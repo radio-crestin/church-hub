@@ -53,7 +53,7 @@ async function main() {
   console.log(`\x1b[36mOutput binary:\x1b[0m ${outfile}`)
 
   console.log('\x1b[34mCompiling server with Bun...\x1b[0m')
-  await $`bun build --compile --production --minify --minify-syntax --target bun --bytecode --bundle ./src/index.ts --outfile ${outfile}`
+  await $`bun build --compile --production --minify --minify-syntax --target bun --bundle ./src/index.ts --outfile ${outfile}`
 
   console.log('\x1b[32mDone! Binary created at:\x1b[0m', outfile)
 }

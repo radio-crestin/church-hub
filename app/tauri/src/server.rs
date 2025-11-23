@@ -37,6 +37,7 @@ pub fn start_server(app_handle: &AppHandle, server_port: u16) -> Result<(), Stri
 
     sidecar = sidecar.env("TZ", "UTC");
     sidecar = sidecar.env("NODE_ENV", "production");
+    sidecar = sidecar.env("TAURI_MODE", "true");
     sidecar = sidecar.env("PORT", server_port.to_string());
 
     let (mut rx, child) = sidecar.spawn().map_err(|err| err.to_string())?;

@@ -1,6 +1,3 @@
-import { readFileSync } from "node:fs";
-import { join, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
 import type { Database } from "bun:sqlite";
 
 const DEBUG = process.env.DEBUG === "true";
@@ -13,24 +10,59 @@ function log(level: "debug" | "info" | "warning" | "error", message: string) {
   console.log(`[${level.toUpperCase()}] [MIGRATIONS] ${message}`);
 }
 
+// Embedded schema SQL for compiled binary compatibility
+const SCHEMA_SQL = `
+-- Application Settings Table
+-- Stores application-level configuration (theme, language, etc.)
+CREATE TABLE IF NOT EXISTS app_settings (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  key TEXT NOT NULL UNIQUE,
+  value TEXT NOT NULL,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch())
+);
+
+-- Index for faster lookups by key
+CREATE INDEX IF NOT EXISTS idx_app_settings_key ON app_settings(key);
+
+-- User Preferences Table
+-- Stores user-specific configurations and preferences
+CREATE TABLE IF NOT EXISTS user_preferences (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  key TEXT NOT NULL UNIQUE,
+  value TEXT NOT NULL,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch())
+);
+
+-- Index for faster lookups by key
+CREATE INDEX IF NOT EXISTS idx_user_preferences_key ON user_preferences(key);
+
+-- Cache Metadata Table
+-- Stores cache and synchronization metadata
+CREATE TABLE IF NOT EXISTS cache_metadata (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  key TEXT NOT NULL UNIQUE,
+  value TEXT NOT NULL,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch())
+);
+
+-- Index for faster lookups by key
+CREATE INDEX IF NOT EXISTS idx_cache_metadata_key ON cache_metadata(key);
+`;
+
 /**
  * Runs database migrations
- * Executes the schema.sql file to create tables and indexes
+ * Executes the embedded schema SQL to create tables and indexes
  */
 export function runMigrations(db: Database): void {
   try {
     log("info", "Running database migrations...");
+    log("debug", "Loading embedded schema");
 
-    // Get the current file's directory
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = dirname(__filename);
-    const schemaPath = join(__dirname, "schema.sql");
-
-    log("debug", `Loading schema from: ${schemaPath}`);
-
-    // Read and execute schema
-    const schema = readFileSync(schemaPath, "utf-8");
-    db.run(schema);
+    // Execute embedded schema
+    db.run(SCHEMA_SQL);
 
     log("info", "Migrations completed successfully");
   } catch (error) {
