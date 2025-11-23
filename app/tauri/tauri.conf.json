@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "identifier": "com.tauri-bun",
   "build": {
-    "devUrl": "http://localhost:3001",
+    "devUrl": "http://localhost:8086",
     "beforeDevCommand": "bun run --filter client dev",
     "beforeBuildCommand": "bun build:apps",
     "frontendDist": "../apps/client/dist"
