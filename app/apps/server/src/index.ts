@@ -5,22 +5,27 @@ import { listenRustIPC } from './rust-ipc'
 import { initializeDatabase, runMigrations, closeDatabase } from './db'
 import { upsertSetting, deleteSetting, getSetting, getAllSettings, type SettingsTable } from './service'
 
-// Initialize database
-const db = await initializeDatabase()
-runMigrations(db)
+async function main() {
+  // Initialize database
+  const db = await initializeDatabase()
+  runMigrations(db)
 
-listenRustIPC()
+  // Only listen to Rust IPC when running inside Tauri
+  const isTauriMode = process.env.TAURI_MODE === 'true' || process.stdin.isTTY === false
+  if (isTauriMode) {
+    listenRustIPC()
+  }
 
-const isProd = process.env.NODE_ENV === 'production'
+  const isProd = process.env.NODE_ENV === 'production'
 
-function handleCors(_: Request, res: Response) {
-  res.headers.set('Access-Control-Allow-Origin', '*')
-  res.headers.set('Access-Control-Allow-Headers', '*')
-  res.headers.set('Access-Control-Allow-Credentials', 'true')
-  return res
-}
+  function handleCors(_: Request, res: Response) {
+    res.headers.set('Access-Control-Allow-Origin', '*')
+    res.headers.set('Access-Control-Allow-Headers', '*')
+    res.headers.set('Access-Control-Allow-Credentials', 'true')
+    return res
+  }
 
-const server = Bun.serve({
+  const server = Bun.serve({
   port: process.env['PORT'] ?? 3000,
   hostname: '127.0.0.1',
   async fetch(req: Request) {
@@ -116,21 +121,27 @@ const server = Bun.serve({
     }
 
     return handleCors(req, new Response('Not Found', { status: 404 }))
-  },
-})
+    },
+  })
 
-// biome-ignore lint/suspicious/noConsole: <>
-console.log(`Bun server running at ${server.url}`)
+  // biome-ignore lint/suspicious/noConsole: <>
+  console.log(`Bun server running at ${server.url}`)
 
-// Graceful shutdown
-process.on('SIGINT', () => {
-  console.log('\nShutting down gracefully...')
-  closeDatabase()
-  process.exit(0)
-})
+  // Graceful shutdown
+  process.on('SIGINT', () => {
+    console.log('\nShutting down gracefully...')
+    closeDatabase()
+    process.exit(0)
+  })
 
-process.on('SIGTERM', () => {
-  console.log('\nShutting down gracefully...')
-  closeDatabase()
-  process.exit(0)
+  process.on('SIGTERM', () => {
+    console.log('\nShutting down gracefully...')
+    closeDatabase()
+    process.exit(0)
+  })
+}
+
+main().catch((error) => {
+  console.error('Failed to start server:', error)
+  process.exit(1)
 })
