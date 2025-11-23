@@ -1,5 +1,5 @@
 {
-  "name": "tauri-bun",
+  "name": "church-hub",
   "private": true,
   "workspaces": ["apps/*"],
   "scripts": {
