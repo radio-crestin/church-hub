@@ -7,7 +7,10 @@ use domain::AppState;
 use parking_lot::Mutex;
 use std::net::TcpListener;
 use std::sync::Arc;
+#[cfg(not(debug_assertions))]
 use tauri::{Manager, RunEvent};
+#[cfg(debug_assertions)]
+use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -38,11 +41,11 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![get_server_config])
         .build(tauri::generate_context!())
         .expect("error while running tauri application")
-        .run(|app_handle, event| {
+        .run(|_app_handle, _event| {
             #[cfg(not(debug_assertions))]
-            match event {
+            match _event {
                 RunEvent::ExitRequested { .. } | RunEvent::Exit => {
-                    if let Err(e) = server::shutdown_server(app_handle) {
+                    if let Err(e) = server::shutdown_server(_app_handle) {
                         println!("[sidecar] Failed to shut down server on exit: {}", e);
                     }
                 }
