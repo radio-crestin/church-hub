@@ -12,10 +12,13 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "Church Hub",
         "width": 1200,
         "height": 800,
-        "maximized": true
+        "center": true,
+        "resizable": true,
+        "decorations": true
       }
     ],
     "security": {
