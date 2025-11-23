@@ -32,7 +32,7 @@ pub fn start_server(app_handle: &AppHandle, server_port: u16) -> Result<(), Stri
 
     let shell = app_handle.shell();
     let mut sidecar = shell
-        .sidecar("tauri-bun-sidecar")
+        .sidecar("church-hub-sidecar")
         .map_err(|err| err.to_string())?;
 
     sidecar = sidecar.env("TZ", "UTC");
