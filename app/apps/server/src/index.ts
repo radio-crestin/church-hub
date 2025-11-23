@@ -2,6 +2,12 @@ import process from 'node:process'
 
 import { authMiddleware } from './middleware'
 import { listenRustIPC } from './rust-ipc'
+import { initializeDatabase, runMigrations, closeDatabase } from './db'
+import { upsertSetting, deleteSetting, getSetting, getAllSettings, type SettingsTable } from './service'
+
+// Initialize database
+const db = await initializeDatabase()
+runMigrations(db)
 
 listenRustIPC()
 
@@ -38,9 +44,93 @@ const server = Bun.serve({
       return handleCors(req, new Response(JSON.stringify({ data: 'pong' })))
     }
 
+    // Settings API endpoints
+    // GET /api/settings/:table/:key - Get a setting by key
+    const getSettingMatch = url.pathname.match(/^\/api\/settings\/([^/]+)\/([^/]+)$/)
+    if (req.method === 'GET' && getSettingMatch) {
+      const table = getSettingMatch[1] as SettingsTable
+      const key = getSettingMatch[2]
+
+      const setting = getSetting(table, key)
+      if (!setting) {
+        return handleCors(req, new Response(JSON.stringify({ error: 'Setting not found' }), { status: 404 }))
+      }
+
+      return handleCors(req, new Response(JSON.stringify({ data: setting }), {
+        headers: { 'Content-Type': 'application/json' }
+      }))
+    }
+
+    // GET /api/settings/:table - Get all settings from a table
+    const getAllSettingsMatch = url.pathname.match(/^\/api\/settings\/([^/]+)$/)
+    if (req.method === 'GET' && getAllSettingsMatch) {
+      const table = getAllSettingsMatch[1] as SettingsTable
+      const settings = getAllSettings(table)
+
+      return handleCors(req, new Response(JSON.stringify({ data: settings }), {
+        headers: { 'Content-Type': 'application/json' }
+      }))
+    }
+
+    // POST /api/settings/:table - Upsert a setting
+    if (req.method === 'POST' && url.pathname.match(/^\/api\/settings\/([^/]+)$/)) {
+      const tableMatch = url.pathname.match(/^\/api\/settings\/([^/]+)$/)
+      const table = tableMatch![1] as SettingsTable
+
+      try {
+        const body = await req.json() as { key: string; value: string }
+
+        if (!body.key || !body.value) {
+          return handleCors(req, new Response(JSON.stringify({ error: 'Missing key or value' }), { status: 400 }))
+        }
+
+        const result = upsertSetting(table, { key: body.key, value: body.value })
+
+        if (!result.success) {
+          return handleCors(req, new Response(JSON.stringify({ error: result.error }), { status: 500 }))
+        }
+
+        return handleCors(req, new Response(JSON.stringify({ data: result }), {
+          headers: { 'Content-Type': 'application/json' }
+        }))
+      } catch (error) {
+        return handleCors(req, new Response(JSON.stringify({ error: 'Invalid JSON body' }), { status: 400 }))
+      }
+    }
+
+    // DELETE /api/settings/:table/:key - Delete a setting
+    const deleteSettingMatch = url.pathname.match(/^\/api\/settings\/([^/]+)\/([^/]+)$/)
+    if (req.method === 'DELETE' && deleteSettingMatch) {
+      const table = deleteSettingMatch[1] as SettingsTable
+      const key = deleteSettingMatch[2]
+
+      const result = deleteSetting(table, key)
+
+      if (!result.success) {
+        return handleCors(req, new Response(JSON.stringify({ error: result.error }), { status: 404 }))
+      }
+
+      return handleCors(req, new Response(JSON.stringify({ data: result }), {
+        headers: { 'Content-Type': 'application/json' }
+      }))
+    }
+
     return handleCors(req, new Response('Not Found', { status: 404 }))
   },
 })
 
 // biome-ignore lint/suspicious/noConsole: <>
 console.log(`Bun server running at ${server.url}`)
+
+// Graceful shutdown
+process.on('SIGINT', () => {
+  console.log('\nShutting down gracefully...')
+  closeDatabase()
+  process.exit(0)
+})
+
+process.on('SIGTERM', () => {
+  console.log('\nShutting down gracefully...')
+  closeDatabase()
+  process.exit(0)
+})
