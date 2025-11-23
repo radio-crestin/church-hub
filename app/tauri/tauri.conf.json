@@ -5,6 +5,7 @@
   "identifier": "com.tauri-bun",
   "build": {
     "devUrl": "http://localhost:3001",
+    "beforeDevCommand": "bun run --filter client dev",
     "beforeBuildCommand": "bun build:apps",
     "frontendDist": "../apps/client/dist"
   },
