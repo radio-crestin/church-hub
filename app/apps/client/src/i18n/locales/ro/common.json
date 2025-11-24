@@ -1,0 +1,15 @@
+{
+  "buttons": {
+    "goBack": "Înapoi",
+    "startOver": "Începe din nou"
+  },
+  "errors": {
+    "pageNotFound": "Pagina pe care o căutați nu există."
+  },
+  "theme": {
+    "system": "Sistem",
+    "lightMode": "Mod luminos",
+    "darkMode": "Mod întunecat",
+    "toggleTheme": "Schimbă tema"
+  }
+}

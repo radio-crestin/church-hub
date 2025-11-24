@@ -1,0 +1,30 @@
+{
+  "title": "Settings",
+  "sections": {
+    "appearance": {
+      "title": "Appearance"
+    },
+    "application": {
+      "title": "Application Settings",
+      "description": "Configure your Church Hub preferences here"
+    },
+    "language": {
+      "title": "Language",
+      "description": "Select your preferred language",
+      "options": {
+        "system": "System Default",
+        "english": "English",
+        "romanian": "Romanian"
+      }
+    },
+    "theme": {
+      "title": "Theme",
+      "description": "Choose your preferred color theme",
+      "options": {
+        "system": "System Default",
+        "light": "Light",
+        "dark": "Dark"
+      }
+    }
+  }
+}

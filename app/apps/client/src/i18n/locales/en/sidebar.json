@@ -1,0 +1,12 @@
+{
+  "navigation": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "settings": "Settings"
+  },
+  "actions": {
+    "collapse": "Collapse",
+    "expand": "Expand sidebar",
+    "collapseSidebar": "Collapse sidebar"
+  }
+}
