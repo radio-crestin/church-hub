@@ -1,0 +1,15 @@
+{
+  "buttons": {
+    "goBack": "Go back",
+    "startOver": "Start Over"
+  },
+  "errors": {
+    "pageNotFound": "The page you are looking for does not exist."
+  },
+  "theme": {
+    "system": "System",
+    "lightMode": "Light mode",
+    "darkMode": "Dark mode",
+    "toggleTheme": "Toggle theme"
+  }
+}

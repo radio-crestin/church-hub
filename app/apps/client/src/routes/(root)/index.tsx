@@ -16,7 +16,11 @@ function App() {
   return (
     <div className="space-y-8">
       <div className="flex items-center gap-4">
-        <img src="/logo192.png" alt="Church Hub" className="w-16 h-16 flex-shrink-0" />
+        <img
+          src="/logo192.png"
+          alt="Church Hub"
+          className="w-16 h-16 flex-shrink-0"
+        />
         <div>
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
             Welcome to Church Hub

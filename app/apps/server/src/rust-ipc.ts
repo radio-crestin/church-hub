@@ -2,12 +2,14 @@ import readline from 'node:readline'
 
 import { verificationStore } from './crypto'
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-})
+let rl: readline.Interface | null = null
 
 export function listenRustIPC() {
+  rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  })
+
   rl.on('line', async (line) => {
     if (line.startsWith('[verify-token-response]')) {
       try {

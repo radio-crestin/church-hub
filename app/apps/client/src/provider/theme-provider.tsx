@@ -1,56 +1,110 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from 'react'
 
-type Theme = "dark" | "light";
+import {
+  detectSystemTheme,
+  getThemePreference,
+  resolveTheme,
+  saveThemePreference,
+  type Theme,
+  type ThemePreference,
+} from '../service/theme'
 
 interface ThemeContextType {
-  theme: Theme;
-  toggleTheme: () => void;
-  setTheme: (theme: Theme) => void;
+  theme: Theme
+  preference: ThemePreference
+  setThemePreference: (preference: ThemePreference) => Promise<void>
+  isLoading: boolean
 }
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("church-hub-theme") as Theme | null;
-      return stored || "dark";
-    }
-    return "dark";
-  });
+  const [preference, setPreference] = useState<ThemePreference>('system')
+  const [theme, setTheme] = useState<Theme>('dark')
+  const [isLoading, setIsLoading] = useState(true)
 
+  // Load theme preference on mount
   useEffect(() => {
-    const root = document.documentElement;
-    const body = document.body;
+    async function loadThemePreference() {
+      try {
+        const savedPreference = await getThemePreference()
+        const effectivePreference = savedPreference || 'system'
+        const effectiveTheme = resolveTheme(effectivePreference)
 
-    root.classList.remove("light", "dark");
-    root.classList.add(theme);
+        setPreference(effectivePreference)
+        setTheme(effectiveTheme)
+      } catch (_error) {
+        // Fallback to system theme
+        const systemTheme = detectSystemTheme()
+        setTheme(systemTheme)
+      } finally {
+        setIsLoading(false)
+      }
+    }
 
-    body.classList.remove("light", "dark");
-    body.classList.add(theme);
+    loadThemePreference()
+  }, [])
 
-    localStorage.setItem("church-hub-theme", theme);
-  }, [theme]);
+  // Apply theme to DOM
+  useEffect(() => {
+    const root = document.documentElement
+    const body = document.body
 
-  const toggleTheme = () => {
-    setThemeState((prev) => (prev === "dark" ? "light" : "dark"));
-  };
+    root.classList.remove('light', 'dark')
+    root.classList.add(theme)
 
-  const setTheme = (newTheme: Theme) => {
-    setThemeState(newTheme);
-  };
+    body.classList.remove('light', 'dark')
+    body.classList.add(theme)
+
+    // Also update localStorage for offline support
+    localStorage.setItem('church-hub-theme', theme)
+  }, [theme])
+
+  // Listen for system theme changes when preference is 'system'
+  useEffect(() => {
+    if (preference !== 'system') return
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+
+    const handleChange = (e: MediaQueryListEvent) => {
+      const newTheme = e.matches ? 'dark' : 'light'
+      setTheme(newTheme)
+    }
+
+    mediaQuery.addEventListener('change', handleChange)
+    return () => mediaQuery.removeEventListener('change', handleChange)
+  }, [preference])
+
+  const setThemePreference = async (newPreference: ThemePreference) => {
+    try {
+      // Resolve the actual theme
+      const effectiveTheme = resolveTheme(newPreference)
+
+      // Save to database
+      const success = await saveThemePreference(newPreference)
+
+      if (success) {
+        // Update state
+        setPreference(newPreference)
+        setTheme(effectiveTheme)
+      } else {
+      }
+    } catch (_error) {}
+  }
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
+    <ThemeContext.Provider
+      value={{ theme, preference, setThemePreference, isLoading }}
+    >
       {children}
     </ThemeContext.Provider>
-  );
+  )
 }
 
 export function useTheme() {
-  const context = useContext(ThemeContext);
+  const context = useContext(ThemeContext)
   if (context === undefined) {
-    throw new Error("useTheme must be used within a ThemeProvider");
+    throw new Error('useTheme must be used within a ThemeProvider')
   }
-  return context;
+  return context
 }

@@ -1,2 +1,12 @@
-export { getSetting, getAllSettings, upsertSetting, deleteSetting } from "./settings";
-export type { Setting, SettingsTable, UpsertSettingInput, ApiResponse } from "./types";
+export {
+  deleteSetting,
+  getAllSettings,
+  getSetting,
+  upsertSetting,
+} from './settings'
+export type {
+  ApiResponse,
+  Setting,
+  SettingsTable,
+  UpsertSettingInput,
+} from './types'

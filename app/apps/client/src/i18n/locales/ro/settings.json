@@ -1,0 +1,30 @@
+{
+  "title": "Setări",
+  "sections": {
+    "appearance": {
+      "title": "Aspect"
+    },
+    "application": {
+      "title": "Setări aplicație",
+      "description": "Configurează preferințele tale pentru Church Hub"
+    },
+    "language": {
+      "title": "Limbă",
+      "description": "Selectează limba preferată",
+      "options": {
+        "system": "Implicit din sistem",
+        "english": "Engleză",
+        "romanian": "Română"
+      }
+    },
+    "theme": {
+      "title": "Temă",
+      "description": "Alege tema de culoare preferată",
+      "options": {
+        "system": "Implicit din sistem",
+        "light": "Luminos",
+        "dark": "Întunecat"
+      }
+    }
+  }
+}
