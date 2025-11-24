@@ -22,21 +22,21 @@ export default function DefaultCatchBoundary({ error }: ErrorComponentProps) {
           onClick={() => {
             router.invalidate()
           }}
-          className={`px-2 py-1 bg-gray-600 dark:bg-gray-700 rounded-sm text-white uppercase font-extrabold`}
+          className={`px-2 py-1 bg-gray-600 dark:bg-gray-800 hover:bg-gray-700 dark:hover:bg-gray-700 rounded-sm text-white uppercase font-extrabold transition-colors`}
         >
           Try Again
         </button>
         {isRoot ? (
           <Link
             to="/"
-            className={`px-2 py-1 bg-gray-600 dark:bg-gray-700 rounded-sm text-white uppercase font-extrabold`}
+            className={`px-2 py-1 bg-gray-600 dark:bg-gray-800 hover:bg-gray-700 dark:hover:bg-gray-700 rounded-sm text-white uppercase font-extrabold transition-colors`}
           >
             Home
           </Link>
         ) : (
           <Link
             to="/"
-            className={`px-2 py-1 bg-gray-600 dark:bg-gray-700 rounded-sm text-white uppercase font-extrabold`}
+            className={`px-2 py-1 bg-gray-600 dark:bg-gray-800 hover:bg-gray-700 dark:hover:bg-gray-700 rounded-sm text-white uppercase font-extrabold transition-colors`}
             onClick={(e) => {
               e.preventDefault()
               window.history.back()

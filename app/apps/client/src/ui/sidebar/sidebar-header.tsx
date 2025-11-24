@@ -1,5 +1,5 @@
 interface SidebarHeaderProps {
-  isCollapsed: boolean;
+  isCollapsed: boolean
 }
 
 export function SidebarHeader({ isCollapsed }: SidebarHeaderProps) {
@@ -22,5 +22,5 @@ export function SidebarHeader({ isCollapsed }: SidebarHeaderProps) {
         </div>
       )}
     </div>
-  );
+  )
 }

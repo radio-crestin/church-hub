@@ -1,0 +1,12 @@
+{
+  "navigation": {
+    "home": "Acasă",
+    "dashboard": "Panou",
+    "settings": "Setări"
+  },
+  "actions": {
+    "collapse": "Restrânge",
+    "expand": "Extinde bara laterală",
+    "collapseSidebar": "Restrânge bara laterală"
+  }
+}
