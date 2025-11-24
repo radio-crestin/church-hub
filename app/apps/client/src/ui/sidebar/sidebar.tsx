@@ -1,35 +1,52 @@
-import { useState } from "react";
-import { useLocation } from "@tanstack/react-router";
+import { useLocation } from '@tanstack/react-router'
 import {
-  Home,
-  LayoutDashboard,
-  Settings,
   ChevronLeft,
   ChevronRight,
+  Home,
+  LayoutDashboard,
+  Monitor,
   Moon,
+  Settings,
   Sun,
-} from "lucide-react";
-import { SidebarHeader } from "./sidebar-header";
-import { SidebarItem } from "./sidebar-item";
-import { useTheme } from "../../provider/theme-provider";
+} from 'lucide-react'
+import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
-const menuItems = [
-  { icon: Home, label: "Home", to: "/" },
-  { icon: LayoutDashboard, label: "Dashboard", to: "/dashboard" },
-  { icon: Settings, label: "Settings", to: "/settings" },
-];
+import { SidebarHeader } from './sidebar-header'
+import { SidebarItem } from './sidebar-item'
+import { useTheme } from '../../provider/theme-provider'
 
 export function Sidebar() {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const { theme, toggleTheme } = useTheme();
-  const location = useLocation();
+  const [isCollapsed, setIsCollapsed] = useState(false)
+  const { preference, setThemePreference } = useTheme()
+  const location = useLocation()
+  const { t } = useTranslation(['sidebar', 'common'])
+
+  const cycleTheme = () => {
+    const cycle = { system: 'light', light: 'dark', dark: 'system' } as const
+    setThemePreference(cycle[preference])
+  }
+
+  const menuItems = [
+    { icon: Home, label: t('sidebar:navigation.home'), to: '/' },
+    {
+      icon: LayoutDashboard,
+      label: t('sidebar:navigation.dashboard'),
+      to: '/dashboard',
+    },
+    {
+      icon: Settings,
+      label: t('sidebar:navigation.settings'),
+      to: '/settings',
+    },
+  ]
 
   return (
     <aside
       className={`
         flex flex-col h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800
         transition-all duration-300 ease-in-out
-        ${isCollapsed ? "w-20" : "w-64"}
+        ${isCollapsed ? 'w-20' : 'w-64'}
       `}
     >
       <SidebarHeader isCollapsed={isCollapsed} />
@@ -49,20 +66,26 @@ export function Sidebar() {
 
       <div className="p-3 border-t border-gray-200 dark:border-gray-800 space-y-2">
         <button
-          onClick={toggleTheme}
+          onClick={cycleTheme}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-lg
             text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800
             transition-colors"
-          title={isCollapsed ? "Toggle theme" : undefined}
+          title={isCollapsed ? t('common:theme.toggleTheme') : undefined}
         >
-          {theme === "dark" ? (
+          {preference === 'system' ? (
+            <Monitor size={20} className="flex-shrink-0" />
+          ) : preference === 'light' ? (
             <Sun size={20} className="flex-shrink-0" />
           ) : (
             <Moon size={20} className="flex-shrink-0" />
           )}
           {!isCollapsed && (
             <span className="text-sm font-medium">
-              {theme === "dark" ? "Light mode" : "Dark mode"}
+              {preference === 'system'
+                ? t('common:theme.system')
+                : preference === 'light'
+                  ? t('common:theme.lightMode')
+                  : t('common:theme.darkMode')}
             </span>
           )}
         </button>
@@ -72,18 +95,24 @@ export function Sidebar() {
           className="w-full flex items-center gap-3 px-4 py-3 rounded-lg
             text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800
             transition-colors"
-          title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={
+            isCollapsed
+              ? t('sidebar:actions.expand')
+              : t('sidebar:actions.collapseSidebar')
+          }
         >
           {isCollapsed ? (
             <ChevronRight size={20} className="flex-shrink-0" />
           ) : (
             <>
               <ChevronLeft size={20} className="flex-shrink-0" />
-              <span className="text-sm font-medium">Collapse</span>
+              <span className="text-sm font-medium">
+                {t('sidebar:actions.collapse')}
+              </span>
             </>
           )}
         </button>
       </div>
     </aside>
-  );
+  )
 }
