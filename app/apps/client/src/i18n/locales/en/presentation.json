@@ -1,0 +1,74 @@
+{
+  "displays": {
+    "title": "Displays",
+    "description": "Configure output displays for your presentations. Each display can have its own theme and settings.",
+    "add": "Add Display",
+    "addFirst": "Add Your First Display",
+    "edit": "Edit Display",
+    "empty": "No Displays",
+    "emptyDescription": "Create displays to output your presentations to different screens or windows.",
+    "name": "Display Name",
+    "namePlaceholder": "e.g., Main Screen, Stage Monitor",
+    "activeLabel": "Display is active",
+    "active": "Active",
+    "inactive": "Inactive",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "editTheme": "Edit Theme",
+    "openWindow": "Open Display Window",
+    "deleteConfirmTitle": "Delete Display?",
+    "deleteConfirmMessage": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone."
+  },
+  "theme": {
+    "title": "Display Theme",
+    "backgroundType": "Background Type",
+    "backgrounds": {
+      "transparent": "Transparent",
+      "color": "Solid Color",
+      "image": "Image"
+    },
+    "backgroundColor": "Background Color",
+    "backgroundImage": "Image URL",
+    "textColor": "Text Color",
+    "fontFamily": "Font Family",
+    "padding": "Padding",
+    "preview": "Preview",
+    "sampleText": "Sample Text"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "close": "Close"
+  },
+  "messages": {
+    "displaySaved": "Display saved successfully",
+    "displaySaveFailed": "Failed to save display",
+    "displayDeleted": "Display deleted",
+    "displayDeleteFailed": "Failed to delete display",
+    "displayActivated": "Display activated",
+    "displayDeactivated": "Display deactivated",
+    "displayToggleFailed": "Failed to toggle display status",
+    "themeSaved": "Theme saved successfully",
+    "themeSaveFailed": "Failed to save theme"
+  },
+  "controls": {
+    "start": "Start",
+    "stop": "Stop",
+    "prev": "Previous",
+    "next": "Next",
+    "clear": "Clear Slide"
+  },
+  "controlRoom": {
+    "title": "Control Room",
+    "selectProgram": "Select a program",
+    "presenting": "Presenting",
+    "notPresenting": "Not presenting",
+    "connected": "Connected",
+    "connecting": "Connecting...",
+    "disconnected": "Disconnected",
+    "openDisplay": "Open Display",
+    "slides": "Slides",
+    "noSlides": "No slides in this program"
+  }
+}

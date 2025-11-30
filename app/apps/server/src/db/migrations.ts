@@ -83,6 +83,79 @@ CREATE TABLE IF NOT EXISTS device_permissions (
 
 -- Index for permission lookups
 CREATE INDEX IF NOT EXISTS idx_device_permissions_device_id ON device_permissions(device_id);
+
+-- Programs Table
+-- Stores presentation programs (collections of slides)
+CREATE TABLE IF NOT EXISTS programs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  description TEXT,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch())
+);
+
+CREATE INDEX IF NOT EXISTS idx_programs_name ON programs(name);
+
+-- Slides Table
+-- Stores individual slides belonging to programs
+CREATE TABLE IF NOT EXISTS slides (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  program_id INTEGER NOT NULL,
+  type TEXT NOT NULL DEFAULT 'custom',
+  content TEXT NOT NULL,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  FOREIGN KEY (program_id) REFERENCES programs(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_slides_program_id ON slides(program_id);
+CREATE INDEX IF NOT EXISTS idx_slides_sort_order ON slides(sort_order);
+
+-- Displays Table
+-- Stores display configurations for presentation outputs
+CREATE TABLE IF NOT EXISTS displays (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  is_active INTEGER NOT NULL DEFAULT 1,
+  theme TEXT NOT NULL DEFAULT '{}',
+  created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch())
+);
+
+CREATE INDEX IF NOT EXISTS idx_displays_is_active ON displays(is_active);
+
+-- Display Slide Configurations Table
+-- Stores per-slide per-display configuration overrides
+CREATE TABLE IF NOT EXISTS display_slide_configs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  display_id INTEGER NOT NULL,
+  slide_id INTEGER NOT NULL,
+  config TEXT NOT NULL DEFAULT '{}',
+  created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  FOREIGN KEY (display_id) REFERENCES displays(id) ON DELETE CASCADE,
+  FOREIGN KEY (slide_id) REFERENCES slides(id) ON DELETE CASCADE,
+  UNIQUE(display_id, slide_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_display_slide_configs_display_id ON display_slide_configs(display_id);
+CREATE INDEX IF NOT EXISTS idx_display_slide_configs_slide_id ON display_slide_configs(slide_id);
+
+-- Presentation State Table
+-- Singleton table storing current presentation state
+CREATE TABLE IF NOT EXISTS presentation_state (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  program_id INTEGER,
+  current_slide_id INTEGER,
+  is_presenting INTEGER NOT NULL DEFAULT 0,
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  FOREIGN KEY (program_id) REFERENCES programs(id) ON DELETE SET NULL,
+  FOREIGN KEY (current_slide_id) REFERENCES slides(id) ON DELETE SET NULL
+);
+
+-- Initialize presentation state with default values
+INSERT OR IGNORE INTO presentation_state (id, is_presenting) VALUES (1, 0);
 `
 
 /**
@@ -120,7 +193,10 @@ export function runMigrations(db: Database): void {
     log('info', 'Running database migrations...')
 
     // Check if we have old devices schema that needs migration
-    if (tableExists(db, 'devices') && columnExists(db, 'devices', 'device_type')) {
+    if (
+      tableExists(db, 'devices') &&
+      columnExists(db, 'devices', 'device_type')
+    ) {
       log('info', 'Migrating old devices schema - dropping old tables...')
 
       // Drop old tables completely and recreate with new schema
@@ -129,8 +205,14 @@ export function runMigrations(db: Database): void {
         DROP TABLE IF EXISTS devices;
       `)
 
-      log('info', 'Old devices tables dropped, will be recreated with new schema')
-    } else if (tableExists(db, 'devices') && columnExists(db, 'devices', 'token')) {
+      log(
+        'info',
+        'Old devices tables dropped, will be recreated with new schema',
+      )
+    } else if (
+      tableExists(db, 'devices') &&
+      columnExists(db, 'devices', 'token')
+    ) {
       log('info', 'Migrating old devices schema...')
 
       // Drop old indexes

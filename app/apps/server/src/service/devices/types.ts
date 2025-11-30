@@ -1,7 +1,13 @@
 /**
  * Available features that can be controlled via permissions
  */
-export type Feature = 'songs' | 'schedules' | 'presentation' | 'settings'
+export type Feature =
+  | 'songs'
+  | 'schedules'
+  | 'presentation'
+  | 'settings'
+  | 'programs'
+  | 'displays'
 
 /**
  * Permission action types
@@ -16,6 +22,8 @@ export const FEATURES: Feature[] = [
   'schedules',
   'presentation',
   'settings',
+  'programs',
+  'displays',
 ]
 
 /**
@@ -113,5 +121,7 @@ export function getDefaultPermissions(): DevicePermissions {
     schedules: { read: false, write: false, delete: false },
     presentation: { read: false, write: false, delete: false },
     settings: { read: false, write: false, delete: false },
+    programs: { read: false, write: false, delete: false },
+    displays: { read: false, write: false, delete: false },
   }
 }
