@@ -25,6 +25,81 @@
         "light": "Luminos",
         "dark": "Întunecat"
       }
+    },
+    "devices": {
+      "title": "Dispozitive autorizate",
+      "description": "Administrează dispozitivele care pot accesa Church Hub",
+      "addDevice": "Adaugă dispozitiv",
+      "noDevices": "Niciun dispozitiv configurat",
+      "noDevicesDescription": "Adaugă un dispozitiv pentru a permite acces extern la Church Hub",
+      "deviceName": "Nume dispozitiv",
+      "deviceNamePlaceholder": "ex., TV Living",
+      "permissions": "Permisiuni",
+      "status": "Stare",
+      "active": "Activ",
+      "inactive": "Inactiv",
+      "lastUsed": "Ultima utilizare",
+      "never": "Niciodată",
+      "createdAt": "Creat la",
+      "features": {
+        "title": "Funcționalitate",
+        "songs": "Cântări",
+        "schedules": "Programe",
+        "presentation": "Prezentare",
+        "settings": "Setări"
+      },
+      "permissionLevels": {
+        "read": "Citire",
+        "write": "Scriere",
+        "delete": "Ștergere"
+      },
+      "actions": {
+        "edit": "Editează",
+        "delete": "Șterge",
+        "regenerateToken": "Regenerează token",
+        "showQRCode": "Afișează cod QR",
+        "deactivate": "Dezactivează",
+        "activate": "Activează",
+        "copyUrl": "Copiază URL"
+      },
+      "modals": {
+        "create": {
+          "title": "Adaugă dispozitiv nou",
+          "submit": "Creează dispozitiv"
+        },
+        "edit": {
+          "title": "Editează dispozitiv",
+          "submit": "Salvează modificările"
+        },
+        "delete": {
+          "title": "Șterge dispozitiv",
+          "message": "Ești sigur că vrei să ștergi \"{{name}}\"? Această acțiune nu poate fi anulată.",
+          "confirm": "Șterge",
+          "cancel": "Anulează"
+        },
+        "qrCode": {
+          "title": "Scanează codul QR",
+          "deviceName": "Dispozitiv",
+          "description": "Scanează acest cod QR cu dispozitivul pe care vrei să îl autorizezi",
+          "warning": "Acest token va fi afișat o singură dată. Salvează-l dacă este necesar.",
+          "manualUrl": "Sau vizitează manual acest URL:",
+          "done": "Gata"
+        },
+        "regenerate": {
+          "title": "Regenerează token",
+          "message": "Aceasta va invalida tokenul curent pentru \"{{name}}\". Dispozitivul va trebui re-autentificat.",
+          "confirm": "Regenerează",
+          "cancel": "Anulează"
+        }
+      },
+      "toast": {
+        "created": "Dispozitiv creat cu succes",
+        "updated": "Dispozitiv actualizat cu succes",
+        "deleted": "Dispozitiv șters cu succes",
+        "tokenRegenerated": "Token regenerat cu succes",
+        "urlCopied": "URL copiat în clipboard",
+        "error": "A apărut o eroare"
+      }
     }
   }
 }
