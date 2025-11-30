@@ -1,13 +1,12 @@
-import type { Database } from "bun:sqlite";
+import type { Database } from 'bun:sqlite'
 
-const DEBUG = process.env.DEBUG === "true";
+const DEBUG = process.env.DEBUG === 'true'
 
 /**
  * Logs debug messages if DEBUG env variable is enabled
  */
-function log(level: "debug" | "info" | "warning" | "error", message: string) {
-  if (level === "debug" && !DEBUG) return;
-  console.log(`[${level.toUpperCase()}] [MIGRATIONS] ${message}`);
+function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
+  if (level === 'debug' && !DEBUG) return
 }
 
 // Embedded schema SQL for compiled binary compatibility
@@ -50,7 +49,67 @@ CREATE TABLE IF NOT EXISTS cache_metadata (
 
 -- Index for faster lookups by key
 CREATE INDEX IF NOT EXISTS idx_cache_metadata_key ON cache_metadata(key);
-`;
+
+-- Authorized Devices Table
+-- Stores device information and their authentication tokens
+CREATE TABLE IF NOT EXISTS devices (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  token_hash TEXT NOT NULL UNIQUE,
+  is_active INTEGER NOT NULL DEFAULT 1,
+  last_used_at INTEGER,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch())
+);
+
+-- Indexes for device lookups
+CREATE INDEX IF NOT EXISTS idx_devices_token_hash ON devices(token_hash);
+CREATE INDEX IF NOT EXISTS idx_devices_is_active ON devices(is_active);
+
+-- Device Permissions Table
+-- Stores granular permissions per device per feature
+CREATE TABLE IF NOT EXISTS device_permissions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  device_id INTEGER NOT NULL,
+  feature TEXT NOT NULL,
+  can_read INTEGER NOT NULL DEFAULT 0,
+  can_write INTEGER NOT NULL DEFAULT 0,
+  can_delete INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE CASCADE,
+  UNIQUE(device_id, feature)
+);
+
+-- Index for permission lookups
+CREATE INDEX IF NOT EXISTS idx_device_permissions_device_id ON device_permissions(device_id);
+`
+
+/**
+ * Checks if a column exists in a table
+ */
+function columnExists(
+  db: Database,
+  tableName: string,
+  columnName: string,
+): boolean {
+  const result = db.query(`PRAGMA table_info(${tableName})`).all() as {
+    name: string
+  }[]
+  return result.some((col) => col.name === columnName)
+}
+
+/**
+ * Checks if a table exists
+ */
+function tableExists(db: Database, tableName: string): boolean {
+  const result = db
+    .query(
+      `SELECT name FROM sqlite_master WHERE type='table' AND name='${tableName}'`,
+    )
+    .get()
+  return !!result
+}
 
 /**
  * Runs database migrations
@@ -58,15 +117,47 @@ CREATE INDEX IF NOT EXISTS idx_cache_metadata_key ON cache_metadata(key);
  */
 export function runMigrations(db: Database): void {
   try {
-    log("info", "Running database migrations...");
-    log("debug", "Loading embedded schema");
+    log('info', 'Running database migrations...')
 
-    // Execute embedded schema
-    db.run(SCHEMA_SQL);
+    // Check if we have old devices schema that needs migration
+    if (tableExists(db, 'devices') && columnExists(db, 'devices', 'device_type')) {
+      log('info', 'Migrating old devices schema - dropping old tables...')
 
-    log("info", "Migrations completed successfully");
+      // Drop old tables completely and recreate with new schema
+      db.exec(`
+        DROP TABLE IF EXISTS device_permissions;
+        DROP TABLE IF EXISTS devices;
+      `)
+
+      log('info', 'Old devices tables dropped, will be recreated with new schema')
+    } else if (tableExists(db, 'devices') && columnExists(db, 'devices', 'token')) {
+      log('info', 'Migrating old devices schema...')
+
+      // Drop old indexes
+      db.exec(`
+        DROP INDEX IF EXISTS idx_devices_token;
+        DROP INDEX IF EXISTS idx_devices_active;
+      `)
+
+      // Rename token to token_hash
+      db.exec(`ALTER TABLE devices RENAME COLUMN token TO token_hash`)
+
+      // Rename last_seen to last_used_at if it exists
+      if (columnExists(db, 'devices', 'last_seen')) {
+        db.exec(`ALTER TABLE devices RENAME COLUMN last_seen TO last_used_at`)
+      }
+
+      log('info', 'Old devices schema migrated successfully')
+    }
+
+    log('debug', 'Loading embedded schema')
+
+    // Execute embedded schema (exec for multiple statements)
+    db.exec(SCHEMA_SQL)
+
+    log('info', 'Migrations completed successfully')
   } catch (error) {
-    log("error", `Migration failed: ${error}`);
-    throw error;
+    log('error', `Migration failed: ${error}`)
+    throw error
   }
 }
