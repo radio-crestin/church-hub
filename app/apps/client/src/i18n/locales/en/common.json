@@ -1,7 +1,10 @@
 {
   "buttons": {
     "goBack": "Go back",
-    "startOver": "Start Over"
+    "startOver": "Start Over",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save"
   },
   "errors": {
     "pageNotFound": "The page you are looking for does not exist."
@@ -11,5 +14,16 @@
     "lightMode": "Light mode",
     "darkMode": "Dark mode",
     "toggleTheme": "Toggle theme"
+  },
+  "presentation": {
+    "queue": "Queue",
+    "nextItem": "Next item",
+    "clearQueue": "Clear queue",
+    "emptyQueue": "Queue is empty",
+    "control": "Control",
+    "viewer": "Presentation",
+    "present": "Present",
+    "addToQueue": "Add to queue",
+    "slideOf": "Slide {{current}} of {{total}}"
   }
 }
