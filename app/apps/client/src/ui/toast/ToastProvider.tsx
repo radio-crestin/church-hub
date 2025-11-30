@@ -1,5 +1,5 @@
-import { createContext, useCallback, useState, type ReactNode } from 'react'
 import { X } from 'lucide-react'
+import { createContext, type ReactNode, useCallback, useState } from 'react'
 
 type ToastType = 'success' | 'error' | 'info'
 
