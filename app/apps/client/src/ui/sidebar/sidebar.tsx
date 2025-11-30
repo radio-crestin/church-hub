@@ -1,11 +1,12 @@
 import { useLocation } from '@tanstack/react-router'
 import {
+  Calendar,
   ChevronLeft,
   ChevronRight,
   Home,
-  LayoutDashboard,
   Monitor,
   Moon,
+  Music,
   Settings,
   Sun,
 } from 'lucide-react'
@@ -30,9 +31,14 @@ export function Sidebar() {
   const menuItems = [
     { icon: Home, label: t('sidebar:navigation.home'), to: '/' },
     {
-      icon: LayoutDashboard,
-      label: t('sidebar:navigation.dashboard'),
-      to: '/dashboard',
+      icon: Music,
+      label: t('sidebar:navigation.songs'),
+      to: '/songs',
+    },
+    {
+      icon: Calendar,
+      label: t('sidebar:navigation.schedules'),
+      to: '/presentation',
     },
     {
       icon: Settings,
