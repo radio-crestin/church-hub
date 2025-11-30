@@ -39,11 +39,18 @@ export function ConfirmModal({
       ? 'bg-red-600 hover:bg-red-700 text-white'
       : 'bg-indigo-600 hover:bg-indigo-700 text-white'
 
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
+    if (e.target === dialogRef.current) {
+      onCancel()
+    }
+  }
+
   return (
     <dialog
       ref={dialogRef}
-      className="p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800"
+      className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800"
       onClose={onCancel}
+      onClick={handleBackdropClick}
     >
       <div className="p-6 min-w-[300px] max-w-md">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
