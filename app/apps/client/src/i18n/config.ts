@@ -4,9 +4,13 @@ import { initReactI18next } from 'react-i18next'
 
 // Import translation files
 import commonEN from './locales/en/common.json'
+import presentationEN from './locales/en/presentation.json'
+import programsEN from './locales/en/programs.json'
 import settingsEN from './locales/en/settings.json'
 import sidebarEN from './locales/en/sidebar.json'
 import commonRO from './locales/ro/common.json'
+import presentationRO from './locales/ro/presentation.json'
+import programsRO from './locales/ro/programs.json'
 import settingsRO from './locales/ro/settings.json'
 import sidebarRO from './locales/ro/sidebar.json'
 
@@ -14,11 +18,15 @@ import sidebarRO from './locales/ro/sidebar.json'
 export const resources = {
   en: {
     common: commonEN,
+    presentation: presentationEN,
+    programs: programsEN,
     sidebar: sidebarEN,
     settings: settingsEN,
   },
   ro: {
     common: commonRO,
+    presentation: presentationRO,
+    programs: programsRO,
     sidebar: sidebarRO,
     settings: settingsRO,
   },
@@ -32,7 +40,7 @@ i18n
     resources,
     fallbackLng: 'en', // Fallback language
     defaultNS: 'common', // Default namespace
-    ns: ['common', 'sidebar', 'settings'], // Available namespaces
+    ns: ['common', 'presentation', 'programs', 'sidebar', 'settings'], // Available namespaces
 
     // Language detection options
     detection: {
