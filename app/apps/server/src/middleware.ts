@@ -1,14 +1,11 @@
-import { verifyAuthToken } from './crypto'
+// Re-export from new middleware directory
+export * from './middleware/index'
 
-export async function authMiddleware(req: Request): Promise<Response | null> {
-  const authHeader = req.headers.get('Authorization')
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return new Response('Unauthorized', { status: 401 })
-  }
-  const token = authHeader.slice('Bearer '.length)
-  const valid = await verifyAuthToken(token)
-  if (!valid) {
-    return new Response('Unauthorized', { status: 401 })
-  }
-  return null // proceed
+// Legacy export for backwards compatibility
+import { combinedAuthMiddleware } from './middleware/index'
+export const authMiddleware = async (
+  req: Request,
+): Promise<Response | null> => {
+  const result = await combinedAuthMiddleware(req)
+  return result.response
 }
