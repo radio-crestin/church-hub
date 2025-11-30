@@ -1,0 +1,69 @@
+{
+  "title": "Schedules",
+  "search": {
+    "placeholder": "Search schedules...",
+    "noResults": "No schedules found"
+  },
+  "list": {
+    "empty": "No schedules yet",
+    "createFirst": "Create your first schedule",
+    "updatedAt": "Updated {{date}}"
+  },
+  "fields": {
+    "title": "Title",
+    "titlePlaceholder": "Enter schedule title",
+    "description": "Description",
+    "descriptionPlaceholder": "Optional description"
+  },
+  "actions": {
+    "create": "New Schedule",
+    "edit": "Edit",
+    "delete": "Delete",
+    "duplicate": "Duplicate",
+    "add": "Add"
+  },
+  "modal": {
+    "createTitle": "Create Schedule",
+    "editTitle": "Edit Schedule",
+    "deleteTitle": "Delete Schedule",
+    "deleteMessage": "Are you sure you want to delete this schedule? This action cannot be undone.",
+    "addToScheduleTitle": "Add to Schedule",
+    "selectSchedule": "Select a schedule",
+    "orCreateNew": "Or create a new schedule",
+    "newSchedulePlaceholder": "New schedule title"
+  },
+  "editor": {
+    "title": "Edit Schedule",
+    "items": "Items",
+    "addItem": "Add Item",
+    "noItems": "No items in this schedule",
+    "addFirstItem": "Add your first item",
+    "addSongDescription": "Add a song from your library",
+    "addTextDescription": "Add custom text or announcement",
+    "selectSong": "Select Song",
+    "searchSongs": "Search songs...",
+    "noSongsFound": "No songs found",
+    "noSongsAvailable": "No songs available",
+    "addText": "Add Text",
+    "textTitle": "Title",
+    "textTitlePlaceholder": "Enter a title",
+    "textContent": "Content",
+    "textContentPlaceholder": "Enter the text content"
+  },
+  "items": {
+    "song": "Song",
+    "bible": "Bible",
+    "text": "Custom Text",
+    "section": "Section"
+  },
+  "messages": {
+    "created": "Schedule created",
+    "updated": "Schedule updated",
+    "deleted": "Schedule deleted",
+    "duplicated": "Schedule duplicated",
+    "itemRemoved": "Item removed",
+    "itemAdded": "Item added to schedule",
+    "notFound": "Schedule not found",
+    "error": "An error occurred"
+  }
+}
