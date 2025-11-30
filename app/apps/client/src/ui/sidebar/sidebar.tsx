@@ -5,7 +5,10 @@ import {
   Home,
   LayoutDashboard,
   Monitor,
+  MonitorUp,
   Moon,
+  Play,
+  Presentation,
   Settings,
   Sun,
 } from 'lucide-react'
@@ -33,6 +36,21 @@ export function Sidebar() {
       icon: LayoutDashboard,
       label: t('sidebar:navigation.dashboard'),
       to: '/dashboard',
+    },
+    {
+      icon: Presentation,
+      label: t('sidebar:navigation.programs'),
+      to: '/programs',
+    },
+    {
+      icon: Play,
+      label: t('sidebar:navigation.present'),
+      to: '/present',
+    },
+    {
+      icon: MonitorUp,
+      label: t('sidebar:navigation.displays'),
+      to: '/displays',
     },
     {
       icon: Settings,
