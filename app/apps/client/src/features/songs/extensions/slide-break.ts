@@ -230,6 +230,20 @@ export const SlideBreak = Node.create<SlideBreakOptions>({
           },
         },
         props: {
+          clipboardTextSerializer: (slice) => {
+            const lines: string[] = []
+            slice.content.forEach((node) => {
+              if (node.type.name === 'slideBreak') {
+                // Add empty line for slide breaks
+                lines.push('')
+              } else if (node.type.name === 'paragraph') {
+                lines.push(node.textContent)
+              } else {
+                lines.push(node.textContent)
+              }
+            })
+            return lines.join('\n')
+          },
           handlePaste(view, event) {
             const text = event.clipboardData?.getData('text/plain')
             if (!text) return false
