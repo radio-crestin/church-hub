@@ -9,18 +9,36 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as StageIndexRouteImport } from './routes/stage/index'
+import { Route as SongsIndexRouteImport } from './routes/songs/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings/index'
-import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
+import { Route as PresentationIndexRouteImport } from './routes/presentation/index'
 import { Route as rootIndexRouteImport } from './routes/(root)/index'
+import { Route as SongsSongIdRouteImport } from './routes/songs/$songId'
+import { Route as SettingsThemesRouteImport } from './routes/settings/themes'
+import { Route as SettingsDisplaysRouteImport } from './routes/settings/displays'
+import { Route as SettingsDevicesRouteImport } from './routes/settings/devices'
+import { Route as PresentationViewerRouteImport } from './routes/presentation/viewer'
+import { Route as PresentationScheduleIdRouteImport } from './routes/presentation/$scheduleId'
 
+const StageIndexRoute = StageIndexRouteImport.update({
+  id: '/stage/',
+  path: '/stage/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SongsIndexRoute = SongsIndexRouteImport.update({
+  id: '/songs/',
+  path: '/songs/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsIndexRoute = SettingsIndexRouteImport.update({
   id: '/settings/',
   path: '/settings/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardIndexRoute = DashboardIndexRouteImport.update({
-  id: '/dashboard/',
-  path: '/dashboard/',
+const PresentationIndexRoute = PresentationIndexRouteImport.update({
+  id: '/presentation/',
+  path: '/presentation/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const rootIndexRoute = rootIndexRouteImport.update({
@@ -28,39 +46,149 @@ const rootIndexRoute = rootIndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SongsSongIdRoute = SongsSongIdRouteImport.update({
+  id: '/songs/$songId',
+  path: '/songs/$songId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsThemesRoute = SettingsThemesRouteImport.update({
+  id: '/settings/themes',
+  path: '/settings/themes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsDisplaysRoute = SettingsDisplaysRouteImport.update({
+  id: '/settings/displays',
+  path: '/settings/displays',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsDevicesRoute = SettingsDevicesRouteImport.update({
+  id: '/settings/devices',
+  path: '/settings/devices',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PresentationViewerRoute = PresentationViewerRouteImport.update({
+  id: '/presentation/viewer',
+  path: '/presentation/viewer',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PresentationScheduleIdRoute = PresentationScheduleIdRouteImport.update({
+  id: '/presentation/$scheduleId',
+  path: '/presentation/$scheduleId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
+  '/presentation/$scheduleId': typeof PresentationScheduleIdRoute
+  '/presentation/viewer': typeof PresentationViewerRoute
+  '/settings/devices': typeof SettingsDevicesRoute
+  '/settings/displays': typeof SettingsDisplaysRoute
+  '/settings/themes': typeof SettingsThemesRoute
+  '/songs/$songId': typeof SongsSongIdRoute
   '/': typeof rootIndexRoute
-  '/dashboard': typeof DashboardIndexRoute
+  '/presentation': typeof PresentationIndexRoute
   '/settings': typeof SettingsIndexRoute
+  '/songs': typeof SongsIndexRoute
+  '/stage': typeof StageIndexRoute
 }
 export interface FileRoutesByTo {
+  '/presentation/$scheduleId': typeof PresentationScheduleIdRoute
+  '/presentation/viewer': typeof PresentationViewerRoute
+  '/settings/devices': typeof SettingsDevicesRoute
+  '/settings/displays': typeof SettingsDisplaysRoute
+  '/settings/themes': typeof SettingsThemesRoute
+  '/songs/$songId': typeof SongsSongIdRoute
   '/': typeof rootIndexRoute
-  '/dashboard': typeof DashboardIndexRoute
+  '/presentation': typeof PresentationIndexRoute
   '/settings': typeof SettingsIndexRoute
+  '/songs': typeof SongsIndexRoute
+  '/stage': typeof StageIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/presentation/$scheduleId': typeof PresentationScheduleIdRoute
+  '/presentation/viewer': typeof PresentationViewerRoute
+  '/settings/devices': typeof SettingsDevicesRoute
+  '/settings/displays': typeof SettingsDisplaysRoute
+  '/settings/themes': typeof SettingsThemesRoute
+  '/songs/$songId': typeof SongsSongIdRoute
   '/(root)/': typeof rootIndexRoute
-  '/dashboard/': typeof DashboardIndexRoute
+  '/presentation/': typeof PresentationIndexRoute
   '/settings/': typeof SettingsIndexRoute
+  '/songs/': typeof SongsIndexRoute
+  '/stage/': typeof StageIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/settings'
+  fullPaths:
+    | '/presentation/$scheduleId'
+    | '/presentation/viewer'
+    | '/settings/devices'
+    | '/settings/displays'
+    | '/settings/themes'
+    | '/songs/$songId'
+    | '/'
+    | '/presentation'
+    | '/settings'
+    | '/songs'
+    | '/stage'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/settings'
-  id: '__root__' | '/(root)/' | '/dashboard/' | '/settings/'
+  to:
+    | '/presentation/$scheduleId'
+    | '/presentation/viewer'
+    | '/settings/devices'
+    | '/settings/displays'
+    | '/settings/themes'
+    | '/songs/$songId'
+    | '/'
+    | '/presentation'
+    | '/settings'
+    | '/songs'
+    | '/stage'
+  id:
+    | '__root__'
+    | '/presentation/$scheduleId'
+    | '/presentation/viewer'
+    | '/settings/devices'
+    | '/settings/displays'
+    | '/settings/themes'
+    | '/songs/$songId'
+    | '/(root)/'
+    | '/presentation/'
+    | '/settings/'
+    | '/songs/'
+    | '/stage/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  PresentationScheduleIdRoute: typeof PresentationScheduleIdRoute
+  PresentationViewerRoute: typeof PresentationViewerRoute
+  SettingsDevicesRoute: typeof SettingsDevicesRoute
+  SettingsDisplaysRoute: typeof SettingsDisplaysRoute
+  SettingsThemesRoute: typeof SettingsThemesRoute
+  SongsSongIdRoute: typeof SongsSongIdRoute
   rootIndexRoute: typeof rootIndexRoute
-  DashboardIndexRoute: typeof DashboardIndexRoute
+  PresentationIndexRoute: typeof PresentationIndexRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
+  SongsIndexRoute: typeof SongsIndexRoute
+  StageIndexRoute: typeof StageIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/stage/': {
+      id: '/stage/'
+      path: '/stage'
+      fullPath: '/stage'
+      preLoaderRoute: typeof StageIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/songs/': {
+      id: '/songs/'
+      path: '/songs'
+      fullPath: '/songs'
+      preLoaderRoute: typeof SongsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings/': {
       id: '/settings/'
       path: '/settings'
@@ -68,11 +196,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard/': {
-      id: '/dashboard/'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardIndexRouteImport
+    '/presentation/': {
+      id: '/presentation/'
+      path: '/presentation'
+      fullPath: '/presentation'
+      preLoaderRoute: typeof PresentationIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(root)/': {
@@ -82,13 +210,63 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/songs/$songId': {
+      id: '/songs/$songId'
+      path: '/songs/$songId'
+      fullPath: '/songs/$songId'
+      preLoaderRoute: typeof SongsSongIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/themes': {
+      id: '/settings/themes'
+      path: '/settings/themes'
+      fullPath: '/settings/themes'
+      preLoaderRoute: typeof SettingsThemesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/displays': {
+      id: '/settings/displays'
+      path: '/settings/displays'
+      fullPath: '/settings/displays'
+      preLoaderRoute: typeof SettingsDisplaysRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/devices': {
+      id: '/settings/devices'
+      path: '/settings/devices'
+      fullPath: '/settings/devices'
+      preLoaderRoute: typeof SettingsDevicesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/presentation/viewer': {
+      id: '/presentation/viewer'
+      path: '/presentation/viewer'
+      fullPath: '/presentation/viewer'
+      preLoaderRoute: typeof PresentationViewerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/presentation/$scheduleId': {
+      id: '/presentation/$scheduleId'
+      path: '/presentation/$scheduleId'
+      fullPath: '/presentation/$scheduleId'
+      preLoaderRoute: typeof PresentationScheduleIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
+  PresentationScheduleIdRoute: PresentationScheduleIdRoute,
+  PresentationViewerRoute: PresentationViewerRoute,
+  SettingsDevicesRoute: SettingsDevicesRoute,
+  SettingsDisplaysRoute: SettingsDisplaysRoute,
+  SettingsThemesRoute: SettingsThemesRoute,
+  SongsSongIdRoute: SongsSongIdRoute,
   rootIndexRoute: rootIndexRoute,
-  DashboardIndexRoute: DashboardIndexRoute,
+  PresentationIndexRoute: PresentationIndexRoute,
   SettingsIndexRoute: SettingsIndexRoute,
+  SongsIndexRoute: SongsIndexRoute,
+  StageIndexRoute: StageIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
