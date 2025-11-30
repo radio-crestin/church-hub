@@ -1,0 +1,74 @@
+{
+  "displays": {
+    "title": "Afișaje",
+    "description": "Configurați afișajele de ieșire pentru prezentările dumneavoastră. Fiecare afișaj poate avea propria temă și setări.",
+    "add": "Adaugă Afișaj",
+    "addFirst": "Adaugă Primul Afișaj",
+    "edit": "Editează Afișaj",
+    "empty": "Niciun Afișaj",
+    "emptyDescription": "Creați afișaje pentru a proiecta prezentările pe diferite ecrane sau ferestre.",
+    "name": "Nume Afișaj",
+    "namePlaceholder": "ex: Ecran Principal, Monitor Scenă",
+    "activeLabel": "Afișajul este activ",
+    "active": "Activ",
+    "inactive": "Inactiv",
+    "activate": "Activează",
+    "deactivate": "Dezactivează",
+    "editTheme": "Editează Tema",
+    "openWindow": "Deschide Fereastra Afișaj",
+    "deleteConfirmTitle": "Ștergeți Afișajul?",
+    "deleteConfirmMessage": "Sunteți sigur că doriți să ștergeți \"{{name}}\"? Această acțiune nu poate fi anulată."
+  },
+  "theme": {
+    "title": "Tema Afișajului",
+    "backgroundType": "Tip Fundal",
+    "backgrounds": {
+      "transparent": "Transparent",
+      "color": "Culoare Solidă",
+      "image": "Imagine"
+    },
+    "backgroundColor": "Culoare Fundal",
+    "backgroundImage": "URL Imagine",
+    "textColor": "Culoare Text",
+    "fontFamily": "Familie Font",
+    "padding": "Spațiere",
+    "preview": "Previzualizare",
+    "sampleText": "Text Exemplu"
+  },
+  "actions": {
+    "save": "Salvează",
+    "cancel": "Anulează",
+    "delete": "Șterge",
+    "close": "Închide"
+  },
+  "messages": {
+    "displaySaved": "Afișaj salvat cu succes",
+    "displaySaveFailed": "Eroare la salvarea afișajului",
+    "displayDeleted": "Afișaj șters",
+    "displayDeleteFailed": "Eroare la ștergerea afișajului",
+    "displayActivated": "Afișaj activat",
+    "displayDeactivated": "Afișaj dezactivat",
+    "displayToggleFailed": "Eroare la schimbarea stării afișajului",
+    "themeSaved": "Tema salvată cu succes",
+    "themeSaveFailed": "Eroare la salvarea temei"
+  },
+  "controls": {
+    "start": "Pornește",
+    "stop": "Oprește",
+    "prev": "Anterior",
+    "next": "Următor",
+    "clear": "Golește Slide"
+  },
+  "controlRoom": {
+    "title": "Cameră de Control",
+    "selectProgram": "Selectează un program",
+    "presenting": "În prezentare",
+    "notPresenting": "Nu prezintă",
+    "connected": "Conectat",
+    "connecting": "Se conectează...",
+    "disconnected": "Deconectat",
+    "openDisplay": "Deschide Afișaj",
+    "slides": "Slide-uri",
+    "noSlides": "Niciun slide în acest program"
+  }
+}

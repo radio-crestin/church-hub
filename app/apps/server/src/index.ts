@@ -23,6 +23,43 @@ import {
   updateDevicePermissions,
   upsertSetting,
 } from './service'
+import {
+  clearSlide,
+  type DisplayTheme,
+  deleteDisplay,
+  getAllDisplays,
+  getDisplayById,
+  getPresentationState,
+  type NavigateInput,
+  navigateSlide,
+  startPresentation,
+  stopPresentation,
+  type UpdatePresentationStateInput,
+  type UpsertDisplayInput,
+  updateDisplayTheme,
+  updatePresentationState,
+  upsertDisplay,
+} from './service/presentation'
+import {
+  deleteProgram,
+  deleteSlide,
+  getAllPrograms,
+  getProgramWithSlides,
+  getSlideById,
+  type ReorderSlidesInput,
+  reorderSlides,
+  type UpsertProgramInput,
+  type UpsertSlideInput,
+  upsertProgram,
+  upsertSlide,
+} from './service/programs'
+import {
+  broadcastPresentationState,
+  handleWebSocketClose,
+  handleWebSocketMessage,
+  handleWebSocketOpen,
+  type WebSocketData,
+} from './websocket'
 
 async function main() {
   // Initialize database
@@ -45,15 +82,28 @@ async function main() {
     return res
   }
 
-  const server = Bun.serve({
+  const server = Bun.serve<WebSocketData>({
     port: process.env['PORT'] ?? 3000,
     hostname: '127.0.0.1',
-    async fetch(req: Request) {
+    async fetch(req: Request, server) {
       if (req.method === 'OPTIONS') {
         return handleCors(req, new Response(null, { status: 204 }))
       }
 
       const url = new URL(req.url)
+
+      // WebSocket upgrade for /ws endpoint
+      if (url.pathname === '/ws') {
+        const success = server.upgrade(req, {
+          data: { clientId: '' },
+        })
+
+        if (success) {
+          return undefined as unknown as Response
+        }
+
+        return new Response('WebSocket upgrade failed', { status: 400 })
+      }
       let _context: RequestContext | null = null
 
       // Device authentication endpoint (public - sets cookie)
@@ -341,13 +391,10 @@ async function main() {
           console.error('Create device error:', error)
           return handleCors(
             req,
-            new Response(
-              JSON.stringify({ error: String(error) }),
-              {
-                status: 500,
-                headers: { 'Content-Type': 'application/json' },
-              },
-            ),
+            new Response(JSON.stringify({ error: String(error) }), {
+              status: 500,
+              headers: { 'Content-Type': 'application/json' },
+            }),
           )
         }
       }
@@ -510,7 +557,572 @@ async function main() {
         )
       }
 
+      // ============================================================
+      // Programs API Endpoints
+      // ============================================================
+
+      // GET /api/programs - List all programs
+      if (req.method === 'GET' && url.pathname === '/api/programs') {
+        const programs = getAllPrograms()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: programs }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // GET /api/programs/:id - Get program with slides
+      const getProgramMatch = url.pathname.match(/^\/api\/programs\/(\d+)$/)
+      if (req.method === 'GET' && getProgramMatch?.[1]) {
+        const id = parseInt(getProgramMatch[1], 10)
+        const program = getProgramWithSlides(id)
+
+        if (!program) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Program not found' }), {
+              status: 404,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: program }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/programs - Create/update program
+      if (req.method === 'POST' && url.pathname === '/api/programs') {
+        try {
+          const body = (await req.json()) as UpsertProgramInput
+
+          if (!body.name) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Missing name' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const program = upsertProgram(body)
+
+          if (!program) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({ error: 'Failed to save program' }),
+                {
+                  status: 500,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: program }), {
+              status: body.id ? 200 : 201,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // DELETE /api/programs/:id - Delete program
+      const deleteProgramMatch = url.pathname.match(/^\/api\/programs\/(\d+)$/)
+      if (req.method === 'DELETE' && deleteProgramMatch?.[1]) {
+        const id = parseInt(deleteProgramMatch[1], 10)
+        const result = deleteProgram(id)
+
+        if (!result.success) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: result.error }), {
+              status: 500,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: { success: true } }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // ============================================================
+      // Slides API Endpoints
+      // ============================================================
+
+      // POST /api/slides - Create/update slide
+      if (req.method === 'POST' && url.pathname === '/api/slides') {
+        try {
+          const body = (await req.json()) as UpsertSlideInput
+
+          if (!body.programId || !body.content) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({ error: 'Missing programId or content' }),
+                {
+                  status: 400,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          const slide = upsertSlide(body)
+
+          if (!slide) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Failed to save slide' }), {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: slide }), {
+              status: body.id ? 200 : 201,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // GET /api/slides/:id - Get slide by ID
+      const getSlideMatch = url.pathname.match(/^\/api\/slides\/(\d+)$/)
+      if (req.method === 'GET' && getSlideMatch?.[1]) {
+        const id = parseInt(getSlideMatch[1], 10)
+        const slide = getSlideById(id)
+
+        if (!slide) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Slide not found' }), {
+              status: 404,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify(slide), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // DELETE /api/slides/:id - Delete slide
+      const deleteSlideMatch = url.pathname.match(/^\/api\/slides\/(\d+)$/)
+      if (req.method === 'DELETE' && deleteSlideMatch?.[1]) {
+        const id = parseInt(deleteSlideMatch[1], 10)
+        const result = deleteSlide(id)
+
+        if (!result.success) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: result.error }), {
+              status: 500,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: { success: true } }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // PUT /api/programs/:id/slides/reorder - Reorder slides
+      const reorderSlidesMatch = url.pathname.match(
+        /^\/api\/programs\/(\d+)\/slides\/reorder$/,
+      )
+      if (req.method === 'PUT' && reorderSlidesMatch?.[1]) {
+        try {
+          const programId = parseInt(reorderSlidesMatch[1], 10)
+          const body = (await req.json()) as ReorderSlidesInput
+
+          if (!body.slideIds || !Array.isArray(body.slideIds)) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({ error: 'Missing slideIds array' }),
+                {
+                  status: 400,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          const result = reorderSlides(programId, body)
+
+          if (!result.success) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: result.error }), {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: { success: true } }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // ============================================================
+      // Displays API Endpoints
+      // ============================================================
+
+      // GET /api/displays - List all displays
+      if (req.method === 'GET' && url.pathname === '/api/displays') {
+        const displays = getAllDisplays()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: displays }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // GET /api/displays/:id - Get display by ID
+      const getDisplayMatch = url.pathname.match(/^\/api\/displays\/(\d+)$/)
+      if (req.method === 'GET' && getDisplayMatch?.[1]) {
+        const id = parseInt(getDisplayMatch[1], 10)
+        const display = getDisplayById(id)
+
+        if (!display) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Display not found' }), {
+              status: 404,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: display }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/displays - Create/update display
+      if (req.method === 'POST' && url.pathname === '/api/displays') {
+        try {
+          const body = (await req.json()) as UpsertDisplayInput
+
+          if (!body.name) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Missing name' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const display = upsertDisplay(body)
+
+          if (!display) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({ error: 'Failed to save display' }),
+                {
+                  status: 500,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: display }), {
+              status: body.id ? 200 : 201,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // DELETE /api/displays/:id - Delete display
+      const deleteDisplayMatch = url.pathname.match(/^\/api\/displays\/(\d+)$/)
+      if (req.method === 'DELETE' && deleteDisplayMatch?.[1]) {
+        const id = parseInt(deleteDisplayMatch[1], 10)
+        const result = deleteDisplay(id)
+
+        if (!result.success) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: result.error }), {
+              status: 500,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: { success: true } }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // PUT /api/displays/:id/theme - Update display theme
+      const updateThemeMatch = url.pathname.match(
+        /^\/api\/displays\/(\d+)\/theme$/,
+      )
+      if (req.method === 'PUT' && updateThemeMatch?.[1]) {
+        try {
+          const id = parseInt(updateThemeMatch[1], 10)
+          const body = (await req.json()) as { theme: DisplayTheme }
+
+          if (!body.theme) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Missing theme' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const result = updateDisplayTheme(id, body.theme)
+
+          if (!result.success) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: result.error }), {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const display = getDisplayById(id)
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: display }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // ============================================================
+      // Presentation State API Endpoints
+      // ============================================================
+
+      // GET /api/presentation/state - Get current presentation state
+      if (req.method === 'GET' && url.pathname === '/api/presentation/state') {
+        const state = getPresentationState()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: state }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // PUT /api/presentation/state - Update presentation state
+      if (req.method === 'PUT' && url.pathname === '/api/presentation/state') {
+        try {
+          const body = (await req.json()) as UpdatePresentationStateInput
+          const state = updatePresentationState(body)
+          broadcastPresentationState(state)
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: state }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // POST /api/presentation/navigate - Navigate slides
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/presentation/navigate'
+      ) {
+        try {
+          const body = (await req.json()) as NavigateInput
+
+          if (!body.direction) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Missing direction' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const state = navigateSlide(body)
+          broadcastPresentationState(state)
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: state }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // POST /api/presentation/start - Start presenting a program
+      if (req.method === 'POST' && url.pathname === '/api/presentation/start') {
+        try {
+          const body = (await req.json()) as { programId: number }
+
+          if (!body.programId) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Missing programId' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const state = startPresentation(body.programId)
+          broadcastPresentationState(state)
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: state }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // POST /api/presentation/stop - Stop presenting
+      if (req.method === 'POST' && url.pathname === '/api/presentation/stop') {
+        const state = stopPresentation()
+        broadcastPresentationState(state)
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: state }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/presentation/clear - Clear current slide
+      if (req.method === 'POST' && url.pathname === '/api/presentation/clear') {
+        const state = clearSlide()
+        broadcastPresentationState(state)
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: state }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
       return handleCors(req, new Response('Not Found', { status: 404 }))
+    },
+    websocket: {
+      open: handleWebSocketOpen,
+      message: handleWebSocketMessage,
+      close: handleWebSocketClose,
     },
   })
 

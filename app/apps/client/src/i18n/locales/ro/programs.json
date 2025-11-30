@@ -1,0 +1,63 @@
+{
+  "title": "Programe",
+  "newProgram": "Program Nou",
+  "editProgram": "Editare Program",
+  "updatedAt": "Actualizat {{date}}",
+  "fields": {
+    "name": "Nume",
+    "description": "Descriere"
+  },
+  "placeholders": {
+    "name": "Introduceți numele programului...",
+    "description": "Introduceți descrierea programului (opțional)..."
+  },
+  "actions": {
+    "create": "Program Nou",
+    "createFirst": "Creați primul program",
+    "edit": "Editare",
+    "delete": "Ștergere",
+    "save": "Salvare",
+    "cancel": "Anulare",
+    "present": "Prezentare"
+  },
+  "messages": {
+    "empty": "Nu există programe",
+    "loadError": "Eroare la încărcarea programelor",
+    "saved": "Programul a fost salvat cu succes",
+    "saveFailed": "Eroare la salvarea programului",
+    "deleted": "Programul a fost șters cu succes",
+    "deleteFailed": "Eroare la ștergerea programului",
+    "presentFailed": "Eroare la pornirea prezentării",
+    "nameRequired": "Numele programului este obligatoriu",
+    "saveToAddSlides": "Salvați programul pentru a adăuga diapozitive"
+  },
+  "deleteModal": {
+    "title": "Ștergere Program",
+    "message": "Sunteți sigur că doriți să ștergeți \"{{name}}\"? Aceasta va șterge și toate diapozitivele din acest program.",
+    "confirm": "Ștergere",
+    "cancel": "Anulare"
+  },
+  "slides": {
+    "title": "Diapozitive",
+    "newSlide": "Diapozitiv Nou",
+    "editSlide": "Editare Diapozitiv",
+    "editorHint": "Textul va fi redimensionat automat pentru a se potrivi pe ecran în timpul prezentării.",
+    "actions": {
+      "add": "Adaugă Diapozitiv"
+    },
+    "messages": {
+      "empty": "Nu există diapozitive. Adăugați primul diapozitiv mai jos.",
+      "saved": "Diapozitivul a fost salvat cu succes",
+      "saveFailed": "Eroare la salvarea diapozitivului",
+      "deleted": "Diapozitivul a fost șters cu succes",
+      "deleteFailed": "Eroare la ștergerea diapozitivului",
+      "reorderFailed": "Eroare la reordonarea diapozitivelor"
+    },
+    "deleteModal": {
+      "title": "Ștergere Diapozitiv",
+      "message": "Sunteți sigur că doriți să ștergeți acest diapozitiv?",
+      "confirm": "Ștergere",
+      "cancel": "Anulare"
+    }
+  }
+}
