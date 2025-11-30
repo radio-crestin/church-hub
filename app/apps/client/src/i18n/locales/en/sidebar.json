@@ -1,7 +1,8 @@
 {
   "navigation": {
     "home": "Home",
-    "dashboard": "Dashboard",
+    "songs": "Songs",
+    "schedules": "Schedules",
     "settings": "Settings"
   },
   "actions": {
