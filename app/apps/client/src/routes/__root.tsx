@@ -5,6 +5,7 @@ import { I18nProvider } from '~/provider/i18n-provider'
 import { QueryClientProvider } from '~/provider/QueryClientProvider'
 import { ThemeProvider } from '~/provider/theme-provider'
 import { AppLayout } from '~/ui/layout/app-layout'
+import { ToastProvider } from '~/ui/toast'
 
 // Initialize i18n
 import '~/i18n/config'
@@ -20,10 +21,12 @@ function RootComponent() {
     <ThemeProvider>
       <QueryClientProvider>
         <I18nProvider>
-          <AppLayout>
-            <Outlet />
-          </AppLayout>
-          {isDev ? <TanStackRouterDevtools position="bottom-right" /> : null}
+          <ToastProvider>
+            <AppLayout>
+              <Outlet />
+            </AppLayout>
+            {isDev ? <TanStackRouterDevtools position="bottom-right" /> : null}
+          </ToastProvider>
         </I18nProvider>
       </QueryClientProvider>
     </ThemeProvider>
