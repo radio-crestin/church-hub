@@ -1,18 +1,18 @@
-import { Database } from "bun:sqlite";
-import { mkdir } from "node:fs/promises";
-import { dirname } from "node:path";
+import { mkdir } from 'node:fs/promises'
+import { dirname } from 'node:path'
 
-const DEBUG = process.env.DEBUG === "true";
-const DATABASE_PATH = process.env.DATABASE_PATH || "./data/app.db";
+import { Database } from 'bun:sqlite'
 
-let db: Database | null = null;
+const DEBUG = process.env.DEBUG === 'true'
+const DATABASE_PATH = process.env.DATABASE_PATH || './data/app.db'
+
+let db: Database | null = null
 
 /**
  * Logs debug messages if DEBUG env variable is enabled
  */
-function log(level: "debug" | "info" | "warning" | "error", message: string) {
-  if (level === "debug" && !DEBUG) return;
-  console.log(`[${level.toUpperCase()}] [DB] ${message}`);
+function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
+  if (level === 'debug' && !DEBUG) return
 }
 
 /**
@@ -21,27 +21,27 @@ function log(level: "debug" | "info" | "warning" | "error", message: string) {
  */
 export async function initializeDatabase(): Promise<Database> {
   try {
-    log("info", `Initializing database at: ${DATABASE_PATH}`);
+    log('info', `Initializing database at: ${DATABASE_PATH}`)
 
     // Ensure data directory exists
-    const dbDir = dirname(DATABASE_PATH);
-    await mkdir(dbDir, { recursive: true });
-    log("debug", `Data directory ensured: ${dbDir}`);
+    const dbDir = dirname(DATABASE_PATH)
+    await mkdir(dbDir, { recursive: true })
+    log('debug', `Data directory ensured: ${dbDir}`)
 
     // Create database connection using Bun's built-in SQLite
-    db = new Database(DATABASE_PATH, { create: true });
+    db = new Database(DATABASE_PATH, { create: true })
 
     // Enable WAL mode for better concurrency
-    db.run("PRAGMA journal_mode = WAL");
+    db.run('PRAGMA journal_mode = WAL')
 
     // Enable foreign keys
-    db.run("PRAGMA foreign_keys = ON");
+    db.run('PRAGMA foreign_keys = ON')
 
-    log("info", "Database connection established");
-    return db;
+    log('info', 'Database connection established')
+    return db
   } catch (error) {
-    log("error", `Failed to initialize database: ${error}`);
-    throw error;
+    log('error', `Failed to initialize database: ${error}`)
+    throw error
   }
 }
 
@@ -51,9 +51,11 @@ export async function initializeDatabase(): Promise<Database> {
  */
 export function getDatabase(): Database {
   if (!db) {
-    throw new Error("Database not initialized. Call initializeDatabase() first.");
+    throw new Error(
+      'Database not initialized. Call initializeDatabase() first.',
+    )
   }
-  return db;
+  return db
 }
 
 /**
@@ -61,8 +63,8 @@ export function getDatabase(): Database {
  */
 export function closeDatabase(): void {
   if (db) {
-    log("info", "Closing database connection");
-    db.close();
-    db = null;
+    log('info', 'Closing database connection')
+    db.close()
+    db = null
   }
 }
