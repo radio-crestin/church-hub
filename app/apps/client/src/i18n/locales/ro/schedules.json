@@ -1,0 +1,69 @@
+{
+  "title": "Programe",
+  "search": {
+    "placeholder": "Cauta programe...",
+    "noResults": "Niciun program gasit"
+  },
+  "list": {
+    "empty": "Niciun program inca",
+    "createFirst": "Creeaza primul tau program",
+    "updatedAt": "Actualizat {{date}}"
+  },
+  "fields": {
+    "title": "Titlu",
+    "titlePlaceholder": "Introdu titlul programului",
+    "description": "Descriere",
+    "descriptionPlaceholder": "Descriere optionala"
+  },
+  "actions": {
+    "create": "Program nou",
+    "edit": "Editeaza",
+    "delete": "Sterge",
+    "duplicate": "Duplica",
+    "add": "Adauga"
+  },
+  "modal": {
+    "createTitle": "Creeaza program",
+    "editTitle": "Editeaza program",
+    "deleteTitle": "Sterge programul",
+    "deleteMessage": "Esti sigur ca vrei sa stergi acest program? Aceasta actiune nu poate fi anulata.",
+    "addToScheduleTitle": "Adauga la program",
+    "selectSchedule": "Selecteaza un program",
+    "orCreateNew": "Sau creeaza unul nou",
+    "newSchedulePlaceholder": "Titlu program nou"
+  },
+  "editor": {
+    "title": "Editeaza programul",
+    "items": "Elemente",
+    "addItem": "Adauga element",
+    "noItems": "Niciun element in acest program",
+    "addFirstItem": "Adauga primul element",
+    "addSongDescription": "Adauga o cantare din biblioteca",
+    "addTextDescription": "Adauga text personalizat sau anunt",
+    "selectSong": "Selecteaza cantare",
+    "searchSongs": "Cauta cantari...",
+    "noSongsFound": "Nicio cantare gasita",
+    "noSongsAvailable": "Nicio cantare disponibila",
+    "addText": "Adauga text",
+    "textTitle": "Titlu",
+    "textTitlePlaceholder": "Introdu un titlu",
+    "textContent": "Continut",
+    "textContentPlaceholder": "Introdu continutul textului"
+  },
+  "items": {
+    "song": "Cantare",
+    "bible": "Biblie",
+    "text": "Text personalizat",
+    "section": "Sectiune"
+  },
+  "messages": {
+    "created": "Program creat",
+    "updated": "Program actualizat",
+    "deleted": "Program sters",
+    "duplicated": "Program duplicat",
+    "itemRemoved": "Element sters",
+    "itemAdded": "Element adaugat la program",
+    "notFound": "Programul nu a fost gasit",
+    "error": "A aparut o eroare"
+  }
+}
