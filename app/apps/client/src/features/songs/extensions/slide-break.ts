@@ -1,4 +1,5 @@
 import { mergeAttributes, Node } from '@tiptap/core'
+import { Slice } from '@tiptap/pm/model'
 import { Plugin, PluginKey } from '@tiptap/pm/state'
 
 export interface SlideBreakOptions {
@@ -233,10 +234,12 @@ export const SlideBreak = Node.create<SlideBreakOptions>({
             const text = event.clipboardData?.getData('text/plain')
             if (!text) return false
 
-            // Check if text has empty lines (double newlines)
-            if (text.includes('\n\n') || text.includes('\r\n\r\n')) {
-              event.preventDefault()
+            // Only handle if text has empty lines (double newlines)
+            const hasEmptyLines =
+              text.includes('\n\n') || text.includes('\r\n\r\n')
+            if (!hasEmptyLines) return false
 
+            try {
               // Split by empty lines and create content
               const parts = text.split(/\n\s*\n|\r\n\s*\r\n/)
               const content: {
@@ -265,21 +268,24 @@ export const SlideBreak = Node.create<SlideBreakOptions>({
                 }
               })
 
-              if (content.length > 0) {
-                const { state, dispatch } = view
-                const tr = state.tr.replaceSelectionWith(
-                  state.schema.nodeFromJSON({
-                    type: 'doc',
-                    content,
-                  }).content,
-                )
-                dispatch(tr)
-              }
+              if (content.length === 0) return false
+
+              event.preventDefault()
+
+              const { state, dispatch } = view
+              const fragment = state.schema.nodeFromJSON({
+                type: 'doc',
+                content,
+              }).content
+
+              const tr = state.tr.replaceSelection(new Slice(fragment, 0, 0))
+              dispatch(tr)
 
               return true
+            } catch {
+              // If anything fails, let default paste handler take over
+              return false
             }
-
-            return false
           },
         },
       }),
