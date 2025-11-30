@@ -1,8 +1,9 @@
 {
   "navigation": {
-    "home": "Acasă",
-    "dashboard": "Panou",
-    "settings": "Setări"
+    "home": "Acasa",
+    "songs": "Cantari",
+    "schedules": "Programe",
+    "settings": "Setari"
   },
   "actions": {
     "collapse": "Restrânge",
