@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { Languages, Palette } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import { DeviceList } from '~/features/devices'
 import { useI18n } from '~/provider/i18n-provider'
 import { useTheme } from '~/provider/theme-provider'
 import type { LanguagePreference } from '~/service/locale'
@@ -111,6 +112,11 @@ function RouteComponent() {
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Authorized Devices Section */}
+      <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
+        <DeviceList />
       </div>
 
       {/* Application Settings Section */}
