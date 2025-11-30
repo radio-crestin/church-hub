@@ -25,6 +25,81 @@
         "light": "Light",
         "dark": "Dark"
       }
+    },
+    "devices": {
+      "title": "Authorized Devices",
+      "description": "Manage devices that can access your Church Hub",
+      "addDevice": "Add Device",
+      "noDevices": "No devices configured",
+      "noDevicesDescription": "Add a device to allow external access to your Church Hub",
+      "deviceName": "Device Name",
+      "deviceNamePlaceholder": "e.g., Living Room TV",
+      "permissions": "Permissions",
+      "status": "Status",
+      "active": "Active",
+      "inactive": "Inactive",
+      "lastUsed": "Last used",
+      "never": "Never",
+      "createdAt": "Created",
+      "features": {
+        "title": "Feature",
+        "songs": "Songs",
+        "schedules": "Schedules",
+        "presentation": "Presentation",
+        "settings": "Settings"
+      },
+      "permissionLevels": {
+        "read": "Read",
+        "write": "Write",
+        "delete": "Delete"
+      },
+      "actions": {
+        "edit": "Edit",
+        "delete": "Delete",
+        "regenerateToken": "Regenerate Token",
+        "showQRCode": "Show QR Code",
+        "deactivate": "Deactivate",
+        "activate": "Activate",
+        "copyUrl": "Copy URL"
+      },
+      "modals": {
+        "create": {
+          "title": "Add New Device",
+          "submit": "Create Device"
+        },
+        "edit": {
+          "title": "Edit Device",
+          "submit": "Save Changes"
+        },
+        "delete": {
+          "title": "Delete Device",
+          "message": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+          "confirm": "Delete",
+          "cancel": "Cancel"
+        },
+        "qrCode": {
+          "title": "Scan QR Code",
+          "deviceName": "Device",
+          "description": "Scan this QR code with the device you want to authorize",
+          "warning": "This token will only be shown once. Save it if needed.",
+          "manualUrl": "Or visit this URL manually:",
+          "done": "Done"
+        },
+        "regenerate": {
+          "title": "Regenerate Token",
+          "message": "This will invalidate the current token for \"{{name}}\". The device will need to be re-authenticated.",
+          "confirm": "Regenerate",
+          "cancel": "Cancel"
+        }
+      },
+      "toast": {
+        "created": "Device created successfully",
+        "updated": "Device updated successfully",
+        "deleted": "Device deleted successfully",
+        "tokenRegenerated": "Token regenerated successfully",
+        "urlCopied": "URL copied to clipboard",
+        "error": "An error occurred"
+      }
     }
   }
 }
