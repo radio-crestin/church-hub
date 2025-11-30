@@ -4,27 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="66517e3f-2e4e-43cc-880d-deb242368f0c" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/provider/theme-provider.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/provider/theme-provider.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/routes/(root)/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/routes/(root)/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/routes/__root.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/routes/__root.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/routes/settings/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/routes/settings/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/service/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/service/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/service/settings/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/service/settings/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/service/settings/settings.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/service/settings/settings.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/service/settings/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/service/settings/types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/ui/DefaultCatchBoundary.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/ui/DefaultCatchBoundary.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/ui/NotFound.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/ui/NotFound.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/ui/layout/app-layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/ui/layout/app-layout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/ui/sidebar/sidebar-header.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/ui/sidebar/sidebar-header.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/ui/sidebar/sidebar-item.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/ui/sidebar/sidebar-item.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/ui/sidebar/sidebar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/ui/sidebar/sidebar.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/utils/fetcher.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/utils/fetcher.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/rust-ipc.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/rust-ipc.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/bun.lock" beforeDir="false" afterPath="$PROJECT_DIR$/app/bun.lock" afterDir="false" />
-    </list>
+    <list default="true" id="66517e3f-2e4e-43cc-880d-deb242368f0c" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -48,37 +28,50 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/iosif/Documents/Projects/church-hub&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;bun&quot;,
-    &quot;npm.dev (1).executor&quot;: &quot;Run&quot;,
-    &quot;npm.dev.executor&quot;: &quot;Run&quot;,
-    &quot;npm.tauri:dev.executor&quot;: &quot;Run&quot;,
-    &quot;org.rust.first.attach.projects&quot;: &quot;true&quot;,
-    &quot;ts.external.directory.path&quot;: &quot;/Users/iosif/Documents/Projects/church-hub/app/node_modules/typescript/lib&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "/Users/iosif/Documents/Projects/church-hub",
+    "node.js.detected.package.eslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "nodejs_package_manager_path": "bun",
+    "npm.compile.executor": "Run",
+    "npm.dev (1).executor": "Run",
+    "npm.dev (2).executor": "Run",
+    "npm.dev (3).executor": "Run",
+    "npm.dev.executor": "Run",
+    "npm.tauri:dev.executor": "Run",
+    "org.rust.first.attach.projects": "true",
+    "ts.external.directory.path": "/Users/iosif/Applications/IntelliJ IDEA Ultimate.app/Contents/plugins/javascript-plugin/jsLanguageServicesImpl/external",
+    "vue.rearranger.settings.migration": "true"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File&quot;: [
-      &quot;TEXT&quot;
+  "keyToStringList": {
+    "com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File": [
+      "TEXT"
     ]
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$" />
     </key>
   </component>
-  <component name="RunManager" selected="npm.dev (1)">
+  <component name="RunManager" selected="npm.dev (2)">
+    <configuration name="compile" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
+      <package-json value="$PROJECT_DIR$/app/apps/server/package.json" />
+      <command value="run" />
+      <scripts>
+        <script value="compile" />
+      </scripts>
+      <node-interpreter value="project" />
+      <envs />
+      <method v="2" />
+    </configuration>
     <configuration name="dev (1)" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
       <package-json value="$PROJECT_DIR$/app/apps/server/package.json" />
       <command value="run" />
@@ -89,8 +82,18 @@
       <envs />
       <method v="2" />
     </configuration>
-    <configuration name="dev" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
-      <package-json value="$PROJECT_DIR$/package.json" />
+    <configuration name="dev (2)" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
+      <package-json value="$PROJECT_DIR$/app/package.json" />
+      <command value="run" />
+      <scripts>
+        <script value="dev" />
+      </scripts>
+      <node-interpreter value="project" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <configuration name="dev (3)" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
+      <package-json value="$PROJECT_DIR$/app/apps/client/package.json" />
       <command value="run" />
       <scripts>
         <script value="dev" />
@@ -111,9 +114,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="npm.tauri:dev" />
+        <item itemvalue="npm.dev (2)" />
+        <item itemvalue="npm.dev (3)" />
         <item itemvalue="npm.dev (1)" />
-        <item itemvalue="npm.dev" />
+        <item itemvalue="npm.compile" />
+        <item itemvalue="npm.tauri:dev" />
       </list>
     </recent_temporary>
   </component>
@@ -137,6 +142,7 @@
       <updated>1762688134949</updated>
       <workItem from="1762688136394" duration="14616000" />
       <workItem from="1763895878404" duration="13746000" />
+      <workItem from="1764529520395" duration="6634000" />
     </task>
     <servers />
   </component>
