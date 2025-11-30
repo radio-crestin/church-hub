@@ -1,2 +1,7 @@
-export { upsertSetting, deleteSetting, getSetting, getAllSettings } from "./settings";
-export type { Setting, SettingsTable, UpsertSettingInput, OperationResult } from "./types";
+export {
+  deleteSetting,
+  getAllSettings,
+  getSetting,
+  upsertSetting,
+} from './settings'
+export type { Setting, SettingsTable, UpsertSettingInput } from './types'
