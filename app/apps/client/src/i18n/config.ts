@@ -4,23 +4,31 @@ import { initReactI18next } from 'react-i18next'
 
 // Import translation files
 import commonEN from './locales/en/common.json'
+import schedulesEN from './locales/en/schedules.json'
 import settingsEN from './locales/en/settings.json'
 import sidebarEN from './locales/en/sidebar.json'
+import songsEN from './locales/en/songs.json'
 import commonRO from './locales/ro/common.json'
+import schedulesRO from './locales/ro/schedules.json'
 import settingsRO from './locales/ro/settings.json'
 import sidebarRO from './locales/ro/sidebar.json'
+import songsRO from './locales/ro/songs.json'
 
 // Define resources type for type safety
 export const resources = {
   en: {
     common: commonEN,
+    schedules: schedulesEN,
     sidebar: sidebarEN,
     settings: settingsEN,
+    songs: songsEN,
   },
   ro: {
     common: commonRO,
+    schedules: schedulesRO,
     sidebar: sidebarRO,
     settings: settingsRO,
+    songs: songsRO,
   },
 } as const
 
@@ -32,7 +40,7 @@ i18n
     resources,
     fallbackLng: 'en', // Fallback language
     defaultNS: 'common', // Default namespace
-    ns: ['common', 'sidebar', 'settings'], // Available namespaces
+    ns: ['common', 'schedules', 'sidebar', 'settings', 'songs'], // Available namespaces
 
     // Language detection options
     detection: {

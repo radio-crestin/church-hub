@@ -1,7 +1,10 @@
 {
   "buttons": {
     "goBack": "Înapoi",
-    "startOver": "Începe din nou"
+    "startOver": "Începe din nou",
+    "cancel": "Anuleaza",
+    "confirm": "Confirma",
+    "save": "Salvează"
   },
   "errors": {
     "pageNotFound": "Pagina pe care o căutați nu există."
@@ -11,5 +14,16 @@
     "lightMode": "Mod luminos",
     "darkMode": "Mod întunecat",
     "toggleTheme": "Schimbă tema"
+  },
+  "presentation": {
+    "queue": "Listă",
+    "nextItem": "Următorul",
+    "clearQueue": "Golește lista",
+    "emptyQueue": "Lista este goală",
+    "control": "Control",
+    "viewer": "Prezentare",
+    "present": "Prezintă",
+    "addToQueue": "Adaugă la listă",
+    "slideOf": "Slide {{current}} din {{total}}"
   }
 }
