@@ -1,26 +1,32 @@
 {
   "displays": {
-    "title": "Afișaje",
-    "description": "Configurați afișajele de ieșire pentru prezentările dumneavoastră. Fiecare afișaj poate avea propria temă și setări.",
-    "add": "Adaugă Afișaj",
-    "addFirst": "Adaugă Primul Afișaj",
-    "edit": "Editează Afișaj",
-    "empty": "Niciun Afișaj",
-    "emptyDescription": "Creați afișaje pentru a proiecta prezentările pe diferite ecrane sau ferestre.",
-    "name": "Nume Afișaj",
+    "title": "Ecrane",
+    "description": "Configurați ecranele de ieșire pentru prezentările dumneavoastră. Fiecare ecran poate avea propria temă și setări.",
+    "add": "Adaugă Ecran",
+    "addFirst": "Adaugă Primul Ecran",
+    "edit": "Editează Ecran",
+    "empty": "Niciun Ecran",
+    "emptyDescription": "Creați ecrane pentru a proiecta prezentările pe diferite monitoare sau ferestre.",
+    "name": "Nume Ecran",
     "namePlaceholder": "ex: Ecran Principal, Monitor Scenă",
-    "activeLabel": "Afișajul este activ",
+    "activeLabel": "Ecranul este activ",
     "active": "Activ",
     "inactive": "Inactiv",
     "activate": "Activează",
     "deactivate": "Dezactivează",
     "editTheme": "Editează Tema",
-    "openWindow": "Deschide Fereastra Afișaj",
-    "deleteConfirmTitle": "Ștergeți Afișajul?",
-    "deleteConfirmMessage": "Sunteți sigur că doriți să ștergeți \"{{name}}\"? Această acțiune nu poate fi anulată."
+    "openWindow": "Deschide Fereastra Ecran",
+    "deleteConfirmTitle": "Ștergeți Ecranul?",
+    "deleteConfirmMessage": "Sunteți sigur că doriți să ștergeți \"{{name}}\"? Această acțiune nu poate fi anulată.",
+    "openMode": "Mod Deschidere",
+    "openModes": {
+      "browser": "Browser",
+      "native": "Fereastră Nativă"
+    },
+    "fullscreenLabel": "Deschide în ecran complet implicit"
   },
   "theme": {
-    "title": "Tema Afișajului",
+    "title": "Tema Ecranului",
     "backgroundType": "Tip Fundal",
     "backgrounds": {
       "transparent": "Transparent",
@@ -42,13 +48,13 @@
     "close": "Închide"
   },
   "messages": {
-    "displaySaved": "Afișaj salvat cu succes",
-    "displaySaveFailed": "Eroare la salvarea afișajului",
-    "displayDeleted": "Afișaj șters",
-    "displayDeleteFailed": "Eroare la ștergerea afișajului",
-    "displayActivated": "Afișaj activat",
-    "displayDeactivated": "Afișaj dezactivat",
-    "displayToggleFailed": "Eroare la schimbarea stării afișajului",
+    "displaySaved": "Ecran salvat cu succes",
+    "displaySaveFailed": "Eroare la salvarea ecranului",
+    "displayDeleted": "Ecran șters",
+    "displayDeleteFailed": "Eroare la ștergerea ecranului",
+    "displayActivated": "Ecran activat",
+    "displayDeactivated": "Ecran dezactivat",
+    "displayToggleFailed": "Eroare la schimbarea stării ecranului",
     "themeSaved": "Tema salvată cu succes",
     "themeSaveFailed": "Eroare la salvarea temei"
   },
@@ -67,7 +73,7 @@
     "connected": "Conectat",
     "connecting": "Se conectează...",
     "disconnected": "Deconectat",
-    "openDisplay": "Deschide Afișaj",
+    "openDisplay": "Deschide Ecran",
     "slides": "Slide-uri",
     "noSlides": "Niciun slide în acest program"
   }

@@ -5,7 +5,6 @@ import {
   Home,
   LayoutDashboard,
   Monitor,
-  MonitorUp,
   Moon,
   Play,
   Presentation,
@@ -46,11 +45,6 @@ export function Sidebar() {
       icon: Play,
       label: t('sidebar:navigation.present'),
       to: '/present',
-    },
-    {
-      icon: MonitorUp,
-      label: t('sidebar:navigation.displays'),
-      to: '/displays',
     },
     {
       icon: Settings,
