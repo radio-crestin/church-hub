@@ -3,6 +3,7 @@ import { Languages, Palette } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { DeviceList } from '~/features/devices'
+import { DisplayManager } from '~/features/presentation'
 import { useI18n } from '~/provider/i18n-provider'
 import { useTheme } from '~/provider/theme-provider'
 import type { LanguagePreference } from '~/service/locale'
@@ -127,6 +128,11 @@ function RouteComponent() {
         <p className="text-gray-600 dark:text-gray-400">
           {t('sections.application.description')}
         </p>
+      </div>
+
+      {/* Displays Section */}
+      <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
+        <DisplayManager />
       </div>
     </div>
   )
