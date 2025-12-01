@@ -56,6 +56,16 @@ function RouteComponent() {
         {t('title')}
       </h1>
 
+      {/* Application Settings Section */}
+      <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          {t('sections.application.title')}
+        </h3>
+        <p className="text-gray-600 dark:text-gray-400">
+          {t('sections.application.description')}
+        </p>
+      </div>
+
       {/* Appearance Settings Section */}
       <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800 space-y-6">
         <div>
@@ -118,16 +128,6 @@ function RouteComponent() {
       {/* Authorized Devices Section */}
       <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
         <DeviceList />
-      </div>
-
-      {/* Application Settings Section */}
-      <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          {t('sections.application.title')}
-        </h3>
-        <p className="text-gray-600 dark:text-gray-400">
-          {t('sections.application.description')}
-        </p>
       </div>
 
       {/* Displays Section */}
