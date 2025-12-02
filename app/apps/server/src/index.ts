@@ -32,6 +32,7 @@ import {
   getPresentationState,
   type NavigateInput,
   navigateSlide,
+  showSlide,
   startPresentation,
   stopPresentation,
   type UpdatePresentationStateInput,
@@ -77,6 +78,10 @@ async function main() {
 
   function handleCors(_: Request, res: Response) {
     res.headers.set('Access-Control-Allow-Origin', '*')
+    res.headers.set(
+      'Access-Control-Allow-Methods',
+      'GET, POST, PUT, DELETE, OPTIONS',
+    )
     res.headers.set('Access-Control-Allow-Headers', '*')
     res.headers.set('Access-Control-Allow-Credentials', 'true')
     return res
@@ -1104,9 +1109,22 @@ async function main() {
         )
       }
 
-      // POST /api/presentation/clear - Clear current slide
+      // POST /api/presentation/clear - Clear current slide (hide)
       if (req.method === 'POST' && url.pathname === '/api/presentation/clear') {
         const state = clearSlide()
+        broadcastPresentationState(state)
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: state }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/presentation/show - Show last displayed slide
+      if (req.method === 'POST' && url.pathname === '/api/presentation/show') {
+        const state = showSlide()
         broadcastPresentationState(state)
 
         return handleCors(

@@ -118,6 +118,8 @@ CREATE TABLE IF NOT EXISTS displays (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
   is_active INTEGER NOT NULL DEFAULT 1,
+  open_mode TEXT NOT NULL DEFAULT 'browser',
+  is_fullscreen INTEGER NOT NULL DEFAULT 0,
   theme TEXT NOT NULL DEFAULT '{}',
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
   updated_at INTEGER NOT NULL DEFAULT (unixepoch())
@@ -148,10 +150,12 @@ CREATE TABLE IF NOT EXISTS presentation_state (
   id INTEGER PRIMARY KEY CHECK (id = 1),
   program_id INTEGER,
   current_slide_id INTEGER,
+  last_slide_id INTEGER,
   is_presenting INTEGER NOT NULL DEFAULT 0,
   updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
   FOREIGN KEY (program_id) REFERENCES programs(id) ON DELETE SET NULL,
-  FOREIGN KEY (current_slide_id) REFERENCES slides(id) ON DELETE SET NULL
+  FOREIGN KEY (current_slide_id) REFERENCES slides(id) ON DELETE SET NULL,
+  FOREIGN KEY (last_slide_id) REFERENCES slides(id) ON DELETE SET NULL
 );
 
 -- Initialize presentation state with default values
@@ -236,6 +240,39 @@ export function runMigrations(db: Database): void {
 
     // Execute embedded schema (exec for multiple statements)
     db.exec(SCHEMA_SQL)
+
+    // Migration: Add open_mode column to displays table if it doesn't exist
+    if (
+      tableExists(db, 'displays') &&
+      !columnExists(db, 'displays', 'open_mode')
+    ) {
+      log('info', 'Adding open_mode column to displays table')
+      db.exec(
+        `ALTER TABLE displays ADD COLUMN open_mode TEXT NOT NULL DEFAULT 'browser'`,
+      )
+    }
+
+    // Migration: Add is_fullscreen column to displays table if it doesn't exist
+    if (
+      tableExists(db, 'displays') &&
+      !columnExists(db, 'displays', 'is_fullscreen')
+    ) {
+      log('info', 'Adding is_fullscreen column to displays table')
+      db.exec(
+        `ALTER TABLE displays ADD COLUMN is_fullscreen INTEGER NOT NULL DEFAULT 0`,
+      )
+    }
+
+    // Migration: Add last_slide_id column to presentation_state table if it doesn't exist
+    if (
+      tableExists(db, 'presentation_state') &&
+      !columnExists(db, 'presentation_state', 'last_slide_id')
+    ) {
+      log('info', 'Adding last_slide_id column to presentation_state table')
+      db.exec(
+        `ALTER TABLE presentation_state ADD COLUMN last_slide_id INTEGER REFERENCES slides(id) ON DELETE SET NULL`,
+      )
+    }
 
     log('info', 'Migrations completed successfully')
   } catch (error) {

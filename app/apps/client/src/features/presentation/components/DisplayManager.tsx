@@ -16,7 +16,7 @@ import type { Display, DisplayTheme, UpsertDisplayInput } from '../types'
 
 export function DisplayManager() {
   const { t } = useTranslation('presentation')
-  const { addToast } = useToast()
+  const { showToast } = useToast()
 
   const { data: displays, isLoading } = useDisplays()
   const upsertDisplay = useUpsertDisplay()
@@ -43,15 +43,9 @@ export function DisplayManager() {
       await upsertDisplay.mutateAsync(input)
       setIsEditorOpen(false)
       setEditingDisplay(null)
-      addToast({
-        type: 'success',
-        message: t('messages.displaySaved'),
-      })
+      showToast(t('messages.displaySaved'), 'success')
     } catch {
-      addToast({
-        type: 'error',
-        message: t('messages.displaySaveFailed'),
-      })
+      showToast(t('messages.displaySaveFailed'), 'error')
     }
   }
 
@@ -61,19 +55,17 @@ export function DisplayManager() {
         id: display.id,
         name: display.name,
         isActive: !display.isActive,
+        openMode: display.openMode,
         theme: display.theme,
       })
-      addToast({
-        type: 'success',
-        message: display.isActive
+      showToast(
+        display.isActive
           ? t('messages.displayDeactivated')
           : t('messages.displayActivated'),
-      })
+        'success',
+      )
     } catch {
-      addToast({
-        type: 'error',
-        message: t('messages.displayToggleFailed'),
-      })
+      showToast(t('messages.displayToggleFailed'), 'error')
     }
   }
 
@@ -87,15 +79,9 @@ export function DisplayManager() {
     try {
       await updateTheme.mutateAsync({ id: themeDisplay.id, theme })
       setThemeDisplay(null)
-      addToast({
-        type: 'success',
-        message: t('messages.themeSaved'),
-      })
+      showToast(t('messages.themeSaved'), 'success')
     } catch {
-      addToast({
-        type: 'error',
-        message: t('messages.themeSaveFailed'),
-      })
+      showToast(t('messages.themeSaveFailed'), 'error')
     }
   }
 
@@ -109,15 +95,9 @@ export function DisplayManager() {
     try {
       await deleteDisplay.mutateAsync(deleteConfirm.id)
       setDeleteConfirm(null)
-      addToast({
-        type: 'success',
-        message: t('messages.displayDeleted'),
-      })
+      showToast(t('messages.displayDeleted'), 'success')
     } catch {
-      addToast({
-        type: 'error',
-        message: t('messages.displayDeleteFailed'),
-      })
+      showToast(t('messages.displayDeleteFailed'), 'error')
     }
   }
 

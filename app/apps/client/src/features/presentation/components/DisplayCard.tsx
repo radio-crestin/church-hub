@@ -1,7 +1,16 @@
-import { ExternalLink, Monitor, Palette, Power, Trash2 } from 'lucide-react'
+import {
+  AppWindow,
+  ExternalLink,
+  Monitor,
+  Palette,
+  Power,
+  Trash2,
+} from 'lucide-react'
+import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { Display } from '../types'
+import { openDisplayWindow } from '../utils/openDisplayWindow'
 
 interface DisplayCardProps {
   display: Display
@@ -9,19 +18,6 @@ interface DisplayCardProps {
   onTheme: (display: Display) => void
   onDelete: (display: Display) => void
   onToggleActive: (display: Display) => void
-}
-
-function openDisplayWindow(displayId: number) {
-  const width = 1280
-  const height = 720
-  const left = window.screen.width / 2 - width / 2
-  const top = window.screen.height / 2 - height / 2
-
-  window.open(
-    `/display/${displayId}`,
-    `display-${displayId}`,
-    `width=${width},height=${height},left=${left},top=${top},menubar=no,toolbar=no,location=no,status=no`,
-  )
 }
 
 export function DisplayCard({
@@ -32,6 +28,24 @@ export function DisplayCard({
   onToggleActive,
 }: DisplayCardProps) {
   const { t } = useTranslation('presentation')
+
+  const handleOpenDisplay = useCallback(async () => {
+    // biome-ignore lint/suspicious/noConsole: Critical debugging for button click
+    console.log(
+      '[DisplayCard] handleOpenDisplay clicked, display:',
+      display.id,
+      'mode:',
+      display.openMode,
+    )
+    try {
+      await openDisplayWindow(display.id, display.openMode)
+      // biome-ignore lint/suspicious/noConsole: Critical debugging for button click
+      console.log('[DisplayCard] openDisplayWindow completed successfully')
+    } catch (error) {
+      // biome-ignore lint/suspicious/noConsole: Critical debugging for button click
+      console.error('[DisplayCard] Failed to open display:', error)
+    }
+  }, [display.id, display.openMode])
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-shadow">
@@ -77,11 +91,15 @@ export function DisplayCard({
         <div className="flex items-center gap-1">
           <button
             type="button"
-            onClick={() => openDisplayWindow(display.id)}
+            onClick={handleOpenDisplay}
             className="p-2 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
             title={t('displays.openWindow')}
           >
-            <ExternalLink size={18} />
+            {display.openMode === 'native' ? (
+              <AppWindow size={18} />
+            ) : (
+              <ExternalLink size={18} />
+            )}
           </button>
           <button
             type="button"
