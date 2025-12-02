@@ -16,7 +16,7 @@ export function ProgramList() {
   const { data: programs, isLoading, error } = usePrograms()
   const deleteProgram = useDeleteProgram()
   const startPresentation = useStartPresentation()
-  const { addToast } = useToast()
+  const { showToast } = useToast()
   const [programToDelete, setProgramToDelete] = useState<Program | null>(null)
 
   const handlePresent = async (program: Program) => {
@@ -24,10 +24,7 @@ export function ProgramList() {
       await startPresentation.mutateAsync(program.id)
       navigate({ to: '/present' })
     } catch {
-      addToast({
-        type: 'error',
-        message: t('messages.presentFailed'),
-      })
+      showToast(t('messages.presentFailed'), 'error')
     }
   }
 
@@ -36,15 +33,9 @@ export function ProgramList() {
 
     try {
       await deleteProgram.mutateAsync(programToDelete.id)
-      addToast({
-        type: 'success',
-        message: t('messages.deleted'),
-      })
+      showToast(t('messages.deleted'), 'success')
     } catch {
-      addToast({
-        type: 'error',
-        message: t('messages.deleteFailed'),
-      })
+      showToast(t('messages.deleteFailed'), 'error')
     } finally {
       setProgramToDelete(null)
     }

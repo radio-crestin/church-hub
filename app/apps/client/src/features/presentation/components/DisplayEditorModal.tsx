@@ -1,8 +1,8 @@
 import { Loader2, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import type { Display, UpsertDisplayInput } from '../types'
+import type { Display, DisplayOpenMode, UpsertDisplayInput } from '../types'
 
 interface DisplayEditorModalProps {
   display: Display | null
@@ -20,22 +20,35 @@ export function DisplayEditorModal({
   isSaving,
 }: DisplayEditorModalProps) {
   const { t } = useTranslation('presentation')
+  const modalRef = useRef<HTMLDivElement>(null)
   const isNew = !display
 
   const [name, setName] = useState('')
   const [isActive, setIsActive] = useState(true)
+  const [openMode, setOpenMode] = useState<DisplayOpenMode>('browser')
+  const [isFullscreen, setIsFullscreen] = useState(false)
 
   useEffect(() => {
     if (isOpen) {
       if (display) {
         setName(display.name)
         setIsActive(display.isActive)
+        setOpenMode(display.openMode || 'browser')
+        setIsFullscreen(display.isFullscreen || false)
       } else {
         setName('')
         setIsActive(true)
+        setOpenMode('browser')
+        setIsFullscreen(false)
       }
     }
   }, [isOpen, display])
+
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+      onClose()
+    }
+  }
 
   if (!isOpen) return null
 
@@ -45,6 +58,8 @@ export function DisplayEditorModal({
     const input: UpsertDisplayInput = {
       name: name.trim(),
       isActive,
+      openMode,
+      isFullscreen: openMode === 'native' ? isFullscreen : false,
     }
 
     if (display?.id) {
@@ -56,8 +71,14 @@ export function DisplayEditorModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      onClick={handleBackdropClick}
+    >
+      <div
+        ref={modalRef}
+        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4"
+      >
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             {isNew ? t('displays.add') : t('displays.edit')}
@@ -104,6 +125,54 @@ export function DisplayEditorModal({
               {t('displays.activeLabel')}
             </label>
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {t('displays.openMode')}
+            </label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setOpenMode('browser')}
+                className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  openMode === 'browser'
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                {t('displays.openModes.browser')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setOpenMode('native')}
+                className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  openMode === 'native'
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                {t('displays.openModes.native')}
+              </button>
+            </div>
+          </div>
+
+          {openMode === 'native' && (
+            <div className="flex items-center gap-3">
+              <input
+                id="display-fullscreen"
+                type="checkbox"
+                checked={isFullscreen}
+                onChange={(e) => setIsFullscreen(e.target.checked)}
+                className="w-4 h-4 text-indigo-600 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500"
+              />
+              <label
+                htmlFor="display-fullscreen"
+                className="text-sm text-gray-700 dark:text-gray-300"
+              >
+                {t('displays.fullscreenLabel')}
+              </label>
+            </div>
+          )}
         </div>
 
         <div className="flex justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-700">

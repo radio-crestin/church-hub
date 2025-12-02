@@ -13,6 +13,7 @@ import { getDefaultSlideContent } from '../types'
 interface SlideEditorModalProps {
   isOpen: boolean
   onClose: () => void
+  onSave?: (slide: Slide) => void
   programId: number
   slide: Slide | null
 }
@@ -20,11 +21,12 @@ interface SlideEditorModalProps {
 export function SlideEditorModal({
   isOpen,
   onClose,
+  onSave,
   programId,
   slide,
 }: SlideEditorModalProps) {
   const { t } = useTranslation('programs')
-  const { addToast } = useToast()
+  const { showToast } = useToast()
   const dialogRef = useRef<HTMLDialogElement>(null)
   const upsertSlide = useUpsertSlide()
 
@@ -48,7 +50,7 @@ export function SlideEditorModal({
     editorProps: {
       attributes: {
         class:
-          'prose prose-lg dark:prose-invert max-w-none min-h-[200px] p-4 focus:outline-none',
+          'prose prose-lg dark:prose-invert max-w-none min-h-[200px] p-4 focus:outline-none text-gray-900 dark:text-white bg-white dark:bg-gray-900',
       },
     },
   })
@@ -81,11 +83,12 @@ export function SlideEditorModal({
     }
 
     try {
-      await upsertSlide.mutateAsync(input)
-      addToast({ type: 'success', message: t('slides.messages.saved') })
+      const savedSlide = await upsertSlide.mutateAsync(input)
+      showToast(t('slides.messages.saved'), 'success')
+      onSave?.(savedSlide)
       onClose()
     } catch {
-      addToast({ type: 'error', message: t('slides.messages.saveFailed') })
+      showToast(t('slides.messages.saveFailed'), 'error')
     }
   }
 
@@ -95,11 +98,18 @@ export function SlideEditorModal({
     }
   }
 
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
+    if (e.target === dialogRef.current) {
+      handleClose()
+    }
+  }
+
   return (
     <dialog
       ref={dialogRef}
       onCancel={handleClose}
-      className="w-full max-w-2xl p-0 rounded-lg bg-white dark:bg-gray-800 backdrop:bg-black/50"
+      onClick={handleBackdropClick}
+      className="fixed inset-0 m-auto w-full max-w-2xl p-0 rounded-lg bg-white dark:bg-gray-800 backdrop:bg-black/50"
     >
       <div className="flex flex-col max-h-[90vh]">
         {/* Header */}

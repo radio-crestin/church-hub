@@ -63,7 +63,9 @@
     "stop": "Oprește",
     "prev": "Anterior",
     "next": "Următor",
-    "clear": "Golește Slide"
+    "clear": "Golește Slide",
+    "show": "Afișează",
+    "hide": "Ascunde"
   },
   "controlRoom": {
     "title": "Cameră de Control",
@@ -75,6 +77,7 @@
     "disconnected": "Deconectat",
     "openDisplay": "Deschide Ecran",
     "slides": "Slide-uri",
-    "noSlides": "Niciun slide în acest program"
+    "noSlides": "Niciun slide în acest program",
+    "preview": "Previzualizare"
   }
 }

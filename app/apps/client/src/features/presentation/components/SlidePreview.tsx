@@ -1,22 +1,35 @@
+import { Pencil } from 'lucide-react'
+
 import type { Slide } from '~/features/programs/types'
 
 interface SlidePreviewProps {
   slide: Slide
   isActive: boolean
   onClick: () => void
+  onEdit?: () => void
 }
 
-export function SlidePreview({ slide, isActive, onClick }: SlidePreviewProps) {
+export function SlidePreview({
+  slide,
+  isActive,
+  onClick,
+  onEdit,
+}: SlidePreviewProps) {
   const content = slide.content?.html || ''
 
   // Strip HTML tags for preview text
   const previewText = content.replace(/<[^>]*>/g, '').trim() || 'Empty slide'
 
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onEdit?.()
+  }
+
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
+      className={`w-full text-left p-3 rounded-lg border-2 transition-all group ${
         isActive
           ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20'
           : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'
@@ -49,6 +62,18 @@ export function SlidePreview({ slide, isActive, onClick }: SlidePreviewProps) {
             {slide.type}
           </div>
         </div>
+
+        {/* Edit Button */}
+        {onEdit && (
+          <button
+            type="button"
+            onClick={handleEditClick}
+            className="flex-shrink-0 p-1.5 rounded opacity-0 group-hover:opacity-100 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
+            title="Edit slide"
+          >
+            <Pencil size={16} className="text-gray-500 dark:text-gray-400" />
+          </button>
+        )}
       </div>
     </button>
   )

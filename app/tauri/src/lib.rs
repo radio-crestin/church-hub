@@ -11,6 +11,7 @@ use std::sync::Arc;
 use tauri::{Manager, RunEvent};
 #[cfg(debug_assertions)]
 use tauri::Manager;
+use tauri::WindowEvent;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -30,6 +31,43 @@ pub fn run() {
                 )
                 .build(),
         )
+        .on_window_event(|window, event| {
+            // When the main window is closed, close all display windows and exit
+            if let WindowEvent::CloseRequested { .. } = event {
+                if window.label() == "main" {
+                    println!("[window-event] Main window close requested");
+
+                    // Get all webview windows
+                    let app_handle = window.app_handle();
+                    let windows = app_handle.webview_windows();
+
+                    // Close all display windows
+                    let display_windows: Vec<_> = windows
+                        .into_iter()
+                        .filter(|(label, _)| label.starts_with("display-"))
+                        .collect();
+
+                    println!(
+                        "[window-event] Closing {} display windows",
+                        display_windows.len()
+                    );
+
+                    for (label, win) in display_windows {
+                        println!("[window-event] Closing window: {}", label);
+                        if let Err(e) = win.close() {
+                            println!("[window-event] Failed to close {}: {}", label, e);
+                        }
+                    }
+
+                    // Small delay to allow windows to close gracefully
+                    std::thread::sleep(std::time::Duration::from_millis(100));
+
+                    // Exit the application
+                    println!("[window-event] Exiting application");
+                    app_handle.exit(0);
+                }
+            }
+        })
         .setup(|app| {
             let sk = crypto::generate_secret_hex();
 

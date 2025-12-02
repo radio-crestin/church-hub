@@ -31,7 +31,7 @@ interface SlideListProps {
 
 export function SlideList({ programId, slides }: SlideListProps) {
   const { t } = useTranslation('programs')
-  const { addToast } = useToast()
+  const { showToast } = useToast()
   const deleteSlide = useDeleteSlide()
   const reorderSlides = useReorderSlides()
 
@@ -59,7 +59,7 @@ export function SlideList({ programId, slides }: SlideListProps) {
       try {
         await reorderSlides.mutateAsync({ programId, slideIds })
       } catch {
-        addToast({ type: 'error', message: t('slides.messages.reorderFailed') })
+        showToast(t('slides.messages.reorderFailed'), 'error')
       }
     }
   }
@@ -72,9 +72,9 @@ export function SlideList({ programId, slides }: SlideListProps) {
         slideId: slideToDelete.id,
         programId,
       })
-      addToast({ type: 'success', message: t('slides.messages.deleted') })
+      showToast(t('slides.messages.deleted'), 'success')
     } catch {
-      addToast({ type: 'error', message: t('slides.messages.deleteFailed') })
+      showToast(t('slides.messages.deleteFailed'), 'error')
     } finally {
       setSlideToDelete(null)
     }
