@@ -4,7 +4,40 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="66517e3f-2e4e-43cc-880d-deb242368f0c" name="Changes" comment="" />
+    <list default="true" id="66517e3f-2e4e-43cc-880d-deb242368f0c" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/ClockOverlay.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/ClockOverlay.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/ControlRoom.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/ControlRoom.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/DisplayCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/DisplayCard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/DisplayEditorModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/DisplayEditorModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/DisplayManager.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/DisplayManager.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/DisplayThemeEditor.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/DisplayThemeEditor.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/DisplayWindow.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/DisplayWindow.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/SlidePreview.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/SlidePreview.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/hooks/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/hooks/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/hooks/usePresentationControls.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/hooks/usePresentationControls.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/service/displays.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/service/displays.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/programs/components/ProgramEditor.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/programs/components/ProgramEditor.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/programs/components/ProgramList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/programs/components/ProgramList.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/programs/components/SlideCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/programs/components/SlideCard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/programs/components/SlideEditorModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/programs/components/SlideEditorModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/programs/components/SlideList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/programs/components/SlideList.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/presentation.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/presentation.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/presentation.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/presentation.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/routeTree.gen.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/routeTree.gen.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/routes/__root.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/routes/__root.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/migrations.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/migrations.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/presentation/displays.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/presentation/displays.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/presentation/presentation-state.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/presentation/presentation-state.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/presentation/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/presentation/types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/bun.lock" beforeDir="false" afterPath="$PROJECT_DIR$/app/bun.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/tauri/capabilities/default.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/capabilities/default.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/tauri/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/src/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/tauri/tauri.conf.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/tauri.conf.json" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -47,7 +80,10 @@
     "npm.dev.executor": "Run",
     "npm.tauri:dev.executor": "Run",
     "org.rust.first.attach.projects": "true",
-    "ts.external.directory.path": "/Users/iosif/Applications/IntelliJ IDEA Ultimate.app/Contents/plugins/javascript-plugin/jsLanguageServicesImpl/external",
+    "project.structure.last.edited": "Modules",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.5",
+    "ts.external.directory.path": "/Users/iosif/Documents/Projects/church-hub/app/node_modules/typescript/lib",
     "vue.rearranger.settings.migration": "true"
   },
   "keyToStringList": {
@@ -142,7 +178,7 @@
       <updated>1762688134949</updated>
       <workItem from="1762688136394" duration="14616000" />
       <workItem from="1763895878404" duration="13746000" />
-      <workItem from="1764529520395" duration="10557000" />
+      <workItem from="1764529520395" duration="23258000" />
     </task>
     <servers />
   </component>

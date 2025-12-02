@@ -1,6 +1,7 @@
 import { createRootRoute, Outlet } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
+import { useAutoOpenDisplays } from '~/features/presentation/hooks'
 import { I18nProvider } from '~/provider/i18n-provider'
 import { QueryClientProvider } from '~/provider/QueryClientProvider'
 import { ThemeProvider } from '~/provider/theme-provider'
@@ -16,12 +17,22 @@ export const Route = createRootRoute({
 
 const isDev = import.meta.env.DEV
 
+/**
+ * Component that handles auto-opening displays
+ * Must be inside QueryClientProvider to use hooks
+ */
+function AutoOpenDisplays() {
+  useAutoOpenDisplays()
+  return null
+}
+
 function RootComponent() {
   return (
     <ThemeProvider>
       <QueryClientProvider>
         <I18nProvider>
           <ToastProvider>
+            <AutoOpenDisplays />
             <AppLayout>
               <Outlet />
             </AppLayout>

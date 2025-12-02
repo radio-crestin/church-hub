@@ -1,3 +1,4 @@
+export * from './useAutoOpenDisplays'
 export * from './useDeleteDisplay'
 export * from './useDisplay'
 export * from './useDisplays'

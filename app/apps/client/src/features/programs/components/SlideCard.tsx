@@ -1,5 +1,4 @@
 import { useSortable } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
 import { Edit, GripVertical, Trash2 } from 'lucide-react'
 
 import type { Slide } from '../types'
@@ -22,7 +21,9 @@ export function SlideCard({ slide, index, onEdit, onDelete }: SlideCardProps) {
   } = useSortable({ id: slide.id })
 
   const style = {
-    transform: CSS.Transform.toString(transform),
+    transform: transform
+      ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
+      : undefined,
     transition,
   }
 

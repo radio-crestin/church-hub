@@ -4,6 +4,11 @@
 export type BackgroundType = 'transparent' | 'color' | 'image'
 
 /**
+ * Display open mode - browser tab or native Tauri window
+ */
+export type DisplayOpenMode = 'browser' | 'native'
+
+/**
  * Display theme configuration
  */
 export interface DisplayTheme {
@@ -22,6 +27,8 @@ export interface Display {
   id: number
   name: string
   isActive: boolean
+  openMode: DisplayOpenMode
+  isFullscreen: boolean
   theme: DisplayTheme
   createdAt: number
   updatedAt: number
@@ -34,6 +41,8 @@ export interface UpsertDisplayInput {
   id?: number
   name: string
   isActive?: boolean
+  openMode?: DisplayOpenMode
+  isFullscreen?: boolean
   theme?: DisplayTheme
 }
 
@@ -43,6 +52,7 @@ export interface UpsertDisplayInput {
 export interface PresentationState {
   programId: number | null
   currentSlideId: number | null
+  lastSlideId: number | null
   isPresenting: boolean
   updatedAt: number
 }
@@ -53,6 +63,7 @@ export interface PresentationState {
 export interface UpdatePresentationStateInput {
   programId?: number | null
   currentSlideId?: number | null
+  lastSlideId?: number | null
   isPresenting?: boolean
 }
 

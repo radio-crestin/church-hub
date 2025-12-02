@@ -4,18 +4,21 @@ import { presentationStateQueryKey } from './usePresentationState'
 import {
   clearSlide,
   navigateSlide,
+  showSlide,
   startPresentation,
   stopPresentation,
   updatePresentationState,
 } from '../service/displays'
+import type { PresentationState } from '../types'
 
 export function useStartPresentation() {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: startPresentation,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: presentationStateQueryKey })
+    onSuccess: (data: PresentationState) => {
+      // Update cache directly with response data instead of refetching
+      queryClient.setQueryData(presentationStateQueryKey, data)
     },
   })
 }
@@ -25,8 +28,8 @@ export function useStopPresentation() {
 
   return useMutation({
     mutationFn: stopPresentation,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: presentationStateQueryKey })
+    onSuccess: (data: PresentationState) => {
+      queryClient.setQueryData(presentationStateQueryKey, data)
     },
   })
 }
@@ -36,8 +39,8 @@ export function useNavigateSlide() {
 
   return useMutation({
     mutationFn: navigateSlide,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: presentationStateQueryKey })
+    onSuccess: (data: PresentationState) => {
+      queryClient.setQueryData(presentationStateQueryKey, data)
     },
   })
 }
@@ -47,8 +50,19 @@ export function useClearSlide() {
 
   return useMutation({
     mutationFn: clearSlide,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: presentationStateQueryKey })
+    onSuccess: (data: PresentationState) => {
+      queryClient.setQueryData(presentationStateQueryKey, data)
+    },
+  })
+}
+
+export function useShowSlide() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: showSlide,
+    onSuccess: (data: PresentationState) => {
+      queryClient.setQueryData(presentationStateQueryKey, data)
     },
   })
 }
@@ -58,8 +72,8 @@ export function useUpdatePresentationState() {
 
   return useMutation({
     mutationFn: updatePresentationState,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: presentationStateQueryKey })
+    onSuccess: (data: PresentationState) => {
+      queryClient.setQueryData(presentationStateQueryKey, data)
     },
   })
 }

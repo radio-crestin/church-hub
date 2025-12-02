@@ -1,5 +1,6 @@
 import type {
   Display,
+  DisplayOpenMode,
   DisplayRecord,
   DisplayTheme,
   OperationResult,
@@ -36,6 +37,8 @@ function toDisplay(record: DisplayRecord): Display {
     id: record.id,
     name: record.name,
     isActive: record.is_active === 1,
+    openMode: (record.open_mode as DisplayOpenMode) || 'browser',
+    isFullscreen: record.is_fullscreen === 1,
     theme: parseTheme(record.theme),
     createdAt: record.created_at,
     updatedAt: record.updated_at,
@@ -111,6 +114,8 @@ export function upsertDisplay(input: UpsertDisplayInput): Display | null {
     const db = getDatabase()
     const now = Math.floor(Date.now() / 1000)
     const themeJson = JSON.stringify(input.theme ?? getDefaultTheme())
+    const openMode = input.openMode ?? 'browser'
+    const isFullscreen = input.isFullscreen === true ? 1 : 0
 
     if (input.id) {
       // Update existing display
@@ -118,12 +123,14 @@ export function upsertDisplay(input: UpsertDisplayInput): Display | null {
 
       const query = db.query(`
         UPDATE displays
-        SET name = ?, is_active = ?, theme = ?, updated_at = ?
+        SET name = ?, is_active = ?, open_mode = ?, is_fullscreen = ?, theme = ?, updated_at = ?
         WHERE id = ?
       `)
       query.run(
         input.name,
         input.isActive !== false ? 1 : 0,
+        openMode,
+        isFullscreen,
         themeJson,
         now,
         input.id,
@@ -137,12 +144,14 @@ export function upsertDisplay(input: UpsertDisplayInput): Display | null {
     log('debug', `Creating display: ${input.name}`)
 
     const insertQuery = db.query(`
-      INSERT INTO displays (name, is_active, theme, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO displays (name, is_active, open_mode, is_fullscreen, theme, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `)
     insertQuery.run(
       input.name,
       input.isActive !== false ? 1 : 0,
+      openMode,
+      isFullscreen,
       themeJson,
       now,
       now,
