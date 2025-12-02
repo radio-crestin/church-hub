@@ -15,7 +15,7 @@ interface ProgramEditorProps {
 export function ProgramEditor({ programId }: ProgramEditorProps) {
   const { t } = useTranslation('programs')
   const navigate = useNavigate()
-  const { addToast } = useToast()
+  const { showToast } = useToast()
   const isNew = programId === 'new'
 
   const { data: program, isLoading } = useProgram(isNew ? 0 : programId)
@@ -34,7 +34,7 @@ export function ProgramEditor({ programId }: ProgramEditorProps) {
 
   const handleSave = async () => {
     if (!name.trim()) {
-      addToast({ type: 'error', message: t('messages.nameRequired') })
+      showToast(t('messages.nameRequired'), 'error')
       return
     }
 
@@ -50,7 +50,7 @@ export function ProgramEditor({ programId }: ProgramEditorProps) {
     try {
       const saved = await upsertProgram.mutateAsync(input)
       setHasChanges(false)
-      addToast({ type: 'success', message: t('messages.saved') })
+      showToast(t('messages.saved'), 'success')
 
       if (isNew && saved?.id) {
         navigate({
@@ -59,7 +59,7 @@ export function ProgramEditor({ programId }: ProgramEditorProps) {
         })
       }
     } catch {
-      addToast({ type: 'error', message: t('messages.saveFailed') })
+      showToast(t('messages.saveFailed'), 'error')
     }
   }
 

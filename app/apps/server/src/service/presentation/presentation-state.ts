@@ -23,6 +23,7 @@ function toPresentationState(
   return {
     programId: record.program_id,
     currentSlideId: record.current_slide_id,
+    lastSlideId: record.last_slide_id,
     isPresenting: record.is_presenting === 1,
     updatedAt: record.updated_at,
   }
@@ -44,8 +45,9 @@ export function getPresentationState(): PresentationState {
       return {
         programId: null,
         currentSlideId: null,
+        lastSlideId: null,
         isPresenting: false,
-        updatedAt: Math.floor(Date.now() / 1000),
+        updatedAt: Date.now(),
       }
     }
 
@@ -55,8 +57,9 @@ export function getPresentationState(): PresentationState {
     return {
       programId: null,
       currentSlideId: null,
+      lastSlideId: null,
       isPresenting: false,
-      updatedAt: Math.floor(Date.now() / 1000),
+      updatedAt: Date.now(),
     }
   }
 }
@@ -71,7 +74,7 @@ export function updatePresentationState(
     log('debug', 'Updating presentation state')
 
     const db = getDatabase()
-    const now = Math.floor(Date.now() / 1000)
+    const now = Date.now() // Use milliseconds for finer granularity
     const current = getPresentationState()
 
     const programId =
@@ -80,21 +83,24 @@ export function updatePresentationState(
       input.currentSlideId !== undefined
         ? input.currentSlideId
         : current.currentSlideId
+    const lastSlideId =
+      input.lastSlideId !== undefined ? input.lastSlideId : current.lastSlideId
     const isPresenting =
       input.isPresenting !== undefined
         ? input.isPresenting
         : current.isPresenting
 
     const query = db.query(`
-      INSERT INTO presentation_state (id, program_id, current_slide_id, is_presenting, updated_at)
-      VALUES (1, ?, ?, ?, ?)
+      INSERT INTO presentation_state (id, program_id, current_slide_id, last_slide_id, is_presenting, updated_at)
+      VALUES (1, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         program_id = excluded.program_id,
         current_slide_id = excluded.current_slide_id,
+        last_slide_id = excluded.last_slide_id,
         is_presenting = excluded.is_presenting,
         updated_at = excluded.updated_at
     `)
-    query.run(programId, currentSlideId, isPresenting ? 1 : 0, now)
+    query.run(programId, currentSlideId, lastSlideId, isPresenting ? 1 : 0, now)
 
     log('info', 'Presentation state updated')
     return getPresentationState()
@@ -126,7 +132,11 @@ export function navigateSlide(input: NavigateInput): PresentationState {
     const current = getPresentationState()
 
     if (input.direction === 'goto' && input.slideId !== undefined) {
-      return updatePresentationState({ currentSlideId: input.slideId })
+      // Set both currentSlideId and lastSlideId when going to a specific slide
+      return updatePresentationState({
+        currentSlideId: input.slideId,
+        lastSlideId: input.slideId,
+      })
     }
 
     if (!current.programId) {
@@ -160,7 +170,11 @@ export function navigateSlide(input: NavigateInput): PresentationState {
     }
 
     const newSlideId = slideIds[newIndex]
-    return updatePresentationState({ currentSlideId: newSlideId })
+    // Set both currentSlideId and lastSlideId when navigating
+    return updatePresentationState({
+      currentSlideId: newSlideId,
+      lastSlideId: newSlideId,
+    })
   } catch (error) {
     log('error', `Failed to navigate slide: ${error}`)
     return getPresentationState()
@@ -180,6 +194,7 @@ export function startPresentation(programId: number): PresentationState {
     return updatePresentationState({
       programId,
       currentSlideId: firstSlideId,
+      lastSlideId: firstSlideId,
       isPresenting: true,
     })
   } catch (error) {
@@ -207,16 +222,42 @@ export function stopPresentation(): PresentationState {
 
 /**
  * Clears the current slide (shows blank/clock)
+ * Keeps lastSlideId so the slide can be restored with showSlide
  */
 export function clearSlide(): PresentationState {
   try {
     log('debug', 'Clearing current slide')
 
+    // Only clear currentSlideId, keep lastSlideId for restoration
     return updatePresentationState({
       currentSlideId: null,
     })
   } catch (error) {
     log('error', `Failed to clear slide: ${error}`)
+    return getPresentationState()
+  }
+}
+
+/**
+ * Shows the last displayed slide (restores from hidden state)
+ */
+export function showSlide(): PresentationState {
+  try {
+    log('debug', 'Showing last slide')
+
+    const current = getPresentationState()
+
+    if (!current.lastSlideId) {
+      log('warning', 'Cannot show slide: no last slide to restore')
+      return current
+    }
+
+    // Restore currentSlideId from lastSlideId
+    return updatePresentationState({
+      currentSlideId: current.lastSlideId,
+    })
+  } catch (error) {
+    log('error', `Failed to show slide: ${error}`)
     return getPresentationState()
   }
 }

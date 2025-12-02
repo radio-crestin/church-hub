@@ -23,26 +23,16 @@ export function ClockOverlay({
     return date.toLocaleTimeString([], {
       hour: '2-digit',
       minute: '2-digit',
-      second: '2-digit',
-    })
-  }
-
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString([], {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
+      hour12: false,
     })
   }
 
   return (
     <div
-      className="flex flex-col items-center justify-center h-full w-full"
+      className="absolute top-6 right-6"
       style={{ color: textColor, fontFamily }}
     >
-      <div className="text-8xl font-bold mb-4">{formatTime(time)}</div>
-      <div className="text-3xl opacity-80">{formatDate(time)}</div>
+      <div className="text-4xl font-medium">{formatTime(time)}</div>
     </div>
   )
 }

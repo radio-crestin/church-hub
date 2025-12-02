@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { getApiUrl } from '~/config'
 import { ClockOverlay } from './ClockOverlay'
@@ -6,6 +6,8 @@ import { SlideRenderer } from './SlideRenderer'
 import { usePresentationState, useWebSocket } from '../hooks'
 import type { DisplayTheme } from '../types'
 import { getDefaultTheme } from '../types'
+import { toggleWindowFullscreen } from '../utils/fullscreen'
+import { isTauri } from '../utils/openDisplayWindow'
 
 interface DisplayWindowProps {
   displayId: number
@@ -26,14 +28,53 @@ export function DisplayWindow({ displayId }: DisplayWindowProps) {
   const [theme, setTheme] = useState<DisplayTheme>(getDefaultTheme())
   const [currentSlide, setCurrentSlide] = useState<SlideData | null>(null)
 
+  // Toggle fullscreen for this display window
+  const toggleFullscreen = useCallback(async () => {
+    if (isTauri()) {
+      try {
+        // For webview windows, use getCurrentWebviewWindow
+        const { getCurrentWebviewWindow } = await import(
+          '@tauri-apps/api/webviewWindow'
+        )
+        const win = getCurrentWebviewWindow()
+        // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
+        console.log('[DisplayWindow] Toggling fullscreen, current window:', win)
+        await toggleWindowFullscreen(win)
+      } catch (error) {
+        // biome-ignore lint/suspicious/noConsole: error logging
+        console.error('Failed to toggle fullscreen:', error)
+      }
+    } else {
+      // Fallback for browser: use Fullscreen API
+      if (document.fullscreenElement) {
+        document.exitFullscreen()
+      } else {
+        document.documentElement.requestFullscreen()
+      }
+    }
+  }, [])
+
+  // Handle keyboard shortcuts (F11 for fullscreen, Escape to exit)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'F11') {
+        e.preventDefault()
+        toggleFullscreen()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [toggleFullscreen])
+
   // Fetch display theme
   useEffect(() => {
     const fetchDisplay = async () => {
       try {
         const response = await fetch(`${getApiUrl()}/api/displays/${displayId}`)
         if (response.ok) {
-          const display = await response.json()
-          setTheme(display.theme)
+          const result = await response.json()
+          setTheme(result.data.theme)
         }
       } catch (error) {
         // biome-ignore lint/suspicious/noConsole: error logging
@@ -45,6 +86,7 @@ export function DisplayWindow({ displayId }: DisplayWindowProps) {
   }, [displayId])
 
   // Fetch current slide content when presentation state changes
+  // Include updatedAt to refetch when navigating to same slide after edit
   useEffect(() => {
     const fetchSlide = async () => {
       if (!presentationState?.currentSlideId) {
@@ -67,7 +109,7 @@ export function DisplayWindow({ displayId }: DisplayWindowProps) {
     }
 
     fetchSlide()
-  }, [presentationState?.currentSlideId])
+  }, [presentationState?.currentSlideId, presentationState?.updatedAt])
 
   const getBackgroundStyle = (): React.CSSProperties => {
     if (theme.backgroundType === 'transparent') {
@@ -91,8 +133,9 @@ export function DisplayWindow({ displayId }: DisplayWindowProps) {
 
   return (
     <div
-      className="w-screen h-screen overflow-hidden"
+      className="w-screen h-screen overflow-hidden cursor-default"
       style={getBackgroundStyle()}
+      onDoubleClick={toggleFullscreen}
     >
       {showClock ? (
         <ClockOverlay

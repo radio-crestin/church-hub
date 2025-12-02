@@ -28,7 +28,8 @@ export async function getAllDisplays(): Promise<Display[]> {
     throw new Error('Failed to fetch displays')
   }
 
-  return response.json()
+  const result = await response.json()
+  return result.data
 }
 
 /**
@@ -43,7 +44,8 @@ export async function getDisplayById(id: number): Promise<Display> {
     throw new Error('Failed to fetch display')
   }
 
-  return response.json()
+  const result = await response.json()
+  return result.data
 }
 
 /**
@@ -64,7 +66,8 @@ export async function upsertDisplay(
     throw new Error('Failed to save display')
   }
 
-  return response.json()
+  const result = await response.json()
+  return result.data
 }
 
 /**
@@ -94,7 +97,7 @@ export async function updateDisplayTheme(
   const response = await fetch(`${getApiUrl()}/api/displays/${id}/theme`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(theme),
+    body: JSON.stringify({ theme }),
   })
 
   if (!response.ok) {
@@ -114,7 +117,8 @@ export async function getPresentationState(): Promise<PresentationState> {
     throw new Error('Failed to fetch presentation state')
   }
 
-  return response.json()
+  const result = await response.json()
+  return result.data
 }
 
 /**
@@ -135,7 +139,8 @@ export async function updatePresentationState(
     throw new Error('Failed to update presentation state')
   }
 
-  return response.json()
+  const result = await response.json()
+  return result.data
 }
 
 /**
@@ -156,7 +161,8 @@ export async function navigateSlide(
     throw new Error('Failed to navigate')
   }
 
-  return response.json()
+  const result = await response.json()
+  return result.data
 }
 
 /**
@@ -177,7 +183,8 @@ export async function startPresentation(
     throw new Error('Failed to start presentation')
   }
 
-  return response.json()
+  const result = await response.json()
+  return result.data
 }
 
 /**
@@ -194,11 +201,12 @@ export async function stopPresentation(): Promise<PresentationState> {
     throw new Error('Failed to stop presentation')
   }
 
-  return response.json()
+  const result = await response.json()
+  return result.data
 }
 
 /**
- * Clears the current slide
+ * Clears the current slide (hides it)
  */
 export async function clearSlide(): Promise<PresentationState> {
   log('debug', 'Clearing slide')
@@ -211,5 +219,24 @@ export async function clearSlide(): Promise<PresentationState> {
     throw new Error('Failed to clear slide')
   }
 
-  return response.json()
+  const result = await response.json()
+  return result.data
+}
+
+/**
+ * Shows the last displayed slide (restores from hidden state)
+ */
+export async function showSlide(): Promise<PresentationState> {
+  log('debug', 'Showing last slide')
+
+  const response = await fetch(`${getApiUrl()}/api/presentation/show`, {
+    method: 'POST',
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to show slide')
+  }
+
+  const result = await response.json()
+  return result.data
 }

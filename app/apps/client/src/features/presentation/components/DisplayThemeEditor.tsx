@@ -1,5 +1,5 @@
 import { Loader2, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { BackgroundType, Display, DisplayTheme } from '../types'
@@ -21,6 +21,8 @@ const FONT_OPTIONS = [
   { value: 'Courier New, monospace', label: 'Courier New' },
 ]
 
+const DEFAULT_THEME = getDefaultTheme()
+
 export function DisplayThemeEditor({
   display,
   isOpen,
@@ -29,18 +31,24 @@ export function DisplayThemeEditor({
   isSaving,
 }: DisplayThemeEditorProps) {
   const { t } = useTranslation('presentation')
-  const defaultTheme = getDefaultTheme()
+  const modalRef = useRef<HTMLDivElement>(null)
 
   const [theme, setTheme] = useState<DisplayTheme>({
-    ...defaultTheme,
+    ...DEFAULT_THEME,
     ...display.theme,
   })
 
   useEffect(() => {
     if (isOpen) {
-      setTheme({ ...defaultTheme, ...display.theme })
+      setTheme({ ...DEFAULT_THEME, ...display.theme })
     }
-  }, [isOpen, display.theme, defaultTheme])
+  }, [isOpen, display.theme])
+
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+      onClose()
+    }
+  }
 
   if (!isOpen) return null
 
@@ -53,8 +61,14 @@ export function DisplayThemeEditor({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      onClick={handleBackdropClick}
+    >
+      <div
+        ref={modalRef}
+        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4"
+      >
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             {t('theme.title')} - {display.name}

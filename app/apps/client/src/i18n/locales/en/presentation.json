@@ -17,7 +17,13 @@
     "editTheme": "Edit Theme",
     "openWindow": "Open Display Window",
     "deleteConfirmTitle": "Delete Display?",
-    "deleteConfirmMessage": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone."
+    "deleteConfirmMessage": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+    "openMode": "Open Mode",
+    "openModes": {
+      "browser": "Browser",
+      "native": "Native Window"
+    },
+    "fullscreenLabel": "Open in fullscreen by default"
   },
   "theme": {
     "title": "Display Theme",
@@ -57,7 +63,9 @@
     "stop": "Stop",
     "prev": "Previous",
     "next": "Next",
-    "clear": "Clear Slide"
+    "clear": "Clear Slide",
+    "show": "Show",
+    "hide": "Hide"
   },
   "controlRoom": {
     "title": "Control Room",
@@ -69,6 +77,7 @@
     "disconnected": "Disconnected",
     "openDisplay": "Open Display",
     "slides": "Slides",
-    "noSlides": "No slides in this program"
+    "noSlides": "No slides in this program",
+    "preview": "Preview"
   }
 }
