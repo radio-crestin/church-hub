@@ -16,8 +16,15 @@
     "editSong": "Edit Song",
     "editSlide": "Edit Slide",
     "insertSlide": "Insert Slide After",
+    "insertAfter": "Insert After",
     "moreOptions": "More options",
     "cancel": "Cancel"
+  },
+  "addToQueue": {
+    "button": "Add",
+    "searchSong": "Search Song",
+    "announcement": "Announcement",
+    "verseteTineri": "Versete Tineri"
   },
   "messages": {
     "added": "Added to queue",

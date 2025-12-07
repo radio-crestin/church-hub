@@ -1,3 +1,4 @@
+export { AddToQueueMenu } from './AddToQueueMenu'
 export { InsertSlideModal } from './InsertSlideModal'
 export { QueueItemContextMenu } from './QueueItemContextMenu'
 export { QueueList } from './QueueList'

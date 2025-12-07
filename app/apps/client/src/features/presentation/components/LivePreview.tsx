@@ -19,6 +19,11 @@ interface SongSlideData {
   content: string
 }
 
+interface StandaloneSlideData {
+  id: number
+  slideContent: string | null
+}
+
 export function LivePreview() {
   // Connect to WebSocket for real-time updates
   useWebSocket()
@@ -28,6 +33,8 @@ export function LivePreview() {
   const [currentSlide, setCurrentSlide] = useState<SlideData | null>(null)
   const [currentSongSlide, setCurrentSongSlide] =
     useState<SongSlideData | null>(null)
+  const [currentStandaloneSlide, setCurrentStandaloneSlide] =
+    useState<StandaloneSlideData | null>(null)
 
   // Fetch the first active display's theme for preview
   useEffect(() => {
@@ -112,6 +119,53 @@ export function LivePreview() {
     fetchSongSlide()
   }, [presentationState?.currentSongSlideId, presentationState?.updatedAt])
 
+  // Fetch current standalone slide content when presentation state changes
+  useEffect(() => {
+    const fetchStandaloneSlide = async () => {
+      // Standalone slide is when we have a queue item but no song slide
+      if (
+        !presentationState?.currentQueueItemId ||
+        presentationState?.currentSongSlideId
+      ) {
+        setCurrentStandaloneSlide(null)
+        return
+      }
+
+      try {
+        // Find the standalone slide from the queue
+        const queueResponse = await fetch(`${getApiUrl()}/api/queue`, {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' },
+        })
+        if (queueResponse.ok) {
+          const queueResult = await queueResponse.json()
+          // Find the queue item
+          const queueItem = (queueResult.data || []).find(
+            (item: { id: number }) =>
+              item.id === presentationState.currentQueueItemId,
+          )
+          if (queueItem && queueItem.itemType === 'slide') {
+            setCurrentStandaloneSlide({
+              id: queueItem.id,
+              slideContent: queueItem.slideContent,
+            })
+            return
+          }
+        }
+        setCurrentStandaloneSlide(null)
+      } catch (error) {
+        // biome-ignore lint/suspicious/noConsole: error logging
+        console.error('Failed to fetch standalone slide:', error)
+      }
+    }
+
+    fetchStandaloneSlide()
+  }, [
+    presentationState?.currentQueueItemId,
+    presentationState?.currentSongSlideId,
+    presentationState?.updatedAt,
+  ])
+
   const getBackgroundStyle = (): React.CSSProperties => {
     if (theme.backgroundType === 'transparent') {
       return { backgroundColor: '#1f2937' } // Dark gray for preview
@@ -128,15 +182,24 @@ export function LivePreview() {
     return { backgroundColor: theme.backgroundColor || '#000000' }
   }
 
-  // Determine what to show
+  // Determine what to show - has content if any slide type is active
+  // For standalone slides: currentQueueItemId is set but currentSongSlideId is null
+  const hasStandaloneSlide =
+    presentationState?.currentQueueItemId &&
+    !presentationState?.currentSongSlideId
   const hasContent =
-    presentationState?.currentSlideId || presentationState?.currentSongSlideId
+    presentationState?.currentSlideId ||
+    presentationState?.currentSongSlideId ||
+    hasStandaloneSlide
   const showClock = !hasContent
 
-  // Get content to display - prioritize song slides over program slides
+  // Get content to display - prioritize song slides, then standalone slides, then program slides
   const getSlideContent = (): string | null => {
     if (currentSongSlide?.content) {
       return currentSongSlide.content
+    }
+    if (currentStandaloneSlide?.slideContent) {
+      return currentStandaloneSlide.slideContent
     }
     if (currentSlide?.content?.html) {
       return currentSlide.content.html

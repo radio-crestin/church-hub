@@ -41,6 +41,8 @@ export interface QueueItem {
 export interface AddToQueueInput {
   songId: number
   presentNow?: boolean
+  /** Optional: Insert after this queue item ID. If not provided, append to end. */
+  afterItemId?: number
 }
 
 /**

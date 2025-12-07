@@ -18,7 +18,7 @@ import { Loader2, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { SongEditorModal } from '~/features/songs/components'
+import { SongEditorModal, SongPickerModal } from '~/features/songs/components'
 import { ConfirmModal } from '~/ui/modal'
 import { useToast } from '~/ui/toast'
 import { InsertSlideModal } from './InsertSlideModal'
@@ -31,7 +31,7 @@ import {
   useReorderQueue,
   useSetQueueItemExpanded,
 } from '../hooks'
-import type { QueueItem } from '../types'
+import type { QueueItem, SlideTemplate } from '../types'
 
 interface SortableQueueItemProps {
   item: QueueItem
@@ -41,7 +41,8 @@ interface SortableQueueItemProps {
   onSongClick: () => void
   onEditSong: (songId: number) => void
   onEditSlide: (item: QueueItem) => void
-  onInsertSlideAfter: (itemId: number) => void
+  onInsertSongAfter: (itemId: number) => void
+  onInsertSlideAfter: (itemId: number, template: SlideTemplate) => void
   onStandaloneSlideClick: () => void
 }
 
@@ -53,6 +54,7 @@ function SortableQueueItem({
   onSongClick,
   onEditSong,
   onEditSlide,
+  onInsertSongAfter,
   onInsertSlideAfter,
   onStandaloneSlideClick,
 }: SortableQueueItemProps) {
@@ -93,7 +95,10 @@ function SortableQueueItem({
           onRemove={handleRemove}
           onClick={onStandaloneSlideClick}
           onEditSlide={() => onEditSlide(item)}
-          onInsertSlideAfter={() => onInsertSlideAfter(item.id)}
+          onInsertSongAfter={() => onInsertSongAfter(item.id)}
+          onInsertSlideAfter={(template) =>
+            onInsertSlideAfter(item.id, template)
+          }
           dragHandleProps={{ ...attributes, ...listeners }}
         />
       </div>
@@ -112,7 +117,8 @@ function SortableQueueItem({
         onSlideClick={onSlideClick}
         onSongClick={onSongClick}
         onEditSong={() => item.songId && onEditSong(item.songId)}
-        onInsertSlideAfter={() => onInsertSlideAfter(item.id)}
+        onInsertSongAfter={() => onInsertSongAfter(item.id)}
+        onInsertSlideAfter={(template) => onInsertSlideAfter(item.id, template)}
         dragHandleProps={{ ...attributes, ...listeners }}
       />
     </div>
@@ -148,6 +154,11 @@ export function QueueList({
   const [insertAfterItemId, setInsertAfterItemId] = useState<number | null>(
     null,
   )
+  const [insertSongAfterItemId, setInsertSongAfterItemId] = useState<
+    number | null
+  >(null)
+  const [insertSlideTemplate, setInsertSlideTemplate] =
+    useState<SlideTemplate>('announcement')
 
   // Auto-expand the song containing the active slide when it changes
   useEffect(() => {
@@ -284,7 +295,11 @@ export function QueueList({
                 onSongClick={() => handleSongClick(item)}
                 onEditSong={setEditingSongId}
                 onEditSlide={setEditingSlideItem}
-                onInsertSlideAfter={setInsertAfterItemId}
+                onInsertSongAfter={setInsertSongAfterItemId}
+                onInsertSlideAfter={(itemId, template) => {
+                  setInsertAfterItemId(itemId)
+                  setInsertSlideTemplate(template)
+                }}
                 onStandaloneSlideClick={() =>
                   handleStandaloneSlideClick(item.id)
                 }
@@ -323,12 +338,20 @@ export function QueueList({
         <InsertSlideModal
           isOpen={insertAfterItemId !== null}
           afterItemId={insertAfterItemId}
+          initialTemplate={insertSlideTemplate}
           onClose={() => setInsertAfterItemId(null)}
           onSaved={() => {
             // Queue will be invalidated automatically by the insert mutation
           }}
         />
       )}
+
+      {/* Song Picker Modal for Insert After */}
+      <SongPickerModal
+        isOpen={insertSongAfterItemId !== null}
+        afterItemId={insertSongAfterItemId ?? undefined}
+        onClose={() => setInsertSongAfterItemId(null)}
+      />
 
       {/* Edit Slide Modal */}
       {editingSlideItem !== null && (
