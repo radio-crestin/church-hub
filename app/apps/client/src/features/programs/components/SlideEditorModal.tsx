@@ -50,6 +50,9 @@ export function SlideEditorModal({
     editorProps: {
       attributes: {
         class: 'min-h-[200px] p-4 focus:outline-none bg-white dark:bg-gray-900',
+        autocorrect: 'off',
+        autocapitalize: 'off',
+        spellcheck: 'false',
       },
     },
   })

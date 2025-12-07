@@ -5,19 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="66517e3f-2e4e-43cc-880d-deb242368f0c" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/ControlRoom.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/ControlRoom.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/LivePreview.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/LivePreview.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/AddToQueueMenu.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/AddToQueueMenu.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/InsertSlideModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/InsertSlideModal.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/QueueItemContextMenu.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/QueueItemContextMenu.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/QueueList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/QueueList.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/QueueSlideItem.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/QueueSlideItem.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/QueueSongItem.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/QueueSongItem.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/songs/components/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/songs/components/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/queue/addToQueue.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/queue/addToQueue.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/queue/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/queue/types.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -160,7 +149,7 @@
       <workItem from="1762688136394" duration="14616000" />
       <workItem from="1763895878404" duration="13746000" />
       <workItem from="1764529520395" duration="23258000" />
-      <workItem from="1765113262440" duration="21267000" />
+      <workItem from="1765113262440" duration="21854000" />
     </task>
     <servers />
   </component>
