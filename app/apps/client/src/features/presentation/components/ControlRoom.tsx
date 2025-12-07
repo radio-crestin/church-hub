@@ -237,7 +237,7 @@ export function ControlRoom() {
                   <button
                     type="button"
                     onClick={() => setShowClearModal(true)}
-                    className="flex items-center gap-1.5 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-white bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 rounded-md transition-colors"
                   >
                     <Trash2 size={14} />
                     {t('queue:actions.clear')}
