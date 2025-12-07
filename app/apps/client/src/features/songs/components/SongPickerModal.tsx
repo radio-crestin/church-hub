@@ -74,7 +74,7 @@ export function SongPickerModal({
   return (
     <dialog
       ref={dialogRef}
-      className="w-full max-w-lg p-0 bg-white dark:bg-gray-800 rounded-xl shadow-xl backdrop:bg-black/50"
+      className="fixed inset-0 m-auto w-full max-w-lg p-0 bg-white dark:bg-gray-800 rounded-xl shadow-xl backdrop:bg-black/50"
       onClick={(e) => {
         if (e.target === dialogRef.current) handleClose()
       }}
