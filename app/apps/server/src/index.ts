@@ -1745,6 +1745,14 @@ async function main() {
             )
           }
 
+          // If this slide is currently being displayed, broadcast to refresh displays
+          const currentState = getPresentationState()
+          if (currentState.currentQueueItemId === id) {
+            // Update the timestamp to trigger refetch on clients
+            const updatedState = updatePresentationState({})
+            broadcastPresentationState(updatedState)
+          }
+
           return handleCors(
             req,
             new Response(JSON.stringify({ data: queueItem }), {
