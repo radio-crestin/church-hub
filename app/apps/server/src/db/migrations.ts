@@ -447,6 +447,20 @@ export function runMigrations(db: Database): void {
       )
     }
 
+    // Migration: Add last_song_slide_id column to presentation_state table if it doesn't exist
+    if (
+      tableExists(db, 'presentation_state') &&
+      !columnExists(db, 'presentation_state', 'last_song_slide_id')
+    ) {
+      log(
+        'info',
+        'Adding last_song_slide_id column to presentation_state table',
+      )
+      db.exec(
+        `ALTER TABLE presentation_state ADD COLUMN last_song_slide_id INTEGER REFERENCES song_slides(id) ON DELETE SET NULL`,
+      )
+    }
+
     log('info', 'Migrations completed successfully')
   } catch (error) {
     log('error', `Migration failed: ${error}`)

@@ -55,6 +55,7 @@ export interface PresentationState {
   lastSlideId: number | null
   currentQueueItemId: number | null
   currentSongSlideId: number | null
+  lastSongSlideId: number | null
   isPresenting: boolean
   updatedAt: number
 }
@@ -68,6 +69,7 @@ export interface UpdatePresentationStateInput {
   lastSlideId?: number | null
   currentQueueItemId?: number | null
   currentSongSlideId?: number | null
+  lastSongSlideId?: number | null
   isPresenting?: boolean
 }
 

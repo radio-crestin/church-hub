@@ -26,6 +26,7 @@ function toPresentationState(
     lastSlideId: record.last_slide_id,
     currentQueueItemId: record.current_queue_item_id,
     currentSongSlideId: record.current_song_slide_id,
+    lastSongSlideId: record.last_song_slide_id,
     isPresenting: record.is_presenting === 1,
     updatedAt: record.updated_at,
   }
@@ -50,6 +51,7 @@ export function getPresentationState(): PresentationState {
         lastSlideId: null,
         currentQueueItemId: null,
         currentSongSlideId: null,
+        lastSongSlideId: null,
         isPresenting: false,
         updatedAt: Date.now(),
       }
@@ -64,6 +66,7 @@ export function getPresentationState(): PresentationState {
       lastSlideId: null,
       currentQueueItemId: null,
       currentSongSlideId: null,
+      lastSongSlideId: null,
       isPresenting: false,
       updatedAt: Date.now(),
     }
@@ -99,20 +102,25 @@ export function updatePresentationState(
       input.currentSongSlideId !== undefined
         ? input.currentSongSlideId
         : current.currentSongSlideId
+    const lastSongSlideId =
+      input.lastSongSlideId !== undefined
+        ? input.lastSongSlideId
+        : current.lastSongSlideId
     const isPresenting =
       input.isPresenting !== undefined
         ? input.isPresenting
         : current.isPresenting
 
     const query = db.query(`
-      INSERT INTO presentation_state (id, program_id, current_slide_id, last_slide_id, current_queue_item_id, current_song_slide_id, is_presenting, updated_at)
-      VALUES (1, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO presentation_state (id, program_id, current_slide_id, last_slide_id, current_queue_item_id, current_song_slide_id, last_song_slide_id, is_presenting, updated_at)
+      VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         program_id = excluded.program_id,
         current_slide_id = excluded.current_slide_id,
         last_slide_id = excluded.last_slide_id,
         current_queue_item_id = excluded.current_queue_item_id,
         current_song_slide_id = excluded.current_song_slide_id,
+        last_song_slide_id = excluded.last_song_slide_id,
         is_presenting = excluded.is_presenting,
         updated_at = excluded.updated_at
     `)
@@ -122,6 +130,7 @@ export function updatePresentationState(
       lastSlideId,
       currentQueueItemId,
       currentSongSlideId,
+      lastSongSlideId,
       isPresenting ? 1 : 0,
       now,
     )
@@ -248,16 +257,21 @@ export function stopPresentation(): PresentationState {
 
 /**
  * Clears the current slide (shows blank/clock)
- * Keeps lastSlideId and currentQueueItemId so the slide can be restored with showSlide
+ * Saves currentSongSlideId to lastSongSlideId for restoration
+ * Keeps currentQueueItemId so the slide can be restored with showSlide
  */
 export function clearSlide(): PresentationState {
   try {
     log('debug', 'Clearing current slide')
 
-    // Clear currentSlideId and currentSongSlideId, keep lastSlideId and currentQueueItemId for restoration
+    const current = getPresentationState()
+
+    // Save current song slide ID for restoration, then clear current display
     return updatePresentationState({
       currentSlideId: null,
       currentSongSlideId: null,
+      // Save the current song slide ID so we can restore the exact slide
+      lastSongSlideId: current.currentSongSlideId ?? current.lastSongSlideId,
     })
   } catch (error) {
     log('error', `Failed to clear slide: ${error}`)
@@ -275,11 +289,35 @@ export function showSlide(): PresentationState {
 
     const current = getPresentationState()
 
-    // Try to restore song slide first (if we have a queue item selected)
+    // Priority 1: Restore from lastSongSlideId if available (exact slide that was hidden)
+    if (current.lastSongSlideId) {
+      return updatePresentationState({
+        currentSongSlideId: current.lastSongSlideId,
+      })
+    }
+
+    // Priority 2: If we have a queue item, check if it's a standalone slide or song
     if (current.currentQueueItemId) {
-      // Restore the last song slide from the queue
       const db = getDatabase()
-      const query = db.query(`
+
+      // Check if this is a standalone slide
+      const queueItemQuery = db.query(
+        'SELECT item_type FROM presentation_queue WHERE id = ?',
+      )
+      const queueItem = queueItemQuery.get(current.currentQueueItemId) as {
+        item_type: string
+      } | null
+
+      if (queueItem?.item_type === 'slide') {
+        // Standalone slide - it's already "shown" by having currentQueueItemId set
+        // The frontend detects standalone slides by having currentQueueItemId but no currentSongSlideId
+        // We just need to ensure the state is correct
+        log('debug', 'Standalone slide is already shown via currentQueueItemId')
+        return current
+      }
+
+      // It's a song - get the first slide as fallback
+      const slideQuery = db.query(`
         SELECT ss.id
         FROM song_slides ss
         JOIN presentation_queue pq ON pq.song_id = ss.song_id
@@ -287,7 +325,7 @@ export function showSlide(): PresentationState {
         ORDER BY ss.sort_order ASC
         LIMIT 1
       `)
-      const result = query.get(current.currentQueueItemId) as {
+      const result = slideQuery.get(current.currentQueueItemId) as {
         id: number
       } | null
       if (result) {
@@ -297,16 +335,15 @@ export function showSlide(): PresentationState {
       }
     }
 
-    // Fall back to program slide
-    if (!current.lastSlideId) {
-      log('warning', 'Cannot show slide: no last slide to restore')
-      return current
+    // Priority 3: Fall back to program slide
+    if (current.lastSlideId) {
+      return updatePresentationState({
+        currentSlideId: current.lastSlideId,
+      })
     }
 
-    // Restore currentSlideId from lastSlideId
-    return updatePresentationState({
-      currentSlideId: current.lastSlideId,
-    })
+    log('warning', 'Cannot show slide: no slide to restore')
+    return current
   } catch (error) {
     log('error', `Failed to show slide: ${error}`)
     return getPresentationState()
