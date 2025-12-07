@@ -1,0 +1,59 @@
+{
+  "title": "Cântări",
+  "actions": {
+    "create": "Cântare nouă",
+    "save": "Salvează",
+    "delete": "Șterge",
+    "back": "Înapoi la cântări",
+    "import": "Importă din text",
+    "addSlide": "Adaugă slide",
+    "cloneSlide": "Clonează slide"
+  },
+  "editor": {
+    "titlePlaceholder": "Introdu titlul cântării...",
+    "categoryPlaceholder": "Selectează categoria...",
+    "slides": "Slide-uri",
+    "slideNumber": "Slide {{number}}",
+    "emptySlide": "Slide gol - click pentru a edita",
+    "noSlides": "Nu există slide-uri încă",
+    "saveFirst": "Salvează cântarea pentru a adăuga slide-uri",
+    "undo": "Anulează",
+    "redo": "Refă"
+  },
+  "search": {
+    "placeholder": "Caută cântări...",
+    "noResults": "Nu s-au găsit cântări pentru \"{{query}}\"",
+    "resultsCount": "{{count}} cântări găsite"
+  },
+  "import": {
+    "title": "Importă din text",
+    "description": "Lipește textul cântării mai jos. Fiecare paragraf va deveni un slide separat.",
+    "placeholder": "Lipește versurile aici...",
+    "preview": "Previzualizare: {{count}} slide-uri",
+    "confirm": "Importă",
+    "cancel": "Anulează"
+  },
+  "category": {
+    "none": "Fără categorie",
+    "create": "Creează",
+    "name": "Categorie"
+  },
+  "messages": {
+    "saved": "Cântarea a fost salvată cu succes",
+    "deleted": "Cântarea a fost ștearsă cu succes",
+    "error": "A apărut o eroare",
+    "slideSaved": "Slide salvat",
+    "slideDeleted": "Slide șters",
+    "slideCloned": "Slide clonat",
+    "reorderFailed": "Nu s-a putut reordona slide-urile",
+    "categoryCreated": "Categoria a fost creată"
+  },
+  "modal": {
+    "deleteTitle": "Șterge cântarea",
+    "deleteMessage": "Ești sigur că vrei să ștergi această cântare? Această acțiune nu poate fi anulată.",
+    "deleteSlideTitle": "Șterge slide",
+    "deleteSlideMessage": "Ești sigur că vrei să ștergi acest slide?"
+  },
+  "noSongs": "Nu există cântări încă",
+  "noSongsDescription": "Creează prima ta cântare pentru a începe"
+}

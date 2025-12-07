@@ -1,0 +1,44 @@
+{
+  "title": "Queue",
+  "empty": "Queue is empty",
+  "emptyDescription": "Add songs to start presenting",
+  "songCount_one": "{{count}} song",
+  "songCount_other": "{{count}} songs",
+  "itemCount_one": "{{count}} item",
+  "itemCount_other": "{{count}} items",
+  "actions": {
+    "addToQueue": "Add to Queue",
+    "presentNow": "Present Now",
+    "remove": "Remove",
+    "clear": "Clear Queue",
+    "expand": "Expand",
+    "collapse": "Collapse",
+    "editSong": "Edit Song",
+    "insertSlide": "Insert Slide After",
+    "moreOptions": "More options",
+    "cancel": "Cancel"
+  },
+  "messages": {
+    "added": "Added to queue",
+    "removed": "Removed from queue",
+    "cleared": "Queue cleared",
+    "presenting": "Now presenting",
+    "error": "An error occurred",
+    "slideInserted": "Slide inserted"
+  },
+  "confirmClear": {
+    "title": "Clear Queue?",
+    "message": "This will remove all items from the queue."
+  },
+  "slideTemplates": {
+    "announcement": "Announcement",
+    "versete_tineri": "Versete tineri"
+  },
+  "insertSlide": {
+    "title": "Insert Slide",
+    "selectTemplate": "Select template",
+    "content": "Content",
+    "insert": "Insert",
+    "errorEmpty": "Please add content to the slide"
+  }
+}
