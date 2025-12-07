@@ -1,6 +1,16 @@
 import { Edit3, MoreVertical, PlusCircle, Trash2 } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react'
 import { useTranslation } from 'react-i18next'
+
+export interface QueueItemContextMenuHandle {
+  openMenu: () => void
+}
 
 interface QueueItemContextMenuProps {
   onEditSong?: () => void
@@ -8,15 +18,22 @@ interface QueueItemContextMenuProps {
   onRemove: () => void
 }
 
-export function QueueItemContextMenu({
-  onEditSong,
-  onInsertSlideAfter,
-  onRemove,
-}: QueueItemContextMenuProps) {
+export const QueueItemContextMenu = forwardRef<
+  QueueItemContextMenuHandle,
+  QueueItemContextMenuProps
+>(function QueueItemContextMenu(
+  { onEditSong, onInsertSlideAfter, onRemove },
+  ref,
+) {
   const { t } = useTranslation('queue')
   const [isOpen, setIsOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
+
+  // Expose openMenu to parent via ref
+  useImperativeHandle(ref, () => ({
+    openMenu: () => setIsOpen(true),
+  }))
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -104,4 +121,4 @@ export function QueueItemContextMenu({
       )}
     </div>
   )
-}
+})

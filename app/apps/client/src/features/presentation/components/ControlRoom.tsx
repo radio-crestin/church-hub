@@ -150,9 +150,9 @@ export function ControlRoom() {
       </div>
 
       {/* Main Content: Two-Column Layout */}
-      <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0 h-full">
+      <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0">
         {/* Left Column: Preview + Controls */}
-        <div className="lg:w-2/3 space-y-4 flex-shrink-0 overflow-auto">
+        <div className="lg:w-2/3 space-y-4 overflow-auto">
           {/* Live Preview */}
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
@@ -192,8 +192,8 @@ export function ControlRoom() {
         </div>
 
         {/* Right Column: Queue List */}
-        <div className="lg:w-1/3 flex flex-col min-h-0 h-full overflow-hidden">
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 flex-1 flex flex-col min-h-0 h-full overflow-hidden">
+        <div className="lg:w-1/3 flex flex-col min-h-0 flex-1 lg:flex-initial">
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 flex-1 flex flex-col min-h-0 overflow-hidden">
             {/* Queue Header */}
             <div className="flex items-center justify-between mb-3 flex-shrink-0">
               <div className="flex items-center gap-2">
@@ -221,6 +221,7 @@ export function ControlRoom() {
             <div className="flex-1 overflow-y-auto pr-2 min-h-0">
               <QueueList
                 activeSlideId={state?.currentSongSlideId ?? null}
+                activeQueueItemId={state?.currentQueueItemId ?? null}
                 onSlideClick={handleSlideClick}
                 hideHeader
               />

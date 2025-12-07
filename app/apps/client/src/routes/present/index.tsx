@@ -8,7 +8,7 @@ export const Route = createFileRoute('/present/')({
 
 function PresentPage() {
   return (
-    <div className="p-6">
+    <div className="h-full">
       <ControlRoom />
     </div>
   )
