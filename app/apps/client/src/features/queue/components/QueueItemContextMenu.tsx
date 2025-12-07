@@ -14,6 +14,7 @@ export interface QueueItemContextMenuHandle {
 
 interface QueueItemContextMenuProps {
   onEditSong?: () => void
+  onEditSlide?: () => void
   onInsertSlideAfter: () => void
   onRemove: () => void
 }
@@ -22,7 +23,7 @@ export const QueueItemContextMenu = forwardRef<
   QueueItemContextMenuHandle,
   QueueItemContextMenuProps
 >(function QueueItemContextMenu(
-  { onEditSong, onInsertSlideAfter, onRemove },
+  { onEditSong, onEditSlide, onInsertSlideAfter, onRemove },
   ref,
 ) {
   const { t } = useTranslation('queue')
@@ -98,6 +99,16 @@ export const QueueItemContextMenu = forwardRef<
             >
               <Edit3 size={14} />
               {t('actions.editSong')}
+            </button>
+          )}
+          {onEditSlide && (
+            <button
+              type="button"
+              onClick={() => handleAction(onEditSlide)}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              <Edit3 size={14} />
+              {t('actions.editSlide')}
             </button>
           )}
           <button

@@ -80,10 +80,11 @@ export function ControlRoom() {
 
   // Handle slide click from queue - update presentation state
   const handleSlideClick = async (queueItemId: number, slideId: number) => {
-    // Update presentation state with the selected song slide
+    // slideId of -1 indicates a standalone slide
+    const isStandaloneSlide = slideId === -1
     await updateState.mutateAsync({
       currentQueueItemId: queueItemId,
-      currentSongSlideId: slideId,
+      currentSongSlideId: isStandaloneSlide ? null : slideId,
     })
   }
 

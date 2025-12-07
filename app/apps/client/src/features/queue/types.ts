@@ -53,6 +53,15 @@ export interface InsertSlideInput {
 }
 
 /**
+ * Input for updating a standalone slide in the queue
+ */
+export interface UpdateSlideInput {
+  id: number
+  slideType: SlideTemplate
+  slideContent: string
+}
+
+/**
  * Input for reordering queue items
  */
 export interface ReorderQueueInput {
