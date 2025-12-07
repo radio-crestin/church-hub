@@ -134,7 +134,11 @@ export function DisplayWindow({ displayId }: DisplayWindowProps) {
 
       try {
         // Find the song slide from the queue
-        const queueResponse = await fetch(`${getApiUrl()}/api/queue`)
+        // Use cache-busting to ensure fresh data
+        const queueResponse = await fetch(`${getApiUrl()}/api/queue`, {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' },
+        })
         if (queueResponse.ok) {
           const queueResult = await queueResponse.json()
           // Search through queue items to find the slide
@@ -173,7 +177,11 @@ export function DisplayWindow({ displayId }: DisplayWindowProps) {
 
       try {
         // Find the standalone slide from the queue
-        const queueResponse = await fetch(`${getApiUrl()}/api/queue`)
+        // Use cache-busting to ensure fresh data
+        const queueResponse = await fetch(`${getApiUrl()}/api/queue`, {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' },
+        })
         if (queueResponse.ok) {
           const queueResult = await queueResponse.json()
           // Find the queue item
