@@ -1,12 +1,4 @@
-import {
-  ChevronLeft,
-  ChevronRight,
-  Eye,
-  EyeOff,
-  Loader2,
-  MonitorUp,
-  Trash2,
-} from 'lucide-react'
+import { ChevronLeft, ChevronRight, MonitorUp, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -80,7 +72,12 @@ export function ControlRoom() {
 
   // Show = display the last slide
   const handleShow = async () => {
-    if (state?.lastSlideId || state?.currentSongSlideId) {
+    // Check lastSlideId, lastSongSlideId (if available), or currentQueueItemId
+    if (
+      state?.lastSlideId ||
+      state?.lastSongSlideId ||
+      state?.currentQueueItemId
+    ) {
       await showSlide.mutateAsync()
     }
   }
@@ -118,7 +115,11 @@ export function ControlRoom() {
   }
 
   const hasCurrentSlide = !!state?.currentSlideId || !!state?.currentSongSlideId
-  const hasLastSlide = !!state?.lastSlideId || !!state?.currentSongSlideId
+  // Check if we have something to restore: lastSlideId, lastSongSlideId, or currentQueueItemId
+  const hasLastSlide =
+    !!state?.lastSlideId ||
+    !!state?.lastSongSlideId ||
+    !!state?.currentQueueItemId
   const canShow = !hasCurrentSlide && hasLastSlide
   const canNavigate = state?.isPresenting || hasQueueSlide
   const isNavigating = navigateSlide.isPending || navigateQueueSlide.isPending
@@ -126,49 +127,11 @@ export function ControlRoom() {
   return (
     <div className="flex flex-col h-full gap-4">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4 flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <MonitorUp size={24} className="text-indigo-600" />
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {t('presentation:controlRoom.title')}
-          </h1>
-        </div>
-
-        {/* Show/Hide */}
-        <div className="flex items-center gap-4 flex-wrap">
-          {/* Show/Hide Button - Green "Afiseaza" or Red "Ascunde" */}
-          {hasCurrentSlide ? (
-            <button
-              type="button"
-              onClick={handleHide}
-              disabled={clearSlide.isPending}
-              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
-              title={t('presentation:controls.hide')}
-            >
-              {clearSlide.isPending ? (
-                <Loader2 size={20} className="animate-spin" />
-              ) : (
-                <EyeOff size={20} />
-              )}
-              <span>{t('presentation:controls.hide')}</span>
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={handleShow}
-              disabled={!canShow || showSlide.isPending}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
-              title={t('presentation:controls.show')}
-            >
-              {showSlide.isPending ? (
-                <Loader2 size={20} className="animate-spin" />
-              ) : (
-                <Eye size={20} />
-              )}
-              <span>{t('presentation:controls.show')}</span>
-            </button>
-          )}
-        </div>
+      <div className="flex items-center gap-3 flex-shrink-0">
+        <MonitorUp size={24} className="text-indigo-600" />
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          {t('presentation:controlRoom.title')}
+        </h1>
       </div>
 
       {/* Main Content: Two-Column Layout */}
@@ -180,7 +143,14 @@ export function ControlRoom() {
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
               {t('presentation:controlRoom.preview')}
             </h2>
-            <LivePreview />
+            <LivePreview
+              onShow={handleShow}
+              onHide={handleHide}
+              isShowPending={showSlide.isPending}
+              isHidePending={clearSlide.isPending}
+              canShow={canShow}
+              hasCurrentSlide={hasCurrentSlide}
+            />
           </div>
 
           {/* Navigation Controls Below Preview */}
