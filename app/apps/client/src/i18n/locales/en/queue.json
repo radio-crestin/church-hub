@@ -22,9 +22,13 @@
   },
   "addToQueue": {
     "button": "Add",
+    "title": "Add to Queue",
     "searchSong": "Search Song",
+    "searchSongDescription": "Find and add an existing song",
     "announcement": "Announcement",
-    "verseteTineri": "Versete Tineri"
+    "announcementDescription": "Create a custom announcement slide",
+    "verseteTineri": "Versete Tineri",
+    "verseteTineriDescription": "Add a youth verse slide"
   },
   "messages": {
     "added": "Added to queue",

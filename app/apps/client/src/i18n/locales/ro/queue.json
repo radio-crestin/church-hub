@@ -24,9 +24,13 @@
   },
   "addToQueue": {
     "button": "Adaugă",
+    "title": "Adaugă în coadă",
     "searchSong": "Caută cântare",
+    "searchSongDescription": "Găsește și adaugă o cântare existentă",
     "announcement": "Anunț",
-    "verseteTineri": "Versete Tineri"
+    "announcementDescription": "Creează un slide de anunț personalizat",
+    "verseteTineri": "Versete Tineri",
+    "verseteTineriDescription": "Adaugă un slide cu versete pentru tineri"
   },
   "messages": {
     "added": "Adăugat în coadă",
