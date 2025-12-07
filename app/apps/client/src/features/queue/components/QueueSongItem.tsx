@@ -1,7 +1,11 @@
 import { ChevronDown, ChevronRight, GripVertical, Music } from 'lucide-react'
+import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { QueueItemContextMenu } from './QueueItemContextMenu'
+import {
+  QueueItemContextMenu,
+  type QueueItemContextMenuHandle,
+} from './QueueItemContextMenu'
 import { QueueSlidePreview } from './QueueSlidePreview'
 import type { QueueItem } from '../types'
 
@@ -9,6 +13,7 @@ interface QueueSongItemProps {
   item: QueueItem
   isExpanded: boolean
   activeSlideId: number | null
+  activeQueueItemId: number | null
   onToggleExpand: () => void
   onRemove: () => void
   onSlideClick: (slideId: number) => void
@@ -21,6 +26,7 @@ export function QueueSongItem({
   item,
   isExpanded,
   activeSlideId,
+  activeQueueItemId,
   onToggleExpand,
   onRemove,
   onSlideClick,
@@ -29,10 +35,18 @@ export function QueueSongItem({
   dragHandleProps,
 }: QueueSongItemProps) {
   const { t } = useTranslation('queue')
+  const contextMenuRef = useRef<QueueItemContextMenuHandle>(null)
 
-  const isAnySlideActive = item.slides.some(
-    (slide) => slide.id === activeSlideId,
-  )
+  // Only highlight if this specific queue item is active
+  const isThisQueueItemActive = item.id === activeQueueItemId
+  const isAnySlideActive =
+    isThisQueueItemActive &&
+    item.slides.some((slide) => slide.id === activeSlideId)
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault()
+    contextMenuRef.current?.openMenu()
+  }
 
   return (
     <div
@@ -43,7 +57,10 @@ export function QueueSongItem({
       }`}
     >
       {/* Song Header */}
-      <div className="flex items-center gap-2 p-3">
+      <div
+        className="flex items-center gap-2 p-3"
+        onContextMenu={handleContextMenu}
+      >
         {/* Drag Handle */}
         <div
           {...dragHandleProps}
@@ -99,6 +116,7 @@ export function QueueSongItem({
 
         {/* Context Menu */}
         <QueueItemContextMenu
+          ref={contextMenuRef}
           onEditSong={onEditSong}
           onInsertSlideAfter={onInsertSlideAfter}
           onRemove={onRemove}
@@ -113,7 +131,7 @@ export function QueueSongItem({
               key={slide.id}
               slide={slide}
               slideIndex={idx}
-              isActive={slide.id === activeSlideId}
+              isActive={isThisQueueItemActive && slide.id === activeSlideId}
               onClick={() => onSlideClick(slide.id)}
             />
           ))}

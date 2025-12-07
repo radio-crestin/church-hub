@@ -314,27 +314,72 @@ export function showSlide(): PresentationState {
 }
 
 /**
- * Gets all song slides in queue order
- * Returns a flat list of { queueItemId, slideId } for navigation
+ * Gets all slides in queue order (both song slides and standalone slides)
+ * Returns a flat list for navigation
  */
-function getQueueSlides(): { queueItemId: number; slideId: number }[] {
+function getQueueSlides(): {
+  queueItemId: number
+  slideId: number | null
+  isStandaloneSlide: boolean
+}[] {
   const db = getDatabase()
+
+  // Get all queue items with their slides
+  // For song items: join song_slides
+  // For slide items: use queue item id as "slide" (slideId = null)
   const query = db.query(`
-    SELECT pq.id as queue_item_id, ss.id as slide_id
+    SELECT
+      pq.id as queue_item_id,
+      pq.item_type,
+      ss.id as slide_id
     FROM presentation_queue pq
-    JOIN song_slides ss ON ss.song_id = pq.song_id
+    LEFT JOIN song_slides ss ON pq.item_type = 'song' AND ss.song_id = pq.song_id
     ORDER BY pq.sort_order ASC, ss.sort_order ASC
   `)
-  const results = query.all() as { queue_item_id: number; slide_id: number }[]
-  return results.map((r) => ({
-    queueItemId: r.queue_item_id,
-    slideId: r.slide_id,
-  }))
+
+  const results = query.all() as {
+    queue_item_id: number
+    item_type: string
+    slide_id: number | null
+  }[]
+
+  // Build flat list - standalone slides appear once, songs appear for each slide
+  const slides: {
+    queueItemId: number
+    slideId: number | null
+    isStandaloneSlide: boolean
+  }[] = []
+
+  for (const r of results) {
+    if (r.item_type === 'slide') {
+      // Standalone slide - only add once (LEFT JOIN may produce multiple rows)
+      if (
+        !slides.some(
+          (s) => s.queueItemId === r.queue_item_id && s.isStandaloneSlide,
+        )
+      ) {
+        slides.push({
+          queueItemId: r.queue_item_id,
+          slideId: null,
+          isStandaloneSlide: true,
+        })
+      }
+    } else if (r.slide_id) {
+      // Song slide
+      slides.push({
+        queueItemId: r.queue_item_id,
+        slideId: r.slide_id,
+        isStandaloneSlide: false,
+      })
+    }
+  }
+
+  return slides
 }
 
 /**
  * Navigate to next or previous slide in the queue
- * Moves through all song slides across all queue items
+ * Moves through all slides (song slides and standalone slides) across all queue items
  */
 export function navigateQueueSlide(
   direction: 'next' | 'prev',
@@ -351,9 +396,23 @@ export function navigateQueueSlide(
     }
 
     // Find current position
-    const currentIndex = current.currentSongSlideId
-      ? slides.findIndex((s) => s.slideId === current.currentSongSlideId)
-      : -1
+    // For song slides: match by slideId
+    // For standalone slides: match by queueItemId with null slideId
+    let currentIndex = -1
+    if (current.currentSongSlideId) {
+      // Currently on a song slide
+      currentIndex = slides.findIndex(
+        (s) =>
+          s.slideId === current.currentSongSlideId &&
+          s.queueItemId === current.currentQueueItemId,
+      )
+    } else if (current.currentQueueItemId) {
+      // Currently on a standalone slide (no song slide ID)
+      currentIndex = slides.findIndex(
+        (s) =>
+          s.isStandaloneSlide && s.queueItemId === current.currentQueueItemId,
+      )
+    }
 
     let newIndex: number
 

@@ -36,6 +36,7 @@ import type { QueueItem } from '../types'
 interface SortableQueueItemProps {
   item: QueueItem
   activeSlideId: number | null
+  activeQueueItemId: number | null
   onSlideClick: (slideId: number) => void
   onEditSong: (songId: number) => void
   onInsertSlideAfter: (itemId: number) => void
@@ -45,6 +46,7 @@ interface SortableQueueItemProps {
 function SortableQueueItem({
   item,
   activeSlideId,
+  activeQueueItemId,
   onSlideClick,
   onEditSong,
   onInsertSlideAfter,
@@ -76,10 +78,8 @@ function SortableQueueItem({
 
   // Render different components based on item type
   if (item.itemType === 'slide') {
-    // Check if this standalone slide is active
-    // For now, we don't have a way to track active standalone slides
-    // This would need to be implemented in the presentation state
-    const isActive = false
+    // Standalone slide is active when it's the current queue item with no song slide
+    const isActive = item.id === activeQueueItemId && activeSlideId === null
 
     return (
       <div ref={setNodeRef} style={style}>
@@ -101,6 +101,7 @@ function SortableQueueItem({
         item={item}
         isExpanded={item.isExpanded}
         activeSlideId={activeSlideId}
+        activeQueueItemId={activeQueueItemId}
         onToggleExpand={handleToggleExpand}
         onRemove={handleRemove}
         onSlideClick={onSlideClick}
@@ -114,12 +115,14 @@ function SortableQueueItem({
 
 interface QueueListProps {
   activeSlideId: number | null
+  activeQueueItemId: number | null
   onSlideClick: (queueItemId: number, slideId: number) => void
   hideHeader?: boolean
 }
 
 export function QueueList({
   activeSlideId,
+  activeQueueItemId,
   onSlideClick,
   hideHeader = false,
 }: QueueListProps) {
@@ -256,6 +259,7 @@ export function QueueList({
                 key={item.id}
                 item={item}
                 activeSlideId={activeSlideId}
+                activeQueueItemId={activeQueueItemId}
                 onSlideClick={(slideId) => handleSlideClick(item.id, slideId)}
                 onEditSong={setEditingSongId}
                 onInsertSlideAfter={setInsertAfterItemId}
