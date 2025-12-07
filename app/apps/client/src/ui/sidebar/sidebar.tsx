@@ -2,9 +2,9 @@ import { useLocation } from '@tanstack/react-router'
 import {
   ChevronLeft,
   ChevronRight,
+  Film,
   Monitor,
   Moon,
-  Play,
   Presentation,
   Settings,
   Sun,
@@ -29,7 +29,7 @@ export function Sidebar() {
 
   const menuItems = [
     {
-      icon: Play,
+      icon: Film,
       label: t('sidebar:navigation.present'),
       to: '/present',
     },
