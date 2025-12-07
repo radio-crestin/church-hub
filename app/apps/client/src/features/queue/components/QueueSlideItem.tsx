@@ -13,6 +13,7 @@ interface QueueSlideItemProps {
   isActive: boolean
   onRemove: () => void
   onClick: () => void
+  onEditSlide: () => void
   onInsertSlideAfter: () => void
   dragHandleProps?: React.HTMLAttributes<HTMLDivElement>
 }
@@ -32,6 +33,7 @@ export function QueueSlideItem({
   isActive,
   onRemove,
   onClick,
+  onEditSlide,
   onInsertSlideAfter,
   dragHandleProps,
 }: QueueSlideItemProps) {
@@ -107,6 +109,7 @@ export function QueueSlideItem({
         {/* Context Menu */}
         <QueueItemContextMenu
           ref={contextMenuRef}
+          onEditSlide={onEditSlide}
           onInsertSlideAfter={onInsertSlideAfter}
           onRemove={onRemove}
         />
