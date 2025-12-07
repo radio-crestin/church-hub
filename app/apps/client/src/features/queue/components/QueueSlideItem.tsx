@@ -1,7 +1,11 @@
 import { FileText, GripVertical, Megaphone } from 'lucide-react'
+import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { QueueItemContextMenu } from './QueueItemContextMenu'
+import {
+  QueueItemContextMenu,
+  type QueueItemContextMenuHandle,
+} from './QueueItemContextMenu'
 import type { QueueItem, SlideTemplate } from '../types'
 
 interface QueueSlideItemProps {
@@ -32,9 +36,15 @@ export function QueueSlideItem({
   dragHandleProps,
 }: QueueSlideItemProps) {
   const { t } = useTranslation('queue')
+  const contextMenuRef = useRef<QueueItemContextMenuHandle>(null)
 
   const Icon = item.slideType ? TEMPLATE_ICONS[item.slideType] : FileText
   const contentPreview = item.slideContent ? stripHtml(item.slideContent) : ''
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault()
+    contextMenuRef.current?.openMenu()
+  }
 
   return (
     <div
@@ -45,7 +55,10 @@ export function QueueSlideItem({
       }`}
     >
       {/* Slide Header */}
-      <div className="flex items-center gap-2 p-3">
+      <div
+        className="flex items-center gap-2 p-3"
+        onContextMenu={handleContextMenu}
+      >
         {/* Drag Handle */}
         <div
           {...dragHandleProps}
@@ -93,6 +106,7 @@ export function QueueSlideItem({
 
         {/* Context Menu */}
         <QueueItemContextMenu
+          ref={contextMenuRef}
           onInsertSlideAfter={onInsertSlideAfter}
           onRemove={onRemove}
         />
