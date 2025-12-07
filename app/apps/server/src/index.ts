@@ -76,6 +76,8 @@ import {
   getAllSongs,
   getSongWithSlides,
   type ReorderSongSlidesInput,
+  rebuildSearchIndex,
+  removeFromSearchIndex,
   reorderSongSlides,
   searchSongs,
   type UpsertCategoryInput,
@@ -98,6 +100,9 @@ async function main() {
   // Initialize database
   const db = await initializeDatabase()
   runMigrations(db)
+
+  // Rebuild search index to ensure FTS table is populated
+  rebuildSearchIndex()
 
   // Only listen to Rust IPC when running inside Tauri
   const isTauriMode =
@@ -1320,6 +1325,9 @@ async function main() {
             }),
           )
         }
+
+        // Remove from search index
+        removeFromSearchIndex(id)
 
         return handleCors(
           req,
