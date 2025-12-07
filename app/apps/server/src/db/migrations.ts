@@ -341,11 +341,36 @@ export function runMigrations(db: Database): void {
         'info',
         'Dropping presentation_queue table to add standalone slide support',
       )
+      // First remove FK column from presentation_state if it exists
+      if (
+        tableExists(db, 'presentation_state') &&
+        columnExists(db, 'presentation_state', 'current_queue_item_id')
+      ) {
+        db.exec(
+          `ALTER TABLE presentation_state DROP COLUMN current_queue_item_id`,
+        )
+      }
       db.exec(`
         DROP INDEX IF EXISTS idx_presentation_queue_sort_order;
         DROP INDEX IF EXISTS idx_presentation_queue_song_id;
         DROP TABLE IF EXISTS presentation_queue;
       `)
+    }
+
+    // Migration: Handle orphaned FK column if presentation_queue doesn't exist
+    // but presentation_state has the FK column
+    if (
+      !tableExists(db, 'presentation_queue') &&
+      tableExists(db, 'presentation_state') &&
+      columnExists(db, 'presentation_state', 'current_queue_item_id')
+    ) {
+      log(
+        'info',
+        'Removing orphaned current_queue_item_id column from presentation_state',
+      )
+      db.exec(
+        `ALTER TABLE presentation_state DROP COLUMN current_queue_item_id`,
+      )
     }
 
     log('debug', 'Loading embedded schema')
