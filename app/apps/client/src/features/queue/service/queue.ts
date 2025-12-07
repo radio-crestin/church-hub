@@ -4,6 +4,7 @@ import type {
   InsertSlideInput,
   QueueItem,
   ReorderQueueInput,
+  UpdateSlideInput,
 } from '../types'
 
 interface ApiResponse<T> {
@@ -87,6 +88,28 @@ export async function insertSlideToQueue(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   })
+
+  if (response.error) {
+    return { success: false, error: response.error }
+  }
+
+  return { success: true, data: response.data }
+}
+
+export async function updateSlideInQueue(
+  input: UpdateSlideInput,
+): Promise<{ success: boolean; data?: QueueItem; error?: string }> {
+  const response = await fetcher<ApiResponse<QueueItem>>(
+    `/api/queue/slide/${input.id}`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        slideType: input.slideType,
+        slideContent: input.slideContent,
+      }),
+    },
+  )
 
   if (response.error) {
     return { success: false, error: response.error }

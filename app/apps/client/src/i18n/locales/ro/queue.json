@@ -16,6 +16,7 @@
     "expand": "Extinde",
     "collapse": "Restrânge",
     "editSong": "Editează cântarea",
+    "editSlide": "Editează slide-ul",
     "insertSlide": "Inserează slide după",
     "moreOptions": "Mai multe opțiuni",
     "cancel": "Anulează"
@@ -26,7 +27,8 @@
     "cleared": "Coada a fost golită",
     "presenting": "Se prezintă acum",
     "error": "A apărut o eroare",
-    "slideInserted": "Slide-ul a fost inserat"
+    "slideInserted": "Slide-ul a fost inserat",
+    "slideUpdated": "Slide-ul a fost actualizat"
   },
   "confirmClear": {
     "title": "Golești coada?",
@@ -38,9 +40,11 @@
   },
   "insertSlide": {
     "title": "Inserează slide",
+    "editTitle": "Editează slide-ul",
     "selectTemplate": "Selectează șablonul",
     "content": "Conținut",
     "insert": "Inserează",
+    "save": "Salvează",
     "errorEmpty": "Te rugăm să adaugi conținut slide-ului"
   }
 }

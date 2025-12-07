@@ -6,14 +6,17 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useToast } from '~/ui/toast'
-import { useInsertSlideToQueue } from '../hooks'
-import type { SlideTemplate } from '../types'
+import { useInsertSlideToQueue, useUpdateSlide } from '../hooks'
+import type { QueueItem, SlideTemplate } from '../types'
 
 interface InsertSlideModalProps {
   isOpen: boolean
   onClose: () => void
-  afterItemId: number
-  onInserted?: () => void
+  /** For insert mode: ID of the item to insert after */
+  afterItemId?: number
+  /** For edit mode: the queue item being edited */
+  editingItem?: QueueItem | null
+  onSaved?: () => void
 }
 
 const TEMPLATES: { type: SlideTemplate; icon: typeof Megaphone }[] = [
@@ -25,12 +28,16 @@ export function InsertSlideModal({
   isOpen,
   onClose,
   afterItemId,
-  onInserted,
+  editingItem,
+  onSaved,
 }: InsertSlideModalProps) {
   const { t } = useTranslation('queue')
   const { showToast } = useToast()
   const dialogRef = useRef<HTMLDialogElement>(null)
   const insertMutation = useInsertSlideToQueue()
+  const updateMutation = useUpdateSlide()
+
+  const isEditMode = !!editingItem
 
   const [selectedTemplate, setSelectedTemplate] =
     useState<SlideTemplate>('announcement')
@@ -63,41 +70,67 @@ export function InsertSlideModal({
   useEffect(() => {
     if (isOpen) {
       dialogRef.current?.showModal()
-      // Reset state
-      setSelectedTemplate('announcement')
-      setContent('')
-      editor?.commands.setContent('')
+      // Load editing item data or reset state
+      if (editingItem) {
+        setSelectedTemplate(editingItem.slideType ?? 'announcement')
+        setContent(editingItem.slideContent ?? '')
+        editor?.commands.setContent(editingItem.slideContent ?? '')
+      } else {
+        setSelectedTemplate('announcement')
+        setContent('')
+        editor?.commands.setContent('')
+      }
     } else {
       dialogRef.current?.close()
     }
-  }, [isOpen, editor])
+  }, [isOpen, editor, editingItem])
 
-  const handleInsert = async () => {
+  const handleSave = async () => {
     if (!content.trim()) {
       showToast(t('insertSlide.errorEmpty'), 'error')
       return
     }
 
-    const result = await insertMutation.mutateAsync({
-      slideType: selectedTemplate,
-      slideContent: content,
-      afterItemId,
-    })
+    if (isEditMode && editingItem) {
+      // Update existing slide
+      const result = await updateMutation.mutateAsync({
+        id: editingItem.id,
+        slideType: selectedTemplate,
+        slideContent: content,
+      })
 
-    if (result.success) {
-      showToast(t('messages.slideInserted'), 'success')
-      onInserted?.()
-      onClose()
+      if (result.success) {
+        showToast(t('messages.slideUpdated'), 'success')
+        onSaved?.()
+        onClose()
+      } else {
+        showToast(t('messages.error'), 'error')
+      }
     } else {
-      showToast(t('messages.error'), 'error')
+      // Insert new slide
+      const result = await insertMutation.mutateAsync({
+        slideType: selectedTemplate,
+        slideContent: content,
+        afterItemId,
+      })
+
+      if (result.success) {
+        showToast(t('messages.slideInserted'), 'success')
+        onSaved?.()
+        onClose()
+      } else {
+        showToast(t('messages.error'), 'error')
+      }
     }
   }
 
   const handleClose = () => {
-    if (!insertMutation.isPending) {
+    if (!insertMutation.isPending && !updateMutation.isPending) {
       onClose()
     }
   }
+
+  const isPending = insertMutation.isPending || updateMutation.isPending
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
     if (e.target === dialogRef.current) {
@@ -116,12 +149,12 @@ export function InsertSlideModal({
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {t('insertSlide.title')}
+            {isEditMode ? t('insertSlide.editTitle') : t('insertSlide.title')}
           </h2>
           <button
             type="button"
             onClick={handleClose}
-            disabled={insertMutation.isPending}
+            disabled={isPending}
             className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
           >
             <X size={20} className="text-gray-500" />
@@ -224,21 +257,19 @@ export function InsertSlideModal({
           <button
             type="button"
             onClick={handleClose}
-            disabled={insertMutation.isPending}
+            disabled={isPending}
             className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg disabled:opacity-50"
           >
             {t('actions.cancel')}
           </button>
           <button
             type="button"
-            onClick={handleInsert}
-            disabled={insertMutation.isPending || !content.trim()}
+            onClick={handleSave}
+            disabled={isPending || !content.trim()}
             className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
           >
-            {insertMutation.isPending && (
-              <Loader2 size={18} className="animate-spin" />
-            )}
-            {t('insertSlide.insert')}
+            {isPending && <Loader2 size={18} className="animate-spin" />}
+            {isEditMode ? t('insertSlide.save') : t('insertSlide.insert')}
           </button>
         </div>
       </div>

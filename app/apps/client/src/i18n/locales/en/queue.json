@@ -14,6 +14,7 @@
     "expand": "Expand",
     "collapse": "Collapse",
     "editSong": "Edit Song",
+    "editSlide": "Edit Slide",
     "insertSlide": "Insert Slide After",
     "moreOptions": "More options",
     "cancel": "Cancel"
@@ -24,7 +25,8 @@
     "cleared": "Queue cleared",
     "presenting": "Now presenting",
     "error": "An error occurred",
-    "slideInserted": "Slide inserted"
+    "slideInserted": "Slide inserted",
+    "slideUpdated": "Slide updated"
   },
   "confirmClear": {
     "title": "Clear Queue?",
@@ -36,9 +38,11 @@
   },
   "insertSlide": {
     "title": "Insert Slide",
+    "editTitle": "Edit Slide",
     "selectTemplate": "Select template",
     "content": "Content",
     "insert": "Insert",
+    "save": "Save",
     "errorEmpty": "Please add content to the slide"
   }
 }

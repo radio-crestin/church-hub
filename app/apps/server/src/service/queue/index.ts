@@ -14,4 +14,6 @@ export type {
   QueueItemType,
   ReorderQueueInput,
   SlideTemplate,
+  UpdateSlideInput,
 } from './types'
+export { updateSlide } from './updateSlide'

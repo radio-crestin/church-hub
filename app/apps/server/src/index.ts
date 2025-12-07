@@ -66,6 +66,8 @@ import {
   removeFromQueue,
   reorderQueue,
   setExpanded,
+  type UpdateSlideInput,
+  updateSlide,
 } from './service/queue'
 import {
   cloneSongSlide,
@@ -1688,6 +1690,64 @@ async function main() {
             req,
             new Response(JSON.stringify({ data: queueItem }), {
               status: 201,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // PUT /api/queue/slide/:id - Update a standalone slide in queue
+      const updateSlideMatch = url.pathname.match(
+        /^\/api\/queue\/slide\/(\d+)$/,
+      )
+      if (req.method === 'PUT' && updateSlideMatch?.[1]) {
+        try {
+          const id = parseInt(updateSlideMatch[1], 10)
+          const body = (await req.json()) as Partial<UpdateSlideInput>
+
+          if (!body.slideType || !body.slideContent) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({ error: 'Missing slideType or slideContent' }),
+                {
+                  status: 400,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          const queueItem = updateSlide({
+            id,
+            slideType: body.slideType,
+            slideContent: body.slideContent,
+          })
+
+          if (!queueItem) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({ error: 'Failed to update slide in queue' }),
+                {
+                  status: 500,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: queueItem }), {
               headers: { 'Content-Type': 'application/json' },
             }),
           )
