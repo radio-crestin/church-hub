@@ -160,6 +160,55 @@ CREATE TABLE IF NOT EXISTS presentation_state (
 
 -- Initialize presentation state with default values
 INSERT OR IGNORE INTO presentation_state (id, is_presenting) VALUES (1, 0);
+
+-- Song Categories Table
+-- Stores categories for organizing songs
+CREATE TABLE IF NOT EXISTS song_categories (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL UNIQUE,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch())
+);
+
+CREATE INDEX IF NOT EXISTS idx_song_categories_name ON song_categories(name);
+
+-- Songs Table
+-- Stores songs with optional category
+CREATE TABLE IF NOT EXISTS songs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
+  category_id INTEGER,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  FOREIGN KEY (category_id) REFERENCES song_categories(id) ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_songs_title ON songs(title);
+CREATE INDEX IF NOT EXISTS idx_songs_category_id ON songs(category_id);
+
+-- Song Slides Table
+-- Stores individual slides belonging to songs
+CREATE TABLE IF NOT EXISTS song_slides (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  song_id INTEGER NOT NULL,
+  content TEXT NOT NULL,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  FOREIGN KEY (song_id) REFERENCES songs(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_song_slides_song_id ON song_slides(song_id);
+CREATE INDEX IF NOT EXISTS idx_song_slides_sort_order ON song_slides(sort_order);
+
+-- Full-Text Search Virtual Table for Songs
+-- Enables fast text search across song titles and slide content
+CREATE VIRTUAL TABLE IF NOT EXISTS songs_fts USING fts5(
+  song_id UNINDEXED,
+  title,
+  content,
+  tokenize='unicode61'
+);
 `
 
 /**
@@ -195,6 +244,14 @@ function tableExists(db: Database, tableName: string): boolean {
 export function runMigrations(db: Database): void {
   try {
     log('info', 'Running database migrations...')
+
+    // Check if we have old songs table without category_id column
+    if (tableExists(db, 'songs') && !columnExists(db, 'songs', 'category_id')) {
+      log('info', 'Migrating old songs schema - dropping old table...')
+      // Drop old songs table (no slides yet in old schema)
+      db.exec(`DROP TABLE IF EXISTS songs`)
+      log('info', 'Old songs table dropped, will be recreated with new schema')
+    }
 
     // Check if we have old devices schema that needs migration
     if (

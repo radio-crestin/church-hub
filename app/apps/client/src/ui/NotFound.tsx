@@ -17,7 +17,7 @@ export default function NotFound({ children }: { children?: any }) {
           {t('buttons.goBack')}
         </button>
         <Link
-          to="/"
+          to="/present"
           className="bg-cyan-600 dark:bg-cyan-700 hover:bg-cyan-700 dark:hover:bg-cyan-600 text-white px-2 py-1 rounded-sm uppercase font-black text-sm transition-colors"
         >
           {t('buttons.startOver')}
