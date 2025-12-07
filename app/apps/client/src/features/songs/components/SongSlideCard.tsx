@@ -58,6 +58,9 @@ export function SongSlideCard({
     editorProps: {
       attributes: {
         class: 'min-h-[100px] p-4 focus:outline-none',
+        autocorrect: 'off',
+        autocapitalize: 'off',
+        spellcheck: 'false',
       },
     },
     onUpdate: ({ editor }) => {
