@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { presentationStateQueryKey } from './usePresentationState'
 import {
   clearSlide,
+  navigateQueueSlide,
   navigateSlide,
   showSlide,
   startPresentation,
@@ -72,6 +73,17 @@ export function useUpdatePresentationState() {
 
   return useMutation({
     mutationFn: updatePresentationState,
+    onSuccess: (data: PresentationState) => {
+      queryClient.setQueryData(presentationStateQueryKey, data)
+    },
+  })
+}
+
+export function useNavigateQueueSlide() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: navigateQueueSlide,
     onSuccess: (data: PresentationState) => {
       queryClient.setQueryData(presentationStateQueryKey, data)
     },

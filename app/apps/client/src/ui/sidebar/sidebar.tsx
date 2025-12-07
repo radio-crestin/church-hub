@@ -4,6 +4,7 @@ import {
   ChevronRight,
   Monitor,
   Moon,
+  Music,
   Presentation,
   Settings,
   SquarePlay,
@@ -32,6 +33,11 @@ export function Sidebar() {
       icon: SquarePlay,
       label: t('sidebar:navigation.present'),
       to: '/present',
+    },
+    {
+      icon: Music,
+      label: t('sidebar:navigation.songs'),
+      to: '/songs',
     },
     {
       icon: Presentation,
@@ -63,7 +69,10 @@ export function Sidebar() {
             label={item.label}
             to={item.to}
             isCollapsed={isCollapsed}
-            isActive={location.pathname === item.to}
+            isActive={
+              location.pathname === item.to ||
+              location.pathname.startsWith(`${item.to}/`)
+            }
           />
         ))}
       </nav>

@@ -31,6 +31,7 @@ import {
   getDisplayById,
   getPresentationState,
   type NavigateInput,
+  navigateQueueSlide,
   navigateSlide,
   showSlide,
   startPresentation,
@@ -54,6 +55,37 @@ import {
   upsertProgram,
   upsertSlide,
 } from './service/programs'
+import {
+  type AddToQueueInput,
+  addToQueue,
+  clearQueue,
+  getQueue,
+  type InsertSlideInput,
+  insertSlideToQueue,
+  type ReorderQueueInput,
+  removeFromQueue,
+  reorderQueue,
+  setExpanded,
+} from './service/queue'
+import {
+  cloneSongSlide,
+  deleteCategory,
+  deleteSong,
+  deleteSongSlide,
+  getAllCategories,
+  getAllSongs,
+  getSongWithSlides,
+  type ReorderSongSlidesInput,
+  reorderSongSlides,
+  searchSongs,
+  type UpsertCategoryInput,
+  type UpsertSongInput,
+  type UpsertSongSlideInput,
+  updateSearchIndex,
+  upsertCategory,
+  upsertSong,
+  upsertSongSlide,
+} from './service/songs'
 import {
   broadcastPresentationState,
   handleWebSocketClose,
@@ -1133,6 +1165,674 @@ async function main() {
             headers: { 'Content-Type': 'application/json' },
           }),
         )
+      }
+
+      // POST /api/presentation/navigate-queue - Navigate queue slides
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/presentation/navigate-queue'
+      ) {
+        try {
+          const body = (await req.json()) as { direction: 'next' | 'prev' }
+
+          if (!body.direction) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Missing direction' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const state = navigateQueueSlide(body.direction)
+          broadcastPresentationState(state)
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: state }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // ============================================================
+      // Songs API Endpoints
+      // ============================================================
+
+      // GET /api/songs/search - Search songs (must be before /api/songs/:id)
+      if (req.method === 'GET' && url.pathname === '/api/songs/search') {
+        const query = url.searchParams.get('q') || ''
+        const results = searchSongs(query)
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: results }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // GET /api/songs - List all songs
+      if (req.method === 'GET' && url.pathname === '/api/songs') {
+        const songs = getAllSongs()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: songs }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // GET /api/songs/:id - Get song with slides
+      const getSongMatch = url.pathname.match(/^\/api\/songs\/(\d+)$/)
+      if (req.method === 'GET' && getSongMatch?.[1]) {
+        const id = parseInt(getSongMatch[1], 10)
+        const song = getSongWithSlides(id)
+
+        if (!song) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Song not found' }), {
+              status: 404,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: song }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/songs - Create/update song
+      if (req.method === 'POST' && url.pathname === '/api/songs') {
+        try {
+          const body = (await req.json()) as UpsertSongInput
+
+          if (!body.title) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Missing title' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const song = upsertSong(body)
+
+          if (!song) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Failed to save song' }), {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          // Update search index
+          updateSearchIndex(song.id)
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: song }), {
+              status: body.id ? 200 : 201,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // DELETE /api/songs/:id - Delete song
+      const deleteSongMatch = url.pathname.match(/^\/api\/songs\/(\d+)$/)
+      if (req.method === 'DELETE' && deleteSongMatch?.[1]) {
+        const id = parseInt(deleteSongMatch[1], 10)
+        const result = deleteSong(id)
+
+        if (!result.success) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: result.error }), {
+              status: 500,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: { success: true } }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // ============================================================
+      // Song Slides API Endpoints
+      // ============================================================
+
+      // POST /api/song-slides - Create/update song slide
+      if (req.method === 'POST' && url.pathname === '/api/song-slides') {
+        try {
+          const body = (await req.json()) as UpsertSongSlideInput
+
+          if (!body.songId || body.content === undefined) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({ error: 'Missing songId or content' }),
+                {
+                  status: 400,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          const slide = upsertSongSlide(body)
+
+          if (!slide) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Failed to save slide' }), {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          // Update search index for the song
+          updateSearchIndex(body.songId)
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: slide }), {
+              status: body.id ? 200 : 201,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // DELETE /api/song-slides/:id - Delete song slide
+      const deleteSongSlideMatch = url.pathname.match(
+        /^\/api\/song-slides\/(\d+)$/,
+      )
+      if (req.method === 'DELETE' && deleteSongSlideMatch?.[1]) {
+        const id = parseInt(deleteSongSlideMatch[1], 10)
+        const result = deleteSongSlide(id)
+
+        if (!result.success) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: result.error }), {
+              status: 500,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: { success: true } }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/song-slides/:id/clone - Clone song slide
+      const cloneSongSlideMatch = url.pathname.match(
+        /^\/api\/song-slides\/(\d+)\/clone$/,
+      )
+      if (req.method === 'POST' && cloneSongSlideMatch?.[1]) {
+        const id = parseInt(cloneSongSlideMatch[1], 10)
+        const clonedSlide = cloneSongSlide(id)
+
+        if (!clonedSlide) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Failed to clone slide' }), {
+              status: 500,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        // Update search index
+        updateSearchIndex(clonedSlide.songId)
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: clonedSlide }), {
+            status: 201,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // PUT /api/songs/:id/slides/reorder - Reorder song slides
+      const reorderSongSlidesMatch = url.pathname.match(
+        /^\/api\/songs\/(\d+)\/slides\/reorder$/,
+      )
+      if (req.method === 'PUT' && reorderSongSlidesMatch?.[1]) {
+        try {
+          const songId = parseInt(reorderSongSlidesMatch[1], 10)
+          const body = (await req.json()) as ReorderSongSlidesInput
+
+          if (!body.slideIds || !Array.isArray(body.slideIds)) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({ error: 'Missing slideIds array' }),
+                {
+                  status: 400,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          const result = reorderSongSlides(songId, body)
+
+          if (!result.success) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: result.error }), {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: { success: true } }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // ============================================================
+      // Song Categories API Endpoints
+      // ============================================================
+
+      // GET /api/categories - List all categories
+      if (req.method === 'GET' && url.pathname === '/api/categories') {
+        const categories = getAllCategories()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: categories }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/categories - Create/update category
+      if (req.method === 'POST' && url.pathname === '/api/categories') {
+        try {
+          const body = (await req.json()) as UpsertCategoryInput
+
+          if (!body.name) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Missing name' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const category = upsertCategory(body)
+
+          if (!category) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({ error: 'Failed to save category' }),
+                {
+                  status: 500,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: category }), {
+              status: body.id ? 200 : 201,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // DELETE /api/categories/:id - Delete category
+      const deleteCategoryMatch = url.pathname.match(
+        /^\/api\/categories\/(\d+)$/,
+      )
+      if (req.method === 'DELETE' && deleteCategoryMatch?.[1]) {
+        const id = parseInt(deleteCategoryMatch[1], 10)
+        const result = deleteCategory(id)
+
+        if (!result.success) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: result.error }), {
+              status: 500,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: { success: true } }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // ============================================================
+      // Presentation Queue API Endpoints
+      // ============================================================
+
+      // GET /api/queue - Get all queue items
+      if (req.method === 'GET' && url.pathname === '/api/queue') {
+        const queue = getQueue()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: queue }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/queue - Add song to queue
+      if (req.method === 'POST' && url.pathname === '/api/queue') {
+        try {
+          const body = (await req.json()) as AddToQueueInput
+
+          if (!body.songId) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Missing songId' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const queueItem = addToQueue(body)
+
+          if (!queueItem) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({ error: 'Failed to add to queue' }),
+                {
+                  status: 500,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: queueItem }), {
+              status: 201,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // POST /api/queue/slide - Insert standalone slide to queue
+      if (req.method === 'POST' && url.pathname === '/api/queue/slide') {
+        try {
+          const body = (await req.json()) as InsertSlideInput
+
+          if (!body.slideType || !body.slideContent) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({ error: 'Missing slideType or slideContent' }),
+                {
+                  status: 400,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          const queueItem = insertSlideToQueue(body)
+
+          if (!queueItem) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({ error: 'Failed to insert slide to queue' }),
+                {
+                  status: 500,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: queueItem }), {
+              status: 201,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // DELETE /api/queue - Clear entire queue
+      if (req.method === 'DELETE' && url.pathname === '/api/queue') {
+        const result = clearQueue()
+
+        if (!result.success) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: result.error }), {
+              status: 500,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: { success: true } }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // DELETE /api/queue/:id - Remove item from queue
+      const removeFromQueueMatch = url.pathname.match(/^\/api\/queue\/(\d+)$/)
+      if (req.method === 'DELETE' && removeFromQueueMatch?.[1]) {
+        const id = parseInt(removeFromQueueMatch[1], 10)
+        const result = removeFromQueue(id)
+
+        if (!result.success) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: result.error }), {
+              status: 500,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: { success: true } }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // PUT /api/queue/reorder - Reorder queue items
+      if (req.method === 'PUT' && url.pathname === '/api/queue/reorder') {
+        try {
+          const body = (await req.json()) as ReorderQueueInput
+
+          if (!body.itemIds || !Array.isArray(body.itemIds)) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Missing itemIds array' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const result = reorderQueue(body)
+
+          if (!result.success) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: result.error }), {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: { success: true } }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // PUT /api/queue/:id/expand - Set queue item expanded state
+      const expandQueueMatch = url.pathname.match(
+        /^\/api\/queue\/(\d+)\/expand$/,
+      )
+      if (req.method === 'PUT' && expandQueueMatch?.[1]) {
+        try {
+          const id = parseInt(expandQueueMatch[1], 10)
+          const body = (await req.json()) as { expanded: boolean }
+
+          if (body.expanded === undefined) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Missing expanded' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const queueItem = setExpanded(id, body.expanded)
+
+          if (!queueItem) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({ error: 'Failed to update queue item' }),
+                {
+                  status: 500,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: queueItem }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
       }
 
       return handleCors(req, new Response('Not Found', { status: 404 }))

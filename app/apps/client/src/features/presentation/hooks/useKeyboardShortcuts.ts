@@ -2,16 +2,25 @@ import { useEffect } from 'react'
 
 import {
   useClearSlide,
+  useNavigateQueueSlide,
   useNavigateSlide,
   usePresentationState,
+  useShowSlide,
   useStopPresentation,
 } from './index'
 
 export function useKeyboardShortcuts() {
   const { data: state } = usePresentationState()
   const navigateSlide = useNavigateSlide()
+  const navigateQueueSlide = useNavigateQueueSlide()
   const stopPresentation = useStopPresentation()
   const clearSlide = useClearSlide()
+  const showSlide = useShowSlide()
+
+  // Determine if we have queue slides to navigate
+  const hasQueueSlide =
+    !!state?.currentQueueItemId || !!state?.currentSongSlideId
+  const canNavigate = state?.isPresenting || hasQueueSlide
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -24,8 +33,8 @@ export function useKeyboardShortcuts() {
         return
       }
 
-      // Only handle shortcuts when presenting
-      if (!state?.isPresenting) return
+      // Only handle navigation shortcuts when we can navigate
+      if (!canNavigate) return
 
       switch (event.key) {
         case 'ArrowRight':
@@ -33,14 +42,22 @@ export function useKeyboardShortcuts() {
         case ' ':
         case 'PageDown':
           event.preventDefault()
-          navigateSlide.mutate({ direction: 'next' })
+          if (hasQueueSlide) {
+            navigateQueueSlide.mutate('next')
+          } else {
+            navigateSlide.mutate({ direction: 'next' })
+          }
           break
 
         case 'ArrowLeft':
         case 'ArrowUp':
         case 'PageUp':
           event.preventDefault()
-          navigateSlide.mutate({ direction: 'prev' })
+          if (hasQueueSlide) {
+            navigateQueueSlide.mutate('prev')
+          } else {
+            navigateSlide.mutate({ direction: 'prev' })
+          }
           break
 
         case 'Escape':
@@ -51,14 +68,29 @@ export function useKeyboardShortcuts() {
         case 'b':
         case 'B':
         case '.':
-          // Black/blank screen
+          // Black/blank screen - hide current slide
           event.preventDefault()
           clearSlide.mutate()
+          break
+
+        case 's':
+        case 'S':
+          // Show slide (restore from hidden)
+          event.preventDefault()
+          showSlide.mutate()
           break
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [state?.isPresenting, navigateSlide, stopPresentation, clearSlide])
+  }, [
+    canNavigate,
+    hasQueueSlide,
+    navigateSlide,
+    navigateQueueSlide,
+    stopPresentation,
+    clearSlide,
+    showSlide,
+  ])
 }

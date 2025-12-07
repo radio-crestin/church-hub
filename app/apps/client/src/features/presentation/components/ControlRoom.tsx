@@ -5,28 +5,29 @@ import {
   EyeOff,
   Loader2,
   MonitorUp,
+  Trash2,
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { SlideEditorModal } from '~/features/programs/components/SlideEditorModal'
-import { useProgram, usePrograms } from '~/features/programs/hooks'
-import type { Slide } from '~/features/programs/types'
+import { QueueList, useClearQueue, useQueue } from '~/features/queue'
+import { ConfirmModal } from '~/ui/modal'
+import { useToast } from '~/ui/toast'
 import { LivePreview } from './LivePreview'
-import { SlidePreview } from './SlidePreview'
 import {
   useClearSlide,
   useKeyboardShortcuts,
+  useNavigateQueueSlide,
   useNavigateSlide,
   usePresentationState,
   useShowSlide,
-  useStartPresentation,
   useUpdatePresentationState,
   useWebSocket,
 } from '../hooks'
 
 export function ControlRoom() {
-  const { t } = useTranslation('presentation')
+  const { t } = useTranslation(['presentation', 'queue'])
+  const { showToast } = useToast()
 
   // Connect to WebSocket for real-time updates
   useWebSocket()
@@ -35,65 +36,40 @@ export function ControlRoom() {
   useKeyboardShortcuts()
 
   const { data: state } = usePresentationState()
-  const { data: programs, isLoading: programsLoading } = usePrograms()
+  const { data: queue } = useQueue()
+  const clearQueueMutation = useClearQueue()
+  const [showClearModal, setShowClearModal] = useState(false)
 
   const navigateSlide = useNavigateSlide()
-  const startPresentation = useStartPresentation()
+  const navigateQueueSlide = useNavigateQueueSlide()
   const clearSlide = useClearSlide()
   const showSlide = useShowSlide()
   const updateState = useUpdatePresentationState()
 
-  const [selectedProgramId, setSelectedProgramId] = useState<number | null>(
-    null,
-  )
-  const [editingSlide, setEditingSlide] = useState<Slide | null>(null)
-  const [isEditorOpen, setIsEditorOpen] = useState(false)
-
-  // Set initial program from presentation state or first available
-  useEffect(() => {
-    if (state?.programId) {
-      setSelectedProgramId(state.programId)
-    } else if (programs?.length && !selectedProgramId) {
-      setSelectedProgramId(programs[0].id)
-    }
-  }, [state?.programId, programs, selectedProgramId])
-
-  const { data: selectedProgram, isLoading: programLoading } = useProgram(
-    selectedProgramId ?? 0,
-  )
-
-  // Click on slide = select it, only display if currently showing
-  const handleSlideClick = async (slideId: number) => {
-    // First start presentation if not started
-    if (!state?.isPresenting && selectedProgramId) {
-      await startPresentation.mutateAsync(selectedProgramId)
-    }
-
-    // If currently showing content, navigate to display the slide
-    // If hidden, only select it (update lastSlideId) without displaying
-    if (state?.currentSlideId) {
-      await navigateSlide.mutateAsync({ direction: 'goto', slideId })
-    } else {
-      // Just select the slide without displaying
-      await updateState.mutateAsync({ lastSlideId: slideId })
-    }
-  }
+  // Determine if we're navigating queue slides or program slides
+  const hasQueueSlide =
+    !!state?.currentQueueItemId || !!state?.currentSongSlideId
 
   const handlePrev = async () => {
-    await navigateSlide.mutateAsync({ direction: 'prev' })
+    if (hasQueueSlide) {
+      await navigateQueueSlide.mutateAsync('prev')
+    } else {
+      await navigateSlide.mutateAsync({ direction: 'prev' })
+    }
   }
 
   const handleNext = async () => {
-    await navigateSlide.mutateAsync({ direction: 'next' })
+    if (hasQueueSlide) {
+      await navigateQueueSlide.mutateAsync('next')
+    } else {
+      await navigateSlide.mutateAsync({ direction: 'next' })
+    }
   }
 
-  // Show = display the last slide (or start presentation with first slide)
+  // Show = display the last slide
   const handleShow = async () => {
-    if (state?.lastSlideId) {
+    if (state?.lastSlideId || state?.currentSongSlideId) {
       await showSlide.mutateAsync()
-    } else if (selectedProgramId) {
-      // If no last slide, start presentation
-      await startPresentation.mutateAsync(selectedProgramId)
     }
   }
 
@@ -102,51 +78,37 @@ export function ControlRoom() {
     await clearSlide.mutateAsync()
   }
 
-  // Quick edit slide
-  const handleEditSlide = (slide: Slide) => {
-    setEditingSlide(slide)
-    setIsEditorOpen(true)
-  }
-
-  const handleCloseEditor = () => {
-    setIsEditorOpen(false)
-    setEditingSlide(null)
-  }
-
-  // After saving, display the edited slide
-  const handleSaveSlide = async (savedSlide: Slide) => {
-    // Start presentation if not started
-    if (!state?.isPresenting && selectedProgramId) {
-      await startPresentation.mutateAsync(selectedProgramId)
-    }
-    // Navigate to the saved slide to display it
-    await navigateSlide.mutateAsync({
-      direction: 'goto',
-      slideId: savedSlide.id,
+  // Handle slide click from queue - update presentation state
+  const handleSlideClick = async (queueItemId: number, slideId: number) => {
+    // Update presentation state with the selected song slide
+    await updateState.mutateAsync({
+      currentQueueItemId: queueItemId,
+      currentSongSlideId: slideId,
     })
   }
 
-  const hasCurrentSlide = !!state?.currentSlideId
-  const hasLastSlide = !!state?.lastSlideId
-  const canShow = !hasCurrentSlide && (hasLastSlide || selectedProgramId)
-  const canNavigate = state?.isPresenting
-
-  if (programsLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
-      </div>
-    )
+  const handleClearConfirm = async () => {
+    setShowClearModal(false)
+    const success = await clearQueueMutation.mutateAsync()
+    if (success) {
+      showToast(t('queue:messages.cleared'), 'success')
+    }
   }
 
+  const hasCurrentSlide = !!state?.currentSlideId || !!state?.currentSongSlideId
+  const hasLastSlide = !!state?.lastSlideId || !!state?.currentSongSlideId
+  const canShow = !hasCurrentSlide && hasLastSlide
+  const canNavigate = state?.isPresenting || hasQueueSlide
+  const isNavigating = navigateSlide.isPending || navigateQueueSlide.isPending
+
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col h-full gap-4">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
+      <div className="flex items-center justify-between flex-wrap gap-4 flex-shrink-0">
         <div className="flex items-center gap-3">
           <MonitorUp size={24} className="text-indigo-600" />
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {t('controlRoom.title')}
+            {t('presentation:controlRoom.title')}
           </h1>
         </div>
 
@@ -159,14 +121,14 @@ export function ControlRoom() {
               onClick={handleHide}
               disabled={clearSlide.isPending}
               className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
-              title={t('controls.hide')}
+              title={t('presentation:controls.hide')}
             >
               {clearSlide.isPending ? (
                 <Loader2 size={20} className="animate-spin" />
               ) : (
                 <EyeOff size={20} />
               )}
-              <span>{t('controls.hide')}</span>
+              <span>{t('presentation:controls.hide')}</span>
             </button>
           ) : (
             <button
@@ -174,27 +136,27 @@ export function ControlRoom() {
               onClick={handleShow}
               disabled={!canShow || showSlide.isPending}
               className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
-              title={t('controls.show')}
+              title={t('presentation:controls.show')}
             >
               {showSlide.isPending ? (
                 <Loader2 size={20} className="animate-spin" />
               ) : (
                 <Eye size={20} />
               )}
-              <span>{t('controls.show')}</span>
+              <span>{t('presentation:controls.show')}</span>
             </button>
           )}
         </div>
       </div>
 
       {/* Main Content: Two-Column Layout */}
-      <div className="flex flex-col lg:flex-row gap-4">
+      <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0 h-full">
         {/* Left Column: Preview + Controls */}
-        <div className="lg:w-2/3 space-y-4">
+        <div className="lg:w-2/3 space-y-4 flex-shrink-0 overflow-auto">
           {/* Live Preview */}
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-              {t('controlRoom.preview')}
+              {t('presentation:controlRoom.preview')}
             </h2>
             <LivePreview />
           </div>
@@ -206,73 +168,78 @@ export function ControlRoom() {
               <button
                 type="button"
                 onClick={handlePrev}
-                disabled={!canNavigate || navigateSlide.isPending}
+                disabled={!canNavigate || isNavigating}
                 className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
-                title={t('controls.prev')}
+                title={t('presentation:controls.prev')}
               >
                 <ChevronLeft size={20} />
-                <span>{t('controls.prev')}</span>
+                <span>{t('presentation:controls.prev')}</span>
               </button>
 
               {/* Next Button */}
               <button
                 type="button"
                 onClick={handleNext}
-                disabled={!canNavigate || navigateSlide.isPending}
+                disabled={!canNavigate || isNavigating}
                 className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
-                title={t('controls.next')}
+                title={t('presentation:controls.next')}
               >
-                <span>{t('controls.next')}</span>
+                <span>{t('presentation:controls.next')}</span>
                 <ChevronRight size={20} />
               </button>
             </div>
           </div>
         </div>
 
-        {/* Right Column: Slide List */}
-        <div className="lg:w-1/3">
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 h-full">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-              {t('controlRoom.slides')}
-            </h2>
+        {/* Right Column: Queue List */}
+        <div className="lg:w-1/3 flex flex-col min-h-0 h-full overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 flex-1 flex flex-col min-h-0 h-full overflow-hidden">
+            {/* Queue Header */}
+            <div className="flex items-center justify-between mb-3 flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {t('queue:title')}
+                </h2>
+                {queue && queue.length > 0 && (
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    ({t('queue:songCount', { count: queue.length })})
+                  </span>
+                )}
+              </div>
+              {queue && queue.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowClearModal(true)}
+                  className="flex items-center gap-1.5 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                >
+                  <Trash2 size={14} />
+                  {t('queue:actions.clear')}
+                </button>
+              )}
+            </div>
 
-            {programLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
-              </div>
-            ) : selectedProgram?.slides && selectedProgram.slides.length > 0 ? (
-              <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2">
-                {selectedProgram.slides.map((slide) => (
-                  <SlidePreview
-                    key={slide.id}
-                    slide={slide}
-                    isActive={
-                      (state?.currentSlideId ?? state?.lastSlideId) === slide.id
-                    }
-                    onClick={() => handleSlideClick(slide.id)}
-                    onEdit={() => handleEditSlide(slide)}
-                  />
-                ))}
-              </div>
-            ) : (
-              <p className="text-center py-8 text-gray-500 dark:text-gray-400">
-                {t('controlRoom.noSlides')}
-              </p>
-            )}
+            <div className="flex-1 overflow-y-auto pr-2 min-h-0">
+              <QueueList
+                activeSlideId={state?.currentSongSlideId ?? null}
+                onSlideClick={handleSlideClick}
+                hideHeader
+              />
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Quick Edit Slide Modal */}
-      {selectedProgramId && (
-        <SlideEditorModal
-          isOpen={isEditorOpen}
-          onClose={handleCloseEditor}
-          onSave={handleSaveSlide}
-          programId={selectedProgramId}
-          slide={editingSlide}
-        />
-      )}
+      {/* Clear Queue Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showClearModal}
+        title={t('queue:confirmClear.title')}
+        message={t('queue:confirmClear.message')}
+        confirmLabel={t('queue:actions.clear')}
+        cancelLabel={t('common:cancel')}
+        onConfirm={handleClearConfirm}
+        onCancel={() => setShowClearModal(false)}
+        variant="danger"
+      />
     </div>
   )
 }
