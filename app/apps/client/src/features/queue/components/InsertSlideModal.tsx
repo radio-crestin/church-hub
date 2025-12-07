@@ -166,31 +166,33 @@ export function InsertSlideModal({
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {/* Template Selector */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {t('insertSlide.selectTemplate')}
-            </label>
-            <div className="flex gap-2">
-              {TEMPLATES.map(({ type, icon: Icon }) => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => setSelectedTemplate(type)}
-                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border transition-colors ${
-                    selectedTemplate === type
-                      ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
-                      : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-                  }`}
-                >
-                  <Icon size={18} />
-                  <span className="text-sm font-medium">
-                    {t(`slideTemplates.${type}`)}
-                  </span>
-                </button>
-              ))}
+          {/* Template Selector - only show in edit mode or when no initial template */}
+          {(isEditMode || !initialTemplate) && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {t('insertSlide.selectTemplate')}
+              </label>
+              <div className="flex gap-2">
+                {TEMPLATES.map(({ type, icon: Icon }) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => setSelectedTemplate(type)}
+                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border transition-colors ${
+                      selectedTemplate === type
+                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
+                        : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    <Icon size={18} />
+                    <span className="text-sm font-medium">
+                      {t(`slideTemplates.${type}`)}
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Content Editor */}
           <div>
