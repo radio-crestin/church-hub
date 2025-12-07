@@ -124,8 +124,10 @@ export function searchSongs(query: string): SongSearchResult[] {
     `)
 
     // Escape special FTS5 characters and add prefix matching
+    // FTS5 special chars: " ' * ( ) ^ : + - \ need to be removed or replaced
     const escapedQuery = query
       .replace(/['"]/g, '')
+      .replace(/[*()^:+\-\\]/g, ' ')
       .split(/\s+/)
       .filter((term) => term.length > 0)
       .map((term) => `"${term}"*`)
@@ -153,7 +155,7 @@ export function searchSongs(query: string): SongSearchResult[] {
       matchedContent: r.matched_content,
     }))
   } catch (error) {
-    log('error', `Failed to search songs: ${error}`)
+    log('error', `Failed to search songs with query "${query}": ${error}`)
     return []
   }
 }

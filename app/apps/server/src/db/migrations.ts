@@ -203,11 +203,12 @@ CREATE INDEX IF NOT EXISTS idx_song_slides_sort_order ON song_slides(sort_order)
 
 -- Full-Text Search Virtual Table for Songs
 -- Enables fast text search across song titles and slide content
+-- Uses remove_diacritics=2 for accent-insensitive search (e.g., "inger" matches "înger")
 CREATE VIRTUAL TABLE IF NOT EXISTS songs_fts USING fts5(
   song_id UNINDEXED,
   title,
   content,
-  tokenize='unicode61'
+  tokenize='unicode61 remove_diacritics 2'
 );
 
 -- Presentation Queue Table
@@ -371,6 +372,13 @@ export function runMigrations(db: Database): void {
       db.exec(
         `ALTER TABLE presentation_state DROP COLUMN current_queue_item_id`,
       )
+    }
+
+    // Migration: Recreate songs_fts table with updated tokenizer for diacritic support
+    // Drop the old FTS table so it gets recreated with remove_diacritics=2
+    if (tableExists(db, 'songs_fts')) {
+      log('info', 'Dropping songs_fts table to recreate with diacritic support')
+      db.exec('DROP TABLE IF EXISTS songs_fts')
     }
 
     log('debug', 'Loading embedded schema')
