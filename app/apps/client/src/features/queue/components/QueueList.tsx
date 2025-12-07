@@ -39,6 +39,7 @@ interface SortableQueueItemProps {
   activeQueueItemId: number | null
   onSlideClick: (slideId: number) => void
   onEditSong: (songId: number) => void
+  onEditSlide: (item: QueueItem) => void
   onInsertSlideAfter: (itemId: number) => void
   onStandaloneSlideClick: () => void
 }
@@ -49,6 +50,7 @@ function SortableQueueItem({
   activeQueueItemId,
   onSlideClick,
   onEditSong,
+  onEditSlide,
   onInsertSlideAfter,
   onStandaloneSlideClick,
 }: SortableQueueItemProps) {
@@ -88,6 +90,7 @@ function SortableQueueItem({
           isActive={isActive}
           onRemove={handleRemove}
           onClick={onStandaloneSlideClick}
+          onEditSlide={() => onEditSlide(item)}
           onInsertSlideAfter={() => onInsertSlideAfter(item.id)}
           dragHandleProps={{ ...attributes, ...listeners }}
         />
@@ -136,6 +139,9 @@ export function QueueList({
 
   const [showClearModal, setShowClearModal] = useState(false)
   const [editingSongId, setEditingSongId] = useState<number | null>(null)
+  const [editingSlideItem, setEditingSlideItem] = useState<QueueItem | null>(
+    null,
+  )
   const [insertAfterItemId, setInsertAfterItemId] = useState<number | null>(
     null,
   )
@@ -262,6 +268,7 @@ export function QueueList({
                 activeQueueItemId={activeQueueItemId}
                 onSlideClick={(slideId) => handleSlideClick(item.id, slideId)}
                 onEditSong={setEditingSongId}
+                onEditSlide={setEditingSlideItem}
                 onInsertSlideAfter={setInsertAfterItemId}
                 onStandaloneSlideClick={() =>
                   handleStandaloneSlideClick(item.id)
@@ -302,8 +309,20 @@ export function QueueList({
           isOpen={insertAfterItemId !== null}
           afterItemId={insertAfterItemId}
           onClose={() => setInsertAfterItemId(null)}
-          onInserted={() => {
+          onSaved={() => {
             // Queue will be invalidated automatically by the insert mutation
+          }}
+        />
+      )}
+
+      {/* Edit Slide Modal */}
+      {editingSlideItem !== null && (
+        <InsertSlideModal
+          isOpen={editingSlideItem !== null}
+          editingItem={editingSlideItem}
+          onClose={() => setEditingSlideItem(null)}
+          onSaved={() => {
+            // Queue will be invalidated automatically by the update mutation
           }}
         />
       )}
