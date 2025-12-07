@@ -7,7 +7,7 @@ import {
   type QueueItemContextMenuHandle,
 } from './QueueItemContextMenu'
 import { QueueSlidePreview } from './QueueSlidePreview'
-import type { QueueItem } from '../types'
+import type { QueueItem, SlideTemplate } from '../types'
 
 interface QueueSongItemProps {
   item: QueueItem
@@ -19,7 +19,8 @@ interface QueueSongItemProps {
   onSlideClick: (slideId: number) => void
   onSongClick: () => void
   onEditSong: () => void
-  onInsertSlideAfter: () => void
+  onInsertSongAfter: () => void
+  onInsertSlideAfter: (template: SlideTemplate) => void
   dragHandleProps?: React.HTMLAttributes<HTMLDivElement>
 }
 
@@ -33,6 +34,7 @@ export function QueueSongItem({
   onSlideClick,
   onSongClick,
   onEditSong,
+  onInsertSongAfter,
   onInsertSlideAfter,
   dragHandleProps,
 }: QueueSongItemProps) {
@@ -126,6 +128,7 @@ export function QueueSongItem({
         <QueueItemContextMenu
           ref={contextMenuRef}
           onEditSong={onEditSong}
+          onInsertSongAfter={onInsertSongAfter}
           onInsertSlideAfter={onInsertSlideAfter}
           onRemove={onRemove}
         />

@@ -10,7 +10,15 @@ import {
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { QueueList, useClearQueue, useQueue } from '~/features/queue'
+import {
+  AddToQueueMenu,
+  InsertSlideModal,
+  QueueList,
+  useClearQueue,
+  useQueue,
+} from '~/features/queue'
+import type { SlideTemplate } from '~/features/queue/types'
+import { SongPickerModal } from '~/features/songs/components'
 import { ConfirmModal } from '~/ui/modal'
 import { useToast } from '~/ui/toast'
 import { LivePreview } from './LivePreview'
@@ -39,6 +47,10 @@ export function ControlRoom() {
   const { data: queue } = useQueue()
   const clearQueueMutation = useClearQueue()
   const [showClearModal, setShowClearModal] = useState(false)
+  const [showSongPicker, setShowSongPicker] = useState(false)
+  const [showSlideInsert, setShowSlideInsert] = useState(false)
+  const [slideInsertTemplate, setSlideInsertTemplate] =
+    useState<SlideTemplate>('announcement')
 
   const navigateSlide = useNavigateSlide()
   const navigateQueueSlide = useNavigateQueueSlide()
@@ -94,6 +106,15 @@ export function ControlRoom() {
     if (success) {
       showToast(t('queue:messages.cleared'), 'success')
     }
+  }
+
+  const handleAddSong = () => {
+    setShowSongPicker(true)
+  }
+
+  const handleAddSlide = (template: SlideTemplate) => {
+    setSlideInsertTemplate(template)
+    setShowSlideInsert(true)
   }
 
   const hasCurrentSlide = !!state?.currentSlideId || !!state?.currentSongSlideId
@@ -207,16 +228,22 @@ export function ControlRoom() {
                   </span>
                 )}
               </div>
-              {queue && queue.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setShowClearModal(true)}
-                  className="flex items-center gap-1.5 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-                >
-                  <Trash2 size={14} />
-                  {t('queue:actions.clear')}
-                </button>
-              )}
+              <div className="flex items-center gap-2">
+                <AddToQueueMenu
+                  onAddSong={handleAddSong}
+                  onAddSlide={handleAddSlide}
+                />
+                {queue && queue.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowClearModal(true)}
+                    className="flex items-center gap-1.5 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                  >
+                    <Trash2 size={14} />
+                    {t('queue:actions.clear')}
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="flex-1 overflow-y-auto pr-2 min-h-0">
@@ -241,6 +268,19 @@ export function ControlRoom() {
         onConfirm={handleClearConfirm}
         onCancel={() => setShowClearModal(false)}
         variant="danger"
+      />
+
+      {/* Song Picker Modal */}
+      <SongPickerModal
+        isOpen={showSongPicker}
+        onClose={() => setShowSongPicker(false)}
+      />
+
+      {/* Insert Slide Modal */}
+      <InsertSlideModal
+        isOpen={showSlideInsert}
+        onClose={() => setShowSlideInsert(false)}
+        initialTemplate={slideInsertTemplate}
       />
     </div>
   )

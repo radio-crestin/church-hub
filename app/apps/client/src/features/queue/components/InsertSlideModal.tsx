@@ -12,10 +12,12 @@ import type { QueueItem, SlideTemplate } from '../types'
 interface InsertSlideModalProps {
   isOpen: boolean
   onClose: () => void
-  /** For insert mode: ID of the item to insert after */
+  /** For insert mode: ID of the item to insert after. If not provided, append to end. */
   afterItemId?: number
   /** For edit mode: the queue item being edited */
   editingItem?: QueueItem | null
+  /** Pre-select a template when opening */
+  initialTemplate?: SlideTemplate
   onSaved?: () => void
 }
 
@@ -29,6 +31,7 @@ export function InsertSlideModal({
   onClose,
   afterItemId,
   editingItem,
+  initialTemplate,
   onSaved,
 }: InsertSlideModalProps) {
   const { t } = useTranslation('queue')
@@ -76,14 +79,14 @@ export function InsertSlideModal({
         setContent(editingItem.slideContent ?? '')
         editor?.commands.setContent(editingItem.slideContent ?? '')
       } else {
-        setSelectedTemplate('announcement')
+        setSelectedTemplate(initialTemplate ?? 'announcement')
         setContent('')
         editor?.commands.setContent('')
       }
     } else {
       dialogRef.current?.close()
     }
-  }, [isOpen, editor, editingItem])
+  }, [isOpen, editor, editingItem, initialTemplate])
 
   const handleSave = async () => {
     if (!content.trim()) {
