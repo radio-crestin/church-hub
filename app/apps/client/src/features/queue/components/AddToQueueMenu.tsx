@@ -1,4 +1,4 @@
-import { FileText, Megaphone, Music, Plus } from 'lucide-react'
+import { FileText, Megaphone, Music, Plus, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -12,40 +12,15 @@ interface AddToQueueMenuProps {
 export function AddToQueueMenu({ onAddSong, onAddSlide }: AddToQueueMenuProps) {
   const { t } = useTranslation('queue')
   const [isOpen, setIsOpen] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
-  const buttonRef = useRef<HTMLButtonElement>(null)
+  const dialogRef = useRef<HTMLDialogElement>(null)
 
-  // Close menu when clicking outside
+  // Dialog open/close handling
   useEffect(() => {
-    if (!isOpen) return
-
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        menuRef.current &&
-        !menuRef.current.contains(e.target as Node) &&
-        buttonRef.current &&
-        !buttonRef.current.contains(e.target as Node)
-      ) {
-        setIsOpen(false)
-      }
+    if (isOpen) {
+      dialogRef.current?.showModal()
+    } else {
+      dialogRef.current?.close()
     }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [isOpen])
-
-  // Close menu on Escape key
-  useEffect(() => {
-    if (!isOpen) return
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setIsOpen(false)
-      }
-    }
-
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
   }, [isOpen])
 
   const handleAction = (action: () => void) => {
@@ -53,49 +28,109 @@ export function AddToQueueMenu({ onAddSong, onAddSlide }: AddToQueueMenuProps) {
     action()
   }
 
+  const handleClose = () => {
+    setIsOpen(false)
+  }
+
   return (
-    <div className="relative">
+    <>
       <button
-        ref={buttonRef}
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => setIsOpen(true)}
         className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-md transition-colors"
       >
         <Plus size={14} />
         {t('addToQueue.button')}
       </button>
 
-      {isOpen && (
-        <div
-          ref={menuRef}
-          className="absolute right-0 top-full mt-1 z-50 min-w-[180px] bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1"
-        >
-          <button
-            type="button"
-            onClick={() => handleAction(onAddSong)}
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-          >
-            <Music size={14} />
-            {t('addToQueue.searchSong')}
-          </button>
-          <button
-            type="button"
-            onClick={() => handleAction(() => onAddSlide('announcement'))}
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-          >
-            <Megaphone size={14} />
-            {t('addToQueue.announcement')}
-          </button>
-          <button
-            type="button"
-            onClick={() => handleAction(() => onAddSlide('versete_tineri'))}
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-          >
-            <FileText size={14} />
-            {t('addToQueue.verseteTineri')}
-          </button>
+      <dialog
+        ref={dialogRef}
+        onCancel={handleClose}
+        onClick={(e) => {
+          if (e.target === dialogRef.current) handleClose()
+        }}
+        className="fixed inset-0 m-auto w-full max-w-sm p-0 bg-white dark:bg-gray-800 rounded-xl shadow-xl backdrop:bg-black/50"
+      >
+        <div className="flex flex-col">
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              {t('addToQueue.title')}
+            </h2>
+            <button
+              type="button"
+              onClick={handleClose}
+              className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              <X size={20} className="text-gray-500" />
+            </button>
+          </div>
+
+          {/* Options */}
+          <div className="p-4 space-y-2">
+            <button
+              type="button"
+              onClick={() => handleAction(onAddSong)}
+              className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+                <Music
+                  size={20}
+                  className="text-indigo-600 dark:text-indigo-400"
+                />
+              </div>
+              <div>
+                <div className="font-medium">{t('addToQueue.searchSong')}</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  {t('addToQueue.searchSongDescription')}
+                </div>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleAction(() => onAddSlide('announcement'))}
+              className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+                <Megaphone
+                  size={20}
+                  className="text-orange-600 dark:text-orange-400"
+                />
+              </div>
+              <div>
+                <div className="font-medium">
+                  {t('addToQueue.announcement')}
+                </div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  {t('addToQueue.announcementDescription')}
+                </div>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleAction(() => onAddSlide('versete_tineri'))}
+              className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                <FileText
+                  size={20}
+                  className="text-green-600 dark:text-green-400"
+                />
+              </div>
+              <div>
+                <div className="font-medium">
+                  {t('addToQueue.verseteTineri')}
+                </div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  {t('addToQueue.verseteTineriDescription')}
+                </div>
+              </div>
+            </button>
+          </div>
         </div>
-      )}
-    </div>
+      </dialog>
+    </>
   )
 }
