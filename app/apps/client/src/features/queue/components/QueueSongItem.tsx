@@ -17,6 +17,7 @@ interface QueueSongItemProps {
   onToggleExpand: () => void
   onRemove: () => void
   onSlideClick: (slideId: number) => void
+  onSongClick: () => void
   onEditSong: () => void
   onInsertSlideAfter: () => void
   dragHandleProps?: React.HTMLAttributes<HTMLDivElement>
@@ -30,6 +31,7 @@ export function QueueSongItem({
   onToggleExpand,
   onRemove,
   onSlideClick,
+  onSongClick,
   onEditSong,
   onInsertSlideAfter,
   dragHandleProps,
@@ -86,33 +88,39 @@ export function QueueSongItem({
           )}
         </button>
 
-        {/* Song Icon */}
-        <div
-          className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-            isAnySlideActive
-              ? 'bg-indigo-600 text-white'
-              : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-          }`}
+        {/* Song Icon & Title - Clickable to select first slide */}
+        <button
+          type="button"
+          onClick={onSongClick}
+          className="flex items-center gap-3 flex-1 min-w-0 text-left"
         >
-          <Music size={16} />
-        </div>
-
-        {/* Song Title & Info */}
-        <div className="flex-1 min-w-0">
           <div
-            className={`font-medium text-sm truncate ${
+            className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
               isAnySlideActive
-                ? 'text-indigo-900 dark:text-indigo-100'
-                : 'text-gray-900 dark:text-white'
+                ? 'bg-indigo-600 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
             }`}
           >
-            {item.song?.title}
+            <Music size={16} />
           </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            {item.slides.length} slides
-            {item.song?.categoryName && ` • ${item.song.categoryName}`}
+
+          {/* Song Title & Info */}
+          <div className="flex-1 min-w-0">
+            <div
+              className={`font-medium text-sm truncate ${
+                isAnySlideActive
+                  ? 'text-indigo-900 dark:text-indigo-100'
+                  : 'text-gray-900 dark:text-white'
+              }`}
+            >
+              {item.song?.title}
+            </div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              {item.slides.length} slides
+              {item.song?.categoryName && ` • ${item.song.categoryName}`}
+            </div>
           </div>
-        </div>
+        </button>
 
         {/* Context Menu */}
         <QueueItemContextMenu

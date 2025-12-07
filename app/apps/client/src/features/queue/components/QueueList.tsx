@@ -38,6 +38,7 @@ interface SortableQueueItemProps {
   activeSlideId: number | null
   activeQueueItemId: number | null
   onSlideClick: (slideId: number) => void
+  onSongClick: () => void
   onEditSong: (songId: number) => void
   onEditSlide: (item: QueueItem) => void
   onInsertSlideAfter: (itemId: number) => void
@@ -49,6 +50,7 @@ function SortableQueueItem({
   activeSlideId,
   activeQueueItemId,
   onSlideClick,
+  onSongClick,
   onEditSong,
   onEditSlide,
   onInsertSlideAfter,
@@ -108,6 +110,7 @@ function SortableQueueItem({
         onToggleExpand={handleToggleExpand}
         onRemove={handleRemove}
         onSlideClick={onSlideClick}
+        onSongClick={onSongClick}
         onEditSong={() => item.songId && onEditSong(item.songId)}
         onInsertSlideAfter={() => onInsertSlideAfter(item.id)}
         dragHandleProps={{ ...attributes, ...listeners }}
@@ -200,6 +203,17 @@ export function QueueList({
     onSlideClick(queueItemId, -1)
   }
 
+  const handleSongClick = (item: QueueItem) => {
+    // Auto-expand the song
+    if (!item.isExpanded) {
+      setExpanded.mutate({ id: item.id, expanded: true })
+    }
+    // Select the first slide if available
+    if (item.slides.length > 0) {
+      onSlideClick(item.id, item.slides[0].id)
+    }
+  }
+
   const handleClearConfirm = async () => {
     setShowClearModal(false)
     const success = await clearQueueMutation.mutateAsync()
@@ -267,6 +281,7 @@ export function QueueList({
                 activeSlideId={activeSlideId}
                 activeQueueItemId={activeQueueItemId}
                 onSlideClick={(slideId) => handleSlideClick(item.id, slideId)}
+                onSongClick={() => handleSongClick(item)}
                 onEditSong={setEditingSongId}
                 onEditSlide={setEditingSlideItem}
                 onInsertSlideAfter={setInsertAfterItemId}
