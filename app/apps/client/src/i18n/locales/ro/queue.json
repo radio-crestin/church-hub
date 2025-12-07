@@ -1,0 +1,46 @@
+{
+  "title": "Coadă",
+  "empty": "Coada este goală",
+  "emptyDescription": "Adaugă cântări pentru a începe prezentarea",
+  "songCount_one": "{{count}} cântare",
+  "songCount_few": "{{count}} cântări",
+  "songCount_other": "{{count}} cântări",
+  "itemCount_one": "{{count}} element",
+  "itemCount_few": "{{count}} elemente",
+  "itemCount_other": "{{count}} elemente",
+  "actions": {
+    "addToQueue": "Adaugă în coadă",
+    "presentNow": "Prezintă acum",
+    "remove": "Șterge",
+    "clear": "Golește coada",
+    "expand": "Extinde",
+    "collapse": "Restrânge",
+    "editSong": "Editează cântarea",
+    "insertSlide": "Inserează slide după",
+    "moreOptions": "Mai multe opțiuni",
+    "cancel": "Anulează"
+  },
+  "messages": {
+    "added": "Adăugat în coadă",
+    "removed": "Șters din coadă",
+    "cleared": "Coada a fost golită",
+    "presenting": "Se prezintă acum",
+    "error": "A apărut o eroare",
+    "slideInserted": "Slide-ul a fost inserat"
+  },
+  "confirmClear": {
+    "title": "Golești coada?",
+    "message": "Aceasta va șterge toate elementele din coadă."
+  },
+  "slideTemplates": {
+    "announcement": "Anunț",
+    "versete_tineri": "Versete tineri"
+  },
+  "insertSlide": {
+    "title": "Inserează slide",
+    "selectTemplate": "Selectează șablonul",
+    "content": "Conținut",
+    "insert": "Inserează",
+    "errorEmpty": "Te rugăm să adaugi conținut slide-ului"
+  }
+}

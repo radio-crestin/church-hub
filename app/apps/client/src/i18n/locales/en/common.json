@@ -1,7 +1,11 @@
 {
   "buttons": {
     "goBack": "Go back",
-    "startOver": "Start Over"
+    "startOver": "Start Over",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "save": "Save"
   },
   "errors": {
     "pageNotFound": "The page you are looking for does not exist."

@@ -1,0 +1,59 @@
+{
+  "title": "Songs",
+  "actions": {
+    "create": "New Song",
+    "save": "Save",
+    "delete": "Delete",
+    "back": "Back to Songs",
+    "import": "Import from Text",
+    "addSlide": "Add Slide",
+    "cloneSlide": "Clone Slide"
+  },
+  "editor": {
+    "titlePlaceholder": "Enter song title...",
+    "categoryPlaceholder": "Select category...",
+    "slides": "Slides",
+    "slideNumber": "Slide {{number}}",
+    "emptySlide": "Empty slide - click to edit",
+    "noSlides": "No slides yet",
+    "saveFirst": "Save the song to add slides",
+    "undo": "Undo",
+    "redo": "Redo"
+  },
+  "search": {
+    "placeholder": "Search songs...",
+    "noResults": "No songs found for \"{{query}}\"",
+    "resultsCount": "{{count}} songs found"
+  },
+  "import": {
+    "title": "Import from Text",
+    "description": "Paste your song text below. Each paragraph will become a separate slide.",
+    "placeholder": "Paste song lyrics here...",
+    "preview": "Preview: {{count}} slides",
+    "confirm": "Import",
+    "cancel": "Cancel"
+  },
+  "category": {
+    "none": "No Category",
+    "create": "Create",
+    "name": "Category"
+  },
+  "messages": {
+    "saved": "Song saved successfully",
+    "deleted": "Song deleted successfully",
+    "error": "An error occurred",
+    "slideSaved": "Slide saved",
+    "slideDeleted": "Slide deleted",
+    "slideCloned": "Slide cloned",
+    "reorderFailed": "Failed to reorder slides",
+    "categoryCreated": "Category created"
+  },
+  "modal": {
+    "deleteTitle": "Delete Song",
+    "deleteMessage": "Are you sure you want to delete this song? This action cannot be undone.",
+    "deleteSlideTitle": "Delete Slide",
+    "deleteSlideMessage": "Are you sure you want to delete this slide?"
+  },
+  "noSongs": "No songs yet",
+  "noSongsDescription": "Create your first song to get started"
+}

@@ -240,3 +240,28 @@ export async function showSlide(): Promise<PresentationState> {
   const result = await response.json()
   return result.data
 }
+
+/**
+ * Navigates to next or previous slide in the queue
+ */
+export async function navigateQueueSlide(
+  direction: 'next' | 'prev',
+): Promise<PresentationState> {
+  log('debug', `Navigating queue: ${direction}`)
+
+  const response = await fetch(
+    `${getApiUrl()}/api/presentation/navigate-queue`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ direction }),
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error('Failed to navigate queue')
+  }
+
+  const result = await response.json()
+  return result.data
+}
