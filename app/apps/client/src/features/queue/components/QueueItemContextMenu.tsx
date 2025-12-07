@@ -1,4 +1,13 @@
-import { Edit3, MoreVertical, PlusCircle, Trash2 } from 'lucide-react'
+import {
+  ChevronRight,
+  Edit3,
+  FileText,
+  Megaphone,
+  MoreVertical,
+  Music,
+  PlusCircle,
+  Trash2,
+} from 'lucide-react'
 import {
   forwardRef,
   useEffect,
@@ -8,6 +17,8 @@ import {
 } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import type { SlideTemplate } from '../types'
+
 export interface QueueItemContextMenuHandle {
   openMenu: () => void
 }
@@ -15,7 +26,8 @@ export interface QueueItemContextMenuHandle {
 interface QueueItemContextMenuProps {
   onEditSong?: () => void
   onEditSlide?: () => void
-  onInsertSlideAfter: () => void
+  onInsertSongAfter: () => void
+  onInsertSlideAfter: (template: SlideTemplate) => void
   onRemove: () => void
 }
 
@@ -23,11 +35,12 @@ export const QueueItemContextMenu = forwardRef<
   QueueItemContextMenuHandle,
   QueueItemContextMenuProps
 >(function QueueItemContextMenu(
-  { onEditSong, onEditSlide, onInsertSlideAfter, onRemove },
+  { onEditSong, onEditSlide, onInsertSongAfter, onInsertSlideAfter, onRemove },
   ref,
 ) {
   const { t } = useTranslation('queue')
   const [isOpen, setIsOpen] = useState(false)
+  const [showInsertSubmenu, setShowInsertSubmenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
 
@@ -111,14 +124,55 @@ export const QueueItemContextMenu = forwardRef<
               {t('actions.editSlide')}
             </button>
           )}
-          <button
-            type="button"
-            onClick={() => handleAction(onInsertSlideAfter)}
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+          {/* Insert After with submenu */}
+          <div
+            className="relative"
+            onMouseEnter={() => setShowInsertSubmenu(true)}
+            onMouseLeave={() => setShowInsertSubmenu(false)}
           >
-            <PlusCircle size={14} />
-            {t('actions.insertSlide')}
-          </button>
+            <button
+              type="button"
+              className="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              <span className="flex items-center gap-2">
+                <PlusCircle size={14} />
+                {t('actions.insertAfter')}
+              </span>
+              <ChevronRight size={14} />
+            </button>
+            {showInsertSubmenu && (
+              <div className="absolute left-full top-0 ml-1 min-w-[160px] bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1">
+                <button
+                  type="button"
+                  onClick={() => handleAction(onInsertSongAfter)}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  <Music size={14} />
+                  {t('addToQueue.searchSong')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleAction(() => onInsertSlideAfter('announcement'))
+                  }
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  <Megaphone size={14} />
+                  {t('addToQueue.announcement')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleAction(() => onInsertSlideAfter('versete_tineri'))
+                  }
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  <FileText size={14} />
+                  {t('addToQueue.verseteTineri')}
+                </button>
+              </div>
+            )}
+          </div>
           <div className="border-t border-gray-200 dark:border-gray-700 my-1" />
           <button
             type="button"

@@ -14,7 +14,8 @@ interface QueueSlideItemProps {
   onRemove: () => void
   onClick: () => void
   onEditSlide: () => void
-  onInsertSlideAfter: () => void
+  onInsertSongAfter: () => void
+  onInsertSlideAfter: (template: SlideTemplate) => void
   dragHandleProps?: React.HTMLAttributes<HTMLDivElement>
 }
 
@@ -34,6 +35,7 @@ export function QueueSlideItem({
   onRemove,
   onClick,
   onEditSlide,
+  onInsertSongAfter,
   onInsertSlideAfter,
   dragHandleProps,
 }: QueueSlideItemProps) {
@@ -110,6 +112,7 @@ export function QueueSlideItem({
         <QueueItemContextMenu
           ref={contextMenuRef}
           onEditSlide={onEditSlide}
+          onInsertSongAfter={onInsertSongAfter}
           onInsertSlideAfter={onInsertSlideAfter}
           onRemove={onRemove}
         />

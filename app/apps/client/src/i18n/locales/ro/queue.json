@@ -18,8 +18,15 @@
     "editSong": "Editează cântarea",
     "editSlide": "Editează slide-ul",
     "insertSlide": "Inserează slide după",
+    "insertAfter": "Inserează după",
     "moreOptions": "Mai multe opțiuni",
     "cancel": "Anulează"
+  },
+  "addToQueue": {
+    "button": "Adaugă",
+    "searchSong": "Caută cântare",
+    "announcement": "Anunț",
+    "verseteTineri": "Versete Tineri"
   },
   "messages": {
     "added": "Adăugat în coadă",
