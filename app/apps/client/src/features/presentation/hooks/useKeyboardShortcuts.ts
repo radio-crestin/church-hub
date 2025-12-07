@@ -24,12 +24,26 @@ export function useKeyboardShortcuts() {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Don't trigger if user is typing in an input
+      // Don't trigger if user is typing in an input or editor
       if (
         event.target instanceof HTMLInputElement ||
         event.target instanceof HTMLTextAreaElement ||
         event.target instanceof HTMLSelectElement
       ) {
+        return
+      }
+
+      // Don't trigger if user is in a contenteditable element (e.g., TipTap editor)
+      if (
+        event.target instanceof HTMLElement &&
+        event.target.isContentEditable
+      ) {
+        return
+      }
+
+      // Don't trigger if any dialog/modal is open
+      const openDialog = document.querySelector('dialog[open]')
+      if (openDialog) {
         return
       }
 
