@@ -2,11 +2,11 @@ import { useLocation } from '@tanstack/react-router'
 import {
   ChevronLeft,
   ChevronRight,
-  Film,
   Monitor,
   Moon,
   Presentation,
   Settings,
+  SquarePlay,
   Sun,
 } from 'lucide-react'
 import { useState } from 'react'
@@ -29,7 +29,7 @@ export function Sidebar() {
 
   const menuItems = [
     {
-      icon: Film,
+      icon: SquarePlay,
       label: t('sidebar:navigation.present'),
       to: '/present',
     },
