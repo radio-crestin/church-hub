@@ -150,24 +150,8 @@ export function ControlRoom() {
           </h1>
         </div>
 
-        {/* Program Selector and Show/Hide */}
+        {/* Show/Hide */}
         <div className="flex items-center gap-4 flex-wrap">
-          {/* Program Selector */}
-          <select
-            value={selectedProgramId ?? ''}
-            onChange={(e) => setSelectedProgramId(Number(e.target.value))}
-            className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white text-sm"
-          >
-            <option value="" disabled>
-              {t('controlRoom.selectProgram')}
-            </option>
-            {programs?.map((program) => (
-              <option key={program.id} value={program.id}>
-                {program.name}
-              </option>
-            ))}
-          </select>
-
           {/* Show/Hide Button - Green "Afiseaza" or Red "Ascunde" */}
           {hasCurrentSlide ? (
             <button
