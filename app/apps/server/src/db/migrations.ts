@@ -209,6 +209,25 @@ CREATE VIRTUAL TABLE IF NOT EXISTS songs_fts USING fts5(
   content,
   tokenize='unicode61'
 );
+
+-- Presentation Queue Table
+-- Stores queue items for the control room presentation
+-- Supports both songs and standalone slides
+CREATE TABLE IF NOT EXISTS presentation_queue (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  item_type TEXT NOT NULL CHECK (item_type IN ('song', 'slide')),
+  song_id INTEGER,
+  slide_type TEXT CHECK (slide_type IN ('announcement', 'versete_tineri')),
+  slide_content TEXT,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  is_expanded INTEGER NOT NULL DEFAULT 1,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  FOREIGN KEY (song_id) REFERENCES songs(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_presentation_queue_sort_order ON presentation_queue(sort_order);
+CREATE INDEX IF NOT EXISTS idx_presentation_queue_song_id ON presentation_queue(song_id);
 `
 
 /**
@@ -293,6 +312,42 @@ export function runMigrations(db: Database): void {
       log('info', 'Old devices schema migrated successfully')
     }
 
+    // Migration: Drop and recreate presentation_queue if it has incomplete schema
+    // This is a new feature so no data loss concerns
+    if (
+      tableExists(db, 'presentation_queue') &&
+      (!columnExists(db, 'presentation_queue', 'song_id') ||
+        !columnExists(db, 'presentation_queue', 'sort_order') ||
+        !columnExists(db, 'presentation_queue', 'is_expanded'))
+    ) {
+      log(
+        'info',
+        'Dropping incomplete presentation_queue table to recreate with correct schema',
+      )
+      db.exec(`
+        DROP INDEX IF EXISTS idx_presentation_queue_sort_order;
+        DROP INDEX IF EXISTS idx_presentation_queue_song_id;
+        DROP TABLE IF EXISTS presentation_queue;
+      `)
+    }
+
+    // Migration: Drop and recreate presentation_queue if it doesn't support standalone slides
+    // This adds slide_type and slide_content columns for standalone slide items
+    if (
+      tableExists(db, 'presentation_queue') &&
+      !columnExists(db, 'presentation_queue', 'slide_type')
+    ) {
+      log(
+        'info',
+        'Dropping presentation_queue table to add standalone slide support',
+      )
+      db.exec(`
+        DROP INDEX IF EXISTS idx_presentation_queue_sort_order;
+        DROP INDEX IF EXISTS idx_presentation_queue_song_id;
+        DROP TABLE IF EXISTS presentation_queue;
+      `)
+    }
+
     log('debug', 'Loading embedded schema')
 
     // Execute embedded schema (exec for multiple statements)
@@ -328,6 +383,34 @@ export function runMigrations(db: Database): void {
       log('info', 'Adding last_slide_id column to presentation_state table')
       db.exec(
         `ALTER TABLE presentation_state ADD COLUMN last_slide_id INTEGER REFERENCES slides(id) ON DELETE SET NULL`,
+      )
+    }
+
+    // Migration: Add current_queue_item_id column to presentation_state table if it doesn't exist
+    if (
+      tableExists(db, 'presentation_state') &&
+      !columnExists(db, 'presentation_state', 'current_queue_item_id')
+    ) {
+      log(
+        'info',
+        'Adding current_queue_item_id column to presentation_state table',
+      )
+      db.exec(
+        `ALTER TABLE presentation_state ADD COLUMN current_queue_item_id INTEGER REFERENCES presentation_queue(id) ON DELETE SET NULL`,
+      )
+    }
+
+    // Migration: Add current_song_slide_id column to presentation_state table if it doesn't exist
+    if (
+      tableExists(db, 'presentation_state') &&
+      !columnExists(db, 'presentation_state', 'current_song_slide_id')
+    ) {
+      log(
+        'info',
+        'Adding current_song_slide_id column to presentation_state table',
+      )
+      db.exec(
+        `ALTER TABLE presentation_state ADD COLUMN current_song_slide_id INTEGER REFERENCES song_slides(id) ON DELETE SET NULL`,
       )
     }
 

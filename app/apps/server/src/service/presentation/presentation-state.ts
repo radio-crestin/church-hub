@@ -24,6 +24,8 @@ function toPresentationState(
     programId: record.program_id,
     currentSlideId: record.current_slide_id,
     lastSlideId: record.last_slide_id,
+    currentQueueItemId: record.current_queue_item_id,
+    currentSongSlideId: record.current_song_slide_id,
     isPresenting: record.is_presenting === 1,
     updatedAt: record.updated_at,
   }
@@ -46,6 +48,8 @@ export function getPresentationState(): PresentationState {
         programId: null,
         currentSlideId: null,
         lastSlideId: null,
+        currentQueueItemId: null,
+        currentSongSlideId: null,
         isPresenting: false,
         updatedAt: Date.now(),
       }
@@ -58,6 +62,8 @@ export function getPresentationState(): PresentationState {
       programId: null,
       currentSlideId: null,
       lastSlideId: null,
+      currentQueueItemId: null,
+      currentSongSlideId: null,
       isPresenting: false,
       updatedAt: Date.now(),
     }
@@ -85,22 +91,40 @@ export function updatePresentationState(
         : current.currentSlideId
     const lastSlideId =
       input.lastSlideId !== undefined ? input.lastSlideId : current.lastSlideId
+    const currentQueueItemId =
+      input.currentQueueItemId !== undefined
+        ? input.currentQueueItemId
+        : current.currentQueueItemId
+    const currentSongSlideId =
+      input.currentSongSlideId !== undefined
+        ? input.currentSongSlideId
+        : current.currentSongSlideId
     const isPresenting =
       input.isPresenting !== undefined
         ? input.isPresenting
         : current.isPresenting
 
     const query = db.query(`
-      INSERT INTO presentation_state (id, program_id, current_slide_id, last_slide_id, is_presenting, updated_at)
-      VALUES (1, ?, ?, ?, ?, ?)
+      INSERT INTO presentation_state (id, program_id, current_slide_id, last_slide_id, current_queue_item_id, current_song_slide_id, is_presenting, updated_at)
+      VALUES (1, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         program_id = excluded.program_id,
         current_slide_id = excluded.current_slide_id,
         last_slide_id = excluded.last_slide_id,
+        current_queue_item_id = excluded.current_queue_item_id,
+        current_song_slide_id = excluded.current_song_slide_id,
         is_presenting = excluded.is_presenting,
         updated_at = excluded.updated_at
     `)
-    query.run(programId, currentSlideId, lastSlideId, isPresenting ? 1 : 0, now)
+    query.run(
+      programId,
+      currentSlideId,
+      lastSlideId,
+      currentQueueItemId,
+      currentSongSlideId,
+      isPresenting ? 1 : 0,
+      now,
+    )
 
     log('info', 'Presentation state updated')
     return getPresentationState()
@@ -213,6 +237,8 @@ export function stopPresentation(): PresentationState {
     return updatePresentationState({
       isPresenting: false,
       currentSlideId: null,
+      currentQueueItemId: null,
+      currentSongSlideId: null,
     })
   } catch (error) {
     log('error', `Failed to stop presentation: ${error}`)
@@ -222,15 +248,16 @@ export function stopPresentation(): PresentationState {
 
 /**
  * Clears the current slide (shows blank/clock)
- * Keeps lastSlideId so the slide can be restored with showSlide
+ * Keeps lastSlideId and currentQueueItemId so the slide can be restored with showSlide
  */
 export function clearSlide(): PresentationState {
   try {
     log('debug', 'Clearing current slide')
 
-    // Only clear currentSlideId, keep lastSlideId for restoration
+    // Clear currentSlideId and currentSongSlideId, keep lastSlideId and currentQueueItemId for restoration
     return updatePresentationState({
       currentSlideId: null,
+      currentSongSlideId: null,
     })
   } catch (error) {
     log('error', `Failed to clear slide: ${error}`)
@@ -240,6 +267,7 @@ export function clearSlide(): PresentationState {
 
 /**
  * Shows the last displayed slide (restores from hidden state)
+ * Restores either program slide or song slide depending on what was last shown
  */
 export function showSlide(): PresentationState {
   try {
@@ -247,6 +275,29 @@ export function showSlide(): PresentationState {
 
     const current = getPresentationState()
 
+    // Try to restore song slide first (if we have a queue item selected)
+    if (current.currentQueueItemId) {
+      // Restore the last song slide from the queue
+      const db = getDatabase()
+      const query = db.query(`
+        SELECT ss.id
+        FROM song_slides ss
+        JOIN presentation_queue pq ON pq.song_id = ss.song_id
+        WHERE pq.id = ?
+        ORDER BY ss.sort_order ASC
+        LIMIT 1
+      `)
+      const result = query.get(current.currentQueueItemId) as {
+        id: number
+      } | null
+      if (result) {
+        return updatePresentationState({
+          currentSongSlideId: result.id,
+        })
+      }
+    }
+
+    // Fall back to program slide
     if (!current.lastSlideId) {
       log('warning', 'Cannot show slide: no last slide to restore')
       return current
@@ -258,6 +309,74 @@ export function showSlide(): PresentationState {
     })
   } catch (error) {
     log('error', `Failed to show slide: ${error}`)
+    return getPresentationState()
+  }
+}
+
+/**
+ * Gets all song slides in queue order
+ * Returns a flat list of { queueItemId, slideId } for navigation
+ */
+function getQueueSlides(): { queueItemId: number; slideId: number }[] {
+  const db = getDatabase()
+  const query = db.query(`
+    SELECT pq.id as queue_item_id, ss.id as slide_id
+    FROM presentation_queue pq
+    JOIN song_slides ss ON ss.song_id = pq.song_id
+    ORDER BY pq.sort_order ASC, ss.sort_order ASC
+  `)
+  const results = query.all() as { queue_item_id: number; slide_id: number }[]
+  return results.map((r) => ({
+    queueItemId: r.queue_item_id,
+    slideId: r.slide_id,
+  }))
+}
+
+/**
+ * Navigate to next or previous slide in the queue
+ * Moves through all song slides across all queue items
+ */
+export function navigateQueueSlide(
+  direction: 'next' | 'prev',
+): PresentationState {
+  try {
+    log('debug', `Navigating queue slide: ${direction}`)
+
+    const current = getPresentationState()
+    const slides = getQueueSlides()
+
+    if (slides.length === 0) {
+      log('warning', 'Cannot navigate: no slides in queue')
+      return current
+    }
+
+    // Find current position
+    const currentIndex = current.currentSongSlideId
+      ? slides.findIndex((s) => s.slideId === current.currentSongSlideId)
+      : -1
+
+    let newIndex: number
+
+    if (direction === 'next') {
+      newIndex = currentIndex + 1
+      if (newIndex >= slides.length) {
+        newIndex = slides.length - 1 // Stay on last slide
+      }
+    } else {
+      // prev
+      newIndex = currentIndex - 1
+      if (newIndex < 0) {
+        newIndex = 0 // Stay on first slide
+      }
+    }
+
+    const newSlide = slides[newIndex]
+    return updatePresentationState({
+      currentQueueItemId: newSlide.queueItemId,
+      currentSongSlideId: newSlide.slideId,
+    })
+  } catch (error) {
+    log('error', `Failed to navigate queue slide: ${error}`)
     return getPresentationState()
   }
 }

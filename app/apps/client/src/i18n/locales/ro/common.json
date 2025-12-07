@@ -1,7 +1,11 @@
 {
   "buttons": {
     "goBack": "Înapoi",
-    "startOver": "Începe din nou"
+    "startOver": "Începe din nou",
+    "cancel": "Anulează",
+    "confirm": "Confirmă",
+    "delete": "Șterge",
+    "save": "Salvează"
   },
   "errors": {
     "pageNotFound": "Pagina pe care o căutați nu există."

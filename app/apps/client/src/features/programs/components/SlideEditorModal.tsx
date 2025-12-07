@@ -49,8 +49,7 @@ export function SlideEditorModal({
     },
     editorProps: {
       attributes: {
-        class:
-          'prose prose-lg dark:prose-invert max-w-none min-h-[200px] p-4 focus:outline-none text-gray-900 dark:text-white bg-white dark:bg-gray-900',
+        class: 'min-h-[200px] p-4 focus:outline-none bg-white dark:bg-gray-900',
       },
     },
   })

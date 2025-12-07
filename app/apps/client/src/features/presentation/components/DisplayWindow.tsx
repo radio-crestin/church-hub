@@ -20,6 +20,11 @@ interface SlideData {
   }
 }
 
+interface SongSlideData {
+  id: number
+  content: string
+}
+
 export function DisplayWindow({ displayId }: DisplayWindowProps) {
   // Connect to WebSocket for real-time updates
   useWebSocket()
@@ -27,6 +32,8 @@ export function DisplayWindow({ displayId }: DisplayWindowProps) {
   const { data: presentationState } = usePresentationState()
   const [theme, setTheme] = useState<DisplayTheme>(getDefaultTheme())
   const [currentSlide, setCurrentSlide] = useState<SlideData | null>(null)
+  const [currentSongSlide, setCurrentSongSlide] =
+    useState<SongSlideData | null>(null)
 
   // Toggle fullscreen for this display window
   const toggleFullscreen = useCallback(async () => {
@@ -85,8 +92,7 @@ export function DisplayWindow({ displayId }: DisplayWindowProps) {
     fetchDisplay()
   }, [displayId])
 
-  // Fetch current slide content when presentation state changes
-  // Include updatedAt to refetch when navigating to same slide after edit
+  // Fetch current program slide content when presentation state changes
   useEffect(() => {
     const fetchSlide = async () => {
       if (!presentationState?.currentSlideId) {
@@ -111,6 +117,41 @@ export function DisplayWindow({ displayId }: DisplayWindowProps) {
     fetchSlide()
   }, [presentationState?.currentSlideId, presentationState?.updatedAt])
 
+  // Fetch current song slide content when presentation state changes
+  useEffect(() => {
+    const fetchSongSlide = async () => {
+      if (!presentationState?.currentSongSlideId) {
+        setCurrentSongSlide(null)
+        return
+      }
+
+      try {
+        // Find the song slide from the queue
+        const queueResponse = await fetch(`${getApiUrl()}/api/queue`)
+        if (queueResponse.ok) {
+          const queueResult = await queueResponse.json()
+          // Search through queue items to find the slide
+          for (const item of queueResult.data || []) {
+            const slide = item.slides?.find(
+              (s: SongSlideData) =>
+                s.id === presentationState.currentSongSlideId,
+            )
+            if (slide) {
+              setCurrentSongSlide(slide)
+              return
+            }
+          }
+        }
+        setCurrentSongSlide(null)
+      } catch (error) {
+        // biome-ignore lint/suspicious/noConsole: error logging
+        console.error('Failed to fetch song slide:', error)
+      }
+    }
+
+    fetchSongSlide()
+  }, [presentationState?.currentSongSlideId, presentationState?.updatedAt])
+
   const getBackgroundStyle = (): React.CSSProperties => {
     if (theme.backgroundType === 'transparent') {
       return { backgroundColor: 'transparent' }
@@ -127,9 +168,23 @@ export function DisplayWindow({ displayId }: DisplayWindowProps) {
     return { backgroundColor: theme.backgroundColor || '#000000' }
   }
 
-  // Show clock when not presenting or no current slide
-  const showClock =
-    !presentationState?.isPresenting || !presentationState?.currentSlideId
+  // Determine what to show - has content if either slide type is active
+  const hasContent =
+    presentationState?.currentSlideId || presentationState?.currentSongSlideId
+  const showClock = !hasContent
+
+  // Get content to display - prioritize song slides over program slides
+  const getSlideContent = (): string | null => {
+    if (currentSongSlide?.content) {
+      return currentSongSlide.content
+    }
+    if (currentSlide?.content?.html) {
+      return currentSlide.content.html
+    }
+    return null
+  }
+
+  const slideContent = getSlideContent()
 
   return (
     <div
@@ -142,8 +197,8 @@ export function DisplayWindow({ displayId }: DisplayWindowProps) {
           textColor={theme.textColor}
           fontFamily={theme.fontFamily}
         />
-      ) : currentSlide?.content?.html ? (
-        <SlideRenderer content={currentSlide.content.html} theme={theme} />
+      ) : slideContent ? (
+        <SlideRenderer content={slideContent} theme={theme} />
       ) : (
         <ClockOverlay
           textColor={theme.textColor}
