@@ -2,8 +2,6 @@ import { useLocation } from '@tanstack/react-router'
 import {
   ChevronLeft,
   ChevronRight,
-  Home,
-  LayoutDashboard,
   Monitor,
   Moon,
   Play,
@@ -30,21 +28,15 @@ export function Sidebar() {
   }
 
   const menuItems = [
-    { icon: Home, label: t('sidebar:navigation.home'), to: '/' },
     {
-      icon: LayoutDashboard,
-      label: t('sidebar:navigation.dashboard'),
-      to: '/dashboard',
+      icon: Play,
+      label: t('sidebar:navigation.present'),
+      to: '/present',
     },
     {
       icon: Presentation,
       label: t('sidebar:navigation.programs'),
       to: '/programs',
-    },
-    {
-      icon: Play,
-      label: t('sidebar:navigation.present'),
-      to: '/present',
     },
     {
       icon: Settings,
