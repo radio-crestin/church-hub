@@ -122,13 +122,15 @@ export function ControlRoom() {
     setShowSlideInsert(true)
   }
 
-  const hasCurrentSlide = !!state?.currentSlideId || !!state?.currentSongSlideId
-  // Check if we have something to restore: lastSlideId, lastSongSlideId, or currentQueueItemId
-  const hasLastSlide =
+  // Use isHidden flag for button state
+  const isHidden = state?.isHidden ?? false
+  // Check if we have content to show (for enabling show button)
+  const hasContent =
+    !!state?.currentSlideId ||
+    !!state?.currentSongSlideId ||
+    !!state?.currentQueueItemId ||
     !!state?.lastSlideId ||
-    !!state?.lastSongSlideId ||
-    !!state?.currentQueueItemId
-  const canShow = !hasCurrentSlide && hasLastSlide
+    !!state?.lastSongSlideId
   const canNavigate = state?.isPresenting || hasQueueSlide
   const isNavigating = navigateSlide.isPending || navigateQueueSlide.isPending
 
@@ -153,13 +155,13 @@ export function ControlRoom() {
                 {t('presentation:controlRoom.preview')}
               </h2>
               {/* Show/Hide Button */}
-              {hasCurrentSlide ? (
+              {!isHidden ? (
                 <button
                   type="button"
                   onClick={handleHide}
                   disabled={clearSlide.isPending}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
-                  title={t('presentation:controls.hide')}
+                  title={`${t('presentation:controls.hide')} (Esc)`}
                 >
                   {clearSlide.isPending ? (
                     <Loader2 size={16} className="animate-spin" />
@@ -167,14 +169,15 @@ export function ControlRoom() {
                     <EyeOff size={16} />
                   )}
                   <span>{t('presentation:controls.hide')}</span>
+                  <span className="text-xs opacity-75">(Esc)</span>
                 </button>
               ) : (
                 <button
                   type="button"
                   onClick={handleShow}
-                  disabled={!canShow || showSlide.isPending}
+                  disabled={!hasContent || showSlide.isPending}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
-                  title={t('presentation:controls.show')}
+                  title={`${t('presentation:controls.show')} (F10)`}
                 >
                   {showSlide.isPending ? (
                     <Loader2 size={16} className="animate-spin" />
@@ -182,6 +185,7 @@ export function ControlRoom() {
                     <Eye size={16} />
                   )}
                   <span>{t('presentation:controls.show')}</span>
+                  <span className="text-xs opacity-75">(F10)</span>
                 </button>
               )}
             </div>

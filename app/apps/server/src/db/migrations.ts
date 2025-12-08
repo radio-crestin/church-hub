@@ -461,6 +461,17 @@ export function runMigrations(db: Database): void {
       )
     }
 
+    // Migration: Add is_hidden column to presentation_state table if it doesn't exist
+    if (
+      tableExists(db, 'presentation_state') &&
+      !columnExists(db, 'presentation_state', 'is_hidden')
+    ) {
+      log('info', 'Adding is_hidden column to presentation_state table')
+      db.exec(
+        `ALTER TABLE presentation_state ADD COLUMN is_hidden INTEGER NOT NULL DEFAULT 0`,
+      )
+    }
+
     log('info', 'Migrations completed successfully')
   } catch (error) {
     log('error', `Migration failed: ${error}`)

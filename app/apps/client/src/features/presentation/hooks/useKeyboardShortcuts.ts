@@ -6,14 +6,12 @@ import {
   useNavigateSlide,
   usePresentationState,
   useShowSlide,
-  useStopPresentation,
 } from './index'
 
 export function useKeyboardShortcuts() {
   const { data: state } = usePresentationState()
   const navigateSlide = useNavigateSlide()
   const navigateQueueSlide = useNavigateQueueSlide()
-  const stopPresentation = useStopPresentation()
   const clearSlide = useClearSlide()
   const showSlide = useShowSlide()
 
@@ -75,21 +73,14 @@ export function useKeyboardShortcuts() {
           break
 
         case 'Escape':
-          event.preventDefault()
-          stopPresentation.mutate()
-          break
-
-        case 'b':
-        case 'B':
-        case '.':
-          // Black/blank screen - hide current slide
+          // Hide presentation (show clock)
           event.preventDefault()
           clearSlide.mutate()
           break
 
-        case 's':
-        case 'S':
-          // Show slide (restore from hidden)
+        case 'F5':
+        case 'F10':
+          // Show presentation (unhide)
           event.preventDefault()
           showSlide.mutate()
           break
@@ -103,7 +94,6 @@ export function useKeyboardShortcuts() {
     hasQueueSlide,
     navigateSlide,
     navigateQueueSlide,
-    stopPresentation,
     clearSlide,
     showSlide,
   ])
