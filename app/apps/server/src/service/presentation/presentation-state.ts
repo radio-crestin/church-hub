@@ -28,6 +28,7 @@ function toPresentationState(
     currentSongSlideId: record.current_song_slide_id,
     lastSongSlideId: record.last_song_slide_id,
     isPresenting: record.is_presenting === 1,
+    isHidden: record.is_hidden === 1,
     updatedAt: record.updated_at,
   }
 }
@@ -53,6 +54,7 @@ export function getPresentationState(): PresentationState {
         currentSongSlideId: null,
         lastSongSlideId: null,
         isPresenting: false,
+        isHidden: false,
         updatedAt: Date.now(),
       }
     }
@@ -68,6 +70,7 @@ export function getPresentationState(): PresentationState {
       currentSongSlideId: null,
       lastSongSlideId: null,
       isPresenting: false,
+      isHidden: false,
       updatedAt: Date.now(),
     }
   }
@@ -110,10 +113,12 @@ export function updatePresentationState(
       input.isPresenting !== undefined
         ? input.isPresenting
         : current.isPresenting
+    const isHidden =
+      input.isHidden !== undefined ? input.isHidden : current.isHidden
 
     const query = db.query(`
-      INSERT INTO presentation_state (id, program_id, current_slide_id, last_slide_id, current_queue_item_id, current_song_slide_id, last_song_slide_id, is_presenting, updated_at)
-      VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO presentation_state (id, program_id, current_slide_id, last_slide_id, current_queue_item_id, current_song_slide_id, last_song_slide_id, is_presenting, is_hidden, updated_at)
+      VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         program_id = excluded.program_id,
         current_slide_id = excluded.current_slide_id,
@@ -122,6 +127,7 @@ export function updatePresentationState(
         current_song_slide_id = excluded.current_song_slide_id,
         last_song_slide_id = excluded.last_song_slide_id,
         is_presenting = excluded.is_presenting,
+        is_hidden = excluded.is_hidden,
         updated_at = excluded.updated_at
     `)
     query.run(
@@ -132,6 +138,7 @@ export function updatePresentationState(
       currentSongSlideId,
       lastSongSlideId,
       isPresenting ? 1 : 0,
+      isHidden ? 1 : 0,
       now,
     )
 
@@ -262,16 +269,15 @@ export function stopPresentation(): PresentationState {
  */
 export function clearSlide(): PresentationState {
   try {
-    log('debug', 'Clearing current slide')
+    log('debug', 'Clearing current slide (hiding)')
 
     const current = getPresentationState()
 
-    // Save current song slide ID for restoration, then clear current display
+    // Save current song slide ID for restoration, then set hidden state
     return updatePresentationState({
-      currentSlideId: null,
-      currentSongSlideId: null,
       // Save the current song slide ID so we can restore the exact slide
       lastSongSlideId: current.currentSongSlideId ?? current.lastSongSlideId,
+      isHidden: true,
     })
   } catch (error) {
     log('error', `Failed to clear slide: ${error}`)
@@ -280,70 +286,16 @@ export function clearSlide(): PresentationState {
 }
 
 /**
- * Shows the last displayed slide (restores from hidden state)
- * Restores either program slide or song slide depending on what was last shown
+ * Shows the presentation (restores from hidden state)
+ * Simply sets isHidden to false - the current slide IDs are preserved
  */
 export function showSlide(): PresentationState {
   try {
-    log('debug', 'Showing last slide')
+    log('debug', 'Showing presentation (unhiding)')
 
-    const current = getPresentationState()
-
-    // Priority 1: Restore from lastSongSlideId if available (exact slide that was hidden)
-    if (current.lastSongSlideId) {
-      return updatePresentationState({
-        currentSongSlideId: current.lastSongSlideId,
-      })
-    }
-
-    // Priority 2: If we have a queue item, check if it's a standalone slide or song
-    if (current.currentQueueItemId) {
-      const db = getDatabase()
-
-      // Check if this is a standalone slide
-      const queueItemQuery = db.query(
-        'SELECT item_type FROM presentation_queue WHERE id = ?',
-      )
-      const queueItem = queueItemQuery.get(current.currentQueueItemId) as {
-        item_type: string
-      } | null
-
-      if (queueItem?.item_type === 'slide') {
-        // Standalone slide - it's already "shown" by having currentQueueItemId set
-        // The frontend detects standalone slides by having currentQueueItemId but no currentSongSlideId
-        // We just need to ensure the state is correct
-        log('debug', 'Standalone slide is already shown via currentQueueItemId')
-        return current
-      }
-
-      // It's a song - get the first slide as fallback
-      const slideQuery = db.query(`
-        SELECT ss.id
-        FROM song_slides ss
-        JOIN presentation_queue pq ON pq.song_id = ss.song_id
-        WHERE pq.id = ?
-        ORDER BY ss.sort_order ASC
-        LIMIT 1
-      `)
-      const result = slideQuery.get(current.currentQueueItemId) as {
-        id: number
-      } | null
-      if (result) {
-        return updatePresentationState({
-          currentSongSlideId: result.id,
-        })
-      }
-    }
-
-    // Priority 3: Fall back to program slide
-    if (current.lastSlideId) {
-      return updatePresentationState({
-        currentSlideId: current.lastSlideId,
-      })
-    }
-
-    log('warning', 'Cannot show slide: no slide to restore')
-    return current
+    return updatePresentationState({
+      isHidden: false,
+    })
   } catch (error) {
     log('error', `Failed to show slide: ${error}`)
     return getPresentationState()
