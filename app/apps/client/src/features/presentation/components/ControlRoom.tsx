@@ -161,7 +161,7 @@ export function ControlRoom() {
                     type="button"
                     onClick={handleHide}
                     disabled={clearSlide.isPending}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-gray-700 dark:text-gray-300 text-sm rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-gray-700 dark:text-gray-300 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
                     title={`${t('presentation:controls.hide')} (Esc)`}
                   >
                     {clearSlide.isPending ? (
@@ -177,7 +177,7 @@ export function ControlRoom() {
                     type="button"
                     onClick={handleShow}
                     disabled={!hasContent || showSlide.isPending}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-gray-700 dark:text-gray-300 text-sm rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-gray-700 dark:text-gray-300 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
                     title={`${t('presentation:controls.show')} (F10)`}
                   >
                     {showSlide.isPending ? (
