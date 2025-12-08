@@ -2,10 +2,11 @@ pub mod commands;
 pub mod crypto;
 pub mod domain;
 pub mod server;
-use commands::get_server_config;
+use commands::{clear_pending_import, get_pending_import, get_server_config, PendingImport};
 use domain::AppState;
 use parking_lot::Mutex;
 use std::net::TcpListener;
+use std::path::PathBuf;
 use std::sync::Arc;
 #[cfg(not(debug_assertions))]
 use tauri::{Manager, RunEvent};
@@ -19,6 +20,8 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_http::init())
+        .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_dialog::init())
         .plugin(
             tauri_plugin_window_state::Builder::new()
                 .with_state_flags(
@@ -81,6 +84,22 @@ pub fn run() {
             };
             app.manage(app_state);
 
+            // Handle file association - check CLI args for PPTX file
+            let pending_import = PendingImport {
+                file_path: Mutex::new(None),
+            };
+
+            let args: Vec<String> = std::env::args().collect();
+            if args.len() > 1 {
+                let path = PathBuf::from(&args[1]);
+                if path.extension().map_or(false, |ext| ext.eq_ignore_ascii_case("pptx")) {
+                    println!("[file-association] PPTX file detected: {:?}", path);
+                    *pending_import.file_path.lock() = Some(path);
+                }
+            }
+
+            app.manage(pending_import);
+
             #[cfg(not(debug_assertions))]
             if let Err(err) = server::start_server(app.handle(), server_port) {
                 println!("[sidecar] Failed to start the server: {}", err);
@@ -88,7 +107,11 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![get_server_config])
+        .invoke_handler(tauri::generate_handler![
+            get_server_config,
+            get_pending_import,
+            clear_pending_import
+        ])
         .build(tauri::generate_context!())
         .expect("error while running tauri application")
         .run(|_app_handle, _event| {

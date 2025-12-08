@@ -178,6 +178,7 @@ CREATE TABLE IF NOT EXISTS songs (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   title TEXT NOT NULL,
   category_id INTEGER,
+  source_file_path TEXT,
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
   updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
   FOREIGN KEY (category_id) REFERENCES song_categories(id) ON DELETE SET NULL
@@ -470,6 +471,15 @@ export function runMigrations(db: Database): void {
       db.exec(
         `ALTER TABLE presentation_state ADD COLUMN is_hidden INTEGER NOT NULL DEFAULT 0`,
       )
+    }
+
+    // Migration: Add source_file_path column to songs table if it doesn't exist
+    if (
+      tableExists(db, 'songs') &&
+      !columnExists(db, 'songs', 'source_file_path')
+    ) {
+      log('info', 'Adding source_file_path column to songs table')
+      db.exec(`ALTER TABLE songs ADD COLUMN source_file_path TEXT`)
     }
 
     log('info', 'Migrations completed successfully')

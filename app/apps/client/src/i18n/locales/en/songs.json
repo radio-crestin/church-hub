@@ -55,5 +55,13 @@
     "deleteSlideMessage": "Are you sure you want to delete this slide?"
   },
   "noSongs": "No songs yet",
-  "noSongsDescription": "Create your first song to get started"
+  "noSongsDescription": "Create your first song to get started",
+  "pptxImport": {
+    "title": "Import PowerPoint",
+    "description": "Found {{count}} slides. Import as a new song?",
+    "songTitle": "Song Title",
+    "createSong": "Create Song",
+    "dropHint": "Drop PPTX file to import as song",
+    "slideNumber": "Slide {{number}}"
+  }
 }

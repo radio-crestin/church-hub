@@ -38,6 +38,14 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
+    ],
+    "fileAssociations": [
+      {
+        "ext": ["pptx"],
+        "name": "PowerPoint Presentation",
+        "description": "Import PowerPoint as Song",
+        "role": "Viewer"
+      }
     ]
   }
 }
