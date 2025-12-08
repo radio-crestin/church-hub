@@ -214,7 +214,7 @@ export function LivePreview() {
   const isDisplayed = !presentationState?.isHidden
   const borderClass = isDisplayed
     ? 'border-red-500'
-    : 'border-gray-300 dark:border-gray-600'
+    : 'border-white dark:border-gray-800'
 
   return (
     <div
