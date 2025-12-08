@@ -6,6 +6,7 @@
     "delete": "Șterge",
     "back": "Înapoi la cântări",
     "import": "Importă din text",
+    "importPptx": "Importă PPTX",
     "addSlide": "Adaugă slide",
     "cloneSlide": "Clonează slide"
   },
