@@ -1,6 +1,4 @@
-import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 
 import { getApiUrl } from '~/config'
 import { ClockOverlay } from './ClockOverlay'
@@ -26,24 +24,7 @@ interface StandaloneSlideData {
   slideContent: string | null
 }
 
-interface LivePreviewProps {
-  onShow?: () => void
-  onHide?: () => void
-  isShowPending?: boolean
-  isHidePending?: boolean
-  canShow?: boolean
-  hasCurrentSlide?: boolean
-}
-
-export function LivePreview({
-  onShow,
-  onHide,
-  isShowPending = false,
-  isHidePending = false,
-  canShow = false,
-  hasCurrentSlide = false,
-}: LivePreviewProps) {
-  const { t } = useTranslation(['presentation'])
+export function LivePreview() {
   // Connect to WebSocket for real-time updates
   useWebSocket()
 
@@ -228,8 +209,6 @@ export function LivePreview({
 
   const slideContent = getSlideContent()
 
-  const showButton = onShow && onHide
-
   return (
     <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow-lg border border-gray-300 dark:border-gray-600">
       <div
@@ -250,43 +229,6 @@ export function LivePreview({
           />
         )}
       </div>
-
-      {/* Show/Hide Button - Top Right Corner */}
-      {showButton && (
-        <div className="absolute top-2 right-2 z-10">
-          {hasCurrentSlide ? (
-            <button
-              type="button"
-              onClick={onHide}
-              disabled={isHidePending}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors shadow-lg"
-              title={t('presentation:controls.hide')}
-            >
-              {isHidePending ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                <EyeOff size={16} />
-              )}
-              <span>{t('presentation:controls.hide')}</span>
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={onShow}
-              disabled={!canShow || isShowPending}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors shadow-lg"
-              title={t('presentation:controls.show')}
-            >
-              {isShowPending ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                <Eye size={16} />
-              )}
-              <span>{t('presentation:controls.show')}</span>
-            </button>
-          )}
-        </div>
-      )}
     </div>
   )
 }
