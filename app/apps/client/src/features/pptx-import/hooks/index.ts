@@ -1,0 +1,1 @@
+export { useFileAssociationHandler } from './useFileAssociationHandler'

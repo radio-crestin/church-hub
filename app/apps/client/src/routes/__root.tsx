@@ -1,6 +1,7 @@
 import { createRootRoute, Outlet } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
+import { PptxDropZoneProvider } from '~/features/pptx-import'
 import { useAutoOpenDisplays } from '~/features/presentation/hooks'
 import { I18nProvider } from '~/provider/i18n-provider'
 import { QueryClientProvider } from '~/provider/QueryClientProvider'
@@ -32,10 +33,12 @@ function RootComponent() {
       <QueryClientProvider>
         <I18nProvider>
           <ToastProvider>
-            <AutoOpenDisplays />
-            <AppLayout>
-              <Outlet />
-            </AppLayout>
+            <PptxDropZoneProvider>
+              <AutoOpenDisplays />
+              <AppLayout>
+                <Outlet />
+              </AppLayout>
+            </PptxDropZoneProvider>
             {isDev ? <TanStackRouterDevtools position="bottom-right" /> : null}
           </ToastProvider>
         </I18nProvider>

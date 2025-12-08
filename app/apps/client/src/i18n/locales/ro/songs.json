@@ -55,5 +55,13 @@
     "deleteSlideMessage": "Ești sigur că vrei să ștergi acest slide?"
   },
   "noSongs": "Nu există cântări încă",
-  "noSongsDescription": "Creează prima ta cântare pentru a începe"
+  "noSongsDescription": "Creează prima ta cântare pentru a începe",
+  "pptxImport": {
+    "title": "Importă PowerPoint",
+    "description": "S-au găsit {{count}} slide-uri. Importă ca o cântare nouă?",
+    "songTitle": "Titlul cântării",
+    "createSong": "Creează cântare",
+    "dropHint": "Trage fișierul PPTX pentru a importa ca cântare",
+    "slideNumber": "Slide {{number}}"
+  }
 }

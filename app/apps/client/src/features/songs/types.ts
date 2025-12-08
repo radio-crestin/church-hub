@@ -9,6 +9,7 @@ export interface Song {
   id: number
   title: string
   categoryId: number | null
+  sourceFilePath: string | null
   createdAt: number
   updatedAt: number
 }
@@ -37,6 +38,7 @@ export interface UpsertSongInput {
   id?: number
   title: string
   categoryId?: number | null
+  sourceFilePath?: string | null
   slides?: SlideInput[]
 }
 
