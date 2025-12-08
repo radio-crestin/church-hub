@@ -65,7 +65,9 @@
     "next": "Next",
     "clear": "Clear Slide",
     "show": "Show",
-    "hide": "Hide"
+    "hide": "Hide",
+    "screenHidden": "Screen is hidden",
+    "screenDisplayed": "Screen is displayed"
   },
   "controlRoom": {
     "title": "Control Room",

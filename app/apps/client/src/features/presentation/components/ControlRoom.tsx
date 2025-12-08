@@ -155,39 +155,49 @@ export function ControlRoom() {
                 {t('presentation:controlRoom.preview')}
               </h2>
               {/* Show/Hide Button */}
-              {!isHidden ? (
-                <button
-                  type="button"
-                  onClick={handleHide}
-                  disabled={clearSlide.isPending}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
-                  title={`${t('presentation:controls.hide')} (Esc)`}
-                >
-                  {clearSlide.isPending ? (
-                    <Loader2 size={16} className="animate-spin" />
-                  ) : (
-                    <EyeOff size={16} />
-                  )}
-                  <span>{t('presentation:controls.hide')}</span>
-                  <span className="text-xs opacity-75">(Esc)</span>
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleShow}
-                  disabled={!hasContent || showSlide.isPending}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
-                  title={`${t('presentation:controls.show')} (F10)`}
-                >
-                  {showSlide.isPending ? (
-                    <Loader2 size={16} className="animate-spin" />
-                  ) : (
-                    <Eye size={16} />
-                  )}
-                  <span>{t('presentation:controls.show')}</span>
-                  <span className="text-xs opacity-75">(F10)</span>
-                </button>
-              )}
+              <div className="flex items-center gap-2">
+                {!isHidden ? (
+                  <button
+                    type="button"
+                    onClick={handleHide}
+                    disabled={clearSlide.isPending}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-gray-700 dark:text-gray-300 text-sm rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+                    title={`${t('presentation:controls.hide')} (Esc)`}
+                  >
+                    {clearSlide.isPending ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <EyeOff size={16} />
+                    )}
+                    <span>{t('presentation:controls.hide')}</span>
+                    <span className="text-xs opacity-75">(Esc)</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleShow}
+                    disabled={!hasContent || showSlide.isPending}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-gray-700 dark:text-gray-300 text-sm rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+                    title={`${t('presentation:controls.show')} (F10)`}
+                  >
+                    {showSlide.isPending ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <Eye size={16} />
+                    )}
+                    <span>{t('presentation:controls.show')}</span>
+                    <span className="text-xs opacity-75">(F10)</span>
+                  </button>
+                )}
+                <span
+                  className={`w-2.5 h-2.5 rounded-full ${isHidden ? 'bg-green-500' : 'bg-red-500'}`}
+                  title={
+                    isHidden
+                      ? t('presentation:controls.screenHidden')
+                      : t('presentation:controls.screenDisplayed')
+                  }
+                />
+              </div>
             </div>
             <LivePreview />
           </div>
