@@ -65,7 +65,9 @@
     "next": "Următor",
     "clear": "Golește Slide",
     "show": "Afișează",
-    "hide": "Ascunde"
+    "hide": "Ascunde",
+    "screenHidden": "Ecranul este ascuns",
+    "screenDisplayed": "Ecranul este afișat"
   },
   "controlRoom": {
     "title": "Cameră de Control",
