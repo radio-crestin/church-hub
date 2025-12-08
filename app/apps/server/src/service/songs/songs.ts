@@ -25,6 +25,7 @@ function toSong(record: SongRecord): Song {
     id: record.id,
     title: record.title,
     categoryId: record.category_id,
+    sourceFilePath: record.source_file_path,
     createdAt: record.created_at,
     updatedAt: record.updated_at,
   }
@@ -112,10 +113,16 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
 
       const query = db.query(`
         UPDATE songs
-        SET title = ?, category_id = ?, updated_at = ?
+        SET title = ?, category_id = ?, source_file_path = ?, updated_at = ?
         WHERE id = ?
       `)
-      query.run(input.title, input.categoryId ?? null, now, input.id)
+      query.run(
+        input.title,
+        input.categoryId ?? null,
+        input.sourceFilePath ?? null,
+        now,
+        input.id,
+      )
       songId = input.id
 
       log('info', `Song updated: ${input.id}`)
@@ -123,10 +130,16 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
       log('debug', `Creating song: ${input.title}`)
 
       const insertQuery = db.query(`
-        INSERT INTO songs (title, category_id, created_at, updated_at)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO songs (title, category_id, source_file_path, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?)
       `)
-      insertQuery.run(input.title, input.categoryId ?? null, now, now)
+      insertQuery.run(
+        input.title,
+        input.categoryId ?? null,
+        input.sourceFilePath ?? null,
+        now,
+        now,
+      )
 
       const getLastId = db.query('SELECT last_insert_rowid() as id')
       const result = getLastId.get() as { id: number }
