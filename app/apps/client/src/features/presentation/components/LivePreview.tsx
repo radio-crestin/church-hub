@@ -218,7 +218,7 @@ export function LivePreview() {
 
   return (
     <div
-      className={`relative w-full aspect-video rounded-lg overflow-hidden shadow-lg border-2 transition-colors duration-300 ${borderClass}`}
+      className={`relative w-full aspect-video rounded-lg overflow-hidden shadow-lg border-2 ${borderClass}`}
     >
       <div
         className="absolute inset-0 flex items-center justify-center"
