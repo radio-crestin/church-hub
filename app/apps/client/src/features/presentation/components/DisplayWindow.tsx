@@ -236,7 +236,8 @@ export function DisplayWindow({ displayId }: DisplayWindowProps) {
     presentationState?.currentSlideId ||
     presentationState?.currentSongSlideId ||
     hasStandaloneSlide
-  const showClock = !hasContent
+  // Show clock when hidden or no content
+  const showClock = !hasContent || presentationState?.isHidden
 
   // Get content to display - prioritize song slides, then standalone slides, then program slides
   const getSlideContent = (): string | null => {

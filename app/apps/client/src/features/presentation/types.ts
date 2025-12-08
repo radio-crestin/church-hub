@@ -57,6 +57,7 @@ export interface PresentationState {
   currentSongSlideId: number | null
   lastSongSlideId: number | null
   isPresenting: boolean
+  isHidden: boolean
   updatedAt: number
 }
 
@@ -71,6 +72,7 @@ export interface UpdatePresentationStateInput {
   currentSongSlideId?: number | null
   lastSongSlideId?: number | null
   isPresenting?: boolean
+  isHidden?: boolean
 }
 
 /**
