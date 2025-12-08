@@ -1,4 +1,12 @@
-import { ChevronLeft, ChevronRight, MonitorUp, Trash2 } from 'lucide-react'
+import {
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  EyeOff,
+  Loader2,
+  MonitorUp,
+  Trash2,
+} from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -140,17 +148,44 @@ export function ControlRoom() {
         <div className="lg:w-2/3 space-y-4 overflow-auto">
           {/* Live Preview */}
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-              {t('presentation:controlRoom.preview')}
-            </h2>
-            <LivePreview
-              onShow={handleShow}
-              onHide={handleHide}
-              isShowPending={showSlide.isPending}
-              isHidePending={clearSlide.isPending}
-              canShow={canShow}
-              hasCurrentSlide={hasCurrentSlide}
-            />
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                {t('presentation:controlRoom.preview')}
+              </h2>
+              {/* Show/Hide Button */}
+              {hasCurrentSlide ? (
+                <button
+                  type="button"
+                  onClick={handleHide}
+                  disabled={clearSlide.isPending}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
+                  title={t('presentation:controls.hide')}
+                >
+                  {clearSlide.isPending ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <EyeOff size={16} />
+                  )}
+                  <span>{t('presentation:controls.hide')}</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleShow}
+                  disabled={!canShow || showSlide.isPending}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+                  title={t('presentation:controls.show')}
+                >
+                  {showSlide.isPending ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <Eye size={16} />
+                  )}
+                  <span>{t('presentation:controls.show')}</span>
+                </button>
+              )}
+            </div>
+            <LivePreview />
           </div>
 
           {/* Navigation Controls Below Preview */}
