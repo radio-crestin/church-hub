@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { open } from '@tauri-apps/plugin-dialog'
+import { readFile } from '@tauri-apps/plugin-fs'
 import { FileUp, Plus } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -38,9 +39,8 @@ function SongsPage() {
       if (selected && selected.length > 0) {
         // Process the first file for now (could handle multiple in future)
         const filePath = selected[0]
-        const response = await fetch(filePath)
-        const arrayBuffer = await response.arrayBuffer()
-        const parsed = await parsePptxFile(arrayBuffer)
+        const fileData = await readFile(filePath)
+        const parsed = await parsePptxFile(fileData.buffer)
 
         setSourceFilePath(filePath)
         setParsedPptx(parsed)
