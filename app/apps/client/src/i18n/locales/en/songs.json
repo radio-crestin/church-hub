@@ -6,6 +6,7 @@
     "delete": "Delete",
     "back": "Back to Songs",
     "import": "Import from Text",
+    "importPptx": "Import PPTX",
     "addSlide": "Add Slide",
     "cloneSlide": "Clone Slide"
   },
