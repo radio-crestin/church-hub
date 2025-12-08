@@ -130,7 +130,23 @@ function extractParagraphText(paragraph: Element, ns: string): string[] {
       // Check if parent is a text element <a:t>
       const parent = node.parentElement
       if (parent?.localName === 't' && parent.namespaceURI === ns) {
-        currentLine += node.textContent || ''
+        const textContent = node.textContent || ''
+        // Handle embedded newline characters within text content
+        if (textContent.includes('\n')) {
+          const parts = textContent.split('\n')
+          for (let i = 0; i < parts.length; i++) {
+            currentLine += parts[i]
+            // If not the last part, push current line and start new one
+            if (i < parts.length - 1) {
+              if (currentLine.trim()) {
+                result.push(currentLine.trim())
+              }
+              currentLine = ''
+            }
+          }
+        } else {
+          currentLine += textContent
+        }
       }
     }
     node = walker.nextNode()
