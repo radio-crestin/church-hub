@@ -2,11 +2,9 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { open } from '@tauri-apps/plugin-dialog'
 import { readFile } from '@tauri-apps/plugin-fs'
 import { FileUp, Plus } from 'lucide-react'
-import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import type { ParsedPptx } from '~/features/pptx-import'
-import { PptxImportDialog, parsePptxFile } from '~/features/pptx-import'
+import { parsePptxFile, useImportPptxAsSong } from '~/features/pptx-import'
 import { SongList } from '~/features/songs/components'
 
 export const Route = createFileRoute('/songs/')({
@@ -16,9 +14,7 @@ export const Route = createFileRoute('/songs/')({
 function SongsPage() {
   const { t } = useTranslation('songs')
   const navigate = useNavigate()
-  const [parsedPptx, setParsedPptx] = useState<ParsedPptx | null>(null)
-  const [sourceFilePath, setSourceFilePath] = useState<string | null>(null)
-  const [showImportDialog, setShowImportDialog] = useState(false)
+  const { importAsSong, isPending } = useImportPptxAsSong()
 
   const handleSongClick = (songId: number) => {
     navigate({ to: '/songs/$songId', params: { songId: String(songId) } })
@@ -40,29 +36,14 @@ function SongsPage() {
         // Process the first file for now (could handle multiple in future)
         const filePath = selected[0]
         const fileData = await readFile(filePath)
-        const parsed = await parsePptxFile(fileData.buffer)
+        const parsed = await parsePptxFile(fileData.buffer, filePath)
 
-        setSourceFilePath(filePath)
-        setParsedPptx(parsed)
-        setShowImportDialog(true)
+        await importAsSong(parsed, filePath)
       }
     } catch (error) {
       // biome-ignore lint/suspicious/noConsole: error logging
       console.error('[songs] Failed to open PPTX file:', error)
     }
-  }
-
-  const handleConfirmImport = (songId: number) => {
-    setShowImportDialog(false)
-    setParsedPptx(null)
-    setSourceFilePath(null)
-    navigate({ to: '/songs/$songId', params: { songId: String(songId) } })
-  }
-
-  const handleCancelImport = () => {
-    setShowImportDialog(false)
-    setParsedPptx(null)
-    setSourceFilePath(null)
   }
 
   return (
@@ -75,7 +56,8 @@ function SongsPage() {
           <button
             type="button"
             onClick={handleImportPptx}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors"
+            disabled={isPending}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FileUp className="w-5 h-5" />
             {t('actions.importPptx')}
@@ -94,14 +76,6 @@ function SongsPage() {
       </div>
 
       <SongList onSongClick={handleSongClick} />
-
-      <PptxImportDialog
-        isOpen={showImportDialog}
-        parsedPptx={parsedPptx}
-        sourceFilePath={sourceFilePath}
-        onConfirm={handleConfirmImport}
-        onCancel={handleCancelImport}
-      />
     </div>
   )
 }

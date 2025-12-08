@@ -12,7 +12,7 @@ import {
 } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { PptxImportDialog } from './PptxImportDialog'
+import { useUpsertSong } from '~/features/songs/hooks'
 import { type ParsedPptx, parsePptxFile } from '../utils/parsePptx'
 
 interface PptxDropZoneContextValue {
@@ -35,10 +35,30 @@ export function PptxDropZoneProvider({ children }: Props) {
   const { t } = useTranslation('songs')
   const navigate = useNavigate()
   const [isDragging, setIsDragging] = useState(false)
-  const [parsedPptx, setParsedPptx] = useState<ParsedPptx | null>(null)
-  const [sourceFilePath, setSourceFilePath] = useState<string | null>(null)
-  const [showDialog, setShowDialog] = useState(false)
   const dragCounterRef = useRef(0)
+  const upsertMutation = useUpsertSong()
+
+  // Direct import function
+  const importPptxAsSong = useCallback(
+    async (parsed: ParsedPptx, sourceFilePath: string | null) => {
+      const result = await upsertMutation.mutateAsync({
+        title: parsed.title,
+        sourceFilePath,
+        slides: parsed.slides.map((slide, idx) => ({
+          content: slide.htmlContent,
+          sortOrder: idx,
+        })),
+      })
+
+      if (result.success && result.data) {
+        navigate({
+          to: '/songs/$songId',
+          params: { songId: String(result.data.id) },
+        })
+      }
+    },
+    [navigate, upsertMutation],
+  )
 
   // Handle file association - check on mount if app was opened with a PPTX file
   useEffect(() => {
@@ -49,11 +69,9 @@ export function PptxDropZoneProvider({ children }: Props) {
         if (filePath && filePath.toLowerCase().endsWith('.pptx')) {
           // Read the file using Tauri FS plugin
           const fileData = await readFile(filePath)
-          const parsed = await parsePptxFile(fileData.buffer)
+          const parsed = await parsePptxFile(fileData.buffer, filePath)
 
-          setSourceFilePath(filePath)
-          setParsedPptx(parsed)
-          setShowDialog(true)
+          await importPptxAsSong(parsed, filePath)
         }
       } catch (error) {
         // biome-ignore lint/suspicious/noConsole: error logging
@@ -62,7 +80,7 @@ export function PptxDropZoneProvider({ children }: Props) {
     }
 
     checkPendingImport()
-  }, [])
+  }, [importPptxAsSong])
 
   // Use document-level event listeners for reliable drag and drop
   useEffect(() => {
@@ -111,12 +129,10 @@ export function PptxDropZoneProvider({ children }: Props) {
       if (pptxFile) {
         try {
           const parsed = await parsePptxFile(pptxFile)
-          setParsedPptx(parsed)
           // Try to get the file path (available in Tauri)
           // @ts-expect-error - path property may be available in Tauri
           const filePath = pptxFile.path as string | undefined
-          setSourceFilePath(filePath || null)
-          setShowDialog(true)
+          await importPptxAsSong(parsed, filePath || null)
         } catch (error) {
           // biome-ignore lint/suspicious/noConsole: error logging
           console.error('[pptx-import] Failed to parse PPTX:', error)
@@ -135,23 +151,7 @@ export function PptxDropZoneProvider({ children }: Props) {
       document.removeEventListener('dragleave', handleDragLeave)
       document.removeEventListener('drop', handleDrop)
     }
-  }, [])
-
-  const handleConfirmImport = useCallback(
-    async (songId: number) => {
-      setShowDialog(false)
-      setParsedPptx(null)
-      setSourceFilePath(null)
-      navigate({ to: '/songs/$songId', params: { songId: String(songId) } })
-    },
-    [navigate],
-  )
-
-  const handleCancelImport = useCallback(() => {
-    setShowDialog(false)
-    setParsedPptx(null)
-    setSourceFilePath(null)
-  }, [])
+  }, [importPptxAsSong])
 
   return (
     <PptxDropZoneContext.Provider value={{ isDragging }}>
@@ -167,15 +167,6 @@ export function PptxDropZoneProvider({ children }: Props) {
           </div>
         </div>
       )}
-
-      {/* Import dialog */}
-      <PptxImportDialog
-        isOpen={showDialog}
-        parsedPptx={parsedPptx}
-        sourceFilePath={sourceFilePath}
-        onConfirm={handleConfirmImport}
-        onCancel={handleCancelImport}
-      />
     </PptxDropZoneContext.Provider>
   )
 }
