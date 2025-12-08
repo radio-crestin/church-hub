@@ -191,8 +191,8 @@ export function LivePreview() {
     presentationState?.currentSlideId ||
     presentationState?.currentSongSlideId ||
     hasStandaloneSlide
-  // Show clock when hidden or no content
-  const showClock = !hasContent || presentationState?.isHidden
+  // Show clock only when there's no content (preview always shows selected slide)
+  const showClock = !hasContent
 
   // Get content to display - prioritize song slides, then standalone slides, then program slides
   const getSlideContent = (): string | null => {
