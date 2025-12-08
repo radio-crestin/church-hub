@@ -3,6 +3,6 @@ export {
   PptxImportDialog,
   usePptxDropZone,
 } from './components'
-export { useFileAssociationHandler } from './hooks'
+export { useFileAssociationHandler, useImportPptxAsSong } from './hooks'
 export type { ParsedPptx, ParsedSlide } from './utils'
 export { parsePptxFile } from './utils'
