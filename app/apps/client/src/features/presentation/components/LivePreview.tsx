@@ -213,7 +213,7 @@ export function LivePreview() {
   // Determine border color based on display state
   const isDisplayed = !presentationState?.isHidden
   const borderClass = isDisplayed
-    ? 'border-red-500'
+    ? 'border-white dark:border-white'
     : 'border-white dark:border-gray-800'
 
   return (
