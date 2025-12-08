@@ -210,8 +210,16 @@ export function LivePreview() {
 
   const slideContent = getSlideContent()
 
+  // Determine border color based on display state
+  const isDisplayed = !presentationState?.isHidden
+  const borderClass = isDisplayed
+    ? 'border-red-500'
+    : 'border-gray-300 dark:border-gray-600'
+
   return (
-    <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow-lg border border-gray-300 dark:border-gray-600">
+    <div
+      className={`relative w-full aspect-video rounded-lg overflow-hidden shadow-lg border-2 transition-colors duration-300 ${borderClass}`}
+    >
       <div
         className="absolute inset-0 flex items-center justify-center"
         style={getBackgroundStyle()}
