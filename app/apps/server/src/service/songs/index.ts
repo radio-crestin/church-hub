@@ -25,6 +25,7 @@ export {
 } from './song-slides'
 // Songs
 export {
+  batchImportSongs,
   deleteSong,
   getAllSongs,
   getSongById,
@@ -32,6 +33,8 @@ export {
   upsertSong,
 } from './songs'
 export type {
+  BatchImportResult,
+  BatchImportSongInput,
   OperationResult,
   ReorderSongSlidesInput,
   Song,

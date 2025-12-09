@@ -5,8 +5,8 @@
     "save": "Salvează",
     "delete": "Șterge",
     "back": "Înapoi la cântări",
-    "import": "Importă din text",
-    "importPptx": "Importă PPTX",
+    "import": "Importă",
+    "importFromText": "Importă din text",
     "addSlide": "Adaugă slide",
     "cloneSlide": "Clonează slide"
   },
@@ -28,8 +28,8 @@
   },
   "import": {
     "title": "Importă din text",
-    "description": "Lipește textul cântării mai jos. Fiecare paragraf va deveni un slide separat.",
-    "placeholder": "Lipește versurile aici...",
+    "description": "Introdu textul cântecului mai jos. Fiecare paragraf va deveni un slide separat.",
+    "placeholder": "Introdu versurile aici...",
     "preview": "Previzualizare: {{count}} slide-uri",
     "confirm": "Importă",
     "cancel": "Anulează"
@@ -53,7 +53,10 @@
     "deleteTitle": "Șterge cântarea",
     "deleteMessage": "Ești sigur că vrei să ștergi această cântare? Această acțiune nu poate fi anulată.",
     "deleteSlideTitle": "Șterge slide",
-    "deleteSlideMessage": "Ești sigur că vrei să ștergi acest slide?"
+    "deleteSlideMessage": "Ești sigur că vrei să ștergi acest slide?",
+    "unsavedChangesTitle": "Modificări nesalvate",
+    "unsavedChangesMessage": "Ai modificări nesalvate. Ești sigur că vrei să părăsești pagina?",
+    "discardChanges": "Pierde modificările"
   },
   "noSongs": "Nu există cântări încă",
   "noSongsDescription": "Creează prima ta cântare pentru a începe",
@@ -64,5 +67,35 @@
     "createSong": "Creează cântare",
     "dropHint": "Trage fișierul PPTX pentru a importa ca cântare",
     "slideNumber": "Slide {{number}}"
+  },
+  "batchImport": {
+    "title": "Importă cântări",
+    "description": "Pregătit pentru importul a {{count}} cântare/cântări",
+    "categoryLabel": "Categorie (opțional)",
+    "songsList": "Cântări de importat:",
+    "confirmButton": "Importă {{count}} cântare/cântări",
+    "importing": "Se importă...",
+    "noSongsFound": "Nu s-au găsit fișiere de cântări",
+    "successMessage": "S-au importat cu succes {{count}} cântare/cântări",
+    "processing": "Se procesează fișierele...",
+    "processingProgress": "Procesare: {{current}} din {{total}} fișiere",
+    "extracting": "Se extrage arhiva...",
+    "parsing": "Se parsează cântările...",
+    "saving": "Se salvează în baza de date..."
+  },
+  "metadata": {
+    "detailsSection": "Detalii",
+    "author": "Autor",
+    "copyright": "Drepturi de autor",
+    "ccli": "Număr CCLI",
+    "hymnNumber": "Număr imn",
+    "key": "Tonalitate",
+    "tempo": "Tempo",
+    "timeSignature": "Măsură",
+    "theme": "Temă",
+    "altTheme": "Temă alternativă",
+    "keyLine": "Gama melodie",
+    "keyLinePlaceholder": "Introdu un vers memorabil din cântare...",
+    "presentationOrder": "Ordinea prezentării"
   }
 }

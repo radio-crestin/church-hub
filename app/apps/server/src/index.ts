@@ -30,11 +30,8 @@ import {
   getAllDisplays,
   getDisplayById,
   getPresentationState,
-  type NavigateInput,
   navigateQueueSlide,
-  navigateSlide,
   showSlide,
-  startPresentation,
   stopPresentation,
   type UpdatePresentationStateInput,
   type UpsertDisplayInput,
@@ -42,19 +39,6 @@ import {
   updatePresentationState,
   upsertDisplay,
 } from './service/presentation'
-import {
-  deleteProgram,
-  deleteSlide,
-  getAllPrograms,
-  getProgramWithSlides,
-  getSlideById,
-  type ReorderSlidesInput,
-  reorderSlides,
-  type UpsertProgramInput,
-  type UpsertSlideInput,
-  upsertProgram,
-  upsertSlide,
-} from './service/programs'
 import {
   type AddToQueueInput,
   addToQueue,
@@ -70,6 +54,25 @@ import {
   updateSlide,
 } from './service/queue'
 import {
+  type AddToScheduleInput,
+  addItemToSchedule,
+  deleteSchedule,
+  getScheduleById,
+  getSchedules,
+  importScheduleToQueue,
+  type ReorderScheduleItemsInput,
+  rebuildScheduleSearchIndex,
+  removeItemFromSchedule,
+  reorderScheduleItems,
+  searchSchedules,
+  type UpdateScheduleSlideInput,
+  type UpsertScheduleInput,
+  updateScheduleSlide,
+  upsertSchedule,
+} from './service/schedules'
+import {
+  type BatchImportSongInput,
+  batchImportSongs,
   cloneSongSlide,
   deleteCategory,
   deleteSong,
@@ -103,8 +106,9 @@ async function main() {
   const db = await initializeDatabase()
   runMigrations(db)
 
-  // Rebuild search index to ensure FTS table is populated
+  // Rebuild search indexes to ensure FTS tables are populated
   rebuildSearchIndex()
+  rebuildScheduleSearchIndex()
 
   // Only listen to Rust IPC when running inside Tauri
   const isTauriMode =
@@ -602,30 +606,42 @@ async function main() {
       }
 
       // ============================================================
-      // Programs API Endpoints
+      // Schedules API Endpoints
       // ============================================================
 
-      // GET /api/programs - List all programs
-      if (req.method === 'GET' && url.pathname === '/api/programs') {
-        const programs = getAllPrograms()
+      // GET /api/schedules/search - Search schedules (must be before /api/schedules/:id)
+      if (req.method === 'GET' && url.pathname === '/api/schedules/search') {
+        const query = url.searchParams.get('q') || ''
+        const results = searchSchedules(query)
         return handleCors(
           req,
-          new Response(JSON.stringify({ data: programs }), {
+          new Response(JSON.stringify({ data: results }), {
             headers: { 'Content-Type': 'application/json' },
           }),
         )
       }
 
-      // GET /api/programs/:id - Get program with slides
-      const getProgramMatch = url.pathname.match(/^\/api\/programs\/(\d+)$/)
-      if (req.method === 'GET' && getProgramMatch?.[1]) {
-        const id = parseInt(getProgramMatch[1], 10)
-        const program = getProgramWithSlides(id)
+      // GET /api/schedules - List all schedules
+      if (req.method === 'GET' && url.pathname === '/api/schedules') {
+        const schedules = getSchedules()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: schedules }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
 
-        if (!program) {
+      // GET /api/schedules/:id - Get schedule with items
+      const getScheduleMatch = url.pathname.match(/^\/api\/schedules\/(\d+)$/)
+      if (req.method === 'GET' && getScheduleMatch?.[1]) {
+        const id = parseInt(getScheduleMatch[1], 10)
+        const schedule = getScheduleById(id)
+
+        if (!schedule) {
           return handleCors(
             req,
-            new Response(JSON.stringify({ error: 'Program not found' }), {
+            new Response(JSON.stringify({ error: 'Schedule not found' }), {
               status: 404,
               headers: { 'Content-Type': 'application/json' },
             }),
@@ -634,34 +650,34 @@ async function main() {
 
         return handleCors(
           req,
-          new Response(JSON.stringify({ data: program }), {
+          new Response(JSON.stringify({ data: schedule }), {
             headers: { 'Content-Type': 'application/json' },
           }),
         )
       }
 
-      // POST /api/programs - Create/update program
-      if (req.method === 'POST' && url.pathname === '/api/programs') {
+      // POST /api/schedules - Create/update schedule
+      if (req.method === 'POST' && url.pathname === '/api/schedules') {
         try {
-          const body = (await req.json()) as UpsertProgramInput
+          const body = (await req.json()) as UpsertScheduleInput
 
-          if (!body.name) {
+          if (!body.title) {
             return handleCors(
               req,
-              new Response(JSON.stringify({ error: 'Missing name' }), {
+              new Response(JSON.stringify({ error: 'Missing title' }), {
                 status: 400,
                 headers: { 'Content-Type': 'application/json' },
               }),
             )
           }
 
-          const program = upsertProgram(body)
+          const schedule = upsertSchedule(body)
 
-          if (!program) {
+          if (!schedule) {
             return handleCors(
               req,
               new Response(
-                JSON.stringify({ error: 'Failed to save program' }),
+                JSON.stringify({ error: 'Failed to save schedule' }),
                 {
                   status: 500,
                   headers: { 'Content-Type': 'application/json' },
@@ -672,7 +688,7 @@ async function main() {
 
           return handleCors(
             req,
-            new Response(JSON.stringify({ data: program }), {
+            new Response(JSON.stringify({ data: schedule }), {
               status: body.id ? 200 : 201,
               headers: { 'Content-Type': 'application/json' },
             }),
@@ -688,161 +704,195 @@ async function main() {
         }
       }
 
-      // DELETE /api/programs/:id - Delete program
-      const deleteProgramMatch = url.pathname.match(/^\/api\/programs\/(\d+)$/)
-      if (req.method === 'DELETE' && deleteProgramMatch?.[1]) {
-        const id = parseInt(deleteProgramMatch[1], 10)
-        const result = deleteProgram(id)
-
-        if (!result.success) {
-          return handleCors(
-            req,
-            new Response(JSON.stringify({ error: result.error }), {
-              status: 500,
-              headers: { 'Content-Type': 'application/json' },
-            }),
-          )
-        }
-
-        return handleCors(
-          req,
-          new Response(JSON.stringify({ data: { success: true } }), {
-            headers: { 'Content-Type': 'application/json' },
-          }),
-        )
-      }
-
-      // ============================================================
-      // Slides API Endpoints
-      // ============================================================
-
-      // POST /api/slides - Create/update slide
-      if (req.method === 'POST' && url.pathname === '/api/slides') {
-        try {
-          const body = (await req.json()) as UpsertSlideInput
-
-          if (!body.programId || !body.content) {
-            return handleCors(
-              req,
-              new Response(
-                JSON.stringify({ error: 'Missing programId or content' }),
-                {
-                  status: 400,
-                  headers: { 'Content-Type': 'application/json' },
-                },
-              ),
-            )
-          }
-
-          const slide = upsertSlide(body)
-
-          if (!slide) {
-            return handleCors(
-              req,
-              new Response(JSON.stringify({ error: 'Failed to save slide' }), {
-                status: 500,
-                headers: { 'Content-Type': 'application/json' },
-              }),
-            )
-          }
-
-          return handleCors(
-            req,
-            new Response(JSON.stringify({ data: slide }), {
-              status: body.id ? 200 : 201,
-              headers: { 'Content-Type': 'application/json' },
-            }),
-          )
-        } catch {
-          return handleCors(
-            req,
-            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
-              status: 400,
-              headers: { 'Content-Type': 'application/json' },
-            }),
-          )
-        }
-      }
-
-      // GET /api/slides/:id - Get slide by ID
-      const getSlideMatch = url.pathname.match(/^\/api\/slides\/(\d+)$/)
-      if (req.method === 'GET' && getSlideMatch?.[1]) {
-        const id = parseInt(getSlideMatch[1], 10)
-        const slide = getSlideById(id)
-
-        if (!slide) {
-          return handleCors(
-            req,
-            new Response(JSON.stringify({ error: 'Slide not found' }), {
-              status: 404,
-              headers: { 'Content-Type': 'application/json' },
-            }),
-          )
-        }
-
-        return handleCors(
-          req,
-          new Response(JSON.stringify(slide), {
-            headers: { 'Content-Type': 'application/json' },
-          }),
-        )
-      }
-
-      // DELETE /api/slides/:id - Delete slide
-      const deleteSlideMatch = url.pathname.match(/^\/api\/slides\/(\d+)$/)
-      if (req.method === 'DELETE' && deleteSlideMatch?.[1]) {
-        const id = parseInt(deleteSlideMatch[1], 10)
-        const result = deleteSlide(id)
-
-        if (!result.success) {
-          return handleCors(
-            req,
-            new Response(JSON.stringify({ error: result.error }), {
-              status: 500,
-              headers: { 'Content-Type': 'application/json' },
-            }),
-          )
-        }
-
-        return handleCors(
-          req,
-          new Response(JSON.stringify({ data: { success: true } }), {
-            headers: { 'Content-Type': 'application/json' },
-          }),
-        )
-      }
-
-      // PUT /api/programs/:id/slides/reorder - Reorder slides
-      const reorderSlidesMatch = url.pathname.match(
-        /^\/api\/programs\/(\d+)\/slides\/reorder$/,
+      // DELETE /api/schedules/:id - Delete schedule
+      const deleteScheduleMatch = url.pathname.match(
+        /^\/api\/schedules\/(\d+)$/,
       )
-      if (req.method === 'PUT' && reorderSlidesMatch?.[1]) {
-        try {
-          const programId = parseInt(reorderSlidesMatch[1], 10)
-          const body = (await req.json()) as ReorderSlidesInput
+      if (req.method === 'DELETE' && deleteScheduleMatch?.[1]) {
+        const id = parseInt(deleteScheduleMatch[1], 10)
+        const result = deleteSchedule(id)
 
-          if (!body.slideIds || !Array.isArray(body.slideIds)) {
-            return handleCors(
-              req,
-              new Response(
-                JSON.stringify({ error: 'Missing slideIds array' }),
-                {
-                  status: 400,
-                  headers: { 'Content-Type': 'application/json' },
-                },
-              ),
-            )
+        if (!result) {
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({ error: 'Failed to delete schedule' }),
+              {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        }
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: { success: true } }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/schedules/:id/items - Add item to schedule
+      const addScheduleItemMatch = url.pathname.match(
+        /^\/api\/schedules\/(\d+)\/items$/,
+      )
+      if (req.method === 'POST' && addScheduleItemMatch?.[1]) {
+        try {
+          const scheduleId = parseInt(addScheduleItemMatch[1], 10)
+          const body = (await req.json()) as Omit<
+            AddToScheduleInput,
+            'scheduleId'
+          >
+
+          const input: AddToScheduleInput = {
+            scheduleId,
+            ...body,
           }
 
-          const result = reorderSlides(programId, body)
+          const item = addItemToSchedule(input)
 
-          if (!result.success) {
+          if (!item) {
             return handleCors(
               req,
-              new Response(JSON.stringify({ error: result.error }), {
+              new Response(JSON.stringify({ error: 'Failed to add item' }), {
                 status: 500,
                 headers: { 'Content-Type': 'application/json' },
               }),
+            )
+          }
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: item }), {
+              status: 201,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // PUT /api/schedules/:id/items/:itemId - Update slide in schedule
+      const updateScheduleItemMatch = url.pathname.match(
+        /^\/api\/schedules\/(\d+)\/items\/(\d+)$/,
+      )
+      if (
+        req.method === 'PUT' &&
+        updateScheduleItemMatch?.[1] &&
+        updateScheduleItemMatch?.[2]
+      ) {
+        try {
+          const itemId = parseInt(updateScheduleItemMatch[2], 10)
+          const body = (await req.json()) as Omit<
+            UpdateScheduleSlideInput,
+            'id'
+          >
+
+          const input: UpdateScheduleSlideInput = {
+            id: itemId,
+            slideType: body.slideType,
+            slideContent: body.slideContent,
+          }
+
+          const item = updateScheduleSlide(input)
+
+          if (!item) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Failed to update item' }), {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: item }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // DELETE /api/schedules/:id/items/:itemId - Remove item from schedule
+      const removeScheduleItemMatch = url.pathname.match(
+        /^\/api\/schedules\/(\d+)\/items\/(\d+)$/,
+      )
+      if (
+        req.method === 'DELETE' &&
+        removeScheduleItemMatch?.[1] &&
+        removeScheduleItemMatch?.[2]
+      ) {
+        const scheduleId = parseInt(removeScheduleItemMatch[1], 10)
+        const itemId = parseInt(removeScheduleItemMatch[2], 10)
+        const result = removeItemFromSchedule(scheduleId, itemId)
+
+        if (!result) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Failed to remove item' }), {
+              status: 500,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: { success: true } }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // PUT /api/schedules/:id/items/reorder - Reorder schedule items
+      const reorderScheduleItemsMatch = url.pathname.match(
+        /^\/api\/schedules\/(\d+)\/items\/reorder$/,
+      )
+      if (req.method === 'PUT' && reorderScheduleItemsMatch?.[1]) {
+        try {
+          const scheduleId = parseInt(reorderScheduleItemsMatch[1], 10)
+          const body = (await req.json()) as ReorderScheduleItemsInput
+
+          if (!body.itemIds || !Array.isArray(body.itemIds)) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Missing itemIds array' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const result = reorderScheduleItems(scheduleId, body)
+
+          if (!result) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({ error: 'Failed to reorder items' }),
+                {
+                  status: 500,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
             )
           }
 
@@ -861,6 +911,35 @@ async function main() {
             }),
           )
         }
+      }
+
+      // POST /api/schedules/:id/import-to-queue - Import schedule to queue
+      const importScheduleMatch = url.pathname.match(
+        /^\/api\/schedules\/(\d+)\/import-to-queue$/,
+      )
+      if (req.method === 'POST' && importScheduleMatch?.[1]) {
+        const scheduleId = parseInt(importScheduleMatch[1], 10)
+        const result = importScheduleToQueue(scheduleId)
+
+        if (!result) {
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({ error: 'Failed to import schedule' }),
+              {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        }
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: { success: true } }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
       }
 
       // ============================================================
@@ -1062,79 +1141,6 @@ async function main() {
         }
       }
 
-      // POST /api/presentation/navigate - Navigate slides
-      if (
-        req.method === 'POST' &&
-        url.pathname === '/api/presentation/navigate'
-      ) {
-        try {
-          const body = (await req.json()) as NavigateInput
-
-          if (!body.direction) {
-            return handleCors(
-              req,
-              new Response(JSON.stringify({ error: 'Missing direction' }), {
-                status: 400,
-                headers: { 'Content-Type': 'application/json' },
-              }),
-            )
-          }
-
-          const state = navigateSlide(body)
-          broadcastPresentationState(state)
-
-          return handleCors(
-            req,
-            new Response(JSON.stringify({ data: state }), {
-              headers: { 'Content-Type': 'application/json' },
-            }),
-          )
-        } catch {
-          return handleCors(
-            req,
-            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
-              status: 400,
-              headers: { 'Content-Type': 'application/json' },
-            }),
-          )
-        }
-      }
-
-      // POST /api/presentation/start - Start presenting a program
-      if (req.method === 'POST' && url.pathname === '/api/presentation/start') {
-        try {
-          const body = (await req.json()) as { programId: number }
-
-          if (!body.programId) {
-            return handleCors(
-              req,
-              new Response(JSON.stringify({ error: 'Missing programId' }), {
-                status: 400,
-                headers: { 'Content-Type': 'application/json' },
-              }),
-            )
-          }
-
-          const state = startPresentation(body.programId)
-          broadcastPresentationState(state)
-
-          return handleCors(
-            req,
-            new Response(JSON.stringify({ data: state }), {
-              headers: { 'Content-Type': 'application/json' },
-            }),
-          )
-        } catch {
-          return handleCors(
-            req,
-            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
-              status: 400,
-              headers: { 'Content-Type': 'application/json' },
-            }),
-          )
-        }
-      }
-
       // POST /api/presentation/stop - Stop presenting
       if (req.method === 'POST' && url.pathname === '/api/presentation/stop') {
         const state = stopPresentation()
@@ -1298,6 +1304,49 @@ async function main() {
             req,
             new Response(JSON.stringify({ data: song }), {
               status: body.id ? 200 : 201,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // POST /api/songs/batch - Batch import songs
+      if (req.method === 'POST' && url.pathname === '/api/songs/batch') {
+        try {
+          const body = (await req.json()) as {
+            songs: BatchImportSongInput[]
+            categoryId?: number | null
+          }
+
+          if (!body.songs || !Array.isArray(body.songs)) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Missing songs array' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const result = batchImportSongs(body.songs, body.categoryId)
+
+          // Update search index for all imported songs
+          for (const songId of result.songIds) {
+            updateSearchIndex(songId)
+          }
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: result }), {
+              status: 201,
               headers: { 'Content-Type': 'application/json' },
             }),
           )
@@ -1633,6 +1682,18 @@ async function main() {
                 },
               ),
             )
+          }
+
+          // Handle presentNow: auto-select and present the first slide
+          if (body.presentNow && queueItem.slides.length > 0) {
+            const firstSlideId = queueItem.slides[0].id
+            const state = updatePresentationState({
+              currentQueueItemId: queueItem.id,
+              currentSongSlideId: firstSlideId,
+              isPresenting: true,
+              isHidden: false,
+            })
+            broadcastPresentationState(state)
           }
 
           return handleCors(

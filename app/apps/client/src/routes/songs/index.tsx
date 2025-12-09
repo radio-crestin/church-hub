@@ -1,10 +1,17 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { open } from '@tauri-apps/plugin-dialog'
-import { readFile } from '@tauri-apps/plugin-fs'
 import { FileUp, Plus } from 'lucide-react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { parsePptxFile, useImportPptxAsSong } from '~/features/pptx-import'
+import {
+  ImportConfirmationModal,
+  type ImportProgress,
+  ImportProgressModal,
+  type ProcessedImport,
+  processImportFiles,
+  useBatchImportSongs,
+} from '~/features/song-import'
 import { SongList } from '~/features/songs/components'
 
 export const Route = createFileRoute('/songs/')({
@@ -14,37 +21,99 @@ export const Route = createFileRoute('/songs/')({
 function SongsPage() {
   const { t } = useTranslation('songs')
   const navigate = useNavigate()
-  const { importAsSong, isPending } = useImportPptxAsSong()
+  const { batchImport, isPending: isImporting } = useBatchImportSongs()
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false)
+  const [songsToImport, setSongsToImport] = useState<ProcessedImport[]>([])
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [importProgress, setImportProgress] = useState<ImportProgress | null>(
+    null,
+  )
 
   const handleSongClick = (songId: number) => {
     navigate({ to: '/songs/$songId', params: { songId: String(songId) } })
   }
 
-  const handleImportPptx = async () => {
+  const handleImport = async () => {
     try {
+      // Note: filters removed due to macOS bug where files without extensions
+      // cannot be selected when filters are present (Tauri issue #6661)
+      // OpenSong files often have no extension, so we show all files
       const selected = await open({
         multiple: true,
-        filters: [
-          {
-            name: 'PowerPoint',
-            extensions: ['pptx'],
-          },
-        ],
       })
 
       if (selected && selected.length > 0) {
-        // Process the first file for now (could handle multiple in future)
-        const filePath = selected[0]
-        const fileData = await readFile(filePath)
-        const parsed = await parsePptxFile(fileData.buffer, filePath)
+        setIsProcessing(true)
+        setImportProgress(null)
 
-        await importAsSong(parsed, filePath)
+        const result = await processImportFiles(selected, (progress) => {
+          setImportProgress(progress)
+        })
+
+        setIsProcessing(false)
+        setImportProgress(null)
+
+        if (result.songs.length > 0) {
+          setSongsToImport(result.songs)
+          setIsImportModalOpen(true)
+        }
       }
     } catch (error) {
+      setIsProcessing(false)
+      setImportProgress(null)
       // biome-ignore lint/suspicious/noConsole: error logging
-      console.error('[songs] Failed to open PPTX file:', error)
+      console.error('[songs] Failed to process import files:', error)
     }
   }
+
+  const handleConfirmImport = async (categoryId: number | null) => {
+    const result = await batchImport({
+      songs: songsToImport.map((s) => {
+        // Check if this is an OpenSong import with metadata
+        const metadata = 'metadata' in s.parsed ? s.parsed.metadata : undefined
+
+        return {
+          title: s.parsed.title,
+          slides: s.parsed.slides.map((slide, idx) => ({
+            content: slide.htmlContent,
+            sortOrder: idx,
+            label: 'label' in slide ? slide.label : null,
+          })),
+          sourceFilePath: s.sourceFilePath,
+          // Include OpenSong metadata if available
+          author: metadata?.author,
+          copyright: metadata?.copyright,
+          ccli: metadata?.ccli,
+          key: metadata?.key,
+          tempo: metadata?.tempo,
+          timeSignature: metadata?.timeSignature,
+          theme: metadata?.theme,
+          altTheme: metadata?.altTheme,
+          hymnNumber: metadata?.hymnNumber,
+          keyLine: metadata?.keyLine,
+          presentationOrder: metadata?.presentationOrder,
+        }
+      }),
+      categoryId,
+    })
+
+    setIsImportModalOpen(false)
+    setSongsToImport([])
+
+    if (result.songIds.length === 1) {
+      navigate({
+        to: '/songs/$songId',
+        params: { songId: String(result.songIds[0]) },
+      })
+    }
+  }
+
+  const handleCancelImport = () => {
+    setIsImportModalOpen(false)
+    setSongsToImport([])
+  }
+
+  const isPending = isProcessing || isImporting
 
   return (
     <div className="space-y-6">
@@ -55,12 +124,12 @@ function SongsPage() {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={handleImportPptx}
+            onClick={handleImport}
             disabled={isPending}
             className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FileUp className="w-5 h-5" />
-            {t('actions.importPptx')}
+            {t('actions.import')}
           </button>
           <button
             type="button"
@@ -76,6 +145,16 @@ function SongsPage() {
       </div>
 
       <SongList onSongClick={handleSongClick} />
+
+      <ImportConfirmationModal
+        isOpen={isImportModalOpen}
+        songs={songsToImport.map((s) => s.parsed)}
+        onConfirm={handleConfirmImport}
+        onCancel={handleCancelImport}
+        isPending={isImporting}
+      />
+
+      <ImportProgressModal isOpen={isProcessing} progress={importProgress} />
     </div>
   )
 }

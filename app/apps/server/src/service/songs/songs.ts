@@ -1,6 +1,8 @@
 import { getCategoryById } from './categories'
 import { getSlidesBySongId } from './song-slides'
 import type {
+  BatchImportResult,
+  BatchImportSongInput,
   OperationResult,
   Song,
   SongRecord,
@@ -26,6 +28,17 @@ function toSong(record: SongRecord): Song {
     title: record.title,
     categoryId: record.category_id,
     sourceFilePath: record.source_file_path,
+    author: record.author,
+    copyright: record.copyright,
+    ccli: record.ccli,
+    key: record.key,
+    tempo: record.tempo,
+    timeSignature: record.time_signature,
+    theme: record.theme,
+    altTheme: record.alt_theme,
+    hymnNumber: record.hymn_number,
+    keyLine: record.key_line,
+    presentationOrder: record.presentation_order,
     createdAt: record.created_at,
     updatedAt: record.updated_at,
   }
@@ -113,13 +126,27 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
 
       const query = db.query(`
         UPDATE songs
-        SET title = ?, category_id = ?, source_file_path = ?, updated_at = ?
+        SET title = ?, category_id = ?, source_file_path = ?,
+            author = ?, copyright = ?, ccli = ?, key = ?, tempo = ?,
+            time_signature = ?, theme = ?, alt_theme = ?, hymn_number = ?,
+            key_line = ?, presentation_order = ?, updated_at = ?
         WHERE id = ?
       `)
       query.run(
         input.title,
         input.categoryId ?? null,
         input.sourceFilePath ?? null,
+        input.author ?? null,
+        input.copyright ?? null,
+        input.ccli ?? null,
+        input.key ?? null,
+        input.tempo ?? null,
+        input.timeSignature ?? null,
+        input.theme ?? null,
+        input.altTheme ?? null,
+        input.hymnNumber ?? null,
+        input.keyLine ?? null,
+        input.presentationOrder ?? null,
         now,
         input.id,
       )
@@ -130,13 +157,29 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
       log('debug', `Creating song: ${input.title}`)
 
       const insertQuery = db.query(`
-        INSERT INTO songs (title, category_id, source_file_path, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO songs (
+          title, category_id, source_file_path,
+          author, copyright, ccli, key, tempo, time_signature,
+          theme, alt_theme, hymn_number, key_line, presentation_order,
+          created_at, updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `)
       insertQuery.run(
         input.title,
         input.categoryId ?? null,
         input.sourceFilePath ?? null,
+        input.author ?? null,
+        input.copyright ?? null,
+        input.ccli ?? null,
+        input.key ?? null,
+        input.tempo ?? null,
+        input.timeSignature ?? null,
+        input.theme ?? null,
+        input.altTheme ?? null,
+        input.hymnNumber ?? null,
+        input.keyLine ?? null,
+        input.presentationOrder ?? null,
         now,
         now,
       )
@@ -172,16 +215,29 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
           // Update existing slide
           db.query(`
             UPDATE song_slides
-            SET content = ?, sort_order = ?, updated_at = ?
+            SET content = ?, sort_order = ?, label = ?, updated_at = ?
             WHERE id = ?
-          `).run(slide.content, slide.sortOrder, now, slide.id)
+          `).run(
+            slide.content,
+            slide.sortOrder,
+            slide.label ?? null,
+            now,
+            slide.id,
+          )
           keepIds.add(slide.id as number)
         } else {
           // Insert new slide
           db.query(`
-            INSERT INTO song_slides (song_id, content, sort_order, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?)
-          `).run(songId, slide.content, slide.sortOrder, now, now)
+            INSERT INTO song_slides (song_id, content, sort_order, label, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+          `).run(
+            songId,
+            slide.content,
+            slide.sortOrder,
+            slide.label ?? null,
+            now,
+            now,
+          )
         }
       }
 
@@ -220,4 +276,112 @@ export function deleteSong(id: number): OperationResult {
     log('error', `Failed to delete song: ${error}`)
     return { success: false, error: String(error) }
   }
+}
+
+/**
+ * Batch imports multiple songs in a single transaction
+ * Much faster than individual upserts for large imports
+ */
+export function batchImportSongs(
+  songs: BatchImportSongInput[],
+  defaultCategoryId?: number | null,
+): BatchImportResult {
+  const db = getDatabase()
+  const songIds: number[] = []
+  let successCount = 0
+  let failedCount = 0
+  const errors: string[] = []
+  const now = Math.floor(Date.now() / 1000)
+
+  log('info', `Starting batch import of ${songs.length} songs`)
+
+  try {
+    // Use transaction for atomic batch insert
+    db.exec('BEGIN TRANSACTION')
+
+    // Prepare statements for reuse
+    const insertSongStmt = db.query(`
+      INSERT INTO songs (
+        title, category_id, source_file_path,
+        author, copyright, ccli, key, tempo, time_signature,
+        theme, alt_theme, hymn_number, key_line, presentation_order,
+        created_at, updated_at
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `)
+
+    const getLastIdStmt = db.query('SELECT last_insert_rowid() as id')
+
+    const insertSlideStmt = db.query(`
+      INSERT INTO song_slides (song_id, content, sort_order, label, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `)
+
+    for (let i = 0; i < songs.length; i++) {
+      const input = songs[i]
+
+      try {
+        const categoryId = input.categoryId ?? defaultCategoryId ?? null
+
+        // Insert song
+        insertSongStmt.run(
+          input.title,
+          categoryId,
+          input.sourceFilePath ?? null,
+          input.author ?? null,
+          input.copyright ?? null,
+          input.ccli ?? null,
+          input.key ?? null,
+          input.tempo ?? null,
+          input.timeSignature ?? null,
+          input.theme ?? null,
+          input.altTheme ?? null,
+          input.hymnNumber ?? null,
+          input.keyLine ?? null,
+          input.presentationOrder ?? null,
+          now,
+          now,
+        )
+
+        const result = getLastIdStmt.get() as { id: number }
+        const songId = result.id
+        songIds.push(songId)
+
+        // Insert slides if provided
+        if (input.slides && input.slides.length > 0) {
+          for (const slide of input.slides) {
+            insertSlideStmt.run(
+              songId,
+              slide.content,
+              slide.sortOrder,
+              slide.label ?? null,
+              now,
+              now,
+            )
+          }
+        }
+
+        successCount++
+        log('debug', `Song ${i + 1}/${songs.length} imported: ${songId}`)
+      } catch (error) {
+        failedCount++
+        const msg = error instanceof Error ? error.message : String(error)
+        errors.push(`Song "${input.title}": ${msg}`)
+        log('error', `Failed to import song ${i + 1}: ${msg}`)
+      }
+    }
+
+    db.exec('COMMIT')
+    log(
+      'info',
+      `Batch import completed: ${successCount} success, ${failedCount} failed`,
+    )
+  } catch (error) {
+    db.exec('ROLLBACK')
+    const msg = error instanceof Error ? error.message : String(error)
+    log('error', `Batch import transaction failed: ${msg}`)
+    errors.push(`Transaction failed: ${msg}`)
+  }
+
+  return { successCount, failedCount, songIds, errors }
 }
