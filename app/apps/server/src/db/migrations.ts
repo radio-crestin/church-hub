@@ -84,33 +84,49 @@ CREATE TABLE IF NOT EXISTS device_permissions (
 -- Index for permission lookups
 CREATE INDEX IF NOT EXISTS idx_device_permissions_device_id ON device_permissions(device_id);
 
--- Programs Table
--- Stores presentation programs (collections of slides)
-CREATE TABLE IF NOT EXISTS programs (
+-- Schedules Table
+-- Stores presentation schedules (collections of songs and slides)
+CREATE TABLE IF NOT EXISTS schedules (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL,
+  title TEXT NOT NULL,
   description TEXT,
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
   updated_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
 
-CREATE INDEX IF NOT EXISTS idx_programs_name ON programs(name);
+CREATE INDEX IF NOT EXISTS idx_schedules_title ON schedules(title);
 
--- Slides Table
--- Stores individual slides belonging to programs
-CREATE TABLE IF NOT EXISTS slides (
+-- Schedule Items Table
+-- Stores items belonging to schedules (same structure as presentation_queue)
+CREATE TABLE IF NOT EXISTS schedule_items (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  program_id INTEGER NOT NULL,
-  type TEXT NOT NULL DEFAULT 'custom',
-  content TEXT NOT NULL,
+  schedule_id INTEGER NOT NULL,
+  item_type TEXT NOT NULL CHECK (item_type IN ('song', 'slide')),
+  song_id INTEGER,
+  slide_type TEXT CHECK (slide_type IN ('announcement', 'versete_tineri')),
+  slide_content TEXT,
   sort_order INTEGER NOT NULL DEFAULT 0,
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
   updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
-  FOREIGN KEY (program_id) REFERENCES programs(id) ON DELETE CASCADE
+  FOREIGN KEY (schedule_id) REFERENCES schedules(id) ON DELETE CASCADE,
+  FOREIGN KEY (song_id) REFERENCES songs(id) ON DELETE CASCADE
 );
 
-CREATE INDEX IF NOT EXISTS idx_slides_program_id ON slides(program_id);
-CREATE INDEX IF NOT EXISTS idx_slides_sort_order ON slides(sort_order);
+CREATE INDEX IF NOT EXISTS idx_schedule_items_schedule_id ON schedule_items(schedule_id);
+CREATE INDEX IF NOT EXISTS idx_schedule_items_sort_order ON schedule_items(sort_order);
+CREATE INDEX IF NOT EXISTS idx_schedule_items_song_id ON schedule_items(song_id);
+
+-- Full-Text Search Virtual Table for Schedules
+-- Enables fast text search across schedule metadata and song content
+-- Uses remove_diacritics=2 for accent-insensitive search
+CREATE VIRTUAL TABLE IF NOT EXISTS schedules_fts USING fts5(
+  schedule_id UNINDEXED,
+  title,
+  description,
+  song_titles,
+  song_content,
+  tokenize='unicode61 remove_diacritics 2'
+);
 
 -- Displays Table
 -- Stores display configurations for presentation outputs
@@ -127,35 +143,12 @@ CREATE TABLE IF NOT EXISTS displays (
 
 CREATE INDEX IF NOT EXISTS idx_displays_is_active ON displays(is_active);
 
--- Display Slide Configurations Table
--- Stores per-slide per-display configuration overrides
-CREATE TABLE IF NOT EXISTS display_slide_configs (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  display_id INTEGER NOT NULL,
-  slide_id INTEGER NOT NULL,
-  config TEXT NOT NULL DEFAULT '{}',
-  created_at INTEGER NOT NULL DEFAULT (unixepoch()),
-  updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
-  FOREIGN KEY (display_id) REFERENCES displays(id) ON DELETE CASCADE,
-  FOREIGN KEY (slide_id) REFERENCES slides(id) ON DELETE CASCADE,
-  UNIQUE(display_id, slide_id)
-);
-
-CREATE INDEX IF NOT EXISTS idx_display_slide_configs_display_id ON display_slide_configs(display_id);
-CREATE INDEX IF NOT EXISTS idx_display_slide_configs_slide_id ON display_slide_configs(slide_id);
-
 -- Presentation State Table
 -- Singleton table storing current presentation state
 CREATE TABLE IF NOT EXISTS presentation_state (
   id INTEGER PRIMARY KEY CHECK (id = 1),
-  program_id INTEGER,
-  current_slide_id INTEGER,
-  last_slide_id INTEGER,
   is_presenting INTEGER NOT NULL DEFAULT 0,
-  updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
-  FOREIGN KEY (program_id) REFERENCES programs(id) ON DELETE SET NULL,
-  FOREIGN KEY (current_slide_id) REFERENCES slides(id) ON DELETE SET NULL,
-  FOREIGN KEY (last_slide_id) REFERENCES slides(id) ON DELETE SET NULL
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
 
 -- Initialize presentation state with default values
@@ -203,11 +196,13 @@ CREATE INDEX IF NOT EXISTS idx_song_slides_song_id ON song_slides(song_id);
 CREATE INDEX IF NOT EXISTS idx_song_slides_sort_order ON song_slides(sort_order);
 
 -- Full-Text Search Virtual Table for Songs
--- Enables fast text search across song titles and slide content
+-- Enables fast text search across song titles, categories, and slide content
 -- Uses remove_diacritics=2 for accent-insensitive search (e.g., "inger" matches "înger")
+-- Column weights for bm25(): title=10, category_name=5, content=1
 CREATE VIRTUAL TABLE IF NOT EXISTS songs_fts USING fts5(
   song_id UNINDEXED,
   title,
+  category_name,
   content,
   tokenize='unicode61 remove_diacritics 2'
 );
@@ -265,6 +260,29 @@ function tableExists(db: Database, tableName: string): boolean {
 export function runMigrations(db: Database): void {
   try {
     log('info', 'Running database migrations...')
+
+    // Migration: Drop old programs tables and replace with schedules
+    if (tableExists(db, 'programs')) {
+      log('info', 'Dropping old programs tables to replace with schedules')
+      db.exec(`
+        DROP TABLE IF EXISTS display_slide_configs;
+        DROP TABLE IF EXISTS slides;
+        DROP TABLE IF EXISTS programs;
+      `)
+      // Reset presentation state program/slide references since programs are removed
+      // Only update columns that actually exist
+      if (tableExists(db, 'presentation_state')) {
+        if (columnExists(db, 'presentation_state', 'program_id')) {
+          db.exec(`UPDATE presentation_state SET program_id = NULL`)
+        }
+        if (columnExists(db, 'presentation_state', 'current_slide_id')) {
+          db.exec(`UPDATE presentation_state SET current_slide_id = NULL`)
+        }
+        if (columnExists(db, 'presentation_state', 'last_slide_id')) {
+          db.exec(`UPDATE presentation_state SET last_slide_id = NULL`)
+        }
+      }
+    }
 
     // Check if we have old songs table without category_id column
     if (tableExists(db, 'songs') && !columnExists(db, 'songs', 'category_id')) {
@@ -382,6 +400,16 @@ export function runMigrations(db: Database): void {
       db.exec('DROP TABLE IF EXISTS songs_fts')
     }
 
+    // Migration: Recreate schedules_fts table with correct schema
+    // Drop and recreate to ensure column structure matches expected schema
+    if (tableExists(db, 'schedules_fts')) {
+      log(
+        'info',
+        'Dropping schedules_fts table to recreate with correct schema',
+      )
+      db.exec('DROP TABLE IF EXISTS schedules_fts')
+    }
+
     log('debug', 'Loading embedded schema')
 
     // Execute embedded schema (exec for multiple statements)
@@ -406,17 +434,6 @@ export function runMigrations(db: Database): void {
       log('info', 'Adding is_fullscreen column to displays table')
       db.exec(
         `ALTER TABLE displays ADD COLUMN is_fullscreen INTEGER NOT NULL DEFAULT 0`,
-      )
-    }
-
-    // Migration: Add last_slide_id column to presentation_state table if it doesn't exist
-    if (
-      tableExists(db, 'presentation_state') &&
-      !columnExists(db, 'presentation_state', 'last_slide_id')
-    ) {
-      log('info', 'Adding last_slide_id column to presentation_state table')
-      db.exec(
-        `ALTER TABLE presentation_state ADD COLUMN last_slide_id INTEGER REFERENCES slides(id) ON DELETE SET NULL`,
       )
     }
 
@@ -480,6 +497,31 @@ export function runMigrations(db: Database): void {
     ) {
       log('info', 'Adding source_file_path column to songs table')
       db.exec(`ALTER TABLE songs ADD COLUMN source_file_path TEXT`)
+    }
+
+    // Migration: Add OpenSong metadata columns to songs table
+    if (tableExists(db, 'songs') && !columnExists(db, 'songs', 'author')) {
+      log('info', 'Adding OpenSong metadata columns to songs table')
+      db.exec(`ALTER TABLE songs ADD COLUMN author TEXT`)
+      db.exec(`ALTER TABLE songs ADD COLUMN copyright TEXT`)
+      db.exec(`ALTER TABLE songs ADD COLUMN ccli TEXT`)
+      db.exec(`ALTER TABLE songs ADD COLUMN key TEXT`)
+      db.exec(`ALTER TABLE songs ADD COLUMN tempo TEXT`)
+      db.exec(`ALTER TABLE songs ADD COLUMN time_signature TEXT`)
+      db.exec(`ALTER TABLE songs ADD COLUMN theme TEXT`)
+      db.exec(`ALTER TABLE songs ADD COLUMN alt_theme TEXT`)
+      db.exec(`ALTER TABLE songs ADD COLUMN hymn_number TEXT`)
+      db.exec(`ALTER TABLE songs ADD COLUMN key_line TEXT`)
+      db.exec(`ALTER TABLE songs ADD COLUMN presentation_order TEXT`)
+    }
+
+    // Migration: Add label column to song_slides table for verse labels (V1, C, etc.)
+    if (
+      tableExists(db, 'song_slides') &&
+      !columnExists(db, 'song_slides', 'label')
+    ) {
+      log('info', 'Adding label column to song_slides table')
+      db.exec(`ALTER TABLE song_slides ADD COLUMN label TEXT`)
     }
 
     log('info', 'Migrations completed successfully')
