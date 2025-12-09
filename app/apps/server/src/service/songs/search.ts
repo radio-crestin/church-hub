@@ -202,7 +202,37 @@ function buildSearchQuery(queryText: string): string {
 }
 
 /**
+ * Checks if a term has a fuzzy match in content
+ * Uses middle substring matching (e.g., "Hristos" matches "Cristos" via "isto")
+ */
+function hasFuzzyMatch(term: string, content: string): boolean {
+  // First check exact match
+  if (content.includes(term)) {
+    return true
+  }
+
+  // For short terms, only exact match
+  if (term.length < 4) {
+    return false
+  }
+
+  // Check middle substrings for fuzzy match
+  // "Hristos" -> check "risto", "isto" which would match "Cristos"
+  for (let len = Math.min(5, term.length - 1); len >= 3; len--) {
+    for (let start = 1; start <= term.length - len; start++) {
+      const sub = term.substring(start, start + len)
+      if (content.includes(sub)) {
+        return true
+      }
+    }
+  }
+
+  return false
+}
+
+/**
  * Calculates a relevance score based on how many query terms match the content
+ * Uses fuzzy substring matching for better results with spelling variations
  * Higher score = more terms matched = better relevance
  */
 function calculateTermMatchScore(
@@ -213,8 +243,7 @@ function calculateTermMatchScore(
   let matchedCount = 0
 
   for (const term of queryTerms) {
-    // Check if term appears in content (with word boundary awareness)
-    if (normalizedContent.includes(term)) {
+    if (hasFuzzyMatch(term, normalizedContent)) {
       matchedCount++
     }
   }
@@ -226,15 +255,52 @@ function calculateTermMatchScore(
 }
 
 /**
+ * Extracts fuzzy search substrings from a term
+ * For "Hristos", extracts substrings that would also match "Cristos"
+ * Uses middle portion of words for better fuzzy matching
+ */
+function extractFuzzySubstrings(term: string): string[] {
+  if (term.length < 4) return []
+
+  const substrings: string[] = []
+
+  // Extract middle portions (skip first and last char for fuzzy matching)
+  // "Hristos" -> "risto", "isto", "sto"
+  // "Cristos" -> "risto", "isto", "sto"
+  // Common matches: "risto", "isto", "sto"
+  for (let len = Math.min(5, term.length - 1); len >= 3; len--) {
+    for (let start = 1; start <= term.length - len; start++) {
+      const sub = term.substring(start, start + len)
+      if (sub.length >= 3 && !substrings.includes(sub)) {
+        substrings.push(sub)
+      }
+    }
+  }
+
+  return substrings.slice(0, 3) // Limit to top 3 substrings per term
+}
+
+/**
  * Builds a trigram query for fuzzy matching
- * Only uses terms with 3+ characters (trigram minimum)
+ * Uses middle substrings of words to find similar matches
+ * e.g., "Hristos" -> searches for "risto", "isto" which also matches "Cristos"
  */
 function buildTrigramQuery(terms: string[]): string {
-  const validTerms = terms.filter((t) => t.length >= 3)
-  if (validTerms.length === 0) return ''
+  const allSubstrings: string[] = []
 
-  // For trigram, use simple OR query - each term can match substrings
-  return validTerms.map((t) => `"${t}"`).join(' OR ')
+  for (const term of terms) {
+    // Add full term if long enough
+    if (term.length >= 4) {
+      allSubstrings.push(term)
+    }
+    // Add fuzzy substrings
+    allSubstrings.push(...extractFuzzySubstrings(term))
+  }
+
+  if (allSubstrings.length === 0) return ''
+
+  // Use OR to match any substring
+  return allSubstrings.map((s) => `"${s}"`).join(' OR ')
 }
 
 /**

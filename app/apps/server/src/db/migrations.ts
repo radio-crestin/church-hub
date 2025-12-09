@@ -210,13 +210,12 @@ CREATE VIRTUAL TABLE IF NOT EXISTS songs_fts USING fts5(
 -- Trigram Full-Text Search Virtual Table for Songs
 -- Enables fuzzy/substring matching for similar words (e.g., "Hristos" matches "Cristos")
 -- Uses trigram tokenizer which breaks text into 3-character overlapping chunks
--- detail='none' reduces index size since we only need matching, not highlighting
+-- Note: Requires detail='full' (default) for MATCH queries to work
 CREATE VIRTUAL TABLE IF NOT EXISTS songs_fts_trigram USING fts5(
   song_id UNINDEXED,
   title,
   content,
-  tokenize='trigram',
-  detail='none'
+  tokenize='trigram'
 );
 
 -- Presentation Queue Table
@@ -422,10 +421,11 @@ export function runMigrations(db: Database): void {
       db.exec('DROP TABLE IF EXISTS schedules_fts')
     }
 
-    // Migration: Create songs_fts_trigram table for fuzzy matching
-    // This is a new table, no need to drop - just ensure it gets created
-    if (!tableExists(db, 'songs_fts_trigram')) {
-      log('info', 'Creating songs_fts_trigram table for fuzzy search')
+    // Migration: Recreate songs_fts_trigram table to support MATCH queries
+    // The previous version had detail='none' which doesn't support MATCH
+    if (tableExists(db, 'songs_fts_trigram')) {
+      log('info', 'Dropping songs_fts_trigram to recreate with full detail')
+      db.exec('DROP TABLE IF EXISTS songs_fts_trigram')
     }
 
     log('debug', 'Loading embedded schema')
