@@ -165,6 +165,10 @@ function buildSearchQuery(queryText: string): string {
   return `(${phraseQuery}) OR (${nearQuery}) OR (${prefixQuery})`
 }
 
+// Minimum BM25 score threshold (bm25 returns negative values, more negative = better match)
+// -0.1 filters out very weak matches while keeping reasonable results
+const MIN_SCORE_THRESHOLD = -0.1
+
 /**
  * Searches songs using FTS5 with field-weighted ranking
  *
@@ -177,6 +181,11 @@ function buildSearchQuery(queryText: string): string {
  * 1. Exact phrase matches
  * 2. Proximity matches (words within 5 tokens)
  * 3. Individual term prefix matches
+ *
+ * Performance optimizations:
+ * - Uses FTS5 inverted index for fast MATCH queries
+ * - Limits results to top 50 matches
+ * - Filters out low-quality matches with minimum score threshold
  */
 export function searchSongs(query: string): SongSearchResult[] {
   try {
@@ -199,6 +208,7 @@ export function searchSongs(query: string): SongSearchResult[] {
 
     // Use bm25() with column weights: song_id(0), title(10), category_name(5), content(1)
     // snippet() column index: 0=song_id(UNINDEXED), 1=title, 2=category_name, 3=content
+    // Subquery ensures we filter by score before joining and computing snippets
     const searchQuery = db.query(`
       SELECT
         s.id,
@@ -206,15 +216,21 @@ export function searchSongs(query: string): SongSearchResult[] {
         s.category_id,
         sc.name as category_name,
         snippet(songs_fts, 3, '<mark>', '</mark>', '...', 30) as matched_content
-      FROM songs_fts fts
-      JOIN songs s ON fts.song_id = s.id
+      FROM (
+        SELECT song_id, bm25(songs_fts, 0.0, 10.0, 5.0, 1.0) as score
+        FROM songs_fts
+        WHERE songs_fts MATCH ?
+        ORDER BY score
+        LIMIT 50
+      ) AS ranked
+      JOIN songs_fts fts ON fts.song_id = ranked.song_id
+      JOIN songs s ON s.id = ranked.song_id
       LEFT JOIN song_categories sc ON s.category_id = sc.id
-      WHERE songs_fts MATCH ?
-      ORDER BY bm25(songs_fts, 0.0, 10.0, 5.0, 1.0)
-      LIMIT 50
+      WHERE ranked.score < ?
+      ORDER BY ranked.score
     `)
 
-    const results = searchQuery.all(ftsQuery) as Array<{
+    const results = searchQuery.all(ftsQuery, MIN_SCORE_THRESHOLD) as Array<{
       id: number
       title: string
       category_id: number | null
