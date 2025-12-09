@@ -5,6 +5,7 @@ export {
   deleteCategory,
   getAllCategories,
   getCategoryById,
+  reorderCategories,
   upsertCategory,
 } from './categories'
 // Search
@@ -37,6 +38,7 @@ export type {
   BatchImportResult,
   BatchImportSongInput,
   OperationResult,
+  ReorderCategoriesInput,
   ReorderSongSlidesInput,
   Song,
   SongCategory,
