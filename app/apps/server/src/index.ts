@@ -89,6 +89,7 @@ import {
   type UpsertSongInput,
   type UpsertSongSlideInput,
   updateSearchIndex,
+  updateSearchIndexByCategory,
   upsertCategory,
   upsertSong,
   upsertSongSlide,
@@ -1593,6 +1594,11 @@ async function main() {
                 },
               ),
             )
+          }
+
+          // Re-index songs when updating category name
+          if (body.id) {
+            updateSearchIndexByCategory(body.id)
           }
 
           return handleCors(

@@ -13,6 +13,7 @@ export {
   removeFromSearchIndex,
   searchSongs,
   updateSearchIndex,
+  updateSearchIndexByCategory,
 } from './search'
 // Song Slides
 export {
