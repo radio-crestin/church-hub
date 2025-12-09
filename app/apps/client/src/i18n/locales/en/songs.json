@@ -84,7 +84,9 @@
     "processingProgress": "Processing: {{current}} of {{total}} files",
     "extracting": "Extracting archive...",
     "parsing": "Parsing songs...",
-    "saving": "Saving to database..."
+    "saving": "Saving to database...",
+    "useFirstVerseAsTitle": "Use first verse as title",
+    "overwriteDuplicates": "Overwrite existing songs with same title"
   },
   "metadata": {
     "detailsSection": "Details",

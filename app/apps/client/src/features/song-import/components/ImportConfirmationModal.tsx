@@ -3,12 +3,13 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { CategoryPicker } from '~/features/songs/components'
+import type { ImportOptions } from '../types'
 import type { ParsedPptx } from '../utils/parsePptx'
 
 interface ImportConfirmationModalProps {
   isOpen: boolean
   songs: ParsedPptx[]
-  onConfirm: (categoryId: number | null) => void
+  onConfirm: (categoryId: number | null, options: ImportOptions) => void
   onCancel: () => void
   isPending: boolean
   progress?: number
@@ -25,6 +26,8 @@ export function ImportConfirmationModal({
   const { t } = useTranslation('songs')
   const dialogRef = useRef<HTMLDialogElement>(null)
   const [categoryId, setCategoryId] = useState<number | null>(null)
+  const [overwriteDuplicates, setOverwriteDuplicates] = useState(false)
+  const [useFirstVerseAsTitle, setUseFirstVerseAsTitle] = useState(true)
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -40,6 +43,8 @@ export function ImportConfirmationModal({
   useEffect(() => {
     if (!isOpen) {
       setCategoryId(null)
+      setOverwriteDuplicates(false)
+      setUseFirstVerseAsTitle(true)
     }
   }, [isOpen])
 
@@ -50,7 +55,7 @@ export function ImportConfirmationModal({
   }
 
   const handleConfirm = () => {
-    onConfirm(categoryId)
+    onConfirm(categoryId, { overwriteDuplicates, useFirstVerseAsTitle })
   }
 
   const songCount = songs.length
@@ -93,6 +98,33 @@ export function ImportConfirmationModal({
             onChange={setCategoryId}
             disabled={isPending}
           />
+        </div>
+
+        <div className="mb-4 space-y-3">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={useFirstVerseAsTitle}
+              onChange={(e) => setUseFirstVerseAsTitle(e.target.checked)}
+              disabled={isPending}
+              className="w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 disabled:opacity-50"
+            />
+            <span className="text-sm text-gray-700 dark:text-gray-300">
+              {t('batchImport.useFirstVerseAsTitle')}
+            </span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={overwriteDuplicates}
+              onChange={(e) => setOverwriteDuplicates(e.target.checked)}
+              disabled={isPending}
+              className="w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 disabled:opacity-50"
+            />
+            <span className="text-sm text-gray-700 dark:text-gray-300">
+              {t('batchImport.overwriteDuplicates')}
+            </span>
+          </label>
         </div>
 
         <div className="mb-6">

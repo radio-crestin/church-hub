@@ -84,7 +84,9 @@
     "processingProgress": "Procesare: {{current}} din {{total}} fișiere",
     "extracting": "Se extrage arhiva...",
     "parsing": "Se parsează cântările...",
-    "saving": "Se salvează în baza de date..."
+    "saving": "Se salvează în baza de date...",
+    "useFirstVerseAsTitle": "Folosește primul vers ca titlu",
+    "overwriteDuplicates": "Suprascrie cântările existente cu același titlu"
   },
   "metadata": {
     "detailsSection": "Detalii",
