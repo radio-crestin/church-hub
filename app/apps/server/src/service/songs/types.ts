@@ -4,6 +4,7 @@
 export interface SongCategoryRecord {
   id: number
   name: string
+  priority: number
   created_at: number
   updated_at: number
 }
@@ -50,6 +51,7 @@ export interface SongSlideRecord {
 export interface SongCategory {
   id: number
   name: string
+  priority: number
   createdAt: number
   updatedAt: number
 }
@@ -104,6 +106,7 @@ export interface SongWithSlides extends Song {
 export interface UpsertCategoryInput {
   id?: number
   name: string
+  priority?: number
 }
 
 /**
@@ -154,6 +157,13 @@ export interface UpsertSongSlideInput {
  */
 export interface ReorderSongSlidesInput {
   slideIds: number[]
+}
+
+/**
+ * Input for reordering song categories
+ */
+export interface ReorderCategoriesInput {
+  categoryIds: number[]
 }
 
 /**
