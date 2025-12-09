@@ -151,12 +151,14 @@ export function rebuildSearchIndex(): void {
 
 /**
  * Builds an optimized FTS5 query with tiered matching
- * Supports: exact phrase, proximity (NEAR), and prefix matching
+ * Supports: exact phrase, proximity (NEAR), partial AND matching, and prefix fallback
  *
  * For multi-word queries, this creates a combined query that:
  * 1. Tries exact phrase match (highest relevance)
  * 2. Tries proximity match within 5 tokens
- * 3. Falls back to individual prefix matches
+ * 3. Tries AND queries with N-1 terms (allows one missing term)
+ * 4. Tries AND queries with N-2 terms (allows two missing terms, for 5+ word queries)
+ * 5. Falls back to individual prefix matches with OR
  */
 function buildSearchQuery(queryText: string): string {
   // Escape special FTS5 characters
@@ -176,15 +178,41 @@ function buildSearchQuery(queryText: string): string {
     return `"${terms[0]}"*`
   }
 
-  // Multi-word: combine phrase, proximity, and prefix matching
-  const phraseQuery = `"${terms.join(' ')}"` // Exact phrase (highest rank)
-  const nearQuery = `NEAR(${terms.map((t) => `"${t}"`).join(' ')}, 5)` // Within 5 tokens
-  const prefixQuery = terms.map((t) => `"${t}"*`).join(' OR ') // Individual terms with prefix
+  const queries: string[] = []
+
+  // Tier 1: Exact phrase (highest rank)
+  queries.push(`"${terms.join(' ')}"`)
+
+  // Tier 2: NEAR with all terms
+  queries.push(`NEAR(${terms.map((t) => `"${t}"`).join(' ')}, 5)`)
+
+  // Tier 3: AND queries with N-1 terms (allows one missing term)
+  // This is critical for partial matching - e.g., "Isus Hristos in veci va fi"
+  // will match "Isus Cristos in veci va fi" because 5/6 terms match via AND
+  if (terms.length >= 3) {
+    for (let i = 0; i < terms.length; i++) {
+      const subset = terms.filter((_, idx) => idx !== i)
+      queries.push(`(${subset.map((t) => `"${t}"*`).join(' AND ')})`)
+    }
+  }
+
+  // Tier 4: AND queries with N-2 terms (for 5+ word queries)
+  if (terms.length >= 5) {
+    for (let i = 0; i < terms.length; i++) {
+      for (let j = i + 1; j < terms.length; j++) {
+        const subset = terms.filter((_, idx) => idx !== i && idx !== j)
+        queries.push(`(${subset.map((t) => `"${t}"*`).join(' AND ')})`)
+      }
+    }
+  }
+
+  // Tier 5: OR fallback for individual terms
+  const prefixQuery = terms.map((t) => `"${t}"*`).join(' OR ')
+  queries.push(`(${prefixQuery})`)
 
   // Combine with OR - FTS5's BM25 will naturally rank better matches higher
-  return `(${phraseQuery}) OR (${nearQuery}) OR (${prefixQuery})`
+  return queries.join(' OR ')
 }
-
 
 /**
  * Searches songs using FTS5 with field-weighted ranking
