@@ -22,6 +22,8 @@ export function ImportProgressModal({
     switch (progress.phase) {
       case 'extracting':
         return t('batchImport.extracting')
+      case 'converting':
+        return t('batchImport.converting')
       case 'parsing':
         return t('batchImport.parsing')
       case 'saving':
