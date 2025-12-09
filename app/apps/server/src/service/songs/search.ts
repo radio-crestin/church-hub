@@ -10,6 +10,14 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
 }
 
 /**
+ * Normalizes text by removing diacritics (accents)
+ * e.g., "în" -> "in", "ă" -> "a", "ș" -> "s"
+ */
+function removeDiacritics(text: string): string {
+  return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+}
+
+/**
  * Updates the FTS index for a specific song (both standard and trigram)
  */
 export function updateSearchIndex(songId: number): void {
@@ -314,6 +322,7 @@ function findFuzzyMatchWord(
 /**
  * Creates highlighted content with fuzzy match support
  * Highlights both exact matches and fuzzy matches (e.g., "Hristos" -> "Cristos")
+ * Supports diacritic-insensitive matching (e.g., "in" matches "în")
  */
 function createFuzzyHighlightedSnippet(
   content: string,
@@ -323,36 +332,65 @@ function createFuzzyHighlightedSnippet(
   // Strip HTML tags for cleaner processing
   const plainContent = content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ')
 
-  // Filter to significant terms (skip very short ones that cause overlapping issues)
-  const significantTerms = queryTerms.filter((t) => t.length >= 3)
+  // Normalize content for diacritic-insensitive matching
+  const normalizedContent = removeDiacritics(plainContent).toLowerCase()
 
   // Find all matches (exact and fuzzy) with their positions
   const matches: Array<{ start: number; end: number; length: number }> = []
 
-  for (const term of significantTerms) {
-    const lowerContent = plainContent.toLowerCase()
-    const lowerTerm = term.toLowerCase()
+  for (const term of queryTerms) {
+    const normalizedTerm = removeDiacritics(term).toLowerCase()
 
-    // Find exact matches
-    let pos = 0
-    while ((pos = lowerContent.indexOf(lowerTerm, pos)) !== -1) {
-      matches.push({
-        start: pos,
-        end: pos + term.length,
-        length: term.length,
-      })
-      pos += 1
-    }
-
-    // Find fuzzy matches (for terms >= 5 chars)
-    if (term.length >= 5) {
-      const fuzzyMatch = findFuzzyMatchWord(plainContent, term)
-      if (fuzzyMatch && !matches.some((m) => m.start === fuzzyMatch.index)) {
+    // For short terms (< 3 chars), only match whole words to avoid false positives
+    // e.g., "in" should match "in" or "în" but not the "in" inside "furtuni"
+    if (term.length < 3) {
+      // Use word boundary regex for short terms
+      const wordRegex = new RegExp(`\\b${normalizedTerm}\\b`, 'gi')
+      let match: RegExpExecArray | null
+      while ((match = wordRegex.exec(normalizedContent)) !== null) {
+        // Find the actual position in original content (may differ due to diacritics)
+        const actualWord = plainContent.substring(
+          match.index,
+          match.index + match[0].length,
+        )
         matches.push({
-          start: fuzzyMatch.index,
-          end: fuzzyMatch.index + fuzzyMatch.word.length,
-          length: fuzzyMatch.word.length,
+          start: match.index,
+          end: match.index + actualWord.length,
+          length: actualWord.length,
         })
+      }
+    } else {
+      // For longer terms, find all occurrences
+      let pos = 0
+      while ((pos = normalizedContent.indexOf(normalizedTerm, pos)) !== -1) {
+        // Get actual length from original content (may be different due to composed chars)
+        let actualEnd = pos + normalizedTerm.length
+        // Adjust for any length differences in original content
+        while (
+          actualEnd < plainContent.length &&
+          removeDiacritics(plainContent.substring(pos, actualEnd)).toLowerCase()
+            .length < normalizedTerm.length
+        ) {
+          actualEnd++
+        }
+        matches.push({
+          start: pos,
+          end: actualEnd,
+          length: actualEnd - pos,
+        })
+        pos += 1
+      }
+
+      // Find fuzzy matches (for terms >= 5 chars)
+      if (term.length >= 5) {
+        const fuzzyMatch = findFuzzyMatchWord(plainContent, term)
+        if (fuzzyMatch && !matches.some((m) => m.start === fuzzyMatch.index)) {
+          matches.push({
+            start: fuzzyMatch.index,
+            end: fuzzyMatch.index + fuzzyMatch.word.length,
+            length: fuzzyMatch.word.length,
+          })
+        }
       }
     }
   }
