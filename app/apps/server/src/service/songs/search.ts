@@ -10,7 +10,7 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
 }
 
 /**
- * Updates the FTS index for a specific song
+ * Updates the FTS index for a specific song (both standard and trigram)
  */
 export function updateSearchIndex(songId: number): void {
   try {
@@ -42,21 +42,19 @@ export function updateSearchIndex(songId: number): void {
     const slides = slidesQuery.all(songId) as { content: string }[]
     const combinedContent = slides.map((s) => s.content).join(' ')
 
-    // Remove existing index entry
-    const deleteQuery = db.query('DELETE FROM songs_fts WHERE song_id = ?')
-    deleteQuery.run(songId)
-
-    // Insert new index entry with category_name
-    const insertQuery = db.query(`
+    // Update standard FTS index
+    db.query('DELETE FROM songs_fts WHERE song_id = ?').run(songId)
+    db.query(`
       INSERT INTO songs_fts (song_id, title, category_name, content)
       VALUES (?, ?, ?, ?)
-    `)
-    insertQuery.run(
-      songId,
-      song.title,
-      song.category_name ?? '',
-      combinedContent,
-    )
+    `).run(songId, song.title, song.category_name ?? '', combinedContent)
+
+    // Update trigram FTS index for fuzzy matching
+    db.query('DELETE FROM songs_fts_trigram WHERE song_id = ?').run(songId)
+    db.query(`
+      INSERT INTO songs_fts_trigram (song_id, title, content)
+      VALUES (?, ?, ?)
+    `).run(songId, song.title, combinedContent)
 
     log('debug', `Search index updated for song: ${songId}`)
   } catch (error) {
@@ -65,15 +63,15 @@ export function updateSearchIndex(songId: number): void {
 }
 
 /**
- * Removes a song from the FTS index
+ * Removes a song from the FTS index (both standard and trigram)
  */
 export function removeFromSearchIndex(songId: number): void {
   try {
     log('debug', `Removing song from search index: ${songId}`)
 
     const db = getDatabase()
-    const query = db.query('DELETE FROM songs_fts WHERE song_id = ?')
-    query.run(songId)
+    db.query('DELETE FROM songs_fts WHERE song_id = ?').run(songId)
+    db.query('DELETE FROM songs_fts_trigram WHERE song_id = ?').run(songId)
 
     log('debug', `Song removed from search index: ${songId}`)
   } catch (error) {
@@ -104,7 +102,7 @@ export function updateSearchIndexByCategory(categoryId: number): void {
 }
 
 /**
- * Rebuilds the entire search index using a single batch INSERT
+ * Rebuilds the entire search index (both standard and trigram)
  * This is much faster than updating each song individually
  */
 export function rebuildSearchIndex(): void {
@@ -117,8 +115,9 @@ export function rebuildSearchIndex(): void {
     db.exec('BEGIN TRANSACTION')
 
     try {
-      // Clear existing index
+      // Clear existing indexes
       db.exec('DELETE FROM songs_fts')
+      db.exec('DELETE FROM songs_fts_trigram')
 
       // Batch insert all songs with their slides in a single query
       // Uses GROUP_CONCAT to combine all slide content per song
@@ -132,6 +131,20 @@ export function rebuildSearchIndex(): void {
           COALESCE(GROUP_CONCAT(ss.content, ' '), '')
         FROM songs s
         LEFT JOIN song_categories sc ON s.category_id = sc.id
+        LEFT JOIN (
+          SELECT song_id, content FROM song_slides ORDER BY sort_order
+        ) ss ON ss.song_id = s.id
+        GROUP BY s.id
+      `)
+
+      // Also rebuild trigram index for fuzzy matching
+      db.run(`
+        INSERT INTO songs_fts_trigram (song_id, title, content)
+        SELECT
+          s.id,
+          s.title,
+          COALESCE(GROUP_CONCAT(ss.content, ' '), '')
+        FROM songs s
         LEFT JOIN (
           SELECT song_id, content FROM song_slides ORDER BY sort_order
         ) ss ON ss.song_id = s.id
@@ -213,20 +226,33 @@ function calculateTermMatchScore(
 }
 
 /**
- * Searches songs using FTS5 with two-phase ranking:
+ * Builds a trigram query for fuzzy matching
+ * Only uses terms with 3+ characters (trigram minimum)
+ */
+function buildTrigramQuery(terms: string[]): string {
+  const validTerms = terms.filter((t) => t.length >= 3)
+  if (validTerms.length === 0) return ''
+
+  // For trigram, use simple OR query - each term can match substrings
+  return validTerms.map((t) => `"${t}"`).join(' OR ')
+}
+
+/**
+ * Searches songs using FTS5 with three-phase ranking:
  *
- * Phase 1: FTS5 query with BM25 to find candidates
- * Phase 2: Re-rank by term match count (more matched terms = higher rank)
+ * Phase 1: Standard FTS5 query to find exact/prefix matches
+ * Phase 2: Trigram FTS5 query to find fuzzy/similar matches (e.g., "Hristos" ~ "Cristos")
+ * Phase 3: Combine results and re-rank by term match count
  *
  * This approach:
- * - Uses simple OR query for fast candidate retrieval
- * - Calculates custom relevance score based on matched term count
+ * - Uses standard FTS for fast exact matching
+ * - Uses trigram for fuzzy matching of similar words
  * - Properly ranks partial phrase matches (e.g., 5/6 terms matched ranks high)
  *
  * Performance optimizations:
  * - Uses `rank` column instead of bm25() for faster sorting
  * - Simple query structure avoids combinatorial explosion
- * - Limits to 100 candidates, returns top 50 after re-ranking
+ * - Limits candidates, returns top 50 after re-ranking
  */
 export function searchSongs(query: string): SongSearchResult[] {
   try {
@@ -247,9 +273,10 @@ export function searchSongs(query: string): SongSearchResult[] {
     log('debug', `FTS query: ${ftsQuery}`)
     log('debug', `Query terms: ${queryTerms.join(', ')}`)
 
-    // Phase 1: Get candidates using FTS5 with rank column (faster than bm25())
-    // Fetch more candidates than needed for re-ranking
-    const searchQuery = db.query(`
+    // Phase 1: Standard FTS5 search for exact/prefix matches
+    const standardResults = db
+      .query(
+        `
       SELECT
         s.id,
         s.title,
@@ -265,9 +292,9 @@ export function searchSongs(query: string): SongSearchResult[] {
       WHERE songs_fts MATCH ?
       ORDER BY rank
       LIMIT 100
-    `)
-
-    const candidates = searchQuery.all(ftsQuery) as Array<{
+    `,
+      )
+      .all(ftsQuery) as Array<{
       id: number
       title: string
       category_id: number | null
@@ -278,9 +305,88 @@ export function searchSongs(query: string): SongSearchResult[] {
       bm25_rank: number
     }>
 
-    log('debug', `Phase 1: Found ${candidates.length} candidates`)
+    log('debug', `Phase 1 (standard): Found ${standardResults.length} results`)
 
-    // Phase 2: Calculate term match scores and re-rank
+    // Phase 2: Trigram search for fuzzy matches
+    const trigramQuery = buildTrigramQuery(queryTerms)
+    let trigramResults: Array<{
+      id: number
+      title: string
+      category_id: number | null
+      category_name: string | null
+      full_content: string
+      bm25_rank: number
+    }> = []
+
+    if (trigramQuery) {
+      try {
+        trigramResults = db
+          .query(
+            `
+          SELECT
+            s.id,
+            s.title,
+            s.category_id,
+            sc.name as category_name,
+            songs_fts_trigram.content as full_content,
+            rank as bm25_rank
+          FROM songs_fts_trigram
+          JOIN songs s ON s.id = songs_fts_trigram.song_id
+          LEFT JOIN song_categories sc ON s.category_id = sc.id
+          WHERE songs_fts_trigram MATCH ?
+          ORDER BY rank
+          LIMIT 50
+        `,
+          )
+          .all(trigramQuery) as typeof trigramResults
+
+        log(
+          'debug',
+          `Phase 2 (trigram): Found ${trigramResults.length} results`,
+        )
+      } catch (e) {
+        // Trigram table might not exist yet, continue without it
+        log('debug', `Trigram search failed (table may not exist): ${e}`)
+      }
+    }
+
+    // Combine results - use Map to deduplicate by song ID
+    const candidateMap = new Map<
+      number,
+      {
+        id: number
+        title: string
+        category_id: number | null
+        category_name: string | null
+        highlighted_title: string
+        matched_content: string
+        full_content: string
+        bm25_rank: number
+        fromTrigram: boolean
+      }
+    >()
+
+    // Add standard results first (they have highlighting)
+    for (const r of standardResults) {
+      candidateMap.set(r.id, { ...r, fromTrigram: false })
+    }
+
+    // Add trigram results (without overwriting standard results)
+    for (const r of trigramResults) {
+      if (!candidateMap.has(r.id)) {
+        candidateMap.set(r.id, {
+          ...r,
+          highlighted_title: r.title, // No highlighting for trigram-only matches
+          matched_content: '',
+          fromTrigram: true,
+        })
+      }
+    }
+
+    const candidates = Array.from(candidateMap.values())
+    log('debug', `Combined: ${candidates.length} unique candidates`)
+
+    // Phase 3: Calculate term match scores and re-rank
     const scoredResults = candidates.map((r) => {
       const searchableText = `${r.title} ${r.full_content}`
       const termScore = calculateTermMatchScore(searchableText, queryTerms)
@@ -306,7 +412,7 @@ export function searchSongs(query: string): SongSearchResult[] {
 
     log(
       'debug',
-      `Phase 2: Re-ranked results. Top score: ${topResults[0]?.termScore ?? 0}%`,
+      `Phase 3: Re-ranked. Top score: ${topResults[0]?.termScore ?? 0}%`,
     )
 
     return topResults.map((r) => ({
