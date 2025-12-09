@@ -285,6 +285,140 @@ function extractFuzzySubstrings(term: string): string[] {
 }
 
 /**
+ * Finds the word containing a fuzzy substring match
+ * Returns the full word that contains the matching substring
+ */
+function findFuzzyMatchWord(
+  content: string,
+  term: string,
+): { word: string; index: number } | null {
+  if (term.length < 5) return null
+
+  const words = content.match(/[\p{L}\p{N}]+/gu) || []
+
+  for (let len = Math.min(5, term.length - 1); len >= 4; len--) {
+    for (let start = 1; start <= term.length - len; start++) {
+      const sub = term.substring(start, start + len).toLowerCase()
+      for (const word of words) {
+        if (word.toLowerCase().includes(sub)) {
+          const index = content.toLowerCase().indexOf(word.toLowerCase())
+          return { word, index }
+        }
+      }
+    }
+  }
+
+  return null
+}
+
+/**
+ * Creates highlighted content with fuzzy match support
+ * Highlights both exact matches and fuzzy matches (e.g., "Hristos" -> "Cristos")
+ */
+function createFuzzyHighlightedSnippet(
+  content: string,
+  queryTerms: string[],
+  maxLength: number = 150,
+): string {
+  // Strip HTML tags for cleaner processing
+  const plainContent = content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ')
+
+  // Filter to significant terms (skip very short ones that cause overlapping issues)
+  const significantTerms = queryTerms.filter((t) => t.length >= 3)
+
+  // Find all matches (exact and fuzzy) with their positions
+  const matches: Array<{ start: number; end: number; length: number }> = []
+
+  for (const term of significantTerms) {
+    const lowerContent = plainContent.toLowerCase()
+    const lowerTerm = term.toLowerCase()
+
+    // Find exact matches
+    let pos = 0
+    while ((pos = lowerContent.indexOf(lowerTerm, pos)) !== -1) {
+      matches.push({
+        start: pos,
+        end: pos + term.length,
+        length: term.length,
+      })
+      pos += 1
+    }
+
+    // Find fuzzy matches (for terms >= 5 chars)
+    if (term.length >= 5) {
+      const fuzzyMatch = findFuzzyMatchWord(plainContent, term)
+      if (fuzzyMatch && !matches.some((m) => m.start === fuzzyMatch.index)) {
+        matches.push({
+          start: fuzzyMatch.index,
+          end: fuzzyMatch.index + fuzzyMatch.word.length,
+          length: fuzzyMatch.word.length,
+        })
+      }
+    }
+  }
+
+  if (matches.length === 0) {
+    // No matches, return start of content
+    return plainContent.length > maxLength
+      ? `${plainContent.substring(0, maxLength)}...`
+      : plainContent
+  }
+
+  // Sort matches by position, then by length (longer matches first)
+  matches.sort((a, b) => a.start - b.start || b.length - a.length)
+
+  // Merge overlapping matches - keep longer ones, remove shorter overlapping
+  const mergedMatches: Array<{ start: number; end: number }> = []
+  for (const match of matches) {
+    const overlaps = mergedMatches.some(
+      (m) => match.start < m.end && match.end > m.start,
+    )
+    if (!overlaps) {
+      mergedMatches.push({ start: match.start, end: match.end })
+    }
+  }
+
+  // Find the best snippet window (area with most matches)
+  let bestStart = 0
+  let bestMatchCount = 0
+
+  for (const match of mergedMatches) {
+    const windowStart = Math.max(0, match.start - 30)
+    const windowEnd = windowStart + maxLength
+    const matchesInWindow = mergedMatches.filter(
+      (m) => m.start >= windowStart && m.end <= windowEnd,
+    ).length
+    if (matchesInWindow > bestMatchCount) {
+      bestMatchCount = matchesInWindow
+      bestStart = windowStart
+    }
+  }
+
+  // Extract snippet
+  let snippet = plainContent.substring(bestStart, bestStart + maxLength)
+
+  // Get matches within snippet and adjust positions
+  const snippetMatches = mergedMatches
+    .filter((m) => m.start >= bestStart && m.end <= bestStart + maxLength)
+    .map((m) => ({ start: m.start - bestStart, end: m.end - bestStart }))
+    .sort((a, b) => b.start - a.start) // Sort descending for safe replacement
+
+  // Apply highlighting (from end to start to preserve positions)
+  for (const match of snippetMatches) {
+    const before = snippet.substring(0, match.start)
+    const term = snippet.substring(match.start, match.end)
+    const after = snippet.substring(match.end)
+    snippet = `${before}<mark>${term}</mark>${after}`
+  }
+
+  // Add ellipsis
+  const prefix = bestStart > 0 ? '...' : ''
+  const suffix = bestStart + maxLength < plainContent.length ? '...' : ''
+
+  return `${prefix}${snippet}${suffix}`
+}
+
+/**
  * Builds a trigram query for fuzzy matching
  * Uses middle substrings of words to find similar matches
  * e.g., "Hristos" -> searches for "risto", "isto" which also matches "Cristos"
@@ -409,7 +543,7 @@ export function searchSongs(query: string): SongSearchResult[] {
           LEFT JOIN song_categories sc ON s.category_id = sc.id
           WHERE songs_fts_trigram MATCH ?
           ORDER BY rank
-          LIMIT 50
+          LIMIT 200
         `,
           )
           .all(trigramQuery) as typeof trigramResults
@@ -503,14 +637,23 @@ export function searchSongs(query: string): SongSearchResult[] {
       `Phase 3: Re-ranked. Top score: ${topResults[0]?.termScore ?? 0}%`,
     )
 
-    return topResults.map((r) => ({
-      id: r.id,
-      title: r.title,
-      categoryId: r.category_id,
-      categoryName: r.category_name,
-      highlightedTitle: r.highlighted_title,
-      matchedContent: r.matched_content,
-    }))
+    return topResults.map((r) => {
+      // Always use fuzzy highlighting to ensure fuzzy matches are highlighted
+      // (e.g., "Cristos" highlighted when searching "Hristos")
+      const matchedContent = createFuzzyHighlightedSnippet(
+        r.full_content,
+        queryTerms,
+      )
+
+      return {
+        id: r.id,
+        title: r.title,
+        categoryId: r.category_id,
+        categoryName: r.category_name,
+        highlightedTitle: r.highlighted_title,
+        matchedContent,
+      }
+    })
   } catch (error) {
     log('error', `Failed to search songs with query "${query}": ${error}`)
     return []
