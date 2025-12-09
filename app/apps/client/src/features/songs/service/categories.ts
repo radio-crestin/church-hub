@@ -36,3 +36,22 @@ export async function deleteCategory(id: number): Promise<boolean> {
   )
   return response.data?.success ?? false
 }
+
+export async function reorderCategories(
+  categoryIds: number[],
+): Promise<{ success: boolean; error?: string }> {
+  const response = await fetcher<ApiResponse<{ success: boolean }>>(
+    '/api/categories/reorder',
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ categoryIds }),
+    },
+  )
+
+  if (response.error) {
+    return { success: false, error: response.error }
+  }
+
+  return { success: true }
+}
