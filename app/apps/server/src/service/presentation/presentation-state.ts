@@ -1,5 +1,4 @@
 import type {
-  NavigateInput,
   PresentationState,
   PresentationStateRecord,
   UpdatePresentationStateInput,
@@ -21,9 +20,6 @@ function toPresentationState(
   record: PresentationStateRecord,
 ): PresentationState {
   return {
-    programId: record.program_id,
-    currentSlideId: record.current_slide_id,
-    lastSlideId: record.last_slide_id,
     currentQueueItemId: record.current_queue_item_id,
     currentSongSlideId: record.current_song_slide_id,
     lastSongSlideId: record.last_song_slide_id,
@@ -47,9 +43,6 @@ export function getPresentationState(): PresentationState {
     if (!record) {
       // Return default state if not found
       return {
-        programId: null,
-        currentSlideId: null,
-        lastSlideId: null,
         currentQueueItemId: null,
         currentSongSlideId: null,
         lastSongSlideId: null,
@@ -63,9 +56,6 @@ export function getPresentationState(): PresentationState {
   } catch (error) {
     log('error', `Failed to get presentation state: ${error}`)
     return {
-      programId: null,
-      currentSlideId: null,
-      lastSlideId: null,
       currentQueueItemId: null,
       currentSongSlideId: null,
       lastSongSlideId: null,
@@ -89,14 +79,6 @@ export function updatePresentationState(
     const now = Date.now() // Use milliseconds for finer granularity
     const current = getPresentationState()
 
-    const programId =
-      input.programId !== undefined ? input.programId : current.programId
-    const currentSlideId =
-      input.currentSlideId !== undefined
-        ? input.currentSlideId
-        : current.currentSlideId
-    const lastSlideId =
-      input.lastSlideId !== undefined ? input.lastSlideId : current.lastSlideId
     const currentQueueItemId =
       input.currentQueueItemId !== undefined
         ? input.currentQueueItemId
@@ -117,12 +99,9 @@ export function updatePresentationState(
       input.isHidden !== undefined ? input.isHidden : current.isHidden
 
     const query = db.query(`
-      INSERT INTO presentation_state (id, program_id, current_slide_id, last_slide_id, current_queue_item_id, current_song_slide_id, last_song_slide_id, is_presenting, is_hidden, updated_at)
-      VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO presentation_state (id, current_queue_item_id, current_song_slide_id, last_song_slide_id, is_presenting, is_hidden, updated_at)
+      VALUES (1, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
-        program_id = excluded.program_id,
-        current_slide_id = excluded.current_slide_id,
-        last_slide_id = excluded.last_slide_id,
         current_queue_item_id = excluded.current_queue_item_id,
         current_song_slide_id = excluded.current_song_slide_id,
         last_song_slide_id = excluded.last_song_slide_id,
@@ -131,9 +110,6 @@ export function updatePresentationState(
         updated_at = excluded.updated_at
     `)
     query.run(
-      programId,
-      currentSlideId,
-      lastSlideId,
       currentQueueItemId,
       currentSongSlideId,
       lastSongSlideId,
@@ -151,99 +127,6 @@ export function updatePresentationState(
 }
 
 /**
- * Gets ordered slide IDs for the current program
- */
-function getOrderedSlideIds(programId: number): number[] {
-  const db = getDatabase()
-  const query = db.query(
-    'SELECT id FROM slides WHERE program_id = ? ORDER BY sort_order ASC',
-  )
-  const results = query.all(programId) as { id: number }[]
-  return results.map((r) => r.id)
-}
-
-/**
- * Navigate to next, previous, or specific slide
- */
-export function navigateSlide(input: NavigateInput): PresentationState {
-  try {
-    log('debug', `Navigating slide: ${input.direction}`)
-
-    const current = getPresentationState()
-
-    if (input.direction === 'goto' && input.slideId !== undefined) {
-      // Set both currentSlideId and lastSlideId when going to a specific slide
-      return updatePresentationState({
-        currentSlideId: input.slideId,
-        lastSlideId: input.slideId,
-      })
-    }
-
-    if (!current.programId) {
-      log('warning', 'Cannot navigate: no program selected')
-      return current
-    }
-
-    const slideIds = getOrderedSlideIds(current.programId)
-    if (slideIds.length === 0) {
-      log('warning', 'Cannot navigate: no slides in program')
-      return current
-    }
-
-    const currentIndex = current.currentSlideId
-      ? slideIds.indexOf(current.currentSlideId)
-      : -1
-
-    let newIndex: number
-
-    if (input.direction === 'next') {
-      newIndex = currentIndex + 1
-      if (newIndex >= slideIds.length) {
-        newIndex = slideIds.length - 1 // Stay on last slide
-      }
-    } else {
-      // prev
-      newIndex = currentIndex - 1
-      if (newIndex < 0) {
-        newIndex = 0 // Stay on first slide
-      }
-    }
-
-    const newSlideId = slideIds[newIndex]
-    // Set both currentSlideId and lastSlideId when navigating
-    return updatePresentationState({
-      currentSlideId: newSlideId,
-      lastSlideId: newSlideId,
-    })
-  } catch (error) {
-    log('error', `Failed to navigate slide: ${error}`)
-    return getPresentationState()
-  }
-}
-
-/**
- * Starts presenting a program
- */
-export function startPresentation(programId: number): PresentationState {
-  try {
-    log('debug', `Starting presentation for program: ${programId}`)
-
-    const slideIds = getOrderedSlideIds(programId)
-    const firstSlideId = slideIds.length > 0 ? slideIds[0] : null
-
-    return updatePresentationState({
-      programId,
-      currentSlideId: firstSlideId,
-      lastSlideId: firstSlideId,
-      isPresenting: true,
-    })
-  } catch (error) {
-    log('error', `Failed to start presentation: ${error}`)
-    return getPresentationState()
-  }
-}
-
-/**
  * Stops the current presentation
  */
 export function stopPresentation(): PresentationState {
@@ -252,7 +135,6 @@ export function stopPresentation(): PresentationState {
 
     return updatePresentationState({
       isPresenting: false,
-      currentSlideId: null,
       currentQueueItemId: null,
       currentSongSlideId: null,
     })
@@ -408,7 +290,13 @@ export function navigateQueueSlide(
     if (direction === 'next') {
       newIndex = currentIndex + 1
       if (newIndex >= slides.length) {
-        newIndex = slides.length - 1 // Stay on last slide
+        // At the end of the queue - hide and deselect
+        log('info', 'Reached end of queue, hiding presentation')
+        return updatePresentationState({
+          currentQueueItemId: null,
+          currentSongSlideId: null,
+          isHidden: true,
+        })
       }
     } else {
       // prev

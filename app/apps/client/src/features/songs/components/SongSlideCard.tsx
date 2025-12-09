@@ -11,6 +11,7 @@ interface LocalSlide {
   id: string | number
   content: string
   sortOrder: number
+  label?: string | null
 }
 
 interface SongSlideCardProps {
@@ -95,6 +96,11 @@ export function SongSlideCard({
           </button>
           <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
             {t('editor.slideNumber', { number: index + 1 })}
+            {slide.label && (
+              <span className="ml-2 px-1.5 py-0.5 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded text-xs font-semibold">
+                {slide.label}
+              </span>
+            )}
           </span>
         </div>
 
@@ -225,7 +231,12 @@ export function SongSlideCard({
       </div>
 
       {/* Editor Content */}
-      <EditorContent editor={editor} />
+      <div className="bg-gray-50 dark:bg-gray-900/50">
+        <EditorContent
+          editor={editor}
+          className="prose prose-sm dark:prose-invert max-w-none [&_.ProseMirror]:text-gray-900 [&_.ProseMirror]:dark:text-gray-100"
+        />
+      </div>
     </div>
   )
 }

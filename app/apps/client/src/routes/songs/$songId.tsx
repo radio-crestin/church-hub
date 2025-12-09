@@ -222,6 +222,10 @@ function SongEditorPage() {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [handleSave, upsertMutation.isPending])
 
+  const handleBack = useCallback(() => {
+    navigate({ to: '/songs/', search: { q: searchQuery } })
+  }, [navigate, searchQuery])
+
   const handleDeleteConfirm = async () => {
     if (!numericId) return
 
@@ -229,7 +233,7 @@ function SongEditorPage() {
     const success = await deleteMutation.mutateAsync(numericId)
     if (success) {
       showToast(t('songs:messages.deleted'), 'success')
-      navigate({ to: '/songs', search: { q: searchQuery } })
+      handleBack()
     } else {
       showToast(t('songs:messages.error'), 'error')
     }
@@ -265,6 +269,7 @@ function SongEditorPage() {
         onMetadataChange={handleMetadataChange}
         onSave={handleSave}
         onDelete={isNew ? undefined : () => setShowDeleteModal(true)}
+        onBack={handleBack}
       />
 
       <ConfirmModal

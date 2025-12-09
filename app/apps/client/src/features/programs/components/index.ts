@@ -1,6 +1,0 @@
-export * from './ProgramCard'
-export * from './ProgramEditor'
-export * from './ProgramList'
-export * from './SlideCard'
-export * from './SlideEditorModal'
-export * from './SlideList'

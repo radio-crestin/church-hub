@@ -18,6 +18,7 @@ import {
   useQueue,
 } from '~/features/queue'
 import type { SlideTemplate } from '~/features/queue/types'
+import { SchedulePickerModal } from '~/features/schedules/components'
 import { SongPickerModal } from '~/features/songs/components'
 import { ConfirmModal } from '~/ui/modal'
 import { useToast } from '~/ui/toast'
@@ -26,7 +27,6 @@ import {
   useClearSlide,
   useKeyboardShortcuts,
   useNavigateQueueSlide,
-  useNavigateSlide,
   usePresentationState,
   useShowSlide,
   useUpdatePresentationState,
@@ -51,41 +51,29 @@ export function ControlRoom() {
   const [showSlideInsert, setShowSlideInsert] = useState(false)
   const [slideInsertTemplate, setSlideInsertTemplate] =
     useState<SlideTemplate>('announcement')
+  const [showSchedulePicker, setShowSchedulePicker] = useState(false)
 
-  const navigateSlide = useNavigateSlide()
   const navigateQueueSlide = useNavigateQueueSlide()
   const clearSlide = useClearSlide()
   const showSlide = useShowSlide()
   const updateState = useUpdatePresentationState()
 
-  // Determine if we're navigating queue slides or program slides
+  // Check if we have queue content
   const hasQueueSlide =
     !!state?.currentQueueItemId || !!state?.currentSongSlideId
 
   const handlePrev = async () => {
-    if (hasQueueSlide) {
-      await navigateQueueSlide.mutateAsync('prev')
-    } else {
-      await navigateSlide.mutateAsync({ direction: 'prev' })
-    }
+    await navigateQueueSlide.mutateAsync('prev')
   }
 
   const handleNext = async () => {
-    if (hasQueueSlide) {
-      await navigateQueueSlide.mutateAsync('next')
-    } else {
-      await navigateSlide.mutateAsync({ direction: 'next' })
-    }
+    await navigateQueueSlide.mutateAsync('next')
   }
 
   // Show = display the last slide
   const handleShow = async () => {
-    // Check lastSlideId, lastSongSlideId (if available), or currentQueueItemId
-    if (
-      state?.lastSlideId ||
-      state?.lastSongSlideId ||
-      state?.currentQueueItemId
-    ) {
+    // Check lastSongSlideId or currentQueueItemId
+    if (state?.lastSongSlideId || state?.currentQueueItemId) {
       await showSlide.mutateAsync()
     }
   }
@@ -122,52 +110,74 @@ export function ControlRoom() {
     setShowSlideInsert(true)
   }
 
+  const handleImportSchedule = () => {
+    setShowSchedulePicker(true)
+  }
+
   // Use isHidden flag for button state
   const isHidden = state?.isHidden ?? false
   // Check if we have content to show (for enabling show button)
   const hasContent =
-    !!state?.currentSlideId ||
     !!state?.currentSongSlideId ||
     !!state?.currentQueueItemId ||
-    !!state?.lastSlideId ||
     !!state?.lastSongSlideId
-  const canNavigate = state?.isPresenting || hasQueueSlide
-  const isNavigating = navigateSlide.isPending || navigateQueueSlide.isPending
+  const canNavigate = hasQueueSlide
+  const isNavigating = navigateQueueSlide.isPending
 
   return (
-    <div className="flex flex-col h-full gap-4">
-      {/* Header */}
-      <div className="flex items-center gap-3 flex-shrink-0">
-        <MonitorUp size={24} className="text-indigo-600" />
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          {t('presentation:controlRoom.title')}
-        </h1>
-      </div>
-
+    <div className="flex flex-col h-full gap-3">
       {/* Main Content: Two-Column Layout */}
-      <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0">
+      <div className="flex flex-col lg:flex-row gap-3 flex-1 min-h-0">
         {/* Left Column: Preview + Controls */}
-        <div className="lg:w-2/3 space-y-4 overflow-auto">
+        <div className="lg:w-2/3 space-y-3 overflow-auto">
           {/* Live Preview */}
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                {t('presentation:controlRoom.preview')}
-              </h2>
+              <div className="flex items-center gap-2">
+                <MonitorUp size={20} className="text-indigo-600" />
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {t('presentation:controlRoom.title')}
+                </h2>
+              </div>
               {/* Show/Hide Button */}
               <div className="flex items-center gap-2">
+                {/* LIVE Indicator */}
+                <div
+                  className={`flex items-center gap-1.5 px-2 py-1 rounded-md ${
+                    !isHidden
+                      ? 'bg-red-100 dark:bg-red-900/30'
+                      : 'bg-gray-100 dark:bg-gray-700'
+                  }`}
+                >
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      !isHidden
+                        ? 'bg-red-500 animate-pulse'
+                        : 'bg-gray-400 dark:bg-gray-500'
+                    }`}
+                  />
+                  <span
+                    className={`text-xs font-semibold ${
+                      !isHidden
+                        ? 'text-red-600 dark:text-red-400'
+                        : 'text-gray-400 dark:text-gray-500'
+                    }`}
+                  >
+                    LIVE
+                  </span>
+                </div>
                 {!isHidden ? (
                   <button
                     type="button"
                     onClick={handleHide}
                     disabled={clearSlide.isPending}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-gray-700 dark:text-gray-300 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
                     title={`${t('presentation:controls.hide')} (Esc)`}
                   >
                     {clearSlide.isPending ? (
-                      <Loader2 size={16} className="animate-spin" />
+                      <Loader2 size={18} className="animate-spin" />
                     ) : (
-                      <EyeOff size={16} />
+                      <EyeOff size={18} />
                     )}
                     <span>{t('presentation:controls.hide')}</span>
                     <span className="text-xs opacity-75">(Esc)</span>
@@ -177,26 +187,18 @@ export function ControlRoom() {
                     type="button"
                     onClick={handleShow}
                     disabled={!hasContent || showSlide.isPending}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-gray-700 dark:text-gray-300 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
                     title={`${t('presentation:controls.show')} (F10)`}
                   >
                     {showSlide.isPending ? (
-                      <Loader2 size={16} className="animate-spin" />
+                      <Loader2 size={18} className="animate-spin" />
                     ) : (
-                      <Eye size={16} />
+                      <Eye size={18} />
                     )}
                     <span>{t('presentation:controls.show')}</span>
                     <span className="text-xs opacity-75">(F10)</span>
                   </button>
                 )}
-                <span
-                  className={`w-2.5 h-2.5 rounded-full ${isHidden ? 'bg-green-500' : 'bg-red-500'}`}
-                  title={
-                    isHidden
-                      ? t('presentation:controls.screenHidden')
-                      : t('presentation:controls.screenDisplayed')
-                  }
-                />
               </div>
             </div>
             <LivePreview />
@@ -234,9 +236,9 @@ export function ControlRoom() {
 
         {/* Right Column: Queue List */}
         <div className="lg:w-1/3 flex flex-col min-h-0 flex-1 lg:flex-initial">
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 flex-1 flex flex-col min-h-0 overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 flex-1 flex flex-col min-h-0 overflow-hidden">
             {/* Queue Header */}
-            <div className="flex items-center justify-between mb-3 flex-shrink-0">
+            <div className="flex items-center justify-between p-4 pb-3 flex-shrink-0">
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                   {t('queue:title')}
@@ -251,21 +253,21 @@ export function ControlRoom() {
                 <AddToQueueMenu
                   onAddSong={handleAddSong}
                   onAddSlide={handleAddSlide}
+                  onImportSchedule={handleImportSchedule}
                 />
                 {queue && queue.length > 0 && (
                   <button
                     type="button"
                     onClick={() => setShowClearModal(true)}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-white bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 rounded-md transition-colors"
+                    className="p-1.5 text-white bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 rounded-lg transition-colors"
                   >
-                    <Trash2 size={14} />
-                    {t('queue:actions.clear')}
+                    <Trash2 size={18} />
                   </button>
                 )}
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto pr-2 min-h-0">
+            <div className="flex-1 overflow-y-auto scrollbar-thin min-h-0 px-4 pb-4">
               <QueueList
                 activeSlideId={state?.currentSongSlideId ?? null}
                 activeQueueItemId={state?.currentQueueItemId ?? null}
@@ -283,7 +285,6 @@ export function ControlRoom() {
         title={t('queue:confirmClear.title')}
         message={t('queue:confirmClear.message')}
         confirmLabel={t('queue:actions.clear')}
-        cancelLabel={t('common:cancel')}
         onConfirm={handleClearConfirm}
         onCancel={() => setShowClearModal(false)}
         variant="danger"
@@ -300,6 +301,12 @@ export function ControlRoom() {
         isOpen={showSlideInsert}
         onClose={() => setShowSlideInsert(false)}
         initialTemplate={slideInsertTemplate}
+      />
+
+      {/* Schedule Picker Modal */}
+      <SchedulePickerModal
+        isOpen={showSchedulePicker}
+        onClose={() => setShowSchedulePicker(false)}
       />
     </div>
   )

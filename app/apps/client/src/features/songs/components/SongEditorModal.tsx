@@ -7,6 +7,34 @@ import { CategoryPicker } from './CategoryPicker'
 import { type LocalSlide, SongSlideList } from './SongSlideList'
 import { useSong, useUpsertSong } from '../hooks'
 
+interface SongMetadata {
+  author: string | null
+  copyright: string | null
+  ccli: string | null
+  key: string | null
+  tempo: string | null
+  timeSignature: string | null
+  theme: string | null
+  altTheme: string | null
+  hymnNumber: string | null
+  keyLine: string | null
+  presentationOrder: string | null
+}
+
+const defaultMetadata: SongMetadata = {
+  author: null,
+  copyright: null,
+  ccli: null,
+  key: null,
+  tempo: null,
+  timeSignature: null,
+  theme: null,
+  altTheme: null,
+  hymnNumber: null,
+  keyLine: null,
+  presentationOrder: null,
+}
+
 interface SongEditorModalProps {
   isOpen: boolean
   onClose: () => void
@@ -28,9 +56,14 @@ export function SongEditorModal({
   const upsertMutation = useUpsertSong()
 
   // Local state for editing
+  // NOTE: When adding new fields to song editing, ensure they are:
+  // 1. Added to the local state here
+  // 2. Initialized from loaded song data in useEffect
+  // 3. Included in handleSave mutation call
   const [title, setTitle] = useState('')
   const [categoryId, setCategoryId] = useState<number | null>(null)
   const [slides, setSlides] = useState<LocalSlide[]>([])
+  const [metadata, setMetadata] = useState<SongMetadata>(defaultMetadata)
   const [isInitialized, setIsInitialized] = useState(false)
 
   // Initialize local state when song is loaded
@@ -43,8 +76,22 @@ export function SongEditorModal({
           id: s.id,
           content: s.content,
           sortOrder: s.sortOrder,
+          label: s.label,
         })),
       )
+      setMetadata({
+        author: song.author,
+        copyright: song.copyright,
+        ccli: song.ccli,
+        key: song.key,
+        tempo: song.tempo,
+        timeSignature: song.timeSignature,
+        theme: song.theme,
+        altTheme: song.altTheme,
+        hymnNumber: song.hymnNumber,
+        keyLine: song.keyLine,
+        presentationOrder: song.presentationOrder,
+      })
       setIsInitialized(true)
     }
   }, [song, isOpen])
@@ -76,7 +123,20 @@ export function SongEditorModal({
         id: typeof s.id === 'number' ? s.id : undefined,
         content: s.content,
         sortOrder: idx,
+        label: s.label,
       })),
+      // Include all metadata fields to preserve them during save
+      author: metadata.author,
+      copyright: metadata.copyright,
+      ccli: metadata.ccli,
+      key: metadata.key,
+      tempo: metadata.tempo,
+      timeSignature: metadata.timeSignature,
+      theme: metadata.theme,
+      altTheme: metadata.altTheme,
+      hymnNumber: metadata.hymnNumber,
+      keyLine: metadata.keyLine,
+      presentationOrder: metadata.presentationOrder,
     })
 
     if (result.success && result.data) {
@@ -87,8 +147,22 @@ export function SongEditorModal({
           id: s.id,
           content: s.content,
           sortOrder: s.sortOrder,
+          label: s.label,
         })),
       )
+      setMetadata({
+        author: result.data.author,
+        copyright: result.data.copyright,
+        ccli: result.data.ccli,
+        key: result.data.key,
+        tempo: result.data.tempo,
+        timeSignature: result.data.timeSignature,
+        theme: result.data.theme,
+        altTheme: result.data.altTheme,
+        hymnNumber: result.data.hymnNumber,
+        keyLine: result.data.keyLine,
+        presentationOrder: result.data.presentationOrder,
+      })
       onSaved?.()
       onClose()
     } else {
@@ -98,6 +172,7 @@ export function SongEditorModal({
     title,
     categoryId,
     slides,
+    metadata,
     songId,
     upsertMutation,
     showToast,

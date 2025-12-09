@@ -24,6 +24,7 @@ export interface LocalSlide {
   id: string | number
   content: string
   sortOrder: number
+  label?: string | null
 }
 
 interface SongSlideListProps {

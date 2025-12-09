@@ -1,0 +1,43 @@
+{
+  "title": "Schedules",
+  "actions": {
+    "create": "New Schedule",
+    "save": "Save",
+    "delete": "Delete",
+    "back": "Back to Schedules",
+    "addItem": "Add",
+    "importToQueue": "Import to Queue"
+  },
+  "editor": {
+    "titlePlaceholder": "Enter schedule title...",
+    "descriptionPlaceholder": "Add a description (optional)...",
+    "items": "Items",
+    "noItems": "No items yet",
+    "addFirstItem": "Add songs or slides to build your schedule"
+  },
+  "search": {
+    "placeholder": "Search schedules...",
+    "noResults": "No schedules found for \"{{query}}\"",
+    "resultsCount": "{{count}} schedules found"
+  },
+  "messages": {
+    "saved": "Schedule saved successfully",
+    "deleted": "Schedule deleted successfully",
+    "itemAdded": "Item added to schedule",
+    "itemRemoved": "Item removed from schedule",
+    "importedToQueue": "Schedule imported to queue",
+    "error": "An error occurred"
+  },
+  "modal": {
+    "deleteTitle": "Delete Schedule",
+    "deleteMessage": "Are you sure you want to delete this schedule? This action cannot be undone.",
+    "importTitle": "Import Schedule",
+    "unsavedChangesTitle": "Unsaved Changes",
+    "unsavedChangesMessage": "You have unsaved changes. Are you sure you want to leave?",
+    "discardChanges": "Lose changes"
+  },
+  "noSchedules": "No schedules yet",
+  "noSchedulesDescription": "Create your first schedule to plan your presentations",
+  "itemCount_one": "{{count}} item",
+  "itemCount_other": "{{count}} items"
+}
