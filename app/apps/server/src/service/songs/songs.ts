@@ -285,6 +285,7 @@ export function deleteSong(id: number): OperationResult {
 export function batchImportSongs(
   songs: BatchImportSongInput[],
   defaultCategoryId?: number | null,
+  overwriteDuplicates?: boolean,
 ): BatchImportResult {
   const db = getDatabase()
   const songIds: number[] = []
@@ -300,6 +301,10 @@ export function batchImportSongs(
     db.exec('BEGIN TRANSACTION')
 
     // Prepare statements for reuse
+    const findExistingStmt = db.query(
+      'SELECT id FROM songs WHERE LOWER(title) = LOWER(?) LIMIT 1',
+    )
+
     const insertSongStmt = db.query(`
       INSERT INTO songs (
         title, category_id, source_file_path,
@@ -310,7 +315,20 @@ export function batchImportSongs(
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `)
 
+    const updateSongStmt = db.query(`
+      UPDATE songs
+      SET title = ?, category_id = ?, source_file_path = ?,
+          author = ?, copyright = ?, ccli = ?, key = ?, tempo = ?,
+          time_signature = ?, theme = ?, alt_theme = ?, hymn_number = ?,
+          key_line = ?, presentation_order = ?, updated_at = ?
+      WHERE id = ?
+    `)
+
     const getLastIdStmt = db.query('SELECT last_insert_rowid() as id')
+
+    const deleteSlidesByIdStmt = db.query(
+      'DELETE FROM song_slides WHERE song_id = ?',
+    )
 
     const insertSlideStmt = db.query(`
       INSERT INTO song_slides (song_id, content, sort_order, label, created_at, updated_at)
@@ -322,29 +340,63 @@ export function batchImportSongs(
 
       try {
         const categoryId = input.categoryId ?? defaultCategoryId ?? null
+        let songId: number
 
-        // Insert song
-        insertSongStmt.run(
-          input.title,
-          categoryId,
-          input.sourceFilePath ?? null,
-          input.author ?? null,
-          input.copyright ?? null,
-          input.ccli ?? null,
-          input.key ?? null,
-          input.tempo ?? null,
-          input.timeSignature ?? null,
-          input.theme ?? null,
-          input.altTheme ?? null,
-          input.hymnNumber ?? null,
-          input.keyLine ?? null,
-          input.presentationOrder ?? null,
-          now,
-          now,
-        )
+        // Check for existing song if overwrite is enabled
+        const existingSong = overwriteDuplicates
+          ? (findExistingStmt.get(input.title) as { id: number } | null)
+          : null
 
-        const result = getLastIdStmt.get() as { id: number }
-        const songId = result.id
+        if (existingSong) {
+          // Update existing song
+          songId = existingSong.id
+          updateSongStmt.run(
+            input.title,
+            categoryId,
+            input.sourceFilePath ?? null,
+            input.author ?? null,
+            input.copyright ?? null,
+            input.ccli ?? null,
+            input.key ?? null,
+            input.tempo ?? null,
+            input.timeSignature ?? null,
+            input.theme ?? null,
+            input.altTheme ?? null,
+            input.hymnNumber ?? null,
+            input.keyLine ?? null,
+            input.presentationOrder ?? null,
+            now,
+            songId,
+          )
+
+          // Delete old slides before inserting new ones
+          deleteSlidesByIdStmt.run(songId)
+          log('debug', `Updated existing song ${songId}: "${input.title}"`)
+        } else {
+          // Insert new song
+          insertSongStmt.run(
+            input.title,
+            categoryId,
+            input.sourceFilePath ?? null,
+            input.author ?? null,
+            input.copyright ?? null,
+            input.ccli ?? null,
+            input.key ?? null,
+            input.tempo ?? null,
+            input.timeSignature ?? null,
+            input.theme ?? null,
+            input.altTheme ?? null,
+            input.hymnNumber ?? null,
+            input.keyLine ?? null,
+            input.presentationOrder ?? null,
+            now,
+            now,
+          )
+
+          const result = getLastIdStmt.get() as { id: number }
+          songId = result.id
+        }
+
         songIds.push(songId)
 
         // Insert slides if provided

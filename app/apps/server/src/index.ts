@@ -1325,6 +1325,7 @@ async function main() {
           const body = (await req.json()) as {
             songs: BatchImportSongInput[]
             categoryId?: number | null
+            overwriteDuplicates?: boolean
           }
 
           if (!body.songs || !Array.isArray(body.songs)) {
@@ -1337,7 +1338,11 @@ async function main() {
             )
           }
 
-          const result = batchImportSongs(body.songs, body.categoryId)
+          const result = batchImportSongs(
+            body.songs,
+            body.categoryId,
+            body.overwriteDuplicates,
+          )
 
           // Update search index for all imported songs
           for (const songId of result.songIds) {

@@ -6,6 +6,10 @@ import type { BatchImportInput, BatchImportResult } from '../types'
 const API_BASE_URL = 'http://localhost:3000'
 const BATCH_SIZE = 200
 
+interface BatchImportOptions {
+  overwriteDuplicates?: boolean
+}
+
 export function useBatchImportSongs() {
   const queryClient = useQueryClient()
   const [isPending, setIsPending] = useState(false)
@@ -13,6 +17,7 @@ export function useBatchImportSongs() {
 
   const batchImport = async (
     input: BatchImportInput,
+    options?: BatchImportOptions,
   ): Promise<BatchImportResult> => {
     setIsPending(true)
     setProgress(0)
@@ -48,6 +53,7 @@ export function useBatchImportSongs() {
               presentationOrder: song.presentationOrder,
             })),
             categoryId: input.categoryId,
+            overwriteDuplicates: options?.overwriteDuplicates ?? false,
           }),
         })
 
