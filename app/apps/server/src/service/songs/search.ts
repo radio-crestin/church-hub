@@ -18,9 +18,17 @@ export function updateSearchIndex(songId: number): void {
 
     const db = getDatabase()
 
-    // Get song title
-    const songQuery = db.query('SELECT title FROM songs WHERE id = ?')
-    const song = songQuery.get(songId) as { title: string } | null
+    // Get song title and category name
+    const songQuery = db.query(`
+      SELECT s.title, sc.name as category_name
+      FROM songs s
+      LEFT JOIN song_categories sc ON s.category_id = sc.id
+      WHERE s.id = ?
+    `)
+    const song = songQuery.get(songId) as {
+      title: string
+      category_name: string | null
+    } | null
 
     if (!song) {
       log('debug', `Song not found for indexing: ${songId}`)
@@ -38,12 +46,17 @@ export function updateSearchIndex(songId: number): void {
     const deleteQuery = db.query('DELETE FROM songs_fts WHERE song_id = ?')
     deleteQuery.run(songId)
 
-    // Insert new index entry
+    // Insert new index entry with category_name
     const insertQuery = db.query(`
-      INSERT INTO songs_fts (song_id, title, content)
-      VALUES (?, ?, ?)
+      INSERT INTO songs_fts (song_id, title, category_name, content)
+      VALUES (?, ?, ?, ?)
     `)
-    insertQuery.run(songId, song.title, combinedContent)
+    insertQuery.run(
+      songId,
+      song.title,
+      song.category_name ?? '',
+      combinedContent,
+    )
 
     log('debug', `Search index updated for song: ${songId}`)
   } catch (error) {
@@ -65,6 +78,28 @@ export function removeFromSearchIndex(songId: number): void {
     log('debug', `Song removed from search index: ${songId}`)
   } catch (error) {
     log('error', `Failed to remove from search index: ${error}`)
+  }
+}
+
+/**
+ * Updates the FTS index for all songs in a category
+ * Called when a category name is updated
+ */
+export function updateSearchIndexByCategory(categoryId: number): void {
+  try {
+    log('debug', `Updating search index for category: ${categoryId}`)
+
+    const db = getDatabase()
+    const songsQuery = db.query('SELECT id FROM songs WHERE category_id = ?')
+    const songs = songsQuery.all(categoryId) as { id: number }[]
+
+    for (const song of songs) {
+      updateSearchIndex(song.id)
+    }
+
+    log('debug', `Updated ${songs.length} songs for category: ${categoryId}`)
+  } catch (error) {
+    log('error', `Failed to update search index for category: ${error}`)
   }
 }
 
@@ -95,7 +130,53 @@ export function rebuildSearchIndex(): void {
 }
 
 /**
- * Searches songs using FTS5
+ * Builds an optimized FTS5 query with tiered matching
+ * Supports: exact phrase, proximity (NEAR), and prefix matching
+ *
+ * For multi-word queries, this creates a combined query that:
+ * 1. Tries exact phrase match (highest relevance)
+ * 2. Tries proximity match within 5 tokens
+ * 3. Falls back to individual prefix matches
+ */
+function buildSearchQuery(queryText: string): string {
+  // Escape special FTS5 characters
+  const sanitized = queryText
+    .replace(/['"]/g, '')
+    .replace(/[*()^:+\-\\]/g, ' ')
+    .trim()
+
+  if (!sanitized) return ''
+
+  const terms = sanitized.split(/\s+/).filter((t) => t.length > 0)
+
+  if (terms.length === 0) return ''
+
+  if (terms.length === 1) {
+    // Single word: prefix match
+    return `"${terms[0]}"*`
+  }
+
+  // Multi-word: combine phrase, proximity, and prefix matching
+  const phraseQuery = `"${terms.join(' ')}"` // Exact phrase (highest rank)
+  const nearQuery = `NEAR(${terms.map((t) => `"${t}"`).join(' ')}, 5)` // Within 5 tokens
+  const prefixQuery = terms.map((t) => `"${t}"*`).join(' OR ') // Individual terms with prefix
+
+  // Combine with OR - FTS5's BM25 will naturally rank better matches higher
+  return `(${phraseQuery}) OR (${nearQuery}) OR (${prefixQuery})`
+}
+
+/**
+ * Searches songs using FTS5 with field-weighted ranking
+ *
+ * Ranking weights (via bm25):
+ * - title: 10.0 (highest priority)
+ * - category_name: 5.0 (medium priority)
+ * - content: 1.0 (lowest priority)
+ *
+ * Query strategy prioritizes:
+ * 1. Exact phrase matches
+ * 2. Proximity matches (words within 5 tokens)
+ * 3. Individual term prefix matches
  */
 export function searchSongs(query: string): SongSearchResult[] {
   try {
@@ -107,37 +188,33 @@ export function searchSongs(query: string): SongSearchResult[] {
 
     const db = getDatabase()
 
-    // Use FTS5 MATCH query with snippet for highlighting
+    // Build the tiered FTS5 query
+    const ftsQuery = buildSearchQuery(query)
+
+    if (!ftsQuery) {
+      return []
+    }
+
+    log('debug', `FTS query: ${ftsQuery}`)
+
+    // Use bm25() with column weights: song_id(0), title(10), category_name(5), content(1)
+    // snippet() column index: 0=song_id(UNINDEXED), 1=title, 2=category_name, 3=content
     const searchQuery = db.query(`
       SELECT
         s.id,
         s.title,
         s.category_id,
         sc.name as category_name,
-        snippet(songs_fts, 2, '<mark>', '</mark>', '...', 30) as matched_content
+        snippet(songs_fts, 3, '<mark>', '</mark>', '...', 30) as matched_content
       FROM songs_fts fts
       JOIN songs s ON fts.song_id = s.id
       LEFT JOIN song_categories sc ON s.category_id = sc.id
       WHERE songs_fts MATCH ?
-      ORDER BY rank
+      ORDER BY bm25(songs_fts, 0.0, 10.0, 5.0, 1.0)
       LIMIT 50
     `)
 
-    // Escape special FTS5 characters and add prefix matching
-    // FTS5 special chars: " ' * ( ) ^ : + - \ need to be removed or replaced
-    const escapedQuery = query
-      .replace(/['"]/g, '')
-      .replace(/[*()^:+\-\\]/g, ' ')
-      .split(/\s+/)
-      .filter((term) => term.length > 0)
-      .map((term) => `"${term}"*`)
-      .join(' OR ')
-
-    if (!escapedQuery) {
-      return []
-    }
-
-    const results = searchQuery.all(escapedQuery) as Array<{
+    const results = searchQuery.all(ftsQuery) as Array<{
       id: number
       title: string
       category_id: number | null
