@@ -102,3 +102,8 @@ export interface BatchImportResult {
   failedCount: number
   songIds: number[]
 }
+
+export interface ImportOptions {
+  overwriteDuplicates: boolean
+  useFirstVerseAsTitle: boolean
+}
