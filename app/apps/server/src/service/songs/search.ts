@@ -203,7 +203,8 @@ function buildSearchQuery(queryText: string): string {
 
 /**
  * Checks if a term has a fuzzy match in content
- * Uses middle substring matching (e.g., "Hristos" matches "Cristos" via "isto")
+ * Uses middle substring matching (e.g., "Hristos" matches "Cristos" via "risto")
+ * Minimum substring length is 4 to avoid false positives (e.g., "ist" matching "Linistit")
  */
 function hasFuzzyMatch(term: string, content: string): boolean {
   // First check exact match
@@ -212,13 +213,14 @@ function hasFuzzyMatch(term: string, content: string): boolean {
   }
 
   // For short terms, only exact match
-  if (term.length < 4) {
+  if (term.length < 5) {
     return false
   }
 
   // Check middle substrings for fuzzy match
   // "Hristos" -> check "risto", "isto" which would match "Cristos"
-  for (let len = Math.min(5, term.length - 1); len >= 3; len--) {
+  // Minimum length 4 to avoid false positives like "ist" matching "Linistit"
+  for (let len = Math.min(5, term.length - 1); len >= 4; len--) {
     for (let start = 1; start <= term.length - len; start++) {
       const sub = term.substring(start, start + len)
       if (content.includes(sub)) {
@@ -258,20 +260,22 @@ function calculateTermMatchScore(
  * Extracts fuzzy search substrings from a term
  * For "Hristos", extracts substrings that would also match "Cristos"
  * Uses middle portion of words for better fuzzy matching
+ * Minimum length 4 to avoid false positives
  */
 function extractFuzzySubstrings(term: string): string[] {
-  if (term.length < 4) return []
+  if (term.length < 5) return []
 
   const substrings: string[] = []
 
   // Extract middle portions (skip first and last char for fuzzy matching)
-  // "Hristos" -> "risto", "isto", "sto"
-  // "Cristos" -> "risto", "isto", "sto"
-  // Common matches: "risto", "isto", "sto"
-  for (let len = Math.min(5, term.length - 1); len >= 3; len--) {
+  // "Hristos" -> "risto", "isto"
+  // "Cristos" -> "risto", "isto"
+  // Common matches: "risto", "isto"
+  // Minimum length 4 to avoid false positives like "ist" matching "Linistit"
+  for (let len = Math.min(5, term.length - 1); len >= 4; len--) {
     for (let start = 1; start <= term.length - len; start++) {
       const sub = term.substring(start, start + len)
-      if (sub.length >= 3 && !substrings.includes(sub)) {
+      if (sub.length >= 4 && !substrings.includes(sub)) {
         substrings.push(sub)
       }
     }
@@ -472,7 +476,7 @@ export function searchSongs(query: string): SongSearchResult[] {
       }
     })
 
-    // Sort by: boosted score (desc), then term score (desc), then BM25 rank (asc)
+    // Sort by: boosted score (desc), term score (desc), FTS over trigram, then BM25 rank (asc)
     scoredResults.sort((a, b) => {
       // Primary: boosted score (category priority applied)
       if (b.boostedScore !== a.boostedScore) {
@@ -482,7 +486,12 @@ export function searchSongs(query: string): SongSearchResult[] {
       if (b.termScore !== a.termScore) {
         return b.termScore - a.termScore
       }
-      // Tertiary: better BM25 score (lower rank value = better match)
+      // Tertiary: prioritize FTS results over trigram results
+      // (trigram BM25 scores are not comparable to FTS scores)
+      if (a.fromTrigram !== b.fromTrigram) {
+        return a.fromTrigram ? 1 : -1 // FTS (false) comes before trigram (true)
+      }
+      // Quaternary: better BM25 score (lower rank value = better match)
       return a.bm25_rank - b.bm25_rank
     })
 
