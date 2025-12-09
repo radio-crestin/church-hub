@@ -184,6 +184,44 @@ function extractSearchTerms(queryText: string): string[] {
 }
 
 /**
+ * Filters query terms to only those that exist meaningfully in the corpus
+ * Excludes:
+ * - Terms that don't exist at all (typos, random strings)
+ * - Terms matching very few documents (<10) - likely noise like IDs or rare typos
+ */
+function getValidTerms(
+  db: ReturnType<typeof getDatabase>,
+  terms: string[],
+): { validTerms: string[]; termCounts: Map<string, number> } {
+  const MIN_TERM_FREQUENCY = 10 // Terms must match at least this many docs
+  const termCounts = new Map<string, number>()
+  const validTerms: string[] = []
+
+  for (const term of terms) {
+    try {
+      // Check if term exists in FTS index (with prefix matching)
+      const result = db
+        .query(
+          `SELECT COUNT(*) as count FROM songs_fts WHERE songs_fts MATCH ?`,
+        )
+        .get(`"${term}"*`) as { count: number } | null
+
+      const count = result?.count ?? 0
+      // Only include terms that appear in enough documents
+      // This filters out noise like "123" which might match a few song titles
+      if (count >= MIN_TERM_FREQUENCY) {
+        validTerms.push(term)
+        termCounts.set(term, count)
+      }
+    } catch {
+      // Term might have special characters, skip it
+    }
+  }
+
+  return { validTerms, termCounts }
+}
+
+/**
  * Builds a simple FTS5 query optimized for performance
  * Uses OR for broad matching, letting post-processing handle ranking
  *
@@ -506,14 +544,29 @@ export function searchSongs(query: string): SongSearchResult[] {
 
     const db = getDatabase()
     const queryTerms = extractSearchTerms(query)
-    const ftsQuery = buildSearchQuery(query)
+
+    // Filter to valid terms (terms that exist in corpus) - ignore noise like "123"
+    const { validTerms, termCounts } = getValidTerms(db, queryTerms)
+
+    log(
+      'debug',
+      `Query terms: ${queryTerms.join(', ')} | Valid: ${validTerms.join(', ')}`,
+    )
+
+    // If no valid terms, return empty
+    if (validTerms.length === 0) {
+      log('debug', 'No valid search terms found')
+      return []
+    }
+
+    // Build FTS query using only valid terms for better results
+    const ftsQuery = buildSearchQuery(validTerms.join(' '))
 
     if (!ftsQuery) {
       return []
     }
 
     log('debug', `FTS query: ${ftsQuery}`)
-    log('debug', `Query terms: ${queryTerms.join(', ')}`)
 
     // Phase 1: Standard FTS5 search for exact/prefix matches
     const standardResults = db
@@ -534,7 +587,7 @@ export function searchSongs(query: string): SongSearchResult[] {
       LEFT JOIN song_categories sc ON s.category_id = sc.id
       WHERE songs_fts MATCH ?
       ORDER BY rank
-      LIMIT 100
+      LIMIT 500
     `,
       )
       .all(ftsQuery) as Array<{
@@ -551,8 +604,8 @@ export function searchSongs(query: string): SongSearchResult[] {
 
     log('debug', `Phase 1 (standard): Found ${standardResults.length} results`)
 
-    // Phase 2: Trigram search for fuzzy matches
-    const trigramQuery = buildTrigramQuery(queryTerms)
+    // Phase 2: Trigram search for fuzzy matches (use valid terms only)
+    const trigramQuery = buildTrigramQuery(validTerms)
     let trigramResults: Array<{
       id: number
       title: string
@@ -633,17 +686,42 @@ export function searchSongs(query: string): SongSearchResult[] {
     const candidates = Array.from(candidateMap.values())
     log('debug', `Combined: ${candidates.length} unique candidates`)
 
+    // Calculate total document count for rarity scoring
+    const totalDocs =
+      (
+        db.query('SELECT COUNT(*) as count FROM songs').get() as {
+          count: number
+        }
+      )?.count ?? 1
+
     // Phase 3: Calculate term match scores and re-rank with category priority
+    // Uses only valid terms (ignoring noise) and boosts rare term matches
     const scoredResults = candidates.map((r) => {
       const searchableText = `${r.title} ${r.full_content}`
-      const termScore = calculateTermMatchScore(searchableText, queryTerms)
+
+      // Calculate match score against valid terms only
+      const termScore = calculateTermMatchScore(searchableText, validTerms)
+
+      // Calculate rarity boost: rare terms (appearing in fewer docs) get higher weight
+      let rarityBoost = 0
+      const normalizedContent = removeDiacritics(searchableText).toLowerCase()
+      for (const term of validTerms) {
+        const normalizedTerm = removeDiacritics(term).toLowerCase()
+        if (normalizedContent.includes(normalizedTerm)) {
+          const termCount = termCounts.get(term) ?? totalDocs
+          // IDF-like score: log(totalDocs / termCount)
+          rarityBoost += Math.log(totalDocs / Math.max(termCount, 1))
+        }
+      }
 
       // Apply category priority multiplier (default 1 for uncategorized)
-      const boostedScore = termScore * r.category_priority
+      // Combined score: termScore (0-100) + rarityBoost (0-~10) scaled
+      const boostedScore = (termScore + rarityBoost * 5) * r.category_priority
 
       return {
         ...r,
         termScore,
+        rarityBoost,
         boostedScore,
       }
     })
@@ -678,9 +756,10 @@ export function searchSongs(query: string): SongSearchResult[] {
     return topResults.map((r) => {
       // Always use fuzzy highlighting to ensure fuzzy matches are highlighted
       // (e.g., "Cristos" highlighted when searching "Hristos")
+      // Use validTerms only (ignore noise terms like "123")
       const matchedContent = createFuzzyHighlightedSnippet(
         r.full_content,
-        queryTerms,
+        validTerms,
       )
 
       return {
