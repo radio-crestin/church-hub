@@ -5,7 +5,8 @@
     "cancel": "Anulează",
     "confirm": "Confirmă",
     "delete": "Șterge",
-    "save": "Salvează"
+    "save": "Salvează",
+    "ok": "OK"
   },
   "errors": {
     "pageNotFound": "Pagina pe care o căutați nu există."
