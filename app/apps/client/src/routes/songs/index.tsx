@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router'
 import { open } from '@tauri-apps/plugin-dialog'
 import { FileUp, Plus } from 'lucide-react'
 import { useState } from 'react'
@@ -14,13 +14,21 @@ import {
 } from '~/features/song-import'
 import { SongList } from '~/features/songs/components'
 
+interface SongsSearchParams {
+  q?: string
+}
+
 export const Route = createFileRoute('/songs/')({
   component: SongsPage,
+  validateSearch: (search: Record<string, unknown>): SongsSearchParams => ({
+    q: typeof search.q === 'string' ? search.q : undefined,
+  }),
 })
 
 function SongsPage() {
   const { t } = useTranslation('songs')
   const navigate = useNavigate()
+  const { q: searchQuery = '' } = useSearch({ from: '/songs/' })
   const {
     batchImport,
     isPending: isImporting,
@@ -34,7 +42,19 @@ function SongsPage() {
   )
 
   const handleSongClick = (songId: number) => {
-    navigate({ to: '/songs/$songId', params: { songId: String(songId) } })
+    navigate({
+      to: '/songs/$songId',
+      params: { songId: String(songId) },
+      search: { q: searchQuery || undefined },
+    })
+  }
+
+  const handleSearchChange = (query: string) => {
+    navigate({
+      to: '/songs/',
+      search: { q: query || undefined },
+      replace: true,
+    })
   }
 
   const handleImport = async () => {
@@ -148,7 +168,11 @@ function SongsPage() {
         </div>
       </div>
 
-      <SongList onSongClick={handleSongClick} />
+      <SongList
+        onSongClick={handleSongClick}
+        searchQuery={searchQuery}
+        onSearchChange={handleSearchChange}
+      />
 
       <ImportConfirmationModal
         isOpen={isImportModalOpen}
