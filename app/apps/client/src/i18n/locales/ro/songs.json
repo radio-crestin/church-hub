@@ -24,7 +24,9 @@
   "search": {
     "placeholder": "Caută cântări...",
     "noResults": "Nu s-au găsit cântări pentru \"{{query}}\"",
-    "resultsCount": "{{count}} cântări găsite"
+    "resultsCount": "{{count}} cântări găsite",
+    "showingCount": "Se afișează {{showing}} din {{total}} cântări",
+    "moreResults": "{{count}} cântări în plus nu sunt afișate. Folosește căutarea pentru a găsi cântări specifice."
   },
   "import": {
     "title": "Importă din text",
