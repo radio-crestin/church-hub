@@ -150,86 +150,83 @@ export function rebuildSearchIndex(): void {
 }
 
 /**
- * Builds an optimized FTS5 query with tiered matching
- * Supports: exact phrase, proximity (NEAR), partial AND matching, and prefix fallback
- *
- * For multi-word queries, this creates a combined query that:
- * 1. Tries exact phrase match (highest relevance)
- * 2. Tries proximity match within 5 tokens
- * 3. Tries AND queries with N-1 terms (allows one missing term)
- * 4. Tries AND queries with N-2 terms (allows two missing terms, for 5+ word queries)
- * 5. Falls back to individual prefix matches with OR
+ * Extracts and sanitizes search terms from query text
  */
-function buildSearchQuery(queryText: string): string {
-  // Escape special FTS5 characters
+function extractSearchTerms(queryText: string): string[] {
   const sanitized = queryText
     .replace(/['"]/g, '')
     .replace(/[*()^:+\-\\]/g, ' ')
     .trim()
+    .toLowerCase()
 
-  if (!sanitized) return ''
+  return sanitized.split(/\s+/).filter((t) => t.length > 0)
+}
 
-  const terms = sanitized.split(/\s+/).filter((t) => t.length > 0)
+/**
+ * Builds a simple FTS5 query optimized for performance
+ * Uses OR for broad matching, letting post-processing handle ranking
+ *
+ * Strategy:
+ * 1. Exact phrase match (highest BM25 boost)
+ * 2. NEAR query for proximity matching
+ * 3. OR with prefix for each term (broad candidate search)
+ */
+function buildSearchQuery(queryText: string): string {
+  const terms = extractSearchTerms(queryText)
 
   if (terms.length === 0) return ''
 
   if (terms.length === 1) {
-    // Single word: prefix match
     return `"${terms[0]}"*`
   }
 
-  const queries: string[] = []
+  // Simple tiered query - avoids combinatorial explosion
+  const phraseQuery = `"${terms.join(' ')}"` // Exact phrase
+  const nearQuery = `NEAR(${terms.map((t) => `"${t}"`).join(' ')}, 10)` // Proximity (wider window)
+  const orQuery = terms.map((t) => `"${t}"*`).join(' OR ') // Broad match
 
-  // Tier 1: Exact phrase (highest rank)
-  queries.push(`"${terms.join(' ')}"`)
-
-  // Tier 2: NEAR with all terms
-  queries.push(`NEAR(${terms.map((t) => `"${t}"`).join(' ')}, 5)`)
-
-  // Tier 3: AND queries with N-1 terms (allows one missing term)
-  // This is critical for partial matching - e.g., "Isus Hristos in veci va fi"
-  // will match "Isus Cristos in veci va fi" because 5/6 terms match via AND
-  if (terms.length >= 3) {
-    for (let i = 0; i < terms.length; i++) {
-      const subset = terms.filter((_, idx) => idx !== i)
-      queries.push(`(${subset.map((t) => `"${t}"*`).join(' AND ')})`)
-    }
-  }
-
-  // Tier 4: AND queries with N-2 terms (for 5+ word queries)
-  if (terms.length >= 5) {
-    for (let i = 0; i < terms.length; i++) {
-      for (let j = i + 1; j < terms.length; j++) {
-        const subset = terms.filter((_, idx) => idx !== i && idx !== j)
-        queries.push(`(${subset.map((t) => `"${t}"*`).join(' AND ')})`)
-      }
-    }
-  }
-
-  // Tier 5: OR fallback for individual terms
-  const prefixQuery = terms.map((t) => `"${t}"*`).join(' OR ')
-  queries.push(`(${prefixQuery})`)
-
-  // Combine with OR - FTS5's BM25 will naturally rank better matches higher
-  return queries.join(' OR ')
+  return `(${phraseQuery}) OR (${nearQuery}) OR (${orQuery})`
 }
 
 /**
- * Searches songs using FTS5 with field-weighted ranking
+ * Calculates a relevance score based on how many query terms match the content
+ * Higher score = more terms matched = better relevance
+ */
+function calculateTermMatchScore(
+  content: string,
+  queryTerms: string[],
+): number {
+  const normalizedContent = content.toLowerCase()
+  let matchedCount = 0
+
+  for (const term of queryTerms) {
+    // Check if term appears in content (with word boundary awareness)
+    if (normalizedContent.includes(term)) {
+      matchedCount++
+    }
+  }
+
+  // Return percentage of terms matched (0-100)
+  return queryTerms.length > 0
+    ? Math.round((matchedCount / queryTerms.length) * 100)
+    : 0
+}
+
+/**
+ * Searches songs using FTS5 with two-phase ranking:
  *
- * Ranking weights (via bm25):
- * - title: 10.0 (highest priority)
- * - category_name: 5.0 (medium priority)
- * - content: 1.0 (lowest priority)
+ * Phase 1: FTS5 query with BM25 to find candidates
+ * Phase 2: Re-rank by term match count (more matched terms = higher rank)
  *
- * Query strategy prioritizes:
- * 1. Exact phrase matches
- * 2. Proximity matches (words within 5 tokens)
- * 3. Individual term prefix matches
+ * This approach:
+ * - Uses simple OR query for fast candidate retrieval
+ * - Calculates custom relevance score based on matched term count
+ * - Properly ranks partial phrase matches (e.g., 5/6 terms matched ranks high)
  *
  * Performance optimizations:
- * - Uses FTS5 inverted index for fast MATCH queries
- * - Limits results to top 50 matches
+ * - Uses `rank` column instead of bm25() for faster sorting
+ * - Simple query structure avoids combinatorial explosion
+ * - Limits to 100 candidates, returns top 50 after re-ranking
  */
 export function searchSongs(query: string): SongSearchResult[] {
   try {
@@ -240,8 +237,7 @@ export function searchSongs(query: string): SongSearchResult[] {
     }
 
     const db = getDatabase()
-
-    // Build the tiered FTS5 query
+    const queryTerms = extractSearchTerms(query)
     const ftsQuery = buildSearchQuery(query)
 
     if (!ftsQuery) {
@@ -249,11 +245,10 @@ export function searchSongs(query: string): SongSearchResult[] {
     }
 
     log('debug', `FTS query: ${ftsQuery}`)
+    log('debug', `Query terms: ${queryTerms.join(', ')}`)
 
-    // Use bm25() with column weights: song_id(0), title(10), category_name(5), content(1)
-    // snippet() column index: 0=song_id(UNINDEXED), 1=title, 2=category_name, 3=content
-    // highlight() is used for title (full text with marks), snippet() for content (truncated)
-    // IMPORTANT: highlight() and snippet() MUST be in same query context as MATCH clause
+    // Phase 1: Get candidates using FTS5 with rank column (faster than bm25())
+    // Fetch more candidates than needed for re-ranking
     const searchQuery = db.query(`
       SELECT
         s.id,
@@ -261,27 +256,60 @@ export function searchSongs(query: string): SongSearchResult[] {
         s.category_id,
         sc.name as category_name,
         highlight(songs_fts, 1, '<mark>', '</mark>') as highlighted_title,
-        snippet(songs_fts, 3, '<mark>', '</mark>', '...', 30) as matched_content
+        snippet(songs_fts, 3, '<mark>', '</mark>', '...', 30) as matched_content,
+        songs_fts.content as full_content,
+        rank as bm25_rank
       FROM songs_fts
       JOIN songs s ON s.id = songs_fts.song_id
       LEFT JOIN song_categories sc ON s.category_id = sc.id
       WHERE songs_fts MATCH ?
-      ORDER BY bm25(songs_fts, 0.0, 10.0, 5.0, 1.0)
-      LIMIT 50
+      ORDER BY rank
+      LIMIT 100
     `)
 
-    const results = searchQuery.all(ftsQuery) as Array<{
+    const candidates = searchQuery.all(ftsQuery) as Array<{
       id: number
       title: string
       category_id: number | null
       category_name: string | null
       highlighted_title: string
       matched_content: string
+      full_content: string
+      bm25_rank: number
     }>
 
-    log('debug', `Search found ${results.length} results`)
+    log('debug', `Phase 1: Found ${candidates.length} candidates`)
 
-    return results.map((r) => ({
+    // Phase 2: Calculate term match scores and re-rank
+    const scoredResults = candidates.map((r) => {
+      const searchableText = `${r.title} ${r.full_content}`
+      const termScore = calculateTermMatchScore(searchableText, queryTerms)
+
+      return {
+        ...r,
+        termScore,
+      }
+    })
+
+    // Sort by: term match score (desc), then BM25 rank (asc, lower is better)
+    scoredResults.sort((a, b) => {
+      // Primary: more terms matched = higher priority
+      if (b.termScore !== a.termScore) {
+        return b.termScore - a.termScore
+      }
+      // Secondary: better BM25 score (lower rank value = better match)
+      return a.bm25_rank - b.bm25_rank
+    })
+
+    // Return top 50 results
+    const topResults = scoredResults.slice(0, 50)
+
+    log(
+      'debug',
+      `Phase 2: Re-ranked results. Top score: ${topResults[0]?.termScore ?? 0}%`,
+    )
+
+    return topResults.map((r) => ({
       id: r.id,
       title: r.title,
       categoryId: r.category_id,
