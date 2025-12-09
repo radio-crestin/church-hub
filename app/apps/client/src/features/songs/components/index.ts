@@ -1,3 +1,4 @@
+export { CategoryManager } from './CategoryManager'
 export { CategoryPicker } from './CategoryPicker'
 export { ImportTextModal } from './ImportTextModal'
 export { SongCard } from './SongCard'
