@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 
 import {
   ImportConfirmationModal,
+  type ImportOptions,
   type ImportProgress,
   ImportProgressModal,
   type ProcessedImport,
@@ -94,36 +95,53 @@ function SongsPage() {
     }
   }
 
-  const handleConfirmImport = async (categoryId: number | null) => {
-    const result = await batchImport({
-      songs: songsToImport.map((s) => {
-        // Check if this is an OpenSong import with metadata
-        const metadata = 'metadata' in s.parsed ? s.parsed.metadata : undefined
+  const handleConfirmImport = async (
+    categoryId: number | null,
+    options: ImportOptions,
+  ) => {
+    const result = await batchImport(
+      {
+        songs: songsToImport.map((s) => {
+          // Check if this is an OpenSong import with metadata
+          const metadata =
+            'metadata' in s.parsed ? s.parsed.metadata : undefined
 
-        return {
-          title: s.parsed.title,
-          slides: s.parsed.slides.map((slide, idx) => ({
-            content: slide.htmlContent,
-            sortOrder: idx,
-            label: 'label' in slide ? slide.label : null,
-          })),
-          sourceFilePath: s.sourceFilePath,
-          // Include OpenSong metadata if available
-          author: metadata?.author,
-          copyright: metadata?.copyright,
-          ccli: metadata?.ccli,
-          key: metadata?.key,
-          tempo: metadata?.tempo,
-          timeSignature: metadata?.timeSignature,
-          theme: metadata?.theme,
-          altTheme: metadata?.altTheme,
-          hymnNumber: metadata?.hymnNumber,
-          keyLine: metadata?.keyLine,
-          presentationOrder: metadata?.presentationOrder,
-        }
-      }),
-      categoryId,
-    })
+          // Extract first verse as title if option is enabled
+          let title = s.parsed.title
+          if (options.useFirstVerseAsTitle && s.parsed.slides.length > 0) {
+            const firstSlide = s.parsed.slides[0]
+            const firstLine = firstSlide.text.split('\n')[0]?.trim()
+            if (firstLine) {
+              title = firstLine
+            }
+          }
+
+          return {
+            title,
+            slides: s.parsed.slides.map((slide, idx) => ({
+              content: slide.htmlContent,
+              sortOrder: idx,
+              label: 'label' in slide ? slide.label : null,
+            })),
+            sourceFilePath: s.sourceFilePath,
+            // Include OpenSong metadata if available
+            author: metadata?.author,
+            copyright: metadata?.copyright,
+            ccli: metadata?.ccli,
+            key: metadata?.key,
+            tempo: metadata?.tempo,
+            timeSignature: metadata?.timeSignature,
+            theme: metadata?.theme,
+            altTheme: metadata?.altTheme,
+            hymnNumber: metadata?.hymnNumber,
+            keyLine: metadata?.keyLine,
+            presentationOrder: metadata?.presentationOrder,
+          }
+        }),
+        categoryId,
+      },
+      { overwriteDuplicates: options.overwriteDuplicates },
+    )
 
     setIsImportModalOpen(false)
     setSongsToImport([])

@@ -16,6 +16,7 @@ export type {
   ExtractedOpenSongFile,
   ExtractedPptxFile,
   ExtractResult,
+  ImportOptions,
   ImportProgress,
   OpenSongMetadata,
   ParsedSlideWithLabel,
