@@ -1,6 +1,7 @@
 export interface SongCategory {
   id: number
   name: string
+  priority: number
   createdAt: number
   updatedAt: number
 }
@@ -77,6 +78,7 @@ export interface UpsertSlideInput {
 export interface UpsertCategoryInput {
   id?: number
   name: string
+  priority?: number
 }
 
 export interface SongSearchResult {

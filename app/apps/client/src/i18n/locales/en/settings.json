@@ -100,6 +100,42 @@
         "urlCopied": "URL copied to clipboard",
         "error": "An error occurred"
       }
+    },
+    "categories": {
+      "title": "Song Categories",
+      "description": "Manage song categories and their search priority. Higher position = higher priority in search results.",
+      "addCategory": "Add Category",
+      "noCategories": "No categories configured",
+      "noCategoriesDescription": "Add a category to organize your songs",
+      "categoryName": "Category Name",
+      "categoryNamePlaceholder": "e.g., Worship, Hymns, Christmas",
+      "priority": "Priority",
+      "actions": {
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "modals": {
+        "create": {
+          "title": "Add New Category",
+          "submit": "Create Category"
+        },
+        "edit": {
+          "title": "Edit Category",
+          "submit": "Save Changes"
+        },
+        "delete": {
+          "title": "Delete Category",
+          "message": "Are you sure you want to delete \"{{name}}\"? Songs in this category will become uncategorized.",
+          "confirm": "Delete"
+        }
+      },
+      "toast": {
+        "created": "Category created successfully",
+        "updated": "Category updated successfully",
+        "deleted": "Category deleted successfully",
+        "reordered": "Category order updated",
+        "error": "An error occurred"
+      }
     }
   }
 }

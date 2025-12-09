@@ -1,4 +1,9 @@
-export { deleteCategory, getAllCategories, upsertCategory } from './categories'
+export {
+  deleteCategory,
+  getAllCategories,
+  reorderCategories,
+  upsertCategory,
+} from './categories'
 export {
   cloneSongSlide,
   deleteSongSlide,
