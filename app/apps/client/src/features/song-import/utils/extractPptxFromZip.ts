@@ -2,6 +2,7 @@ import JSZip from 'jszip'
 
 import type {
   ExtractedOpenSongFile,
+  ExtractedPptFile,
   ExtractedPptxFile,
   ExtractResult,
 } from '../types'
@@ -62,14 +63,16 @@ interface FileEntry {
 }
 
 /**
- * Recursively extracts all PPTX and OpenSong files from a ZIP archive
+ * Recursively extracts all PPTX, PPT, and OpenSong files from a ZIP archive
  * Uses parallel processing for faster extraction
+ * PPT files are returned separately for server-side conversion to PPTX
  */
 export async function extractFilesFromZip(
   zipData: ArrayBuffer,
   onProgress?: (current: number, total: number) => void,
 ): Promise<ExtractResult> {
   const pptxFiles: ExtractedPptxFile[] = []
+  const pptFiles: ExtractedPptFile[] = []
   const opensongFiles: ExtractedOpenSongFile[] = []
   const errors: string[] = []
 
@@ -87,6 +90,7 @@ export async function extractFilesFromZip(
 
     // Categorize files by type for efficient parallel processing
     const pptxEntries: FileEntry[] = []
+    const pptEntries: FileEntry[] = []
     const opensongEntries: FileEntry[] = []
     const nestedZipEntries: FileEntry[] = []
 
@@ -94,6 +98,8 @@ export async function extractFilesFromZip(
       const lowerPath = entry.path.toLowerCase()
       if (lowerPath.endsWith('.pptx')) {
         pptxEntries.push(entry)
+      } else if (lowerPath.endsWith('.ppt')) {
+        pptEntries.push(entry)
       } else if (lowerPath.endsWith('.zip')) {
         nestedZipEntries.push(entry)
       } else if (isOpenSongCandidate(entry.path)) {
@@ -135,6 +141,45 @@ export async function extractFilesFromZip(
     for (const result of pptxResults) {
       if (result.success) {
         pptxFiles.push(result.data)
+      } else {
+        errors.push(result.error)
+      }
+    }
+
+    // Process PPT files in parallel (will be converted to PPTX later)
+    const pptResults = await processInChunks(
+      pptEntries,
+      async (entry) => {
+        try {
+          const data = await entry.file.async('arraybuffer')
+          const filename = entry.path.split(/[/\\]/).pop() || entry.path
+          processed++
+          onProgress?.(processed, total)
+          return {
+            success: true as const,
+            data: {
+              filename,
+              data,
+              sourcePath: entry.path,
+            },
+          }
+        } catch (error) {
+          processed++
+          onProgress?.(processed, total)
+          const message =
+            error instanceof Error ? error.message : 'Unknown error'
+          return {
+            success: false as const,
+            error: `Failed to extract ${entry.path}: ${message}`,
+          }
+        }
+      },
+      PARALLEL_CHUNK_SIZE,
+    )
+
+    for (const result of pptResults) {
+      if (result.success) {
+        pptFiles.push(result.data)
       } else {
         errors.push(result.error)
       }
@@ -196,6 +241,7 @@ export async function extractFilesFromZip(
           },
         )
         pptxFiles.push(...nestedResult.pptxFiles)
+        pptFiles.push(...nestedResult.pptFiles)
         opensongFiles.push(...nestedResult.opensongFiles)
         errors.push(...nestedResult.errors)
         processed++
@@ -212,7 +258,7 @@ export async function extractFilesFromZip(
     errors.push(`Failed to open ZIP archive: ${message}`)
   }
 
-  return { pptxFiles, opensongFiles, errors }
+  return { pptxFiles, pptFiles, opensongFiles, errors }
 }
 
 /**
