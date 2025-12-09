@@ -24,6 +24,7 @@ function toSongSlide(record: SongSlideRecord): SongSlide {
     songId: record.song_id,
     content: record.content,
     sortOrder: record.sort_order,
+    label: record.label,
     createdAt: record.created_at,
     updatedAt: record.updated_at,
   }
@@ -97,10 +98,10 @@ export function upsertSongSlide(input: UpsertSongSlideInput): SongSlide | null {
 
       const query = db.query(`
         UPDATE song_slides
-        SET content = ?, updated_at = ?
+        SET content = ?, label = ?, updated_at = ?
         WHERE id = ?
       `)
-      query.run(input.content, now, input.id)
+      query.run(input.content, input.label ?? null, now, input.id)
 
       log('info', `Song slide updated: ${input.id}`)
       return getSongSlideById(input.id)
@@ -111,10 +112,17 @@ export function upsertSongSlide(input: UpsertSongSlideInput): SongSlide | null {
     const sortOrder = input.sortOrder ?? getNextSortOrder(input.songId)
 
     const insertQuery = db.query(`
-      INSERT INTO song_slides (song_id, content, sort_order, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO song_slides (song_id, content, sort_order, label, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?)
     `)
-    insertQuery.run(input.songId, input.content, sortOrder, now, now)
+    insertQuery.run(
+      input.songId,
+      input.content,
+      sortOrder,
+      input.label ?? null,
+      now,
+      now,
+    )
 
     const getLastId = db.query('SELECT last_insert_rowid() as id')
     const { id } = getLastId.get() as { id: number }
@@ -173,10 +181,17 @@ export function cloneSongSlide(id: number): SongSlide | null {
 
     // Insert the cloned slide
     const insertQuery = db.query(`
-      INSERT INTO song_slides (song_id, content, sort_order, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO song_slides (song_id, content, sort_order, label, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?)
     `)
-    insertQuery.run(original.songId, original.content, sortOrder, now, now)
+    insertQuery.run(
+      original.songId,
+      original.content,
+      sortOrder,
+      original.label,
+      now,
+      now,
+    )
 
     const getLastId = db.query('SELECT last_insert_rowid() as id')
     const { id: newId } = getLastId.get() as { id: number }

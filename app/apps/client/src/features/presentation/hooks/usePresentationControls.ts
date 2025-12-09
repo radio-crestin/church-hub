@@ -4,42 +4,17 @@ import { presentationStateQueryKey } from './usePresentationState'
 import {
   clearSlide,
   navigateQueueSlide,
-  navigateSlide,
   showSlide,
-  startPresentation,
   stopPresentation,
   updatePresentationState,
 } from '../service/displays'
 import type { PresentationState } from '../types'
-
-export function useStartPresentation() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: startPresentation,
-    onSuccess: (data: PresentationState) => {
-      // Update cache directly with response data instead of refetching
-      queryClient.setQueryData(presentationStateQueryKey, data)
-    },
-  })
-}
 
 export function useStopPresentation() {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: stopPresentation,
-    onSuccess: (data: PresentationState) => {
-      queryClient.setQueryData(presentationStateQueryKey, data)
-    },
-  })
-}
-
-export function useNavigateSlide() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: navigateSlide,
     onSuccess: (data: PresentationState) => {
       queryClient.setQueryData(presentationStateQueryKey, data)
     },

@@ -1,8 +1,8 @@
 import { createRootRoute, Outlet } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
-import { PptxDropZoneProvider } from '~/features/pptx-import'
 import { useAutoOpenDisplays } from '~/features/presentation/hooks'
+import { PptxDropZoneProvider } from '~/features/song-import'
 import { I18nProvider } from '~/provider/i18n-provider'
 import { QueryClientProvider } from '~/provider/QueryClientProvider'
 import { ThemeProvider } from '~/provider/theme-provider'

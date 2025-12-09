@@ -13,7 +13,7 @@
     "clear": "Clear Queue",
     "expand": "Expand",
     "collapse": "Collapse",
-    "editSong": "Edit Song",
+    "editSong": "Edit",
     "editSlide": "Edit Slide",
     "insertSlide": "Insert Slide After",
     "insertAfter": "Insert After",
@@ -28,7 +28,9 @@
     "announcement": "Announcement",
     "announcementDescription": "Create a custom announcement slide",
     "verseteTineri": "Versete Tineri",
-    "verseteTineriDescription": "Add a youth verse slide"
+    "verseteTineriDescription": "Add a youth verse slide",
+    "importSchedule": "Import Schedule",
+    "importScheduleDescription": "Add all items from a saved schedule"
   },
   "messages": {
     "added": "Added to queue",

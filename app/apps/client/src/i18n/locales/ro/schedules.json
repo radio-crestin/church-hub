@@ -1,0 +1,43 @@
+{
+  "title": "Programe",
+  "actions": {
+    "create": "Program Nou",
+    "save": "Salveaza",
+    "delete": "Sterge",
+    "back": "Inapoi la Programe",
+    "addItem": "Adauga",
+    "importToQueue": "Importa in Coada"
+  },
+  "editor": {
+    "titlePlaceholder": "Introdu titlul programului...",
+    "descriptionPlaceholder": "Adauga o descriere (optional)...",
+    "items": "Elemente",
+    "noItems": "Niciun element inca",
+    "addFirstItem": "Adauga cantari sau slide-uri pentru a construi programul"
+  },
+  "search": {
+    "placeholder": "Cauta programe...",
+    "noResults": "Nu s-au gasit programe pentru \"{{query}}\"",
+    "resultsCount": "{{count}} programe gasite"
+  },
+  "messages": {
+    "saved": "Programul a fost salvat cu succes",
+    "deleted": "Programul a fost sters cu succes",
+    "itemAdded": "Element adaugat la program",
+    "itemRemoved": "Element eliminat din program",
+    "importedToQueue": "Programul a fost importat in coada",
+    "error": "A aparut o eroare"
+  },
+  "modal": {
+    "deleteTitle": "Sterge Programul",
+    "deleteMessage": "Esti sigur ca vrei sa stergi acest program? Aceasta actiune nu poate fi anulata.",
+    "importTitle": "Importa Program",
+    "unsavedChangesTitle": "Modificari Nesalvate",
+    "unsavedChangesMessage": "Ai modificari nesalvate. Esti sigur ca vrei sa parasesti aceasta pagina?",
+    "discardChanges": "Pierde modificarile"
+  },
+  "noSchedules": "Niciun program inca",
+  "noSchedulesDescription": "Creeaza primul tau program pentru a planifica prezentarile",
+  "itemCount_one": "{{count}} element",
+  "itemCount_other": "{{count}} elemente"
+}

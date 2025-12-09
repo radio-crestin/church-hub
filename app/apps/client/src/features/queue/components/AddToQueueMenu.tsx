@@ -1,4 +1,4 @@
-import { FileText, Megaphone, Music, Plus, X } from 'lucide-react'
+import { CalendarDays, FileText, Megaphone, Music, Plus, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -7,9 +7,14 @@ import type { SlideTemplate } from '../types'
 interface AddToQueueMenuProps {
   onAddSong: () => void
   onAddSlide: (template: SlideTemplate) => void
+  onImportSchedule?: () => void
 }
 
-export function AddToQueueMenu({ onAddSong, onAddSlide }: AddToQueueMenuProps) {
+export function AddToQueueMenu({
+  onAddSong,
+  onAddSlide,
+  onImportSchedule,
+}: AddToQueueMenuProps) {
   const { t } = useTranslation('queue')
   const [isOpen, setIsOpen] = useState(false)
   const dialogRef = useRef<HTMLDialogElement>(null)
@@ -37,9 +42,9 @@ export function AddToQueueMenu({ onAddSong, onAddSlide }: AddToQueueMenuProps) {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-md transition-colors"
+        className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-lg transition-colors"
       >
-        <Plus size={14} />
+        <Plus size={18} />
         {t('addToQueue.button')}
       </button>
 
@@ -128,6 +133,27 @@ export function AddToQueueMenu({ onAddSong, onAddSlide }: AddToQueueMenuProps) {
                 </div>
               </div>
             </button>
+
+            {onImportSchedule && (
+              <button
+                type="button"
+                onClick={() => handleAction(onImportSchedule)}
+                className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                  <CalendarDays
+                    size={20}
+                    className="text-purple-600 dark:text-purple-400"
+                  />
+                </div>
+                <div>
+                  <div className="font-medium">{t('importSchedule.title')}</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    {t('importSchedule.description')}
+                  </div>
+                </div>
+              </button>
+            )}
           </div>
         </div>
       </dialog>

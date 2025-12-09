@@ -3,14 +3,12 @@ import { useEffect } from 'react'
 import {
   useClearSlide,
   useNavigateQueueSlide,
-  useNavigateSlide,
   usePresentationState,
   useShowSlide,
 } from './index'
 
 export function useKeyboardShortcuts() {
   const { data: state } = usePresentationState()
-  const navigateSlide = useNavigateSlide()
   const navigateQueueSlide = useNavigateQueueSlide()
   const clearSlide = useClearSlide()
   const showSlide = useShowSlide()
@@ -18,7 +16,6 @@ export function useKeyboardShortcuts() {
   // Determine if we have queue slides to navigate
   const hasQueueSlide =
     !!state?.currentQueueItemId || !!state?.currentSongSlideId
-  const canNavigate = state?.isPresenting || hasQueueSlide
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -45,9 +42,6 @@ export function useKeyboardShortcuts() {
         return
       }
 
-      // Only handle navigation shortcuts when we can navigate
-      if (!canNavigate) return
-
       switch (event.key) {
         case 'ArrowRight':
         case 'ArrowDown':
@@ -56,8 +50,6 @@ export function useKeyboardShortcuts() {
           event.preventDefault()
           if (hasQueueSlide) {
             navigateQueueSlide.mutate('next')
-          } else {
-            navigateSlide.mutate({ direction: 'next' })
           }
           break
 
@@ -67,8 +59,6 @@ export function useKeyboardShortcuts() {
           event.preventDefault()
           if (hasQueueSlide) {
             navigateQueueSlide.mutate('prev')
-          } else {
-            navigateSlide.mutate({ direction: 'prev' })
           }
           break
 
@@ -89,12 +79,5 @@ export function useKeyboardShortcuts() {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [
-    canNavigate,
-    hasQueueSlide,
-    navigateSlide,
-    navigateQueueSlide,
-    clearSlide,
-    showSlide,
-  ])
+  }, [hasQueueSlide, navigateQueueSlide, clearSlide, showSlide])
 }

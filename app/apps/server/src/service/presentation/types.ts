@@ -89,9 +89,6 @@ export interface DisplaySlideConfig {
  */
 export interface PresentationStateRecord {
   id: number
-  program_id: number | null
-  current_slide_id: number | null
-  last_slide_id: number | null
   current_queue_item_id: number | null
   current_song_slide_id: number | null
   last_song_slide_id: number | null
@@ -104,9 +101,6 @@ export interface PresentationStateRecord {
  * Presentation state API format
  */
 export interface PresentationState {
-  programId: number | null
-  currentSlideId: number | null
-  lastSlideId: number | null
   currentQueueItemId: number | null
   currentSongSlideId: number | null
   lastSongSlideId: number | null
@@ -119,27 +113,11 @@ export interface PresentationState {
  * Input for updating presentation state
  */
 export interface UpdatePresentationStateInput {
-  programId?: number | null
-  currentSlideId?: number | null
-  lastSlideId?: number | null
   currentQueueItemId?: number | null
   currentSongSlideId?: number | null
   lastSongSlideId?: number | null
   isPresenting?: boolean
   isHidden?: boolean
-}
-
-/**
- * Navigation direction
- */
-export type NavigateDirection = 'next' | 'prev' | 'goto'
-
-/**
- * Input for navigating slides
- */
-export interface NavigateInput {
-  direction: NavigateDirection
-  slideId?: number
 }
 
 /**
