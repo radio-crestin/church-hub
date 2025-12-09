@@ -11,12 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SongsIndexRouteImport } from './routes/songs/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings/index'
-import { Route as ProgramsIndexRouteImport } from './routes/programs/index'
+import { Route as SchedulesIndexRouteImport } from './routes/schedules/index'
 import { Route as PresentIndexRouteImport } from './routes/present/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as rootIndexRouteImport } from './routes/(root)/index'
 import { Route as SongsSongIdRouteImport } from './routes/songs/$songId'
-import { Route as ProgramsProgramIdRouteImport } from './routes/programs/$programId'
+import { Route as SchedulesScheduleIdRouteImport } from './routes/schedules/$scheduleId'
 import { Route as DisplayDisplayIdRouteImport } from './routes/display/$displayId'
 
 const SongsIndexRoute = SongsIndexRouteImport.update({
@@ -29,9 +29,9 @@ const SettingsIndexRoute = SettingsIndexRouteImport.update({
   path: '/settings/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProgramsIndexRoute = ProgramsIndexRouteImport.update({
-  id: '/programs/',
-  path: '/programs/',
+const SchedulesIndexRoute = SchedulesIndexRouteImport.update({
+  id: '/schedules/',
+  path: '/schedules/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PresentIndexRoute = PresentIndexRouteImport.update({
@@ -54,9 +54,9 @@ const SongsSongIdRoute = SongsSongIdRouteImport.update({
   path: '/songs/$songId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProgramsProgramIdRoute = ProgramsProgramIdRouteImport.update({
-  id: '/programs/$programId',
-  path: '/programs/$programId',
+const SchedulesScheduleIdRoute = SchedulesScheduleIdRouteImport.update({
+  id: '/schedules/$scheduleId',
+  path: '/schedules/$scheduleId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DisplayDisplayIdRoute = DisplayDisplayIdRouteImport.update({
@@ -67,35 +67,35 @@ const DisplayDisplayIdRoute = DisplayDisplayIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/display/$displayId': typeof DisplayDisplayIdRoute
-  '/programs/$programId': typeof ProgramsProgramIdRoute
+  '/schedules/$scheduleId': typeof SchedulesScheduleIdRoute
   '/songs/$songId': typeof SongsSongIdRoute
   '/': typeof rootIndexRoute
   '/dashboard': typeof DashboardIndexRoute
   '/present': typeof PresentIndexRoute
-  '/programs': typeof ProgramsIndexRoute
+  '/schedules': typeof SchedulesIndexRoute
   '/settings': typeof SettingsIndexRoute
   '/songs': typeof SongsIndexRoute
 }
 export interface FileRoutesByTo {
   '/display/$displayId': typeof DisplayDisplayIdRoute
-  '/programs/$programId': typeof ProgramsProgramIdRoute
+  '/schedules/$scheduleId': typeof SchedulesScheduleIdRoute
   '/songs/$songId': typeof SongsSongIdRoute
   '/': typeof rootIndexRoute
   '/dashboard': typeof DashboardIndexRoute
   '/present': typeof PresentIndexRoute
-  '/programs': typeof ProgramsIndexRoute
+  '/schedules': typeof SchedulesIndexRoute
   '/settings': typeof SettingsIndexRoute
   '/songs': typeof SongsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/display/$displayId': typeof DisplayDisplayIdRoute
-  '/programs/$programId': typeof ProgramsProgramIdRoute
+  '/schedules/$scheduleId': typeof SchedulesScheduleIdRoute
   '/songs/$songId': typeof SongsSongIdRoute
   '/(root)/': typeof rootIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/present/': typeof PresentIndexRoute
-  '/programs/': typeof ProgramsIndexRoute
+  '/schedules/': typeof SchedulesIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/songs/': typeof SongsIndexRoute
 }
@@ -103,46 +103,46 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/display/$displayId'
-    | '/programs/$programId'
+    | '/schedules/$scheduleId'
     | '/songs/$songId'
     | '/'
     | '/dashboard'
     | '/present'
-    | '/programs'
+    | '/schedules'
     | '/settings'
     | '/songs'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/display/$displayId'
-    | '/programs/$programId'
+    | '/schedules/$scheduleId'
     | '/songs/$songId'
     | '/'
     | '/dashboard'
     | '/present'
-    | '/programs'
+    | '/schedules'
     | '/settings'
     | '/songs'
   id:
     | '__root__'
     | '/display/$displayId'
-    | '/programs/$programId'
+    | '/schedules/$scheduleId'
     | '/songs/$songId'
     | '/(root)/'
     | '/dashboard/'
     | '/present/'
-    | '/programs/'
+    | '/schedules/'
     | '/settings/'
     | '/songs/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   DisplayDisplayIdRoute: typeof DisplayDisplayIdRoute
-  ProgramsProgramIdRoute: typeof ProgramsProgramIdRoute
+  SchedulesScheduleIdRoute: typeof SchedulesScheduleIdRoute
   SongsSongIdRoute: typeof SongsSongIdRoute
   rootIndexRoute: typeof rootIndexRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
   PresentIndexRoute: typeof PresentIndexRoute
-  ProgramsIndexRoute: typeof ProgramsIndexRoute
+  SchedulesIndexRoute: typeof SchedulesIndexRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
   SongsIndexRoute: typeof SongsIndexRoute
 }
@@ -163,11 +163,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/programs/': {
-      id: '/programs/'
-      path: '/programs'
-      fullPath: '/programs'
-      preLoaderRoute: typeof ProgramsIndexRouteImport
+    '/schedules/': {
+      id: '/schedules/'
+      path: '/schedules'
+      fullPath: '/schedules'
+      preLoaderRoute: typeof SchedulesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/present/': {
@@ -198,11 +198,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SongsSongIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/programs/$programId': {
-      id: '/programs/$programId'
-      path: '/programs/$programId'
-      fullPath: '/programs/$programId'
-      preLoaderRoute: typeof ProgramsProgramIdRouteImport
+    '/schedules/$scheduleId': {
+      id: '/schedules/$scheduleId'
+      path: '/schedules/$scheduleId'
+      fullPath: '/schedules/$scheduleId'
+      preLoaderRoute: typeof SchedulesScheduleIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/display/$displayId': {
@@ -217,12 +217,12 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   DisplayDisplayIdRoute: DisplayDisplayIdRoute,
-  ProgramsProgramIdRoute: ProgramsProgramIdRoute,
+  SchedulesScheduleIdRoute: SchedulesScheduleIdRoute,
   SongsSongIdRoute: SongsSongIdRoute,
   rootIndexRoute: rootIndexRoute,
   DashboardIndexRoute: DashboardIndexRoute,
   PresentIndexRoute: PresentIndexRoute,
-  ProgramsIndexRoute: ProgramsIndexRoute,
+  SchedulesIndexRoute: SchedulesIndexRoute,
   SettingsIndexRoute: SettingsIndexRoute,
   SongsIndexRoute: SongsIndexRoute,
 }

@@ -15,7 +15,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Loader2, Trash2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { SongEditorModal, SongPickerModal } from '~/features/songs/components'
@@ -44,6 +44,7 @@ interface SortableQueueItemProps {
   onInsertSongAfter: (itemId: number) => void
   onInsertSlideAfter: (itemId: number, template: SlideTemplate) => void
   onStandaloneSlideClick: () => void
+  itemRef: (element: HTMLDivElement | null) => void
 }
 
 function SortableQueueItem({
@@ -57,6 +58,7 @@ function SortableQueueItem({
   onInsertSongAfter,
   onInsertSlideAfter,
   onStandaloneSlideClick,
+  itemRef,
 }: SortableQueueItemProps) {
   const { showToast } = useToast()
   const { t } = useTranslation('queue')
@@ -65,6 +67,15 @@ function SortableQueueItem({
 
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id: item.id })
+
+  // Combine sortable ref with item ref for scroll tracking
+  const combinedRef = useCallback(
+    (element: HTMLDivElement | null) => {
+      setNodeRef(element)
+      itemRef(element)
+    },
+    [setNodeRef, itemRef],
+  )
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -88,7 +99,7 @@ function SortableQueueItem({
     const isActive = item.id === activeQueueItemId && activeSlideId === null
 
     return (
-      <div ref={setNodeRef} style={style}>
+      <div ref={combinedRef} style={style}>
         <QueueSlideItem
           item={item}
           isActive={isActive}
@@ -106,7 +117,7 @@ function SortableQueueItem({
   }
 
   return (
-    <div ref={setNodeRef} style={style}>
+    <div ref={combinedRef} style={style}>
       <QueueSongItem
         item={item}
         isExpanded={item.isExpanded}
@@ -159,6 +170,53 @@ export function QueueList({
   >(null)
   const [insertSlideTemplate, setInsertSlideTemplate] =
     useState<SlideTemplate>('announcement')
+
+  // Refs for auto-scroll functionality
+  const itemRefs = useRef<Map<number, HTMLDivElement>>(new Map())
+  const previousActiveQueueItemId = useRef<number | null>(null)
+
+  // Create callback to register item refs
+  const createItemRef = useCallback(
+    (itemId: number) => (element: HTMLDivElement | null) => {
+      if (element) {
+        itemRefs.current.set(itemId, element)
+      } else {
+        itemRefs.current.delete(itemId)
+      }
+    },
+    [],
+  )
+
+  // Auto-scroll to active queue item when it changes
+  useEffect(() => {
+    // Only scroll if the active queue item actually changed (not on initial render with null)
+    if (
+      activeQueueItemId !== null &&
+      activeQueueItemId !== previousActiveQueueItemId.current
+    ) {
+      const element = itemRefs.current.get(activeQueueItemId)
+      if (element) {
+        // Find the scrollable container (parent with overflow-y-auto)
+        const scrollContainer = element.closest(
+          '[class*="overflow-y-auto"], [class*="overflow-auto"]',
+        )
+        if (scrollContainer) {
+          const containerRect = scrollContainer.getBoundingClientRect()
+          const elementRect = element.getBoundingClientRect()
+
+          // Check if element is not fully visible in the container
+          const isAboveViewport = elementRect.top < containerRect.top
+          const isBelowViewport = elementRect.bottom > containerRect.bottom
+
+          if (isAboveViewport || isBelowViewport) {
+            // Scroll to make the element the first visible item
+            element.scrollIntoView({ block: 'start', behavior: 'smooth' })
+          }
+        }
+      }
+    }
+    previousActiveQueueItemId.current = activeQueueItemId
+  }, [activeQueueItemId])
 
   // Auto-expand the song containing the active slide when it changes
   useEffect(() => {
@@ -303,6 +361,7 @@ export function QueueList({
                 onStandaloneSlideClick={() =>
                   handleStandaloneSlideClick(item.id)
                 }
+                itemRef={createItemRef(item.id)}
               />
             ))}
           </div>
@@ -315,7 +374,6 @@ export function QueueList({
         title={t('confirmClear.title')}
         message={t('confirmClear.message')}
         confirmLabel={t('actions.clear')}
-        cancelLabel="Cancel"
         onConfirm={handleClearConfirm}
         onCancel={() => setShowClearModal(false)}
         variant="danger"

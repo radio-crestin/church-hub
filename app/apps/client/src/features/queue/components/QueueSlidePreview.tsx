@@ -1,3 +1,5 @@
+import { useEffect, useRef } from 'react'
+
 import type { SongSlide } from '~/features/songs/types'
 
 interface QueueSlidePreviewProps {
@@ -13,12 +15,28 @@ export function QueueSlidePreview({
   isActive,
   onClick,
 }: QueueSlidePreviewProps) {
-  // Strip HTML tags for preview text
+  const buttonRef = useRef<HTMLButtonElement>(null)
+
+  // Auto-scroll to keep active slide visible at the top of the list
+  useEffect(() => {
+    if (isActive && buttonRef.current) {
+      buttonRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      })
+    }
+  }, [isActive])
+
+  // Strip HTML tags for preview text, replacing them with spaces to preserve word separation
   const previewText =
-    slide.content.replace(/<[^>]*>/g, '').trim() || 'Empty slide'
+    slide.content
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim() || 'Empty slide'
 
   return (
     <button
+      ref={buttonRef}
       type="button"
       onClick={onClick}
       className={`w-full text-left p-2 pl-10 rounded-lg border transition-all ${

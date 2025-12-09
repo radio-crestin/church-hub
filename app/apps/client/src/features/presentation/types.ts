@@ -50,9 +50,6 @@ export interface UpsertDisplayInput {
  * Presentation state
  */
 export interface PresentationState {
-  programId: number | null
-  currentSlideId: number | null
-  lastSlideId: number | null
   currentQueueItemId: number | null
   currentSongSlideId: number | null
   lastSongSlideId: number | null
@@ -65,27 +62,11 @@ export interface PresentationState {
  * Input for updating presentation state
  */
 export interface UpdatePresentationStateInput {
-  programId?: number | null
-  currentSlideId?: number | null
-  lastSlideId?: number | null
   currentQueueItemId?: number | null
   currentSongSlideId?: number | null
   lastSongSlideId?: number | null
   isPresenting?: boolean
   isHidden?: boolean
-}
-
-/**
- * Navigation direction
- */
-export type NavigateDirection = 'next' | 'prev' | 'goto'
-
-/**
- * Input for navigating slides
- */
-export interface NavigateInput {
-  direction: NavigateDirection
-  slideId?: number
 }
 
 /**

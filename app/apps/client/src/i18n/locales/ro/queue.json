@@ -15,7 +15,7 @@
     "clear": "Golește coada",
     "expand": "Extinde",
     "collapse": "Restrânge",
-    "editSong": "Editează cântarea",
+    "editSong": "Editează",
     "editSlide": "Editează slide-ul",
     "insertSlide": "Inserează slide după",
     "insertAfter": "Inserează după",
@@ -30,7 +30,9 @@
     "announcement": "Anunț",
     "announcementDescription": "Creează un slide de anunț personalizat",
     "verseteTineri": "Versete Tineri",
-    "verseteTineriDescription": "Adaugă un slide cu versete pentru tineri"
+    "verseteTineriDescription": "Adaugă un slide cu versete pentru tineri",
+    "importSchedule": "Importă Program",
+    "importScheduleDescription": "Adaugă toate elementele dintr-un program salvat"
   },
   "messages": {
     "added": "Adăugat în coadă",

@@ -5,15 +5,15 @@ import { initReactI18next } from 'react-i18next'
 // Import translation files
 import commonEN from './locales/en/common.json'
 import presentationEN from './locales/en/presentation.json'
-import programsEN from './locales/en/programs.json'
 import queueEN from './locales/en/queue.json'
+import schedulesEN from './locales/en/schedules.json'
 import settingsEN from './locales/en/settings.json'
 import sidebarEN from './locales/en/sidebar.json'
 import songsEN from './locales/en/songs.json'
 import commonRO from './locales/ro/common.json'
 import presentationRO from './locales/ro/presentation.json'
-import programsRO from './locales/ro/programs.json'
 import queueRO from './locales/ro/queue.json'
+import schedulesRO from './locales/ro/schedules.json'
 import settingsRO from './locales/ro/settings.json'
 import sidebarRO from './locales/ro/sidebar.json'
 import songsRO from './locales/ro/songs.json'
@@ -23,8 +23,8 @@ export const resources = {
   en: {
     common: commonEN,
     presentation: presentationEN,
-    programs: programsEN,
     queue: queueEN,
+    schedules: schedulesEN,
     sidebar: sidebarEN,
     settings: settingsEN,
     songs: songsEN,
@@ -32,8 +32,8 @@ export const resources = {
   ro: {
     common: commonRO,
     presentation: presentationRO,
-    programs: programsRO,
     queue: queueRO,
+    schedules: schedulesRO,
     sidebar: sidebarRO,
     settings: settingsRO,
     songs: songsRO,
@@ -51,8 +51,8 @@ i18n
     ns: [
       'common',
       'presentation',
-      'programs',
       'queue',
+      'schedules',
       'sidebar',
       'settings',
       'songs',

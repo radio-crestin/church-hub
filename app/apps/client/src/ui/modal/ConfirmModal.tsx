@@ -1,11 +1,12 @@
 import { useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface ConfirmModalProps {
   isOpen: boolean
   title: string
   message: string
   confirmLabel: string
-  cancelLabel: string
+  cancelLabel?: string
   onConfirm: () => void
   onCancel: () => void
   variant?: 'danger' | 'default'
@@ -21,6 +22,7 @@ export function ConfirmModal({
   onCancel,
   variant = 'default',
 }: ConfirmModalProps) {
+  const { t } = useTranslation()
   const dialogRef = useRef<HTMLDialogElement>(null)
 
   useEffect(() => {
@@ -63,7 +65,7 @@ export function ConfirmModal({
             onClick={onCancel}
             className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
           >
-            {cancelLabel}
+            {cancelLabel ?? t('common:buttons.cancel')}
           </button>
           <button
             type="button"
