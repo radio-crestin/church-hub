@@ -6,6 +6,12 @@ export interface ExtractedPptxFile {
   sourcePath: string
 }
 
+export interface ExtractedPptFile {
+  filename: string
+  data: ArrayBuffer
+  sourcePath: string
+}
+
 export interface ExtractedOpenSongFile {
   filename: string
   content: string
@@ -14,6 +20,7 @@ export interface ExtractedOpenSongFile {
 
 export interface ExtractResult {
   pptxFiles: ExtractedPptxFile[]
+  pptFiles: ExtractedPptFile[]
   opensongFiles: ExtractedOpenSongFile[]
   errors: string[]
 }

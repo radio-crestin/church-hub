@@ -59,7 +59,8 @@ async function processInChunks<T, R>(
 }
 
 /**
- * Processes selected files (PPTX, OpenSong XML, and ZIP) into parsed songs
+ * Processes selected files (PPTX, PPT, OpenSong XML, and ZIP) into parsed songs
+ * PPT files are converted to PPTX via server-side LibreOffice before parsing
  * Uses parallel processing for faster extraction and parsing
  */
 export async function processImportFiles(
@@ -227,6 +228,67 @@ export async function processImportFiles(
         )
 
         for (const result of pptxResults) {
+          if (result.success) {
+            songs.push(result.data)
+          } else {
+            errors.push(result.error)
+          }
+        }
+      }
+
+      // Convert and parse extracted PPT files
+      if (extractResult.pptFiles.length > 0) {
+        onProgress?.({
+          phase: 'converting',
+          current: 0,
+          total: extractResult.pptFiles.length,
+          currentFile: 'PPT files from ZIP',
+        })
+
+        const pptResults = await processInChunks(
+          extractResult.pptFiles,
+          async (pptFile) => {
+            try {
+              // Convert PPT to PPTX via server
+              const pptxData = await convertPptToPptx(pptFile.data)
+
+              // Parse converted PPTX
+              const parsed = await parsePptxFile(pptxData, pptFile.filename)
+              return {
+                success: true as const,
+                data: {
+                  parsed,
+                  sourceFilePath: null,
+                  sourceFormat: 'pptx' as const,
+                },
+              }
+            } catch (error) {
+              if (error instanceof LibreOfficeNotInstalledError) {
+                return {
+                  success: false as const,
+                  error: 'LIBREOFFICE_NOT_INSTALLED',
+                }
+              }
+              const message =
+                error instanceof Error ? error.message : 'Unknown error'
+              return {
+                success: false as const,
+                error: `Failed to convert ${pptFile.filename}: ${message}`,
+              }
+            }
+          },
+          PARALLEL_CHUNK_SIZE,
+          (current, total) => {
+            onProgress?.({
+              phase: 'converting',
+              current,
+              total,
+              currentFile: 'PPT files from ZIP',
+            })
+          },
+        )
+
+        for (const result of pptResults) {
           if (result.success) {
             songs.push(result.data)
           } else {
