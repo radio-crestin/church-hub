@@ -546,14 +546,38 @@ export function searchSongs(query: string): SongSearchResult[] {
     const queryTerms = extractSearchTerms(query)
 
     // Filter to valid terms (terms that exist in corpus) - ignore noise like "123"
-    const { validTerms, termCounts } = getValidTerms(db, queryTerms)
+    let { validTerms, termCounts } = getValidTerms(db, queryTerms)
+
+    // If ALL terms were filtered out, fall back to original terms
+    // This handles cases like searching "001" where the user wants that specific song
+    // vs adding "123" noise to a longer query like "Isus Cristos 123"
+    if (validTerms.length === 0 && queryTerms.length > 0) {
+      log(
+        'debug',
+        'All terms filtered as noise, falling back to original terms',
+      )
+      validTerms = queryTerms
+      // Get actual counts for these terms (even if below threshold)
+      for (const term of queryTerms) {
+        try {
+          const result = db
+            .query(
+              `SELECT COUNT(*) as count FROM songs_fts WHERE songs_fts MATCH ?`,
+            )
+            .get(`"${term}"*`) as { count: number } | null
+          termCounts.set(term, result?.count ?? 0)
+        } catch {
+          termCounts.set(term, 0)
+        }
+      }
+    }
 
     log(
       'debug',
       `Query terms: ${queryTerms.join(', ')} | Valid: ${validTerms.join(', ')}`,
     )
 
-    // If no valid terms, return empty
+    // If still no valid terms (shouldn't happen), return empty
     if (validTerms.length === 0) {
       log('debug', 'No valid search terms found')
       return []
