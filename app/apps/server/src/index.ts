@@ -80,9 +80,11 @@ import {
   getAllCategories,
   getAllSongs,
   getSongWithSlides,
+  type ReorderCategoriesInput,
   type ReorderSongSlidesInput,
   rebuildSearchIndex,
   removeFromSearchIndex,
+  reorderCategories,
   reorderSongSlides,
   searchSongs,
   type UpsertCategoryInput,
@@ -1648,6 +1650,53 @@ async function main() {
             headers: { 'Content-Type': 'application/json' },
           }),
         )
+      }
+
+      // PUT /api/categories/reorder - Reorder categories by priority
+      if (req.method === 'PUT' && url.pathname === '/api/categories/reorder') {
+        try {
+          const body = (await req.json()) as ReorderCategoriesInput
+
+          if (!body.categoryIds || !Array.isArray(body.categoryIds)) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({ error: 'Missing categoryIds array' }),
+                {
+                  status: 400,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          const result = reorderCategories(body)
+
+          if (!result.success) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: result.error }), {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: { success: true } }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
       }
 
       // ============================================================
