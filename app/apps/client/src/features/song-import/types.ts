@@ -19,7 +19,7 @@ export interface ExtractResult {
 }
 
 export interface ImportProgress {
-  phase: 'extracting' | 'parsing' | 'saving'
+  phase: 'extracting' | 'converting' | 'parsing' | 'saving'
   current: number
   total: number
   currentFile?: string

@@ -24,6 +24,10 @@ import {
   upsertSetting,
 } from './service'
 import {
+  checkLibreOfficeInstalled,
+  convertPptToPptx,
+} from './service/conversion'
+import {
   clearSlide,
   type DisplayTheme,
   deleteDisplay,
@@ -1363,6 +1367,85 @@ async function main() {
             req,
             new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
               status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // ============================================================
+      // File Conversion API Endpoints
+      // ============================================================
+
+      // GET /api/convert/check-libreoffice - Check if LibreOffice is installed
+      if (
+        req.method === 'GET' &&
+        url.pathname === '/api/convert/check-libreoffice'
+      ) {
+        const isInstalled = await checkLibreOfficeInstalled()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: { installed: isInstalled } }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/convert/ppt-to-pptx - Convert PPT to PPTX
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/convert/ppt-to-pptx'
+      ) {
+        try {
+          const body = (await req.json()) as { data: string }
+
+          if (!body.data) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Missing PPT data' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          // Decode base64 to Buffer
+          const pptBuffer = Buffer.from(body.data, 'base64')
+
+          // Convert using service
+          const result = await convertPptToPptx(pptBuffer)
+
+          if (!result.success) {
+            const status =
+              result.errorCode === 'LIBREOFFICE_NOT_INSTALLED' ? 503 : 500
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({
+                  error: result.error,
+                  errorCode: result.errorCode,
+                }),
+                {
+                  status,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          // Return converted PPTX as base64
+          const pptxBase64 = result.data!.toString('base64')
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: pptxBase64 }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Conversion failed' }), {
+              status: 500,
               headers: { 'Content-Type': 'application/json' },
             }),
           )

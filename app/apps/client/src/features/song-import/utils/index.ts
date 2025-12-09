@@ -1,3 +1,7 @@
+export {
+  convertPptToPptx,
+  LibreOfficeNotInstalledError,
+} from './convertPptToPptx'
 export { extractFilesFromZip, extractPptxFromZip } from './extractPptxFromZip'
 export type { OpenSongVerse, ParsedOpenSong } from './parseOpenSong'
 export { isOpenSongXml, parseOpenSongXml } from './parseOpenSong'
