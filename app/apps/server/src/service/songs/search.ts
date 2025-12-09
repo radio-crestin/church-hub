@@ -348,6 +348,7 @@ export function searchSongs(query: string): SongSearchResult[] {
         s.title,
         s.category_id,
         sc.name as category_name,
+        COALESCE(sc.priority, 1) as category_priority,
         highlight(songs_fts, 1, '<mark>', '</mark>') as highlighted_title,
         snippet(songs_fts, 3, '<mark>', '</mark>', '...', 30) as matched_content,
         songs_fts.content as full_content,
@@ -365,6 +366,7 @@ export function searchSongs(query: string): SongSearchResult[] {
       title: string
       category_id: number | null
       category_name: string | null
+      category_priority: number
       highlighted_title: string
       matched_content: string
       full_content: string
@@ -380,6 +382,7 @@ export function searchSongs(query: string): SongSearchResult[] {
       title: string
       category_id: number | null
       category_name: string | null
+      category_priority: number
       full_content: string
       bm25_rank: number
     }> = []
@@ -394,6 +397,7 @@ export function searchSongs(query: string): SongSearchResult[] {
             s.title,
             s.category_id,
             sc.name as category_name,
+            COALESCE(sc.priority, 1) as category_priority,
             songs_fts_trigram.content as full_content,
             rank as bm25_rank
           FROM songs_fts_trigram
@@ -424,6 +428,7 @@ export function searchSongs(query: string): SongSearchResult[] {
         title: string
         category_id: number | null
         category_name: string | null
+        category_priority: number
         highlighted_title: string
         matched_content: string
         full_content: string
@@ -452,24 +457,32 @@ export function searchSongs(query: string): SongSearchResult[] {
     const candidates = Array.from(candidateMap.values())
     log('debug', `Combined: ${candidates.length} unique candidates`)
 
-    // Phase 3: Calculate term match scores and re-rank
+    // Phase 3: Calculate term match scores and re-rank with category priority
     const scoredResults = candidates.map((r) => {
       const searchableText = `${r.title} ${r.full_content}`
       const termScore = calculateTermMatchScore(searchableText, queryTerms)
 
+      // Apply category priority multiplier (default 1 for uncategorized)
+      const boostedScore = termScore * r.category_priority
+
       return {
         ...r,
         termScore,
+        boostedScore,
       }
     })
 
-    // Sort by: term match score (desc), then BM25 rank (asc, lower is better)
+    // Sort by: boosted score (desc), then term score (desc), then BM25 rank (asc)
     scoredResults.sort((a, b) => {
-      // Primary: more terms matched = higher priority
+      // Primary: boosted score (category priority applied)
+      if (b.boostedScore !== a.boostedScore) {
+        return b.boostedScore - a.boostedScore
+      }
+      // Secondary: more terms matched = higher priority
       if (b.termScore !== a.termScore) {
         return b.termScore - a.termScore
       }
-      // Secondary: better BM25 score (lower rank value = better match)
+      // Tertiary: better BM25 score (lower rank value = better match)
       return a.bm25_rank - b.bm25_rank
     })
 
