@@ -21,7 +21,11 @@ export const Route = createFileRoute('/songs/')({
 function SongsPage() {
   const { t } = useTranslation('songs')
   const navigate = useNavigate()
-  const { batchImport, isPending: isImporting } = useBatchImportSongs()
+  const {
+    batchImport,
+    isPending: isImporting,
+    progress: savingProgress,
+  } = useBatchImportSongs()
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
   const [songsToImport, setSongsToImport] = useState<ProcessedImport[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
@@ -152,6 +156,7 @@ function SongsPage() {
         onConfirm={handleConfirmImport}
         onCancel={handleCancelImport}
         isPending={isImporting}
+        progress={savingProgress}
       />
 
       <ImportProgressModal isOpen={isProcessing} progress={importProgress} />
