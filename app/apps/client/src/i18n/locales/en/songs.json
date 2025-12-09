@@ -24,7 +24,9 @@
   "search": {
     "placeholder": "Search songs...",
     "noResults": "No songs found for \"{{query}}\"",
-    "resultsCount": "{{count}} songs found"
+    "resultsCount": "{{count}} songs found",
+    "showingCount": "Showing {{showing}} of {{total}} songs",
+    "moreResults": "{{count}} more songs not shown. Use search to find specific songs."
   },
   "import": {
     "title": "Import from Text",
