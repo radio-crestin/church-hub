@@ -156,9 +156,11 @@ INSERT OR IGNORE INTO presentation_state (id, is_presenting) VALUES (1, 0);
 
 -- Song Categories Table
 -- Stores categories for organizing songs
+-- Priority: higher value = higher priority in search results
 CREATE TABLE IF NOT EXISTS song_categories (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL UNIQUE,
+  priority INTEGER NOT NULL DEFAULT 1,
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
   updated_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
@@ -540,6 +542,17 @@ export function runMigrations(db: Database): void {
     ) {
       log('info', 'Adding label column to song_slides table')
       db.exec(`ALTER TABLE song_slides ADD COLUMN label TEXT`)
+    }
+
+    // Migration: Add priority column to song_categories table for search ranking
+    if (
+      tableExists(db, 'song_categories') &&
+      !columnExists(db, 'song_categories', 'priority')
+    ) {
+      log('info', 'Adding priority column to song_categories table')
+      db.exec(
+        `ALTER TABLE song_categories ADD COLUMN priority INTEGER NOT NULL DEFAULT 1`,
+      )
     }
 
     log('info', 'Migrations completed successfully')
