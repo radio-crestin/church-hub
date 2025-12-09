@@ -1,5 +1,9 @@
 import { readFile } from '@tauri-apps/plugin-fs'
 
+import {
+  convertPptToPptx,
+  LibreOfficeNotInstalledError,
+} from './convertPptToPptx'
 import { extractFilesFromZip } from './extractPptxFromZip'
 import { parseOpenSongXml } from './parseOpenSong'
 import { parsePptxFile } from './parsePptx'
@@ -66,6 +70,7 @@ export async function processImportFiles(
   const errors: string[] = []
 
   // Categorize files by type
+  const pptPaths: string[] = []
   const pptxPaths: string[] = []
   const zipPaths: string[] = []
   const opensongPaths: string[] = []
@@ -74,6 +79,8 @@ export async function processImportFiles(
     const lowerPath = filePath.toLowerCase()
     if (lowerPath.endsWith('.pptx')) {
       pptxPaths.push(filePath)
+    } else if (lowerPath.endsWith('.ppt')) {
+      pptPaths.push(filePath)
     } else if (lowerPath.endsWith('.zip')) {
       zipPaths.push(filePath)
     } else if (mightBeOpenSongFile(filePath)) {
@@ -81,10 +88,75 @@ export async function processImportFiles(
     }
   }
 
-  const totalFiles = pptxPaths.length + zipPaths.length + opensongPaths.length
+  const totalFiles =
+    pptPaths.length + pptxPaths.length + zipPaths.length + opensongPaths.length
   let processedFiles = 0
 
-  // Process ZIP files first (they may contain many songs)
+  // Process PPT files first (convert to PPTX via server)
+  if (pptPaths.length > 0) {
+    onProgress?.({
+      phase: 'converting',
+      current: 0,
+      total: pptPaths.length,
+      currentFile: 'PPT files',
+    })
+
+    const pptResults = await processInChunks(
+      pptPaths,
+      async (filePath) => {
+        try {
+          const fileData = await readFile(filePath)
+
+          // Convert PPT to PPTX via server
+          const pptxData = await convertPptToPptx(fileData.buffer)
+
+          // Parse converted PPTX
+          const parsed = await parsePptxFile(pptxData, filePath)
+          return {
+            success: true as const,
+            data: {
+              parsed,
+              sourceFilePath: filePath,
+              sourceFormat: 'pptx' as const,
+            },
+          }
+        } catch (error) {
+          if (error instanceof LibreOfficeNotInstalledError) {
+            return {
+              success: false as const,
+              error: 'LIBREOFFICE_NOT_INSTALLED',
+            }
+          }
+          const message =
+            error instanceof Error ? error.message : 'Unknown error'
+          const filename = filePath.split(/[/\\]/).pop() || filePath
+          return {
+            success: false as const,
+            error: `Failed to convert ${filename}: ${message}`,
+          }
+        }
+      },
+      PARALLEL_CHUNK_SIZE,
+      (current, total) => {
+        onProgress?.({
+          phase: 'converting',
+          current,
+          total,
+          currentFile: 'PPT files',
+        })
+      },
+    )
+
+    for (const result of pptResults) {
+      if (result.success) {
+        songs.push(result.data)
+      } else {
+        errors.push(result.error)
+      }
+    }
+  }
+
+  // Process ZIP files (they may contain many songs)
   for (const zipPath of zipPaths) {
     onProgress?.({
       phase: 'extracting',
