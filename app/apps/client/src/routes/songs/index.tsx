@@ -13,6 +13,7 @@ import {
   useBatchImportSongs,
 } from '~/features/song-import'
 import { SongList } from '~/features/songs/components'
+import { AlertModal } from '~/ui/modal'
 
 interface SongsSearchParams {
   q?: string
@@ -40,6 +41,7 @@ function SongsPage() {
   const [importProgress, setImportProgress] = useState<ImportProgress | null>(
     null,
   )
+  const [isNoSongsModalOpen, setIsNoSongsModalOpen] = useState(false)
 
   const handleSongClick = (songId: number) => {
     navigate({
@@ -80,6 +82,8 @@ function SongsPage() {
         if (result.songs.length > 0) {
           setSongsToImport(result.songs)
           setIsImportModalOpen(true)
+        } else {
+          setIsNoSongsModalOpen(true)
         }
       }
     } catch (error) {
@@ -184,6 +188,14 @@ function SongsPage() {
       />
 
       <ImportProgressModal isOpen={isProcessing} progress={importProgress} />
+
+      <AlertModal
+        isOpen={isNoSongsModalOpen}
+        title={t('batchImport.noSongsFound')}
+        message={t('batchImport.noSongsFoundDescription')}
+        onClose={() => setIsNoSongsModalOpen(false)}
+        variant="error"
+      />
     </div>
   )
 }

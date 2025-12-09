@@ -5,7 +5,8 @@
     "cancel": "Cancel",
     "confirm": "Confirm",
     "delete": "Delete",
-    "save": "Save"
+    "save": "Save",
+    "ok": "OK"
   },
   "errors": {
     "pageNotFound": "The page you are looking for does not exist."
