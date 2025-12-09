@@ -1,0 +1,4 @@
+- you can test the client app accessing http://localhost:8086/ and the server app accessing http://localhost:3000
+- you can test the client app accessing http://localhost:8086/ and the server app accessing http://localhost:3000
+- do not launch the client/server as it's already running
+- make sure that any api is integrated into openapi and in scalar docs

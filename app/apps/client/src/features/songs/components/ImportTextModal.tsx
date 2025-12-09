@@ -56,11 +56,18 @@ export function ImportTextModal({
     onClose()
   }
 
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
+    if (e.target === dialogRef.current) {
+      handleClose()
+    }
+  }
+
   return (
     <dialog
       ref={dialogRef}
       className="fixed inset-0 p-0 m-auto w-full max-w-lg bg-transparent backdrop:bg-black/50"
       onClose={handleClose}
+      onClick={handleBackdropClick}
     >
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl">
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">

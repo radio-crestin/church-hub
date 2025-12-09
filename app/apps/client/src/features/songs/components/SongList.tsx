@@ -41,6 +41,7 @@ export function SongList({
       title: string
       categoryId: number | null
       categoryName: string | null
+      highlightedTitle?: string
       matchedContent?: string
     }>
 
@@ -50,6 +51,7 @@ export function SongList({
         title: result.title,
         categoryId: result.categoryId,
         categoryName: result.categoryName,
+        highlightedTitle: result.highlightedTitle,
         matchedContent: result.matchedContent,
       }))
     } else {

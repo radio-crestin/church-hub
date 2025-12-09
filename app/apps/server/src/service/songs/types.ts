@@ -164,6 +164,7 @@ export interface SongSearchResult {
   title: string
   categoryId: number | null
   categoryName: string | null
+  highlightedTitle: string
   matchedContent: string
 }
 

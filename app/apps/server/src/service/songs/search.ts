@@ -104,7 +104,8 @@ export function updateSearchIndexByCategory(categoryId: number): void {
 }
 
 /**
- * Rebuilds the entire search index
+ * Rebuilds the entire search index using a single batch INSERT
+ * This is much faster than updating each song individually
  */
 export function rebuildSearchIndex(): void {
   try {
@@ -112,18 +113,37 @@ export function rebuildSearchIndex(): void {
 
     const db = getDatabase()
 
-    // Clear existing index
-    db.exec('DELETE FROM songs_fts')
+    // Use a transaction for atomicity
+    db.exec('BEGIN TRANSACTION')
 
-    // Get all songs with their slides
-    const songsQuery = db.query('SELECT id FROM songs')
-    const songs = songsQuery.all() as { id: number }[]
+    try {
+      // Clear existing index
+      db.exec('DELETE FROM songs_fts')
 
-    for (const song of songs) {
-      updateSearchIndex(song.id)
+      // Batch insert all songs with their slides in a single query
+      // Uses GROUP_CONCAT to combine all slide content per song
+      // Subquery ensures slides are ordered by sort_order before concatenation
+      const result = db.run(`
+        INSERT INTO songs_fts (song_id, title, category_name, content)
+        SELECT
+          s.id,
+          s.title,
+          COALESCE(sc.name, ''),
+          COALESCE(GROUP_CONCAT(ss.content, ' '), '')
+        FROM songs s
+        LEFT JOIN song_categories sc ON s.category_id = sc.id
+        LEFT JOIN (
+          SELECT song_id, content FROM song_slides ORDER BY sort_order
+        ) ss ON ss.song_id = s.id
+        GROUP BY s.id
+      `)
+
+      db.exec('COMMIT')
+      log('info', `Search index rebuilt: ${result.changes} songs indexed`)
+    } catch (error) {
+      db.exec('ROLLBACK')
+      throw error
     }
-
-    log('info', `Search index rebuilt: ${songs.length} songs indexed`)
   } catch (error) {
     log('error', `Failed to rebuild search index: ${error}`)
   }
@@ -165,9 +185,6 @@ function buildSearchQuery(queryText: string): string {
   return `(${phraseQuery}) OR (${nearQuery}) OR (${prefixQuery})`
 }
 
-// Minimum BM25 score threshold (bm25 returns negative values, more negative = better match)
-// -0.1 filters out very weak matches while keeping reasonable results
-const MIN_SCORE_THRESHOLD = -0.1
 
 /**
  * Searches songs using FTS5 with field-weighted ranking
@@ -185,7 +202,6 @@ const MIN_SCORE_THRESHOLD = -0.1
  * Performance optimizations:
  * - Uses FTS5 inverted index for fast MATCH queries
  * - Limits results to top 50 matches
- * - Filters out low-quality matches with minimum score threshold
  */
 export function searchSongs(query: string): SongSearchResult[] {
   try {
@@ -208,33 +224,30 @@ export function searchSongs(query: string): SongSearchResult[] {
 
     // Use bm25() with column weights: song_id(0), title(10), category_name(5), content(1)
     // snippet() column index: 0=song_id(UNINDEXED), 1=title, 2=category_name, 3=content
-    // Subquery ensures we filter by score before joining and computing snippets
+    // highlight() is used for title (full text with marks), snippet() for content (truncated)
+    // IMPORTANT: highlight() and snippet() MUST be in same query context as MATCH clause
     const searchQuery = db.query(`
       SELECT
         s.id,
         s.title,
         s.category_id,
         sc.name as category_name,
+        highlight(songs_fts, 1, '<mark>', '</mark>') as highlighted_title,
         snippet(songs_fts, 3, '<mark>', '</mark>', '...', 30) as matched_content
-      FROM (
-        SELECT song_id, bm25(songs_fts, 0.0, 10.0, 5.0, 1.0) as score
-        FROM songs_fts
-        WHERE songs_fts MATCH ?
-        ORDER BY score
-        LIMIT 50
-      ) AS ranked
-      JOIN songs_fts fts ON fts.song_id = ranked.song_id
-      JOIN songs s ON s.id = ranked.song_id
+      FROM songs_fts
+      JOIN songs s ON s.id = songs_fts.song_id
       LEFT JOIN song_categories sc ON s.category_id = sc.id
-      WHERE ranked.score < ?
-      ORDER BY ranked.score
+      WHERE songs_fts MATCH ?
+      ORDER BY bm25(songs_fts, 0.0, 10.0, 5.0, 1.0)
+      LIMIT 50
     `)
 
-    const results = searchQuery.all(ftsQuery, MIN_SCORE_THRESHOLD) as Array<{
+    const results = searchQuery.all(ftsQuery) as Array<{
       id: number
       title: string
       category_id: number | null
       category_name: string | null
+      highlighted_title: string
       matched_content: string
     }>
 
@@ -245,6 +258,7 @@ export function searchSongs(query: string): SongSearchResult[] {
       title: r.title,
       categoryId: r.category_id,
       categoryName: r.category_name,
+      highlightedTitle: r.highlighted_title,
       matchedContent: r.matched_content,
     }))
   } catch (error) {

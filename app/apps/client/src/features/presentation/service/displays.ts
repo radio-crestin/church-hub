@@ -2,7 +2,6 @@ import { getApiUrl } from '~/config'
 import type {
   Display,
   DisplayTheme,
-  NavigateInput,
   PresentationState,
   UpdatePresentationStateInput,
   UpsertDisplayInput,
@@ -137,50 +136,6 @@ export async function updatePresentationState(
 
   if (!response.ok) {
     throw new Error('Failed to update presentation state')
-  }
-
-  const result = await response.json()
-  return result.data
-}
-
-/**
- * Navigates slides
- */
-export async function navigateSlide(
-  input: NavigateInput,
-): Promise<PresentationState> {
-  log('debug', `Navigating: ${input.direction}`)
-
-  const response = await fetch(`${getApiUrl()}/api/presentation/navigate`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
-  })
-
-  if (!response.ok) {
-    throw new Error('Failed to navigate')
-  }
-
-  const result = await response.json()
-  return result.data
-}
-
-/**
- * Starts a presentation
- */
-export async function startPresentation(
-  programId: number,
-): Promise<PresentationState> {
-  log('debug', `Starting presentation: ${programId}`)
-
-  const response = await fetch(`${getApiUrl()}/api/presentation/start`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ programId }),
-  })
-
-  if (!response.ok) {
-    throw new Error('Failed to start presentation')
   }
 
   const result = await response.json()

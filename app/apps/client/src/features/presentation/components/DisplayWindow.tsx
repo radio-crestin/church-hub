@@ -13,13 +13,6 @@ interface DisplayWindowProps {
   displayId: number
 }
 
-interface SlideData {
-  id: number
-  content: {
-    html?: string
-  }
-}
-
 interface SongSlideData {
   id: number
   content: string
@@ -36,7 +29,6 @@ export function DisplayWindow({ displayId }: DisplayWindowProps) {
 
   const { data: presentationState } = usePresentationState()
   const [theme, setTheme] = useState<DisplayTheme>(getDefaultTheme())
-  const [currentSlide, setCurrentSlide] = useState<SlideData | null>(null)
   const [currentSongSlide, setCurrentSongSlide] =
     useState<SongSlideData | null>(null)
   const [currentStandaloneSlide, setCurrentStandaloneSlide] =
@@ -98,31 +90,6 @@ export function DisplayWindow({ displayId }: DisplayWindowProps) {
 
     fetchDisplay()
   }, [displayId])
-
-  // Fetch current program slide content when presentation state changes
-  useEffect(() => {
-    const fetchSlide = async () => {
-      if (!presentationState?.currentSlideId) {
-        setCurrentSlide(null)
-        return
-      }
-
-      try {
-        const response = await fetch(
-          `${getApiUrl()}/api/slides/${presentationState.currentSlideId}`,
-        )
-        if (response.ok) {
-          const slide = await response.json()
-          setCurrentSlide(slide)
-        }
-      } catch (error) {
-        // biome-ignore lint/suspicious/noConsole: error logging
-        console.error('Failed to fetch slide:', error)
-      }
-    }
-
-    fetchSlide()
-  }, [presentationState?.currentSlideId, presentationState?.updatedAt])
 
   // Fetch current song slide content when presentation state changes
   useEffect(() => {
@@ -232,23 +199,17 @@ export function DisplayWindow({ displayId }: DisplayWindowProps) {
   const hasStandaloneSlide =
     presentationState?.currentQueueItemId &&
     !presentationState?.currentSongSlideId
-  const hasContent =
-    presentationState?.currentSlideId ||
-    presentationState?.currentSongSlideId ||
-    hasStandaloneSlide
+  const hasContent = presentationState?.currentSongSlideId || hasStandaloneSlide
   // Show clock when hidden or no content
   const showClock = !hasContent || presentationState?.isHidden
 
-  // Get content to display - prioritize song slides, then standalone slides, then program slides
+  // Get content to display - prioritize song slides, then standalone slides
   const getSlideContent = (): string | null => {
     if (currentSongSlide?.content) {
       return currentSongSlide.content
     }
     if (currentStandaloneSlide?.slideContent) {
       return currentStandaloneSlide.slideContent
-    }
-    if (currentSlide?.content?.html) {
-      return currentSlide.content.html
     }
     return null
   }

@@ -10,6 +10,17 @@ export interface Song {
   title: string
   categoryId: number | null
   sourceFilePath: string | null
+  author: string | null
+  copyright: string | null
+  ccli: string | null
+  key: string | null
+  tempo: string | null
+  timeSignature: string | null
+  theme: string | null
+  altTheme: string | null
+  hymnNumber: string | null
+  keyLine: string | null
+  presentationOrder: string | null
   createdAt: number
   updatedAt: number
 }
@@ -19,6 +30,7 @@ export interface SongSlide {
   songId: number
   content: string
   sortOrder: number
+  label: string | null
   createdAt: number
   updatedAt: number
 }
@@ -32,6 +44,7 @@ export interface SlideInput {
   id?: number | string
   content: string
   sortOrder: number
+  label?: string | null
 }
 
 export interface UpsertSongInput {
@@ -39,6 +52,17 @@ export interface UpsertSongInput {
   title: string
   categoryId?: number | null
   sourceFilePath?: string | null
+  author?: string | null
+  copyright?: string | null
+  ccli?: string | null
+  key?: string | null
+  tempo?: string | null
+  timeSignature?: string | null
+  theme?: string | null
+  altTheme?: string | null
+  hymnNumber?: string | null
+  keyLine?: string | null
+  presentationOrder?: string | null
   slides?: SlideInput[]
 }
 
@@ -47,6 +71,7 @@ export interface UpsertSlideInput {
   songId: number
   content: string
   sortOrder?: number
+  label?: string | null
 }
 
 export interface UpsertCategoryInput {
@@ -59,5 +84,6 @@ export interface SongSearchResult {
   title: string
   categoryId: number | null
   categoryName: string | null
+  highlightedTitle: string
   matchedContent: string
 }
