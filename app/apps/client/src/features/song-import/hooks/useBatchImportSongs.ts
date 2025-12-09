@@ -4,7 +4,7 @@ import { useState } from 'react'
 import type { BatchImportInput, BatchImportResult } from '../types'
 
 const API_BASE_URL = 'http://localhost:3000'
-const BATCH_SIZE = 50
+const BATCH_SIZE = 200
 
 export function useBatchImportSongs() {
   const queryClient = useQueryClient()

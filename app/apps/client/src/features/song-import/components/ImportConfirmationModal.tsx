@@ -1,4 +1,4 @@
-import { FileUp, X } from 'lucide-react'
+import { FileUp, Loader2, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -11,6 +11,7 @@ interface ImportConfirmationModalProps {
   onConfirm: (categoryId: number | null) => void
   onCancel: () => void
   isPending: boolean
+  progress?: number
 }
 
 export function ImportConfirmationModal({
@@ -19,6 +20,7 @@ export function ImportConfirmationModal({
   onConfirm,
   onCancel,
   isPending,
+  progress = 0,
 }: ImportConfirmationModalProps) {
   const { t } = useTranslation('songs')
   const dialogRef = useRef<HTMLDialogElement>(null)
@@ -111,26 +113,39 @@ export function ImportConfirmationModal({
           </div>
         </div>
 
-        <div className="flex justify-end gap-3">
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={isPending}
-            className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
-          >
-            {t('common:buttons.cancel', { ns: 'common' })}
-          </button>
-          <button
-            type="button"
-            onClick={handleConfirm}
-            disabled={isPending}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isPending
-              ? t('batchImport.importing')
-              : t('batchImport.confirmButton', { count: songCount })}
-          </button>
-        </div>
+        {isPending ? (
+          <div className="space-y-3">
+            <div className="flex items-center justify-center gap-3">
+              <Loader2 className="w-5 h-5 text-indigo-600 animate-spin" />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {t('batchImport.saving')} {progress}%
+              </span>
+            </div>
+            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+              <div
+                className="bg-indigo-600 h-2 rounded-full transition-all duration-300 ease-out"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              {t('common:buttons.cancel', { ns: 'common' })}
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirm}
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
+            >
+              {t('batchImport.confirmButton', { count: songCount })}
+            </button>
+          </div>
+        )}
       </div>
     </dialog>
   )
