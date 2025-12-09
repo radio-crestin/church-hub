@@ -78,6 +78,7 @@
     "confirmButton": "Importă {{count}} cântare/cântări",
     "importing": "Se importă...",
     "noSongsFound": "Nu s-au găsit fișiere de cântări",
+    "noSongsFoundDescription": "Fișierele selectate nu au putut fi interpretate ca și cântări. Te rugăm să te asiguri că importezi fișiere de cântări valide (OpenSong XML sau fișiere PowerPoint).",
     "successMessage": "S-au importat cu succes {{count}} cântare/cântări",
     "processing": "Se procesează fișierele...",
     "processingProgress": "Procesare: {{current}} din {{total}} fișiere",
