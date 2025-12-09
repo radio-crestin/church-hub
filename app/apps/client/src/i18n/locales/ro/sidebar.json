@@ -2,7 +2,7 @@
   "navigation": {
     "home": "Acasă",
     "dashboard": "Panou",
-    "programs": "Programe",
+    "schedules": "Programe",
     "songs": "Cântări",
     "present": "Camera de control",
     "settings": "Setări"
@@ -10,6 +10,8 @@
   "actions": {
     "collapse": "Restrânge",
     "expand": "Extinde bara laterală",
-    "collapseSidebar": "Restrânge bara laterală"
+    "collapseSidebar": "Restrânge bara laterală",
+    "openMenu": "Deschide meniu",
+    "closeMenu": "Închide meniu"
   }
 }
