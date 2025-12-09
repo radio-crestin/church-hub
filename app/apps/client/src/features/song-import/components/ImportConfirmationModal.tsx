@@ -1,0 +1,137 @@
+import { FileUp, X } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+
+import { CategoryPicker } from '~/features/songs/components'
+import type { ParsedPptx } from '../utils/parsePptx'
+
+interface ImportConfirmationModalProps {
+  isOpen: boolean
+  songs: ParsedPptx[]
+  onConfirm: (categoryId: number | null) => void
+  onCancel: () => void
+  isPending: boolean
+}
+
+export function ImportConfirmationModal({
+  isOpen,
+  songs,
+  onConfirm,
+  onCancel,
+  isPending,
+}: ImportConfirmationModalProps) {
+  const { t } = useTranslation('songs')
+  const dialogRef = useRef<HTMLDialogElement>(null)
+  const [categoryId, setCategoryId] = useState<number | null>(null)
+
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog) return
+
+    if (isOpen) {
+      dialog.showModal()
+    } else {
+      dialog.close()
+    }
+  }, [isOpen])
+
+  useEffect(() => {
+    if (!isOpen) {
+      setCategoryId(null)
+    }
+  }, [isOpen])
+
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
+    if (e.target === dialogRef.current && !isPending) {
+      onCancel()
+    }
+  }
+
+  const handleConfirm = () => {
+    onConfirm(categoryId)
+  }
+
+  const songCount = songs.length
+
+  return (
+    <dialog
+      ref={dialogRef}
+      className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800"
+      onClose={onCancel}
+      onClick={handleBackdropClick}
+    >
+      <div className="p-6 min-w-[400px] max-w-lg">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <FileUp className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              {t('batchImport.title')}
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={isPending}
+            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded transition-colors disabled:opacity-50"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <p className="text-gray-600 dark:text-gray-400 mb-4">
+          {t('batchImport.description', { count: songCount })}
+        </p>
+
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            {t('batchImport.categoryLabel')}
+          </label>
+          <CategoryPicker
+            value={categoryId}
+            onChange={setCategoryId}
+            disabled={isPending}
+          />
+        </div>
+
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            {t('batchImport.songsList')}
+          </label>
+          <div className="max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+              {songs.map((song, index) => (
+                <li
+                  key={`${song.title}-${index}`}
+                  className="px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+                >
+                  {index + 1}. {song.title}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={isPending}
+            className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
+          >
+            {t('common:buttons.cancel', { ns: 'common' })}
+          </button>
+          <button
+            type="button"
+            onClick={handleConfirm}
+            disabled={isPending}
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isPending
+              ? t('batchImport.importing')
+              : t('batchImport.confirmButton', { count: songCount })}
+          </button>
+        </div>
+      </div>
+    </dialog>
+  )
+}
