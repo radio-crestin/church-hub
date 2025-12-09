@@ -1,5 +1,5 @@
 import { Music, Search } from 'lucide-react'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { SongCard } from './SongCard'
@@ -20,12 +20,19 @@ export function SongList({
   onSearchChange,
 }: SongListProps) {
   const { t } = useTranslation('songs')
+  // Local state for immediate input feedback
+  const [localQuery, setLocalQuery] = useState(searchQuery)
   const { data: songs, isLoading: songsLoading } = useSongs()
   const { data: searchResults, isLoading: searchLoading } =
-    useSearchSongs(searchQuery)
+    useSearchSongs(localQuery)
   const { data: categories } = useCategories()
 
-  const isSearching = searchQuery.length > 0
+  // Sync local state when URL search param changes (e.g., navigation)
+  useEffect(() => {
+    setLocalQuery(searchQuery)
+  }, [searchQuery])
+
+  const isSearching = localQuery.length > 0
   const isLoading = isSearching ? searchLoading : songsLoading
 
   const { displaySongs, totalCount } = useMemo(() => {
@@ -63,7 +70,9 @@ export function SongList({
   }, [isSearching, searchResults, songs, categories])
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onSearchChange?.(e.target.value)
+    const value = e.target.value
+    setLocalQuery(value)
+    onSearchChange?.(value)
   }
 
   const hasMore = totalCount > MAX_DISPLAY_SONGS
@@ -74,7 +83,7 @@ export function SongList({
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
         <input
           type="text"
-          value={searchQuery}
+          value={localQuery}
           onChange={handleSearchChange}
           placeholder={t('search.placeholder')}
           className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
@@ -98,7 +107,7 @@ export function SongList({
           />
           <p className="text-gray-600 dark:text-gray-400 font-medium">
             {isSearching
-              ? t('search.noResults', { query: searchQuery })
+              ? t('search.noResults', { query: localQuery })
               : t('noSongs')}
           </p>
           {!isSearching && (
