@@ -78,6 +78,7 @@
     "confirmButton": "Import {{count}} Song(s)",
     "importing": "Importing...",
     "noSongsFound": "No song files found",
+    "noSongsFoundDescription": "The selected files could not be parsed as songs. Please make sure you're importing valid song files (OpenSong XML or PowerPoint files).",
     "successMessage": "Successfully imported {{count}} song(s)",
     "processing": "Processing files...",
     "processingProgress": "Processing: {{current}} of {{total}} files",
