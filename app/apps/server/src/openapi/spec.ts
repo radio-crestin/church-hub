@@ -542,7 +542,8 @@ export const openApiSpec = {
       get: {
         tags: ['Songs'],
         summary: 'Search songs',
-        description: 'Search songs by title or content with highlighted matches',
+        description:
+          'Search songs by title or content with highlighted matches',
         security: [{ bearerAuth: [] }, { cookieAuth: [] }],
         parameters: [
           {
@@ -603,7 +604,8 @@ export const openApiSpec = {
       post: {
         tags: ['Songs'],
         summary: 'Create or update song',
-        description: 'Creates a new song or updates an existing one if id is provided',
+        description:
+          'Creates a new song or updates an existing one if id is provided',
         security: [{ bearerAuth: [] }, { cookieAuth: [] }],
         requestBody: {
           required: true,
@@ -648,7 +650,9 @@ export const openApiSpec = {
                 properties: {
                   songs: {
                     type: 'array',
-                    items: { $ref: '#/components/schemas/BatchImportSongInput' },
+                    items: {
+                      $ref: '#/components/schemas/BatchImportSongInput',
+                    },
                   },
                 },
               },
@@ -743,7 +747,8 @@ export const openApiSpec = {
       put: {
         tags: ['Song Slides'],
         summary: 'Reorder song slides',
-        description: 'Reorder slides within a song by providing ordered slide IDs',
+        description:
+          'Reorder slides within a song by providing ordered slide IDs',
         security: [{ bearerAuth: [] }, { cookieAuth: [] }],
         parameters: [
           {
@@ -786,7 +791,8 @@ export const openApiSpec = {
       post: {
         tags: ['Song Slides'],
         summary: 'Create or update song slide',
-        description: 'Creates a new slide or updates an existing one if id is provided',
+        description:
+          'Creates a new slide or updates an existing one if id is provided',
         security: [{ bearerAuth: [] }, { cookieAuth: [] }],
         requestBody: {
           required: true,
@@ -975,12 +981,47 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/categories/reorder': {
+      put: {
+        tags: ['Categories'],
+        summary: 'Reorder categories',
+        description:
+          'Reorder categories by priority. First item in array gets highest priority.',
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/ReorderCategoriesInput' },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Categories reordered',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: { $ref: '#/components/schemas/OperationResult' },
+                  },
+                },
+              },
+            },
+          },
+          '400': { $ref: '#/components/responses/BadRequest' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+        },
+      },
+    },
     // Queue API
     '/api/queue': {
       get: {
         tags: ['Queue'],
         summary: 'Get queue items',
-        description: 'Returns all items in the presentation queue with their slides',
+        description:
+          'Returns all items in the presentation queue with their slides',
         security: [{ bearerAuth: [] }, { cookieAuth: [] }],
         responses: {
           '200': {
@@ -1060,7 +1101,8 @@ export const openApiSpec = {
       post: {
         tags: ['Queue'],
         summary: 'Insert standalone slide',
-        description: 'Insert a standalone slide (announcement, etc.) into the queue',
+        description:
+          'Insert a standalone slide (announcement, etc.) into the queue',
         security: [{ bearerAuth: [] }, { cookieAuth: [] }],
         requestBody: {
           required: true,
@@ -1273,7 +1315,9 @@ export const openApiSpec = {
                   properties: {
                     data: {
                       type: 'array',
-                      items: { $ref: '#/components/schemas/ScheduleSearchResult' },
+                      items: {
+                        $ref: '#/components/schemas/ScheduleSearchResult',
+                      },
                     },
                   },
                 },
@@ -1558,7 +1602,8 @@ export const openApiSpec = {
       put: {
         tags: ['Schedules'],
         summary: 'Reorder schedule items',
-        description: 'Reorder items in a schedule by providing ordered item IDs',
+        description:
+          'Reorder items in a schedule by providing ordered item IDs',
         security: [{ bearerAuth: [] }, { cookieAuth: [] }],
         parameters: [
           {
@@ -1573,7 +1618,9 @@ export const openApiSpec = {
           required: true,
           content: {
             'application/json': {
-              schema: { $ref: '#/components/schemas/ReorderScheduleItemsInput' },
+              schema: {
+                $ref: '#/components/schemas/ReorderScheduleItemsInput',
+              },
             },
           },
         },
@@ -1601,7 +1648,8 @@ export const openApiSpec = {
       post: {
         tags: ['Schedules'],
         summary: 'Import schedule to queue',
-        description: 'Import all items from a schedule into the presentation queue',
+        description:
+          'Import all items from a schedule into the presentation queue',
         security: [{ bearerAuth: [] }, { cookieAuth: [] }],
         parameters: [
           {
@@ -1809,7 +1857,8 @@ export const openApiSpec = {
       get: {
         tags: ['Presentation'],
         summary: 'Get presentation state',
-        description: 'Returns the current presentation state including active slide',
+        description:
+          'Returns the current presentation state including active slide',
         security: [{ bearerAuth: [] }, { cookieAuth: [] }],
         responses: {
           '200': {
@@ -1831,13 +1880,16 @@ export const openApiSpec = {
       put: {
         tags: ['Presentation'],
         summary: 'Update presentation state',
-        description: 'Update the presentation state (current slide, presenting status)',
+        description:
+          'Update the presentation state (current slide, presenting status)',
         security: [{ bearerAuth: [] }, { cookieAuth: [] }],
         requestBody: {
           required: true,
           content: {
             'application/json': {
-              schema: { $ref: '#/components/schemas/UpdatePresentationStateInput' },
+              schema: {
+                $ref: '#/components/schemas/UpdatePresentationStateInput',
+              },
             },
           },
         },
@@ -2075,6 +2127,11 @@ export const openApiSpec = {
         properties: {
           id: { type: 'integer' },
           name: { type: 'string' },
+          priority: {
+            type: 'integer',
+            description:
+              'Priority for search ranking (higher = more important)',
+          },
           createdAt: { type: 'integer', description: 'Unix timestamp' },
           updatedAt: { type: 'integer', description: 'Unix timestamp' },
         },
@@ -2148,7 +2205,10 @@ export const openApiSpec = {
         type: 'object',
         required: ['title'],
         properties: {
-          id: { type: 'integer', description: 'If provided, updates existing song' },
+          id: {
+            type: 'integer',
+            description: 'If provided, updates existing song',
+          },
           title: { type: 'string' },
           categoryId: { type: 'integer', nullable: true },
           sourceFilePath: { type: 'string', nullable: true },
@@ -2182,7 +2242,10 @@ export const openApiSpec = {
         type: 'object',
         required: ['songId', 'content'],
         properties: {
-          id: { type: 'integer', description: 'If provided, updates existing slide' },
+          id: {
+            type: 'integer',
+            description: 'If provided, updates existing slide',
+          },
           songId: { type: 'integer' },
           content: { type: 'string' },
           sortOrder: { type: 'integer' },
@@ -2251,8 +2314,27 @@ export const openApiSpec = {
         type: 'object',
         required: ['name'],
         properties: {
-          id: { type: 'integer', description: 'If provided, updates existing category' },
+          id: {
+            type: 'integer',
+            description: 'If provided, updates existing category',
+          },
           name: { type: 'string' },
+          priority: {
+            type: 'integer',
+            description: 'Priority for search ranking',
+          },
+        },
+      },
+      ReorderCategoriesInput: {
+        type: 'object',
+        required: ['categoryIds'],
+        properties: {
+          categoryIds: {
+            type: 'array',
+            items: { type: 'integer' },
+            description:
+              'Ordered array of category IDs (first = highest priority)',
+          },
         },
       },
       // Queue Schemas
@@ -2298,8 +2380,14 @@ export const openApiSpec = {
         required: ['songId'],
         properties: {
           songId: { type: 'integer' },
-          presentNow: { type: 'boolean', description: 'Whether to start presenting immediately' },
-          afterItemId: { type: 'integer', description: 'Insert after this queue item ID' },
+          presentNow: {
+            type: 'boolean',
+            description: 'Whether to start presenting immediately',
+          },
+          afterItemId: {
+            type: 'integer',
+            description: 'Insert after this queue item ID',
+          },
         },
       },
       InsertSlideInput: {
@@ -2308,7 +2396,10 @@ export const openApiSpec = {
         properties: {
           slideType: { $ref: '#/components/schemas/SlideTemplate' },
           slideContent: { type: 'string' },
-          afterItemId: { type: 'integer', description: 'Insert after this queue item ID' },
+          afterItemId: {
+            type: 'integer',
+            description: 'Insert after this queue item ID',
+          },
         },
       },
       UpdateSlideInput: {
@@ -2399,7 +2490,10 @@ export const openApiSpec = {
         type: 'object',
         required: ['title'],
         properties: {
-          id: { type: 'integer', description: 'If provided, updates existing schedule' },
+          id: {
+            type: 'integer',
+            description: 'If provided, updates existing schedule',
+          },
           title: { type: 'string' },
           description: { type: 'string', nullable: true },
         },
@@ -2409,10 +2503,19 @@ export const openApiSpec = {
         required: ['scheduleId'],
         properties: {
           scheduleId: { type: 'integer' },
-          songId: { type: 'integer', description: 'Add a song to the schedule' },
+          songId: {
+            type: 'integer',
+            description: 'Add a song to the schedule',
+          },
           slideType: { $ref: '#/components/schemas/SlideTemplate' },
-          slideContent: { type: 'string', description: 'Content for standalone slide' },
-          afterItemId: { type: 'integer', description: 'Insert after this item ID' },
+          slideContent: {
+            type: 'string',
+            description: 'Content for standalone slide',
+          },
+          afterItemId: {
+            type: 'integer',
+            description: 'Insert after this item ID',
+          },
         },
       },
       UpdateScheduleSlideInput: {
@@ -2474,7 +2577,10 @@ export const openApiSpec = {
         type: 'object',
         required: ['name'],
         properties: {
-          id: { type: 'integer', description: 'If provided, updates existing display' },
+          id: {
+            type: 'integer',
+            description: 'If provided, updates existing display',
+          },
           name: { type: 'string' },
           isActive: { type: 'boolean' },
           openMode: { $ref: '#/components/schemas/DisplayOpenMode' },
