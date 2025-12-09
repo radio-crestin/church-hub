@@ -100,6 +100,42 @@
         "urlCopied": "URL copiat în clipboard",
         "error": "A apărut o eroare"
       }
+    },
+    "categories": {
+      "title": "Categorii Cântări",
+      "description": "Administrează categoriile de cântări și prioritatea lor în căutare. Poziție mai sus = prioritate mai mare în rezultatele căutării.",
+      "addCategory": "Adaugă Categorie",
+      "noCategories": "Nicio categorie configurată",
+      "noCategoriesDescription": "Adaugă o categorie pentru a organiza cântările tale",
+      "categoryName": "Nume Categorie",
+      "categoryNamePlaceholder": "ex., Închinare, Imnuri, Crăciun",
+      "priority": "Prioritate",
+      "actions": {
+        "edit": "Editează",
+        "delete": "Șterge"
+      },
+      "modals": {
+        "create": {
+          "title": "Adaugă Categorie Nouă",
+          "submit": "Creează Categorie"
+        },
+        "edit": {
+          "title": "Editează Categorie",
+          "submit": "Salvează Modificările"
+        },
+        "delete": {
+          "title": "Șterge Categorie",
+          "message": "Ești sigur că vrei să ștergi \"{{name}}\"? Cântările din această categorie vor deveni necategorizate.",
+          "confirm": "Șterge"
+        }
+      },
+      "toast": {
+        "created": "Categorie creată cu succes",
+        "updated": "Categorie actualizată cu succes",
+        "deleted": "Categorie ștearsă cu succes",
+        "reordered": "Ordinea categoriilor actualizată",
+        "error": "A apărut o eroare"
+      }
     }
   }
 }
