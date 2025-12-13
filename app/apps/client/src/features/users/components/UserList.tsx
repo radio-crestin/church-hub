@@ -1,37 +1,37 @@
-import { Plus, Smartphone, X } from 'lucide-react'
+import { Plus, Users, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { DeviceCard } from './DeviceCard'
-import { DeviceForm } from './DeviceForm'
-import { DeviceQRModal } from './DeviceQRModal'
+import { UserCard } from './UserCard'
+import { UserForm } from './UserForm'
+import { UserQRModal } from './UserQRModal'
 import { ConfirmModal } from '../../../ui/modal/ConfirmModal'
 import { useToast } from '../../../ui/toast'
 import {
-  useCreateDevice,
-  useDeleteDevice,
-  useDevices,
+  useCreateUser,
+  useDeleteUser,
   useRegenerateToken,
-  useUpdateDevice,
   useUpdatePermissions,
+  useUpdateUser,
+  useUsers,
 } from '../hooks'
-import type { DevicePermissions, DeviceWithPermissions } from '../types'
+import type { Permission, UserWithPermissions } from '../types'
 
 type ModalState =
   | { type: 'none' }
   | { type: 'create' }
-  | { type: 'edit'; device: DeviceWithPermissions }
-  | { type: 'qr'; device: DeviceWithPermissions; token: string }
-  | { type: 'delete'; device: DeviceWithPermissions }
-  | { type: 'regenerate'; device: DeviceWithPermissions }
+  | { type: 'edit'; user: UserWithPermissions }
+  | { type: 'qr'; user: UserWithPermissions }
+  | { type: 'delete'; user: UserWithPermissions }
+  | { type: 'regenerate'; user: UserWithPermissions }
 
-export function DeviceList() {
+export function UserList() {
   const { t } = useTranslation('settings')
   const { showToast } = useToast()
-  const { data: devices, isLoading, error } = useDevices()
-  const createDevice = useCreateDevice()
-  const updateDevice = useUpdateDevice()
-  const deleteDevice = useDeleteDevice()
+  const { data: users, isLoading, error } = useUsers()
+  const createUser = useCreateUser()
+  const updateUser = useUpdateUser()
+  const deleteUser = useDeleteUser()
   const updatePermissions = useUpdatePermissions()
   const regenerateToken = useRegenerateToken()
 
@@ -51,36 +51,36 @@ export function DeviceList() {
 
   const handleCreate = async (data: {
     name: string
-    permissions: DevicePermissions
+    permissions: Permission[]
   }) => {
     try {
-      const result = await createDevice.mutateAsync(data)
-      setModal({ type: 'qr', device: result.device, token: result.token })
-      showToast(t('sections.devices.toast.created'), 'success')
+      const result = await createUser.mutateAsync(data)
+      setModal({ type: 'qr', user: result.user })
+      showToast(t('sections.users.toast.created'), 'success')
     } catch {
-      showToast(t('sections.devices.toast.error'), 'error')
+      showToast(t('sections.users.toast.error'), 'error')
     }
   }
 
   const handleEdit = async (data: {
     name: string
-    permissions: DevicePermissions
+    permissions: Permission[]
   }) => {
     if (modal.type !== 'edit') return
 
     try {
-      await updateDevice.mutateAsync({
-        id: modal.device.id,
+      await updateUser.mutateAsync({
+        id: modal.user.id,
         input: { name: data.name },
       })
       await updatePermissions.mutateAsync({
-        id: modal.device.id,
+        id: modal.user.id,
         permissions: data.permissions,
       })
       setModal({ type: 'none' })
-      showToast(t('sections.devices.toast.updated'), 'success')
+      showToast(t('sections.users.toast.updated'), 'success')
     } catch {
-      showToast(t('sections.devices.toast.error'), 'error')
+      showToast(t('sections.users.toast.error'), 'error')
     }
   }
 
@@ -88,11 +88,11 @@ export function DeviceList() {
     if (modal.type !== 'delete') return
 
     try {
-      await deleteDevice.mutateAsync(modal.device.id)
+      await deleteUser.mutateAsync(modal.user.id)
       setModal({ type: 'none' })
-      showToast(t('sections.devices.toast.deleted'), 'success')
+      showToast(t('sections.users.toast.deleted'), 'success')
     } catch {
-      showToast(t('sections.devices.toast.error'), 'error')
+      showToast(t('sections.users.toast.error'), 'error')
     }
   }
 
@@ -100,29 +100,29 @@ export function DeviceList() {
     if (modal.type !== 'regenerate') return
 
     try {
-      const result = await regenerateToken.mutateAsync(modal.device.id)
-      setModal({ type: 'qr', device: result.device, token: result.token })
-      showToast(t('sections.devices.toast.tokenRegenerated'), 'success')
+      const result = await regenerateToken.mutateAsync(modal.user.id)
+      setModal({ type: 'qr', user: result.user })
+      showToast(t('sections.users.toast.tokenRegenerated'), 'success')
     } catch {
-      showToast(t('sections.devices.toast.error'), 'error')
+      showToast(t('sections.users.toast.error'), 'error')
     }
   }
 
-  const handleToggleActive = async (device: DeviceWithPermissions) => {
+  const handleToggleActive = async (user: UserWithPermissions) => {
     try {
-      await updateDevice.mutateAsync({
-        id: device.id,
-        input: { isActive: !device.isActive },
+      await updateUser.mutateAsync({
+        id: user.id,
+        input: { isActive: !user.isActive },
       })
-      showToast(t('sections.devices.toast.updated'), 'success')
+      showToast(t('sections.users.toast.updated'), 'success')
     } catch {
-      showToast(t('sections.devices.toast.error'), 'error')
+      showToast(t('sections.users.toast.error'), 'error')
     }
   }
 
-  const handleShowQR = (device: DeviceWithPermissions) => {
-    // We need to regenerate to get the token since we don't store it
-    setModal({ type: 'regenerate', device })
+  const handleShowQR = (user: UserWithPermissions) => {
+    // Token is now stored in the database, so we can show QR directly
+    setModal({ type: 'qr', user })
   }
 
   if (isLoading) {
@@ -136,7 +136,7 @@ export function DeviceList() {
   if (error) {
     return (
       <div className="text-center py-8 text-red-500">
-        {t('sections.devices.toast.error')}
+        {t('sections.users.toast.error')}
       </div>
     )
   }
@@ -146,10 +146,10 @@ export function DeviceList() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-            {t('sections.devices.title')}
+            {t('sections.users.title')}
           </h3>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {t('sections.devices.description')}
+            {t('sections.users.description')}
           </p>
         </div>
         <button
@@ -158,21 +158,21 @@ export function DeviceList() {
             text-white rounded-lg transition-colors text-sm"
         >
           <Plus size={16} />
-          {t('sections.devices.addDevice')}
+          {t('sections.users.addUser')}
         </button>
       </div>
 
-      {devices && devices.length > 0 ? (
+      {users && users.length > 0 ? (
         <div className="grid gap-3">
-          {devices.map((device) => (
-            <DeviceCard
-              key={device.id}
-              device={device}
-              onEdit={(d) => setModal({ type: 'edit', device: d })}
-              onDelete={(d) => setModal({ type: 'delete', device: d })}
+          {users.map((user) => (
+            <UserCard
+              key={user.id}
+              user={user}
+              onEdit={(u) => setModal({ type: 'edit', user: u })}
+              onDelete={(u) => setModal({ type: 'delete', user: u })}
               onShowQR={handleShowQR}
-              onRegenerateToken={(d) =>
-                setModal({ type: 'regenerate', device: d })
+              onRegenerateToken={(u) =>
+                setModal({ type: 'regenerate', user: u })
               }
               onToggleActive={handleToggleActive}
             />
@@ -180,15 +180,15 @@ export function DeviceList() {
         </div>
       ) : (
         <div className="text-center py-12 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-          <Smartphone
+          <Users
             size={48}
             className="mx-auto text-gray-400 dark:text-gray-500 mb-3"
           />
           <p className="text-gray-600 dark:text-gray-400 font-medium">
-            {t('sections.devices.noDevices')}
+            {t('sections.users.noUsers')}
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
-            {t('sections.devices.noDevicesDescription')}
+            {t('sections.users.noUsersDescription')}
           </p>
         </div>
       )}
@@ -196,7 +196,7 @@ export function DeviceList() {
       {/* Create/Edit Dialog */}
       <dialog
         ref={formDialogRef}
-        className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800 max-w-lg w-full"
+        className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800 max-w-lg w-full max-h-[90vh] overflow-y-auto"
         onClose={() => setModal({ type: 'none' })}
         onClick={(e) => {
           if (e.target === formDialogRef.current) {
@@ -208,8 +208,8 @@ export function DeviceList() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
               {modal.type === 'create'
-                ? t('sections.devices.modals.create.title')
-                : t('sections.devices.modals.edit.title')}
+                ? t('sections.users.modals.create.title')
+                : t('sections.users.modals.edit.title')}
             </h2>
             <button
               onClick={() => setModal({ type: 'none' })}
@@ -218,21 +218,21 @@ export function DeviceList() {
               <X size={20} />
             </button>
           </div>
-          <DeviceForm
-            device={modal.type === 'edit' ? modal.device : undefined}
+          <UserForm
+            user={modal.type === 'edit' ? modal.user : undefined}
             onSubmit={modal.type === 'create' ? handleCreate : handleEdit}
             onCancel={() => setModal({ type: 'none' })}
-            isLoading={createDevice.isPending || updateDevice.isPending}
+            isLoading={createUser.isPending || updateUser.isPending}
           />
         </div>
       </dialog>
 
       {/* QR Code Modal */}
       {modal.type === 'qr' && (
-        <DeviceQRModal
+        <UserQRModal
           isOpen={true}
-          deviceName={modal.device.name}
-          token={modal.token}
+          userName={modal.user.name}
+          token={modal.user.token}
           onClose={() => setModal({ type: 'none' })}
         />
       )}
@@ -241,12 +241,12 @@ export function DeviceList() {
       {modal.type === 'delete' && (
         <ConfirmModal
           isOpen={true}
-          title={t('sections.devices.modals.delete.title')}
-          message={t('sections.devices.modals.delete.message', {
-            name: modal.device.name,
+          title={t('sections.users.modals.delete.title')}
+          message={t('sections.users.modals.delete.message', {
+            name: modal.user.name,
           })}
-          confirmLabel={t('sections.devices.modals.delete.confirm')}
-          cancelLabel={t('sections.devices.modals.delete.cancel')}
+          confirmLabel={t('sections.users.modals.delete.confirm')}
+          cancelLabel={t('sections.users.modals.cancel')}
           onConfirm={handleDelete}
           onCancel={() => setModal({ type: 'none' })}
           variant="danger"
@@ -257,12 +257,12 @@ export function DeviceList() {
       {modal.type === 'regenerate' && (
         <ConfirmModal
           isOpen={true}
-          title={t('sections.devices.modals.regenerate.title')}
-          message={t('sections.devices.modals.regenerate.message', {
-            name: modal.device.name,
+          title={t('sections.users.modals.regenerate.title')}
+          message={t('sections.users.modals.regenerate.message', {
+            name: modal.user.name,
           })}
-          confirmLabel={t('sections.devices.modals.regenerate.confirm')}
-          cancelLabel={t('sections.devices.modals.regenerate.cancel')}
+          confirmLabel={t('sections.users.modals.regenerate.confirm')}
+          cancelLabel={t('sections.users.modals.cancel')}
           onConfirm={handleRegenerateToken}
           onCancel={() => setModal({ type: 'none' })}
         />

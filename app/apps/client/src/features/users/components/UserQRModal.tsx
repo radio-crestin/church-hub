@@ -3,27 +3,28 @@ import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useToast } from '../../../ui/toast'
-import { useQRCode } from '../hooks'
-import { getDeviceAuthUrl } from '../service'
+import { useQRCode, useServerInfo } from '../hooks'
+import { getUserAuthUrl } from '../service'
 
-interface DeviceQRModalProps {
+interface UserQRModalProps {
   isOpen: boolean
-  deviceName: string
+  userName: string
   token: string
   onClose: () => void
 }
 
-export function DeviceQRModal({
+export function UserQRModal({
   isOpen,
-  deviceName,
+  userName,
   token,
   onClose,
-}: DeviceQRModalProps) {
+}: UserQRModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const { t } = useTranslation('settings')
   const { showToast } = useToast()
+  const { data: serverInfo } = useServerInfo()
 
-  const authUrl = isOpen ? getDeviceAuthUrl(token) : null
+  const authUrl = isOpen ? getUserAuthUrl(token, serverInfo ?? null) : null
   const { qrDataUrl, isLoading } = useQRCode(authUrl)
 
   useEffect(() => {
@@ -39,7 +40,7 @@ export function DeviceQRModal({
   const copyUrl = async () => {
     if (authUrl) {
       await navigator.clipboard.writeText(authUrl)
-      showToast(t('sections.devices.toast.urlCopied', 'URL copied'), 'success')
+      showToast(t('sections.users.toast.urlCopied'), 'success')
     }
   }
 
@@ -59,7 +60,7 @@ export function DeviceQRModal({
       <div className="p-6 min-w-[350px] max-w-md">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {t('sections.devices.modals.qrCode.title')}
+            {t('sections.users.modals.qrCode.title')}
           </h2>
           <button
             onClick={onClose}
@@ -70,12 +71,12 @@ export function DeviceQRModal({
         </div>
 
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-          {t('sections.devices.modals.qrCode.deviceName', 'Device')}:{' '}
-          <strong>{deviceName}</strong>
+          {t('sections.users.modals.qrCode.userName')}:{' '}
+          <strong>{userName}</strong>
         </p>
 
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-          {t('sections.devices.modals.qrCode.description')}
+          {t('sections.users.modals.qrCode.description')}
         </p>
 
         <div className="flex justify-center mb-4 bg-white p-4 rounded-lg">
@@ -90,12 +91,12 @@ export function DeviceQRModal({
 
         <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mb-4">
           <p className="text-sm text-yellow-800 dark:text-yellow-200">
-            {t('sections.devices.modals.qrCode.warning')}
+            {t('sections.users.modals.qrCode.warning')}
           </p>
         </div>
 
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-          {t('sections.devices.modals.qrCode.manualUrl')}
+          {t('sections.users.modals.qrCode.manualUrl')}
         </p>
 
         <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 rounded-lg p-2">
@@ -105,7 +106,7 @@ export function DeviceQRModal({
           <button
             onClick={copyUrl}
             className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
-            title={t('sections.devices.actions.copyUrl', 'Copy URL')}
+            title={t('sections.users.actions.copyUrl')}
           >
             <Copy size={16} className="text-gray-600 dark:text-gray-400" />
           </button>
@@ -117,7 +118,7 @@ export function DeviceQRModal({
             className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg
               transition-colors"
           >
-            {t('sections.devices.modals.qrCode.done')}
+            {t('sections.users.modals.qrCode.done')}
           </button>
         </div>
       </div>

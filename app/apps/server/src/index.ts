@@ -6,27 +6,30 @@ import { appOnlyAuthMiddleware, combinedAuthMiddleware } from './middleware'
 import { getOpenApiSpec, getScalarDocs } from './openapi'
 import { listenRustIPC } from './rust-ipc'
 import {
-  type CreateDeviceInput,
-  createDevice,
-  type DevicePermissions,
-  deleteDevice,
+  type CreateUserInput,
+  createUser,
   deleteSetting,
-  getAllDevices,
+  deleteUser,
+  getAllRoles,
   getAllSettings,
-  getDeviceById,
-  getDeviceByToken,
+  getAllUsers,
   getSetting,
-  regenerateDeviceToken,
+  getUserById,
+  getUserByToken,
+  type Permission,
+  regenerateUserToken,
   type SettingsTable,
-  type UpdateDeviceInput,
-  updateDevice,
-  updateDevicePermissions,
+  setUserRole,
+  type UpdateUserInput,
+  updateUser,
+  updateUserPermissions,
   upsertSetting,
 } from './service'
 import {
   checkLibreOfficeInstalled,
   convertPptToPptx,
 } from './service/conversion'
+import { getInternalIp } from './service/network'
 import {
   clearSlide,
   type DisplayTheme,
@@ -162,20 +165,18 @@ async function main() {
       }
       let _context: RequestContext | null = null
 
-      // Device authentication endpoint (public - sets cookie)
-      const deviceAuthMatch = url.pathname.match(
-        /^\/api\/auth\/device\/([^/]+)$/,
-      )
-      if (req.method === 'GET' && deviceAuthMatch?.[1]) {
-        const token = decodeURIComponent(deviceAuthMatch[1])
-        const device = await getDeviceByToken(token)
+      // User authentication endpoint (public - sets cookie)
+      const userAuthMatch = url.pathname.match(/^\/api\/auth\/user\/([^/]+)$/)
+      if (req.method === 'GET' && userAuthMatch?.[1]) {
+        const token = decodeURIComponent(userAuthMatch[1])
+        const user = await getUserByToken(token)
 
-        if (!device || !device.isActive) {
+        if (!user || !user.isActive) {
           return handleCors(
             req,
             new Response(
               JSON.stringify({
-                error: 'Invalid or inactive device token',
+                error: 'Invalid or inactive user token',
               }),
               {
                 status: 401,
@@ -185,12 +186,17 @@ async function main() {
           )
         }
 
-        // Redirect to main app with cookie set
+        // Get the internal IP to redirect to the frontend
+        const internalIp = getInternalIp()
+        const frontendPort = process.env['VITE_PORT'] ?? 8086
+        const frontendUrl = `http://${internalIp}:${frontendPort}/`
+
+        // Redirect to frontend app with cookie set
         const response = new Response(null, {
           status: 302,
           headers: {
-            Location: '/',
-            'Set-Cookie': `device_auth=${token}; HttpOnly; SameSite=Lax; Max-Age=31536000; Path=/`,
+            Location: frontendUrl,
+            'Set-Cookie': `user_auth=${token}; HttpOnly; SameSite=Lax; Max-Age=31536000; Path=/`,
           },
         })
 
@@ -203,6 +209,29 @@ async function main() {
       }
       if (url.pathname === '/api/openapi.json') {
         return handleCors(req, getOpenApiSpec())
+      }
+
+      // Server info endpoint (public) - returns internal IP and ports
+      if (req.method === 'GET' && url.pathname === '/api/server-info') {
+        const internalIp = getInternalIp()
+        const serverPort = process.env['PORT'] ?? 3000
+        const frontendPort = process.env['VITE_PORT'] ?? 8086
+
+        return handleCors(
+          req,
+          new Response(
+            JSON.stringify({
+              data: {
+                internalIp,
+                serverPort: Number(serverPort),
+                frontendPort: Number(frontendPort),
+              },
+            }),
+            {
+              headers: { 'Content-Type': 'application/json' },
+            },
+          ),
+        )
       }
 
       // All other /api/* routes require authentication in production
@@ -358,33 +387,47 @@ async function main() {
         return null
       }
 
-      // GET /api/devices - List all devices
-      if (req.method === 'GET' && url.pathname === '/api/devices') {
+      // GET /api/roles - List all roles
+      if (req.method === 'GET' && url.pathname === '/api/roles') {
         const authError = await requireAppAuth()
         if (authError) return authError
 
-        const devices = getAllDevices()
+        const roles = getAllRoles()
         return handleCors(
           req,
-          new Response(JSON.stringify({ data: devices }), {
+          new Response(JSON.stringify({ data: roles }), {
             headers: { 'Content-Type': 'application/json' },
           }),
         )
       }
 
-      // GET /api/devices/:id - Get device by ID
-      const getDeviceMatch = url.pathname.match(/^\/api\/devices\/(\d+)$/)
-      if (req.method === 'GET' && getDeviceMatch?.[1]) {
+      // GET /api/users - List all users
+      if (req.method === 'GET' && url.pathname === '/api/users') {
         const authError = await requireAppAuth()
         if (authError) return authError
 
-        const id = parseInt(getDeviceMatch[1], 10)
-        const device = getDeviceById(id)
+        const users = getAllUsers()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: users }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
 
-        if (!device) {
+      // GET /api/users/:id - Get user by ID
+      const getUserMatch = url.pathname.match(/^\/api\/users\/(\d+)$/)
+      if (req.method === 'GET' && getUserMatch?.[1]) {
+        const authError = await requireAppAuth()
+        if (authError) return authError
+
+        const id = parseInt(getUserMatch[1], 10)
+        const user = getUserById(id)
+
+        if (!user) {
           return handleCors(
             req,
-            new Response(JSON.stringify({ error: 'Device not found' }), {
+            new Response(JSON.stringify({ error: 'User not found' }), {
               status: 404,
               headers: { 'Content-Type': 'application/json' },
             }),
@@ -393,45 +436,39 @@ async function main() {
 
         return handleCors(
           req,
-          new Response(JSON.stringify({ data: device }), {
+          new Response(JSON.stringify({ data: user }), {
             headers: { 'Content-Type': 'application/json' },
           }),
         )
       }
 
-      // POST /api/devices - Create new device
-      if (req.method === 'POST' && url.pathname === '/api/devices') {
+      // POST /api/users - Create new user
+      if (req.method === 'POST' && url.pathname === '/api/users') {
         const authError = await requireAppAuth()
         if (authError) return authError
 
         try {
-          const body = (await req.json()) as CreateDeviceInput
+          const body = (await req.json()) as CreateUserInput
 
-          if (!body.name || !body.permissions) {
+          if (!body.name) {
             return handleCors(
               req,
-              new Response(
-                JSON.stringify({ error: 'Missing name or permissions' }),
-                {
-                  status: 400,
-                  headers: { 'Content-Type': 'application/json' },
-                },
-              ),
+              new Response(JSON.stringify({ error: 'Missing name' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
             )
           }
 
-          const result = await createDevice(body)
+          const result = await createUser(body)
 
           if (!result) {
             return handleCors(
               req,
-              new Response(
-                JSON.stringify({ error: 'Failed to create device' }),
-                {
-                  status: 500,
-                  headers: { 'Content-Type': 'application/json' },
-                },
-              ),
+              new Response(JSON.stringify({ error: 'Failed to create user' }), {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              }),
             )
           }
 
@@ -444,7 +481,7 @@ async function main() {
           )
         } catch (error) {
           // biome-ignore lint/suspicious/noConsole: debugging
-          console.error('Create device error:', error)
+          console.error('Create user error:', error)
           return handleCors(
             req,
             new Response(JSON.stringify({ error: String(error) }), {
@@ -455,17 +492,17 @@ async function main() {
         }
       }
 
-      // PUT /api/devices/:id - Update device
-      const updateDeviceMatch = url.pathname.match(/^\/api\/devices\/(\d+)$/)
-      if (req.method === 'PUT' && updateDeviceMatch?.[1]) {
+      // PUT /api/users/:id - Update user
+      const updateUserMatch = url.pathname.match(/^\/api\/users\/(\d+)$/)
+      if (req.method === 'PUT' && updateUserMatch?.[1]) {
         const authError = await requireAppAuth()
         if (authError) return authError
 
-        const id = parseInt(updateDeviceMatch[1], 10)
+        const id = parseInt(updateUserMatch[1], 10)
 
         try {
-          const body = (await req.json()) as UpdateDeviceInput
-          const result = updateDevice(id, body)
+          const body = (await req.json()) as UpdateUserInput
+          const result = updateUser(id, body)
 
           if (!result.success) {
             return handleCors(
@@ -477,10 +514,10 @@ async function main() {
             )
           }
 
-          const updatedDevice = getDeviceById(id)
+          const updatedUser = getUserById(id)
           return handleCors(
             req,
-            new Response(JSON.stringify({ data: updatedDevice }), {
+            new Response(JSON.stringify({ data: updatedUser }), {
               headers: { 'Content-Type': 'application/json' },
             }),
           )
@@ -495,14 +532,14 @@ async function main() {
         }
       }
 
-      // DELETE /api/devices/:id - Delete device
-      const deleteDeviceMatch = url.pathname.match(/^\/api\/devices\/(\d+)$/)
-      if (req.method === 'DELETE' && deleteDeviceMatch?.[1]) {
+      // DELETE /api/users/:id - Delete user
+      const deleteUserMatch = url.pathname.match(/^\/api\/users\/(\d+)$/)
+      if (req.method === 'DELETE' && deleteUserMatch?.[1]) {
         const authError = await requireAppAuth()
         if (authError) return authError
 
-        const id = parseInt(deleteDeviceMatch[1], 10)
-        const result = deleteDevice(id)
+        const id = parseInt(deleteUserMatch[1], 10)
+        const result = deleteUser(id)
 
         if (!result.success) {
           return handleCors(
@@ -522,9 +559,9 @@ async function main() {
         )
       }
 
-      // PUT /api/devices/:id/permissions - Update device permissions
+      // PUT /api/users/:id/permissions - Update user permissions
       const updatePermissionsMatch = url.pathname.match(
-        /^\/api\/devices\/(\d+)\/permissions$/,
+        /^\/api\/users\/(\d+)\/permissions$/,
       )
       if (req.method === 'PUT' && updatePermissionsMatch?.[1]) {
         const authError = await requireAppAuth()
@@ -533,7 +570,7 @@ async function main() {
         const id = parseInt(updatePermissionsMatch[1], 10)
 
         try {
-          const body = (await req.json()) as { permissions: DevicePermissions }
+          const body = (await req.json()) as { permissions: Permission[] }
 
           if (!body.permissions) {
             return handleCors(
@@ -545,7 +582,7 @@ async function main() {
             )
           }
 
-          const result = updateDevicePermissions(id, body.permissions)
+          const result = updateUserPermissions(id, body.permissions)
 
           if (!result.success) {
             return handleCors(
@@ -557,10 +594,10 @@ async function main() {
             )
           }
 
-          const updatedDevice = getDeviceById(id)
+          const updatedUser = getUserById(id)
           return handleCors(
             req,
-            new Response(JSON.stringify({ data: updatedDevice }), {
+            new Response(JSON.stringify({ data: updatedUser }), {
               headers: { 'Content-Type': 'application/json' },
             }),
           )
@@ -575,16 +612,64 @@ async function main() {
         }
       }
 
-      // POST /api/devices/:id/regenerate-token - Regenerate device token
+      // PUT /api/users/:id/role - Set user role
+      const setRoleMatch = url.pathname.match(/^\/api\/users\/(\d+)\/role$/)
+      if (req.method === 'PUT' && setRoleMatch?.[1]) {
+        const authError = await requireAppAuth()
+        if (authError) return authError
+
+        const id = parseInt(setRoleMatch[1], 10)
+
+        try {
+          const body = (await req.json()) as {
+            roleId: number | null
+            clearCustomPermissions?: boolean
+          }
+
+          const result = setUserRole(
+            id,
+            body.roleId,
+            body.clearCustomPermissions ?? false,
+          )
+
+          if (!result.success) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: result.error }), {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const updatedUser = getUserById(id)
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: updatedUser }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // POST /api/users/:id/regenerate-token - Regenerate user token
       const regenerateTokenMatch = url.pathname.match(
-        /^\/api\/devices\/(\d+)\/regenerate-token$/,
+        /^\/api\/users\/(\d+)\/regenerate-token$/,
       )
       if (req.method === 'POST' && regenerateTokenMatch?.[1]) {
         const authError = await requireAppAuth()
         if (authError) return authError
 
         const id = parseInt(regenerateTokenMatch[1], 10)
-        const result = await regenerateDeviceToken(id)
+        const result = await regenerateUserToken(id)
 
         if (!result) {
           return handleCors(
@@ -599,17 +684,69 @@ async function main() {
           )
         }
 
-        const device = getDeviceById(id)
+        const user = getUserById(id)
         return handleCors(
           req,
           new Response(
             JSON.stringify({
-              data: { device, token: result.token },
+              data: { user, token: result.token },
             }),
             {
               headers: { 'Content-Type': 'application/json' },
             },
           ),
+        )
+      }
+
+      // GET /api/auth/me - Get current user's info and permissions
+      if (req.method === 'GET' && url.pathname === '/api/auth/me') {
+        const authResult = await combinedAuthMiddleware(req)
+        if (authResult.response) return handleCors(req, authResult.response)
+
+        if (authResult.context?.authType === 'app') {
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({
+                data: {
+                  authType: 'app',
+                  isAdmin: true,
+                  permissions: [],
+                },
+              }),
+              {
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        }
+
+        if (authResult.context?.userId) {
+          const user = getUserById(authResult.context.userId)
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({
+                data: {
+                  authType: 'user',
+                  user,
+                  isAdmin: false,
+                  permissions: authResult.context.permissions || [],
+                },
+              }),
+              {
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        }
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ error: 'Unauthorized' }), {
+            status: 401,
+            headers: { 'Content-Type': 'application/json' },
+          }),
         )
       }
 

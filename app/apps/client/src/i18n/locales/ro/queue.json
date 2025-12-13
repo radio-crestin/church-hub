@@ -59,5 +59,9 @@
     "insert": "Inserează",
     "save": "Salvează",
     "errorEmpty": "Te rugăm să adaugi conținut slide-ului"
+  },
+  "importSchedule": {
+    "title": "Importă Program",
+    "description": "Adaugă toate elementele dintr-un program salvat în coadă"
   }
 }

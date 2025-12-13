@@ -4,6 +4,7 @@ import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { useAutoOpenDisplays } from '~/features/presentation/hooks'
 import { PptxDropZoneProvider } from '~/features/song-import'
 import { I18nProvider } from '~/provider/i18n-provider'
+import { PermissionsProvider } from '~/provider/permissions-provider'
 import { QueryClientProvider } from '~/provider/QueryClientProvider'
 import { ThemeProvider } from '~/provider/theme-provider'
 import { AppLayout } from '~/ui/layout/app-layout'
@@ -31,17 +32,21 @@ function RootComponent() {
   return (
     <ThemeProvider>
       <QueryClientProvider>
-        <I18nProvider>
-          <ToastProvider>
-            <PptxDropZoneProvider>
-              <AutoOpenDisplays />
-              <AppLayout>
-                <Outlet />
-              </AppLayout>
-            </PptxDropZoneProvider>
-            {isDev ? <TanStackRouterDevtools position="bottom-right" /> : null}
-          </ToastProvider>
-        </I18nProvider>
+        <PermissionsProvider>
+          <I18nProvider>
+            <ToastProvider>
+              <PptxDropZoneProvider>
+                <AutoOpenDisplays />
+                <AppLayout>
+                  <Outlet />
+                </AppLayout>
+              </PptxDropZoneProvider>
+              {isDev ? (
+                <TanStackRouterDevtools position="bottom-right" />
+              ) : null}
+            </ToastProvider>
+          </I18nProvider>
+        </PermissionsProvider>
       </QueryClientProvider>
     </ThemeProvider>
   )
