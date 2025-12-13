@@ -50,39 +50,63 @@ CREATE TABLE IF NOT EXISTS cache_metadata (
 -- Index for faster lookups by key
 CREATE INDEX IF NOT EXISTS idx_cache_metadata_key ON cache_metadata(key);
 
--- Authorized Devices Table
--- Stores device information and their authentication tokens
-CREATE TABLE IF NOT EXISTS devices (
+-- Roles Table
+-- Stores role templates (system and custom roles)
+CREATE TABLE IF NOT EXISTS roles (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL UNIQUE,
+  is_system INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch())
+);
+
+CREATE INDEX IF NOT EXISTS idx_roles_name ON roles(name);
+
+-- Role Permissions Table
+-- Stores permissions assigned to each role
+CREATE TABLE IF NOT EXISTS role_permissions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  role_id INTEGER NOT NULL,
+  permission TEXT NOT NULL,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE,
+  UNIQUE(role_id, permission)
+);
+
+CREATE INDEX IF NOT EXISTS idx_role_permissions_role_id ON role_permissions(role_id);
+
+-- Authorized Users Table
+-- Stores user information and their authentication tokens
+CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
+  token TEXT NOT NULL,
   token_hash TEXT NOT NULL UNIQUE,
   is_active INTEGER NOT NULL DEFAULT 1,
+  role_id INTEGER REFERENCES roles(id) ON DELETE SET NULL,
   last_used_at INTEGER,
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
   updated_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
 
--- Indexes for device lookups
-CREATE INDEX IF NOT EXISTS idx_devices_token_hash ON devices(token_hash);
-CREATE INDEX IF NOT EXISTS idx_devices_is_active ON devices(is_active);
+-- Indexes for user lookups
+CREATE INDEX IF NOT EXISTS idx_users_token_hash ON users(token_hash);
+CREATE INDEX IF NOT EXISTS idx_users_is_active ON users(is_active);
+CREATE INDEX IF NOT EXISTS idx_users_role_id ON users(role_id);
 
--- Device Permissions Table
--- Stores granular permissions per device per feature
-CREATE TABLE IF NOT EXISTS device_permissions (
+-- User Permissions Table
+-- Stores custom permissions per user (extends/overrides role permissions)
+CREATE TABLE IF NOT EXISTS user_permissions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  device_id INTEGER NOT NULL,
-  feature TEXT NOT NULL,
-  can_read INTEGER NOT NULL DEFAULT 0,
-  can_write INTEGER NOT NULL DEFAULT 0,
-  can_delete INTEGER NOT NULL DEFAULT 0,
+  user_id INTEGER NOT NULL,
+  permission TEXT NOT NULL,
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
-  updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
-  FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE CASCADE,
-  UNIQUE(device_id, feature)
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE(user_id, permission)
 );
 
 -- Index for permission lookups
-CREATE INDEX IF NOT EXISTS idx_device_permissions_device_id ON device_permissions(device_id);
+CREATE INDEX IF NOT EXISTS idx_user_permissions_user_id ON user_permissions(user_id);
 
 -- Schedules Table
 -- Stores presentation schedules (collections of songs and slides)
@@ -267,6 +291,119 @@ function tableExists(db: Database, tableName: string): boolean {
 }
 
 /**
+ * All permissions in the system
+ */
+const ALL_PERMISSIONS = [
+  // Songs
+  'songs.view',
+  'songs.create',
+  'songs.edit',
+  'songs.delete',
+  'songs.add_to_queue',
+  'songs.present_now',
+  // Control Room
+  'control_room.view',
+  'control_room.control',
+  // Programs
+  'programs.view',
+  'programs.create',
+  'programs.edit',
+  'programs.delete',
+  'programs.import_to_queue',
+  // Queue
+  'queue.view',
+  'queue.add',
+  'queue.remove',
+  'queue.reorder',
+  'queue.clear',
+  // Settings
+  'settings.view',
+  'settings.edit',
+  // Displays
+  'displays.view',
+  'displays.create',
+  'displays.edit',
+  'displays.delete',
+  // Users
+  'users.view',
+  'users.create',
+  'users.edit',
+  'users.delete',
+]
+
+/**
+ * Role templates with their default permissions
+ */
+const ROLE_TEMPLATES: Record<string, string[]> = {
+  admin: ALL_PERMISSIONS,
+  presenter: [
+    'control_room.view',
+    'control_room.control',
+    'songs.view',
+    'songs.add_to_queue',
+    'songs.present_now',
+    'queue.view',
+    'queue.add',
+    'queue.remove',
+    'queue.reorder',
+    'programs.view',
+    'programs.import_to_queue',
+    'displays.view',
+  ],
+  viewer: [
+    'control_room.view',
+    'songs.view',
+    'programs.view',
+    'queue.view',
+    'displays.view',
+  ],
+  queue_manager: [
+    'queue.view',
+    'queue.add',
+    'queue.remove',
+    'queue.reorder',
+    'queue.clear',
+    'songs.view',
+    'songs.add_to_queue',
+    'programs.view',
+    'programs.import_to_queue',
+    'control_room.view',
+  ],
+}
+
+/**
+ * Initialize system roles with their default permissions
+ */
+function initializeSystemRoles(db: Database): void {
+  log('debug', 'Initializing system roles...')
+
+  for (const [roleName, permissions] of Object.entries(ROLE_TEMPLATES)) {
+    // Insert role if not exists
+    db.exec(`
+      INSERT OR IGNORE INTO roles (name, is_system)
+      VALUES ('${roleName}', 1)
+    `)
+
+    // Get role id
+    const role = db
+      .query(`SELECT id FROM roles WHERE name = ?`)
+      .get(roleName) as { id: number } | null
+
+    if (role) {
+      // Insert permissions for this role
+      for (const permission of permissions) {
+        db.exec(`
+          INSERT OR IGNORE INTO role_permissions (role_id, permission)
+          VALUES (${role.id}, '${permission}')
+        `)
+      }
+    }
+  }
+
+  log('debug', 'System roles initialized')
+}
+
+/**
  * Runs database migrations
  * Executes the embedded schema SQL to create tables and indexes
  */
@@ -305,44 +442,252 @@ export function runMigrations(db: Database): void {
       log('info', 'Old songs table dropped, will be recreated with new schema')
     }
 
-    // Check if we have old devices schema that needs migration
-    if (
-      tableExists(db, 'devices') &&
-      columnExists(db, 'devices', 'device_type')
-    ) {
-      log('info', 'Migrating old devices schema - dropping old tables...')
+    // Migration: devices to users - migrate data before dropping
+    if (tableExists(db, 'devices')) {
+      log('info', 'Migrating devices to users...')
 
-      // Drop old tables completely and recreate with new schema
+      // First create the new tables if they don't exist
+      db.exec(`
+        -- Create roles table first
+        CREATE TABLE IF NOT EXISTS roles (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL UNIQUE,
+          is_system INTEGER NOT NULL DEFAULT 0,
+          created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+          updated_at INTEGER NOT NULL DEFAULT (unixepoch())
+        );
+
+        -- Create role_permissions table
+        CREATE TABLE IF NOT EXISTS role_permissions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          role_id INTEGER NOT NULL,
+          permission TEXT NOT NULL,
+          created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+          FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE,
+          UNIQUE(role_id, permission)
+        );
+
+        -- Create users table
+        CREATE TABLE IF NOT EXISTS users (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          token TEXT NOT NULL,
+          token_hash TEXT NOT NULL UNIQUE,
+          is_active INTEGER NOT NULL DEFAULT 1,
+          role_id INTEGER REFERENCES roles(id) ON DELETE SET NULL,
+          last_used_at INTEGER,
+          created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+          updated_at INTEGER NOT NULL DEFAULT (unixepoch())
+        );
+
+        -- Create user_permissions table
+        CREATE TABLE IF NOT EXISTS user_permissions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          permission TEXT NOT NULL,
+          created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+          UNIQUE(user_id, permission)
+        );
+      `)
+
+      // Check if devices has token column (old schema) vs token_hash
+      const hasToken = columnExists(db, 'devices', 'token')
+      const tokenColumn = hasToken ? 'token' : 'token_hash'
+
+      // Migrate device data to users
+      const devices = db
+        .query(
+          `SELECT id, name, ${tokenColumn} as token_hash, is_active, last_used_at, created_at, updated_at FROM devices`,
+        )
+        .all() as Array<{
+        id: number
+        name: string
+        token_hash: string
+        is_active: number
+        last_used_at: number | null
+        created_at: number
+        updated_at: number
+      }>
+
+      for (const device of devices) {
+        // Insert user
+        db.exec(`
+          INSERT OR IGNORE INTO users (name, token_hash, is_active, last_used_at, created_at, updated_at)
+          VALUES ('${device.name.replace(/'/g, "''")}', '${device.token_hash}', ${device.is_active}, ${device.last_used_at ?? 'NULL'}, ${device.created_at}, ${device.updated_at})
+        `)
+
+        // Get the new user id
+        const user = db
+          .query(`SELECT id FROM users WHERE token_hash = ?`)
+          .get(device.token_hash) as { id: number } | null
+
+        if (user && tableExists(db, 'device_permissions')) {
+          // Migrate permissions - convert old feature-based to new action-specific
+          const oldPerms = db
+            .query(
+              `SELECT feature, can_read, can_write, can_delete FROM device_permissions WHERE device_id = ?`,
+            )
+            .all(device.id) as Array<{
+            feature: string
+            can_read: number
+            can_write: number
+            can_delete: number
+          }>
+
+          for (const perm of oldPerms) {
+            // Map old feature+action to new permission strings
+            const permMappings: Array<{
+              old: { feature: string; action: string }
+              new: string
+            }> = [
+              // Songs
+              {
+                old: { feature: 'songs', action: 'read' },
+                new: 'songs.view',
+              },
+              {
+                old: { feature: 'songs', action: 'write' },
+                new: 'songs.create',
+              },
+              {
+                old: { feature: 'songs', action: 'write' },
+                new: 'songs.edit',
+              },
+              {
+                old: { feature: 'songs', action: 'write' },
+                new: 'songs.add_to_queue',
+              },
+              {
+                old: { feature: 'songs', action: 'write' },
+                new: 'songs.present_now',
+              },
+              {
+                old: { feature: 'songs', action: 'delete' },
+                new: 'songs.delete',
+              },
+              // Schedules -> programs
+              {
+                old: { feature: 'schedules', action: 'read' },
+                new: 'programs.view',
+              },
+              {
+                old: { feature: 'schedules', action: 'write' },
+                new: 'programs.create',
+              },
+              {
+                old: { feature: 'schedules', action: 'write' },
+                new: 'programs.edit',
+              },
+              {
+                old: { feature: 'schedules', action: 'write' },
+                new: 'programs.import_to_queue',
+              },
+              {
+                old: { feature: 'schedules', action: 'delete' },
+                new: 'programs.delete',
+              },
+              // Presentation -> control_room + queue
+              {
+                old: { feature: 'presentation', action: 'read' },
+                new: 'control_room.view',
+              },
+              {
+                old: { feature: 'presentation', action: 'read' },
+                new: 'queue.view',
+              },
+              {
+                old: { feature: 'presentation', action: 'write' },
+                new: 'control_room.control',
+              },
+              {
+                old: { feature: 'presentation', action: 'write' },
+                new: 'queue.add',
+              },
+              {
+                old: { feature: 'presentation', action: 'write' },
+                new: 'queue.remove',
+              },
+              {
+                old: { feature: 'presentation', action: 'write' },
+                new: 'queue.reorder',
+              },
+              {
+                old: { feature: 'presentation', action: 'delete' },
+                new: 'queue.clear',
+              },
+              // Settings
+              {
+                old: { feature: 'settings', action: 'read' },
+                new: 'settings.view',
+              },
+              {
+                old: { feature: 'settings', action: 'write' },
+                new: 'settings.edit',
+              },
+              {
+                old: { feature: 'settings', action: 'read' },
+                new: 'displays.view',
+              },
+              {
+                old: { feature: 'settings', action: 'write' },
+                new: 'displays.create',
+              },
+              {
+                old: { feature: 'settings', action: 'write' },
+                new: 'displays.edit',
+              },
+              {
+                old: { feature: 'settings', action: 'delete' },
+                new: 'displays.delete',
+              },
+              {
+                old: { feature: 'settings', action: 'read' },
+                new: 'users.view',
+              },
+              {
+                old: { feature: 'settings', action: 'write' },
+                new: 'users.create',
+              },
+              {
+                old: { feature: 'settings', action: 'write' },
+                new: 'users.edit',
+              },
+              {
+                old: { feature: 'settings', action: 'delete' },
+                new: 'users.delete',
+              },
+            ]
+
+            for (const mapping of permMappings) {
+              if (mapping.old.feature === perm.feature) {
+                const hasAction =
+                  (mapping.old.action === 'read' && perm.can_read) ||
+                  (mapping.old.action === 'write' && perm.can_write) ||
+                  (mapping.old.action === 'delete' && perm.can_delete)
+
+                if (hasAction) {
+                  db.exec(`
+                    INSERT OR IGNORE INTO user_permissions (user_id, permission)
+                    VALUES (${user.id}, '${mapping.new}')
+                  `)
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // Drop old tables
       db.exec(`
         DROP TABLE IF EXISTS device_permissions;
         DROP TABLE IF EXISTS devices;
+        DROP INDEX IF EXISTS idx_devices_token_hash;
+        DROP INDEX IF EXISTS idx_devices_is_active;
+        DROP INDEX IF EXISTS idx_device_permissions_device_id;
       `)
 
-      log(
-        'info',
-        'Old devices tables dropped, will be recreated with new schema',
-      )
-    } else if (
-      tableExists(db, 'devices') &&
-      columnExists(db, 'devices', 'token')
-    ) {
-      log('info', 'Migrating old devices schema...')
-
-      // Drop old indexes
-      db.exec(`
-        DROP INDEX IF EXISTS idx_devices_token;
-        DROP INDEX IF EXISTS idx_devices_active;
-      `)
-
-      // Rename token to token_hash
-      db.exec(`ALTER TABLE devices RENAME COLUMN token TO token_hash`)
-
-      // Rename last_seen to last_used_at if it exists
-      if (columnExists(db, 'devices', 'last_seen')) {
-        db.exec(`ALTER TABLE devices RENAME COLUMN last_seen TO last_used_at`)
-      }
-
-      log('info', 'Old devices schema migrated successfully')
+      log('info', 'Devices migrated to users successfully')
     }
 
     // Migration: Drop and recreate presentation_queue if it has incomplete schema
@@ -434,6 +779,9 @@ export function runMigrations(db: Database): void {
 
     // Execute embedded schema (exec for multiple statements)
     db.exec(SCHEMA_SQL)
+
+    // Initialize system roles with default permissions
+    initializeSystemRoles(db)
 
     // Migration: Add open_mode column to displays table if it doesn't exist
     if (
@@ -553,6 +901,14 @@ export function runMigrations(db: Database): void {
       db.exec(
         `ALTER TABLE song_categories ADD COLUMN priority INTEGER NOT NULL DEFAULT 1`,
       )
+    }
+
+    // Migration: Add token column to users table to store plaintext token for QR code display
+    if (tableExists(db, 'users') && !columnExists(db, 'users', 'token')) {
+      log('info', 'Adding token column to users table')
+      // For existing users without a token, we need to regenerate tokens
+      // This is a breaking change - existing tokens will need to be regenerated
+      db.exec(`ALTER TABLE users ADD COLUMN token TEXT DEFAULT ''`)
     }
 
     log('info', 'Migrations completed successfully')

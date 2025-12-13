@@ -1,6 +1,6 @@
 import type { Setting, SettingsTable, UpsertSettingInput } from './types'
 import { getDatabase } from '../../db'
-import type { OperationResult } from '../devices'
+import type { OperationResult } from '../users'
 
 const DEBUG = process.env.DEBUG === 'true'
 

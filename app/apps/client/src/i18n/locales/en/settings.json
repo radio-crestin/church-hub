@@ -26,32 +26,67 @@
         "dark": "Dark"
       }
     },
-    "devices": {
-      "title": "Authorized Devices",
-      "description": "Manage devices that can access your Church Hub",
-      "addDevice": "Add Device",
-      "noDevices": "No devices configured",
-      "noDevicesDescription": "Add a device to allow external access to your Church Hub",
-      "deviceName": "Device Name",
-      "deviceNamePlaceholder": "e.g., Living Room TV",
-      "permissions": "Permissions",
+    "users": {
+      "title": "Authorized Users",
+      "description": "Manage users that can access your Church Hub",
+      "addUser": "Add User",
+      "noUsers": "No users configured",
+      "noUsersDescription": "Add a user to allow external access to your Church Hub",
+      "userName": "User Name",
+      "userNamePlaceholder": "e.g., John's Tablet",
+      "permissions": "permissions",
+      "permissionsSelected": "permissions selected",
       "status": "Status",
       "active": "Active",
       "inactive": "Inactive",
       "lastUsed": "Last used",
       "never": "Never",
       "createdAt": "Created",
-      "features": {
-        "title": "Feature",
-        "songs": "Songs",
-        "schedules": "Schedules",
-        "presentation": "Presentation",
-        "settings": "Settings"
+      "roleTemplate": "Role Template",
+      "roles": {
+        "admin": "Administrator",
+        "presenter": "Presenter",
+        "viewer": "Viewer",
+        "queue_manager": "Queue Manager"
       },
-      "permissionLevels": {
-        "read": "Read",
-        "write": "Write",
-        "delete": "Delete"
+      "groups": {
+        "songs": "Songs",
+        "control_room": "Control Room",
+        "programs": "Programs",
+        "queue": "Queue",
+        "settings": "Settings",
+        "displays": "Displays",
+        "users": "User Management"
+      },
+      "permissionLabels": {
+        "songs.view": "View songs",
+        "songs.create": "Create songs",
+        "songs.edit": "Edit songs",
+        "songs.delete": "Delete songs",
+        "songs.add_to_queue": "Add songs to queue",
+        "songs.present_now": "Present songs immediately",
+        "control_room.view": "View control room",
+        "control_room.control": "Control presentation",
+        "programs.view": "View programs",
+        "programs.create": "Create programs",
+        "programs.edit": "Edit programs",
+        "programs.delete": "Delete programs",
+        "programs.import_to_queue": "Import programs to queue",
+        "queue.view": "View queue",
+        "queue.add": "Add items to queue",
+        "queue.remove": "Remove items from queue",
+        "queue.reorder": "Reorder queue items",
+        "queue.clear": "Clear queue",
+        "settings.view": "View settings",
+        "settings.edit": "Edit settings",
+        "displays.view": "View displays",
+        "displays.create": "Create displays",
+        "displays.edit": "Edit displays",
+        "displays.delete": "Delete displays",
+        "users.view": "View users",
+        "users.create": "Create users",
+        "users.edit": "Edit users",
+        "users.delete": "Delete users"
       },
       "actions": {
         "edit": "Edit",
@@ -63,23 +98,23 @@
         "copyUrl": "Copy URL"
       },
       "modals": {
+        "cancel": "Cancel",
         "create": {
-          "title": "Add New Device",
-          "submit": "Create Device"
+          "title": "Add New User",
+          "submit": "Create User"
         },
         "edit": {
-          "title": "Edit Device",
+          "title": "Edit User",
           "submit": "Save Changes"
         },
         "delete": {
-          "title": "Delete Device",
+          "title": "Delete User",
           "message": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
-          "confirm": "Delete",
-          "cancel": "Cancel"
+          "confirm": "Delete"
         },
         "qrCode": {
           "title": "Scan QR Code",
-          "deviceName": "Device",
+          "userName": "User",
           "description": "Scan this QR code with the device you want to authorize",
           "warning": "This token will only be shown once. Save it if needed.",
           "manualUrl": "Or visit this URL manually:",
@@ -87,15 +122,14 @@
         },
         "regenerate": {
           "title": "Regenerate Token",
-          "message": "This will invalidate the current token for \"{{name}}\". The device will need to be re-authenticated.",
-          "confirm": "Regenerate",
-          "cancel": "Cancel"
+          "message": "This will invalidate the current token for \"{{name}}\". The user will need to be re-authenticated.",
+          "confirm": "Regenerate"
         }
       },
       "toast": {
-        "created": "Device created successfully",
-        "updated": "Device updated successfully",
-        "deleted": "Device deleted successfully",
+        "created": "User created successfully",
+        "updated": "User updated successfully",
+        "deleted": "User deleted successfully",
         "tokenRegenerated": "Token regenerated successfully",
         "urlCopied": "URL copied to clipboard",
         "error": "An error occurred"

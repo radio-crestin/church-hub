@@ -1,2 +1,2 @@
-export * from './devices'
 export * from './settings'
+export * from './users'

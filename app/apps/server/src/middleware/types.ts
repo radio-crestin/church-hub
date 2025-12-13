@@ -1,17 +1,17 @@
-import type { DevicePermissions } from '../service/devices'
+import type { Permission } from '../service/users'
 
 /**
  * Authentication type
  */
-export type AuthType = 'app' | 'device'
+export type AuthType = 'app' | 'user'
 
 /**
  * Request context after authentication
  */
 export interface RequestContext {
   authType: AuthType
-  deviceId?: number
-  permissions?: DevicePermissions
+  userId?: number
+  permissions?: Permission[]
 }
 
 /**

@@ -57,5 +57,9 @@
     "insert": "Insert",
     "save": "Save",
     "errorEmpty": "Please add content to the slide"
+  },
+  "importSchedule": {
+    "title": "Import Schedule",
+    "description": "Add all items from a saved schedule to the queue"
   }
 }
