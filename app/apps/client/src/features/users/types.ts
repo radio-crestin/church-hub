@@ -231,12 +231,3 @@ export interface CurrentUser {
   permissions: Permission[]
   isApp: boolean
 }
-
-/**
- * Server info from /api/server-info
- */
-export interface ServerInfo {
-  internalIp: string
-  serverPort: number
-  frontendPort: number
-}

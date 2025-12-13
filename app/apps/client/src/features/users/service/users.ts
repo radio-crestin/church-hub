@@ -1,3 +1,4 @@
+import { getApiUrl } from '~/config'
 import { fetcher } from '../../../utils/fetcher'
 import type {
   CreateUserInput,
@@ -5,7 +6,6 @@ import type {
   CurrentUser,
   Permission,
   RoleWithPermissions,
-  ServerInfo,
   UpdateUserInput,
   UserWithPermissions,
 } from '../types'
@@ -153,22 +153,9 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
 }
 
 /**
- * Fetches server info (internal IP and ports)
- */
-export async function getServerInfo(): Promise<ServerInfo> {
-  const response = await fetcher<ApiResponse<ServerInfo>>('/api/server-info')
-  return response.data
-}
-
-/**
  * Generates the authentication URL for a user
- * Uses internal IP for QR code scanning from other devices
+ * Uses the same hostname the client used to access the app
  */
-export function getUserAuthUrl(
-  token: string,
-  serverInfo: ServerInfo | null,
-): string {
-  const ip = serverInfo?.internalIp ?? '127.0.0.1'
-  const port = serverInfo?.serverPort ?? 3000
-  return `http://${ip}:${port}/api/auth/user/${encodeURIComponent(token)}`
+export function getUserAuthUrl(token: string): string {
+  return `${getApiUrl()}/api/auth/user/${encodeURIComponent(token)}`
 }

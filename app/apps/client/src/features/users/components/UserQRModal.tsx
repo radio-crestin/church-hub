@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useToast } from '../../../ui/toast'
-import { useQRCode, useServerInfo } from '../hooks'
+import { useQRCode } from '../hooks'
 import { getUserAuthUrl } from '../service'
 
 interface UserQRModalProps {
@@ -22,9 +22,8 @@ export function UserQRModal({
   const dialogRef = useRef<HTMLDialogElement>(null)
   const { t } = useTranslation('settings')
   const { showToast } = useToast()
-  const { data: serverInfo } = useServerInfo()
 
-  const authUrl = isOpen ? getUserAuthUrl(token, serverInfo ?? null) : null
+  const authUrl = isOpen ? getUserAuthUrl(token) : null
   const { qrDataUrl, isLoading } = useQRCode(authUrl)
 
   useEffect(() => {
