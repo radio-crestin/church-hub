@@ -31,13 +31,9 @@ export function isTauri(): boolean {
 
 /**
  * Gets the frontend base URL for display windows
+ * Uses the same origin the client accessed from
  */
 function getFrontendUrl(): string {
-  // In development, use the dev server URL
-  if (import.meta.env.DEV) {
-    return 'http://localhost:8086'
-  }
-  // In production Tauri, use the current origin
   return window.location.origin
 }
 
