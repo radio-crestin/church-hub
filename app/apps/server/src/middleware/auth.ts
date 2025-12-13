@@ -1,6 +1,6 @@
 import type { AuthResult } from './types'
 import { verifyAuthToken } from '../crypto'
-import { getDeviceByToken, updateDeviceLastUsed } from '../service/devices'
+import { getUserByToken, updateUserLastUsed } from '../service/users'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -11,7 +11,7 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
 /**
  * Parses cookies from the Cookie header
  */
-function parseCookies(cookieHeader: string): Record<string, string> {
+export function parseCookies(cookieHeader: string): Record<string, string> {
   const cookies: Record<string, string> = {}
   if (!cookieHeader) return cookies
 
@@ -27,7 +27,7 @@ function parseCookies(cookieHeader: string): Record<string, string> {
 
 /**
  * Combined authentication middleware
- * Supports both Bearer token (app auth) and cookie (device auth)
+ * Supports both Bearer token (app auth) and cookie (user auth)
  */
 export async function combinedAuthMiddleware(
   req: Request,
@@ -47,26 +47,26 @@ export async function combinedAuthMiddleware(
     log('debug', 'Invalid Bearer token')
   }
 
-  // 2. Check device cookie
+  // 2. Check user cookie
   const cookieHeader = req.headers.get('Cookie') || ''
   const cookies = parseCookies(cookieHeader)
-  const deviceToken = cookies['device_auth']
+  const userToken = cookies['user_auth']
 
-  if (deviceToken) {
-    const device = await getDeviceByToken(deviceToken)
-    if (device && device.isActive) {
-      log('debug', `Authenticated via cookie (device: ${device.name})`)
-      updateDeviceLastUsed(device.id)
+  if (userToken) {
+    const user = await getUserByToken(userToken)
+    if (user && user.isActive) {
+      log('debug', `Authenticated via cookie (user: ${user.name})`)
+      updateUserLastUsed(user.id)
       return {
         response: null,
         context: {
-          authType: 'device',
-          deviceId: device.id,
-          permissions: device.permissions,
+          authType: 'user',
+          userId: user.id,
+          permissions: user.permissions,
         },
       }
     }
-    log('debug', 'Invalid or inactive device token')
+    log('debug', 'Invalid or inactive user token')
   }
 
   // 3. No valid auth

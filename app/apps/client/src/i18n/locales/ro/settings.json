@@ -26,32 +26,67 @@
         "dark": "Întunecat"
       }
     },
-    "devices": {
-      "title": "Dispozitive autorizate",
-      "description": "Administrează dispozitivele care pot accesa Church Hub",
-      "addDevice": "Adaugă dispozitiv",
-      "noDevices": "Niciun dispozitiv configurat",
-      "noDevicesDescription": "Adaugă un dispozitiv pentru a permite acces extern la Church Hub",
-      "deviceName": "Nume dispozitiv",
-      "deviceNamePlaceholder": "ex., TV Living",
-      "permissions": "Permisiuni",
+    "users": {
+      "title": "Utilizatori autorizați",
+      "description": "Administrează utilizatorii care pot accesa Church Hub",
+      "addUser": "Adaugă utilizator",
+      "noUsers": "Niciun utilizator configurat",
+      "noUsersDescription": "Adaugă un utilizator pentru a permite acces extern la Church Hub",
+      "userName": "Nume utilizator",
+      "userNamePlaceholder": "ex., Tableta lui Ion",
+      "permissions": "permisiuni",
+      "permissionsSelected": "permisiuni selectate",
       "status": "Stare",
       "active": "Activ",
       "inactive": "Inactiv",
       "lastUsed": "Ultima utilizare",
       "never": "Niciodată",
       "createdAt": "Creat la",
-      "features": {
-        "title": "Funcționalitate",
-        "songs": "Cântări",
-        "schedules": "Programe",
-        "presentation": "Prezentare",
-        "settings": "Setări"
+      "roleTemplate": "Șablon rol",
+      "roles": {
+        "admin": "Administrator",
+        "presenter": "Prezentator",
+        "viewer": "Vizualizator",
+        "queue_manager": "Manager coadă"
       },
-      "permissionLevels": {
-        "read": "Citire",
-        "write": "Scriere",
-        "delete": "Ștergere"
+      "groups": {
+        "songs": "Cântări",
+        "control_room": "Cameră de control",
+        "programs": "Programe",
+        "queue": "Coadă",
+        "settings": "Setări",
+        "displays": "Afișaje",
+        "users": "Administrare utilizatori"
+      },
+      "permissionLabels": {
+        "songs.view": "Vizualizare cântări",
+        "songs.create": "Creare cântări",
+        "songs.edit": "Editare cântări",
+        "songs.delete": "Ștergere cântări",
+        "songs.add_to_queue": "Adăugare cântări în coadă",
+        "songs.present_now": "Prezentare cântări imediat",
+        "control_room.view": "Vizualizare cameră de control",
+        "control_room.control": "Control prezentare",
+        "programs.view": "Vizualizare programe",
+        "programs.create": "Creare programe",
+        "programs.edit": "Editare programe",
+        "programs.delete": "Ștergere programe",
+        "programs.import_to_queue": "Import programe în coadă",
+        "queue.view": "Vizualizare coadă",
+        "queue.add": "Adăugare în coadă",
+        "queue.remove": "Eliminare din coadă",
+        "queue.reorder": "Reordonare coadă",
+        "queue.clear": "Golire coadă",
+        "settings.view": "Vizualizare setări",
+        "settings.edit": "Editare setări",
+        "displays.view": "Vizualizare afișaje",
+        "displays.create": "Creare afișaje",
+        "displays.edit": "Editare afișaje",
+        "displays.delete": "Ștergere afișaje",
+        "users.view": "Vizualizare utilizatori",
+        "users.create": "Creare utilizatori",
+        "users.edit": "Editare utilizatori",
+        "users.delete": "Ștergere utilizatori"
       },
       "actions": {
         "edit": "Editează",
@@ -63,23 +98,23 @@
         "copyUrl": "Copiază URL"
       },
       "modals": {
+        "cancel": "Anulează",
         "create": {
-          "title": "Adaugă dispozitiv nou",
-          "submit": "Creează dispozitiv"
+          "title": "Adaugă utilizator nou",
+          "submit": "Creează utilizator"
         },
         "edit": {
-          "title": "Editează dispozitiv",
+          "title": "Editează utilizator",
           "submit": "Salvează modificările"
         },
         "delete": {
-          "title": "Șterge dispozitiv",
+          "title": "Șterge utilizator",
           "message": "Ești sigur că vrei să ștergi \"{{name}}\"? Această acțiune nu poate fi anulată.",
-          "confirm": "Șterge",
-          "cancel": "Anulează"
+          "confirm": "Șterge"
         },
         "qrCode": {
           "title": "Scanează codul QR",
-          "deviceName": "Dispozitiv",
+          "userName": "Utilizator",
           "description": "Scanează acest cod QR cu dispozitivul pe care vrei să îl autorizezi",
           "warning": "Acest token va fi afișat o singură dată. Salvează-l dacă este necesar.",
           "manualUrl": "Sau vizitează manual acest URL:",
@@ -87,15 +122,14 @@
         },
         "regenerate": {
           "title": "Regenerează token",
-          "message": "Aceasta va invalida tokenul curent pentru \"{{name}}\". Dispozitivul va trebui re-autentificat.",
-          "confirm": "Regenerează",
-          "cancel": "Anulează"
+          "message": "Aceasta va invalida tokenul curent pentru \"{{name}}\". Utilizatorul va trebui re-autentificat.",
+          "confirm": "Regenerează"
         }
       },
       "toast": {
-        "created": "Dispozitiv creat cu succes",
-        "updated": "Dispozitiv actualizat cu succes",
-        "deleted": "Dispozitiv șters cu succes",
+        "created": "Utilizator creat cu succes",
+        "updated": "Utilizator actualizat cu succes",
+        "deleted": "Utilizator șters cu succes",
         "tokenRegenerated": "Token regenerat cu succes",
         "urlCopied": "URL copiat în clipboard",
         "error": "A apărut o eroare"
