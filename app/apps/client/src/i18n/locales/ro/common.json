@@ -9,7 +9,10 @@
     "ok": "OK"
   },
   "errors": {
-    "pageNotFound": "Pagina pe care o căutați nu există."
+    "pageNotFound": "Pagina pe care o căutați nu există.",
+    "noPermission": "Nu aveți permisiunea de a accesa această pagină.",
+    "noPermissionTitle": "Acces interzis",
+    "contactAdmin": "Vă rugăm să contactați administratorul dacă credeți că aceasta este o eroare."
   },
   "theme": {
     "system": "Sistem",
