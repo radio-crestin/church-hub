@@ -83,6 +83,7 @@ import {
   deleteSongSlide,
   getAllCategories,
   getAllSongs,
+  getAllSongsWithSlides,
   getSongWithSlides,
   type ReorderCategoriesInput,
   type ReorderSongSlidesInput,
@@ -1237,6 +1238,21 @@ async function main() {
         return handleCors(
           req,
           new Response(JSON.stringify({ data: results }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // GET /api/songs/export - Get all songs with slides for export
+      if (req.method === 'GET' && url.pathname === '/api/songs/export') {
+        const categoryIdParam = url.searchParams.get('categoryId')
+        const categoryId = categoryIdParam
+          ? parseInt(categoryIdParam, 10)
+          : null
+        const songs = getAllSongsWithSlides(categoryId)
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: songs }), {
             headers: { 'Content-Type': 'application/json' },
           }),
         )
