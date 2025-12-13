@@ -17,6 +17,8 @@ import { useTranslation } from 'react-i18next'
 
 import { SidebarHeader } from './sidebar-header'
 import { SidebarItem } from './sidebar-item'
+import type { Permission } from '../../features/users/types'
+import { usePermissions } from '../../provider/permissions-provider'
 import { useTheme } from '../../provider/theme-provider'
 
 export function Sidebar() {
@@ -25,32 +27,42 @@ export function Sidebar() {
   const { preference, setThemePreference } = useTheme()
   const location = useLocation()
   const { t } = useTranslation(['sidebar', 'common'])
+  const { hasPermission } = usePermissions()
 
   const cycleTheme = () => {
     const cycle = { system: 'light', light: 'dark', dark: 'system' } as const
     setThemePreference(cycle[preference])
   }
 
-  const menuItems = [
+  const menuItems: {
+    icon: typeof SquarePlay
+    label: string
+    to: string
+    permission: Permission
+  }[] = [
     {
       icon: SquarePlay,
       label: t('sidebar:navigation.present'),
       to: '/present',
+      permission: 'control_room.view',
     },
     {
       icon: Music,
       label: t('sidebar:navigation.songs'),
       to: '/songs',
+      permission: 'songs.view',
     },
     {
       icon: CalendarDays,
       label: t('sidebar:navigation.schedules'),
       to: '/schedules',
+      permission: 'programs.view',
     },
     {
       icon: Settings,
       label: t('sidebar:navigation.settings'),
       to: '/settings',
+      permission: 'settings.view',
     },
   ]
 
@@ -139,20 +151,22 @@ export function Sidebar() {
         </div>
 
         <nav className="flex-1 flex flex-col gap-2 p-3 overflow-y-auto">
-          {menuItems.map((item) => (
-            <SidebarItem
-              key={item.to}
-              icon={item.icon}
-              label={item.label}
-              to={item.to}
-              isCollapsed={isCollapsed}
-              isActive={
-                location.pathname === item.to ||
-                location.pathname.startsWith(`${item.to}/`)
-              }
-              className="md:flex"
-            />
-          ))}
+          {menuItems
+            .filter((item) => hasPermission(item.permission))
+            .map((item) => (
+              <SidebarItem
+                key={item.to}
+                icon={item.icon}
+                label={item.label}
+                to={item.to}
+                isCollapsed={isCollapsed}
+                isActive={
+                  location.pathname === item.to ||
+                  location.pathname.startsWith(`${item.to}/`)
+                }
+                className="md:flex"
+              />
+            ))}
         </nav>
 
         <div className="p-3 border-t border-gray-200 dark:border-gray-800 space-y-2">
