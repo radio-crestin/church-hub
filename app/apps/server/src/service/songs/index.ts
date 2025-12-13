@@ -30,6 +30,7 @@ export {
   batchImportSongs,
   deleteSong,
   getAllSongs,
+  getAllSongsWithSlides,
   getSongById,
   getSongWithSlides,
   upsertSong,

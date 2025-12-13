@@ -112,6 +112,48 @@ export function getSongWithSlides(id: number): SongWithSlides | null {
 }
 
 /**
+ * Gets all songs with their slides and categories
+ * Optionally filters by category ID
+ */
+export function getAllSongsWithSlides(
+  categoryId?: number | null,
+): SongWithSlides[] {
+  try {
+    log('debug', `Getting all songs with slides, categoryId: ${categoryId}`)
+
+    const db = getDatabase()
+
+    let query: ReturnType<typeof db.query>
+    if (categoryId !== null && categoryId !== undefined) {
+      query = db.query(
+        'SELECT * FROM songs WHERE category_id = ? ORDER BY title ASC',
+      )
+      const records = query.all(categoryId) as SongRecord[]
+      return records.map((record) => {
+        const song = toSong(record)
+        const slides = getSlidesBySongId(song.id)
+        const category = song.categoryId
+          ? getCategoryById(song.categoryId)
+          : null
+        return { ...song, slides, category }
+      })
+    }
+
+    query = db.query('SELECT * FROM songs ORDER BY title ASC')
+    const records = query.all() as SongRecord[]
+    return records.map((record) => {
+      const song = toSong(record)
+      const slides = getSlidesBySongId(song.id)
+      const category = song.categoryId ? getCategoryById(song.categoryId) : null
+      return { ...song, slides, category }
+    })
+  } catch (error) {
+    log('error', `Failed to get all songs with slides: ${error}`)
+    return []
+  }
+}
+
+/**
  * Creates or updates a song with optional slides
  */
 export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
