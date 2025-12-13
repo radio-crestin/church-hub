@@ -1,3 +1,4 @@
+import os from 'node:os'
 import process from 'node:process'
 
 import { closeDatabase, initializeDatabase, runMigrations } from './db'
@@ -145,11 +146,37 @@ async function main() {
     return res
   }
 
-  // Helper to check if IP is localhost (only the server machine gets admin access)
+  // Get all IP addresses of this server machine
+  function getServerIPs(): Set<string> {
+    const ips = new Set<string>([
+      '127.0.0.1',
+      '::1',
+      'localhost',
+      '::ffff:127.0.0.1',
+    ])
+    const interfaces = os.networkInterfaces()
+    for (const name in interfaces) {
+      const netInterface = interfaces[name]
+      if (netInterface) {
+        for (const info of netInterface) {
+          ips.add(info.address)
+          // Also add IPv4-mapped IPv6 format
+          if (info.family === 'IPv4') {
+            ips.add(`::ffff:${info.address}`)
+          }
+        }
+      }
+    }
+    return ips
+  }
+
+  // Cache server IPs (computed once at startup)
+  const serverIPs = getServerIPs()
+
+  // Helper to check if request is from the server machine itself
   function isLocalRequest(clientIP: string | null): boolean {
     if (!clientIP) return false
-    const localhostIPs = ['127.0.0.1', '::1', 'localhost', '::ffff:127.0.0.1']
-    return localhostIPs.includes(clientIP)
+    return serverIPs.has(clientIP)
   }
 
   const server = Bun.serve<WebSocketData>({
