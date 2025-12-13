@@ -9,7 +9,10 @@
     "ok": "OK"
   },
   "errors": {
-    "pageNotFound": "The page you are looking for does not exist."
+    "pageNotFound": "The page you are looking for does not exist.",
+    "noPermission": "You don't have permission to access this page.",
+    "noPermissionTitle": "Access Denied",
+    "contactAdmin": "Please contact your administrator if you believe this is an error."
   },
   "theme": {
     "system": "System",
