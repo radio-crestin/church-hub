@@ -748,6 +748,46 @@ async function main() {
         )
       }
 
+      // GET /api/auth/user/:token - Authenticate user via token URL (sets cookie and redirects)
+      const authUserMatch = url.pathname.match(/^\/api\/auth\/user\/(.+)$/)
+      if (req.method === 'GET' && authUserMatch?.[1]) {
+        const token = decodeURIComponent(authUserMatch[1])
+        const user = await getUserByToken(token)
+
+        if (!user || !user.isActive) {
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({ error: 'Invalid or inactive user token' }),
+              {
+                status: 401,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        }
+
+        // Update last used timestamp
+        updateUserLastUsed(user.id)
+
+        // Get the origin from the request to redirect back to the client
+        const origin = req.headers.get('Origin') || req.headers.get('Referer')
+        const clientUrl = origin
+          ? new URL(origin).origin
+          : 'http://localhost:8086'
+
+        // Set the user_auth cookie and redirect to the client
+        const response = new Response(null, {
+          status: 302,
+          headers: {
+            Location: clientUrl,
+            'Set-Cookie': `user_auth=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000`,
+          },
+        })
+
+        return handleCors(req, response)
+      }
+
       // GET /api/auth/me - Get current user's info and permissions
       if (req.method === 'GET' && url.pathname === '/api/auth/me') {
         // Grant admin access for local network requests
