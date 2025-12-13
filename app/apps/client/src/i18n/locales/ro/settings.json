@@ -110,6 +110,7 @@
       "categoryName": "Nume Categorie",
       "categoryNamePlaceholder": "ex., Închinare, Imnuri, Crăciun",
       "priority": "Prioritate",
+      "value": "Prioritate",
       "actions": {
         "edit": "Editează",
         "delete": "Șterge"
@@ -135,6 +136,75 @@
         "deleted": "Categorie ștearsă cu succes",
         "reordered": "Ordinea categoriilor actualizată",
         "error": "A apărut o eroare"
+      }
+    },
+    "synonyms": {
+      "title": "Sinonime Căutare",
+      "description": "Definește sinonime pentru cuvinte pentru a îmbunătăți rezultatele căutării. Când cauți un cuvânt, vor apărea și rezultatele cu sinonimele acestuia.",
+      "addSynonym": "Adaugă Sinonim",
+      "noSynonyms": "Niciun sinonim configurat",
+      "noSynonymsDescription": "Adaugă sinonime pentru a găsi cântări cu ortografii alternative",
+      "primaryTerm": "Termen Principal",
+      "primaryTermPlaceholder": "ex., cristos",
+      "synonymTerms": "Termeni Sinonimi",
+      "synonymTermsPlaceholder": "ex., hristos, christ",
+      "synonymTermsHint": "Separă sinonimele multiple cu virgulă",
+      "actions": {
+        "edit": "Editează",
+        "delete": "Șterge"
+      },
+      "modals": {
+        "create": {
+          "title": "Adaugă Sinonim Nou",
+          "submit": "Creează Sinonim"
+        },
+        "edit": {
+          "title": "Editează Sinonim",
+          "submit": "Salvează Modificările"
+        },
+        "delete": {
+          "title": "Șterge Sinonim",
+          "message": "Ești sigur că vrei să ștergi grupul de sinonime pentru \"{{primary}}\"?",
+          "confirm": "Șterge"
+        }
+      },
+      "toast": {
+        "created": "Sinonim creat cu succes",
+        "updated": "Sinonim actualizat cu succes",
+        "deleted": "Sinonim șters cu succes",
+        "error": "A apărut o eroare"
+      }
+    },
+    "importExport": {
+      "title": "Import & Export Cântări",
+      "description": "Importă cântări din fișiere sau exportă biblioteca de cântări",
+      "import": {
+        "title": "Import Cântări",
+        "description": "Importă cântări din fișiere OpenSong XML, PPTX sau ZIP",
+        "button": "Selectează Fișiere",
+        "supportedFormats": "Formate acceptate: OpenSong XML, PPTX, PPT, ZIP",
+        "noSongsTitle": "Nicio Cântare Găsită",
+        "noSongsMessage": "Nu s-au găsit cântări valide în fișierele selectate."
+      },
+      "export": {
+        "title": "Export Cântări",
+        "description": "Exportă cântările în format OpenSong XML într-o arhivă ZIP",
+        "button": "Exportă Cântări",
+        "allSongs": "Toate cântările",
+        "byCategory": "După categorie",
+        "selectCategory": "Selectează o categorie",
+        "exporting": "Se exportă...",
+        "fetching": "Se încarcă cântările...",
+        "generating": "Se generează fișierele XML...",
+        "zipping": "Se creează arhiva ZIP...",
+        "saving": "Se salvează fișierul...",
+        "processingProgress": "Se procesează {{current}} din {{total}}"
+      },
+      "toast": {
+        "importSuccess": "S-au importat cu succes {{count}} cântări",
+        "importFailed": "Importul a eșuat: {{error}}",
+        "exportSuccess": "S-au exportat cu succes {{count}} cântări",
+        "exportFailed": "Exportul a eșuat: {{error}}"
       }
     }
   }
