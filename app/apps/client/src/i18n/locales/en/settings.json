@@ -110,6 +110,7 @@
       "categoryName": "Category Name",
       "categoryNamePlaceholder": "e.g., Worship, Hymns, Christmas",
       "priority": "Priority",
+      "value": "Value",
       "actions": {
         "edit": "Edit",
         "delete": "Delete"
@@ -135,6 +136,75 @@
         "deleted": "Category deleted successfully",
         "reordered": "Category order updated",
         "error": "An error occurred"
+      }
+    },
+    "synonyms": {
+      "title": "Search Synonyms",
+      "description": "Define word synonyms to improve search results. When you search for one word, results with its synonyms will also appear.",
+      "addSynonym": "Add Synonym",
+      "noSynonyms": "No synonyms configured",
+      "noSynonymsDescription": "Add synonyms to find songs with alternative spellings",
+      "primaryTerm": "Primary Term",
+      "primaryTermPlaceholder": "e.g., cristos",
+      "synonymTerms": "Synonym Terms",
+      "synonymTermsPlaceholder": "e.g., hristos, christ",
+      "synonymTermsHint": "Separate multiple synonyms with commas",
+      "actions": {
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "modals": {
+        "create": {
+          "title": "Add New Synonym",
+          "submit": "Create Synonym"
+        },
+        "edit": {
+          "title": "Edit Synonym",
+          "submit": "Save Changes"
+        },
+        "delete": {
+          "title": "Delete Synonym",
+          "message": "Are you sure you want to delete the synonym group for \"{{primary}}\"?",
+          "confirm": "Delete"
+        }
+      },
+      "toast": {
+        "created": "Synonym created successfully",
+        "updated": "Synonym updated successfully",
+        "deleted": "Synonym deleted successfully",
+        "error": "An error occurred"
+      }
+    },
+    "importExport": {
+      "title": "Import & Export Songs",
+      "description": "Import songs from files or export your song library",
+      "import": {
+        "title": "Import Songs",
+        "description": "Import songs from OpenSong XML, PPTX, or ZIP files",
+        "button": "Select Files",
+        "supportedFormats": "Supported: OpenSong XML, PPTX, PPT, ZIP",
+        "noSongsTitle": "No Songs Found",
+        "noSongsMessage": "No valid songs were found in the selected files."
+      },
+      "export": {
+        "title": "Export Songs",
+        "description": "Export songs to OpenSong XML format in a ZIP archive",
+        "button": "Export Songs",
+        "allSongs": "All songs",
+        "byCategory": "By category",
+        "selectCategory": "Select a category",
+        "exporting": "Exporting...",
+        "fetching": "Fetching songs...",
+        "generating": "Generating XML files...",
+        "zipping": "Creating ZIP archive...",
+        "saving": "Saving file...",
+        "processingProgress": "Processing {{current}} of {{total}}"
+      },
+      "toast": {
+        "importSuccess": "Successfully imported {{count}} songs",
+        "importFailed": "Import failed: {{error}}",
+        "exportSuccess": "Successfully exported {{count}} songs",
+        "exportFailed": "Export failed: {{error}}"
       }
     }
   }

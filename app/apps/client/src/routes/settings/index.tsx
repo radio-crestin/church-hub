@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next'
 
 import { DeviceList } from '~/features/devices'
 import { DisplayManager } from '~/features/presentation'
+import { SynonymManager } from '~/features/search'
+import { ImportExportManager } from '~/features/song-export'
 import { CategoryManager } from '~/features/songs/components'
 import { useI18n } from '~/provider/i18n-provider'
 import { useTheme } from '~/provider/theme-provider'
@@ -126,6 +128,11 @@ function RouteComponent() {
         <CategoryManager />
       </div>
 
+      {/* Search Synonyms Section */}
+      <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
+        <SynonymManager />
+      </div>
+
       {/* Authorized Devices Section */}
       <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
         <DeviceList />
@@ -134,6 +141,11 @@ function RouteComponent() {
       {/* Displays Section */}
       <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
         <DisplayManager />
+      </div>
+
+      {/* Import/Export Section */}
+      <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
+        <ImportExportManager />
       </div>
     </div>
   )
