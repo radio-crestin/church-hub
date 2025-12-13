@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:3000'
+import { getApiUrl } from '~/config'
 
 export type ConversionErrorCode =
   | 'LIBREOFFICE_NOT_INSTALLED'
@@ -45,9 +45,7 @@ function base64ToArrayBuffer(base64: string): ArrayBuffer {
  */
 export async function checkLibreOfficeInstalled(): Promise<boolean> {
   try {
-    const response = await fetch(
-      `${API_BASE_URL}/api/convert/check-libreoffice`,
-    )
+    const response = await fetch(`${getApiUrl()}/api/convert/check-libreoffice`)
     const result = (await response.json()) as { data: { installed: boolean } }
     return result.data.installed
   } catch {
@@ -67,7 +65,7 @@ export async function convertPptToPptx(
 ): Promise<ArrayBuffer> {
   const base64Data = arrayBufferToBase64(pptData)
 
-  const response = await fetch(`${API_BASE_URL}/api/convert/ppt-to-pptx`, {
+  const response = await fetch(`${getApiUrl()}/api/convert/ppt-to-pptx`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ data: base64Data }),

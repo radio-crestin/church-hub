@@ -29,7 +29,6 @@ import {
   checkLibreOfficeInstalled,
   convertPptToPptx,
 } from './service/conversion'
-import { getInternalIp } from './service/network'
 import {
   clearSlide,
   type DisplayTheme,
@@ -186,10 +185,10 @@ async function main() {
           )
         }
 
-        // Get the internal IP to redirect to the frontend
-        const internalIp = getInternalIp()
+        // Redirect to frontend using the same host the user accessed from
+        const host = req.headers.get('host')?.split(':')[0] ?? 'localhost'
         const frontendPort = process.env['VITE_PORT'] ?? 8086
-        const frontendUrl = `http://${internalIp}:${frontendPort}/`
+        const frontendUrl = `http://${host}:${frontendPort}/`
 
         // Redirect to frontend app with cookie set
         const response = new Response(null, {
@@ -209,29 +208,6 @@ async function main() {
       }
       if (url.pathname === '/api/openapi.json') {
         return handleCors(req, getOpenApiSpec())
-      }
-
-      // Server info endpoint (public) - returns internal IP and ports
-      if (req.method === 'GET' && url.pathname === '/api/server-info') {
-        const internalIp = getInternalIp()
-        const serverPort = process.env['PORT'] ?? 3000
-        const frontendPort = process.env['VITE_PORT'] ?? 8086
-
-        return handleCors(
-          req,
-          new Response(
-            JSON.stringify({
-              data: {
-                internalIp,
-                serverPort: Number(serverPort),
-                frontendPort: Number(frontendPort),
-              },
-            }),
-            {
-              headers: { 'Content-Type': 'application/json' },
-            },
-          ),
-        )
       }
 
       // All other /api/* routes require authentication in production

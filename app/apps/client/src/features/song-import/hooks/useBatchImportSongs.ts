@@ -1,9 +1,9 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
+import { getApiUrl } from '~/config'
 import type { BatchImportInput, BatchImportResult } from '../types'
 
-const API_BASE_URL = 'http://localhost:3000'
 const BATCH_SIZE = 200
 
 interface BatchImportOptions {
@@ -31,7 +31,7 @@ export function useBatchImportSongs() {
       for (let i = 0; i < input.songs.length; i += BATCH_SIZE) {
         const batch = input.songs.slice(i, i + BATCH_SIZE)
 
-        const response = await fetch(`${API_BASE_URL}/api/songs/batch`, {
+        const response = await fetch(`${getApiUrl()}/api/songs/batch`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
