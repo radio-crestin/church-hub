@@ -143,7 +143,7 @@ async function main() {
 
   const server = Bun.serve<WebSocketData>({
     port: process.env['PORT'] ?? 3000,
-    hostname: '127.0.0.1',
+    hostname: '0.0.0.0',
     async fetch(req: Request, server) {
       if (req.method === 'OPTIONS') {
         return handleCors(req, new Response(null, { status: 204 }))
