@@ -13,6 +13,9 @@ interface ImportConfirmationModalProps {
   onCancel: () => void
   isPending: boolean
   progress?: number
+  defaultCategoryId?: number | null
+  defaultUseFirstVerseAsTitle?: boolean
+  defaultOverwriteDuplicates?: boolean
 }
 
 export function ImportConfirmationModal({
@@ -22,12 +25,19 @@ export function ImportConfirmationModal({
   onCancel,
   isPending,
   progress = 0,
+  defaultCategoryId = null,
+  defaultUseFirstVerseAsTitle = true,
+  defaultOverwriteDuplicates = false,
 }: ImportConfirmationModalProps) {
   const { t } = useTranslation('songs')
   const dialogRef = useRef<HTMLDialogElement>(null)
-  const [categoryId, setCategoryId] = useState<number | null>(null)
-  const [overwriteDuplicates, setOverwriteDuplicates] = useState(false)
-  const [useFirstVerseAsTitle, setUseFirstVerseAsTitle] = useState(true)
+  const [categoryId, setCategoryId] = useState<number | null>(defaultCategoryId)
+  const [overwriteDuplicates, setOverwriteDuplicates] = useState(
+    defaultOverwriteDuplicates,
+  )
+  const [useFirstVerseAsTitle, setUseFirstVerseAsTitle] = useState(
+    defaultUseFirstVerseAsTitle,
+  )
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -41,12 +51,17 @@ export function ImportConfirmationModal({
   }, [isOpen])
 
   useEffect(() => {
-    if (!isOpen) {
-      setCategoryId(null)
-      setOverwriteDuplicates(false)
-      setUseFirstVerseAsTitle(true)
+    if (isOpen) {
+      setCategoryId(defaultCategoryId)
+      setOverwriteDuplicates(defaultOverwriteDuplicates)
+      setUseFirstVerseAsTitle(defaultUseFirstVerseAsTitle)
     }
-  }, [isOpen])
+  }, [
+    isOpen,
+    defaultCategoryId,
+    defaultOverwriteDuplicates,
+    defaultUseFirstVerseAsTitle,
+  ])
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
     if (e.target === dialogRef.current && !isPending) {

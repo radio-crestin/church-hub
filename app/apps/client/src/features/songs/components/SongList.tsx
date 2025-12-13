@@ -1,5 +1,5 @@
 import { Music, Search } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { SongCard } from './SongCard'
@@ -20,6 +20,7 @@ export function SongList({
   onSearchChange,
 }: SongListProps) {
   const { t } = useTranslation('songs')
+  const searchInputRef = useRef<HTMLInputElement>(null)
   // Local state for immediate input feedback
   const [localQuery, setLocalQuery] = useState(searchQuery)
   const { data: songs, isLoading: songsLoading } = useSongs()
@@ -31,6 +32,11 @@ export function SongList({
   useEffect(() => {
     setLocalQuery(searchQuery)
   }, [searchQuery])
+
+  // Auto-focus search input on mount
+  useEffect(() => {
+    searchInputRef.current?.focus()
+  }, [])
 
   const isSearching = localQuery.length > 0
   const isLoading = isSearching ? searchLoading : songsLoading
@@ -84,6 +90,7 @@ export function SongList({
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
         <input
+          ref={searchInputRef}
           type="text"
           value={localQuery}
           onChange={handleSearchChange}

@@ -1,5 +1,106 @@
 import type { SongSearchResult } from './types'
 import { getDatabase } from '../../db'
+import { getSetting } from '../settings'
+
+/**
+ * Synonym group interface matching client-side structure
+ */
+interface SynonymGroup {
+  id: string
+  primary: string
+  synonyms: string[]
+}
+
+/**
+ * Synonyms configuration stored in app_settings
+ */
+interface SynonymsConfig {
+  groups: SynonymGroup[]
+}
+
+/**
+ * In-memory cache for synonyms to avoid DB hits on every search
+ */
+let synonymsCache: Map<string, string[]> | null = null
+let synonymsCacheTimestamp = 0
+const SYNONYMS_CACHE_TTL = 60000 // 1 minute cache TTL
+
+/**
+ * Loads and caches synonyms from the database
+ * Returns a Map where each term (primary and synonyms) maps to all related terms
+ */
+function loadSynonyms(): Map<string, string[]> {
+  const now = Date.now()
+
+  // Return cached if still valid
+  if (synonymsCache && now - synonymsCacheTimestamp < SYNONYMS_CACHE_TTL) {
+    return synonymsCache
+  }
+
+  log('debug', 'Loading synonyms from database')
+
+  const setting = getSetting('app_settings', 'search_synonyms')
+  const synonymMap = new Map<string, string[]>()
+
+  if (!setting) {
+    log('debug', 'No synonyms configured')
+    synonymsCache = synonymMap
+    synonymsCacheTimestamp = now
+    return synonymMap
+  }
+
+  try {
+    const config = JSON.parse(setting.value) as SynonymsConfig
+
+    for (const group of config.groups) {
+      // All terms in the group (primary + synonyms)
+      const allTerms = [
+        group.primary.toLowerCase(),
+        ...group.synonyms.map((s) => s.toLowerCase()),
+      ]
+
+      // Each term maps to all other terms in the group
+      for (const term of allTerms) {
+        const otherTerms = allTerms.filter((t) => t !== term)
+        const existing = synonymMap.get(term) || []
+        synonymMap.set(term, [...new Set([...existing, ...otherTerms])])
+      }
+    }
+
+    log('debug', `Loaded ${config.groups.length} synonym groups`)
+  } catch (error) {
+    log('error', `Failed to parse synonyms config: ${error}`)
+  }
+
+  synonymsCache = synonymMap
+  synonymsCacheTimestamp = now
+  return synonymMap
+}
+
+/**
+ * Expands search terms with their synonyms
+ * Example: ["cristos"] -> ["cristos", "hristos"]
+ */
+function expandTermsWithSynonyms(terms: string[]): string[] {
+  const synonymMap = loadSynonyms()
+  const expandedTerms = new Set<string>(terms)
+
+  for (const term of terms) {
+    const synonyms = synonymMap.get(term.toLowerCase())
+    if (synonyms) {
+      for (const synonym of synonyms) {
+        expandedTerms.add(synonym)
+      }
+    }
+  }
+
+  const result = Array.from(expandedTerms)
+  if (result.length > terms.length) {
+    log('debug', `Expanded terms: ${terms.join(', ')} -> ${result.join(', ')}`)
+  }
+
+  return result
+}
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -248,58 +349,190 @@ function buildSearchQuery(queryText: string): string {
 }
 
 /**
- * Checks if a term has a fuzzy match in content
- * Uses middle substring matching (e.g., "Hristos" matches "Cristos" via "risto")
- * Minimum substring length is 4 to avoid false positives (e.g., "ist" matching "Linistit")
+ * Calculates title match score with bonuses for exact phrase and term order
+ * Title matching is simpler since titles are short
+ *
+ * Score breakdown:
+ * - 100: Exact phrase match
+ * - 80-99: All terms present in correct order
+ * - 60-79: All terms present (any order)
+ * - 0-59: Partial term matches
  */
-function hasFuzzyMatch(term: string, content: string): boolean {
-  // First check exact match
-  if (content.includes(term)) {
-    return true
+function calculateTitleScore(title: string, queryTerms: string[]): number {
+  if (!title || queryTerms.length === 0) return 0
+
+  const normalizedTitle = removeDiacritics(title).toLowerCase()
+  const normalizedTerms = queryTerms.map((t) =>
+    removeDiacritics(t).toLowerCase(),
+  )
+
+  // Check for exact phrase match (highest score)
+  const exactPhrase = normalizedTerms.join(' ')
+  if (normalizedTitle.includes(exactPhrase)) {
+    return 100
   }
 
-  // For short terms, only exact match
-  if (term.length < 5) {
-    return false
-  }
+  // Count matched terms and check order
+  let matchedCount = 0
+  let lastMatchPos = -1
+  let inOrderCount = 0
 
-  // Check middle substrings for fuzzy match
-  // "Hristos" -> check "risto", "isto" which would match "Cristos"
-  // Minimum length 4 to avoid false positives like "ist" matching "Linistit"
-  for (let len = Math.min(5, term.length - 1); len >= 4; len--) {
-    for (let start = 1; start <= term.length - len; start++) {
-      const sub = term.substring(start, start + len)
-      if (content.includes(sub)) {
-        return true
+  for (const term of normalizedTerms) {
+    const pos = normalizedTitle.indexOf(term)
+    if (pos !== -1) {
+      matchedCount++
+      if (pos > lastMatchPos) {
+        inOrderCount++
+        lastMatchPos = pos
       }
     }
   }
 
-  return false
+  if (matchedCount === 0) return 0
+
+  const matchPercentage = matchedCount / normalizedTerms.length
+  const orderBonus = inOrderCount === matchedCount ? 0.2 : 0
+  const allMatchedBonus = matchedCount === normalizedTerms.length ? 0.2 : 0
+
+  // Score: base 60% for matches, +20% for all matched, +20% for correct order
+  return Math.round(
+    matchPercentage * 60 + allMatchedBonus * 100 + orderBonus * 100,
+  )
 }
 
 /**
- * Calculates a relevance score based on how many query terms match the content
- * Uses fuzzy substring matching for better results with spelling variations
- * Higher score = more terms matched = better relevance
+ * Finds the best matching phrase/region in content and returns its score
+ * Instead of counting scattered word occurrences, this finds the SINGLE BEST
+ * contiguous region where query terms cluster together
+ *
+ * Score breakdown:
+ * - 100: Exact phrase match found
+ * - 70-99: All terms found in a tight cluster
+ * - 40-69: Most terms found with reasonable proximity
+ * - 0-39: Sparse/partial matches
  */
-function calculateTermMatchScore(
+function calculateBestPhraseScore(
   content: string,
   queryTerms: string[],
 ): number {
-  const normalizedContent = content.toLowerCase()
-  let matchedCount = 0
+  if (!content || queryTerms.length === 0) return 0
 
-  for (const term of queryTerms) {
-    if (hasFuzzyMatch(term, normalizedContent)) {
-      matchedCount++
+  const normalizedContent = removeDiacritics(content).toLowerCase()
+  const normalizedTerms = queryTerms.map((t) =>
+    removeDiacritics(t).toLowerCase(),
+  )
+
+  // Check for exact phrase match (highest score)
+  const exactPhrase = normalizedTerms.join(' ')
+  if (normalizedContent.includes(exactPhrase)) {
+    return 100
+  }
+
+  // Find all positions where each query term appears
+  const termPositions: Map<number, number[]> = new Map()
+  for (let i = 0; i < normalizedTerms.length; i++) {
+    const term = normalizedTerms[i]
+    const positions: number[] = []
+    let pos = 0
+    while ((pos = normalizedContent.indexOf(term, pos)) !== -1) {
+      positions.push(pos)
+      pos++
+    }
+    if (positions.length > 0) {
+      termPositions.set(i, positions)
     }
   }
 
-  // Return percentage of terms matched (0-100)
-  return queryTerms.length > 0
-    ? Math.round((matchedCount / queryTerms.length) * 100)
-    : 0
+  // If no terms found at all
+  if (termPositions.size === 0) return 0
+
+  // If only one term type found, simple percentage score
+  if (termPositions.size === 1) {
+    return Math.round((1 / normalizedTerms.length) * 50)
+  }
+
+  // Find the best cluster: region where most terms appear closest together
+  let bestScore = 0
+
+  // Try starting from each occurrence of each term
+  for (const [startTermIdx, startPositions] of termPositions) {
+    for (const anchorPos of startPositions) {
+      // For this anchor position, find the best cluster of terms
+      const termsInCluster = new Set<number>([startTermIdx])
+      let clusterStart = anchorPos
+      let clusterEnd = anchorPos + normalizedTerms[startTermIdx].length
+
+      // Greedily add closest terms to the cluster
+      const CLUSTER_RADIUS = 150 // Max chars to look for related terms
+
+      for (const [termIdx, positions] of termPositions) {
+        if (termIdx === startTermIdx) continue
+
+        // Find the closest occurrence to our current cluster
+        let closestPos = -1
+        let closestDist = Number.POSITIVE_INFINITY
+
+        for (const pos of positions) {
+          const distToCluster = Math.min(
+            Math.abs(pos - clusterStart),
+            Math.abs(pos - clusterEnd),
+          )
+          if (distToCluster < closestDist && distToCluster <= CLUSTER_RADIUS) {
+            closestDist = distToCluster
+            closestPos = pos
+          }
+        }
+
+        if (closestPos !== -1) {
+          termsInCluster.add(termIdx)
+          clusterStart = Math.min(clusterStart, closestPos)
+          clusterEnd = Math.max(
+            clusterEnd,
+            closestPos + normalizedTerms[termIdx].length,
+          )
+        }
+      }
+
+      // Score this cluster
+      const matchRatio = termsInCluster.size / normalizedTerms.length
+      const clusterSpan = clusterEnd - clusterStart
+
+      // Check if terms appear in query order within the cluster
+      let inOrder = true
+      let lastPos = -1
+      for (let i = 0; i < normalizedTerms.length; i++) {
+        if (!termsInCluster.has(i)) continue
+        const positions = termPositions.get(i) || []
+        const posInCluster = positions.find(
+          (p) => p >= clusterStart && p <= clusterEnd,
+        )
+        if (posInCluster !== undefined) {
+          if (posInCluster < lastPos) {
+            inOrder = false
+            break
+          }
+          lastPos = posInCluster
+        }
+      }
+
+      // Calculate score:
+      // - Base: 50% for match ratio
+      // - Proximity bonus: up to 30% (tighter cluster = higher)
+      // - Order bonus: 20% if terms appear in correct order
+      const baseScore = matchRatio * 50
+      const idealSpan = termsInCluster.size * 10 // ~10 chars per term is ideal
+      const proximityScore =
+        termsInCluster.size > 1
+          ? Math.max(0, 30 * (1 - Math.min(1, (clusterSpan - idealSpan) / 200)))
+          : 0
+      const orderScore = inOrder ? 20 : 0
+
+      const clusterScore = baseScore + proximityScore + orderScore
+      bestScore = Math.max(bestScore, clusterScore)
+    }
+  }
+
+  return Math.round(bestScore)
 }
 
 /**
@@ -583,8 +816,27 @@ export function searchSongs(query: string): SongSearchResult[] {
       return []
     }
 
-    // Build FTS query using only valid terms for better results
-    const ftsQuery = buildSearchQuery(validTerms.join(' '))
+    // Expand valid terms with synonyms for broader search
+    const expandedTerms = expandTermsWithSynonyms(validTerms)
+
+    // Update term counts for expanded terms
+    for (const term of expandedTerms) {
+      if (!termCounts.has(term)) {
+        try {
+          const result = db
+            .query(
+              `SELECT COUNT(*) as count FROM songs_fts WHERE songs_fts MATCH ?`,
+            )
+            .get(`"${term}"*`) as { count: number } | null
+          termCounts.set(term, result?.count ?? 0)
+        } catch {
+          termCounts.set(term, 0)
+        }
+      }
+    }
+
+    // Build FTS query using expanded terms for broader results
+    const ftsQuery = buildSearchQuery(expandedTerms.join(' '))
 
     if (!ftsQuery) {
       return []
@@ -628,8 +880,8 @@ export function searchSongs(query: string): SongSearchResult[] {
 
     log('debug', `Phase 1 (standard): Found ${standardResults.length} results`)
 
-    // Phase 2: Trigram search for fuzzy matches (use valid terms only)
-    const trigramQuery = buildTrigramQuery(validTerms)
+    // Phase 2: Trigram search for fuzzy matches (use expanded terms)
+    const trigramQuery = buildTrigramQuery(expandedTerms)
     let trigramResults: Array<{
       id: number
       title: string
@@ -710,47 +962,41 @@ export function searchSongs(query: string): SongSearchResult[] {
     const candidates = Array.from(candidateMap.values())
     log('debug', `Combined: ${candidates.length} unique candidates`)
 
-    // Calculate total document count for rarity scoring
-    const totalDocs =
-      (
-        db.query('SELECT COUNT(*) as count FROM songs').get() as {
-          count: number
-        }
-      )?.count ?? 1
+    // Phase 3: Calculate match scores using phrase-based scoring
+    // Title: uses calculateTitleScore (bonuses for exact phrase, term order)
+    // Content: uses calculateBestPhraseScore (finds BEST matching region, not scattered words)
+    // Title matches get 2x weight compared to content matches
+    const TITLE_WEIGHT = 2
+    const CONTENT_WEIGHT = 1
 
-    // Phase 3: Calculate term match scores and re-rank with category priority
-    // Uses only valid terms (ignoring noise) and boosts rare term matches
     const scoredResults = candidates.map((r) => {
-      const searchableText = `${r.title} ${r.full_content}`
+      // Calculate title score (0-100) with phrase matching
+      const titleScore = calculateTitleScore(r.title, expandedTerms)
 
-      // Calculate match score against valid terms only
-      const termScore = calculateTermMatchScore(searchableText, validTerms)
+      // Calculate content score (0-100) - finds the BEST single phrase match
+      const contentScore = calculateBestPhraseScore(
+        r.full_content,
+        expandedTerms,
+      )
 
-      // Calculate rarity boost: rare terms (appearing in fewer docs) get higher weight
-      let rarityBoost = 0
-      const normalizedContent = removeDiacritics(searchableText).toLowerCase()
-      for (const term of validTerms) {
-        const normalizedTerm = removeDiacritics(term).toLowerCase()
-        if (normalizedContent.includes(normalizedTerm)) {
-          const termCount = termCounts.get(term) ?? totalDocs
-          // IDF-like score: log(totalDocs / termCount)
-          rarityBoost += Math.log(totalDocs / Math.max(termCount, 1))
-        }
-      }
+      // Weighted combined score: title matches count 2x more than content matches
+      const termScore =
+        (titleScore * TITLE_WEIGHT + contentScore * CONTENT_WEIGHT) /
+        (TITLE_WEIGHT + CONTENT_WEIGHT)
 
       // Apply category priority multiplier (default 1 for uncategorized)
-      // Combined score: termScore (0-100) + rarityBoost (0-~10) scaled
-      const boostedScore = (termScore + rarityBoost * 5) * r.category_priority
+      const boostedScore = termScore * r.category_priority
 
       return {
         ...r,
+        titleScore,
+        contentScore,
         termScore,
-        rarityBoost,
         boostedScore,
       }
     })
 
-    // Sort by: boosted score (desc), term score (desc), FTS over trigram, then BM25 rank (asc)
+    // Sort by: boosted score (desc), term score (desc), title score (desc), FTS over trigram, then BM25 rank (asc)
     scoredResults.sort((a, b) => {
       // Primary: boosted score (category priority applied)
       if (b.boostedScore !== a.boostedScore) {
@@ -760,12 +1006,16 @@ export function searchSongs(query: string): SongSearchResult[] {
       if (b.termScore !== a.termScore) {
         return b.termScore - a.termScore
       }
-      // Tertiary: prioritize FTS results over trigram results
+      // Tertiary: prefer title matches over content-only matches
+      if (b.titleScore !== a.titleScore) {
+        return b.titleScore - a.titleScore
+      }
+      // Quaternary: prioritize FTS results over trigram results
       // (trigram BM25 scores are not comparable to FTS scores)
       if (a.fromTrigram !== b.fromTrigram) {
         return a.fromTrigram ? 1 : -1 // FTS (false) comes before trigram (true)
       }
-      // Quaternary: better BM25 score (lower rank value = better match)
+      // Quinary: better BM25 score (lower rank value = better match)
       return a.bm25_rank - b.bm25_rank
     })
 
@@ -780,10 +1030,10 @@ export function searchSongs(query: string): SongSearchResult[] {
     return topResults.map((r) => {
       // Always use fuzzy highlighting to ensure fuzzy matches are highlighted
       // (e.g., "Cristos" highlighted when searching "Hristos")
-      // Use validTerms only (ignore noise terms like "123")
+      // Use expanded terms (includes synonyms) for highlighting
       const matchedContent = createFuzzyHighlightedSnippet(
         r.full_content,
-        validTerms,
+        expandedTerms,
       )
 
       return {

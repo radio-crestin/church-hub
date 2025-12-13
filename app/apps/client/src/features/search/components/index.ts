@@ -1,0 +1,1 @@
+export { SynonymManager } from './SynonymManager'
