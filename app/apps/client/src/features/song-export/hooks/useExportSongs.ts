@@ -29,9 +29,9 @@ export function useExportSongs() {
         // User cancelled
         return {
           success: false,
+          cancelled: true,
           songCount: 0,
           filename: '',
-          error: 'Export cancelled',
         }
       }
 
