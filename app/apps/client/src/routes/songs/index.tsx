@@ -15,6 +15,7 @@ import {
 } from '~/features/song-import'
 import { SongList } from '~/features/songs/components'
 import { AlertModal } from '~/ui/modal'
+import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
 
 interface SongsSearchParams {
   q?: string
@@ -162,58 +163,60 @@ function SongsPage() {
   const isPending = isProcessing || isImporting
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          {t('title')}
-        </h1>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleImport}
-            disabled={isPending}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <FileUp className="w-5 h-5" />
-            {t('actions.import')}
-          </button>
-          <button
-            type="button"
-            onClick={() =>
-              navigate({ to: '/songs/$songId', params: { songId: 'new' } })
-            }
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-            {t('actions.create')}
-          </button>
+    <PagePermissionGuard permission="songs.view">
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            {t('title')}
+          </h1>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleImport}
+              disabled={isPending}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <FileUp className="w-5 h-5" />
+              {t('actions.import')}
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                navigate({ to: '/songs/$songId', params: { songId: 'new' } })
+              }
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
+            >
+              <Plus className="w-5 h-5" />
+              {t('actions.create')}
+            </button>
+          </div>
         </div>
+
+        <SongList
+          onSongClick={handleSongClick}
+          searchQuery={searchQuery}
+          onSearchChange={handleSearchChange}
+        />
+
+        <ImportConfirmationModal
+          isOpen={isImportModalOpen}
+          songs={songsToImport.map((s) => s.parsed)}
+          onConfirm={handleConfirmImport}
+          onCancel={handleCancelImport}
+          isPending={isImporting}
+          progress={savingProgress}
+        />
+
+        <ImportProgressModal isOpen={isProcessing} progress={importProgress} />
+
+        <AlertModal
+          isOpen={isNoSongsModalOpen}
+          title={t('batchImport.noSongsFound')}
+          message={t('batchImport.noSongsFoundDescription')}
+          onClose={() => setIsNoSongsModalOpen(false)}
+          variant="error"
+        />
       </div>
-
-      <SongList
-        onSongClick={handleSongClick}
-        searchQuery={searchQuery}
-        onSearchChange={handleSearchChange}
-      />
-
-      <ImportConfirmationModal
-        isOpen={isImportModalOpen}
-        songs={songsToImport.map((s) => s.parsed)}
-        onConfirm={handleConfirmImport}
-        onCancel={handleCancelImport}
-        isPending={isImporting}
-        progress={savingProgress}
-      />
-
-      <ImportProgressModal isOpen={isProcessing} progress={importProgress} />
-
-      <AlertModal
-        isOpen={isNoSongsModalOpen}
-        title={t('batchImport.noSongsFound')}
-        message={t('batchImport.noSongsFoundDescription')}
-        onClose={() => setIsNoSongsModalOpen(false)}
-        variant="error"
-      />
-    </div>
+    </PagePermissionGuard>
   )
 }
