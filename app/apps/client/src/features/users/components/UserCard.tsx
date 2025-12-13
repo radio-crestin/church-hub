@@ -10,49 +10,39 @@ import {
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import type { DeviceWithPermissions } from '../types'
+import type { UserWithPermissions } from '../types'
 
-interface DeviceCardProps {
-  device: DeviceWithPermissions
-  onEdit: (device: DeviceWithPermissions) => void
-  onDelete: (device: DeviceWithPermissions) => void
-  onShowQR: (device: DeviceWithPermissions) => void
-  onRegenerateToken: (device: DeviceWithPermissions) => void
-  onToggleActive: (device: DeviceWithPermissions) => void
+interface UserCardProps {
+  user: UserWithPermissions
+  onEdit: (user: UserWithPermissions) => void
+  onDelete: (user: UserWithPermissions) => void
+  onShowQR: (user: UserWithPermissions) => void
+  onRegenerateToken: (user: UserWithPermissions) => void
+  onToggleActive: (user: UserWithPermissions) => void
 }
 
-export function DeviceCard({
-  device,
+export function UserCard({
+  user,
   onEdit,
   onDelete,
   onShowQR,
   onRegenerateToken,
   onToggleActive,
-}: DeviceCardProps) {
+}: UserCardProps) {
   const { t } = useTranslation('settings')
   const [menuOpen, setMenuOpen] = useState(false)
 
   const formatDate = (timestamp: number | null) => {
-    if (!timestamp) return t('sections.devices.never')
+    if (!timestamp) return t('sections.users.never')
     return new Date(timestamp * 1000).toLocaleDateString()
   }
 
-  const permissionCount = Object.values(device.permissions).reduce(
-    (acc, perms) => {
-      return (
-        acc +
-        (perms.read ? 1 : 0) +
-        (perms.write ? 1 : 0) +
-        (perms.delete ? 1 : 0)
-      )
-    },
-    0,
-  )
+  const permissionCount = user.permissions.length
 
   return (
     <div
       className={`relative border rounded-lg p-4 ${
-        device.isActive
+        user.isActive
           ? 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
           : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 opacity-60'
       }`}
@@ -61,29 +51,47 @@ export function DeviceCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <h3 className="text-base font-medium text-gray-900 dark:text-white truncate">
-              {device.name}
+              {user.name}
             </h3>
             <span
               className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                device.isActive
+                user.isActive
                   ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                   : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400'
               }`}
             >
-              {device.isActive
-                ? t('sections.devices.active')
-                : t('sections.devices.inactive')}
+              {user.isActive
+                ? t('sections.users.active')
+                : t('sections.users.inactive')}
             </span>
           </div>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {t('sections.devices.lastUsed')}: {formatDate(device.lastUsedAt)}
+          {user.roleName && (
+            <p className="mt-1 text-sm text-indigo-600 dark:text-indigo-400">
+              {t(`sections.users.roles.${user.roleName}`, user.roleName)}
+            </p>
+          )}
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {t('sections.users.lastUsed')}: {formatDate(user.lastUsedAt)}
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {permissionCount} {t('sections.devices.permissions').toLowerCase()}
+            {permissionCount} {t('sections.users.permissions').toLowerCase()}
           </p>
         </div>
 
-        <div className="relative">
+        <div className="flex items-center gap-1">
+          {/* QR Code button - always visible */}
+          <button
+            onClick={() => onShowQR(user)}
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            title={t('sections.users.actions.showQRCode')}
+          >
+            <QrCode
+              size={20}
+              className="text-indigo-600 dark:text-indigo-400"
+            />
+          </button>
+
+          {/* More options menu */}
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -103,63 +111,63 @@ export function DeviceCard({
               <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-20">
                 <button
                   onClick={() => {
-                    onShowQR(device)
+                    onShowQR(user)
                     setMenuOpen(false)
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
                   <QrCode size={16} />
-                  {t('sections.devices.actions.showQRCode')}
+                  {t('sections.users.actions.showQRCode')}
                 </button>
                 <button
                   onClick={() => {
-                    onEdit(device)
+                    onEdit(user)
                     setMenuOpen(false)
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
                   <Edit size={16} />
-                  {t('sections.devices.actions.edit')}
+                  {t('sections.users.actions.edit')}
                 </button>
                 <button
                   onClick={() => {
-                    onRegenerateToken(device)
+                    onRegenerateToken(user)
                     setMenuOpen(false)
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
                   <RefreshCw size={16} />
-                  {t('sections.devices.actions.regenerateToken')}
+                  {t('sections.users.actions.regenerateToken')}
                 </button>
                 <button
                   onClick={() => {
-                    onToggleActive(device)
+                    onToggleActive(user)
                     setMenuOpen(false)
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
-                  {device.isActive ? (
+                  {user.isActive ? (
                     <>
                       <PowerOff size={16} />
-                      {t('sections.devices.actions.deactivate')}
+                      {t('sections.users.actions.deactivate')}
                     </>
                   ) : (
                     <>
                       <Power size={16} />
-                      {t('sections.devices.actions.activate')}
+                      {t('sections.users.actions.activate')}
                     </>
                   )}
                 </button>
                 <div className="border-t border-gray-200 dark:border-gray-700" />
                 <button
                   onClick={() => {
-                    onDelete(device)
+                    onDelete(user)
                     setMenuOpen(false)
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
                 >
                   <Trash2 size={16} />
-                  {t('sections.devices.actions.delete')}
+                  {t('sections.users.actions.delete')}
                 </button>
               </div>
             </>

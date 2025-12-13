@@ -2,11 +2,11 @@ import { createFileRoute } from '@tanstack/react-router'
 import { Languages, Palette } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-import { DeviceList } from '~/features/devices'
 import { DisplayManager } from '~/features/presentation'
 import { SynonymManager } from '~/features/search'
 import { ImportExportManager } from '~/features/song-export'
 import { CategoryManager } from '~/features/songs/components'
+import { UserList } from '~/features/users'
 import { useI18n } from '~/provider/i18n-provider'
 import { useTheme } from '~/provider/theme-provider'
 import type { LanguagePreference } from '~/service/locale'
@@ -138,9 +138,9 @@ function RouteComponent() {
         <SynonymManager />
       </div>
 
-      {/* Authorized Devices Section */}
+      {/* Authorized Users Section */}
       <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
-        <DeviceList />
+        <UserList />
       </div>
 
       {/* Displays Section */}
