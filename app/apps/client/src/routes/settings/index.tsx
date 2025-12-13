@@ -128,6 +128,11 @@ function RouteComponent() {
         <CategoryManager />
       </div>
 
+      {/* Import/Export Section */}
+      <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
+        <ImportExportManager />
+      </div>
+
       {/* Search Synonyms Section */}
       <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
         <SynonymManager />
@@ -141,11 +146,6 @@ function RouteComponent() {
       {/* Displays Section */}
       <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
         <DisplayManager />
-      </div>
-
-      {/* Import/Export Section */}
-      <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
-        <ImportExportManager />
       </div>
     </div>
   )

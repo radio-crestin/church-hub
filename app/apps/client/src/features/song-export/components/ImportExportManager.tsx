@@ -24,7 +24,6 @@ type ModalState =
   | { type: 'importConfirm' }
   | { type: 'noSongs' }
   | { type: 'exportOptions' }
-  | { type: 'exportProgress' }
 
 export function ImportExportManager() {
   const { t } = useTranslation('settings')
@@ -34,7 +33,11 @@ export function ImportExportManager() {
     isPending: isImporting,
     progress: savingProgress,
   } = useBatchImportSongs()
-  const { exportSongs, progress: exportProgress } = useExportSongs()
+  const {
+    exportSongs,
+    isPending: isExporting,
+    progress: exportProgress,
+  } = useExportSongs()
 
   const [modalState, setModalState] = useState<ModalState>({ type: 'none' })
   const [songsToImport, setSongsToImport] = useState<ProcessedImport[]>([])
@@ -143,11 +146,14 @@ export function ImportExportManager() {
   }
 
   const handleConfirmExport = async (categoryId: number | null) => {
-    setModalState({ type: 'exportProgress' })
+    setModalState({ type: 'none' })
 
     const result = await exportSongs({ categoryId })
 
-    setModalState({ type: 'none' })
+    if (result.cancelled) {
+      // User cancelled the save dialog, do nothing
+      return
+    }
 
     if (result.success) {
       showToast(
@@ -253,10 +259,7 @@ export function ImportExportManager() {
         onCancel={handleCancelExport}
       />
 
-      <ExportProgressModal
-        isOpen={modalState.type === 'exportProgress'}
-        progress={exportProgress}
-      />
+      <ExportProgressModal isOpen={isExporting} progress={exportProgress} />
     </div>
   )
 }
