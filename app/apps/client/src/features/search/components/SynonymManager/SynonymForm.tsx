@@ -2,28 +2,30 @@ import { X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import type { SongCategory } from '../../types'
+import type { SynonymGroup } from '~/service/synonyms'
 
-interface CategoryFormProps {
+interface SynonymFormProps {
   isOpen: boolean
-  category?: SongCategory
-  onSubmit: (name: string, value: number) => void
+  synonym?: SynonymGroup
+  onSubmit: (primary: string, synonyms: string[]) => void
   onCancel: () => void
   isLoading: boolean
 }
 
-export function CategoryForm({
+export function SynonymForm({
   isOpen,
-  category,
+  synonym,
   onSubmit,
   onCancel,
   isLoading,
-}: CategoryFormProps) {
+}: SynonymFormProps) {
   const { t } = useTranslation('settings')
   const dialogRef = useRef<HTMLDialogElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  const [name, setName] = useState(category?.name ?? '')
-  const [value, setValue] = useState(category?.priority ?? 1)
+  const [primary, setPrimary] = useState(synonym?.primary ?? '')
+  const [synonymsText, setSynonymsText] = useState(
+    synonym?.synonyms.join(', ') ?? '',
+  )
 
   useEffect(() => {
     if (isOpen) {
@@ -35,14 +37,21 @@ export function CategoryForm({
   }, [isOpen])
 
   useEffect(() => {
-    setName(category?.name ?? '')
-    setValue(category?.priority ?? 1)
-  }, [category])
+    setPrimary(synonym?.primary ?? '')
+    setSynonymsText(synonym?.synonyms.join(', ') ?? '')
+  }, [synonym])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (name.trim()) {
-      onSubmit(name.trim(), value)
+    if (primary.trim() && synonymsText.trim()) {
+      const synonymsList = synonymsText
+        .split(',')
+        .map((s) => s.trim().toLowerCase())
+        .filter((s) => s.length > 0)
+
+      if (synonymsList.length > 0) {
+        onSubmit(primary.trim().toLowerCase(), synonymsList)
+      }
     }
   }
 
@@ -62,9 +71,9 @@ export function CategoryForm({
       <div className="p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {category
-              ? t('sections.categories.modals.edit.title')
-              : t('sections.categories.modals.create.title')}
+            {synonym
+              ? t('sections.synonyms.modals.edit.title')
+              : t('sections.synonyms.modals.create.title')}
           </h2>
           <button
             type="button"
@@ -78,14 +87,14 @@ export function CategoryForm({
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {t('sections.categories.categoryName')}
+              {t('sections.synonyms.primaryTerm')}
             </label>
             <input
               ref={inputRef}
               type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={t('sections.categories.categoryNamePlaceholder')}
+              value={primary}
+              onChange={(e) => setPrimary(e.target.value)}
+              placeholder={t('sections.synonyms.primaryTermPlaceholder')}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               required
             />
@@ -93,15 +102,19 @@ export function CategoryForm({
 
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {t('sections.categories.value')}
+              {t('sections.synonyms.synonymTerms')}
             </label>
             <input
-              type="number"
-              min={1}
-              value={value}
-              onChange={(e) => setValue(Number(e.target.value) || 1)}
+              type="text"
+              value={synonymsText}
+              onChange={(e) => setSynonymsText(e.target.value)}
+              placeholder={t('sections.synonyms.synonymTermsPlaceholder')}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              required
             />
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              {t('sections.synonyms.synonymTermsHint')}
+            </p>
           </div>
 
           <div className="flex justify-end gap-2">
@@ -114,12 +127,12 @@ export function CategoryForm({
             </button>
             <button
               type="submit"
-              disabled={isLoading || !name.trim()}
+              disabled={isLoading || !primary.trim() || !synonymsText.trim()}
               className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50"
             >
-              {category
-                ? t('sections.categories.modals.edit.submit')
-                : t('sections.categories.modals.create.submit')}
+              {synonym
+                ? t('sections.synonyms.modals.edit.submit')
+                : t('sections.synonyms.modals.create.submit')}
             </button>
           </div>
         </form>

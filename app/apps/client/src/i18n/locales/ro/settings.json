@@ -200,6 +200,13 @@
         "saving": "Se salvează fișierul...",
         "processingProgress": "Se procesează {{current}} din {{total}}"
       },
+      "resurseCrestine": {
+        "title": "Import din Resurse Crestine",
+        "description": "Descarcă și importă cântări de pe site-ul Resurse Crestine",
+        "button": "Importă din Resurse Crestine",
+        "importing": "Se importă...",
+        "note": "Cântările vor fi importate în categoria 'Resurse Crestine' cu primul vers ca titlu"
+      },
       "toast": {
         "importSuccess": "S-au importat cu succes {{count}} cântări",
         "importFailed": "Importul a eșuat: {{error}}",

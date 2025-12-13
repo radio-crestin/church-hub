@@ -20,6 +20,8 @@ export function ImportProgressModal({
     if (!progress) return t('batchImport.processing')
 
     switch (progress.phase) {
+      case 'downloading':
+        return t('batchImport.downloading')
       case 'extracting':
         return t('batchImport.extracting')
       case 'converting':
@@ -33,10 +35,17 @@ export function ImportProgressModal({
     }
   }
 
-  const percentage =
-    progress && progress.total > 0
-      ? Math.round((progress.current / progress.total) * 100)
-      : 0
+  const hasKnownTotal =
+    progress && progress.total !== null && progress.total > 0
+  const percentage = hasKnownTotal
+    ? Math.round((progress.current / progress.total) * 100)
+    : 0
+
+  const formatBytes = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -45,7 +54,7 @@ export function ImportProgressModal({
         <div className="flex flex-col items-center gap-6">
           <div className="relative">
             <Loader2 className="w-16 h-16 text-indigo-600 animate-spin" />
-            {progress && progress.total > 0 && (
+            {hasKnownTotal && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <span className="text-sm font-semibold text-indigo-600">
                   {percentage}%
@@ -59,14 +68,24 @@ export function ImportProgressModal({
               {getPhaseText()}
             </h3>
 
-            {progress && progress.total > 0 && (
+            {progress && (
               <>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {t('batchImport.processingProgress', {
-                    current: progress.current,
-                    total: progress.total,
-                  })}
-                </p>
+                {progress.phase === 'downloading' ? (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {hasKnownTotal
+                      ? `${formatBytes(progress.current)} / ${formatBytes(progress.total)}`
+                      : formatBytes(progress.current)}
+                  </p>
+                ) : (
+                  hasKnownTotal && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {t('batchImport.processingProgress', {
+                        current: progress.current,
+                        total: progress.total,
+                      })}
+                    </p>
+                  )
+                )}
 
                 {progress.currentFile && (
                   <p className="text-xs text-gray-400 dark:text-gray-500 truncate max-w-xs">
@@ -79,8 +98,10 @@ export function ImportProgressModal({
 
           <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
             <div
-              className="bg-indigo-600 h-2 rounded-full transition-all duration-300 ease-out"
-              style={{ width: `${percentage}%` }}
+              className={`h-2 rounded-full transition-all duration-300 ease-out ${
+                hasKnownTotal ? 'bg-indigo-600' : 'bg-indigo-600 animate-pulse'
+              }`}
+              style={{ width: hasKnownTotal ? `${percentage}%` : '100%' }}
             />
           </div>
         </div>

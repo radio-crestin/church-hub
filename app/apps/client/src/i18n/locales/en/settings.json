@@ -200,6 +200,13 @@
         "saving": "Saving file...",
         "processingProgress": "Processing {{current}} of {{total}}"
       },
+      "resurseCrestine": {
+        "title": "Import from Resurse Crestine",
+        "description": "Download and import songs from Resurse Crestine website",
+        "button": "Import from Resurse Crestine",
+        "importing": "Importing...",
+        "note": "Songs will be imported to the 'Resurse Crestine' category with first verse as title"
+      },
       "toast": {
         "importSuccess": "Successfully imported {{count}} songs",
         "importFailed": "Import failed: {{error}}",
