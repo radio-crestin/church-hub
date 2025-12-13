@@ -2,10 +2,15 @@ import process from 'node:process'
 
 import { closeDatabase, initializeDatabase, runMigrations } from './db'
 import type { RequestContext } from './middleware'
-import { appOnlyAuthMiddleware, combinedAuthMiddleware } from './middleware'
+import {
+  appOnlyAuthMiddleware,
+  combinedAuthMiddleware,
+  requirePermission,
+} from './middleware'
 import { getOpenApiSpec, getScalarDocs } from './openapi'
 import { listenRustIPC } from './rust-ipc'
 import {
+  ALL_PERMISSIONS,
   type CreateUserInput,
   createUser,
   deleteSetting,
@@ -140,10 +145,20 @@ async function main() {
     return res
   }
 
+  // Helper to check if IP is localhost (only the server machine gets admin access)
+  function isLocalRequest(clientIP: string | null): boolean {
+    if (!clientIP) return false
+    const localhostIPs = ['127.0.0.1', '::1', 'localhost', '::ffff:127.0.0.1']
+    return localhostIPs.includes(clientIP)
+  }
+
   const server = Bun.serve<WebSocketData>({
     port: process.env['PORT'] ?? 3000,
     hostname: '0.0.0.0',
     async fetch(req: Request, server) {
+      // Get client IP for permission checks
+      const clientSocketAddr = server.requestIP(req)
+      const clientIP = clientSocketAddr?.address ?? null
       if (req.method === 'OPTIONS') {
         return handleCors(req, new Response(null, { status: 204 }))
       }
@@ -232,6 +247,9 @@ async function main() {
         /^\/api\/settings\/([^/]+)\/([^/]+)$/,
       )
       if (req.method === 'GET' && getSettingMatch?.[1] && getSettingMatch[2]) {
+        const permError = checkPermission('settings.view')
+        if (permError) return permError
+
         const table = getSettingMatch[1] as SettingsTable
         const key = getSettingMatch[2]
 
@@ -258,6 +276,9 @@ async function main() {
         /^\/api\/settings\/([^/]+)$/,
       )
       if (req.method === 'GET' && getAllSettingsMatch) {
+        const permError = checkPermission('settings.view')
+        if (permError) return permError
+
         const table = getAllSettingsMatch[1] as SettingsTable
         const settings = getAllSettings(table)
 
@@ -274,6 +295,9 @@ async function main() {
         req.method === 'POST' &&
         url.pathname.match(/^\/api\/settings\/([^/]+)$/)
       ) {
+        const permError = checkPermission('settings.edit')
+        if (permError) return permError
+
         const tableMatch = url.pathname.match(/^\/api\/settings\/([^/]+)$/)
         const table = tableMatch![1] as SettingsTable
 
@@ -328,6 +352,9 @@ async function main() {
         deleteSettingMatch?.[1] &&
         deleteSettingMatch[2]
       ) {
+        const permError = checkPermission('settings.edit')
+        if (permError) return permError
+
         const table = deleteSettingMatch[1] as SettingsTable
         const key = deleteSettingMatch[2]
 
@@ -360,6 +387,26 @@ async function main() {
           const authResult = await appOnlyAuthMiddleware(req)
           if (authResult.response) return handleCors(req, authResult.response)
         }
+        return null
+      }
+
+      // Helper function to check user permissions
+      // Grants admin access for localhost requests, otherwise checks user permissions
+      function checkPermission(permission: Permission): Response | null {
+        // Grant admin access for localhost/local IP requests
+        if (isLocalRequest(clientIP)) return null
+
+        if (!_context) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Unauthorized' }), {
+              status: 401,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+        const result = requirePermission(permission)(_context)
+        if (result) return handleCors(req, result)
         return null
       }
 
@@ -676,6 +723,28 @@ async function main() {
 
       // GET /api/auth/me - Get current user's info and permissions
       if (req.method === 'GET' && url.pathname === '/api/auth/me') {
+        // Grant admin access for local network requests
+        if (isLocalRequest(clientIP)) {
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({
+                data: {
+                  id: 0,
+                  name: 'Local Admin',
+                  authType: 'local',
+                  isAdmin: true,
+                  isApp: true,
+                  permissions: ALL_PERMISSIONS,
+                },
+              }),
+              {
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        }
+
         const authResult = await combinedAuthMiddleware(req)
         if (authResult.response) return handleCors(req, authResult.response)
 
@@ -685,9 +754,12 @@ async function main() {
             new Response(
               JSON.stringify({
                 data: {
+                  id: 0,
+                  name: 'App Admin',
                   authType: 'app',
                   isAdmin: true,
-                  permissions: [],
+                  isApp: true,
+                  permissions: ALL_PERMISSIONS,
                 },
               }),
               {
@@ -732,6 +804,9 @@ async function main() {
 
       // GET /api/schedules/search - Search schedules (must be before /api/schedules/:id)
       if (req.method === 'GET' && url.pathname === '/api/schedules/search') {
+        const permError = checkPermission('programs.view')
+        if (permError) return permError
+
         const query = url.searchParams.get('q') || ''
         const results = searchSchedules(query)
         return handleCors(
@@ -744,6 +819,9 @@ async function main() {
 
       // GET /api/schedules - List all schedules
       if (req.method === 'GET' && url.pathname === '/api/schedules') {
+        const permError = checkPermission('programs.view')
+        if (permError) return permError
+
         const schedules = getSchedules()
         return handleCors(
           req,
@@ -756,6 +834,9 @@ async function main() {
       // GET /api/schedules/:id - Get schedule with items
       const getScheduleMatch = url.pathname.match(/^\/api\/schedules\/(\d+)$/)
       if (req.method === 'GET' && getScheduleMatch?.[1]) {
+        const permError = checkPermission('programs.view')
+        if (permError) return permError
+
         const id = parseInt(getScheduleMatch[1], 10)
         const schedule = getScheduleById(id)
 
@@ -781,6 +862,12 @@ async function main() {
       if (req.method === 'POST' && url.pathname === '/api/schedules') {
         try {
           const body = (await req.json()) as UpsertScheduleInput
+
+          // Check create or edit permission based on whether it's a new schedule
+          const permError = checkPermission(
+            body.id ? 'programs.edit' : 'programs.create',
+          )
+          if (permError) return permError
 
           if (!body.title) {
             return handleCors(
@@ -830,6 +917,9 @@ async function main() {
         /^\/api\/schedules\/(\d+)$/,
       )
       if (req.method === 'DELETE' && deleteScheduleMatch?.[1]) {
+        const permError = checkPermission('programs.delete')
+        if (permError) return permError
+
         const id = parseInt(deleteScheduleMatch[1], 10)
         const result = deleteSchedule(id)
 
@@ -859,6 +949,9 @@ async function main() {
         /^\/api\/schedules\/(\d+)\/items$/,
       )
       if (req.method === 'POST' && addScheduleItemMatch?.[1]) {
+        const permError = checkPermission('programs.edit')
+        if (permError) return permError
+
         try {
           const scheduleId = parseInt(addScheduleItemMatch[1], 10)
           const body = (await req.json()) as Omit<
@@ -910,6 +1003,9 @@ async function main() {
         updateScheduleItemMatch?.[1] &&
         updateScheduleItemMatch?.[2]
       ) {
+        const permError = checkPermission('programs.edit')
+        if (permError) return permError
+
         try {
           const itemId = parseInt(updateScheduleItemMatch[2], 10)
           const body = (await req.json()) as Omit<
@@ -961,6 +1057,9 @@ async function main() {
         removeScheduleItemMatch?.[1] &&
         removeScheduleItemMatch?.[2]
       ) {
+        const permError = checkPermission('programs.edit')
+        if (permError) return permError
+
         const scheduleId = parseInt(removeScheduleItemMatch[1], 10)
         const itemId = parseInt(removeScheduleItemMatch[2], 10)
         const result = removeItemFromSchedule(scheduleId, itemId)
@@ -988,6 +1087,9 @@ async function main() {
         /^\/api\/schedules\/(\d+)\/items\/reorder$/,
       )
       if (req.method === 'PUT' && reorderScheduleItemsMatch?.[1]) {
+        const permError = checkPermission('programs.edit')
+        if (permError) return permError
+
         try {
           const scheduleId = parseInt(reorderScheduleItemsMatch[1], 10)
           const body = (await req.json()) as ReorderScheduleItemsInput
@@ -1039,6 +1141,9 @@ async function main() {
         /^\/api\/schedules\/(\d+)\/import-to-queue$/,
       )
       if (req.method === 'POST' && importScheduleMatch?.[1]) {
+        const permError = checkPermission('programs.import_to_queue')
+        if (permError) return permError
+
         const scheduleId = parseInt(importScheduleMatch[1], 10)
         const result = importScheduleToQueue(scheduleId)
 
@@ -1069,6 +1174,9 @@ async function main() {
 
       // GET /api/displays - List all displays
       if (req.method === 'GET' && url.pathname === '/api/displays') {
+        const permError = checkPermission('displays.view')
+        if (permError) return permError
+
         const displays = getAllDisplays()
         return handleCors(
           req,
@@ -1081,6 +1189,9 @@ async function main() {
       // GET /api/displays/:id - Get display by ID
       const getDisplayMatch = url.pathname.match(/^\/api\/displays\/(\d+)$/)
       if (req.method === 'GET' && getDisplayMatch?.[1]) {
+        const permError = checkPermission('displays.view')
+        if (permError) return permError
+
         const id = parseInt(getDisplayMatch[1], 10)
         const display = getDisplayById(id)
 
@@ -1106,6 +1217,12 @@ async function main() {
       if (req.method === 'POST' && url.pathname === '/api/displays') {
         try {
           const body = (await req.json()) as UpsertDisplayInput
+
+          // Check create or edit permission based on whether it's a new display
+          const permError = checkPermission(
+            body.id ? 'displays.edit' : 'displays.create',
+          )
+          if (permError) return permError
 
           if (!body.name) {
             return handleCors(
@@ -1153,6 +1270,9 @@ async function main() {
       // DELETE /api/displays/:id - Delete display
       const deleteDisplayMatch = url.pathname.match(/^\/api\/displays\/(\d+)$/)
       if (req.method === 'DELETE' && deleteDisplayMatch?.[1]) {
+        const permError = checkPermission('displays.delete')
+        if (permError) return permError
+
         const id = parseInt(deleteDisplayMatch[1], 10)
         const result = deleteDisplay(id)
 
@@ -1179,6 +1299,9 @@ async function main() {
         /^\/api\/displays\/(\d+)\/theme$/,
       )
       if (req.method === 'PUT' && updateThemeMatch?.[1]) {
+        const permError = checkPermission('displays.edit')
+        if (permError) return permError
+
         try {
           const id = parseInt(updateThemeMatch[1], 10)
           const body = (await req.json()) as { theme: DisplayTheme }
@@ -1229,6 +1352,9 @@ async function main() {
 
       // GET /api/presentation/state - Get current presentation state
       if (req.method === 'GET' && url.pathname === '/api/presentation/state') {
+        const permError = checkPermission('control_room.view')
+        if (permError) return permError
+
         const state = getPresentationState()
         return handleCors(
           req,
@@ -1240,6 +1366,9 @@ async function main() {
 
       // PUT /api/presentation/state - Update presentation state
       if (req.method === 'PUT' && url.pathname === '/api/presentation/state') {
+        const permError = checkPermission('control_room.control')
+        if (permError) return permError
+
         try {
           const body = (await req.json()) as UpdatePresentationStateInput
           const state = updatePresentationState(body)
@@ -1264,6 +1393,9 @@ async function main() {
 
       // POST /api/presentation/stop - Stop presenting
       if (req.method === 'POST' && url.pathname === '/api/presentation/stop') {
+        const permError = checkPermission('control_room.control')
+        if (permError) return permError
+
         const state = stopPresentation()
         broadcastPresentationState(state)
 
@@ -1277,6 +1409,9 @@ async function main() {
 
       // POST /api/presentation/clear - Clear current slide (hide)
       if (req.method === 'POST' && url.pathname === '/api/presentation/clear') {
+        const permError = checkPermission('control_room.control')
+        if (permError) return permError
+
         const state = clearSlide()
         broadcastPresentationState(state)
 
@@ -1290,6 +1425,9 @@ async function main() {
 
       // POST /api/presentation/show - Show last displayed slide
       if (req.method === 'POST' && url.pathname === '/api/presentation/show') {
+        const permError = checkPermission('control_room.control')
+        if (permError) return permError
+
         const state = showSlide()
         broadcastPresentationState(state)
 
@@ -1306,6 +1444,9 @@ async function main() {
         req.method === 'POST' &&
         url.pathname === '/api/presentation/navigate-queue'
       ) {
+        const permError = checkPermission('control_room.control')
+        if (permError) return permError
+
         try {
           const body = (await req.json()) as { direction: 'next' | 'prev' }
 
@@ -1345,6 +1486,9 @@ async function main() {
 
       // GET /api/songs/search - Search songs (must be before /api/songs/:id)
       if (req.method === 'GET' && url.pathname === '/api/songs/search') {
+        const permError = checkPermission('songs.view')
+        if (permError) return permError
+
         const query = url.searchParams.get('q') || ''
         const results = searchSongs(query)
 
@@ -1358,6 +1502,9 @@ async function main() {
 
       // GET /api/songs/export - Get all songs with slides for export
       if (req.method === 'GET' && url.pathname === '/api/songs/export') {
+        const permError = checkPermission('songs.view')
+        if (permError) return permError
+
         const categoryIdParam = url.searchParams.get('categoryId')
         const categoryId = categoryIdParam
           ? parseInt(categoryIdParam, 10)
@@ -1373,6 +1520,9 @@ async function main() {
 
       // GET /api/songs - List all songs
       if (req.method === 'GET' && url.pathname === '/api/songs') {
+        const permError = checkPermission('songs.view')
+        if (permError) return permError
+
         const songs = getAllSongs()
         return handleCors(
           req,
@@ -1385,6 +1535,9 @@ async function main() {
       // GET /api/songs/:id - Get song with slides
       const getSongMatch = url.pathname.match(/^\/api\/songs\/(\d+)$/)
       if (req.method === 'GET' && getSongMatch?.[1]) {
+        const permError = checkPermission('songs.view')
+        if (permError) return permError
+
         const id = parseInt(getSongMatch[1], 10)
         const song = getSongWithSlides(id)
 
@@ -1410,6 +1563,12 @@ async function main() {
       if (req.method === 'POST' && url.pathname === '/api/songs') {
         try {
           const body = (await req.json()) as UpsertSongInput
+
+          // Check create or edit permission based on whether it's a new song
+          const permError = checkPermission(
+            body.id ? 'songs.edit' : 'songs.create',
+          )
+          if (permError) return permError
 
           if (!body.title) {
             return handleCors(
@@ -1456,6 +1615,9 @@ async function main() {
 
       // POST /api/songs/batch - Batch import songs
       if (req.method === 'POST' && url.pathname === '/api/songs/batch') {
+        const permError = checkPermission('songs.create')
+        if (permError) return permError
+
         try {
           const body = (await req.json()) as {
             songs: BatchImportSongInput[]
@@ -1511,6 +1673,9 @@ async function main() {
         req.method === 'GET' &&
         url.pathname === '/api/convert/check-libreoffice'
       ) {
+        const permError = checkPermission('songs.view')
+        if (permError) return permError
+
         const isInstalled = await checkLibreOfficeInstalled()
         return handleCors(
           req,
@@ -1525,6 +1690,9 @@ async function main() {
         req.method === 'POST' &&
         url.pathname === '/api/convert/ppt-to-pptx'
       ) {
+        const permError = checkPermission('songs.create')
+        if (permError) return permError
+
         try {
           const body = (await req.json()) as { data: string }
 
@@ -1584,6 +1752,9 @@ async function main() {
       // DELETE /api/songs/:id - Delete song
       const deleteSongMatch = url.pathname.match(/^\/api\/songs\/(\d+)$/)
       if (req.method === 'DELETE' && deleteSongMatch?.[1]) {
+        const permError = checkPermission('songs.delete')
+        if (permError) return permError
+
         const id = parseInt(deleteSongMatch[1], 10)
         const result = deleteSong(id)
 
@@ -1614,6 +1785,9 @@ async function main() {
 
       // POST /api/song-slides - Create/update song slide
       if (req.method === 'POST' && url.pathname === '/api/song-slides') {
+        const permError = checkPermission('songs.edit')
+        if (permError) return permError
+
         try {
           const body = (await req.json()) as UpsertSongSlideInput
 
@@ -1668,6 +1842,9 @@ async function main() {
         /^\/api\/song-slides\/(\d+)$/,
       )
       if (req.method === 'DELETE' && deleteSongSlideMatch?.[1]) {
+        const permError = checkPermission('songs.edit')
+        if (permError) return permError
+
         const id = parseInt(deleteSongSlideMatch[1], 10)
         const result = deleteSongSlide(id)
 
@@ -1694,6 +1871,9 @@ async function main() {
         /^\/api\/song-slides\/(\d+)\/clone$/,
       )
       if (req.method === 'POST' && cloneSongSlideMatch?.[1]) {
+        const permError = checkPermission('songs.edit')
+        if (permError) return permError
+
         const id = parseInt(cloneSongSlideMatch[1], 10)
         const clonedSlide = cloneSongSlide(id)
 
@@ -1724,6 +1904,9 @@ async function main() {
         /^\/api\/songs\/(\d+)\/slides\/reorder$/,
       )
       if (req.method === 'PUT' && reorderSongSlidesMatch?.[1]) {
+        const permError = checkPermission('songs.edit')
+        if (permError) return permError
+
         try {
           const songId = parseInt(reorderSongSlidesMatch[1], 10)
           const body = (await req.json()) as ReorderSongSlidesInput
@@ -1776,6 +1959,9 @@ async function main() {
 
       // GET /api/categories - List all categories
       if (req.method === 'GET' && url.pathname === '/api/categories') {
+        const permError = checkPermission('songs.view')
+        if (permError) return permError
+
         const categories = getAllCategories()
         return handleCors(
           req,
@@ -1789,6 +1975,12 @@ async function main() {
       if (req.method === 'POST' && url.pathname === '/api/categories') {
         try {
           const body = (await req.json()) as UpsertCategoryInput
+
+          // Check create or edit permission based on whether it's a new category
+          const permError = checkPermission(
+            body.id ? 'songs.edit' : 'songs.create',
+          )
+          if (permError) return permError
 
           if (!body.name) {
             return handleCors(
@@ -1843,6 +2035,9 @@ async function main() {
         /^\/api\/categories\/(\d+)$/,
       )
       if (req.method === 'DELETE' && deleteCategoryMatch?.[1]) {
+        const permError = checkPermission('songs.delete')
+        if (permError) return permError
+
         const id = parseInt(deleteCategoryMatch[1], 10)
         const result = deleteCategory(id)
 
@@ -1866,6 +2061,9 @@ async function main() {
 
       // PUT /api/categories/reorder - Reorder categories by priority
       if (req.method === 'PUT' && url.pathname === '/api/categories/reorder') {
+        const permError = checkPermission('songs.edit')
+        if (permError) return permError
+
         try {
           const body = (await req.json()) as ReorderCategoriesInput
 
@@ -1917,6 +2115,9 @@ async function main() {
 
       // GET /api/queue - Get all queue items
       if (req.method === 'GET' && url.pathname === '/api/queue') {
+        const permError = checkPermission('queue.view')
+        if (permError) return permError
+
         const queue = getQueue()
         return handleCors(
           req,
@@ -1928,6 +2129,9 @@ async function main() {
 
       // POST /api/queue - Add song to queue
       if (req.method === 'POST' && url.pathname === '/api/queue') {
+        const permError = checkPermission('queue.add')
+        if (permError) return permError
+
         try {
           const body = (await req.json()) as AddToQueueInput
 
@@ -1988,6 +2192,9 @@ async function main() {
 
       // POST /api/queue/slide - Insert standalone slide to queue
       if (req.method === 'POST' && url.pathname === '/api/queue/slide') {
+        const permError = checkPermission('queue.add')
+        if (permError) return permError
+
         try {
           const body = (await req.json()) as InsertSlideInput
 
@@ -2042,6 +2249,9 @@ async function main() {
         /^\/api\/queue\/slide\/(\d+)$/,
       )
       if (req.method === 'PUT' && updateSlideMatch?.[1]) {
+        const permError = checkPermission('queue.add')
+        if (permError) return permError
+
         try {
           const id = parseInt(updateSlideMatch[1], 10)
           const body = (await req.json()) as Partial<UpdateSlideInput>
@@ -2105,6 +2315,9 @@ async function main() {
 
       // DELETE /api/queue - Clear entire queue
       if (req.method === 'DELETE' && url.pathname === '/api/queue') {
+        const permError = checkPermission('queue.clear')
+        if (permError) return permError
+
         const result = clearQueue()
 
         if (!result.success) {
@@ -2128,6 +2341,9 @@ async function main() {
       // DELETE /api/queue/:id - Remove item from queue
       const removeFromQueueMatch = url.pathname.match(/^\/api\/queue\/(\d+)$/)
       if (req.method === 'DELETE' && removeFromQueueMatch?.[1]) {
+        const permError = checkPermission('queue.remove')
+        if (permError) return permError
+
         const id = parseInt(removeFromQueueMatch[1], 10)
         const result = removeFromQueue(id)
 
@@ -2151,6 +2367,9 @@ async function main() {
 
       // PUT /api/queue/reorder - Reorder queue items
       if (req.method === 'PUT' && url.pathname === '/api/queue/reorder') {
+        const permError = checkPermission('queue.reorder')
+        if (permError) return permError
+
         try {
           const body = (await req.json()) as ReorderQueueInput
 
@@ -2198,6 +2417,9 @@ async function main() {
         /^\/api\/queue\/(\d+)\/expand$/,
       )
       if (req.method === 'PUT' && expandQueueMatch?.[1]) {
+        const permError = checkPermission('queue.view')
+        if (permError) return permError
+
         try {
           const id = parseInt(expandQueueMatch[1], 10)
           const body = (await req.json()) as { expanded: boolean }
