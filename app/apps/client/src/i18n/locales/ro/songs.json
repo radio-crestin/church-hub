@@ -82,6 +82,7 @@
     "successMessage": "S-au importat cu succes {{count}} cântare/cântări",
     "processing": "Se procesează fișierele...",
     "processingProgress": "Procesare: {{current}} din {{total}} fișiere",
+    "downloading": "Se descarcă...",
     "extracting": "Se extrage arhiva...",
     "converting": "Se convertesc fișierele PPT...",
     "convertingProgress": "Conversie: {{current}} din {{total}} fișiere PPT",

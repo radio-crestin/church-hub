@@ -70,6 +70,7 @@ export function useKeyboardShortcuts() {
 
         case 'F5':
         case 'F10':
+        case 'Enter':
           // Show presentation (unhide)
           event.preventDefault()
           showSlide.mutate()

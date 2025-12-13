@@ -26,9 +26,9 @@ export interface ExtractResult {
 }
 
 export interface ImportProgress {
-  phase: 'extracting' | 'converting' | 'parsing' | 'saving'
+  phase: 'downloading' | 'extracting' | 'converting' | 'parsing' | 'saving'
   current: number
-  total: number
+  total: number | null
   currentFile?: string
 }
 

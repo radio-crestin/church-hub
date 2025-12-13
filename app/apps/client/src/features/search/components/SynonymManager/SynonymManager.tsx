@@ -1,68 +1,67 @@
-import { FolderOpen, Plus } from 'lucide-react'
+import { Plus, Search } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import type { SynonymGroup } from '~/service/synonyms'
 import { ConfirmModal } from '~/ui/modal'
 import { useToast } from '~/ui/toast'
-import { CategoryCard } from './CategoryCard'
-import { CategoryForm } from './CategoryForm'
-import {
-  useCategories,
-  useDeleteCategory,
-  useUpsertCategory,
-} from '../../hooks'
-import type { SongCategory } from '../../types'
+import { SynonymCard } from './SynonymCard'
+import { SynonymForm } from './SynonymForm'
+import { useDeleteSynonym, useSynonyms, useUpsertSynonym } from '../../hooks'
 
 type ModalState =
   | { type: 'none' }
   | { type: 'create' }
-  | { type: 'edit'; category: SongCategory }
-  | { type: 'delete'; category: SongCategory }
+  | { type: 'edit'; synonym: SynonymGroup }
+  | { type: 'delete'; synonym: SynonymGroup }
 
-export function CategoryManager() {
+export function SynonymManager() {
   const { t } = useTranslation('settings')
   const { showToast } = useToast()
-  const { data: categories, isLoading, error } = useCategories()
-  const upsertCategory = useUpsertCategory()
-  const deleteCategory = useDeleteCategory()
+  const { data: synonyms, isLoading, error } = useSynonyms()
+  const upsertSynonym = useUpsertSynonym()
+  const deleteSynonym = useDeleteSynonym()
 
   const [modal, setModal] = useState<ModalState>({ type: 'none' })
 
-  const handleCreate = async (name: string, value: number) => {
-    const result = await upsertCategory.mutateAsync({ name, priority: value })
-    if (result.success) {
+  const handleCreate = async (primary: string, synonymsList: string[]) => {
+    const success = await upsertSynonym.mutateAsync({
+      primary,
+      synonyms: synonymsList,
+    })
+    if (success) {
       setModal({ type: 'none' })
-      showToast(t('sections.categories.toast.created'), 'success')
+      showToast(t('sections.synonyms.toast.created'), 'success')
     } else {
-      showToast(t('sections.categories.toast.error'), 'error')
+      showToast(t('sections.synonyms.toast.error'), 'error')
     }
   }
 
-  const handleEdit = async (name: string, value: number) => {
+  const handleEdit = async (primary: string, synonymsList: string[]) => {
     if (modal.type !== 'edit') return
 
-    const result = await upsertCategory.mutateAsync({
-      id: modal.category.id,
-      name,
-      priority: value,
+    const success = await upsertSynonym.mutateAsync({
+      id: modal.synonym.id,
+      primary,
+      synonyms: synonymsList,
     })
-    if (result.success) {
+    if (success) {
       setModal({ type: 'none' })
-      showToast(t('sections.categories.toast.updated'), 'success')
+      showToast(t('sections.synonyms.toast.updated'), 'success')
     } else {
-      showToast(t('sections.categories.toast.error'), 'error')
+      showToast(t('sections.synonyms.toast.error'), 'error')
     }
   }
 
   const handleDelete = async () => {
     if (modal.type !== 'delete') return
 
-    const success = await deleteCategory.mutateAsync(modal.category.id)
+    const success = await deleteSynonym.mutateAsync(modal.synonym.id)
     if (success) {
       setModal({ type: 'none' })
-      showToast(t('sections.categories.toast.deleted'), 'success')
+      showToast(t('sections.synonyms.toast.deleted'), 'success')
     } else {
-      showToast(t('sections.categories.toast.error'), 'error')
+      showToast(t('sections.synonyms.toast.error'), 'error')
     }
   }
 
@@ -77,7 +76,7 @@ export function CategoryManager() {
   if (error) {
     return (
       <div className="text-center py-8 text-red-500">
-        {t('sections.categories.toast.error')}
+        {t('sections.synonyms.toast.error')}
       </div>
     )
   }
@@ -87,10 +86,10 @@ export function CategoryManager() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {t('sections.categories.title')}
+            {t('sections.synonyms.title')}
           </h3>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {t('sections.categories.description')}
+            {t('sections.synonyms.description')}
           </p>
         </div>
         <button
@@ -100,44 +99,44 @@ export function CategoryManager() {
             text-white rounded-lg transition-colors text-sm"
         >
           <Plus size={16} />
-          {t('sections.categories.addCategory')}
+          {t('sections.synonyms.addSynonym')}
         </button>
       </div>
 
-      {categories && categories.length > 0 ? (
+      {synonyms && synonyms.length > 0 ? (
         <div className="space-y-2">
-          {categories.map((category) => (
-            <CategoryCard
-              key={category.id}
-              category={category}
-              onEdit={() => setModal({ type: 'edit', category })}
-              onDelete={() => setModal({ type: 'delete', category })}
+          {synonyms.map((synonym) => (
+            <SynonymCard
+              key={synonym.id}
+              synonym={synonym}
+              onEdit={() => setModal({ type: 'edit', synonym })}
+              onDelete={() => setModal({ type: 'delete', synonym })}
             />
           ))}
         </div>
       ) : (
         <div className="text-center py-12 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-          <FolderOpen
+          <Search
             size={48}
             className="mx-auto text-gray-400 dark:text-gray-500 mb-3"
           />
           <p className="text-gray-600 dark:text-gray-400 font-medium">
-            {t('sections.categories.noCategories')}
+            {t('sections.synonyms.noSynonyms')}
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
-            {t('sections.categories.noCategoriesDescription')}
+            {t('sections.synonyms.noSynonymsDescription')}
           </p>
         </div>
       )}
 
       {/* Create/Edit Modal */}
       {(modal.type === 'create' || modal.type === 'edit') && (
-        <CategoryForm
+        <SynonymForm
           isOpen={true}
-          category={modal.type === 'edit' ? modal.category : undefined}
+          synonym={modal.type === 'edit' ? modal.synonym : undefined}
           onSubmit={modal.type === 'create' ? handleCreate : handleEdit}
           onCancel={() => setModal({ type: 'none' })}
-          isLoading={upsertCategory.isPending}
+          isLoading={upsertSynonym.isPending}
         />
       )}
 
@@ -145,11 +144,11 @@ export function CategoryManager() {
       {modal.type === 'delete' && (
         <ConfirmModal
           isOpen={true}
-          title={t('sections.categories.modals.delete.title')}
-          message={t('sections.categories.modals.delete.message', {
-            name: modal.category.name,
+          title={t('sections.synonyms.modals.delete.title')}
+          message={t('sections.synonyms.modals.delete.message', {
+            primary: modal.synonym.primary,
           })}
-          confirmLabel={t('sections.categories.modals.delete.confirm')}
+          confirmLabel={t('sections.synonyms.modals.delete.confirm')}
           cancelLabel={t('common:buttons.cancel', 'Cancel')}
           onConfirm={handleDelete}
           onCancel={() => setModal({ type: 'none' })}

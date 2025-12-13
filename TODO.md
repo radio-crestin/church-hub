@@ -1,7 +1,8 @@
 ~~- adauga optiunea de a importa o arhiva zip cu mai multe fisiere in care utilizatorul va avea posibilitatea sa aleaga categoria in care sa fie importate fisierele~~
 ~~- adauga optiunea de a importa OpenSong XML~~
-- imbunatateste algoritmul de search
-- adauga optiunea de a da export in format OpenSong XML
+~~- imbunatateste algoritmul de search~~
+~~- importa toate cantarile existente din PPTX~~
+~~- adauga optiunea de a da export in format OpenSong XML~~
 - implementeaza sistemul de permissioning cu link de autentificare
 - modifica adauga in coada cu adauga in program
 - considera coada actuala ca si un program.,
