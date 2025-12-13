@@ -20,6 +20,7 @@ export interface ExportProgress {
  */
 export interface ExportResult {
   success: boolean
+  cancelled?: boolean
   songCount: number
   filename: string
   error?: string
