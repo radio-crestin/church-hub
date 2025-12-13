@@ -31,9 +31,11 @@ export type {
   ParsedSlide,
 } from './utils'
 export {
+  downloadFromUrl,
   extractPptxFromZip,
   isOpenSongXml,
   parseOpenSongXml,
   parsePptxFile,
   processImportFiles,
+  processZipFromBuffer,
 } from './utils'

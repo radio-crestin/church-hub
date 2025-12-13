@@ -1,22 +1,29 @@
 import { open } from '@tauri-apps/plugin-dialog'
-import { Download, FileUp } from 'lucide-react'
+import { Download, FileUp, Globe } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import {
+  downloadFromUrl,
   ImportConfirmationModal,
   type ImportOptions,
   type ImportProgress,
   ImportProgressModal,
   type ProcessedImport,
   processImportFiles,
+  processZipFromBuffer,
   useBatchImportSongs,
 } from '~/features/song-import'
+import { useCategories, useUpsertCategory } from '~/features/songs/hooks'
 import { AlertModal } from '~/ui/modal'
 import { useToast } from '~/ui/toast'
 import { ExportOptionsModal } from './ExportOptionsModal'
 import { ExportProgressModal } from './ExportProgressModal'
 import { useExportSongs } from '../hooks'
+
+const RESURSE_CRESTINE_URL =
+  'https://download.resursecrestine.ro/programe-crestine/cantece-resurse-crestine-opensong-standard.zip'
+const RESURSE_CRESTINE_CATEGORY_NAME = 'Resurse Crestine'
 
 type ModalState =
   | { type: 'none' }
@@ -38,12 +45,23 @@ export function ImportExportManager() {
     isPending: isExporting,
     progress: exportProgress,
   } = useExportSongs()
+  const { data: categories } = useCategories()
+  const { mutateAsync: upsertCategory } = useUpsertCategory()
 
   const [modalState, setModalState] = useState<ModalState>({ type: 'none' })
   const [songsToImport, setSongsToImport] = useState<ProcessedImport[]>([])
   const [importProgress, setImportProgress] = useState<ImportProgress | null>(
     null,
   )
+  const [isImportingFromResurseCrestine, setIsImportingFromResurseCrestine] =
+    useState(false)
+  const [defaultImportCategoryId, setDefaultImportCategoryId] = useState<
+    number | null
+  >(null)
+  const [defaultImportOptions, setDefaultImportOptions] = useState({
+    useFirstVerseAsTitle: true,
+    overwriteDuplicates: false,
+  })
 
   const handleImport = async () => {
     try {
@@ -63,6 +81,11 @@ export function ImportExportManager() {
 
         if (result.songs.length > 0) {
           setSongsToImport(result.songs)
+          setDefaultImportCategoryId(null)
+          setDefaultImportOptions({
+            useFirstVerseAsTitle: true,
+            overwriteDuplicates: false,
+          })
           setModalState({ type: 'importConfirm' })
         } else {
           setModalState({ type: 'noSongs' })
@@ -174,6 +197,80 @@ export function ImportExportManager() {
     setModalState({ type: 'none' })
   }
 
+  const handleImportFromResurseCrestine = async () => {
+    setIsImportingFromResurseCrestine(true)
+    setModalState({ type: 'importProgress' })
+    setImportProgress({
+      phase: 'downloading',
+      current: 0,
+      total: null,
+      currentFile: 'Resurse Crestine archive',
+    })
+
+    try {
+      // Step 1: Download the ZIP file
+      const zipData = await downloadFromUrl(
+        RESURSE_CRESTINE_URL,
+        (downloaded, total) => {
+          setImportProgress({
+            phase: 'downloading',
+            current: downloaded,
+            total,
+            currentFile: 'Resurse Crestine archive',
+          })
+        },
+      )
+
+      // Step 2: Process the ZIP file
+      const result = await processZipFromBuffer(zipData, (progress) => {
+        setImportProgress(progress)
+      })
+
+      setImportProgress(null)
+
+      if (result.songs.length === 0) {
+        setModalState({ type: 'noSongs' })
+        setIsImportingFromResurseCrestine(false)
+        return
+      }
+
+      // Step 3: Get or create the "Resurse Crestine" category for default selection
+      let categoryId: number | null = null
+      const existingCategory = categories?.find(
+        (c) => c.name === RESURSE_CRESTINE_CATEGORY_NAME,
+      )
+
+      if (existingCategory) {
+        categoryId = existingCategory.id
+      } else {
+        const categoryResult = await upsertCategory({
+          name: RESURSE_CRESTINE_CATEGORY_NAME,
+        })
+        if (categoryResult.success && categoryResult.category) {
+          categoryId = categoryResult.category.id
+        }
+      }
+
+      // Step 4: Show confirmation modal with defaults
+      setSongsToImport(result.songs)
+      setDefaultImportCategoryId(categoryId)
+      setDefaultImportOptions({
+        useFirstVerseAsTitle: true,
+        overwriteDuplicates: true,
+      })
+      setModalState({ type: 'importConfirm' })
+    } catch (error) {
+      setModalState({ type: 'none' })
+      setImportProgress(null)
+      showToast(
+        t('sections.importExport.toast.importFailed', { error: String(error) }),
+        'error',
+      )
+    } finally {
+      setIsImportingFromResurseCrestine(false)
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div>
@@ -206,6 +303,32 @@ export function ImportExportManager() {
           </button>
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
             {t('sections.importExport.import.supportedFormats')}
+          </p>
+        </div>
+
+        {/* Resurse Crestine Import Section */}
+        <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Globe className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+            <h4 className="font-medium text-gray-900 dark:text-white">
+              {t('sections.importExport.resurseCrestine.title')}
+            </h4>
+          </div>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+            {t('sections.importExport.resurseCrestine.description')}
+          </p>
+          <button
+            type="button"
+            onClick={handleImportFromResurseCrestine}
+            disabled={isImportingFromResurseCrestine}
+            className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
+          >
+            {isImportingFromResurseCrestine
+              ? t('sections.importExport.resurseCrestine.importing')
+              : t('sections.importExport.resurseCrestine.button')}
+          </button>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
+            {t('sections.importExport.resurseCrestine.note')}
           </p>
         </div>
 
@@ -243,6 +366,9 @@ export function ImportExportManager() {
         onCancel={handleCancelImport}
         isPending={isImporting}
         progress={savingProgress}
+        defaultCategoryId={defaultImportCategoryId}
+        defaultUseFirstVerseAsTitle={defaultImportOptions.useFirstVerseAsTitle}
+        defaultOverwriteDuplicates={defaultImportOptions.overwriteDuplicates}
       />
 
       <AlertModal

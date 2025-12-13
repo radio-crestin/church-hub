@@ -82,6 +82,7 @@
     "successMessage": "Successfully imported {{count}} song(s)",
     "processing": "Processing files...",
     "processingProgress": "Processing: {{current}} of {{total}} files",
+    "downloading": "Downloading...",
     "extracting": "Extracting archive...",
     "converting": "Converting PPT files...",
     "convertingProgress": "Converting: {{current}} of {{total}} PPT files",
