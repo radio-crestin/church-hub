@@ -194,7 +194,7 @@
         "byCategory": "By category",
         "selectCategory": "Select a category",
         "exporting": "Exporting...",
-        "fetching": "Fetching songs...",
+        "fetching": "Exporting songs...",
         "generating": "Generating XML files...",
         "zipping": "Creating ZIP archive...",
         "saving": "Saving file...",
