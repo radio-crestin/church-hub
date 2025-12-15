@@ -22,8 +22,11 @@ function extractFilenameWithoutExtension(filePath: string): string {
 }
 
 /**
- * Extracts title from the first slide's first line, removing leading non-alphanumeric characters
- * For example: "/: Am căutat pe Domnul" becomes "Am căutat pe Domnul"
+ * Extracts title from the first slide's first line, keeping only allowed characters
+ * Allowed: letters (including accented), numbers, spaces, hyphens, underscores
+ * Examples:
+ *   "/: Am căutat pe Domnul" → "Am căutat pe Domnul"
+ *   "Te-am ales să fii al Meu!" → "Te-am ales să fii al Meu"
  */
 function extractTitleFromSlideText(text: string): string | null {
   if (!text.trim()) return null
@@ -32,9 +35,12 @@ function extractTitleFromSlideText(text: string): string | null {
   const firstLine = text.split('\n')[0].trim()
   if (!firstLine) return null
 
-  // Remove leading non-alphanumeric characters (keeping letters including accented ones, and numbers)
+  // Remove leading non-alphanumeric characters
   // \p{L} matches any letter (including accented characters), \p{N} matches any number
-  const cleaned = firstLine.replace(/^[^\p{L}\p{N}]+/u, '').trim()
+  let cleaned = firstLine.replace(/^[^\p{L}\p{N}]+/u, '')
+
+  // Keep only letters, numbers, spaces, hyphens, and underscores
+  cleaned = cleaned.replace(/[^\p{L}\p{N}\s\-_]/gu, '').trim()
 
   return cleaned || null
 }
