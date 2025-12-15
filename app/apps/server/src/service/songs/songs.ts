@@ -1,4 +1,5 @@
 import { getCategoryById } from './categories'
+import { sanitizeSongTitle } from './sanitizeTitle'
 import { getSlidesBySongId } from './song-slides'
 import type {
   BatchImportResult,
@@ -12,11 +13,59 @@ import type {
 import { getDatabase } from '../../db'
 
 const DEBUG = process.env.DEBUG === 'true'
+const SLIDE_BULK_INSERT_CHUNK_SIZE = 500
 
 function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
   if (level === 'debug' && !DEBUG) return
   // biome-ignore lint/suspicious/noConsole: logging utility
   console.log(`[${level.toUpperCase()}] [songs] ${message}`)
+}
+
+interface SlideInput {
+  content: string
+  sortOrder: number
+  label?: string | null
+}
+
+interface SlideWithSongId {
+  songId: number
+  content: string
+  sortOrder: number
+  label: string | null
+}
+
+/**
+ * Bulk inserts all slides from all songs in chunks
+ * This is more efficient than calling insertSlidesBulk per song
+ */
+function insertSlidesBulkAll(
+  db: any,
+  slides: SlideWithSongId[],
+  now: number,
+): void {
+  if (slides.length === 0) return
+
+  for (let i = 0; i < slides.length; i += SLIDE_BULK_INSERT_CHUNK_SIZE) {
+    const chunk = slides.slice(i, i + SLIDE_BULK_INSERT_CHUNK_SIZE)
+    const valuesSql = chunk.map(() => '(?, ?, ?, ?, ?, ?)').join(', ')
+    const stmt = db.query(`
+      INSERT INTO song_slides (song_id, content, sort_order, label, created_at, updated_at)
+      VALUES ${valuesSql}
+    `)
+
+    const params: (number | string | null)[] = []
+    for (const slide of chunk) {
+      params.push(
+        slide.songId,
+        slide.content,
+        slide.sortOrder,
+        slide.label,
+        now,
+        now,
+      )
+    }
+    stmt.run(...params)
+  }
 }
 
 /**
@@ -160,6 +209,7 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
   try {
     const db = getDatabase()
     const now = Math.floor(Date.now() / 1000)
+    const sanitizedTitle = sanitizeSongTitle(input.title)
 
     let songId: number
 
@@ -175,7 +225,7 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
         WHERE id = ?
       `)
       query.run(
-        input.title,
+        sanitizedTitle,
         input.categoryId ?? null,
         input.sourceFilePath ?? null,
         input.author ?? null,
@@ -196,7 +246,7 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
 
       log('info', `Song updated: ${input.id}`)
     } else {
-      log('debug', `Creating song: ${input.title}`)
+      log('debug', `Creating song: ${sanitizedTitle}`)
 
       const insertQuery = db.query(`
         INSERT INTO songs (
@@ -208,7 +258,7 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `)
       insertQuery.run(
-        input.title,
+        sanitizedTitle,
         input.categoryId ?? null,
         input.sourceFilePath ?? null,
         input.author ?? null,
@@ -322,7 +372,10 @@ export function deleteSong(id: number): OperationResult {
 
 /**
  * Batch imports multiple songs in a single transaction
- * Much faster than individual upserts for large imports
+ * Optimized for high performance with:
+ * - UPSERT (INSERT ... ON CONFLICT) for single-statement insert/update
+ * - Bulk slide deletion in single query
+ * - Bulk slide insertion in chunks
  */
 export function batchImportSongs(
   songs: BatchImportSongInput[],
@@ -342,127 +395,126 @@ export function batchImportSongs(
     // Use transaction for atomic batch insert
     db.exec('BEGIN TRANSACTION')
 
-    // Prepare statements for reuse
-    const findExistingStmt = db.query(
-      'SELECT id FROM songs WHERE LOWER(title) = LOWER(?) LIMIT 1',
-    )
+    // Prepare UPSERT statement - combines INSERT and UPDATE in one operation
+    // Uses ON CONFLICT with the UNIQUE constraint on title (COLLATE NOCASE)
+    // RETURNING id gives us the song ID whether inserted or updated
+    const upsertSongStmt = overwriteDuplicates
+      ? db.query(`
+          INSERT INTO songs (
+            title, category_id, source_file_path,
+            author, copyright, ccli, key, tempo, time_signature,
+            theme, alt_theme, hymn_number, key_line, presentation_order,
+            created_at, updated_at
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(title) DO UPDATE SET
+            category_id = excluded.category_id,
+            source_file_path = excluded.source_file_path,
+            author = excluded.author,
+            copyright = excluded.copyright,
+            ccli = excluded.ccli,
+            key = excluded.key,
+            tempo = excluded.tempo,
+            time_signature = excluded.time_signature,
+            theme = excluded.theme,
+            alt_theme = excluded.alt_theme,
+            hymn_number = excluded.hymn_number,
+            key_line = excluded.key_line,
+            presentation_order = excluded.presentation_order,
+            updated_at = excluded.updated_at
+          RETURNING id
+        `)
+      : db.query(`
+          INSERT INTO songs (
+            title, category_id, source_file_path,
+            author, copyright, ccli, key, tempo, time_signature,
+            theme, alt_theme, hymn_number, key_line, presentation_order,
+            created_at, updated_at
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(title) DO NOTHING
+          RETURNING id
+        `)
 
-    const insertSongStmt = db.query(`
-      INSERT INTO songs (
-        title, category_id, source_file_path,
-        author, copyright, ccli, key, tempo, time_signature,
-        theme, alt_theme, hymn_number, key_line, presentation_order,
-        created_at, updated_at
-      )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `)
+    // Collect all song IDs and their slides for batch processing
+    const songsWithIds: Array<{
+      songId: number
+      slides: SlideInput[]
+    }> = []
 
-    const updateSongStmt = db.query(`
-      UPDATE songs
-      SET title = ?, category_id = ?, source_file_path = ?,
-          author = ?, copyright = ?, ccli = ?, key = ?, tempo = ?,
-          time_signature = ?, theme = ?, alt_theme = ?, hymn_number = ?,
-          key_line = ?, presentation_order = ?, updated_at = ?
-      WHERE id = ?
-    `)
-
-    const getLastIdStmt = db.query('SELECT last_insert_rowid() as id')
-
-    const deleteSlidesByIdStmt = db.query(
-      'DELETE FROM song_slides WHERE song_id = ?',
-    )
-
-    const insertSlideStmt = db.query(`
-      INSERT INTO song_slides (song_id, content, sort_order, label, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `)
-
+    // Phase 1: Insert/Update all songs and collect IDs
     for (let i = 0; i < songs.length; i++) {
       const input = songs[i]
 
       try {
         const categoryId = input.categoryId ?? defaultCategoryId ?? null
-        let songId: number
+        const sanitizedTitle = sanitizeSongTitle(input.title)
 
-        // Check for existing song if overwrite is enabled
-        const existingSong = overwriteDuplicates
-          ? (findExistingStmt.get(input.title) as { id: number } | null)
-          : null
+        const result = upsertSongStmt.get(
+          sanitizedTitle,
+          categoryId,
+          input.sourceFilePath ?? null,
+          input.author ?? null,
+          input.copyright ?? null,
+          input.ccli ?? null,
+          input.key ?? null,
+          input.tempo ?? null,
+          input.timeSignature ?? null,
+          input.theme ?? null,
+          input.altTheme ?? null,
+          input.hymnNumber ?? null,
+          input.keyLine ?? null,
+          input.presentationOrder ?? null,
+          now,
+          now,
+        ) as { id: number } | null
 
-        if (existingSong) {
-          // Update existing song
-          songId = existingSong.id
-          updateSongStmt.run(
-            input.title,
-            categoryId,
-            input.sourceFilePath ?? null,
-            input.author ?? null,
-            input.copyright ?? null,
-            input.ccli ?? null,
-            input.key ?? null,
-            input.tempo ?? null,
-            input.timeSignature ?? null,
-            input.theme ?? null,
-            input.altTheme ?? null,
-            input.hymnNumber ?? null,
-            input.keyLine ?? null,
-            input.presentationOrder ?? null,
-            now,
-            songId,
-          )
-
-          // Delete old slides before inserting new ones
-          deleteSlidesByIdStmt.run(songId)
-          log('debug', `Updated existing song ${songId}: "${input.title}"`)
+        if (result) {
+          songIds.push(result.id)
+          songsWithIds.push({ songId: result.id, slides: input.slides || [] })
+          successCount++
         } else {
-          // Insert new song
-          insertSongStmt.run(
-            input.title,
-            categoryId,
-            input.sourceFilePath ?? null,
-            input.author ?? null,
-            input.copyright ?? null,
-            input.ccli ?? null,
-            input.key ?? null,
-            input.tempo ?? null,
-            input.timeSignature ?? null,
-            input.theme ?? null,
-            input.altTheme ?? null,
-            input.hymnNumber ?? null,
-            input.keyLine ?? null,
-            input.presentationOrder ?? null,
-            now,
-            now,
-          )
-
-          const result = getLastIdStmt.get() as { id: number }
-          songId = result.id
+          // DO NOTHING was triggered (duplicate without overwrite)
+          failedCount++
+          errors.push(`Song "${input.title}": duplicate title (skipped)`)
         }
-
-        songIds.push(songId)
-
-        // Insert slides if provided
-        if (input.slides && input.slides.length > 0) {
-          for (const slide of input.slides) {
-            insertSlideStmt.run(
-              songId,
-              slide.content,
-              slide.sortOrder,
-              slide.label ?? null,
-              now,
-              now,
-            )
-          }
-        }
-
-        successCount++
-        log('debug', `Song ${i + 1}/${songs.length} imported: ${songId}`)
       } catch (error) {
         failedCount++
         const msg = error instanceof Error ? error.message : String(error)
         errors.push(`Song "${input.title}": ${msg}`)
         log('error', `Failed to import song ${i + 1}: ${msg}`)
       }
+    }
+
+    // Phase 2: Bulk delete old slides for all imported songs (when overwriting)
+    if (overwriteDuplicates && songIds.length > 0) {
+      const placeholders = songIds.map(() => '?').join(',')
+      db.query(
+        `DELETE FROM song_slides WHERE song_id IN (${placeholders})`,
+      ).run(...songIds)
+    }
+
+    // Phase 3: Bulk insert all slides at once (super batch)
+    const allSlides: Array<{
+      songId: number
+      content: string
+      sortOrder: number
+      label: string | null
+    }> = []
+
+    for (const { songId, slides } of songsWithIds) {
+      for (const slide of slides) {
+        allSlides.push({
+          songId,
+          content: slide.content,
+          sortOrder: slide.sortOrder,
+          label: slide.label ?? null,
+        })
+      }
+    }
+
+    if (allSlides.length > 0) {
+      insertSlidesBulkAll(db, allSlides, now)
     }
 
     db.exec('COMMIT')

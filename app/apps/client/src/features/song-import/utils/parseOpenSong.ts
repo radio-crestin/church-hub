@@ -1,3 +1,4 @@
+import { sanitizeSongTitle } from './sanitizeTitle'
 import type {
   OpenSongMetadata,
   ParsedSlideWithLabel,
@@ -55,9 +56,10 @@ function extractMetadata(
   song: Element,
   filename?: string,
 ): { title: string; metadata: OpenSongMetadata } {
-  const title =
+  const rawTitle =
     getTextContent(song, 'title') ||
     (filename ? extractFilenameWithoutExtension(filename) : 'Untitled Song')
+  const title = sanitizeSongTitle(rawTitle)
 
   const metadata: OpenSongMetadata = {
     author: getTextContent(song, 'author'),

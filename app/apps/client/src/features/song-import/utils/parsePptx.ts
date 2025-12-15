@@ -1,5 +1,7 @@
 import JSZip from 'jszip'
 
+import { sanitizeSongTitle } from './sanitizeTitle'
+
 export interface ParsedSlide {
   slideNumber: number
   text: string
@@ -22,11 +24,7 @@ function extractFilenameWithoutExtension(filePath: string): string {
 }
 
 /**
- * Extracts title from the first slide's first line, keeping only allowed characters
- * Allowed: letters (including accented), numbers, spaces, hyphens, underscores
- * Examples:
- *   "/: Am căutat pe Domnul" → "Am căutat pe Domnul"
- *   "Te-am ales să fii al Meu!" → "Te-am ales să fii al Meu"
+ * Extracts title from the first slide's first line, using shared sanitization
  */
 function extractTitleFromSlideText(text: string): string | null {
   if (!text.trim()) return null
@@ -35,14 +33,8 @@ function extractTitleFromSlideText(text: string): string | null {
   const firstLine = text.split('\n')[0].trim()
   if (!firstLine) return null
 
-  // Remove leading non-alphanumeric characters
-  // \p{L} matches any letter (including accented characters), \p{N} matches any number
-  let cleaned = firstLine.replace(/^[^\p{L}\p{N}]+/u, '')
-
-  // Keep only letters, numbers, spaces, hyphens, and underscores
-  cleaned = cleaned.replace(/[^\p{L}\p{N}\s\-_]/gu, '').trim()
-
-  return cleaned || null
+  const sanitized = sanitizeSongTitle(firstLine)
+  return sanitized === 'Untitled Song' ? null : sanitized
 }
 
 /**
@@ -90,12 +82,12 @@ export async function parsePptxFile(
     }
   }
 
-  // Fallback to filename if no title from slide
+  // Fallback to filename if no title from slide (also sanitized)
   if (title === 'Imported Song') {
     if (filename) {
-      title = extractFilenameWithoutExtension(filename)
+      title = sanitizeSongTitle(extractFilenameWithoutExtension(filename))
     } else if (file instanceof File && file.name) {
-      title = extractFilenameWithoutExtension(file.name)
+      title = sanitizeSongTitle(extractFilenameWithoutExtension(file.name))
     }
   }
 
