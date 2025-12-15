@@ -38,6 +38,7 @@ interface SongMetadata {
   hymnNumber: string | null
   keyLine: string | null
   presentationOrder: string | null
+  sourceFilePath: string | null
 }
 
 interface SongEditorProps {
@@ -72,6 +73,7 @@ const defaultMetadata: SongMetadata = {
   hymnNumber: null,
   keyLine: null,
   presentationOrder: null,
+  sourceFilePath: null,
 }
 
 export function SongEditor({
@@ -493,6 +495,25 @@ export function SongEditor({
                     className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-white text-sm"
                   />
                 </div>
+
+                {/* Source File Path (read-only) */}
+                {metadata.sourceFilePath && (
+                  <div className="sm:col-span-2">
+                    <label
+                      htmlFor="sourceFilePath"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    >
+                      {t('metadata.sourceFilePath')}
+                    </label>
+                    <input
+                      id="sourceFilePath"
+                      type="text"
+                      value={metadata.sourceFilePath || ''}
+                      readOnly
+                      className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 text-sm cursor-not-allowed"
+                    />
+                  </div>
+                )}
 
                 {/* Presentation Order (read-only) */}
                 {metadata.presentationOrder && (
