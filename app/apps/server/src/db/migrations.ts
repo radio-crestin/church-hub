@@ -7,6 +7,8 @@ const DEBUG = process.env.DEBUG === 'true'
  */
 function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
   if (level === 'debug' && !DEBUG) return
+  // biome-ignore lint/suspicious/noConsole: migration logging
+  console.log(`[migrations:${level}] ${message}`)
 }
 
 // Embedded schema SQL for compiled binary compatibility
@@ -108,6 +110,20 @@ CREATE TABLE IF NOT EXISTS user_permissions (
 -- Index for permission lookups
 CREATE INDEX IF NOT EXISTS idx_user_permissions_user_id ON user_permissions(user_id);
 
+-- App Sessions Table
+-- Stores authenticated app sessions from Tauri bootstrap
+CREATE TABLE IF NOT EXISTS app_sessions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  session_token TEXT NOT NULL UNIQUE,
+  session_token_hash TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL DEFAULT 'Local Admin',
+  created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  last_used_at INTEGER
+);
+
+-- Index for app session lookups
+CREATE INDEX IF NOT EXISTS idx_app_sessions_token_hash ON app_sessions(session_token_hash);
+
 -- Schedules Table
 -- Stores presentation schedules (collections of songs and slides)
 CREATE TABLE IF NOT EXISTS schedules (
@@ -193,11 +209,12 @@ CREATE INDEX IF NOT EXISTS idx_song_categories_name ON song_categories(name);
 
 -- Songs Table
 -- Stores songs with optional category
+-- title uses COLLATE NOCASE for case-insensitive uniqueness and UPSERT support
 CREATE TABLE IF NOT EXISTS songs (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  title TEXT NOT NULL,
+  title TEXT NOT NULL COLLATE NOCASE UNIQUE,
   category_id INTEGER,
-  source_file_path TEXT,
+  source_filename TEXT,
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
   updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
   FOREIGN KEY (category_id) REFERENCES song_categories(id) ON DELETE SET NULL
@@ -375,7 +392,7 @@ const ROLE_TEMPLATES: Record<string, string[]> = {
  * Initialize system roles with their default permissions
  */
 function initializeSystemRoles(db: Database): void {
-  log('debug', 'Initializing system roles...')
+  log('info', 'Initializing system roles...')
 
   for (const [roleName, permissions] of Object.entries(ROLE_TEMPLATES)) {
     // Insert role if not exists
@@ -390,17 +407,35 @@ function initializeSystemRoles(db: Database): void {
       .get(roleName) as { id: number } | null
 
     if (role) {
+      // Count existing permissions
+      const existingCount = db
+        .query(
+          `SELECT COUNT(*) as count FROM role_permissions WHERE role_id = ?`,
+        )
+        .get(role.id) as { count: number }
+
       // Insert permissions for this role
+      let addedCount = 0
       for (const permission of permissions) {
-        db.exec(`
-          INSERT OR IGNORE INTO role_permissions (role_id, permission)
-          VALUES (${role.id}, '${permission}')
-        `)
+        const result = db.run(
+          `INSERT OR IGNORE INTO role_permissions (role_id, permission) VALUES (?, ?)`,
+          [role.id, permission],
+        )
+        if (result.changes > 0) {
+          addedCount++
+        }
+      }
+
+      if (addedCount > 0) {
+        log(
+          'info',
+          `Role "${roleName}": added ${addedCount} new permissions (total: ${existingCount.count + addedCount})`,
+        )
       }
     }
   }
 
-  log('debug', 'System roles initialized')
+  log('info', 'System roles initialized')
 }
 
 /**
@@ -858,13 +893,50 @@ export function runMigrations(db: Database): void {
       )
     }
 
-    // Migration: Add source_file_path column to songs table if it doesn't exist
+    // Migration: Rename source_file_path to source_filename and extract filenames from full paths
+    // This must run BEFORE the "add source_filename" migration below
     if (
       tableExists(db, 'songs') &&
-      !columnExists(db, 'songs', 'source_file_path')
+      columnExists(db, 'songs', 'source_file_path')
     ) {
-      log('info', 'Adding source_file_path column to songs table')
-      db.exec(`ALTER TABLE songs ADD COLUMN source_file_path TEXT`)
+      log('info', 'Migrating source_file_path to source_filename')
+
+      // Add new column if it doesn't exist
+      if (!columnExists(db, 'songs', 'source_filename')) {
+        db.exec(`ALTER TABLE songs ADD COLUMN source_filename TEXT`)
+      }
+
+      // Extract filenames from existing paths
+      const songs = db
+        .query(
+          'SELECT id, source_file_path FROM songs WHERE source_file_path IS NOT NULL',
+        )
+        .all() as Array<{ id: number; source_file_path: string }>
+
+      const updateStmt = db.prepare(
+        'UPDATE songs SET source_filename = ? WHERE id = ?',
+      )
+
+      for (const song of songs) {
+        // Extract filename from path (handles / and \)
+        const parts = song.source_file_path.split(/[/\\]/)
+        const filename = parts[parts.length - 1] || null
+        updateStmt.run(filename, song.id)
+      }
+
+      // Drop old column
+      db.exec(`ALTER TABLE songs DROP COLUMN source_file_path`)
+
+      log('info', 'source_file_path migrated to source_filename')
+    }
+
+    // Migration: Add source_filename column to songs table if it doesn't exist (for fresh installs)
+    if (
+      tableExists(db, 'songs') &&
+      !columnExists(db, 'songs', 'source_filename')
+    ) {
+      log('info', 'Adding source_filename column to songs table')
+      db.exec(`ALTER TABLE songs ADD COLUMN source_filename TEXT`)
     }
 
     // Migration: Add OpenSong metadata columns to songs table
@@ -909,6 +981,99 @@ export function runMigrations(db: Database): void {
       // For existing users without a token, we need to regenerate tokens
       // This is a breaking change - existing tokens will need to be regenerated
       db.exec(`ALTER TABLE users ADD COLUMN token TEXT DEFAULT ''`)
+    }
+
+    // Migration: Recreate songs table with COLLATE NOCASE UNIQUE constraint for UPSERT support
+    // This is needed because existing tables may have been created without the UNIQUE constraint
+    if (tableExists(db, 'songs')) {
+      // Check if title column has UNIQUE constraint by trying to get table info
+      const tableInfo = db
+        .query(
+          `SELECT sql FROM sqlite_master WHERE type='table' AND name='songs'`,
+        )
+        .get() as { sql: string } | null
+
+      const hasUniqueConstraint =
+        tableInfo?.sql?.includes('UNIQUE') &&
+        tableInfo?.sql?.includes('COLLATE NOCASE')
+
+      if (!hasUniqueConstraint) {
+        log(
+          'info',
+          'Recreating songs table with COLLATE NOCASE UNIQUE constraint for UPSERT support',
+        )
+
+        // Get all columns from songs table
+        const columns = db.query('PRAGMA table_info(songs)').all() as Array<{
+          name: string
+        }>
+        const columnNames = columns.map((c) => c.name).join(', ')
+
+        // Create new table with proper constraint
+        db.exec(`
+          CREATE TABLE songs_new (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL COLLATE NOCASE UNIQUE,
+            category_id INTEGER,
+            source_filename TEXT,
+            author TEXT,
+            copyright TEXT,
+            ccli TEXT,
+            key TEXT,
+            tempo TEXT,
+            time_signature TEXT,
+            theme TEXT,
+            alt_theme TEXT,
+            hymn_number TEXT,
+            key_line TEXT,
+            presentation_order TEXT,
+            created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+            updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
+            FOREIGN KEY (category_id) REFERENCES song_categories(id) ON DELETE SET NULL
+          )
+        `)
+
+        // Copy data (handle duplicates by keeping the first occurrence)
+        db.exec(`
+          INSERT OR IGNORE INTO songs_new (${columnNames})
+          SELECT ${columnNames} FROM songs
+        `)
+
+        // Drop old table and rename new one
+        db.exec('DROP TABLE songs')
+        db.exec('ALTER TABLE songs_new RENAME TO songs')
+
+        // Recreate indexes
+        db.exec('CREATE INDEX IF NOT EXISTS idx_songs_title ON songs(title)')
+        db.exec(
+          'CREATE INDEX IF NOT EXISTS idx_songs_category_id ON songs(category_id)',
+        )
+
+        log('info', 'Songs table recreated with UNIQUE constraint')
+      }
+    }
+
+    // Drop the old nocase index if it exists (no longer needed with UNIQUE constraint)
+    db.exec('DROP INDEX IF EXISTS idx_songs_title_nocase')
+
+    // Migration: Add presentation_count column to songs table for tracking how many times a song was presented
+    if (
+      tableExists(db, 'songs') &&
+      !columnExists(db, 'songs', 'presentation_count')
+    ) {
+      log('info', 'Adding presentation_count column to songs table')
+      db.exec(
+        `ALTER TABLE songs ADD COLUMN presentation_count INTEGER NOT NULL DEFAULT 0`,
+      )
+    }
+
+    // Migration: Add last_manual_edit column to songs table for tracking when a song was last edited via UI
+    if (
+      tableExists(db, 'songs') &&
+      !columnExists(db, 'songs', 'last_manual_edit')
+    ) {
+      log('info', 'Adding last_manual_edit column to songs table')
+      db.exec(`ALTER TABLE songs ADD COLUMN last_manual_edit INTEGER`)
     }
 
     log('info', 'Migrations completed successfully')

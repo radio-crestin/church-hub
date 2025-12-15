@@ -5,7 +5,8 @@
     "apps/*"
   ],
   "scripts": {
-    "dev": "concurrently --kill-others \"bun run --filter server dev\" \"tauri dev\"",
+    "dev": "tauri dev",
+    "dev:web": "concurrently --kill-others \"bun run --filter server dev\" \"bun run --filter client dev\"",
     "lint": "biome check ./apps",
     "lint:fix": "biome check ./apps --write",
     "tauri:dev": "tauri dev",

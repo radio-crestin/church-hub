@@ -211,6 +211,75 @@ export function updateSearchIndexByCategory(categoryId: number): void {
 }
 
 /**
+ * Batch updates the FTS index for multiple songs in a single transaction
+ * Much faster than calling updateSearchIndex() individually for each song
+ */
+export function batchUpdateSearchIndex(songIds: number[]): void {
+  if (songIds.length === 0) return
+
+  try {
+    log('info', `Batch updating search index for ${songIds.length} songs`)
+
+    const db = getDatabase()
+
+    db.exec('BEGIN TRANSACTION')
+
+    try {
+      // Build placeholders for IN clause
+      const placeholders = songIds.map(() => '?').join(',')
+
+      // Delete existing FTS entries for these songs
+      db.query(`DELETE FROM songs_fts WHERE song_id IN (${placeholders})`).run(
+        ...songIds,
+      )
+      db.query(
+        `DELETE FROM songs_fts_trigram WHERE song_id IN (${placeholders})`,
+      ).run(...songIds)
+
+      // Batch insert all songs with their slides in a single query
+      db.query(`
+        INSERT INTO songs_fts (song_id, title, category_name, content)
+        SELECT
+          s.id,
+          s.title,
+          COALESCE(sc.name, ''),
+          COALESCE(GROUP_CONCAT(ss.content, ' '), '')
+        FROM songs s
+        LEFT JOIN song_categories sc ON s.category_id = sc.id
+        LEFT JOIN (
+          SELECT song_id, content FROM song_slides ORDER BY sort_order
+        ) ss ON ss.song_id = s.id
+        WHERE s.id IN (${placeholders})
+        GROUP BY s.id
+      `).run(...songIds)
+
+      // Also update trigram index
+      db.query(`
+        INSERT INTO songs_fts_trigram (song_id, title, content)
+        SELECT
+          s.id,
+          s.title,
+          COALESCE(GROUP_CONCAT(ss.content, ' '), '')
+        FROM songs s
+        LEFT JOIN (
+          SELECT song_id, content FROM song_slides ORDER BY sort_order
+        ) ss ON ss.song_id = s.id
+        WHERE s.id IN (${placeholders})
+        GROUP BY s.id
+      `).run(...songIds)
+
+      db.exec('COMMIT')
+      log('info', `Batch search index updated for ${songIds.length} songs`)
+    } catch (error) {
+      db.exec('ROLLBACK')
+      throw error
+    }
+  } catch (error) {
+    log('error', `Failed to batch update search index: ${error}`)
+  }
+}
+
+/**
  * Rebuilds the entire search index (both standard and trigram)
  * This is much faster than updating each song individually
  */
@@ -353,8 +422,9 @@ function buildSearchQuery(queryText: string): string {
  * Title matching is simpler since titles are short
  *
  * Score breakdown:
- * - 100: Exact phrase match
- * - 80-99: All terms present in correct order
+ * - 100: Title starts with exact phrase
+ * - 95: Exact phrase match (anywhere in title)
+ * - 80-94: All terms present in correct order
  * - 60-79: All terms present (any order)
  * - 0-59: Partial term matches
  */
@@ -366,10 +436,16 @@ function calculateTitleScore(title: string, queryTerms: string[]): number {
     removeDiacritics(t).toLowerCase(),
   )
 
-  // Check for exact phrase match (highest score)
   const exactPhrase = normalizedTerms.join(' ')
-  if (normalizedTitle.includes(exactPhrase)) {
+
+  // Highest score: title starts with the exact phrase
+  if (normalizedTitle.startsWith(exactPhrase)) {
     return 100
+  }
+
+  // Second highest: phrase appears elsewhere in title
+  if (normalizedTitle.includes(exactPhrase)) {
+    return 95
   }
 
   // Count matched terms and check order
@@ -394,9 +470,9 @@ function calculateTitleScore(title: string, queryTerms: string[]): number {
   const orderBonus = inOrderCount === matchedCount ? 0.2 : 0
   const allMatchedBonus = matchedCount === normalizedTerms.length ? 0.2 : 0
 
-  // Score: base 60% for matches, +20% for all matched, +20% for correct order
+  // Score: base 54% for matches, +20% for all matched, +20% for correct order (max 94)
   return Math.round(
-    matchPercentage * 60 + allMatchedBonus * 100 + orderBonus * 100,
+    matchPercentage * 54 + allMatchedBonus * 100 + orderBonus * 100,
   )
 }
 

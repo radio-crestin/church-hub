@@ -12,10 +12,10 @@ export function useImportPptxAsSong() {
   const upsertMutation = useUpsertSong()
 
   const importAsSong = useCallback(
-    async (parsedPptx: ParsedPptx, sourceFilePath: string | null) => {
+    async (parsedPptx: ParsedPptx, sourceFilename: string | null) => {
       const result = await upsertMutation.mutateAsync({
         title: parsedPptx.title,
-        sourceFilePath,
+        sourceFilename,
         slides: parsedPptx.slides.map((slide, idx) => ({
           content: slide.htmlContent,
           sortOrder: idx,

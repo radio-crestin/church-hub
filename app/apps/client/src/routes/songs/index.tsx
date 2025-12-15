@@ -124,7 +124,7 @@ function SongsPage() {
               sortOrder: idx,
               label: 'label' in slide ? slide.label : null,
             })),
-            sourceFilePath: s.sourceFilePath,
+            sourceFilename: s.sourceFilename,
             // Include OpenSong metadata if available
             author: metadata?.author,
             copyright: metadata?.copyright,

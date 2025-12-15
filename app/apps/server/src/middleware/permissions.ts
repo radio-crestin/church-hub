@@ -5,6 +5,8 @@ const DEBUG = process.env.DEBUG === 'true'
 
 function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
   if (level === 'debug' && !DEBUG) return
+  // biome-ignore lint/suspicious/noConsole: permission logging
+  console.log(`[permissions:${level}] ${message}`)
 }
 
 /**
@@ -23,7 +25,10 @@ export function requirePermission(
 
     // Check user permissions
     if (!context.permissions) {
-      log('warning', 'No permissions found for user auth')
+      log(
+        'warning',
+        `No permissions found for user ${context.userId} - required: ${permission}`,
+      )
       return new Response(
         JSON.stringify({
           error: 'Forbidden',
@@ -40,7 +45,7 @@ export function requirePermission(
     if (!hasPermission) {
       log(
         'warning',
-        `Permission denied: ${permission} for user ${context.userId}`,
+        `Permission denied: ${permission} for user ${context.userId}. User has: ${context.permissions.join(', ')}`,
       )
       return new Response(
         JSON.stringify({
