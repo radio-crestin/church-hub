@@ -22,6 +22,24 @@ function extractFilenameWithoutExtension(filePath: string): string {
 }
 
 /**
+ * Extracts title from the first slide's first line, removing leading non-alphanumeric characters
+ * For example: "/: Am căutat pe Domnul" becomes "Am căutat pe Domnul"
+ */
+function extractTitleFromSlideText(text: string): string | null {
+  if (!text.trim()) return null
+
+  // Get the first line
+  const firstLine = text.split('\n')[0].trim()
+  if (!firstLine) return null
+
+  // Remove leading non-alphanumeric characters (keeping letters including accented ones, and numbers)
+  // \p{L} matches any letter (including accented characters), \p{N} matches any number
+  const cleaned = firstLine.replace(/^[^\p{L}\p{N}]+/u, '').trim()
+
+  return cleaned || null
+}
+
+/**
  * Parses a PPTX file and extracts text from each slide
  * @param file - The PPTX file (File object or ArrayBuffer)
  * @param filename - Optional filename to use as title (for ArrayBuffer inputs)
@@ -55,12 +73,24 @@ export async function parsePptxFile(
     }
   }
 
-  // Determine title from filename
+  // Determine title from first slide's text, falling back to filename
   let title = 'Imported Song'
-  if (filename) {
-    title = extractFilenameWithoutExtension(filename)
-  } else if (file instanceof File && file.name) {
-    title = extractFilenameWithoutExtension(file.name)
+
+  // Try to extract title from the first slide's first line
+  if (slides.length > 0) {
+    const slideTitle = extractTitleFromSlideText(slides[0].text)
+    if (slideTitle) {
+      title = slideTitle
+    }
+  }
+
+  // Fallback to filename if no title from slide
+  if (title === 'Imported Song') {
+    if (filename) {
+      title = extractFilenameWithoutExtension(filename)
+    } else if (file instanceof File && file.name) {
+      title = extractFilenameWithoutExtension(file.name)
+    }
   }
 
   return { title, slides }
