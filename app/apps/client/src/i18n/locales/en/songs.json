@@ -90,6 +90,7 @@
     "saving": "Saving to database...",
     "useFirstVerseAsTitle": "Use first verse as title",
     "overwriteDuplicates": "Overwrite existing songs with same title",
+    "skipManuallyEdited": "Skip songs that were manually edited",
     "libreOfficeNotInstalled": "LibreOffice is required to import .ppt files",
     "libreOfficeNotInstalledDescription": "Please install LibreOffice from https://www.libreoffice.org to enable .ppt file import. Alternatively, convert your files to .pptx format first."
   },
@@ -107,6 +108,9 @@
     "keyLine": "Key Line",
     "keyLinePlaceholder": "Enter a memorable line from the song...",
     "presentationOrder": "Presentation Order",
-    "sourceFilePath": "Source File"
+    "sourceFilename": "Source File",
+    "presentationCount": "Times Presented",
+    "lastManualEdit": "Last Manual Edit",
+    "neverEdited": "Never edited"
   }
 }

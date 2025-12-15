@@ -8,7 +8,7 @@ import type { ParsedPptx } from '../utils/parsePptx'
 interface PptxImportDialogProps {
   isOpen: boolean
   parsedPptx: ParsedPptx | null
-  sourceFilePath: string | null
+  sourceFilename: string | null
   onConfirm: (songId: number) => void
   onCancel: () => void
 }
@@ -16,7 +16,7 @@ interface PptxImportDialogProps {
 export function PptxImportDialog({
   isOpen,
   parsedPptx,
-  sourceFilePath,
+  sourceFilename,
   onConfirm,
   onCancel,
 }: PptxImportDialogProps) {
@@ -42,7 +42,7 @@ export function PptxImportDialog({
 
     const result = await upsertMutation.mutateAsync({
       title: title.trim(),
-      sourceFilePath,
+      sourceFilename,
       slides: parsedPptx.slides.map((slide, idx) => ({
         content: slide.htmlContent,
         sortOrder: idx,

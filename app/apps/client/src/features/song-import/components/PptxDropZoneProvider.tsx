@@ -40,10 +40,10 @@ export function PptxDropZoneProvider({ children }: Props) {
 
   // Direct import function
   const importPptxAsSong = useCallback(
-    async (parsed: ParsedPptx, sourceFilePath: string | null) => {
+    async (parsed: ParsedPptx, sourceFilename: string | null) => {
       const result = await upsertMutation.mutateAsync({
         title: parsed.title,
-        sourceFilePath,
+        sourceFilename,
         slides: parsed.slides.map((slide, idx) => ({
           content: slide.htmlContent,
           sortOrder: idx,

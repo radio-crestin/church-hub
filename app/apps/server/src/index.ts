@@ -1,4 +1,3 @@
-import os from 'node:os'
 import process from 'node:process'
 
 import { closeDatabase, initializeDatabase, runMigrations } from './db'
@@ -9,7 +8,6 @@ import {
   requirePermission,
 } from './middleware'
 import { getOpenApiSpec, getScalarDocs } from './openapi'
-import { listenRustIPC } from './rust-ipc'
 import {
   ALL_PERMISSIONS,
   type CreateUserInput,
@@ -85,6 +83,7 @@ import {
 import {
   type BatchImportSongInput,
   batchImportSongs,
+  batchUpdateSearchIndex,
   cloneSongSlide,
   deleteCategory,
   deleteSong,
@@ -126,66 +125,31 @@ async function main() {
   rebuildSearchIndex()
   rebuildScheduleSearchIndex()
 
-  // Only listen to Rust IPC when running inside Tauri
-  const isTauriMode =
-    process.env.TAURI_MODE === 'true' || process.stdin.isTTY === false
-  if (isTauriMode) {
-    listenRustIPC()
-  }
-
   const isProd = process.env.NODE_ENV === 'production'
 
-  function handleCors(_: Request, res: Response) {
-    res.headers.set('Access-Control-Allow-Origin', '*')
+  // biome-ignore lint/suspicious/noConsole: Startup logging
+  console.log('[server] Starting with simple auth (localhost = admin)')
+
+  function handleCors(req: Request, res: Response) {
+    // Get the origin from the request, or use localhost as fallback
+    const origin = req.headers.get('Origin') || 'http://localhost:8086'
+    res.headers.set('Access-Control-Allow-Origin', origin)
     res.headers.set(
       'Access-Control-Allow-Methods',
       'GET, POST, PUT, DELETE, OPTIONS',
     )
-    res.headers.set('Access-Control-Allow-Headers', '*')
+    res.headers.set(
+      'Access-Control-Allow-Headers',
+      'Content-Type, Authorization, X-App-Session',
+    )
     res.headers.set('Access-Control-Allow-Credentials', 'true')
     return res
-  }
-
-  // Get all IP addresses of this server machine
-  function getServerIPs(): Set<string> {
-    const ips = new Set<string>([
-      '127.0.0.1',
-      '::1',
-      'localhost',
-      '::ffff:127.0.0.1',
-    ])
-    const interfaces = os.networkInterfaces()
-    for (const name in interfaces) {
-      const netInterface = interfaces[name]
-      if (netInterface) {
-        for (const info of netInterface) {
-          ips.add(info.address)
-          // Also add IPv4-mapped IPv6 format
-          if (info.family === 'IPv4') {
-            ips.add(`::ffff:${info.address}`)
-          }
-        }
-      }
-    }
-    return ips
-  }
-
-  // Cache server IPs (computed once at startup)
-  const serverIPs = getServerIPs()
-
-  // Helper to check if request is from the server machine itself
-  function isLocalRequest(clientIP: string | null): boolean {
-    if (!clientIP) return false
-    return serverIPs.has(clientIP)
   }
 
   const server = Bun.serve<WebSocketData>({
     port: process.env['PORT'] ?? 3000,
     hostname: '0.0.0.0',
     async fetch(req: Request, server) {
-      // Get client IP for permission checks
-      const clientSocketAddr = server.requestIP(req)
-      const clientIP = clientSocketAddr?.address ?? null
       if (req.method === 'OPTIONS') {
         return handleCors(req, new Response(null, { status: 204 }))
       }
@@ -206,7 +170,7 @@ async function main() {
       }
       let _context: RequestContext | null = null
 
-      // User authentication endpoint (public - sets cookie)
+      // User authentication endpoint (public - sets cookie for remote users)
       const userAuthMatch = url.pathname.match(/^\/api\/auth\/user\/([^/]+)$/)
       if (req.method === 'GET' && userAuthMatch?.[1]) {
         const token = decodeURIComponent(userAuthMatch[1])
@@ -232,12 +196,26 @@ async function main() {
         const frontendPort = process.env['VITE_PORT'] ?? 8086
         const frontendUrl = `http://${host}:${frontendPort}/`
 
+        // Build cookie with domain for cross-port sharing
+        // Note: Domain attribute allows cookie to be sent to all ports on the same host
+        const cookieParts = [
+          `user_auth=${token}`,
+          'HttpOnly',
+          'SameSite=Lax',
+          'Max-Age=31536000',
+          'Path=/',
+        ]
+        // Only add Domain for non-localhost (IP addresses need explicit domain)
+        if (host !== 'localhost' && host !== '127.0.0.1') {
+          cookieParts.push(`Domain=${host}`)
+        }
+
         // Redirect to frontend app with cookie set
         const response = new Response(null, {
           status: 302,
           headers: {
             Location: frontendUrl,
-            'Set-Cookie': `user_auth=${token}; HttpOnly; SameSite=Lax; Max-Age=31536000; Path=/`,
+            'Set-Cookie': cookieParts.join('; '),
           },
         })
 
@@ -252,8 +230,8 @@ async function main() {
         return handleCors(req, getOpenApiSpec())
       }
 
-      // All other /api/* routes require authentication in production
-      if (isProd && url.pathname.startsWith('/api/')) {
+      // All /api/* routes require authentication (localhost = admin)
+      if (url.pathname.startsWith('/api/')) {
         const authResult = await combinedAuthMiddleware(req)
         if (authResult.response) return handleCors(req, authResult.response)
         _context = authResult.context
@@ -281,18 +259,10 @@ async function main() {
         const key = getSettingMatch[2]
 
         const setting = getSetting(table, key)
-        if (!setting) {
-          return handleCors(
-            req,
-            new Response(JSON.stringify({ error: 'Setting not found' }), {
-              status: 404,
-            }),
-          )
-        }
 
         return handleCors(
           req,
-          new Response(JSON.stringify({ data: setting }), {
+          new Response(JSON.stringify({ data: setting ?? null }), {
             headers: { 'Content-Type': 'application/json' },
           }),
         )
@@ -418,11 +388,7 @@ async function main() {
       }
 
       // Helper function to check user permissions
-      // Grants admin access for localhost requests, otherwise checks user permissions
       function checkPermission(permission: Permission): Response | null {
-        // Grant admin access for localhost/local IP requests
-        if (isLocalRequest(clientIP)) return null
-
         if (!_context) {
           return handleCors(
             req,
@@ -748,70 +714,44 @@ async function main() {
         )
       }
 
-      // GET /api/auth/user/:token - Authenticate user via token URL (sets cookie and redirects)
-      const authUserMatch = url.pathname.match(/^\/api\/auth\/user\/(.+)$/)
-      if (req.method === 'GET' && authUserMatch?.[1]) {
-        const token = decodeURIComponent(authUserMatch[1])
-        const user = await getUserByToken(token)
+      // POST /api/users/:id/grant-all-permissions - Grant all permissions to a user
+      const grantAllPermissionsMatch = url.pathname.match(
+        /^\/api\/users\/(\d+)\/grant-all-permissions$/,
+      )
+      if (req.method === 'POST' && grantAllPermissionsMatch?.[1]) {
+        const authError = await requireAppAuth()
+        if (authError) return authError
 
-        if (!user || !user.isActive) {
+        const id = parseInt(grantAllPermissionsMatch[1], 10)
+        const result = updateUserPermissions(id, ALL_PERMISSIONS)
+
+        if (!result.success) {
           return handleCors(
             req,
-            new Response(
-              JSON.stringify({ error: 'Invalid or inactive user token' }),
-              {
-                status: 401,
-                headers: { 'Content-Type': 'application/json' },
-              },
-            ),
+            new Response(JSON.stringify({ error: result.error }), {
+              status: 500,
+              headers: { 'Content-Type': 'application/json' },
+            }),
           )
         }
 
-        // Update last used timestamp
-        updateUserLastUsed(user.id)
-
-        // Get the origin from the request to redirect back to the client
-        const origin = req.headers.get('Origin') || req.headers.get('Referer')
-        const clientUrl = origin
-          ? new URL(origin).origin
-          : 'http://localhost:8086'
-
-        // Set the user_auth cookie and redirect to the client
-        const response = new Response(null, {
-          status: 302,
-          headers: {
-            Location: clientUrl,
-            'Set-Cookie': `user_auth=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000`,
-          },
-        })
-
-        return handleCors(req, response)
+        const updatedUser = getUserById(id)
+        return handleCors(
+          req,
+          new Response(
+            JSON.stringify({
+              data: updatedUser,
+              message: `Granted ${ALL_PERMISSIONS.length} permissions to user`,
+            }),
+            {
+              headers: { 'Content-Type': 'application/json' },
+            },
+          ),
+        )
       }
 
       // GET /api/auth/me - Get current user's info and permissions
       if (req.method === 'GET' && url.pathname === '/api/auth/me') {
-        // Grant admin access for local network requests
-        if (isLocalRequest(clientIP)) {
-          return handleCors(
-            req,
-            new Response(
-              JSON.stringify({
-                data: {
-                  id: 0,
-                  name: 'Local Admin',
-                  authType: 'local',
-                  isAdmin: true,
-                  isApp: true,
-                  permissions: ALL_PERMISSIONS,
-                },
-              }),
-              {
-                headers: { 'Content-Type': 'application/json' },
-              },
-            ),
-          )
-        }
-
         const authResult = await combinedAuthMiddleware(req)
         if (authResult.response) return handleCors(req, authResult.response)
 
@@ -822,7 +762,7 @@ async function main() {
               JSON.stringify({
                 data: {
                   id: 0,
-                  name: 'App Admin',
+                  name: 'Local Admin',
                   authType: 'app',
                   isAdmin: true,
                   isApp: true,
@@ -1647,7 +1587,7 @@ async function main() {
             )
           }
 
-          const song = upsertSong(body)
+          const song = upsertSong({ ...body, isManualEdit: true })
 
           if (!song) {
             return handleCors(
@@ -1690,6 +1630,7 @@ async function main() {
             songs: BatchImportSongInput[]
             categoryId?: number | null
             overwriteDuplicates?: boolean
+            skipManuallyEdited?: boolean
           }
 
           if (!body.songs || !Array.isArray(body.songs)) {
@@ -1706,12 +1647,11 @@ async function main() {
             body.songs,
             body.categoryId,
             body.overwriteDuplicates,
+            body.skipManuallyEdited,
           )
 
-          // Update search index for all imported songs
-          for (const songId of result.songIds) {
-            updateSearchIndex(songId)
-          }
+          // Update search index for all imported songs in a single batch operation
+          batchUpdateSearchIndex(result.songIds)
 
           return handleCors(
             req,

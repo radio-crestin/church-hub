@@ -10,7 +10,7 @@ export interface Song {
   id: number
   title: string
   categoryId: number | null
-  sourceFilePath: string | null
+  sourceFilename: string | null
   author: string | null
   copyright: string | null
   ccli: string | null
@@ -22,6 +22,8 @@ export interface Song {
   hymnNumber: string | null
   keyLine: string | null
   presentationOrder: string | null
+  presentationCount: number
+  lastManualEdit: number | null
   createdAt: number
   updatedAt: number
 }
@@ -52,7 +54,7 @@ export interface UpsertSongInput {
   id?: number
   title: string
   categoryId?: number | null
-  sourceFilePath?: string | null
+  sourceFilename?: string | null
   author?: string | null
   copyright?: string | null
   ccli?: string | null

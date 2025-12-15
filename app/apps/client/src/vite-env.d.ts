@@ -2,7 +2,6 @@
 /// <reference types="vite-plugin-svgr/client" />
 
 type ServerConfig = {
-  authToken: string
   serverPort: number
 }
 declare global {
@@ -10,7 +9,6 @@ declare global {
     __appVersion: string
     __envMode: string
     __serverConfig: ServerConfig
-    __localServerAuthToken: string
   }
 
   declare const __appVersion: string

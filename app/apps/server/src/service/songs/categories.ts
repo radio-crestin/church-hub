@@ -139,15 +139,29 @@ export function upsertCategory(
 }
 
 /**
- * Deletes a category (songs with this category will have category_id set to NULL)
+ * Deletes a category and all songs belonging to it
+ * Songs' slides are automatically deleted via CASCADE
  */
 export function deleteCategory(id: number): OperationResult {
   try {
     log('debug', `Deleting category: ${id}`)
 
     const db = getDatabase()
-    const query = db.query('DELETE FROM song_categories WHERE id = ?')
-    query.run(id)
+
+    // Delete all songs belonging to this category first
+    // (song_slides are deleted automatically via CASCADE on songs table)
+    const deleteSongsQuery = db.query('DELETE FROM songs WHERE category_id = ?')
+    const songsResult = deleteSongsQuery.run(id)
+    log(
+      'debug',
+      `Deleted ${songsResult.changes} songs belonging to category ${id}`,
+    )
+
+    // Delete the category
+    const deleteCategoryQuery = db.query(
+      'DELETE FROM song_categories WHERE id = ?',
+    )
+    deleteCategoryQuery.run(id)
 
     log('info', `Category deleted: ${id}`)
     return { success: true }

@@ -186,20 +186,24 @@ export const openApiSpec = {
         ],
         responses: {
           '200': {
-            description: 'Setting found',
+            description: 'Setting value or null if not found',
             content: {
               'application/json': {
                 schema: {
                   type: 'object',
                   properties: {
-                    data: { $ref: '#/components/schemas/Setting' },
+                    data: {
+                      oneOf: [
+                        { $ref: '#/components/schemas/Setting' },
+                        { type: 'null' },
+                      ],
+                    },
                   },
                 },
               },
             },
           },
           '401': { $ref: '#/components/responses/Unauthorized' },
-          '404': { $ref: '#/components/responses/NotFound' },
         },
       },
       delete: {
@@ -654,6 +658,21 @@ export const openApiSpec = {
                     items: {
                       $ref: '#/components/schemas/BatchImportSongInput',
                     },
+                  },
+                  categoryId: {
+                    type: 'integer',
+                    nullable: true,
+                    description: 'Default category ID for imported songs',
+                  },
+                  overwriteDuplicates: {
+                    type: 'boolean',
+                    description:
+                      'Whether to overwrite existing songs with same title',
+                  },
+                  skipManuallyEdited: {
+                    type: 'boolean',
+                    description:
+                      'Skip songs that were manually edited (only used when overwriteDuplicates is true)',
                   },
                 },
               },
@@ -2237,7 +2256,7 @@ export const openApiSpec = {
           id: { type: 'integer' },
           title: { type: 'string' },
           categoryId: { type: 'integer', nullable: true },
-          sourceFilePath: { type: 'string', nullable: true },
+          sourceFilename: { type: 'string', nullable: true },
           author: { type: 'string', nullable: true },
           copyright: { type: 'string', nullable: true },
           ccli: { type: 'string', nullable: true },
@@ -2249,6 +2268,15 @@ export const openApiSpec = {
           hymnNumber: { type: 'string', nullable: true },
           keyLine: { type: 'string', nullable: true },
           presentationOrder: { type: 'string', nullable: true },
+          presentationCount: {
+            type: 'integer',
+            description: 'Number of times the song was presented',
+          },
+          lastManualEdit: {
+            type: 'integer',
+            nullable: true,
+            description: 'Unix timestamp of last manual edit from UI',
+          },
           createdAt: { type: 'integer', description: 'Unix timestamp' },
           updatedAt: { type: 'integer', description: 'Unix timestamp' },
         },
@@ -2306,7 +2334,7 @@ export const openApiSpec = {
           },
           title: { type: 'string' },
           categoryId: { type: 'integer', nullable: true },
-          sourceFilePath: { type: 'string', nullable: true },
+          sourceFilename: { type: 'string', nullable: true },
           author: { type: 'string', nullable: true },
           copyright: { type: 'string', nullable: true },
           ccli: { type: 'string', nullable: true },
@@ -2364,7 +2392,7 @@ export const openApiSpec = {
         properties: {
           title: { type: 'string' },
           categoryId: { type: 'integer', nullable: true },
-          sourceFilePath: { type: 'string', nullable: true },
+          sourceFilename: { type: 'string', nullable: true },
           author: { type: 'string', nullable: true },
           copyright: { type: 'string', nullable: true },
           ccli: { type: 'string', nullable: true },
@@ -2395,6 +2423,11 @@ export const openApiSpec = {
         properties: {
           successCount: { type: 'integer' },
           failedCount: { type: 'integer' },
+          skippedCount: {
+            type: 'integer',
+            description:
+              'Number of songs skipped (e.g., manually edited songs)',
+          },
           songIds: {
             type: 'array',
             items: { type: 'integer' },

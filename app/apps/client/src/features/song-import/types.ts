@@ -70,7 +70,7 @@ export interface ParsedSong {
 
 export interface ProcessedImport {
   parsed: ParsedPptx | ParsedSong
-  sourceFilePath: string | null
+  sourceFilename: string | null
   sourceFormat: 'pptx' | 'opensong'
 }
 
@@ -87,7 +87,7 @@ export interface BatchImportInput {
       sortOrder: number
       label?: string | null
     }>
-    sourceFilePath: string | null
+    sourceFilename: string | null
     // OpenSong metadata
     author?: string | null
     copyright?: string | null
@@ -107,10 +107,12 @@ export interface BatchImportInput {
 export interface BatchImportResult {
   successCount: number
   failedCount: number
+  skippedCount: number
   songIds: number[]
 }
 
 export interface ImportOptions {
   overwriteDuplicates: boolean
   useFirstVerseAsTitle: boolean
+  skipManuallyEdited: boolean
 }

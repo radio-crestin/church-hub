@@ -8,6 +8,7 @@ const BATCH_SIZE = 200
 
 interface BatchImportOptions {
   overwriteDuplicates?: boolean
+  skipManuallyEdited?: boolean
 }
 
 export function useBatchImportSongs() {
@@ -25,6 +26,7 @@ export function useBatchImportSongs() {
     const songIds: number[] = []
     let successCount = 0
     let failedCount = 0
+    let skippedCount = 0
 
     try {
       // Process in batches to avoid overwhelming the server
@@ -38,7 +40,7 @@ export function useBatchImportSongs() {
             songs: batch.map((song) => ({
               title: song.title,
               categoryId: input.categoryId,
-              sourceFilePath: song.sourceFilePath,
+              sourceFilename: song.sourceFilename,
               slides: song.slides,
               author: song.author,
               copyright: song.copyright,
@@ -54,6 +56,7 @@ export function useBatchImportSongs() {
             })),
             categoryId: input.categoryId,
             overwriteDuplicates: options?.overwriteDuplicates ?? false,
+            skipManuallyEdited: options?.skipManuallyEdited ?? false,
           }),
         })
 
@@ -68,6 +71,7 @@ export function useBatchImportSongs() {
           data: {
             successCount: number
             failedCount: number
+            skippedCount: number
             songIds: number[]
             errors: string[]
           }
@@ -76,6 +80,7 @@ export function useBatchImportSongs() {
         songIds.push(...data.data.songIds)
         successCount += data.data.successCount
         failedCount += data.data.failedCount
+        skippedCount += data.data.skippedCount
 
         // Update progress
         const processed = Math.min(i + BATCH_SIZE, input.songs.length)
@@ -88,7 +93,7 @@ export function useBatchImportSongs() {
       setProgress(0)
     }
 
-    return { successCount, failedCount, songIds }
+    return { successCount, failedCount, skippedCount, songIds }
   }
 
   return { batchImport, isPending, progress }

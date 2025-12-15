@@ -84,7 +84,7 @@ export async function processZipFromBuffer(
             success: true as const,
             data: {
               parsed,
-              sourceFilePath: null,
+              sourceFilename: pptxFile.filename,
               sourceFormat: 'pptx' as const,
             },
           }
@@ -136,7 +136,7 @@ export async function processZipFromBuffer(
             success: true as const,
             data: {
               parsed,
-              sourceFilePath: null,
+              sourceFilename: pptFile.filename,
               sourceFormat: 'pptx' as const,
             },
           }
@@ -196,7 +196,7 @@ export async function processZipFromBuffer(
             success: true as const,
             data: {
               parsed,
-              sourceFilePath: null,
+              sourceFilename: opensongFile.filename,
               sourceFormat: 'opensong' as const,
             },
           }

@@ -127,7 +127,7 @@ export function ImportExportManager() {
               sortOrder: idx,
               label: 'label' in slide ? slide.label : null,
             })),
-            sourceFilePath: s.sourceFilePath,
+            sourceFilename: s.sourceFilename,
             author: metadata?.author,
             copyright: metadata?.copyright,
             ccli: metadata?.ccli,
