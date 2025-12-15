@@ -19,7 +19,7 @@ interface SongMetadata {
   hymnNumber: string | null
   keyLine: string | null
   presentationOrder: string | null
-  sourceFilePath: string | null
+  sourceFilename: string | null
 }
 
 const defaultMetadata: SongMetadata = {
@@ -34,7 +34,7 @@ const defaultMetadata: SongMetadata = {
   hymnNumber: null,
   keyLine: null,
   presentationOrder: null,
-  sourceFilePath: null,
+  sourceFilename: null,
 }
 
 interface SongEditorModalProps {
@@ -93,7 +93,7 @@ export function SongEditorModal({
         hymnNumber: song.hymnNumber,
         keyLine: song.keyLine,
         presentationOrder: song.presentationOrder,
-        sourceFilePath: song.sourceFilePath,
+        sourceFilename: song.sourceFilename,
       })
       setIsInitialized(true)
     }

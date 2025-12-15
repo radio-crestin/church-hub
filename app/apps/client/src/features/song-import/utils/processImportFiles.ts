@@ -4,6 +4,7 @@ import {
   convertPptToPptx,
   LibreOfficeNotInstalledError,
 } from './convertPptToPptx'
+import { extractFilename } from './extractFilename'
 import { extractFilesFromZip } from './extractPptxFromZip'
 import { parseOpenSongXml } from './parseOpenSong'
 import { parsePptxFile } from './parsePptx'
@@ -117,7 +118,7 @@ export async function processImportFiles(
             success: true as const,
             data: {
               parsed,
-              sourceFilePath: filePath,
+              sourceFilename: extractFilename(filePath),
               sourceFormat: 'pptx' as const,
             },
           }
@@ -203,7 +204,7 @@ export async function processImportFiles(
                 success: true as const,
                 data: {
                   parsed,
-                  sourceFilePath: null,
+                  sourceFilename: pptxFile.filename,
                   sourceFormat: 'pptx' as const,
                 },
               }
@@ -258,7 +259,7 @@ export async function processImportFiles(
                 success: true as const,
                 data: {
                   parsed,
-                  sourceFilePath: null,
+                  sourceFilename: pptFile.filename,
                   sourceFormat: 'pptx' as const,
                 },
               }
@@ -318,7 +319,7 @@ export async function processImportFiles(
                 success: true as const,
                 data: {
                   parsed,
-                  sourceFilePath: null,
+                  sourceFilename: opensongFile.filename,
                   sourceFormat: 'opensong' as const,
                 },
               }
@@ -378,7 +379,7 @@ export async function processImportFiles(
             success: true as const,
             data: {
               parsed,
-              sourceFilePath: filePath,
+              sourceFilename: extractFilename(filePath),
               sourceFormat: 'pptx' as const,
             },
           }
@@ -435,7 +436,7 @@ export async function processImportFiles(
               success: true as const,
               data: {
                 parsed,
-                sourceFilePath: filePath,
+                sourceFilename: extractFilename(filePath),
                 sourceFormat: 'opensong' as const,
               },
             }

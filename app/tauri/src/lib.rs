@@ -1,17 +1,13 @@
 pub mod commands;
-pub mod crypto;
 pub mod domain;
 pub mod server;
+
 use commands::{clear_pending_import, get_pending_import, get_server_config, PendingImport};
 use domain::AppState;
 use parking_lot::Mutex;
-use std::net::TcpListener;
 use std::path::PathBuf;
 use std::sync::Arc;
-#[cfg(not(debug_assertions))]
 use tauri::{Manager, RunEvent};
-#[cfg(debug_assertions)]
-use tauri::Manager;
 use tauri::WindowEvent;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -56,9 +52,9 @@ pub fn run() {
                     );
 
                     for (label, win) in display_windows {
-                        println!("[window-event] Closing window: {}", label);
+                        println!("[window-event] Closing window: {label}");
                         if let Err(e) = win.close() {
-                            println!("[window-event] Failed to close {}: {}", label, e);
+                            println!("[window-event] Failed to close {label}: {e}");
                         }
                     }
 
@@ -72,15 +68,11 @@ pub fn run() {
             }
         })
         .setup(|app| {
-            let sk = crypto::generate_secret_hex();
-
-            let listener = TcpListener::bind("127.0.0.1:0")?;
-            let server_port = listener.local_addr()?.port();
+            let server_port: u16 = 3000;
 
             let app_state = AppState {
-                app_secret_key: sk,
                 server: Arc::new(Mutex::new(None)),
-                server_port: server_port,
+                server_port,
             };
             app.manage(app_state);
 
@@ -92,17 +84,17 @@ pub fn run() {
             let args: Vec<String> = std::env::args().collect();
             if args.len() > 1 {
                 let path = PathBuf::from(&args[1]);
-                if path.extension().map_or(false, |ext| ext.eq_ignore_ascii_case("pptx")) {
-                    println!("[file-association] PPTX file detected: {:?}", path);
+                if path.extension().is_some_and(|ext| ext.eq_ignore_ascii_case("pptx")) {
+                    println!("[file-association] PPTX file detected: {path:?}");
                     *pending_import.file_path.lock() = Some(path);
                 }
             }
 
             app.manage(pending_import);
 
-            #[cfg(not(debug_assertions))]
+            // Start the sidecar server
             if let Err(err) = server::start_server(app.handle(), server_port) {
-                println!("[sidecar] Failed to start the server: {}", err);
+                println!("[sidecar] Failed to start the server: {err}");
             }
 
             Ok(())
@@ -114,12 +106,11 @@ pub fn run() {
         ])
         .build(tauri::generate_context!())
         .expect("error while running tauri application")
-        .run(|_app_handle, _event| {
-            #[cfg(not(debug_assertions))]
-            match _event {
+        .run(|app_handle, event| {
+            match event {
                 RunEvent::ExitRequested { .. } | RunEvent::Exit => {
-                    if let Err(e) = server::shutdown_server(_app_handle) {
-                        println!("[sidecar] Failed to shut down server on exit: {}", e);
+                    if let Err(e) = server::shutdown_server(app_handle) {
+                        println!("[sidecar] Failed to shut down server on exit: {e}");
                     }
                 }
                 _ => {}

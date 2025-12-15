@@ -90,6 +90,7 @@
     "saving": "Se salvează în baza de date...",
     "useFirstVerseAsTitle": "Folosește primul vers ca titlu",
     "overwriteDuplicates": "Suprascrie cântările existente cu același titlu",
+    "skipManuallyEdited": "Sari peste cântările editate manual",
     "libreOfficeNotInstalled": "LibreOffice este necesar pentru a importa fișiere .ppt",
     "libreOfficeNotInstalledDescription": "Te rugăm să instalezi LibreOffice de la https://www.libreoffice.org pentru a activa importul fișierelor .ppt. Alternativ, convertește fișierele în format .pptx mai întâi."
   },
@@ -107,6 +108,9 @@
     "keyLine": "Gama melodie",
     "keyLinePlaceholder": "Introdu un vers memorabil din cântare...",
     "presentationOrder": "Ordinea prezentării",
-    "sourceFilePath": "Fișier sursă"
+    "sourceFilename": "Fișier sursă",
+    "presentationCount": "Număr prezentări",
+    "lastManualEdit": "Ultima editare manuală",
+    "neverEdited": "Needitat"
   }
 }

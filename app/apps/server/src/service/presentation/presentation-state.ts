@@ -14,6 +14,27 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
 }
 
 /**
+ * Increments the presentation count for a song when one of its slides is displayed
+ */
+function incrementSongPresentationCount(songSlideId: number): void {
+  try {
+    const db = getDatabase()
+    // Get song_id from song_slides, then increment presentation_count
+    db.query(`
+      UPDATE songs
+      SET presentation_count = presentation_count + 1
+      WHERE id = (SELECT song_id FROM song_slides WHERE id = ?)
+    `).run(songSlideId)
+    log(
+      'debug',
+      `Incremented presentation count for song with slide ${songSlideId}`,
+    )
+  } catch (error) {
+    log('error', `Failed to increment presentation count: ${error}`)
+  }
+}
+
+/**
  * Converts database record to API format
  */
 function toPresentationState(
@@ -117,6 +138,15 @@ export function updatePresentationState(
       isHidden ? 1 : 0,
       now,
     )
+
+    // Track presentation count when a new song slide is displayed
+    if (
+      input.currentSongSlideId &&
+      input.currentSongSlideId !== current.currentSongSlideId &&
+      !isHidden
+    ) {
+      incrementSongPresentationCount(input.currentSongSlideId)
+    }
 
     log('info', 'Presentation state updated')
     return getPresentationState()

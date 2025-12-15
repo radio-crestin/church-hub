@@ -38,6 +38,7 @@ export function ImportConfirmationModal({
   const [useFirstVerseAsTitle, setUseFirstVerseAsTitle] = useState(
     defaultUseFirstVerseAsTitle,
   )
+  const [skipManuallyEdited, setSkipManuallyEdited] = useState(false)
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -55,6 +56,7 @@ export function ImportConfirmationModal({
       setCategoryId(defaultCategoryId)
       setOverwriteDuplicates(defaultOverwriteDuplicates)
       setUseFirstVerseAsTitle(defaultUseFirstVerseAsTitle)
+      setSkipManuallyEdited(false)
     }
   }, [
     isOpen,
@@ -70,7 +72,11 @@ export function ImportConfirmationModal({
   }
 
   const handleConfirm = () => {
-    onConfirm(categoryId, { overwriteDuplicates, useFirstVerseAsTitle })
+    onConfirm(categoryId, {
+      overwriteDuplicates,
+      useFirstVerseAsTitle,
+      skipManuallyEdited,
+    })
   }
 
   const songCount = songs.length
@@ -138,6 +144,20 @@ export function ImportConfirmationModal({
             />
             <span className="text-sm text-gray-700 dark:text-gray-300">
               {t('batchImport.overwriteDuplicates')}
+            </span>
+          </label>
+          <label
+            className={`flex items-center gap-2 ${!overwriteDuplicates ? 'opacity-50' : 'cursor-pointer'}`}
+          >
+            <input
+              type="checkbox"
+              checked={skipManuallyEdited}
+              onChange={(e) => setSkipManuallyEdited(e.target.checked)}
+              disabled={isPending || !overwriteDuplicates}
+              className="w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 disabled:opacity-50"
+            />
+            <span className="text-sm text-gray-700 dark:text-gray-300">
+              {t('batchImport.skipManuallyEdited')}
             </span>
           </label>
         </div>
