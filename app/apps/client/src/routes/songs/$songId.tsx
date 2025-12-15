@@ -30,6 +30,7 @@ interface SongMetadata {
   hymnNumber: string | null
   keyLine: string | null
   presentationOrder: string | null
+  sourceFilePath: string | null
 }
 
 const defaultMetadata: SongMetadata = {
@@ -44,6 +45,7 @@ const defaultMetadata: SongMetadata = {
   hymnNumber: null,
   keyLine: null,
   presentationOrder: null,
+  sourceFilePath: null,
 }
 
 export const Route = createFileRoute('/songs/$songId')({
@@ -103,6 +105,7 @@ function SongEditorPage() {
         hymnNumber: song.hymnNumber,
         keyLine: song.keyLine,
         presentationOrder: song.presentationOrder,
+        sourceFilePath: song.sourceFilePath,
       }
       setMetadata(loadedMetadata)
 
