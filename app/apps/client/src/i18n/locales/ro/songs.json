@@ -106,6 +106,7 @@
     "altTheme": "Temă alternativă",
     "keyLine": "Gama melodie",
     "keyLinePlaceholder": "Introdu un vers memorabil din cântare...",
-    "presentationOrder": "Ordinea prezentării"
+    "presentationOrder": "Ordinea prezentării",
+    "sourceFilePath": "Fișier sursă"
   }
 }

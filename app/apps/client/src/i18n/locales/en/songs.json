@@ -106,6 +106,7 @@
     "altTheme": "Alternative Theme",
     "keyLine": "Key Line",
     "keyLinePlaceholder": "Enter a memorable line from the song...",
-    "presentationOrder": "Presentation Order"
+    "presentationOrder": "Presentation Order",
+    "sourceFilePath": "Source File"
   }
 }
