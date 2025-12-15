@@ -7,7 +7,9 @@ const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 const fetchFn = isTauri ? tauriFetch : window.fetch.bind(window)
 
 /**
- * Gets the API base URL using the same hostname the client accessed from
+ * Gets the API base URL
+ * - In Tauri: always use localhost with the sidecar port
+ * - In browser: use the same hostname the client accessed from
  */
 function getApiBaseUrl(): string {
   const port =
@@ -15,11 +17,11 @@ function getApiBaseUrl(): string {
     import.meta.env.VITE_SERVER_PORT ??
     3000
 
-  // Use the same hostname the client used to access the app
-  const hostname =
-    typeof window !== 'undefined' && window.location.hostname
-      ? window.location.hostname
-      : 'localhost'
+  // In Tauri, always use localhost (sidecar runs locally)
+  // In browser, use the same hostname the client used to access the app
+  const hostname = isTauri
+    ? 'localhost'
+    : window.location.hostname || 'localhost'
 
   return `http://${hostname}:${port}`
 }
@@ -30,8 +32,8 @@ export async function fetcher<T>(
 ): Promise<T> {
   const res = await fetchFn(`${getApiBaseUrl()}${url}`, {
     ...(options ?? {}),
+    credentials: 'include',
     headers: {
-      Authorization: `Bearer ${window.__serverConfig?.authToken}`, // Not required for dev
       ...(options?.headers ?? {}),
     },
   })

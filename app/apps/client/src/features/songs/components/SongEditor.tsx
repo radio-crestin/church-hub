@@ -38,7 +38,7 @@ interface SongMetadata {
   hymnNumber: string | null
   keyLine: string | null
   presentationOrder: string | null
-  sourceFilePath: string | null
+  sourceFilename: string | null
 }
 
 interface SongEditorProps {
@@ -52,6 +52,9 @@ interface SongEditorProps {
   categoryId: number | null
   slides: LocalSlide[]
   metadata?: SongMetadata
+  // Read-only tracking fields
+  presentationCount?: number
+  lastManualEdit?: number | null
   onTitleChange: (title: string) => void
   onCategoryChange: (categoryId: number | null) => void
   onSlidesChange: (slides: LocalSlide[]) => void
@@ -73,7 +76,7 @@ const defaultMetadata: SongMetadata = {
   hymnNumber: null,
   keyLine: null,
   presentationOrder: null,
-  sourceFilePath: null,
+  sourceFilename: null,
 }
 
 export function SongEditor({
@@ -87,6 +90,8 @@ export function SongEditor({
   categoryId,
   slides,
   metadata = defaultMetadata,
+  presentationCount = 0,
+  lastManualEdit,
   onTitleChange,
   onCategoryChange,
   onSlidesChange,
@@ -497,18 +502,18 @@ export function SongEditor({
                 </div>
 
                 {/* Source File Path (read-only) */}
-                {metadata.sourceFilePath && (
+                {metadata.sourceFilename && (
                   <div className="sm:col-span-2">
                     <label
-                      htmlFor="sourceFilePath"
+                      htmlFor="sourceFilename"
                       className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                     >
-                      {t('metadata.sourceFilePath')}
+                      {t('metadata.sourceFilename')}
                     </label>
                     <input
-                      id="sourceFilePath"
+                      id="sourceFilename"
                       type="text"
-                      value={metadata.sourceFilePath || ''}
+                      value={metadata.sourceFilename || ''}
                       readOnly
                       className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 text-sm cursor-not-allowed"
                     />
@@ -532,6 +537,46 @@ export function SongEditor({
                       className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 text-sm cursor-not-allowed"
                     />
                   </div>
+                )}
+
+                {/* Tracking Stats (read-only) */}
+                {!isNew && (
+                  <>
+                    <div>
+                      <label
+                        htmlFor="presentationCount"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                      >
+                        {t('metadata.presentationCount')}
+                      </label>
+                      <input
+                        id="presentationCount"
+                        type="text"
+                        value={presentationCount}
+                        readOnly
+                        className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 text-sm cursor-not-allowed"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="lastManualEdit"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                      >
+                        {t('metadata.lastManualEdit')}
+                      </label>
+                      <input
+                        id="lastManualEdit"
+                        type="text"
+                        value={
+                          lastManualEdit
+                            ? new Date(lastManualEdit).toLocaleString()
+                            : t('metadata.neverEdited')
+                        }
+                        readOnly
+                        className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 text-sm cursor-not-allowed"
+                      />
+                    </div>
+                  </>
                 )}
               </div>
             )}

@@ -10,6 +10,7 @@ export {
 } from './categories'
 // Search
 export {
+  batchUpdateSearchIndex,
   rebuildSearchIndex,
   removeFromSearchIndex,
   searchSongs,

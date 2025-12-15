@@ -21,7 +21,9 @@ function log(level: 'debug' | 'info' | 'error', message: string) {
 export async function getAllDisplays(): Promise<Display[]> {
   log('debug', 'Fetching all displays')
 
-  const response = await fetch(`${getApiUrl()}/api/displays`)
+  const response = await fetch(`${getApiUrl()}/api/displays`, {
+    credentials: 'include',
+  })
 
   if (!response.ok) {
     throw new Error('Failed to fetch displays')
@@ -37,7 +39,9 @@ export async function getAllDisplays(): Promise<Display[]> {
 export async function getDisplayById(id: number): Promise<Display> {
   log('debug', `Fetching display: ${id}`)
 
-  const response = await fetch(`${getApiUrl()}/api/displays/${id}`)
+  const response = await fetch(`${getApiUrl()}/api/displays/${id}`, {
+    credentials: 'include',
+  })
 
   if (!response.ok) {
     throw new Error('Failed to fetch display')
@@ -59,6 +63,7 @@ export async function upsertDisplay(
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
+    credentials: 'include',
   })
 
   if (!response.ok) {
@@ -77,6 +82,7 @@ export async function deleteDisplay(id: number): Promise<void> {
 
   const response = await fetch(`${getApiUrl()}/api/displays/${id}`, {
     method: 'DELETE',
+    credentials: 'include',
   })
 
   if (!response.ok) {
@@ -97,6 +103,7 @@ export async function updateDisplayTheme(
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ theme }),
+    credentials: 'include',
   })
 
   if (!response.ok) {
@@ -110,7 +117,9 @@ export async function updateDisplayTheme(
 export async function getPresentationState(): Promise<PresentationState> {
   log('debug', 'Fetching presentation state')
 
-  const response = await fetch(`${getApiUrl()}/api/presentation/state`)
+  const response = await fetch(`${getApiUrl()}/api/presentation/state`, {
+    credentials: 'include',
+  })
 
   if (!response.ok) {
     throw new Error('Failed to fetch presentation state')
@@ -132,6 +141,7 @@ export async function updatePresentationState(
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
+    credentials: 'include',
   })
 
   if (!response.ok) {
@@ -150,6 +160,7 @@ export async function stopPresentation(): Promise<PresentationState> {
 
   const response = await fetch(`${getApiUrl()}/api/presentation/stop`, {
     method: 'POST',
+    credentials: 'include',
   })
 
   if (!response.ok) {
@@ -168,6 +179,7 @@ export async function clearSlide(): Promise<PresentationState> {
 
   const response = await fetch(`${getApiUrl()}/api/presentation/clear`, {
     method: 'POST',
+    credentials: 'include',
   })
 
   if (!response.ok) {
@@ -186,6 +198,7 @@ export async function showSlide(): Promise<PresentationState> {
 
   const response = await fetch(`${getApiUrl()}/api/presentation/show`, {
     method: 'POST',
+    credentials: 'include',
   })
 
   if (!response.ok) {
@@ -210,6 +223,7 @@ export async function navigateQueueSlide(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ direction }),
+      credentials: 'include',
     },
   )
 

@@ -32,7 +32,9 @@ export function LivePreview() {
   useEffect(() => {
     const fetchDisplayTheme = async () => {
       try {
-        const response = await fetch(`${getApiUrl()}/api/displays`)
+        const response = await fetch(`${getApiUrl()}/api/displays`, {
+          credentials: 'include',
+        })
         if (response.ok) {
           const result = await response.json()
           const activeDisplay = result.data?.find(
@@ -61,7 +63,9 @@ export function LivePreview() {
 
       try {
         // Find the song slide from the queue
-        const queueResponse = await fetch(`${getApiUrl()}/api/queue`)
+        const queueResponse = await fetch(`${getApiUrl()}/api/queue`, {
+          credentials: 'include',
+        })
         if (queueResponse.ok) {
           const queueResult = await queueResponse.json()
           // Search through queue items to find the slide
@@ -103,6 +107,7 @@ export function LivePreview() {
         const queueResponse = await fetch(`${getApiUrl()}/api/queue`, {
           cache: 'no-store',
           headers: { 'Cache-Control': 'no-cache' },
+          credentials: 'include',
         })
         if (queueResponse.ok) {
           const queueResult = await queueResponse.json()

@@ -77,7 +77,12 @@ export function DisplayWindow({ displayId }: DisplayWindowProps) {
   useEffect(() => {
     const fetchDisplay = async () => {
       try {
-        const response = await fetch(`${getApiUrl()}/api/displays/${displayId}`)
+        const response = await fetch(
+          `${getApiUrl()}/api/displays/${displayId}`,
+          {
+            credentials: 'include',
+          },
+        )
         if (response.ok) {
           const result = await response.json()
           setTheme(result.data.theme)
@@ -105,6 +110,7 @@ export function DisplayWindow({ displayId }: DisplayWindowProps) {
         const queueResponse = await fetch(`${getApiUrl()}/api/queue`, {
           cache: 'no-store',
           headers: { 'Cache-Control': 'no-cache' },
+          credentials: 'include',
         })
         if (queueResponse.ok) {
           const queueResult = await queueResponse.json()
@@ -148,6 +154,7 @@ export function DisplayWindow({ displayId }: DisplayWindowProps) {
         const queueResponse = await fetch(`${getApiUrl()}/api/queue`, {
           cache: 'no-store',
           headers: { 'Cache-Control': 'no-cache' },
+          credentials: 'include',
         })
         if (queueResponse.ok) {
           const queueResult = await queueResponse.json()

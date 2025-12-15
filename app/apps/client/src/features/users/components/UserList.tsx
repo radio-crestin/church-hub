@@ -219,6 +219,7 @@ export function UserList() {
             </button>
           </div>
           <UserForm
+            key={modal.type === 'edit' ? modal.user.id : 'create'}
             user={modal.type === 'edit' ? modal.user : undefined}
             onSubmit={modal.type === 'create' ? handleCreate : handleEdit}
             onCancel={() => setModal({ type: 'none' })}

@@ -16,7 +16,7 @@ export interface SongRecord {
   id: number
   title: string
   category_id: number | null
-  source_file_path: string | null
+  source_filename: string | null
   author: string | null
   copyright: string | null
   ccli: string | null
@@ -28,6 +28,8 @@ export interface SongRecord {
   hymn_number: string | null
   key_line: string | null
   presentation_order: string | null
+  presentation_count: number
+  last_manual_edit: number | null
   created_at: number
   updated_at: number
 }
@@ -63,7 +65,7 @@ export interface Song {
   id: number
   title: string
   categoryId: number | null
-  sourceFilePath: string | null
+  sourceFilename: string | null
   author: string | null
   copyright: string | null
   ccli: string | null
@@ -75,6 +77,8 @@ export interface Song {
   hymnNumber: string | null
   keyLine: string | null
   presentationOrder: string | null
+  presentationCount: number
+  lastManualEdit: number | null
   createdAt: number
   updatedAt: number
 }
@@ -126,7 +130,7 @@ export interface UpsertSongInput {
   id?: number
   title: string
   categoryId?: number | null
-  sourceFilePath?: string | null
+  sourceFilename?: string | null
   author?: string | null
   copyright?: string | null
   ccli?: string | null
@@ -139,6 +143,8 @@ export interface UpsertSongInput {
   keyLine?: string | null
   presentationOrder?: string | null
   slides?: SlideInput[]
+  /** Whether this is a manual edit from the UI (sets last_manual_edit timestamp) */
+  isManualEdit?: boolean
 }
 
 /**
@@ -193,7 +199,7 @@ export interface OperationResult {
 export interface BatchImportSongInput {
   title: string
   categoryId?: number | null
-  sourceFilePath?: string | null
+  sourceFilename?: string | null
   author?: string | null
   copyright?: string | null
   ccli?: string | null
@@ -218,6 +224,7 @@ export interface BatchImportSongInput {
 export interface BatchImportResult {
   successCount: number
   failedCount: number
+  skippedCount: number
   songIds: number[]
   errors: string[]
 }

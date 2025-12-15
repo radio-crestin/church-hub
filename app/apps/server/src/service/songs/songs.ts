@@ -76,7 +76,7 @@ function toSong(record: SongRecord): Song {
     id: record.id,
     title: record.title,
     categoryId: record.category_id,
-    sourceFilePath: record.source_file_path,
+    sourceFilename: record.source_filename,
     author: record.author,
     copyright: record.copyright,
     ccli: record.ccli,
@@ -88,6 +88,8 @@ function toSong(record: SongRecord): Song {
     hymnNumber: record.hymn_number,
     keyLine: record.key_line,
     presentationOrder: record.presentation_order,
+    presentationCount: record.presentation_count,
+    lastManualEdit: record.last_manual_edit,
     createdAt: record.created_at,
     updatedAt: record.updated_at,
   }
@@ -216,18 +218,22 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
     if (input.id) {
       log('debug', `Updating song: ${input.id}`)
 
+      // Set last_manual_edit only when isManualEdit is true (UI edit)
+      const lastManualEdit = input.isManualEdit ? now : null
+
       const query = db.query(`
         UPDATE songs
-        SET title = ?, category_id = ?, source_file_path = ?,
+        SET title = ?, category_id = ?, source_filename = ?,
             author = ?, copyright = ?, ccli = ?, key = ?, tempo = ?,
             time_signature = ?, theme = ?, alt_theme = ?, hymn_number = ?,
-            key_line = ?, presentation_order = ?, updated_at = ?
+            key_line = ?, presentation_order = ?, updated_at = ?,
+            last_manual_edit = COALESCE(?, last_manual_edit)
         WHERE id = ?
       `)
       query.run(
         sanitizedTitle,
         input.categoryId ?? null,
-        input.sourceFilePath ?? null,
+        input.sourceFilename ?? null,
         input.author ?? null,
         input.copyright ?? null,
         input.ccli ?? null,
@@ -240,6 +246,7 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
         input.keyLine ?? null,
         input.presentationOrder ?? null,
         now,
+        lastManualEdit,
         input.id,
       )
       songId = input.id
@@ -248,19 +255,22 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
     } else {
       log('debug', `Creating song: ${sanitizedTitle}`)
 
+      // Set last_manual_edit only when isManualEdit is true (UI edit)
+      const lastManualEdit = input.isManualEdit ? now : null
+
       const insertQuery = db.query(`
         INSERT INTO songs (
-          title, category_id, source_file_path,
+          title, category_id, source_filename,
           author, copyright, ccli, key, tempo, time_signature,
           theme, alt_theme, hymn_number, key_line, presentation_order,
-          created_at, updated_at
+          last_manual_edit, created_at, updated_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `)
       insertQuery.run(
         sanitizedTitle,
         input.categoryId ?? null,
-        input.sourceFilePath ?? null,
+        input.sourceFilename ?? null,
         input.author ?? null,
         input.copyright ?? null,
         input.ccli ?? null,
@@ -272,6 +282,7 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
         input.hymnNumber ?? null,
         input.keyLine ?? null,
         input.presentationOrder ?? null,
+        lastManualEdit,
         now,
         now,
       )
@@ -381,11 +392,13 @@ export function batchImportSongs(
   songs: BatchImportSongInput[],
   defaultCategoryId?: number | null,
   overwriteDuplicates?: boolean,
+  skipManuallyEdited?: boolean,
 ): BatchImportResult {
   const db = getDatabase()
   const songIds: number[] = []
   let successCount = 0
   let failedCount = 0
+  let skippedCount = 0
   const errors: string[] = []
   const now = Math.floor(Date.now() / 1000)
 
@@ -401,7 +414,7 @@ export function batchImportSongs(
     const upsertSongStmt = overwriteDuplicates
       ? db.query(`
           INSERT INTO songs (
-            title, category_id, source_file_path,
+            title, category_id, source_filename,
             author, copyright, ccli, key, tempo, time_signature,
             theme, alt_theme, hymn_number, key_line, presentation_order,
             created_at, updated_at
@@ -409,7 +422,7 @@ export function batchImportSongs(
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON CONFLICT(title) DO UPDATE SET
             category_id = excluded.category_id,
-            source_file_path = excluded.source_file_path,
+            source_filename = excluded.source_filename,
             author = excluded.author,
             copyright = excluded.copyright,
             ccli = excluded.ccli,
@@ -426,7 +439,7 @@ export function batchImportSongs(
         `)
       : db.query(`
           INSERT INTO songs (
-            title, category_id, source_file_path,
+            title, category_id, source_filename,
             author, copyright, ccli, key, tempo, time_signature,
             theme, alt_theme, hymn_number, key_line, presentation_order,
             created_at, updated_at
@@ -442,6 +455,14 @@ export function batchImportSongs(
       slides: SlideInput[]
     }> = []
 
+    // Prepare statement to check for manually edited songs (used when skipManuallyEdited is enabled)
+    const checkManualEditStmt =
+      skipManuallyEdited && overwriteDuplicates
+        ? db.query(
+            'SELECT id, last_manual_edit FROM songs WHERE LOWER(title) = LOWER(?)',
+          )
+        : null
+
     // Phase 1: Insert/Update all songs and collect IDs
     for (let i = 0; i < songs.length; i++) {
       const input = songs[i]
@@ -450,10 +471,23 @@ export function batchImportSongs(
         const categoryId = input.categoryId ?? defaultCategoryId ?? null
         const sanitizedTitle = sanitizeSongTitle(input.title)
 
+        // Check if song was manually edited and should be skipped
+        if (checkManualEditStmt) {
+          const existing = checkManualEditStmt.get(sanitizedTitle) as {
+            id: number
+            last_manual_edit: number | null
+          } | null
+          if (existing?.last_manual_edit) {
+            skippedCount++
+            errors.push(`Song "${input.title}": manually edited (skipped)`)
+            continue
+          }
+        }
+
         const result = upsertSongStmt.get(
           sanitizedTitle,
           categoryId,
-          input.sourceFilePath ?? null,
+          input.sourceFilename ?? null,
           input.author ?? null,
           input.copyright ?? null,
           input.ccli ?? null,
@@ -520,7 +554,7 @@ export function batchImportSongs(
     db.exec('COMMIT')
     log(
       'info',
-      `Batch import completed: ${successCount} success, ${failedCount} failed`,
+      `Batch import completed: ${successCount} success, ${failedCount} failed, ${skippedCount} skipped`,
     )
   } catch (error) {
     db.exec('ROLLBACK')
@@ -529,5 +563,5 @@ export function batchImportSongs(
     errors.push(`Transaction failed: ${msg}`)
   }
 
-  return { successCount, failedCount, songIds, errors }
+  return { successCount, failedCount, skippedCount, songIds, errors }
 }
