@@ -1,5 +1,8 @@
+import { eq } from 'drizzle-orm'
+
 import type { OperationResult } from './types'
 import { getDatabase } from '../../db'
+import { presentationQueue } from '../../db/schema'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -17,8 +20,7 @@ export function removeFromQueue(id: number): OperationResult {
     log('debug', `Removing queue item: ${id}`)
 
     const db = getDatabase()
-    const query = db.query('DELETE FROM presentation_queue WHERE id = ?')
-    query.run(id)
+    db.delete(presentationQueue).where(eq(presentationQueue.id, id)).run()
 
     log('info', `Queue item removed: ${id}`)
     return { success: true }

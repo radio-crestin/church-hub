@@ -1,5 +1,8 @@
+import { eq } from 'drizzle-orm'
+
 import { removeFromScheduleSearchIndex } from './search'
 import { getDatabase } from '../../db'
+import { schedules } from '../../db/schema'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -22,8 +25,7 @@ export function deleteSchedule(id: number): boolean {
     removeFromScheduleSearchIndex(id)
 
     // Delete schedule (cascade will delete items)
-    const query = db.query('DELETE FROM schedules WHERE id = ?')
-    query.run(id)
+    db.delete(schedules).where(eq(schedules.id, id)).run()
 
     log('info', `Schedule deleted: ${id}`)
     return true

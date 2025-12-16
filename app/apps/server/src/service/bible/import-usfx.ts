@@ -7,7 +7,7 @@ import type {
   ParsedVerse,
 } from './types'
 import { BOOK_ORDER } from './types'
-import { getDatabase } from '../../db'
+import { getRawDatabase } from '../../db'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -191,7 +191,7 @@ function cleanVerseText(text: string): string {
 export function importUsfxTranslation(
   input: CreateTranslationInput,
 ): ImportResult {
-  const db = getDatabase()
+  const db = getRawDatabase()
   const now = Math.floor(Date.now() / 1000)
 
   try {

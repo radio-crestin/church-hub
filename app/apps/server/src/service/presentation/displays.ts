@@ -1,13 +1,15 @@
+import { asc, eq, sql } from 'drizzle-orm'
+
 import type {
   Display,
   DisplayOpenMode,
-  DisplayRecord,
   DisplayTheme,
   OperationResult,
   UpsertDisplayInput,
 } from './types'
 import { getDefaultTheme } from './types'
 import { getDatabase } from '../../db'
+import { displays } from '../../db/schema'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -32,16 +34,22 @@ function parseTheme(themeJson: string): DisplayTheme {
 /**
  * Converts database display record to API format
  */
-function toDisplay(record: DisplayRecord): Display {
+function toDisplay(record: typeof displays.$inferSelect): Display {
   return {
     id: record.id,
     name: record.name,
-    isActive: record.is_active === 1,
-    openMode: (record.open_mode as DisplayOpenMode) || 'browser',
-    isFullscreen: record.is_fullscreen === 1,
+    isActive: record.isActive,
+    openMode: (record.openMode as DisplayOpenMode) || 'browser',
+    isFullscreen: record.isFullscreen,
     theme: parseTheme(record.theme),
-    createdAt: record.created_at,
-    updatedAt: record.updated_at,
+    createdAt:
+      record.createdAt instanceof Date
+        ? Math.floor(record.createdAt.getTime() / 1000)
+        : (record.createdAt as unknown as number),
+    updatedAt:
+      record.updatedAt instanceof Date
+        ? Math.floor(record.updatedAt.getTime() / 1000)
+        : (record.updatedAt as unknown as number),
   }
 }
 
@@ -53,8 +61,11 @@ export function getAllDisplays(): Display[] {
     log('debug', 'Getting all displays')
 
     const db = getDatabase()
-    const query = db.query('SELECT * FROM displays ORDER BY created_at ASC')
-    const records = query.all() as DisplayRecord[]
+    const records = db
+      .select()
+      .from(displays)
+      .orderBy(asc(displays.createdAt))
+      .all()
 
     return records.map(toDisplay)
   } catch (error) {
@@ -71,10 +82,12 @@ export function getActiveDisplays(): Display[] {
     log('debug', 'Getting active displays')
 
     const db = getDatabase()
-    const query = db.query(
-      'SELECT * FROM displays WHERE is_active = 1 ORDER BY created_at ASC',
-    )
-    const records = query.all() as DisplayRecord[]
+    const records = db
+      .select()
+      .from(displays)
+      .where(eq(displays.isActive, true))
+      .orderBy(asc(displays.createdAt))
+      .all()
 
     return records.map(toDisplay)
   } catch (error) {
@@ -91,8 +104,7 @@ export function getDisplayById(id: number): Display | null {
     log('debug', `Getting display by ID: ${id}`)
 
     const db = getDatabase()
-    const query = db.query('SELECT * FROM displays WHERE id = ?')
-    const record = query.get(id) as DisplayRecord | null
+    const record = db.select().from(displays).where(eq(displays.id, id)).get()
 
     if (!record) {
       log('debug', `Display not found: ${id}`)
@@ -112,29 +124,24 @@ export function getDisplayById(id: number): Display | null {
 export function upsertDisplay(input: UpsertDisplayInput): Display | null {
   try {
     const db = getDatabase()
-    const now = Math.floor(Date.now() / 1000)
     const themeJson = JSON.stringify(input.theme ?? getDefaultTheme())
     const openMode = input.openMode ?? 'browser'
-    const isFullscreen = input.isFullscreen === true ? 1 : 0
 
     if (input.id) {
       // Update existing display
       log('debug', `Updating display: ${input.id}`)
 
-      const query = db.query(`
-        UPDATE displays
-        SET name = ?, is_active = ?, open_mode = ?, is_fullscreen = ?, theme = ?, updated_at = ?
-        WHERE id = ?
-      `)
-      query.run(
-        input.name,
-        input.isActive !== false ? 1 : 0,
-        openMode,
-        isFullscreen,
-        themeJson,
-        now,
-        input.id,
-      )
+      db.update(displays)
+        .set({
+          name: input.name,
+          isActive: input.isActive !== false,
+          openMode,
+          isFullscreen: input.isFullscreen === true,
+          theme: themeJson,
+          updatedAt: sql`(unixepoch())` as unknown as Date,
+        })
+        .where(eq(displays.id, input.id))
+        .run()
 
       log('info', `Display updated: ${input.id}`)
       return getDisplayById(input.id)
@@ -143,26 +150,20 @@ export function upsertDisplay(input: UpsertDisplayInput): Display | null {
     // Create new display
     log('debug', `Creating display: ${input.name}`)
 
-    const insertQuery = db.query(`
-      INSERT INTO displays (name, is_active, open_mode, is_fullscreen, theme, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `)
-    insertQuery.run(
-      input.name,
-      input.isActive !== false ? 1 : 0,
-      openMode,
-      isFullscreen,
-      themeJson,
-      now,
-      now,
-    )
+    const inserted = db
+      .insert(displays)
+      .values({
+        name: input.name,
+        isActive: input.isActive !== false,
+        openMode,
+        isFullscreen: input.isFullscreen === true,
+        theme: themeJson,
+      })
+      .returning({ id: displays.id })
+      .get()
 
-    // Get the inserted ID
-    const getLastId = db.query('SELECT last_insert_rowid() as id')
-    const { id } = getLastId.get() as { id: number }
-
-    log('info', `Display created: ${id}`)
-    return getDisplayById(id)
+    log('info', `Display created: ${inserted.id}`)
+    return getDisplayById(inserted.id)
   } catch (error) {
     log('error', `Failed to upsert display: ${error}`)
     return null
@@ -177,8 +178,7 @@ export function deleteDisplay(id: number): OperationResult {
     log('debug', `Deleting display: ${id}`)
 
     const db = getDatabase()
-    const query = db.query('DELETE FROM displays WHERE id = ?')
-    query.run(id)
+    db.delete(displays).where(eq(displays.id, id)).run()
 
     log('info', `Display deleted: ${id}`)
     return { success: true }
@@ -199,15 +199,15 @@ export function updateDisplayTheme(
     log('debug', `Updating theme for display: ${id}`)
 
     const db = getDatabase()
-    const now = Math.floor(Date.now() / 1000)
     const themeJson = JSON.stringify(theme)
 
-    const query = db.query(`
-      UPDATE displays
-      SET theme = ?, updated_at = ?
-      WHERE id = ?
-    `)
-    query.run(themeJson, now, id)
+    db.update(displays)
+      .set({
+        theme: themeJson,
+        updatedAt: sql`(unixepoch())` as unknown as Date,
+      })
+      .where(eq(displays.id, id))
+      .run()
 
     log('info', `Display theme updated: ${id}`)
     return { success: true }

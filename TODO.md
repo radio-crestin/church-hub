@@ -4,6 +4,8 @@
 ~~- importa toate cantarile existente din PPTX~~
 ~~- adauga optiunea de a da export in format OpenSong XML~~
 - implementeaza OpenBible XML (import/export, serch, etc)
+  - better ui
+  - export functionality
 - imbunatateste viteza de import pentru cantarile de pe resurse crestine
 
 

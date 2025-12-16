@@ -36,6 +36,7 @@ if (typeof window !== 'undefined') {
         }
       }
     } catch (error) {
+      // biome-ignore lint/suspicious/noConsole: error logging for startup
       console.error('[router] Error getting server config:', error)
     }
   }

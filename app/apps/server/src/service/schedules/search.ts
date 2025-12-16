@@ -1,5 +1,8 @@
+import { and, asc, eq } from 'drizzle-orm'
+
 import type { ScheduleSearchResult } from './types'
-import { getDatabase } from '../../db'
+import { getDatabase, getRawDatabase } from '../../db'
+import { scheduleItems, schedules, songs } from '../../db/schema'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -12,21 +15,21 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
 /**
  * Updates the FTS index for a specific schedule
  * Indexes schedule title, description, and all song content
+ * Uses Drizzle for non-FTS queries, raw SQL for FTS operations
  */
 export function updateScheduleSearchIndex(scheduleId: number): void {
   try {
     log('debug', `Updating search index for schedule: ${scheduleId}`)
 
     const db = getDatabase()
+    const rawDb = getRawDatabase()
 
     // Get schedule metadata
-    const scheduleQuery = db.query(
-      'SELECT title, description FROM schedules WHERE id = ?',
-    )
-    const schedule = scheduleQuery.get(scheduleId) as {
-      title: string
-      description: string | null
-    } | null
+    const schedule = db
+      .select({ title: schedules.title, description: schedules.description })
+      .from(schedules)
+      .where(eq(schedules.id, scheduleId))
+      .get()
 
     if (!schedule) {
       log('debug', `Schedule not found for indexing: ${scheduleId}`)
@@ -34,41 +37,39 @@ export function updateScheduleSearchIndex(scheduleId: number): void {
     }
 
     // Get all song titles in this schedule
-    const songTitlesQuery = db.query(`
-      SELECT s.title
-      FROM schedule_items si
-      JOIN songs s ON si.song_id = s.id
-      WHERE si.schedule_id = ? AND si.item_type = 'song'
-      ORDER BY si.sort_order ASC
-    `)
-    const songTitles = songTitlesQuery.all(scheduleId) as { title: string }[]
+    const songTitles = db
+      .select({ title: songs.title })
+      .from(scheduleItems)
+      .innerJoin(songs, eq(scheduleItems.songId, songs.id))
+      .where(
+        and(
+          eq(scheduleItems.scheduleId, scheduleId),
+          eq(scheduleItems.itemType, 'song'),
+        ),
+      )
+      .orderBy(asc(scheduleItems.sortOrder))
+      .all()
     const combinedTitles = songTitles.map((s) => s.title).join(' ')
 
-    // Get all song content in this schedule
-    const songContentQuery = db.query(`
+    // Get all song content in this schedule (use raw SQL for complex join)
+    const songContentResults = rawDb
+      .query(`
       SELECT ss.content
       FROM schedule_items si
       JOIN song_slides ss ON si.song_id = ss.song_id
       WHERE si.schedule_id = ? AND si.item_type = 'song'
       ORDER BY si.sort_order ASC, ss.sort_order ASC
     `)
-    const songContent = songContentQuery.all(scheduleId) as {
-      content: string
-    }[]
-    const combinedContent = songContent.map((s) => s.content).join(' ')
+      .all(scheduleId) as { content: string }[]
+    const combinedContent = songContentResults.map((s) => s.content).join(' ')
 
-    // Remove existing index entry
-    const deleteQuery = db.query(
-      'DELETE FROM schedules_fts WHERE schedule_id = ?',
-    )
-    deleteQuery.run(scheduleId)
+    // Remove existing index entry (FTS operation - use raw DB)
+    rawDb.run('DELETE FROM schedules_fts WHERE schedule_id = ?', scheduleId)
 
-    // Insert new index entry
-    const insertQuery = db.query(`
-      INSERT INTO schedules_fts (schedule_id, title, description, song_titles, song_content)
-      VALUES (?, ?, ?, ?, ?)
-    `)
-    insertQuery.run(
+    // Insert new index entry (FTS operation - use raw DB)
+    rawDb.run(
+      `INSERT INTO schedules_fts (schedule_id, title, description, song_titles, song_content)
+       VALUES (?, ?, ?, ?, ?)`,
       scheduleId,
       schedule.title,
       schedule.description ?? '',
@@ -84,14 +85,14 @@ export function updateScheduleSearchIndex(scheduleId: number): void {
 
 /**
  * Removes a schedule from the FTS index
+ * Uses raw SQL for FTS operations
  */
 export function removeFromScheduleSearchIndex(scheduleId: number): void {
   try {
     log('debug', `Removing schedule from search index: ${scheduleId}`)
 
-    const db = getDatabase()
-    const query = db.query('DELETE FROM schedules_fts WHERE schedule_id = ?')
-    query.run(scheduleId)
+    const rawDb = getRawDatabase()
+    rawDb.run('DELETE FROM schedules_fts WHERE schedule_id = ?', scheduleId)
 
     log('debug', `Schedule removed from search index: ${scheduleId}`)
   } catch (error) {
@@ -101,27 +102,28 @@ export function removeFromScheduleSearchIndex(scheduleId: number): void {
 
 /**
  * Rebuilds the entire schedule search index
+ * Uses Drizzle for schedule list, raw SQL for FTS operations
  */
 export function rebuildScheduleSearchIndex(): void {
   try {
     log('info', 'Rebuilding schedule search index...')
 
     const db = getDatabase()
+    const rawDb = getRawDatabase()
 
-    // Clear existing index
-    db.exec('DELETE FROM schedules_fts')
+    // Clear existing index (FTS operation - use raw DB)
+    rawDb.exec('DELETE FROM schedules_fts')
 
     // Get all schedules
-    const schedulesQuery = db.query('SELECT id FROM schedules')
-    const schedules = schedulesQuery.all() as { id: number }[]
+    const allSchedules = db.select({ id: schedules.id }).from(schedules).all()
 
-    for (const schedule of schedules) {
+    for (const schedule of allSchedules) {
       updateScheduleSearchIndex(schedule.id)
     }
 
     log(
       'info',
-      `Schedule search index rebuilt: ${schedules.length} schedules indexed`,
+      `Schedule search index rebuilt: ${allSchedules.length} schedules indexed`,
     )
   } catch (error) {
     log('error', `Failed to rebuild search index: ${error}`)
@@ -131,6 +133,7 @@ export function rebuildScheduleSearchIndex(): void {
 /**
  * Searches schedules using FTS5
  * Searches in title, description, song titles, and song content
+ * Uses raw SQL for FTS5 MATCH queries (not supported by Drizzle)
  */
 export function searchSchedules(query: string): ScheduleSearchResult[] {
   try {
@@ -140,23 +143,7 @@ export function searchSchedules(query: string): ScheduleSearchResult[] {
       return []
     }
 
-    const db = getDatabase()
-
-    // Use FTS5 MATCH query with snippet for highlighting
-    // Note: snippet() doesn't work with GROUP BY, so we use a subquery for item_count
-    const searchQuery = db.query(`
-      SELECT
-        s.id,
-        s.title,
-        s.description,
-        (SELECT COUNT(*) FROM schedule_items si WHERE si.schedule_id = s.id) as item_count,
-        snippet(schedules_fts, 1, '<mark>', '</mark>', '...', 30) as matched_content
-      FROM schedules_fts
-      JOIN schedules s ON schedules_fts.schedule_id = s.id
-      WHERE schedules_fts MATCH ?
-      ORDER BY rank
-      LIMIT 50
-    `)
+    const rawDb = getRawDatabase()
 
     // Escape special FTS5 characters and add prefix matching
     const escapedQuery = query
@@ -171,7 +158,23 @@ export function searchSchedules(query: string): ScheduleSearchResult[] {
       return []
     }
 
-    const results = searchQuery.all(escapedQuery) as Array<{
+    // Use FTS5 MATCH query with snippet for highlighting
+    // Note: snippet() doesn't work with GROUP BY, so we use a subquery for item_count
+    const results = rawDb
+      .query(`
+      SELECT
+        s.id,
+        s.title,
+        s.description,
+        (SELECT COUNT(*) FROM schedule_items si WHERE si.schedule_id = s.id) as item_count,
+        snippet(schedules_fts, 1, '<mark>', '</mark>', '...', 30) as matched_content
+      FROM schedules_fts
+      JOIN schedules s ON schedules_fts.schedule_id = s.id
+      WHERE schedules_fts MATCH ?
+      ORDER BY rank
+      LIMIT 50
+    `)
+      .all(escapedQuery) as Array<{
       id: number
       title: string
       description: string | null

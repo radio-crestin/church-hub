@@ -1,11 +1,13 @@
+import { desc, eq, max, sql } from 'drizzle-orm'
+
 import type {
   OperationResult,
   ReorderCategoriesInput,
   SongCategory,
-  SongCategoryRecord,
   UpsertCategoryInput,
 } from './types'
-import { getDatabase } from '../../db'
+import { getDatabase, getRawDatabase } from '../../db'
+import { songCategories, songs } from '../../db/schema'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -18,13 +20,19 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
 /**
  * Converts database category record to API format
  */
-function toCategory(record: SongCategoryRecord): SongCategory {
+function toCategory(record: typeof songCategories.$inferSelect): SongCategory {
   return {
     id: record.id,
     name: record.name,
     priority: record.priority,
-    createdAt: record.created_at,
-    updatedAt: record.updated_at,
+    createdAt:
+      record.createdAt instanceof Date
+        ? Math.floor(record.createdAt.getTime() / 1000)
+        : (record.createdAt as unknown as number),
+    updatedAt:
+      record.updatedAt instanceof Date
+        ? Math.floor(record.updatedAt.getTime() / 1000)
+        : (record.updatedAt as unknown as number),
   }
 }
 
@@ -36,10 +44,11 @@ export function getAllCategories(): SongCategory[] {
     log('debug', 'Getting all categories')
 
     const db = getDatabase()
-    const query = db.query(
-      'SELECT * FROM song_categories ORDER BY priority DESC, name ASC',
-    )
-    const records = query.all() as SongCategoryRecord[]
+    const records = db
+      .select()
+      .from(songCategories)
+      .orderBy(desc(songCategories.priority), songCategories.name)
+      .all()
 
     return records.map(toCategory)
   } catch (error) {
@@ -56,8 +65,11 @@ export function getCategoryById(id: number): SongCategory | null {
     log('debug', `Getting category by ID: ${id}`)
 
     const db = getDatabase()
-    const query = db.query('SELECT * FROM song_categories WHERE id = ?')
-    const record = query.get(id) as SongCategoryRecord | null
+    const record = db
+      .select()
+      .from(songCategories)
+      .where(eq(songCategories.id, id))
+      .get()
 
     if (!record) {
       log('debug', `Category not found: ${id}`)
@@ -79,59 +91,55 @@ export function upsertCategory(
 ): SongCategory | null {
   try {
     const db = getDatabase()
-    const now = Math.floor(Date.now() / 1000)
 
     if (input.id) {
       log('debug', `Updating category: ${input.id}`)
 
-      // Build dynamic update query based on provided fields
-      const updates: string[] = ['updated_at = ?']
-      const values: (string | number)[] = [now]
+      // Build update object with only provided fields
+      const updateData: Partial<typeof songCategories.$inferInsert> = {
+        updatedAt: sql`(unixepoch())` as unknown as Date,
+      }
 
       if (input.name !== undefined) {
-        updates.push('name = ?')
-        values.push(input.name)
+        updateData.name = input.name
       }
       if (input.priority !== undefined) {
-        updates.push('priority = ?')
-        values.push(input.priority)
+        updateData.priority = input.priority
       }
 
-      values.push(input.id)
-      const query = db.query(`
-        UPDATE song_categories
-        SET ${updates.join(', ')}
-        WHERE id = ?
-      `)
-      query.run(...values)
+      db.update(songCategories)
+        .set(updateData)
+        .where(eq(songCategories.id, input.id))
+        .run()
 
       log('info', `Category updated: ${input.id}`)
       return getCategoryById(input.id)
     }
 
     // For new categories, calculate next priority (max + 1)
-    const maxPriorityQuery = db.query(
-      'SELECT MAX(priority) as max_priority FROM song_categories',
-    )
-    const result = maxPriorityQuery.get() as { max_priority: number | null }
-    const nextPriority = input.priority ?? (result?.max_priority ?? 0) + 1
+    const result = db
+      .select({ maxPriority: max(songCategories.priority) })
+      .from(songCategories)
+      .get()
+
+    const nextPriority = input.priority ?? (result?.maxPriority ?? 0) + 1
 
     log(
       'debug',
       `Creating category: ${input.name} with priority: ${nextPriority}`,
     )
 
-    const insertQuery = db.query(`
-      INSERT INTO song_categories (name, priority, created_at, updated_at)
-      VALUES (?, ?, ?, ?)
-    `)
-    insertQuery.run(input.name, nextPriority, now, now)
+    const inserted = db
+      .insert(songCategories)
+      .values({
+        name: input.name,
+        priority: nextPriority,
+      })
+      .returning({ id: songCategories.id })
+      .get()
 
-    const getLastId = db.query('SELECT last_insert_rowid() as id')
-    const { id } = getLastId.get() as { id: number }
-
-    log('info', `Category created: ${id}`)
-    return getCategoryById(id)
+    log('info', `Category created: ${inserted.id}`)
+    return getCategoryById(inserted.id)
   } catch (error) {
     log('error', `Failed to upsert category: ${error}`)
     return null
@@ -150,18 +158,19 @@ export function deleteCategory(id: number): OperationResult {
 
     // Delete all songs belonging to this category first
     // (song_slides are deleted automatically via CASCADE on songs table)
-    const deleteSongsQuery = db.query('DELETE FROM songs WHERE category_id = ?')
-    const songsResult = deleteSongsQuery.run(id)
+    const deletedSongs = db
+      .delete(songs)
+      .where(eq(songs.categoryId, id))
+      .returning({ id: songs.id })
+      .all()
+
     log(
       'debug',
-      `Deleted ${songsResult.changes} songs belonging to category ${id}`,
+      `Deleted ${deletedSongs.length} songs belonging to category ${id}`,
     )
 
     // Delete the category
-    const deleteCategoryQuery = db.query(
-      'DELETE FROM song_categories WHERE id = ?',
-    )
-    deleteCategoryQuery.run(id)
+    db.delete(songCategories).where(eq(songCategories.id, id)).run()
 
     log('info', `Category deleted: ${id}`)
     return { success: true }
@@ -181,28 +190,32 @@ export function reorderCategories(
   try {
     log('debug', `Reordering ${input.categoryIds.length} categories`)
 
-    const db = getDatabase()
-    const now = Math.floor(Date.now() / 1000)
+    const rawDb = getRawDatabase()
 
-    db.exec('BEGIN TRANSACTION')
+    rawDb.exec('BEGIN TRANSACTION')
 
     try {
+      const db = getDatabase()
+
       // Assign priorities in descending order (first = highest)
       for (let i = 0; i < input.categoryIds.length; i++) {
         const id = input.categoryIds[i]
         const priority = input.categoryIds.length - i
-        db.query(`
-          UPDATE song_categories
-          SET priority = ?, updated_at = ?
-          WHERE id = ?
-        `).run(priority, now, id)
+
+        db.update(songCategories)
+          .set({
+            priority,
+            updatedAt: sql`(unixepoch())` as unknown as Date,
+          })
+          .where(eq(songCategories.id, id))
+          .run()
       }
 
-      db.exec('COMMIT')
+      rawDb.exec('COMMIT')
       log('info', 'Categories reordered successfully')
       return { success: true }
     } catch (error) {
-      db.exec('ROLLBACK')
+      rawDb.exec('ROLLBACK')
       throw error
     }
   } catch (error) {

@@ -1,25 +1,37 @@
 import { mkdir } from 'node:fs/promises'
 import { dirname } from 'node:path'
+import { type BunSQLiteDatabase, drizzle } from 'drizzle-orm/bun-sqlite'
 
+import { type MigrationResult, runMigrations } from './migrations'
+import * as schema from './schema'
 import { Database } from 'bun:sqlite'
+
+interface InitializeResult {
+  db: BunSQLiteDatabase<typeof schema>
+  migrationResult: MigrationResult
+}
 
 const DEBUG = process.env.DEBUG === 'true'
 const DATABASE_PATH = process.env.DATABASE_PATH || './data/app.db'
 
-let db: Database | null = null
+let sqlite: Database | null = null
+let db: BunSQLiteDatabase<typeof schema> | null = null
 
 /**
  * Logs debug messages if DEBUG env variable is enabled
  */
 function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
   if (level === 'debug' && !DEBUG) return
+  // biome-ignore lint/suspicious/noConsole: logging utility
+  console.log(`[db:${level}] ${message}`)
 }
 
 /**
- * Initializes the SQLite database connection
+ * Initializes the SQLite database connection with Drizzle ORM
  * Creates the data directory if it doesn't exist
+ * Returns both the database instance and migration result
  */
-export async function initializeDatabase(): Promise<Database> {
+export async function initializeDatabase(): Promise<InitializeResult> {
   try {
     log('info', `Initializing database at: ${DATABASE_PATH}`)
 
@@ -29,16 +41,23 @@ export async function initializeDatabase(): Promise<Database> {
     log('debug', `Data directory ensured: ${dbDir}`)
 
     // Create database connection using Bun's built-in SQLite
-    db = new Database(DATABASE_PATH, { create: true })
+    sqlite = new Database(DATABASE_PATH, { create: true })
 
     // Enable WAL mode for better concurrency
-    db.run('PRAGMA journal_mode = WAL')
+    sqlite.run('PRAGMA journal_mode = WAL')
 
     // Enable foreign keys
-    db.run('PRAGMA foreign_keys = ON')
+    sqlite.run('PRAGMA foreign_keys = ON')
 
-    log('info', 'Database connection established')
-    return db
+    // Initialize Drizzle ORM with schema
+    db = drizzle(sqlite, { schema })
+
+    log('info', 'Database connection established with Drizzle ORM')
+
+    // Run migrations
+    const migrationResult = runMigrations(db, sqlite)
+
+    return { db, migrationResult }
   } catch (error) {
     log('error', `Failed to initialize database: ${error}`)
     throw error
@@ -46,10 +65,10 @@ export async function initializeDatabase(): Promise<Database> {
 }
 
 /**
- * Returns the active database connection
+ * Returns the active Drizzle database instance
  * Throws if database is not initialized
  */
-export function getDatabase(): Database {
+export function getDatabase(): BunSQLiteDatabase<typeof schema> {
   if (!db) {
     throw new Error(
       'Database not initialized. Call initializeDatabase() first.',
@@ -59,12 +78,27 @@ export function getDatabase(): Database {
 }
 
 /**
+ * Returns the raw SQLite database connection
+ * Used for FTS operations that cannot be expressed via Drizzle
+ * Throws if database is not initialized
+ */
+export function getRawDatabase(): Database {
+  if (!sqlite) {
+    throw new Error(
+      'Database not initialized. Call initializeDatabase() first.',
+    )
+  }
+  return sqlite
+}
+
+/**
  * Closes the database connection
  */
 export function closeDatabase(): void {
-  if (db) {
+  if (sqlite) {
     log('info', 'Closing database connection')
-    db.close()
+    sqlite.close()
+    sqlite = null
     db = null
   }
 }
