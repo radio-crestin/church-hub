@@ -123,6 +123,7 @@ export function BibleNavigationPanel({
             chapter={state.chapter || 0}
             verses={verses}
             selectedIndex={state.verseIndex}
+            presentedIndex={state.presentedVerseIndex}
             isLoading={isLoadingVerses}
             onSelectVerse={handleSelectVerse}
             onGoBack={goBack}
