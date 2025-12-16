@@ -8,7 +8,8 @@
     "import": "Importă",
     "importFromText": "Importă din text",
     "addSlide": "Adaugă slide",
-    "cloneSlide": "Clonează slide"
+    "cloneSlide": "Clonează slide",
+    "addToSchedule": "Adaugă în program"
   },
   "editor": {
     "titlePlaceholder": "Introdu titlul cântării...",
@@ -42,6 +43,7 @@
     "name": "Categorie"
   },
   "messages": {
+    "saving": "Se salvează cântarea...",
     "saved": "Cântarea a fost salvată cu succes",
     "deleted": "Cântarea a fost ștearsă cu succes",
     "error": "A apărut o eroare",
@@ -58,7 +60,11 @@
     "deleteSlideMessage": "Ești sigur că vrei să ștergi acest slide?",
     "unsavedChangesTitle": "Modificări nesalvate",
     "unsavedChangesMessage": "Ai modificări nesalvate. Ești sigur că vrei să părăsești pagina?",
-    "discardChanges": "Pierde modificările"
+    "unsavedBeforeActionMessage": "Ai modificări nesalvate. Ce vrei să faci?",
+    "discardChanges": "Pierde modificările",
+    "saveAndContinue": "Salvează și continuă",
+    "continueWithoutSaving": "Continuă fără a salva",
+    "cancel": "Anulează"
   },
   "noSongs": "Nu există cântări încă",
   "noSongsDescription": "Creează prima ta cântare pentru a începe",

@@ -6,19 +6,48 @@
   <component name="ChangeListManager">
     <list default="true" id="66517e3f-2e4e-43cc-880d-deb242368f0c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/BibleSearch.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TODO.md" beforeDir="false" afterPath="$PROJECT_DIR$/TODO.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/BibleControlPanel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/BibleControlPanel.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/BibleNavigationPanel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/BibleNavigationPanel.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/BooksList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/BooksList.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/VersesList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/VersesList.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/bible/hooks/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/bible/hooks/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/bible/hooks/useBibleKeyboardShortcuts.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/bible/hooks/useBibleKeyboardShortcuts.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/bible/hooks/useBibleNavigation.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/bible/hooks/useBibleNavigation.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/bible/hooks/useSearchBible.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/bible/hooks/useSearchBible.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/bible/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/bible/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/ControlRoom.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/ControlRoom.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/DisplayWindow.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/DisplayWindow.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/LivePreview.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/LivePreview.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/AddToQueueMenu.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/AddToQueueMenu.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/QueueItemContextMenu.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/QueueItemContextMenu.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/QueueList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/QueueList.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/QueueSongItem.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/QueueSongItem.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/index.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/hooks/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/hooks/index.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/service/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/service/index.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/service/queue.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/service/queue.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/drizzle/migrations/meta/_journal.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/drizzle/migrations/meta/_journal.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/schema/presentation.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/schema/presentation.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/schedules/components/ScheduleCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/schedules/components/ScheduleCard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/schedules/components/ScheduleEditor.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/schedules/components/ScheduleEditor.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/schedules/components/ScheduleList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/schedules/components/ScheduleList.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/schedules/components/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/schedules/components/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/songs/components/SongEditor.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/songs/components/SongEditor.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/users/components/UserQRModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/users/components/UserQRModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/users/service/users.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/users/service/users.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/queue.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/queue.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/schedules.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/schedules.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/settings.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/settings.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/songs.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/songs.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/queue.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/queue.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/schedules.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/schedules.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/settings.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/settings.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/songs.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/songs.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/routes/bible/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/routes/bible/index.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/routes/songs/$songId.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/routes/songs/$songId.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/ui/layout/app-layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/ui/layout/app-layout.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/apps/server/src/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/queue/getQueue.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/queue/getQueue.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/presentation/presentation-state.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/presentation/presentation-state.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/queue/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/queue/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/queue/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/queue/types.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -165,7 +194,7 @@
       <workItem from="1762688136394" duration="14616000" />
       <workItem from="1763895878404" duration="13746000" />
       <workItem from="1764529520395" duration="23258000" />
-      <workItem from="1765113262440" duration="121076000" />
+      <workItem from="1765113262440" duration="137188000" />
     </task>
     <servers />
   </component>

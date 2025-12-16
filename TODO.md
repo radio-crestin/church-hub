@@ -3,16 +3,14 @@
 ~~- imbunatateste algoritmul de search~~
 ~~- importa toate cantarile existente din PPTX~~
 ~~- adauga optiunea de a da export in format OpenSong XML~~
-- implementeaza OpenBible XML (import/export, serch, etc)
-  - better ui
-  - export functionality
-- imbunatateste viteza de import pentru cantarile de pe resurse crestine
-
-
-- implementeaza sistemul de permissioning cu link de autentificare
-- modifica adauga in coada cu adauga in program
-- adauga optiunea de a salva coada actuala ca si un program
-- in camera de control adauga optiunea de a functiona fara o coada, ci doar cu o singura prezentare
+~~- implementeaza OpenBible XML (import, serch, etc)~~
+  ~~- better ui~~
+~~- imbunatateste viteza de import pentru cantarile de pe resurse crestine~~
+~~- implementeaza sistemul de permissioning cu link de autentificare~~
+~~- modifica adauga in coada cu adauga in program~~
+~~- adauga optiunea de a salva coada actuala ca si un program~~
+- in butonul adauga, adauga optiunea de a adauga versete biblice
+- adauga in versete tineri referinte catre versete
 - fa meniul lateral configurabil din setari (muta butonul de setari in partea de jos)
 - adauga link catre WhatsApp in sidebar
 - rezolva problema cu schimbul temei si muta acest meniu in setari

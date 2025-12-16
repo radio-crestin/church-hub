@@ -126,8 +126,8 @@ function SongEditorPage() {
     [],
   )
 
-  const handleSave = useCallback(async () => {
-    if (!title.trim()) return
+  const handleSave = useCallback(async (): Promise<boolean> => {
+    if (!title.trim()) return false
 
     const result = await upsertMutation.mutateAsync({
       id: numericId ?? undefined,
@@ -193,8 +193,10 @@ function SongEditorPage() {
         setSlides(savedSlides)
         setMetadata(savedMetadata)
       }
+      return true
     } else {
       showToast(t('songs:messages.error'), 'error')
+      return false
     }
   }, [
     title,

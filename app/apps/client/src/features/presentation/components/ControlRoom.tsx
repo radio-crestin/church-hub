@@ -5,15 +5,18 @@ import {
   EyeOff,
   Loader2,
   MonitorUp,
+  Save,
   Trash2,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from '@tanstack/react-router'
 
 import {
   AddToQueueMenu,
   InsertSlideModal,
   QueueList,
+  SaveQueueAsScheduleModal,
   useClearQueue,
   useQueue,
 } from '~/features/queue'
@@ -52,6 +55,8 @@ export function ControlRoom() {
   const [slideInsertTemplate, setSlideInsertTemplate] =
     useState<SlideTemplate>('announcement')
   const [showSchedulePicker, setShowSchedulePicker] = useState(false)
+  const [showSaveAsProgram, setShowSaveAsProgram] = useState(false)
+  const navigate = useNavigate()
 
   const navigateQueueSlide = useNavigateQueueSlide()
   const clearSlide = useClearSlide()
@@ -85,16 +90,19 @@ export function ControlRoom() {
 
   // Handle slide click from queue - update presentation state
   const handleSlideClick = async (queueItemId: number, slideId: number) => {
-    // slideId of -1 indicates a standalone slide
+    // slideId of -1 indicates a standalone slide (or Bible verse)
     const isStandaloneSlide = slideId === -1
     await updateState.mutateAsync({
       currentQueueItemId: queueItemId,
       currentSongSlideId: isStandaloneSlide ? null : slideId,
+      isHidden: false,
     })
   }
 
   const handleClearConfirm = async () => {
     setShowClearModal(false)
+    // Hide the presentation when clearing the queue
+    await clearSlide.mutateAsync()
     const success = await clearQueueMutation.mutateAsync()
     if (success) {
       showToast(t('queue:messages.cleared'), 'success')
@@ -112,6 +120,10 @@ export function ControlRoom() {
 
   const handleImportSchedule = () => {
     setShowSchedulePicker(true)
+  }
+
+  const handleScheduleSaved = (scheduleId: number) => {
+    navigate({ to: '/schedules/$scheduleId', params: { scheduleId: String(scheduleId) } })
   }
 
   // Use isHidden flag for button state
@@ -258,6 +270,16 @@ export function ControlRoom() {
                 {queue && queue.length > 0 && (
                   <button
                     type="button"
+                    onClick={() => setShowSaveAsProgram(true)}
+                    className="p-1.5 text-white bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 rounded-lg transition-colors"
+                    title={t('queue:actions.saveAsProgram')}
+                  >
+                    <Save size={18} />
+                  </button>
+                )}
+                {queue && queue.length > 0 && (
+                  <button
+                    type="button"
                     onClick={() => setShowClearModal(true)}
                     className="p-1.5 text-white bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 rounded-lg transition-colors"
                   >
@@ -307,6 +329,13 @@ export function ControlRoom() {
       <SchedulePickerModal
         isOpen={showSchedulePicker}
         onClose={() => setShowSchedulePicker(false)}
+      />
+
+      {/* Save Queue as Schedule Modal */}
+      <SaveQueueAsScheduleModal
+        isOpen={showSaveAsProgram}
+        onClose={() => setShowSaveAsProgram(false)}
+        onSaved={handleScheduleSaved}
       />
     </div>
   )

@@ -1,4 +1,5 @@
-import { CalendarDays, ChevronRight, ListMusic } from 'lucide-react'
+import { CalendarDays, ChevronRight, Clock, ListMusic } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 interface ScheduleCardProps {
   schedule: {
@@ -6,12 +7,23 @@ interface ScheduleCardProps {
     title: string
     description: string | null
     itemCount: number
+    createdAt?: number
     matchedContent?: string
   }
   onClick: () => void
 }
 
 export function ScheduleCard({ schedule, onClick }: ScheduleCardProps) {
+  const { t, i18n } = useTranslation('schedules')
+
+  const formatDate = (timestamp: number) => {
+    return new Date(timestamp).toLocaleDateString(i18n.language, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    })
+  }
+
   return (
     <button
       type="button"
@@ -31,11 +43,21 @@ export function ScheduleCard({ schedule, onClick }: ScheduleCardProps) {
               {schedule.description}
             </p>
           )}
-          <div className="flex items-center gap-1 mt-1">
-            <ListMusic className="w-3 h-3 text-gray-400" />
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              {schedule.itemCount} {schedule.itemCount === 1 ? 'item' : 'items'}
-            </span>
+          <div className="flex items-center gap-3 mt-1">
+            <div className="flex items-center gap-1">
+              <ListMusic className="w-3 h-3 text-gray-400" />
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {t('itemCount', { count: schedule.itemCount })}
+              </span>
+            </div>
+            {schedule.createdAt && (
+              <div className="flex items-center gap-1">
+                <Clock className="w-3 h-3 text-gray-400" />
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  {formatDate(schedule.createdAt)}
+                </span>
+              </div>
+            )}
           </div>
           {schedule.matchedContent && (
             <p

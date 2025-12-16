@@ -10,15 +10,19 @@ import {
   formatVerseReference,
   useBibleKeyboardShortcuts,
   useBibleNavigation,
+  useBooks,
+  useChapters,
   useImportTranslation,
   useTranslations,
+  useVerse,
   useVerses,
 } from '~/features/bible'
 import {
   useClearSlide,
+  usePresentationState,
   useUpdatePresentationState,
 } from '~/features/presentation'
-import { useInsertBibleVerseToQueue } from '~/features/queue'
+import { useInsertBibleVerseToQueue, useQueue } from '~/features/queue'
 import { AlertModal } from '~/ui/modal'
 import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
 
@@ -42,9 +46,30 @@ function BiblePage() {
   const [dividerPosition, setDividerPosition] = useState(40) // percentage
   const containerRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
+  const hasInitialSynced = useRef(false)
+  const prevChapterRef = useRef<{ bookId: number; chapter: number } | null>(
+    null,
+  )
 
   // Initialize navigation with first translation
   const navigation = useBibleNavigation(translations?.[0]?.id)
+
+  // Get presentation state and queue to sync with current Bible item
+  const { data: presentationState } = usePresentationState()
+  const { data: queue } = useQueue()
+
+  // Find current Bible item in queue
+  const currentBibleItem = queue?.find(
+    (item) =>
+      item.id === presentationState?.currentQueueItemId &&
+      item.itemType === 'bible' &&
+      item.bibleVerseId,
+  )
+
+  // Fetch verse details for the current Bible item
+  const { data: currentVerse } = useVerse(
+    currentBibleItem?.bibleVerseId ?? undefined,
+  )
 
   // Auto-select first translation when loaded
   useEffect(() => {
@@ -52,6 +77,26 @@ function BiblePage() {
       navigation.selectTranslation(translations[0].id)
     }
   }, [translations, navigation])
+
+  // Sync navigation with current Bible verse from presentation queue on initial load
+  useEffect(() => {
+    if (hasInitialSynced.current) return
+    if (!currentVerse) return
+
+    // Navigate to the current verse
+    navigation.navigateToVerse({
+      translationId: currentVerse.translationId,
+      bookId: currentVerse.bookId,
+      bookName: currentVerse.bookName,
+      chapter: currentVerse.chapter,
+      verseIndex: currentVerse.verse - 1, // verse number is 1-based, index is 0-based
+    })
+    hasInitialSynced.current = true
+  }, [currentVerse, navigation])
+
+  // Get books and chapters for navigation between chapters/books
+  const { data: books = [] } = useBooks(navigation.state.translationId)
+  const { data: chapters = [] } = useChapters(navigation.state.bookId)
 
   // Get verses for the current selection
   const { data: verses = [] } = useVerses(
@@ -88,6 +133,7 @@ function BiblePage() {
         await updatePresentationState.mutateAsync({
           currentQueueItemId: result.data.id,
           currentSongSlideId: null,
+          isHidden: false,
         })
       }
     },
@@ -98,12 +144,41 @@ function BiblePage() {
     ],
   )
 
-  // Handle verse selection from navigation (only selects, does not present)
+  // Auto-present verse when navigating to a new chapter (for chapter/book transitions)
+  useEffect(() => {
+    const { bookId, chapter, presentedIndex } = navigation.state
+    if (!bookId || !chapter || verses.length === 0) return
+
+    const prevChapter = prevChapterRef.current
+    const chapterChanged =
+      prevChapter &&
+      (prevChapter.bookId !== bookId || prevChapter.chapter !== chapter)
+
+    // Update ref for next comparison
+    prevChapterRef.current = { bookId, chapter }
+
+    // If chapter changed and we have a presentedIndex, present that verse
+    if (chapterChanged && presentedIndex !== null) {
+      // Clamp the index to valid range
+      const clampedIndex = Math.min(presentedIndex, verses.length - 1)
+      const verse = verses[clampedIndex]
+      if (verse) {
+        // Update the index if it was clamped
+        if (clampedIndex !== presentedIndex) {
+          navigation.presentVerse(clampedIndex)
+        }
+        presentVerseToScreen(verse)
+      }
+    }
+  }, [navigation, verses, presentVerseToScreen])
+
+  // Handle verse selection - immediately present it
   const handleSelectVerse = useCallback(
-    (_verse: BibleVerse, index: number) => {
-      navigation.selectVerse(index)
+    async (verse: BibleVerse, index: number) => {
+      navigation.presentVerse(index)
+      await presentVerseToScreen(verse)
     },
-    [navigation],
+    [navigation, presentVerseToScreen],
   )
 
   // Handle search result selection
@@ -124,20 +199,110 @@ function BiblePage() {
     [currentTranslation?.abbreviation, insertBibleVerse],
   )
 
-  // Handle next/previous verse navigation (only changes selection)
-  const handleNextVerse = useCallback(() => {
-    const nextIndex = navigation.state.verseIndex + 1
+  // Handle next/previous verse navigation - presents immediately
+  // Also handles chapter and book transitions
+  const handleNextVerse = useCallback(async () => {
+    const currentIndex =
+      navigation.state.presentedIndex ?? navigation.state.searchedIndex ?? -1
+    const nextIndex = currentIndex + 1
+
+    // If there are more verses in current chapter
     if (nextIndex < verses.length) {
       navigation.nextVerse()
+      const verse = verses[nextIndex]
+      if (verse) {
+        await presentVerseToScreen(verse)
+      }
+      return
     }
-  }, [navigation, verses.length])
 
-  const handlePreviousVerse = useCallback(() => {
-    const prevIndex = navigation.state.verseIndex - 1
+    // End of chapter - try to go to next chapter
+    const currentChapter = navigation.state.chapter
+    const currentBookId = navigation.state.bookId
+    if (!currentChapter || !currentBookId) return
+
+    const currentChapterIndex = chapters.findIndex(
+      (c) => c.chapter === currentChapter,
+    )
+    const nextChapterData = chapters[currentChapterIndex + 1]
+
+    if (nextChapterData) {
+      // Go to next chapter, first verse
+      navigation.navigateToChapter({
+        bookId: currentBookId,
+        bookName: navigation.state.bookName || '',
+        chapter: nextChapterData.chapter,
+        verseIndex: 0,
+      })
+      return
+    }
+
+    // End of book - try to go to next book
+    const currentBookIndex = books.findIndex((b) => b.id === currentBookId)
+    const nextBook = books[currentBookIndex + 1]
+
+    if (nextBook) {
+      // Go to next book, first chapter, first verse
+      navigation.navigateToChapter({
+        bookId: nextBook.id,
+        bookName: nextBook.bookName,
+        chapter: 1,
+        verseIndex: 0,
+      })
+    }
+  }, [navigation, verses, chapters, books, presentVerseToScreen])
+
+  const handlePreviousVerse = useCallback(async () => {
+    const currentIndex =
+      navigation.state.presentedIndex ?? navigation.state.searchedIndex ?? 0
+    const prevIndex = currentIndex - 1
+
+    // If there are previous verses in current chapter
     if (prevIndex >= 0) {
       navigation.previousVerse()
+      const verse = verses[prevIndex]
+      if (verse) {
+        await presentVerseToScreen(verse)
+      }
+      return
     }
-  }, [navigation])
+
+    // Beginning of chapter - try to go to previous chapter
+    const currentChapter = navigation.state.chapter
+    const currentBookId = navigation.state.bookId
+    if (!currentChapter || !currentBookId) return
+
+    const currentChapterIndex = chapters.findIndex(
+      (c) => c.chapter === currentChapter,
+    )
+    const prevChapterData = chapters[currentChapterIndex - 1]
+
+    if (prevChapterData) {
+      // Go to previous chapter, last verse (use verseCount - 1)
+      navigation.navigateToChapter({
+        bookId: currentBookId,
+        bookName: navigation.state.bookName || '',
+        chapter: prevChapterData.chapter,
+        verseIndex: prevChapterData.verseCount - 1,
+      })
+      return
+    }
+
+    // Beginning of book - try to go to previous book
+    const currentBookIndex = books.findIndex((b) => b.id === currentBookId)
+    const prevBook = books[currentBookIndex - 1]
+
+    if (prevBook) {
+      // Go to previous book, last chapter
+      // We'll set verseIndex to a high number, the component will clamp it
+      navigation.navigateToChapter({
+        bookId: prevBook.id,
+        bookName: prevBook.bookName,
+        chapter: prevBook.chapterCount,
+        verseIndex: 999, // Will be clamped to last verse when verses load
+      })
+    }
+  }, [navigation, verses, chapters, books, presentVerseToScreen])
 
   // Handle hide presentation (Escape) - clears slide but keeps selection
   const handleHidePresentation = useCallback(async () => {
@@ -145,32 +310,12 @@ function BiblePage() {
     await clearSlide.mutateAsync()
   }, [navigation, clearSlide])
 
-  // Handle keyboard navigation deeper
-  const handleNavigateDeeper = useCallback(() => {
-    // This is handled by clicking in the navigation panel
-  }, [])
-
-  // Handle present current verse (Enter/F5/F10)
-  const handlePresent = useCallback(async () => {
-    const index = navigation.state.verseIndex
-    const verse = verses[index]
-    if (verse) {
-      navigation.presentVerse(index)
-      await presentVerseToScreen(verse)
-    }
-  }, [navigation, verses, presentVerseToScreen])
-
   // Enable keyboard shortcuts
   useBibleKeyboardShortcuts({
-    level: navigation.state.level,
-    verseIndex: navigation.state.verseIndex,
-    versesCount: verses.length,
     onNextVerse: handleNextVerse,
     onPreviousVerse: handlePreviousVerse,
-    onNavigateDeeper: handleNavigateDeeper,
     onGoBack: navigation.goBack,
     onHidePresentation: handleHidePresentation,
-    onPresent: handlePresent,
     enabled: navigation.state.level === 'verses',
   })
 
@@ -275,7 +420,7 @@ function BiblePage() {
           >
             {/* Left Panel - Navigation */}
             <div
-              className="min-h-0 flex-1 lg:flex-initial overflow-hidden"
+              className="min-h-0 h-full flex-1 lg:flex-initial overflow-hidden"
               style={{ width: `${dividerPosition}%` }}
             >
               <BibleNavigationPanel
