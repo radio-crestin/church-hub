@@ -3,10 +3,39 @@
   "search": {
     "placeholder": "Search verses (e.g., \"Gen 1:1\" or \"In the beginning\")",
     "hint": "Type a reference like \"Gen 1:1\" or search for text",
-    "noResults": "No results found for \"{{query}}\"",
+    "noResults": "No results found",
+    "searching": "Searching...",
     "directReference": "Direct reference",
     "resultsCount": "{{count}} verse found",
     "resultsCount_other": "{{count}} verses found"
+  },
+  "navigation": {
+    "back": "Back",
+    "oldTestament": "Old Testament",
+    "newTestament": "New Testament",
+    "noBooks": "No books available"
+  },
+  "queue": {
+    "title": "Bible Queue",
+    "empty": "No verses in queue",
+    "removed": "Verse removed from queue",
+    "remove": "Remove"
+  },
+  "controls": {
+    "title": "Preview",
+    "prev": "Prev",
+    "next": "Next",
+    "prevVerse": "Previous verse",
+    "nextVerse": "Next verse",
+    "show": "Show",
+    "hide": "Hide"
+  },
+  "shortcuts": {
+    "title": "Keyboard Shortcuts",
+    "navigate": "Navigate verses",
+    "back": "Go back",
+    "hide": "Hide display",
+    "present": "Present verse"
   },
   "actions": {
     "presentNow": "Present now",
