@@ -25,6 +25,8 @@
     "title": "Add to Queue",
     "searchSong": "Search Song",
     "searchSongDescription": "Find and add an existing song",
+    "bibleVerse": "Bible Verse",
+    "bibleVerseDescription": "Search and add a Bible verse",
     "announcement": "Announcement",
     "announcementDescription": "Create a custom announcement slide",
     "verseteTineri": "Versete Tineri",

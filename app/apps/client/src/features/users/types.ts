@@ -9,6 +9,12 @@ export type Permission =
   | 'songs.delete'
   | 'songs.add_to_queue'
   | 'songs.present_now'
+  // Bible
+  | 'bible.view'
+  | 'bible.import'
+  | 'bible.delete'
+  | 'bible.add_to_queue'
+  | 'bible.present_now'
   // Control Room
   | 'control_room.view'
   | 'control_room.control'
@@ -49,6 +55,12 @@ export const ALL_PERMISSIONS: Permission[] = [
   'songs.delete',
   'songs.add_to_queue',
   'songs.present_now',
+  // Bible
+  'bible.view',
+  'bible.import',
+  'bible.delete',
+  'bible.add_to_queue',
+  'bible.present_now',
   // Control Room
   'control_room.view',
   'control_room.control',
@@ -90,6 +102,13 @@ export const PERMISSION_GROUPS = {
     'songs.delete',
     'songs.add_to_queue',
     'songs.present_now',
+  ] as Permission[],
+  bible: [
+    'bible.view',
+    'bible.import',
+    'bible.delete',
+    'bible.add_to_queue',
+    'bible.present_now',
   ] as Permission[],
   control_room: ['control_room.view', 'control_room.control'] as Permission[],
   programs: [
@@ -139,6 +158,9 @@ export const ROLE_TEMPLATES: Record<RoleTemplate, Permission[]> = {
     'songs.view',
     'songs.add_to_queue',
     'songs.present_now',
+    'bible.view',
+    'bible.add_to_queue',
+    'bible.present_now',
     'queue.view',
     'queue.add',
     'queue.remove',
@@ -150,6 +172,7 @@ export const ROLE_TEMPLATES: Record<RoleTemplate, Permission[]> = {
   viewer: [
     'control_room.view',
     'songs.view',
+    'bible.view',
     'programs.view',
     'queue.view',
     'displays.view',

@@ -1,6 +1,36 @@
 use crate::domain::AppState;
+use std::time::{Duration, Instant};
 use tauri::{AppHandle, Manager};
 use tauri_plugin_shell::{process::CommandEvent, ShellExt};
+
+/// Waits for the server to be ready by polling the /ping endpoint
+pub fn wait_for_server_ready(port: u16, timeout_secs: u64) -> Result<(), String> {
+    let start = Instant::now();
+    let timeout = Duration::from_secs(timeout_secs);
+    let url = format!("http://127.0.0.1:{}/ping", port);
+
+    println!("[sidecar] Waiting for server to be ready on port {port}...");
+
+    while start.elapsed() < timeout {
+        match ureq::get(&url).timeout(Duration::from_millis(500)).call() {
+            Ok(response) if response.status() == 200 => {
+                println!(
+                    "[sidecar] Server is ready! (took {:.2}s)",
+                    start.elapsed().as_secs_f64()
+                );
+                return Ok(());
+            }
+            _ => {
+                std::thread::sleep(Duration::from_millis(100));
+            }
+        }
+    }
+
+    Err(format!(
+        "Server failed to become ready within {} seconds",
+        timeout_secs
+    ))
+}
 
 pub fn start_server(app_handle: &AppHandle, server_port: u16) -> Result<(), String> {
     println!("[sidecar] Starting server...");

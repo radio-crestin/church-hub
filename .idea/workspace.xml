@@ -6,56 +6,21 @@
   <component name="ChangeListManager">
     <list default="true" id="66517e3f-2e4e-43cc-880d-deb242368f0c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TODO.md" beforeDir="false" afterPath="$PROJECT_DIR$/TODO.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/app/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/DisplayWindow.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/DisplayWindow.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/LivePreview.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/LivePreview.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/service/displays.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/service/displays.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/song-export/components/ImportExportManager.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/song-export/components/ImportExportManager.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/song-import/components/ImportConfirmationModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/song-import/components/ImportConfirmationModal.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/song-import/components/PptxDropZoneProvider.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/song-import/components/PptxDropZoneProvider.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/song-import/components/PptxImportDialog.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/song-import/components/PptxImportDialog.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/song-import/hooks/useBatchImportSongs.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/song-import/hooks/useBatchImportSongs.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/song-import/hooks/useImportPptxAsSong.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/song-import/hooks/useImportPptxAsSong.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/song-import/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/song-import/types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/song-import/utils/processImportFiles.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/song-import/utils/processImportFiles.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/song-import/utils/processZipFromBuffer.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/song-import/utils/processZipFromBuffer.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/songs/components/SongEditor.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/songs/components/SongEditor.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/songs/components/SongEditorModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/songs/components/SongEditorModal.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/songs/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/songs/types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/users/components/UserList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/users/components/UserList.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/songs.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/songs.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/songs.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/songs.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/router.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/router.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/routes/songs/$songId.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/routes/songs/$songId.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/routes/songs/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/routes/songs/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/utils/fetcher.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/utils/fetcher.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/utils/tauri-commands.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/utils/tauri-commands.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/vite-env.d.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/vite-env.d.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/crypto.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/AddToQueueMenu.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/AddToQueueMenu.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/users/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/users/types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/config.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/queue.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/queue.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/sidebar.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/sidebar.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/queue.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/queue.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/sidebar.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/sidebar.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/routeTree.gen.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/routeTree.gen.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/ui/sidebar/sidebar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/ui/sidebar/sidebar.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/migrations.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/migrations.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/apps/server/src/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/middleware/auth.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/middleware/auth.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/middleware/permissions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/middleware/permissions.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/apps/server/src/openapi/spec.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/openapi/spec.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/rust-ipc.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/presentation/presentation-state.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/presentation/presentation-state.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/songs/categories.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/songs/categories.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/songs/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/songs/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/songs/search.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/songs/search.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/songs/songs.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/songs/songs.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/songs/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/songs/types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/data/app.db" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/data/app.db-shm" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/data/app.db-wal" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/data/app.db-wal" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/tauri/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/tauri/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/Cargo.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/tauri/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/tauri/src/commands.rs" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/src/commands.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/tauri/src/crypto.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/tauri/src/domain.rs" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/src/domain.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/tauri/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/src/lib.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/tauri/src/server.rs" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/src/server.rs" afterDir="false" />
     </list>
@@ -203,7 +168,7 @@
       <workItem from="1762688136394" duration="14616000" />
       <workItem from="1763895878404" duration="13746000" />
       <workItem from="1764529520395" duration="23258000" />
-      <workItem from="1765113262440" duration="110527000" />
+      <workItem from="1765113262440" duration="112989000" />
     </task>
     <servers />
   </component>

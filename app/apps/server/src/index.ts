@@ -30,6 +30,20 @@ import {
   upsertSetting,
 } from './service'
 import {
+  type CreateTranslationInput,
+  deleteTranslation,
+  ensureRCCVExists,
+  getAllTranslations,
+  getBooksByTranslation,
+  getChaptersForBook,
+  getTranslationById,
+  getVerseById,
+  getVersesByChapter,
+  importUsfxTranslation,
+  type SearchVersesInput,
+  searchBible,
+} from './service/bible'
+import {
   checkLibreOfficeInstalled,
   convertPptToPptx,
 } from './service/conversion'
@@ -124,6 +138,9 @@ async function main() {
   // Rebuild search indexes to ensure FTS tables are populated
   rebuildSearchIndex()
   rebuildScheduleSearchIndex()
+
+  // Seed RCCV Bible translation if no translations exist
+  ensureRCCVExists()
 
   const isProd = process.env.NODE_ENV === 'production'
 
@@ -1958,6 +1975,259 @@ async function main() {
             }),
           )
         }
+      }
+
+      // ============================================================
+      // Bible API Endpoints
+      // ============================================================
+
+      // GET /api/bible/translations - List all translations
+      if (req.method === 'GET' && url.pathname === '/api/bible/translations') {
+        const permError = checkPermission('bible.view')
+        if (permError) return permError
+
+        const translations = getAllTranslations()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: translations }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // GET /api/bible/translations/:id - Get single translation
+      const getTranslationMatch = url.pathname.match(
+        /^\/api\/bible\/translations\/(\d+)$/,
+      )
+      if (req.method === 'GET' && getTranslationMatch?.[1]) {
+        const permError = checkPermission('bible.view')
+        if (permError) return permError
+
+        const id = parseInt(getTranslationMatch[1], 10)
+        const translation = getTranslationById(id)
+
+        if (!translation) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Translation not found' }), {
+              status: 404,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: translation }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/bible/translations - Import new translation
+      if (req.method === 'POST' && url.pathname === '/api/bible/translations') {
+        const permError = checkPermission('bible.import')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as CreateTranslationInput
+
+          if (
+            !body.name ||
+            !body.abbreviation ||
+            !body.language ||
+            !body.xmlContent
+          ) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({
+                  error:
+                    'Missing required fields: name, abbreviation, language, xmlContent',
+                }),
+                {
+                  status: 400,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          const result = importUsfxTranslation(body)
+
+          if (!result.success) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: result.error }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: result.translation }), {
+              status: 201,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // DELETE /api/bible/translations/:id - Delete translation
+      const deleteTranslationMatch = url.pathname.match(
+        /^\/api\/bible\/translations\/(\d+)$/,
+      )
+      if (req.method === 'DELETE' && deleteTranslationMatch?.[1]) {
+        const permError = checkPermission('bible.delete')
+        if (permError) return permError
+
+        const id = parseInt(deleteTranslationMatch[1], 10)
+        const result = deleteTranslation(id)
+
+        if (!result.success) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: result.error }), {
+              status: result.error === 'Translation not found' ? 404 : 500,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: { success: true } }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // GET /api/bible/books/:translationId - Get books for translation
+      const getBooksMatch = url.pathname.match(/^\/api\/bible\/books\/(\d+)$/)
+      if (req.method === 'GET' && getBooksMatch?.[1]) {
+        const permError = checkPermission('bible.view')
+        if (permError) return permError
+
+        const translationId = parseInt(getBooksMatch[1], 10)
+        const books = getBooksByTranslation(translationId)
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: books }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // GET /api/bible/chapters/:bookId - Get chapters for book
+      const getChaptersMatch = url.pathname.match(
+        /^\/api\/bible\/chapters\/(\d+)$/,
+      )
+      if (req.method === 'GET' && getChaptersMatch?.[1]) {
+        const permError = checkPermission('bible.view')
+        if (permError) return permError
+
+        const bookId = parseInt(getChaptersMatch[1], 10)
+        const chapters = getChaptersForBook(bookId)
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: chapters }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // GET /api/bible/verses/:bookId/:chapter - Get verses for chapter
+      const getVersesMatch = url.pathname.match(
+        /^\/api\/bible\/verses\/(\d+)\/(\d+)$/,
+      )
+      if (req.method === 'GET' && getVersesMatch?.[1] && getVersesMatch?.[2]) {
+        const permError = checkPermission('bible.view')
+        if (permError) return permError
+
+        const bookId = parseInt(getVersesMatch[1], 10)
+        const chapter = parseInt(getVersesMatch[2], 10)
+        const verses = getVersesByChapter(bookId, chapter)
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: verses }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // GET /api/bible/verse/:verseId - Get single verse by ID
+      const getVerseMatch = url.pathname.match(/^\/api\/bible\/verse\/(\d+)$/)
+      if (req.method === 'GET' && getVerseMatch?.[1]) {
+        const permError = checkPermission('bible.view')
+        if (permError) return permError
+
+        const verseId = parseInt(getVerseMatch[1], 10)
+        const verse = getVerseById(verseId)
+
+        if (!verse) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Verse not found' }), {
+              status: 404,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: verse }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // GET /api/bible/search - Search verses (by reference or text)
+      if (req.method === 'GET' && url.pathname === '/api/bible/search') {
+        const permError = checkPermission('bible.view')
+        if (permError) return permError
+
+        const query = url.searchParams.get('q') || ''
+        const translationIdParam = url.searchParams.get('translationId')
+        const limitParam = url.searchParams.get('limit')
+
+        const input: SearchVersesInput = {
+          query,
+          translationId: translationIdParam
+            ? parseInt(translationIdParam, 10)
+            : undefined,
+          limit: limitParam ? parseInt(limitParam, 10) : 50,
+        }
+
+        const result = searchBible(input)
+
+        return handleCors(
+          req,
+          new Response(
+            JSON.stringify({
+              data: {
+                type: result.type,
+                results: result.results,
+              },
+            }),
+            {
+              headers: { 'Content-Type': 'application/json' },
+            },
+          ),
+        )
       }
 
       // ============================================================

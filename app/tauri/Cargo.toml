@@ -29,3 +29,4 @@ tokio = "1.48.0"
 tauri-plugin-http = { version = "2.5.4", features = ["unsafe-headers", "cookies"] }
 tauri-plugin-fs = "2"
 tauri-plugin-dialog = "2"
+ureq = "2"
