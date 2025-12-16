@@ -14,6 +14,7 @@ import { Route as SettingsIndexRouteImport } from './routes/settings/index'
 import { Route as SchedulesIndexRouteImport } from './routes/schedules/index'
 import { Route as PresentIndexRouteImport } from './routes/present/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
+import { Route as BibleIndexRouteImport } from './routes/bible/index'
 import { Route as rootIndexRouteImport } from './routes/(root)/index'
 import { Route as SongsSongIdRouteImport } from './routes/songs/$songId'
 import { Route as SchedulesScheduleIdRouteImport } from './routes/schedules/$scheduleId'
@@ -44,6 +45,11 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   path: '/dashboard/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BibleIndexRoute = BibleIndexRouteImport.update({
+  id: '/bible/',
+  path: '/bible/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const rootIndexRoute = rootIndexRouteImport.update({
   id: '/(root)/',
   path: '/',
@@ -70,6 +76,7 @@ export interface FileRoutesByFullPath {
   '/schedules/$scheduleId': typeof SchedulesScheduleIdRoute
   '/songs/$songId': typeof SongsSongIdRoute
   '/': typeof rootIndexRoute
+  '/bible': typeof BibleIndexRoute
   '/dashboard': typeof DashboardIndexRoute
   '/present': typeof PresentIndexRoute
   '/schedules': typeof SchedulesIndexRoute
@@ -81,6 +88,7 @@ export interface FileRoutesByTo {
   '/schedules/$scheduleId': typeof SchedulesScheduleIdRoute
   '/songs/$songId': typeof SongsSongIdRoute
   '/': typeof rootIndexRoute
+  '/bible': typeof BibleIndexRoute
   '/dashboard': typeof DashboardIndexRoute
   '/present': typeof PresentIndexRoute
   '/schedules': typeof SchedulesIndexRoute
@@ -93,6 +101,7 @@ export interface FileRoutesById {
   '/schedules/$scheduleId': typeof SchedulesScheduleIdRoute
   '/songs/$songId': typeof SongsSongIdRoute
   '/(root)/': typeof rootIndexRoute
+  '/bible/': typeof BibleIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/present/': typeof PresentIndexRoute
   '/schedules/': typeof SchedulesIndexRoute
@@ -106,6 +115,7 @@ export interface FileRouteTypes {
     | '/schedules/$scheduleId'
     | '/songs/$songId'
     | '/'
+    | '/bible'
     | '/dashboard'
     | '/present'
     | '/schedules'
@@ -117,6 +127,7 @@ export interface FileRouteTypes {
     | '/schedules/$scheduleId'
     | '/songs/$songId'
     | '/'
+    | '/bible'
     | '/dashboard'
     | '/present'
     | '/schedules'
@@ -128,6 +139,7 @@ export interface FileRouteTypes {
     | '/schedules/$scheduleId'
     | '/songs/$songId'
     | '/(root)/'
+    | '/bible/'
     | '/dashboard/'
     | '/present/'
     | '/schedules/'
@@ -140,6 +152,7 @@ export interface RootRouteChildren {
   SchedulesScheduleIdRoute: typeof SchedulesScheduleIdRoute
   SongsSongIdRoute: typeof SongsSongIdRoute
   rootIndexRoute: typeof rootIndexRoute
+  BibleIndexRoute: typeof BibleIndexRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
   PresentIndexRoute: typeof PresentIndexRoute
   SchedulesIndexRoute: typeof SchedulesIndexRoute
@@ -184,6 +197,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/bible/': {
+      id: '/bible/'
+      path: '/bible'
+      fullPath: '/bible'
+      preLoaderRoute: typeof BibleIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/(root)/': {
       id: '/(root)/'
       path: '/'
@@ -220,6 +240,7 @@ const rootRouteChildren: RootRouteChildren = {
   SchedulesScheduleIdRoute: SchedulesScheduleIdRoute,
   SongsSongIdRoute: SongsSongIdRoute,
   rootIndexRoute: rootIndexRoute,
+  BibleIndexRoute: BibleIndexRoute,
   DashboardIndexRoute: DashboardIndexRoute,
   PresentIndexRoute: PresentIndexRoute,
   SchedulesIndexRoute: SchedulesIndexRoute,
