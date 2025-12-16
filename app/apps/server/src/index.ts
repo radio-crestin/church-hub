@@ -133,11 +133,13 @@ import {
 async function main() {
   // Initialize database
   const db = await initializeDatabase()
-  runMigrations(db)
+  const { ftsRecreated } = runMigrations(db)
 
-  // Rebuild search indexes to ensure FTS tables are populated
-  rebuildSearchIndex()
-  rebuildScheduleSearchIndex()
+  // Only rebuild search indexes when FTS tables were recreated
+  if (ftsRecreated) {
+    rebuildSearchIndex()
+    rebuildScheduleSearchIndex()
+  }
 
   // Seed RCCV Bible translation if no translations exist
   ensureRCCVExists()
