@@ -6,5 +6,6 @@ export {
   insertSlideToQueue,
   removeFromQueue,
   reorderQueue,
+  saveQueueAsSchedule,
   setQueueItemExpanded,
 } from './queue'

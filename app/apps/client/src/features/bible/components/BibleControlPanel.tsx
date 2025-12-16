@@ -3,7 +3,6 @@ import {
   ChevronUp,
   Eye,
   EyeOff,
-  Keyboard,
   Loader2,
   MonitorUp,
 } from 'lucide-react'
@@ -89,6 +88,39 @@ export function BibleControlPanel({
               LIVE
             </span>
           </div>
+          {!isHidden ? (
+            <button
+              type="button"
+              onClick={handleHide}
+              disabled={clearSlide.isPending}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+              title={`${t('controls.hide')} (Esc)`}
+            >
+              {clearSlide.isPending ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : (
+                <EyeOff size={18} />
+              )}
+              <span>{t('controls.hide')}</span>
+              <span className="text-xs opacity-75">(Esc)</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleShow}
+              disabled={!hasContent || showSlide.isPending}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+              title={`${t('controls.show')} (F10)`}
+            >
+              {showSlide.isPending ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : (
+                <Eye size={18} />
+              )}
+              <span>{t('controls.show')}</span>
+              <span className="text-xs opacity-75">(F10)</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -107,38 +139,6 @@ export function BibleControlPanel({
             <span className="text-sm">{t('controls.prev')}</span>
           </button>
 
-          {!isHidden ? (
-            <button
-              type="button"
-              onClick={handleHide}
-              disabled={clearSlide.isPending}
-              className="flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
-              title={`${t('controls.hide')} (Esc)`}
-            >
-              {clearSlide.isPending ? (
-                <Loader2 size={18} className="animate-spin" />
-              ) : (
-                <EyeOff size={18} />
-              )}
-              <span className="text-sm">{t('controls.hide')}</span>
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={handleShow}
-              disabled={!hasContent || showSlide.isPending}
-              className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50 transition-colors"
-              title={`${t('controls.show')} (F10)`}
-            >
-              {showSlide.isPending ? (
-                <Loader2 size={18} className="animate-spin" />
-              ) : (
-                <Eye size={18} />
-              )}
-              <span className="text-sm">{t('controls.show')}</span>
-            </button>
-          )}
-
           <button
             type="button"
             onClick={onNextVerse}
@@ -149,41 +149,6 @@ export function BibleControlPanel({
             <span className="text-sm">{t('controls.next')}</span>
             <ChevronDown size={18} />
           </button>
-        </div>
-
-        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
-          <div className="flex items-center gap-2 mb-2">
-            <Keyboard size={14} className="text-gray-400" />
-            <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-              {t('shortcuts.title')}
-            </span>
-          </div>
-          <div className="grid grid-cols-2 gap-1 text-xs text-gray-600 dark:text-gray-300">
-            <div className="flex items-center gap-2">
-              <kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-600 rounded text-[10px]">
-                Up/Down
-              </kbd>
-              <span>{t('shortcuts.navigate')}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-600 rounded text-[10px]">
-                Left
-              </kbd>
-              <span>{t('shortcuts.back')}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-600 rounded text-[10px]">
-                Esc
-              </kbd>
-              <span>{t('shortcuts.hide')}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-600 rounded text-[10px]">
-                Enter
-              </kbd>
-              <span>{t('shortcuts.present')}</span>
-            </div>
-          </div>
         </div>
       </div>
     </div>

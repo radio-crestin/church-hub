@@ -6,7 +6,7 @@
     "delete": "Sterge",
     "back": "Inapoi la Programe",
     "addItem": "Adauga",
-    "importToQueue": "Importa in Coada"
+    "importToQueue": "Adauga in Coada"
   },
   "editor": {
     "titlePlaceholder": "Introdu titlul programului...",
@@ -34,10 +34,19 @@
     "importTitle": "Importa Program",
     "unsavedChangesTitle": "Modificari Nesalvate",
     "unsavedChangesMessage": "Ai modificari nesalvate. Esti sigur ca vrei sa parasesti aceasta pagina?",
-    "discardChanges": "Pierde modificarile"
+    "discardChanges": "Pierde modificarile",
+    "addSongTitle": "Adauga in Program",
+    "addSongDescription": "Selecteaza un program pentru a adauga aceasta cantare",
+    "adding": "Se adauga...",
+    "createTitle": "Program Nou",
+    "scheduleName": "Numele programului",
+    "create": "Creeaza",
+    "cancel": "Anuleaza",
+    "createNew": "Creeaza program nou"
   },
   "noSchedules": "Niciun program inca",
   "noSchedulesDescription": "Creeaza primul tau program pentru a planifica prezentarile",
   "itemCount_one": "{{count}} element",
-  "itemCount_other": "{{count}} elemente"
+  "itemCount_other": "{{count}} elemente",
+  "createdAt": "Creat pe {{date}}"
 }

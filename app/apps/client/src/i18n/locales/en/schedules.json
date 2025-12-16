@@ -34,10 +34,19 @@
     "importTitle": "Import Schedule",
     "unsavedChangesTitle": "Unsaved Changes",
     "unsavedChangesMessage": "You have unsaved changes. Are you sure you want to leave?",
-    "discardChanges": "Lose changes"
+    "discardChanges": "Lose changes",
+    "addSongTitle": "Add to Schedule",
+    "addSongDescription": "Select a schedule to add this song",
+    "adding": "Adding...",
+    "createTitle": "New Schedule",
+    "scheduleName": "Schedule name",
+    "create": "Create",
+    "cancel": "Cancel",
+    "createNew": "Create new schedule"
   },
   "noSchedules": "No schedules yet",
   "noSchedulesDescription": "Create your first schedule to plan your presentations",
   "itemCount_one": "{{count}} item",
-  "itemCount_other": "{{count}} items"
+  "itemCount_other": "{{count}} items",
+  "createdAt": "Created {{date}}"
 }

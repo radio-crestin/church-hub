@@ -47,6 +47,7 @@ import {
   checkLibreOfficeInstalled,
   convertPptToPptx,
 } from './service/conversion'
+import { getExternalInterfaces } from './service/network'
 import {
   clearSlide,
   type DisplayTheme,
@@ -67,6 +68,7 @@ import {
   type AddToQueueInput,
   addToQueue,
   clearQueue,
+  exportQueueToSchedule,
   getQueue,
   type InsertBibleVerseInput,
   type InsertSlideInput,
@@ -160,7 +162,7 @@ async function main() {
     )
     res.headers.set(
       'Access-Control-Allow-Headers',
-      'Content-Type, Authorization, X-App-Session',
+      'Content-Type, Authorization, X-App-Session, Cache-Control',
     )
     res.headers.set('Access-Control-Allow-Credentials', 'true')
     return res
@@ -820,6 +822,20 @@ async function main() {
           req,
           new Response(JSON.stringify({ error: 'Unauthorized' }), {
             status: 401,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // GET /api/network/interfaces - Get external network interfaces
+      if (req.method === 'GET' && url.pathname === '/api/network/interfaces') {
+        const authError = await requireAppAuth()
+        if (authError) return authError
+
+        const interfaces = getExternalInterfaces()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: interfaces }), {
             headers: { 'Content-Type': 'application/json' },
           }),
         )
@@ -2798,6 +2814,63 @@ async function main() {
             new Response(JSON.stringify({ data: queueItem }), {
               headers: { 'Content-Type': 'application/json' },
             }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // POST /api/queue/export-to-schedule - Export queue to a new schedule
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/queue/export-to-schedule'
+      ) {
+        const permError = checkPermission('programs.create')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as { title: string }
+
+          if (!body.title) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Missing title' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const scheduleId = exportQueueToSchedule(body.title)
+
+          if (!scheduleId) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({ error: 'Failed to export queue to schedule' }),
+                {
+                  status: 500,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({ success: true, data: { scheduleId } }),
+              {
+                status: 201,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
           )
         } catch {
           return handleCors(

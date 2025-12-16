@@ -5,7 +5,13 @@ import { BooksList } from './BooksList'
 import { ChaptersGrid } from './ChaptersGrid'
 import { TranslationSelector } from './TranslationSelector'
 import { VersesList } from './VersesList'
-import { useBooks, useChapters, useSearchBible, useVerses } from '../hooks'
+import {
+  useBooks,
+  useChapters,
+  useSearchBible,
+  useSmartSearch,
+  useVerses,
+} from '../hooks'
 import type { UseBibleNavigationReturn } from '../hooks/useBibleNavigation'
 import type { BibleSearchResult, BibleVerse } from '../types'
 
@@ -30,7 +36,6 @@ export function BibleNavigationPanel({
     selectTranslation,
     selectBook,
     selectChapter,
-    selectVerse,
     goBack,
     setSearchQuery,
     clearSearch,
@@ -46,20 +51,29 @@ export function BibleNavigationPanel({
     state.bookId,
     state.chapter,
   )
+  const { isReferenceSearch } = useSmartSearch({
+    searchQuery: state.searchQuery,
+    books,
+    navigation,
+    enabled: state.searchQuery.length >= 2,
+  })
+
   const { data: searchResults, isLoading: isSearching } = useSearchBible(
     state.searchQuery,
     state.translationId,
+    50,
+    !isReferenceSearch, // Only run text search when it's not a reference search
   )
 
   const handleSelectVerse = (index: number) => {
-    selectVerse(index)
     const verse = verses[index]
     if (verse) {
       onSelectVerse(verse, index)
     }
   }
 
-  const isSearchActive = state.searchQuery.length >= 2
+  // Show text search results only when there's an active text search (not reference search)
+  const isTextSearchActive = state.searchQuery.length >= 2 && !isReferenceSearch
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
@@ -96,7 +110,7 @@ export function BibleNavigationPanel({
       </div>
 
       <div className="flex-1 overflow-y-auto p-3">
-        {isSearchActive ? (
+        {isTextSearchActive ? (
           <SearchResults
             results={searchResults?.results || []}
             type={searchResults?.type || 'text'}
@@ -122,8 +136,8 @@ export function BibleNavigationPanel({
             bookName={state.bookName || ''}
             chapter={state.chapter || 0}
             verses={verses}
-            selectedIndex={state.verseIndex}
-            presentedIndex={state.presentedVerseIndex}
+            presentedIndex={state.presentedIndex}
+            searchedIndex={state.searchedIndex}
             isLoading={isLoadingVerses}
             onSelectVerse={handleSelectVerse}
             onGoBack={goBack}

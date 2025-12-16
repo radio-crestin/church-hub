@@ -11,6 +11,7 @@ export {
 export type {
   BibleNavigationLevel,
   BibleNavigationState,
+  NavigateToVerseParams,
   UseBibleNavigationReturn,
 } from './hooks'
 // Hooks
