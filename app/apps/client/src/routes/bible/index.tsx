@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Book, FileUp, Loader2 } from 'lucide-react'
+import { Book, FileUp, GripVertical, Loader2 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -7,7 +7,6 @@ import type { BibleSearchResult, BibleVerse } from '~/features/bible'
 import {
   BibleControlPanel,
   BibleNavigationPanel,
-  BibleQueuePanel,
   formatVerseReference,
   useBibleKeyboardShortcuts,
   useBibleNavigation,
@@ -20,7 +19,6 @@ import {
   useUpdatePresentationState,
 } from '~/features/presentation'
 import { useInsertBibleVerseToQueue } from '~/features/queue'
-import type { QueueItem } from '~/features/queue/types'
 import { AlertModal } from '~/ui/modal'
 import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
 
@@ -41,6 +39,9 @@ function BiblePage() {
   const clearSlide = useClearSlide()
 
   const [importError, setImportError] = useState<string | null>(null)
+  const [dividerPosition, setDividerPosition] = useState(40) // percentage
+  const containerRef = useRef<HTMLDivElement>(null)
+  const isDragging = useRef(false)
 
   // Initialize navigation with first translation
   const navigation = useBibleNavigation(translations?.[0]?.id)
@@ -121,17 +122,6 @@ function BiblePage() {
       })
     },
     [currentTranslation?.abbreviation, insertBibleVerse],
-  )
-
-  // Handle queue item selection
-  const handleSelectQueueItem = useCallback(
-    async (item: QueueItem) => {
-      await updatePresentationState.mutateAsync({
-        currentQueueItemId: item.id,
-        currentSongSlideId: null,
-      })
-    },
-    [updatePresentationState],
   )
 
   // Handle next/previous verse navigation
@@ -219,6 +209,34 @@ function BiblePage() {
   const canNavigateVerses =
     navigation.state.level === 'verses' && verses.length > 0
 
+  // Divider drag handlers
+  const handleDividerMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    isDragging.current = true
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      if (!isDragging.current || !containerRef.current) return
+      const containerRect = containerRef.current.getBoundingClientRect()
+      const newPosition =
+        ((moveEvent.clientX - containerRect.left) / containerRect.width) * 100
+      // Clamp between 20% and 80%
+      setDividerPosition(Math.min(80, Math.max(20, newPosition)))
+    }
+
+    const handleMouseUp = () => {
+      isDragging.current = false
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+  }, [])
+
   return (
     <PagePermissionGuard permission="bible.view">
       <div className="flex flex-col h-full">
@@ -256,8 +274,15 @@ function BiblePage() {
             <Loader2 className="w-8 h-8 animate-spin text-indigo-600 dark:text-indigo-400" />
           </div>
         ) : translations && translations.length > 0 ? (
-          <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0">
-            <div className="lg:w-1/3 min-h-0 flex-1 lg:flex-initial">
+          <div
+            ref={containerRef}
+            className="flex flex-col lg:flex-row flex-1 min-h-0"
+          >
+            {/* Left Panel - Navigation */}
+            <div
+              className="min-h-0 flex-1 lg:flex-initial overflow-hidden"
+              style={{ width: `${dividerPosition}%` }}
+            >
               <BibleNavigationPanel
                 navigation={navigation}
                 translations={translations}
@@ -267,11 +292,22 @@ function BiblePage() {
               />
             </div>
 
-            <div className="lg:w-1/3 min-h-0 flex-1 lg:flex-initial">
-              <BibleQueuePanel onSelectItem={handleSelectQueueItem} />
+            {/* Draggable Divider */}
+            <div
+              className="hidden lg:flex items-center justify-center w-2 cursor-col-resize hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors group"
+              onMouseDown={handleDividerMouseDown}
+            >
+              <GripVertical
+                size={16}
+                className="text-gray-400 group-hover:text-indigo-500 transition-colors"
+              />
             </div>
 
-            <div className="lg:w-1/3 min-h-0 flex-1 lg:flex-initial">
+            {/* Right Panel - Preview */}
+            <div
+              className="min-h-0 flex-1 overflow-hidden"
+              style={{ width: `${100 - dividerPosition}%` }}
+            >
               <BibleControlPanel
                 onPrevVerse={handlePreviousVerse}
                 onNextVerse={handleNextVerse}
