@@ -134,3 +134,23 @@ export async function insertBibleVerseToQueue(
 
   return { success: true, data: response.data }
 }
+
+export async function saveQueueAsSchedule(
+  title: string,
+): Promise<{ success: boolean; data?: { scheduleId: number }; error?: string }> {
+  const response = await fetcher<{
+    success?: boolean
+    data?: { scheduleId: number }
+    error?: string
+  }>('/api/queue/export-to-schedule', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title }),
+  })
+
+  if (response.error) {
+    return { success: false, error: response.error }
+  }
+
+  return { success: true, data: response.data }
+}

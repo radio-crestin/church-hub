@@ -116,6 +116,7 @@
           "title": "Scan QR Code",
           "userName": "User",
           "description": "Scan this QR code with the device you want to authorize",
+          "networkInterface": "Network Interface",
           "warning": "This token will only be shown once. Save it if needed.",
           "manualUrl": "Or visit this URL manually:",
           "done": "Done"

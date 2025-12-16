@@ -1,5 +1,6 @@
 export { addToQueue } from './addToQueue'
 export { clearQueue } from './clearQueue'
+export { exportQueueToSchedule } from './exportToSchedule'
 export { getQueue, getQueueItemById } from './getQueue'
 export { insertBibleVerseToQueue } from './insertBibleVerseToQueue'
 export { insertSlideToQueue } from './insertSlideToQueue'

@@ -159,3 +159,27 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
 export function getUserAuthUrl(token: string): string {
   return `${getApiUrl()}/api/auth/user/${encodeURIComponent(token)}`
 }
+
+export interface NetworkInterface {
+  name: string
+  address: string
+  family: 'IPv4' | 'IPv6'
+}
+
+/**
+ * Generates an authentication URL for a specific IP address
+ */
+export function getUserAuthUrlForIp(token: string, ip: string): string {
+  const port = import.meta.env.VITE_API_PORT || '3000'
+  return `http://${ip}:${port}/api/auth/user/${encodeURIComponent(token)}`
+}
+
+/**
+ * Fetches external network interfaces from the server
+ */
+export async function getExternalInterfaces(): Promise<NetworkInterface[]> {
+  const response = await fetcher<ApiResponse<NetworkInterface[]>>(
+    '/api/network/interfaces',
+  )
+  return response.data
+}

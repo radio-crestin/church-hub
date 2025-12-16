@@ -23,6 +23,13 @@ interface StandaloneSlideData {
   slideContent: string | null
 }
 
+interface BibleVerseData {
+  id: number
+  reference: string | null
+  text: string | null
+  translation: string | null
+}
+
 export function DisplayWindow({ displayId }: DisplayWindowProps) {
   // Connect to WebSocket for real-time updates
   useWebSocket()
@@ -33,6 +40,8 @@ export function DisplayWindow({ displayId }: DisplayWindowProps) {
     useState<SongSlideData | null>(null)
   const [currentStandaloneSlide, setCurrentStandaloneSlide] =
     useState<StandaloneSlideData | null>(null)
+  const [currentBibleVerse, setCurrentBibleVerse] =
+    useState<BibleVerseData | null>(null)
 
   // Toggle fullscreen for this display window
   const toggleFullscreen = useCallback(async () => {
@@ -136,20 +145,21 @@ export function DisplayWindow({ displayId }: DisplayWindowProps) {
     fetchSongSlide()
   }, [presentationState?.currentSongSlideId, presentationState?.updatedAt])
 
-  // Fetch current standalone slide content when presentation state changes
+  // Fetch current standalone slide or Bible verse content when presentation state changes
   useEffect(() => {
-    const fetchStandaloneSlide = async () => {
-      // Standalone slide is when we have a queue item but no song slide
+    const fetchStandaloneContent = async () => {
+      // Standalone content is when we have a queue item but no song slide
       if (
         !presentationState?.currentQueueItemId ||
         presentationState?.currentSongSlideId
       ) {
         setCurrentStandaloneSlide(null)
+        setCurrentBibleVerse(null)
         return
       }
 
       try {
-        // Find the standalone slide from the queue
+        // Find the standalone slide or Bible verse from the queue
         // Use cache-busting to ensure fresh data
         const queueResponse = await fetch(`${getApiUrl()}/api/queue`, {
           cache: 'no-store',
@@ -163,22 +173,36 @@ export function DisplayWindow({ displayId }: DisplayWindowProps) {
             (item: { id: number }) =>
               item.id === presentationState.currentQueueItemId,
           )
-          if (queueItem && queueItem.itemType === 'slide') {
-            setCurrentStandaloneSlide({
-              id: queueItem.id,
-              slideContent: queueItem.slideContent,
-            })
-            return
+          if (queueItem) {
+            if (queueItem.itemType === 'slide') {
+              setCurrentStandaloneSlide({
+                id: queueItem.id,
+                slideContent: queueItem.slideContent,
+              })
+              setCurrentBibleVerse(null)
+              return
+            }
+            if (queueItem.itemType === 'bible') {
+              setCurrentBibleVerse({
+                id: queueItem.id,
+                reference: queueItem.bibleReference,
+                text: queueItem.bibleText,
+                translation: queueItem.bibleTranslation,
+              })
+              setCurrentStandaloneSlide(null)
+              return
+            }
           }
         }
         setCurrentStandaloneSlide(null)
+        setCurrentBibleVerse(null)
       } catch (error) {
         // biome-ignore lint/suspicious/noConsole: error logging
-        console.error('Failed to fetch standalone slide:', error)
+        console.error('Failed to fetch standalone content:', error)
       }
     }
 
-    fetchStandaloneSlide()
+    fetchStandaloneContent()
   }, [
     presentationState?.currentQueueItemId,
     presentationState?.currentSongSlideId,
@@ -210,13 +234,20 @@ export function DisplayWindow({ displayId }: DisplayWindowProps) {
   // Show clock when hidden or no content
   const showClock = !hasContent || presentationState?.isHidden
 
-  // Get content to display - prioritize song slides, then standalone slides
+  // Get content to display - prioritize song slides, then standalone slides, then Bible verses
   const getSlideContent = (): string | null => {
     if (currentSongSlide?.content) {
       return currentSongSlide.content
     }
     if (currentStandaloneSlide?.slideContent) {
       return currentStandaloneSlide.slideContent
+    }
+    if (currentBibleVerse?.text) {
+      // Format Bible verse with reference at top (same size), no translation version
+      // Remove translation suffix (e.g., " - RCCV") from reference
+      const fullReference = currentBibleVerse.reference || ''
+      const reference = fullReference.replace(/\s*-\s*[A-Z]+\s*$/, '')
+      return `${reference}<br>${currentBibleVerse.text}`
     }
     return null
   }

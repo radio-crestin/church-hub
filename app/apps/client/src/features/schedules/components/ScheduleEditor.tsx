@@ -1,5 +1,6 @@
-import { ArrowLeft, ListPlus, Loader2, Save, Trash2, X } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from '@tanstack/react-router'
+import { ArrowLeft, ListPlus, Loader2, Trash2, X } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { SongPickerModal } from '~/features/songs/components'
@@ -10,7 +11,6 @@ import { ScheduleItemList } from './ScheduleItemList'
 import {
   useAddItemToSchedule,
   useDeleteSchedule,
-  useDirtyState,
   useImportScheduleToQueue,
   useRemoveItemFromSchedule,
   useReorderScheduleItems,
@@ -34,6 +34,7 @@ export function ScheduleEditor({
 }: ScheduleEditorProps) {
   const { t } = useTranslation('schedules')
   const { showToast } = useToast()
+  const navigate = useNavigate()
 
   const { data: schedule, isLoading } = useSchedule(scheduleId ?? undefined)
   const upsertSchedule = useUpsertSchedule()
@@ -42,7 +43,6 @@ export function ScheduleEditor({
   const importToQueue = useImportScheduleToQueue()
   const reorderItems = useReorderScheduleItems()
   const removeItem = useRemoveItemFromSchedule()
-  const { setSavedState, isDirty } = useDirtyState()
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -69,11 +69,6 @@ export function ScheduleEditor({
       setTitle(schedule.title)
       setDescription(schedule.description ?? '')
       setLocalItems(schedule.items ?? [])
-      setSavedState({
-        title: schedule.title,
-        description: schedule.description ?? '',
-        items: schedule.items ?? [],
-      })
     } else if (scheduleId === null) {
       // New schedule
       setTitle('')
@@ -81,7 +76,7 @@ export function ScheduleEditor({
       setLocalItems([])
       titleInputRef.current?.focus()
     }
-  }, [schedule, scheduleId, setSavedState])
+  }, [schedule, scheduleId])
 
   // Delete dialog handling
   useEffect(() => {
@@ -100,76 +95,47 @@ export function ScheduleEditor({
     setDescription(value)
   }
 
-  const handleSave = async (): Promise<number | null> => {
-    if (!title.trim()) {
-      showToast(t('editor.titleRequired', 'Title is required'), 'error')
-      return null
-    }
-
-    const result = await upsertSchedule.mutateAsync({
-      id: scheduleId ?? undefined,
-      title: title.trim(),
-      description: description.trim() || null,
-    })
-
-    if (result.success && result.data) {
-      const savedScheduleId = result.data.id
-
-      // Handle item changes for existing schedules
-      if (effectiveScheduleId !== null) {
-        const serverItems = schedule?.items ?? []
-        const localItemIds = new Set(localItems.map((item) => item.id))
-
-        // Find removed items (items on server but not in local)
-        const removedItems = serverItems.filter(
-          (item) => !localItemIds.has(item.id),
-        )
-
-        // Remove items that were deleted locally
-        for (const item of removedItems) {
-          await removeItem.mutateAsync({
-            scheduleId: effectiveScheduleId,
-            itemId: item.id,
-          })
-        }
-
-        // Reorder items if order changed
-        if (localItems.length > 0) {
-          const serverOrder = serverItems
-            .filter((item) => localItemIds.has(item.id))
-            .map((item) => item.id)
-          const localOrder = localItems.map((item) => item.id)
-
-          const orderChanged =
-            serverOrder.length !== localOrder.length ||
-            serverOrder.some((id, idx) => id !== localOrder[idx])
-
-          if (orderChanged) {
-            await reorderItems.mutateAsync({
-              scheduleId: effectiveScheduleId,
-              input: { itemIds: localOrder },
-            })
-          }
-        }
+  const handleSave = useCallback(
+    async (
+      currentTitle: string,
+      currentDescription: string,
+    ): Promise<number | null> => {
+      if (!currentTitle.trim()) {
+        return null
       }
 
-      showToast(t('messages.saved'), 'success')
-      setSavedState({
-        title: title.trim(),
-        description: description.trim(),
-        items: localItems,
+      const result = await upsertSchedule.mutateAsync({
+        id: effectiveScheduleId ?? undefined,
+        title: currentTitle.trim(),
+        description: currentDescription.trim() || null,
       })
 
-      // If this was a new schedule, track the ID and redirect
-      if (scheduleId === null && savedScheduleId) {
-        setCreatedScheduleId(savedScheduleId)
-        onScheduleCreated?.(savedScheduleId)
+      if (result.success && result.data) {
+        const savedScheduleId = result.data.id
+
+        // If this was a new schedule, track the ID
+        if (scheduleId === null && savedScheduleId) {
+          setCreatedScheduleId(savedScheduleId)
+          onScheduleCreated?.(savedScheduleId)
+        }
+        return savedScheduleId
       }
-      return savedScheduleId
-    }
-    showToast(t('messages.error'), 'error')
-    return null
-  }
+      return null
+    },
+    [effectiveScheduleId, scheduleId, upsertSchedule, onScheduleCreated],
+  )
+
+  // Auto-save title/description with debounce
+  useEffect(() => {
+    // Skip auto-save if no title yet
+    if (!title.trim()) return
+
+    const timeoutId = setTimeout(() => {
+      handleSave(title, description)
+    }, 500)
+
+    return () => clearTimeout(timeoutId)
+  }, [title, description, handleSave])
 
   const handleDelete = async () => {
     if (!effectiveScheduleId) return
@@ -189,7 +155,7 @@ export function ScheduleEditor({
   const ensureScheduleId = async (): Promise<number | null> => {
     if (effectiveScheduleId !== null) return effectiveScheduleId
     // Auto-save the schedule first
-    return await handleSave()
+    return await handleSave(title, description)
   }
 
   const handleAddSong = async () => {
@@ -221,18 +187,34 @@ export function ScheduleEditor({
     }
   }
 
-  // Local item handlers (changes tracked locally, persisted on Save)
-  const handleReorderItems = (oldIndex: number, newIndex: number) => {
-    setLocalItems((prev) => {
-      const newItems = [...prev]
-      const [removed] = newItems.splice(oldIndex, 1)
-      newItems.splice(newIndex, 0, removed)
-      return newItems
+  // Item handlers - save directly to server
+  const handleReorderItems = async (oldIndex: number, newIndex: number) => {
+    if (!effectiveScheduleId) return
+
+    // Update local state immediately for responsive UI
+    const newItems = [...localItems]
+    const [removed] = newItems.splice(oldIndex, 1)
+    newItems.splice(newIndex, 0, removed)
+    setLocalItems(newItems)
+
+    // Persist to server
+    await reorderItems.mutateAsync({
+      scheduleId: effectiveScheduleId,
+      input: { itemIds: newItems.map((item) => item.id) },
     })
   }
 
-  const handleRemoveItem = (itemId: number) => {
+  const handleRemoveItem = async (itemId: number) => {
+    if (!effectiveScheduleId) return
+
+    // Update local state immediately for responsive UI
     setLocalItems((prev) => prev.filter((item) => item.id !== itemId))
+
+    // Persist to server
+    await removeItem.mutateAsync({
+      scheduleId: effectiveScheduleId,
+      itemId,
+    })
   }
 
   const handleImportToQueue = async () => {
@@ -241,13 +223,11 @@ export function ScheduleEditor({
     const success = await importToQueue.mutateAsync(effectiveScheduleId)
     if (success) {
       showToast(t('messages.importedToQueue'), 'success')
+      navigate({ to: '/present' })
     } else {
       showToast(t('messages.error'), 'error')
     }
   }
-
-  // Check if there are unsaved changes
-  const hasUnsavedChanges = isDirty({ title, description, items: localItems })
 
   if (isLoading && scheduleId !== null) {
     return (
@@ -289,26 +269,12 @@ export function ScheduleEditor({
               <button
                 type="button"
                 onClick={() => setShowDeleteConfirm(true)}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm text-white bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 rounded-lg transition-colors"
+                className="p-2 text-white bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 rounded-lg transition-colors"
               >
                 <Trash2 size={16} />
-                {t('actions.delete')}
               </button>
             </>
           )}
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={upsertSchedule.isPending || !hasUnsavedChanges}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm text-white bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 rounded-lg disabled:opacity-50 transition-colors"
-          >
-            {upsertSchedule.isPending ? (
-              <Loader2 size={16} className="animate-spin" />
-            ) : (
-              <Save size={16} />
-            )}
-            {t('actions.save')}
-          </button>
         </div>
       </div>
 

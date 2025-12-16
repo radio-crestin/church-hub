@@ -1,30 +1,18 @@
 import { useEffect } from 'react'
 
-import type { BibleNavigationLevel } from './useBibleNavigation'
-
 interface UseBibleKeyboardShortcutsOptions {
-  level: BibleNavigationLevel
-  verseIndex: number
-  versesCount: number
   onNextVerse: () => void
   onPreviousVerse: () => void
-  onNavigateDeeper: () => void
   onGoBack: () => void
   onHidePresentation: () => void
-  onPresent: () => void
   enabled?: boolean
 }
 
 export function useBibleKeyboardShortcuts({
-  level,
-  verseIndex,
-  versesCount,
   onNextVerse,
   onPreviousVerse,
-  onNavigateDeeper,
   onGoBack,
   onHidePresentation,
-  onPresent,
   enabled = true,
 }: UseBibleKeyboardShortcutsOptions) {
   useEffect(() => {
@@ -42,32 +30,17 @@ export function useBibleKeyboardShortcuts({
 
       switch (event.key) {
         case 'ArrowDown':
+        case 'ArrowRight':
           event.preventDefault()
-          if (level === 'verses' && verseIndex < versesCount - 1) {
-            onNextVerse()
-          }
+          onNextVerse()
           break
 
         case 'ArrowUp':
-          event.preventDefault()
-          if (level === 'verses' && verseIndex > 0) {
-            onPreviousVerse()
-          }
-          break
-
-        case 'ArrowRight':
-        case 'Enter':
-        case 'F5':
-        case 'F10':
-          event.preventDefault()
-          if (level !== 'verses') {
-            onNavigateDeeper()
-          } else {
-            onPresent()
-          }
-          break
-
         case 'ArrowLeft':
+          event.preventDefault()
+          onPreviousVerse()
+          break
+
         case 'Backspace':
           event.preventDefault()
           onGoBack()
@@ -85,16 +58,5 @@ export function useBibleKeyboardShortcuts({
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [
-    enabled,
-    level,
-    verseIndex,
-    versesCount,
-    onNextVerse,
-    onPreviousVerse,
-    onNavigateDeeper,
-    onGoBack,
-    onHidePresentation,
-    onPresent,
-  ])
+  }, [enabled, onNextVerse, onPreviousVerse, onGoBack, onHidePresentation])
 }

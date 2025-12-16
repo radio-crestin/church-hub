@@ -19,6 +19,7 @@ interface QueueSongItemProps {
   onSlideClick: (slideId: number) => void
   onSongClick: () => void
   onEditSong: () => void
+  onAddToSchedule?: () => void
   onInsertSongAfter: () => void
   onInsertSlideAfter: (template: SlideTemplate) => void
   dragHandleProps?: React.HTMLAttributes<HTMLDivElement>
@@ -34,6 +35,7 @@ export function QueueSongItem({
   onSlideClick,
   onSongClick,
   onEditSong,
+  onAddToSchedule,
   onInsertSongAfter,
   onInsertSlideAfter,
   dragHandleProps,
@@ -128,6 +130,7 @@ export function QueueSongItem({
         <QueueItemContextMenu
           ref={contextMenuRef}
           onEditSong={onEditSong}
+          onAddToSchedule={onAddToSchedule}
           onInsertSongAfter={onInsertSongAfter}
           onInsertSlideAfter={onInsertSlideAfter}
           onRemove={onRemove}

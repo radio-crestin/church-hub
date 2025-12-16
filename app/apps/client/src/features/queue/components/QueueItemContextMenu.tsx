@@ -1,4 +1,5 @@
 import {
+  CalendarPlus,
   Edit3,
   FileText,
   Megaphone,
@@ -26,6 +27,7 @@ export interface QueueItemContextMenuHandle {
 interface QueueItemContextMenuProps {
   onEditSong?: () => void
   onEditSlide?: () => void
+  onAddToSchedule?: () => void
   onInsertSongAfter: () => void
   onInsertSlideAfter: (template: SlideTemplate) => void
   onRemove: () => void
@@ -35,7 +37,7 @@ export const QueueItemContextMenu = forwardRef<
   QueueItemContextMenuHandle,
   QueueItemContextMenuProps
 >(function QueueItemContextMenu(
-  { onEditSong, onEditSlide, onInsertSongAfter, onInsertSlideAfter, onRemove },
+  { onEditSong, onEditSlide, onAddToSchedule, onInsertSongAfter, onInsertSlideAfter, onRemove },
   ref,
 ) {
   const { t } = useTranslation('queue')
@@ -146,6 +148,16 @@ export const QueueItemContextMenu = forwardRef<
             >
               <Edit3 size={14} />
               {t('actions.editSlide')}
+            </button>
+          )}
+          {onAddToSchedule && (
+            <button
+              type="button"
+              onClick={() => handleAction(onAddToSchedule)}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              <CalendarPlus size={14} />
+              {t('actions.addToSchedule')}
             </button>
           )}
           {/* Insert After - opens dialog */}
