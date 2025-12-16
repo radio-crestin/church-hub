@@ -9,7 +9,6 @@
     "dev:web": "concurrently --kill-others \"bun run --filter server dev\" \"bun run --filter client dev\"",
     "lint": "biome check ./apps",
     "lint:fix": "biome check ./apps --write",
-    "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
     "tauri:build:debug": "tauri build --debug",
     "build:apps": "bun run --filter client build && bun run --filter server compile",

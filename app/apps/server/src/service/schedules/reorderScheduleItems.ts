@@ -1,5 +1,8 @@
+import { and, eq } from 'drizzle-orm'
+
 import type { ReorderScheduleItemsInput } from './types'
 import { getDatabase } from '../../db'
+import { scheduleItems, schedules } from '../../db/schema'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -20,24 +23,29 @@ export function reorderScheduleItems(
     log('debug', `Reordering schedule items for schedule: ${scheduleId}`)
 
     const db = getDatabase()
-    const now = Math.floor(Date.now() / 1000)
+    const now = new Date()
 
     // Update sort_order for each item
-    const updateQuery = db.query(`
-      UPDATE schedule_items
-      SET sort_order = ?, updated_at = ?
-      WHERE id = ? AND schedule_id = ?
-    `)
-
     for (let i = 0; i < input.itemIds.length; i++) {
-      updateQuery.run(i, now, input.itemIds[i], scheduleId)
+      db.update(scheduleItems)
+        .set({
+          sortOrder: i,
+          updatedAt: now,
+        })
+        .where(
+          and(
+            eq(scheduleItems.id, input.itemIds[i]),
+            eq(scheduleItems.scheduleId, scheduleId),
+          ),
+        )
+        .run()
     }
 
     // Update schedule's updated_at
-    db.query('UPDATE schedules SET updated_at = ? WHERE id = ?').run(
-      now,
-      scheduleId,
-    )
+    db.update(schedules)
+      .set({ updatedAt: now })
+      .where(eq(schedules.id, scheduleId))
+      .run()
 
     log('info', `Schedule items reordered: ${input.itemIds.length} items`)
     return true

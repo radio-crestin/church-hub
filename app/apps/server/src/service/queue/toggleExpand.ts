@@ -1,6 +1,9 @@
+import { eq, sql } from 'drizzle-orm'
+
 import { getQueueItemById } from './getQueue'
 import type { QueueItem } from './types'
 import { getDatabase } from '../../db'
+import { presentationQueue } from '../../db/schema'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -18,16 +21,15 @@ export function toggleExpand(id: number): QueueItem | null {
     log('debug', `Toggling expand for queue item: ${id}`)
 
     const db = getDatabase()
-    const now = Math.floor(Date.now() / 1000)
 
-    // Toggle is_expanded (1 -> 0, 0 -> 1)
-    const updateQuery = db.query(`
-      UPDATE presentation_queue
-      SET is_expanded = CASE WHEN is_expanded = 1 THEN 0 ELSE 1 END,
-          updated_at = ?
-      WHERE id = ?
-    `)
-    updateQuery.run(now, id)
+    // Toggle is_expanded (true -> false, false -> true)
+    db.update(presentationQueue)
+      .set({
+        isExpanded: sql`CASE WHEN ${presentationQueue.isExpanded} = 1 THEN 0 ELSE 1 END`,
+        updatedAt: sql`(unixepoch())` as unknown as Date,
+      })
+      .where(eq(presentationQueue.id, id))
+      .run()
 
     log('info', `Queue item expand toggled: ${id}`)
     return getQueueItemById(id)
@@ -45,14 +47,14 @@ export function setExpanded(id: number, expanded: boolean): QueueItem | null {
     log('debug', `Setting expand for queue item: ${id} to ${expanded}`)
 
     const db = getDatabase()
-    const now = Math.floor(Date.now() / 1000)
 
-    const updateQuery = db.query(`
-      UPDATE presentation_queue
-      SET is_expanded = ?, updated_at = ?
-      WHERE id = ?
-    `)
-    updateQuery.run(expanded ? 1 : 0, now, id)
+    db.update(presentationQueue)
+      .set({
+        isExpanded: expanded,
+        updatedAt: sql`(unixepoch())` as unknown as Date,
+      })
+      .where(eq(presentationQueue.id, id))
+      .run()
 
     log('info', `Queue item expand set: ${id} = ${expanded}`)
     return getQueueItemById(id)

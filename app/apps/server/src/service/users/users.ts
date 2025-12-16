@@ -1,16 +1,17 @@
+import { asc, desc, eq, sql } from 'drizzle-orm'
+
 import type {
   CreateUserInput,
   CreateUserResult,
   OperationResult,
   Permission,
-  Role,
   RoleWithPermissions,
   UpdateUserInput,
-  User,
   UserWithPermissions,
 } from './types'
 import { ALL_PERMISSIONS } from './types'
 import { getDatabase } from '../../db'
+import { rolePermissions, roles, userPermissions, users } from '../../db/schema'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -50,20 +51,28 @@ export async function hashToken(token: string): Promise<string> {
 export function getAllRoles(): RoleWithPermissions[] {
   try {
     const db = getDatabase()
-    const roles = db.query('SELECT * FROM roles ORDER BY name').all() as Role[]
+    const roleRecords = db.select().from(roles).orderBy(asc(roles.name)).all()
 
-    return roles.map((role) => {
+    return roleRecords.map((role) => {
       const permissions = db
-        .query('SELECT permission FROM role_permissions WHERE role_id = ?')
-        .all(role.id) as Array<{ permission: string }>
+        .select({ permission: rolePermissions.permission })
+        .from(rolePermissions)
+        .where(eq(rolePermissions.roleId, role.id))
+        .all()
 
       return {
         id: role.id,
         name: role.name,
-        isSystem: role.is_system === 1,
+        isSystem: role.isSystem,
         permissions: permissions.map((p) => p.permission as Permission),
-        createdAt: role.created_at,
-        updatedAt: role.updated_at,
+        createdAt:
+          role.createdAt instanceof Date
+            ? Math.floor(role.createdAt.getTime() / 1000)
+            : (role.createdAt as unknown as number),
+        updatedAt:
+          role.updatedAt instanceof Date
+            ? Math.floor(role.updatedAt.getTime() / 1000)
+            : (role.updatedAt as unknown as number),
       }
     })
   } catch (error) {
@@ -78,23 +87,29 @@ export function getAllRoles(): RoleWithPermissions[] {
 export function getRoleById(id: number): RoleWithPermissions | null {
   try {
     const db = getDatabase()
-    const role = db
-      .query('SELECT * FROM roles WHERE id = ?')
-      .get(id) as Role | null
+    const role = db.select().from(roles).where(eq(roles.id, id)).get()
 
     if (!role) return null
 
     const permissions = db
-      .query('SELECT permission FROM role_permissions WHERE role_id = ?')
-      .all(role.id) as Array<{ permission: string }>
+      .select({ permission: rolePermissions.permission })
+      .from(rolePermissions)
+      .where(eq(rolePermissions.roleId, role.id))
+      .all()
 
     return {
       id: role.id,
       name: role.name,
-      isSystem: role.is_system === 1,
+      isSystem: role.isSystem,
       permissions: permissions.map((p) => p.permission as Permission),
-      createdAt: role.created_at,
-      updatedAt: role.updated_at,
+      createdAt:
+        role.createdAt instanceof Date
+          ? Math.floor(role.createdAt.getTime() / 1000)
+          : (role.createdAt as unknown as number),
+      updatedAt:
+        role.updatedAt instanceof Date
+          ? Math.floor(role.updatedAt.getTime() / 1000)
+          : (role.updatedAt as unknown as number),
     }
   } catch (error) {
     log('error', `Failed to get role: ${error}`)
@@ -111,16 +126,20 @@ export function getUserPermissions(userId: number): Permission[] {
 
     // Get user's role
     const user = db
-      .query('SELECT role_id FROM users WHERE id = ?')
-      .get(userId) as { role_id: number | null } | null
+      .select({ roleId: users.roleId })
+      .from(users)
+      .where(eq(users.id, userId))
+      .get()
 
     const permissionSet = new Set<Permission>()
 
     // Get role permissions if user has a role
-    if (user?.role_id) {
+    if (user?.roleId) {
       const rolePerms = db
-        .query('SELECT permission FROM role_permissions WHERE role_id = ?')
-        .all(user.role_id) as Array<{ permission: string }>
+        .select({ permission: rolePermissions.permission })
+        .from(rolePermissions)
+        .where(eq(rolePermissions.roleId, user.roleId))
+        .all()
 
       for (const p of rolePerms) {
         permissionSet.add(p.permission as Permission)
@@ -129,8 +148,10 @@ export function getUserPermissions(userId: number): Permission[] {
 
     // Get custom user permissions
     const userPerms = db
-      .query('SELECT permission FROM user_permissions WHERE user_id = ?')
-      .all(userId) as Array<{ permission: string }>
+      .select({ permission: userPermissions.permission })
+      .from(userPermissions)
+      .where(eq(userPermissions.userId, userId))
+      .all()
 
     for (const p of userPerms) {
       permissionSet.add(p.permission as Permission)
@@ -147,20 +168,28 @@ export function getUserPermissions(userId: number): Permission[] {
  * Converts database user record to API format
  */
 function toUserWithPermissions(
-  user: User,
+  user: typeof users.$inferSelect & { roleName: string | null },
   permissions: Permission[],
-  roleName: string | null,
 ): UserWithPermissions {
   return {
     id: user.id,
     name: user.name,
     token: user.token,
-    isActive: user.is_active === 1,
-    roleId: user.role_id,
-    roleName,
-    lastUsedAt: user.last_used_at,
-    createdAt: user.created_at,
-    updatedAt: user.updated_at,
+    isActive: user.isActive,
+    roleId: user.roleId,
+    roleName: user.roleName,
+    lastUsedAt:
+      user.lastUsedAt instanceof Date
+        ? Math.floor(user.lastUsedAt.getTime() / 1000)
+        : (user.lastUsedAt as unknown as number | null),
+    createdAt:
+      user.createdAt instanceof Date
+        ? Math.floor(user.createdAt.getTime() / 1000)
+        : (user.createdAt as unknown as number),
+    updatedAt:
+      user.updatedAt instanceof Date
+        ? Math.floor(user.updatedAt.getTime() / 1000)
+        : (user.updatedAt as unknown as number),
     permissions,
   }
 }
@@ -178,39 +207,40 @@ export async function createUser(
     const db = getDatabase()
     const token = generateUserToken()
     const tokenHash = await hashToken(token)
-    const now = Math.floor(Date.now() / 1000)
 
     // Insert user with token stored for QR code display
-    const insertUser = db.query(`
-      INSERT INTO users (name, token, token_hash, is_active, role_id, created_at, updated_at)
-      VALUES (?, ?, ?, 1, ?, ?, ?)
-    `)
-    insertUser.run(input.name, token, tokenHash, input.roleId ?? null, now, now)
-
-    // Get the inserted user ID
-    const getLastId = db.query('SELECT last_insert_rowid() as id')
-    const { id: userId } = getLastId.get() as { id: number }
+    const inserted = db
+      .insert(users)
+      .values({
+        name: input.name,
+        token,
+        tokenHash,
+        isActive: true,
+        roleId: input.roleId ?? null,
+      })
+      .returning({ id: users.id })
+      .get()
 
     // Insert custom permissions if provided
     if (input.permissions && input.permissions.length > 0) {
-      const insertPerm = db.query(`
-        INSERT INTO user_permissions (user_id, permission, created_at)
-        VALUES (?, ?, ?)
-      `)
-
       for (const permission of input.permissions) {
-        insertPerm.run(userId, permission, now)
+        db.insert(userPermissions)
+          .values({
+            userId: inserted.id,
+            permission,
+          })
+          .run()
       }
     }
 
     // Fetch the created user
-    const user = getUserById(userId)
+    const user = getUserById(inserted.id)
     if (!user) {
       log('error', 'Failed to fetch created user')
       return null
     }
 
-    log('info', `User created successfully: ${input.name} (ID: ${userId})`)
+    log('info', `User created successfully: ${input.name} (ID: ${inserted.id})`)
     return { user, token }
   } catch (error) {
     log('error', `Failed to create user: ${error}`)
@@ -226,17 +256,27 @@ export function getAllUsers(): UserWithPermissions[] {
     log('debug', 'Getting all users')
 
     const db = getDatabase()
-    const query = db.query(`
-      SELECT u.*, r.name as role_name
-      FROM users u
-      LEFT JOIN roles r ON u.role_id = r.id
-      ORDER BY u.created_at DESC
-    `)
-    const users = query.all() as Array<User & { role_name: string | null }>
+    const userRecords = db
+      .select({
+        id: users.id,
+        name: users.name,
+        token: users.token,
+        tokenHash: users.tokenHash,
+        isActive: users.isActive,
+        roleId: users.roleId,
+        lastUsedAt: users.lastUsedAt,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt,
+        roleName: roles.name,
+      })
+      .from(users)
+      .leftJoin(roles, eq(roles.id, users.roleId))
+      .orderBy(desc(users.createdAt))
+      .all()
 
-    return users.map((user) => {
+    return userRecords.map((user) => {
       const permissions = getUserPermissions(user.id)
-      return toUserWithPermissions(user, permissions, user.role_name)
+      return toUserWithPermissions(user, permissions)
     })
   } catch (error) {
     log('error', `Failed to get all users: ${error}`)
@@ -252,13 +292,23 @@ export function getUserById(id: number): UserWithPermissions | null {
     log('debug', `Getting user by ID: ${id}`)
 
     const db = getDatabase()
-    const query = db.query(`
-      SELECT u.*, r.name as role_name
-      FROM users u
-      LEFT JOIN roles r ON u.role_id = r.id
-      WHERE u.id = ?
-    `)
-    const user = query.get(id) as (User & { role_name: string | null }) | null
+    const user = db
+      .select({
+        id: users.id,
+        name: users.name,
+        token: users.token,
+        tokenHash: users.tokenHash,
+        isActive: users.isActive,
+        roleId: users.roleId,
+        lastUsedAt: users.lastUsedAt,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt,
+        roleName: roles.name,
+      })
+      .from(users)
+      .leftJoin(roles, eq(roles.id, users.roleId))
+      .where(eq(users.id, id))
+      .get()
 
     if (!user) {
       log('debug', `User not found: ${id}`)
@@ -266,7 +316,7 @@ export function getUserById(id: number): UserWithPermissions | null {
     }
 
     const permissions = getUserPermissions(user.id)
-    return toUserWithPermissions(user, permissions, user.role_name)
+    return toUserWithPermissions(user, permissions)
   } catch (error) {
     log('error', `Failed to get user: ${error}`)
     return null
@@ -284,15 +334,23 @@ export async function getUserByToken(
 
     const db = getDatabase()
     const tokenHash = await hashToken(token)
-    const query = db.query(`
-      SELECT u.*, r.name as role_name
-      FROM users u
-      LEFT JOIN roles r ON u.role_id = r.id
-      WHERE u.token_hash = ?
-    `)
-    const user = query.get(tokenHash) as
-      | (User & { role_name: string | null })
-      | null
+    const user = db
+      .select({
+        id: users.id,
+        name: users.name,
+        token: users.token,
+        tokenHash: users.tokenHash,
+        isActive: users.isActive,
+        roleId: users.roleId,
+        lastUsedAt: users.lastUsedAt,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt,
+        roleName: roles.name,
+      })
+      .from(users)
+      .leftJoin(roles, eq(roles.id, users.roleId))
+      .where(eq(users.tokenHash, tokenHash))
+      .get()
 
     if (!user) {
       log('debug', 'User not found for token')
@@ -300,7 +358,7 @@ export async function getUserByToken(
     }
 
     const permissions = getUserPermissions(user.id)
-    return toUserWithPermissions(user, permissions, user.role_name)
+    return toUserWithPermissions(user, permissions)
   } catch (error) {
     log('error', `Failed to get user by token: ${error}`)
     return null
@@ -318,37 +376,25 @@ export function updateUser(
     log('debug', `Updating user: ${id}`)
 
     const db = getDatabase()
-    const now = Math.floor(Date.now() / 1000)
-    const updates: string[] = []
-    const values: (string | number | null)[] = []
+
+    // Build update object with only provided fields
+    const updateData: Partial<typeof users.$inferInsert> = {
+      updatedAt: sql`(unixepoch())` as unknown as Date,
+    }
 
     if (input.name !== undefined) {
-      updates.push('name = ?')
-      values.push(input.name)
+      updateData.name = input.name
     }
 
     if (input.isActive !== undefined) {
-      updates.push('is_active = ?')
-      values.push(input.isActive ? 1 : 0)
+      updateData.isActive = input.isActive
     }
 
     if (input.roleId !== undefined) {
-      updates.push('role_id = ?')
-      values.push(input.roleId)
+      updateData.roleId = input.roleId
     }
 
-    if (updates.length === 0) {
-      return { success: true }
-    }
-
-    updates.push('updated_at = ?')
-    values.push(now)
-    values.push(id)
-
-    const query = db.query(
-      `UPDATE users SET ${updates.join(', ')} WHERE id = ?`,
-    )
-    query.run(...values)
+    db.update(users).set(updateData).where(eq(users.id, id)).run()
 
     log('info', `User updated successfully: ${id}`)
     return { success: true }
@@ -368,14 +414,10 @@ export function deleteUser(id: number): OperationResult {
     const db = getDatabase()
 
     // Delete permissions first (foreign key constraint)
-    const deletePerm = db.query(
-      'DELETE FROM user_permissions WHERE user_id = ?',
-    )
-    deletePerm.run(id)
+    db.delete(userPermissions).where(eq(userPermissions.userId, id)).run()
 
     // Delete user
-    const deleteUserQuery = db.query('DELETE FROM users WHERE id = ?')
-    deleteUserQuery.run(id)
+    db.delete(users).where(eq(users.id, id)).run()
 
     log('info', `User deleted successfully: ${id}`)
     return { success: true }
@@ -388,7 +430,7 @@ export function deleteUser(id: number): OperationResult {
 /**
  * Updates a user's custom permissions
  */
-export function updateUserPermissions(
+export function updateUserPermissionsDb(
   userId: number,
   permissions: Permission[],
 ): OperationResult {
@@ -396,24 +438,25 @@ export function updateUserPermissions(
     log('debug', `Updating permissions for user: ${userId}`)
 
     const db = getDatabase()
-    const now = Math.floor(Date.now() / 1000)
 
     // Delete existing custom permissions
-    db.query('DELETE FROM user_permissions WHERE user_id = ?').run(userId)
+    db.delete(userPermissions).where(eq(userPermissions.userId, userId)).run()
 
     // Insert new permissions
-    const insertPerm = db.query(`
-      INSERT INTO user_permissions (user_id, permission, created_at)
-      VALUES (?, ?, ?)
-    `)
-
     for (const permission of permissions) {
-      insertPerm.run(userId, permission, now)
+      db.insert(userPermissions)
+        .values({
+          userId,
+          permission,
+        })
+        .run()
     }
 
     // Update user updated_at timestamp
-    const updateUser = db.query('UPDATE users SET updated_at = ? WHERE id = ?')
-    updateUser.run(now, userId)
+    db.update(users)
+      .set({ updatedAt: sql`(unixepoch())` as unknown as Date })
+      .where(eq(users.id, userId))
+      .run()
 
     log('info', `Permissions updated for user: ${userId}`)
     return { success: true }
@@ -422,6 +465,9 @@ export function updateUserPermissions(
     return { success: false, error: String(error) }
   }
 }
+
+// Re-export with original name for backwards compatibility
+export { updateUserPermissionsDb as updateUserPermissions }
 
 /**
  * Sets a user's role (and optionally clears custom permissions)
@@ -435,18 +481,19 @@ export function setUserRole(
     log('debug', `Setting role for user: ${userId} to ${roleId}`)
 
     const db = getDatabase()
-    const now = Math.floor(Date.now() / 1000)
 
     // Update user's role
-    db.query('UPDATE users SET role_id = ?, updated_at = ? WHERE id = ?').run(
-      roleId,
-      now,
-      userId,
-    )
+    db.update(users)
+      .set({
+        roleId,
+        updatedAt: sql`(unixepoch())` as unknown as Date,
+      })
+      .where(eq(users.id, userId))
+      .run()
 
     // Optionally clear custom permissions
     if (clearCustomPermissions) {
-      db.query('DELETE FROM user_permissions WHERE user_id = ?').run(userId)
+      db.delete(userPermissions).where(eq(userPermissions.userId, userId)).run()
     }
 
     log('info', `Role set for user: ${userId}`)
@@ -470,13 +517,16 @@ export async function regenerateUserToken(
     const db = getDatabase()
     const token = generateUserToken()
     const tokenHash = await hashToken(token)
-    const now = Math.floor(Date.now() / 1000)
 
     // Update both token and token_hash so QR code can be displayed
-    const query = db.query(
-      'UPDATE users SET token = ?, token_hash = ?, updated_at = ? WHERE id = ?',
-    )
-    query.run(token, tokenHash, now, id)
+    db.update(users)
+      .set({
+        token,
+        tokenHash,
+        updatedAt: sql`(unixepoch())` as unknown as Date,
+      })
+      .where(eq(users.id, id))
+      .run()
 
     log('info', `Token regenerated for user: ${id}`)
     return { token }
@@ -492,9 +542,10 @@ export async function regenerateUserToken(
 export function updateUserLastUsed(id: number): void {
   try {
     const db = getDatabase()
-    const now = Math.floor(Date.now() / 1000)
-    const query = db.query('UPDATE users SET last_used_at = ? WHERE id = ?')
-    query.run(now, id)
+    db.update(users)
+      .set({ lastUsedAt: sql`(unixepoch())` as unknown as Date })
+      .where(eq(users.id, id))
+      .run()
   } catch (error) {
     log('error', `Failed to update last used: ${error}`)
   }

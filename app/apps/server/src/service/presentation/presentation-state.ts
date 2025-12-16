@@ -1,9 +1,8 @@
-import type {
-  PresentationState,
-  PresentationStateRecord,
-  UpdatePresentationStateInput,
-} from './types'
-import { getDatabase } from '../../db'
+import { eq, sql } from 'drizzle-orm'
+
+import type { PresentationState, UpdatePresentationStateInput } from './types'
+import { getDatabase, getRawDatabase } from '../../db'
+import { presentationState, songSlides, songs } from '../../db/schema'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -20,11 +19,20 @@ function incrementSongPresentationCount(songSlideId: number): void {
   try {
     const db = getDatabase()
     // Get song_id from song_slides, then increment presentation_count
-    db.query(`
-      UPDATE songs
-      SET presentation_count = presentation_count + 1
-      WHERE id = (SELECT song_id FROM song_slides WHERE id = ?)
-    `).run(songSlideId)
+    const slide = db
+      .select({ songId: songSlides.songId })
+      .from(songSlides)
+      .where(eq(songSlides.id, songSlideId))
+      .get()
+
+    if (slide) {
+      db.update(songs)
+        .set({
+          presentationCount: sql`${songs.presentationCount} + 1`,
+        })
+        .where(eq(songs.id, slide.songId))
+        .run()
+    }
     log(
       'debug',
       `Incremented presentation count for song with slide ${songSlideId}`,
@@ -38,15 +46,15 @@ function incrementSongPresentationCount(songSlideId: number): void {
  * Converts database record to API format
  */
 function toPresentationState(
-  record: PresentationStateRecord,
+  record: typeof presentationState.$inferSelect,
 ): PresentationState {
   return {
-    currentQueueItemId: record.current_queue_item_id,
-    currentSongSlideId: record.current_song_slide_id,
-    lastSongSlideId: record.last_song_slide_id,
-    isPresenting: record.is_presenting === 1,
-    isHidden: record.is_hidden === 1,
-    updatedAt: record.updated_at,
+    currentQueueItemId: record.currentQueueItemId,
+    currentSongSlideId: record.currentSongSlideId,
+    lastSongSlideId: record.lastSongSlideId,
+    isPresenting: record.isPresenting,
+    isHidden: record.isHidden,
+    updatedAt: record.updatedAt,
   }
 }
 
@@ -58,8 +66,11 @@ export function getPresentationState(): PresentationState {
     log('debug', 'Getting presentation state')
 
     const db = getDatabase()
-    const query = db.query('SELECT * FROM presentation_state WHERE id = 1')
-    const record = query.get() as PresentationStateRecord | null
+    const record = db
+      .select()
+      .from(presentationState)
+      .where(eq(presentationState.id, 1))
+      .get()
 
     if (!record) {
       // Return default state if not found
@@ -97,7 +108,7 @@ export function updatePresentationState(
     log('debug', 'Updating presentation state')
 
     const db = getDatabase()
-    const now = Date.now() // Use milliseconds for finer granularity
+    const now = new Date()
     const current = getPresentationState()
 
     const currentQueueItemId =
@@ -119,25 +130,28 @@ export function updatePresentationState(
     const isHidden =
       input.isHidden !== undefined ? input.isHidden : current.isHidden
 
-    const query = db.query(`
-      INSERT INTO presentation_state (id, current_queue_item_id, current_song_slide_id, last_song_slide_id, is_presenting, is_hidden, updated_at)
-      VALUES (1, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(id) DO UPDATE SET
-        current_queue_item_id = excluded.current_queue_item_id,
-        current_song_slide_id = excluded.current_song_slide_id,
-        last_song_slide_id = excluded.last_song_slide_id,
-        is_presenting = excluded.is_presenting,
-        is_hidden = excluded.is_hidden,
-        updated_at = excluded.updated_at
-    `)
-    query.run(
-      currentQueueItemId,
-      currentSongSlideId,
-      lastSongSlideId,
-      isPresenting ? 1 : 0,
-      isHidden ? 1 : 0,
-      now,
-    )
+    db.insert(presentationState)
+      .values({
+        id: 1,
+        currentQueueItemId,
+        currentSongSlideId,
+        lastSongSlideId,
+        isPresenting,
+        isHidden,
+        updatedAt: now,
+      })
+      .onConflictDoUpdate({
+        target: presentationState.id,
+        set: {
+          currentQueueItemId,
+          currentSongSlideId,
+          lastSongSlideId,
+          isPresenting,
+          isHidden,
+          updatedAt: now,
+        },
+      })
+      .run()
 
     // Track presentation count when a new song slide is displayed
     if (
@@ -217,18 +231,20 @@ export function showSlide(): PresentationState {
 /**
  * Gets all slides in queue order (both song slides and standalone slides)
  * Returns a flat list for navigation
+ * Uses raw SQL for complex LEFT JOIN with conditional logic
  */
 function getQueueSlides(): {
   queueItemId: number
   slideId: number | null
   isStandaloneSlide: boolean
 }[] {
-  const db = getDatabase()
+  const rawDb = getRawDatabase()
 
   // Get all queue items with their slides
   // For song items: join song_slides
   // For slide items: use queue item id as "slide" (slideId = null)
-  const query = db.query(`
+  const results = rawDb
+    .query(`
     SELECT
       pq.id as queue_item_id,
       pq.item_type,
@@ -237,8 +253,7 @@ function getQueueSlides(): {
     LEFT JOIN song_slides ss ON pq.item_type = 'song' AND ss.song_id = pq.song_id
     ORDER BY pq.sort_order ASC, ss.sort_order ASC
   `)
-
-  const results = query.all() as {
+    .all() as {
     queue_item_id: number
     item_type: string
     slide_id: number | null

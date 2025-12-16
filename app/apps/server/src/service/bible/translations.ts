@@ -1,9 +1,8 @@
-import type {
-  BibleTranslation,
-  BibleTranslationRecord,
-  OperationResult,
-} from './types'
-import { getDatabase } from '../../db'
+import { asc, count, eq } from 'drizzle-orm'
+
+import type { BibleTranslation, OperationResult } from './types'
+import { getDatabase, getRawDatabase } from '../../db'
+import { bibleBooks, bibleTranslations, bibleVerses } from '../../db/schema'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -17,18 +16,53 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
  * Converts a database record to API format
  */
 function toTranslation(
-  record: BibleTranslationRecord & { book_count: number; verse_count: number },
+  record: typeof bibleTranslations.$inferSelect,
+  bookCount: number,
+  verseCount: number,
 ): BibleTranslation {
   return {
     id: record.id,
     name: record.name,
     abbreviation: record.abbreviation,
     language: record.language,
-    sourceFilename: record.source_filename,
-    bookCount: record.book_count,
-    verseCount: record.verse_count,
-    createdAt: record.created_at,
-    updatedAt: record.updated_at,
+    sourceFilename: record.sourceFilename,
+    bookCount,
+    verseCount,
+    createdAt:
+      record.createdAt instanceof Date
+        ? Math.floor(record.createdAt.getTime() / 1000)
+        : (record.createdAt as unknown as number),
+    updatedAt:
+      record.updatedAt instanceof Date
+        ? Math.floor(record.updatedAt.getTime() / 1000)
+        : (record.updatedAt as unknown as number),
+  }
+}
+
+/**
+ * Gets counts for a translation
+ */
+function getCounts(translationId: number): {
+  bookCount: number
+  verseCount: number
+} {
+  const db = getDatabase()
+
+  const bookResult = db
+    .select({ count: count() })
+    .from(bibleBooks)
+    .where(eq(bibleBooks.translationId, translationId))
+    .get()
+
+  const verseResult = db
+    .select({ count: count() })
+    .from(bibleVerses)
+    .where(eq(bibleVerses.translationId, translationId))
+    .get()
+
+  return {
+    bookCount: bookResult?.count ?? 0,
+    verseCount: verseResult?.count ?? 0,
   }
 }
 
@@ -38,19 +72,15 @@ function toTranslation(
 export function getAllTranslations(): BibleTranslation[] {
   const db = getDatabase()
   const records = db
-    .query(`
-      SELECT
-        t.*,
-        (SELECT COUNT(*) FROM bible_books WHERE translation_id = t.id) as book_count,
-        (SELECT COUNT(*) FROM bible_verses WHERE translation_id = t.id) as verse_count
-      FROM bible_translations t
-      ORDER BY t.name ASC
-    `)
-    .all() as Array<
-    BibleTranslationRecord & { book_count: number; verse_count: number }
-  >
+    .select()
+    .from(bibleTranslations)
+    .orderBy(asc(bibleTranslations.name))
+    .all()
 
-  return records.map(toTranslation)
+  return records.map((record) => {
+    const counts = getCounts(record.id)
+    return toTranslation(record, counts.bookCount, counts.verseCount)
+  })
 }
 
 /**
@@ -59,19 +89,15 @@ export function getAllTranslations(): BibleTranslation[] {
 export function getTranslationById(id: number): BibleTranslation | null {
   const db = getDatabase()
   const record = db
-    .query(`
-      SELECT
-        t.*,
-        (SELECT COUNT(*) FROM bible_books WHERE translation_id = t.id) as book_count,
-        (SELECT COUNT(*) FROM bible_verses WHERE translation_id = t.id) as verse_count
-      FROM bible_translations t
-      WHERE t.id = ?
-    `)
-    .get(id) as
-    | (BibleTranslationRecord & { book_count: number; verse_count: number })
-    | null
+    .select()
+    .from(bibleTranslations)
+    .where(eq(bibleTranslations.id, id))
+    .get()
 
-  return record ? toTranslation(record) : null
+  if (!record) return null
+
+  const counts = getCounts(record.id)
+  return toTranslation(record, counts.bookCount, counts.verseCount)
 }
 
 /**
@@ -82,19 +108,15 @@ export function getTranslationByAbbreviation(
 ): BibleTranslation | null {
   const db = getDatabase()
   const record = db
-    .query(`
-      SELECT
-        t.*,
-        (SELECT COUNT(*) FROM bible_books WHERE translation_id = t.id) as book_count,
-        (SELECT COUNT(*) FROM bible_verses WHERE translation_id = t.id) as verse_count
-      FROM bible_translations t
-      WHERE t.abbreviation = ?
-    `)
-    .get(abbreviation.toUpperCase()) as
-    | (BibleTranslationRecord & { book_count: number; verse_count: number })
-    | null
+    .select()
+    .from(bibleTranslations)
+    .where(eq(bibleTranslations.abbreviation, abbreviation.toUpperCase()))
+    .get()
 
-  return record ? toTranslation(record) : null
+  if (!record) return null
+
+  const counts = getCounts(record.id)
+  return toTranslation(record, counts.bookCount, counts.verseCount)
 }
 
 /**
@@ -103,20 +125,16 @@ export function getTranslationByAbbreviation(
 export function getDefaultTranslation(): BibleTranslation | null {
   const db = getDatabase()
   const record = db
-    .query(`
-      SELECT
-        t.*,
-        (SELECT COUNT(*) FROM bible_books WHERE translation_id = t.id) as book_count,
-        (SELECT COUNT(*) FROM bible_verses WHERE translation_id = t.id) as verse_count
-      FROM bible_translations t
-      ORDER BY t.created_at ASC
-      LIMIT 1
-    `)
-    .get() as
-    | (BibleTranslationRecord & { book_count: number; verse_count: number })
-    | null
+    .select()
+    .from(bibleTranslations)
+    .orderBy(asc(bibleTranslations.createdAt))
+    .limit(1)
+    .get()
 
-  return record ? toTranslation(record) : null
+  if (!record) return null
+
+  const counts = getCounts(record.id)
+  return toTranslation(record, counts.bookCount, counts.verseCount)
 }
 
 /**
@@ -124,12 +142,15 @@ export function getDefaultTranslation(): BibleTranslation | null {
  */
 export function deleteTranslation(id: number): OperationResult {
   const db = getDatabase()
+  const rawDb = getRawDatabase()
 
   try {
     // Check if translation exists
     const existing = db
-      .query('SELECT id FROM bible_translations WHERE id = ?')
-      .get(id)
+      .select({ id: bibleTranslations.id })
+      .from(bibleTranslations)
+      .where(eq(bibleTranslations.id, id))
+      .get()
 
     if (!existing) {
       return {
@@ -140,12 +161,12 @@ export function deleteTranslation(id: number): OperationResult {
 
     log('info', `Deleting translation ID: ${id}`)
 
-    // Start transaction
-    db.exec('BEGIN TRANSACTION')
+    // Start transaction using raw DB for FTS operations
+    rawDb.exec('BEGIN TRANSACTION')
 
     try {
-      // Remove from FTS index first
-      db.run(
+      // Remove from FTS index first (must use raw SQL for FTS)
+      rawDb.run(
         `
         DELETE FROM bible_verses_fts
         WHERE rowid IN (SELECT id FROM bible_verses WHERE translation_id = ?)
@@ -153,22 +174,22 @@ export function deleteTranslation(id: number): OperationResult {
         [id],
       )
 
-      // Delete verses (CASCADE should handle this, but explicit for safety)
-      db.run('DELETE FROM bible_verses WHERE translation_id = ?', [id])
+      // Delete verses
+      db.delete(bibleVerses).where(eq(bibleVerses.translationId, id)).run()
 
       // Delete books
-      db.run('DELETE FROM bible_books WHERE translation_id = ?', [id])
+      db.delete(bibleBooks).where(eq(bibleBooks.translationId, id)).run()
 
       // Delete translation
-      db.run('DELETE FROM bible_translations WHERE id = ?', [id])
+      db.delete(bibleTranslations).where(eq(bibleTranslations.id, id)).run()
 
-      db.exec('COMMIT')
+      rawDb.exec('COMMIT')
 
       log('info', `Successfully deleted translation ID: ${id}`)
 
       return { success: true }
     } catch (error) {
-      db.exec('ROLLBACK')
+      rawDb.exec('ROLLBACK')
       throw error
     }
   } catch (error) {
@@ -185,8 +206,6 @@ export function deleteTranslation(id: number): OperationResult {
  */
 export function hasTranslations(): boolean {
   const db = getDatabase()
-  const result = db
-    .query('SELECT COUNT(*) as count FROM bible_translations')
-    .get() as { count: number }
-  return result.count > 0
+  const result = db.select({ count: count() }).from(bibleTranslations).get()
+  return (result?.count ?? 0) > 0
 }

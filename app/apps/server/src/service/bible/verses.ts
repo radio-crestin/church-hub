@@ -1,18 +1,24 @@
-import type { BibleVerse, BibleVerseRecord } from './types'
+import { and, asc, between, eq, gt, gte, lt, lte, or } from 'drizzle-orm'
+
+import type { BibleVerse } from './types'
 import { getDatabase } from '../../db'
+import { bibleBooks, bibleVerses } from '../../db/schema'
+
+type VerseWithBook = typeof bibleVerses.$inferSelect & {
+  bookCode: string
+  bookName: string
+}
 
 /**
  * Converts a database record to API format
  */
-function toVerse(
-  record: BibleVerseRecord & { book_code: string; book_name: string },
-): BibleVerse {
+function toVerse(record: VerseWithBook): BibleVerse {
   return {
     id: record.id,
-    translationId: record.translation_id,
-    bookId: record.book_id,
-    bookCode: record.book_code,
-    bookName: record.book_name,
+    translationId: record.translationId,
+    bookId: record.bookId,
+    bookCode: record.bookCode,
+    bookName: record.bookName,
     chapter: record.chapter,
     verse: record.verse,
     text: record.text,
@@ -28,16 +34,23 @@ export function getVersesByChapter(
 ): BibleVerse[] {
   const db = getDatabase()
   const records = db
-    .query(`
-      SELECT v.*, b.book_code, b.book_name
-      FROM bible_verses v
-      JOIN bible_books b ON b.id = v.book_id
-      WHERE v.book_id = ? AND v.chapter = ?
-      ORDER BY v.verse ASC
-    `)
-    .all(bookId, chapter) as Array<
-    BibleVerseRecord & { book_code: string; book_name: string }
-  >
+    .select({
+      id: bibleVerses.id,
+      translationId: bibleVerses.translationId,
+      bookId: bibleVerses.bookId,
+      chapter: bibleVerses.chapter,
+      verse: bibleVerses.verse,
+      text: bibleVerses.text,
+      bookCode: bibleBooks.bookCode,
+      bookName: bibleBooks.bookName,
+    })
+    .from(bibleVerses)
+    .innerJoin(bibleBooks, eq(bibleBooks.id, bibleVerses.bookId))
+    .where(
+      and(eq(bibleVerses.bookId, bookId), eq(bibleVerses.chapter, chapter)),
+    )
+    .orderBy(asc(bibleVerses.verse))
+    .all()
 
   return records.map(toVerse)
 }
@@ -48,15 +61,20 @@ export function getVersesByChapter(
 export function getVerseById(verseId: number): BibleVerse | null {
   const db = getDatabase()
   const record = db
-    .query(`
-      SELECT v.*, b.book_code, b.book_name
-      FROM bible_verses v
-      JOIN bible_books b ON b.id = v.book_id
-      WHERE v.id = ?
-    `)
-    .get(verseId) as
-    | (BibleVerseRecord & { book_code: string; book_name: string })
-    | null
+    .select({
+      id: bibleVerses.id,
+      translationId: bibleVerses.translationId,
+      bookId: bibleVerses.bookId,
+      chapter: bibleVerses.chapter,
+      verse: bibleVerses.verse,
+      text: bibleVerses.text,
+      bookCode: bibleBooks.bookCode,
+      bookName: bibleBooks.bookName,
+    })
+    .from(bibleVerses)
+    .innerJoin(bibleBooks, eq(bibleBooks.id, bibleVerses.bookId))
+    .where(eq(bibleVerses.id, verseId))
+    .get()
 
   return record ? toVerse(record) : null
 }
@@ -72,18 +90,27 @@ export function getVerse(
 ): BibleVerse | null {
   const db = getDatabase()
   const record = db
-    .query(`
-      SELECT v.*, b.book_code, b.book_name
-      FROM bible_verses v
-      JOIN bible_books b ON b.id = v.book_id
-      WHERE v.translation_id = ?
-        AND b.book_code = ?
-        AND v.chapter = ?
-        AND v.verse = ?
-    `)
-    .get(translationId, bookCode.toUpperCase(), chapter, verseNumber) as
-    | (BibleVerseRecord & { book_code: string; book_name: string })
-    | null
+    .select({
+      id: bibleVerses.id,
+      translationId: bibleVerses.translationId,
+      bookId: bibleVerses.bookId,
+      chapter: bibleVerses.chapter,
+      verse: bibleVerses.verse,
+      text: bibleVerses.text,
+      bookCode: bibleBooks.bookCode,
+      bookName: bibleBooks.bookName,
+    })
+    .from(bibleVerses)
+    .innerJoin(bibleBooks, eq(bibleBooks.id, bibleVerses.bookId))
+    .where(
+      and(
+        eq(bibleVerses.translationId, translationId),
+        eq(bibleBooks.bookCode, bookCode.toUpperCase()),
+        eq(bibleVerses.chapter, chapter),
+        eq(bibleVerses.verse, verseNumber),
+      ),
+    )
+    .get()
 
   return record ? toVerse(record) : null
 }
@@ -100,24 +127,28 @@ export function getVerseRange(
 ): BibleVerse[] {
   const db = getDatabase()
   const records = db
-    .query(`
-      SELECT v.*, b.book_code, b.book_name
-      FROM bible_verses v
-      JOIN bible_books b ON b.id = v.book_id
-      WHERE v.translation_id = ?
-        AND b.book_code = ?
-        AND v.chapter = ?
-        AND v.verse >= ?
-        AND v.verse <= ?
-      ORDER BY v.verse ASC
-    `)
-    .all(
-      translationId,
-      bookCode.toUpperCase(),
-      chapter,
-      startVerse,
-      endVerse,
-    ) as Array<BibleVerseRecord & { book_code: string; book_name: string }>
+    .select({
+      id: bibleVerses.id,
+      translationId: bibleVerses.translationId,
+      bookId: bibleVerses.bookId,
+      chapter: bibleVerses.chapter,
+      verse: bibleVerses.verse,
+      text: bibleVerses.text,
+      bookCode: bibleBooks.bookCode,
+      bookName: bibleBooks.bookName,
+    })
+    .from(bibleVerses)
+    .innerJoin(bibleBooks, eq(bibleBooks.id, bibleVerses.bookId))
+    .where(
+      and(
+        eq(bibleVerses.translationId, translationId),
+        eq(bibleBooks.bookCode, bookCode.toUpperCase()),
+        eq(bibleVerses.chapter, chapter),
+        between(bibleVerses.verse, startVerse, endVerse),
+      ),
+    )
+    .orderBy(asc(bibleVerses.verse))
+    .all()
 
   return records.map(toVerse)
 }
@@ -139,29 +170,40 @@ export function getVersesAcrossChapters(
   // Get all verses from middle chapters
   // Get verses from end chapter (from 1 to endVerse)
   const records = db
-    .query(`
-      SELECT v.*, b.book_code, b.book_name
-      FROM bible_verses v
-      JOIN bible_books b ON b.id = v.book_id
-      WHERE v.translation_id = ?
-        AND b.book_code = ?
-        AND (
-          (v.chapter = ? AND v.verse >= ?) OR
-          (v.chapter > ? AND v.chapter < ?) OR
-          (v.chapter = ? AND v.verse <= ?)
-        )
-      ORDER BY v.chapter ASC, v.verse ASC
-    `)
-    .all(
-      translationId,
-      bookCode.toUpperCase(),
-      startChapter,
-      startVerse,
-      startChapter,
-      endChapter,
-      endChapter,
-      endVerse,
-    ) as Array<BibleVerseRecord & { book_code: string; book_name: string }>
+    .select({
+      id: bibleVerses.id,
+      translationId: bibleVerses.translationId,
+      bookId: bibleVerses.bookId,
+      chapter: bibleVerses.chapter,
+      verse: bibleVerses.verse,
+      text: bibleVerses.text,
+      bookCode: bibleBooks.bookCode,
+      bookName: bibleBooks.bookName,
+    })
+    .from(bibleVerses)
+    .innerJoin(bibleBooks, eq(bibleBooks.id, bibleVerses.bookId))
+    .where(
+      and(
+        eq(bibleVerses.translationId, translationId),
+        eq(bibleBooks.bookCode, bookCode.toUpperCase()),
+        or(
+          and(
+            eq(bibleVerses.chapter, startChapter),
+            gte(bibleVerses.verse, startVerse),
+          ),
+          and(
+            gt(bibleVerses.chapter, startChapter),
+            lt(bibleVerses.chapter, endChapter),
+          ),
+          and(
+            eq(bibleVerses.chapter, endChapter),
+            lte(bibleVerses.verse, endVerse),
+          ),
+        ),
+      ),
+    )
+    .orderBy(asc(bibleVerses.chapter), asc(bibleVerses.verse))
+    .all()
 
   return records.map(toVerse)
 }

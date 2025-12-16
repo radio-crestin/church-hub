@@ -92,14 +92,28 @@ pub fn run() {
 
             app.manage(pending_import);
 
-            // Start the sidecar server
-            if let Err(err) = server::start_server(app.handle(), server_port) {
-                println!("[sidecar] Failed to start the server: {err}");
+            // In dev mode, the server is started by beforeDevCommand, so skip sidecar
+            // In release mode, start the sidecar server
+            #[cfg(not(debug_assertions))]
+            {
+                // Start the sidecar server
+                if let Err(err) = server::start_server(app.handle(), server_port) {
+                    println!("[sidecar] Failed to start the server: {err}");
+                }
+
+                // Wait for server to be ready before showing UI
+                if let Err(err) = server::wait_for_server_ready(server_port, 30) {
+                    println!("[sidecar] {err}");
+                }
             }
 
-            // Wait for server to be ready before showing UI
-            if let Err(err) = server::wait_for_server_ready(server_port, 30) {
-                println!("[sidecar] {err}");
+            #[cfg(debug_assertions)]
+            {
+                println!("[dev] Skipping sidecar - using dev server from beforeDevCommand");
+                // Wait for dev server to be ready
+                if let Err(err) = server::wait_for_server_ready(server_port, 30) {
+                    println!("[dev] {err}");
+                }
             }
 
             Ok(())
@@ -114,6 +128,8 @@ pub fn run() {
         .run(|app_handle, event| {
             match event {
                 RunEvent::ExitRequested { .. } | RunEvent::Exit => {
+                    // Only shutdown sidecar in release mode (we started it)
+                    #[cfg(not(debug_assertions))]
                     if let Err(e) = server::shutdown_server(app_handle) {
                         println!("[sidecar] Failed to shut down server on exit: {e}");
                     }

@@ -5,7 +5,7 @@
   "identifier": "com.church-hub",
   "build": {
     "devUrl": "http://localhost:8086",
-    "beforeDevCommand": "bun run --filter client dev",
+    "beforeDevCommand": "concurrently --kill-others \"bun run --filter server dev\" \"bun run --filter client dev\"",
     "beforeBuildCommand": "bun build:apps",
     "frontendDist": "../apps/client/dist"
   },

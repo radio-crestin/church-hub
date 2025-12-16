@@ -1,5 +1,6 @@
 import type { OperationResult } from './types'
 import { getDatabase } from '../../db'
+import { presentationQueue } from '../../db/schema'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -17,7 +18,7 @@ export function clearQueue(): OperationResult {
     log('debug', 'Clearing queue')
 
     const db = getDatabase()
-    db.query('DELETE FROM presentation_queue').run()
+    db.delete(presentationQueue).run()
 
     log('info', 'Queue cleared')
     return { success: true }

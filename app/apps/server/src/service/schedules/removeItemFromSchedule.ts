@@ -1,5 +1,8 @@
+import { and, eq } from 'drizzle-orm'
+
 import { updateScheduleSearchIndex } from './search'
 import { getDatabase } from '../../db'
+import { scheduleItems, schedules } from '../../db/schema'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -20,19 +23,23 @@ export function removeItemFromSchedule(
     log('debug', `Removing item ${itemId} from schedule ${scheduleId}`)
 
     const db = getDatabase()
-    const now = Math.floor(Date.now() / 1000)
+    const now = new Date()
 
     // Delete the item
-    const query = db.query(
-      'DELETE FROM schedule_items WHERE id = ? AND schedule_id = ?',
-    )
-    query.run(itemId, scheduleId)
+    db.delete(scheduleItems)
+      .where(
+        and(
+          eq(scheduleItems.id, itemId),
+          eq(scheduleItems.scheduleId, scheduleId),
+        ),
+      )
+      .run()
 
     // Update schedule's updated_at
-    db.query('UPDATE schedules SET updated_at = ? WHERE id = ?').run(
-      now,
-      scheduleId,
-    )
+    db.update(schedules)
+      .set({ updatedAt: now })
+      .where(eq(schedules.id, scheduleId))
+      .run()
 
     // Update search index
     updateScheduleSearchIndex(scheduleId)

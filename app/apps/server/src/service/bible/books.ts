@@ -1,17 +1,20 @@
-import type { BibleBook, BibleBookRecord } from './types'
+import { and, asc, count, eq } from 'drizzle-orm'
+
+import type { BibleBook } from './types'
 import { getDatabase } from '../../db'
+import { bibleBooks, bibleVerses } from '../../db/schema'
 
 /**
  * Converts a database record to API format
  */
-function toBook(record: BibleBookRecord): BibleBook {
+function toBook(record: typeof bibleBooks.$inferSelect): BibleBook {
   return {
     id: record.id,
-    translationId: record.translation_id,
-    bookCode: record.book_code,
-    bookName: record.book_name,
-    bookOrder: record.book_order,
-    chapterCount: record.chapter_count,
+    translationId: record.translationId,
+    bookCode: record.bookCode,
+    bookName: record.bookName,
+    bookOrder: record.bookOrder,
+    chapterCount: record.chapterCount,
   }
 }
 
@@ -21,12 +24,11 @@ function toBook(record: BibleBookRecord): BibleBook {
 export function getBooksByTranslation(translationId: number): BibleBook[] {
   const db = getDatabase()
   const records = db
-    .query(`
-      SELECT * FROM bible_books
-      WHERE translation_id = ?
-      ORDER BY book_order ASC
-    `)
-    .all(translationId) as BibleBookRecord[]
+    .select()
+    .from(bibleBooks)
+    .where(eq(bibleBooks.translationId, translationId))
+    .orderBy(asc(bibleBooks.bookOrder))
+    .all()
 
   return records.map(toBook)
 }
@@ -40,11 +42,15 @@ export function getBookByCode(
 ): BibleBook | null {
   const db = getDatabase()
   const record = db
-    .query(`
-      SELECT * FROM bible_books
-      WHERE translation_id = ? AND book_code = ?
-    `)
-    .get(translationId, bookCode.toUpperCase()) as BibleBookRecord | null
+    .select()
+    .from(bibleBooks)
+    .where(
+      and(
+        eq(bibleBooks.translationId, translationId),
+        eq(bibleBooks.bookCode, bookCode.toUpperCase()),
+      ),
+    )
+    .get()
 
   return record ? toBook(record) : null
 }
@@ -55,8 +61,10 @@ export function getBookByCode(
 export function getBookById(bookId: number): BibleBook | null {
   const db = getDatabase()
   const record = db
-    .query('SELECT * FROM bible_books WHERE id = ?')
-    .get(bookId) as BibleBookRecord | null
+    .select()
+    .from(bibleBooks)
+    .where(eq(bibleBooks.id, bookId))
+    .get()
 
   return record ? toBook(record) : null
 }
@@ -69,17 +77,18 @@ export function getChaptersForBook(
 ): Array<{ chapter: number; verseCount: number }> {
   const db = getDatabase()
   const chapters = db
-    .query(`
-      SELECT chapter, COUNT(*) as verse_count
-      FROM bible_verses
-      WHERE book_id = ?
-      GROUP BY chapter
-      ORDER BY chapter ASC
-    `)
-    .all(bookId) as Array<{ chapter: number; verse_count: number }>
+    .select({
+      chapter: bibleVerses.chapter,
+      verseCount: count(),
+    })
+    .from(bibleVerses)
+    .where(eq(bibleVerses.bookId, bookId))
+    .groupBy(bibleVerses.chapter)
+    .orderBy(asc(bibleVerses.chapter))
+    .all()
 
   return chapters.map((c) => ({
     chapter: c.chapter,
-    verseCount: c.verse_count,
+    verseCount: c.verseCount,
   }))
 }
