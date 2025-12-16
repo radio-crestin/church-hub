@@ -8,6 +8,7 @@ export interface BibleNavigationState {
   bookName: string | undefined
   chapter: number | undefined
   verseIndex: number
+  presentedVerseIndex: number | null
   searchQuery: string
   level: BibleNavigationLevel
 }
@@ -18,6 +19,8 @@ export interface UseBibleNavigationReturn {
   selectBook: (bookId: number, bookName: string) => void
   selectChapter: (chapter: number) => void
   selectVerse: (index: number) => void
+  presentVerse: (index: number) => void
+  clearPresentation: () => void
   nextVerse: () => void
   previousVerse: () => void
   goBack: () => void
@@ -32,6 +35,7 @@ const initialState: BibleNavigationState = {
   bookName: undefined,
   chapter: undefined,
   verseIndex: 0,
+  presentedVerseIndex: null,
   searchQuery: '',
   level: 'books',
 }
@@ -76,6 +80,21 @@ export function useBibleNavigation(
     setState((prev) => ({
       ...prev,
       verseIndex: index,
+    }))
+  }, [])
+
+  const presentVerse = useCallback((index: number) => {
+    setState((prev) => ({
+      ...prev,
+      verseIndex: index,
+      presentedVerseIndex: index,
+    }))
+  }, [])
+
+  const clearPresentation = useCallback(() => {
+    setState((prev) => ({
+      ...prev,
+      presentedVerseIndex: null,
     }))
   }, [])
 
@@ -142,6 +161,8 @@ export function useBibleNavigation(
     selectBook,
     selectChapter,
     selectVerse,
+    presentVerse,
+    clearPresentation,
     nextVerse,
     previousVerse,
     goBack,

@@ -64,8 +64,8 @@ function BiblePage() {
     (t) => t.id === navigation.state.translationId,
   )
 
-  // Handle verse presentation
-  const presentVerse = useCallback(
+  // Handle verse presentation to screen (API call)
+  const presentVerseToScreen = useCallback(
     async (verse: BibleVerse) => {
       const reference = formatVerseReference(
         verse.bookName,
@@ -98,12 +98,12 @@ function BiblePage() {
     ],
   )
 
-  // Handle verse selection from navigation
+  // Handle verse selection from navigation (only selects, does not present)
   const handleSelectVerse = useCallback(
-    async (verse: BibleVerse, index: number) => {
-      await presentVerse(verse)
+    (_verse: BibleVerse, index: number) => {
+      navigation.selectVerse(index)
     },
-    [presentVerse],
+    [navigation],
   )
 
   // Handle search result selection
@@ -124,46 +124,41 @@ function BiblePage() {
     [currentTranslation?.abbreviation, insertBibleVerse],
   )
 
-  // Handle next/previous verse navigation
-  const handleNextVerse = useCallback(async () => {
+  // Handle next/previous verse navigation (only changes selection)
+  const handleNextVerse = useCallback(() => {
     const nextIndex = navigation.state.verseIndex + 1
     if (nextIndex < verses.length) {
       navigation.nextVerse()
-      const verse = verses[nextIndex]
-      if (verse) {
-        await presentVerse(verse)
-      }
     }
-  }, [navigation, verses, presentVerse])
+  }, [navigation, verses.length])
 
-  const handlePreviousVerse = useCallback(async () => {
+  const handlePreviousVerse = useCallback(() => {
     const prevIndex = navigation.state.verseIndex - 1
     if (prevIndex >= 0) {
       navigation.previousVerse()
-      const verse = verses[prevIndex]
-      if (verse) {
-        await presentVerse(verse)
-      }
     }
-  }, [navigation, verses, presentVerse])
+  }, [navigation])
 
-  // Handle hide presentation
+  // Handle hide presentation (Escape) - clears slide but keeps selection
   const handleHidePresentation = useCallback(async () => {
+    navigation.clearPresentation()
     await clearSlide.mutateAsync()
-  }, [clearSlide])
+  }, [navigation, clearSlide])
 
   // Handle keyboard navigation deeper
   const handleNavigateDeeper = useCallback(() => {
     // This is handled by clicking in the navigation panel
   }, [])
 
-  // Handle present current verse
+  // Handle present current verse (Enter/F5/F10)
   const handlePresent = useCallback(async () => {
-    const verse = verses[navigation.state.verseIndex]
+    const index = navigation.state.verseIndex
+    const verse = verses[index]
     if (verse) {
-      await presentVerse(verse)
+      navigation.presentVerse(index)
+      await presentVerseToScreen(verse)
     }
-  }, [verses, navigation.state.verseIndex, presentVerse])
+  }, [navigation, verses, presentVerseToScreen])
 
   // Enable keyboard shortcuts
   useBibleKeyboardShortcuts({
