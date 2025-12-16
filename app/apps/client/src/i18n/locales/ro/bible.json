@@ -1,31 +1,60 @@
 {
   "title": "Biblie",
   "search": {
-    "placeholder": "Caută versete (ex: \"Gen 1:1\" sau \"La început\")",
-    "hint": "Scrie o referință precum \"Gen 1:1\" sau caută un text",
-    "noResults": "Niciun rezultat găsit pentru \"{{query}}\"",
-    "directReference": "Referință directă",
-    "resultsCount": "{{count}} verset găsit",
-    "resultsCount_other": "{{count}} versete găsite"
+    "placeholder": "Cauta versete (ex: \"Gen 1:1\" sau \"La inceput\")",
+    "hint": "Scrie o referinta precum \"Gen 1:1\" sau cauta un text",
+    "noResults": "Niciun rezultat gasit",
+    "searching": "Se cauta...",
+    "directReference": "Referinta directa",
+    "resultsCount": "{{count}} verset gasit",
+    "resultsCount_other": "{{count}} versete gasite"
+  },
+  "navigation": {
+    "back": "Inapoi",
+    "oldTestament": "Vechiul Testament",
+    "newTestament": "Noul Testament",
+    "noBooks": "Nicio carte disponibila"
+  },
+  "queue": {
+    "title": "Lista versete",
+    "empty": "Niciun verset in lista",
+    "removed": "Versetul a fost eliminat din lista",
+    "remove": "Elimina"
+  },
+  "controls": {
+    "title": "Previzualizare",
+    "prev": "Ant.",
+    "next": "Urm.",
+    "prevVerse": "Versetul anterior",
+    "nextVerse": "Versetul urmator",
+    "show": "Afiseaza",
+    "hide": "Ascunde"
+  },
+  "shortcuts": {
+    "title": "Scurtaturi tastatura",
+    "navigate": "Navigheaza versete",
+    "back": "Inapoi",
+    "hide": "Ascunde afisajul",
+    "present": "Prezinta versetul"
   },
   "actions": {
-    "presentNow": "Prezintă acum",
-    "addToQueue": "Adaugă în listă",
-    "import": "Importă",
-    "importFirst": "Importă traducere Biblie"
+    "presentNow": "Prezinta acum",
+    "addToQueue": "Adauga in lista",
+    "import": "Importa",
+    "importFirst": "Importa traducere Biblie"
   },
   "empty": {
-    "title": "Nicio traducere disponibilă",
-    "description": "Importă o traducere a Bibliei în format USFX XML pentru a începe."
+    "title": "Nicio traducere disponibila",
+    "description": "Importa o traducere a Bibliei in format USFX XML pentru a incepe."
   },
   "import": {
-    "title": "Importă traducere Biblie",
-    "error": "Importul traducerii a eșuat",
+    "title": "Importa traducere Biblie",
+    "error": "Importul traducerii a esuat",
     "errorTitle": "Eroare la import",
-    "success": "Traducerea a fost importată cu succes"
+    "success": "Traducerea a fost importata cu succes"
   },
   "translation": {
-    "select": "Selectează traducerea",
-    "loading": "Se încarcă traducerile..."
+    "select": "Selecteaza traducerea",
+    "loading": "Se incarca traducerile..."
   }
 }

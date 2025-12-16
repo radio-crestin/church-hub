@@ -39,6 +39,10 @@ function toQueueItem(
         : null,
     slideType: record.slideType,
     slideContent: record.slideContent,
+    bibleVerseId: record.bibleVerseId,
+    bibleReference: record.bibleReference,
+    bibleText: record.bibleText,
+    bibleTranslation: record.bibleTranslation,
     sortOrder: record.sortOrder,
     isExpanded: record.isExpanded,
     createdAt:
