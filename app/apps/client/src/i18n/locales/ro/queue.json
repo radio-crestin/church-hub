@@ -20,7 +20,9 @@
     "insertSlide": "Inserează slide după",
     "insertAfter": "Inserează după",
     "moreOptions": "Mai multe opțiuni",
-    "cancel": "Anulează"
+    "cancel": "Anulează",
+    "addToSchedule": "Adaugă în program",
+    "saveAsProgram": "Salvează ca program"
   },
   "addToQueue": {
     "button": "Adaugă",
@@ -43,7 +45,15 @@
     "presenting": "Se prezintă acum",
     "error": "A apărut o eroare",
     "slideInserted": "Slide-ul a fost inserat",
-    "slideUpdated": "Slide-ul a fost actualizat"
+    "slideUpdated": "Slide-ul a fost actualizat",
+    "savedAsProgram": "Coada a fost salvată ca program"
+  },
+  "saveAsProgram": {
+    "title": "Salvează coada ca program",
+    "nameLabel": "Nume program",
+    "namePlaceholder": "Introdu numele programului",
+    "save": "Salvează",
+    "cancel": "Anulează"
   },
   "confirmClear": {
     "title": "Golești coada?",

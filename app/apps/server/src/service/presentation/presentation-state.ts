@@ -259,7 +259,7 @@ function getQueueSlides(): {
     slide_id: number | null
   }[]
 
-  // Build flat list - standalone slides appear once, songs appear for each slide
+  // Build flat list - standalone slides and bible verses appear once, songs appear for each slide
   const slides: {
     queueItemId: number
     slideId: number | null
@@ -267,8 +267,8 @@ function getQueueSlides(): {
   }[] = []
 
   for (const r of results) {
-    if (r.item_type === 'slide') {
-      // Standalone slide - only add once (LEFT JOIN may produce multiple rows)
+    if (r.item_type === 'slide' || r.item_type === 'bible') {
+      // Standalone slide or Bible verse - only add once (LEFT JOIN may produce multiple rows)
       if (
         !slides.some(
           (s) => s.queueItemId === r.queue_item_id && s.isStandaloneSlide,
@@ -355,6 +355,7 @@ export function navigateQueueSlide(
     return updatePresentationState({
       currentQueueItemId: newSlide.queueItemId,
       currentSongSlideId: newSlide.slideId,
+      isHidden: false,
     })
   } catch (error) {
     log('error', `Failed to navigate queue slide: ${error}`)

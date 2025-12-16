@@ -8,7 +8,8 @@
     "import": "Import",
     "importFromText": "Import from Text",
     "addSlide": "Add Slide",
-    "cloneSlide": "Clone Slide"
+    "cloneSlide": "Clone Slide",
+    "addToSchedule": "Add to Schedule"
   },
   "editor": {
     "titlePlaceholder": "Enter song title...",
@@ -42,6 +43,7 @@
     "name": "Category"
   },
   "messages": {
+    "saving": "Saving song...",
     "saved": "Song saved successfully",
     "deleted": "Song deleted successfully",
     "error": "An error occurred",
@@ -58,7 +60,11 @@
     "deleteSlideMessage": "Are you sure you want to delete this slide?",
     "unsavedChangesTitle": "Unsaved Changes",
     "unsavedChangesMessage": "You have unsaved changes. Are you sure you want to leave this page?",
-    "discardChanges": "Lose changes"
+    "unsavedBeforeActionMessage": "You have unsaved changes. What would you like to do?",
+    "discardChanges": "Lose changes",
+    "saveAndContinue": "Save and continue",
+    "continueWithoutSaving": "Continue without saving",
+    "cancel": "Cancel"
   },
   "noSongs": "No songs yet",
   "noSongsDescription": "Create your first song to get started",

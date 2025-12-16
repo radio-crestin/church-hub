@@ -8,34 +8,53 @@ interface VersesListProps {
   bookName: string
   chapter: number
   verses: BibleVerse[]
-  selectedIndex: number
   presentedIndex: number | null
+  searchedIndex: number | null
   isLoading: boolean
   onSelectVerse: (index: number) => void
   onGoBack: () => void
 }
 
+const SCROLL_OFFSET_TOP = 100 // Fixed position from top in pixels
+
 export function VersesList({
   bookName,
   chapter,
   verses,
-  selectedIndex,
   presentedIndex,
+  searchedIndex,
   isLoading,
   onSelectVerse,
   onGoBack,
 }: VersesListProps) {
   const { t } = useTranslation('bible')
-  const selectedRef = useRef<HTMLButtonElement>(null)
+  const highlightedRef = useRef<HTMLButtonElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  // Scroll to the highlighted verse (prioritize presented, then searched)
+  const scrollTargetIndex = presentedIndex ?? searchedIndex
 
   useEffect(() => {
-    if (selectedRef.current) {
-      selectedRef.current.scrollIntoView({
+    if (highlightedRef.current && containerRef.current) {
+      const container = containerRef.current
+      const element = highlightedRef.current
+      const elementRect = element.getBoundingClientRect()
+      const containerRect = container.getBoundingClientRect()
+
+      // Calculate where the element is relative to the container
+      const elementTop =
+        elementRect.top - containerRect.top + container.scrollTop
+
+      // For first few verses, use natural position (don't scroll above content)
+      // For other verses, position at SCROLL_OFFSET_TOP from container top
+      const targetScrollTop = Math.max(0, elementTop - SCROLL_OFFSET_TOP)
+
+      container.scrollTo({
+        top: targetScrollTop,
         behavior: 'smooth',
-        block: 'nearest',
       })
     }
-  }, [selectedIndex])
+  }, [scrollTargetIndex, verses.length])
 
   if (isLoading) {
     return (
@@ -46,8 +65,8 @@ export function VersesList({
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col h-full">
+      <div className="flex items-center justify-between mb-3">
         <button
           type="button"
           onClick={onGoBack}
@@ -61,21 +80,21 @@ export function VersesList({
         </span>
       </div>
 
-      <div className="space-y-1 max-h-[calc(100vh-20rem)] overflow-y-auto">
+      <div
+        ref={containerRef}
+        className="flex-1 min-h-0 space-y-1 overflow-y-auto px-0.5 py-0.5"
+      >
         {verses.map((verse, index) => {
-          const isSelected = index === selectedIndex
           const isPresented = index === presentedIndex
+          const isSearched = index === searchedIndex && !isPresented
+          const isHighlighted = isPresented || isSearched
 
-          // Styles:
-          // - Presented: Green solid background (actively shown on screen)
-          // - Selected only: Blue ring outline (ready to present)
-          // - Neither: Default hover state
           const getButtonClass = () => {
             if (isPresented) {
               return 'bg-green-100 dark:bg-green-900/50 ring-2 ring-green-500'
             }
-            if (isSelected) {
-              return 'bg-indigo-50 dark:bg-indigo-900/30 ring-2 ring-indigo-500'
+            if (isSearched) {
+              return 'bg-indigo-100 dark:bg-indigo-900/50 ring-2 ring-indigo-500'
             }
             return 'hover:bg-gray-100 dark:hover:bg-gray-700'
           }
@@ -84,7 +103,7 @@ export function VersesList({
             if (isPresented) {
               return 'text-green-700 dark:text-green-300'
             }
-            if (isSelected) {
+            if (isSearched) {
               return 'text-indigo-700 dark:text-indigo-300'
             }
             return 'text-gray-500 dark:text-gray-400'
@@ -94,7 +113,7 @@ export function VersesList({
             if (isPresented) {
               return 'text-green-900 dark:text-green-100'
             }
-            if (isSelected) {
+            if (isSearched) {
               return 'text-indigo-900 dark:text-indigo-100'
             }
             return 'text-gray-700 dark:text-gray-200'
@@ -103,7 +122,7 @@ export function VersesList({
           return (
             <button
               key={verse.id}
-              ref={isSelected ? selectedRef : null}
+              ref={isHighlighted ? highlightedRef : null}
               type="button"
               onClick={() => onSelectVerse(index)}
               className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${getButtonClass()}`}

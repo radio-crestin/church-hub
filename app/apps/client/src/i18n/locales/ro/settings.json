@@ -116,6 +116,7 @@
           "title": "Scanează codul QR",
           "userName": "Utilizator",
           "description": "Scanează acest cod QR cu dispozitivul pe care vrei să îl autorizezi",
+          "networkInterface": "Interfață de rețea",
           "warning": "Acest token va fi afișat o singură dată. Salvează-l dacă este necesar.",
           "manualUrl": "Sau vizitează manual acest URL:",
           "done": "Gata"

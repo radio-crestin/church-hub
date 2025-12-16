@@ -18,10 +18,12 @@ import { Loader2, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { AddSongToScheduleModal } from '~/features/schedules'
 import { SongEditorModal, SongPickerModal } from '~/features/songs/components'
 import { ConfirmModal } from '~/ui/modal'
 import { useToast } from '~/ui/toast'
 import { InsertSlideModal } from './InsertSlideModal'
+import { QueueBibleItem } from './QueueBibleItem'
 import { QueueSlideItem } from './QueueSlideItem'
 import { QueueSongItem } from './QueueSongItem'
 import {
@@ -41,6 +43,7 @@ interface SortableQueueItemProps {
   onSongClick: () => void
   onEditSong: (songId: number) => void
   onEditSlide: (item: QueueItem) => void
+  onAddToSchedule: (songId: number) => void
   onInsertSongAfter: (itemId: number) => void
   onInsertSlideAfter: (itemId: number, template: SlideTemplate) => void
   onStandaloneSlideClick: () => void
@@ -55,6 +58,7 @@ function SortableQueueItem({
   onSongClick,
   onEditSong,
   onEditSlide,
+  onAddToSchedule,
   onInsertSongAfter,
   onInsertSlideAfter,
   onStandaloneSlideClick,
@@ -116,6 +120,27 @@ function SortableQueueItem({
     )
   }
 
+  if (item.itemType === 'bible') {
+    // Bible verse is active when it's the current queue item with no song slide
+    const isActive = item.id === activeQueueItemId && activeSlideId === null
+
+    return (
+      <div ref={combinedRef} style={style}>
+        <QueueBibleItem
+          item={item}
+          isActive={isActive}
+          onRemove={handleRemove}
+          onClick={onStandaloneSlideClick}
+          onInsertSongAfter={() => onInsertSongAfter(item.id)}
+          onInsertSlideAfter={(template) =>
+            onInsertSlideAfter(item.id, template)
+          }
+          dragHandleProps={{ ...attributes, ...listeners }}
+        />
+      </div>
+    )
+  }
+
   return (
     <div ref={combinedRef} style={style}>
       <QueueSongItem
@@ -128,6 +153,7 @@ function SortableQueueItem({
         onSlideClick={onSlideClick}
         onSongClick={onSongClick}
         onEditSong={() => item.songId && onEditSong(item.songId)}
+        onAddToSchedule={item.songId ? () => onAddToSchedule(item.songId!) : undefined}
         onInsertSongAfter={() => onInsertSongAfter(item.id)}
         onInsertSlideAfter={(template) => onInsertSlideAfter(item.id, template)}
         dragHandleProps={{ ...attributes, ...listeners }}
@@ -170,6 +196,9 @@ export function QueueList({
   >(null)
   const [insertSlideTemplate, setInsertSlideTemplate] =
     useState<SlideTemplate>('announcement')
+  const [addToScheduleSongId, setAddToScheduleSongId] = useState<number | null>(
+    null,
+  )
 
   // Refs for auto-scroll functionality
   const itemRefs = useRef<Map<number, HTMLDivElement>>(new Map())
@@ -353,6 +382,7 @@ export function QueueList({
                 onSongClick={() => handleSongClick(item)}
                 onEditSong={setEditingSongId}
                 onEditSlide={setEditingSlideItem}
+                onAddToSchedule={setAddToScheduleSongId}
                 onInsertSongAfter={setInsertSongAfterItemId}
                 onInsertSlideAfter={(itemId, template) => {
                   setInsertAfterItemId(itemId)
@@ -420,6 +450,15 @@ export function QueueList({
           onSaved={() => {
             // Queue will be invalidated automatically by the update mutation
           }}
+        />
+      )}
+
+      {/* Add to Schedule Modal */}
+      {addToScheduleSongId !== null && (
+        <AddSongToScheduleModal
+          isOpen={addToScheduleSongId !== null}
+          songId={addToScheduleSongId}
+          onClose={() => setAddToScheduleSongId(null)}
         />
       )}
     </>

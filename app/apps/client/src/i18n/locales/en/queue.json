@@ -18,7 +18,9 @@
     "insertSlide": "Insert Slide After",
     "insertAfter": "Insert After",
     "moreOptions": "More options",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "addToSchedule": "Add to Schedule",
+    "saveAsProgram": "Save as Program"
   },
   "addToQueue": {
     "button": "Add",
@@ -41,7 +43,15 @@
     "presenting": "Now presenting",
     "error": "An error occurred",
     "slideInserted": "Slide inserted",
-    "slideUpdated": "Slide updated"
+    "slideUpdated": "Slide updated",
+    "savedAsProgram": "Queue saved as program"
+  },
+  "saveAsProgram": {
+    "title": "Save Queue as Program",
+    "nameLabel": "Program Name",
+    "namePlaceholder": "Enter program name",
+    "save": "Save",
+    "cancel": "Cancel"
   },
   "confirmClear": {
     "title": "Clear Queue?",

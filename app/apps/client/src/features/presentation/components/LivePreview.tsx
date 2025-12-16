@@ -186,8 +186,9 @@ export function LivePreview() {
     presentationState?.currentQueueItemId &&
     !presentationState?.currentSongSlideId
   const hasContent = presentationState?.currentSongSlideId || hasStandaloneSlide
-  // Show clock only when there's no content (preview always shows selected slide)
-  const showClock = !hasContent
+  const isHidden = presentationState?.isHidden ?? false
+  // Show clock when there's no content or when hidden
+  const showClock = !hasContent || isHidden
 
   // Get content to display - prioritize song slides, then standalone slides, then Bible verses
   const getSlideContent = (): string | null => {
@@ -198,10 +199,12 @@ export function LivePreview() {
       return currentStandaloneSlide.slideContent
     }
     if (currentBibleVerse?.text) {
-      // Format Bible verse as slide content
-      const reference = currentBibleVerse.reference || ''
+      // Format Bible verse with reference at top (same size), no translation version
+      // Remove translation suffix (e.g., " - RCCV") from reference
+      const fullReference = currentBibleVerse.reference || ''
+      const reference = fullReference.replace(/\s*-\s*[A-Z]+\s*$/, '')
       const text = currentBibleVerse.text || ''
-      return `${text}\n\n${reference}`
+      return `${reference}<br>${text}`
     }
     return null
   }

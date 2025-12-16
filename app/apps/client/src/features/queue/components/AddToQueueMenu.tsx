@@ -52,10 +52,10 @@ export function AddToQueueMenu({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-lg transition-colors"
+        className="p-1.5 text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-lg transition-colors"
+        title={t('addToQueue.button')}
       >
         <Plus size={18} />
-        {t('addToQueue.button')}
       </button>
 
       <dialog

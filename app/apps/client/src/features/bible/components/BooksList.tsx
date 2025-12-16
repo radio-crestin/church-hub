@@ -38,7 +38,7 @@ export function BooksList({ books, isLoading, onSelectBook }: BooksListProps) {
   )
 
   return (
-    <div className="space-y-4">
+    <div className="h-full overflow-y-auto space-y-4">
       {oldTestamentBooks.length > 0 && (
         <div>
           <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 px-1">
