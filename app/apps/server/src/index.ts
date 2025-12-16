@@ -68,7 +68,9 @@ import {
   addToQueue,
   clearQueue,
   getQueue,
+  type InsertBibleVerseInput,
   type InsertSlideInput,
+  insertBibleVerseToQueue,
   insertSlideToQueue,
   type ReorderQueueInput,
   removeFromQueue,
@@ -2496,6 +2498,70 @@ async function main() {
               req,
               new Response(
                 JSON.stringify({ error: 'Failed to insert slide to queue' }),
+                {
+                  status: 500,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: queueItem }), {
+              status: 201,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // POST /api/queue/bible - Insert Bible verse to queue
+      if (req.method === 'POST' && url.pathname === '/api/queue/bible') {
+        const permError = checkPermission('queue.add')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as InsertBibleVerseInput
+
+          if (
+            !body.verseId ||
+            !body.reference ||
+            !body.text ||
+            !body.translationAbbreviation
+          ) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({
+                  error:
+                    'Missing verseId, reference, text, or translationAbbreviation',
+                }),
+                {
+                  status: 400,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          const queueItem = insertBibleVerseToQueue(body)
+
+          if (!queueItem) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({
+                  error: 'Failed to insert Bible verse to queue',
+                }),
                 {
                   status: 500,
                   headers: { 'Content-Type': 'application/json' },
