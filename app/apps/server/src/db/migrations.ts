@@ -279,6 +279,65 @@ CREATE TABLE IF NOT EXISTS presentation_queue (
 
 CREATE INDEX IF NOT EXISTS idx_presentation_queue_sort_order ON presentation_queue(sort_order);
 CREATE INDEX IF NOT EXISTS idx_presentation_queue_song_id ON presentation_queue(song_id);
+
+-- Bible Translations Table
+-- Stores Bible translation metadata (name, abbreviation, language)
+CREATE TABLE IF NOT EXISTS bible_translations (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  abbreviation TEXT NOT NULL UNIQUE,
+  language TEXT NOT NULL,
+  source_filename TEXT,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch())
+);
+
+CREATE INDEX IF NOT EXISTS idx_bible_translations_abbreviation ON bible_translations(abbreviation);
+
+-- Bible Books Table
+-- Stores books for each translation (66 books per translation)
+CREATE TABLE IF NOT EXISTS bible_books (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  translation_id INTEGER NOT NULL,
+  book_code TEXT NOT NULL,
+  book_name TEXT NOT NULL,
+  book_order INTEGER NOT NULL,
+  chapter_count INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  FOREIGN KEY (translation_id) REFERENCES bible_translations(id) ON DELETE CASCADE,
+  UNIQUE(translation_id, book_code)
+);
+
+CREATE INDEX IF NOT EXISTS idx_bible_books_translation_id ON bible_books(translation_id);
+CREATE INDEX IF NOT EXISTS idx_bible_books_order ON bible_books(translation_id, book_order);
+
+-- Bible Verses Table
+-- Stores all verses for each book/chapter
+CREATE TABLE IF NOT EXISTS bible_verses (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  translation_id INTEGER NOT NULL,
+  book_id INTEGER NOT NULL,
+  chapter INTEGER NOT NULL,
+  verse INTEGER NOT NULL,
+  text TEXT NOT NULL,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  FOREIGN KEY (translation_id) REFERENCES bible_translations(id) ON DELETE CASCADE,
+  FOREIGN KEY (book_id) REFERENCES bible_books(id) ON DELETE CASCADE,
+  UNIQUE(translation_id, book_id, chapter, verse)
+);
+
+CREATE INDEX IF NOT EXISTS idx_bible_verses_lookup ON bible_verses(book_id, chapter, verse);
+CREATE INDEX IF NOT EXISTS idx_bible_verses_translation ON bible_verses(translation_id);
+
+-- Full-Text Search Virtual Table for Bible Verses
+-- Enables fast text search across verse content
+-- Uses remove_diacritics=2 for accent-insensitive search (Romanian support)
+CREATE VIRTUAL TABLE IF NOT EXISTS bible_verses_fts USING fts5(
+  text,
+  content=bible_verses,
+  content_rowid=id,
+  tokenize='unicode61 remove_diacritics 2'
+);
 `
 
 /**
@@ -318,6 +377,12 @@ const ALL_PERMISSIONS = [
   'songs.delete',
   'songs.add_to_queue',
   'songs.present_now',
+  // Bible
+  'bible.view',
+  'bible.import',
+  'bible.delete',
+  'bible.add_to_queue',
+  'bible.present_now',
   // Control Room
   'control_room.view',
   'control_room.control',
@@ -359,6 +424,9 @@ const ROLE_TEMPLATES: Record<string, string[]> = {
     'songs.view',
     'songs.add_to_queue',
     'songs.present_now',
+    'bible.view',
+    'bible.add_to_queue',
+    'bible.present_now',
     'queue.view',
     'queue.add',
     'queue.remove',
@@ -370,6 +438,7 @@ const ROLE_TEMPLATES: Record<string, string[]> = {
   viewer: [
     'control_room.view',
     'songs.view',
+    'bible.view',
     'programs.view',
     'queue.view',
     'displays.view',
@@ -382,6 +451,8 @@ const ROLE_TEMPLATES: Record<string, string[]> = {
     'queue.clear',
     'songs.view',
     'songs.add_to_queue',
+    'bible.view',
+    'bible.add_to_queue',
     'programs.view',
     'programs.import_to_queue',
     'control_room.view',

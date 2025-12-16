@@ -1,0 +1,31 @@
+{
+  "title": "Biblie",
+  "search": {
+    "placeholder": "Caută versete (ex: \"Gen 1:1\" sau \"La început\")",
+    "hint": "Scrie o referință precum \"Gen 1:1\" sau caută un text",
+    "noResults": "Niciun rezultat găsit pentru \"{{query}}\"",
+    "directReference": "Referință directă",
+    "resultsCount": "{{count}} verset găsit",
+    "resultsCount_other": "{{count}} versete găsite"
+  },
+  "actions": {
+    "presentNow": "Prezintă acum",
+    "addToQueue": "Adaugă în listă",
+    "import": "Importă",
+    "importFirst": "Importă traducere Biblie"
+  },
+  "empty": {
+    "title": "Nicio traducere disponibilă",
+    "description": "Importă o traducere a Bibliei în format USFX XML pentru a începe."
+  },
+  "import": {
+    "title": "Importă traducere Biblie",
+    "error": "Importul traducerii a eșuat",
+    "errorTitle": "Eroare la import",
+    "success": "Traducerea a fost importată cu succes"
+  },
+  "translation": {
+    "select": "Selectează traducerea",
+    "loading": "Se încarcă traducerile..."
+  }
+}

@@ -3,7 +3,7 @@ import type { SongSlide } from '../songs/types'
 /**
  * Queue item types
  */
-export type QueueItemType = 'song' | 'slide'
+export type QueueItemType = 'song' | 'slide' | 'bible'
 
 /**
  * Slide template types for standalone slides
@@ -12,7 +12,7 @@ export type SlideTemplate = 'announcement' | 'versete_tineri'
 
 /**
  * Queue item API response format
- * Supports both song items and standalone slide items
+ * Supports song items, standalone slide items, and bible verse items
  */
 export interface QueueItem {
   id: number
@@ -28,6 +28,11 @@ export interface QueueItem {
   // Standalone slide fields (present when itemType === 'slide')
   slideType: SlideTemplate | null
   slideContent: string | null
+  // Bible fields (present when itemType === 'bible')
+  bibleVerseId: number | null
+  bibleReference: string | null
+  bibleText: string | null
+  bibleTranslation: string | null
   // Common fields
   sortOrder: number
   isExpanded: boolean
@@ -61,6 +66,18 @@ export interface UpdateSlideInput {
   id: number
   slideType: SlideTemplate
   slideContent: string
+}
+
+/**
+ * Input for adding a Bible verse to the queue
+ */
+export interface InsertBibleVerseInput {
+  verseId: number
+  reference: string
+  text: string
+  translationAbbreviation: string
+  presentNow?: boolean
+  afterItemId?: number
 }
 
 /**

@@ -1,5 +1,6 @@
 import { useLocation } from '@tanstack/react-router'
 import {
+  Book,
   CalendarDays,
   ChevronLeft,
   ChevronRight,
@@ -51,6 +52,12 @@ export function Sidebar() {
       label: t('sidebar:navigation.songs'),
       to: '/songs',
       permission: 'songs.view',
+    },
+    {
+      icon: Book,
+      label: t('sidebar:navigation.bible'),
+      to: '/bible',
+      permission: 'bible.view',
     },
     {
       icon: CalendarDays,

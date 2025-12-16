@@ -97,6 +97,11 @@ pub fn run() {
                 println!("[sidecar] Failed to start the server: {err}");
             }
 
+            // Wait for server to be ready before showing UI
+            if let Err(err) = server::wait_for_server_ready(server_port, 30) {
+                println!("[sidecar] {err}");
+            }
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

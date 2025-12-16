@@ -1,4 +1,12 @@
-import { CalendarDays, FileText, Megaphone, Music, Plus, X } from 'lucide-react'
+import {
+  Book,
+  CalendarDays,
+  FileText,
+  Megaphone,
+  Music,
+  Plus,
+  X,
+} from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -6,12 +14,14 @@ import type { SlideTemplate } from '../types'
 
 interface AddToQueueMenuProps {
   onAddSong: () => void
+  onAddBibleVerse?: () => void
   onAddSlide: (template: SlideTemplate) => void
   onImportSchedule?: () => void
 }
 
 export function AddToQueueMenu({
   onAddSong,
+  onAddBibleVerse,
   onAddSlide,
   onImportSchedule,
 }: AddToQueueMenuProps) {
@@ -91,6 +101,29 @@ export function AddToQueueMenu({
                 </div>
               </div>
             </button>
+
+            {onAddBibleVerse && (
+              <button
+                type="button"
+                onClick={() => handleAction(onAddBibleVerse)}
+                className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                  <Book
+                    size={20}
+                    className="text-blue-600 dark:text-blue-400"
+                  />
+                </div>
+                <div>
+                  <div className="font-medium">
+                    {t('addToQueue.bibleVerse')}
+                  </div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    {t('addToQueue.bibleVerseDescription')}
+                  </div>
+                </div>
+              </button>
+            )}
 
             <button
               type="button"
