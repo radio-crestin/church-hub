@@ -1,0 +1,31 @@
+{
+  "title": "Bible",
+  "search": {
+    "placeholder": "Search verses (e.g., \"Gen 1:1\" or \"In the beginning\")",
+    "hint": "Type a reference like \"Gen 1:1\" or search for text",
+    "noResults": "No results found for \"{{query}}\"",
+    "directReference": "Direct reference",
+    "resultsCount": "{{count}} verse found",
+    "resultsCount_other": "{{count}} verses found"
+  },
+  "actions": {
+    "presentNow": "Present now",
+    "addToQueue": "Add to queue",
+    "import": "Import",
+    "importFirst": "Import Bible Translation"
+  },
+  "empty": {
+    "title": "No Bible translations",
+    "description": "Import a Bible translation in USFX XML format to get started."
+  },
+  "import": {
+    "title": "Import Bible Translation",
+    "error": "Failed to import translation",
+    "errorTitle": "Import Error",
+    "success": "Translation imported successfully"
+  },
+  "translation": {
+    "select": "Select translation",
+    "loading": "Loading translations..."
+  }
+}

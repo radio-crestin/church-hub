@@ -3,6 +3,7 @@ import LanguageDetector from 'i18next-browser-languagedetector'
 import { initReactI18next } from 'react-i18next'
 
 // Import translation files
+import bibleEN from './locales/en/bible.json'
 import commonEN from './locales/en/common.json'
 import presentationEN from './locales/en/presentation.json'
 import queueEN from './locales/en/queue.json'
@@ -10,6 +11,7 @@ import schedulesEN from './locales/en/schedules.json'
 import settingsEN from './locales/en/settings.json'
 import sidebarEN from './locales/en/sidebar.json'
 import songsEN from './locales/en/songs.json'
+import bibleRO from './locales/ro/bible.json'
 import commonRO from './locales/ro/common.json'
 import presentationRO from './locales/ro/presentation.json'
 import queueRO from './locales/ro/queue.json'
@@ -21,6 +23,7 @@ import songsRO from './locales/ro/songs.json'
 // Define resources type for type safety
 export const resources = {
   en: {
+    bible: bibleEN,
     common: commonEN,
     presentation: presentationEN,
     queue: queueEN,
@@ -30,6 +33,7 @@ export const resources = {
     songs: songsEN,
   },
   ro: {
+    bible: bibleRO,
     common: commonRO,
     presentation: presentationRO,
     queue: queueRO,
@@ -49,6 +53,7 @@ i18n
     fallbackLng: 'en', // Fallback language
     defaultNS: 'common', // Default namespace
     ns: [
+      'bible',
       'common',
       'presentation',
       'queue',
