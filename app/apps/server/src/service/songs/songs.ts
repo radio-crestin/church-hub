@@ -1,3 +1,5 @@
+import { asc, eq, inArray } from 'drizzle-orm'
+
 import { getCategoryById } from './categories'
 import { sanitizeSongTitle } from './sanitizeTitle'
 import { getSlidesBySongId } from './song-slides'
@@ -6,11 +8,11 @@ import type {
   BatchImportSongInput,
   OperationResult,
   Song,
-  SongRecord,
   SongWithSlides,
   UpsertSongInput,
 } from './types'
-import { getDatabase } from '../../db'
+import { getDatabase, getRawDatabase } from '../../db'
+import { songSlides, songs } from '../../db/schema'
 
 const DEBUG = process.env.DEBUG === 'true'
 const SLIDE_BULK_INSERT_CHUNK_SIZE = 500
@@ -37,9 +39,10 @@ interface SlideWithSongId {
 /**
  * Bulk inserts all slides from all songs in chunks
  * This is more efficient than calling insertSlidesBulk per song
+ * Uses raw SQL for performance
  */
 function insertSlidesBulkAll(
-  db: any,
+  rawDb: ReturnType<typeof getRawDatabase>,
   slides: SlideWithSongId[],
   now: number,
 ): void {
@@ -48,7 +51,7 @@ function insertSlidesBulkAll(
   for (let i = 0; i < slides.length; i += SLIDE_BULK_INSERT_CHUNK_SIZE) {
     const chunk = slides.slice(i, i + SLIDE_BULK_INSERT_CHUNK_SIZE)
     const valuesSql = chunk.map(() => '(?, ?, ?, ?, ?, ?)').join(', ')
-    const stmt = db.query(`
+    const stmt = rawDb.query(`
       INSERT INTO song_slides (song_id, content, sort_order, label, created_at, updated_at)
       VALUES ${valuesSql}
     `)
@@ -71,27 +74,29 @@ function insertSlidesBulkAll(
 /**
  * Converts database song record to API format
  */
-function toSong(record: SongRecord): Song {
+function toSong(record: typeof songs.$inferSelect): Song {
   return {
     id: record.id,
     title: record.title,
-    categoryId: record.category_id,
-    sourceFilename: record.source_filename,
+    categoryId: record.categoryId,
+    sourceFilename: record.sourceFilename,
     author: record.author,
     copyright: record.copyright,
     ccli: record.ccli,
     key: record.key,
     tempo: record.tempo,
-    timeSignature: record.time_signature,
+    timeSignature: record.timeSignature,
     theme: record.theme,
-    altTheme: record.alt_theme,
-    hymnNumber: record.hymn_number,
-    keyLine: record.key_line,
-    presentationOrder: record.presentation_order,
-    presentationCount: record.presentation_count,
-    lastManualEdit: record.last_manual_edit,
-    createdAt: record.created_at,
-    updatedAt: record.updated_at,
+    altTheme: record.altTheme,
+    hymnNumber: record.hymnNumber,
+    keyLine: record.keyLine,
+    presentationOrder: record.presentationOrder,
+    presentationCount: record.presentationCount,
+    lastManualEdit: record.lastManualEdit
+      ? Math.floor(record.lastManualEdit.getTime() / 1000)
+      : null,
+    createdAt: Math.floor(record.createdAt.getTime() / 1000),
+    updatedAt: Math.floor(record.updatedAt.getTime() / 1000),
   }
 }
 
@@ -103,8 +108,7 @@ export function getAllSongs(): Song[] {
     log('debug', 'Getting all songs')
 
     const db = getDatabase()
-    const query = db.query('SELECT * FROM songs ORDER BY title ASC')
-    const records = query.all() as SongRecord[]
+    const records = db.select().from(songs).orderBy(asc(songs.title)).all()
 
     return records.map(toSong)
   } catch (error) {
@@ -121,8 +125,7 @@ export function getSongById(id: number): Song | null {
     log('debug', `Getting song by ID: ${id}`)
 
     const db = getDatabase()
-    const query = db.query('SELECT * FROM songs WHERE id = ?')
-    const record = query.get(id) as SongRecord | null
+    const record = db.select().from(songs).where(eq(songs.id, id)).get()
 
     if (!record) {
       log('debug', `Song not found: ${id}`)
@@ -174,24 +177,18 @@ export function getAllSongsWithSlides(
 
     const db = getDatabase()
 
-    let query: ReturnType<typeof db.query>
+    let records: (typeof songs.$inferSelect)[]
     if (categoryId !== null && categoryId !== undefined) {
-      query = db.query(
-        'SELECT * FROM songs WHERE category_id = ? ORDER BY title ASC',
-      )
-      const records = query.all(categoryId) as SongRecord[]
-      return records.map((record) => {
-        const song = toSong(record)
-        const slides = getSlidesBySongId(song.id)
-        const category = song.categoryId
-          ? getCategoryById(song.categoryId)
-          : null
-        return { ...song, slides, category }
-      })
+      records = db
+        .select()
+        .from(songs)
+        .where(eq(songs.categoryId, categoryId))
+        .orderBy(asc(songs.title))
+        .all()
+    } else {
+      records = db.select().from(songs).orderBy(asc(songs.title)).all()
     }
 
-    query = db.query('SELECT * FROM songs ORDER BY title ASC')
-    const records = query.all() as SongRecord[]
     return records.map((record) => {
       const song = toSong(record)
       const slides = getSlidesBySongId(song.id)
@@ -210,7 +207,7 @@ export function getAllSongsWithSlides(
 export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
   try {
     const db = getDatabase()
-    const now = Math.floor(Date.now() / 1000)
+    const now = new Date()
     const sanitizedTitle = sanitizeSongTitle(input.title)
 
     let songId: number
@@ -218,37 +215,31 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
     if (input.id) {
       log('debug', `Updating song: ${input.id}`)
 
-      // Set last_manual_edit only when isManualEdit is true (UI edit)
-      const lastManualEdit = input.isManualEdit ? now : null
+      // Build update object
+      const updateData: Record<string, any> = {
+        title: sanitizedTitle,
+        categoryId: input.categoryId ?? null,
+        sourceFilename: input.sourceFilename ?? null,
+        author: input.author ?? null,
+        copyright: input.copyright ?? null,
+        ccli: input.ccli ?? null,
+        key: input.key ?? null,
+        tempo: input.tempo ?? null,
+        timeSignature: input.timeSignature ?? null,
+        theme: input.theme ?? null,
+        altTheme: input.altTheme ?? null,
+        hymnNumber: input.hymnNumber ?? null,
+        keyLine: input.keyLine ?? null,
+        presentationOrder: input.presentationOrder ?? null,
+        updatedAt: now,
+      }
 
-      const query = db.query(`
-        UPDATE songs
-        SET title = ?, category_id = ?, source_filename = ?,
-            author = ?, copyright = ?, ccli = ?, key = ?, tempo = ?,
-            time_signature = ?, theme = ?, alt_theme = ?, hymn_number = ?,
-            key_line = ?, presentation_order = ?, updated_at = ?,
-            last_manual_edit = COALESCE(?, last_manual_edit)
-        WHERE id = ?
-      `)
-      query.run(
-        sanitizedTitle,
-        input.categoryId ?? null,
-        input.sourceFilename ?? null,
-        input.author ?? null,
-        input.copyright ?? null,
-        input.ccli ?? null,
-        input.key ?? null,
-        input.tempo ?? null,
-        input.timeSignature ?? null,
-        input.theme ?? null,
-        input.altTheme ?? null,
-        input.hymnNumber ?? null,
-        input.keyLine ?? null,
-        input.presentationOrder ?? null,
-        now,
-        lastManualEdit,
-        input.id,
-      )
+      // Set last_manual_edit only when isManualEdit is true (UI edit)
+      if (input.isManualEdit) {
+        updateData.lastManualEdit = now
+      }
+
+      db.update(songs).set(updateData).where(eq(songs.id, input.id)).run()
       songId = input.id
 
       log('info', `Song updated: ${input.id}`)
@@ -258,37 +249,30 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
       // Set last_manual_edit only when isManualEdit is true (UI edit)
       const lastManualEdit = input.isManualEdit ? now : null
 
-      const insertQuery = db.query(`
-        INSERT INTO songs (
-          title, category_id, source_filename,
-          author, copyright, ccli, key, tempo, time_signature,
-          theme, alt_theme, hymn_number, key_line, presentation_order,
-          last_manual_edit, created_at, updated_at
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `)
-      insertQuery.run(
-        sanitizedTitle,
-        input.categoryId ?? null,
-        input.sourceFilename ?? null,
-        input.author ?? null,
-        input.copyright ?? null,
-        input.ccli ?? null,
-        input.key ?? null,
-        input.tempo ?? null,
-        input.timeSignature ?? null,
-        input.theme ?? null,
-        input.altTheme ?? null,
-        input.hymnNumber ?? null,
-        input.keyLine ?? null,
-        input.presentationOrder ?? null,
-        lastManualEdit,
-        now,
-        now,
-      )
+      const result = db
+        .insert(songs)
+        .values({
+          title: sanitizedTitle,
+          categoryId: input.categoryId ?? null,
+          sourceFilename: input.sourceFilename ?? null,
+          author: input.author ?? null,
+          copyright: input.copyright ?? null,
+          ccli: input.ccli ?? null,
+          key: input.key ?? null,
+          tempo: input.tempo ?? null,
+          timeSignature: input.timeSignature ?? null,
+          theme: input.theme ?? null,
+          altTheme: input.altTheme ?? null,
+          hymnNumber: input.hymnNumber ?? null,
+          keyLine: input.keyLine ?? null,
+          presentationOrder: input.presentationOrder ?? null,
+          lastManualEdit,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .returning({ id: songs.id })
+        .get()
 
-      const getLastId = db.query('SELECT last_insert_rowid() as id')
-      const result = getLastId.get() as { id: number }
       songId = result.id
 
       log('info', `Song created: ${songId}`)
@@ -303,8 +287,10 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
 
       // Get existing slide IDs
       const existingSlides = db
-        .query('SELECT id FROM song_slides WHERE song_id = ?')
-        .all(songId) as { id: number }[]
+        .select({ id: songSlides.id })
+        .from(songSlides)
+        .where(eq(songSlides.songId, songId))
+        .all()
       const existingIds = new Set(existingSlides.map((s) => s.id))
 
       // Track which existing IDs are still present
@@ -316,40 +302,38 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
 
         if (isExisting) {
           // Update existing slide
-          db.query(`
-            UPDATE song_slides
-            SET content = ?, sort_order = ?, label = ?, updated_at = ?
-            WHERE id = ?
-          `).run(
-            slide.content,
-            slide.sortOrder,
-            slide.label ?? null,
-            now,
-            slide.id,
-          )
+          db.update(songSlides)
+            .set({
+              content: slide.content,
+              sortOrder: slide.sortOrder,
+              label: slide.label ?? null,
+              updatedAt: now,
+            })
+            .where(eq(songSlides.id, slide.id as number))
+            .run()
           keepIds.add(slide.id as number)
         } else {
           // Insert new slide
-          db.query(`
-            INSERT INTO song_slides (song_id, content, sort_order, label, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?)
-          `).run(
-            songId,
-            slide.content,
-            slide.sortOrder,
-            slide.label ?? null,
-            now,
-            now,
-          )
+          db.insert(songSlides)
+            .values({
+              songId,
+              content: slide.content,
+              sortOrder: slide.sortOrder,
+              label: slide.label ?? null,
+              createdAt: now,
+              updatedAt: now,
+            })
+            .run()
         }
       }
 
       // Delete slides that were removed
-      for (const existingId of existingIds) {
-        if (!keepIds.has(existingId)) {
-          db.query('DELETE FROM song_slides WHERE id = ?').run(existingId)
-          log('debug', `Deleted slide: ${existingId}`)
-        }
+      const idsToDelete = Array.from(existingIds).filter(
+        (id) => !keepIds.has(id),
+      )
+      if (idsToDelete.length > 0) {
+        db.delete(songSlides).where(inArray(songSlides.id, idsToDelete)).run()
+        log('debug', `Deleted ${idsToDelete.length} slides`)
       }
     }
 
@@ -370,8 +354,7 @@ export function deleteSong(id: number): OperationResult {
     const db = getDatabase()
 
     // Slides are deleted automatically via CASCADE
-    const query = db.query('DELETE FROM songs WHERE id = ?')
-    query.run(id)
+    db.delete(songs).where(eq(songs.id, id)).run()
 
     log('info', `Song deleted: ${id}`)
     return { success: true }
@@ -387,14 +370,15 @@ export function deleteSong(id: number): OperationResult {
  * - UPSERT (INSERT ... ON CONFLICT) for single-statement insert/update
  * - Bulk slide deletion in single query
  * - Bulk slide insertion in chunks
+ * Uses raw SQL for performance
  */
 export function batchImportSongs(
-  songs: BatchImportSongInput[],
+  songsInput: BatchImportSongInput[],
   defaultCategoryId?: number | null,
   overwriteDuplicates?: boolean,
   skipManuallyEdited?: boolean,
 ): BatchImportResult {
-  const db = getDatabase()
+  const rawDb = getRawDatabase()
   const songIds: number[] = []
   let successCount = 0
   let failedCount = 0
@@ -402,17 +386,17 @@ export function batchImportSongs(
   const errors: string[] = []
   const now = Math.floor(Date.now() / 1000)
 
-  log('info', `Starting batch import of ${songs.length} songs`)
+  log('info', `Starting batch import of ${songsInput.length} songs`)
 
   try {
     // Use transaction for atomic batch insert
-    db.exec('BEGIN TRANSACTION')
+    rawDb.exec('BEGIN TRANSACTION')
 
     // Prepare UPSERT statement - combines INSERT and UPDATE in one operation
     // Uses ON CONFLICT with the UNIQUE constraint on title (COLLATE NOCASE)
     // RETURNING id gives us the song ID whether inserted or updated
     const upsertSongStmt = overwriteDuplicates
-      ? db.query(`
+      ? rawDb.query(`
           INSERT INTO songs (
             title, category_id, source_filename,
             author, copyright, ccli, key, tempo, time_signature,
@@ -437,7 +421,7 @@ export function batchImportSongs(
             updated_at = excluded.updated_at
           RETURNING id
         `)
-      : db.query(`
+      : rawDb.query(`
           INSERT INTO songs (
             title, category_id, source_filename,
             author, copyright, ccli, key, tempo, time_signature,
@@ -458,14 +442,14 @@ export function batchImportSongs(
     // Prepare statement to check for manually edited songs (used when skipManuallyEdited is enabled)
     const checkManualEditStmt =
       skipManuallyEdited && overwriteDuplicates
-        ? db.query(
+        ? rawDb.query(
             'SELECT id, last_manual_edit FROM songs WHERE LOWER(title) = LOWER(?)',
           )
         : null
 
     // Phase 1: Insert/Update all songs and collect IDs
-    for (let i = 0; i < songs.length; i++) {
-      const input = songs[i]
+    for (let i = 0; i < songsInput.length; i++) {
+      const input = songsInput[i]
 
       try {
         const categoryId = input.categoryId ?? defaultCategoryId ?? null
@@ -523,9 +507,9 @@ export function batchImportSongs(
     // Phase 2: Bulk delete old slides for all imported songs (when overwriting)
     if (overwriteDuplicates && songIds.length > 0) {
       const placeholders = songIds.map(() => '?').join(',')
-      db.query(
-        `DELETE FROM song_slides WHERE song_id IN (${placeholders})`,
-      ).run(...songIds)
+      rawDb
+        .query(`DELETE FROM song_slides WHERE song_id IN (${placeholders})`)
+        .run(...songIds)
     }
 
     // Phase 3: Bulk insert all slides at once (super batch)
@@ -548,16 +532,16 @@ export function batchImportSongs(
     }
 
     if (allSlides.length > 0) {
-      insertSlidesBulkAll(db, allSlides, now)
+      insertSlidesBulkAll(rawDb, allSlides, now)
     }
 
-    db.exec('COMMIT')
+    rawDb.exec('COMMIT')
     log(
       'info',
       `Batch import completed: ${successCount} success, ${failedCount} failed, ${skippedCount} skipped`,
     )
   } catch (error) {
-    db.exec('ROLLBACK')
+    rawDb.exec('ROLLBACK')
     const msg = error instanceof Error ? error.message : String(error)
     log('error', `Batch import transaction failed: ${msg}`)
     errors.push(`Transaction failed: ${msg}`)

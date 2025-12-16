@@ -1,6 +1,9 @@
+import { eq, sql } from 'drizzle-orm'
+
 import { updateScheduleSearchIndex } from './search'
 import type { Schedule, UpsertScheduleInput } from './types'
 import { getDatabase } from '../../db'
+import { scheduleItems, schedules } from '../../db/schema'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -18,30 +21,34 @@ export function upsertSchedule(input: UpsertScheduleInput): Schedule | null {
     log('debug', `Upserting schedule: ${input.id ?? 'new'}`)
 
     const db = getDatabase()
-    const now = Math.floor(Date.now() / 1000)
+    const now = new Date()
 
     let scheduleId: number
 
     if (input.id) {
       // Update existing schedule
-      const updateQuery = db.query(`
-        UPDATE schedules
-        SET title = ?, description = ?, updated_at = ?
-        WHERE id = ?
-      `)
-      updateQuery.run(input.title, input.description ?? null, now, input.id)
+      db.update(schedules)
+        .set({
+          title: input.title,
+          description: input.description ?? null,
+          updatedAt: now,
+        })
+        .where(eq(schedules.id, input.id))
+        .run()
       scheduleId = input.id
       log('info', `Schedule updated: ${scheduleId}`)
     } else {
       // Create new schedule
-      const insertQuery = db.query(`
-        INSERT INTO schedules (title, description, created_at, updated_at)
-        VALUES (?, ?, ?, ?)
-      `)
-      insertQuery.run(input.title, input.description ?? null, now, now)
-
-      const getLastId = db.query('SELECT last_insert_rowid() as id')
-      const result = getLastId.get() as { id: number }
+      const result = db
+        .insert(schedules)
+        .values({
+          title: input.title,
+          description: input.description ?? null,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .returning({ id: schedules.id })
+        .get()
       scheduleId = result.id
       log('info', `Schedule created: ${scheduleId}`)
     }
@@ -50,36 +57,35 @@ export function upsertSchedule(input: UpsertScheduleInput): Schedule | null {
     updateScheduleSearchIndex(scheduleId)
 
     // Get counts for response
-    const countsQuery = db.query(`
-      SELECT
-        COUNT(si.id) as item_count,
-        SUM(CASE WHEN si.item_type = 'song' THEN 1 ELSE 0 END) as song_count
-      FROM schedule_items si
-      WHERE si.schedule_id = ?
-    `)
-    const counts = countsQuery.get(scheduleId) as {
-      item_count: number
-      song_count: number
-    }
+    const counts = db
+      .select({
+        itemCount: sql<number>`CAST(COUNT(${scheduleItems.id}) AS INTEGER)`,
+        songCount: sql<number>`CAST(SUM(CASE WHEN ${scheduleItems.itemType} = 'song' THEN 1 ELSE 0 END) AS INTEGER)`,
+      })
+      .from(scheduleItems)
+      .where(eq(scheduleItems.scheduleId, scheduleId))
+      .get()
 
     // Get updated schedule
-    const scheduleQuery = db.query('SELECT * FROM schedules WHERE id = ?')
-    const schedule = scheduleQuery.get(scheduleId) as {
-      id: number
-      title: string
-      description: string | null
-      created_at: number
-      updated_at: number
+    const schedule = db
+      .select()
+      .from(schedules)
+      .where(eq(schedules.id, scheduleId))
+      .get()
+
+    if (!schedule) {
+      log('error', `Failed to retrieve schedule after upsert: ${scheduleId}`)
+      return null
     }
 
     return {
       id: schedule.id,
       title: schedule.title,
       description: schedule.description,
-      itemCount: counts.item_count,
-      songCount: counts.song_count,
-      createdAt: schedule.created_at,
-      updatedAt: schedule.updated_at,
+      itemCount: counts?.itemCount ?? 0,
+      songCount: counts?.songCount ?? 0,
+      createdAt: Math.floor(schedule.createdAt.getTime() / 1000),
+      updatedAt: Math.floor(schedule.updatedAt.getTime() / 1000),
     }
   } catch (error) {
     log('error', `Failed to upsert schedule: ${error}`)

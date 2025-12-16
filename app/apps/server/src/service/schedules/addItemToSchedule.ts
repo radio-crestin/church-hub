@@ -1,7 +1,10 @@
+import { and, eq, gte, max, sql } from 'drizzle-orm'
+
 import { getScheduleItemById } from './getSchedules'
 import { updateScheduleSearchIndex } from './search'
 import type { AddToScheduleInput, ScheduleItem } from './types'
 import { getDatabase } from '../../db'
+import { scheduleItems, schedules } from '../../db/schema'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -25,73 +28,86 @@ export function addItemToSchedule(
     )
 
     const db = getDatabase()
-    const now = Math.floor(Date.now() / 1000)
+    const now = new Date()
 
     let targetOrder: number
 
     if (input.afterItemId) {
       // Get the sort_order of the item we're inserting after
       const afterItem = db
-        .query('SELECT sort_order FROM schedule_items WHERE id = ?')
-        .get(input.afterItemId) as { sort_order: number } | null
+        .select({ sortOrder: scheduleItems.sortOrder })
+        .from(scheduleItems)
+        .where(eq(scheduleItems.id, input.afterItemId))
+        .get()
 
       if (!afterItem) {
         log('error', `Schedule item not found: ${input.afterItemId}`)
         return null
       }
 
-      targetOrder = afterItem.sort_order + 1
+      targetOrder = afterItem.sortOrder + 1
 
       // Shift all items after the target position
-      db.query(
-        `
-        UPDATE schedule_items
-        SET sort_order = sort_order + 1, updated_at = ?
-        WHERE schedule_id = ? AND sort_order >= ?
-      `,
-      ).run(now, input.scheduleId, targetOrder)
+      db.update(scheduleItems)
+        .set({
+          sortOrder: sql`${scheduleItems.sortOrder} + 1`,
+          updatedAt: now,
+        })
+        .where(
+          and(
+            eq(scheduleItems.scheduleId, input.scheduleId),
+            gte(scheduleItems.sortOrder, targetOrder),
+          ),
+        )
+        .run()
     } else {
       // Get the max sort_order to append at the end
       const maxOrderResult = db
-        .query(
-          'SELECT MAX(sort_order) as max_order FROM schedule_items WHERE schedule_id = ?',
-        )
-        .get(input.scheduleId) as { max_order: number | null }
-      targetOrder = (maxOrderResult?.max_order ?? -1) + 1
+        .select({ maxOrder: max(scheduleItems.sortOrder) })
+        .from(scheduleItems)
+        .where(eq(scheduleItems.scheduleId, input.scheduleId))
+        .get()
+      targetOrder = (maxOrderResult?.maxOrder ?? -1) + 1
     }
 
     // Insert the item
+    let itemId: number
     if (isSong) {
-      const insertQuery = db.query(`
-        INSERT INTO schedule_items (schedule_id, item_type, song_id, sort_order, created_at, updated_at)
-        VALUES (?, 'song', ?, ?, ?, ?)
-      `)
-      insertQuery.run(input.scheduleId, input.songId!, targetOrder, now, now)
+      const result = db
+        .insert(scheduleItems)
+        .values({
+          scheduleId: input.scheduleId,
+          itemType: 'song',
+          songId: input.songId!,
+          sortOrder: targetOrder,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .returning({ id: scheduleItems.id })
+        .get()
+      itemId = result.id
     } else {
-      const insertQuery = db.query(`
-        INSERT INTO schedule_items (schedule_id, item_type, slide_type, slide_content, sort_order, created_at, updated_at)
-        VALUES (?, 'slide', ?, ?, ?, ?, ?)
-      `)
-      insertQuery.run(
-        input.scheduleId,
-        input.slideType!,
-        input.slideContent!,
-        targetOrder,
-        now,
-        now,
-      )
+      const result = db
+        .insert(scheduleItems)
+        .values({
+          scheduleId: input.scheduleId,
+          itemType: 'slide',
+          slideType: input.slideType!,
+          slideContent: input.slideContent!,
+          sortOrder: targetOrder,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .returning({ id: scheduleItems.id })
+        .get()
+      itemId = result.id
     }
 
-    // Get the inserted ID
-    const getLastId = db.query('SELECT last_insert_rowid() as id')
-    const result = getLastId.get() as { id: number }
-    const itemId = result.id
-
     // Update schedule's updated_at
-    db.query('UPDATE schedules SET updated_at = ? WHERE id = ?').run(
-      now,
-      input.scheduleId,
-    )
+    db.update(schedules)
+      .set({ updatedAt: now })
+      .where(eq(schedules.id, input.scheduleId))
+      .run()
 
     // Update search index
     updateScheduleSearchIndex(input.scheduleId)

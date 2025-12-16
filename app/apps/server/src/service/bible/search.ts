@@ -1,9 +1,12 @@
+import { and, asc, eq } from 'drizzle-orm'
+
 import { getBookByCode } from './books'
 import { getDefaultTranslation } from './translations'
 import type { BibleSearchResult, BibleVerse, SearchVersesInput } from './types'
 import { BOOK_ALIASES } from './types'
 import { formatReference, getVerse, getVerseRange } from './verses'
-import { getDatabase } from '../../db'
+import { getDatabase, getRawDatabase } from '../../db'
+import { bibleBooks, bibleVerses } from '../../db/schema'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -24,17 +27,62 @@ interface ParsedReference {
 }
 
 /**
- * Parses a Bible reference string like "Gen 1:23" or "Ioan 3:16-18"
+ * Gets all verses for a chapter by book code
+ */
+function getChapterVerses(
+  translationId: number,
+  bookCode: string,
+  chapter: number,
+): BibleVerse[] {
+  const db = getDatabase()
+  const records = db
+    .select({
+      id: bibleVerses.id,
+      translationId: bibleVerses.translationId,
+      bookId: bibleVerses.bookId,
+      bookCode: bibleBooks.bookCode,
+      bookName: bibleBooks.bookName,
+      chapter: bibleVerses.chapter,
+      verse: bibleVerses.verse,
+      text: bibleVerses.text,
+    })
+    .from(bibleVerses)
+    .innerJoin(bibleBooks, eq(bibleBooks.id, bibleVerses.bookId))
+    .where(
+      and(
+        eq(bibleVerses.translationId, translationId),
+        eq(bibleBooks.bookCode, bookCode.toUpperCase()),
+        eq(bibleVerses.chapter, chapter),
+      ),
+    )
+    .orderBy(asc(bibleVerses.verse))
+    .all()
+
+  return records.map((r) => ({
+    id: r.id,
+    translationId: r.translationId,
+    bookId: r.bookId,
+    bookCode: r.bookCode,
+    bookName: r.bookName,
+    chapter: r.chapter,
+    verse: r.verse,
+    text: r.text,
+  }))
+}
+
+/**
+ * Parses a Bible reference string like "Gen", "Gen 1", "Gen 1:23" or "Ioan 3:16-18"
  * Returns null if the string doesn't match a reference pattern
  */
 export function parseReference(query: string): ParsedReference | null {
   // Normalize the query
   const normalized = query.trim().toLowerCase()
 
-  // Pattern: Book Chapter:Verse or Book Chapter:StartVerse-EndVerse
-  // Examples: "gen 1:1", "ioan 3:16", "psalm 23:1-6", "1 cor 13:4-8"
+  // Pattern: Book [Chapter[:Verse[-EndVerse]]]
+  // Examples: "gen", "gen 1", "gen 1:1", "gen 1 1", "psalm 23:1-6", "1 cor 13:4-8"
+  // Supports both colon and space as separator between chapter and verse
   const referencePattern =
-    /^(\d?\s*[a-zA-ZăâîșțĂÂÎȘȚ]+)\s*(\d+)(?::(\d+)(?:-(\d+))?)?$/i
+    /^(\d?\s*[a-zA-ZăâîșțĂÂÎȘȚ]+)(?:\s+(\d+)(?:[:\s]+(\d+)(?:-(\d+))?)?)?$/i
 
   const match = normalized.match(referencePattern)
   if (!match) {
@@ -53,7 +101,8 @@ export function parseReference(query: string): ParsedReference | null {
     return null
   }
 
-  const chapter = Number.parseInt(chapterStr, 10)
+  // Default to chapter 1 if no chapter specified
+  const chapter = chapterStr ? Number.parseInt(chapterStr, 10) : 1
   const startVerse = startVerseStr
     ? Number.parseInt(startVerseStr, 10)
     : undefined
@@ -113,15 +162,13 @@ export function searchByReference(
     return []
   }
 
-  // If no verse specified, return first verse of chapter
+  // If no verse specified, return all verses of the chapter
   if (parsed.startVerse === undefined) {
-    const verse = getVerse(
+    return getChapterVerses(
       effectiveTranslationId,
       parsed.bookCode,
       parsed.chapter,
-      1,
     )
-    return verse ? [verse] : []
   }
 
   // If range specified, get range
@@ -147,11 +194,12 @@ export function searchByReference(
 
 /**
  * Full-text search across verse content
+ * Uses raw SQL for FTS5 MATCH queries (not supported by Drizzle)
  */
 export function searchVersesByText(
   input: SearchVersesInput,
 ): BibleSearchResult[] {
-  const db = getDatabase()
+  const rawDb = getRawDatabase()
   const { query, translationId, limit = 50 } = input
 
   if (!query || query.trim().length < 2) {
@@ -216,7 +264,7 @@ export function searchVersesByText(
       params = [sanitizedQuery, limit]
     }
 
-    const results = db.query(sql).all(...params) as Array<{
+    const results = rawDb.query(sql).all(...params) as Array<{
       id: number
       translation_id: number
       book_name: string
@@ -272,28 +320,29 @@ export function searchBible(input: SearchVersesInput): {
 
 /**
  * Updates the FTS index for a translation
+ * Uses raw SQL for FTS operations (not supported by Drizzle)
  */
 export function updateSearchIndex(translationId: number): void {
-  const db = getDatabase()
+  const rawDb = getRawDatabase()
 
   log('info', `Updating FTS index for translation ${translationId}`)
 
   // Remove existing entries for this translation
-  db.run(
+  rawDb.run(
     `
     DELETE FROM bible_verses_fts
     WHERE rowid IN (SELECT id FROM bible_verses WHERE translation_id = ?)
   `,
-    [translationId],
+    translationId,
   )
 
   // Re-add entries
-  db.run(
+  rawDb.run(
     `
     INSERT INTO bible_verses_fts (rowid, text)
     SELECT id, text FROM bible_verses WHERE translation_id = ?
   `,
-    [translationId],
+    translationId,
   )
 
   log('info', 'FTS index updated')
@@ -301,15 +350,16 @@ export function updateSearchIndex(translationId: number): void {
 
 /**
  * Rebuilds the entire Bible FTS index
+ * Uses raw SQL for FTS operations (not supported by Drizzle)
  */
 export function rebuildSearchIndex(): void {
-  const db = getDatabase()
+  const rawDb = getRawDatabase()
 
   log('info', 'Rebuilding entire Bible FTS index')
 
   // Clear and rebuild
-  db.exec('DELETE FROM bible_verses_fts')
-  db.exec(`
+  rawDb.exec('DELETE FROM bible_verses_fts')
+  rawDb.exec(`
     INSERT INTO bible_verses_fts (rowid, text)
     SELECT id, text FROM bible_verses
   `)

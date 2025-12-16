@@ -1,5 +1,8 @@
+import { eq, sql } from 'drizzle-orm'
+
 import type { OperationResult, ReorderQueueInput } from './types'
 import { getDatabase } from '../../db'
+import { presentationQueue } from '../../db/schema'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -17,16 +20,15 @@ export function reorderQueue(input: ReorderQueueInput): OperationResult {
     log('debug', `Reordering queue: ${input.itemIds.join(', ')}`)
 
     const db = getDatabase()
-    const now = Math.floor(Date.now() / 1000)
-
-    const updateQuery = db.query(`
-      UPDATE presentation_queue
-      SET sort_order = ?, updated_at = ?
-      WHERE id = ?
-    `)
 
     for (let i = 0; i < input.itemIds.length; i++) {
-      updateQuery.run(i, now, input.itemIds[i])
+      db.update(presentationQueue)
+        .set({
+          sortOrder: i,
+          updatedAt: sql`(unixepoch())` as unknown as Date,
+        })
+        .where(eq(presentationQueue.id, input.itemIds[i]))
+        .run()
     }
 
     log('info', 'Queue reordered successfully')

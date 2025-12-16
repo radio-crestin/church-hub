@@ -1,5 +1,5 @@
 import type { SongSearchResult } from './types'
-import { getDatabase } from '../../db'
+import { getRawDatabase } from '../../db'
 import { getSetting } from '../settings'
 
 /**
@@ -125,7 +125,7 @@ export function updateSearchIndex(songId: number): void {
   try {
     log('debug', `Updating search index for song: ${songId}`)
 
-    const db = getDatabase()
+    const db = getRawDatabase()
 
     // Get song title and category name
     const songQuery = db.query(`
@@ -178,7 +178,7 @@ export function removeFromSearchIndex(songId: number): void {
   try {
     log('debug', `Removing song from search index: ${songId}`)
 
-    const db = getDatabase()
+    const db = getRawDatabase()
     db.query('DELETE FROM songs_fts WHERE song_id = ?').run(songId)
     db.query('DELETE FROM songs_fts_trigram WHERE song_id = ?').run(songId)
 
@@ -196,7 +196,7 @@ export function updateSearchIndexByCategory(categoryId: number): void {
   try {
     log('debug', `Updating search index for category: ${categoryId}`)
 
-    const db = getDatabase()
+    const db = getRawDatabase()
     const songsQuery = db.query('SELECT id FROM songs WHERE category_id = ?')
     const songs = songsQuery.all(categoryId) as { id: number }[]
 
@@ -220,7 +220,7 @@ export function batchUpdateSearchIndex(songIds: number[]): void {
   try {
     log('info', `Batch updating search index for ${songIds.length} songs`)
 
-    const db = getDatabase()
+    const db = getRawDatabase()
 
     db.exec('BEGIN TRANSACTION')
 
@@ -287,7 +287,7 @@ export function rebuildSearchIndex(): void {
   try {
     log('info', 'Rebuilding search index...')
 
-    const db = getDatabase()
+    const db = getRawDatabase()
 
     // Use a transaction for atomicity
     db.exec('BEGIN TRANSACTION')
@@ -851,7 +851,7 @@ export function searchSongs(query: string): SongSearchResult[] {
       return []
     }
 
-    const db = getDatabase()
+    const db = getRawDatabase()
     const queryTerms = extractSearchTerms(query)
 
     // Filter to valid terms (terms that exist in corpus) - ignore noise like "123"
