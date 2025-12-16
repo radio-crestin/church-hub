@@ -1,6 +1,5 @@
 export { BibleControlPanel } from './BibleControlPanel'
 export { BibleNavigationPanel } from './BibleNavigationPanel'
-export { BibleQueuePanel } from './BibleQueuePanel'
 export { BooksList } from './BooksList'
 export { ChaptersGrid } from './ChaptersGrid'
 export { TranslationSelector } from './TranslationSelector'
