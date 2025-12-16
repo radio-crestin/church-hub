@@ -57,6 +57,8 @@ export function useBibleKeyboardShortcuts({
 
         case 'ArrowRight':
         case 'Enter':
+        case 'F5':
+        case 'F10':
           event.preventDefault()
           if (level !== 'verses') {
             onNavigateDeeper()
