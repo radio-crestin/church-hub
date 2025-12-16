@@ -1,6 +1,9 @@
+import { eq, gte, max, sql } from 'drizzle-orm'
+
 import { getQueueItemById } from './getQueue'
 import type { AddToQueueInput, QueueItem } from './types'
 import { getDatabase } from '../../db'
+import { presentationQueue } from '../../db/schema'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -22,52 +25,56 @@ export function addToQueue(input: AddToQueueInput): QueueItem | null {
     )
 
     const db = getDatabase()
-    const now = Math.floor(Date.now() / 1000)
 
     let targetOrder: number
 
     if (input.afterItemId) {
       // Get the sort_order of the item we're inserting after
       const afterItem = db
-        .query('SELECT sort_order FROM presentation_queue WHERE id = ?')
-        .get(input.afterItemId) as { sort_order: number } | null
+        .select({ sortOrder: presentationQueue.sortOrder })
+        .from(presentationQueue)
+        .where(eq(presentationQueue.id, input.afterItemId))
+        .get()
 
       if (!afterItem) {
         log('error', `Queue item not found: ${input.afterItemId}`)
         return null
       }
 
-      targetOrder = afterItem.sort_order + 1
+      targetOrder = afterItem.sortOrder + 1
 
       // Shift all items after the target position
-      db.query(`
-        UPDATE presentation_queue
-        SET sort_order = sort_order + 1, updated_at = ?
-        WHERE sort_order >= ?
-      `).run(now, targetOrder)
+      db.update(presentationQueue)
+        .set({
+          sortOrder: sql`${presentationQueue.sortOrder} + 1`,
+          updatedAt: sql`(unixepoch())` as unknown as Date,
+        })
+        .where(gte(presentationQueue.sortOrder, targetOrder))
+        .run()
     } else {
       // Get the max sort_order to append at the end
       const maxOrderResult = db
-        .query('SELECT MAX(sort_order) as max_order FROM presentation_queue')
-        .get() as { max_order: number | null }
-      targetOrder = (maxOrderResult?.max_order ?? -1) + 1
+        .select({ maxOrder: max(presentationQueue.sortOrder) })
+        .from(presentationQueue)
+        .get()
+      targetOrder = (maxOrderResult?.maxOrder ?? -1) + 1
     }
 
     // Insert the queue item
-    const insertQuery = db.query(`
-      INSERT INTO presentation_queue (item_type, song_id, sort_order, is_expanded, created_at, updated_at)
-      VALUES ('song', ?, ?, 1, ?, ?)
-    `)
-    insertQuery.run(input.songId, targetOrder, now, now)
+    const inserted = db
+      .insert(presentationQueue)
+      .values({
+        itemType: 'song',
+        songId: input.songId,
+        sortOrder: targetOrder,
+        isExpanded: true,
+      })
+      .returning({ id: presentationQueue.id })
+      .get()
 
-    // Get the inserted ID
-    const getLastId = db.query('SELECT last_insert_rowid() as id')
-    const result = getLastId.get() as { id: number }
-    const queueItemId = result.id
+    log('info', `Song added to queue: ${inserted.id}`)
 
-    log('info', `Song added to queue: ${queueItemId}`)
-
-    return getQueueItemById(queueItemId)
+    return getQueueItemById(inserted.id)
   } catch (error) {
     log('error', `Failed to add to queue: ${error}`)
     return null

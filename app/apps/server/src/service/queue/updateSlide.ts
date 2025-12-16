@@ -1,6 +1,9 @@
+import { eq, sql } from 'drizzle-orm'
+
 import { getQueueItemById } from './getQueue'
 import type { QueueItem, UpdateSlideInput } from './types'
 import { getDatabase } from '../../db'
+import { presentationQueue } from '../../db/schema'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -18,29 +21,36 @@ export function updateSlide(input: UpdateSlideInput): QueueItem | null {
     log('debug', `Updating slide in queue: ${input.id}`)
 
     const db = getDatabase()
-    const now = Math.floor(Date.now() / 1000)
 
     // Verify the item exists and is a slide type
     const existingItem = db
-      .query('SELECT id, item_type FROM presentation_queue WHERE id = ?')
-      .get(input.id) as { id: number; item_type: string } | null
+      .select({
+        id: presentationQueue.id,
+        itemType: presentationQueue.itemType,
+      })
+      .from(presentationQueue)
+      .where(eq(presentationQueue.id, input.id))
+      .get()
 
     if (!existingItem) {
       log('error', `Queue item not found: ${input.id}`)
       return null
     }
 
-    if (existingItem.item_type !== 'slide') {
+    if (existingItem.itemType !== 'slide') {
       log('error', `Queue item is not a slide: ${input.id}`)
       return null
     }
 
     // Update the slide
-    db.query(`
-      UPDATE presentation_queue
-      SET slide_type = ?, slide_content = ?, updated_at = ?
-      WHERE id = ?
-    `).run(input.slideType, input.slideContent, now, input.id)
+    db.update(presentationQueue)
+      .set({
+        slideType: input.slideType,
+        slideContent: input.slideContent,
+        updatedAt: sql`(unixepoch())` as unknown as Date,
+      })
+      .where(eq(presentationQueue.id, input.id))
+      .run()
 
     log('info', `Slide updated in queue: ${input.id}`)
 

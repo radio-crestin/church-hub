@@ -1,5 +1,8 @@
-import type { QueueItem, QueueItemWithSongRecord } from './types'
+import { asc, eq } from 'drizzle-orm'
+
+import type { QueueItem } from './types'
 import { getDatabase } from '../../db'
+import { presentationQueue, songCategories, songs } from '../../db/schema'
 import { getSlidesBySongId } from '../songs'
 
 const DEBUG = process.env.DEBUG === 'true'
@@ -15,27 +18,37 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
  * Handles both song items and standalone slide items
  */
 function toQueueItem(
-  record: QueueItemWithSongRecord,
+  record: typeof presentationQueue.$inferSelect & {
+    song: typeof songs.$inferSelect | null
+    songCategory: typeof songCategories.$inferSelect | null
+  },
 ): Omit<QueueItem, 'slides'> {
-  const isSongItem = record.item_type === 'song' && record.song_id !== null
+  const isSongItem = record.itemType === 'song' && record.songId !== null
 
   return {
     id: record.id,
-    itemType: record.item_type,
-    songId: record.song_id,
-    song: isSongItem
-      ? {
-          id: record.song_id!,
-          title: record.song_title!,
-          categoryName: record.category_name,
-        }
-      : null,
-    slideType: record.slide_type,
-    slideContent: record.slide_content,
-    sortOrder: record.sort_order,
-    isExpanded: record.is_expanded === 1,
-    createdAt: record.created_at,
-    updatedAt: record.updated_at,
+    itemType: record.itemType,
+    songId: record.songId,
+    song:
+      isSongItem && record.song
+        ? {
+            id: record.song.id,
+            title: record.song.title,
+            categoryName: record.songCategory?.name ?? null,
+          }
+        : null,
+    slideType: record.slideType,
+    slideContent: record.slideContent,
+    sortOrder: record.sortOrder,
+    isExpanded: record.isExpanded,
+    createdAt:
+      record.createdAt instanceof Date
+        ? Math.floor(record.createdAt.getTime() / 1000)
+        : (record.createdAt as unknown as number),
+    updatedAt:
+      record.updatedAt instanceof Date
+        ? Math.floor(record.updatedAt.getTime() / 1000)
+        : (record.updatedAt as unknown as number),
   }
 }
 
@@ -48,25 +61,30 @@ export function getQueue(): QueueItem[] {
     log('debug', 'Getting all queue items')
 
     const db = getDatabase()
-    const query = db.query(`
-      SELECT
-        pq.*,
-        s.title as song_title,
-        sc.name as category_name
-      FROM presentation_queue pq
-      LEFT JOIN songs s ON pq.song_id = s.id
-      LEFT JOIN song_categories sc ON s.category_id = sc.id
-      ORDER BY pq.sort_order ASC
-    `)
-    const records = query.all() as QueueItemWithSongRecord[]
+    const records = db
+      .select({
+        presentationQueue,
+        song: songs,
+        songCategory: songCategories,
+      })
+      .from(presentationQueue)
+      .leftJoin(songs, eq(presentationQueue.songId, songs.id))
+      .leftJoin(songCategories, eq(songs.categoryId, songCategories.id))
+      .orderBy(asc(presentationQueue.sortOrder))
+      .all()
 
     // Get slides for each queue item
     return records.map((record) => {
-      const item = toQueueItem(record)
+      const item = toQueueItem({
+        ...record.presentationQueue,
+        song: record.song,
+        songCategory: record.songCategory,
+      })
       // Only fetch slides for song items
       const slides =
-        record.item_type === 'song' && record.song_id
-          ? getSlidesBySongId(record.song_id)
+        record.presentationQueue.itemType === 'song' &&
+        record.presentationQueue.songId
+          ? getSlidesBySongId(record.presentationQueue.songId)
           : []
       return {
         ...item,
@@ -87,28 +105,33 @@ export function getQueueItemById(id: number): QueueItem | null {
     log('debug', `Getting queue item by ID: ${id}`)
 
     const db = getDatabase()
-    const query = db.query(`
-      SELECT
-        pq.*,
-        s.title as song_title,
-        sc.name as category_name
-      FROM presentation_queue pq
-      LEFT JOIN songs s ON pq.song_id = s.id
-      LEFT JOIN song_categories sc ON s.category_id = sc.id
-      WHERE pq.id = ?
-    `)
-    const record = query.get(id) as QueueItemWithSongRecord | null
+    const record = db
+      .select({
+        presentationQueue,
+        song: songs,
+        songCategory: songCategories,
+      })
+      .from(presentationQueue)
+      .leftJoin(songs, eq(presentationQueue.songId, songs.id))
+      .leftJoin(songCategories, eq(songs.categoryId, songCategories.id))
+      .where(eq(presentationQueue.id, id))
+      .get()
 
     if (!record) {
       log('debug', `Queue item not found: ${id}`)
       return null
     }
 
-    const item = toQueueItem(record)
+    const item = toQueueItem({
+      ...record.presentationQueue,
+      song: record.song,
+      songCategory: record.songCategory,
+    })
     // Only fetch slides for song items
     const slides =
-      record.item_type === 'song' && record.song_id
-        ? getSlidesBySongId(record.song_id)
+      record.presentationQueue.itemType === 'song' &&
+      record.presentationQueue.songId
+        ? getSlidesBySongId(record.presentationQueue.songId)
         : []
     return {
       ...item,

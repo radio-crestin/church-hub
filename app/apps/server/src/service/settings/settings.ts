@@ -1,12 +1,19 @@
+import { eq, sql } from 'drizzle-orm'
+
 import type { Setting, SettingsTable, UpsertSettingInput } from './types'
 import { getDatabase } from '../../db'
+import { appSettings, cacheMetadata, userPreferences } from '../../db/schema'
 import type { OperationResult } from '../users'
 
 const DEBUG = process.env.DEBUG === 'true'
 
-/**
- * Logs debug messages if DEBUG env variable is enabled
- */
+// Map table names to schema tables
+const tableMap = {
+  app_settings: appSettings,
+  user_preferences: userPreferences,
+  cache_metadata: cacheMetadata,
+} as const
+
 function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
   if (level === 'debug' && !DEBUG) return
 }
@@ -23,17 +30,21 @@ export function upsertSetting(
     log('debug', `Upserting setting: ${input.key} in table: ${table}`)
 
     const db = getDatabase()
-    const now = Math.floor(Date.now() / 1000) // Unix timestamp in seconds
+    const schemaTable = tableMap[table]
 
-    const query = db.query(`
-      INSERT INTO ${table} (key, value, created_at, updated_at)
-      VALUES (?, ?, ?, ?)
-      ON CONFLICT(key) DO UPDATE SET
-        value = excluded.value,
-        updated_at = excluded.updated_at
-    `)
-
-    query.run(input.key, input.value, now, now)
+    db.insert(schemaTable)
+      .values({
+        key: input.key,
+        value: input.value,
+      })
+      .onConflictDoUpdate({
+        target: schemaTable.key,
+        set: {
+          value: input.value,
+          updatedAt: sql`(unixepoch())`,
+        },
+      })
+      .run()
 
     log('info', `Setting upserted successfully: ${input.key}`)
     return { success: true }
@@ -54,19 +65,21 @@ export function deleteSetting(
     log('debug', `Deleting setting: ${key} from table: ${table}`)
 
     const db = getDatabase()
-    const query = db.query(`DELETE FROM ${table} WHERE key = ?`)
-    query.run(key)
+    const schemaTable = tableMap[table]
 
-    // Check if any rows were affected by trying to get the setting
-    const checkQuery = db.query(
-      `SELECT COUNT(*) as count FROM ${table} WHERE key = ?`,
-    )
-    const beforeCount = (checkQuery.get(key) as any)?.count || 0
+    // Check if setting exists first
+    const existing = db
+      .select()
+      .from(schemaTable)
+      .where(eq(schemaTable.key, key))
+      .get()
 
-    if (beforeCount > 0) {
+    if (!existing) {
       log('warning', `Setting not found: ${key}`)
       return { success: false, error: 'Setting not found' }
     }
+
+    db.delete(schemaTable).where(eq(schemaTable.key, key)).run()
 
     log('info', `Setting deleted successfully: ${key}`)
     return { success: true }
@@ -85,8 +98,19 @@ export function getSetting(table: SettingsTable, key: string): Setting | null {
     log('debug', `Getting setting: ${key} from table: ${table}`)
 
     const db = getDatabase()
-    const query = db.query(`SELECT * FROM ${table} WHERE key = ?`)
-    const result = query.get(key) as Setting | null
+    const schemaTable = tableMap[table]
+
+    const result = db
+      .select({
+        id: schemaTable.id,
+        key: schemaTable.key,
+        value: schemaTable.value,
+        created_at: schemaTable.createdAt,
+        updated_at: schemaTable.updatedAt,
+      })
+      .from(schemaTable)
+      .where(eq(schemaTable.key, key))
+      .get()
 
     if (!result) {
       log('debug', `Setting not found: ${key}`)
@@ -94,7 +118,19 @@ export function getSetting(table: SettingsTable, key: string): Setting | null {
     }
 
     log('debug', `Setting retrieved: ${key}`)
-    return result
+    return {
+      id: result.id,
+      key: result.key,
+      value: result.value,
+      created_at:
+        result.created_at instanceof Date
+          ? Math.floor(result.created_at.getTime() / 1000)
+          : (result.created_at as number),
+      updated_at:
+        result.updated_at instanceof Date
+          ? Math.floor(result.updated_at.getTime() / 1000)
+          : (result.updated_at as number),
+    }
   } catch (error) {
     log('error', `Failed to get setting: ${error}`)
     return null
@@ -109,11 +145,34 @@ export function getAllSettings(table: SettingsTable): Setting[] {
     log('debug', `Getting all settings from table: ${table}`)
 
     const db = getDatabase()
-    const query = db.query(`SELECT * FROM ${table} ORDER BY key ASC`)
-    const results = query.all() as Setting[]
+    const schemaTable = tableMap[table]
+
+    const results = db
+      .select({
+        id: schemaTable.id,
+        key: schemaTable.key,
+        value: schemaTable.value,
+        created_at: schemaTable.createdAt,
+        updated_at: schemaTable.updatedAt,
+      })
+      .from(schemaTable)
+      .orderBy(schemaTable.key)
+      .all()
 
     log('debug', `Retrieved ${results.length} settings`)
-    return results
+    return results.map((r) => ({
+      id: r.id,
+      key: r.key,
+      value: r.value,
+      created_at:
+        r.created_at instanceof Date
+          ? Math.floor(r.created_at.getTime() / 1000)
+          : (r.created_at as number),
+      updated_at:
+        r.updated_at instanceof Date
+          ? Math.floor(r.updated_at.getTime() / 1000)
+          : (r.updated_at as number),
+    }))
   } catch (error) {
     log('error', `Failed to get all settings: ${error}`)
     return []

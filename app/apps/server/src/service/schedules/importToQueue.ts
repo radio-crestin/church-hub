@@ -1,5 +1,8 @@
+import { max } from 'drizzle-orm'
+
 import { getScheduleById } from './getSchedules'
 import { getDatabase } from '../../db'
+import { presentationQueue } from '../../db/schema'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -18,7 +21,7 @@ export function importScheduleToQueue(scheduleId: number): boolean {
     log('debug', `Importing schedule to queue: ${scheduleId}`)
 
     const db = getDatabase()
-    const now = Math.floor(Date.now() / 1000)
+    const now = new Date()
 
     // Get the schedule with all items
     const schedule = getScheduleById(scheduleId)
@@ -34,32 +37,36 @@ export function importScheduleToQueue(scheduleId: number): boolean {
 
     // Get current max sort_order in queue
     const maxOrderResult = db
-      .query('SELECT MAX(sort_order) as max_order FROM presentation_queue')
-      .get() as { max_order: number | null }
-    let nextOrder = (maxOrderResult?.max_order ?? -1) + 1
+      .select({ maxOrder: max(presentationQueue.sortOrder) })
+      .from(presentationQueue)
+      .get()
+    let nextOrder = (maxOrderResult?.maxOrder ?? -1) + 1
 
     // Insert each schedule item into the queue
-    const insertSongQuery = db.query(`
-      INSERT INTO presentation_queue (item_type, song_id, sort_order, is_expanded, created_at, updated_at)
-      VALUES ('song', ?, ?, 1, ?, ?)
-    `)
-
-    const insertSlideQuery = db.query(`
-      INSERT INTO presentation_queue (item_type, slide_type, slide_content, sort_order, is_expanded, created_at, updated_at)
-      VALUES ('slide', ?, ?, ?, 1, ?, ?)
-    `)
-
     for (const item of schedule.items) {
       if (item.itemType === 'song' && item.songId) {
-        insertSongQuery.run(item.songId, nextOrder, now, now)
+        db.insert(presentationQueue)
+          .values({
+            itemType: 'song',
+            songId: item.songId,
+            sortOrder: nextOrder,
+            isExpanded: true,
+            createdAt: now,
+            updatedAt: now,
+          })
+          .run()
       } else if (item.itemType === 'slide') {
-        insertSlideQuery.run(
-          item.slideType,
-          item.slideContent,
-          nextOrder,
-          now,
-          now,
-        )
+        db.insert(presentationQueue)
+          .values({
+            itemType: 'slide',
+            slideType: item.slideType!,
+            slideContent: item.slideContent!,
+            sortOrder: nextOrder,
+            isExpanded: true,
+            createdAt: now,
+            updatedAt: now,
+          })
+          .run()
       }
       nextOrder++
     }

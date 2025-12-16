@@ -1,6 +1,6 @@
 import process from 'node:process'
 
-import { closeDatabase, initializeDatabase, runMigrations } from './db'
+import { closeDatabase, initializeDatabase } from './db'
 import type { RequestContext } from './middleware'
 import {
   appOnlyAuthMiddleware,
@@ -131,12 +131,11 @@ import {
 } from './websocket'
 
 async function main() {
-  // Initialize database
-  const db = await initializeDatabase()
-  const { ftsRecreated } = runMigrations(db)
+  // Initialize database (Drizzle ORM wrapper) and run migrations
+  const { migrationResult } = await initializeDatabase()
 
   // Only rebuild search indexes when FTS tables were recreated
-  if (ftsRecreated) {
+  if (migrationResult.ftsRecreated) {
     rebuildSearchIndex()
     rebuildScheduleSearchIndex()
   }

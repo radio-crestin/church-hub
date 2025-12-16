@@ -1,6 +1,9 @@
+import { eq } from 'drizzle-orm'
+
 import { getScheduleItemById } from './getSchedules'
 import type { ScheduleItem, UpdateScheduleSlideInput } from './types'
 import { getDatabase } from '../../db'
+import { scheduleItems, schedules } from '../../db/schema'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -20,36 +23,43 @@ export function updateScheduleSlide(
     log('debug', `Updating schedule slide: ${input.id}`)
 
     const db = getDatabase()
-    const now = Math.floor(Date.now() / 1000)
+    const now = new Date()
 
     // Verify item exists and is a slide
     const existingItem = db
-      .query('SELECT item_type, schedule_id FROM schedule_items WHERE id = ?')
-      .get(input.id) as { item_type: string; schedule_id: number } | null
+      .select({
+        itemType: scheduleItems.itemType,
+        scheduleId: scheduleItems.scheduleId,
+      })
+      .from(scheduleItems)
+      .where(eq(scheduleItems.id, input.id))
+      .get()
 
     if (!existingItem) {
       log('error', `Schedule item not found: ${input.id}`)
       return null
     }
 
-    if (existingItem.item_type !== 'slide') {
+    if (existingItem.itemType !== 'slide') {
       log('error', `Cannot update non-slide item: ${input.id}`)
       return null
     }
 
     // Update the slide
-    const updateQuery = db.query(`
-      UPDATE schedule_items
-      SET slide_type = ?, slide_content = ?, updated_at = ?
-      WHERE id = ?
-    `)
-    updateQuery.run(input.slideType, input.slideContent, now, input.id)
+    db.update(scheduleItems)
+      .set({
+        slideType: input.slideType,
+        slideContent: input.slideContent,
+        updatedAt: now,
+      })
+      .where(eq(scheduleItems.id, input.id))
+      .run()
 
     // Update schedule's updated_at
-    db.query('UPDATE schedules SET updated_at = ? WHERE id = ?').run(
-      now,
-      existingItem.schedule_id,
-    )
+    db.update(schedules)
+      .set({ updatedAt: now })
+      .where(eq(schedules.id, existingItem.scheduleId))
+      .run()
 
     log('info', `Schedule slide updated: ${input.id}`)
 
