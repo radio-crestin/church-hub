@@ -125,7 +125,10 @@ export function useBibleNavigation(
   const previousVerse = useCallback(() => {
     setState((prev) => ({
       ...prev,
-      presentedIndex: Math.max(0, (prev.presentedIndex ?? prev.searchedIndex ?? 1) - 1),
+      presentedIndex: Math.max(
+        0,
+        (prev.presentedIndex ?? prev.searchedIndex ?? 1) - 1,
+      ),
       searchedIndex: null, // Clear search highlight when presenting
     }))
   }, [])

@@ -107,14 +107,17 @@ function SongsPage() {
           const metadata =
             'metadata' in s.parsed ? s.parsed.metadata : undefined
 
-          // Extract first verse as title if option is enabled
-          let title = s.parsed.title
+          // Determine title based on option
+          let title: string
           if (options.useFirstVerseAsTitle && s.parsed.slides.length > 0) {
             const firstSlide = s.parsed.slides[0]
             const firstLine = firstSlide.text.split('\n')[0]?.trim()
-            if (firstLine) {
-              title = firstLine
-            }
+            title = firstLine || s.parsed.title
+          } else if (s.sourceFilename) {
+            // Use filename without extension as title
+            title = s.sourceFilename.replace(/\.[^.]+$/, '') || s.parsed.title
+          } else {
+            title = s.parsed.title
           }
 
           return {

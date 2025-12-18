@@ -111,13 +111,16 @@ export function ImportExportManager() {
           const metadata =
             'metadata' in s.parsed ? s.parsed.metadata : undefined
 
-          let title = s.parsed.title
+          let title: string
           if (options.useFirstVerseAsTitle && s.parsed.slides.length > 0) {
             const firstSlide = s.parsed.slides[0]
             const firstLine = firstSlide.text.split('\n')[0]?.trim()
-            if (firstLine) {
-              title = firstLine
-            }
+            title = firstLine || s.parsed.title
+          } else if (s.sourceFilename) {
+            // Use filename without extension as title
+            title = s.sourceFilename.replace(/\.[^.]+$/, '') || s.parsed.title
+          } else {
+            title = s.parsed.title
           }
 
           return {
