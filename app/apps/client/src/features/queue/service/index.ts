@@ -2,6 +2,7 @@ export {
   addToQueue,
   clearQueue,
   getQueue,
+  insertBiblePassageToQueue,
   insertBibleVerseToQueue,
   insertSlideToQueue,
   removeFromQueue,

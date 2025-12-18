@@ -18,12 +18,14 @@ import { Loader2, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { BiblePassagePickerModal } from '~/features/bible'
 import { AddSongToScheduleModal } from '~/features/schedules'
 import { SongEditorModal, SongPickerModal } from '~/features/songs/components'
 import { ConfirmModal } from '~/ui/modal'
 import { useToast } from '~/ui/toast'
 import { InsertSlideModal } from './InsertSlideModal'
 import { QueueBibleItem } from './QueueBibleItem'
+import { QueueBiblePassageItem } from './QueueBiblePassageItem'
 import { QueueSlideItem } from './QueueSlideItem'
 import { QueueSongItem } from './QueueSongItem'
 import {
@@ -38,13 +40,18 @@ import type { QueueItem, SlideTemplate } from '../types'
 interface SortableQueueItemProps {
   item: QueueItem
   activeSlideId: number | null
+  activeVerseId: number | null
   activeQueueItemId: number | null
   onSlideClick: (slideId: number) => void
+  onVerseClick: (verseId: number) => void
   onSongClick: () => void
+  onPassageClick: () => void
   onEditSong: (songId: number) => void
   onEditSlide: (item: QueueItem) => void
   onAddToSchedule: (songId: number) => void
   onInsertSongAfter: (itemId: number) => void
+  onInsertBibleVerseAfter?: (itemId: number) => void
+  onInsertBiblePassageAfter?: (itemId: number) => void
   onInsertSlideAfter: (itemId: number, template: SlideTemplate) => void
   onStandaloneSlideClick: () => void
   itemRef: (element: HTMLDivElement | null) => void
@@ -53,13 +60,18 @@ interface SortableQueueItemProps {
 function SortableQueueItem({
   item,
   activeSlideId,
+  activeVerseId,
   activeQueueItemId,
   onSlideClick,
+  onVerseClick,
   onSongClick,
+  onPassageClick,
   onEditSong,
   onEditSlide,
   onAddToSchedule,
   onInsertSongAfter,
+  onInsertBibleVerseAfter,
+  onInsertBiblePassageAfter,
   onInsertSlideAfter,
   onStandaloneSlideClick,
   itemRef,
@@ -111,6 +123,16 @@ function SortableQueueItem({
           onClick={onStandaloneSlideClick}
           onEditSlide={() => onEditSlide(item)}
           onInsertSongAfter={() => onInsertSongAfter(item.id)}
+          onInsertBibleVerseAfter={
+            onInsertBibleVerseAfter
+              ? () => onInsertBibleVerseAfter(item.id)
+              : undefined
+          }
+          onInsertBiblePassageAfter={
+            onInsertBiblePassageAfter
+              ? () => onInsertBiblePassageAfter(item.id)
+              : undefined
+          }
           onInsertSlideAfter={(template) =>
             onInsertSlideAfter(item.id, template)
           }
@@ -132,6 +154,48 @@ function SortableQueueItem({
           onRemove={handleRemove}
           onClick={onStandaloneSlideClick}
           onInsertSongAfter={() => onInsertSongAfter(item.id)}
+          onInsertBibleVerseAfter={
+            onInsertBibleVerseAfter
+              ? () => onInsertBibleVerseAfter(item.id)
+              : undefined
+          }
+          onInsertBiblePassageAfter={
+            onInsertBiblePassageAfter
+              ? () => onInsertBiblePassageAfter(item.id)
+              : undefined
+          }
+          onInsertSlideAfter={(template) =>
+            onInsertSlideAfter(item.id, template)
+          }
+          dragHandleProps={{ ...attributes, ...listeners }}
+        />
+      </div>
+    )
+  }
+
+  if (item.itemType === 'bible_passage') {
+    return (
+      <div ref={combinedRef} style={style}>
+        <QueueBiblePassageItem
+          item={item}
+          isExpanded={item.isExpanded}
+          activeVerseId={activeVerseId}
+          activeQueueItemId={activeQueueItemId}
+          onToggleExpand={handleToggleExpand}
+          onRemove={handleRemove}
+          onVerseClick={onVerseClick}
+          onPassageClick={onPassageClick}
+          onInsertSongAfter={() => onInsertSongAfter(item.id)}
+          onInsertBibleVerseAfter={
+            onInsertBibleVerseAfter
+              ? () => onInsertBibleVerseAfter(item.id)
+              : undefined
+          }
+          onInsertBiblePassageAfter={
+            onInsertBiblePassageAfter
+              ? () => onInsertBiblePassageAfter(item.id)
+              : undefined
+          }
           onInsertSlideAfter={(template) =>
             onInsertSlideAfter(item.id, template)
           }
@@ -153,8 +217,20 @@ function SortableQueueItem({
         onSlideClick={onSlideClick}
         onSongClick={onSongClick}
         onEditSong={() => item.songId && onEditSong(item.songId)}
-        onAddToSchedule={item.songId ? () => onAddToSchedule(item.songId!) : undefined}
+        onAddToSchedule={
+          item.songId ? () => onAddToSchedule(item.songId!) : undefined
+        }
         onInsertSongAfter={() => onInsertSongAfter(item.id)}
+        onInsertBibleVerseAfter={
+          onInsertBibleVerseAfter
+            ? () => onInsertBibleVerseAfter(item.id)
+            : undefined
+        }
+        onInsertBiblePassageAfter={
+          onInsertBiblePassageAfter
+            ? () => onInsertBiblePassageAfter(item.id)
+            : undefined
+        }
         onInsertSlideAfter={(template) => onInsertSlideAfter(item.id, template)}
         dragHandleProps={{ ...attributes, ...listeners }}
       />
@@ -164,15 +240,19 @@ function SortableQueueItem({
 
 interface QueueListProps {
   activeSlideId: number | null
+  activeVerseId: number | null
   activeQueueItemId: number | null
   onSlideClick: (queueItemId: number, slideId: number) => void
+  onVerseClick: (queueItemId: number, verseId: number) => void
   hideHeader?: boolean
 }
 
 export function QueueList({
   activeSlideId,
+  activeVerseId,
   activeQueueItemId,
   onSlideClick,
+  onVerseClick,
   hideHeader = false,
 }: QueueListProps) {
   const { t } = useTranslation('queue')
@@ -194,6 +274,8 @@ export function QueueList({
   const [insertSongAfterItemId, setInsertSongAfterItemId] = useState<
     number | null
   >(null)
+  const [insertBiblePassageAfterItemId, setInsertBiblePassageAfterItemId] =
+    useState<number | null>(null)
   const [insertSlideTemplate, setInsertSlideTemplate] =
     useState<SlideTemplate>('announcement')
   const [addToScheduleSongId, setAddToScheduleSongId] = useState<number | null>(
@@ -312,6 +394,26 @@ export function QueueList({
     }
   }
 
+  const handleVerseClick = (queueItemId: number, verseId: number) => {
+    // Auto-expand the passage when a verse is clicked
+    const item = queue?.find((q) => q.id === queueItemId)
+    if (item && !item.isExpanded) {
+      setExpanded.mutate({ id: queueItemId, expanded: true })
+    }
+    onVerseClick(queueItemId, verseId)
+  }
+
+  const handlePassageClick = (item: QueueItem) => {
+    // Auto-expand the passage
+    if (!item.isExpanded) {
+      setExpanded.mutate({ id: item.id, expanded: true })
+    }
+    // Select the first verse if available
+    if (item.biblePassageVerses && item.biblePassageVerses.length > 0) {
+      onVerseClick(item.id, item.biblePassageVerses[0].id)
+    }
+  }
+
   const handleClearConfirm = async () => {
     setShowClearModal(false)
     const success = await clearQueueMutation.mutateAsync()
@@ -377,13 +479,17 @@ export function QueueList({
                 key={item.id}
                 item={item}
                 activeSlideId={activeSlideId}
+                activeVerseId={activeVerseId}
                 activeQueueItemId={activeQueueItemId}
                 onSlideClick={(slideId) => handleSlideClick(item.id, slideId)}
+                onVerseClick={(verseId) => handleVerseClick(item.id, verseId)}
                 onSongClick={() => handleSongClick(item)}
+                onPassageClick={() => handlePassageClick(item)}
                 onEditSong={setEditingSongId}
                 onEditSlide={setEditingSlideItem}
                 onAddToSchedule={setAddToScheduleSongId}
                 onInsertSongAfter={setInsertSongAfterItemId}
+                onInsertBiblePassageAfter={setInsertBiblePassageAfterItemId}
                 onInsertSlideAfter={(itemId, template) => {
                   setInsertAfterItemId(itemId)
                   setInsertSlideTemplate(template)
@@ -439,6 +545,13 @@ export function QueueList({
         isOpen={insertSongAfterItemId !== null}
         afterItemId={insertSongAfterItemId ?? undefined}
         onClose={() => setInsertSongAfterItemId(null)}
+      />
+
+      {/* Bible Passage Picker Modal for Insert After */}
+      <BiblePassagePickerModal
+        isOpen={insertBiblePassageAfterItemId !== null}
+        afterItemId={insertBiblePassageAfterItemId ?? undefined}
+        onClose={() => setInsertBiblePassageAfterItemId(null)}
       />
 
       {/* Edit Slide Modal */}

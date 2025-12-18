@@ -30,17 +30,15 @@ export function ScheduleList({ onScheduleClick }: ScheduleListProps) {
         matchedContent: result.matchedContent,
       }))
     }
-    return (
-      [...(schedules ?? [])]
-        .sort((a, b) => b.createdAt - a.createdAt)
-        .map((schedule: Schedule) => ({
-          id: schedule.id,
-          title: schedule.title,
-          description: schedule.description,
-          itemCount: schedule.itemCount,
-          createdAt: schedule.createdAt,
-        }))
-    )
+    return [...(schedules ?? [])]
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .map((schedule: Schedule) => ({
+        id: schedule.id,
+        title: schedule.title,
+        description: schedule.description,
+        itemCount: schedule.itemCount,
+        createdAt: schedule.createdAt,
+      }))
   }, [isSearching, searchResults, schedules])
 
   return (

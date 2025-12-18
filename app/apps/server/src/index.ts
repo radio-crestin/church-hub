@@ -70,8 +70,10 @@ import {
   clearQueue,
   exportQueueToSchedule,
   getQueue,
+  type InsertBiblePassageInput,
   type InsertBibleVerseInput,
   type InsertSlideInput,
+  insertBiblePassageToQueue,
   insertBibleVerseToQueue,
   insertSlideToQueue,
   type ReorderQueueInput,
@@ -2584,6 +2586,89 @@ async function main() {
                 },
               ),
             )
+          }
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: queueItem }), {
+              status: 201,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // POST /api/queue/bible-passage - Insert Bible passage (verse range) to queue
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/queue/bible-passage'
+      ) {
+        const permError = checkPermission('queue.add')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as InsertBiblePassageInput
+
+          if (
+            !body.translationId ||
+            !body.translationAbbreviation ||
+            !body.bookCode ||
+            !body.bookName ||
+            body.startChapter === undefined ||
+            body.startVerse === undefined ||
+            body.endChapter === undefined ||
+            body.endVerse === undefined
+          ) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({
+                  error:
+                    'Missing required fields: translationId, translationAbbreviation, bookCode, bookName, startChapter, startVerse, endChapter, endVerse',
+                }),
+                {
+                  status: 400,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          const queueItem = insertBiblePassageToQueue(body)
+
+          if (!queueItem) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({
+                  error: 'Failed to insert Bible passage to queue',
+                }),
+                {
+                  status: 500,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          // Handle presentNow: auto-select and present the first verse
+          if (body.presentNow && queueItem.biblePassageVerses.length > 0) {
+            const firstVerseId = queueItem.biblePassageVerses[0].id
+            const state = updatePresentationState({
+              currentQueueItemId: queueItem.id,
+              currentBiblePassageVerseId: firstVerseId,
+              isPresenting: true,
+              isHidden: false,
+            })
+            broadcastPresentationState(state)
           }
 
           return handleCors(

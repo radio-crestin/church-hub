@@ -3,12 +3,23 @@ import type { SongSlide } from '../songs'
 /**
  * Queue item types
  */
-export type QueueItemType = 'song' | 'slide' | 'bible'
+export type QueueItemType = 'song' | 'slide' | 'bible' | 'bible_passage'
 
 /**
  * Slide template types for standalone slides
  */
 export type SlideTemplate = 'announcement' | 'versete_tineri'
+
+/**
+ * A single verse within a Bible passage
+ */
+export interface BiblePassageVerse {
+  id: number
+  verseId: number
+  reference: string
+  text: string
+  sortOrder: number
+}
 
 /**
  * Queue item record from database
@@ -23,6 +34,9 @@ export interface QueueItemRecord {
   bible_reference: string | null
   bible_text: string | null
   bible_translation: string | null
+  // Bible passage fields (when item_type === 'bible_passage')
+  bible_passage_reference: string | null
+  bible_passage_translation: string | null
   sort_order: number
   is_expanded: number
   created_at: number
@@ -59,6 +73,10 @@ export interface QueueItem {
   bibleReference: string | null
   bibleText: string | null
   bibleTranslation: string | null
+  // Bible passage fields (present when itemType === 'bible_passage')
+  biblePassageReference: string | null
+  biblePassageTranslation: string | null
+  biblePassageVerses: BiblePassageVerse[]
   // Common fields
   sortOrder: number
   isExpanded: boolean
@@ -94,6 +112,22 @@ export interface InsertBibleVerseInput {
   text: string
   translationAbbreviation: string
   afterItemId?: number
+}
+
+/**
+ * Input for inserting a Bible passage (range of verses) to the queue
+ */
+export interface InsertBiblePassageInput {
+  translationId: number
+  translationAbbreviation: string
+  bookCode: string
+  bookName: string
+  startChapter: number
+  startVerse: number
+  endChapter: number
+  endVerse: number
+  afterItemId?: number
+  presentNow?: boolean
 }
 
 /**

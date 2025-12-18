@@ -15,6 +15,13 @@
       "when": 1765883977764,
       "tag": "0001_dazzling_bruce_banner",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1765907330713,
+      "tag": "0002_add_bible_passage_support",
+      "breakpoints": true
     }
   ]
 }

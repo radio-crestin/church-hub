@@ -1,3 +1,4 @@
+import { useNavigate } from '@tanstack/react-router'
 import {
   ChevronLeft,
   ChevronRight,
@@ -10,8 +11,8 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from '@tanstack/react-router'
 
+import { BiblePassagePickerModal } from '~/features/bible'
 import {
   AddToQueueMenu,
   InsertSlideModal,
@@ -56,6 +57,7 @@ export function ControlRoom() {
     useState<SlideTemplate>('announcement')
   const [showSchedulePicker, setShowSchedulePicker] = useState(false)
   const [showSaveAsProgram, setShowSaveAsProgram] = useState(false)
+  const [showBiblePassagePicker, setShowBiblePassagePicker] = useState(false)
   const navigate = useNavigate()
 
   const navigateQueueSlide = useNavigateQueueSlide()
@@ -95,6 +97,17 @@ export function ControlRoom() {
     await updateState.mutateAsync({
       currentQueueItemId: queueItemId,
       currentSongSlideId: isStandaloneSlide ? null : slideId,
+      currentBiblePassageVerseId: null,
+      isHidden: false,
+    })
+  }
+
+  // Handle verse click from queue - update presentation state for bible passages
+  const handleVerseClick = async (queueItemId: number, verseId: number) => {
+    await updateState.mutateAsync({
+      currentQueueItemId: queueItemId,
+      currentSongSlideId: null,
+      currentBiblePassageVerseId: verseId,
       isHidden: false,
     })
   }
@@ -122,8 +135,15 @@ export function ControlRoom() {
     setShowSchedulePicker(true)
   }
 
+  const handleAddBiblePassage = () => {
+    setShowBiblePassagePicker(true)
+  }
+
   const handleScheduleSaved = (scheduleId: number) => {
-    navigate({ to: '/schedules/$scheduleId', params: { scheduleId: String(scheduleId) } })
+    navigate({
+      to: '/schedules/$scheduleId',
+      params: { scheduleId: String(scheduleId) },
+    })
   }
 
   // Use isHidden flag for button state
@@ -264,6 +284,7 @@ export function ControlRoom() {
               <div className="flex items-center gap-2">
                 <AddToQueueMenu
                   onAddSong={handleAddSong}
+                  onAddBiblePassage={handleAddBiblePassage}
                   onAddSlide={handleAddSlide}
                   onImportSchedule={handleImportSchedule}
                 />
@@ -292,8 +313,10 @@ export function ControlRoom() {
             <div className="flex-1 overflow-y-auto scrollbar-thin min-h-0 px-4 pb-4">
               <QueueList
                 activeSlideId={state?.currentSongSlideId ?? null}
+                activeVerseId={state?.currentBiblePassageVerseId ?? null}
                 activeQueueItemId={state?.currentQueueItemId ?? null}
                 onSlideClick={handleSlideClick}
+                onVerseClick={handleVerseClick}
                 hideHeader
               />
             </div>
@@ -336,6 +359,12 @@ export function ControlRoom() {
         isOpen={showSaveAsProgram}
         onClose={() => setShowSaveAsProgram(false)}
         onSaved={handleScheduleSaved}
+      />
+
+      {/* Bible Passage Picker Modal */}
+      <BiblePassagePickerModal
+        isOpen={showBiblePassagePicker}
+        onClose={() => setShowBiblePassagePicker(false)}
       />
     </div>
   )

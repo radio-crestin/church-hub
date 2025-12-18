@@ -24,6 +24,13 @@ interface BibleVerseData {
   translation: string | null
 }
 
+interface BiblePassageVerseData {
+  id: number
+  reference: string
+  text: string
+  translation: string | null
+}
+
 export function LivePreview() {
   // Connect to WebSocket for real-time updates
   useWebSocket()
@@ -36,6 +43,8 @@ export function LivePreview() {
     useState<StandaloneSlideData | null>(null)
   const [currentBibleVerse, setCurrentBibleVerse] =
     useState<BibleVerseData | null>(null)
+  const [currentBiblePassageVerse, setCurrentBiblePassageVerse] =
+    useState<BiblePassageVerseData | null>(null)
 
   // Fetch the first active display's theme for preview
   useEffect(() => {
@@ -109,6 +118,7 @@ export function LivePreview() {
       ) {
         setCurrentStandaloneSlide(null)
         setCurrentBibleVerse(null)
+        setCurrentBiblePassageVerse(null)
         return
       }
 
@@ -134,6 +144,7 @@ export function LivePreview() {
                 slideContent: queueItem.slideContent,
               })
               setCurrentBibleVerse(null)
+              setCurrentBiblePassageVerse(null)
               return
             }
 
@@ -145,12 +156,48 @@ export function LivePreview() {
                 translation: queueItem.bibleTranslation,
               })
               setCurrentStandaloneSlide(null)
+              setCurrentBiblePassageVerse(null)
               return
+            }
+
+            if (queueItem.itemType === 'bible_passage') {
+              // Find the specific verse within the passage
+              const verseId = presentationState.currentBiblePassageVerseId
+              if (verseId && queueItem.biblePassageVerses) {
+                const verse = queueItem.biblePassageVerses.find(
+                  (v: { id: number }) => v.id === verseId,
+                )
+                if (verse) {
+                  setCurrentBiblePassageVerse({
+                    id: verse.id,
+                    reference: verse.reference,
+                    text: verse.text,
+                    translation: queueItem.biblePassageTranslation,
+                  })
+                  setCurrentStandaloneSlide(null)
+                  setCurrentBibleVerse(null)
+                  return
+                }
+              }
+              // Fallback: show first verse if no specific verse selected
+              if (queueItem.biblePassageVerses?.length > 0) {
+                const firstVerse = queueItem.biblePassageVerses[0]
+                setCurrentBiblePassageVerse({
+                  id: firstVerse.id,
+                  reference: firstVerse.reference,
+                  text: firstVerse.text,
+                  translation: queueItem.biblePassageTranslation,
+                })
+                setCurrentStandaloneSlide(null)
+                setCurrentBibleVerse(null)
+                return
+              }
             }
           }
         }
         setCurrentStandaloneSlide(null)
         setCurrentBibleVerse(null)
+        setCurrentBiblePassageVerse(null)
       } catch (error) {
         // biome-ignore lint/suspicious/noConsole: error logging
         console.error('Failed to fetch queue item:', error)
@@ -161,6 +208,7 @@ export function LivePreview() {
   }, [
     presentationState?.currentQueueItemId,
     presentationState?.currentSongSlideId,
+    presentationState?.currentBiblePassageVerseId,
     presentationState?.updatedAt,
   ])
 
@@ -205,6 +253,10 @@ export function LivePreview() {
       const reference = fullReference.replace(/\s*-\s*[A-Z]+\s*$/, '')
       const text = currentBibleVerse.text || ''
       return `${reference}<br>${text}`
+    }
+    if (currentBiblePassageVerse?.text) {
+      // Format Bible passage verse with reference at top
+      return `${currentBiblePassageVerse.reference}<br>${currentBiblePassageVerse.text}`
     }
     return null
   }

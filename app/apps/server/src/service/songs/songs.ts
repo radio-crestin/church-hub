@@ -453,11 +453,12 @@ export function batchImportSongs(
 
       try {
         const categoryId = input.categoryId ?? defaultCategoryId ?? null
-        const sanitizedTitle = sanitizeSongTitle(input.title)
+        // Use the title as-is from the client (client already determines the final title)
+        const title = input.title?.trim() || 'Untitled Song'
 
         // Check if song was manually edited and should be skipped
         if (checkManualEditStmt) {
-          const existing = checkManualEditStmt.get(sanitizedTitle) as {
+          const existing = checkManualEditStmt.get(title) as {
             id: number
             last_manual_edit: number | null
           } | null
@@ -469,7 +470,7 @@ export function batchImportSongs(
         }
 
         const result = upsertSongStmt.get(
-          sanitizedTitle,
+          title,
           categoryId,
           input.sourceFilename ?? null,
           input.author ?? null,

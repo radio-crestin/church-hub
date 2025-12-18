@@ -1,4 +1,6 @@
 import {
+  Book,
+  BookOpen,
   CalendarPlus,
   Edit3,
   FileText,
@@ -29,6 +31,8 @@ interface QueueItemContextMenuProps {
   onEditSlide?: () => void
   onAddToSchedule?: () => void
   onInsertSongAfter: () => void
+  onInsertBibleVerseAfter?: () => void
+  onInsertBiblePassageAfter?: () => void
   onInsertSlideAfter: (template: SlideTemplate) => void
   onRemove: () => void
 }
@@ -37,7 +41,16 @@ export const QueueItemContextMenu = forwardRef<
   QueueItemContextMenuHandle,
   QueueItemContextMenuProps
 >(function QueueItemContextMenu(
-  { onEditSong, onEditSlide, onAddToSchedule, onInsertSongAfter, onInsertSlideAfter, onRemove },
+  {
+    onEditSong,
+    onEditSlide,
+    onAddToSchedule,
+    onInsertSongAfter,
+    onInsertBibleVerseAfter,
+    onInsertBiblePassageAfter,
+    onInsertSlideAfter,
+    onRemove,
+  },
   ref,
 ) {
   const { t } = useTranslation('queue')
@@ -225,6 +238,52 @@ export const QueueItemContextMenu = forwardRef<
                 </div>
               </div>
             </button>
+
+            {onInsertBibleVerseAfter && (
+              <button
+                type="button"
+                onClick={() => handleDialogAction(onInsertBibleVerseAfter)}
+                className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                  <Book
+                    size={20}
+                    className="text-blue-600 dark:text-blue-400"
+                  />
+                </div>
+                <div>
+                  <div className="font-medium">
+                    {t('addToQueue.bibleVerse')}
+                  </div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    {t('addToQueue.bibleVerseDescription')}
+                  </div>
+                </div>
+              </button>
+            )}
+
+            {onInsertBiblePassageAfter && (
+              <button
+                type="button"
+                onClick={() => handleDialogAction(onInsertBiblePassageAfter)}
+                className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center">
+                  <BookOpen
+                    size={20}
+                    className="text-teal-600 dark:text-teal-400"
+                  />
+                </div>
+                <div>
+                  <div className="font-medium">
+                    {t('addToQueue.biblePassage')}
+                  </div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    {t('addToQueue.biblePassageDescription')}
+                  </div>
+                </div>
+              </button>
+            )}
 
             <button
               type="button"

@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight, GripVertical, Music } from 'lucide-react'
+import { Book, ChevronDown, ChevronRight, GripVertical } from 'lucide-react'
 import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -6,20 +6,18 @@ import {
   QueueItemContextMenu,
   type QueueItemContextMenuHandle,
 } from './QueueItemContextMenu'
-import { QueueSlidePreview } from './QueueSlidePreview'
+import { QueueVersePreview } from './QueueVersePreview'
 import type { QueueItem, SlideTemplate } from '../types'
 
-interface QueueSongItemProps {
+interface QueueBiblePassageItemProps {
   item: QueueItem
   isExpanded: boolean
-  activeSlideId: number | null
+  activeVerseId: number | null
   activeQueueItemId: number | null
   onToggleExpand: () => void
   onRemove: () => void
-  onSlideClick: (slideId: number) => void
-  onSongClick: () => void
-  onEditSong: () => void
-  onAddToSchedule?: () => void
+  onVerseClick: (verseId: number) => void
+  onPassageClick: () => void
   onInsertSongAfter: () => void
   onInsertBibleVerseAfter?: () => void
   onInsertBiblePassageAfter?: () => void
@@ -27,31 +25,29 @@ interface QueueSongItemProps {
   dragHandleProps?: React.HTMLAttributes<HTMLDivElement>
 }
 
-export function QueueSongItem({
+export function QueueBiblePassageItem({
   item,
   isExpanded,
-  activeSlideId,
+  activeVerseId,
   activeQueueItemId,
   onToggleExpand,
   onRemove,
-  onSlideClick,
-  onSongClick,
-  onEditSong,
-  onAddToSchedule,
+  onVerseClick,
+  onPassageClick,
   onInsertSongAfter,
   onInsertBibleVerseAfter,
   onInsertBiblePassageAfter,
   onInsertSlideAfter,
   dragHandleProps,
-}: QueueSongItemProps) {
+}: QueueBiblePassageItemProps) {
   const { t } = useTranslation('queue')
   const contextMenuRef = useRef<QueueItemContextMenuHandle>(null)
 
   // Only highlight if this specific queue item is active
   const isThisQueueItemActive = item.id === activeQueueItemId
-  const isAnySlideActive =
+  const isAnyVerseActive =
     isThisQueueItemActive &&
-    item.slides.some((slide) => slide.id === activeSlideId)
+    item.biblePassageVerses.some((verse) => verse.id === activeVerseId)
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -61,12 +57,12 @@ export function QueueSongItem({
   return (
     <div
       className={`rounded-lg border transition-all ${
-        isAnySlideActive
-          ? 'border-indigo-400 bg-indigo-50/50 dark:bg-indigo-900/10'
+        isAnyVerseActive
+          ? 'border-teal-400 bg-teal-50/50 dark:bg-teal-900/10'
           : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
       }`}
     >
-      {/* Song Header */}
+      {/* Passage Header */}
       <div
         className="flex items-center gap-2 p-3"
         onContextMenu={handleContextMenu}
@@ -96,36 +92,39 @@ export function QueueSongItem({
           )}
         </button>
 
-        {/* Song Icon & Title - Clickable to select first slide */}
+        {/* Passage Icon & Title - Clickable to select first verse */}
         <button
           type="button"
-          onClick={onSongClick}
+          onClick={onPassageClick}
           className="flex items-center gap-3 flex-1 min-w-0 text-left"
         >
           <div
             className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-              isAnySlideActive
-                ? 'bg-indigo-600 text-white'
+              isAnyVerseActive
+                ? 'bg-teal-600 text-white'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
             }`}
           >
-            <Music size={16} />
+            <Book size={16} />
           </div>
 
-          {/* Song Title & Info */}
+          {/* Passage Reference & Info */}
           <div className="flex-1 min-w-0">
-            <div
-              className={`font-medium text-sm truncate ${
-                isAnySlideActive
-                  ? 'text-indigo-900 dark:text-indigo-100'
-                  : 'text-gray-900 dark:text-white'
-              }`}
-            >
-              {item.song?.title}
+            <div className="flex items-center gap-2">
+              <span
+                className={`font-medium text-sm truncate ${
+                  isAnyVerseActive
+                    ? 'text-teal-900 dark:text-teal-100'
+                    : 'text-gray-900 dark:text-white'
+                }`}
+              >
+                {item.biblePassageReference || t('biblePassage.passage')}
+              </span>
             </div>
             <div className="text-xs text-gray-500 dark:text-gray-400">
-              {item.slides.length} slides
-              {item.song?.categoryName && ` • ${item.song.categoryName}`}
+              {t('biblePassage.versesCount', {
+                count: item.biblePassageVerses.length,
+              })}
             </div>
           </div>
         </button>
@@ -133,8 +132,6 @@ export function QueueSongItem({
         {/* Context Menu */}
         <QueueItemContextMenu
           ref={contextMenuRef}
-          onEditSong={onEditSong}
-          onAddToSchedule={onAddToSchedule}
           onInsertSongAfter={onInsertSongAfter}
           onInsertBibleVerseAfter={onInsertBibleVerseAfter}
           onInsertBiblePassageAfter={onInsertBiblePassageAfter}
@@ -143,16 +140,16 @@ export function QueueSongItem({
         />
       </div>
 
-      {/* Expanded Slides */}
-      {isExpanded && item.slides.length > 0 && (
+      {/* Expanded Verses */}
+      {isExpanded && item.biblePassageVerses.length > 0 && (
         <div className="px-3 pb-3 space-y-1.5">
-          {item.slides.map((slide, idx) => (
-            <QueueSlidePreview
-              key={slide.id}
-              slide={slide}
-              slideIndex={idx}
-              isActive={isThisQueueItemActive && slide.id === activeSlideId}
-              onClick={() => onSlideClick(slide.id)}
+          {item.biblePassageVerses.map((verse, idx) => (
+            <QueueVersePreview
+              key={verse.id}
+              verse={verse}
+              verseIndex={idx}
+              isActive={isThisQueueItemActive && verse.id === activeVerseId}
+              onClick={() => onVerseClick(verse.id)}
             />
           ))}
         </div>
