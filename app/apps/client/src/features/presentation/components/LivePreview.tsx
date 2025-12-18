@@ -31,6 +31,12 @@ interface BiblePassageVerseData {
   translation: string | null
 }
 
+interface VerseteTineriEntryData {
+  id: number
+  reference: string
+  text: string
+}
+
 export function LivePreview() {
   // Connect to WebSocket for real-time updates
   useWebSocket()
@@ -45,6 +51,8 @@ export function LivePreview() {
     useState<BibleVerseData | null>(null)
   const [currentBiblePassageVerse, setCurrentBiblePassageVerse] =
     useState<BiblePassageVerseData | null>(null)
+  const [currentVerseteTineriEntry, setCurrentVerseteTineriEntry] =
+    useState<VerseteTineriEntryData | null>(null)
 
   // Fetch the first active display's theme for preview
   useEffect(() => {
@@ -119,6 +127,7 @@ export function LivePreview() {
         setCurrentStandaloneSlide(null)
         setCurrentBibleVerse(null)
         setCurrentBiblePassageVerse(null)
+        setCurrentVerseteTineriEntry(null)
         return
       }
 
@@ -139,12 +148,51 @@ export function LivePreview() {
 
           if (queueItem) {
             if (queueItem.itemType === 'slide') {
+              // Check if this is a versete_tineri slide
+              if (
+                queueItem.slideType === 'versete_tineri' &&
+                queueItem.verseteTineriEntries
+              ) {
+                // Find the specific entry
+                const entryId = presentationState.currentVerseteTineriEntryId
+                if (entryId && queueItem.verseteTineriEntries) {
+                  const entry = queueItem.verseteTineriEntries.find(
+                    (e: { id: number }) => e.id === entryId,
+                  )
+                  if (entry) {
+                    setCurrentVerseteTineriEntry({
+                      id: entry.id,
+                      reference: entry.reference,
+                      text: entry.text,
+                    })
+                    setCurrentStandaloneSlide(null)
+                    setCurrentBibleVerse(null)
+                    setCurrentBiblePassageVerse(null)
+                    return
+                  }
+                }
+                // Fallback: show first entry if no specific entry selected
+                if (queueItem.verseteTineriEntries.length > 0) {
+                  const firstEntry = queueItem.verseteTineriEntries[0]
+                  setCurrentVerseteTineriEntry({
+                    id: firstEntry.id,
+                    reference: firstEntry.reference,
+                    text: firstEntry.text,
+                  })
+                  setCurrentStandaloneSlide(null)
+                  setCurrentBibleVerse(null)
+                  setCurrentBiblePassageVerse(null)
+                  return
+                }
+              }
+              // Regular standalone slide
               setCurrentStandaloneSlide({
                 id: queueItem.id,
                 slideContent: queueItem.slideContent,
               })
               setCurrentBibleVerse(null)
               setCurrentBiblePassageVerse(null)
+              setCurrentVerseteTineriEntry(null)
               return
             }
 
@@ -157,6 +205,7 @@ export function LivePreview() {
               })
               setCurrentStandaloneSlide(null)
               setCurrentBiblePassageVerse(null)
+              setCurrentVerseteTineriEntry(null)
               return
             }
 
@@ -176,6 +225,7 @@ export function LivePreview() {
                   })
                   setCurrentStandaloneSlide(null)
                   setCurrentBibleVerse(null)
+                  setCurrentVerseteTineriEntry(null)
                   return
                 }
               }
@@ -190,6 +240,7 @@ export function LivePreview() {
                 })
                 setCurrentStandaloneSlide(null)
                 setCurrentBibleVerse(null)
+                setCurrentVerseteTineriEntry(null)
                 return
               }
             }
@@ -198,6 +249,7 @@ export function LivePreview() {
         setCurrentStandaloneSlide(null)
         setCurrentBibleVerse(null)
         setCurrentBiblePassageVerse(null)
+        setCurrentVerseteTineriEntry(null)
       } catch (error) {
         // biome-ignore lint/suspicious/noConsole: error logging
         console.error('Failed to fetch queue item:', error)
@@ -209,6 +261,7 @@ export function LivePreview() {
     presentationState?.currentQueueItemId,
     presentationState?.currentSongSlideId,
     presentationState?.currentBiblePassageVerseId,
+    presentationState?.currentVerseteTineriEntryId,
     presentationState?.updatedAt,
   ])
 
@@ -257,6 +310,10 @@ export function LivePreview() {
     if (currentBiblePassageVerse?.text) {
       // Format Bible passage verse with reference at top
       return `${currentBiblePassageVerse.reference}<br>${currentBiblePassageVerse.text}`
+    }
+    if (currentVerseteTineriEntry?.text) {
+      // Format versete tineri entry with reference at top (person name is internal only)
+      return `${currentVerseteTineriEntry.reference}<br>${currentVerseteTineriEntry.text}`
     }
     return null
   }

@@ -1,7 +1,7 @@
 /**
- * All action-specific permissions in the system
+ * Built-in permissions in the system
  */
-export type Permission =
+export type BuiltInPermission =
   // Songs
   | 'songs.view'
   | 'songs.create'
@@ -45,9 +45,29 @@ export type Permission =
   | 'users.delete'
 
 /**
- * All available permissions as an array
+ * Dynamic permission for custom pages
+ * Format: custom_page.{pageId}.view
  */
-export const ALL_PERMISSIONS: Permission[] = [
+export type CustomPagePermission = `custom_page.${string}.view`
+
+/**
+ * All permissions including built-in and dynamic
+ */
+export type Permission = BuiltInPermission | CustomPagePermission
+
+/**
+ * Check if a permission string is a custom page permission
+ */
+export function isCustomPagePermission(
+  permission: string,
+): permission is CustomPagePermission {
+  return permission.startsWith('custom_page.') && permission.endsWith('.view')
+}
+
+/**
+ * All built-in permissions as an array (used for admin check)
+ */
+export const ALL_PERMISSIONS: BuiltInPermission[] = [
   // Songs
   'songs.view',
   'songs.create',

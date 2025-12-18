@@ -53,6 +53,7 @@ function toPresentationState(
     currentSongSlideId: record.currentSongSlideId,
     lastSongSlideId: record.lastSongSlideId,
     currentBiblePassageVerseId: record.currentBiblePassageVerseId,
+    currentVerseteTineriEntryId: record.currentVerseteTineriEntryId,
     isPresenting: record.isPresenting,
     isHidden: record.isHidden,
     updatedAt: record.updatedAt,
@@ -80,6 +81,7 @@ export function getPresentationState(): PresentationState {
         currentSongSlideId: null,
         lastSongSlideId: null,
         currentBiblePassageVerseId: null,
+        currentVerseteTineriEntryId: null,
         isPresenting: false,
         isHidden: false,
         updatedAt: Date.now(),
@@ -94,6 +96,7 @@ export function getPresentationState(): PresentationState {
       currentSongSlideId: null,
       lastSongSlideId: null,
       currentBiblePassageVerseId: null,
+      currentVerseteTineriEntryId: null,
       isPresenting: false,
       isHidden: false,
       updatedAt: Date.now(),
@@ -130,6 +133,10 @@ export function updatePresentationState(
       input.currentBiblePassageVerseId !== undefined
         ? input.currentBiblePassageVerseId
         : current.currentBiblePassageVerseId
+    const currentVerseteTineriEntryId =
+      input.currentVerseteTineriEntryId !== undefined
+        ? input.currentVerseteTineriEntryId
+        : current.currentVerseteTineriEntryId
     const isPresenting =
       input.isPresenting !== undefined
         ? input.isPresenting
@@ -144,6 +151,7 @@ export function updatePresentationState(
         currentSongSlideId,
         lastSongSlideId,
         currentBiblePassageVerseId,
+        currentVerseteTineriEntryId,
         isPresenting,
         isHidden,
         updatedAt: now,
@@ -155,6 +163,7 @@ export function updatePresentationState(
           currentSongSlideId,
           lastSongSlideId,
           currentBiblePassageVerseId,
+          currentVerseteTineriEntryId,
           isPresenting,
           isHidden,
           updatedAt: now,
@@ -246,33 +255,41 @@ function getQueueSlides(): {
   queueItemId: number
   slideId: number | null
   biblePassageVerseId: number | null
+  verseteTineriEntryId: number | null
   isStandaloneSlide: boolean
   isBiblePassageVerse: boolean
+  isVerseteTineriEntry: boolean
 }[] {
   const rawDb = getRawDatabase()
 
-  // Get all queue items with their slides and bible passage verses
+  // Get all queue items with their slides, bible passage verses, and versete tineri entries
   // For song items: join song_slides
   // For bible_passage items: join bible_passage_verses
-  // For slide/bible items: use queue item id as "slide" (slideId = null)
+  // For versete_tineri slides: join versete_tineri_entries
+  // For other slide/bible items: use queue item id as "slide" (slideId = null)
   const results = rawDb
     .query(`
     SELECT
       pq.id as queue_item_id,
       pq.item_type,
+      pq.slide_type,
       ss.id as slide_id,
       bpv.id as bible_passage_verse_id,
-      COALESCE(ss.sort_order, bpv.sort_order, 0) as inner_sort_order
+      vte.id as versete_tineri_entry_id,
+      COALESCE(ss.sort_order, bpv.sort_order, vte.sort_order, 0) as inner_sort_order
     FROM presentation_queue pq
     LEFT JOIN song_slides ss ON pq.item_type = 'song' AND ss.song_id = pq.song_id
     LEFT JOIN bible_passage_verses bpv ON pq.item_type = 'bible_passage' AND bpv.queue_item_id = pq.id
+    LEFT JOIN versete_tineri_entries vte ON pq.item_type = 'slide' AND pq.slide_type = 'versete_tineri' AND vte.queue_item_id = pq.id
     ORDER BY pq.sort_order ASC, inner_sort_order ASC
   `)
     .all() as {
     queue_item_id: number
     item_type: string
+    slide_type: string | null
     slide_id: number | null
     bible_passage_verse_id: number | null
+    versete_tineri_entry_id: number | null
     inner_sort_order: number
   }[]
 
@@ -281,12 +298,27 @@ function getQueueSlides(): {
     queueItemId: number
     slideId: number | null
     biblePassageVerseId: number | null
+    verseteTineriEntryId: number | null
     isStandaloneSlide: boolean
     isBiblePassageVerse: boolean
+    isVerseteTineriEntry: boolean
   }[] = []
 
   for (const r of results) {
-    if (r.item_type === 'slide' || r.item_type === 'bible') {
+    if (r.item_type === 'slide' && r.slide_type === 'versete_tineri') {
+      // Versete tineri entry - add each entry as a navigable item
+      if (r.versete_tineri_entry_id) {
+        slides.push({
+          queueItemId: r.queue_item_id,
+          slideId: null,
+          biblePassageVerseId: null,
+          verseteTineriEntryId: r.versete_tineri_entry_id,
+          isStandaloneSlide: false,
+          isBiblePassageVerse: false,
+          isVerseteTineriEntry: true,
+        })
+      }
+    } else if (r.item_type === 'slide' || r.item_type === 'bible') {
       // Standalone slide or single Bible verse - only add once (LEFT JOIN may produce multiple rows)
       if (
         !slides.some(
@@ -297,8 +329,10 @@ function getQueueSlides(): {
           queueItemId: r.queue_item_id,
           slideId: null,
           biblePassageVerseId: null,
+          verseteTineriEntryId: null,
           isStandaloneSlide: true,
           isBiblePassageVerse: false,
+          isVerseteTineriEntry: false,
         })
       }
     } else if (r.item_type === 'bible_passage' && r.bible_passage_verse_id) {
@@ -307,8 +341,10 @@ function getQueueSlides(): {
         queueItemId: r.queue_item_id,
         slideId: null,
         biblePassageVerseId: r.bible_passage_verse_id,
+        verseteTineriEntryId: null,
         isStandaloneSlide: false,
         isBiblePassageVerse: true,
+        isVerseteTineriEntry: false,
       })
     } else if (r.slide_id) {
       // Song slide
@@ -316,8 +352,10 @@ function getQueueSlides(): {
         queueItemId: r.queue_item_id,
         slideId: r.slide_id,
         biblePassageVerseId: null,
+        verseteTineriEntryId: null,
         isStandaloneSlide: false,
         isBiblePassageVerse: false,
+        isVerseteTineriEntry: false,
       })
     }
   }
@@ -346,6 +384,7 @@ export function navigateQueueSlide(
     // Find current position
     // For song slides: match by slideId
     // For bible passage verses: match by biblePassageVerseId
+    // For versete tineri entries: match by verseteTineriEntryId
     // For standalone slides: match by queueItemId with null slideId
     let currentIndex = -1
     if (current.currentSongSlideId) {
@@ -362,8 +401,15 @@ export function navigateQueueSlide(
           s.biblePassageVerseId === current.currentBiblePassageVerseId &&
           s.queueItemId === current.currentQueueItemId,
       )
+    } else if (current.currentVerseteTineriEntryId) {
+      // Currently on a versete tineri entry
+      currentIndex = slides.findIndex(
+        (s) =>
+          s.verseteTineriEntryId === current.currentVerseteTineriEntryId &&
+          s.queueItemId === current.currentQueueItemId,
+      )
     } else if (current.currentQueueItemId) {
-      // Currently on a standalone slide (no song slide ID or bible passage verse ID)
+      // Currently on a standalone slide (no song slide ID, bible passage verse ID, or versete tineri entry ID)
       currentIndex = slides.findIndex(
         (s) =>
           s.isStandaloneSlide && s.queueItemId === current.currentQueueItemId,
@@ -381,6 +427,7 @@ export function navigateQueueSlide(
           currentQueueItemId: null,
           currentSongSlideId: null,
           currentBiblePassageVerseId: null,
+          currentVerseteTineriEntryId: null,
           isHidden: true,
         })
       }
@@ -397,6 +444,7 @@ export function navigateQueueSlide(
       currentQueueItemId: newSlide.queueItemId,
       currentSongSlideId: newSlide.slideId,
       currentBiblePassageVerseId: newSlide.biblePassageVerseId,
+      currentVerseteTineriEntryId: newSlide.verseteTineriEntryId,
       isHidden: false,
     })
   } catch (error) {

@@ -108,6 +108,18 @@ export function ControlRoom() {
       currentQueueItemId: queueItemId,
       currentSongSlideId: null,
       currentBiblePassageVerseId: verseId,
+      currentVerseteTineriEntryId: null,
+      isHidden: false,
+    })
+  }
+
+  // Handle entry click from queue - update presentation state for versete tineri entries
+  const handleEntryClick = async (queueItemId: number, entryId: number) => {
+    await updateState.mutateAsync({
+      currentQueueItemId: queueItemId,
+      currentSongSlideId: null,
+      currentBiblePassageVerseId: null,
+      currentVerseteTineriEntryId: entryId,
       isHidden: false,
     })
   }
@@ -314,9 +326,11 @@ export function ControlRoom() {
               <QueueList
                 activeSlideId={state?.currentSongSlideId ?? null}
                 activeVerseId={state?.currentBiblePassageVerseId ?? null}
+                activeEntryId={state?.currentVerseteTineriEntryId ?? null}
                 activeQueueItemId={state?.currentQueueItemId ?? null}
                 onSlideClick={handleSlideClick}
                 onVerseClick={handleVerseClick}
+                onEntryClick={handleEntryClick}
                 hideHeader
               />
             </div>
