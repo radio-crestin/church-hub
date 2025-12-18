@@ -22,6 +22,24 @@ export interface BiblePassageVerse {
 }
 
 /**
+ * Versete Tineri entry (nested within versete_tineri slides)
+ */
+export interface VerseteTineriEntry {
+  id: number
+  personName: string
+  translationId: number
+  bookCode: string
+  bookName: string
+  reference: string
+  text: string
+  startChapter: number
+  startVerse: number
+  endChapter: number
+  endVerse: number
+  sortOrder: number
+}
+
+/**
  * Queue item API response format
  * Supports song items, standalone slide items, bible verse items, and bible passage items
  */
@@ -48,6 +66,8 @@ export interface QueueItem {
   biblePassageReference: string | null
   biblePassageTranslation: string | null
   biblePassageVerses: BiblePassageVerse[]
+  // Versete Tineri fields (present when itemType === 'slide' && slideType === 'versete_tineri')
+  verseteTineriEntries: VerseteTineriEntry[]
   // Common fields
   sortOrder: number
   isExpanded: boolean
@@ -116,4 +136,26 @@ export interface InsertBiblePassageInput {
   endVerse: number
   afterItemId?: number
   presentNow?: boolean
+}
+
+/**
+ * Single entry for Versete Tineri input
+ */
+export interface VerseteTineriEntryInput {
+  personName: string
+  translationId: number
+  bookCode: string
+  bookName: string
+  startChapter: number
+  startVerse: number
+  endChapter: number
+  endVerse: number
+}
+
+/**
+ * Input for adding a Versete Tineri group to the queue
+ */
+export interface InsertVerseteTineriInput {
+  entries: VerseteTineriEntryInput[]
+  afterItemId?: number
 }

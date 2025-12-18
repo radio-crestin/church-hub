@@ -73,9 +73,11 @@ import {
   type InsertBiblePassageInput,
   type InsertBibleVerseInput,
   type InsertSlideInput,
+  type InsertVerseteTineriInput,
   insertBiblePassageToQueue,
   insertBibleVerseToQueue,
   insertSlideToQueue,
+  insertVerseteTineriToQueue,
   type ReorderQueueInput,
   removeFromQueue,
   reorderQueue,
@@ -2669,6 +2671,95 @@ async function main() {
               isHidden: false,
             })
             broadcastPresentationState(state)
+          }
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: queueItem }), {
+              status: 201,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // POST /api/queue/versete-tineri - Insert Versete Tineri group to queue
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/queue/versete-tineri'
+      ) {
+        const permError = checkPermission('queue.add')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as InsertVerseteTineriInput
+
+          if (!body.entries || !Array.isArray(body.entries) || body.entries.length === 0) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({
+                  error: 'Missing required field: entries (must be a non-empty array)',
+                }),
+                {
+                  status: 400,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          // Validate each entry
+          for (const entry of body.entries) {
+            if (
+              !entry.personName ||
+              !entry.translationId ||
+              !entry.bookCode ||
+              !entry.bookName ||
+              entry.startChapter === undefined ||
+              entry.startVerse === undefined ||
+              entry.endChapter === undefined ||
+              entry.endVerse === undefined
+            ) {
+              return handleCors(
+                req,
+                new Response(
+                  JSON.stringify({
+                    error:
+                      'Each entry must have: personName, translationId, bookCode, bookName, startChapter, startVerse, endChapter, endVerse',
+                  }),
+                  {
+                    status: 400,
+                    headers: { 'Content-Type': 'application/json' },
+                  },
+                ),
+              )
+            }
+          }
+
+          const queueItem = insertVerseteTineriToQueue(body)
+
+          if (!queueItem) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({
+                  error: 'Failed to insert Versete Tineri to queue',
+                }),
+                {
+                  status: 500,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
           }
 
           return handleCors(

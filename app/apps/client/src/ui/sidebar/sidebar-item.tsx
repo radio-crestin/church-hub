@@ -9,6 +9,7 @@ interface SidebarItemProps {
   isActive: boolean
   className?: string
   disabled?: boolean
+  onClick?: () => void
 }
 
 export function SidebarItem({
@@ -19,6 +20,7 @@ export function SidebarItem({
   isActive,
   className = '',
   disabled = false,
+  onClick,
 }: SidebarItemProps) {
   const baseClasses = `
     flex items-center gap-3 px-4 py-3 rounded-lg transition-all
@@ -60,6 +62,7 @@ export function SidebarItem({
       to={to}
       className={`${baseClasses} ${enabledClasses}`}
       title={isCollapsed ? label : undefined}
+      onClick={onClick}
     >
       {content}
     </Link>

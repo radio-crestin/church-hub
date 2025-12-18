@@ -4,8 +4,7 @@ import { useTranslation } from 'react-i18next'
 
 import { useInsertBiblePassageToQueue } from '~/features/queue/hooks'
 import { useToast } from '~/ui/toast'
-import { useBooks, useTranslations } from '../hooks'
-import type { BibleTranslation } from '../types'
+import { useBooks, useDefaultBibleTranslation } from '../hooks'
 import {
   type ParsedPassageRange,
   parsePassageRange,
@@ -31,29 +30,15 @@ export function BiblePassagePickerModal({
   const insertMutation = useInsertBiblePassageToQueue()
 
   // Selection state
-  const [selectedTranslation, setSelectedTranslation] =
-    useState<BibleTranslation | null>(null)
   const [referenceInput, setReferenceInput] = useState('')
   const [parsedResult, setParsedResult] = useState<ParsedPassageRange | null>(
     null,
   )
 
-  // Fetch data
-  const { data: translations = [] } = useTranslations()
+  // Fetch data - use default translation from settings
+  const { translation: selectedTranslation, isLoading: isTranslationLoading } =
+    useDefaultBibleTranslation()
   const { data: books = [] } = useBooks(selectedTranslation?.id ?? 0)
-
-  // Set default translation
-  useEffect(() => {
-    if (translations.length > 0 && !selectedTranslation) {
-      setSelectedTranslation(translations[0])
-    }
-  }, [translations, selectedTranslation])
-
-  // Reset reference when translation changes
-  useEffect(() => {
-    setReferenceInput('')
-    setParsedResult(null)
-  }, [selectedTranslation])
 
   // Debounced parsing
   useEffect(() => {
@@ -164,29 +149,6 @@ export function BiblePassagePickerModal({
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {/* Translation Selector */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {t('biblePassage.translation')}
-            </label>
-            <select
-              value={selectedTranslation?.id ?? ''}
-              onChange={(e) => {
-                const trans = translations.find(
-                  (t) => t.id === parseInt(e.target.value, 10),
-                )
-                setSelectedTranslation(trans ?? null)
-              }}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
-            >
-              {translations.map((trans) => (
-                <option key={trans.id} value={trans.id}>
-                  {trans.name} ({trans.abbreviation})
-                </option>
-              ))}
-            </select>
-          </div>
-
           {/* Reference Input */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">

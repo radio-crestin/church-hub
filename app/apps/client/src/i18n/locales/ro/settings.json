@@ -4,6 +4,13 @@
     "appearance": {
       "title": "Aspect"
     },
+    "bible": {
+      "title": "Biblia",
+      "defaultTranslation": {
+        "title": "Traducere biblică implicită",
+        "description": "Selectează traducerea implicită pentru selecția versetelor biblice"
+      }
+    },
     "application": {
       "title": "Setări aplicație",
       "description": "Configurează preferințele tale pentru Church Hub"
@@ -247,6 +254,62 @@
         "importFailed": "Importul a eșuat: {{error}}",
         "exportSuccess": "S-au exportat cu succes {{count}} cântări",
         "exportFailed": "Exportul a eșuat: {{error}}"
+      }
+    },
+    "sidebar": {
+      "title": "Configurare Bară Laterală",
+      "description": "Personalizează elementele meniului din bara laterală, ordinea lor și adaugă pagini personalizate",
+      "builtIn": "Predefinit",
+      "custom": "Pagină Personalizată",
+      "addCustomPage": "Adaugă Pagină Personalizată",
+      "visible": "Vizibil",
+      "hidden": "Ascuns",
+      "pageNotFound": "Pagina nu a fost găsită",
+      "openInNewTab": "Deschide în tab nou",
+      "openInWindow": "Deschide în fereastră",
+      "openInBrowser": "Deschide în browser",
+      "loadingPage": "Se încarcă pagina...",
+      "loadError": "Această pagină nu poate fi încorporată",
+      "loadErrorDescription": "Unele site-uri web blochează încorporarea din motive de securitate. Deschide într-un tab nou.",
+      "nativeWindowTitle": "Pagina externă deschisă în fereastră nativă",
+      "nativeWindowDescription": "Această pagină a fost deschisă într-o fereastră separată pentru a asigura funcționalitatea completă. Apasă butonul de mai sus pentru a o redeschide dacă este necesar.",
+      "fields": {
+        "title": "Titlu",
+        "titlePlaceholder": "ex., Calendar Biserică",
+        "url": "URL",
+        "urlPlaceholder": "https://exemplu.com/calendar",
+        "urlHint": "URL-ul va fi încorporat într-un iframe",
+        "icon": "Pictogramă",
+        "selectIcon": "Selectează o pictogramă pentru bara laterală",
+        "useIframeEmbedding": "Folosește încorporare iframe",
+        "useIframeEmbeddingHint": "Încorporează folosind un iframe în loc de webview nativ. Recomandat pentru site-uri ca YouTube care suportă încorporarea iframe."
+      },
+      "validation": {
+        "titleRequired": "Titlul este obligatoriu",
+        "urlRequired": "URL-ul este obligatoriu",
+        "urlInvalid": "Te rog introdu un URL valid"
+      },
+      "modals": {
+        "create": {
+          "title": "Adaugă Pagină Personalizată",
+          "submit": "Adaugă Pagina"
+        },
+        "edit": {
+          "title": "Editează Pagină Personalizată",
+          "submit": "Salvează Modificările"
+        },
+        "delete": {
+          "title": "Șterge Pagină Personalizată",
+          "message": "Ești sigur că vrei să ștergi \"{{name}}\"?",
+          "confirm": "Șterge"
+        }
+      },
+      "toast": {
+        "saved": "Configurare bară laterală salvată",
+        "customPageCreated": "Pagină personalizată adăugată",
+        "customPageUpdated": "Pagină personalizată actualizată",
+        "customPageDeleted": "Pagină personalizată ștearsă",
+        "error": "A apărut o eroare"
       }
     }
   }

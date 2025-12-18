@@ -4,6 +4,7 @@ import type {
   InsertBiblePassageInput,
   InsertBibleVerseInput,
   InsertSlideInput,
+  InsertVerseteTineriInput,
   QueueItem,
   ReorderQueueInput,
   UpdateSlideInput,
@@ -169,6 +170,25 @@ export async function saveQueueAsSchedule(title: string): Promise<{
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ title }),
   })
+
+  if (response.error) {
+    return { success: false, error: response.error }
+  }
+
+  return { success: true, data: response.data }
+}
+
+export async function insertVerseteTineriToQueue(
+  input: InsertVerseteTineriInput,
+): Promise<{ success: boolean; data?: QueueItem; error?: string }> {
+  const response = await fetcher<ApiResponse<QueueItem>>(
+    '/api/queue/versete-tineri',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    },
+  )
 
   if (response.error) {
     return { success: false, error: response.error }

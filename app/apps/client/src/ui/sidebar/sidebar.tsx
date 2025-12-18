@@ -1,26 +1,27 @@
 import { useLocation } from '@tanstack/react-router'
 import {
-  Book,
-  CalendarDays,
   ChevronLeft,
   ChevronRight,
   Menu,
   Monitor,
   Moon,
-  Music,
-  Settings,
-  SquarePlay,
   Sun,
   X,
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { SidebarHeader } from './sidebar-header'
-import { SidebarItem } from './sidebar-item'
+import {
+  hideAllCustomPageWebviews,
+  updateCurrentWebviewBounds,
+  useResolvedSidebarItems,
+  useSidebarConfig,
+} from '../../features/sidebar-config'
 import type { Permission } from '../../features/users/types'
 import { usePermissions } from '../../provider/permissions-provider'
 import { useTheme } from '../../provider/theme-provider'
+import { SidebarHeader } from './sidebar-header'
+import { SidebarItem } from './sidebar-item'
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
@@ -30,48 +31,33 @@ export function Sidebar() {
   const { t } = useTranslation(['sidebar', 'common'])
   const { hasPermission } = usePermissions()
 
+  // Get sidebar configuration
+  const { config } = useSidebarConfig()
+  const resolvedItems = useResolvedSidebarItems(config?.items)
+
   const cycleTheme = () => {
     const cycle = { system: 'light', light: 'dark', dark: 'system' } as const
     setThemePreference(cycle[preference])
   }
 
-  const menuItems: {
-    icon: typeof SquarePlay
-    label: string
-    to: string
-    permission: Permission
-  }[] = [
-    {
-      icon: SquarePlay,
-      label: t('sidebar:navigation.present'),
-      to: '/present',
-      permission: 'control_room.view',
-    },
-    {
-      icon: Music,
-      label: t('sidebar:navigation.songs'),
-      to: '/songs',
-      permission: 'songs.view',
-    },
-    {
-      icon: Book,
-      label: t('sidebar:navigation.bible'),
-      to: '/bible',
-      permission: 'bible.view',
-    },
-    {
-      icon: CalendarDays,
-      label: t('sidebar:navigation.schedules'),
-      to: '/schedules',
-      permission: 'programs.view',
-    },
-    {
-      icon: Settings,
-      label: t('sidebar:navigation.settings'),
-      to: '/settings',
-      permission: 'settings.view',
-    },
-  ]
+  // Filter items by permission
+  const menuItems = resolvedItems.filter((item) => {
+    // Custom pages: check dynamic permission
+    if (item.isCustom) {
+      return hasPermission(item.permission as Permission)
+    }
+    // Built-in items: check their permission
+    return item.permission ? hasPermission(item.permission) : true
+  })
+
+  // Hide webview when clicking on non-custom-page items (keep running in background)
+  const handleSidebarItemClick = useCallback((destinationPath: string) => {
+    // If navigating to a non-custom-page, hide ALL custom page webviews
+    if (!destinationPath.startsWith('/custom-page/')) {
+      console.log('[Sidebar] Hiding all custom page webviews before navigating to:', destinationPath)
+      void hideAllCustomPageWebviews()
+    }
+  }, [])
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -89,6 +75,16 @@ export function Sidebar() {
       document.body.style.overflow = ''
     }
   }, [isMobileMenuOpen])
+
+  // Update webview bounds when sidebar collapses/expands
+  useEffect(() => {
+    // Small delay to let the CSS transition complete
+    const timeoutId = setTimeout(() => {
+      updateCurrentWebviewBounds()
+    }, 350) // Match the CSS transition duration (300ms) + buffer
+
+    return () => clearTimeout(timeoutId)
+  }, [isCollapsed])
 
   const themeLabel =
     preference === 'system'
@@ -158,22 +154,21 @@ export function Sidebar() {
         </div>
 
         <nav className="flex-1 flex flex-col gap-2 p-3 overflow-y-auto">
-          {menuItems
-            .filter((item) => hasPermission(item.permission))
-            .map((item) => (
-              <SidebarItem
-                key={item.to}
-                icon={item.icon}
-                label={item.label}
-                to={item.to}
-                isCollapsed={isCollapsed}
-                isActive={
-                  location.pathname === item.to ||
-                  location.pathname.startsWith(`${item.to}/`)
-                }
-                className="md:flex"
-              />
-            ))}
+          {menuItems.map((item) => (
+            <SidebarItem
+              key={item.id}
+              icon={item.icon}
+              label={item.label}
+              to={item.to}
+              isCollapsed={isCollapsed}
+              isActive={
+                location.pathname === item.to ||
+                location.pathname.startsWith(`${item.to}/`)
+              }
+              className="md:flex"
+              onClick={() => handleSidebarItemClick(item.to)}
+            />
+          ))}
         </nav>
 
         <div className="p-3 border-t border-gray-200 dark:border-gray-800 space-y-2">

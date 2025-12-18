@@ -5,9 +5,18 @@ import { FileText, Loader2, Megaphone, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useDefaultBibleTranslation } from '~/features/bible/hooks'
 import { useToast } from '~/ui/toast'
-import { useInsertSlideToQueue, useUpdateSlide } from '../hooks'
-import type { QueueItem, SlideTemplate } from '../types'
+import {
+  useInsertSlideToQueue,
+  useInsertVerseteTineriToQueue,
+  useUpdateSlide,
+} from '../hooks'
+import type { QueueItem, SlideTemplate, VerseteTineriEntryInput } from '../types'
+import {
+  type LocalVerseteTineriEntry,
+  VerseteTineriEditor,
+} from './VerseteTineriEditor'
 
 interface InsertSlideModalProps {
   isOpen: boolean
@@ -39,12 +48,21 @@ export function InsertSlideModal({
   const dialogRef = useRef<HTMLDialogElement>(null)
   const insertMutation = useInsertSlideToQueue()
   const updateMutation = useUpdateSlide()
+  const insertVerseteTineriMutation = useInsertVerseteTineriToQueue()
+
+  // Get default translation for versete tineri
+  const { translation: defaultTranslation } = useDefaultBibleTranslation()
 
   const isEditMode = !!editingItem
 
   const [selectedTemplate, setSelectedTemplate] =
     useState<SlideTemplate>('announcement')
   const [content, setContent] = useState('')
+
+  // Versete Tineri state
+  const [verseteTineriEntries, setVerseteTineriEntries] = useState<
+    LocalVerseteTineriEntry[]
+  >([])
 
   const editor = useEditor({
     extensions: [
@@ -81,10 +99,13 @@ export function InsertSlideModal({
         setSelectedTemplate(editingItem.slideType ?? 'announcement')
         setContent(editingItem.slideContent ?? '')
         editor?.commands.setContent(editingItem.slideContent ?? '')
+        // TODO: Load versete tineri entries from editingItem if editing
+        setVerseteTineriEntries([])
       } else {
         setSelectedTemplate(initialTemplate ?? 'announcement')
         setContent('')
         editor?.commands.setContent('')
+        setVerseteTineriEntries([])
       }
     } else {
       dialogRef.current?.close()
@@ -92,6 +113,55 @@ export function InsertSlideModal({
   }, [isOpen, editor, editingItem, initialTemplate])
 
   const handleSave = async () => {
+    // Handle Versete Tineri template
+    if (selectedTemplate === 'versete_tineri') {
+      // Validate entries
+      const validEntries = verseteTineriEntries.filter(
+        (entry) =>
+          entry.personName.trim() &&
+          entry.parsedResult?.status === 'valid',
+      )
+
+      if (validEntries.length === 0) {
+        showToast(t('verseteTineri.errorNoValidEntries'), 'error')
+        return
+      }
+
+      if (!defaultTranslation) {
+        showToast(t('verseteTineri.errorNoTranslation'), 'error')
+        return
+      }
+
+      // Convert to input format
+      const entriesInput: VerseteTineriEntryInput[] = validEntries.map(
+        (entry) => ({
+          personName: entry.personName.trim(),
+          translationId: defaultTranslation.id,
+          bookCode: entry.parsedResult!.bookCode!,
+          bookName: entry.parsedResult!.bookName!,
+          startChapter: entry.parsedResult!.startChapter!,
+          startVerse: entry.parsedResult!.startVerse!,
+          endChapter: entry.parsedResult!.endChapter!,
+          endVerse: entry.parsedResult!.endVerse!,
+        }),
+      )
+
+      const result = await insertVerseteTineriMutation.mutateAsync({
+        entries: entriesInput,
+        afterItemId,
+      })
+
+      if (result.success) {
+        showToast(t('messages.slideInserted'), 'success')
+        onSaved?.()
+        onClose()
+      } else {
+        showToast(t('messages.error'), 'error')
+      }
+      return
+    }
+
+    // Handle announcement and other templates
     if (!content.trim()) {
       showToast(t('insertSlide.errorEmpty'), 'error')
       return
@@ -131,12 +201,19 @@ export function InsertSlideModal({
   }
 
   const handleClose = () => {
-    if (!insertMutation.isPending && !updateMutation.isPending) {
+    if (
+      !insertMutation.isPending &&
+      !updateMutation.isPending &&
+      !insertVerseteTineriMutation.isPending
+    ) {
       onClose()
     }
   }
 
-  const isPending = insertMutation.isPending || updateMutation.isPending
+  const isPending =
+    insertMutation.isPending ||
+    updateMutation.isPending ||
+    insertVerseteTineriMutation.isPending
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
     if (e.target === dialogRef.current) {
@@ -197,67 +274,74 @@ export function InsertSlideModal({
             </div>
           )}
 
-          {/* Content Editor */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {t('insertSlide.content')}
-            </label>
-            {/* Toolbar */}
-            <div className="flex items-center gap-1 p-2 bg-gray-50 dark:bg-gray-900 rounded-t-lg border border-b-0 border-gray-200 dark:border-gray-700">
-              <button
-                type="button"
-                onClick={() => editor?.chain().focus().toggleBold().run()}
-                className={`px-2 py-1 rounded text-sm font-bold ${
-                  editor?.isActive('bold')
-                    ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800'
-                }`}
-              >
-                B
-              </button>
-              <button
-                type="button"
-                onClick={() => editor?.chain().focus().toggleItalic().run()}
-                className={`px-2 py-1 rounded text-sm italic ${
-                  editor?.isActive('italic')
-                    ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800'
-                }`}
-              >
-                I
-              </button>
-              <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1" />
-              <button
-                type="button"
-                onClick={() =>
-                  editor?.chain().focus().toggleHeading({ level: 1 }).run()
-                }
-                className={`px-2 py-1 rounded text-sm ${
-                  editor?.isActive('heading', { level: 1 })
-                    ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800'
-                }`}
-              >
-                H1
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  editor?.chain().focus().toggleHeading({ level: 2 }).run()
-                }
-                className={`px-2 py-1 rounded text-sm ${
-                  editor?.isActive('heading', { level: 2 })
-                    ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800'
-                }`}
-              >
-                H2
-              </button>
+          {/* Content Editor - Show VerseteTineriEditor for versete_tineri template */}
+          {selectedTemplate === 'versete_tineri' ? (
+            <VerseteTineriEditor
+              entries={verseteTineriEntries}
+              onEntriesChange={setVerseteTineriEntries}
+            />
+          ) : (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {t('insertSlide.content')}
+              </label>
+              {/* Toolbar */}
+              <div className="flex items-center gap-1 p-2 bg-gray-50 dark:bg-gray-900 rounded-t-lg border border-b-0 border-gray-200 dark:border-gray-700">
+                <button
+                  type="button"
+                  onClick={() => editor?.chain().focus().toggleBold().run()}
+                  className={`px-2 py-1 rounded text-sm font-bold ${
+                    editor?.isActive('bold')
+                      ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800'
+                  }`}
+                >
+                  B
+                </button>
+                <button
+                  type="button"
+                  onClick={() => editor?.chain().focus().toggleItalic().run()}
+                  className={`px-2 py-1 rounded text-sm italic ${
+                    editor?.isActive('italic')
+                      ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800'
+                  }`}
+                >
+                  I
+                </button>
+                <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1" />
+                <button
+                  type="button"
+                  onClick={() =>
+                    editor?.chain().focus().toggleHeading({ level: 1 }).run()
+                  }
+                  className={`px-2 py-1 rounded text-sm ${
+                    editor?.isActive('heading', { level: 1 })
+                      ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800'
+                  }`}
+                >
+                  H1
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    editor?.chain().focus().toggleHeading({ level: 2 }).run()
+                  }
+                  className={`px-2 py-1 rounded text-sm ${
+                    editor?.isActive('heading', { level: 2 })
+                      ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800'
+                  }`}
+                >
+                  H2
+                </button>
+              </div>
+              <div className="border border-gray-200 dark:border-gray-700 rounded-b-lg overflow-hidden">
+                <EditorContent editor={editor} />
+              </div>
             </div>
-            <div className="border border-gray-200 dark:border-gray-700 rounded-b-lg overflow-hidden">
-              <EditorContent editor={editor} />
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Footer */}
@@ -273,7 +357,12 @@ export function InsertSlideModal({
           <button
             type="button"
             onClick={handleSave}
-            disabled={isPending || !content.trim()}
+            disabled={
+              isPending ||
+              (selectedTemplate === 'versete_tineri'
+                ? verseteTineriEntries.length === 0
+                : !content.trim())
+            }
             className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
           >
             {isPending && <Loader2 size={18} className="animate-spin" />}

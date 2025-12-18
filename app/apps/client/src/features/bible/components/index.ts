@@ -1,4 +1,5 @@
 export { BibleControlPanel } from './BibleControlPanel'
+export { BibleTranslationSetting } from './BibleTranslationSetting'
 export { BibleNavigationPanel } from './BibleNavigationPanel'
 export { BiblePassagePickerModal } from './BiblePassagePickerModal'
 export { BooksList } from './BooksList'
