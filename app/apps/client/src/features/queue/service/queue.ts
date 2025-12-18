@@ -1,6 +1,7 @@
 import { fetcher } from '~/utils/fetcher'
 import type {
   AddToQueueInput,
+  InsertBiblePassageInput,
   InsertBibleVerseInput,
   InsertSlideInput,
   QueueItem,
@@ -135,9 +136,30 @@ export async function insertBibleVerseToQueue(
   return { success: true, data: response.data }
 }
 
-export async function saveQueueAsSchedule(
-  title: string,
-): Promise<{ success: boolean; data?: { scheduleId: number }; error?: string }> {
+export async function insertBiblePassageToQueue(
+  input: InsertBiblePassageInput,
+): Promise<{ success: boolean; data?: QueueItem; error?: string }> {
+  const response = await fetcher<ApiResponse<QueueItem>>(
+    '/api/queue/bible-passage',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    },
+  )
+
+  if (response.error) {
+    return { success: false, error: response.error }
+  }
+
+  return { success: true, data: response.data }
+}
+
+export async function saveQueueAsSchedule(title: string): Promise<{
+  success: boolean
+  data?: { scheduleId: number }
+  error?: string
+}> {
   const response = await fetcher<{
     success?: boolean
     data?: { scheduleId: number }

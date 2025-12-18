@@ -30,7 +30,7 @@ export const presentationQueue = sqliteTable(
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
     itemType: text('item_type', {
-      enum: ['song', 'slide', 'bible'],
+      enum: ['song', 'slide', 'bible', 'bible_passage'],
     }).notNull(),
     songId: integer('song_id').references(() => songs.id, {
       onDelete: 'cascade',
@@ -43,6 +43,9 @@ export const presentationQueue = sqliteTable(
     bibleReference: text('bible_reference'),
     bibleText: text('bible_text'),
     bibleTranslation: text('bible_translation'),
+    // Bible passage fields (when itemType === 'bible_passage')
+    biblePassageReference: text('bible_passage_reference'),
+    biblePassageTranslation: text('bible_passage_translation'),
     sortOrder: integer('sort_order').notNull().default(0),
     isExpanded: integer('is_expanded', { mode: 'boolean' })
       .notNull()
@@ -58,6 +61,34 @@ export const presentationQueue = sqliteTable(
     index('idx_presentation_queue_sort_order').on(table.sortOrder),
     index('idx_presentation_queue_song_id').on(table.songId),
     index('idx_presentation_queue_bible_verse_id').on(table.bibleVerseId),
+  ],
+)
+
+export const biblePassageVerses = sqliteTable(
+  'bible_passage_verses',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    queueItemId: integer('queue_item_id').references(
+      () => presentationQueue.id,
+      {
+        onDelete: 'cascade',
+      },
+    ),
+    verseId: integer('verse_id')
+      .notNull()
+      .references(() => bibleVerses.id, {
+        onDelete: 'cascade',
+      }),
+    reference: text('reference').notNull(),
+    text: text('text').notNull(),
+    sortOrder: integer('sort_order').notNull().default(0),
+    createdAt: integer('created_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (table) => [
+    index('idx_bible_passage_verses_queue_item_id').on(table.queueItemId),
+    index('idx_bible_passage_verses_sort_order').on(table.sortOrder),
   ],
 )
 
@@ -83,6 +114,11 @@ export const presentationState = sqliteTable('presentation_state', {
       onDelete: 'set null',
     },
   ),
+  currentBiblePassageVerseId: integer(
+    'current_bible_passage_verse_id',
+  ).references(() => biblePassageVerses.id, {
+    onDelete: 'set null',
+  }),
   updatedAt: integer('updated_at', { mode: 'timestamp' })
     .notNull()
     .default(sql`(unixepoch())`),

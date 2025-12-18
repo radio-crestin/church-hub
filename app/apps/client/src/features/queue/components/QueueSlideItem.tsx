@@ -15,6 +15,8 @@ interface QueueSlideItemProps {
   onClick: () => void
   onEditSlide: () => void
   onInsertSongAfter: () => void
+  onInsertBibleVerseAfter?: () => void
+  onInsertBiblePassageAfter?: () => void
   onInsertSlideAfter: (template: SlideTemplate) => void
   dragHandleProps?: React.HTMLAttributes<HTMLDivElement>
 }
@@ -36,6 +38,8 @@ export function QueueSlideItem({
   onClick,
   onEditSlide,
   onInsertSongAfter,
+  onInsertBibleVerseAfter,
+  onInsertBiblePassageAfter,
   onInsertSlideAfter,
   dragHandleProps,
 }: QueueSlideItemProps) {
@@ -113,6 +117,8 @@ export function QueueSlideItem({
           ref={contextMenuRef}
           onEditSlide={onEditSlide}
           onInsertSongAfter={onInsertSongAfter}
+          onInsertBibleVerseAfter={onInsertBibleVerseAfter}
+          onInsertBiblePassageAfter={onInsertBiblePassageAfter}
           onInsertSlideAfter={onInsertSlideAfter}
           onRemove={onRemove}
         />

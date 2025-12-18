@@ -194,7 +194,10 @@ export function SongEditor({
   }
 
   const handleSongAddedToSchedule = (scheduleId: number) => {
-    navigate({ to: '/schedules/$scheduleId', params: { scheduleId: String(scheduleId) } })
+    navigate({
+      to: '/schedules/$scheduleId',
+      params: { scheduleId: String(scheduleId) },
+    })
   }
 
   const handleImport = (slideContents: string[]) => {
@@ -691,7 +694,10 @@ export function SongEditor({
         ref={unsavedChangesDialogRef}
         className="fixed inset-0 m-auto w-full max-w-md p-0 bg-white dark:bg-gray-800 rounded-xl shadow-xl backdrop:bg-black/50"
         onClick={(e) => {
-          if (e.target === unsavedChangesDialogRef.current && !isSavingBeforeAction)
+          if (
+            e.target === unsavedChangesDialogRef.current &&
+            !isSavingBeforeAction
+          )
             handleCancelAction()
         }}
       >

@@ -92,6 +92,7 @@ export interface PresentationStateRecord {
   current_queue_item_id: number | null
   current_song_slide_id: number | null
   last_song_slide_id: number | null
+  current_bible_passage_verse_id: number | null
   is_presenting: number
   is_hidden: number
   updated_at: number
@@ -104,6 +105,7 @@ export interface PresentationState {
   currentQueueItemId: number | null
   currentSongSlideId: number | null
   lastSongSlideId: number | null
+  currentBiblePassageVerseId: number | null
   isPresenting: boolean
   isHidden: boolean
   updatedAt: number
@@ -116,6 +118,7 @@ export interface UpdatePresentationStateInput {
   currentQueueItemId?: number | null
   currentSongSlideId?: number | null
   lastSongSlideId?: number | null
+  currentBiblePassageVerseId?: number | null
   isPresenting?: boolean
   isHidden?: boolean
 }

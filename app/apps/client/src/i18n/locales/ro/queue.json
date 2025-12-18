@@ -31,6 +31,8 @@
     "searchSongDescription": "Găsește și adaugă o cântare existentă",
     "bibleVerse": "Verset Biblic",
     "bibleVerseDescription": "Caută și adaugă un verset din Biblie",
+    "biblePassage": "Pasaj Biblic",
+    "biblePassageDescription": "Adaugă un interval de versete",
     "announcement": "Anunț",
     "announcementDescription": "Creează un slide de anunț personalizat",
     "verseteTineri": "Versete Tineri",
@@ -46,7 +48,8 @@
     "error": "A apărut o eroare",
     "slideInserted": "Slide-ul a fost inserat",
     "slideUpdated": "Slide-ul a fost actualizat",
-    "savedAsProgram": "Coada a fost salvată ca program"
+    "savedAsProgram": "Coada a fost salvată ca program",
+    "biblePassageInserted": "Pasajul biblic a fost adăugat în coadă"
   },
   "saveAsProgram": {
     "title": "Salvează coada ca program",
@@ -75,5 +78,22 @@
   "importSchedule": {
     "title": "Importă Program",
     "description": "Adaugă toate elementele dintr-un program salvat în coadă"
+  },
+  "biblePassage": {
+    "title": "Adaugă Pasaj Biblic",
+    "translation": "Traducere",
+    "reference": "Referință",
+    "referencePlaceholder": "ex: Gen 1:1-5 sau Ioan 3:16",
+    "referenceHint": "Introdu cartea, capitolul și intervalul de versete",
+    "valid": "Valid",
+    "add": "Adaugă în coadă",
+    "passage": "Pasaj Biblic",
+    "errors": {
+      "empty": "Te rugăm să introduci o referință",
+      "invalid_format": "Format invalid. Încearcă: Gen 1:1 sau Gen 1:1-5",
+      "book_not_found": "Cartea nu a fost găsită",
+      "invalid_chapter": "Număr de capitol invalid",
+      "end_before_start": "Sfârșitul trebuie să fie după început"
+    }
   }
 }

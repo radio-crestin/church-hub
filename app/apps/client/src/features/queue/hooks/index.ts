@@ -1,5 +1,6 @@
 export { useAddToQueue } from './useAddToQueue'
 export { useClearQueue } from './useClearQueue'
+export { useInsertBiblePassageToQueue } from './useInsertBiblePassageToQueue'
 export { useInsertBibleVerseToQueue } from './useInsertBibleVerseToQueue'
 export { useInsertSlideToQueue } from './useInsertSlideToQueue'
 export { useQueue } from './useQueue'
