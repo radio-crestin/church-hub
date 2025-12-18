@@ -49,7 +49,8 @@
     "slideInserted": "Slide-ul a fost inserat",
     "slideUpdated": "Slide-ul a fost actualizat",
     "savedAsProgram": "Coada a fost salvată ca program",
-    "biblePassageInserted": "Pasajul biblic a fost adăugat în coadă"
+    "biblePassageInserted": "Pasajul biblic a fost adăugat în coadă",
+    "verseteTineriInserted": "Versetele tineri au fost adăugate în coadă"
   },
   "saveAsProgram": {
     "title": "Salvează coada ca program",
@@ -95,5 +96,19 @@
       "invalid_chapter": "Număr de capitol invalid",
       "end_before_start": "Sfârșitul trebuie să fie după început"
     }
+  },
+  "verseteTineri": {
+    "title": "Versete Tineri",
+    "addEntry": "Adaugă intrare",
+    "personName": "Nume persoană",
+    "personNamePlaceholder": "Introdu numele...",
+    "bibleReference": "Referință biblică",
+    "bibleReferencePlaceholder": "ex: Ioan 3:16",
+    "entriesCount_one": "{{count}} intrare",
+    "entriesCount_few": "{{count}} intrări",
+    "entriesCount_other": "{{count}} intrări",
+    "removeEntry": "Șterge intrare",
+    "noEntries": "Nu există intrări",
+    "addFirstEntry": "Adaugă o intrare pentru a începe"
   }
 }

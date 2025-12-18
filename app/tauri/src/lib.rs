@@ -1,8 +1,13 @@
 pub mod commands;
 pub mod domain;
 pub mod server;
+pub mod webview;
 
 use commands::{clear_pending_import, get_pending_import, get_server_config, PendingImport};
+use webview::{
+    close_child_webview, create_child_webview, hide_child_webview, show_child_webview,
+    update_child_webview, webview_exists,
+};
 use domain::AppState;
 use parking_lot::Mutex;
 use std::path::PathBuf;
@@ -40,21 +45,37 @@ pub fn run() {
                     let app_handle = window.app_handle();
                     let windows = app_handle.webview_windows();
 
-                    // Close all display windows
-                    let display_windows: Vec<_> = windows
+                    // Close all display windows and custom-page webviews
+                    let child_windows: Vec<_> = windows
                         .into_iter()
-                        .filter(|(label, _)| label.starts_with("display-"))
+                        .filter(|(label, _)| {
+                            label.starts_with("display-") || label.starts_with("custom-page-")
+                        })
                         .collect();
 
                     println!(
-                        "[window-event] Closing {} display windows",
-                        display_windows.len()
+                        "[window-event] Closing {} child windows/webviews",
+                        child_windows.len()
                     );
 
-                    for (label, win) in display_windows {
-                        println!("[window-event] Closing window: {label}");
+                    for (label, win) in child_windows {
+                        println!("[window-event] Closing: {label}");
                         if let Err(e) = win.close() {
                             println!("[window-event] Failed to close {label}: {e}");
+                        }
+                    }
+
+                    // Also close any child webviews
+                    let webviews = app_handle.webviews();
+                    let custom_webviews: Vec<_> = webviews
+                        .into_iter()
+                        .filter(|(label, _)| label.starts_with("custom-page-"))
+                        .collect();
+
+                    for (label, wv) in custom_webviews {
+                        println!("[window-event] Closing webview: {label}");
+                        if let Err(e) = wv.close() {
+                            println!("[window-event] Failed to close webview {label}: {e}");
                         }
                     }
 
@@ -121,7 +142,13 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             get_server_config,
             get_pending_import,
-            clear_pending_import
+            clear_pending_import,
+            create_child_webview,
+            close_child_webview,
+            show_child_webview,
+            hide_child_webview,
+            update_child_webview,
+            webview_exists
         ])
         .build(tauri::generate_context!())
         .expect("error while running tauri application")

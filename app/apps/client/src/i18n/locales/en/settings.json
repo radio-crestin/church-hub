@@ -4,6 +4,13 @@
     "appearance": {
       "title": "Appearance"
     },
+    "bible": {
+      "title": "Bible",
+      "defaultTranslation": {
+        "title": "Default Bible Translation",
+        "description": "Select the default translation for Bible verse selection"
+      }
+    },
     "application": {
       "title": "Application Settings",
       "description": "Configure your Church Hub preferences here"
@@ -247,6 +254,62 @@
         "importFailed": "Import failed: {{error}}",
         "exportSuccess": "Successfully exported {{count}} songs",
         "exportFailed": "Export failed: {{error}}"
+      }
+    },
+    "sidebar": {
+      "title": "Sidebar Configuration",
+      "description": "Customize sidebar menu items, their order, and add custom pages",
+      "builtIn": "Built-in",
+      "custom": "Custom Page",
+      "addCustomPage": "Add Custom Page",
+      "visible": "Visible",
+      "hidden": "Hidden",
+      "pageNotFound": "Page not found",
+      "openInNewTab": "Open in new tab",
+      "openInWindow": "Open in window",
+      "openInBrowser": "Open in browser",
+      "loadingPage": "Loading page...",
+      "loadError": "This page cannot be embedded",
+      "loadErrorDescription": "Some websites block embedding for security reasons. Open in a new tab instead.",
+      "nativeWindowTitle": "External page opened in native window",
+      "nativeWindowDescription": "This page has been opened in a separate window to ensure full functionality. Click the button above to reopen it if needed.",
+      "fields": {
+        "title": "Title",
+        "titlePlaceholder": "e.g., Church Calendar",
+        "url": "URL",
+        "urlPlaceholder": "https://example.com/calendar",
+        "urlHint": "The URL will be embedded in an iframe",
+        "icon": "Icon",
+        "selectIcon": "Select an icon for the sidebar",
+        "useIframeEmbedding": "Use iframe embedding",
+        "useIframeEmbeddingHint": "Embed using an iframe instead of native webview. Recommended for sites like YouTube that support iframe embedding."
+      },
+      "validation": {
+        "titleRequired": "Title is required",
+        "urlRequired": "URL is required",
+        "urlInvalid": "Please enter a valid URL"
+      },
+      "modals": {
+        "create": {
+          "title": "Add Custom Page",
+          "submit": "Add Page"
+        },
+        "edit": {
+          "title": "Edit Custom Page",
+          "submit": "Save Changes"
+        },
+        "delete": {
+          "title": "Delete Custom Page",
+          "message": "Are you sure you want to delete \"{{name}}\"?",
+          "confirm": "Delete"
+        }
+      },
+      "toast": {
+        "saved": "Sidebar configuration saved",
+        "customPageCreated": "Custom page added",
+        "customPageUpdated": "Custom page updated",
+        "customPageDeleted": "Custom page deleted",
+        "error": "An error occurred"
       }
     }
   }

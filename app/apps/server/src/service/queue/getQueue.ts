@@ -1,12 +1,13 @@
 import { asc, eq } from 'drizzle-orm'
 
-import type { BiblePassageVerse, QueueItem } from './types'
+import type { BiblePassageVerse, QueueItem, VerseteTineriEntry } from './types'
 import { getDatabase } from '../../db'
 import {
   biblePassageVerses,
   presentationQueue,
   songCategories,
   songs,
+  verseteTineriEntries,
 } from '../../db/schema'
 import { getSlidesBySongId } from '../songs'
 
@@ -42,6 +43,36 @@ function getPassageVersesByQueueItemId(
 }
 
 /**
+ * Gets versete tineri entries by queue item ID
+ */
+function getVerseteTineriEntriesByQueueItemId(
+  queueItemId: number,
+): VerseteTineriEntry[] {
+  const db = getDatabase()
+  const records = db
+    .select()
+    .from(verseteTineriEntries)
+    .where(eq(verseteTineriEntries.queueItemId, queueItemId))
+    .orderBy(asc(verseteTineriEntries.sortOrder))
+    .all()
+
+  return records.map((record) => ({
+    id: record.id,
+    personName: record.personName,
+    translationId: record.translationId,
+    bookCode: record.bookCode,
+    bookName: record.bookName,
+    reference: record.reference,
+    text: record.text,
+    startChapter: record.startChapter,
+    startVerse: record.startVerse,
+    endChapter: record.endChapter,
+    endVerse: record.endVerse,
+    sortOrder: record.sortOrder,
+  }))
+}
+
+/**
  * Converts database queue item record to API format
  * Handles song items, standalone slide items, and bible passage items
  */
@@ -50,7 +81,7 @@ function toQueueItem(
     song: typeof songs.$inferSelect | null
     songCategory: typeof songCategories.$inferSelect | null
   },
-): Omit<QueueItem, 'slides' | 'biblePassageVerses'> {
+): Omit<QueueItem, 'slides' | 'biblePassageVerses' | 'verseteTineriEntries'> {
   const isSongItem = record.itemType === 'song' && record.songId !== null
 
   return {
@@ -107,7 +138,7 @@ export function getQueue(): QueueItem[] {
       .orderBy(asc(presentationQueue.sortOrder))
       .all()
 
-    // Get slides/verses for each queue item
+    // Get slides/verses/entries for each queue item
     return records.map((record) => {
       const item = toQueueItem({
         ...record.presentationQueue,
@@ -125,10 +156,17 @@ export function getQueue(): QueueItem[] {
         record.presentationQueue.itemType === 'bible_passage'
           ? getPassageVersesByQueueItemId(record.presentationQueue.id)
           : []
+      // Only fetch versete tineri entries for versete_tineri slides
+      const vtEntries =
+        record.presentationQueue.itemType === 'slide' &&
+        record.presentationQueue.slideType === 'versete_tineri'
+          ? getVerseteTineriEntriesByQueueItemId(record.presentationQueue.id)
+          : []
       return {
         ...item,
         slides,
         biblePassageVerses: passageVerses,
+        verseteTineriEntries: vtEntries,
       }
     })
   } catch (error) {
@@ -178,10 +216,17 @@ export function getQueueItemById(id: number): QueueItem | null {
       record.presentationQueue.itemType === 'bible_passage'
         ? getPassageVersesByQueueItemId(record.presentationQueue.id)
         : []
+    // Only fetch versete tineri entries for versete_tineri slides
+    const vtEntries =
+      record.presentationQueue.itemType === 'slide' &&
+      record.presentationQueue.slideType === 'versete_tineri'
+        ? getVerseteTineriEntriesByQueueItemId(record.presentationQueue.id)
+        : []
     return {
       ...item,
       slides,
       biblePassageVerses: passageVerses,
+      verseteTineriEntries: vtEntries,
     }
   } catch (error) {
     log('error', `Failed to get queue item: ${error}`)

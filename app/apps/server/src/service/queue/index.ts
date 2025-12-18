@@ -5,6 +5,7 @@ export { getQueue, getQueueItemById } from './getQueue'
 export { insertBiblePassageToQueue } from './insertBiblePassageToQueue'
 export { insertBibleVerseToQueue } from './insertBibleVerseToQueue'
 export { insertSlideToQueue } from './insertSlideToQueue'
+export { insertVerseteTineriToQueue } from './insertVerseteTineriToQueue'
 export { removeFromQueue } from './removeFromQueue'
 export { reorderQueue } from './reorderQueue'
 export { setExpanded, toggleExpand } from './toggleExpand'
@@ -14,6 +15,7 @@ export type {
   InsertBiblePassageInput,
   InsertBibleVerseInput,
   InsertSlideInput,
+  InsertVerseteTineriInput,
   OperationResult,
   QueueItem,
   QueueItemRecord,
@@ -21,5 +23,6 @@ export type {
   ReorderQueueInput,
   SlideTemplate,
   UpdateSlideInput,
+  VerseteTineriEntry,
 } from './types'
 export { updateSlide } from './updateSlide'
