@@ -92,6 +92,36 @@ export const biblePassageVerses = sqliteTable(
   ],
 )
 
+export const verseteTineriEntries = sqliteTable(
+  'versete_tineri_entries',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    queueItemId: integer('queue_item_id')
+      .notNull()
+      .references(() => presentationQueue.id, {
+        onDelete: 'cascade',
+      }),
+    personName: text('person_name').notNull(),
+    translationId: integer('translation_id').notNull(),
+    bookCode: text('book_code').notNull(),
+    bookName: text('book_name').notNull(),
+    reference: text('reference').notNull(),
+    text: text('text').notNull(),
+    startChapter: integer('start_chapter').notNull(),
+    startVerse: integer('start_verse').notNull(),
+    endChapter: integer('end_chapter').notNull(),
+    endVerse: integer('end_verse').notNull(),
+    sortOrder: integer('sort_order').notNull().default(0),
+    createdAt: integer('created_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (table) => [
+    index('idx_versete_tineri_entries_queue_item_id').on(table.queueItemId),
+    index('idx_versete_tineri_entries_sort_order').on(table.sortOrder),
+  ],
+)
+
 export const presentationState = sqliteTable('presentation_state', {
   id: integer('id').primaryKey(),
   isPresenting: integer('is_presenting', { mode: 'boolean' })
@@ -117,6 +147,11 @@ export const presentationState = sqliteTable('presentation_state', {
   currentBiblePassageVerseId: integer(
     'current_bible_passage_verse_id',
   ).references(() => biblePassageVerses.id, {
+    onDelete: 'set null',
+  }),
+  currentVerseteTineriEntryId: integer(
+    'current_versete_tineri_entry_id',
+  ).references(() => verseteTineriEntries.id, {
     onDelete: 'set null',
   }),
   updatedAt: integer('updated_at', { mode: 'timestamp' })

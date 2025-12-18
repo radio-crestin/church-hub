@@ -15,7 +15,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Loader2, Trash2 } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { BiblePassagePickerModal } from '~/features/bible'
@@ -28,6 +28,7 @@ import { QueueBibleItem } from './QueueBibleItem'
 import { QueueBiblePassageItem } from './QueueBiblePassageItem'
 import { QueueSlideItem } from './QueueSlideItem'
 import { QueueSongItem } from './QueueSongItem'
+import { QueueVerseteTineriItem } from './QueueVerseteTineriItem'
 import {
   useClearQueue,
   useQueue,
@@ -41,11 +42,14 @@ interface SortableQueueItemProps {
   item: QueueItem
   activeSlideId: number | null
   activeVerseId: number | null
+  activeEntryId: number | null
   activeQueueItemId: number | null
   onSlideClick: (slideId: number) => void
   onVerseClick: (verseId: number) => void
+  onEntryClick: (entryId: number) => void
   onSongClick: () => void
   onPassageClick: () => void
+  onVerseteTineriClick: () => void
   onEditSong: (songId: number) => void
   onEditSlide: (item: QueueItem) => void
   onAddToSchedule: (songId: number) => void
@@ -54,18 +58,20 @@ interface SortableQueueItemProps {
   onInsertBiblePassageAfter?: (itemId: number) => void
   onInsertSlideAfter: (itemId: number, template: SlideTemplate) => void
   onStandaloneSlideClick: () => void
-  itemRef: (element: HTMLDivElement | null) => void
 }
 
 function SortableQueueItem({
   item,
   activeSlideId,
   activeVerseId,
+  activeEntryId,
   activeQueueItemId,
   onSlideClick,
   onVerseClick,
+  onEntryClick,
   onSongClick,
   onPassageClick,
+  onVerseteTineriClick,
   onEditSong,
   onEditSlide,
   onAddToSchedule,
@@ -74,7 +80,6 @@ function SortableQueueItem({
   onInsertBiblePassageAfter,
   onInsertSlideAfter,
   onStandaloneSlideClick,
-  itemRef,
 }: SortableQueueItemProps) {
   const { showToast } = useToast()
   const { t } = useTranslation('queue')
@@ -83,15 +88,6 @@ function SortableQueueItem({
 
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id: item.id })
-
-  // Combine sortable ref with item ref for scroll tracking
-  const combinedRef = useCallback(
-    (element: HTMLDivElement | null) => {
-      setNodeRef(element)
-      itemRef(element)
-    },
-    [setNodeRef, itemRef],
-  )
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -110,12 +106,45 @@ function SortableQueueItem({
   }
 
   // Render different components based on item type
+  // Check for versete_tineri slides first (special slide type)
+  if (item.itemType === 'slide' && item.slideType === 'versete_tineri') {
+    return (
+      <div ref={setNodeRef} style={style}>
+        <QueueVerseteTineriItem
+          item={item}
+          isExpanded={item.isExpanded}
+          activeEntryId={activeEntryId}
+          activeQueueItemId={activeQueueItemId}
+          onToggleExpand={handleToggleExpand}
+          onRemove={handleRemove}
+          onEntryClick={onEntryClick}
+          onItemClick={onVerseteTineriClick}
+          onInsertSongAfter={() => onInsertSongAfter(item.id)}
+          onInsertBibleVerseAfter={
+            onInsertBibleVerseAfter
+              ? () => onInsertBibleVerseAfter(item.id)
+              : undefined
+          }
+          onInsertBiblePassageAfter={
+            onInsertBiblePassageAfter
+              ? () => onInsertBiblePassageAfter(item.id)
+              : undefined
+          }
+          onInsertSlideAfter={(template) =>
+            onInsertSlideAfter(item.id, template)
+          }
+          dragHandleProps={{ ...attributes, ...listeners }}
+        />
+      </div>
+    )
+  }
+
   if (item.itemType === 'slide') {
     // Standalone slide is active when it's the current queue item with no song slide
     const isActive = item.id === activeQueueItemId && activeSlideId === null
 
     return (
-      <div ref={combinedRef} style={style}>
+      <div ref={setNodeRef} style={style}>
         <QueueSlideItem
           item={item}
           isActive={isActive}
@@ -147,7 +176,7 @@ function SortableQueueItem({
     const isActive = item.id === activeQueueItemId && activeSlideId === null
 
     return (
-      <div ref={combinedRef} style={style}>
+      <div ref={setNodeRef} style={style}>
         <QueueBibleItem
           item={item}
           isActive={isActive}
@@ -175,7 +204,7 @@ function SortableQueueItem({
 
   if (item.itemType === 'bible_passage') {
     return (
-      <div ref={combinedRef} style={style}>
+      <div ref={setNodeRef} style={style}>
         <QueueBiblePassageItem
           item={item}
           isExpanded={item.isExpanded}
@@ -206,7 +235,7 @@ function SortableQueueItem({
   }
 
   return (
-    <div ref={combinedRef} style={style}>
+    <div ref={setNodeRef} style={style}>
       <QueueSongItem
         item={item}
         isExpanded={item.isExpanded}
@@ -241,18 +270,22 @@ function SortableQueueItem({
 interface QueueListProps {
   activeSlideId: number | null
   activeVerseId: number | null
+  activeEntryId: number | null
   activeQueueItemId: number | null
   onSlideClick: (queueItemId: number, slideId: number) => void
   onVerseClick: (queueItemId: number, verseId: number) => void
+  onEntryClick: (queueItemId: number, entryId: number) => void
   hideHeader?: boolean
 }
 
 export function QueueList({
   activeSlideId,
   activeVerseId,
+  activeEntryId,
   activeQueueItemId,
   onSlideClick,
   onVerseClick,
+  onEntryClick,
   hideHeader = false,
 }: QueueListProps) {
   const { t } = useTranslation('queue')
@@ -282,52 +315,8 @@ export function QueueList({
     null,
   )
 
-  // Refs for auto-scroll functionality
-  const itemRefs = useRef<Map<number, HTMLDivElement>>(new Map())
-  const previousActiveQueueItemId = useRef<number | null>(null)
-
-  // Create callback to register item refs
-  const createItemRef = useCallback(
-    (itemId: number) => (element: HTMLDivElement | null) => {
-      if (element) {
-        itemRefs.current.set(itemId, element)
-      } else {
-        itemRefs.current.delete(itemId)
-      }
-    },
-    [],
-  )
-
-  // Auto-scroll to active queue item when it changes
-  useEffect(() => {
-    // Only scroll if the active queue item actually changed (not on initial render with null)
-    if (
-      activeQueueItemId !== null &&
-      activeQueueItemId !== previousActiveQueueItemId.current
-    ) {
-      const element = itemRefs.current.get(activeQueueItemId)
-      if (element) {
-        // Find the scrollable container (parent with overflow-y-auto)
-        const scrollContainer = element.closest(
-          '[class*="overflow-y-auto"], [class*="overflow-auto"]',
-        )
-        if (scrollContainer) {
-          const containerRect = scrollContainer.getBoundingClientRect()
-          const elementRect = element.getBoundingClientRect()
-
-          // Check if element is not fully visible in the container
-          const isAboveViewport = elementRect.top < containerRect.top
-          const isBelowViewport = elementRect.bottom > containerRect.bottom
-
-          if (isAboveViewport || isBelowViewport) {
-            // Scroll to make the element the first visible item
-            element.scrollIntoView({ block: 'start', behavior: 'smooth' })
-          }
-        }
-      }
-    }
-    previousActiveQueueItemId.current = activeQueueItemId
-  }, [activeQueueItemId])
+  // Note: Auto-scroll is handled by individual verse/entry preview components
+  // (QueueVersePreview, QueueVerseteTineriEntryPreview) to ensure precise scroll positioning
 
   // Auto-expand the song containing the active slide when it changes
   useEffect(() => {
@@ -414,6 +403,26 @@ export function QueueList({
     }
   }
 
+  const handleEntryClick = (queueItemId: number, entryId: number) => {
+    // Auto-expand the versete tineri item when an entry is clicked
+    const item = queue?.find((q) => q.id === queueItemId)
+    if (item && !item.isExpanded) {
+      setExpanded.mutate({ id: queueItemId, expanded: true })
+    }
+    onEntryClick(queueItemId, entryId)
+  }
+
+  const handleVerseteTineriClick = (item: QueueItem) => {
+    // Auto-expand the versete tineri item
+    if (!item.isExpanded) {
+      setExpanded.mutate({ id: item.id, expanded: true })
+    }
+    // Select the first entry if available
+    if (item.verseteTineriEntries && item.verseteTineriEntries.length > 0) {
+      onEntryClick(item.id, item.verseteTineriEntries[0].id)
+    }
+  }
+
   const handleClearConfirm = async () => {
     setShowClearModal(false)
     const success = await clearQueueMutation.mutateAsync()
@@ -480,11 +489,14 @@ export function QueueList({
                 item={item}
                 activeSlideId={activeSlideId}
                 activeVerseId={activeVerseId}
+                activeEntryId={activeEntryId}
                 activeQueueItemId={activeQueueItemId}
                 onSlideClick={(slideId) => handleSlideClick(item.id, slideId)}
                 onVerseClick={(verseId) => handleVerseClick(item.id, verseId)}
+                onEntryClick={(entryId) => handleEntryClick(item.id, entryId)}
                 onSongClick={() => handleSongClick(item)}
                 onPassageClick={() => handlePassageClick(item)}
+                onVerseteTineriClick={() => handleVerseteTineriClick(item)}
                 onEditSong={setEditingSongId}
                 onEditSlide={setEditingSlideItem}
                 onAddToSchedule={setAddToScheduleSongId}
@@ -497,7 +509,6 @@ export function QueueList({
                 onStandaloneSlideClick={() =>
                   handleStandaloneSlideClick(item.id)
                 }
-                itemRef={createItemRef(item.id)}
               />
             ))}
           </div>

@@ -47,7 +47,8 @@
     "slideInserted": "Slide inserted",
     "slideUpdated": "Slide updated",
     "savedAsProgram": "Queue saved as program",
-    "biblePassageInserted": "Bible passage added to queue"
+    "biblePassageInserted": "Bible passage added to queue",
+    "verseteTineriInserted": "Youth verses added to queue"
   },
   "saveAsProgram": {
     "title": "Save Queue as Program",
@@ -93,5 +94,18 @@
       "invalid_chapter": "Invalid chapter number",
       "end_before_start": "End must be after start"
     }
+  },
+  "verseteTineri": {
+    "title": "Youth Verses",
+    "addEntry": "Add Entry",
+    "personName": "Person Name",
+    "personNamePlaceholder": "Enter name...",
+    "bibleReference": "Bible Reference",
+    "bibleReferencePlaceholder": "e.g., John 3:16",
+    "entriesCount_one": "{{count}} entry",
+    "entriesCount_other": "{{count}} entries",
+    "removeEntry": "Remove entry",
+    "noEntries": "No entries added yet",
+    "addFirstEntry": "Add an entry to get started"
   }
 }

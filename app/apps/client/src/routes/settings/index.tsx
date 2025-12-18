@@ -2,8 +2,10 @@ import { createFileRoute } from '@tanstack/react-router'
 import { Languages, Palette } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import { BibleTranslationSetting } from '~/features/bible/components'
 import { DisplayManager } from '~/features/presentation'
 import { SynonymManager } from '~/features/search'
+import { SidebarConfigManager } from '~/features/sidebar-config'
 import { ImportExportManager } from '~/features/song-export'
 import { CategoryManager } from '~/features/songs/components'
 import { UserList } from '~/features/users'
@@ -125,6 +127,11 @@ function RouteComponent() {
           </div>
         </div>
 
+        {/* Bible Settings Section */}
+        <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
+          <BibleTranslationSetting />
+        </div>
+
         {/* Song Categories Section */}
         <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
           <CategoryManager />
@@ -148,6 +155,11 @@ function RouteComponent() {
         {/* Displays Section */}
         <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
           <DisplayManager />
+        </div>
+
+        {/* Sidebar Configuration Section */}
+        <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
+          <SidebarConfigManager />
         </div>
       </div>
     </PagePermissionGuard>

@@ -2,13 +2,13 @@ import { createContext, useContext, useEffect, useState } from 'react'
 
 import { getCurrentUser } from '../features/users/service'
 import type { CurrentUser, Permission } from '../features/users/types'
-import { ALL_PERMISSIONS } from '../features/users/types'
+import { ALL_PERMISSIONS, isCustomPagePermission } from '../features/users/types'
 
 interface PermissionsContextType {
   permissions: Permission[]
-  hasPermission: (permission: Permission) => boolean
-  hasAnyPermission: (permissions: Permission[]) => boolean
-  hasAllPermissions: (permissions: Permission[]) => boolean
+  hasPermission: (permission: Permission | string) => boolean
+  hasAnyPermission: (permissions: (Permission | string)[]) => boolean
+  hasAllPermissions: (permissions: (Permission | string)[]) => boolean
   isAdmin: boolean
   isApp: boolean
   isAuthenticated: boolean
@@ -51,19 +51,23 @@ export function PermissionsProvider({
   // App auth has all permissions
   const effectivePermissions = isApp ? ALL_PERMISSIONS : permissions
 
-  const hasPermission = (permission: Permission): boolean => {
+  const hasPermission = (permission: Permission | string): boolean => {
     if (isApp) return true
-    return effectivePermissions.includes(permission)
+    // For dynamic custom page permissions, check if user has this specific permission
+    if (isCustomPagePermission(permission)) {
+      return effectivePermissions.includes(permission as Permission)
+    }
+    return effectivePermissions.includes(permission as Permission)
   }
 
-  const hasAnyPermission = (perms: Permission[]): boolean => {
+  const hasAnyPermission = (perms: (Permission | string)[]): boolean => {
     if (isApp) return true
-    return perms.some((p) => effectivePermissions.includes(p))
+    return perms.some((p) => hasPermission(p))
   }
 
-  const hasAllPermissions = (perms: Permission[]): boolean => {
+  const hasAllPermissions = (perms: (Permission | string)[]): boolean => {
     if (isApp) return true
-    return perms.every((p) => effectivePermissions.includes(p))
+    return perms.every((p) => hasPermission(p))
   }
 
   const isAdmin =

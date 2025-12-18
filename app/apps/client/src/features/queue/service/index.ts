@@ -5,6 +5,7 @@ export {
   insertBiblePassageToQueue,
   insertBibleVerseToQueue,
   insertSlideToQueue,
+  insertVerseteTineriToQueue,
   removeFromQueue,
   reorderQueue,
   saveQueueAsSchedule,

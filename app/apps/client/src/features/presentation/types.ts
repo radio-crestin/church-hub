@@ -53,6 +53,7 @@ export interface PresentationState {
   currentQueueItemId: number | null
   currentSongSlideId: number | null
   currentBiblePassageVerseId: number | null
+  currentVerseteTineriEntryId: number | null
   lastSongSlideId: number | null
   isPresenting: boolean
   isHidden: boolean
@@ -66,6 +67,7 @@ export interface UpdatePresentationStateInput {
   currentQueueItemId?: number | null
   currentSongSlideId?: number | null
   currentBiblePassageVerseId?: number | null
+  currentVerseteTineriEntryId?: number | null
   lastSongSlideId?: number | null
   isPresenting?: boolean
   isHidden?: boolean
