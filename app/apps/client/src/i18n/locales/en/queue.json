@@ -29,6 +29,8 @@
     "searchSongDescription": "Find and add an existing song",
     "bibleVerse": "Bible Verse",
     "bibleVerseDescription": "Search and add a Bible verse",
+    "biblePassage": "Bible Passage",
+    "biblePassageDescription": "Add a range of Bible verses",
     "announcement": "Announcement",
     "announcementDescription": "Create a custom announcement slide",
     "verseteTineri": "Versete Tineri",
@@ -44,7 +46,8 @@
     "error": "An error occurred",
     "slideInserted": "Slide inserted",
     "slideUpdated": "Slide updated",
-    "savedAsProgram": "Queue saved as program"
+    "savedAsProgram": "Queue saved as program",
+    "biblePassageInserted": "Bible passage added to queue"
   },
   "saveAsProgram": {
     "title": "Save Queue as Program",
@@ -73,5 +76,22 @@
   "importSchedule": {
     "title": "Import Schedule",
     "description": "Add all items from a saved schedule to the queue"
+  },
+  "biblePassage": {
+    "title": "Add Bible Passage",
+    "translation": "Translation",
+    "reference": "Reference",
+    "referencePlaceholder": "e.g., Gen 1:1-5 or Ioan 3:16",
+    "referenceHint": "Enter book, chapter, and verse range",
+    "valid": "Valid",
+    "add": "Add to Queue",
+    "passage": "Bible Passage",
+    "errors": {
+      "empty": "Please enter a reference",
+      "invalid_format": "Invalid format. Try: Gen 1:1 or Gen 1:1-5",
+      "book_not_found": "Book not found",
+      "invalid_chapter": "Invalid chapter number",
+      "end_before_start": "End must be after start"
+    }
   }
 }

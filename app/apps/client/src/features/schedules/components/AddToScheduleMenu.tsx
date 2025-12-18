@@ -1,4 +1,12 @@
-import { FileText, Megaphone, Music, Plus, X } from 'lucide-react'
+import {
+  Book,
+  BookOpen,
+  FileText,
+  Megaphone,
+  Music,
+  Plus,
+  X,
+} from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -6,11 +14,15 @@ import type { SlideTemplate } from '../types'
 
 interface AddToScheduleMenuProps {
   onAddSong: () => void
+  onAddBibleVerse?: () => void
+  onAddBiblePassage?: () => void
   onAddSlide: (template: SlideTemplate) => void
 }
 
 export function AddToScheduleMenu({
   onAddSong,
+  onAddBibleVerse,
+  onAddBiblePassage,
   onAddSlide,
 }: AddToScheduleMenuProps) {
   const { t } = useTranslation('queue')
@@ -86,6 +98,52 @@ export function AddToScheduleMenu({
                 </div>
               </div>
             </button>
+
+            {onAddBibleVerse && (
+              <button
+                type="button"
+                onClick={() => handleAction(onAddBibleVerse)}
+                className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                  <Book
+                    size={20}
+                    className="text-blue-600 dark:text-blue-400"
+                  />
+                </div>
+                <div>
+                  <div className="font-medium">
+                    {t('addToQueue.bibleVerse')}
+                  </div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    {t('addToQueue.bibleVerseDescription')}
+                  </div>
+                </div>
+              </button>
+            )}
+
+            {onAddBiblePassage && (
+              <button
+                type="button"
+                onClick={() => handleAction(onAddBiblePassage)}
+                className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center">
+                  <BookOpen
+                    size={20}
+                    className="text-teal-600 dark:text-teal-400"
+                  />
+                </div>
+                <div>
+                  <div className="font-medium">
+                    {t('addToQueue.biblePassage')}
+                  </div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    {t('addToQueue.biblePassageDescription')}
+                  </div>
+                </div>
+              </button>
+            )}
 
             <button
               type="button"

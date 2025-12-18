@@ -2,6 +2,7 @@
 export {
   BibleControlPanel,
   BibleNavigationPanel,
+  BiblePassagePickerModal,
   BooksList,
   ChaptersGrid,
   TranslationSelector,

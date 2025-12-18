@@ -38,4 +38,5 @@ export {
   parsePptxFile,
   processImportFiles,
   processZipFromBuffer,
+  sanitizeSongTitle,
 } from './utils'
