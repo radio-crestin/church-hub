@@ -36,6 +36,13 @@
       "when": 1766200000000,
       "tag": "0004_add_screens_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1766300000000,
+      "tag": "0005_drop_displays_table",
+      "breakpoints": true
     }
   ]
 }
