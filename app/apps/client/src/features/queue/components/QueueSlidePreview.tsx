@@ -28,10 +28,18 @@ export function QueueSlidePreview({
   }, [isActive])
 
   // Strip HTML tags for preview text, replacing them with spaces to preserve word separation
+  // Then decode HTML entities like &quot; &amp; etc.
   const previewText =
     slide.content
       .replace(/<[^>]*>/g, ' ')
       .replace(/\s+/g, ' ')
+      .replace(/&quot;/g, '"')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&apos;/g, "'")
+      .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(dec))
+      .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
       .trim() || 'Empty slide'
 
   return (
