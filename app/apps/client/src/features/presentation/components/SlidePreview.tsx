@@ -1,6 +1,13 @@
 import { Pencil } from 'lucide-react'
 
-import type { Slide } from '~/features/programs/types'
+// Slide type for announcement/custom slides
+interface Slide {
+  type?: string
+  sortOrder: number
+  content?: {
+    html?: string
+  }
+}
 
 interface SlidePreviewProps {
   slide: Slide

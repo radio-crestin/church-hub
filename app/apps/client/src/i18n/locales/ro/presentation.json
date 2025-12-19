@@ -1,4 +1,141 @@
 {
+  "screens": {
+    "title": "Ecrane",
+    "description": "Configurați ecrane pentru diferite scopuri de afișare. Fiecare tip de ecran are propriile opțiuni de configurare.",
+    "addScreen": "Adaugă Ecran",
+    "addFirstScreen": "Adaugă Primul Ecran",
+    "noScreens": "Niciun ecran configurat",
+    "noScreensDescription": "Adaugă primul tău ecran pentru a configura cum este afișat conținutul.",
+    "screenName": "Nume Ecran",
+    "screenNamePlaceholder": "ex: Proiector Principal",
+    "screenType": "Tip Ecran",
+    "screenTypes": {
+      "primary": "Principal / Audiență",
+      "stage": "Monitor Scenă",
+      "livestream": "Transmisie Live"
+    },
+    "createAndConfigure": "Creează și Configurează",
+    "deleteConfirmTitle": "Șterge Ecranul?",
+    "deleteConfirmMessage": "Ești sigur că vrei să ștergi \"{{name}}\"? Această acțiune nu poate fi anulată.",
+    "editor": {
+      "preview": "Previzualizare",
+      "zoom": "Zoom",
+      "resetZoom": "Resetează Zoom",
+      "save": "Salvează",
+      "unsavedChanges": "Modificări nesalvate"
+    },
+    "contentTypes": {
+      "song": "Cântec",
+      "bible": "Verset Biblic",
+      "bible_passage": "Pasaj Biblic",
+      "announcement": "Anunț",
+      "versete_tineri": "Versete Tineri",
+      "empty": "Gol / Ceas"
+    },
+    "panels": {
+      "position": "Poziție și Dimensiune",
+      "textStyle": "Stil Text",
+      "animation": "Animație",
+      "background": "Fundal",
+      "general": "Setări Generale",
+      "nextSlide": "Secțiune Slide Următor"
+    },
+    "position": {
+      "x": "Poziție X",
+      "y": "Poziție Y",
+      "width": "Lățime",
+      "height": "Înălțime",
+      "unit": "Unitate",
+      "pixels": "Pixeli",
+      "percent": "Procent",
+      "constraints": "Constrângeri",
+      "element": "Element",
+      "top": "Sus",
+      "bottom": "Jos",
+      "left": "Stânga",
+      "right": "Dreapta",
+      "stretchHorizontal": "Lățimea se întinde între constrângerile stânga și dreapta",
+      "stretchVertical": "Înălțimea se întinde între constrângerile sus și jos"
+    },
+    "textStyle": {
+      "fontFamily": "Familie Font",
+      "maxFontSize": "Dimensiune Max Font",
+      "autoScale": "Scalare Automată",
+      "color": "Culoare",
+      "bold": "Bold",
+      "italic": "Italic",
+      "underline": "Subliniat",
+      "horizontalAlignment": "Aliniere Orizontală",
+      "verticalAlignment": "Aliniere Verticală",
+      "left": "Stânga",
+      "center": "Centru",
+      "right": "Dreapta",
+      "top": "Sus",
+      "middle": "Mijloc",
+      "bottom": "Jos",
+      "lineHeight": "Înălțime Linie",
+      "shadow": "Umbră Text"
+    },
+    "animation": {
+      "animationIn": "Animație Intrare",
+      "animationOut": "Animație Ieșire",
+      "type": "Tip",
+      "duration": "Durată",
+      "delay": "Întârziere",
+      "easing": "Easing",
+      "types": {
+        "none": "Niciunul",
+        "fade": "Fade",
+        "slideUp": "Alunecare Sus",
+        "slideDown": "Alunecare Jos",
+        "slideLeft": "Alunecare Stânga",
+        "slideRight": "Alunecare Dreapta",
+        "scale": "Scalare",
+        "blur": "Blur"
+      },
+      "easings": {
+        "linear": "Liniar",
+        "easeIn": "Ease In",
+        "easeOut": "Ease Out",
+        "easeInOut": "Ease In Out",
+        "bounce": "Bounce"
+      }
+    },
+    "background": {
+      "type": "Tip",
+      "types": {
+        "transparent": "Transparent",
+        "color": "Culoare Solidă",
+        "image": "Imagine",
+        "video": "Video"
+      },
+      "color": "Culoare",
+      "imageUrl": "URL Imagine",
+      "videoUrl": "URL Video",
+      "opacity": "Opacitate"
+    },
+    "general": {
+      "screenSize": "Dimensiune Ecran",
+      "width": "Lățime",
+      "height": "Înălțime",
+      "clockEnabled": "Afișează Ceas",
+      "defaultBackground": "Fundal Implicit"
+    },
+    "nextSlide": {
+      "enabled": "Afișează Secțiunea Slide Următor",
+      "labelText": "Text Etichetă",
+      "labelStyle": "Stil Etichetă",
+      "contentStyle": "Stil Conținut"
+    },
+    "messages": {
+      "screenCreated": "Ecran creat cu succes",
+      "screenCreateFailed": "Eroare la crearea ecranului",
+      "screenSaved": "Ecran salvat cu succes",
+      "screenSaveFailed": "Eroare la salvarea ecranului",
+      "screenDeleted": "Ecran șters cu succes",
+      "screenDeleteFailed": "Eroare la ștergerea ecranului"
+    }
+  },
   "displays": {
     "title": "Ecrane",
     "description": "Configurați ecranele de ieșire pentru prezentările dumneavoastră. Fiecare ecran poate avea propria temă și setări.",
