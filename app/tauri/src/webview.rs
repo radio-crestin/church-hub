@@ -1,9 +1,10 @@
 use std::time::Duration;
 use tauri::{webview::WebviewBuilder, LogicalPosition, LogicalSize, Manager, WebviewUrl};
+use tauri_utils::config::BackgroundThrottlingPolicy;
 use tokio::time::sleep;
 
-// Modern Chrome user agent to ensure compatibility with sites like WhatsApp Web
-const CHROME_USER_AGENT: &str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+// Modern Chrome user agent to ensure compatibility with sites like YouTube and WhatsApp Web
+const CHROME_USER_AGENT: &str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36";
 
 // Maximum retries for getting main window (handles timing issues during startup)
 const MAX_MAIN_WINDOW_RETRIES: u32 = 10;
@@ -90,8 +91,10 @@ pub async fn create_child_webview(
 
     // Build and add the child webview with modern Chrome user agent
     // Note: We don't use auto_resize() because we want to control the exact position
+    // Disable background throttling to ensure smooth video playback (macOS 14.0+)
     let webview_builder = WebviewBuilder::new(&label, webview_url)
-        .user_agent(CHROME_USER_AGENT);
+        .user_agent(CHROME_USER_AGENT)
+        .background_throttling(BackgroundThrottlingPolicy::Disabled);
 
     // Get the window reference for add_child
     let window = main_window.as_ref().window();
