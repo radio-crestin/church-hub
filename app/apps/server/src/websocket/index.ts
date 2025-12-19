@@ -23,6 +23,23 @@ export type PresentationMessage = {
   }
 }
 
+export type ScreenConfigUpdatedMessage = {
+  type: 'screen_config_updated'
+  payload: {
+    screenId: number
+    updatedAt: number
+  }
+}
+
+export type ScreenConfigPreviewMessage = {
+  type: 'screen_config_preview'
+  payload: {
+    screenId: number
+    config: Record<string, unknown>
+    updatedAt: number
+  }
+}
+
 // Store connected clients
 const clients = new Map<string, ServerWebSocket<WebSocketData>>()
 
@@ -58,6 +75,36 @@ export function handleWebSocketMessage(
     // Handle ping/pong for keepalive
     if (data.type === 'ping') {
       ws.send(JSON.stringify({ type: 'pong' }))
+      return
+    }
+
+    // Handle screen config preview - broadcast to all other clients
+    if (data.type === 'screen_config_preview') {
+      const previewMessage = JSON.stringify({
+        type: 'screen_config_preview',
+        payload: {
+          screenId: data.payload.screenId,
+          config: data.payload.config,
+          updatedAt: Date.now(),
+        },
+      } satisfies ScreenConfigPreviewMessage)
+
+      log(
+        'debug',
+        `Broadcasting screen config preview for screen ${data.payload.screenId}`,
+      )
+
+      // Broadcast to all clients except the sender
+      for (const [clientId, client] of clients) {
+        if (clientId !== ws.data.clientId) {
+          try {
+            client.send(previewMessage)
+          } catch (error) {
+            log('error', `Failed to send preview to ${clientId}: ${error}`)
+            clients.delete(clientId)
+          }
+        }
+      }
     }
   } catch (error) {
     log('error', `Failed to parse message: ${error}`)
@@ -89,6 +136,33 @@ export function broadcastPresentationState(
   } satisfies PresentationMessage)
 
   log('debug', `Broadcasting to ${clients.size} clients`)
+
+  for (const [clientId, ws] of clients) {
+    try {
+      ws.send(message)
+    } catch (error) {
+      log('error', `Failed to send to ${clientId}: ${error}`)
+      clients.delete(clientId)
+    }
+  }
+}
+
+/**
+ * Broadcasts screen config update to all connected clients
+ */
+export function broadcastScreenConfigUpdated(screenId: number) {
+  const message = JSON.stringify({
+    type: 'screen_config_updated',
+    payload: {
+      screenId,
+      updatedAt: Date.now(),
+    },
+  } satisfies ScreenConfigUpdatedMessage)
+
+  log(
+    'debug',
+    `Broadcasting screen config update for screen ${screenId} to ${clients.size} clients`,
+  )
 
   for (const [clientId, ws] of clients) {
     try {

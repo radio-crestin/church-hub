@@ -10,8 +10,8 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
   const location = useLocation()
 
-  // Full-screen mode for display windows
-  if (location.pathname.startsWith('/display/')) {
+  // Full-screen mode for screen/display windows
+  if (location.pathname.startsWith('/screen/')) {
     return <>{children}</>
   }
 

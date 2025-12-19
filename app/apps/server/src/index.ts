@@ -50,20 +50,34 @@ import {
 } from './service/conversion'
 import { getExternalInterfaces } from './service/network'
 import {
+  type ContentType,
   clearSlide,
   type DisplayTheme,
   deleteDisplay,
+  deleteScreen,
   getAllDisplays,
+  getAllScreens,
+  getContentConfig,
   getDisplayById,
+  getNextSlideConfig,
   getPresentationState,
+  getScreenById,
+  getScreenWithConfigs,
+  type NextSlideSectionConfig,
   navigateQueueSlide,
+  type ScreenGlobalSettings,
   showSlide,
   stopPresentation,
   type UpdatePresentationStateInput,
   type UpsertDisplayInput,
+  type UpsertScreenInput,
+  updateContentConfig,
   updateDisplayTheme,
+  updateGlobalSettings,
+  updateNextSlideConfig,
   updatePresentationState,
   upsertDisplay,
+  upsertScreen,
 } from './service/presentation'
 import {
   type AddToQueueInput,
@@ -133,6 +147,7 @@ import {
 } from './service/songs'
 import {
   broadcastPresentationState,
+  broadcastScreenConfigUpdated,
   handleWebSocketClose,
   handleWebSocketMessage,
   handleWebSocketOpen,
@@ -1380,6 +1395,320 @@ async function main() {
           return handleCors(
             req,
             new Response(JSON.stringify({ data: display }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // ============================================================
+      // Screens API Endpoints (New rendering engine)
+      // ============================================================
+
+      // GET /api/screens - List all screens
+      if (req.method === 'GET' && url.pathname === '/api/screens') {
+        const permError = checkPermission('displays.view')
+        if (permError) return permError
+
+        const screenList = getAllScreens()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: screenList }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // GET /api/screens/:id - Get screen by ID (with configs)
+      const getScreenMatch = url.pathname.match(/^\/api\/screens\/(\d+)$/)
+      if (req.method === 'GET' && getScreenMatch?.[1]) {
+        const permError = checkPermission('displays.view')
+        if (permError) return permError
+
+        const id = parseInt(getScreenMatch[1], 10)
+        const screen = getScreenWithConfigs(id)
+
+        if (!screen) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Screen not found' }), {
+              status: 404,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: screen }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/screens - Create/update screen
+      if (req.method === 'POST' && url.pathname === '/api/screens') {
+        try {
+          const body = (await req.json()) as UpsertScreenInput
+
+          const permError = checkPermission(
+            body.id ? 'displays.edit' : 'displays.create',
+          )
+          if (permError) return permError
+
+          if (!body.name) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Missing name' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          if (!body.type) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Missing type' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const screen = upsertScreen(body)
+
+          if (!screen) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Failed to save screen' }), {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          // Broadcast screen config update if updating existing screen
+          if (body.id) {
+            broadcastScreenConfigUpdated(screen.id)
+          }
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: screen }), {
+              status: body.id ? 200 : 201,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // DELETE /api/screens/:id - Delete screen
+      const deleteScreenMatch = url.pathname.match(/^\/api\/screens\/(\d+)$/)
+      if (req.method === 'DELETE' && deleteScreenMatch?.[1]) {
+        const permError = checkPermission('displays.delete')
+        if (permError) return permError
+
+        const id = parseInt(deleteScreenMatch[1], 10)
+        const result = deleteScreen(id)
+
+        if (!result.success) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: result.error }), {
+              status: 500,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: { success: true } }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // PUT /api/screens/:id/config/:contentType - Update content config
+      const updateConfigMatch = url.pathname.match(
+        /^\/api\/screens\/(\d+)\/config\/(.+)$/,
+      )
+      if (
+        req.method === 'PUT' &&
+        updateConfigMatch?.[1] &&
+        updateConfigMatch?.[2]
+      ) {
+        const permError = checkPermission('displays.edit')
+        if (permError) return permError
+
+        try {
+          const screenId = parseInt(updateConfigMatch[1], 10)
+          const contentType = updateConfigMatch[2] as ContentType
+          const body = (await req.json()) as { config: Record<string, unknown> }
+
+          if (!body.config) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Missing config' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const result = updateContentConfig({
+            screenId,
+            contentType,
+            config: body.config,
+          })
+
+          if (!result.success) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: result.error }), {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          // Broadcast screen config update to all connected clients
+          broadcastScreenConfigUpdated(screenId)
+
+          const config = getContentConfig(screenId, contentType)
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: config }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // PUT /api/screens/:id/next-slide-config - Update next slide config
+      const updateNextSlideMatch = url.pathname.match(
+        /^\/api\/screens\/(\d+)\/next-slide-config$/,
+      )
+      if (req.method === 'PUT' && updateNextSlideMatch?.[1]) {
+        const permError = checkPermission('displays.edit')
+        if (permError) return permError
+
+        try {
+          const screenId = parseInt(updateNextSlideMatch[1], 10)
+          const body = (await req.json()) as { config: NextSlideSectionConfig }
+
+          if (!body.config) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Missing config' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const result = updateNextSlideConfig({
+            screenId,
+            config: body.config,
+          })
+
+          if (!result.success) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: result.error }), {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          // Broadcast screen config update to all connected clients
+          broadcastScreenConfigUpdated(screenId)
+
+          const config = getNextSlideConfig(screenId)
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: config }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // PUT /api/screens/:id/global-settings - Update global settings
+      const updateGlobalSettingsMatch = url.pathname.match(
+        /^\/api\/screens\/(\d+)\/global-settings$/,
+      )
+      if (req.method === 'PUT' && updateGlobalSettingsMatch?.[1]) {
+        const permError = checkPermission('displays.edit')
+        if (permError) return permError
+
+        try {
+          const screenId = parseInt(updateGlobalSettingsMatch[1], 10)
+          const body = (await req.json()) as { settings: ScreenGlobalSettings }
+
+          if (!body.settings) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Missing settings' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const result = updateGlobalSettings(screenId, body.settings)
+
+          if (!result.success) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: result.error }), {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          // Broadcast screen config update to all connected clients
+          broadcastScreenConfigUpdated(screenId)
+
+          const screen = getScreenById(screenId)
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: screen }), {
               headers: { 'Content-Type': 'application/json' },
             }),
           )

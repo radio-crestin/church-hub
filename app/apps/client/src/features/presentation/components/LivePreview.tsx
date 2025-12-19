@@ -1,40 +1,41 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { getApiUrl } from '~/config'
-import { ClockOverlay } from './ClockOverlay'
-import { SlideRenderer } from './SlideRenderer'
+import { ScreenPreview } from './ScreenPreview'
 import { usePresentationState, useWebSocket } from '../hooks'
-import type { DisplayTheme } from '../types'
-import { getDefaultTheme } from '../types'
+import { useScreen } from '../hooks/useScreen'
+import { useScreens } from '../hooks/useScreens'
+import type { ContentType } from '../types'
 
 interface SongSlideData {
   id: number
   content: string
 }
 
-interface StandaloneSlideData {
+interface QueueItem {
   id: number
-  slideContent: string | null
+  itemType: string
+  slideType?: string
+  slideContent?: string
+  bibleReference?: string
+  bibleText?: string
+  bibleTranslation?: string
+  biblePassageVerses?: Array<{ id: number; reference: string; text: string }>
+  biblePassageTranslation?: string
+  verseteTineriEntries?: Array<{
+    id: number
+    reference: string
+    text: string
+    person?: string
+  }>
+  slides?: Array<{ id: number; content: string }>
 }
 
-interface BibleVerseData {
-  id: number
-  reference: string | null
-  text: string | null
-  translation: string | null
-}
-
-interface BiblePassageVerseData {
-  id: number
-  reference: string
-  text: string
-  translation: string | null
-}
-
-interface VerseteTineriEntryData {
-  id: number
-  reference: string
-  text: string
+interface ContentData {
+  mainText?: string
+  referenceText?: string
+  contentText?: string
+  personLabel?: string
 }
 
 export function LivePreview() {
@@ -42,304 +43,182 @@ export function LivePreview() {
   useWebSocket()
 
   const { data: presentationState } = usePresentationState()
-  const [theme, setTheme] = useState<DisplayTheme>(getDefaultTheme())
-  const [currentSongSlide, setCurrentSongSlide] =
-    useState<SongSlideData | null>(null)
-  const [currentStandaloneSlide, setCurrentStandaloneSlide] =
-    useState<StandaloneSlideData | null>(null)
-  const [currentBibleVerse, setCurrentBibleVerse] =
-    useState<BibleVerseData | null>(null)
-  const [currentBiblePassageVerse, setCurrentBiblePassageVerse] =
-    useState<BiblePassageVerseData | null>(null)
-  const [currentVerseteTineriEntry, setCurrentVerseteTineriEntry] =
-    useState<VerseteTineriEntryData | null>(null)
+  const { data: screens } = useScreens()
 
-  // Fetch the first active display's theme for preview
+  // Find first active primary screen
+  const primaryScreen = useMemo(() => {
+    if (!screens) return null
+    return (
+      screens
+        .filter((s) => s.type === 'primary' && s.isActive)
+        .sort((a, b) => a.sortOrder - b.sortOrder)[0] || null
+    )
+  }, [screens])
+
+  // Get full config for the primary screen
+  const { data: screen } = useScreen(primaryScreen?.id ?? 0)
+
+  const [contentType, setContentType] = useState<ContentType>('empty')
+  const [contentData, setContentData] = useState<ContentData>({})
+
+  // Fetch content based on presentation state
   useEffect(() => {
-    const fetchDisplayTheme = async () => {
-      try {
-        const response = await fetch(`${getApiUrl()}/api/displays`, {
-          credentials: 'include',
-        })
-        if (response.ok) {
-          const result = await response.json()
-          const activeDisplay = result.data?.find(
-            (d: { isActive: boolean }) => d.isActive,
-          )
-          if (activeDisplay?.theme) {
-            setTheme(activeDisplay.theme)
-          }
-        }
-      } catch (error) {
-        // biome-ignore lint/suspicious/noConsole: error logging
-        console.error('Failed to fetch display theme:', error)
+    const fetchContent = async () => {
+      if (!presentationState) {
+        setContentData({})
+        setContentType('empty')
+        return
       }
-    }
 
-    fetchDisplayTheme()
-  }, [])
-
-  // Fetch current song slide content when presentation state changes
-  useEffect(() => {
-    const fetchSongSlide = async () => {
-      if (!presentationState?.currentSongSlideId) {
-        setCurrentSongSlide(null)
+      // Check if hidden
+      if (presentationState.isHidden) {
+        setContentData({})
+        setContentType('empty')
         return
       }
 
       try {
-        // Find the song slide from the queue
-        const queueResponse = await fetch(`${getApiUrl()}/api/queue`, {
-          credentials: 'include',
-        })
-        if (queueResponse.ok) {
-          const queueResult = await queueResponse.json()
-          // Search through queue items to find the slide
-          for (const item of queueResult.data || []) {
-            const slide = item.slides?.find(
-              (s: SongSlideData) =>
-                s.id === presentationState.currentSongSlideId,
-            )
-            if (slide) {
-              setCurrentSongSlide(slide)
-              return
-            }
-          }
-        }
-        setCurrentSongSlide(null)
-      } catch (error) {
-        // biome-ignore lint/suspicious/noConsole: error logging
-        console.error('Failed to fetch song slide:', error)
-      }
-    }
-
-    fetchSongSlide()
-  }, [presentationState?.currentSongSlideId, presentationState?.updatedAt])
-
-  // Fetch current standalone slide or Bible verse content when presentation state changes
-  useEffect(() => {
-    const fetchQueueItem = async () => {
-      // Only when we have a queue item but no song slide
-      if (
-        !presentationState?.currentQueueItemId ||
-        presentationState?.currentSongSlideId
-      ) {
-        setCurrentStandaloneSlide(null)
-        setCurrentBibleVerse(null)
-        setCurrentBiblePassageVerse(null)
-        setCurrentVerseteTineriEntry(null)
-        return
-      }
-
-      try {
-        // Find the item from the queue
         const queueResponse = await fetch(`${getApiUrl()}/api/queue`, {
           cache: 'no-store',
           headers: { 'Cache-Control': 'no-cache' },
           credentials: 'include',
         })
-        if (queueResponse.ok) {
-          const queueResult = await queueResponse.json()
-          // Find the queue item
-          const queueItem = (queueResult.data || []).find(
-            (item: { id: number }) =>
-              item.id === presentationState.currentQueueItemId,
+
+        if (!queueResponse.ok) {
+          setContentData({})
+          setContentType('empty')
+          return
+        }
+
+        const queueResult = await queueResponse.json()
+        const queueItems: QueueItem[] = queueResult.data || []
+
+        // Find current content - song slide
+        if (presentationState.currentSongSlideId) {
+          for (const item of queueItems) {
+            const slide = item.slides?.find(
+              (s: SongSlideData) =>
+                s.id === presentationState.currentSongSlideId,
+            )
+            if (slide) {
+              setContentType('song')
+              setContentData({
+                mainText: slide.content,
+              })
+              return
+            }
+          }
+        }
+
+        // Queue item content (not song slide)
+        if (
+          presentationState.currentQueueItemId &&
+          !presentationState.currentSongSlideId
+        ) {
+          const queueItem = queueItems.find(
+            (item) => item.id === presentationState.currentQueueItemId,
           )
 
           if (queueItem) {
             if (queueItem.itemType === 'slide') {
-              // Check if this is a versete_tineri slide
               if (
                 queueItem.slideType === 'versete_tineri' &&
                 queueItem.verseteTineriEntries
               ) {
-                // Find the specific entry
                 const entryId = presentationState.currentVerseteTineriEntryId
-                if (entryId && queueItem.verseteTineriEntries) {
-                  const entry = queueItem.verseteTineriEntries.find(
-                    (e: { id: number }) => e.id === entryId,
-                  )
-                  if (entry) {
-                    setCurrentVerseteTineriEntry({
-                      id: entry.id,
-                      reference: entry.reference,
-                      text: entry.text,
-                    })
-                    setCurrentStandaloneSlide(null)
-                    setCurrentBibleVerse(null)
-                    setCurrentBiblePassageVerse(null)
-                    return
-                  }
-                }
-                // Fallback: show first entry if no specific entry selected
-                if (queueItem.verseteTineriEntries.length > 0) {
-                  const firstEntry = queueItem.verseteTineriEntries[0]
-                  setCurrentVerseteTineriEntry({
-                    id: firstEntry.id,
-                    reference: firstEntry.reference,
-                    text: firstEntry.text,
+                const entry = entryId
+                  ? queueItem.verseteTineriEntries.find((e) => e.id === entryId)
+                  : queueItem.verseteTineriEntries[0]
+
+                if (entry) {
+                  setContentType('versete_tineri')
+                  setContentData({
+                    personLabel: entry.person || '',
+                    referenceText: entry.reference,
+                    contentText: entry.text,
                   })
-                  setCurrentStandaloneSlide(null)
-                  setCurrentBibleVerse(null)
-                  setCurrentBiblePassageVerse(null)
                   return
                 }
               }
-              // Regular standalone slide
-              setCurrentStandaloneSlide({
-                id: queueItem.id,
-                slideContent: queueItem.slideContent,
+
+              // Regular announcement slide
+              setContentType('announcement')
+              setContentData({
+                mainText: queueItem.slideContent || '',
               })
-              setCurrentBibleVerse(null)
-              setCurrentBiblePassageVerse(null)
-              setCurrentVerseteTineriEntry(null)
               return
             }
 
             if (queueItem.itemType === 'bible') {
-              setCurrentBibleVerse({
-                id: queueItem.id,
-                reference: queueItem.bibleReference,
-                text: queueItem.bibleText,
-                translation: queueItem.bibleTranslation,
+              const reference = (queueItem.bibleReference || '').replace(
+                /\s*-\s*[A-Z]+\s*$/,
+                '',
+              )
+              setContentType('bible')
+              setContentData({
+                referenceText: reference,
+                contentText: queueItem.bibleText || '',
               })
-              setCurrentStandaloneSlide(null)
-              setCurrentBiblePassageVerse(null)
-              setCurrentVerseteTineriEntry(null)
               return
             }
 
             if (queueItem.itemType === 'bible_passage') {
-              // Find the specific verse within the passage
               const verseId = presentationState.currentBiblePassageVerseId
-              if (verseId && queueItem.biblePassageVerses) {
-                const verse = queueItem.biblePassageVerses.find(
-                  (v: { id: number }) => v.id === verseId,
-                )
-                if (verse) {
-                  setCurrentBiblePassageVerse({
-                    id: verse.id,
-                    reference: verse.reference,
-                    text: verse.text,
-                    translation: queueItem.biblePassageTranslation,
-                  })
-                  setCurrentStandaloneSlide(null)
-                  setCurrentBibleVerse(null)
-                  setCurrentVerseteTineriEntry(null)
-                  return
-                }
-              }
-              // Fallback: show first verse if no specific verse selected
-              if (queueItem.biblePassageVerses?.length > 0) {
-                const firstVerse = queueItem.biblePassageVerses[0]
-                setCurrentBiblePassageVerse({
-                  id: firstVerse.id,
-                  reference: firstVerse.reference,
-                  text: firstVerse.text,
-                  translation: queueItem.biblePassageTranslation,
+              const verse = verseId
+                ? queueItem.biblePassageVerses?.find((v) => v.id === verseId)
+                : queueItem.biblePassageVerses?.[0]
+
+              if (verse) {
+                setContentType('bible_passage')
+                setContentData({
+                  referenceText: verse.reference,
+                  contentText: verse.text,
                 })
-                setCurrentStandaloneSlide(null)
-                setCurrentBibleVerse(null)
-                setCurrentVerseteTineriEntry(null)
                 return
               }
             }
           }
         }
-        setCurrentStandaloneSlide(null)
-        setCurrentBibleVerse(null)
-        setCurrentBiblePassageVerse(null)
-        setCurrentVerseteTineriEntry(null)
-      } catch (error) {
-        // biome-ignore lint/suspicious/noConsole: error logging
-        console.error('Failed to fetch queue item:', error)
+
+        // No content, show empty/clock
+        setContentData({})
+        setContentType('empty')
+      } catch (_error) {
+        setContentData({})
+        setContentType('empty')
       }
     }
 
-    fetchQueueItem()
+    fetchContent()
   }, [
-    presentationState?.currentQueueItemId,
     presentationState?.currentSongSlideId,
+    presentationState?.currentQueueItemId,
     presentationState?.currentBiblePassageVerseId,
     presentationState?.currentVerseteTineriEntryId,
+    presentationState?.isHidden,
     presentationState?.updatedAt,
   ])
 
-  const getBackgroundStyle = (): React.CSSProperties => {
-    if (theme.backgroundType === 'transparent') {
-      return { backgroundColor: '#1f2937' } // Dark gray for preview
-    }
+  const hasContent = Object.keys(contentData).length > 0
+  const showClock = !hasContent || presentationState?.isHidden
 
-    if (theme.backgroundType === 'image' && theme.backgroundImage) {
-      return {
-        backgroundImage: `url(${theme.backgroundImage})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }
-    }
-
-    return { backgroundColor: theme.backgroundColor || '#000000' }
+  // Loading state
+  if (!screen) {
+    return (
+      <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow-lg bg-gray-800 flex items-center justify-center">
+        <div className="text-gray-400 text-sm">Loading...</div>
+      </div>
+    )
   }
-
-  // Determine what to show - has content if any slide type is active
-  // For standalone slides/Bible: currentQueueItemId is set but currentSongSlideId is null
-  const hasStandaloneSlide =
-    presentationState?.currentQueueItemId &&
-    !presentationState?.currentSongSlideId
-  const hasContent = presentationState?.currentSongSlideId || hasStandaloneSlide
-  const isHidden = presentationState?.isHidden ?? false
-  // Show clock when there's no content or when hidden
-  const showClock = !hasContent || isHidden
-
-  // Get content to display - prioritize song slides, then standalone slides, then Bible verses
-  const getSlideContent = (): string | null => {
-    if (currentSongSlide?.content) {
-      return currentSongSlide.content
-    }
-    if (currentStandaloneSlide?.slideContent) {
-      return currentStandaloneSlide.slideContent
-    }
-    if (currentBibleVerse?.text) {
-      // Format Bible verse with reference at top (same size), no translation version
-      // Remove translation suffix (e.g., " - RCCV") from reference
-      const fullReference = currentBibleVerse.reference || ''
-      const reference = fullReference.replace(/\s*-\s*[A-Z]+\s*$/, '')
-      const text = currentBibleVerse.text || ''
-      return `${reference}<br>${text}`
-    }
-    if (currentBiblePassageVerse?.text) {
-      // Format Bible passage verse with reference at top
-      return `${currentBiblePassageVerse.reference}<br>${currentBiblePassageVerse.text}`
-    }
-    if (currentVerseteTineriEntry?.text) {
-      // Format versete tineri entry with reference at top (person name is internal only)
-      return `${currentVerseteTineriEntry.reference}<br>${currentVerseteTineriEntry.text}`
-    }
-    return null
-  }
-
-  const slideContent = getSlideContent()
 
   return (
     <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow-lg">
-      <div
-        className="absolute inset-0 flex items-center justify-center"
-        style={getBackgroundStyle()}
-      >
-        {showClock ? (
-          <ClockOverlay
-            textColor={theme.textColor}
-            fontFamily={theme.fontFamily}
-          />
-        ) : slideContent ? (
-          <SlideRenderer content={slideContent} theme={theme} />
-        ) : (
-          <ClockOverlay
-            textColor={theme.textColor}
-            fontFamily={theme.fontFamily}
-          />
-        )}
-      </div>
+      <ScreenPreview
+        screen={screen}
+        contentType={contentType}
+        contentData={contentData}
+        showClock={showClock}
+      />
     </div>
   )
 }

@@ -1,4 +1,141 @@
 {
+  "screens": {
+    "title": "Screens",
+    "description": "Configure screens for different display purposes. Each screen type has its own layout and configuration options.",
+    "addScreen": "Add Screen",
+    "addFirstScreen": "Add First Screen",
+    "noScreens": "No screens configured",
+    "noScreensDescription": "Add your first screen to configure how content is displayed.",
+    "screenName": "Screen Name",
+    "screenNamePlaceholder": "e.g., Main Projector",
+    "screenType": "Screen Type",
+    "screenTypes": {
+      "primary": "Primary / Audience",
+      "stage": "Stage Monitor",
+      "livestream": "Live Stream"
+    },
+    "createAndConfigure": "Create & Configure",
+    "deleteConfirmTitle": "Delete Screen?",
+    "deleteConfirmMessage": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+    "editor": {
+      "preview": "Preview",
+      "zoom": "Zoom",
+      "resetZoom": "Reset Zoom",
+      "save": "Save",
+      "unsavedChanges": "Unsaved changes"
+    },
+    "contentTypes": {
+      "song": "Song",
+      "bible": "Bible Verse",
+      "bible_passage": "Bible Passage",
+      "announcement": "Announcement",
+      "versete_tineri": "Versete Tineri",
+      "empty": "Empty / Clock"
+    },
+    "panels": {
+      "position": "Position & Size",
+      "textStyle": "Text Style",
+      "animation": "Animation",
+      "background": "Background",
+      "general": "General Settings",
+      "nextSlide": "Next Slide Section"
+    },
+    "position": {
+      "x": "X Position",
+      "y": "Y Position",
+      "width": "Width",
+      "height": "Height",
+      "unit": "Unit",
+      "pixels": "Pixels",
+      "percent": "Percent",
+      "constraints": "Constraints",
+      "element": "Element",
+      "top": "Top",
+      "bottom": "Bottom",
+      "left": "Left",
+      "right": "Right",
+      "stretchHorizontal": "Width stretches between left and right constraints",
+      "stretchVertical": "Height stretches between top and bottom constraints"
+    },
+    "textStyle": {
+      "fontFamily": "Font Family",
+      "maxFontSize": "Max Font Size",
+      "autoScale": "Auto Scale",
+      "color": "Color",
+      "bold": "Bold",
+      "italic": "Italic",
+      "underline": "Underline",
+      "horizontalAlignment": "Horizontal Alignment",
+      "verticalAlignment": "Vertical Alignment",
+      "left": "Left",
+      "center": "Center",
+      "right": "Right",
+      "top": "Top",
+      "middle": "Middle",
+      "bottom": "Bottom",
+      "lineHeight": "Line Height",
+      "shadow": "Text Shadow"
+    },
+    "animation": {
+      "animationIn": "Animation In",
+      "animationOut": "Animation Out",
+      "type": "Type",
+      "duration": "Duration",
+      "delay": "Delay",
+      "easing": "Easing",
+      "types": {
+        "none": "None",
+        "fade": "Fade",
+        "slideUp": "Slide Up",
+        "slideDown": "Slide Down",
+        "slideLeft": "Slide Left",
+        "slideRight": "Slide Right",
+        "scale": "Scale",
+        "blur": "Blur"
+      },
+      "easings": {
+        "linear": "Linear",
+        "easeIn": "Ease In",
+        "easeOut": "Ease Out",
+        "easeInOut": "Ease In Out",
+        "bounce": "Bounce"
+      }
+    },
+    "background": {
+      "type": "Type",
+      "types": {
+        "transparent": "Transparent",
+        "color": "Solid Color",
+        "image": "Image",
+        "video": "Video"
+      },
+      "color": "Color",
+      "imageUrl": "Image URL",
+      "videoUrl": "Video URL",
+      "opacity": "Opacity"
+    },
+    "general": {
+      "screenSize": "Screen Size",
+      "width": "Width",
+      "height": "Height",
+      "clockEnabled": "Show Clock",
+      "defaultBackground": "Default Background"
+    },
+    "nextSlide": {
+      "enabled": "Show Next Slide Section",
+      "labelText": "Label Text",
+      "labelStyle": "Label Style",
+      "contentStyle": "Content Style"
+    },
+    "messages": {
+      "screenCreated": "Screen created successfully",
+      "screenCreateFailed": "Failed to create screen",
+      "screenSaved": "Screen saved successfully",
+      "screenSaveFailed": "Failed to save screen",
+      "screenDeleted": "Screen deleted successfully",
+      "screenDeleteFailed": "Failed to delete screen"
+    }
+  },
   "displays": {
     "title": "Displays",
     "description": "Configure output displays for your presentations. Each display can have its own theme and settings.",

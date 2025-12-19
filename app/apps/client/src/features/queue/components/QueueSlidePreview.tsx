@@ -39,7 +39,9 @@ export function QueueSlidePreview({
       .replace(/&gt;/g, '>')
       .replace(/&apos;/g, "'")
       .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(dec))
-      .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+      .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) =>
+        String.fromCharCode(parseInt(hex, 16)),
+      )
       .trim() || 'Empty slide'
 
   return (
