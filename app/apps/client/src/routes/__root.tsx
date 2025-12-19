@@ -1,7 +1,10 @@
-import { createRootRoute, Outlet } from '@tanstack/react-router'
+import { createRootRoute, Outlet, useLocation } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
-import { useAutoOpenDisplays } from '~/features/presentation/hooks'
+import {
+  useAutoOpenDisplays,
+  useAutoOpenScreens,
+} from '~/features/presentation/hooks'
 import { PptxDropZoneProvider } from '~/features/song-import'
 import { I18nProvider } from '~/provider/i18n-provider'
 import { PermissionsProvider } from '~/provider/permissions-provider'
@@ -20,15 +23,33 @@ export const Route = createRootRoute({
 const isDev = import.meta.env.DEV
 
 /**
- * Component that handles auto-opening displays
+ * Component that handles auto-opening displays and screens
  * Must be inside QueryClientProvider to use hooks
  */
 function AutoOpenDisplays() {
   useAutoOpenDisplays()
+  useAutoOpenScreens()
   return null
 }
 
-function RootComponent() {
+/**
+ * Minimal layout for screen routes (display windows)
+ * Only includes essential providers for rendering
+ */
+function ScreenLayout() {
+  return (
+    <ThemeProvider>
+      <QueryClientProvider>
+        <Outlet />
+      </QueryClientProvider>
+    </ThemeProvider>
+  )
+}
+
+/**
+ * Full layout for main app routes
+ */
+function MainLayout() {
   return (
     <ThemeProvider>
       <QueryClientProvider>
@@ -50,4 +71,15 @@ function RootComponent() {
       </QueryClientProvider>
     </ThemeProvider>
   )
+}
+
+function RootComponent() {
+  const location = useLocation()
+
+  // Use minimal layout for screen routes (display windows)
+  if (location.pathname.startsWith('/screen/')) {
+    return <ScreenLayout />
+  }
+
+  return <MainLayout />
 }
