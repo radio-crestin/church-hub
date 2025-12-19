@@ -134,6 +134,11 @@
       "screenSaveFailed": "Failed to save screen",
       "screenDeleted": "Screen deleted successfully",
       "screenDeleteFailed": "Failed to delete screen"
+    },
+    "renderer": {
+      "loading": "Loading screen configuration...",
+      "error": "Failed to load screen",
+      "notFound": "Screen not found"
     }
   },
   "displays": {
