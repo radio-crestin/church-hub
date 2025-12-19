@@ -1,10 +1,7 @@
 import { createRootRoute, Outlet, useLocation } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
-import {
-  useAutoOpenDisplays,
-  useAutoOpenScreens,
-} from '~/features/presentation/hooks'
+import { useAutoOpenScreens } from '~/features/presentation/hooks'
 import { PptxDropZoneProvider } from '~/features/song-import'
 import { I18nProvider } from '~/provider/i18n-provider'
 import { PermissionsProvider } from '~/provider/permissions-provider'
@@ -23,11 +20,10 @@ export const Route = createRootRoute({
 const isDev = import.meta.env.DEV
 
 /**
- * Component that handles auto-opening displays and screens
+ * Component that handles auto-opening screens
  * Must be inside QueryClientProvider to use hooks
  */
-function AutoOpenDisplays() {
-  useAutoOpenDisplays()
+function AutoOpenScreens() {
   useAutoOpenScreens()
   return null
 }
@@ -57,7 +53,7 @@ function MainLayout() {
           <I18nProvider>
             <ToastProvider>
               <PptxDropZoneProvider>
-                <AutoOpenDisplays />
+                <AutoOpenScreens />
                 <AppLayout>
                   <Outlet />
                 </AppLayout>

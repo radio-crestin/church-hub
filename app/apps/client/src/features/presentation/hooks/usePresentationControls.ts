@@ -7,7 +7,7 @@ import {
   showSlide,
   stopPresentation,
   updatePresentationState,
-} from '../service/displays'
+} from '../service/presentation'
 import type { PresentationState } from '../types'
 
 export function useStopPresentation() {

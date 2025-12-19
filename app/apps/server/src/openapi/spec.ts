@@ -26,7 +26,10 @@ export const openApiSpec = {
     { name: 'Bible', description: 'Bible translations and verse management' },
     { name: 'Queue', description: 'Presentation queue management' },
     { name: 'Schedules', description: 'Schedule management' },
-    { name: 'Displays', description: 'Display configuration' },
+    {
+      name: 'Screens',
+      description: 'Screen configuration and rendering settings',
+    },
     { name: 'Presentation', description: 'Presentation state control' },
     { name: 'Conversion', description: 'File format conversion utilities' },
   ],
@@ -34,20 +37,15 @@ export const openApiSpec = {
     '/': {
       get: {
         tags: ['Health'],
-        summary: 'Health check',
-        description:
-          'Returns a simple greeting to confirm the server is running',
+        summary: 'API Documentation Redirect',
+        description: 'Redirects to the API documentation at /api/docs',
         responses: {
-          '200': {
-            description: 'Server is running',
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    data: { type: 'string', example: 'Hello from Bun!' },
-                  },
-                },
+          '302': {
+            description: 'Redirect to API documentation',
+            headers: {
+              Location: {
+                schema: { type: 'string', example: '/api/docs' },
+                description: 'URL of the API documentation',
               },
             },
           },
@@ -2018,16 +2016,16 @@ export const openApiSpec = {
         },
       },
     },
-    // Displays API
-    '/api/displays': {
+    // Screens API
+    '/api/screens': {
       get: {
-        tags: ['Displays'],
-        summary: 'List all displays',
-        description: 'Returns all display configurations',
+        tags: ['Screens'],
+        summary: 'List all screens',
+        description: 'Returns all screen configurations ordered by sort order',
         security: [{ bearerAuth: [] }, { cookieAuth: [] }],
         responses: {
           '200': {
-            description: 'List of displays',
+            description: 'List of screens',
             content: {
               'application/json': {
                 schema: {
@@ -2035,7 +2033,7 @@ export const openApiSpec = {
                   properties: {
                     data: {
                       type: 'array',
-                      items: { $ref: '#/components/schemas/Display' },
+                      items: { $ref: '#/components/schemas/Screen' },
                     },
                   },
                 },
@@ -2046,27 +2044,41 @@ export const openApiSpec = {
         },
       },
       post: {
-        tags: ['Displays'],
-        summary: 'Create or update display',
-        description: 'Creates a new display or updates an existing one',
+        tags: ['Screens'],
+        summary: 'Create or update screen',
+        description:
+          'Creates a new screen or updates an existing one. Default content configs are created for new screens.',
         security: [{ bearerAuth: [] }, { cookieAuth: [] }],
         requestBody: {
           required: true,
           content: {
             'application/json': {
-              schema: { $ref: '#/components/schemas/UpsertDisplayInput' },
+              schema: { $ref: '#/components/schemas/UpsertScreenInput' },
             },
           },
         },
         responses: {
           '200': {
-            description: 'Display created/updated',
+            description: 'Screen updated',
             content: {
               'application/json': {
                 schema: {
                   type: 'object',
                   properties: {
-                    data: { $ref: '#/components/schemas/Display' },
+                    data: { $ref: '#/components/schemas/Screen' },
+                  },
+                },
+              },
+            },
+          },
+          '201': {
+            description: 'Screen created',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: { $ref: '#/components/schemas/Screen' },
                   },
                 },
               },
@@ -2077,11 +2089,12 @@ export const openApiSpec = {
         },
       },
     },
-    '/api/displays/{id}': {
+    '/api/screens/{id}': {
       get: {
-        tags: ['Displays'],
-        summary: 'Get display by ID',
-        description: 'Returns a display configuration',
+        tags: ['Screens'],
+        summary: 'Get screen by ID with all configs',
+        description:
+          'Returns a screen with all content type configurations and next slide config',
         security: [{ bearerAuth: [] }, { cookieAuth: [] }],
         parameters: [
           {
@@ -2089,18 +2102,18 @@ export const openApiSpec = {
             in: 'path',
             required: true,
             schema: { type: 'integer' },
-            description: 'Display ID',
+            description: 'Screen ID',
           },
         ],
         responses: {
           '200': {
-            description: 'Display details',
+            description: 'Screen with configurations',
             content: {
               'application/json': {
                 schema: {
                   type: 'object',
                   properties: {
-                    data: { $ref: '#/components/schemas/Display' },
+                    data: { $ref: '#/components/schemas/ScreenWithConfigs' },
                   },
                 },
               },
@@ -2111,9 +2124,9 @@ export const openApiSpec = {
         },
       },
       delete: {
-        tags: ['Displays'],
-        summary: 'Delete display',
-        description: 'Delete a display configuration',
+        tags: ['Screens'],
+        summary: 'Delete screen',
+        description: 'Deletes a screen and all its configurations (cascade)',
         security: [{ bearerAuth: [] }, { cookieAuth: [] }],
         parameters: [
           {
@@ -2125,7 +2138,7 @@ export const openApiSpec = {
         ],
         responses: {
           '200': {
-            description: 'Display deleted',
+            description: 'Screen deleted',
             content: {
               'application/json': {
                 schema: {
@@ -2142,11 +2155,12 @@ export const openApiSpec = {
         },
       },
     },
-    '/api/displays/{id}/theme': {
+    '/api/screens/{id}/config/{contentType}': {
       put: {
-        tags: ['Displays'],
-        summary: 'Update display theme',
-        description: 'Update the theme settings for a display',
+        tags: ['Screens'],
+        summary: 'Update content-specific config',
+        description:
+          'Updates the rendering configuration for a specific content type',
         security: [{ bearerAuth: [] }, { cookieAuth: [] }],
         parameters: [
           {
@@ -2154,26 +2168,41 @@ export const openApiSpec = {
             in: 'path',
             required: true,
             schema: { type: 'integer' },
-            description: 'Display ID',
+            description: 'Screen ID',
+          },
+          {
+            name: 'contentType',
+            in: 'path',
+            required: true,
+            schema: { $ref: '#/components/schemas/ContentType' },
+            description: 'Content type to configure',
           },
         ],
         requestBody: {
           required: true,
           content: {
             'application/json': {
-              schema: { $ref: '#/components/schemas/DisplayTheme' },
+              schema: {
+                type: 'object',
+                properties: {
+                  config: {
+                    type: 'object',
+                    description: 'Content-specific configuration object',
+                  },
+                },
+              },
             },
           },
         },
         responses: {
           '200': {
-            description: 'Theme updated',
+            description: 'Config updated',
             content: {
               'application/json': {
                 schema: {
                   type: 'object',
                   properties: {
-                    data: { $ref: '#/components/schemas/Display' },
+                    data: { $ref: '#/components/schemas/OperationResult' },
                   },
                 },
               },
@@ -2181,7 +2210,106 @@ export const openApiSpec = {
           },
           '400': { $ref: '#/components/responses/BadRequest' },
           '401': { $ref: '#/components/responses/Unauthorized' },
-          '404': { $ref: '#/components/responses/NotFound' },
+        },
+      },
+    },
+    '/api/screens/{id}/next-slide-config': {
+      put: {
+        tags: ['Screens'],
+        summary: 'Update next slide section config',
+        description:
+          'Updates the next slide preview section configuration (for stage screens)',
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'integer' },
+            description: 'Screen ID',
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  config: {
+                    $ref: '#/components/schemas/NextSlideSectionConfig',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Config updated',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: { $ref: '#/components/schemas/OperationResult' },
+                  },
+                },
+              },
+            },
+          },
+          '400': { $ref: '#/components/responses/BadRequest' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+        },
+      },
+    },
+    '/api/screens/{id}/global-settings': {
+      put: {
+        tags: ['Screens'],
+        summary: 'Update global screen settings',
+        description:
+          'Updates the global settings like default background and clock config',
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'integer' },
+            description: 'Screen ID',
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  settings: {
+                    $ref: '#/components/schemas/ScreenGlobalSettings',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Settings updated',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: { $ref: '#/components/schemas/OperationResult' },
+                  },
+                },
+              },
+            },
+          },
+          '400': { $ref: '#/components/responses/BadRequest' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
         },
       },
     },
@@ -3062,54 +3190,159 @@ export const openApiSpec = {
           },
         },
       },
-      // Display Schemas
-      BackgroundType: {
+      // Screen Schemas
+      ScreenType: {
         type: 'string',
-        enum: ['transparent', 'color', 'image'],
-        description: 'Type of display background',
+        enum: ['primary', 'stage', 'livestream'],
+        description:
+          'Type of screen - primary (audience), stage (performers), or livestream (overlay)',
+      },
+      ContentType: {
+        type: 'string',
+        enum: [
+          'song',
+          'bible',
+          'bible_passage',
+          'announcement',
+          'versete_tineri',
+          'empty',
+        ],
+        description: 'Type of content being rendered',
+      },
+      ScreenBackgroundType: {
+        type: 'string',
+        enum: ['transparent', 'color', 'image', 'video'],
+        description: 'Type of screen background',
       },
       DisplayOpenMode: {
         type: 'string',
         enum: ['browser', 'native'],
-        description: 'How the display opens - browser tab or native window',
+        description: 'How the screen opens - browser tab or native window',
       },
-      DisplayTheme: {
+      Position: {
         type: 'object',
         properties: {
-          backgroundType: { $ref: '#/components/schemas/BackgroundType' },
-          backgroundColor: { type: 'string', description: 'CSS color value' },
-          backgroundImage: { type: 'string', description: 'Image URL' },
-          textColor: { type: 'string', description: 'CSS color value' },
-          fontFamily: { type: 'string' },
-          padding: { type: 'number' },
+          x: { type: 'number' },
+          y: { type: 'number' },
+          unit: { type: 'string', enum: ['px', '%'] },
         },
       },
-      Display: {
+      Size: {
+        type: 'object',
+        properties: {
+          width: { type: 'number' },
+          height: { type: 'number' },
+          unit: { type: 'string', enum: ['px', '%'] },
+        },
+      },
+      TextStyle: {
+        type: 'object',
+        properties: {
+          fontFamily: { type: 'string' },
+          maxFontSize: { type: 'number' },
+          autoScale: { type: 'boolean' },
+          color: { type: 'string' },
+          bold: { type: 'boolean' },
+          italic: { type: 'boolean' },
+          underline: { type: 'boolean' },
+          alignment: { type: 'string', enum: ['left', 'center', 'right'] },
+          lineHeight: { type: 'number' },
+          shadow: { type: 'boolean' },
+        },
+      },
+      ScreenBackgroundConfig: {
+        type: 'object',
+        properties: {
+          type: { $ref: '#/components/schemas/ScreenBackgroundType' },
+          color: { type: 'string' },
+          imageUrl: { type: 'string' },
+          videoUrl: { type: 'string' },
+          opacity: { type: 'number' },
+        },
+      },
+      ClockElementConfig: {
+        type: 'object',
+        properties: {
+          enabled: { type: 'boolean' },
+          position: { $ref: '#/components/schemas/Position' },
+          style: { $ref: '#/components/schemas/TextStyle' },
+          format: { type: 'string', enum: ['12h', '24h'] },
+          showSeconds: { type: 'boolean' },
+        },
+      },
+      ScreenGlobalSettings: {
+        type: 'object',
+        properties: {
+          defaultBackground: {
+            $ref: '#/components/schemas/ScreenBackgroundConfig',
+          },
+          clockEnabled: { type: 'boolean' },
+          clockConfig: { $ref: '#/components/schemas/ClockElementConfig' },
+        },
+      },
+      NextSlideSectionConfig: {
+        type: 'object',
+        properties: {
+          enabled: { type: 'boolean' },
+          position: { $ref: '#/components/schemas/Position' },
+          size: { $ref: '#/components/schemas/Size' },
+          labelText: { type: 'string' },
+          labelStyle: { $ref: '#/components/schemas/TextStyle' },
+          contentStyle: { $ref: '#/components/schemas/TextStyle' },
+          background: { $ref: '#/components/schemas/ScreenBackgroundConfig' },
+        },
+      },
+      Screen: {
         type: 'object',
         properties: {
           id: { type: 'integer' },
           name: { type: 'string' },
+          type: { $ref: '#/components/schemas/ScreenType' },
           isActive: { type: 'boolean' },
           openMode: { $ref: '#/components/schemas/DisplayOpenMode' },
           isFullscreen: { type: 'boolean' },
-          theme: { $ref: '#/components/schemas/DisplayTheme' },
+          width: { type: 'integer', description: 'Screen width in pixels' },
+          height: { type: 'integer', description: 'Screen height in pixels' },
+          globalSettings: { $ref: '#/components/schemas/ScreenGlobalSettings' },
+          sortOrder: { type: 'integer' },
           createdAt: { type: 'integer', description: 'Unix timestamp' },
           updatedAt: { type: 'integer', description: 'Unix timestamp' },
         },
       },
-      UpsertDisplayInput: {
+      ScreenWithConfigs: {
+        allOf: [
+          { $ref: '#/components/schemas/Screen' },
+          {
+            type: 'object',
+            properties: {
+              contentConfigs: {
+                type: 'object',
+                description: 'Map of content type to its configuration',
+              },
+              nextSlideConfig: {
+                $ref: '#/components/schemas/NextSlideSectionConfig',
+              },
+            },
+          },
+        ],
+      },
+      UpsertScreenInput: {
         type: 'object',
-        required: ['name'],
+        required: ['name', 'type'],
         properties: {
           id: {
             type: 'integer',
-            description: 'If provided, updates existing display',
+            description: 'If provided, updates existing screen',
           },
           name: { type: 'string' },
+          type: { $ref: '#/components/schemas/ScreenType' },
           isActive: { type: 'boolean' },
           openMode: { $ref: '#/components/schemas/DisplayOpenMode' },
           isFullscreen: { type: 'boolean' },
-          theme: { $ref: '#/components/schemas/DisplayTheme' },
+          width: { type: 'integer' },
+          height: { type: 'integer' },
+          globalSettings: { $ref: '#/components/schemas/ScreenGlobalSettings' },
+          sortOrder: { type: 'integer' },
         },
       },
       // Presentation Schemas

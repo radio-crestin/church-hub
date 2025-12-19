@@ -1,5 +1,5 @@
 import { setWindowFullscreen } from './fullscreen'
-import type { Display, DisplayOpenMode, Screen } from '../types'
+import type { DisplayOpenMode, Screen } from '../types'
 
 const WINDOW_POSITIONS_KEY = 'display-window-positions'
 
@@ -291,23 +291,6 @@ async function openInNativeWindow(
     // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
     console.log('[openInNativeWindow] Not in Tauri, falling back to browser')
     window.open(url, '_blank')
-  }
-}
-
-/**
- * Opens all active displays with native windows
- */
-export async function openAllActiveDisplays(
-  displays: Display[],
-): Promise<void> {
-  const activeNativeDisplays = displays.filter(
-    (d) => d.isActive && d.openMode === 'native',
-  )
-
-  for (const display of activeNativeDisplays) {
-    await openDisplayWindow(display.id, display.openMode, display.isFullscreen)
-    // Small delay to prevent overwhelming the system
-    await new Promise((resolve) => setTimeout(resolve, 100))
   }
 }
 
