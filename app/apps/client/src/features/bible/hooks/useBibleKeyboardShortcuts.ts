@@ -5,6 +5,7 @@ interface UseBibleKeyboardShortcutsOptions {
   onPreviousVerse: () => void
   onGoBack: () => void
   onHidePresentation: () => void
+  onPresentSearched?: () => void
   enabled?: boolean
 }
 
@@ -13,6 +14,7 @@ export function useBibleKeyboardShortcuts({
   onPreviousVerse,
   onGoBack,
   onHidePresentation,
+  onPresentSearched,
   enabled = true,
 }: UseBibleKeyboardShortcutsOptions) {
   useEffect(() => {
@@ -50,6 +52,13 @@ export function useBibleKeyboardShortcuts({
           event.preventDefault()
           onHidePresentation()
           break
+
+        case 'Enter':
+          if (onPresentSearched) {
+            event.preventDefault()
+            onPresentSearched()
+          }
+          break
       }
     }
 
@@ -58,5 +67,12 @@ export function useBibleKeyboardShortcuts({
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [enabled, onNextVerse, onPreviousVerse, onGoBack, onHidePresentation])
+  }, [
+    enabled,
+    onNextVerse,
+    onPreviousVerse,
+    onGoBack,
+    onHidePresentation,
+    onPresentSearched,
+  ])
 }
