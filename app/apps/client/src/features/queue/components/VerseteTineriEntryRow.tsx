@@ -22,7 +22,10 @@ interface VerseteTineriEntryRowProps {
   entry: LocalVerseteTineriEntry
   index: number
   onPersonNameChange: (personName: string) => void
-  onReferenceChange: (referenceInput: string, parsed: ParsedPassageRange | null) => void
+  onReferenceChange: (
+    referenceInput: string,
+    parsed: ParsedPassageRange | null,
+  ) => void
   onDelete: () => void
 }
 
@@ -133,7 +136,10 @@ export function VerseteTineriEntryRow({
             <div className="flex items-center gap-1 text-xs">
               {isValid ? (
                 <>
-                  <Check size={12} className="text-teal-600 dark:text-teal-400" />
+                  <Check
+                    size={12}
+                    className="text-teal-600 dark:text-teal-400"
+                  />
                   <span className="text-teal-700 dark:text-teal-300">
                     {entry.parsedResult.formattedReference}
                   </span>

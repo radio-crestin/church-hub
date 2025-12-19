@@ -12,18 +12,17 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
-import { Loader2, Plus, PanelLeft } from 'lucide-react'
+import { Loader2, PanelLeft, Plus } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ConfirmModal } from '~/ui/modal'
 import { useToast } from '~/ui/toast'
-
+import { CustomPageFormModal } from './CustomPageFormModal'
+import { SidebarItemCard } from './SidebarItemCard'
 import { useSidebarConfig } from '../hooks/useSidebarConfig'
 import { generateCustomPageId } from '../service/sidebarConfig'
 import type { CustomPageInput, CustomPageMenuItem } from '../types'
-import { CustomPageFormModal } from './CustomPageFormModal'
-import { SidebarItemCard } from './SidebarItemCard'
 
 /**
  * Main component for managing sidebar configuration in settings
@@ -186,8 +185,11 @@ export function SidebarConfigManager() {
     )
   }
 
+  // Filter out settings - it's fixed at the bottom and not configurable
   const sortedItems = config?.items
-    ? [...config.items].sort((a, b) => a.order - b.order)
+    ? [...config.items]
+        .filter((item) => item.id !== 'settings')
+        .sort((a, b) => a.order - b.order)
     : []
 
   const deletingPage = deletingPageId

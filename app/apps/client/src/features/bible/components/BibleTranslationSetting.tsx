@@ -5,12 +5,8 @@ import { useDefaultBibleTranslation } from '../hooks'
 
 export function BibleTranslationSetting() {
   const { t } = useTranslation('settings')
-  const {
-    translation,
-    translations,
-    setDefaultTranslation,
-    isLoading,
-  } = useDefaultBibleTranslation()
+  const { translation, translations, setDefaultTranslation, isLoading } =
+    useDefaultBibleTranslation()
 
   const handleChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const translationId = parseInt(e.target.value, 10)

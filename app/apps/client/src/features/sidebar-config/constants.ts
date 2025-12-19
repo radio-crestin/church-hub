@@ -81,13 +81,7 @@ export const DEFAULT_SIDEBAR_CONFIG: SidebarConfiguration = {
       order: 3,
       isVisible: true,
     },
-    {
-      id: 'settings',
-      type: 'builtin',
-      builtinId: 'settings',
-      order: 4,
-      isVisible: true,
-    },
+    // Note: Settings is not configurable - it's fixed at the bottom of the sidebar
   ],
 }
 

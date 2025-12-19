@@ -1,8 +1,4 @@
 export { useBibleKeyboardShortcuts } from './useBibleKeyboardShortcuts'
-export {
-  DEFAULT_BIBLE_TRANSLATION_QUERY_KEY,
-  useDefaultBibleTranslation,
-} from './useDefaultBibleTranslation'
 export type {
   BibleNavigationLevel,
   BibleNavigationState,
@@ -13,6 +9,10 @@ export type {
 export { useBibleNavigation } from './useBibleNavigation'
 export { useBooks } from './useBooks'
 export { useChapters } from './useChapters'
+export {
+  DEFAULT_BIBLE_TRANSLATION_QUERY_KEY,
+  useDefaultBibleTranslation,
+} from './useDefaultBibleTranslation'
 export {
   useDeleteTranslation,
   useImportTranslation,
