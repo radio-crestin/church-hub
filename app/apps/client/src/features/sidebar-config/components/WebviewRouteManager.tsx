@@ -2,7 +2,6 @@ import { useLocation } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
 
 import { isTauri } from '~/features/presentation/utils/openDisplayWindow'
-
 import { hideAllCustomPageWebviews } from '../service/webviewManager'
 
 /**
@@ -35,19 +34,12 @@ export function WebviewRouteManager() {
 
     // If we left a custom page entirely, hide all webviews
     if (wasOnCustomPage && !isOnCustomPage) {
-      console.log('[WebviewRouteManager] Left custom page, hiding all webviews')
       void hideAllCustomPageWebviews()
     }
 
     // If we switched from one custom page to another, close the old webview
     // (the new page will show its own webview)
     if (wasOnCustomPage && isOnCustomPage && previousPageId !== currentPageId) {
-      console.log(
-        '[WebviewRouteManager] Switching custom pages:',
-        previousPageId,
-        '->',
-        currentPageId,
-      )
       // The new CustomPageView will create its own webview and close the old one
       // We don't need to close here as showCustomPageWebview handles it
     }

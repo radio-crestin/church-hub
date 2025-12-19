@@ -3,9 +3,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { isTauri } from '~/features/presentation/utils/openDisplayWindow'
-
 import { useSidebarConfig } from '../hooks/useSidebarConfig'
-import { hideCurrentWebview, showCustomPageWebview } from '../service/webviewManager'
+import {
+  hideCurrentWebview,
+  showCustomPageWebview,
+} from '../service/webviewManager'
 import type { CustomPageMenuItem } from '../types'
 import { transformToEmbedUrl } from '../utils/transformEmbedUrl'
 
@@ -65,12 +67,10 @@ export function CustomPageView({ pageId }: CustomPageViewProps) {
 
     const initWebview = async () => {
       try {
-        console.log('[CustomPageView] Showing webview for:', page.id, page.url)
         await showCustomPageWebview(page.id, page.url)
         setIsWebviewLoading(false)
         setWebviewError(null)
       } catch (error) {
-        console.error('[CustomPageView] Error showing webview:', error)
         setWebviewError(String(error))
         setIsWebviewLoading(false)
       }

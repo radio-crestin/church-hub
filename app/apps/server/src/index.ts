@@ -2702,12 +2702,17 @@ async function main() {
         try {
           const body = (await req.json()) as InsertVerseteTineriInput
 
-          if (!body.entries || !Array.isArray(body.entries) || body.entries.length === 0) {
+          if (
+            !body.entries ||
+            !Array.isArray(body.entries) ||
+            body.entries.length === 0
+          ) {
             return handleCors(
               req,
               new Response(
                 JSON.stringify({
-                  error: 'Missing required field: entries (must be a non-empty array)',
+                  error:
+                    'Missing required field: entries (must be a non-empty array)',
                 }),
                 {
                   status: 400,

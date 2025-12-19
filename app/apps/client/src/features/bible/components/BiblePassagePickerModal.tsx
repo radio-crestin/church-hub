@@ -36,8 +36,7 @@ export function BiblePassagePickerModal({
   )
 
   // Fetch data - use default translation from settings
-  const { translation: selectedTranslation, isLoading: isTranslationLoading } =
-    useDefaultBibleTranslation()
+  const { translation: selectedTranslation } = useDefaultBibleTranslation()
   const { data: books = [] } = useBooks(selectedTranslation?.id ?? 0)
 
   // Debounced parsing

@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import type { CustomPageInput, CustomPageMenuItem } from '../types'
 import { IconPicker } from './IconPicker'
+import type { CustomPageInput, CustomPageMenuItem } from '../types'
 
 interface CustomPageFormModalProps {
   isOpen: boolean
