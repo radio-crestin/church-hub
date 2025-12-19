@@ -8,8 +8,16 @@ import { transformToEmbedUrl } from '../utils/transformEmbedUrl'
  */
 
 // Track created child webviews by label
-// Using 'any' because we can't import Webview type at module level
-const createdWebviews = new Map<string, { close: () => Promise<void> }>()
+// Using interface for the webview methods we need
+interface WebviewHandle {
+  close: () => Promise<void>
+  hide: () => Promise<void>
+  show: () => Promise<void>
+  setPosition: (position: { x: number; y: number }) => Promise<void>
+  setSize: (size: { width: number; height: number }) => Promise<void>
+  setFocus: () => Promise<void>
+}
+const createdWebviews = new Map<string, WebviewHandle>()
 
 // Currently visible webview label
 let currentVisibleWebview: string | null = null
@@ -135,11 +143,10 @@ export async function showCustomPageWebview(
     const { getCurrentWindow } = await import('@tauri-apps/api/window')
     const { LogicalPosition, LogicalSize } = await import('@tauri-apps/api/dpi')
 
-    // Close any currently visible webview first
-    // Note: Child webviews don't support hide(), so we must close them
+    // Hide any currently visible webview first (keeps it running in background)
     if (currentVisibleWebview && currentVisibleWebview !== label) {
-      console.log('[webviewManager] Closing previous webview:', currentVisibleWebview)
-      await closeWebviewByLabel(currentVisibleWebview)
+      console.log('[webviewManager] Hiding previous webview:', currentVisibleWebview)
+      await hideWebviewByLabel(currentVisibleWebview)
     }
 
     // Calculate content area bounds
@@ -241,9 +248,51 @@ async function closeWebviewByLabel(label: string): Promise<void> {
 }
 
 /**
- * Closes the current custom page webview
+ * Hides a webview by its label (keeps it running in background)
+ * Always moves off-screen to prevent z-index conflicts, plus calls hide() if available
+ */
+async function hideWebviewByLabel(label: string): Promise<void> {
+  console.log('[webviewManager] hideWebviewByLabel called for:', label)
+
+  try {
+    const { Webview } = await import('@tauri-apps/api/webview')
+    const { LogicalPosition } = await import('@tauri-apps/api/dpi')
+
+    const webview = await Webview.getByLabel(label)
+    if (!webview) {
+      console.log('[webviewManager] Webview not found:', label)
+      return
+    }
+
+    // Always move off-screen first to prevent z-index conflicts
+    // This ensures the hidden webview won't overlap with newly shown webviews
+    await webview.setPosition(new LogicalPosition(-9999, -9999))
+    console.log('[webviewManager] Moved webview off-screen:', label)
+
+    // Also try to call hide() for proper visibility state
+    try {
+      await webview.hide()
+      console.log('[webviewManager] Successfully hid webview:', label)
+    } catch (hideError) {
+      // hide() not supported, but we already moved off-screen so it's fine
+      console.log('[webviewManager] hide() not available (off-screen is enough):', label)
+    }
+
+    if (currentVisibleWebview === label) {
+      currentVisibleWebview = null
+    }
+  } catch (error) {
+    console.error('[webviewManager] Error in hideWebviewByLabel:', label, error)
+    if (currentVisibleWebview === label) {
+      currentVisibleWebview = null
+    }
+  }
+}
+
+/**
+ * Hides the current custom page webview
  * Called when navigating away from a custom page
- * Note: Child webviews don't support hide(), so we close them
+ * Keeps the webview running in background for faster switching
  */
 export async function hideCurrentWebview(): Promise<void> {
   if (!isTauri()) {
@@ -251,15 +300,15 @@ export async function hideCurrentWebview(): Promise<void> {
     return
   }
 
-  const labelToClose = currentVisibleWebview
-  console.log('[webviewManager] hideCurrentWebview called, label:', labelToClose)
+  const labelToHide = currentVisibleWebview
+  console.log('[webviewManager] hideCurrentWebview called, label:', labelToHide)
 
-  if (!labelToClose) {
-    console.log('[webviewManager] hideCurrentWebview: No webview to close')
+  if (!labelToHide) {
+    console.log('[webviewManager] hideCurrentWebview: No webview to hide')
     return
   }
 
-  await closeWebviewByLabel(labelToClose)
+  await hideWebviewByLabel(labelToHide)
 }
 
 /**
@@ -271,21 +320,20 @@ export async function closeWebview(pageId: string): Promise<void> {
 }
 
 /**
- * Closes all custom page webviews
+ * Hides all custom page webviews
  * Called when navigating to a non-custom-page route
- * Note: Child webviews don't support hide(), so we close them
+ * Keeps webviews running in background for faster switching
  */
 export async function hideAllCustomPageWebviews(): Promise<void> {
   if (!isTauri()) return
 
-  console.log('[webviewManager] Closing all custom page webviews')
+  console.log('[webviewManager] Hiding all custom page webviews')
 
   const labels = Array.from(createdWebviews.keys())
   for (const label of labels) {
-    await closeWebviewByLabel(label)
+    await hideWebviewByLabel(label)
   }
 
-  createdWebviews.clear()
   currentVisibleWebview = null
 }
 
