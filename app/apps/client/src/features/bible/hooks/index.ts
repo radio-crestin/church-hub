@@ -17,7 +17,14 @@ export {
   useDeleteTranslation,
   useImportTranslation,
 } from './useImportTranslation'
+export type { MultiTranslationVerseResult } from './useMultiTranslationVerse'
+export { useMultiTranslationVerse } from './useMultiTranslationVerse'
 export { useSearchBible } from './useSearchBible'
+export {
+  MAX_TRANSLATIONS,
+  SELECTED_BIBLE_TRANSLATIONS_QUERY_KEY,
+  useSelectedBibleTranslations,
+} from './useSelectedBibleTranslations'
 export { useSmartSearch } from './useSmartSearch'
 export { TRANSLATIONS_QUERY_KEY, useTranslations } from './useTranslations'
 export { useVerse, useVerses } from './useVerses'
