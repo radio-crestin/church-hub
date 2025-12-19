@@ -3,7 +3,7 @@ import { Languages, Palette } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { BibleTranslationsManager } from '~/features/bible/components'
-import { DisplayManager } from '~/features/presentation'
+import { ScreenManager } from '~/features/presentation'
 import { SynonymManager } from '~/features/search'
 import { SidebarConfigManager } from '~/features/sidebar-config'
 import { ImportExportManager } from '~/features/song-export'
@@ -133,9 +133,9 @@ function RouteComponent() {
           <UserList />
         </div>
 
-        {/* Displays Section */}
+        {/* Screens Section */}
         <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
-          <DisplayManager />
+          <ScreenManager />
         </div>
 
         {/* Sidebar Configuration Section */}

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { getApiUrl } from '~/config'
 import { presentationStateQueryKey } from './usePresentationState'
+import { screenQueryKey } from './useScreen'
 import type { PresentationState } from '../types'
 
 const DEBUG = import.meta.env.DEV
@@ -18,6 +19,23 @@ type WebSocketStatus = 'connecting' | 'connected' | 'disconnected' | 'error'
 interface PresentationMessage {
   type: 'presentation_state'
   payload: PresentationState
+}
+
+interface ScreenConfigUpdatedMessage {
+  type: 'screen_config_updated'
+  payload: {
+    screenId: number
+    updatedAt: number
+  }
+}
+
+interface ScreenConfigPreviewMessage {
+  type: 'screen_config_preview'
+  payload: {
+    screenId: number
+    config: Record<string, unknown>
+    updatedAt: number
+  }
 }
 
 export function useWebSocket() {
@@ -59,6 +77,8 @@ export function useWebSocket() {
         try {
           const data = JSON.parse(event.data) as
             | PresentationMessage
+            | ScreenConfigUpdatedMessage
+            | ScreenConfigPreviewMessage
             | { type: 'pong' }
 
           if (data.type === 'pong') {
@@ -70,6 +90,29 @@ export function useWebSocket() {
             log('debug', 'Received presentation state update')
             // Update React Query cache with new state
             queryClient.setQueryData(presentationStateQueryKey, data.payload)
+          }
+
+          if (data.type === 'screen_config_updated') {
+            log(
+              'debug',
+              `Received screen config update for screen ${data.payload.screenId}`,
+            )
+            // Invalidate the screen query to trigger a refetch
+            queryClient.invalidateQueries({
+              queryKey: screenQueryKey(data.payload.screenId),
+            })
+          }
+
+          if (data.type === 'screen_config_preview') {
+            log(
+              'debug',
+              `Received screen config preview for screen ${data.payload.screenId}`,
+            )
+            // Update React Query cache directly with preview config
+            queryClient.setQueryData(
+              screenQueryKey(data.payload.screenId),
+              data.payload.config,
+            )
           }
         } catch (error) {
           log('error', `Failed to parse message: ${error}`)
@@ -125,6 +168,15 @@ export function useWebSocket() {
     }
   }, [])
 
+  const send = useCallback((message: Record<string, unknown>) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify(message))
+      return true
+    }
+    log('error', 'Cannot send message: WebSocket not connected')
+    return false
+  }, [])
+
   useEffect(() => {
     connect()
 
@@ -133,5 +185,5 @@ export function useWebSocket() {
     }
   }, [connect, disconnect])
 
-  return { status, connect, disconnect }
+  return { status, connect, disconnect, send }
 }
