@@ -13,7 +13,7 @@ import {
   useBooks,
   useChapters,
   useImportTranslation,
-  useTranslations,
+  useSelectedBibleTranslations,
   useVerse,
   useVerses,
 } from '~/features/bible'
@@ -34,8 +34,12 @@ function BiblePage() {
   const { t } = useTranslation('bible')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const { data: translations, isLoading: translationsLoading } =
-    useTranslations()
+  const {
+    selectedTranslations,
+    primaryTranslation,
+    translations,
+    isLoading: translationsLoading,
+  } = useSelectedBibleTranslations()
   const { mutateAsync: importTranslation, isPending: isImporting } =
     useImportTranslation()
   const insertBibleVerse = useInsertBibleVerseToQueue()
@@ -51,8 +55,8 @@ function BiblePage() {
     null,
   )
 
-  // Initialize navigation with first translation
-  const navigation = useBibleNavigation(translations?.[0]?.id)
+  // Initialize navigation with primary translation
+  const navigation = useBibleNavigation(primaryTranslation?.id)
 
   // Get presentation state and queue to sync with current Bible item
   const { data: presentationState } = usePresentationState()
@@ -71,12 +75,12 @@ function BiblePage() {
     currentBibleItem?.bibleVerseId ?? undefined,
   )
 
-  // Auto-select first translation when loaded
+  // Auto-select primary translation when loaded
   useEffect(() => {
-    if (translations?.length && !navigation.state.translationId) {
-      navigation.selectTranslation(translations[0].id)
+    if (primaryTranslation && !navigation.state.translationId) {
+      navigation.selectTranslation(primaryTranslation.id)
     }
-  }, [translations, navigation])
+  }, [primaryTranslation, navigation])
 
   // Sync navigation with current Bible verse from presentation queue on initial load
   useEffect(() => {
@@ -104,8 +108,8 @@ function BiblePage() {
     navigation.state.chapter,
   )
 
-  // Get current translation abbreviation
-  const currentTranslation = translations?.find(
+  // Get current translation (the one being navigated)
+  const currentTranslation = translations.find(
     (t) => t.id === navigation.state.translationId,
   )
 
@@ -310,12 +314,26 @@ function BiblePage() {
     await clearSlide.mutateAsync()
   }, [navigation, clearSlide])
 
+  // Handle presenting the searched verse (Enter) - presents the searched verse if not already presented
+  const handlePresentSearched = useCallback(async () => {
+    const { searchedIndex, presentedIndex } = navigation.state
+    // Only present if there's a searched verse that's not already presented
+    if (searchedIndex !== null && searchedIndex !== presentedIndex) {
+      const verse = verses[searchedIndex]
+      if (verse) {
+        navigation.presentVerse(searchedIndex)
+        await presentVerseToScreen(verse)
+      }
+    }
+  }, [navigation, verses, presentVerseToScreen])
+
   // Enable keyboard shortcuts
   useBibleKeyboardShortcuts({
     onNextVerse: handleNextVerse,
     onPreviousVerse: handlePreviousVerse,
     onGoBack: navigation.goBack,
     onHidePresentation: handleHidePresentation,
+    onPresentSearched: handlePresentSearched,
     enabled: navigation.state.level === 'verses',
   })
 
@@ -413,7 +431,7 @@ function BiblePage() {
           <div className="flex items-center justify-center flex-1">
             <Loader2 className="w-8 h-8 animate-spin text-indigo-600 dark:text-indigo-400" />
           </div>
-        ) : translations && translations.length > 0 ? (
+        ) : selectedTranslations.length > 0 ? (
           <div
             ref={containerRef}
             className="flex flex-col lg:flex-row flex-1 min-h-0"
@@ -425,10 +443,9 @@ function BiblePage() {
             >
               <BibleNavigationPanel
                 navigation={navigation}
-                translations={translations}
-                isLoadingTranslations={translationsLoading}
                 onSelectVerse={handleSelectVerse}
                 onSelectSearchResult={handleSelectSearchResult}
+                onPresentSearched={handlePresentSearched}
               />
             </div>
 
@@ -455,7 +472,19 @@ function BiblePage() {
               />
             </div>
           </div>
+        ) : translations.length > 0 ? (
+          // Translations exist but none selected - prompt to go to settings
+          <div className="text-center py-12 flex-1 flex flex-col items-center justify-center">
+            <Book className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              {t('empty.noTranslationsSelected')}
+            </h2>
+            <p className="text-gray-500 dark:text-gray-400 mb-4">
+              {t('empty.noTranslationsSelectedDescription')}
+            </p>
+          </div>
         ) : (
+          // No translations imported at all
           <div className="text-center py-12 flex-1 flex flex-col items-center justify-center">
             <Book className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">

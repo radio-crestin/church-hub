@@ -5,10 +5,28 @@
       "title": "Appearance"
     },
     "bible": {
-      "title": "Bible",
-      "defaultTranslation": {
-        "title": "Default Bible Translation",
-        "description": "Select the default translation for Bible verse selection"
+      "title": "Bible Translations",
+      "description": "Select up to 3 translations to display. Drag to reorder.",
+      "addTranslation": "Add Translation",
+      "primary": "Primary",
+      "secondary": "Secondary",
+      "tertiary": "Tertiary",
+      "noTranslations": "No translations selected",
+      "noTranslationsDescription": "Add a Bible translation to get started",
+      "maxReached": "Maximum 3 translations",
+      "translationsSelected": "translations selected",
+      "modals": {
+        "add": {
+          "title": "Add Translation",
+          "selectLabel": "Select a translation",
+          "submit": "Add"
+        }
+      },
+      "toast": {
+        "saved": "Translations saved",
+        "removed": "Translation removed",
+        "added": "Translation added",
+        "error": "An error occurred"
       }
     },
     "application": {

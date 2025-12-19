@@ -3,20 +3,25 @@ export {
   BibleControlPanel,
   BibleNavigationPanel,
   BiblePassagePickerModal,
+  BibleTranslationsManager,
   BooksList,
   ChaptersGrid,
-  TranslationSelector,
+  MultiTranslationVerse,
+  TranslationItemCard,
   VerseCard,
   VersesList,
 } from './components'
 export type {
   BibleNavigationLevel,
   BibleNavigationState,
+  MultiTranslationVerseResult,
   NavigateToVerseParams,
   UseBibleNavigationReturn,
 } from './hooks'
 // Hooks
 export {
+  MAX_TRANSLATIONS,
+  SELECTED_BIBLE_TRANSLATIONS_QUERY_KEY,
   TRANSLATIONS_QUERY_KEY,
   useBibleKeyboardShortcuts,
   useBibleNavigation,
@@ -24,7 +29,9 @@ export {
   useChapters,
   useDeleteTranslation,
   useImportTranslation,
+  useMultiTranslationVerse,
   useSearchBible,
+  useSelectedBibleTranslations,
   useTranslations,
   useVerse,
   useVerses,

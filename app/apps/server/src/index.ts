@@ -37,6 +37,7 @@ import {
   getBooksByTranslation,
   getChaptersForBook,
   getTranslationById,
+  getVerse,
   getVerseById,
   getVersesByChapter,
   importUsfxTranslation,
@@ -2209,6 +2210,34 @@ async function main() {
             }),
           )
         }
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: verse }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // GET /api/bible/verse-by-reference/:translationId/:bookCode/:chapter/:verse - Get verse by reference
+      const getVerseByRefMatch = url.pathname.match(
+        /^\/api\/bible\/verse-by-reference\/(\d+)\/([A-Za-z0-9]+)\/(\d+)\/(\d+)$/,
+      )
+      if (
+        req.method === 'GET' &&
+        getVerseByRefMatch?.[1] &&
+        getVerseByRefMatch?.[2] &&
+        getVerseByRefMatch?.[3] &&
+        getVerseByRefMatch?.[4]
+      ) {
+        const permError = checkPermission('bible.view')
+        if (permError) return permError
+
+        const translationId = parseInt(getVerseByRefMatch[1], 10)
+        const bookCode = getVerseByRefMatch[2]
+        const chapter = parseInt(getVerseByRefMatch[3], 10)
+        const verseNumber = parseInt(getVerseByRefMatch[4], 10)
+        const verse = getVerse(translationId, bookCode, chapter, verseNumber)
 
         return handleCors(
           req,

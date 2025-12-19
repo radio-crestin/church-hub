@@ -5,10 +5,28 @@
       "title": "Aspect"
     },
     "bible": {
-      "title": "Biblia",
-      "defaultTranslation": {
-        "title": "Traducere biblică implicită",
-        "description": "Selectează traducerea implicită pentru selecția versetelor biblice"
+      "title": "Traduceri Biblice",
+      "description": "Selectează până la 3 traduceri pentru afișare. Trage pentru a reordona.",
+      "addTranslation": "Adaugă Traducere",
+      "primary": "Principal",
+      "secondary": "Secundar",
+      "tertiary": "Terțiar",
+      "noTranslations": "Nicio traducere selectată",
+      "noTranslationsDescription": "Adaugă o traducere biblică pentru a începe",
+      "maxReached": "Maximum 3 traduceri",
+      "translationsSelected": "traduceri selectate",
+      "modals": {
+        "add": {
+          "title": "Adaugă Traducere",
+          "selectLabel": "Selectează o traducere",
+          "submit": "Adaugă"
+        }
+      },
+      "toast": {
+        "saved": "Traduceri salvate",
+        "removed": "Traducere eliminată",
+        "added": "Traducere adăugată",
+        "error": "A apărut o eroare"
       }
     },
     "application": {

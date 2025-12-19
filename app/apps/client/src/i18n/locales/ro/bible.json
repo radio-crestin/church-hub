@@ -45,7 +45,9 @@
   },
   "empty": {
     "title": "Nicio traducere disponibila",
-    "description": "Importa o traducere a Bibliei in format USFX XML pentru a incepe."
+    "description": "Importa o traducere a Bibliei in format USFX XML pentru a incepe.",
+    "noTranslationsSelected": "Nicio traducere selectata",
+    "noTranslationsSelectedDescription": "Mergi la Setari > Traduceri Biblice pentru a selecta traducerile dorite."
   },
   "import": {
     "title": "Importa traducere Biblie",
