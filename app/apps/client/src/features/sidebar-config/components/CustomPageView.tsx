@@ -112,7 +112,6 @@ export function CustomPageView({ pageId }: CustomPageViewProps) {
     return (
       <div className="-m-4 md:-m-6 h-[calc(100%+2rem)] md:h-[calc(100%+3rem)] flex flex-col">
         <iframe
-          key={`iframe-${page.id}`} // Force re-render when page changes
           src={embedUrl ?? page.url}
           title={page.title}
           className="flex-1 w-full border-0"

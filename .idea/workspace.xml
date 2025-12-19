@@ -5,47 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="66517e3f-2e4e-43cc-880d-deb242368f0c" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TODO.md" beforeDir="false" afterPath="$PROJECT_DIR$/TODO.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/BiblePassagePickerModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/BiblePassagePickerModal.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/bible/hooks/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/bible/hooks/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/ControlRoom.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/ControlRoom.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/DisplayWindow.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/DisplayWindow.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/LivePreview.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/LivePreview.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/InsertSlideModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/InsertSlideModal.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/QueueList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/QueueList.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/QueueVersePreview.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/QueueVersePreview.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/hooks/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/hooks/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/service/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/service/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/service/queue.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/service/queue.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/users/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/users/types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/queue.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/queue.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/settings.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/settings.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/queue.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/queue.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/settings.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/settings.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/provider/permissions-provider.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/provider/permissions-provider.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/routeTree.gen.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/routeTree.gen.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/routes/settings/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/routes/settings/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/ui/layout/app-layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/ui/layout/app-layout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/ui/sidebar/sidebar-item.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/ui/sidebar/sidebar-item.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/ui/sidebar/sidebar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/ui/sidebar/sidebar.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/drizzle/migrations/meta/_journal.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/drizzle/migrations/meta/_journal.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/schema/presentation.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/schema/presentation.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/presentation/presentation-state.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/presentation/presentation-state.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/presentation/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/presentation/types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/queue/getQueue.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/queue/getQueue.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/queue/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/queue/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/queue/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/queue/types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/tauri/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/tauri/capabilities/default.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/capabilities/default.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/tauri/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/tauri/tauri.conf.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/tauri.conf.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/sidebar-config/components/CustomPageView.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/sidebar-config/components/CustomPageView.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/sidebar-config/service/webviewManager.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/sidebar-config/service/webviewManager.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/routes/custom-page/$pageId.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/routes/custom-page/$pageId.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -192,7 +155,7 @@
       <workItem from="1762688136394" duration="14616000" />
       <workItem from="1763895878404" duration="13746000" />
       <workItem from="1764529520395" duration="23258000" />
-      <workItem from="1765113262440" duration="186257000" />
+      <workItem from="1765113262440" duration="187051000" />
     </task>
     <servers />
   </component>
