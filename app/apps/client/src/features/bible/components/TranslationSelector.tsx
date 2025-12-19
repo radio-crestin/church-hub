@@ -1,5 +1,6 @@
-import { ChevronDown } from 'lucide-react'
+import { useMemo } from 'react'
 
+import { Combobox, type ComboboxOption } from '~/ui/combobox'
 import type { BibleTranslation } from '../types'
 
 interface TranslationSelectorProps {
@@ -15,6 +16,15 @@ export function TranslationSelector({
   onSelect,
   isLoading,
 }: TranslationSelectorProps) {
+  const options: ComboboxOption[] = useMemo(
+    () =>
+      translations.map((trans) => ({
+        value: trans.id,
+        label: `${trans.abbreviation} - ${trans.name}`,
+      })),
+    [translations],
+  )
+
   if (isLoading) {
     return (
       <div className="h-9 w-32 bg-gray-100 dark:bg-gray-700 rounded-lg animate-pulse" />
@@ -26,22 +36,11 @@ export function TranslationSelector({
   }
 
   return (
-    <div className="relative">
-      <select
-        value={selectedId || ''}
-        onChange={(e) => onSelect(Number(e.target.value))}
-        className="appearance-none bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 pr-8 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer"
-      >
-        {translations.map((translation) => (
-          <option key={translation.id} value={translation.id}>
-            {translation.abbreviation} - {translation.name}
-          </option>
-        ))}
-      </select>
-      <ChevronDown
-        size={16}
-        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-      />
-    </div>
+    <Combobox
+      options={options}
+      value={selectedId ?? null}
+      onChange={(val) => val && onSelect(val as number)}
+      allowClear={false}
+    />
   )
 }
