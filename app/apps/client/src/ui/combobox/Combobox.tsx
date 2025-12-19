@@ -6,7 +6,7 @@ export interface ComboboxOption {
   label: string
 }
 
-interface ComboboxProps {
+export interface ComboboxProps {
   options: ComboboxOption[]
   value: number | string | null
   onChange: (value: number | string | null) => void
@@ -15,6 +15,7 @@ interface ComboboxProps {
   createNewLabel?: string
   disabled?: boolean
   allowClear?: boolean
+  className?: string
 }
 
 export function Combobox({
@@ -26,6 +27,7 @@ export function Combobox({
   createNewLabel = 'Create',
   disabled = false,
   allowClear = true,
+  className = '',
 }: ComboboxProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState('')
@@ -103,7 +105,7 @@ export function Combobox({
   }
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className={`relative ${className}`}>
       <button
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}

@@ -62,16 +62,7 @@ export async function toggleWindowFullscreen(
 ): Promise<void> {
   try {
     // Check current state
-    let isFullscreen = await win.isFullscreen()
-
-    // If not fullscreen via regular API, check simple fullscreen
-    if (!isFullscreen) {
-      try {
-        isFullscreen = await win.isSimpleFullscreen()
-      } catch {
-        // isSimpleFullscreen might not be available
-      }
-    }
+    const isFullscreen = await win.isFullscreen()
 
     // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
     console.log(

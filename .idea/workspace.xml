@@ -6,25 +6,22 @@
   <component name="ChangeListManager">
     <list default="true" id="66517e3f-2e4e-43cc-880d-deb242368f0c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/BibleNavigationPanel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/BibleNavigationPanel.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/BibleTranslationSetting.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/TranslationSelector.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/VersesList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/VersesList.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/bible/hooks/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/bible/hooks/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/bible/hooks/useBibleKeyboardShortcuts.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/bible/hooks/useBibleKeyboardShortcuts.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/bible/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/bible/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/bible/service/bible.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/bible/service/bible.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/bible/service/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/bible/service/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/bible.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/bible.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/settings.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/settings.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/bible.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/bible.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/settings.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/settings.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/routes/bible/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/routes/bible/index.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/SlidePreview.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/SlidePreview.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/hooks/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/hooks/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/utils/fullscreen.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/utils/fullscreen.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/QueueSlidePreview.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/QueueSlidePreview.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/presentation.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/presentation.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/presentation.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/presentation.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/routeTree.gen.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/routeTree.gen.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/apps/client/src/routes/settings/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/routes/settings/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/service/bible/bible.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/service/bible/bible.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/service/bible/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/service/bible/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/ui/combobox/Combobox.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/ui/combobox/Combobox.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/drizzle/migrations/meta/_journal.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/drizzle/migrations/meta/_journal.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/schema/presentation.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/schema/presentation.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/apps/server/src/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/presentation/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/presentation/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/presentation/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/presentation/types.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

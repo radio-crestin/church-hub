@@ -17,8 +17,8 @@ import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as BibleIndexRouteImport } from './routes/bible/index'
 import { Route as rootIndexRouteImport } from './routes/(root)/index'
 import { Route as SongsSongIdRouteImport } from './routes/songs/$songId'
+import { Route as ScreenScreenIdRouteImport } from './routes/screen/$screenId'
 import { Route as SchedulesScheduleIdRouteImport } from './routes/schedules/$scheduleId'
-import { Route as DisplayDisplayIdRouteImport } from './routes/display/$displayId'
 import { Route as CustomPagePageIdRouteImport } from './routes/custom-page/$pageId'
 
 const SongsIndexRoute = SongsIndexRouteImport.update({
@@ -61,14 +61,14 @@ const SongsSongIdRoute = SongsSongIdRouteImport.update({
   path: '/songs/$songId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ScreenScreenIdRoute = ScreenScreenIdRouteImport.update({
+  id: '/screen/$screenId',
+  path: '/screen/$screenId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SchedulesScheduleIdRoute = SchedulesScheduleIdRouteImport.update({
   id: '/schedules/$scheduleId',
   path: '/schedules/$scheduleId',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DisplayDisplayIdRoute = DisplayDisplayIdRouteImport.update({
-  id: '/display/$displayId',
-  path: '/display/$displayId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CustomPagePageIdRoute = CustomPagePageIdRouteImport.update({
@@ -79,8 +79,8 @@ const CustomPagePageIdRoute = CustomPagePageIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/custom-page/$pageId': typeof CustomPagePageIdRoute
-  '/display/$displayId': typeof DisplayDisplayIdRoute
   '/schedules/$scheduleId': typeof SchedulesScheduleIdRoute
+  '/screen/$screenId': typeof ScreenScreenIdRoute
   '/songs/$songId': typeof SongsSongIdRoute
   '/': typeof rootIndexRoute
   '/bible': typeof BibleIndexRoute
@@ -92,8 +92,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/custom-page/$pageId': typeof CustomPagePageIdRoute
-  '/display/$displayId': typeof DisplayDisplayIdRoute
   '/schedules/$scheduleId': typeof SchedulesScheduleIdRoute
+  '/screen/$screenId': typeof ScreenScreenIdRoute
   '/songs/$songId': typeof SongsSongIdRoute
   '/': typeof rootIndexRoute
   '/bible': typeof BibleIndexRoute
@@ -106,8 +106,8 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/custom-page/$pageId': typeof CustomPagePageIdRoute
-  '/display/$displayId': typeof DisplayDisplayIdRoute
   '/schedules/$scheduleId': typeof SchedulesScheduleIdRoute
+  '/screen/$screenId': typeof ScreenScreenIdRoute
   '/songs/$songId': typeof SongsSongIdRoute
   '/(root)/': typeof rootIndexRoute
   '/bible/': typeof BibleIndexRoute
@@ -121,8 +121,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/custom-page/$pageId'
-    | '/display/$displayId'
     | '/schedules/$scheduleId'
+    | '/screen/$screenId'
     | '/songs/$songId'
     | '/'
     | '/bible'
@@ -134,8 +134,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/custom-page/$pageId'
-    | '/display/$displayId'
     | '/schedules/$scheduleId'
+    | '/screen/$screenId'
     | '/songs/$songId'
     | '/'
     | '/bible'
@@ -147,8 +147,8 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/custom-page/$pageId'
-    | '/display/$displayId'
     | '/schedules/$scheduleId'
+    | '/screen/$screenId'
     | '/songs/$songId'
     | '/(root)/'
     | '/bible/'
@@ -161,8 +161,8 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   CustomPagePageIdRoute: typeof CustomPagePageIdRoute
-  DisplayDisplayIdRoute: typeof DisplayDisplayIdRoute
   SchedulesScheduleIdRoute: typeof SchedulesScheduleIdRoute
+  ScreenScreenIdRoute: typeof ScreenScreenIdRoute
   SongsSongIdRoute: typeof SongsSongIdRoute
   rootIndexRoute: typeof rootIndexRoute
   BibleIndexRoute: typeof BibleIndexRoute
@@ -231,18 +231,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SongsSongIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/screen/$screenId': {
+      id: '/screen/$screenId'
+      path: '/screen/$screenId'
+      fullPath: '/screen/$screenId'
+      preLoaderRoute: typeof ScreenScreenIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/schedules/$scheduleId': {
       id: '/schedules/$scheduleId'
       path: '/schedules/$scheduleId'
       fullPath: '/schedules/$scheduleId'
       preLoaderRoute: typeof SchedulesScheduleIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/display/$displayId': {
-      id: '/display/$displayId'
-      path: '/display/$displayId'
-      fullPath: '/display/$displayId'
-      preLoaderRoute: typeof DisplayDisplayIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/custom-page/$pageId': {
@@ -257,8 +257,8 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   CustomPagePageIdRoute: CustomPagePageIdRoute,
-  DisplayDisplayIdRoute: DisplayDisplayIdRoute,
   SchedulesScheduleIdRoute: SchedulesScheduleIdRoute,
+  ScreenScreenIdRoute: ScreenScreenIdRoute,
   SongsSongIdRoute: SongsSongIdRoute,
   rootIndexRoute: rootIndexRoute,
   BibleIndexRoute: BibleIndexRoute,

@@ -4,6 +4,7 @@ import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { bibleVerses } from './bible'
 import { songSlides, songs } from './songs'
 
+// Legacy displays table - kept for rollback, will be removed in future
 export const displays = sqliteTable(
   'displays',
   {
@@ -23,6 +24,93 @@ export const displays = sqliteTable(
       .default(sql`(unixepoch())`),
   },
   (table) => [index('idx_displays_is_active').on(table.isActive)],
+)
+
+// Screen types enum
+export const screenTypes = ['primary', 'stage', 'livestream'] as const
+
+// Content types that can be rendered on screens
+export const contentTypes = [
+  'song',
+  'bible',
+  'bible_passage',
+  'announcement',
+  'versete_tineri',
+  'empty',
+] as const
+
+// New screens table - replaces displays with enhanced functionality
+export const screens = sqliteTable(
+  'screens',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    name: text('name').notNull(),
+    type: text('type', { enum: screenTypes }).notNull().default('primary'),
+    isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
+    openMode: text('open_mode').notNull().default('browser'),
+    isFullscreen: integer('is_fullscreen', { mode: 'boolean' })
+      .notNull()
+      .default(false),
+    width: integer('width').notNull().default(1920),
+    height: integer('height').notNull().default(1080),
+    globalSettings: text('global_settings').notNull().default('{}'),
+    sortOrder: integer('sort_order').notNull().default(0),
+    createdAt: integer('created_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (table) => [
+    index('idx_screens_is_active').on(table.isActive),
+    index('idx_screens_type').on(table.type),
+    index('idx_screens_sort_order').on(table.sortOrder),
+  ],
+)
+
+// Per-content-type configuration for each screen
+export const screenContentConfigs = sqliteTable(
+  'screen_content_configs',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    screenId: integer('screen_id')
+      .notNull()
+      .references(() => screens.id, { onDelete: 'cascade' }),
+    contentType: text('content_type', { enum: contentTypes }).notNull(),
+    config: text('config').notNull().default('{}'),
+    createdAt: integer('created_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (table) => [
+    index('idx_screen_content_configs_screen_id').on(table.screenId),
+    index('idx_screen_content_configs_content_type').on(table.contentType),
+  ],
+)
+
+// Next slide section configuration (for stage screens)
+export const screenNextSlideConfigs = sqliteTable(
+  'screen_next_slide_configs',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    screenId: integer('screen_id')
+      .notNull()
+      .references(() => screens.id, { onDelete: 'cascade' }),
+    config: text('config').notNull().default('{}'),
+    createdAt: integer('created_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (table) => [
+    index('idx_screen_next_slide_configs_screen_id').on(table.screenId),
+  ],
 )
 
 export const presentationQueue = sqliteTable(
