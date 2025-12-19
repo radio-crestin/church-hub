@@ -1,8 +1,9 @@
 import { Copy, X } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { useToast } from '../../../ui/toast'
+import { Combobox, type ComboboxOption } from '~/ui/combobox'
+import { useToast } from '~/ui/toast'
 import { useQRCode } from '../hooks'
 import {
   getExternalInterfaces,
@@ -30,6 +31,15 @@ export function UserQRModal({
   const [interfaces, setInterfaces] = useState<NetworkInterface[]>([])
   const [selectedInterface, setSelectedInterface] =
     useState<NetworkInterface | null>(null)
+
+  const interfaceOptions: ComboboxOption[] = useMemo(
+    () =>
+      interfaces.map((iface) => ({
+        value: iface.address,
+        label: `${iface.name} - ${iface.address}`,
+      })),
+    [interfaces],
+  )
 
   // Fetch external interfaces when modal opens
   useEffect(() => {
@@ -112,24 +122,16 @@ export function UserQRModal({
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t('sections.users.modals.qrCode.networkInterface')}
             </label>
-            <select
-              value={selectedInterface?.address || ''}
-              onChange={(e) => {
-                const iface = interfaces.find(
-                  (i) => i.address === e.target.value,
+            <Combobox
+              options={interfaceOptions}
+              value={selectedInterface?.address ?? null}
+              onChange={(val) =>
+                setSelectedInterface(
+                  interfaces.find((i) => i.address === val) ?? null,
                 )
-                setSelectedInterface(iface || null)
-              }}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
-                bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-            >
-              {interfaces.map((iface) => (
-                <option key={iface.address} value={iface.address}>
-                  {iface.name} - {iface.address}
-                </option>
-              ))}
-            </select>
+              }
+              allowClear={false}
+            />
           </div>
         )}
 

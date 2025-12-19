@@ -2,6 +2,7 @@ import { Loader2, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { Combobox } from '~/ui/combobox'
 import type { BackgroundType, Display, DisplayTheme } from '../types'
 import { getDefaultTheme } from '../types'
 
@@ -179,17 +180,12 @@ export function DisplayThemeEditor({
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t('theme.fontFamily')}
             </label>
-            <select
-              value={theme.fontFamily || 'system-ui'}
-              onChange={(e) => updateTheme({ fontFamily: e.target.value })}
-              className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white text-sm"
-            >
-              {FONT_OPTIONS.map((font) => (
-                <option key={font.value} value={font.value}>
-                  {font.label}
-                </option>
-              ))}
-            </select>
+            <Combobox
+              options={FONT_OPTIONS}
+              value={theme.fontFamily ?? 'system-ui'}
+              onChange={(val) => updateTheme({ fontFamily: val as string })}
+              allowClear={false}
+            />
           </div>
 
           {/* Padding */}

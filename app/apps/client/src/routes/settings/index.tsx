@@ -13,6 +13,7 @@ import { useI18n } from '~/provider/i18n-provider'
 import { useTheme } from '~/provider/theme-provider'
 import type { LanguagePreference } from '~/service/locale'
 import type { ThemePreference } from '~/service/theme'
+import { Combobox } from '~/ui/combobox'
 import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
 
 export const Route = createFileRoute('/settings/')({
@@ -44,18 +45,6 @@ function RouteComponent() {
     { value: 'dark', label: t('sections.theme.options.dark') },
   ]
 
-  const handleLanguageChange = async (
-    e: React.ChangeEvent<HTMLSelectElement>,
-  ) => {
-    const newPreference = e.target.value as LanguagePreference
-    await setLanguagePreference(newPreference)
-  }
-
-  const handleThemeChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newPreference = e.target.value as ThemePreference
-    await setThemePreference(newPreference)
-  }
-
   return (
     <PagePermissionGuard permission="settings.view">
       <div className="space-y-6">
@@ -83,18 +72,15 @@ function RouteComponent() {
                   {t('sections.language.title')}
                 </label>
               </div>
-              <select
+              <Combobox
+                options={languageOptions}
                 value={languagePreference}
-                onChange={handleLanguageChange}
+                onChange={(val) =>
+                  setLanguagePreference(val as LanguagePreference)
+                }
                 disabled={isLanguageLoading}
-                className="block w-full px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed placeholder:text-gray-500 dark:placeholder:text-gray-400"
-              >
-                {languageOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+                allowClear={false}
+              />
               <p className="text-gray-600 dark:text-gray-400 text-xs">
                 {t('sections.language.description')}
               </p>
@@ -108,18 +94,13 @@ function RouteComponent() {
                   {t('sections.theme.title')}
                 </label>
               </div>
-              <select
+              <Combobox
+                options={themeOptions}
                 value={themePreference}
-                onChange={handleThemeChange}
+                onChange={(val) => setThemePreference(val as ThemePreference)}
                 disabled={isThemeLoading}
-                className="block w-full px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed placeholder:text-gray-500 dark:placeholder:text-gray-400"
-              >
-                {themeOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+                allowClear={false}
+              />
               <p className="text-gray-600 dark:text-gray-400 text-xs">
                 {t('sections.theme.description')}
               </p>
