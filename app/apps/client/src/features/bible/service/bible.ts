@@ -78,6 +78,23 @@ export async function getVerseById(verseId: number): Promise<BibleVerse> {
   return response.data
 }
 
+// Get verse by reference (for multi-translation display)
+export async function getVerseByReference(
+  translationId: number,
+  bookCode: string,
+  chapter: number,
+  verseNumber: number,
+): Promise<BibleVerse | null> {
+  try {
+    const response = await fetcher<{ data: BibleVerse | null }>(
+      `/api/bible/verse-by-reference/${translationId}/${bookCode}/${chapter}/${verseNumber}`,
+    )
+    return response.data
+  } catch {
+    return null
+  }
+}
+
 // Search
 export async function searchBible(
   query: string,

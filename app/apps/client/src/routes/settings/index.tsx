@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { Languages, Palette } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-import { BibleTranslationSetting } from '~/features/bible/components'
+import { BibleTranslationsManager } from '~/features/bible/components'
 import { DisplayManager } from '~/features/presentation'
 import { SynonymManager } from '~/features/search'
 import { SidebarConfigManager } from '~/features/sidebar-config'
@@ -110,7 +110,7 @@ function RouteComponent() {
 
         {/* Bible Settings Section */}
         <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
-          <BibleTranslationSetting />
+          <BibleTranslationsManager />
         </div>
 
         {/* Song Categories Section */}

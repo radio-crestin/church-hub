@@ -1,14 +1,15 @@
 import { Search, X } from 'lucide-react'
+import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { BooksList } from './BooksList'
 import { ChaptersGrid } from './ChaptersGrid'
-import { TranslationSelector } from './TranslationSelector'
 import { VersesList } from './VersesList'
 import {
   useBooks,
   useChapters,
   useSearchBible,
+  useSelectedBibleTranslations,
   useSmartSearch,
   useVerses,
 } from '../hooks'
@@ -17,29 +18,34 @@ import type { BibleSearchResult, BibleVerse } from '../types'
 
 interface BibleNavigationPanelProps {
   navigation: UseBibleNavigationReturn
-  translations: { id: number; name: string; abbreviation: string }[]
-  isLoadingTranslations: boolean
   onSelectVerse: (verse: BibleVerse, index: number) => void
   onSelectSearchResult: (result: BibleSearchResult) => void
+  onPresentSearched?: () => void
 }
 
 export function BibleNavigationPanel({
   navigation,
-  translations,
-  isLoadingTranslations,
   onSelectVerse,
   onSelectSearchResult,
+  onPresentSearched,
 }: BibleNavigationPanelProps) {
   const { t } = useTranslation('bible')
+  const searchInputRef = useRef<HTMLInputElement>(null)
   const {
     state,
-    selectTranslation,
     selectBook,
     selectChapter,
     goBack,
     setSearchQuery,
     clearSearch,
   } = navigation
+
+  // Auto-focus search input on mount
+  useEffect(() => {
+    searchInputRef.current?.focus()
+  }, [])
+
+  const { selectedTranslations } = useSelectedBibleTranslations()
 
   const { data: books = [], isLoading: isLoadingBooks } = useBooks(
     state.translationId,
@@ -51,6 +57,10 @@ export function BibleNavigationPanel({
     state.bookId,
     state.chapter,
   )
+
+  // Get the book code for the current book
+  const currentBook = books.find((b) => b.id === state.bookId)
+  const bookCode = currentBook?.bookCode || ''
   const { isReferenceSearch } = useSmartSearch({
     searchQuery: state.searchQuery,
     books,
@@ -72,6 +82,13 @@ export function BibleNavigationPanel({
     }
   }
 
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && onPresentSearched) {
+      e.preventDefault()
+      onPresentSearched()
+    }
+  }
+
   // Show text search results only when there's an active text search (not reference search)
   const isTextSearchActive = state.searchQuery.length >= 2 && !isReferenceSearch
 
@@ -84,9 +101,11 @@ export function BibleNavigationPanel({
             className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
           />
           <input
+            ref={searchInputRef}
             type="text"
             value={state.searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={handleSearchKeyDown}
             placeholder={t('search.placeholder')}
             className="w-full pl-9 pr-9 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-white placeholder-gray-400"
           />
@@ -100,13 +119,6 @@ export function BibleNavigationPanel({
             </button>
           )}
         </div>
-
-        <TranslationSelector
-          translations={translations}
-          selectedId={state.translationId}
-          onSelect={selectTranslation}
-          isLoading={isLoadingTranslations}
-        />
       </div>
 
       <div className="flex-1 overflow-y-auto p-3">
@@ -134,11 +146,13 @@ export function BibleNavigationPanel({
         ) : (
           <VersesList
             bookName={state.bookName || ''}
+            bookCode={bookCode}
             chapter={state.chapter || 0}
             verses={verses}
             presentedIndex={state.presentedIndex}
             searchedIndex={state.searchedIndex}
             isLoading={isLoadingVerses}
+            selectedTranslations={selectedTranslations}
             onSelectVerse={handleSelectVerse}
             onGoBack={goBack}
           />

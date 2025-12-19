@@ -2,15 +2,19 @@ import { ArrowLeft, Loader2 } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import type { BibleVerse } from '../types'
+import { MultiTranslationVerse } from './MultiTranslationVerse'
+import { useMultiTranslationVerse } from '../hooks/useMultiTranslationVerse'
+import type { BibleTranslation, BibleVerse } from '../types'
 
 interface VersesListProps {
   bookName: string
+  bookCode: string
   chapter: number
   verses: BibleVerse[]
   presentedIndex: number | null
   searchedIndex: number | null
   isLoading: boolean
+  selectedTranslations: BibleTranslation[]
   onSelectVerse: (index: number) => void
   onGoBack: () => void
 }
@@ -19,17 +23,34 @@ const SCROLL_OFFSET_TOP = 100 // Fixed position from top in pixels
 
 export function VersesList({
   bookName,
+  bookCode,
   chapter,
   verses,
   presentedIndex,
   searchedIndex,
   isLoading,
+  selectedTranslations,
   onSelectVerse,
   onGoBack,
 }: VersesListProps) {
   const { t } = useTranslation('bible')
   const highlightedRef = useRef<HTMLButtonElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+
+  // Get the presented verse number for multi-translation lookup
+  const presentedVerseNumber =
+    presentedIndex !== null ? verses[presentedIndex]?.verse : undefined
+
+  // Fetch the same verse from all other selected translations
+  // Skip the primary translation (first one) as it's already shown
+  const otherTranslations = selectedTranslations.slice(1)
+  const { results: multiTranslationResults, isLoading: isLoadingMulti } =
+    useMultiTranslationVerse(
+      otherTranslations,
+      bookCode,
+      chapter,
+      presentedVerseNumber,
+    )
 
   // Scroll to the highlighted verse (prioritize presented, then searched)
   const scrollTargetIndex = presentedIndex ?? searchedIndex
@@ -120,18 +141,26 @@ export function VersesList({
           }
 
           return (
-            <button
-              key={verse.id}
-              ref={isHighlighted ? highlightedRef : null}
-              type="button"
-              onClick={() => onSelectVerse(index)}
-              className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${getButtonClass()}`}
-            >
-              <span className={`font-semibold mr-2 ${getVerseNumberClass()}`}>
-                {verse.verse}
-              </span>
-              <span className={getTextClass()}>{verse.text}</span>
-            </button>
+            <div key={verse.id}>
+              <button
+                ref={isHighlighted ? highlightedRef : null}
+                type="button"
+                onClick={() => onSelectVerse(index)}
+                className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${getButtonClass()}`}
+              >
+                <span className={`font-semibold mr-2 ${getVerseNumberClass()}`}>
+                  {verse.verse}
+                </span>
+                <span className={getTextClass()}>{verse.text}</span>
+              </button>
+              {isPresented && otherTranslations.length > 0 && (
+                <MultiTranslationVerse
+                  results={multiTranslationResults}
+                  isLoading={isLoadingMulti}
+                  verseNumber={verse.verse}
+                />
+              )}
+            </div>
           )
         })}
       </div>

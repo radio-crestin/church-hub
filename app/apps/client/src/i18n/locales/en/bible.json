@@ -45,7 +45,9 @@
   },
   "empty": {
     "title": "No Bible translations",
-    "description": "Import a Bible translation in USFX XML format to get started."
+    "description": "Import a Bible translation in USFX XML format to get started.",
+    "noTranslationsSelected": "No translations selected",
+    "noTranslationsSelectedDescription": "Go to Settings > Bible Translations to select which translations to use."
   },
   "import": {
     "title": "Import Bible Translation",
