@@ -13,9 +13,10 @@
 ~~- adauga in versete tineri referinte catre versete~~
 ~~- fa meniul lateral configurabil din setari (muta butonul de setari in partea de jos)~~
 ~~- adauga link catre WhatsApp in sidebar~~
-- rezolva problema cu schimbul temei si muta acest meniu in setari
-- rezolva problema cu selectorii, implementand ceva custom
+~~- rezolva problema cu schimbul temei si muta acest meniu in setari~~
+~~- rezolva problema cu selectorii, implementand ceva custom~~
 - imbunatateste creare de ecrane, lasand utilizatorul sa aleaga intre (ecran prezentare principal, stage monitor, livestream overlay)
+- adauga o pagina de editare si configurare a fiecarui tip de ecran
 - apoi implementeaza in ecranul versete biblice sa fie afisat slide-ul urmator pe stage monitor
 - creaza o pagina numita LiveStream
 - din aceasta pagina utilizatorul poate crea un nou livestream pe YouTube
