@@ -1,6 +1,5 @@
 import {
-  calculatePixelPosition,
-  calculatePixelSize,
+  calculatePixelBounds,
   getBackgroundCSS,
   getTextStyleCSS,
 } from './utils/styleUtils'
@@ -28,22 +27,20 @@ export function NextSlideSection({
     return null
   }
 
-  const position = calculatePixelPosition(config.position, {
-    width: screenWidth,
-    height: screenHeight,
-  })
-
-  const size = calculatePixelSize(config.size, {
-    width: screenWidth,
-    height: screenHeight,
-  })
+  // Use constraints-based positioning
+  const bounds = calculatePixelBounds(
+    config.constraints,
+    config.size,
+    screenWidth,
+    screenHeight,
+  )
 
   const containerStyles: React.CSSProperties = {
     position: 'absolute',
-    left: position.x,
-    top: position.y,
-    width: size.width,
-    height: size.height,
+    left: bounds.x,
+    top: bounds.y,
+    width: bounds.width,
+    height: bounds.height,
     ...getBackgroundCSS(config.background),
     display: 'flex',
     alignItems: 'center',
