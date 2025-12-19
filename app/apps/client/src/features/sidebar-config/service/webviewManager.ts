@@ -1,5 +1,4 @@
 import { isTauri } from '~/features/presentation/utils/openDisplayWindow'
-
 import { transformToEmbedUrl } from '../utils/transformEmbedUrl'
 
 /**
@@ -25,9 +24,9 @@ let currentVisibleWebview: string | null = null
 // Window resize listener cleanup
 let resizeCleanup: (() => void) | null = null
 
-// Chrome user agent for compatibility
+// Modern Chrome user agent for compatibility with sites like YouTube and WhatsApp Web
 const CHROME_USER_AGENT =
-  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36'
 
 /**
  * Gets the webview label for a custom page
@@ -68,11 +67,8 @@ async function getContentAreaBounds(): Promise<{
       width: windowWidth - sidebarWidth,
       height: windowHeight,
     }
-
-    console.log('[webviewManager] Content area bounds:', bounds)
     return bounds
-  } catch (error) {
-    console.warn('[webviewManager] Could not get window info:', error)
+  } catch (_error) {
     return {
       x: sidebarWidth,
       y: 0,
@@ -98,11 +94,7 @@ async function handleWindowResize(): Promise<void> {
     const bounds = await getContentAreaBounds()
     await webview.setPosition(new LogicalPosition(bounds.x, bounds.y))
     await webview.setSize(new LogicalSize(bounds.width, bounds.height))
-
-    console.log('[webviewManager] Updated webview position on resize:', bounds)
-  } catch (error) {
-    console.error('[webviewManager] Error updating webview on resize:', error)
-  }
+  } catch (_error) {}
 }
 
 /**
@@ -145,7 +137,6 @@ export async function showCustomPageWebview(
 
     // Hide any currently visible webview first (keeps it running in background)
     if (currentVisibleWebview && currentVisibleWebview !== label) {
-      console.log('[webviewManager] Hiding previous webview:', currentVisibleWebview)
       await hideWebviewByLabel(currentVisibleWebview)
     }
 
@@ -155,18 +146,16 @@ export async function showCustomPageWebview(
     // Check if webview already exists
     const existingWebview = await Webview.getByLabel(label)
     if (existingWebview) {
-      console.log('[webviewManager] Showing existing webview:', label)
       await existingWebview.setPosition(new LogicalPosition(bounds.x, bounds.y))
-      await existingWebview.setSize(new LogicalSize(bounds.width, bounds.height))
+      await existingWebview.setSize(
+        new LogicalSize(bounds.width, bounds.height),
+      )
       await existingWebview.show()
       await existingWebview.setFocus()
       currentVisibleWebview = label
       setupResizeListener()
       return
     }
-
-    // Create new child webview embedded in main window
-    console.log('[webviewManager] Creating child webview:', label, embedUrl)
     const mainWindow = getCurrentWindow()
 
     const webview = new Webview(mainWindow, label, {
@@ -181,11 +170,9 @@ export async function showCustomPageWebview(
     // Wait for webview to be created
     await new Promise<void>((resolve, reject) => {
       webview.once('tauri://created', () => {
-        console.log('[webviewManager] Child webview created:', label)
         resolve()
       })
       webview.once('tauri://error', (e) => {
-        console.error('[webviewManager] Error creating child webview:', e)
         reject(new Error(`Failed to create webview: ${e}`))
       })
     })
@@ -197,7 +184,6 @@ export async function showCustomPageWebview(
     // Listen for main window resize to update webview position
     mainWindow.onResized(handleWindowResize)
   } catch (error) {
-    console.error('[webviewManager] Error showing webview:', error)
     throw error
   }
 }
@@ -206,40 +192,29 @@ export async function showCustomPageWebview(
  * Closes a webview by its label (destroys it completely)
  */
 async function closeWebviewByLabel(label: string): Promise<void> {
-  console.log('[webviewManager] closeWebviewByLabel called for:', label)
-
   try {
     // First try to use our stored instance
     const storedWebview = createdWebviews.get(label)
     if (storedWebview) {
-      console.log('[webviewManager] Closing stored webview instance:', label)
       try {
         await storedWebview.close()
-        console.log('[webviewManager] Successfully closed stored webview:', label)
-      } catch (e) {
-        console.error('[webviewManager] Error closing stored webview:', e)
-      }
+      } catch (_e) {}
     }
 
     // Also try to get by label as fallback
     const { Webview } = await import('@tauri-apps/api/webview')
     const webviewByLabel = await Webview.getByLabel(label)
     if (webviewByLabel) {
-      console.log('[webviewManager] Found webview by label, closing:', label)
       try {
         await webviewByLabel.close()
-        console.log('[webviewManager] Successfully closed webview by label:', label)
-      } catch (e) {
-        console.error('[webviewManager] Error closing webview by label:', e)
-      }
+      } catch (_e) {}
     }
 
     createdWebviews.delete(label)
     if (currentVisibleWebview === label) {
       currentVisibleWebview = null
     }
-  } catch (error) {
-    console.error('[webviewManager] Error in closeWebviewByLabel:', label, error)
+  } catch (_error) {
     createdWebviews.delete(label)
     if (currentVisibleWebview === label) {
       currentVisibleWebview = null
@@ -252,37 +227,28 @@ async function closeWebviewByLabel(label: string): Promise<void> {
  * Always moves off-screen to prevent z-index conflicts, plus calls hide() if available
  */
 async function hideWebviewByLabel(label: string): Promise<void> {
-  console.log('[webviewManager] hideWebviewByLabel called for:', label)
-
   try {
     const { Webview } = await import('@tauri-apps/api/webview')
     const { LogicalPosition } = await import('@tauri-apps/api/dpi')
 
     const webview = await Webview.getByLabel(label)
     if (!webview) {
-      console.log('[webviewManager] Webview not found:', label)
       return
     }
 
     // Always move off-screen first to prevent z-index conflicts
     // This ensures the hidden webview won't overlap with newly shown webviews
     await webview.setPosition(new LogicalPosition(-9999, -9999))
-    console.log('[webviewManager] Moved webview off-screen:', label)
 
     // Also try to call hide() for proper visibility state
     try {
       await webview.hide()
-      console.log('[webviewManager] Successfully hid webview:', label)
-    } catch (hideError) {
-      // hide() not supported, but we already moved off-screen so it's fine
-      console.log('[webviewManager] hide() not available (off-screen is enough):', label)
-    }
+    } catch (_hideError) {}
 
     if (currentVisibleWebview === label) {
       currentVisibleWebview = null
     }
-  } catch (error) {
-    console.error('[webviewManager] Error in hideWebviewByLabel:', label, error)
+  } catch (_error) {
     if (currentVisibleWebview === label) {
       currentVisibleWebview = null
     }
@@ -296,15 +262,12 @@ async function hideWebviewByLabel(label: string): Promise<void> {
  */
 export async function hideCurrentWebview(): Promise<void> {
   if (!isTauri()) {
-    console.log('[webviewManager] hideCurrentWebview: Not in Tauri, skipping')
     return
   }
 
   const labelToHide = currentVisibleWebview
-  console.log('[webviewManager] hideCurrentWebview called, label:', labelToHide)
 
   if (!labelToHide) {
-    console.log('[webviewManager] hideCurrentWebview: No webview to hide')
     return
   }
 
@@ -327,8 +290,6 @@ export async function closeWebview(pageId: string): Promise<void> {
 export async function hideAllCustomPageWebviews(): Promise<void> {
   if (!isTauri()) return
 
-  console.log('[webviewManager] Hiding all custom page webviews')
-
   const labels = Array.from(createdWebviews.keys())
   for (const label of labels) {
     await hideWebviewByLabel(label)
@@ -350,8 +311,6 @@ export async function forceCloseAllCustomPageWebviews(): Promise<void> {
  */
 export async function destroyAllCustomPageWebviews(): Promise<void> {
   if (!isTauri()) return
-
-  console.log('[webviewManager] Destroying all custom page webviews')
 
   const labels = Array.from(createdWebviews.keys())
   for (const label of labels) {
@@ -390,11 +349,8 @@ export async function updateCurrentWebviewBounds(): Promise<void> {
     if (!webview) return
 
     const bounds = await getContentAreaBounds()
-    console.log('[webviewManager] Updating webview bounds:', bounds)
 
     await webview.setPosition(new LogicalPosition(bounds.x, bounds.y))
     await webview.setSize(new LogicalSize(bounds.width, bounds.height))
-  } catch (error) {
-    console.error('[webviewManager] Error updating webview bounds:', error)
-  }
+  } catch (_error) {}
 }

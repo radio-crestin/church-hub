@@ -17,6 +17,14 @@ use tauri::WindowEvent;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // Enable GPU acceleration on Windows by ignoring the GPU blocklist
+    // This ensures hardware-accelerated rendering for video playback (e.g., YouTube)
+    #[cfg(target_os = "windows")]
+    std::env::set_var(
+        "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS",
+        "--ignore-gpu-blocklist --enable-gpu-rasterization --enable-accelerated-video-decode",
+    );
+
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_shell::init())
