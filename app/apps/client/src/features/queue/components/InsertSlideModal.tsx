@@ -8,15 +8,19 @@ import { useTranslation } from 'react-i18next'
 import { useDefaultBibleTranslation } from '~/features/bible/hooks'
 import { useToast } from '~/ui/toast'
 import {
+  type LocalVerseteTineriEntry,
+  VerseteTineriEditor,
+} from './VerseteTineriEditor'
+import {
   useInsertSlideToQueue,
   useInsertVerseteTineriToQueue,
   useUpdateSlide,
 } from '../hooks'
-import type { QueueItem, SlideTemplate, VerseteTineriEntryInput } from '../types'
-import {
-  type LocalVerseteTineriEntry,
-  VerseteTineriEditor,
-} from './VerseteTineriEditor'
+import type {
+  QueueItem,
+  SlideTemplate,
+  VerseteTineriEntryInput,
+} from '../types'
 
 interface InsertSlideModalProps {
   isOpen: boolean
@@ -118,8 +122,7 @@ export function InsertSlideModal({
       // Validate entries
       const validEntries = verseteTineriEntries.filter(
         (entry) =>
-          entry.personName.trim() &&
-          entry.parsedResult?.status === 'valid',
+          entry.personName.trim() && entry.parsedResult?.status === 'valid',
       )
 
       if (validEntries.length === 0) {

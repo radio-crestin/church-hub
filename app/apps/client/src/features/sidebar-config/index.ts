@@ -6,7 +6,14 @@ export {
   SidebarConfigManager,
   SidebarItemCard,
 } from './components'
-
+// Constants
+export {
+  AVAILABLE_ICONS,
+  type AvailableIconName,
+  BUILTIN_ITEMS,
+  DEFAULT_SIDEBAR_CONFIG,
+  SIDEBAR_CONFIG_KEY,
+} from './constants'
 // Hooks
 export {
   getIconComponent,
@@ -14,7 +21,6 @@ export {
   useResolvedSidebarItems,
   useSidebarConfig,
 } from './hooks'
-
 // Service
 export {
   destroyAllCustomPageWebviews,
@@ -27,16 +33,6 @@ export {
   saveSidebarConfiguration,
   updateCurrentWebviewBounds,
 } from './service'
-
-// Constants
-export {
-  AVAILABLE_ICONS,
-  type AvailableIconName,
-  BUILTIN_ITEMS,
-  DEFAULT_SIDEBAR_CONFIG,
-  SIDEBAR_CONFIG_KEY,
-} from './constants'
-
 // Types
 export type {
   BuiltInItemDefinition,

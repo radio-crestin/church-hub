@@ -1,5 +1,4 @@
 import { getSetting, upsertSetting } from '~/service/settings/settings'
-
 import type { CustomPagePermission } from '../../users/types'
 import {
   BUILTIN_ITEMS,
@@ -16,9 +15,7 @@ import type {
  * Merges stored configuration with defaults to handle new built-in items
  * that may have been added to the app since the config was saved
  */
-function mergeWithDefaults(
-  stored: SidebarConfiguration,
-): SidebarConfiguration {
+function mergeWithDefaults(stored: SidebarConfiguration): SidebarConfiguration {
   const defaultBuiltinIds = Object.keys(BUILTIN_ITEMS) as BuiltInMenuItemId[]
   const storedIds = new Set(stored.items.map((item) => item.id))
 

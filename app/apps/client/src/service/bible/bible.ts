@@ -7,7 +7,10 @@ const DEFAULT_BIBLE_TRANSLATION_KEY = 'default_bible_translation'
  * Returns null if no preference is saved
  */
 export async function getDefaultBibleTranslationId(): Promise<number | null> {
-  const setting = await getSetting('app_settings', DEFAULT_BIBLE_TRANSLATION_KEY)
+  const setting = await getSetting(
+    'app_settings',
+    DEFAULT_BIBLE_TRANSLATION_KEY,
+  )
 
   if (!setting) {
     return null

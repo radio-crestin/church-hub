@@ -2,7 +2,10 @@ import { createContext, useContext, useEffect, useState } from 'react'
 
 import { getCurrentUser } from '../features/users/service'
 import type { CurrentUser, Permission } from '../features/users/types'
-import { ALL_PERMISSIONS, isCustomPagePermission } from '../features/users/types'
+import {
+  ALL_PERMISSIONS,
+  isCustomPagePermission,
+} from '../features/users/types'
 
 interface PermissionsContextType {
   permissions: Permission[]

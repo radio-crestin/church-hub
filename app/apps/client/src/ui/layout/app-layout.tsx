@@ -1,7 +1,6 @@
 import { useLocation } from '@tanstack/react-router'
 
 import { WebviewRouteManager } from '~/features/sidebar-config/components/WebviewRouteManager'
-
 import { Sidebar } from '../sidebar/sidebar'
 
 interface AppLayoutProps {
@@ -21,9 +20,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       <WebviewRouteManager />
       <Sidebar />
       <main className="flex-1 overflow-y-auto [scrollbar-gutter:stable] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-gray-50 dark:bg-gray-950 pt-14 md:pt-0">
-        <div className="p-4 md:p-6 h-full">
-          {children}
-        </div>
+        <div className="p-4 md:p-6 h-full">{children}</div>
       </main>
     </div>
   )

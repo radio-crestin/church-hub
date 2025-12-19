@@ -1,16 +1,10 @@
 import { useLocation } from '@tanstack/react-router'
-import {
-  ChevronLeft,
-  ChevronRight,
-  Menu,
-  Monitor,
-  Moon,
-  Sun,
-  X,
-} from 'lucide-react'
+import { ChevronLeft, ChevronRight, Menu, Settings, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { SidebarHeader } from './sidebar-header'
+import { SidebarItem } from './sidebar-item'
 import {
   hideAllCustomPageWebviews,
   updateCurrentWebviewBounds,
@@ -19,14 +13,10 @@ import {
 } from '../../features/sidebar-config'
 import type { Permission } from '../../features/users/types'
 import { usePermissions } from '../../provider/permissions-provider'
-import { useTheme } from '../../provider/theme-provider'
-import { SidebarHeader } from './sidebar-header'
-import { SidebarItem } from './sidebar-item'
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const { preference, setThemePreference } = useTheme()
   const location = useLocation()
   const { t } = useTranslation(['sidebar', 'common'])
   const { hasPermission } = usePermissions()
@@ -35,13 +25,12 @@ export function Sidebar() {
   const { config } = useSidebarConfig()
   const resolvedItems = useResolvedSidebarItems(config?.items)
 
-  const cycleTheme = () => {
-    const cycle = { system: 'light', light: 'dark', dark: 'system' } as const
-    setThemePreference(cycle[preference])
-  }
-
-  // Filter items by permission
+  // Filter items by permission (excluding settings - it's fixed at the bottom)
   const menuItems = resolvedItems.filter((item) => {
+    // Exclude settings from configurable items - it's rendered separately at the bottom
+    if (item.id === 'settings') {
+      return false
+    }
     // Custom pages: check dynamic permission
     if (item.isCustom) {
       return hasPermission(item.permission as Permission)
@@ -50,11 +39,13 @@ export function Sidebar() {
     return item.permission ? hasPermission(item.permission) : true
   })
 
+  // Check if user has permission to view settings
+  const canViewSettings = hasPermission('settings.view')
+
   // Hide webview when clicking on non-custom-page items (keep running in background)
   const handleSidebarItemClick = useCallback((destinationPath: string) => {
     // If navigating to a non-custom-page, hide ALL custom page webviews
     if (!destinationPath.startsWith('/custom-page/')) {
-      console.log('[Sidebar] Hiding all custom page webviews before navigating to:', destinationPath)
       void hideAllCustomPageWebviews()
     }
   }, [])
@@ -85,13 +76,6 @@ export function Sidebar() {
 
     return () => clearTimeout(timeoutId)
   }, [isCollapsed])
-
-  const themeLabel =
-    preference === 'system'
-      ? t('common:theme.system')
-      : preference === 'light'
-        ? t('common:theme.lightMode')
-        : t('common:theme.darkMode')
 
   return (
     <>
@@ -169,32 +153,27 @@ export function Sidebar() {
               onClick={() => handleSidebarItemClick(item.to)}
             />
           ))}
+
+          {/* Settings - fixed at the bottom, above the collapse button */}
+          {canViewSettings && (
+            <div className="mt-auto">
+              <SidebarItem
+                icon={Settings}
+                label={t('sidebar:navigation.settings')}
+                to="/settings"
+                isCollapsed={isCollapsed}
+                isActive={
+                  location.pathname === '/settings' ||
+                  location.pathname.startsWith('/settings/')
+                }
+                className="md:flex"
+                onClick={() => handleSidebarItemClick('/settings')}
+              />
+            </div>
+          )}
         </nav>
 
         <div className="p-3 border-t border-gray-200 dark:border-gray-800 space-y-2">
-          <button
-            onClick={cycleTheme}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg
-              text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800
-              transition-colors"
-            title={isCollapsed ? t('common:theme.toggleTheme') : undefined}
-          >
-            {preference === 'system' ? (
-              <Monitor size={20} className="flex-shrink-0" />
-            ) : preference === 'light' ? (
-              <Sun size={20} className="flex-shrink-0" />
-            ) : (
-              <Moon size={20} className="flex-shrink-0" />
-            )}
-            {/* Mobile: always show label, Desktop: respect isCollapsed */}
-            <span className="text-sm font-medium md:hidden">{themeLabel}</span>
-            {!isCollapsed && (
-              <span className="text-sm font-medium hidden md:inline">
-                {themeLabel}
-              </span>
-            )}
-          </button>
-
           {/* Desktop-only collapse button */}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
