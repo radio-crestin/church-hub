@@ -129,6 +129,12 @@ export function ConstraintControls({
           `}
           title={t('screens.position.top', 'Top')}
         />
+        {constraints.top.enabled && (
+          <span className="absolute top-7 left-1/2 -translate-x-1/2 text-[10px] text-indigo-600 dark:text-indigo-400 font-medium bg-white/90 dark:bg-gray-900/90 px-1 rounded whitespace-nowrap">
+            {constraints.top.value}
+            {constraints.top.unit}
+          </span>
+        )}
 
         {/* Bottom anchor indicator */}
         <button
@@ -150,6 +156,12 @@ export function ConstraintControls({
           `}
           title={t('screens.position.bottom', 'Bottom')}
         />
+        {constraints.bottom.enabled && (
+          <span className="absolute bottom-7 left-1/2 -translate-x-1/2 text-[10px] text-indigo-600 dark:text-indigo-400 font-medium bg-white/90 dark:bg-gray-900/90 px-1 rounded whitespace-nowrap">
+            {constraints.bottom.value}
+            {constraints.bottom.unit}
+          </span>
+        )}
 
         {/* Left anchor indicator */}
         <button
@@ -171,6 +183,12 @@ export function ConstraintControls({
           `}
           title={t('screens.position.left', 'Left')}
         />
+        {constraints.left.enabled && (
+          <span className="absolute left-7 top-1/2 -translate-y-1/2 text-[10px] text-indigo-600 dark:text-indigo-400 font-medium bg-white/90 dark:bg-gray-900/90 px-1 rounded whitespace-nowrap">
+            {constraints.left.value}
+            {constraints.left.unit}
+          </span>
+        )}
 
         {/* Right anchor indicator */}
         <button
@@ -192,6 +210,12 @@ export function ConstraintControls({
           `}
           title={t('screens.position.right', 'Right')}
         />
+        {constraints.right.enabled && (
+          <span className="absolute right-7 top-1/2 -translate-y-1/2 text-[10px] text-indigo-600 dark:text-indigo-400 font-medium bg-white/90 dark:bg-gray-900/90 px-1 rounded whitespace-nowrap">
+            {constraints.right.value}
+            {constraints.right.unit}
+          </span>
+        )}
 
         {/* Lines connecting enabled anchors to center box */}
         {constraints.top.enabled && (
