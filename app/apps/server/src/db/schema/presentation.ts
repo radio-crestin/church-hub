@@ -4,28 +4,6 @@ import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { bibleVerses } from './bible'
 import { songSlides, songs } from './songs'
 
-// Legacy displays table - kept for rollback, will be removed in future
-export const displays = sqliteTable(
-  'displays',
-  {
-    id: integer('id').primaryKey({ autoIncrement: true }),
-    name: text('name').notNull(),
-    isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
-    openMode: text('open_mode').notNull().default('browser'),
-    isFullscreen: integer('is_fullscreen', { mode: 'boolean' })
-      .notNull()
-      .default(false),
-    theme: text('theme').notNull().default('{}'),
-    createdAt: integer('created_at', { mode: 'timestamp' })
-      .notNull()
-      .default(sql`(unixepoch())`),
-    updatedAt: integer('updated_at', { mode: 'timestamp' })
-      .notNull()
-      .default(sql`(unixepoch())`),
-  },
-  (table) => [index('idx_displays_is_active').on(table.isActive)],
-)
-
 // Screen types enum
 export const screenTypes = ['primary', 'stage', 'livestream'] as const
 

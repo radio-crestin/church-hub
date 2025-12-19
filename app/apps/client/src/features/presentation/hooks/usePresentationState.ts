@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 
-import { getPresentationState } from '../service/displays'
+import { getPresentationState } from '../service/presentation'
 
 export const presentationStateQueryKey = ['presentation', 'state']
 

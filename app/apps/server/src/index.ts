@@ -52,13 +52,9 @@ import { getExternalInterfaces } from './service/network'
 import {
   type ContentType,
   clearSlide,
-  type DisplayTheme,
-  deleteDisplay,
   deleteScreen,
-  getAllDisplays,
   getAllScreens,
   getContentConfig,
-  getDisplayById,
   getNextSlideConfig,
   getPresentationState,
   getScreenById,
@@ -69,14 +65,11 @@ import {
   showSlide,
   stopPresentation,
   type UpdatePresentationStateInput,
-  type UpsertDisplayInput,
   type UpsertScreenInput,
   updateContentConfig,
-  updateDisplayTheme,
   updateGlobalSettings,
   updateNextSlideConfig,
   updatePresentationState,
-  upsertDisplay,
   upsertScreen,
 } from './service/presentation'
 import {
@@ -279,10 +272,10 @@ async function main() {
         _context = authResult.context
       }
       if (url.pathname === '/') {
-        return handleCors(
-          req,
-          new Response(JSON.stringify({ data: 'Hello from Bun!' })),
-        )
+        return new Response(null, {
+          status: 302,
+          headers: { Location: '/api/docs' },
+        })
       }
       if (url.pathname === '/ping') {
         return handleCors(req, new Response(JSON.stringify({ data: 'pong' })))
@@ -1232,185 +1225,7 @@ async function main() {
       }
 
       // ============================================================
-      // Displays API Endpoints
-      // ============================================================
-
-      // GET /api/displays - List all displays
-      if (req.method === 'GET' && url.pathname === '/api/displays') {
-        const permError = checkPermission('displays.view')
-        if (permError) return permError
-
-        const displays = getAllDisplays()
-        return handleCors(
-          req,
-          new Response(JSON.stringify({ data: displays }), {
-            headers: { 'Content-Type': 'application/json' },
-          }),
-        )
-      }
-
-      // GET /api/displays/:id - Get display by ID
-      const getDisplayMatch = url.pathname.match(/^\/api\/displays\/(\d+)$/)
-      if (req.method === 'GET' && getDisplayMatch?.[1]) {
-        const permError = checkPermission('displays.view')
-        if (permError) return permError
-
-        const id = parseInt(getDisplayMatch[1], 10)
-        const display = getDisplayById(id)
-
-        if (!display) {
-          return handleCors(
-            req,
-            new Response(JSON.stringify({ error: 'Display not found' }), {
-              status: 404,
-              headers: { 'Content-Type': 'application/json' },
-            }),
-          )
-        }
-
-        return handleCors(
-          req,
-          new Response(JSON.stringify({ data: display }), {
-            headers: { 'Content-Type': 'application/json' },
-          }),
-        )
-      }
-
-      // POST /api/displays - Create/update display
-      if (req.method === 'POST' && url.pathname === '/api/displays') {
-        try {
-          const body = (await req.json()) as UpsertDisplayInput
-
-          // Check create or edit permission based on whether it's a new display
-          const permError = checkPermission(
-            body.id ? 'displays.edit' : 'displays.create',
-          )
-          if (permError) return permError
-
-          if (!body.name) {
-            return handleCors(
-              req,
-              new Response(JSON.stringify({ error: 'Missing name' }), {
-                status: 400,
-                headers: { 'Content-Type': 'application/json' },
-              }),
-            )
-          }
-
-          const display = upsertDisplay(body)
-
-          if (!display) {
-            return handleCors(
-              req,
-              new Response(
-                JSON.stringify({ error: 'Failed to save display' }),
-                {
-                  status: 500,
-                  headers: { 'Content-Type': 'application/json' },
-                },
-              ),
-            )
-          }
-
-          return handleCors(
-            req,
-            new Response(JSON.stringify({ data: display }), {
-              status: body.id ? 200 : 201,
-              headers: { 'Content-Type': 'application/json' },
-            }),
-          )
-        } catch {
-          return handleCors(
-            req,
-            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
-              status: 400,
-              headers: { 'Content-Type': 'application/json' },
-            }),
-          )
-        }
-      }
-
-      // DELETE /api/displays/:id - Delete display
-      const deleteDisplayMatch = url.pathname.match(/^\/api\/displays\/(\d+)$/)
-      if (req.method === 'DELETE' && deleteDisplayMatch?.[1]) {
-        const permError = checkPermission('displays.delete')
-        if (permError) return permError
-
-        const id = parseInt(deleteDisplayMatch[1], 10)
-        const result = deleteDisplay(id)
-
-        if (!result.success) {
-          return handleCors(
-            req,
-            new Response(JSON.stringify({ error: result.error }), {
-              status: 500,
-              headers: { 'Content-Type': 'application/json' },
-            }),
-          )
-        }
-
-        return handleCors(
-          req,
-          new Response(JSON.stringify({ data: { success: true } }), {
-            headers: { 'Content-Type': 'application/json' },
-          }),
-        )
-      }
-
-      // PUT /api/displays/:id/theme - Update display theme
-      const updateThemeMatch = url.pathname.match(
-        /^\/api\/displays\/(\d+)\/theme$/,
-      )
-      if (req.method === 'PUT' && updateThemeMatch?.[1]) {
-        const permError = checkPermission('displays.edit')
-        if (permError) return permError
-
-        try {
-          const id = parseInt(updateThemeMatch[1], 10)
-          const body = (await req.json()) as { theme: DisplayTheme }
-
-          if (!body.theme) {
-            return handleCors(
-              req,
-              new Response(JSON.stringify({ error: 'Missing theme' }), {
-                status: 400,
-                headers: { 'Content-Type': 'application/json' },
-              }),
-            )
-          }
-
-          const result = updateDisplayTheme(id, body.theme)
-
-          if (!result.success) {
-            return handleCors(
-              req,
-              new Response(JSON.stringify({ error: result.error }), {
-                status: 500,
-                headers: { 'Content-Type': 'application/json' },
-              }),
-            )
-          }
-
-          const display = getDisplayById(id)
-          return handleCors(
-            req,
-            new Response(JSON.stringify({ data: display }), {
-              headers: { 'Content-Type': 'application/json' },
-            }),
-          )
-        } catch {
-          return handleCors(
-            req,
-            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
-              status: 400,
-              headers: { 'Content-Type': 'application/json' },
-            }),
-          )
-        }
-      }
-
-      // ============================================================
-      // Screens API Endpoints (New rendering engine)
+      // Screens API Endpoints
       // ============================================================
 
       // GET /api/screens - List all screens
