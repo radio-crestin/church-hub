@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 
 import { TextElement } from './rendering/TextElement'
 import {
+  calculateConstraintStyles,
   getBackgroundCSS,
   getTextStyleCSS,
-  toPixels,
 } from './rendering/utils/styleUtils'
 import type { ContentType, ScreenWithConfigs } from '../types'
 
@@ -168,14 +168,11 @@ export function ScreenPreview({
         : screen.globalSettings.clockConfig
     if (!clockConfig?.enabled) return null
 
-    const x = toPixels(
-      clockConfig.position.x,
-      clockConfig.position.unit,
+    // Use constraints-based positioning
+    const constraintStyles = calculateConstraintStyles(
+      clockConfig.constraints,
+      clockConfig.size,
       canvasWidth,
-    )
-    const y = toPixels(
-      clockConfig.position.y,
-      clockConfig.position.unit,
       canvasHeight,
     )
 
@@ -191,10 +188,9 @@ export function ScreenPreview({
     return (
       <div
         key="clock"
-        className="absolute overflow-hidden flex items-center justify-end"
+        className="overflow-hidden flex items-center justify-end"
         style={{
-          right: canvasWidth - x,
-          top: y,
+          ...constraintStyles,
           ...getTextStyleCSS(clockConfig.style),
           fontSize: clockConfig.style.maxFontSize,
         }}

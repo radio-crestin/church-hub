@@ -1,8 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { getApiUrl } from '~/config'
 import { TextElement } from './TextElement'
-import { getBackgroundCSS, getTextStyleCSS, toPixels } from './utils/styleUtils'
+import {
+  calculateConstraintStyles,
+  calculatePixelBounds,
+  getBackgroundCSS,
+  getTextStyleCSS,
+} from './utils/styleUtils'
 import { usePresentationState, useWebSocket } from '../../hooks'
 import { useScreen } from '../../hooks/useScreen'
 import type { ContentType } from '../../types'
@@ -50,10 +56,11 @@ interface NextSlideData {
 }
 
 export function ScreenRenderer({ screenId }: ScreenRendererProps) {
+  const { t } = useTranslation('presentation')
   useWebSocket()
 
   const { data: presentationState } = usePresentationState()
-  const { data: screen } = useScreen(screenId)
+  const { data: screen, isLoading, isError } = useScreen(screenId)
 
   const [contentData, setContentData] = useState<ContentData | null>(null)
   const [contentType, setContentType] = useState<ContentType>('empty')
@@ -303,10 +310,23 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
     screen?.type,
   ])
 
-  if (!screen) {
+  if (isError) {
     return (
       <div className="w-screen h-screen bg-black flex items-center justify-center">
-        <div className="text-white">Loading screen configuration...</div>
+        <div className="text-white text-center">
+          <div className="text-xl mb-2">{t('screens.renderer.error')}</div>
+          <div className="text-gray-400 text-sm">
+            {t('screens.renderer.notFound')}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (isLoading || !screen) {
+    return (
+      <div className="w-screen h-screen bg-black flex items-center justify-center">
+        <div className="text-white">{t('screens.renderer.loading')}</div>
       </div>
     )
   }
@@ -427,15 +447,13 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
         : screen.contentConfigs.empty?.clock
     if (!clockConfig?.enabled) return null
 
-    const x =
-      toPixels(clockConfig.position.x, clockConfig.position.unit, canvasWidth) *
-      scale
-    const y =
-      toPixels(
-        clockConfig.position.y,
-        clockConfig.position.unit,
-        canvasHeight,
-      ) * scale
+    // Use constraints-based positioning
+    const constraintStyles = calculateConstraintStyles(
+      clockConfig.constraints,
+      clockConfig.size,
+      canvasWidth,
+      canvasHeight,
+    )
 
     const now = new Date()
     const timeString = clockConfig.showSeconds
@@ -449,12 +467,14 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
     return (
       <div
         key="clock"
-        className="absolute overflow-hidden flex items-center justify-end"
+        className="overflow-hidden flex items-center justify-end"
         style={{
-          right: canvasWidth * scale - x,
-          top: y,
+          ...constraintStyles,
           ...getTextStyleCSS(clockConfig.style),
           fontSize: clockConfig.style.maxFontSize * scale,
+          // Scale the constraint positions for the viewport
+          transform: `scale(${scale})`,
+          transformOrigin: 'top left',
         }}
       >
         {timeString}
@@ -466,20 +486,24 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
   const renderNextSlideSection = () => {
     if (screen.type !== 'stage' || !screen.nextSlideConfig?.enabled) return null
     const ns = screen.nextSlideConfig
-    const x = toPixels(ns.position.x, ns.position.unit, canvasWidth) * scale
-    const y = toPixels(ns.position.y, ns.position.unit, canvasHeight) * scale
-    const w = toPixels(ns.size.width, ns.size.unit, canvasWidth) * scale
-    const h = toPixels(ns.size.height, ns.size.unit, canvasHeight) * scale
+
+    // Use constraints-based positioning
+    const bounds = calculatePixelBounds(
+      ns.constraints,
+      ns.size,
+      canvasWidth,
+      canvasHeight,
+    )
 
     return (
       <div
         key="nextSlide"
         className="absolute overflow-hidden"
         style={{
-          left: x,
-          top: y,
-          width: w,
-          height: h,
+          left: bounds.x * scale,
+          top: bounds.y * scale,
+          width: bounds.width * scale,
+          height: bounds.height * scale,
           padding: 16 * scale,
           ...getBackgroundCSS(ns.background),
         }}

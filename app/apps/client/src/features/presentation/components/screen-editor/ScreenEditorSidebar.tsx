@@ -128,6 +128,21 @@ export function ScreenEditorSidebar({
     onUpdateContentConfig(contentType, newConfig)
   }
 
+  // Helper to update multiple nested properties at once (avoids overwriting)
+  const updateConfigMultiple = (
+    updates: Array<{ path: string[]; value: unknown }>,
+  ) => {
+    const newConfig = JSON.parse(JSON.stringify(config))
+    for (const { path, value } of updates) {
+      let current = newConfig
+      for (let i = 0; i < path.length - 1; i++) {
+        current = current[path[i]]
+      }
+      current[path[path.length - 1]] = value
+    }
+    onUpdateContentConfig(contentType, newConfig)
+  }
+
   // Get the currently selected element's config
   const getSelectedElementConfig = () => {
     if (!selectedElement) return null
@@ -176,33 +191,45 @@ export function ScreenEditorSidebar({
           </div>
 
           {/* Position Section */}
-          {'constraints' in selectedConfig.config &&
-            'size' in selectedConfig.config && (
-              <Section title="Position" icon={Move}>
-                <ConstraintControls
-                  constraints={
-                    (selectedConfig.config as { constraints: Constraints })
-                      .constraints
+          {'constraints' in selectedConfig.config && (
+            <Section title="Position" icon={Move}>
+              <ConstraintControls
+                constraints={
+                  (selectedConfig.config as { constraints: Constraints })
+                    .constraints
+                }
+                size={
+                  (selectedConfig.config as { size?: SizeWithUnits }).size ?? {
+                    width: 10,
+                    widthUnit: '%',
+                    height: 5,
+                    heightUnit: '%',
                   }
-                  size={(selectedConfig.config as { size: SizeWithUnits }).size}
-                  onChange={(newConstraints, newSize) => {
-                    if (selectedConfig.isNextSlide) {
-                      onUpdateNextSlideConfig({
-                        ...screen.nextSlideConfig!,
-                        constraints: newConstraints,
-                        size: newSize,
-                      })
-                    } else {
-                      updateConfig(
-                        [...selectedConfig.path, 'constraints'],
-                        newConstraints,
-                      )
-                      updateConfig([...selectedConfig.path, 'size'], newSize)
-                    }
-                  }}
-                />
-              </Section>
-            )}
+                }
+                onChange={(newConstraints, newSize) => {
+                  if (selectedConfig.isNextSlide) {
+                    onUpdateNextSlideConfig({
+                      ...screen.nextSlideConfig!,
+                      constraints: newConstraints,
+                      size: newSize,
+                    })
+                  } else {
+                    // Update both constraints and size together to avoid overwrites
+                    updateConfigMultiple([
+                      {
+                        path: [...selectedConfig.path, 'constraints'],
+                        value: newConstraints,
+                      },
+                      {
+                        path: [...selectedConfig.path, 'size'],
+                        value: newSize,
+                      },
+                    ])
+                  }
+                }}
+              />
+            </Section>
+          )}
 
           {/* Text Style Section */}
           {'style' in selectedConfig.config && (
