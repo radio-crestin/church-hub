@@ -7,30 +7,12 @@
     <list default="true" id="66517e3f-2e4e-43cc-880d-deb242368f0c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TODO.md" beforeDir="false" afterPath="$PROJECT_DIR$/TODO.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/BiblePassagePickerModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/BiblePassagePickerModal.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/BibleTranslationSetting.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/BibleTranslationSetting.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/bible/hooks/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/bible/hooks/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/bible/hooks/useDefaultBibleTranslation.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/bible/hooks/useDefaultBibleTranslation.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/InsertSlideModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/InsertSlideModal.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/QueueVersePreview.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/QueueVersePreview.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/QueueVerseteTineriEntryPreview.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/QueueVerseteTineriEntryPreview.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/VerseteTineriEntryRow.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/VerseteTineriEntryRow.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/sidebar-config/components/CustomPageFormModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/sidebar-config/components/CustomPageFormModal.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/sidebar-config/components/CustomPageView.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/sidebar-config/components/CustomPageView.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/sidebar-config/components/SidebarConfigManager.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/sidebar-config/components/SidebarConfigManager.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/sidebar-config/components/WebviewRouteManager.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/sidebar-config/components/WebviewRouteManager.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/sidebar-config/constants.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/sidebar-config/constants.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/sidebar-config/hooks/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/sidebar-config/hooks/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/sidebar-config/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/sidebar-config/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/sidebar-config/service/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/sidebar-config/service/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/sidebar-config/service/sidebarConfig.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/sidebar-config/service/sidebarConfig.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/sidebar-config/utils/transformEmbedUrl.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/sidebar-config/utils/transformEmbedUrl.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/provider/permissions-provider.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/provider/permissions-provider.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/service/bible/bible.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/service/bible/bible.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/ui/layout/app-layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/ui/layout/app-layout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/ui/sidebar/sidebar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/ui/sidebar/sidebar.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/TranslationSelector.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/TranslationSelector.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/users/components/UserQRModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/users/components/UserQRModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/routes/settings/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/routes/settings/index.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/styles.css" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/styles.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/ui/sidebar/sidebar-header.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/ui/sidebar/sidebar-header.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -177,7 +159,7 @@
       <workItem from="1762688136394" duration="14616000" />
       <workItem from="1763895878404" duration="13746000" />
       <workItem from="1764529520395" duration="23258000" />
-      <workItem from="1765113262440" duration="187717000" />
+      <workItem from="1765113262440" duration="188442000" />
     </task>
     <servers />
   </component>
