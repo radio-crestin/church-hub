@@ -134,6 +134,11 @@
       "screenSaveFailed": "Eroare la salvarea ecranului",
       "screenDeleted": "Ecran șters cu succes",
       "screenDeleteFailed": "Eroare la ștergerea ecranului"
+    },
+    "renderer": {
+      "loading": "Se încarcă configurația ecranului...",
+      "error": "Eroare la încărcarea ecranului",
+      "notFound": "Ecranul nu a fost găsit"
     }
   },
   "displays": {

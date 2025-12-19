@@ -81,6 +81,7 @@ function getDefaultClockConfig(enabled = false) {
   return {
     enabled,
     position: { x: 95, y: 2, unit: '%' as const },
+    size: { width: 15, height: 8, unit: '%' as const },
     style: getDefaultTextStyle({
       maxFontSize: 32,
       autoScale: false,
@@ -151,6 +152,7 @@ function getDefaultVerseteTineriConfig() {
     background: getDefaultBackground(),
     personLabel: {
       position: { x: 5, y: 2, unit: '%' as const },
+      size: { width: 40, height: 5, unit: '%' as const },
       style: getDefaultTextStyle({
         maxFontSize: 28,
         autoScale: false,
@@ -186,6 +188,7 @@ function getDefaultEmptyConfig() {
     clock: {
       enabled: true,
       position: { x: 95, y: 5, unit: '%' as const },
+      size: { width: 15, height: 8, unit: '%' as const },
       style: getDefaultTextStyle({
         maxFontSize: 48,
         autoScale: false,
