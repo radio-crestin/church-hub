@@ -3,12 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Combobox } from '~/ui/combobox/Combobox'
 import { Input } from '~/ui/input/Input'
 import { Label } from '~/ui/label/Label'
-import type {
-  Constraint,
-  Constraints,
-  PositionUnit,
-  SizeWithUnits,
-} from '../../types'
+import type { Constraints, PositionUnit, SizeWithUnits } from '../../types'
 
 interface ConstraintControlsProps {
   constraints: Constraints
@@ -20,60 +15,6 @@ const UNIT_OPTIONS = [
   { value: '%', label: '%' },
   { value: 'px', label: 'px' },
 ]
-
-interface EdgeControlProps {
-  label: string
-  constraint: Constraint
-  onChange: (constraint: Constraint) => void
-}
-
-function EdgeControl({ label, constraint, onChange }: EdgeControlProps) {
-  return (
-    <div className="flex items-center gap-2">
-      <button
-        type="button"
-        onClick={() =>
-          onChange({ ...constraint, enabled: !constraint.enabled })
-        }
-        className={`
-          w-6 h-6 rounded border-2 flex items-center justify-center text-xs font-bold
-          transition-colors duration-150
-          ${
-            constraint.enabled
-              ? 'bg-indigo-600 border-indigo-600 text-white'
-              : 'bg-transparent border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500'
-          }
-        `}
-        title={`${constraint.enabled ? 'Disable' : 'Enable'} ${label} constraint`}
-      >
-        {label.charAt(0).toUpperCase()}
-      </button>
-      {constraint.enabled && (
-        <>
-          <Input
-            type="number"
-            value={constraint.value}
-            onChange={(e) =>
-              onChange({
-                ...constraint,
-                value: parseFloat(e.target.value) || 0,
-              })
-            }
-            className="h-7 w-16 text-xs"
-          />
-          <Combobox
-            value={constraint.unit}
-            onChange={(value) =>
-              onChange({ ...constraint, unit: value as PositionUnit })
-            }
-            options={UNIT_OPTIONS}
-            className="w-14 h-7"
-          />
-        </>
-      )}
-    </div>
-  )
-}
 
 export function ConstraintControls({
   constraints,
@@ -130,10 +71,33 @@ export function ConstraintControls({
           title={t('screens.position.top', 'Top')}
         />
         {constraints.top.enabled && (
-          <span className="absolute top-7 left-1/2 -translate-x-1/2 text-[10px] text-indigo-600 dark:text-indigo-400 font-medium bg-white/90 dark:bg-gray-900/90 px-1 rounded whitespace-nowrap">
-            {constraints.top.value}
-            {constraints.top.unit}
-          </span>
+          <div className="absolute top-7 left-1/2 -translate-x-1/2 flex items-center gap-0.5 bg-white/90 dark:bg-gray-900/90 rounded overflow-hidden">
+            <input
+              type="number"
+              value={constraints.top.value}
+              onChange={(e) =>
+                updateConstraint('top', {
+                  ...constraints.top,
+                  value: parseFloat(e.target.value) || 0,
+                })
+              }
+              className="w-10 h-5 text-[10px] text-indigo-600 dark:text-indigo-400 font-medium bg-transparent px-1 text-center border-0 focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                updateConstraint('top', {
+                  ...constraints.top,
+                  unit: constraints.top.unit === '%' ? 'px' : '%',
+                })
+              }}
+              className="h-5 px-1 text-[10px] text-indigo-500 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/30"
+            >
+              {constraints.top.unit}
+            </button>
+          </div>
         )}
 
         {/* Bottom anchor indicator */}
@@ -157,10 +121,33 @@ export function ConstraintControls({
           title={t('screens.position.bottom', 'Bottom')}
         />
         {constraints.bottom.enabled && (
-          <span className="absolute bottom-7 left-1/2 -translate-x-1/2 text-[10px] text-indigo-600 dark:text-indigo-400 font-medium bg-white/90 dark:bg-gray-900/90 px-1 rounded whitespace-nowrap">
-            {constraints.bottom.value}
-            {constraints.bottom.unit}
-          </span>
+          <div className="absolute bottom-7 left-1/2 -translate-x-1/2 flex items-center gap-0.5 bg-white/90 dark:bg-gray-900/90 rounded overflow-hidden">
+            <input
+              type="number"
+              value={constraints.bottom.value}
+              onChange={(e) =>
+                updateConstraint('bottom', {
+                  ...constraints.bottom,
+                  value: parseFloat(e.target.value) || 0,
+                })
+              }
+              className="w-10 h-5 text-[10px] text-indigo-600 dark:text-indigo-400 font-medium bg-transparent px-1 text-center border-0 focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                updateConstraint('bottom', {
+                  ...constraints.bottom,
+                  unit: constraints.bottom.unit === '%' ? 'px' : '%',
+                })
+              }}
+              className="h-5 px-1 text-[10px] text-indigo-500 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/30"
+            >
+              {constraints.bottom.unit}
+            </button>
+          </div>
         )}
 
         {/* Left anchor indicator */}
@@ -184,10 +171,33 @@ export function ConstraintControls({
           title={t('screens.position.left', 'Left')}
         />
         {constraints.left.enabled && (
-          <span className="absolute left-7 top-1/2 -translate-y-1/2 text-[10px] text-indigo-600 dark:text-indigo-400 font-medium bg-white/90 dark:bg-gray-900/90 px-1 rounded whitespace-nowrap">
-            {constraints.left.value}
-            {constraints.left.unit}
-          </span>
+          <div className="absolute left-7 top-1/2 -translate-y-1/2 flex items-center gap-0.5 bg-white/90 dark:bg-gray-900/90 rounded overflow-hidden">
+            <input
+              type="number"
+              value={constraints.left.value}
+              onChange={(e) =>
+                updateConstraint('left', {
+                  ...constraints.left,
+                  value: parseFloat(e.target.value) || 0,
+                })
+              }
+              className="w-10 h-5 text-[10px] text-indigo-600 dark:text-indigo-400 font-medium bg-transparent px-1 text-center border-0 focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                updateConstraint('left', {
+                  ...constraints.left,
+                  unit: constraints.left.unit === '%' ? 'px' : '%',
+                })
+              }}
+              className="h-5 px-1 text-[10px] text-indigo-500 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/30"
+            >
+              {constraints.left.unit}
+            </button>
+          </div>
         )}
 
         {/* Right anchor indicator */}
@@ -211,10 +221,33 @@ export function ConstraintControls({
           title={t('screens.position.right', 'Right')}
         />
         {constraints.right.enabled && (
-          <span className="absolute right-7 top-1/2 -translate-y-1/2 text-[10px] text-indigo-600 dark:text-indigo-400 font-medium bg-white/90 dark:bg-gray-900/90 px-1 rounded whitespace-nowrap">
-            {constraints.right.value}
-            {constraints.right.unit}
-          </span>
+          <div className="absolute right-7 top-1/2 -translate-y-1/2 flex items-center gap-0.5 bg-white/90 dark:bg-gray-900/90 rounded overflow-hidden">
+            <input
+              type="number"
+              value={constraints.right.value}
+              onChange={(e) =>
+                updateConstraint('right', {
+                  ...constraints.right,
+                  value: parseFloat(e.target.value) || 0,
+                })
+              }
+              className="w-10 h-5 text-[10px] text-indigo-600 dark:text-indigo-400 font-medium bg-transparent px-1 text-center border-0 focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                updateConstraint('right', {
+                  ...constraints.right,
+                  unit: constraints.right.unit === '%' ? 'px' : '%',
+                })
+              }}
+              className="h-5 px-1 text-[10px] text-indigo-500 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/30"
+            >
+              {constraints.right.unit}
+            </button>
+          </div>
         )}
 
         {/* Lines connecting enabled anchors to center box */}
@@ -230,30 +263,6 @@ export function ConstraintControls({
         {constraints.right.enabled && (
           <div className="absolute right-6 top-1/2 h-0.5 w-2 bg-indigo-600 -translate-y-1/2" />
         )}
-      </div>
-
-      {/* Constraint value inputs */}
-      <div className="space-y-3">
-        <EdgeControl
-          label={t('screens.position.top', 'Top')}
-          constraint={constraints.top}
-          onChange={(c) => updateConstraint('top', c)}
-        />
-        <EdgeControl
-          label={t('screens.position.bottom', 'Bottom')}
-          constraint={constraints.bottom}
-          onChange={(c) => updateConstraint('bottom', c)}
-        />
-        <EdgeControl
-          label={t('screens.position.left', 'Left')}
-          constraint={constraints.left}
-          onChange={(c) => updateConstraint('left', c)}
-        />
-        <EdgeControl
-          label={t('screens.position.right', 'Right')}
-          constraint={constraints.right}
-          onChange={(c) => updateConstraint('right', c)}
-        />
       </div>
 
       {/* Size inputs (hidden when stretch mode is active) */}
