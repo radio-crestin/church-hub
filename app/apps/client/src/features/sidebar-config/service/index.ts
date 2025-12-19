@@ -4,7 +4,6 @@ export {
   getSidebarConfiguration,
   saveSidebarConfiguration,
 } from './sidebarConfig'
-
 export {
   destroyAllCustomPageWebviews,
   forceCloseAllCustomPageWebviews,

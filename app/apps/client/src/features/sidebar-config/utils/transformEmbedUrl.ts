@@ -67,7 +67,6 @@ export function transformToEmbedUrl(url: string): string {
   if (isYouTubeUrl(url)) {
     const embedUrl = transformYouTubeToEmbed(url)
     if (embedUrl) {
-      console.log('[transformEmbedUrl] Transformed YouTube URL:', url, '→', embedUrl)
       return embedUrl
     }
   }

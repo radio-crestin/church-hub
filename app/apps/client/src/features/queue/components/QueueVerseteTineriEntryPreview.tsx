@@ -33,7 +33,8 @@ function scrollIntoViewWithNeighbors(element: HTMLElement) {
   const containerRect = scrollContainer.getBoundingClientRect()
 
   // Calculate element position relative to the scroll container
-  const elementTop = elementRect.top - containerRect.top + scrollContainer.scrollTop
+  const elementTop =
+    elementRect.top - containerRect.top + scrollContainer.scrollTop
   const elementBottom = elementTop + elementRect.height
 
   // Get the visible area

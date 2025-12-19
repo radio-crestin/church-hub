@@ -11,8 +11,8 @@
 ~~- adauga optiunea de a salva coada actuala ca si un program~~
 ~~- in butonul adauga, adauga optiunea de a adauga versete biblice~~
 ~~- adauga in versete tineri referinte catre versete~~
-- fa meniul lateral configurabil din setari (muta butonul de setari in partea de jos)
-- adauga link catre WhatsApp in sidebar
+~~- fa meniul lateral configurabil din setari (muta butonul de setari in partea de jos)~~
+~~- adauga link catre WhatsApp in sidebar~~
 - rezolva problema cu schimbul temei si muta acest meniu in setari
 - rezolva problema cu selectorii, implementand ceva custom
 - imbunatateste creare de ecrane, lasand utilizatorul sa aleaga intre (ecran prezentare principal, stage monitor, livestream overlay)

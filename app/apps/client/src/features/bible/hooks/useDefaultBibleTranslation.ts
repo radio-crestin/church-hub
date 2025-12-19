@@ -4,8 +4,8 @@ import {
   getDefaultBibleTranslationId,
   saveDefaultBibleTranslationId,
 } from '~/service/bible'
-import type { BibleTranslation } from '../types'
 import { useTranslations } from './useTranslations'
+import type { BibleTranslation } from '../types'
 
 export const DEFAULT_BIBLE_TRANSLATION_QUERY_KEY = [
   'settings',
@@ -17,10 +17,7 @@ export function useDefaultBibleTranslation() {
   const { data: translations = [], isLoading: isTranslationsLoading } =
     useTranslations()
 
-  const {
-    data: defaultTranslationId,
-    isLoading: isSettingLoading,
-  } = useQuery({
+  const { data: defaultTranslationId, isLoading: isSettingLoading } = useQuery({
     queryKey: DEFAULT_BIBLE_TRANSLATION_QUERY_KEY,
     queryFn: getDefaultBibleTranslationId,
     staleTime: 5 * 60 * 1000, // 5 minutes
