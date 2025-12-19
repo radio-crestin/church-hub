@@ -1,5 +1,5 @@
 import { setWindowFullscreen } from './fullscreen'
-import type { Display, DisplayOpenMode } from '../types'
+import type { Display, DisplayOpenMode, Screen } from '../types'
 
 const WINDOW_POSITIONS_KEY = 'display-window-positions'
 
@@ -31,9 +31,15 @@ export function isTauri(): boolean {
 
 /**
  * Gets the frontend base URL for display windows
- * Uses the same origin the client accessed from
+ * In Tauri dev mode, window.location.origin returns tauri://localhost
+ * so we need to use the actual dev server URL
  */
 function getFrontendUrl(): string {
+  // In development, use the dev server URL (for Tauri which uses tauri:// protocol)
+  if (import.meta.env.DEV) {
+    return 'http://localhost:8086'
+  }
+  // In production Tauri, use the current origin
   return window.location.origin
 }
 
@@ -83,7 +89,7 @@ export async function openDisplayWindow(
   console.log(
     `[openDisplayWindow] Opening display ${displayId} in ${openMode} mode, isTauri: ${isTauri()}, defaultFullscreen: ${defaultFullscreen}`,
   )
-  const displayUrl = `${getFrontendUrl()}/display/${displayId}`
+  const displayUrl = `${getFrontendUrl()}/screen/${displayId}`
   // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
   console.log(`[openDisplayWindow] URL: ${displayUrl}`)
 
@@ -101,7 +107,7 @@ export async function openDisplayWindow(
 /**
  * Opens the display in the system's default browser
  */
-async function openInBrowser(url: string): Promise<void> {
+export async function openInBrowser(url: string): Promise<void> {
   // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
   console.log(`[openInBrowser] called, isTauri: ${isTauri()}`)
   if (isTauri()) {
@@ -368,5 +374,19 @@ export async function setDisplayFullscreen(
   } catch (error) {
     // biome-ignore lint/suspicious/noConsole: Error logging
     console.error('[setDisplayFullscreen] Failed to set fullscreen:', error)
+  }
+}
+
+/**
+ * Opens all active screens with native windows
+ */
+export async function openAllActiveScreens(screens: Screen[]): Promise<void> {
+  const activeScreens = screens.filter((s) => s.isActive)
+
+  for (const screen of activeScreens) {
+    // Always use 'native' mode (matching ScreenManager behavior)
+    await openDisplayWindow(screen.id, 'native', screen.isFullscreen)
+    // Small delay to prevent overwhelming the system
+    await new Promise((resolve) => setTimeout(resolve, 100))
   }
 }
