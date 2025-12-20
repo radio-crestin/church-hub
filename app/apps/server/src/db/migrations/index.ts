@@ -3,6 +3,7 @@ import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite'
 import { migrate } from 'drizzle-orm/bun-sqlite/migrator'
 
 import { seedSystemRoles } from './seed'
+import { seedDefaultScreens } from './seed-screens'
 import type { Database } from 'bun:sqlite'
 import { createFtsTables } from '../fts'
 
@@ -46,6 +47,10 @@ export function runMigrations(
   // Seed system roles and permissions
   log('info', 'Seeding system roles...')
   seedSystemRoles(rawDb)
+
+  // Seed default screens
+  log('info', 'Seeding default screens...')
+  seedDefaultScreens(rawDb)
 
   return { ftsRecreated: true }
 }
