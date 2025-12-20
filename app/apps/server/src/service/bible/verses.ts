@@ -1,5 +1,6 @@
 import { and, asc, between, eq, gt, gte, lt, lte, or } from 'drizzle-orm'
 
+import { getNextBook } from './books'
 import type { BibleVerse } from './types'
 import { getDatabase } from '../../db'
 import { bibleBooks, bibleVerses } from '../../db/schema'
@@ -236,4 +237,44 @@ export function formatRangeReference(
       ? `${bookName} ${chapter}:${startVerse}`
       : `${bookName} ${chapter}:${startVerse}-${endVerse}`
   return translationAbbreviation ? `${ref} - ${translationAbbreviation}` : ref
+}
+
+/**
+ * Gets the next verse in sequence from a given verse ID
+ * Handles chapter and book boundaries automatically:
+ * - If not at end of chapter: returns next verse in same chapter
+ * - If at end of chapter: returns first verse of next chapter
+ * - If at end of book: returns first verse of first chapter of next book
+ * - If at end of Bible: returns null
+ */
+export function getNextVerse(verseId: number): BibleVerse | null {
+  const current = getVerseById(verseId)
+  if (!current) return null
+
+  // Try next verse in same chapter
+  const nextInChapter = getVerse(
+    current.translationId,
+    current.bookCode,
+    current.chapter,
+    current.verse + 1,
+  )
+  if (nextInChapter) return nextInChapter
+
+  // Try first verse of next chapter in same book
+  const nextChapter = getVerse(
+    current.translationId,
+    current.bookCode,
+    current.chapter + 1,
+    1,
+  )
+  if (nextChapter) return nextChapter
+
+  // Try first verse of next book
+  const nextBook = getNextBook(current.translationId, current.bookId)
+  if (nextBook) {
+    return getVerse(nextBook.translationId, nextBook.bookCode, 1, 1)
+  }
+
+  // End of Bible
+  return null
 }
