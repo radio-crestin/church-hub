@@ -14,20 +14,13 @@ import { Combobox } from '~/ui/combobox/Combobox'
 import { Switch } from '~/ui/switch/Switch'
 import { useToast } from '~/ui/toast/useToast'
 import {
+  useBatchUpdateScreenConfig,
   useDeleteScreen,
   useScreen,
   useScreens,
-  useUpdateScreenContentConfig,
-  useUpdateScreenGlobalSettings,
-  useUpdateScreenNextSlideConfig,
   useUpsertScreen,
 } from '../../hooks'
-import type {
-  ContentType,
-  Screen,
-  ScreenType,
-  ScreenWithConfigs,
-} from '../../types'
+import type { Screen, ScreenType, ScreenWithConfigs } from '../../types'
 import {
   closeDisplayWindow,
   openDisplayWindow,
@@ -53,9 +46,7 @@ export function ScreenManager() {
   const { data: screens, isLoading } = useScreens()
   const upsertScreen = useUpsertScreen()
   const deleteScreen = useDeleteScreen()
-  const updateContentConfig = useUpdateScreenContentConfig()
-  const updateNextSlideConfig = useUpdateScreenNextSlideConfig()
-  const updateGlobalSettings = useUpdateScreenGlobalSettings()
+  const batchUpdateConfig = useBatchUpdateScreenConfig()
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [newScreenName, setNewScreenName] = useState('')
@@ -97,42 +88,21 @@ export function ScreenManager() {
   const handleSaveScreen = useCallback(
     async (screen: ScreenWithConfigs) => {
       try {
-        // Update global settings
-        await updateGlobalSettings.mutateAsync({
+        // Single atomic batch update of all screen configs
+        await batchUpdateConfig.mutateAsync({
           screenId: screen.id,
-          settings: screen.globalSettings,
+          globalSettings: screen.globalSettings,
+          contentConfigs: screen.contentConfigs,
+          nextSlideConfig:
+            screen.type === 'stage' ? screen.nextSlideConfig : undefined,
         })
-
-        // Update each content config
-        for (const [contentType, config] of Object.entries(
-          screen.contentConfigs,
-        )) {
-          await updateContentConfig.mutateAsync({
-            screenId: screen.id,
-            contentType: contentType as ContentType,
-            config,
-          })
-        }
-
-        // Update next slide config if stage screen
-        if (screen.type === 'stage' && screen.nextSlideConfig) {
-          await updateNextSlideConfig.mutateAsync({
-            screenId: screen.id,
-            config: screen.nextSlideConfig,
-          })
-        }
 
         showToast('Screen saved successfully', 'success')
       } catch {
         showToast('Failed to save screen', 'error')
       }
     },
-    [
-      updateGlobalSettings,
-      updateContentConfig,
-      updateNextSlideConfig,
-      showToast,
-    ],
+    [batchUpdateConfig, showToast],
   )
 
   const handleCloseEditor = () => {
