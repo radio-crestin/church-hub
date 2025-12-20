@@ -529,7 +529,7 @@ export function ScreenEditorCanvas({
     const els: React.ReactElement[] = []
 
     // Main text / Content text
-    if ('mainText' in config) {
+    if ('mainText' in config && !config.mainText.hidden) {
       const mt = config.mainText
       const bounds = calculatePixelBounds(
         mt.constraints,
@@ -569,7 +569,7 @@ export function ScreenEditorCanvas({
       )
     }
 
-    if ('contentText' in config) {
+    if ('contentText' in config && !config.contentText.hidden) {
       const ct = config.contentText
       const bounds = calculatePixelBounds(
         ct.constraints,
@@ -608,7 +608,7 @@ export function ScreenEditorCanvas({
     }
 
     // Reference text (bible, versete_tineri)
-    if ('referenceText' in config) {
+    if ('referenceText' in config && !config.referenceText.hidden) {
       const rt = config.referenceText
       const bounds = calculatePixelBounds(
         rt.constraints,
@@ -647,7 +647,7 @@ export function ScreenEditorCanvas({
     }
 
     // Person label (versete_tineri)
-    if ('personLabel' in config) {
+    if ('personLabel' in config && !config.personLabel.hidden) {
       const pl = config.personLabel
       const bounds = calculatePixelBounds(
         pl.constraints,
@@ -688,7 +688,7 @@ export function ScreenEditorCanvas({
     // Clock
     const clockConfig =
       'clock' in config ? config.clock : screen.globalSettings.clockConfig
-    if (clockConfig?.enabled) {
+    if (clockConfig?.enabled && !clockConfig.hidden) {
       // Default size for backwards compatibility with configs that don't have size
       const clockSize = clockConfig.size ?? {
         width: 10,
@@ -736,7 +736,11 @@ export function ScreenEditorCanvas({
     }
 
     // Next slide section (stage screens)
-    if (screen.type === 'stage' && screen.nextSlideConfig?.enabled) {
+    if (
+      screen.type === 'stage' &&
+      screen.nextSlideConfig?.enabled &&
+      !screen.nextSlideConfig.hidden
+    ) {
       const ns = screen.nextSlideConfig
       const bounds = calculatePixelBounds(
         ns.constraints,
