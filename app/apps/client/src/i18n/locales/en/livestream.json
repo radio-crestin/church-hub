@@ -64,12 +64,10 @@
   },
   "scenes": {
     "title": "Scenes",
-    "configure": "Configure Scene",
+    "settings": "Scene Settings",
     "displayName": "Display Name",
     "visible": "Visible",
     "hidden": "Hidden",
-    "moveUp": "Move Up",
-    "moveDown": "Move Down",
     "current": "Current"
   },
   "errors": {

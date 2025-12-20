@@ -1,10 +1,10 @@
+import { Settings } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { SceneCard } from './SceneCard'
-import { SceneConfigModal } from './SceneConfigModal'
+import { SceneSettingsModal } from './SceneSettingsModal'
 import { useOBSScenes } from '../hooks'
-import type { OBSScene } from '../types'
 
 export function SceneGrid() {
   const { t } = useTranslation('livestream')
@@ -16,42 +16,22 @@ export function SceneGrid() {
     reorderScenes,
     updateScene,
   } = useOBSScenes()
-  const [configScene, setConfigScene] = useState<OBSScene | null>(null)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
   const visibleScenes = scenes.filter((s) => s.isVisible)
 
-  const handleMoveUp = useCallback(
-    (index: number) => {
-      if (index === 0) return
-      const newOrder = [...visibleScenes]
-      const temp = newOrder[index]
-      newOrder[index] = newOrder[index - 1]
-      newOrder[index - 1] = temp
-      reorderScenes(newOrder.map((s) => s.id!))
+  const handleReorder = useCallback(
+    (sceneIds: number[]) => {
+      reorderScenes(sceneIds)
     },
-    [visibleScenes, reorderScenes],
+    [reorderScenes],
   )
 
-  const handleMoveDown = useCallback(
-    (index: number) => {
-      if (index === visibleScenes.length - 1) return
-      const newOrder = [...visibleScenes]
-      const temp = newOrder[index]
-      newOrder[index] = newOrder[index + 1]
-      newOrder[index + 1] = temp
-      reorderScenes(newOrder.map((s) => s.id!))
+  const handleUpdateScene = useCallback(
+    (id: number, data: { displayName?: string; isVisible?: boolean }) => {
+      updateScene({ id, data })
     },
-    [visibleScenes, reorderScenes],
-  )
-
-  const handleSaveConfig = useCallback(
-    (data: { displayName?: string; isVisible?: boolean }) => {
-      if (configScene?.id) {
-        updateScene({ id: configScene.id, data })
-      }
-      setConfigScene(null)
-    },
-    [configScene, updateScene],
+    [updateScene],
   )
 
   if (isLoading) {
@@ -78,31 +58,37 @@ export function SceneGrid() {
   return (
     <>
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-          {t('scenes.title')}
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            {t('scenes.title')}
+          </h2>
+          <button
+            type="button"
+            onClick={() => setIsSettingsOpen(true)}
+            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            title={t('scenes.settings')}
+          >
+            <Settings size={20} />
+          </button>
+        </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {visibleScenes.map((scene, index) => (
+          {visibleScenes.map((scene) => (
             <SceneCard
               key={scene.id}
               scene={scene}
               onSwitch={switchScene}
-              onMoveUp={() => handleMoveUp(index)}
-              onMoveDown={() => handleMoveDown(index)}
-              onConfigure={() => setConfigScene(scene)}
-              isFirst={index === 0}
-              isLast={index === visibleScenes.length - 1}
               isSwitching={isSwitching}
             />
           ))}
         </div>
       </div>
 
-      {configScene && (
-        <SceneConfigModal
-          scene={configScene}
-          onClose={() => setConfigScene(null)}
-          onSave={handleSaveConfig}
+      {isSettingsOpen && (
+        <SceneSettingsModal
+          scenes={scenes}
+          onClose={() => setIsSettingsOpen(false)}
+          onReorder={handleReorder}
+          onUpdateScene={handleUpdateScene}
         />
       )}
     </>
