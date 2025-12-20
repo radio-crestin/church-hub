@@ -1,11 +1,7 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 
 import { AnimatedElement } from './AnimatedElement'
-import {
-  calculateConstraintStyles,
-  calculatePixelBounds,
-  getTextStyleCSS,
-} from './utils/styleUtils'
+import { calculatePixelBounds, getTextStyleCSS } from './utils/styleUtils'
 import type {
   PersonLabelConfig,
   ReferenceTextConfig,
@@ -54,6 +50,7 @@ interface TextElementProps {
   content: string
   screenWidth: number
   screenHeight: number
+  scale: number
   isVisible?: boolean
   isHtml?: boolean
 }
@@ -63,6 +60,7 @@ export function TextElement({
   content,
   screenWidth,
   screenHeight,
+  scale,
   isVisible = true,
   isHtml = false,
 }: TextElementProps) {
@@ -96,7 +94,7 @@ export function TextElement({
   const animationOut =
     'animationOut' in config ? config.animationOut : undefined
 
-  // Calculate pixel bounds for sizing (needed for auto-scale calculations)
+  // Calculate pixel bounds in native screen coordinates
   const bounds = calculatePixelBounds(
     config.constraints,
     config.size,
@@ -104,15 +102,15 @@ export function TextElement({
     screenHeight,
   )
 
-  // Calculate CSS styles from constraints
-  const constraintStyles = calculateConstraintStyles(
-    config.constraints,
-    config.size,
-    screenWidth,
-    screenHeight,
-  )
+  // Scaled dimensions for display
+  const scaledBounds = {
+    x: bounds.x * scale,
+    y: bounds.y * scale,
+    width: bounds.width * scale,
+    height: bounds.height * scale,
+  }
 
-  // Create size object for compatibility with existing code
+  // Use native dimensions for auto-scale calculations
   const size = { width: bounds.width, height: bounds.height }
 
   // Auto-scale text using single-pass ratio calculation
@@ -183,12 +181,16 @@ export function TextElement({
   const isReady =
     !contentChangedThisRender &&
     (calculatedFontSize !== null || !config.style.autoScale)
-  const fontSize = calculatedFontSize ?? config.style.maxFontSize
+
+  // Apply scale to font size for display
+  const baseFontSize = calculatedFontSize ?? config.style.maxFontSize
+  const scaledFontSize = baseFontSize * scale
+  const scaledPadding = padding * scale
 
   const textStyles: React.CSSProperties = {
     ...getTextStyleCSS(config.style),
-    fontSize: `${fontSize}px`,
-    padding,
+    fontSize: `${scaledFontSize}px`,
+    padding: scaledPadding,
     width: '100%',
     height: '100%',
     display: 'flex',
@@ -210,8 +212,13 @@ export function TextElement({
     visibility: isReady ? 'visible' : 'hidden', // Hide until calculated
   }
 
+  // Use pixel positioning with scaled values
   const containerStyles: React.CSSProperties = {
-    ...constraintStyles,
+    position: 'absolute',
+    left: scaledBounds.x,
+    top: scaledBounds.y,
+    width: scaledBounds.width,
+    height: scaledBounds.height,
   }
 
   return (

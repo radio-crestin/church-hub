@@ -52,43 +52,28 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
     NextSlideData | undefined
   >()
 
-  // Track container dimensions
-  const [containerSize, setContainerSize] = useState({
-    width: window.innerWidth,
-    height: window.innerHeight,
-  })
+  // Track container dimensions (start at 0, render only when measured)
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
 
-  // Update container size on resize
+  // Use ResizeObserver to measure the wrapper element (NOT window size)
   useEffect(() => {
-    let timeoutId: ReturnType<typeof setTimeout>
-
     const updateSize = () => {
-      clearTimeout(timeoutId)
-      timeoutId = setTimeout(() => {
-        if (containerRef.current) {
-          const parent = containerRef.current.parentElement
-          if (parent) {
-            setContainerSize({
-              width: parent.clientWidth,
-              height: parent.clientHeight,
-            })
-            return
-          }
-        }
-        // Fallback to window if no parent
+      if (containerRef.current) {
         setContainerSize({
-          width: window.innerWidth,
-          height: window.innerHeight,
+          width: containerRef.current.clientWidth,
+          height: containerRef.current.clientHeight,
         })
-      }, 100)
+      }
     }
 
     updateSize()
-    window.addEventListener('resize', updateSize)
-    return () => {
-      clearTimeout(timeoutId)
-      window.removeEventListener('resize', updateSize)
+
+    const resizeObserver = new ResizeObserver(updateSize)
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current)
     }
+
+    return () => resizeObserver.disconnect()
   }, [])
 
   // Toggle fullscreen
@@ -336,16 +321,18 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
       className="w-screen h-screen overflow-hidden cursor-default"
       onDoubleClick={toggleFullscreen}
     >
-      <ScreenContent
-        screen={screen}
-        contentType={contentType}
-        contentData={contentData}
-        containerWidth={containerSize.width}
-        containerHeight={containerSize.height}
-        showClock={true}
-        isVisible={isVisible}
-        nextSlideData={nextSlideData}
-      />
+      {containerSize.width > 0 && containerSize.height > 0 && (
+        <ScreenContent
+          screen={screen}
+          contentType={contentType}
+          contentData={contentData}
+          containerWidth={containerSize.width}
+          containerHeight={containerSize.height}
+          showClock={true}
+          isVisible={isVisible}
+          nextSlideData={nextSlideData}
+        />
+      )}
     </div>
   )
 }
