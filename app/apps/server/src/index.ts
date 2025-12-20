@@ -8,6 +8,7 @@ import {
   requirePermission,
 } from './middleware'
 import { getOpenApiSpec, getScalarDocs } from './openapi'
+import { handleLivestreamRoutes } from './routes/livestream'
 import {
   ALL_PERMISSIONS,
   type CreateUserInput,
@@ -49,6 +50,7 @@ import {
   checkLibreOfficeInstalled,
   convertPptToPptx,
 } from './service/conversion'
+import { initializeOBSCallbacks } from './service/livestream/obs'
 import { getExternalInterfaces } from './service/network'
 import {
   batchUpdateScreenConfigs,
@@ -161,6 +163,9 @@ async function main() {
 
   // Seed RCCV Bible translation if no translations exist
   ensureRCCVExists()
+
+  // Wire up OBS callbacks to WebSocket broadcasts
+  initializeOBSCallbacks()
 
   const isProd = process.env.NODE_ENV === 'production'
 
@@ -3326,6 +3331,14 @@ async function main() {
           )
         }
       }
+
+      // Livestream routes (YouTube, OBS integration)
+      const livestreamResponse = await handleLivestreamRoutes(
+        req,
+        url,
+        handleCors,
+      )
+      if (livestreamResponse) return livestreamResponse
 
       return handleCors(req, new Response('Not Found', { status: 404 }))
     },

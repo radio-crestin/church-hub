@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/obs-websocket-js"></script>
+    <title>WEBSOCKET TEST</title>
+</head>
+
+
+<body>
+
+    <a align="center" href="#" onclick="setCurrentScene('SCENE-NAME-ON-OBS')">TEST</a>
+
+<script>
+function setCurrentScene(scenename) {
+const obs = new OBSWebSocket();
+    obs.connect({address: 'localhost:4455', password: 'john1234'
+    });
+    obs.on('ConnectionOpened', () => {
+        obs.send('SetCurrentScene', {
+                'scene-name': scenename
+         });
+    });
+    }
+</script>
+</body>
+</html>
