@@ -42,7 +42,7 @@
       "visibility": "Vizibilitate"
     },
     "visibility": {
-      "visibleWhenHidden": "Vizibil când ecranul este ascuns"
+      "hideElement": "Ascunde elementul"
     },
     "position": {
       "x": "Poziție X",

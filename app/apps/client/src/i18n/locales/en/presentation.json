@@ -42,7 +42,7 @@
       "visibility": "Visibility"
     },
     "visibility": {
-      "visibleWhenHidden": "Visible when screen is hidden"
+      "hideElement": "Hide element"
     },
     "position": {
       "x": "X Position",
