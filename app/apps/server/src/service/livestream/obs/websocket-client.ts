@@ -140,14 +140,27 @@ export class OBSWebSocketClient {
       return
     }
 
+    // Prevent duplicate scheduling
+    if (this.reconnectTimer) {
+      log('debug', 'Reconnect already scheduled, skipping')
+      return
+    }
+
+    // Already connected or connecting
+    if (this.connected || this.connecting) {
+      log('debug', 'Already connected or connecting, skipping reconnect')
+      return
+    }
+
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
       log(
-        'error',
-        `Max reconnect attempts (${this.maxReconnectAttempts}) reached`,
+        'info',
+        `Max reconnect attempts (${this.maxReconnectAttempts}) reached, waiting 30s before retrying...`,
       )
       this.reconnectAttempts = 0
-      // Reset after a longer delay to try again
+      // Reset after a longer delay to try again (keep trying forever)
       this.reconnectTimer = setTimeout(() => {
+        this.reconnectTimer = null
         log('info', 'Resetting reconnect attempts and trying again...')
         this.scheduleReconnect()
       }, 30000)
@@ -162,11 +175,12 @@ export class OBSWebSocketClient {
     )
 
     this.reconnectTimer = setTimeout(async () => {
+      this.reconnectTimer = null
       try {
         await this.connect()
       } catch (error) {
         log('error', `Reconnect attempt failed: ${error}`)
-        // handleDisconnect will be called, which will schedule another reconnect
+        // Error handlers will schedule another reconnect
       }
     }, delay)
   }
@@ -283,6 +297,8 @@ export class OBSWebSocketClient {
           cleanup()
           this.connecting = false
           this.notifyConnectionStatus()
+          // Schedule reconnect on error if auto-reconnect is enabled
+          this.scheduleReconnect()
           reject(new Error(`WebSocket connection error: ${errorInfo}`))
         }
 
@@ -300,6 +316,8 @@ export class OBSWebSocketClient {
       } catch (error) {
         this.connecting = false
         this.notifyConnectionStatus()
+        // Schedule reconnect on error if auto-reconnect is enabled
+        this.scheduleReconnect()
         reject(error)
       }
     })
