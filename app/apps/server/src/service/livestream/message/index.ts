@@ -1,0 +1,1 @@
+export { generateBroadcastMessage } from './generator'

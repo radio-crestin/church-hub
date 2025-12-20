@@ -43,6 +43,13 @@
       "when": 1766300000000,
       "tag": "0005_drop_displays_table",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1766400000000,
+      "tag": "0006_add_livestream_tables",
+      "breakpoints": true
     }
   ]
 }

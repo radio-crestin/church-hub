@@ -1,0 +1,86 @@
+{
+  "title": "Live Stream",
+  "youtube": {
+    "notConnected": "YouTube neconectat",
+    "connected": "Conectat ca {{channelName}}",
+    "login": "Conecteaza-te cu YouTube",
+    "logout": "Deconecteaza YouTube",
+    "settings": "Setari YouTube",
+    "titleTemplate": "Sablon titlu",
+    "description": "Descriere",
+    "privacyStatus": "Confidentialitate",
+    "privacyPublic": "Public",
+    "privacyUnlisted": "Nelistat",
+    "privacyPrivate": "Privat",
+    "streamKey": "Cheie Stream",
+    "selectStreamKey": "Selecteaza cheia stream",
+    "playlist": "ID Playlist",
+    "startScene": "Scena de start"
+  },
+  "obs": {
+    "connected": "OBS Conectat",
+    "disconnected": "OBS Deconectat",
+    "connecting": "Se conecteaza...",
+    "connect": "Conecteaza la OBS",
+    "disconnect": "Deconecteaza",
+    "settings": "Setari OBS",
+    "host": "Host",
+    "port": "Port",
+    "password": "Parola",
+    "autoConnect": "Auto-conectare la pornire",
+    "setup": {
+      "title": "Configurare OBS WebSocket",
+      "helpLink": "Ai nevoie de ajutor pentru conectare?",
+      "step1Title": "Pasul 1: Instaleaza OBS WebSocket",
+      "step1Description": "OBS WebSocket este necesar pentru ca Church Hub sa controleze OBS Studio. Pentru OBS 28+, este inclus. Pentru versiuni mai vechi, descarca si instaleaza:",
+      "downloadLink": "Descarca OBS WebSocket de pe GitHub",
+      "step2Title": "Pasul 2: Activeaza Serverul WebSocket",
+      "step2Instruction1": "Deschide OBS Studio",
+      "step2Instruction2": "Mergi la Tools → WebSocket Server Settings",
+      "step2Instruction3": "Bifeaza \"Enable WebSocket server\" si seteaza parola de mai jos",
+      "step3Title": "Pasul 3: Configureaza Parola",
+      "step3Description": "Copiaza aceasta parola si paste-o in OBS WebSocket Server Settings:",
+      "copy": "Copiaza",
+      "copied": "Copiat!",
+      "noteTitle": "Nota:",
+      "noteDescription": "Asigura-te ca folosesti aceeasi parola in OBS. Church Hub va folosi automat aceasta parola la conectare.",
+      "saveAndClose": "Salveaza si Inchide"
+    }
+  },
+  "stream": {
+    "startStream": "Porneste Stream",
+    "stopStream": "Opreste Stream",
+    "isLive": "LIVE",
+    "notStreaming": "Nu transmite",
+    "starting": "Se porneste...",
+    "stopping": "Se opreste..."
+  },
+  "broadcast": {
+    "currentBroadcast": "Transmisie curenta",
+    "noBroadcast": "Nicio transmisie activa",
+    "copyMessage": "Copiaza mesaj",
+    "messageCopied": "Mesaj copiat",
+    "openInYouTube": "Deschide in YouTube"
+  },
+  "scenes": {
+    "title": "Scene",
+    "configure": "Configureaza scena",
+    "displayName": "Nume afisat",
+    "visible": "Vizibil",
+    "hidden": "Ascuns",
+    "moveUp": "Muta sus",
+    "moveDown": "Muta jos",
+    "current": "Curenta"
+  },
+  "errors": {
+    "obsConnectionFailed": "Conectarea la OBS a esuat",
+    "obsNotRunning": "Nu se poate conecta la OBS. Asigura-te ca OBS ruleaza si serverul WebSocket este activat (Tools → WebSocket Server Settings).",
+    "obsAuthFailed": "Autentificarea OBS a esuat. Verifica parola WebSocket din setarile OBS.",
+    "obsTimeout": "Conexiunea la OBS a expirat. Verifica daca host-ul si portul sunt corecte.",
+    "youtubeAuthFailed": "Autentificarea YouTube a esuat",
+    "broadcastFailed": "Crearea transmisiei a esuat",
+    "sceneSwitchFailed": "Schimbarea scenei a esuat",
+    "startStreamFailed": "Pornirea stream-ului a esuat",
+    "stopStreamFailed": "Oprirea stream-ului a esuat"
+  }
+}

@@ -6,16 +6,17 @@
   <component name="ChangeListManager">
     <list default="true" id="66517e3f-2e4e-43cc-880d-deb242368f0c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TODO.md" beforeDir="false" afterPath="$PROJECT_DIR$/TODO.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/ScreenRenderer.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/ScreenRenderer.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/utils/calculateNextSlide.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/utils/calculateNextSlide.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-screens.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-screens.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-settings.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-settings.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-song-categories.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-song-categories.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/bible/books.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/bible/books.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/bible/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/bible/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/bible/verses.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/bible/verses.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/sidebar-config/constants.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/sidebar-config/constants.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/sidebar-config/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/sidebar-config/types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/config.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/sidebar.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/sidebar.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/sidebar.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/sidebar.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/routeTree.gen.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/routeTree.gen.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/drizzle/migrations/meta/_journal.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/drizzle/migrations/meta/_journal.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/schema/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/schema/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/websocket/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/websocket/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/bun.lock" beforeDir="false" afterPath="$PROJECT_DIR$/app/bun.lock" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -52,7 +53,7 @@
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;main&quot;,
     &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/iosif/Documents/Projects/church-hub&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/iosif/Documents/Projects/church-hub/scripts&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;bun&quot;,
@@ -85,6 +86,7 @@
 }</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/scripts" />
       <recent name="$PROJECT_DIR$" />
     </key>
   </component>
