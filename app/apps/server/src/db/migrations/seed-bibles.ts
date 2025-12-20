@@ -11,21 +11,33 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
   console.log(`[seed-bibles:${level}] ${message}`)
 }
 
+interface BibleVerseFixture {
+  chapter: number
+  verse: number
+  text: string
+}
+
+interface BibleBookFixture {
+  bookCode: string
+  bookName: string
+  bookOrder: number
+  chapterCount: number
+  verses: BibleVerseFixture[]
+}
+
 interface BibleTranslationFixture {
   name: string
   abbreviation: string
   language: string
   sourceFilename: string | null
+  books: BibleBookFixture[]
 }
 
 const FIXTURE_PATH = join(import.meta.dir, '../fixtures/default-bibles.json')
 
 /**
- * Seeds default bible translations metadata from fixture file.
+ * Seeds default bible translations with books and verses from fixture file.
  * Uses abbreviation uniqueness to avoid duplicates on subsequent runs.
- *
- * Note: This only seeds the translation metadata, not the actual verses.
- * Bible verses are imported separately via the import functionality.
  *
  * To update fixtures:
  * 1. Import bibles in the UI
@@ -64,6 +76,7 @@ export function seedBibleTranslations(db: Database): void {
       continue
     }
 
+    // Insert translation
     db.run(
       `INSERT INTO bible_translations
         (name, abbreviation, language, source_filename, created_at, updated_at)
@@ -76,7 +89,77 @@ export function seedBibleTranslations(db: Database): void {
       ],
     )
 
-    log('debug', `Seeded bible translation: ${translation.name}`)
+    // Get the inserted translation ID
+    const inserted = db
+      .query('SELECT id FROM bible_translations WHERE abbreviation = ?')
+      .get(translation.abbreviation) as { id: number } | null
+
+    if (!inserted) {
+      log(
+        'warning',
+        `Failed to get inserted translation ID for ${translation.name}`,
+      )
+      continue
+    }
+
+    const translationId = inserted.id
+    let totalVerses = 0
+
+    // Insert books and verses
+    for (const book of translation.books) {
+      db.run(
+        `INSERT INTO bible_books
+          (translation_id, book_code, book_name, book_order, chapter_count, created_at)
+          VALUES (?, ?, ?, ?, ?, unixepoch())`,
+        [
+          translationId,
+          book.bookCode,
+          book.bookName,
+          book.bookOrder,
+          book.chapterCount,
+        ],
+      )
+
+      // Get the inserted book ID
+      const insertedBook = db
+        .query(
+          'SELECT id FROM bible_books WHERE translation_id = ? AND book_code = ?',
+        )
+        .get(translationId, book.bookCode) as { id: number } | null
+
+      if (!insertedBook) {
+        log('warning', `Failed to get inserted book ID for ${book.bookName}`)
+        continue
+      }
+
+      const bookId = insertedBook.id
+
+      // Insert verses in batches for better performance
+      if (book.verses.length > 0) {
+        const stmt = db.prepare(
+          `INSERT INTO bible_verses
+            (translation_id, book_id, chapter, verse, text, created_at)
+            VALUES (?, ?, ?, ?, ?, unixepoch())`,
+        )
+
+        for (const verse of book.verses) {
+          stmt.run(
+            translationId,
+            bookId,
+            verse.chapter,
+            verse.verse,
+            verse.text,
+          )
+        }
+
+        totalVerses += book.verses.length
+      }
+    }
+
+    log(
+      'debug',
+      `Seeded bible: ${translation.name} (${translation.books.length} books, ${totalVerses} verses)`,
+    )
     seededCount++
   }
 
