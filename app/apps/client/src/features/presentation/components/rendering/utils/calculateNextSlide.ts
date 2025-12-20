@@ -25,13 +25,20 @@ function formatSongPreview(content: string): string {
 }
 
 /**
+ * Strips translation abbreviation from reference (e.g., "John 3:16 - RCCV" -> "John 3:16")
+ */
+function stripTranslation(reference: string): string {
+  return reference.replace(/\s*-\s*[A-Z]+\s*$/, '').trim()
+}
+
+/**
  * Formats a Bible verse preview
  */
 function formatBibleVersePreview(
   reference: string | null,
   text: string | null,
 ): string {
-  const ref = reference || ''
+  const ref = stripTranslation(reference || '')
   const txt = text || ''
   return `${ref}: ${txt.substring(0, 50)}...`
 }
@@ -40,7 +47,7 @@ function formatBibleVersePreview(
  * Formats an announcement preview
  */
 function formatAnnouncementPreview(content: string | null): string {
-  return (content || '').substring(0, 100)
+  return stripHtml(content || '').substring(0, 100)
 }
 
 /**
