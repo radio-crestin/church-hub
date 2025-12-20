@@ -6,6 +6,7 @@ export {
   getBookById,
   getBooksByTranslation,
   getChaptersForBook,
+  getNextBook,
 } from './books'
 // Import operations
 export {
@@ -59,6 +60,7 @@ export { BOOK_ALIASES, BOOK_ORDER } from './types'
 export {
   formatRangeReference,
   formatReference,
+  getNextVerse,
   getVerse,
   getVerseById,
   getVerseRange,
