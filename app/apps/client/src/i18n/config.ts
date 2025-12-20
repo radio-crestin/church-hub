@@ -5,6 +5,7 @@ import { initReactI18next } from 'react-i18next'
 // Import translation files
 import bibleEN from './locales/en/bible.json'
 import commonEN from './locales/en/common.json'
+import livestreamEN from './locales/en/livestream.json'
 import presentationEN from './locales/en/presentation.json'
 import queueEN from './locales/en/queue.json'
 import schedulesEN from './locales/en/schedules.json'
@@ -13,6 +14,7 @@ import sidebarEN from './locales/en/sidebar.json'
 import songsEN from './locales/en/songs.json'
 import bibleRO from './locales/ro/bible.json'
 import commonRO from './locales/ro/common.json'
+import livestreamRO from './locales/ro/livestream.json'
 import presentationRO from './locales/ro/presentation.json'
 import queueRO from './locales/ro/queue.json'
 import schedulesRO from './locales/ro/schedules.json'
@@ -25,6 +27,7 @@ export const resources = {
   en: {
     bible: bibleEN,
     common: commonEN,
+    livestream: livestreamEN,
     presentation: presentationEN,
     queue: queueEN,
     schedules: schedulesEN,
@@ -35,6 +38,7 @@ export const resources = {
   ro: {
     bible: bibleRO,
     common: commonRO,
+    livestream: livestreamRO,
     presentation: presentationRO,
     queue: queueRO,
     schedules: schedulesRO,
@@ -55,6 +59,7 @@ i18n
     ns: [
       'bible',
       'common',
+      'livestream',
       'presentation',
       'queue',
       'schedules',

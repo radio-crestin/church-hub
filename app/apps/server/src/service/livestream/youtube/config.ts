@@ -1,0 +1,82 @@
+import { eq } from 'drizzle-orm'
+
+import { getDatabase } from '../../../db'
+import { youtubeConfig } from '../../../db/schema'
+import type { YouTubeConfig } from '../types'
+
+export async function getYouTubeConfig(): Promise<YouTubeConfig> {
+  const db = getDatabase()
+  const configs = await db.select().from(youtubeConfig).limit(1)
+
+  if (configs.length === 0) {
+    const [newConfig] = await db
+      .insert(youtubeConfig)
+      .values({
+        titleTemplate: 'Live',
+        description: '',
+        privacyStatus: 'unlisted',
+      })
+      .returning()
+
+    return {
+      id: newConfig.id,
+      titleTemplate: newConfig.titleTemplate,
+      description: newConfig.description,
+      privacyStatus: newConfig.privacyStatus as
+        | 'public'
+        | 'unlisted'
+        | 'private',
+      streamKeyId: newConfig.streamKeyId || undefined,
+      playlistId: newConfig.playlistId || undefined,
+      startSceneName: newConfig.startSceneName || undefined,
+    }
+  }
+
+  const config = configs[0]
+  return {
+    id: config.id,
+    titleTemplate: config.titleTemplate,
+    description: config.description,
+    privacyStatus: config.privacyStatus as 'public' | 'unlisted' | 'private',
+    streamKeyId: config.streamKeyId || undefined,
+    playlistId: config.playlistId || undefined,
+    startSceneName: config.startSceneName || undefined,
+  }
+}
+
+export async function updateYouTubeConfig(
+  data: Partial<Omit<YouTubeConfig, 'id'>>,
+): Promise<YouTubeConfig> {
+  const db = getDatabase()
+  const current = await getYouTubeConfig()
+
+  const [updated] = await db
+    .update(youtubeConfig)
+    .set({
+      ...(data.titleTemplate !== undefined && {
+        titleTemplate: data.titleTemplate,
+      }),
+      ...(data.description !== undefined && { description: data.description }),
+      ...(data.privacyStatus !== undefined && {
+        privacyStatus: data.privacyStatus,
+      }),
+      ...(data.streamKeyId !== undefined && { streamKeyId: data.streamKeyId }),
+      ...(data.playlistId !== undefined && { playlistId: data.playlistId }),
+      ...(data.startSceneName !== undefined && {
+        startSceneName: data.startSceneName,
+      }),
+      updatedAt: new Date(),
+    })
+    .where(eq(youtubeConfig.id, current.id!))
+    .returning()
+
+  return {
+    id: updated.id,
+    titleTemplate: updated.titleTemplate,
+    description: updated.description,
+    privacyStatus: updated.privacyStatus as 'public' | 'unlisted' | 'private',
+    streamKeyId: updated.streamKeyId || undefined,
+    playlistId: updated.playlistId || undefined,
+    startSceneName: updated.startSceneName || undefined,
+  }
+}

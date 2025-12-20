@@ -1,4 +1,11 @@
-import { Book, CalendarDays, Music, Settings, SquarePlay } from 'lucide-react'
+import {
+  Book,
+  CalendarDays,
+  Music,
+  Radio,
+  Settings,
+  SquarePlay,
+} from 'lucide-react'
 
 import type {
   BuiltInItemDefinition,
@@ -37,6 +44,13 @@ export const BUILTIN_ITEMS: Record<BuiltInMenuItemId, BuiltInItemDefinition> = {
     labelKey: 'sidebar:navigation.schedules',
     to: '/schedules',
     permission: 'programs.view',
+  },
+  livestream: {
+    id: 'livestream',
+    icon: Radio,
+    labelKey: 'sidebar:navigation.livestream',
+    to: '/livestream',
+    permission: 'settings.view',
   },
   settings: {
     id: 'settings',
@@ -79,6 +93,13 @@ export const DEFAULT_SIDEBAR_CONFIG: SidebarConfiguration = {
       type: 'builtin',
       builtinId: 'schedules',
       order: 3,
+      isVisible: true,
+    },
+    {
+      id: 'livestream',
+      type: 'builtin',
+      builtinId: 'livestream',
+      order: 4,
       isVisible: true,
     },
     // Note: Settings is not configurable - it's fixed at the bottom of the sidebar
