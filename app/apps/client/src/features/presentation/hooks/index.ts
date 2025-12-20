@@ -1,4 +1,5 @@
 export * from './useAutoOpenScreens'
+export * from './useBatchUpdateScreenConfig'
 export * from './useDeleteScreen'
 export * from './useKeyboardShortcuts'
 export * from './usePresentationControls'
