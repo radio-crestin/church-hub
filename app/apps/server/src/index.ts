@@ -36,6 +36,7 @@ import {
   getAllTranslations,
   getBooksByTranslation,
   getChaptersForBook,
+  getNextVerse,
   getTranslationById,
   getVerse,
   getVerseById,
@@ -2428,6 +2429,25 @@ async function main() {
         return handleCors(
           req,
           new Response(JSON.stringify({ data: verse }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // GET /api/bible/next-verse/:verseId - Get next sequential verse
+      const getNextVerseMatch = url.pathname.match(
+        /^\/api\/bible\/next-verse\/(\d+)$/,
+      )
+      if (req.method === 'GET' && getNextVerseMatch?.[1]) {
+        const permError = checkPermission('bible.view')
+        if (permError) return permError
+
+        const verseId = parseInt(getNextVerseMatch[1], 10)
+        const nextVerse = getNextVerse(verseId)
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: nextVerse }), {
             headers: { 'Content-Type': 'application/json' },
           }),
         )
