@@ -61,6 +61,7 @@ interface DraggableElementProps {
   constraints: Constraints
   size: SizeWithUnits
   isSelected: boolean
+  isHidden?: boolean
   onClick: () => void
   onConstraintChange: (constraints: Constraints) => void
   onSizeChange: (size: SizeWithUnits) => void
@@ -82,6 +83,7 @@ function DraggableElement({
   constraints,
   size,
   isSelected,
+  isHidden = false,
   onClick,
   onConstraintChange,
   onSizeChange,
@@ -402,6 +404,13 @@ function DraggableElement({
     screenHeight,
   ])
 
+  // Determine border style based on selection and hidden state
+  const getBorderStyle = () => {
+    if (isSelected) return '2px solid #6366f1'
+    if (isHidden) return '2px dashed rgba(239, 68, 68, 0.5)' // Red dashed for hidden
+    return '1px dashed rgba(255,255,255,0.3)'
+  }
+
   return (
     <div
       ref={elementRef}
@@ -411,10 +420,9 @@ function DraggableElement({
         top: position.y,
         width: currentSize.width,
         height: currentSize.height,
-        border: isSelected
-          ? '2px solid #6366f1'
-          : '1px dashed rgba(255,255,255,0.3)',
+        border: getBorderStyle(),
         boxSizing: 'border-box',
+        opacity: isHidden ? 0.4 : 1,
       }}
       onMouseDown={handleMouseDown}
       onClick={(e) => e.stopPropagation()}
@@ -529,7 +537,7 @@ export function ScreenEditorCanvas({
     const els: React.ReactElement[] = []
 
     // Main text / Content text
-    if ('mainText' in config && !config.mainText.hidden) {
+    if ('mainText' in config) {
       const mt = config.mainText
       const bounds = calculatePixelBounds(
         mt.constraints,
@@ -548,6 +556,7 @@ export function ScreenEditorCanvas({
           constraints={mt.constraints}
           size={mt.size}
           isSelected={selectedElement?.type === 'mainText'}
+          isHidden={mt.hidden}
           onClick={() => onSelectElement({ type: 'mainText' })}
           onConstraintChange={handleConstraintChange('mainText')}
           onSizeChange={handleSizeChange('mainText')}
@@ -569,7 +578,7 @@ export function ScreenEditorCanvas({
       )
     }
 
-    if ('contentText' in config && !config.contentText.hidden) {
+    if ('contentText' in config) {
       const ct = config.contentText
       const bounds = calculatePixelBounds(
         ct.constraints,
@@ -588,6 +597,7 @@ export function ScreenEditorCanvas({
           constraints={ct.constraints}
           size={ct.size}
           isSelected={selectedElement?.type === 'contentText'}
+          isHidden={ct.hidden}
           onClick={() => onSelectElement({ type: 'contentText' })}
           onConstraintChange={handleConstraintChange('contentText')}
           onSizeChange={handleSizeChange('contentText')}
@@ -608,7 +618,7 @@ export function ScreenEditorCanvas({
     }
 
     // Reference text (bible, versete_tineri)
-    if ('referenceText' in config && !config.referenceText.hidden) {
+    if ('referenceText' in config) {
       const rt = config.referenceText
       const bounds = calculatePixelBounds(
         rt.constraints,
@@ -627,6 +637,7 @@ export function ScreenEditorCanvas({
           constraints={rt.constraints}
           size={rt.size}
           isSelected={selectedElement?.type === 'referenceText'}
+          isHidden={rt.hidden}
           onClick={() => onSelectElement({ type: 'referenceText' })}
           onConstraintChange={handleConstraintChange('referenceText')}
           onSizeChange={handleSizeChange('referenceText')}
@@ -647,7 +658,7 @@ export function ScreenEditorCanvas({
     }
 
     // Person label (versete_tineri)
-    if ('personLabel' in config && !config.personLabel.hidden) {
+    if ('personLabel' in config) {
       const pl = config.personLabel
       const bounds = calculatePixelBounds(
         pl.constraints,
@@ -666,6 +677,7 @@ export function ScreenEditorCanvas({
           constraints={pl.constraints}
           size={pl.size}
           isSelected={selectedElement?.type === 'personLabel'}
+          isHidden={pl.hidden}
           onClick={() => onSelectElement({ type: 'personLabel' })}
           onConstraintChange={handleConstraintChange('personLabel')}
           onSizeChange={handleSizeChange('personLabel')}
@@ -688,7 +700,7 @@ export function ScreenEditorCanvas({
     // Clock
     const clockConfig =
       'clock' in config ? config.clock : screen.globalSettings.clockConfig
-    if (clockConfig?.enabled && !clockConfig.hidden) {
+    if (clockConfig?.enabled) {
       // Default size for backwards compatibility with configs that don't have size
       const clockSize = clockConfig.size ?? {
         width: 10,
@@ -713,6 +725,7 @@ export function ScreenEditorCanvas({
           constraints={clockConfig.constraints}
           size={clockSize}
           isSelected={selectedElement?.type === 'clock'}
+          isHidden={clockConfig.hidden}
           onClick={() => onSelectElement({ type: 'clock' })}
           onConstraintChange={handleConstraintChange('clock')}
           onSizeChange={handleSizeChange('clock')}
@@ -736,11 +749,7 @@ export function ScreenEditorCanvas({
     }
 
     // Next slide section (stage screens)
-    if (
-      screen.type === 'stage' &&
-      screen.nextSlideConfig?.enabled &&
-      !screen.nextSlideConfig.hidden
-    ) {
+    if (screen.type === 'stage' && screen.nextSlideConfig?.enabled) {
       const ns = screen.nextSlideConfig
       const bounds = calculatePixelBounds(
         ns.constraints,
@@ -759,6 +768,7 @@ export function ScreenEditorCanvas({
           constraints={ns.constraints}
           size={ns.size}
           isSelected={selectedElement?.type === 'nextSlide'}
+          isHidden={ns.hidden}
           onClick={() => onSelectElement({ type: 'nextSlide' })}
           onConstraintChange={handleConstraintChange('nextSlide')}
           onSizeChange={handleSizeChange('nextSlide')}
