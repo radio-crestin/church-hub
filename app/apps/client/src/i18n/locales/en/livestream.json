@@ -1,0 +1,86 @@
+{
+  "title": "Live Stream",
+  "youtube": {
+    "notConnected": "YouTube not connected",
+    "connected": "Connected as {{channelName}}",
+    "login": "Login with YouTube",
+    "logout": "Disconnect YouTube",
+    "settings": "YouTube Settings",
+    "titleTemplate": "Title Template",
+    "description": "Description",
+    "privacyStatus": "Privacy",
+    "privacyPublic": "Public",
+    "privacyUnlisted": "Unlisted",
+    "privacyPrivate": "Private",
+    "streamKey": "Stream Key",
+    "selectStreamKey": "Select stream key",
+    "playlist": "Playlist ID",
+    "startScene": "Start Scene"
+  },
+  "obs": {
+    "connected": "OBS Connected",
+    "disconnected": "OBS Disconnected",
+    "connecting": "Connecting...",
+    "connect": "Connect to OBS",
+    "disconnect": "Disconnect",
+    "settings": "OBS Settings",
+    "host": "Host",
+    "port": "Port",
+    "password": "Password",
+    "autoConnect": "Auto-connect on startup",
+    "setup": {
+      "title": "OBS WebSocket Setup",
+      "helpLink": "Need help connecting?",
+      "step1Title": "Step 1: Install OBS WebSocket",
+      "step1Description": "OBS WebSocket is required for Church Hub to control OBS Studio. For OBS 28+, it's built-in. For older versions, download and install it:",
+      "downloadLink": "Download OBS WebSocket from GitHub",
+      "step2Title": "Step 2: Enable WebSocket Server",
+      "step2Instruction1": "Open OBS Studio",
+      "step2Instruction2": "Go to Tools → WebSocket Server Settings",
+      "step2Instruction3": "Check \"Enable WebSocket server\" and set the password below",
+      "step3Title": "Step 3: Configure Password",
+      "step3Description": "Copy this password and paste it in OBS WebSocket Server Settings:",
+      "copy": "Copy",
+      "copied": "Copied!",
+      "noteTitle": "Note:",
+      "noteDescription": "Make sure to use the same password in OBS. Church Hub will automatically use this password when connecting.",
+      "saveAndClose": "Save & Close"
+    }
+  },
+  "stream": {
+    "startStream": "Start Stream",
+    "stopStream": "Stop Stream",
+    "isLive": "LIVE",
+    "notStreaming": "Not Streaming",
+    "starting": "Starting...",
+    "stopping": "Stopping..."
+  },
+  "broadcast": {
+    "currentBroadcast": "Current Broadcast",
+    "noBroadcast": "No active broadcast",
+    "copyMessage": "Copy Message",
+    "messageCopied": "Message copied to clipboard",
+    "openInYouTube": "Open in YouTube"
+  },
+  "scenes": {
+    "title": "Scenes",
+    "configure": "Configure Scene",
+    "displayName": "Display Name",
+    "visible": "Visible",
+    "hidden": "Hidden",
+    "moveUp": "Move Up",
+    "moveDown": "Move Down",
+    "current": "Current"
+  },
+  "errors": {
+    "obsConnectionFailed": "Failed to connect to OBS",
+    "obsNotRunning": "Cannot connect to OBS. Make sure OBS is running and WebSocket server is enabled (Tools → WebSocket Server Settings).",
+    "obsAuthFailed": "OBS authentication failed. Check your WebSocket password in OBS settings.",
+    "obsTimeout": "Connection to OBS timed out. Check that the host and port are correct.",
+    "youtubeAuthFailed": "YouTube authentication failed",
+    "broadcastFailed": "Failed to create broadcast",
+    "sceneSwitchFailed": "Failed to switch scene",
+    "startStreamFailed": "Failed to start stream",
+    "stopStreamFailed": "Failed to stop stream"
+  }
+}

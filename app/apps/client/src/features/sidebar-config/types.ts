@@ -10,6 +10,7 @@ export type BuiltInMenuItemId =
   | 'songs'
   | 'bible'
   | 'schedules'
+  | 'livestream'
   | 'settings'
 
 /**

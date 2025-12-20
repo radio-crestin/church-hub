@@ -180,3 +180,137 @@ export function broadcastScreenConfigUpdated(screenId: number) {
 export function getConnectedClients(): number {
   return clients.size
 }
+
+// OBS/Livestream message types
+export type OBSConnectionStatusMessage = {
+  type: 'obs_connection_status'
+  payload: {
+    connected: boolean
+    host: string
+    port: number
+    error?: string
+    updatedAt: number
+  }
+}
+
+export type OBSStreamingStatusMessage = {
+  type: 'obs_streaming_status'
+  payload: {
+    isStreaming: boolean
+    isRecording: boolean
+    updatedAt: number
+  }
+}
+
+export type OBSCurrentSceneMessage = {
+  type: 'obs_current_scene'
+  payload: {
+    sceneName: string
+    updatedAt: number
+  }
+}
+
+export type LivestreamStatusMessage = {
+  type: 'livestream_status'
+  payload: {
+    isLive: boolean
+    broadcastId: string | null
+    broadcastUrl: string | null
+    title: string | null
+    startedAt: number | null
+    updatedAt: number
+  }
+}
+
+/**
+ * Broadcasts OBS connection status to all connected clients
+ */
+export function broadcastOBSConnectionStatus(
+  status: OBSConnectionStatusMessage['payload'],
+) {
+  const message = JSON.stringify({
+    type: 'obs_connection_status',
+    payload: status,
+  } satisfies OBSConnectionStatusMessage)
+
+  log('debug', `Broadcasting OBS connection status to ${clients.size} clients`)
+
+  for (const [clientId, ws] of clients) {
+    try {
+      ws.send(message)
+    } catch (error) {
+      log('error', `Failed to send to ${clientId}: ${error}`)
+      clients.delete(clientId)
+    }
+  }
+}
+
+/**
+ * Broadcasts OBS streaming status to all connected clients
+ */
+export function broadcastOBSStreamingStatus(
+  status: OBSStreamingStatusMessage['payload'],
+) {
+  const message = JSON.stringify({
+    type: 'obs_streaming_status',
+    payload: status,
+  } satisfies OBSStreamingStatusMessage)
+
+  log('debug', `Broadcasting OBS streaming status to ${clients.size} clients`)
+
+  for (const [clientId, ws] of clients) {
+    try {
+      ws.send(message)
+    } catch (error) {
+      log('error', `Failed to send to ${clientId}: ${error}`)
+      clients.delete(clientId)
+    }
+  }
+}
+
+/**
+ * Broadcasts current OBS scene to all connected clients
+ */
+export function broadcastOBSCurrentScene(sceneName: string) {
+  const message = JSON.stringify({
+    type: 'obs_current_scene',
+    payload: {
+      sceneName,
+      updatedAt: Date.now(),
+    },
+  } satisfies OBSCurrentSceneMessage)
+
+  log('debug', `Broadcasting OBS current scene to ${clients.size} clients`)
+
+  for (const [clientId, ws] of clients) {
+    try {
+      ws.send(message)
+    } catch (error) {
+      log('error', `Failed to send to ${clientId}: ${error}`)
+      clients.delete(clientId)
+    }
+  }
+}
+
+/**
+ * Broadcasts livestream status to all connected clients
+ */
+export function broadcastLivestreamStatus(
+  status: LivestreamStatusMessage['payload'],
+) {
+  const message = JSON.stringify({
+    type: 'livestream_status',
+    payload: status,
+  } satisfies LivestreamStatusMessage)
+
+  log('debug', `Broadcasting livestream status to ${clients.size} clients`)
+
+  for (const [clientId, ws] of clients) {
+    try {
+      ws.send(message)
+    } catch (error) {
+      log('error', `Failed to send to ${clientId}: ${error}`)
+      clients.delete(clientId)
+    }
+  }
+}
