@@ -38,7 +38,11 @@
       "animation": "Animație",
       "background": "Fundal",
       "general": "Setări Generale",
-      "nextSlide": "Secțiune Slide Următor"
+      "nextSlide": "Secțiune Slide Următor",
+      "visibility": "Vizibilitate"
+    },
+    "visibility": {
+      "visibleWhenHidden": "Vizibil când ecranul este ascuns"
     },
     "position": {
       "x": "Poziție X",
