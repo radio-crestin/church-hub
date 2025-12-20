@@ -50,6 +50,7 @@ export function ScreenContent({
       return null
 
     const mt = config.mainText
+    if (mt.hidden) return null
     const bounds = calculatePixelBounds(
       mt.constraints,
       mt.size,
@@ -100,6 +101,7 @@ export function ScreenContent({
       return null
 
     const ct = config.contentText
+    if (ct.hidden) return null
     const bounds = calculatePixelBounds(
       ct.constraints,
       ct.size,
@@ -148,6 +150,7 @@ export function ScreenContent({
       return null
 
     const rt = config.referenceText
+    if (rt.hidden) return null
     const bounds = calculatePixelBounds(
       rt.constraints,
       rt.size,
@@ -196,6 +199,7 @@ export function ScreenContent({
       return null
 
     const pl = config.personLabel
+    if (pl.hidden) return null
     const bounds = calculatePixelBounds(
       pl.constraints,
       pl.size,
@@ -246,10 +250,7 @@ export function ScreenContent({
         ? config.clock
         : screen.globalSettings.clockConfig
     if (!clockConfig?.enabled) return null
-
-    // Check visibility when hidden - default to true for backwards compatibility
-    const shouldShowWhenHidden = clockConfig.visibleWhenHidden ?? true
-    if (!isVisible && !shouldShowWhenHidden) return null
+    if (clockConfig.hidden) return null
 
     // Calculate pixel bounds and scale
     const bounds = calculatePixelBounds(
@@ -290,10 +291,7 @@ export function ScreenContent({
   const renderNextSlideSection = () => {
     if (screen.type !== 'stage' || !screen.nextSlideConfig?.enabled) return null
     const ns = screen.nextSlideConfig
-
-    // Check visibility when hidden - default to true for backwards compatibility
-    const shouldShowWhenHidden = ns.visibleWhenHidden ?? true
-    if (!isVisible && !shouldShowWhenHidden) return null
+    if (ns.hidden) return null
 
     const bounds = calculatePixelBounds(
       ns.constraints,
