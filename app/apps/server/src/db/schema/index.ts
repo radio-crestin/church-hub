@@ -2,6 +2,7 @@
 export * from './app-settings'
 export * from './auth'
 export * from './bible'
+export * from './livestream'
 export * from './presentation'
 export * from './relations'
 export * from './schedules'

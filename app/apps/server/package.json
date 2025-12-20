@@ -8,8 +8,12 @@
     "compile": "bun ./scripts/compile.ts"
   },
   "dependencies": {
+    "debug": "^4.4.3",
     "drizzle-orm": "^0.45.1",
-    "libreoffice-convert": "^1.7.0"
+    "google-auth-library": "^10.5.0",
+    "googleapis": "^169.0.0",
+    "libreoffice-convert": "^1.7.0",
+    "obs-websocket-js": "^5.0.7"
   },
   "devDependencies": {
     "@types/bun": "latest",
