@@ -179,6 +179,21 @@ export function ScreenEditorSidebar({
 
   const selectedConfig = getSelectedElementConfig()
 
+  // Helper to update next slide text styles
+  const updateNextSlideStyle = (
+    styleKey: 'labelStyle' | 'contentStyle',
+    updates: Partial<TextStyle>,
+  ) => {
+    if (!screen.nextSlideConfig) return
+    onUpdateNextSlideConfig({
+      ...screen.nextSlideConfig,
+      [styleKey]: {
+        ...screen.nextSlideConfig[styleKey],
+        ...updates,
+      },
+    })
+  }
+
   return (
     <div className="w-80 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 overflow-y-auto">
       {selectedElement && selectedConfig ? (
@@ -434,6 +449,360 @@ export function ScreenEditorSidebar({
               </div>
             </Section>
           )}
+
+          {/* Title Style Section (for nextSlide) */}
+          {'labelStyle' in selectedConfig.config &&
+            selectedConfig.isNextSlide && (
+              <Section title="Title Style" icon={Type}>
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-xs text-gray-500 dark:text-gray-400">
+                      Font Family
+                    </Label>
+                    <Combobox
+                      value={
+                        (
+                          selectedConfig.config as {
+                            labelStyle: TextStyle
+                          }
+                        ).labelStyle.fontFamily
+                      }
+                      onChange={(value) => {
+                        updateNextSlideStyle('labelStyle', {
+                          fontFamily: value,
+                        })
+                      }}
+                      options={FONT_FAMILIES}
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500 dark:text-gray-400">
+                      Max Font Size (px)
+                    </Label>
+                    <Input
+                      type="number"
+                      value={
+                        (
+                          selectedConfig.config as {
+                            labelStyle: TextStyle
+                          }
+                        ).labelStyle.maxFontSize
+                      }
+                      onChange={(e) => {
+                        updateNextSlideStyle('labelStyle', {
+                          maxFontSize: parseInt(e.target.value) || 24,
+                        })
+                      }}
+                      className="h-8"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500 dark:text-gray-400">
+                      Color
+                    </Label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={
+                          (
+                            selectedConfig.config as {
+                              labelStyle: TextStyle
+                            }
+                          ).labelStyle.color
+                        }
+                        onChange={(e) => {
+                          updateNextSlideStyle('labelStyle', {
+                            color: e.target.value,
+                          })
+                        }}
+                        className="w-10 h-8 rounded cursor-pointer"
+                      />
+                      <Input
+                        value={
+                          (
+                            selectedConfig.config as {
+                              labelStyle: TextStyle
+                            }
+                          ).labelStyle.color
+                        }
+                        onChange={(e) => {
+                          updateNextSlideStyle('labelStyle', {
+                            color: e.target.value,
+                          })
+                        }}
+                        className="h-8 flex-1"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <Checkbox
+                      checked={
+                        (
+                          selectedConfig.config as {
+                            labelStyle: TextStyle
+                          }
+                        ).labelStyle.bold
+                      }
+                      onCheckedChange={(checked) => {
+                        updateNextSlideStyle('labelStyle', { bold: !!checked })
+                      }}
+                      label="Bold"
+                    />
+                    <Checkbox
+                      checked={
+                        (
+                          selectedConfig.config as {
+                            labelStyle: TextStyle
+                          }
+                        ).labelStyle.italic
+                      }
+                      onCheckedChange={(checked) => {
+                        updateNextSlideStyle('labelStyle', {
+                          italic: !!checked,
+                        })
+                      }}
+                      label="Italic"
+                    />
+                    <Checkbox
+                      checked={
+                        (
+                          selectedConfig.config as {
+                            labelStyle: TextStyle
+                          }
+                        ).labelStyle.underline
+                      }
+                      onCheckedChange={(checked) => {
+                        updateNextSlideStyle('labelStyle', {
+                          underline: !!checked,
+                        })
+                      }}
+                      label="Underline"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500 dark:text-gray-400">
+                      Horizontal Alignment
+                    </Label>
+                    <div className="flex gap-2 mt-1">
+                      {(['left', 'center', 'right'] as const).map((align) => (
+                        <button
+                          key={align}
+                          className={`flex-1 py-1.5 text-xs font-medium rounded ${
+                            (
+                              selectedConfig.config as {
+                                labelStyle: TextStyle
+                              }
+                            ).labelStyle.alignment === align
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                          }`}
+                          onClick={() => {
+                            updateNextSlideStyle('labelStyle', {
+                              alignment: align,
+                            })
+                          }}
+                        >
+                          {align.charAt(0).toUpperCase() + align.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <Checkbox
+                    checked={
+                      (
+                        selectedConfig.config as {
+                          labelStyle: TextStyle
+                        }
+                      ).labelStyle.shadow ?? false
+                    }
+                    onCheckedChange={(checked) => {
+                      updateNextSlideStyle('labelStyle', { shadow: !!checked })
+                    }}
+                    label="Shadow"
+                  />
+                </div>
+              </Section>
+            )}
+
+          {/* Content Style Section (for nextSlide) */}
+          {'contentStyle' in selectedConfig.config &&
+            selectedConfig.isNextSlide && (
+              <Section title="Content Style" icon={Type}>
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-xs text-gray-500 dark:text-gray-400">
+                      Font Family
+                    </Label>
+                    <Combobox
+                      value={
+                        (
+                          selectedConfig.config as {
+                            contentStyle: TextStyle
+                          }
+                        ).contentStyle.fontFamily
+                      }
+                      onChange={(value) => {
+                        updateNextSlideStyle('contentStyle', {
+                          fontFamily: value,
+                        })
+                      }}
+                      options={FONT_FAMILIES}
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500 dark:text-gray-400">
+                      Max Font Size (px)
+                    </Label>
+                    <Input
+                      type="number"
+                      value={
+                        (
+                          selectedConfig.config as {
+                            contentStyle: TextStyle
+                          }
+                        ).contentStyle.maxFontSize
+                      }
+                      onChange={(e) => {
+                        updateNextSlideStyle('contentStyle', {
+                          maxFontSize: parseInt(e.target.value) || 24,
+                        })
+                      }}
+                      className="h-8"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500 dark:text-gray-400">
+                      Color
+                    </Label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={
+                          (
+                            selectedConfig.config as {
+                              contentStyle: TextStyle
+                            }
+                          ).contentStyle.color
+                        }
+                        onChange={(e) => {
+                          updateNextSlideStyle('contentStyle', {
+                            color: e.target.value,
+                          })
+                        }}
+                        className="w-10 h-8 rounded cursor-pointer"
+                      />
+                      <Input
+                        value={
+                          (
+                            selectedConfig.config as {
+                              contentStyle: TextStyle
+                            }
+                          ).contentStyle.color
+                        }
+                        onChange={(e) => {
+                          updateNextSlideStyle('contentStyle', {
+                            color: e.target.value,
+                          })
+                        }}
+                        className="h-8 flex-1"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <Checkbox
+                      checked={
+                        (
+                          selectedConfig.config as {
+                            contentStyle: TextStyle
+                          }
+                        ).contentStyle.bold
+                      }
+                      onCheckedChange={(checked) => {
+                        updateNextSlideStyle('contentStyle', {
+                          bold: !!checked,
+                        })
+                      }}
+                      label="Bold"
+                    />
+                    <Checkbox
+                      checked={
+                        (
+                          selectedConfig.config as {
+                            contentStyle: TextStyle
+                          }
+                        ).contentStyle.italic
+                      }
+                      onCheckedChange={(checked) => {
+                        updateNextSlideStyle('contentStyle', {
+                          italic: !!checked,
+                        })
+                      }}
+                      label="Italic"
+                    />
+                    <Checkbox
+                      checked={
+                        (
+                          selectedConfig.config as {
+                            contentStyle: TextStyle
+                          }
+                        ).contentStyle.underline
+                      }
+                      onCheckedChange={(checked) => {
+                        updateNextSlideStyle('contentStyle', {
+                          underline: !!checked,
+                        })
+                      }}
+                      label="Underline"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500 dark:text-gray-400">
+                      Horizontal Alignment
+                    </Label>
+                    <div className="flex gap-2 mt-1">
+                      {(['left', 'center', 'right'] as const).map((align) => (
+                        <button
+                          key={align}
+                          className={`flex-1 py-1.5 text-xs font-medium rounded ${
+                            (
+                              selectedConfig.config as {
+                                contentStyle: TextStyle
+                              }
+                            ).contentStyle.alignment === align
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                          }`}
+                          onClick={() => {
+                            updateNextSlideStyle('contentStyle', {
+                              alignment: align,
+                            })
+                          }}
+                        >
+                          {align.charAt(0).toUpperCase() + align.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <Checkbox
+                    checked={
+                      (
+                        selectedConfig.config as {
+                          contentStyle: TextStyle
+                        }
+                      ).contentStyle.shadow ?? false
+                    }
+                    onCheckedChange={(checked) => {
+                      updateNextSlideStyle('contentStyle', {
+                        shadow: !!checked,
+                      })
+                    }}
+                    label="Shadow"
+                  />
+                </div>
+              </Section>
+            )}
 
           {/* Animation Section */}
           {'animationIn' in selectedConfig.config && (
