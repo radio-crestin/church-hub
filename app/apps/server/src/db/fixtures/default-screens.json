@@ -1,6 +1,6 @@
 [
   {
-    "name": "Main Projector",
+    "name": "Main",
     "type": "primary",
     "isActive": true,
     "openMode": "browser",
@@ -13,53 +13,43 @@
         "color": "#000000",
         "opacity": 1
       },
-      "clockEnabled": false,
-      "clockConfig": {
-        "enabled": false,
-        "constraints": {
-          "top": { "enabled": true, "value": 2, "unit": "%" },
-          "bottom": { "enabled": false, "value": 0, "unit": "%" },
-          "left": { "enabled": true, "value": 85, "unit": "%" },
-          "right": { "enabled": false, "value": 0, "unit": "%" }
-        },
-        "size": {
-          "width": 10,
-          "widthUnit": "%",
-          "height": 5,
-          "heightUnit": "%"
-        },
-        "style": {
-          "fontFamily": "system-ui",
-          "maxFontSize": 32,
-          "autoScale": false,
-          "color": "#ffffff",
-          "bold": false,
-          "italic": false,
-          "underline": false,
-          "alignment": "right",
-          "verticalAlignment": "middle",
-          "lineHeight": 1.3,
-          "shadow": false
-        },
-        "format": "24h",
-        "showSeconds": false
-      }
+      "clockEnabled": false
     },
     "sortOrder": 0,
     "contentConfigs": {
       "song": {
-        "background": { "type": "color", "color": "#000000", "opacity": 1 },
+        "background": {
+          "type": "color",
+          "color": "#000000",
+          "opacity": 1
+        },
         "mainText": {
           "constraints": {
-            "top": { "enabled": true, "value": 10, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 5, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 3.896713615023475,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 1.7429577464788741,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
-            "width": 90,
+            "width": 95.193661971831,
             "widthUnit": "%",
-            "height": 80,
+            "height": 92.54303599374022,
             "heightUnit": "%"
           },
           "style": {
@@ -67,11 +57,11 @@
             "maxFontSize": 120,
             "autoScale": true,
             "color": "#ffffff",
-            "bold": false,
+            "bold": true,
             "italic": false,
             "underline": false,
-            "alignment": "center",
-            "verticalAlignment": "middle",
+            "alignment": "left",
+            "verticalAlignment": "top",
             "lineHeight": 1.3,
             "shadow": false
           },
@@ -92,10 +82,26 @@
         "clock": {
           "enabled": false,
           "constraints": {
-            "top": { "enabled": true, "value": 2, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 85, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 2,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 85,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
             "width": 10,
@@ -121,13 +127,33 @@
         }
       },
       "bible": {
-        "background": { "type": "color", "color": "#000000", "opacity": 1 },
+        "background": {
+          "type": "color",
+          "color": "#000000",
+          "opacity": 1
+        },
         "referenceText": {
           "constraints": {
-            "top": { "enabled": true, "value": 2, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 5, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 2,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 5,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
             "width": 80,
@@ -137,7 +163,7 @@
           },
           "style": {
             "fontFamily": "system-ui",
-            "maxFontSize": 36,
+            "maxFontSize": 70,
             "autoScale": false,
             "color": "#ffffff",
             "bold": true,
@@ -151,15 +177,31 @@
         },
         "contentText": {
           "constraints": {
-            "top": { "enabled": true, "value": 12, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 5, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 12,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 5,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
             "width": 90,
             "widthUnit": "%",
-            "height": 83,
+            "height": 80.84037558685445,
             "heightUnit": "%"
           },
           "style": {
@@ -167,11 +209,11 @@
             "maxFontSize": 100,
             "autoScale": true,
             "color": "#ffffff",
-            "bold": false,
+            "bold": true,
             "italic": false,
             "underline": false,
-            "alignment": "center",
-            "verticalAlignment": "middle",
+            "alignment": "left",
+            "verticalAlignment": "top",
             "lineHeight": 1.3,
             "shadow": false
           },
@@ -192,10 +234,26 @@
         "clock": {
           "enabled": false,
           "constraints": {
-            "top": { "enabled": true, "value": 2, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 85, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 2,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 85,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
             "width": 10,
@@ -221,13 +279,33 @@
         }
       },
       "bible_passage": {
-        "background": { "type": "color", "color": "#000000", "opacity": 1 },
+        "background": {
+          "type": "color",
+          "color": "#000000",
+          "opacity": 1
+        },
         "referenceText": {
           "constraints": {
-            "top": { "enabled": true, "value": 2, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 5, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 2,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 5,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
             "width": 80,
@@ -237,7 +315,7 @@
           },
           "style": {
             "fontFamily": "system-ui",
-            "maxFontSize": 36,
+            "maxFontSize": 70,
             "autoScale": false,
             "color": "#ffffff",
             "bold": true,
@@ -251,15 +329,31 @@
         },
         "contentText": {
           "constraints": {
-            "top": { "enabled": true, "value": 12, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 5, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 12,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 5,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
             "width": 90,
             "widthUnit": "%",
-            "height": 83,
+            "height": 77.86697965571204,
             "heightUnit": "%"
           },
           "style": {
@@ -267,11 +361,11 @@
             "maxFontSize": 100,
             "autoScale": true,
             "color": "#ffffff",
-            "bold": false,
+            "bold": true,
             "italic": false,
             "underline": false,
-            "alignment": "center",
-            "verticalAlignment": "middle",
+            "alignment": "left",
+            "verticalAlignment": "top",
             "lineHeight": 1.3,
             "shadow": false
           },
@@ -292,10 +386,26 @@
         "clock": {
           "enabled": false,
           "constraints": {
-            "top": { "enabled": true, "value": 2, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 85, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 2,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 85,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
             "width": 10,
@@ -321,18 +431,38 @@
         }
       },
       "announcement": {
-        "background": { "type": "color", "color": "#000000", "opacity": 1 },
+        "background": {
+          "type": "color",
+          "color": "#000000",
+          "opacity": 1
+        },
         "mainText": {
           "constraints": {
-            "top": { "enabled": true, "value": 10, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 5, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 10,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 5,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
             "width": 90,
             "widthUnit": "%",
-            "height": 85,
+            "height": 65,
             "heightUnit": "%"
           },
           "style": {
@@ -340,7 +470,7 @@
             "maxFontSize": 100,
             "autoScale": true,
             "color": "#ffffff",
-            "bold": false,
+            "bold": true,
             "italic": false,
             "underline": false,
             "alignment": "center",
@@ -365,10 +495,26 @@
         "clock": {
           "enabled": false,
           "constraints": {
-            "top": { "enabled": true, "value": 2, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 85, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 2,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 85,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
             "width": 10,
@@ -394,13 +540,33 @@
         }
       },
       "versete_tineri": {
-        "background": { "type": "color", "color": "#000000", "opacity": 1 },
+        "background": {
+          "type": "color",
+          "color": "#000000",
+          "opacity": 1
+        },
         "personLabel": {
           "constraints": {
-            "top": { "enabled": true, "value": 2, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 5, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 1.8435054773082942,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 5,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
             "width": 40,
@@ -413,7 +579,7 @@
             "maxFontSize": 28,
             "autoScale": false,
             "color": "#ffffff",
-            "bold": false,
+            "bold": true,
             "italic": true,
             "underline": false,
             "alignment": "left",
@@ -424,10 +590,26 @@
         },
         "referenceText": {
           "constraints": {
-            "top": { "enabled": true, "value": 8, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 5, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 8,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 5,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
             "width": 80,
@@ -437,7 +619,7 @@
           },
           "style": {
             "fontFamily": "system-ui",
-            "maxFontSize": 32,
+            "maxFontSize": 70,
             "autoScale": false,
             "color": "#ffffff",
             "bold": true,
@@ -451,15 +633,31 @@
         },
         "contentText": {
           "constraints": {
-            "top": { "enabled": true, "value": 18, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 5, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 18,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 5,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
             "width": 90,
             "widthUnit": "%",
-            "height": 77,
+            "height": 63,
             "heightUnit": "%"
           },
           "style": {
@@ -467,11 +665,11 @@
             "maxFontSize": 90,
             "autoScale": true,
             "color": "#ffffff",
-            "bold": false,
+            "bold": true,
             "italic": false,
             "underline": false,
-            "alignment": "center",
-            "verticalAlignment": "middle",
+            "alignment": "left",
+            "verticalAlignment": "top",
             "lineHeight": 1.3,
             "shadow": false
           },
@@ -492,10 +690,26 @@
         "clock": {
           "enabled": false,
           "constraints": {
-            "top": { "enabled": true, "value": 2, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 85, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 2,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 85,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
             "width": 10,
@@ -521,14 +735,34 @@
         }
       },
       "empty": {
-        "background": { "type": "color", "color": "#000000", "opacity": 1 },
+        "background": {
+          "type": "color",
+          "color": "#000000",
+          "opacity": 1
+        },
         "clock": {
           "enabled": true,
           "constraints": {
-            "top": { "enabled": true, "value": 5, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 80, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 3.904538341158059,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": false,
+              "value": 80,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": true,
+              "value": 2.37676056338028,
+              "unit": "%"
+            }
           },
           "size": {
             "width": 15,
@@ -541,7 +775,7 @@
             "maxFontSize": 48,
             "autoScale": false,
             "color": "#ffffff",
-            "bold": false,
+            "bold": true,
             "italic": false,
             "underline": false,
             "alignment": "right",
@@ -550,13 +784,13 @@
             "shadow": false
           },
           "format": "24h",
-          "showSeconds": true
+          "showSeconds": false
         }
       }
     }
   },
   {
-    "name": "Stage Monitor",
+    "name": "Stage",
     "type": "stage",
     "isActive": true,
     "openMode": "browser",
@@ -569,53 +803,43 @@
         "color": "#000000",
         "opacity": 1
       },
-      "clockEnabled": false,
-      "clockConfig": {
-        "enabled": false,
-        "constraints": {
-          "top": { "enabled": true, "value": 2, "unit": "%" },
-          "bottom": { "enabled": false, "value": 0, "unit": "%" },
-          "left": { "enabled": true, "value": 85, "unit": "%" },
-          "right": { "enabled": false, "value": 0, "unit": "%" }
-        },
-        "size": {
-          "width": 10,
-          "widthUnit": "%",
-          "height": 5,
-          "heightUnit": "%"
-        },
-        "style": {
-          "fontFamily": "system-ui",
-          "maxFontSize": 32,
-          "autoScale": false,
-          "color": "#ffffff",
-          "bold": false,
-          "italic": false,
-          "underline": false,
-          "alignment": "right",
-          "verticalAlignment": "middle",
-          "lineHeight": 1.3,
-          "shadow": false
-        },
-        "format": "24h",
-        "showSeconds": false
-      }
+      "clockEnabled": false
     },
-    "sortOrder": 1,
+    "sortOrder": 0,
     "contentConfigs": {
       "song": {
-        "background": { "type": "color", "color": "#000000", "opacity": 1 },
+        "background": {
+          "type": "color",
+          "color": "#000000",
+          "opacity": 1
+        },
         "mainText": {
           "constraints": {
-            "top": { "enabled": true, "value": 10, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 5, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 2.488262910798123,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 2.183098591549297,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
-            "width": 90,
+            "width": 96.25000000000001,
             "widthUnit": "%",
-            "height": 65,
+            "height": 71.72926447574335,
             "heightUnit": "%"
           },
           "style": {
@@ -623,11 +847,11 @@
             "maxFontSize": 120,
             "autoScale": true,
             "color": "#ffffff",
-            "bold": false,
+            "bold": true,
             "italic": false,
             "underline": false,
-            "alignment": "center",
-            "verticalAlignment": "middle",
+            "alignment": "left",
+            "verticalAlignment": "top",
             "lineHeight": 1.3,
             "shadow": false
           },
@@ -648,10 +872,26 @@
         "clock": {
           "enabled": false,
           "constraints": {
-            "top": { "enabled": true, "value": 2, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 85, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 2,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 85,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
             "width": 10,
@@ -677,13 +917,33 @@
         }
       },
       "bible": {
-        "background": { "type": "color", "color": "#000000", "opacity": 1 },
+        "background": {
+          "type": "color",
+          "color": "#000000",
+          "opacity": 1
+        },
         "referenceText": {
           "constraints": {
-            "top": { "enabled": true, "value": 2, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 5, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 2,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 5,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
             "width": 80,
@@ -693,7 +953,7 @@
           },
           "style": {
             "fontFamily": "system-ui",
-            "maxFontSize": 36,
+            "maxFontSize": 70,
             "autoScale": false,
             "color": "#ffffff",
             "bold": true,
@@ -707,10 +967,26 @@
         },
         "contentText": {
           "constraints": {
-            "top": { "enabled": true, "value": 12, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 5, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 12,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 5,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
             "width": 90,
@@ -723,11 +999,11 @@
             "maxFontSize": 100,
             "autoScale": true,
             "color": "#ffffff",
-            "bold": false,
+            "bold": true,
             "italic": false,
             "underline": false,
-            "alignment": "center",
-            "verticalAlignment": "middle",
+            "alignment": "left",
+            "verticalAlignment": "top",
             "lineHeight": 1.3,
             "shadow": false
           },
@@ -748,10 +1024,26 @@
         "clock": {
           "enabled": false,
           "constraints": {
-            "top": { "enabled": true, "value": 2, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 85, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 2,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 85,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
             "width": 10,
@@ -777,13 +1069,33 @@
         }
       },
       "bible_passage": {
-        "background": { "type": "color", "color": "#000000", "opacity": 1 },
+        "background": {
+          "type": "color",
+          "color": "#000000",
+          "opacity": 1
+        },
         "referenceText": {
           "constraints": {
-            "top": { "enabled": true, "value": 2, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 5, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 2,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 5,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
             "width": 80,
@@ -793,7 +1105,7 @@
           },
           "style": {
             "fontFamily": "system-ui",
-            "maxFontSize": 36,
+            "maxFontSize": 70,
             "autoScale": false,
             "color": "#ffffff",
             "bold": true,
@@ -807,10 +1119,26 @@
         },
         "contentText": {
           "constraints": {
-            "top": { "enabled": true, "value": 12, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 5, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 12,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 5,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
             "width": 90,
@@ -823,11 +1151,11 @@
             "maxFontSize": 100,
             "autoScale": true,
             "color": "#ffffff",
-            "bold": false,
+            "bold": true,
             "italic": false,
             "underline": false,
-            "alignment": "center",
-            "verticalAlignment": "middle",
+            "alignment": "left",
+            "verticalAlignment": "top",
             "lineHeight": 1.3,
             "shadow": false
           },
@@ -848,10 +1176,26 @@
         "clock": {
           "enabled": false,
           "constraints": {
-            "top": { "enabled": true, "value": 2, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 85, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 2,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 85,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
             "width": 10,
@@ -877,13 +1221,33 @@
         }
       },
       "announcement": {
-        "background": { "type": "color", "color": "#000000", "opacity": 1 },
+        "background": {
+          "type": "color",
+          "color": "#000000",
+          "opacity": 1
+        },
         "mainText": {
           "constraints": {
-            "top": { "enabled": true, "value": 10, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 5, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 10,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 5,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
             "width": 90,
@@ -896,7 +1260,7 @@
             "maxFontSize": 100,
             "autoScale": true,
             "color": "#ffffff",
-            "bold": false,
+            "bold": true,
             "italic": false,
             "underline": false,
             "alignment": "center",
@@ -921,10 +1285,26 @@
         "clock": {
           "enabled": false,
           "constraints": {
-            "top": { "enabled": true, "value": 2, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 85, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 2,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 85,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
             "width": 10,
@@ -950,13 +1330,33 @@
         }
       },
       "versete_tineri": {
-        "background": { "type": "color", "color": "#000000", "opacity": 1 },
+        "background": {
+          "type": "color",
+          "color": "#000000",
+          "opacity": 1
+        },
         "personLabel": {
           "constraints": {
-            "top": { "enabled": true, "value": 2, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 5, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 2,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 5,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
             "width": 40,
@@ -969,7 +1369,7 @@
             "maxFontSize": 28,
             "autoScale": false,
             "color": "#ffffff",
-            "bold": false,
+            "bold": true,
             "italic": true,
             "underline": false,
             "alignment": "left",
@@ -980,10 +1380,26 @@
         },
         "referenceText": {
           "constraints": {
-            "top": { "enabled": true, "value": 8, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 5, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 8,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 5,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
             "width": 80,
@@ -993,7 +1409,7 @@
           },
           "style": {
             "fontFamily": "system-ui",
-            "maxFontSize": 32,
+            "maxFontSize": 70,
             "autoScale": false,
             "color": "#ffffff",
             "bold": true,
@@ -1007,15 +1423,31 @@
         },
         "contentText": {
           "constraints": {
-            "top": { "enabled": true, "value": 18, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 5, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 17.217527386541473,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 4.823943661971832,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
             "width": 90,
             "widthUnit": "%",
-            "height": 57,
+            "height": 58.305164319248824,
             "heightUnit": "%"
           },
           "style": {
@@ -1023,11 +1455,11 @@
             "maxFontSize": 90,
             "autoScale": true,
             "color": "#ffffff",
-            "bold": false,
+            "bold": true,
             "italic": false,
             "underline": false,
-            "alignment": "center",
-            "verticalAlignment": "middle",
+            "alignment": "left",
+            "verticalAlignment": "top",
             "lineHeight": 1.3,
             "shadow": false
           },
@@ -1048,10 +1480,26 @@
         "clock": {
           "enabled": false,
           "constraints": {
-            "top": { "enabled": true, "value": 2, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 85, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 2,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 85,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
             "width": 10,
@@ -1077,30 +1525,50 @@
         }
       },
       "empty": {
-        "background": { "type": "color", "color": "#000000", "opacity": 1 },
+        "background": {
+          "type": "color",
+          "color": "#000000",
+          "opacity": 1
+        },
         "clock": {
           "enabled": true,
           "constraints": {
-            "top": { "enabled": true, "value": 5, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 80, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 4.843505477308295,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": false,
+              "value": 80,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": true,
+              "value": 1.1443661971831027,
+              "unit": "%"
+            }
           },
           "size": {
-            "width": 15,
+            "width": 19.489436619718308,
             "widthUnit": "%",
             "height": 8,
             "heightUnit": "%"
           },
           "style": {
             "fontFamily": "system-ui",
-            "maxFontSize": 48,
+            "maxFontSize": 70,
             "autoScale": false,
             "color": "#ffffff",
-            "bold": false,
+            "bold": true,
             "italic": false,
             "underline": false,
-            "alignment": "right",
+            "alignment": "left",
             "verticalAlignment": "middle",
             "lineHeight": 1.3,
             "shadow": false
@@ -1113,10 +1581,26 @@
     "nextSlideConfig": {
       "enabled": true,
       "constraints": {
-        "top": { "enabled": true, "value": 78, "unit": "%" },
-        "right": { "enabled": true, "value": 0, "unit": "%" },
-        "bottom": { "enabled": true, "value": 0, "unit": "%" },
-        "left": { "enabled": true, "value": 0, "unit": "%" }
+        "top": {
+          "enabled": true,
+          "value": 78,
+          "unit": "%"
+        },
+        "right": {
+          "enabled": true,
+          "value": 0,
+          "unit": "%"
+        },
+        "bottom": {
+          "enabled": true,
+          "value": 0,
+          "unit": "%"
+        },
+        "left": {
+          "enabled": true,
+          "value": 0,
+          "unit": "%"
+        }
       },
       "size": {
         "width": 100,
@@ -1140,10 +1624,10 @@
       },
       "contentStyle": {
         "fontFamily": "system-ui",
-        "maxFontSize": 32,
+        "maxFontSize": 41,
         "autoScale": true,
         "color": "#ffffff",
-        "bold": false,
+        "bold": true,
         "italic": false,
         "underline": false,
         "alignment": "left",
@@ -1161,63 +1645,53 @@
   {
     "name": "Live Stream",
     "type": "livestream",
-    "isActive": true,
+    "isActive": false,
     "openMode": "browser",
     "isFullscreen": false,
     "width": 1080,
     "height": 420,
     "globalSettings": {
       "defaultBackground": {
-        "type": "transparent",
+        "type": "color",
+        "color": "#000000",
         "opacity": 1
       },
-      "clockEnabled": false,
-      "clockConfig": {
-        "enabled": false,
-        "constraints": {
-          "top": { "enabled": true, "value": 2, "unit": "%" },
-          "bottom": { "enabled": false, "value": 0, "unit": "%" },
-          "left": { "enabled": true, "value": 85, "unit": "%" },
-          "right": { "enabled": false, "value": 0, "unit": "%" }
-        },
-        "size": {
-          "width": 10,
-          "widthUnit": "%",
-          "height": 5,
-          "heightUnit": "%"
-        },
-        "style": {
-          "fontFamily": "system-ui",
-          "maxFontSize": 32,
-          "autoScale": false,
-          "color": "#ffffff",
-          "bold": false,
-          "italic": false,
-          "underline": false,
-          "alignment": "right",
-          "verticalAlignment": "middle",
-          "lineHeight": 1.3,
-          "shadow": true
-        },
-        "format": "24h",
-        "showSeconds": false
-      }
+      "clockEnabled": false
     },
-    "sortOrder": 2,
+    "sortOrder": 0,
     "contentConfigs": {
       "song": {
-        "background": { "type": "transparent", "opacity": 1 },
+        "background": {
+          "type": "transparent",
+          "opacity": 1
+        },
         "mainText": {
           "constraints": {
-            "top": { "enabled": true, "value": 10, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 5, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 3.4356136820925554,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 1.3908450704225364,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
-            "width": 90,
+            "width": 97.04225352112678,
             "widthUnit": "%",
-            "height": 80,
+            "height": 90.1861167002012,
             "heightUnit": "%"
           },
           "style": {
@@ -1225,24 +1699,24 @@
             "maxFontSize": 120,
             "autoScale": true,
             "color": "#ffffff",
-            "bold": false,
+            "bold": true,
             "italic": false,
             "underline": false,
-            "alignment": "center",
+            "alignment": "left",
             "verticalAlignment": "middle",
             "lineHeight": 1.3,
             "shadow": true
           },
           "padding": 20,
           "animationIn": {
-            "type": "slide-up",
-            "duration": 200,
+            "type": "fade",
+            "duration": 300,
             "delay": 0,
             "easing": "ease-out"
           },
           "animationOut": {
-            "type": "slide-down",
-            "duration": 150,
+            "type": "fade",
+            "duration": 200,
             "delay": 0,
             "easing": "ease-in"
           }
@@ -1250,10 +1724,26 @@
         "clock": {
           "enabled": false,
           "constraints": {
-            "top": { "enabled": true, "value": 2, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 85, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 2,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 85,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
             "width": 10,
@@ -1279,23 +1769,42 @@
         }
       },
       "bible": {
-        "background": { "type": "transparent", "opacity": 1 },
+        "background": {
+          "type": "transparent",
+          "opacity": 1
+        },
         "referenceText": {
           "constraints": {
-            "top": { "enabled": true, "value": 2, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 5, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 5.169014084507043,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 2.1830985915492955,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
-            "width": 80,
+            "width": 95.9330985915493,
             "widthUnit": "%",
-            "height": 8,
+            "height": 11.395372233400405,
             "heightUnit": "%"
           },
           "style": {
             "fontFamily": "system-ui",
-            "maxFontSize": 36,
+            "maxFontSize": 50,
             "autoScale": false,
             "color": "#ffffff",
             "bold": true,
@@ -1309,15 +1818,31 @@
         },
         "contentText": {
           "constraints": {
-            "top": { "enabled": true, "value": 12, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 5, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 18.33802816901408,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 2.0950704225352124,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
-            "width": 90,
+            "width": 95.98591549295777,
             "widthUnit": "%",
-            "height": 83,
+            "height": 75.30382293762574,
             "heightUnit": "%"
           },
           "style": {
@@ -1325,11 +1850,11 @@
             "maxFontSize": 100,
             "autoScale": true,
             "color": "#ffffff",
-            "bold": false,
+            "bold": true,
             "italic": false,
             "underline": false,
-            "alignment": "center",
-            "verticalAlignment": "middle",
+            "alignment": "left",
+            "verticalAlignment": "top",
             "lineHeight": 1.3,
             "shadow": true
           },
@@ -1345,15 +1870,32 @@
             "duration": 200,
             "delay": 0,
             "easing": "ease-in"
-          }
+          },
+          "hidden": false
         },
         "clock": {
           "enabled": false,
           "constraints": {
-            "top": { "enabled": true, "value": 2, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 85, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 2,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 85,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
             "width": 10,
@@ -1379,18 +1921,37 @@
         }
       },
       "bible_passage": {
-        "background": { "type": "transparent", "opacity": 1 },
+        "background": {
+          "type": "transparent",
+          "opacity": 1
+        },
         "referenceText": {
           "constraints": {
-            "top": { "enabled": true, "value": 2, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 5, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 4.263581488933602,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 2.183098591549297,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
-            "width": 80,
+            "width": 94.1725352112676,
             "widthUnit": "%",
-            "height": 8,
+            "height": 13.206237424547284,
             "heightUnit": "%"
           },
           "style": {
@@ -1409,15 +1970,31 @@
         },
         "contentText": {
           "constraints": {
-            "top": { "enabled": true, "value": 12, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 5, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 19.24346076458752,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 2.183098591549297,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
-            "width": 90,
+            "width": 94.40140845070424,
             "widthUnit": "%",
-            "height": 83,
+            "height": 74.17203219315894,
             "heightUnit": "%"
           },
           "style": {
@@ -1425,11 +2002,11 @@
             "maxFontSize": 100,
             "autoScale": true,
             "color": "#ffffff",
-            "bold": false,
+            "bold": true,
             "italic": false,
             "underline": false,
-            "alignment": "center",
-            "verticalAlignment": "middle",
+            "alignment": "left",
+            "verticalAlignment": "top",
             "lineHeight": 1.3,
             "shadow": true
           },
@@ -1450,10 +2027,26 @@
         "clock": {
           "enabled": false,
           "constraints": {
-            "top": { "enabled": true, "value": 2, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 85, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 2,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 85,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
             "width": 10,
@@ -1479,30 +2072,49 @@
         }
       },
       "announcement": {
-        "background": { "type": "transparent", "opacity": 1 },
+        "background": {
+          "type": "transparent",
+          "opacity": 1
+        },
         "mainText": {
           "constraints": {
-            "top": { "enabled": true, "value": 10, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 5, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 5.699195171026157,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 2.711267605633804,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
-            "width": 90,
+            "width": 95.54577464788734,
             "widthUnit": "%",
-            "height": 85,
+            "height": 87.48993963782698,
             "heightUnit": "%"
           },
           "style": {
             "fontFamily": "system-ui",
-            "maxFontSize": 100,
+            "maxFontSize": 60,
             "autoScale": true,
             "color": "#ffffff",
             "bold": false,
             "italic": false,
             "underline": false,
-            "alignment": "center",
-            "verticalAlignment": "middle",
+            "alignment": "left",
+            "verticalAlignment": "top",
             "lineHeight": 1.3,
             "shadow": true
           },
@@ -1523,10 +2135,26 @@
         "clock": {
           "enabled": false,
           "constraints": {
-            "top": { "enabled": true, "value": 2, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 85, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 2,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 85,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
             "width": 10,
@@ -1552,13 +2180,32 @@
         }
       },
       "versete_tineri": {
-        "background": { "type": "transparent", "opacity": 1 },
+        "background": {
+          "type": "transparent",
+          "opacity": 1
+        },
         "personLabel": {
           "constraints": {
-            "top": { "enabled": true, "value": 2, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 5, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 2,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 5,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
             "width": 40,
@@ -1582,15 +2229,31 @@
         },
         "referenceText": {
           "constraints": {
-            "top": { "enabled": true, "value": 8, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 5, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 10.037223340040242,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 4.911971830985917,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
-            "width": 80,
+            "width": 80.88028169014085,
             "widthUnit": "%",
-            "height": 8,
+            "height": 10.942655935613683,
             "heightUnit": "%"
           },
           "style": {
@@ -1609,15 +2272,31 @@
         },
         "contentText": {
           "constraints": {
-            "top": { "enabled": true, "value": 18, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 5, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 23.432595573440643,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 4.559859154929578,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
             "width": 90,
             "widthUnit": "%",
-            "height": 77,
+            "height": 67.49295774647888,
             "heightUnit": "%"
           },
           "style": {
@@ -1625,11 +2304,11 @@
             "maxFontSize": 90,
             "autoScale": true,
             "color": "#ffffff",
-            "bold": false,
+            "bold": true,
             "italic": false,
             "underline": false,
-            "alignment": "center",
-            "verticalAlignment": "middle",
+            "alignment": "left",
+            "verticalAlignment": "top",
             "lineHeight": 1.3,
             "shadow": true
           },
@@ -1650,10 +2329,26 @@
         "clock": {
           "enabled": false,
           "constraints": {
-            "top": { "enabled": true, "value": 2, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 85, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 2,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 85,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
             "width": 10,
@@ -1679,19 +2374,38 @@
         }
       },
       "empty": {
-        "background": { "type": "transparent", "opacity": 1 },
+        "background": {
+          "type": "transparent",
+          "opacity": 1
+        },
         "clock": {
           "enabled": true,
           "constraints": {
-            "top": { "enabled": true, "value": 5, "unit": "%" },
-            "bottom": { "enabled": false, "value": 0, "unit": "%" },
-            "left": { "enabled": true, "value": 80, "unit": "%" },
-            "right": { "enabled": false, "value": 0, "unit": "%" }
+            "top": {
+              "enabled": true,
+              "value": 5.226358148893358,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 77.88732394366197,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": false,
+              "value": 0,
+              "unit": "%"
+            }
           },
           "size": {
-            "width": 15,
+            "width": 20.01760563380282,
             "widthUnit": "%",
-            "height": 8,
+            "height": 20.223340040241453,
             "heightUnit": "%"
           },
           "style": {
@@ -1708,7 +2422,8 @@
             "shadow": true
           },
           "format": "24h",
-          "showSeconds": true
+          "showSeconds": false,
+          "hidden": true
         }
       }
     }
