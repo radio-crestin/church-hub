@@ -38,7 +38,11 @@
       "animation": "Animation",
       "background": "Background",
       "general": "General Settings",
-      "nextSlide": "Next Slide Section"
+      "nextSlide": "Next Slide Section",
+      "visibility": "Visibility"
+    },
+    "visibility": {
+      "visibleWhenHidden": "Visible when screen is hidden"
     },
     "position": {
       "x": "X Position",

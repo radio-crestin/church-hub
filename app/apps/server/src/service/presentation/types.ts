@@ -162,6 +162,7 @@ export interface ClockElementConfig {
   style: TextStyle
   format: '12h' | '24h'
   showSeconds: boolean
+  visibleWhenHidden?: boolean
 }
 
 /**
@@ -236,6 +237,7 @@ export interface TextElementConfig {
   padding: number
   animationIn: AnimationConfig
   animationOut: AnimationConfig
+  visibleWhenHidden?: boolean
 }
 
 /**
@@ -271,6 +273,7 @@ export interface NextSlideSectionConfig {
   background: ScreenBackgroundConfig
   animationIn?: AnimationConfig
   animationOut?: AnimationConfig
+  visibleWhenHidden?: boolean
 }
 
 /**
