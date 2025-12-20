@@ -262,24 +262,21 @@ export function ScreenEditorSidebar({
                 checked={
                   (
                     selectedConfig.config as {
-                      visibleWhenHidden?: boolean
+                      hidden?: boolean
                     }
-                  ).visibleWhenHidden ?? false
+                  ).hidden ?? false
                 }
                 onCheckedChange={(checked) => {
                   if (selectedConfig.isNextSlide) {
                     onUpdateNextSlideConfig({
                       ...screen.nextSlideConfig!,
-                      visibleWhenHidden: !!checked,
+                      hidden: !!checked,
                     })
                   } else {
-                    updateConfig(
-                      [...selectedConfig.path, 'visibleWhenHidden'],
-                      !!checked,
-                    )
+                    updateConfig([...selectedConfig.path, 'hidden'], !!checked)
                   }
                 }}
-                label={t('screens.visibility.visibleWhenHidden')}
+                label={t('screens.visibility.hideElement')}
               />
             </Section>
           )}
