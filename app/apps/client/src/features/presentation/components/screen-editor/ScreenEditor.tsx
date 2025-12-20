@@ -41,6 +41,7 @@ export function ScreenEditor({
   const queryClient = useQueryClient()
   const lastEmitRef = useRef<number>(0)
   const isLocalUpdateRef = useRef<boolean>(false)
+  const isSavingRef = useRef<boolean>(false)
 
   // Initialize editor with screen data (only on mount)
   useEffect(() => {
@@ -57,6 +58,11 @@ export function ScreenEditor({
         event.query.queryKey[0] === queryKey[0] &&
         event.query.queryKey[1] === queryKey[1]
       ) {
+        // Skip updates during save operation to prevent race conditions
+        if (isSavingRef.current) {
+          return
+        }
+
         // Skip if this is our own local update
         if (isLocalUpdateRef.current) {
           isLocalUpdateRef.current = false
@@ -116,16 +122,24 @@ export function ScreenEditor({
 
   const handleSave = useCallback(async () => {
     if (!state.screen) return
-    await onSave(state.screen)
-    actions.markClean()
-    // Emit final saved config
-    send({
-      type: 'screen_config_preview',
-      payload: {
-        screenId: state.screen.id,
-        config: state.screen,
-      },
-    })
+    isSavingRef.current = true
+    try {
+      await onSave(state.screen)
+      actions.markClean()
+      // Emit final saved config
+      send({
+        type: 'screen_config_preview',
+        payload: {
+          screenId: state.screen.id,
+          config: state.screen,
+        },
+      })
+    } finally {
+      // Delay clearing flag to allow any pending refetches to be ignored
+      setTimeout(() => {
+        isSavingRef.current = false
+      }, 100)
+    }
   }, [state.screen, onSave, actions, send])
 
   const handleClose = useCallback(() => {
