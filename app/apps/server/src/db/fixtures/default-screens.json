@@ -1,0 +1,1716 @@
+[
+  {
+    "name": "Main Projector",
+    "type": "primary",
+    "isActive": true,
+    "openMode": "browser",
+    "isFullscreen": false,
+    "width": 1920,
+    "height": 1080,
+    "globalSettings": {
+      "defaultBackground": {
+        "type": "color",
+        "color": "#000000",
+        "opacity": 1
+      },
+      "clockEnabled": false,
+      "clockConfig": {
+        "enabled": false,
+        "constraints": {
+          "top": { "enabled": true, "value": 2, "unit": "%" },
+          "bottom": { "enabled": false, "value": 0, "unit": "%" },
+          "left": { "enabled": true, "value": 85, "unit": "%" },
+          "right": { "enabled": false, "value": 0, "unit": "%" }
+        },
+        "size": {
+          "width": 10,
+          "widthUnit": "%",
+          "height": 5,
+          "heightUnit": "%"
+        },
+        "style": {
+          "fontFamily": "system-ui",
+          "maxFontSize": 32,
+          "autoScale": false,
+          "color": "#ffffff",
+          "bold": false,
+          "italic": false,
+          "underline": false,
+          "alignment": "right",
+          "verticalAlignment": "middle",
+          "lineHeight": 1.3,
+          "shadow": false
+        },
+        "format": "24h",
+        "showSeconds": false
+      }
+    },
+    "sortOrder": 0,
+    "contentConfigs": {
+      "song": {
+        "background": { "type": "color", "color": "#000000", "opacity": 1 },
+        "mainText": {
+          "constraints": {
+            "top": { "enabled": true, "value": 10, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 5, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 90,
+            "widthUnit": "%",
+            "height": 80,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 120,
+            "autoScale": true,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "alignment": "center",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": false
+          },
+          "padding": 20,
+          "animationIn": {
+            "type": "fade",
+            "duration": 300,
+            "delay": 0,
+            "easing": "ease-out"
+          },
+          "animationOut": {
+            "type": "fade",
+            "duration": 200,
+            "delay": 0,
+            "easing": "ease-in"
+          }
+        },
+        "clock": {
+          "enabled": false,
+          "constraints": {
+            "top": { "enabled": true, "value": 2, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 85, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 10,
+            "widthUnit": "%",
+            "height": 5,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 32,
+            "autoScale": false,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "alignment": "right",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": false
+          },
+          "format": "24h",
+          "showSeconds": false
+        }
+      },
+      "bible": {
+        "background": { "type": "color", "color": "#000000", "opacity": 1 },
+        "referenceText": {
+          "constraints": {
+            "top": { "enabled": true, "value": 2, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 5, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 80,
+            "widthUnit": "%",
+            "height": 8,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 36,
+            "autoScale": false,
+            "color": "#ffffff",
+            "bold": true,
+            "italic": false,
+            "underline": false,
+            "alignment": "left",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": false
+          }
+        },
+        "contentText": {
+          "constraints": {
+            "top": { "enabled": true, "value": 12, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 5, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 90,
+            "widthUnit": "%",
+            "height": 83,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 100,
+            "autoScale": true,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "alignment": "center",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": false
+          },
+          "padding": 20,
+          "animationIn": {
+            "type": "fade",
+            "duration": 300,
+            "delay": 0,
+            "easing": "ease-out"
+          },
+          "animationOut": {
+            "type": "fade",
+            "duration": 200,
+            "delay": 0,
+            "easing": "ease-in"
+          }
+        },
+        "clock": {
+          "enabled": false,
+          "constraints": {
+            "top": { "enabled": true, "value": 2, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 85, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 10,
+            "widthUnit": "%",
+            "height": 5,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 32,
+            "autoScale": false,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "alignment": "right",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": false
+          },
+          "format": "24h",
+          "showSeconds": false
+        }
+      },
+      "bible_passage": {
+        "background": { "type": "color", "color": "#000000", "opacity": 1 },
+        "referenceText": {
+          "constraints": {
+            "top": { "enabled": true, "value": 2, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 5, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 80,
+            "widthUnit": "%",
+            "height": 8,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 36,
+            "autoScale": false,
+            "color": "#ffffff",
+            "bold": true,
+            "italic": false,
+            "underline": false,
+            "alignment": "left",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": false
+          }
+        },
+        "contentText": {
+          "constraints": {
+            "top": { "enabled": true, "value": 12, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 5, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 90,
+            "widthUnit": "%",
+            "height": 83,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 100,
+            "autoScale": true,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "alignment": "center",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": false
+          },
+          "padding": 20,
+          "animationIn": {
+            "type": "fade",
+            "duration": 300,
+            "delay": 0,
+            "easing": "ease-out"
+          },
+          "animationOut": {
+            "type": "fade",
+            "duration": 200,
+            "delay": 0,
+            "easing": "ease-in"
+          }
+        },
+        "clock": {
+          "enabled": false,
+          "constraints": {
+            "top": { "enabled": true, "value": 2, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 85, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 10,
+            "widthUnit": "%",
+            "height": 5,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 32,
+            "autoScale": false,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "alignment": "right",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": false
+          },
+          "format": "24h",
+          "showSeconds": false
+        }
+      },
+      "announcement": {
+        "background": { "type": "color", "color": "#000000", "opacity": 1 },
+        "mainText": {
+          "constraints": {
+            "top": { "enabled": true, "value": 10, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 5, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 90,
+            "widthUnit": "%",
+            "height": 85,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 100,
+            "autoScale": true,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "alignment": "center",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": false
+          },
+          "padding": 20,
+          "animationIn": {
+            "type": "fade",
+            "duration": 300,
+            "delay": 0,
+            "easing": "ease-out"
+          },
+          "animationOut": {
+            "type": "fade",
+            "duration": 200,
+            "delay": 0,
+            "easing": "ease-in"
+          }
+        },
+        "clock": {
+          "enabled": false,
+          "constraints": {
+            "top": { "enabled": true, "value": 2, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 85, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 10,
+            "widthUnit": "%",
+            "height": 5,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 32,
+            "autoScale": false,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "alignment": "right",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": false
+          },
+          "format": "24h",
+          "showSeconds": false
+        }
+      },
+      "versete_tineri": {
+        "background": { "type": "color", "color": "#000000", "opacity": 1 },
+        "personLabel": {
+          "constraints": {
+            "top": { "enabled": true, "value": 2, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 5, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 40,
+            "widthUnit": "%",
+            "height": 5,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 28,
+            "autoScale": false,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": true,
+            "underline": false,
+            "alignment": "left",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": false
+          }
+        },
+        "referenceText": {
+          "constraints": {
+            "top": { "enabled": true, "value": 8, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 5, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 80,
+            "widthUnit": "%",
+            "height": 8,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 32,
+            "autoScale": false,
+            "color": "#ffffff",
+            "bold": true,
+            "italic": false,
+            "underline": false,
+            "alignment": "left",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": false
+          }
+        },
+        "contentText": {
+          "constraints": {
+            "top": { "enabled": true, "value": 18, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 5, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 90,
+            "widthUnit": "%",
+            "height": 77,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 90,
+            "autoScale": true,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "alignment": "center",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": false
+          },
+          "padding": 20,
+          "animationIn": {
+            "type": "fade",
+            "duration": 300,
+            "delay": 0,
+            "easing": "ease-out"
+          },
+          "animationOut": {
+            "type": "fade",
+            "duration": 200,
+            "delay": 0,
+            "easing": "ease-in"
+          }
+        },
+        "clock": {
+          "enabled": false,
+          "constraints": {
+            "top": { "enabled": true, "value": 2, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 85, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 10,
+            "widthUnit": "%",
+            "height": 5,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 32,
+            "autoScale": false,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "alignment": "right",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": false
+          },
+          "format": "24h",
+          "showSeconds": false
+        }
+      },
+      "empty": {
+        "background": { "type": "color", "color": "#000000", "opacity": 1 },
+        "clock": {
+          "enabled": true,
+          "constraints": {
+            "top": { "enabled": true, "value": 5, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 80, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 15,
+            "widthUnit": "%",
+            "height": 8,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 48,
+            "autoScale": false,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "alignment": "right",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": false
+          },
+          "format": "24h",
+          "showSeconds": true
+        }
+      }
+    }
+  },
+  {
+    "name": "Stage Monitor",
+    "type": "stage",
+    "isActive": true,
+    "openMode": "browser",
+    "isFullscreen": false,
+    "width": 1920,
+    "height": 1080,
+    "globalSettings": {
+      "defaultBackground": {
+        "type": "color",
+        "color": "#000000",
+        "opacity": 1
+      },
+      "clockEnabled": false,
+      "clockConfig": {
+        "enabled": false,
+        "constraints": {
+          "top": { "enabled": true, "value": 2, "unit": "%" },
+          "bottom": { "enabled": false, "value": 0, "unit": "%" },
+          "left": { "enabled": true, "value": 85, "unit": "%" },
+          "right": { "enabled": false, "value": 0, "unit": "%" }
+        },
+        "size": {
+          "width": 10,
+          "widthUnit": "%",
+          "height": 5,
+          "heightUnit": "%"
+        },
+        "style": {
+          "fontFamily": "system-ui",
+          "maxFontSize": 32,
+          "autoScale": false,
+          "color": "#ffffff",
+          "bold": false,
+          "italic": false,
+          "underline": false,
+          "alignment": "right",
+          "verticalAlignment": "middle",
+          "lineHeight": 1.3,
+          "shadow": false
+        },
+        "format": "24h",
+        "showSeconds": false
+      }
+    },
+    "sortOrder": 1,
+    "contentConfigs": {
+      "song": {
+        "background": { "type": "color", "color": "#000000", "opacity": 1 },
+        "mainText": {
+          "constraints": {
+            "top": { "enabled": true, "value": 10, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 5, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 90,
+            "widthUnit": "%",
+            "height": 65,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 120,
+            "autoScale": true,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "alignment": "center",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": false
+          },
+          "padding": 20,
+          "animationIn": {
+            "type": "fade",
+            "duration": 300,
+            "delay": 0,
+            "easing": "ease-out"
+          },
+          "animationOut": {
+            "type": "fade",
+            "duration": 200,
+            "delay": 0,
+            "easing": "ease-in"
+          }
+        },
+        "clock": {
+          "enabled": false,
+          "constraints": {
+            "top": { "enabled": true, "value": 2, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 85, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 10,
+            "widthUnit": "%",
+            "height": 5,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 32,
+            "autoScale": false,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "alignment": "right",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": false
+          },
+          "format": "24h",
+          "showSeconds": false
+        }
+      },
+      "bible": {
+        "background": { "type": "color", "color": "#000000", "opacity": 1 },
+        "referenceText": {
+          "constraints": {
+            "top": { "enabled": true, "value": 2, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 5, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 80,
+            "widthUnit": "%",
+            "height": 8,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 36,
+            "autoScale": false,
+            "color": "#ffffff",
+            "bold": true,
+            "italic": false,
+            "underline": false,
+            "alignment": "left",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": false
+          }
+        },
+        "contentText": {
+          "constraints": {
+            "top": { "enabled": true, "value": 12, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 5, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 90,
+            "widthUnit": "%",
+            "height": 63,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 100,
+            "autoScale": true,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "alignment": "center",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": false
+          },
+          "padding": 20,
+          "animationIn": {
+            "type": "fade",
+            "duration": 300,
+            "delay": 0,
+            "easing": "ease-out"
+          },
+          "animationOut": {
+            "type": "fade",
+            "duration": 200,
+            "delay": 0,
+            "easing": "ease-in"
+          }
+        },
+        "clock": {
+          "enabled": false,
+          "constraints": {
+            "top": { "enabled": true, "value": 2, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 85, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 10,
+            "widthUnit": "%",
+            "height": 5,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 32,
+            "autoScale": false,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "alignment": "right",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": false
+          },
+          "format": "24h",
+          "showSeconds": false
+        }
+      },
+      "bible_passage": {
+        "background": { "type": "color", "color": "#000000", "opacity": 1 },
+        "referenceText": {
+          "constraints": {
+            "top": { "enabled": true, "value": 2, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 5, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 80,
+            "widthUnit": "%",
+            "height": 8,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 36,
+            "autoScale": false,
+            "color": "#ffffff",
+            "bold": true,
+            "italic": false,
+            "underline": false,
+            "alignment": "left",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": false
+          }
+        },
+        "contentText": {
+          "constraints": {
+            "top": { "enabled": true, "value": 12, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 5, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 90,
+            "widthUnit": "%",
+            "height": 63,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 100,
+            "autoScale": true,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "alignment": "center",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": false
+          },
+          "padding": 20,
+          "animationIn": {
+            "type": "fade",
+            "duration": 300,
+            "delay": 0,
+            "easing": "ease-out"
+          },
+          "animationOut": {
+            "type": "fade",
+            "duration": 200,
+            "delay": 0,
+            "easing": "ease-in"
+          }
+        },
+        "clock": {
+          "enabled": false,
+          "constraints": {
+            "top": { "enabled": true, "value": 2, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 85, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 10,
+            "widthUnit": "%",
+            "height": 5,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 32,
+            "autoScale": false,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "alignment": "right",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": false
+          },
+          "format": "24h",
+          "showSeconds": false
+        }
+      },
+      "announcement": {
+        "background": { "type": "color", "color": "#000000", "opacity": 1 },
+        "mainText": {
+          "constraints": {
+            "top": { "enabled": true, "value": 10, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 5, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 90,
+            "widthUnit": "%",
+            "height": 65,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 100,
+            "autoScale": true,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "alignment": "center",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": false
+          },
+          "padding": 20,
+          "animationIn": {
+            "type": "fade",
+            "duration": 300,
+            "delay": 0,
+            "easing": "ease-out"
+          },
+          "animationOut": {
+            "type": "fade",
+            "duration": 200,
+            "delay": 0,
+            "easing": "ease-in"
+          }
+        },
+        "clock": {
+          "enabled": false,
+          "constraints": {
+            "top": { "enabled": true, "value": 2, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 85, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 10,
+            "widthUnit": "%",
+            "height": 5,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 32,
+            "autoScale": false,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "alignment": "right",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": false
+          },
+          "format": "24h",
+          "showSeconds": false
+        }
+      },
+      "versete_tineri": {
+        "background": { "type": "color", "color": "#000000", "opacity": 1 },
+        "personLabel": {
+          "constraints": {
+            "top": { "enabled": true, "value": 2, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 5, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 40,
+            "widthUnit": "%",
+            "height": 5,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 28,
+            "autoScale": false,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": true,
+            "underline": false,
+            "alignment": "left",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": false
+          }
+        },
+        "referenceText": {
+          "constraints": {
+            "top": { "enabled": true, "value": 8, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 5, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 80,
+            "widthUnit": "%",
+            "height": 8,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 32,
+            "autoScale": false,
+            "color": "#ffffff",
+            "bold": true,
+            "italic": false,
+            "underline": false,
+            "alignment": "left",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": false
+          }
+        },
+        "contentText": {
+          "constraints": {
+            "top": { "enabled": true, "value": 18, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 5, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 90,
+            "widthUnit": "%",
+            "height": 57,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 90,
+            "autoScale": true,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "alignment": "center",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": false
+          },
+          "padding": 20,
+          "animationIn": {
+            "type": "fade",
+            "duration": 300,
+            "delay": 0,
+            "easing": "ease-out"
+          },
+          "animationOut": {
+            "type": "fade",
+            "duration": 200,
+            "delay": 0,
+            "easing": "ease-in"
+          }
+        },
+        "clock": {
+          "enabled": false,
+          "constraints": {
+            "top": { "enabled": true, "value": 2, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 85, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 10,
+            "widthUnit": "%",
+            "height": 5,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 32,
+            "autoScale": false,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "alignment": "right",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": false
+          },
+          "format": "24h",
+          "showSeconds": false
+        }
+      },
+      "empty": {
+        "background": { "type": "color", "color": "#000000", "opacity": 1 },
+        "clock": {
+          "enabled": true,
+          "constraints": {
+            "top": { "enabled": true, "value": 5, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 80, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 15,
+            "widthUnit": "%",
+            "height": 8,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 48,
+            "autoScale": false,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "alignment": "right",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": false
+          },
+          "format": "24h",
+          "showSeconds": true
+        }
+      }
+    },
+    "nextSlideConfig": {
+      "enabled": true,
+      "constraints": {
+        "top": { "enabled": true, "value": 78, "unit": "%" },
+        "right": { "enabled": true, "value": 0, "unit": "%" },
+        "bottom": { "enabled": true, "value": 0, "unit": "%" },
+        "left": { "enabled": true, "value": 0, "unit": "%" }
+      },
+      "size": {
+        "width": 100,
+        "widthUnit": "%",
+        "height": 22,
+        "heightUnit": "%"
+      },
+      "labelText": "Urmeaza:",
+      "labelStyle": {
+        "fontFamily": "system-ui",
+        "maxFontSize": 24,
+        "autoScale": false,
+        "color": "#cccccc",
+        "bold": true,
+        "italic": false,
+        "underline": false,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "lineHeight": 1.3,
+        "shadow": false
+      },
+      "contentStyle": {
+        "fontFamily": "system-ui",
+        "maxFontSize": 32,
+        "autoScale": true,
+        "color": "#ffffff",
+        "bold": false,
+        "italic": false,
+        "underline": false,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "lineHeight": 1.3,
+        "shadow": false
+      },
+      "background": {
+        "type": "color",
+        "color": "#1a1a1a",
+        "opacity": 0.8
+      }
+    }
+  },
+  {
+    "name": "Live Stream",
+    "type": "livestream",
+    "isActive": true,
+    "openMode": "browser",
+    "isFullscreen": false,
+    "width": 1080,
+    "height": 420,
+    "globalSettings": {
+      "defaultBackground": {
+        "type": "transparent",
+        "opacity": 1
+      },
+      "clockEnabled": false,
+      "clockConfig": {
+        "enabled": false,
+        "constraints": {
+          "top": { "enabled": true, "value": 2, "unit": "%" },
+          "bottom": { "enabled": false, "value": 0, "unit": "%" },
+          "left": { "enabled": true, "value": 85, "unit": "%" },
+          "right": { "enabled": false, "value": 0, "unit": "%" }
+        },
+        "size": {
+          "width": 10,
+          "widthUnit": "%",
+          "height": 5,
+          "heightUnit": "%"
+        },
+        "style": {
+          "fontFamily": "system-ui",
+          "maxFontSize": 32,
+          "autoScale": false,
+          "color": "#ffffff",
+          "bold": false,
+          "italic": false,
+          "underline": false,
+          "alignment": "right",
+          "verticalAlignment": "middle",
+          "lineHeight": 1.3,
+          "shadow": true
+        },
+        "format": "24h",
+        "showSeconds": false
+      }
+    },
+    "sortOrder": 2,
+    "contentConfigs": {
+      "song": {
+        "background": { "type": "transparent", "opacity": 1 },
+        "mainText": {
+          "constraints": {
+            "top": { "enabled": true, "value": 10, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 5, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 90,
+            "widthUnit": "%",
+            "height": 80,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 120,
+            "autoScale": true,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "alignment": "center",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": true
+          },
+          "padding": 20,
+          "animationIn": {
+            "type": "slide-up",
+            "duration": 200,
+            "delay": 0,
+            "easing": "ease-out"
+          },
+          "animationOut": {
+            "type": "slide-down",
+            "duration": 150,
+            "delay": 0,
+            "easing": "ease-in"
+          }
+        },
+        "clock": {
+          "enabled": false,
+          "constraints": {
+            "top": { "enabled": true, "value": 2, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 85, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 10,
+            "widthUnit": "%",
+            "height": 5,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 32,
+            "autoScale": false,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "alignment": "right",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": true
+          },
+          "format": "24h",
+          "showSeconds": false
+        }
+      },
+      "bible": {
+        "background": { "type": "transparent", "opacity": 1 },
+        "referenceText": {
+          "constraints": {
+            "top": { "enabled": true, "value": 2, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 5, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 80,
+            "widthUnit": "%",
+            "height": 8,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 36,
+            "autoScale": false,
+            "color": "#ffffff",
+            "bold": true,
+            "italic": false,
+            "underline": false,
+            "alignment": "left",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": true
+          }
+        },
+        "contentText": {
+          "constraints": {
+            "top": { "enabled": true, "value": 12, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 5, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 90,
+            "widthUnit": "%",
+            "height": 83,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 100,
+            "autoScale": true,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "alignment": "center",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": true
+          },
+          "padding": 20,
+          "animationIn": {
+            "type": "fade",
+            "duration": 300,
+            "delay": 0,
+            "easing": "ease-out"
+          },
+          "animationOut": {
+            "type": "fade",
+            "duration": 200,
+            "delay": 0,
+            "easing": "ease-in"
+          }
+        },
+        "clock": {
+          "enabled": false,
+          "constraints": {
+            "top": { "enabled": true, "value": 2, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 85, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 10,
+            "widthUnit": "%",
+            "height": 5,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 32,
+            "autoScale": false,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "alignment": "right",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": true
+          },
+          "format": "24h",
+          "showSeconds": false
+        }
+      },
+      "bible_passage": {
+        "background": { "type": "transparent", "opacity": 1 },
+        "referenceText": {
+          "constraints": {
+            "top": { "enabled": true, "value": 2, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 5, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 80,
+            "widthUnit": "%",
+            "height": 8,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 36,
+            "autoScale": false,
+            "color": "#ffffff",
+            "bold": true,
+            "italic": false,
+            "underline": false,
+            "alignment": "left",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": true
+          }
+        },
+        "contentText": {
+          "constraints": {
+            "top": { "enabled": true, "value": 12, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 5, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 90,
+            "widthUnit": "%",
+            "height": 83,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 100,
+            "autoScale": true,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "alignment": "center",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": true
+          },
+          "padding": 20,
+          "animationIn": {
+            "type": "fade",
+            "duration": 300,
+            "delay": 0,
+            "easing": "ease-out"
+          },
+          "animationOut": {
+            "type": "fade",
+            "duration": 200,
+            "delay": 0,
+            "easing": "ease-in"
+          }
+        },
+        "clock": {
+          "enabled": false,
+          "constraints": {
+            "top": { "enabled": true, "value": 2, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 85, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 10,
+            "widthUnit": "%",
+            "height": 5,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 32,
+            "autoScale": false,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "alignment": "right",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": true
+          },
+          "format": "24h",
+          "showSeconds": false
+        }
+      },
+      "announcement": {
+        "background": { "type": "transparent", "opacity": 1 },
+        "mainText": {
+          "constraints": {
+            "top": { "enabled": true, "value": 10, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 5, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 90,
+            "widthUnit": "%",
+            "height": 85,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 100,
+            "autoScale": true,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "alignment": "center",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": true
+          },
+          "padding": 20,
+          "animationIn": {
+            "type": "fade",
+            "duration": 300,
+            "delay": 0,
+            "easing": "ease-out"
+          },
+          "animationOut": {
+            "type": "fade",
+            "duration": 200,
+            "delay": 0,
+            "easing": "ease-in"
+          }
+        },
+        "clock": {
+          "enabled": false,
+          "constraints": {
+            "top": { "enabled": true, "value": 2, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 85, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 10,
+            "widthUnit": "%",
+            "height": 5,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 32,
+            "autoScale": false,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "alignment": "right",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": true
+          },
+          "format": "24h",
+          "showSeconds": false
+        }
+      },
+      "versete_tineri": {
+        "background": { "type": "transparent", "opacity": 1 },
+        "personLabel": {
+          "constraints": {
+            "top": { "enabled": true, "value": 2, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 5, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 40,
+            "widthUnit": "%",
+            "height": 5,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 28,
+            "autoScale": false,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": true,
+            "underline": false,
+            "alignment": "left",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": true
+          }
+        },
+        "referenceText": {
+          "constraints": {
+            "top": { "enabled": true, "value": 8, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 5, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 80,
+            "widthUnit": "%",
+            "height": 8,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 32,
+            "autoScale": false,
+            "color": "#ffffff",
+            "bold": true,
+            "italic": false,
+            "underline": false,
+            "alignment": "left",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": true
+          }
+        },
+        "contentText": {
+          "constraints": {
+            "top": { "enabled": true, "value": 18, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 5, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 90,
+            "widthUnit": "%",
+            "height": 77,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 90,
+            "autoScale": true,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "alignment": "center",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": true
+          },
+          "padding": 20,
+          "animationIn": {
+            "type": "fade",
+            "duration": 300,
+            "delay": 0,
+            "easing": "ease-out"
+          },
+          "animationOut": {
+            "type": "fade",
+            "duration": 200,
+            "delay": 0,
+            "easing": "ease-in"
+          }
+        },
+        "clock": {
+          "enabled": false,
+          "constraints": {
+            "top": { "enabled": true, "value": 2, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 85, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 10,
+            "widthUnit": "%",
+            "height": 5,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 32,
+            "autoScale": false,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "alignment": "right",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": true
+          },
+          "format": "24h",
+          "showSeconds": false
+        }
+      },
+      "empty": {
+        "background": { "type": "transparent", "opacity": 1 },
+        "clock": {
+          "enabled": true,
+          "constraints": {
+            "top": { "enabled": true, "value": 5, "unit": "%" },
+            "bottom": { "enabled": false, "value": 0, "unit": "%" },
+            "left": { "enabled": true, "value": 80, "unit": "%" },
+            "right": { "enabled": false, "value": 0, "unit": "%" }
+          },
+          "size": {
+            "width": 15,
+            "widthUnit": "%",
+            "height": 8,
+            "heightUnit": "%"
+          },
+          "style": {
+            "fontFamily": "system-ui",
+            "maxFontSize": 48,
+            "autoScale": false,
+            "color": "#ffffff",
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "alignment": "right",
+            "verticalAlignment": "middle",
+            "lineHeight": 1.3,
+            "shadow": true
+          },
+          "format": "24h",
+          "showSeconds": true
+        }
+      }
+    }
+  }
+]
