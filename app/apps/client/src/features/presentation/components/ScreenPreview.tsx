@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 
 import { ScreenContent } from './rendering/ScreenContent'
 import type { ContentData } from './rendering/types'
+import { getBackgroundCSS } from './rendering/utils/styleUtils'
 import type { ContentType, ScreenWithConfigs } from '../types'
 
 interface ScreenPreviewProps {
@@ -56,6 +57,10 @@ export function ScreenPreview({
     }
   }, [canvasWidth, canvasHeight])
 
+  // Get background from screen config
+  const config = screen.contentConfigs[contentType]
+  const bg = config?.background || screen.contentConfigs.empty?.background
+
   return (
     <div
       ref={containerRef}
@@ -63,6 +68,7 @@ export function ScreenPreview({
       style={{
         width: displaySize.width,
         height: displaySize.height,
+        ...(bg ? getBackgroundCSS(bg) : { backgroundColor: '#000000' }),
       }}
     >
       <ScreenContent
