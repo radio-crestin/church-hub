@@ -96,8 +96,10 @@ function DraggableElement({
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [position, setPosition] = useState({ x, y })
+  const positionRef = useRef(position)
   const [isResizing, setIsResizing] = useState<ResizeHandle>(null)
   const [currentSize, setCurrentSize] = useState({ width, height })
+  const currentSizeRef = useRef(currentSize)
   const [resizeStart, setResizeStart] = useState({
     x: 0,
     y: 0,
@@ -114,8 +116,16 @@ function DraggableElement({
   }, [x, y])
 
   useEffect(() => {
+    positionRef.current = position
+  }, [position])
+
+  useEffect(() => {
     setCurrentSize({ width, height })
   }, [width, height])
+
+  useEffect(() => {
+    currentSizeRef.current = currentSize
+  }, [currentSize])
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
@@ -178,11 +188,11 @@ function DraggableElement({
     const handleMouseUp = () => {
       setIsDragging(false)
 
-      // Convert canvas position to screen position
-      const screenX = position.x / scale
-      const screenY = position.y / scale
-      const screenW = currentSize.width / scale
-      const screenH = currentSize.height / scale
+      // Use refs to get latest values (avoids stale closure)
+      const screenX = positionRef.current.x / scale
+      const screenY = positionRef.current.y / scale
+      const screenW = currentSizeRef.current.width / scale
+      const screenH = currentSizeRef.current.height / scale
 
       // Update constraints based on which are enabled
       const newConstraints = { ...constraints }
@@ -233,8 +243,6 @@ function DraggableElement({
   }, [
     isDragging,
     dragStart,
-    position,
-    currentSize,
     constraints,
     onConstraintChange,
     toConstraintValue,
@@ -295,11 +303,11 @@ function DraggableElement({
     const handleMouseUp = () => {
       setIsResizing(null)
 
-      // Convert canvas values to screen values
-      const screenX = position.x / scale
-      const screenY = position.y / scale
-      const screenW = currentSize.width / scale
-      const screenH = currentSize.height / scale
+      // Use refs to get latest values (avoids stale closure)
+      const screenX = positionRef.current.x / scale
+      const screenY = positionRef.current.y / scale
+      const screenW = currentSizeRef.current.width / scale
+      const screenH = currentSizeRef.current.height / scale
 
       const newConstraints = { ...constraints }
       const isHorizontalStretch =
@@ -384,8 +392,6 @@ function DraggableElement({
   }, [
     isResizing,
     resizeStart,
-    currentSize,
-    position,
     constraints,
     size,
     onConstraintChange,
