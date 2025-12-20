@@ -4,6 +4,7 @@ import {
   broadcastOBSConnectionStatus,
   broadcastOBSCurrentScene,
   broadcastOBSStreamingStatus,
+  setOBSStatusProvider,
 } from '../../../websocket'
 
 export { getOBSConfig, updateOBSConfig } from './config'
@@ -40,6 +41,19 @@ export function initializeOBSCallbacks() {
       updatedAt: Date.now(),
     })
   })
+
+  // Register status provider for new WebSocket clients
+  setOBSStatusProvider(() => ({
+    connection: {
+      ...obsConnection.getConnectionStatus(),
+      updatedAt: Date.now(),
+    },
+    streaming: {
+      ...obsConnection.getStreamingStatus(),
+      updatedAt: Date.now(),
+    },
+    currentScene: obsConnection.getCurrentScene(),
+  }))
 }
 
 export async function initializeOBSAutoConnect() {
