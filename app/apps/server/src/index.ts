@@ -50,7 +50,10 @@ import {
   checkLibreOfficeInstalled,
   convertPptToPptx,
 } from './service/conversion'
-import { initializeOBSCallbacks } from './service/livestream/obs'
+import {
+  initializeOBSAutoConnect,
+  initializeOBSCallbacks,
+} from './service/livestream/obs'
 import { getExternalInterfaces } from './service/network'
 import {
   batchUpdateScreenConfigs,
@@ -166,6 +169,9 @@ async function main() {
 
   // Wire up OBS callbacks to WebSocket broadcasts
   initializeOBSCallbacks()
+
+  // Start permanent OBS connection if auto-connect is enabled
+  await initializeOBSAutoConnect()
 
   const isProd = process.env.NODE_ENV === 'production'
 
