@@ -10,10 +10,10 @@ import { ScreenEditorSidebar } from './ScreenEditorSidebar'
 import { useWebSocket } from '../../hooks'
 import { screenQueryKey } from '../../hooks/useScreen'
 import type {
+  Constraints,
   ContentType,
-  Position,
   ScreenWithConfigs,
-  Size,
+  SizeWithUnits,
 } from '../../types'
 
 interface ScreenEditorProps {
@@ -143,23 +143,26 @@ export function ScreenEditor({
   }, [state.screen, initialScreen, send, onClose])
 
   const handleUpdateElement = useCallback(
-    (elementType: string, updates: { position?: Position; size?: Size }) => {
+    (
+      elementType: string,
+      updates: { constraints?: Constraints; size?: SizeWithUnits },
+    ) => {
       if (!state.screen) return
 
       const config = state.screen.contentConfigs[state.selectedContentType]
       const newConfig = { ...config }
 
-      // Update the specific element
+      // Update the specific element with constraints and size
       if (elementType === 'mainText' && 'mainText' in newConfig) {
         newConfig.mainText = {
           ...newConfig.mainText,
-          ...(updates.position && { position: updates.position }),
+          ...(updates.constraints && { constraints: updates.constraints }),
           ...(updates.size && { size: updates.size }),
         }
       } else if (elementType === 'contentText' && 'contentText' in newConfig) {
         newConfig.contentText = {
           ...newConfig.contentText,
-          ...(updates.position && { position: updates.position }),
+          ...(updates.constraints && { constraints: updates.constraints }),
           ...(updates.size && { size: updates.size }),
         }
       } else if (
@@ -168,13 +171,14 @@ export function ScreenEditor({
       ) {
         newConfig.referenceText = {
           ...newConfig.referenceText,
-          ...(updates.position && { position: updates.position }),
+          ...(updates.constraints && { constraints: updates.constraints }),
           ...(updates.size && { size: updates.size }),
         }
       } else if (elementType === 'personLabel' && 'personLabel' in newConfig) {
         newConfig.personLabel = {
           ...newConfig.personLabel,
-          ...(updates.position && { position: updates.position }),
+          ...(updates.constraints && { constraints: updates.constraints }),
+          ...(updates.size && { size: updates.size }),
         }
       } else if (
         elementType === 'clock' &&
@@ -183,12 +187,13 @@ export function ScreenEditor({
       ) {
         newConfig.clock = {
           ...newConfig.clock,
-          ...(updates.position && { position: updates.position }),
+          ...(updates.constraints && { constraints: updates.constraints }),
+          ...(updates.size && { size: updates.size }),
         }
       } else if (elementType === 'nextSlide' && state.screen.nextSlideConfig) {
         actions.updateNextSlideConfig({
           ...state.screen.nextSlideConfig,
-          ...(updates.position && { position: updates.position }),
+          ...(updates.constraints && { constraints: updates.constraints }),
           ...(updates.size && { size: updates.size }),
         })
         return
