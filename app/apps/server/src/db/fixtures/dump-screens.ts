@@ -8,7 +8,8 @@ import { join } from 'node:path'
 
 import Database from 'bun:sqlite'
 
-const DB_PATH = './data/app.db'
+// Resolve path relative to this file's location
+const DB_PATH = join(import.meta.dir, '..', '..', '..', 'data', 'app.db')
 const FIXTURES_DIR = join(import.meta.dir)
 
 interface ScreenRow {
@@ -50,7 +51,7 @@ interface ScreenFixture {
 }
 
 function dumpScreens(): void {
-  const db = new Database(DB_PATH, { readonly: true })
+  const db = new Database(DB_PATH)
 
   const screens = db
     .query('SELECT * FROM screens ORDER BY sort_order')
