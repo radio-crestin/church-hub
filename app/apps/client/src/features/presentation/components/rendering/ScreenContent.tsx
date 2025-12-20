@@ -335,6 +335,8 @@ export function ScreenContent({
           width: bounds.width * scale,
           height: bounds.height * scale,
           padding: 16 * scale,
+          display: 'flex',
+          flexDirection: 'column',
           ...getBackgroundCSS(ns.background),
         }}
       >
@@ -342,6 +344,7 @@ export function ScreenContent({
           style={{
             ...getTextStyleCSS(ns.labelStyle),
             fontSize: ns.labelStyle.maxFontSize * scale,
+            flexShrink: 0,
           }}
         >
           {ns.labelText}
@@ -351,6 +354,9 @@ export function ScreenContent({
             ...getTextStyleCSS(ns.contentStyle),
             fontSize: ns.contentStyle.maxFontSize * scale,
             marginTop: 8 * scale,
+            flex: 1,
+            overflow: 'hidden',
+            wordBreak: 'break-word',
           }}
         >
           {renderNextSlideContent()}

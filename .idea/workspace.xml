@@ -6,10 +6,16 @@
   <component name="ChangeListManager">
     <list default="true" id="66517e3f-2e4e-43cc-880d-deb242368f0c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-bibles.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-bibles.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TODO.md" beforeDir="false" afterPath="$PROJECT_DIR$/TODO.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/ScreenRenderer.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/ScreenRenderer.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/utils/calculateNextSlide.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/utils/calculateNextSlide.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-screens.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-screens.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-settings.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-settings.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-song-categories.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-song-categories.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/bible/books.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/bible/books.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/bible/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/bible/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/bible/verses.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/bible/verses.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
