@@ -1307,6 +1307,45 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/bible/next-verse/{verseId}': {
+      get: {
+        tags: ['Bible'],
+        summary: 'Get next sequential verse',
+        description:
+          'Returns the next verse in the Bible sequence. Handles chapter and book boundaries automatically.',
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'verseId',
+            in: 'path',
+            required: true,
+            schema: { type: 'integer' },
+            description: 'Current verse ID',
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Next verse (or null if at end of Bible)',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: {
+                      oneOf: [
+                        { $ref: '#/components/schemas/BibleVerse' },
+                        { type: 'null' },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+        },
+      },
+    },
     '/api/bible/search': {
       get: {
         tags: ['Bible'],
