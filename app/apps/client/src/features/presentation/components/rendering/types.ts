@@ -7,7 +7,16 @@ export interface ContentData {
   personLabel?: string
 }
 
+export interface VerseteTineriSummaryEntry {
+  personName: string
+  reference: string
+}
+
 export interface NextSlideData {
   contentType: ContentType
   preview: string
+  verseteTineriSummary?: {
+    entries: VerseteTineriSummaryEntry[]
+    hasMore: boolean
+  }
 }
