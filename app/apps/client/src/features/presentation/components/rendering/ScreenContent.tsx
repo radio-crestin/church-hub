@@ -1,4 +1,5 @@
-import { TextElement } from './TextElement'
+import { AnimatedElement } from './AnimatedElement'
+import { TextContent } from './TextContent'
 import type { ContentData, NextSlideData } from './types'
 import {
   calculatePixelBounds,
@@ -51,22 +52,48 @@ export function ScreenContent({
     if (!config || !('mainText' in config) || !contentData?.mainText)
       return null
 
-    const configWithAutoScale = {
-      ...config.mainText,
-      style: { ...config.mainText.style, autoScale: true },
+    const mt = config.mainText
+    const bounds = calculatePixelBounds(
+      mt.constraints,
+      mt.size,
+      canvasWidth,
+      canvasHeight,
+    )
+    const scaledBounds = {
+      x: bounds.x * scale,
+      y: bounds.y * scale,
+      width: bounds.width * scale,
+      height: bounds.height * scale,
     }
+    const padding = ('padding' in mt ? (mt.padding ?? 0) : 0) * scale
 
     return (
-      <TextElement
+      <AnimatedElement
         key="mainText"
-        config={configWithAutoScale}
-        content={contentData.mainText}
-        screenWidth={canvasWidth}
-        screenHeight={canvasHeight}
-        scale={scale}
+        animationIn={'animationIn' in mt ? mt.animationIn : undefined}
+        animationOut={'animationOut' in mt ? mt.animationOut : undefined}
         isVisible={true}
-        isHtml={true}
-      />
+        style={{
+          position: 'absolute',
+          left: scaledBounds.x,
+          top: scaledBounds.y,
+          width: scaledBounds.width,
+          height: scaledBounds.height,
+        }}
+      >
+        <TextContent
+          content={contentData.mainText}
+          style={{
+            ...mt.style,
+            autoScale: true,
+            maxFontSize: mt.style.maxFontSize * scale,
+          }}
+          containerWidth={scaledBounds.width}
+          containerHeight={scaledBounds.height}
+          padding={padding}
+          isHtml={true}
+        />
+      </AnimatedElement>
     )
   }
 
@@ -75,22 +102,46 @@ export function ScreenContent({
     if (!config || !('contentText' in config) || !contentData?.contentText)
       return null
 
-    const configWithAutoScale = {
-      ...config.contentText,
-      style: { ...config.contentText.style, autoScale: true },
+    const ct = config.contentText
+    const bounds = calculatePixelBounds(
+      ct.constraints,
+      ct.size,
+      canvasWidth,
+      canvasHeight,
+    )
+    const scaledBounds = {
+      x: bounds.x * scale,
+      y: bounds.y * scale,
+      width: bounds.width * scale,
+      height: bounds.height * scale,
     }
 
     return (
-      <TextElement
+      <AnimatedElement
         key="contentText"
-        config={configWithAutoScale}
-        content={contentData.contentText}
-        screenWidth={canvasWidth}
-        screenHeight={canvasHeight}
-        scale={scale}
+        animationIn={'animationIn' in ct ? ct.animationIn : undefined}
+        animationOut={'animationOut' in ct ? ct.animationOut : undefined}
         isVisible={true}
-        isHtml={false}
-      />
+        style={{
+          position: 'absolute',
+          left: scaledBounds.x,
+          top: scaledBounds.y,
+          width: scaledBounds.width,
+          height: scaledBounds.height,
+        }}
+      >
+        <TextContent
+          content={contentData.contentText}
+          style={{
+            ...ct.style,
+            autoScale: true,
+            maxFontSize: ct.style.maxFontSize * scale,
+          }}
+          containerWidth={scaledBounds.width}
+          containerHeight={scaledBounds.height}
+          isHtml={false}
+        />
+      </AnimatedElement>
     )
   }
 
@@ -99,22 +150,46 @@ export function ScreenContent({
     if (!config || !('referenceText' in config) || !contentData?.referenceText)
       return null
 
-    const configWithAutoScale = {
-      ...config.referenceText,
-      style: { ...config.referenceText.style, autoScale: true },
+    const rt = config.referenceText
+    const bounds = calculatePixelBounds(
+      rt.constraints,
+      rt.size,
+      canvasWidth,
+      canvasHeight,
+    )
+    const scaledBounds = {
+      x: bounds.x * scale,
+      y: bounds.y * scale,
+      width: bounds.width * scale,
+      height: bounds.height * scale,
     }
 
     return (
-      <TextElement
+      <AnimatedElement
         key="referenceText"
-        config={configWithAutoScale}
-        content={contentData.referenceText}
-        screenWidth={canvasWidth}
-        screenHeight={canvasHeight}
-        scale={scale}
+        animationIn={'animationIn' in rt ? rt.animationIn : undefined}
+        animationOut={'animationOut' in rt ? rt.animationOut : undefined}
         isVisible={true}
-        isHtml={false}
-      />
+        style={{
+          position: 'absolute',
+          left: scaledBounds.x,
+          top: scaledBounds.y,
+          width: scaledBounds.width,
+          height: scaledBounds.height,
+        }}
+      >
+        <TextContent
+          content={contentData.referenceText}
+          style={{
+            ...rt.style,
+            autoScale: true,
+            maxFontSize: rt.style.maxFontSize * scale,
+          }}
+          containerWidth={scaledBounds.width}
+          containerHeight={scaledBounds.height}
+          isHtml={false}
+        />
+      </AnimatedElement>
     )
   }
 
@@ -123,22 +198,46 @@ export function ScreenContent({
     if (!config || !('personLabel' in config) || !contentData?.personLabel)
       return null
 
-    const configWithAutoScale = {
-      ...config.personLabel,
-      style: { ...config.personLabel.style, autoScale: true },
+    const pl = config.personLabel
+    const bounds = calculatePixelBounds(
+      pl.constraints,
+      pl.size,
+      canvasWidth,
+      canvasHeight,
+    )
+    const scaledBounds = {
+      x: bounds.x * scale,
+      y: bounds.y * scale,
+      width: bounds.width * scale,
+      height: bounds.height * scale,
     }
 
     return (
-      <TextElement
+      <AnimatedElement
         key="personLabel"
-        config={configWithAutoScale}
-        content={contentData.personLabel}
-        screenWidth={canvasWidth}
-        screenHeight={canvasHeight}
-        scale={scale}
+        animationIn={'animationIn' in pl ? pl.animationIn : undefined}
+        animationOut={'animationOut' in pl ? pl.animationOut : undefined}
         isVisible={true}
-        isHtml={false}
-      />
+        style={{
+          position: 'absolute',
+          left: scaledBounds.x,
+          top: scaledBounds.y,
+          width: scaledBounds.width,
+          height: scaledBounds.height,
+        }}
+      >
+        <TextContent
+          content={contentData.personLabel}
+          style={{
+            ...pl.style,
+            autoScale: true,
+            maxFontSize: pl.style.maxFontSize * scale,
+          }}
+          containerWidth={scaledBounds.width}
+          containerHeight={scaledBounds.height}
+          isHtml={false}
+        />
+      </AnimatedElement>
     )
   }
 
