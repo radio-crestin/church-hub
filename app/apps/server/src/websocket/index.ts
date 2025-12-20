@@ -43,6 +43,28 @@ export type ScreenConfigPreviewMessage = {
 // Store connected clients
 const clients = new Map<string, ServerWebSocket<WebSocketData>>()
 
+// Callback to get initial OBS status for new clients
+let getOBSStatusCallback:
+  | (() => {
+      connection: OBSConnectionStatusMessage['payload']
+      streaming: OBSStreamingStatusMessage['payload']
+      currentScene: string | null
+    })
+  | null = null
+
+/**
+ * Register a callback to provide OBS status for new WebSocket clients
+ */
+export function setOBSStatusProvider(
+  callback: () => {
+    connection: OBSConnectionStatusMessage['payload']
+    streaming: OBSStreamingStatusMessage['payload']
+    currentScene: string | null
+  },
+) {
+  getOBSStatusCallback = callback
+}
+
 /**
  * Generates a unique client ID
  */
@@ -59,6 +81,46 @@ export function handleWebSocketOpen(ws: ServerWebSocket<WebSocketData>) {
   clients.set(clientId, ws)
 
   log('info', `Client connected: ${clientId} (total: ${clients.size})`)
+
+  // Send initial OBS status to the new client
+  if (getOBSStatusCallback) {
+    try {
+      const status = getOBSStatusCallback()
+
+      // Send connection status
+      ws.send(
+        JSON.stringify({
+          type: 'obs_connection_status',
+          payload: status.connection,
+        } satisfies OBSConnectionStatusMessage),
+      )
+
+      // Send streaming status
+      ws.send(
+        JSON.stringify({
+          type: 'obs_streaming_status',
+          payload: status.streaming,
+        } satisfies OBSStreamingStatusMessage),
+      )
+
+      // Send current scene if connected
+      if (status.currentScene) {
+        ws.send(
+          JSON.stringify({
+            type: 'obs_current_scene',
+            payload: {
+              sceneName: status.currentScene,
+              updatedAt: Date.now(),
+            },
+          } satisfies OBSCurrentSceneMessage),
+        )
+      }
+
+      log('debug', `Sent initial OBS status to ${clientId}`)
+    } catch (error) {
+      log('error', `Failed to send initial OBS status to ${clientId}: ${error}`)
+    }
+  }
 }
 
 /**
