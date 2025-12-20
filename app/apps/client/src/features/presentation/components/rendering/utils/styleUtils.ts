@@ -21,6 +21,27 @@ export function toPixels(
   return unit === '%' ? (value / 100) * total : value
 }
 
+export function toPercent(pixelValue: number, totalPixels: number): number {
+  if (totalPixels === 0) return 0
+  return (pixelValue / totalPixels) * 100
+}
+
+export function convertUnit(
+  value: number,
+  fromUnit: '%' | 'px',
+  toUnit: '%' | 'px',
+  totalPixels: number,
+): number {
+  if (fromUnit === toUnit) return value
+  return fromUnit === '%'
+    ? toPixels(value, '%', totalPixels)
+    : toPercent(value, totalPixels)
+}
+
+export function roundForDisplay(value: number): number {
+  return Math.round(value * 10) / 10
+}
+
 export function calculatePixelPosition(
   position: Position,
   screenDimensions: ScreenDimensions,

@@ -206,6 +206,8 @@ export function ScreenEditorSidebar({
                     heightUnit: '%',
                   }
                 }
+                screenWidth={screen.width}
+                screenHeight={screen.height}
                 onChange={(newConstraints, newSize) => {
                   if (selectedConfig.isNextSlide) {
                     onUpdateNextSlideConfig({
