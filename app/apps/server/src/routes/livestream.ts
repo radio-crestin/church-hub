@@ -17,11 +17,10 @@ import {
   endBroadcast,
   getActiveBroadcast,
   getAuthStatus,
-  getAuthUrl,
   getStreamKeys,
   getYouTubeConfig,
-  handleCallback,
   logout,
+  storeTokens,
   updateYouTubeConfig,
 } from '../service/livestream/youtube'
 import {
@@ -39,41 +38,35 @@ export async function handleLivestreamRoutes(
   handleCors: HandleCors,
 ): Promise<Response | null> {
   // YouTube OAuth endpoints
-  // GET /api/livestream/youtube/auth-url
-  if (
-    req.method === 'GET' &&
-    url.pathname === '/api/livestream/youtube/auth-url'
-  ) {
-    try {
-      const authUrl = getAuthUrl()
-      return handleCors(
-        req,
-        new Response(JSON.stringify({ data: { url: authUrl } }), {
-          headers: { 'Content-Type': 'application/json' },
-        }),
-      )
-    } catch (error) {
-      return handleCors(
-        req,
-        new Response(
-          JSON.stringify({
-            error:
-              error instanceof Error
-                ? error.message
-                : 'Failed to generate auth URL',
-          }),
-          { status: 500, headers: { 'Content-Type': 'application/json' } },
-        ),
-      )
-    }
-  }
 
-  // GET /api/livestream/youtube/callback
+  // GET /api/livestream/youtube/callback - Captures auth code and sends to client via postMessage
+  // The client will exchange the code for tokens using PKCE
   if (
     req.method === 'GET' &&
     url.pathname === '/api/livestream/youtube/callback'
   ) {
     const code = url.searchParams.get('code')
+    const error = url.searchParams.get('error')
+
+    if (error) {
+      return handleCors(
+        req,
+        new Response(
+          `<!DOCTYPE html>
+          <html>
+          <body>
+            <script>
+              window.opener?.postMessage({ type: 'youtube-auth-error', error: '${error}' }, '*');
+              window.close();
+            </script>
+            <p>Authorization failed: ${error}. You can close this window.</p>
+          </body>
+          </html>`,
+          { headers: { 'Content-Type': 'text/html' } },
+        ),
+      )
+    }
+
     if (!code) {
       return handleCors(
         req,
@@ -93,43 +86,69 @@ export async function handleLivestreamRoutes(
       )
     }
 
+    // Send the authorization code to the client for PKCE token exchange
+    return handleCors(
+      req,
+      new Response(
+        `<!DOCTYPE html>
+        <html>
+        <body>
+          <script>
+            window.opener?.postMessage({ type: 'youtube-auth-code', code: '${code}' }, '*');
+            window.close();
+          </script>
+          <p>Authorization successful! You can close this window.</p>
+        </body>
+        </html>`,
+        { headers: { 'Content-Type': 'text/html' } },
+      ),
+    )
+  }
+
+  // POST /api/livestream/youtube/tokens - Store tokens from client after PKCE exchange
+  if (
+    req.method === 'POST' &&
+    url.pathname === '/api/livestream/youtube/tokens'
+  ) {
     try {
-      const status = await handleCallback(code)
+      const body = (await req.json()) as {
+        accessToken: string
+        refreshToken: string
+        expiresAt: number
+      }
+
+      if (!body.accessToken || !body.refreshToken || !body.expiresAt) {
+        return handleCors(
+          req,
+          new Response(
+            JSON.stringify({ error: 'Missing required token fields' }),
+            { status: 400, headers: { 'Content-Type': 'application/json' } },
+          ),
+        )
+      }
+
+      const status = await storeTokens({
+        accessToken: body.accessToken,
+        refreshToken: body.refreshToken,
+        expiresAt: new Date(body.expiresAt),
+      })
+
       return handleCors(
         req,
-        new Response(
-          `<!DOCTYPE html>
-          <html>
-          <body>
-            <script>
-              window.opener?.postMessage({
-                type: 'youtube-auth-success',
-                channelName: '${status.channelName || ''}',
-                channelId: '${status.channelId || ''}'
-              }, '*');
-              window.close();
-            </script>
-            <p>Authorization successful! You can close this window.</p>
-          </body>
-          </html>`,
-          { headers: { 'Content-Type': 'text/html' } },
-        ),
+        new Response(JSON.stringify({ data: status }), {
+          status: 201,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       )
     } catch (error) {
       return handleCors(
         req,
         new Response(
-          `<!DOCTYPE html>
-          <html>
-          <body>
-            <script>
-              window.opener?.postMessage({ type: 'youtube-auth-error', error: '${error instanceof Error ? error.message : 'Authentication failed'}' }, '*');
-              window.close();
-            </script>
-            <p>Authorization failed. You can close this window.</p>
-          </body>
-          </html>`,
-          { headers: { 'Content-Type': 'text/html' } },
+          JSON.stringify({
+            error:
+              error instanceof Error ? error.message : 'Failed to store tokens',
+          }),
+          { status: 500, headers: { 'Content-Type': 'application/json' } },
         ),
       )
     }
@@ -331,6 +350,8 @@ export async function handleLivestreamRoutes(
   if (req.method === 'POST' && url.pathname === '/api/livestream/obs/connect') {
     try {
       const config = await getOBSConfig()
+      // Enable auto-reconnect to maintain permanent connection
+      obsConnection.enableAutoReconnect(true)
       await obsConnection.connect(config.host, config.port, config.password)
       const status = obsConnection.getConnectionStatus()
       broadcastOBSConnectionStatus(status)
