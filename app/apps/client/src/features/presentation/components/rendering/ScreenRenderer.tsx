@@ -4,39 +4,17 @@ import { useTranslation } from 'react-i18next'
 import { getApiUrl } from '~/config'
 import { ScreenContent } from './ScreenContent'
 import type { ContentData, NextSlideData } from './types'
-import { getBackgroundCSS } from './utils/styleUtils'
+import { calculateNextSlideData, getBackgroundCSS } from './utils'
+import type { QueueItem } from '../../../queue/types'
+import type { SongSlide } from '../../../songs/types'
 import { usePresentationState, useWebSocket } from '../../hooks'
 import { useScreen } from '../../hooks/useScreen'
-import type { ContentType } from '../../types'
+import type { ContentType, PresentationState } from '../../types'
 import { toggleWindowFullscreen } from '../../utils/fullscreen'
 import { isTauri } from '../../utils/openDisplayWindow'
 
 interface ScreenRendererProps {
   screenId: number
-}
-
-interface SongSlideData {
-  id: number
-  content: string
-}
-
-interface QueueItem {
-  id: number
-  itemType: string
-  slideType?: string
-  slideContent?: string
-  bibleReference?: string
-  bibleText?: string
-  bibleTranslation?: string
-  biblePassageVerses?: Array<{ id: number; reference: string; text: string }>
-  biblePassageTranslation?: string
-  verseteTineriEntries?: Array<{
-    id: number
-    reference: string
-    text: string
-    person?: string
-  }>
-  slides?: Array<{ id: number; content: string }>
 }
 
 export function ScreenRenderer({ screenId }: ScreenRendererProps) {
@@ -142,55 +120,33 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
         if (!queueResponse.ok) {
           setContentData(null)
           setContentType('empty')
+          setNextSlideData(undefined)
           return
         }
 
         const queueResult = await queueResponse.json()
         const queueItems: QueueItem[] = queueResult.data || []
 
+        let foundContentType: ContentType = 'empty'
+        let foundContentData: ContentData | null = null
+
         // Find current content - song slide
         if (presentationState.currentSongSlideId) {
           for (const item of queueItems) {
             const slide = item.slides?.find(
-              (s: SongSlideData) =>
-                s.id === presentationState.currentSongSlideId,
+              (s: SongSlide) => s.id === presentationState.currentSongSlideId,
             )
             if (slide) {
-              setContentType('song')
-              setContentData({
-                mainText: slide.content,
-              })
-
-              // Find next slide for stage screen
-              if (screen?.type === 'stage') {
-                const slideIndex = item.slides?.findIndex(
-                  (s: SongSlideData) =>
-                    s.id === presentationState.currentSongSlideId,
-                )
-                if (
-                  slideIndex !== undefined &&
-                  slideIndex >= 0 &&
-                  item.slides
-                ) {
-                  const nextSlide = item.slides[slideIndex + 1]
-                  if (nextSlide) {
-                    setNextSlideData({
-                      contentType: 'song',
-                      preview: nextSlide.content
-                        .replace(/<[^>]*>/g, ' ')
-                        .substring(0, 100),
-                    })
-                  } else {
-                    setNextSlideData(undefined)
-                  }
-                }
-              }
-              return
+              foundContentType = 'song'
+              foundContentData = { mainText: slide.content }
+              break
             }
           }
         }
 
+        // If no song slide found, check other content types
         if (
+          !foundContentData &&
           presentationState.currentQueueItemId &&
           !presentationState.currentSongSlideId
         ) {
@@ -210,75 +166,64 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
                   : queueItem.verseteTineriEntries[0]
 
                 if (entry) {
-                  setContentType('versete_tineri')
-                  setContentData({
-                    personLabel: entry.person || '',
+                  foundContentType = 'versete_tineri'
+                  foundContentData = {
+                    personLabel: entry.personName || '',
                     referenceText: entry.reference,
                     contentText: entry.text,
-                  })
-                  return
+                  }
                 }
               }
 
-              setContentType('announcement')
-              setContentData({
-                mainText: queueItem.slideContent || '',
-              })
-              return
-            }
-
-            if (queueItem.itemType === 'bible') {
+              if (!foundContentData) {
+                foundContentType = 'announcement'
+                foundContentData = { mainText: queueItem.slideContent || '' }
+              }
+            } else if (queueItem.itemType === 'bible') {
               const reference = (queueItem.bibleReference || '').replace(
                 /\s*-\s*[A-Z]+\s*$/,
                 '',
               )
-              setContentType('bible')
-              setContentData({
+              foundContentType = 'bible'
+              foundContentData = {
                 referenceText: reference,
                 contentText: queueItem.bibleText || '',
-              })
-              return
-            }
-
-            if (queueItem.itemType === 'bible_passage') {
+              }
+            } else if (queueItem.itemType === 'bible_passage') {
               const verseId = presentationState.currentBiblePassageVerseId
               const verse = verseId
                 ? queueItem.biblePassageVerses?.find((v) => v.id === verseId)
                 : queueItem.biblePassageVerses?.[0]
 
               if (verse) {
-                setContentType('bible_passage')
-                setContentData({
+                foundContentType = 'bible_passage'
+                foundContentData = {
                   referenceText: verse.reference,
                   contentText: verse.text,
-                })
-
-                if (screen?.type === 'stage' && queueItem.biblePassageVerses) {
-                  const verseIndex = queueItem.biblePassageVerses.findIndex(
-                    (v) => v.id === verse.id,
-                  )
-                  const nextVerse = queueItem.biblePassageVerses[verseIndex + 1]
-                  if (nextVerse) {
-                    setNextSlideData({
-                      contentType: 'bible_passage',
-                      preview: `${nextVerse.reference}: ${nextVerse.text.substring(0, 50)}...`,
-                    })
-                  } else {
-                    setNextSlideData(undefined)
-                  }
                 }
-                return
               }
             }
           }
         }
 
-        setContentData(null)
-        setContentType('empty')
-        setNextSlideData(undefined)
+        // Set content state
+        setContentType(foundContentType)
+        setContentData(foundContentData)
+
+        // Calculate next slide for stage screens
+        if (screen?.type === 'stage') {
+          const nextSlide = calculateNextSlideData({
+            queueItems,
+            presentationState: presentationState as PresentationState,
+          })
+          setNextSlideData(nextSlide)
+        } else {
+          setNextSlideData(undefined)
+        }
       } catch (_error) {
         setContentData(null)
         setContentType('empty')
+        setNextSlideData(undefined)
       }
     }
 

@@ -300,6 +300,31 @@ export function ScreenContent({
       canvasHeight,
     )
 
+    // Render content based on whether we have versete_tineri summary
+    const renderNextSlideContent = () => {
+      if (nextSlideData?.verseteTineriSummary) {
+        const { entries, hasMore } = nextSlideData.verseteTineriSummary
+        return (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4 * scale,
+            }}
+          >
+            {entries.map((entry, index) => (
+              <div key={index}>
+                {entry.personName} - {entry.reference}
+              </div>
+            ))}
+            {hasMore && <div>...</div>}
+          </div>
+        )
+      }
+
+      return nextSlideData?.preview || ''
+    }
+
     return (
       <div
         key="nextSlide"
@@ -328,7 +353,7 @@ export function ScreenContent({
             marginTop: 8 * scale,
           }}
         >
-          {nextSlideData?.preview || ''}
+          {renderNextSlideContent()}
         </div>
       </div>
     )
