@@ -56,6 +56,7 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
 
   // Use ResizeObserver to measure the wrapper element (NOT window size)
+  // Re-run when screen loads to attach observer to the actual container
   useEffect(() => {
     const updateSize = () => {
       if (containerRef.current) {
@@ -74,7 +75,7 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
     }
 
     return () => resizeObserver.disconnect()
-  }, [])
+  }, [screen])
 
   // Toggle fullscreen
   const toggleFullscreen = useCallback(async () => {
