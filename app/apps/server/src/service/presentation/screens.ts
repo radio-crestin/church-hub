@@ -33,6 +33,45 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
 // DEFAULT CONFIGURATIONS
 // ============================================================================
 
+type PositionUnit = '%' | 'px'
+
+function constraint(enabled: boolean, value: number, unit: PositionUnit = '%') {
+  return { enabled, value, unit }
+}
+
+function constraints(top: number, left: number, unit: PositionUnit = '%') {
+  return {
+    top: constraint(true, top, unit),
+    bottom: constraint(false, 0, unit),
+    left: constraint(true, left, unit),
+    right: constraint(false, 0, unit),
+  }
+}
+
+function constraintsAll(
+  top: number | null,
+  right: number | null,
+  bottom: number | null,
+  left: number | null,
+  unit: PositionUnit = '%',
+) {
+  return {
+    top: constraint(top !== null, top ?? 0, unit),
+    right: constraint(right !== null, right ?? 0, unit),
+    bottom: constraint(bottom !== null, bottom ?? 0, unit),
+    left: constraint(left !== null, left ?? 0, unit),
+  }
+}
+
+function sizeWithUnits(
+  width: number,
+  height: number,
+  widthUnit: PositionUnit = '%',
+  heightUnit: PositionUnit = '%',
+) {
+  return { width, widthUnit, height, heightUnit }
+}
+
 function getDefaultGlobalSettings(): ScreenGlobalSettings {
   return {
     defaultBackground: {
@@ -54,6 +93,7 @@ function getDefaultTextStyle(overrides: Record<string, unknown> = {}) {
     italic: false,
     underline: false,
     alignment: 'center',
+    verticalAlignment: 'middle',
     lineHeight: 1.3,
     shadow: false,
     ...overrides,
@@ -80,8 +120,8 @@ function getDefaultBackground() {
 function getDefaultClockConfig(enabled = false) {
   return {
     enabled,
-    position: { x: 95, y: 2, unit: '%' as const },
-    size: { width: 15, height: 8, unit: '%' as const },
+    constraints: constraints(2, 85),
+    size: sizeWithUnits(10, 5),
     style: getDefaultTextStyle({
       maxFontSize: 32,
       autoScale: false,
@@ -96,8 +136,8 @@ function getDefaultSongConfig() {
   return {
     background: getDefaultBackground(),
     mainText: {
-      position: { x: 5, y: 10, unit: '%' as const },
-      size: { width: 90, height: 80, unit: '%' as const },
+      constraints: constraints(10, 5),
+      size: sizeWithUnits(90, 80),
       style: getDefaultTextStyle({ maxFontSize: 120 }),
       padding: 20,
       animationIn: getDefaultAnimation('in'),
@@ -111,8 +151,8 @@ function getDefaultBibleConfig() {
   return {
     background: getDefaultBackground(),
     referenceText: {
-      position: { x: 5, y: 2, unit: '%' as const },
-      size: { width: 80, height: 8, unit: '%' as const },
+      constraints: constraints(2, 5),
+      size: sizeWithUnits(80, 8),
       style: getDefaultTextStyle({
         maxFontSize: 36,
         autoScale: false,
@@ -121,8 +161,8 @@ function getDefaultBibleConfig() {
       }),
     },
     contentText: {
-      position: { x: 5, y: 12, unit: '%' as const },
-      size: { width: 90, height: 83, unit: '%' as const },
+      constraints: constraints(12, 5),
+      size: sizeWithUnits(90, 83),
       style: getDefaultTextStyle({ maxFontSize: 100 }),
       padding: 20,
       animationIn: getDefaultAnimation('in'),
@@ -136,8 +176,8 @@ function getDefaultAnnouncementConfig() {
   return {
     background: getDefaultBackground(),
     mainText: {
-      position: { x: 5, y: 10, unit: '%' as const },
-      size: { width: 90, height: 85, unit: '%' as const },
+      constraints: constraints(10, 5),
+      size: sizeWithUnits(90, 85),
       style: getDefaultTextStyle({ maxFontSize: 100 }),
       padding: 20,
       animationIn: getDefaultAnimation('in'),
@@ -151,8 +191,8 @@ function getDefaultVerseteTineriConfig() {
   return {
     background: getDefaultBackground(),
     personLabel: {
-      position: { x: 5, y: 2, unit: '%' as const },
-      size: { width: 40, height: 5, unit: '%' as const },
+      constraints: constraints(2, 5),
+      size: sizeWithUnits(40, 5),
       style: getDefaultTextStyle({
         maxFontSize: 28,
         autoScale: false,
@@ -161,8 +201,8 @@ function getDefaultVerseteTineriConfig() {
       }),
     },
     referenceText: {
-      position: { x: 5, y: 8, unit: '%' as const },
-      size: { width: 80, height: 8, unit: '%' as const },
+      constraints: constraints(8, 5),
+      size: sizeWithUnits(80, 8),
       style: getDefaultTextStyle({
         maxFontSize: 32,
         autoScale: false,
@@ -171,8 +211,8 @@ function getDefaultVerseteTineriConfig() {
       }),
     },
     contentText: {
-      position: { x: 5, y: 18, unit: '%' as const },
-      size: { width: 90, height: 77, unit: '%' as const },
+      constraints: constraints(18, 5),
+      size: sizeWithUnits(90, 77),
       style: getDefaultTextStyle({ maxFontSize: 90 }),
       padding: 20,
       animationIn: getDefaultAnimation('in'),
@@ -187,8 +227,8 @@ function getDefaultEmptyConfig() {
     background: getDefaultBackground(),
     clock: {
       enabled: true,
-      position: { x: 95, y: 5, unit: '%' as const },
-      size: { width: 15, height: 8, unit: '%' as const },
+      constraints: constraints(5, 80),
+      size: sizeWithUnits(15, 8),
       style: getDefaultTextStyle({
         maxFontSize: 48,
         autoScale: false,
@@ -221,8 +261,8 @@ function getDefaultContentConfig(
 function getDefaultNextSlideConfig(): NextSlideSectionConfig {
   return {
     enabled: true,
-    position: { x: 0, y: 78, unit: '%' },
-    size: { width: 100, height: 22, unit: '%' },
+    constraints: constraintsAll(78, 0, 0, 0),
+    size: sizeWithUnits(100, 22),
     labelText: 'Urmeaza:',
     labelStyle: getDefaultTextStyle({
       maxFontSize: 24,
@@ -747,6 +787,102 @@ export function updateGlobalSettings(
     return { success: true }
   } catch (error) {
     log('error', `Failed to update global settings: ${error}`)
+    return { success: false, error: String(error) }
+  }
+}
+
+// ============================================================================
+// BATCH UPDATE OPERATIONS
+// ============================================================================
+
+export interface BatchUpdateScreenConfigInput {
+  screenId: number
+  globalSettings: ScreenGlobalSettings
+  contentConfigs: Record<ContentType, Record<string, unknown>>
+  nextSlideConfig?: NextSlideSectionConfig
+}
+
+export function batchUpdateScreenConfigs(
+  input: BatchUpdateScreenConfigInput,
+): OperationResult {
+  try {
+    log('debug', `Batch updating screen configs: screen=${input.screenId}`)
+
+    const db = getDatabase()
+
+    // Update global settings
+    const settingsJson = JSON.stringify(input.globalSettings)
+    db.update(screens)
+      .set({
+        globalSettings: settingsJson,
+        updatedAt: sql`(unixepoch())` as unknown as Date,
+      })
+      .where(eq(screens.id, input.screenId))
+      .run()
+
+    // Update each content config
+    for (const [contentType, config] of Object.entries(input.contentConfigs)) {
+      const configJson = JSON.stringify(config)
+
+      // Check if config exists
+      const existing = db
+        .select()
+        .from(screenContentConfigs)
+        .where(eq(screenContentConfigs.screenId, input.screenId))
+        .where(eq(screenContentConfigs.contentType, contentType))
+        .get()
+
+      if (existing) {
+        db.update(screenContentConfigs)
+          .set({
+            config: configJson,
+            updatedAt: sql`(unixepoch())` as unknown as Date,
+          })
+          .where(eq(screenContentConfigs.id, existing.id))
+          .run()
+      } else {
+        db.insert(screenContentConfigs)
+          .values({
+            screenId: input.screenId,
+            contentType: contentType as ContentType,
+            config: configJson,
+          })
+          .run()
+      }
+    }
+
+    // Update next slide config if provided
+    if (input.nextSlideConfig) {
+      const nextSlideJson = JSON.stringify(input.nextSlideConfig)
+
+      const existingNextSlide = db
+        .select()
+        .from(screenNextSlideConfigs)
+        .where(eq(screenNextSlideConfigs.screenId, input.screenId))
+        .get()
+
+      if (existingNextSlide) {
+        db.update(screenNextSlideConfigs)
+          .set({
+            config: nextSlideJson,
+            updatedAt: sql`(unixepoch())` as unknown as Date,
+          })
+          .where(eq(screenNextSlideConfigs.id, existingNextSlide.id))
+          .run()
+      } else {
+        db.insert(screenNextSlideConfigs)
+          .values({
+            screenId: input.screenId,
+            config: nextSlideJson,
+          })
+          .run()
+      }
+    }
+
+    log('info', `Batch update complete: screen=${input.screenId}`)
+    return { success: true }
+  } catch (error) {
+    log('error', `Failed to batch update screen configs: ${error}`)
     return { success: false, error: String(error) }
   }
 }
