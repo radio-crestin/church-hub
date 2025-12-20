@@ -23,7 +23,7 @@ export function ScreenPreview({
   const canvasWidth = screen.width
   const canvasHeight = screen.height
 
-  // Calculate display size to fit container while maintaining aspect ratio
+  // Calculate display size to fit parent container while maintaining aspect ratio
   useEffect(() => {
     const updateSize = () => {
       if (!containerRef.current) return
@@ -46,8 +46,14 @@ export function ScreenPreview({
     }
 
     updateSize()
-    window.addEventListener('resize', updateSize)
-    return () => window.removeEventListener('resize', updateSize)
+
+    // Use ResizeObserver for parent container changes
+    const container = containerRef.current?.parentElement
+    if (container) {
+      const resizeObserver = new ResizeObserver(updateSize)
+      resizeObserver.observe(container)
+      return () => resizeObserver.disconnect()
+    }
   }, [canvasWidth, canvasHeight])
 
   return (

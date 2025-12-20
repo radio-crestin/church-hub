@@ -1,7 +1,6 @@
 import { TextElement } from './TextElement'
 import type { ContentData, NextSlideData } from './types'
 import {
-  calculateConstraintStyles,
   calculatePixelBounds,
   getBackgroundCSS,
   getTextStyleCSS,
@@ -33,8 +32,16 @@ export function ScreenContent({
   const canvasWidth = screen.width
   const canvasHeight = screen.height
 
-  // Calculate scale based on container size
-  const scale = containerWidth / canvasWidth
+  // Calculate scale maintaining aspect ratio
+  const scaleX = containerWidth / canvasWidth
+  const scaleY = containerHeight / canvasHeight
+  const scale = Math.min(scaleX, scaleY)
+
+  // Calculate actual display size (centered if aspect ratio differs)
+  const displayWidth = canvasWidth * scale
+  const displayHeight = canvasHeight * scale
+  const offsetX = (containerWidth - displayWidth) / 2
+  const offsetY = (containerHeight - displayHeight) / 2
 
   // Background
   const bg = config?.background || screen.contentConfigs.empty?.background
@@ -56,6 +63,7 @@ export function ScreenContent({
         content={contentData.mainText}
         screenWidth={canvasWidth}
         screenHeight={canvasHeight}
+        scale={scale}
         isVisible={true}
         isHtml={true}
       />
@@ -79,6 +87,7 @@ export function ScreenContent({
         content={contentData.contentText}
         screenWidth={canvasWidth}
         screenHeight={canvasHeight}
+        scale={scale}
         isVisible={true}
         isHtml={false}
       />
@@ -102,6 +111,7 @@ export function ScreenContent({
         content={contentData.referenceText}
         screenWidth={canvasWidth}
         screenHeight={canvasHeight}
+        scale={scale}
         isVisible={true}
         isHtml={false}
       />
@@ -125,6 +135,7 @@ export function ScreenContent({
         content={contentData.personLabel}
         screenWidth={canvasWidth}
         screenHeight={canvasHeight}
+        scale={scale}
         isVisible={true}
         isHtml={false}
       />
@@ -140,7 +151,8 @@ export function ScreenContent({
         : screen.globalSettings.clockConfig
     if (!clockConfig?.enabled) return null
 
-    const constraintStyles = calculateConstraintStyles(
+    // Calculate pixel bounds and scale
+    const bounds = calculatePixelBounds(
       clockConfig.constraints,
       clockConfig.size,
       canvasWidth,
@@ -159,11 +171,14 @@ export function ScreenContent({
     return (
       <div
         key="clock"
-        className="overflow-hidden flex items-center justify-end"
+        className="absolute overflow-hidden flex items-center justify-end"
         style={{
-          ...constraintStyles,
+          left: bounds.x * scale,
+          top: bounds.y * scale,
+          width: bounds.width * scale,
+          height: bounds.height * scale,
           ...getTextStyleCSS(clockConfig.style),
-          fontSize: clockConfig.style.maxFontSize,
+          fontSize: clockConfig.style.maxFontSize * scale,
         }}
       >
         {timeString}
@@ -188,27 +203,27 @@ export function ScreenContent({
         key="nextSlide"
         className="absolute overflow-hidden"
         style={{
-          left: bounds.x,
-          top: bounds.y,
-          width: bounds.width,
-          height: bounds.height,
-          padding: 16,
+          left: bounds.x * scale,
+          top: bounds.y * scale,
+          width: bounds.width * scale,
+          height: bounds.height * scale,
+          padding: 16 * scale,
           ...getBackgroundCSS(ns.background),
         }}
       >
         <div
           style={{
             ...getTextStyleCSS(ns.labelStyle),
-            fontSize: ns.labelStyle.maxFontSize,
+            fontSize: ns.labelStyle.maxFontSize * scale,
           }}
         >
           {ns.labelText}
         </div>
         <div
-          className="mt-2"
           style={{
             ...getTextStyleCSS(ns.contentStyle),
-            fontSize: ns.contentStyle.maxFontSize,
+            fontSize: ns.contentStyle.maxFontSize * scale,
+            marginTop: 8 * scale,
           }}
         >
           {nextSlideData?.preview || ''}
@@ -225,13 +240,14 @@ export function ScreenContent({
         height: containerHeight,
       }}
     >
-      {/* Inner container at native screen dimensions, scaled to fit */}
+      {/* Single container at display dimensions, centered */}
       <div
+        className="absolute"
         style={{
-          width: canvasWidth,
-          height: canvasHeight,
-          transform: `scale(${scale})`,
-          transformOrigin: 'top left',
+          left: offsetX,
+          top: offsetY,
+          width: displayWidth,
+          height: displayHeight,
           position: 'relative',
           ...(bg ? getBackgroundCSS(bg) : { backgroundColor: '#000000' }),
         }}
