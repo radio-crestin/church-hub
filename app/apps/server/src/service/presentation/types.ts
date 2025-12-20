@@ -157,28 +157,45 @@ export interface ScreenBackgroundConfig {
  */
 export interface ClockElementConfig {
   enabled: boolean
-  position: Position
+  constraints: Constraints
+  size?: SizeWithUnits
   style: TextStyle
   format: '12h' | '24h'
   showSeconds: boolean
 }
 
 /**
- * Position type
+ * Position unit - pixels or percentage
  */
-export interface Position {
-  x: number
-  y: number
-  unit: 'px' | '%'
+export type PositionUnit = 'px' | '%'
+
+/**
+ * Single constraint for one edge (top, bottom, left, right)
+ */
+export interface Constraint {
+  enabled: boolean
+  value: number
+  unit: PositionUnit
 }
 
 /**
- * Size type
+ * Constraints for all four edges
  */
-export interface Size {
+export interface Constraints {
+  top: Constraint
+  bottom: Constraint
+  left: Constraint
+  right: Constraint
+}
+
+/**
+ * Size with independent units for width and height
+ */
+export interface SizeWithUnits {
   width: number
+  widthUnit: PositionUnit
   height: number
-  unit: 'px' | '%'
+  heightUnit: PositionUnit
 }
 
 /**
@@ -187,12 +204,14 @@ export interface Size {
 export interface TextStyle {
   fontFamily: string
   maxFontSize: number
+  minFontSize?: number
   autoScale: boolean
   color: string
   bold: boolean
   italic: boolean
   underline: boolean
   alignment: 'left' | 'center' | 'right'
+  verticalAlignment: 'top' | 'middle' | 'bottom'
   lineHeight: number
   shadow?: boolean
 }
@@ -211,8 +230,8 @@ export interface AnimationConfig {
  * Text element config
  */
 export interface TextElementConfig {
-  position: Position
-  size: Size
+  constraints: Constraints
+  size: SizeWithUnits
   style: TextStyle
   padding: number
   animationIn: AnimationConfig
@@ -244,12 +263,14 @@ export interface ScreenWithConfigs extends Screen {
  */
 export interface NextSlideSectionConfig {
   enabled: boolean
-  position: Position
-  size: Size
+  constraints: Constraints
+  size: SizeWithUnits
   labelText: string
   labelStyle: TextStyle
   contentStyle: TextStyle
   background: ScreenBackgroundConfig
+  animationIn?: AnimationConfig
+  animationOut?: AnimationConfig
 }
 
 /**
