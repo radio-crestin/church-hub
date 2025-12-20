@@ -5,6 +5,8 @@ import { getApiUrl } from '~/config'
 import { ScreenContent } from './ScreenContent'
 import type { ContentData, NextSlideData } from './types'
 import { calculateNextSlideData, getBackgroundCSS } from './utils'
+import { getNextVerse } from '../../../bible/service/bible'
+import type { BibleVerse } from '../../../bible/types'
 import type { QueueItem } from '../../../queue/types'
 import type { SongSlide } from '../../../songs/types'
 import { usePresentationState, useWebSocket } from '../../hooks'
@@ -212,9 +214,51 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
 
         // Calculate next slide for stage screens
         if (screen?.type === 'stage') {
+          // Check if we need to fetch next Bible verse (when at end of Bible content with no next queue item)
+          let nextBibleVerse: BibleVerse | null = null
+          const currentItemIndex = queueItems.findIndex(
+            (item) => item.id === presentationState.currentQueueItemId,
+          )
+          const hasNextQueueItem =
+            currentItemIndex !== -1 && currentItemIndex < queueItems.length - 1
+          const currentItem = queueItems[currentItemIndex]
+
+          if (!hasNextQueueItem && currentItem) {
+            let currentVerseId: number | null = null
+
+            if (currentItem.itemType === 'bible') {
+              // Single verse - always at "last slide"
+              currentVerseId = currentItem.bibleVerseId
+            } else if (currentItem.itemType === 'bible_passage') {
+              // Bible passage - check if at last verse
+              const verses = currentItem.biblePassageVerses || []
+              const currentVerseIndex =
+                presentationState.currentBiblePassageVerseId
+                  ? verses.findIndex(
+                      (v) =>
+                        v.id === presentationState.currentBiblePassageVerseId,
+                    )
+                  : 0
+              const isAtLastVerse = currentVerseIndex === verses.length - 1
+
+              if (isAtLastVerse) {
+                currentVerseId = verses[currentVerseIndex]?.verseId ?? null
+              }
+            }
+
+            if (currentVerseId) {
+              try {
+                nextBibleVerse = await getNextVerse(currentVerseId)
+              } catch {
+                // Silently fail - no next verse preview
+              }
+            }
+          }
+
           const nextSlide = calculateNextSlideData({
             queueItems,
             presentationState: presentationState as PresentationState,
+            nextBibleVerse,
           })
           setNextSlideData(nextSlide)
         } else {
