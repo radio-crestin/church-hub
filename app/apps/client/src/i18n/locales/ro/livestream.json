@@ -64,12 +64,10 @@
   },
   "scenes": {
     "title": "Scene",
-    "configure": "Configureaza scena",
+    "settings": "Setari scene",
     "displayName": "Nume afisat",
     "visible": "Vizibil",
     "hidden": "Ascuns",
-    "moveUp": "Muta sus",
-    "moveDown": "Muta jos",
     "current": "Curenta"
   },
   "errors": {
