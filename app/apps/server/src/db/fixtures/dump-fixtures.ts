@@ -122,11 +122,35 @@ interface BibleTranslationRow {
   source_filename: string | null
 }
 
+interface BibleBookRow {
+  id: number
+  translation_id: number
+  book_code: string
+  book_name: string
+  book_order: number
+  chapter_count: number
+}
+
+interface BibleVerseFixture {
+  chapter: number
+  verse: number
+  text: string
+}
+
+interface BibleBookFixture {
+  bookCode: string
+  bookName: string
+  bookOrder: number
+  chapterCount: number
+  verses: BibleVerseFixture[]
+}
+
 interface BibleTranslationFixture {
   name: string
   abbreviation: string
   language: string
   sourceFilename: string | null
+  books: BibleBookFixture[]
 }
 
 interface AppSettingRow {
@@ -304,12 +328,48 @@ function dumpBibleTranslations(db: Database): void {
     return
   }
 
-  const fixtures: BibleTranslationFixture[] = translations.map((t) => ({
-    name: t.name,
-    abbreviation: t.abbreviation,
-    language: t.language,
-    sourceFilename: t.source_filename,
-  }))
+  const fixtures: BibleTranslationFixture[] = []
+
+  for (const translation of translations) {
+    // Get all books for this translation
+    const books = db
+      .query(
+        'SELECT * FROM bible_books WHERE translation_id = ? ORDER BY book_order',
+      )
+      .all(translation.id) as BibleBookRow[]
+
+    const bookFixtures: BibleBookFixture[] = []
+
+    for (const book of books) {
+      // Get all verses for this book
+      const verses = db
+        .query(
+          'SELECT chapter, verse, text FROM bible_verses WHERE book_id = ? ORDER BY chapter, verse',
+        )
+        .all(book.id) as BibleVerseFixture[]
+
+      bookFixtures.push({
+        bookCode: book.book_code,
+        bookName: book.book_name,
+        bookOrder: book.book_order,
+        chapterCount: book.chapter_count,
+        verses,
+      })
+    }
+
+    fixtures.push({
+      name: translation.name,
+      abbreviation: translation.abbreviation,
+      language: translation.language,
+      sourceFilename: translation.source_filename,
+      books: bookFixtures,
+    })
+
+    // biome-ignore lint/suspicious/noConsole: CLI script output
+    console.log(
+      `  - ${translation.name}: ${books.length} books, ${bookFixtures.reduce((sum, b) => sum + b.verses.length, 0)} verses`,
+    )
+  }
 
   const outputPath = join(FIXTURES_DIR, 'default-bibles.json')
   writeFileSync(outputPath, JSON.stringify(fixtures, null, 2))
