@@ -60,30 +60,25 @@ export async function initializeOBSAutoConnect() {
   try {
     const config = await getOBSConfig()
 
-    if (config.autoConnect) {
+    // biome-ignore lint/suspicious/noConsole: Startup logging
+    console.log(
+      `[obs] Initializing OBS connection to ${config.host}:${config.port}...`,
+    )
+
+    // Always enable auto-reconnect to maintain permanent connection
+    obsConnection.enableAutoReconnect(true)
+
+    // Attempt initial connection
+    try {
+      await obsConnection.connect(config.host, config.port, config.password)
+      // biome-ignore lint/suspicious/noConsole: Startup logging
+      console.log('[obs] Successfully connected to OBS')
+    } catch (error) {
       // biome-ignore lint/suspicious/noConsole: Startup logging
       console.log(
-        `[obs] Auto-connect enabled, connecting to ${config.host}:${config.port}...`,
+        `[obs] Initial connection failed, will retry automatically: ${error}`,
       )
-
-      // Enable auto-reconnect for permanent connection
-      obsConnection.enableAutoReconnect(true)
-
-      // Attempt initial connection
-      try {
-        await obsConnection.connect(config.host, config.port, config.password)
-        // biome-ignore lint/suspicious/noConsole: Startup logging
-        console.log('[obs] Successfully connected to OBS')
-      } catch (error) {
-        // biome-ignore lint/suspicious/noConsole: Startup logging
-        console.log(
-          `[obs] Initial connection failed, will retry automatically: ${error}`,
-        )
-        // Auto-reconnect will handle retries
-      }
-    } else {
-      // biome-ignore lint/suspicious/noConsole: Startup logging
-      console.log('[obs] Auto-connect disabled')
+      // Auto-reconnect will handle retries - it keeps trying forever
     }
   } catch (error) {
     // biome-ignore lint/suspicious/noConsole: Startup logging
