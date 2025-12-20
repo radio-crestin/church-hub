@@ -55,6 +55,9 @@ export function VersesList({
   // Scroll to the highlighted verse (prioritize presented, then searched)
   const scrollTargetIndex = presentedIndex ?? searchedIndex
 
+  // Use first verse ID as a stable key to detect when verse content changes
+  const versesKey = verses[0]?.id
+
   useEffect(() => {
     if (highlightedRef.current && containerRef.current) {
       const container = containerRef.current
@@ -75,7 +78,7 @@ export function VersesList({
         behavior: 'smooth',
       })
     }
-  }, [scrollTargetIndex, verses.length])
+  }, [scrollTargetIndex, versesKey])
 
   if (isLoading) {
     return (
