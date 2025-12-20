@@ -6,22 +6,10 @@
   <component name="ChangeListManager">
     <list default="true" id="66517e3f-2e4e-43cc-880d-deb242368f0c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/SlidePreview.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/SlidePreview.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/hooks/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/hooks/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/utils/fullscreen.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/utils/fullscreen.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/QueueSlidePreview.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/QueueSlidePreview.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/presentation.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/presentation.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/presentation.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/presentation.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/routeTree.gen.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/routeTree.gen.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/routes/settings/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/routes/settings/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/ui/combobox/Combobox.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/ui/combobox/Combobox.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/drizzle/migrations/meta/_journal.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/drizzle/migrations/meta/_journal.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/schema/presentation.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/schema/presentation.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/presentation/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/presentation/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/presentation/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/presentation/types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-bibles.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-bibles.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-screens.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-screens.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-settings.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-settings.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-song-categories.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-song-categories.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -34,6 +22,10 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="KubernetesApiPersistence">{}</component>
+  <component name="KubernetesApiProvider">{
+  &quot;isMigrated&quot;: true
+}</component>
   <component name="MacroExpansionManager">
     <option name="directoryName" value="pZQ4YZEb" />
   </component>
@@ -64,7 +56,11 @@
     &quot;npm.dev (3).executor&quot;: &quot;Run&quot;,
     &quot;npm.dev.executor&quot;: &quot;Run&quot;,
     &quot;npm.dev:tauri.executor&quot;: &quot;Run&quot;,
+    &quot;npm.fixtures.executor&quot;: &quot;Run&quot;,
+    &quot;npm.fixtures:screens.executor&quot;: &quot;Run&quot;,
+    &quot;npm.lint.executor&quot;: &quot;Run&quot;,
     &quot;npm.tauri:dev.executor&quot;: &quot;Run&quot;,
+    &quot;npm.tsc:check.executor&quot;: &quot;Run&quot;,
     &quot;org.rust.first.attach.projects&quot;: &quot;true&quot;,
     &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
     &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
@@ -87,26 +83,6 @@
     </key>
   </component>
   <component name="RunManager" selected="npm.dev (2)">
-    <configuration name="compile" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
-      <package-json value="$PROJECT_DIR$/app/apps/server/package.json" />
-      <command value="run" />
-      <scripts>
-        <script value="compile" />
-      </scripts>
-      <node-interpreter value="project" />
-      <envs />
-      <method v="2" />
-    </configuration>
-    <configuration name="dev (1)" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
-      <package-json value="$PROJECT_DIR$/app/apps/server/package.json" />
-      <command value="run" />
-      <scripts>
-        <script value="dev" />
-      </scripts>
-      <node-interpreter value="project" />
-      <envs />
-      <method v="2" />
-    </configuration>
     <configuration name="dev (2)" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
       <package-json value="$PROJECT_DIR$/app/package.json" />
       <command value="run" />
@@ -117,21 +93,41 @@
       <envs />
       <method v="2" />
     </configuration>
-    <configuration name="dev (3)" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
-      <package-json value="$PROJECT_DIR$/app/apps/client/package.json" />
+    <configuration name="fixtures" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
+      <package-json value="$PROJECT_DIR$/app/package.json" />
       <command value="run" />
       <scripts>
-        <script value="dev" />
+        <script value="fixtures" />
       </scripts>
       <node-interpreter value="project" />
       <envs />
       <method v="2" />
     </configuration>
-    <configuration name="dev:tauri" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
+    <configuration name="fixtures:screens" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
       <package-json value="$PROJECT_DIR$/app/package.json" />
       <command value="run" />
       <scripts>
-        <script value="dev:tauri" />
+        <script value="fixtures:screens" />
+      </scripts>
+      <node-interpreter value="project" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <configuration name="lint" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
+      <package-json value="$PROJECT_DIR$/app/package.json" />
+      <command value="run" />
+      <scripts>
+        <script value="lint" />
+      </scripts>
+      <node-interpreter value="project" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <configuration name="tsc:check" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
+      <package-json value="$PROJECT_DIR$/app/package.json" />
+      <command value="run" />
+      <scripts>
+        <script value="tsc:check" />
       </scripts>
       <node-interpreter value="project" />
       <envs />
@@ -140,10 +136,10 @@
     <recent_temporary>
       <list>
         <item itemvalue="npm.dev (2)" />
-        <item itemvalue="npm.dev:tauri" />
-        <item itemvalue="npm.dev (1)" />
-        <item itemvalue="npm.dev (3)" />
-        <item itemvalue="npm.compile" />
+        <item itemvalue="npm.fixtures" />
+        <item itemvalue="npm.tsc:check" />
+        <item itemvalue="npm.fixtures:screens" />
+        <item itemvalue="npm.lint" />
       </list>
     </recent_temporary>
   </component>
