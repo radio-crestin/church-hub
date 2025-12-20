@@ -8,11 +8,6 @@ import type {
   ScreenWithConfigs,
   UpsertScreenInput,
 } from '../types'
-import {
-  migrateContentConfig,
-  migrateElementConfig,
-  needsMigration,
-} from '../utils/defaultConfigs'
 
 const DEBUG = import.meta.env.DEV
 
@@ -41,50 +36,6 @@ export async function getAllScreens(): Promise<Screen[]> {
 }
 
 /**
- * Migrates a ScreenWithConfigs from old position format to new constraints format
- */
-function migrateScreenWithConfigs(
-  screen: ScreenWithConfigs,
-): ScreenWithConfigs {
-  const migratedContentConfigs = { ...screen.contentConfigs }
-
-  // Migrate each content config
-  for (const contentType of Object.keys(
-    migratedContentConfigs,
-  ) as ContentType[]) {
-    const config = migratedContentConfigs[contentType]
-    if (config) {
-      migratedContentConfigs[contentType] = migrateContentConfig(config)
-    }
-  }
-
-  // Migrate next slide config if present
-  let migratedNextSlideConfig = screen.nextSlideConfig
-  if (migratedNextSlideConfig && needsMigration(migratedNextSlideConfig)) {
-    migratedNextSlideConfig = migrateElementConfig(migratedNextSlideConfig)
-  }
-
-  // Migrate global settings clock config if present
-  let migratedGlobalSettings = screen.globalSettings
-  if (
-    migratedGlobalSettings?.clockConfig &&
-    needsMigration(migratedGlobalSettings.clockConfig)
-  ) {
-    migratedGlobalSettings = {
-      ...migratedGlobalSettings,
-      clockConfig: migrateElementConfig(migratedGlobalSettings.clockConfig),
-    }
-  }
-
-  return {
-    ...screen,
-    contentConfigs: migratedContentConfigs,
-    nextSlideConfig: migratedNextSlideConfig,
-    globalSettings: migratedGlobalSettings,
-  }
-}
-
-/**
  * Fetches a screen by ID (with all configs)
  */
 export async function getScreenById(id: number): Promise<ScreenWithConfigs> {
@@ -99,8 +50,7 @@ export async function getScreenById(id: number): Promise<ScreenWithConfigs> {
   }
 
   const result = await response.json()
-  // Migrate old position format to new constraints format
-  return migrateScreenWithConfigs(result.data)
+  return result.data
 }
 
 /**
@@ -216,6 +166,39 @@ export async function updateScreenGlobalSettings(
 
   if (!response.ok) {
     throw new Error('Failed to update screen global settings')
+  }
+
+  const result = await response.json()
+  return result.data
+}
+
+/**
+ * Batch update all screen configs in a single request
+ */
+export async function batchUpdateScreenConfig(
+  screenId: number,
+  globalSettings: ScreenGlobalSettings,
+  contentConfigs: Record<ContentType, ContentTypeConfig>,
+  nextSlideConfig?: NextSlideSectionConfig,
+): Promise<ScreenWithConfigs> {
+  log('debug', `Batch updating screen config: ${screenId}`)
+
+  const response = await fetch(
+    `${getApiUrl()}/api/screens/${screenId}/batch-config`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        globalSettings,
+        contentConfigs,
+        nextSlideConfig,
+      }),
+      credentials: 'include',
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error('Failed to batch update screen config')
   }
 
   const result = await response.json()
