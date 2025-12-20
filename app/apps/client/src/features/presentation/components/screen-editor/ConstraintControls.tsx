@@ -1,24 +1,22 @@
 import { useTranslation } from 'react-i18next'
 
-import { Combobox } from '~/ui/combobox/Combobox'
-import { Input } from '~/ui/input/Input'
 import { Label } from '~/ui/label/Label'
-import type { Constraints, PositionUnit, SizeWithUnits } from '../../types'
+import type { Constraint, Constraints, SizeWithUnits } from '../../types'
+import { convertUnit, roundForDisplay } from '../rendering/utils/styleUtils'
 
 interface ConstraintControlsProps {
   constraints: Constraints
   size: SizeWithUnits
+  screenWidth: number
+  screenHeight: number
   onChange: (constraints: Constraints, size: SizeWithUnits) => void
 }
-
-const UNIT_OPTIONS = [
-  { value: '%', label: '%' },
-  { value: 'px', label: 'px' },
-]
 
 export function ConstraintControls({
   constraints,
   size,
+  screenWidth,
+  screenHeight,
   onChange,
 }: ConstraintControlsProps) {
   const { t } = useTranslation('presentation')
@@ -38,6 +36,46 @@ export function ConstraintControls({
     constraints.left.enabled && constraints.right.enabled
   const isVerticalStretch =
     constraints.top.enabled && constraints.bottom.enabled
+
+  const handleConstraintUnitToggle = (edge: keyof Constraints) => {
+    const constraint = constraints[edge]
+    const newUnit = constraint.unit === '%' ? 'px' : '%'
+    const totalPixels =
+      edge === 'left' || edge === 'right' ? screenWidth : screenHeight
+    const convertedValue = convertUnit(
+      constraint.value,
+      constraint.unit,
+      newUnit,
+      totalPixels,
+    )
+    updateConstraint(edge, {
+      ...constraint,
+      value: convertedValue,
+      unit: newUnit,
+    })
+  }
+
+  const handleWidthUnitToggle = () => {
+    const newUnit = size.widthUnit === '%' ? 'px' : '%'
+    const convertedValue = convertUnit(
+      size.width,
+      size.widthUnit,
+      newUnit,
+      screenWidth,
+    )
+    updateSize({ width: convertedValue, widthUnit: newUnit })
+  }
+
+  const handleHeightUnitToggle = () => {
+    const newUnit = size.heightUnit === '%' ? 'px' : '%'
+    const convertedValue = convertUnit(
+      size.height,
+      size.heightUnit,
+      newUnit,
+      screenHeight,
+    )
+    updateSize({ height: convertedValue, heightUnit: newUnit })
+  }
 
   return (
     <div className="space-y-4">
@@ -74,13 +112,14 @@ export function ConstraintControls({
           <div className="absolute top-7 left-1/2 -translate-x-1/2 flex items-center gap-0.5 bg-white/90 dark:bg-gray-900/90 rounded overflow-hidden">
             <input
               type="number"
-              value={constraints.top.value}
+              value={roundForDisplay(constraints.top.value)}
               onChange={(e) =>
                 updateConstraint('top', {
                   ...constraints.top,
                   value: parseFloat(e.target.value) || 0,
                 })
               }
+              step="0.1"
               className="w-10 h-5 text-[10px] text-indigo-600 dark:text-indigo-400 font-medium bg-transparent px-1 text-center border-0 focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               onClick={(e) => e.stopPropagation()}
             />
@@ -88,10 +127,7 @@ export function ConstraintControls({
               type="button"
               onClick={(e) => {
                 e.stopPropagation()
-                updateConstraint('top', {
-                  ...constraints.top,
-                  unit: constraints.top.unit === '%' ? 'px' : '%',
-                })
+                handleConstraintUnitToggle('top')
               }}
               className="h-5 px-1 text-[10px] text-indigo-500 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/30"
             >
@@ -124,13 +160,14 @@ export function ConstraintControls({
           <div className="absolute bottom-7 left-1/2 -translate-x-1/2 flex items-center gap-0.5 bg-white/90 dark:bg-gray-900/90 rounded overflow-hidden">
             <input
               type="number"
-              value={constraints.bottom.value}
+              value={roundForDisplay(constraints.bottom.value)}
               onChange={(e) =>
                 updateConstraint('bottom', {
                   ...constraints.bottom,
                   value: parseFloat(e.target.value) || 0,
                 })
               }
+              step="0.1"
               className="w-10 h-5 text-[10px] text-indigo-600 dark:text-indigo-400 font-medium bg-transparent px-1 text-center border-0 focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               onClick={(e) => e.stopPropagation()}
             />
@@ -138,10 +175,7 @@ export function ConstraintControls({
               type="button"
               onClick={(e) => {
                 e.stopPropagation()
-                updateConstraint('bottom', {
-                  ...constraints.bottom,
-                  unit: constraints.bottom.unit === '%' ? 'px' : '%',
-                })
+                handleConstraintUnitToggle('bottom')
               }}
               className="h-5 px-1 text-[10px] text-indigo-500 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/30"
             >
@@ -174,13 +208,14 @@ export function ConstraintControls({
           <div className="absolute left-7 top-1/2 -translate-y-1/2 flex items-center gap-0.5 bg-white/90 dark:bg-gray-900/90 rounded overflow-hidden">
             <input
               type="number"
-              value={constraints.left.value}
+              value={roundForDisplay(constraints.left.value)}
               onChange={(e) =>
                 updateConstraint('left', {
                   ...constraints.left,
                   value: parseFloat(e.target.value) || 0,
                 })
               }
+              step="0.1"
               className="w-10 h-5 text-[10px] text-indigo-600 dark:text-indigo-400 font-medium bg-transparent px-1 text-center border-0 focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               onClick={(e) => e.stopPropagation()}
             />
@@ -188,10 +223,7 @@ export function ConstraintControls({
               type="button"
               onClick={(e) => {
                 e.stopPropagation()
-                updateConstraint('left', {
-                  ...constraints.left,
-                  unit: constraints.left.unit === '%' ? 'px' : '%',
-                })
+                handleConstraintUnitToggle('left')
               }}
               className="h-5 px-1 text-[10px] text-indigo-500 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/30"
             >
@@ -224,13 +256,14 @@ export function ConstraintControls({
           <div className="absolute right-7 top-1/2 -translate-y-1/2 flex items-center gap-0.5 bg-white/90 dark:bg-gray-900/90 rounded overflow-hidden">
             <input
               type="number"
-              value={constraints.right.value}
+              value={roundForDisplay(constraints.right.value)}
               onChange={(e) =>
                 updateConstraint('right', {
                   ...constraints.right,
                   value: parseFloat(e.target.value) || 0,
                 })
               }
+              step="0.1"
               className="w-10 h-5 text-[10px] text-indigo-600 dark:text-indigo-400 font-medium bg-transparent px-1 text-center border-0 focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               onClick={(e) => e.stopPropagation()}
             />
@@ -238,10 +271,7 @@ export function ConstraintControls({
               type="button"
               onClick={(e) => {
                 e.stopPropagation()
-                updateConstraint('right', {
-                  ...constraints.right,
-                  unit: constraints.right.unit === '%' ? 'px' : '%',
-                })
+                handleConstraintUnitToggle('right')
               }}
               className="h-5 px-1 text-[10px] text-indigo-500 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/30"
             >
@@ -272,23 +302,23 @@ export function ConstraintControls({
             <Label className="text-xs text-gray-500 dark:text-gray-400">
               {t('screens.position.width', 'Width')}
             </Label>
-            <div className="flex items-center gap-2 mt-1">
-              <Input
+            <div className="flex items-center gap-0.5 mt-1 bg-gray-100 dark:bg-gray-800 rounded overflow-hidden">
+              <input
                 type="number"
-                value={size.width}
+                value={roundForDisplay(size.width)}
                 onChange={(e) =>
                   updateSize({ width: parseFloat(e.target.value) || 0 })
                 }
-                className="h-8 flex-1"
+                step="0.1"
+                className="w-20 h-8 text-sm text-gray-900 dark:text-gray-100 font-medium bg-transparent px-2 text-center border-0 focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
-              <Combobox
-                value={size.widthUnit}
-                onChange={(value) =>
-                  updateSize({ widthUnit: value as PositionUnit })
-                }
-                options={UNIT_OPTIONS}
-                className="w-16 h-8"
-              />
+              <button
+                type="button"
+                onClick={handleWidthUnitToggle}
+                className="h-8 px-2 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 font-medium"
+              >
+                {size.widthUnit}
+              </button>
             </div>
           </div>
         )}
@@ -306,23 +336,23 @@ export function ConstraintControls({
             <Label className="text-xs text-gray-500 dark:text-gray-400">
               {t('screens.position.height', 'Height')}
             </Label>
-            <div className="flex items-center gap-2 mt-1">
-              <Input
+            <div className="flex items-center gap-0.5 mt-1 bg-gray-100 dark:bg-gray-800 rounded overflow-hidden">
+              <input
                 type="number"
-                value={size.height}
+                value={roundForDisplay(size.height)}
                 onChange={(e) =>
                   updateSize({ height: parseFloat(e.target.value) || 0 })
                 }
-                className="h-8 flex-1"
+                step="0.1"
+                className="w-20 h-8 text-sm text-gray-900 dark:text-gray-100 font-medium bg-transparent px-2 text-center border-0 focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
-              <Combobox
-                value={size.heightUnit}
-                onChange={(value) =>
-                  updateSize({ heightUnit: value as PositionUnit })
-                }
-                options={UNIT_OPTIONS}
-                className="w-16 h-8"
-              />
+              <button
+                type="button"
+                onClick={handleHeightUnitToggle}
+                className="h-8 px-2 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 font-medium"
+              >
+                {size.heightUnit}
+              </button>
             </div>
           </div>
         )}
