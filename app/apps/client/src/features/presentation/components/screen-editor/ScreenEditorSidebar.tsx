@@ -2,6 +2,7 @@ import {
   ChevronDown,
   ChevronRight,
   Clock,
+  Eye,
   Film,
   Move,
   Palette,
@@ -9,6 +10,7 @@ import {
   Type,
 } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { Checkbox } from '~/ui/checkbox/Checkbox'
 import { Combobox } from '~/ui/combobox/Combobox'
@@ -115,6 +117,7 @@ export function ScreenEditorSidebar({
   onUpdateNextSlideConfig,
   onUpdateGlobalSettings,
 }: ScreenEditorSidebarProps) {
+  const { t } = useTranslation('presentation')
   const config = screen.contentConfigs[contentType]
 
   // Helper to update a nested property in the config
@@ -244,6 +247,39 @@ export function ScreenEditorSidebar({
                     ])
                   }
                 }}
+              />
+            </Section>
+          )}
+
+          {/* Visibility Section */}
+          {'constraints' in selectedConfig.config && (
+            <Section
+              title={t('screens.panels.visibility')}
+              icon={Eye}
+              defaultOpen={false}
+            >
+              <Checkbox
+                checked={
+                  (
+                    selectedConfig.config as {
+                      visibleWhenHidden?: boolean
+                    }
+                  ).visibleWhenHidden ?? false
+                }
+                onCheckedChange={(checked) => {
+                  if (selectedConfig.isNextSlide) {
+                    onUpdateNextSlideConfig({
+                      ...screen.nextSlideConfig!,
+                      visibleWhenHidden: !!checked,
+                    })
+                  } else {
+                    updateConfig(
+                      [...selectedConfig.path, 'visibleWhenHidden'],
+                      !!checked,
+                    )
+                  }
+                }}
+                label={t('screens.visibility.visibleWhenHidden')}
               />
             </Section>
           )}

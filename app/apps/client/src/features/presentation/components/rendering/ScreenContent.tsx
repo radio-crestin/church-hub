@@ -247,6 +247,10 @@ export function ScreenContent({
         : screen.globalSettings.clockConfig
     if (!clockConfig?.enabled) return null
 
+    // Check visibility when hidden - default to true for backwards compatibility
+    const shouldShowWhenHidden = clockConfig.visibleWhenHidden ?? true
+    if (!isVisible && !shouldShowWhenHidden) return null
+
     // Calculate pixel bounds and scale
     const bounds = calculatePixelBounds(
       clockConfig.constraints,
@@ -286,6 +290,10 @@ export function ScreenContent({
   const renderNextSlideSection = () => {
     if (screen.type !== 'stage' || !screen.nextSlideConfig?.enabled) return null
     const ns = screen.nextSlideConfig
+
+    // Check visibility when hidden - default to true for backwards compatibility
+    const shouldShowWhenHidden = ns.visibleWhenHidden ?? true
+    if (!isVisible && !shouldShowWhenHidden) return null
 
     const bounds = calculatePixelBounds(
       ns.constraints,
