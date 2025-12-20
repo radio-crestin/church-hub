@@ -170,9 +170,6 @@ async function main() {
   // Wire up OBS callbacks to WebSocket broadcasts
   initializeOBSCallbacks()
 
-  // Start permanent OBS connection if auto-connect is enabled
-  await initializeOBSAutoConnect()
-
   const isProd = process.env.NODE_ENV === 'production'
 
   // biome-ignore lint/suspicious/noConsole: Startup logging
@@ -3357,6 +3354,10 @@ async function main() {
 
   // biome-ignore lint/suspicious/noConsole: <>
   console.log(`Bun server running at ${server.url}`)
+
+  // Start permanent OBS connection if auto-connect is enabled
+  // This must be done AFTER the WebSocket server starts so clients can receive status broadcasts
+  initializeOBSAutoConnect()
 
   // Graceful shutdown
   process.on('SIGINT', () => {
