@@ -1,6 +1,5 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 
-import { screenQueryKey } from './useScreen'
 import { updateScreenContentConfig } from '../service/screens'
 import type { ContentType, ContentTypeConfig } from '../types'
 
@@ -11,15 +10,9 @@ interface UpdateContentConfigInput {
 }
 
 export function useUpdateScreenContentConfig() {
-  const queryClient = useQueryClient()
-
   return useMutation({
     mutationFn: ({ screenId, contentType, config }: UpdateContentConfigInput) =>
       updateScreenContentConfig(screenId, contentType, config),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: screenQueryKey(variables.screenId),
-      })
-    },
+    // Note: Query invalidation is handled by WebSocket broadcast from server
   })
 }
