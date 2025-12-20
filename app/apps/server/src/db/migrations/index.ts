@@ -3,7 +3,11 @@ import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite'
 import { migrate } from 'drizzle-orm/bun-sqlite/migrator'
 
 import { seedSystemRoles } from './seed'
+import { seedBibleTranslations } from './seed-bibles'
 import { seedDefaultScreens } from './seed-screens'
+import { seedAppSettings } from './seed-settings'
+import { seedSongCategories } from './seed-song-categories'
+import { seedSongs } from './seed-songs'
 import type { Database } from 'bun:sqlite'
 import { createFtsTables } from '../fts'
 
@@ -51,6 +55,22 @@ export function runMigrations(
   // Seed default screens
   log('info', 'Seeding default screens...')
   seedDefaultScreens(rawDb)
+
+  // Seed song categories (before songs, as songs reference categories)
+  log('info', 'Seeding song categories...')
+  seedSongCategories(rawDb)
+
+  // Seed songs
+  log('info', 'Seeding songs...')
+  seedSongs(rawDb)
+
+  // Seed bible translations metadata
+  log('info', 'Seeding bible translations...')
+  seedBibleTranslations(rawDb)
+
+  // Seed app settings (sidebar config, search synonyms, appearance, etc.)
+  log('info', 'Seeding app settings...')
+  seedAppSettings(rawDb)
 
   return { ftsRecreated: true }
 }
