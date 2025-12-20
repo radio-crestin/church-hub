@@ -41,11 +41,15 @@ export function ScreenEditor({
   const queryClient = useQueryClient()
   const lastEmitRef = useRef<number>(0)
   const isLocalUpdateRef = useRef<boolean>(false)
-  const isSavingRef = useRef<boolean>(false)
+  // Use a version counter to track save operations - more reliable than timeout
+  const saveVersionRef = useRef<number>(0)
+  const lastAppliedVersionRef = useRef<number>(0)
 
   // Initialize editor with screen data (only on mount)
   useEffect(() => {
     actions.setScreen(initialScreen)
+    // Set initial version to match the current data
+    lastAppliedVersionRef.current = Date.now()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -58,8 +62,11 @@ export function ScreenEditor({
         event.query.queryKey[0] === queryKey[0] &&
         event.query.queryKey[1] === queryKey[1]
       ) {
-        // Skip updates during save operation to prevent race conditions
-        if (isSavingRef.current) {
+        // Skip if we're in the middle of a save (saveVersionRef is newer than lastAppliedVersionRef)
+        // This is more robust than a timeout - we track the actual save operation
+        if (saveVersionRef.current > lastAppliedVersionRef.current) {
+          // Update the last applied version to the save version after save completes
+          lastAppliedVersionRef.current = saveVersionRef.current
           return
         }
 
@@ -73,6 +80,7 @@ export function ScreenEditor({
         if (newData) {
           // Update local state with external changes (preserves isDirty)
           actions.setScreenExternal(newData)
+          lastAppliedVersionRef.current = Date.now()
         }
       }
     })
@@ -122,10 +130,13 @@ export function ScreenEditor({
 
   const handleSave = useCallback(async () => {
     if (!state.screen) return
-    isSavingRef.current = true
+    // Mark the save version so we can ignore cache updates during/after save
+    saveVersionRef.current = Date.now()
     try {
       await onSave(state.screen)
       actions.markClean()
+      // Update the last applied version to match the save version
+      lastAppliedVersionRef.current = saveVersionRef.current
       // Emit final saved config
       send({
         type: 'screen_config_preview',
@@ -134,11 +145,10 @@ export function ScreenEditor({
           config: state.screen,
         },
       })
-    } finally {
-      // Delay clearing flag to allow any pending refetches to be ignored
-      setTimeout(() => {
-        isSavingRef.current = false
-      }, 100)
+    } catch {
+      // On error, reset the save version so we don't ignore future updates
+      saveVersionRef.current = lastAppliedVersionRef.current
+      throw new Error('Save failed')
     }
   }, [state.screen, onSave, actions, send])
 
