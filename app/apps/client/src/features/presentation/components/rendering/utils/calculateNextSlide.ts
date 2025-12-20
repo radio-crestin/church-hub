@@ -24,7 +24,7 @@ function stripHtml(html: string): string {
  * Formats a song slide preview
  */
 function formatSongPreview(content: string): string {
-  return stripHtml(content).substring(0, 100)
+  return stripHtml(content)
 }
 
 /**
@@ -43,14 +43,14 @@ function formatBibleVersePreview(
 ): string {
   const ref = stripTranslation(reference || '')
   const txt = text || ''
-  return `${ref}: ${txt.substring(0, 50)}...`
+  return `${ref}: ${txt}`
 }
 
 /**
  * Formats an announcement preview
  */
 function formatAnnouncementPreview(content: string | null): string {
-  return stripHtml(content || '').substring(0, 100)
+  return stripHtml(content || '')
 }
 
 /**
