@@ -44,9 +44,6 @@ export function ScreenContent({
   const offsetX = (containerWidth - displayWidth) / 2
   const offsetY = (containerHeight - displayHeight) / 2
 
-  // Background
-  const bg = config?.background || screen.contentConfigs.empty?.background
-
   // Render main text
   const renderMainText = () => {
     if (!config || !('mainText' in config) || !contentData?.mainText)
@@ -339,7 +336,7 @@ export function ScreenContent({
         height: containerHeight,
       }}
     >
-      {/* Single container at display dimensions, centered */}
+      {/* Single container at display dimensions, centered - no background (parent handles it) */}
       <div
         className="absolute"
         style={{
@@ -348,7 +345,6 @@ export function ScreenContent({
           width: displayWidth,
           height: displayHeight,
           position: 'relative',
-          ...(bg ? getBackgroundCSS(bg) : { backgroundColor: '#000000' }),
         }}
       >
         {isVisible && (
