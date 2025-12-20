@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { getApiUrl } from '~/config'
 import { ScreenContent } from './ScreenContent'
 import type { ContentData, NextSlideData } from './types'
+import { getBackgroundCSS } from './utils/styleUtils'
 import { usePresentationState, useWebSocket } from '../../hooks'
 import { useScreen } from '../../hooks/useScreen'
 import type { ContentType } from '../../types'
@@ -316,10 +317,15 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
   const hasContent = contentData !== null
   const isVisible = hasContent && !presentationState?.isHidden
 
+  // Get background from screen config for fullscreen display
+  const config = screen.contentConfigs[contentType]
+  const bg = config?.background || screen.contentConfigs.empty?.background
+
   return (
     <div
       ref={containerRef}
       className="w-screen h-screen overflow-hidden cursor-default"
+      style={bg ? getBackgroundCSS(bg) : { backgroundColor: '#000000' }}
       onDoubleClick={toggleFullscreen}
     >
       {containerSize.width > 0 && containerSize.height > 0 && (
