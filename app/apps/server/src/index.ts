@@ -50,6 +50,7 @@ import {
 } from './service/conversion'
 import { getExternalInterfaces } from './service/network'
 import {
+  batchUpdateScreenConfigs,
   type ContentType,
   clearSlide,
   deleteScreen,
@@ -1521,6 +1522,75 @@ async function main() {
           broadcastScreenConfigUpdated(screenId)
 
           const screen = getScreenById(screenId)
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: screen }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // PUT /api/screens/:id/batch-config - Batch update all screen configs
+      const batchConfigMatch = url.pathname.match(
+        /^\/api\/screens\/(\d+)\/batch-config$/,
+      )
+      if (req.method === 'PUT' && batchConfigMatch?.[1]) {
+        const permError = checkPermission('displays.edit')
+        if (permError) return permError
+
+        try {
+          const screenId = parseInt(batchConfigMatch[1], 10)
+          const body = (await req.json()) as {
+            globalSettings: ScreenGlobalSettings
+            contentConfigs: Record<ContentType, Record<string, unknown>>
+            nextSlideConfig?: NextSlideSectionConfig
+          }
+
+          if (!body.globalSettings || !body.contentConfigs) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({
+                  error: 'Missing globalSettings or contentConfigs',
+                }),
+                {
+                  status: 400,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          const result = batchUpdateScreenConfigs({
+            screenId,
+            globalSettings: body.globalSettings,
+            contentConfigs: body.contentConfigs,
+            nextSlideConfig: body.nextSlideConfig,
+          })
+
+          if (!result.success) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: result.error }), {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          // Broadcast screen config update to all connected clients
+          broadcastScreenConfigUpdated(screenId)
+
+          const screen = getScreenWithConfigs(screenId)
           return handleCors(
             req,
             new Response(JSON.stringify({ data: screen }), {
