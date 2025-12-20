@@ -54,6 +54,7 @@ interface TextElementProps {
   content: string
   screenWidth: number
   screenHeight: number
+  scale?: number
   isVisible?: boolean
   isHtml?: boolean
 }
@@ -63,6 +64,7 @@ export function TextElement({
   content,
   screenWidth,
   screenHeight,
+  scale = 1,
   isVisible = true,
   isHtml = false,
 }: TextElementProps) {
@@ -212,6 +214,8 @@ export function TextElement({
 
   const containerStyles: React.CSSProperties = {
     ...constraintStyles,
+    transform: scale !== 1 ? `scale(${scale})` : undefined,
+    transformOrigin: 'top left',
   }
 
   return (
