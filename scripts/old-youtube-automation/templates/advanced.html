@@ -1,0 +1,10 @@
+<h1>OBS</h1>
+{% for key, value in midi_input_note_to_actions.items() %}
+<a href="/command?c={{key}}">
+    {% for a in value %}
+    <button>{{a['type']}} - {{a['value']}}</button>
+    {% endfor %}
+</a>
+<br/>
+<br/>
+{% endfor %}
