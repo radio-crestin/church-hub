@@ -17,7 +17,7 @@
 ~~- rezolva problema cu selectorii, implementand ceva custom~~
 ~~- imbunatateste creare de ecrane, lasand utilizatorul sa aleaga intre (ecran prezentare principal, stage monitor, livestream overlay)~~
 ~~- adauga o pagina de editare si configurare a fiecarui tip de ecran~~
-- adauga ecrane cu configurari default
+~~- adauga ecrane cu configurari default~~
 - apoi implementeaza in ecranul versete biblice sa fie afisat slide-ul urmator pe stage monitor
 - creaza o pagina numita LiveStream
 - din aceasta pagina utilizatorul poate crea un nou livestream pe YouTube
