@@ -78,6 +78,20 @@ export async function getVerseById(verseId: number): Promise<BibleVerse> {
   return response.data
 }
 
+// Get next verse in sequence (handles chapter/book boundaries)
+export async function getNextVerse(
+  verseId: number,
+): Promise<BibleVerse | null> {
+  try {
+    const response = await fetcher<{ data: BibleVerse | null }>(
+      `/api/bible/next-verse/${verseId}`,
+    )
+    return response.data
+  } catch {
+    return null
+  }
+}
+
 // Get verse by reference (for multi-translation display)
 export async function getVerseByReference(
   translationId: number,

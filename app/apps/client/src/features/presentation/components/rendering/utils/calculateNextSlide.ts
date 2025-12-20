@@ -1,3 +1,4 @@
+import type { BibleVerse } from '../../../../bible/types'
 import type { QueueItem, VerseteTineriEntry } from '../../../../queue/types'
 import type { SongSlide } from '../../../../songs/types'
 import type { ContentType, PresentationState } from '../../../types'
@@ -8,6 +9,8 @@ const MAX_VERSETE_TINERI_PREVIEW_ENTRIES = 5
 interface CalculateNextSlideParams {
   queueItems: QueueItem[]
   presentationState: PresentationState
+  /** Optional: Next Bible verse from scripture (used when at end of Bible content with no next queue item) */
+  nextBibleVerse?: BibleVerse | null
 }
 
 /**
@@ -139,7 +142,7 @@ function formatNextQueueItemPreview(
 export function calculateNextSlideData(
   params: CalculateNextSlideParams,
 ): NextSlideData | undefined {
-  const { queueItems, presentationState } = params
+  const { queueItems, presentationState, nextBibleVerse } = params
   const {
     currentQueueItemId,
     currentSongSlideId,
@@ -197,8 +200,21 @@ export function calculateNextSlideData(
       }
     }
 
-    // At end of passage, look at next queue item
-    return formatNextQueueItemPreview(nextQueueItem)
+    // At end of passage, look at next queue item or next Bible verse
+    if (nextQueueItem) {
+      return formatNextQueueItemPreview(nextQueueItem)
+    }
+    // No next queue item - show next verse from Bible if available
+    if (nextBibleVerse) {
+      return {
+        contentType: 'bible' as ContentType,
+        preview: formatBibleVersePreview(
+          `${nextBibleVerse.bookName} ${nextBibleVerse.chapter}:${nextBibleVerse.verse}`,
+          nextBibleVerse.text,
+        ),
+      }
+    }
+    return undefined
   }
 
   // Case 3: Versete Tineri
@@ -225,9 +241,22 @@ export function calculateNextSlideData(
     return formatNextQueueItemPreview(nextQueueItem)
   }
 
-  // Case 4: Single Bible Verse - always look at next queue item
+  // Case 4: Single Bible Verse - look at next queue item or next Bible verse
   if (currentItem.itemType === 'bible') {
-    return formatNextQueueItemPreview(nextQueueItem)
+    if (nextQueueItem) {
+      return formatNextQueueItemPreview(nextQueueItem)
+    }
+    // No next queue item - show next verse from Bible if available
+    if (nextBibleVerse) {
+      return {
+        contentType: 'bible' as ContentType,
+        preview: formatBibleVersePreview(
+          `${nextBibleVerse.bookName} ${nextBibleVerse.chapter}:${nextBibleVerse.verse}`,
+          nextBibleVerse.text,
+        ),
+      }
+    }
+    return undefined
   }
 
   // Case 5: Announcement - always look at next queue item
