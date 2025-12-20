@@ -252,14 +252,7 @@ export function ScreenEditorSidebar({
                           .style,
                         fontFamily: value,
                       }
-                      if (selectedConfig.isNextSlide) {
-                        // Handle next slide style updates
-                      } else {
-                        updateConfig(
-                          [...selectedConfig.path, 'style'],
-                          newStyle,
-                        )
-                      }
+                      updateConfig([...selectedConfig.path, 'style'], newStyle)
                     }}
                     options={FONT_FAMILIES}
                     className="w-full"

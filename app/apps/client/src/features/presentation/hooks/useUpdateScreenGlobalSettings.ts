@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
-import { screenQueryKey } from './useScreen'
 import { screensQueryKey } from './useScreens'
 import { updateScreenGlobalSettings } from '../service/screens'
 import type { ScreenGlobalSettings } from '../types'
@@ -16,10 +15,9 @@ export function useUpdateScreenGlobalSettings() {
   return useMutation({
     mutationFn: ({ screenId, settings }: UpdateGlobalSettingsInput) =>
       updateScreenGlobalSettings(screenId, settings),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: screenQueryKey(variables.screenId),
-      })
+    onSuccess: () => {
+      // Screen query invalidation is handled by WebSocket broadcast from server
+      // Still invalidate screens list for potential metadata updates
       queryClient.invalidateQueries({ queryKey: screensQueryKey })
     },
   })
