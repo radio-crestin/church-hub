@@ -1,4 +1,4 @@
-import { and, asc, count, eq } from 'drizzle-orm'
+import { and, asc, count, eq, gt } from 'drizzle-orm'
 
 import type { BibleBook } from './types'
 import { getDatabase } from '../../db'
@@ -91,4 +91,32 @@ export function getChaptersForBook(
     chapter: c.chapter,
     verseCount: c.verseCount,
   }))
+}
+
+/**
+ * Gets the next book in sequence for a translation
+ * Used for navigating from the end of one book to the beginning of the next
+ */
+export function getNextBook(
+  translationId: number,
+  currentBookId: number,
+): BibleBook | null {
+  const currentBook = getBookById(currentBookId)
+  if (!currentBook) return null
+
+  const db = getDatabase()
+  const nextBook = db
+    .select()
+    .from(bibleBooks)
+    .where(
+      and(
+        eq(bibleBooks.translationId, translationId),
+        gt(bibleBooks.bookOrder, currentBook.bookOrder),
+      ),
+    )
+    .orderBy(asc(bibleBooks.bookOrder))
+    .limit(1)
+    .get()
+
+  return nextBook ? toBook(nextBook) : null
 }
