@@ -359,8 +359,9 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
         key="mainText"
         config={configWithAutoScale}
         content={contentData.mainText}
-        screenWidth={viewportSize.width}
-        screenHeight={viewportSize.height}
+        screenWidth={canvasWidth}
+        screenHeight={canvasHeight}
+        scale={scale}
         isVisible={true}
         isHtml={true}
       />
@@ -383,8 +384,9 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
         key="contentText"
         config={configWithAutoScale}
         content={contentData.contentText}
-        screenWidth={viewportSize.width}
-        screenHeight={viewportSize.height}
+        screenWidth={canvasWidth}
+        screenHeight={canvasHeight}
+        scale={scale}
         isVisible={true}
         isHtml={false}
       />
@@ -407,8 +409,9 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
         key="referenceText"
         config={configWithAutoScale}
         content={contentData.referenceText}
-        screenWidth={viewportSize.width}
-        screenHeight={viewportSize.height}
+        screenWidth={canvasWidth}
+        screenHeight={canvasHeight}
+        scale={scale}
         isVisible={true}
         isHtml={false}
       />
@@ -431,8 +434,9 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
         key="personLabel"
         config={configWithAutoScale}
         content={contentData.personLabel}
-        screenWidth={viewportSize.width}
-        screenHeight={viewportSize.height}
+        screenWidth={canvasWidth}
+        screenHeight={canvasHeight}
+        scale={scale}
         isVisible={true}
         isHtml={false}
       />
