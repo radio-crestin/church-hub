@@ -1,4 +1,4 @@
-import { asc, eq, sql } from 'drizzle-orm'
+import { and, asc, eq, sql } from 'drizzle-orm'
 
 import type {
   ContentType,
@@ -635,12 +635,16 @@ export function updateContentConfig(
     const db = getDatabase()
     const configJson = JSON.stringify(input.config)
 
-    // Check if config exists
+    // Check if config exists - use and() to combine conditions
     const existing = db
       .select()
       .from(screenContentConfigs)
-      .where(eq(screenContentConfigs.screenId, input.screenId))
-      .where(eq(screenContentConfigs.contentType, input.contentType))
+      .where(
+        and(
+          eq(screenContentConfigs.screenId, input.screenId),
+          eq(screenContentConfigs.contentType, input.contentType),
+        ),
+      )
       .get()
 
     if (existing) {
@@ -681,8 +685,12 @@ export function getContentConfig(
     const record = db
       .select()
       .from(screenContentConfigs)
-      .where(eq(screenContentConfigs.screenId, screenId))
-      .where(eq(screenContentConfigs.contentType, contentType))
+      .where(
+        and(
+          eq(screenContentConfigs.screenId, screenId),
+          eq(screenContentConfigs.contentType, contentType),
+        ),
+      )
       .get()
 
     if (record) {
@@ -824,12 +832,16 @@ export function batchUpdateScreenConfigs(
     for (const [contentType, config] of Object.entries(input.contentConfigs)) {
       const configJson = JSON.stringify(config)
 
-      // Check if config exists
+      // Check if config exists - use and() to combine conditions
       const existing = db
         .select()
         .from(screenContentConfigs)
-        .where(eq(screenContentConfigs.screenId, input.screenId))
-        .where(eq(screenContentConfigs.contentType, contentType))
+        .where(
+          and(
+            eq(screenContentConfigs.screenId, input.screenId),
+            eq(screenContentConfigs.contentType, contentType),
+          ),
+        )
         .get()
 
       if (existing) {
