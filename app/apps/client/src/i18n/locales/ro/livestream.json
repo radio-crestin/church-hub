@@ -124,6 +124,8 @@
     "obsAuthFailed": "Autentificarea OBS a esuat. Verifica parola WebSocket din setarile OBS.",
     "obsTimeout": "Conexiunea la OBS a expirat. Verifica daca host-ul si portul sunt corecte.",
     "youtubeAuthFailed": "Autentificarea YouTube a esuat",
+    "youtubeSessionExpired": "Sesiunea YouTube a expirat. Te rugam sa te reconectezi.",
+    "youtubeReauthRequired": "YouTube necesita autentificare din nou",
     "broadcastFailed": "Crearea transmisiei a esuat",
     "sceneSwitchFailed": "Schimbarea scenei a esuat",
     "startStreamFailed": "Pornirea stream-ului a esuat",
