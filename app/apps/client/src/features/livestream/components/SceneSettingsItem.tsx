@@ -3,8 +3,8 @@ import { CSS } from '@dnd-kit/utilities'
 import { GripVertical, Settings } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import { formatShortcutForDisplay } from '~/features/keyboard-shortcuts'
 import type { OBSScene } from '../types'
-import { formatShortcutForDisplay } from '../utils/shortcutValidation'
 
 interface SceneSettingsItemProps {
   scene: OBSScene

@@ -51,6 +51,40 @@
         "dark": "Întunecat"
       }
     },
+    "shortcuts": {
+      "title": "Scurtături de Tastatură",
+      "description": "Configurează scurtături globale de tastatură pentru acțiuni rapide. Aceste scurtături funcționează de oriunde în aplicație.",
+      "actions": {
+        "startLive": {
+          "label": "Pornește Transmisiunea",
+          "description": "Pornește transmisiunea YouTube (doar când este pregătită)"
+        },
+        "stopLive": {
+          "label": "Oprește Transmisiunea",
+          "description": "Oprește transmisiunea YouTube curentă"
+        },
+        "searchSong": {
+          "label": "Caută Cântări",
+          "description": "Navighează la cântări și focusează câmpul de căutare"
+        },
+        "searchBible": {
+          "label": "Caută în Biblie",
+          "description": "Navighează la Biblie și focusează câmpul de căutare"
+        }
+      },
+      "addShortcut": "Adaugă Scurtătură",
+      "noShortcuts": "Nicio scurtătură configurată",
+      "enabled": "Activat",
+      "disabled": "Dezactivat",
+      "clickToRecord": "Click pentru înregistrare",
+      "recording": "Înregistrare...",
+      "recordShortcut": "Apasă tastele...",
+      "removeShortcut": "Șterge",
+      "conflicts": {
+        "global": "Folosită deja de \"{{action}}\"",
+        "scene": "Folosită deja de scena \"{{scene}}\""
+      }
+    },
     "users": {
       "title": "Utilizatori autorizați",
       "description": "Administrează utilizatorii care pot accesa Church Hub",
