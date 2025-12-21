@@ -42,6 +42,8 @@ export interface YouTubeAuthStatus {
   channelId?: string
   channelName?: string
   expiresAt?: number
+  requiresReauth?: boolean
+  error?: string
 }
 
 export interface YouTubeConfig {

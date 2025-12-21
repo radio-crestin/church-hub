@@ -291,6 +291,8 @@ export type YouTubeAuthStatusMessage = {
     channelId?: string
     channelName?: string
     expiresAt?: number
+    requiresReauth?: boolean
+    error?: string
     updatedAt: number
   }
 }
