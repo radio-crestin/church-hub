@@ -1,3 +1,11 @@
+const DEBUG = process.env.DEBUG === 'true'
+
+function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
+  if (level === 'debug' && !DEBUG) return
+  // biome-ignore lint/suspicious/noConsole: logging utility
+  console.log(`[${level.toUpperCase()}] [livestream-routes] ${message}`)
+}
+
 import { generateBroadcastMessage } from '../service/livestream/message'
 import {
   getAllSceneShortcuts,
