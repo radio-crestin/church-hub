@@ -51,6 +51,40 @@
         "dark": "Dark"
       }
     },
+    "shortcuts": {
+      "title": "Keyboard Shortcuts",
+      "description": "Configure global keyboard shortcuts for quick actions. These shortcuts work from anywhere in the application.",
+      "actions": {
+        "startLive": {
+          "label": "Start Live Stream",
+          "description": "Start the YouTube live stream (only when ready)"
+        },
+        "stopLive": {
+          "label": "Stop Live Stream",
+          "description": "Stop the current YouTube live stream"
+        },
+        "searchSong": {
+          "label": "Search Songs",
+          "description": "Navigate to songs and focus the search input"
+        },
+        "searchBible": {
+          "label": "Search Bible",
+          "description": "Navigate to Bible and focus the search input"
+        }
+      },
+      "addShortcut": "Add Shortcut",
+      "noShortcuts": "No shortcuts configured",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "clickToRecord": "Click to record",
+      "recording": "Recording...",
+      "recordShortcut": "Press keys...",
+      "removeShortcut": "Remove",
+      "conflicts": {
+        "global": "Already used by \"{{action}}\"",
+        "scene": "Already used by scene \"{{scene}}\""
+      }
+    },
     "users": {
       "title": "Authorized Users",
       "description": "Manage users that can access your Church Hub",

@@ -23,8 +23,8 @@
 ~~- din aceasta pagina utilizatorul poate crea un nou livestream pe YouTube~~
 ~~- aici vor fi afisate scenele si poti schimba rapid intre ele~~
 ~~- integreaza un modul de a schimba scenele cu ajutorul unor shortcuts~~
-- adauga optiunea de a configura ce sceva sa se selecteze la start, stop
-- creaza shortcuts pentru start/stop stream, cauta cantari, cauta Versete
+~~- adauga optiunea de a configura ce sceva sa se selecteze la start, stop~~
+~~- creaza shortcuts pentru start/stop stream, cauta cantari, cauta Versete~~
 - creaza un modul pentru a trigger shortcuts folosind midi devices
 - acest modul trebuie sa permita afisarea state-ului curent in diferite locatii pe acel midi device (de exemplu, scena curenta va aprinde bec-ul unui anumit buton)
 - creaza mecanismul de schimbare scene in functie de tipul de slide afisat (de exemplu cand este un verset biblic tineri, sa se schimbe pe scena SOLO)

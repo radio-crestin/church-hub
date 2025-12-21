@@ -2,7 +2,7 @@ import { Eye, EyeOff, Play, Plus, Square, X } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { ShortcutRecorder } from './ShortcutRecorder'
+import { ShortcutRecorder } from '~/features/keyboard-shortcuts'
 import type { OBSScene, YouTubeConfig } from '../types'
 import { validateShortcut } from '../utils/shortcutValidation'
 
@@ -193,6 +193,7 @@ export function SceneSettingsPopup({
                       onChange={(value) => handleUpdateShortcut(index, value)}
                       onRemove={() => handleRemoveShortcut(index)}
                       error={errors[index]}
+                      namespace="livestream"
                     />
                     {errors[index] && (
                       <p className="mt-1 text-xs text-red-500">
