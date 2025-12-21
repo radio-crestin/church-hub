@@ -9,6 +9,7 @@ import {
 
 export { getOBSConfig, updateOBSConfig } from './config'
 export {
+  getAllSceneShortcuts,
   getScenes,
   getVisibleScenes,
   reorderScenes,

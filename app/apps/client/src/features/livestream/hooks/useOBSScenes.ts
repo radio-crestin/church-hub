@@ -23,7 +23,7 @@ export function useOBSScenes(visibleOnly = false) {
       data,
     }: {
       id: number
-      data: { displayName?: string; isVisible?: boolean }
+      data: { displayName?: string; isVisible?: boolean; shortcuts?: string[] }
     }) => updateOBSScene(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({

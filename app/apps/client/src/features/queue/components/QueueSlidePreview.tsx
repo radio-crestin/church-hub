@@ -1,7 +1,6 @@
 import { useRef } from 'react'
 
 import type { SongSlide } from '~/features/songs/types'
-
 import { useScrollIntoViewWithNeighbors } from '../hooks'
 
 interface QueueSlidePreviewProps {

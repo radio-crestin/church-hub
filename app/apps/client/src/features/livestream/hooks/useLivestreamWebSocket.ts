@@ -6,6 +6,7 @@ import type {
   LivestreamStatus,
   OBSConnectionStatus,
   OBSStreamingStatus,
+  StreamStartProgress,
 } from '../types'
 
 const DEBUG = import.meta.env.DEV
@@ -41,11 +42,29 @@ interface LivestreamStatusMessage {
   payload: LivestreamStatus
 }
 
+interface YouTubeAuthStatusMessage {
+  type: 'youtube_auth_status'
+  payload: {
+    isAuthenticated: boolean
+    channelId?: string
+    channelName?: string
+    expiresAt?: number
+    updatedAt: number
+  }
+}
+
+interface StreamStartProgressMessage {
+  type: 'stream_start_progress'
+  payload: StreamStartProgress
+}
+
 type LivestreamMessage =
   | OBSConnectionStatusMessage
   | OBSStreamingStatusMessage
   | OBSCurrentSceneMessage
   | LivestreamStatusMessage
+  | YouTubeAuthStatusMessage
+  | StreamStartProgressMessage
   | { type: 'pong' }
 
 export function useLivestreamWebSocket() {
@@ -56,6 +75,8 @@ export function useLivestreamWebSocket() {
   const [status, setStatus] = useState<WebSocketStatus>('disconnected')
   const [livestreamStatus, setLivestreamStatus] =
     useState<LivestreamStatus | null>(null)
+  const [streamStartProgress, setStreamStartProgress] =
+    useState<StreamStartProgress | null>(null)
 
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -123,6 +144,28 @@ export function useLivestreamWebSocket() {
               queryKey: ['livestream', 'broadcast'],
             })
           }
+
+          if (data.type === 'youtube_auth_status') {
+            log('debug', 'Received YouTube auth status update')
+            queryClient.invalidateQueries({
+              queryKey: ['livestream', 'youtube', 'auth'],
+            })
+          }
+
+          if (data.type === 'stream_start_progress') {
+            log(
+              'debug',
+              `Stream start progress: ${data.payload.step} (${data.payload.progress}%)`,
+            )
+            setStreamStartProgress(data.payload)
+
+            if (
+              data.payload.step === 'completed' ||
+              data.payload.step === 'error'
+            ) {
+              setTimeout(() => setStreamStartProgress(null), 3000)
+            }
+          }
         } catch (error) {
           log('error', `Failed to parse message: ${error}`)
         }
@@ -182,5 +225,5 @@ export function useLivestreamWebSocket() {
     }
   }, [connect, disconnect])
 
-  return { status, livestreamStatus, connect, disconnect }
+  return { status, livestreamStatus, streamStartProgress, connect, disconnect }
 }
