@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
+import { useToast } from '~/ui/toast'
 import {
   getYouTubeAuthStatus,
   logoutYouTube,
@@ -17,22 +19,36 @@ import {
 } from '../utils'
 
 const YOUTUBE_CLIENT_ID = import.meta.env.VITE_YOUTUBE_CLIENT_ID as string
-const YOUTUBE_CLIENT_SECRET = import.meta.env
-  .VITE_YOUTUBE_CLIENT_SECRET as string
 const YOUTUBE_SCOPE = 'https://www.googleapis.com/auth/youtube.force-ssl'
 const YOUTUBE_REDIRECT_URI =
   'http://localhost:3000/api/livestream/youtube/callback'
 
 export function useYouTubeAuth() {
   const queryClient = useQueryClient()
+  const { t } = useTranslation('livestream')
+  const { showToast } = useToast()
   const [isAuthenticating, setIsAuthenticating] = useState(false)
   const [authError, setAuthError] = useState<string | null>(null)
+  const previousRequiresReauth = useRef<boolean | undefined>(undefined)
 
   const query = useQuery({
     queryKey: ['livestream', 'youtube', 'auth'],
     queryFn: getYouTubeAuthStatus,
     staleTime: 5 * 60 * 1000,
   })
+
+  // Show toast when requiresReauth becomes true
+  useEffect(() => {
+    const requiresReauth = query.data?.requiresReauth
+    if (
+      requiresReauth &&
+      previousRequiresReauth.current !== true &&
+      !isAuthenticating
+    ) {
+      showToast(t('errors.youtubeSessionExpired'), 'error')
+    }
+    previousRequiresReauth.current = requiresReauth
+  }, [query.data?.requiresReauth, isAuthenticating, showToast, t])
 
   const storeMutation = useMutation({
     mutationFn: storeYouTubeTokens,
@@ -136,10 +152,10 @@ export function useYouTubeAuth() {
 
           try {
             // Exchange code for tokens using PKCE (direct call to Google)
+            // Note: client_secret is not required for installed/desktop apps with PKCE
             const tokens = await exchangeCodeForTokens({
               code,
               clientId: YOUTUBE_CLIENT_ID,
-              clientSecret: YOUTUBE_CLIENT_SECRET,
               redirectUri: YOUTUBE_REDIRECT_URI,
               codeVerifier: storedVerifier,
             })
@@ -193,6 +209,7 @@ export function useYouTubeAuth() {
     isAuthenticated: query.data?.isAuthenticated ?? false,
     channelName: query.data?.channelName,
     channelId: query.data?.channelId,
+    requiresReauth: query.data?.requiresReauth ?? false,
     login: openLoginPopup,
     logout: logoutMutation.mutate,
     isLoggingOut: logoutMutation.isPending,
