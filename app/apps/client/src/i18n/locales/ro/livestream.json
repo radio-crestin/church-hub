@@ -76,7 +76,15 @@
     "isLive": "LIVE",
     "notStreaming": "Nu transmite",
     "starting": "Se porneste...",
-    "stopping": "Se opreste..."
+    "stopping": "Se opreste...",
+    "progress": {
+      "creating_broadcast": "Se creeaza transmisia",
+      "waiting_for_ready": "Se asteapta YouTube",
+      "delay_before_stream": "Se pregateste stream-ul",
+      "starting_obs": "Se porneste OBS",
+      "completed": "Stream pornit",
+      "error": "Eroare la pornirea stream-ului"
+    }
   },
   "broadcast": {
     "currentBroadcast": "Transmisie curenta",
@@ -84,7 +92,9 @@
     "loading": "Se incarca informatiile transmisiei...",
     "copyMessage": "Copiaza mesaj",
     "messageCopied": "Mesaj copiat",
-    "openInYouTube": "Deschide in YouTube"
+    "openInYouTube": "Deschide in YouTube",
+    "watchLive": "Vizualizare Live",
+    "openStudio": "YouTube Studio"
   },
   "scenes": {
     "title": "Scene",

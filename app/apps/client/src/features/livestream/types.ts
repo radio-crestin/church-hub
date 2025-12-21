@@ -112,3 +112,20 @@ export interface StartStreamResponse {
   success: boolean
   broadcast: BroadcastInfo
 }
+
+export type StreamStartStep =
+  | 'creating_broadcast'
+  | 'waiting_for_ready'
+  | 'delay_before_stream'
+  | 'starting_obs'
+  | 'completed'
+  | 'error'
+
+export interface StreamStartProgress {
+  step: StreamStartStep
+  progress: number
+  message: string
+  broadcastId?: string
+  error?: string
+  updatedAt: number
+}

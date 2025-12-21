@@ -1,7 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import {
+  getPastBroadcasts,
   getStreamKeys,
+  getUpcomingBroadcasts,
   getYouTubeConfig,
   updateYouTubeConfig,
 } from '../service'
@@ -40,4 +42,37 @@ export function useStreamKeys() {
     queryFn: getStreamKeys,
     staleTime: 10 * 60 * 1000,
   })
+}
+
+export function useUpcomingBroadcasts() {
+  const query = useQuery({
+    queryKey: ['livestream', 'youtube', 'broadcasts', 'upcoming'],
+    queryFn: getUpcomingBroadcasts,
+    staleTime: 60 * 1000,
+  })
+
+  return {
+    broadcasts: query.data ?? [],
+    isLoading: query.isLoading,
+    refetch: query.refetch,
+    isRefetching: query.isRefetching,
+    error: query.error,
+  }
+}
+
+export function usePastBroadcasts(enabled = true) {
+  const query = useQuery({
+    queryKey: ['livestream', 'youtube', 'broadcasts', 'completed'],
+    queryFn: getPastBroadcasts,
+    staleTime: 60 * 1000,
+    enabled,
+  })
+
+  return {
+    broadcasts: query.data ?? [],
+    isLoading: query.isLoading,
+    refetch: query.refetch,
+    isRefetching: query.isRefetching,
+    error: query.error,
+  }
 }

@@ -1,25 +1,21 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Check, Eye, EyeOff, GripVertical, Pencil, X } from 'lucide-react'
-import { useCallback, useState } from 'react'
+import { GripVertical, Settings } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import type { OBSScene } from '../types'
+import { formatShortcutForDisplay } from '../utils/shortcutValidation'
 
 interface SceneSettingsItemProps {
   scene: OBSScene
-  onToggleVisibility: () => void
-  onUpdateDisplayName: (displayName: string) => void
+  onOpenSettings: () => void
 }
 
 export function SceneSettingsItem({
   scene,
-  onToggleVisibility,
-  onUpdateDisplayName,
+  onOpenSettings,
 }: SceneSettingsItemProps) {
   const { t } = useTranslation('livestream')
-  const [isEditing, setIsEditing] = useState(false)
-  const [editValue, setEditValue] = useState(scene.displayName)
 
   const {
     attributes,
@@ -36,33 +32,7 @@ export function SceneSettingsItem({
     opacity: isDragging ? 0.5 : 1,
   }
 
-  const handleEdit = useCallback(() => {
-    setEditValue(scene.displayName)
-    setIsEditing(true)
-  }, [scene.displayName])
-
-  const handleSave = useCallback(() => {
-    if (editValue.trim() && editValue !== scene.displayName) {
-      onUpdateDisplayName(editValue.trim())
-    }
-    setIsEditing(false)
-  }, [editValue, scene.displayName, onUpdateDisplayName])
-
-  const handleCancel = useCallback(() => {
-    setEditValue(scene.displayName)
-    setIsEditing(false)
-  }, [scene.displayName])
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter') {
-        handleSave()
-      } else if (e.key === 'Escape') {
-        handleCancel()
-      }
-    },
-    [handleSave, handleCancel],
-  )
+  const hasShortcuts = scene.shortcuts && scene.shortcuts.length > 0
 
   return (
     <div
@@ -85,75 +55,38 @@ export function SceneSettingsItem({
       </button>
 
       <div className="flex-1 min-w-0">
-        {isEditing ? (
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              value={editValue}
-              onChange={(e) => setEditValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="flex-1 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              autoFocus
-            />
-            <button
-              type="button"
-              onClick={handleSave}
-              className="p-1 text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
-              title={t('common:buttons.save', { defaultValue: 'Save' })}
-            >
-              <Check size={18} />
-            </button>
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-              title={t('common:buttons.cancel', { defaultValue: 'Cancel' })}
-            >
-              <X size={18} />
-            </button>
-          </div>
-        ) : (
-          <div>
-            <span className="font-medium text-gray-900 dark:text-white truncate block">
-              {scene.displayName}
+        <span className="font-medium text-gray-900 dark:text-white truncate block">
+          {scene.displayName}
+        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          {scene.displayName !== scene.obsSceneName && (
+            <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
+              {scene.obsSceneName}
             </span>
-            {scene.displayName !== scene.obsSceneName && (
-              <span className="text-xs text-gray-500 dark:text-gray-400 truncate block">
-                {scene.obsSceneName}
-              </span>
-            )}
-          </div>
-        )}
+          )}
+          {hasShortcuts && (
+            <div className="flex flex-wrap gap-1">
+              {scene.shortcuts.map((shortcut) => (
+                <span
+                  key={shortcut}
+                  className="px-1.5 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded"
+                >
+                  {formatShortcutForDisplay(shortcut)}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
-      {!isEditing && (
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={onToggleVisibility}
-            className={`
-              p-2 rounded-lg transition-colors
-              ${
-                scene.isVisible
-                  ? 'text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'
-                  : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }
-            `}
-            title={scene.isVisible ? t('scenes.visible') : t('scenes.hidden')}
-          >
-            {scene.isVisible ? <Eye size={18} /> : <EyeOff size={18} />}
-          </button>
-
-          <button
-            type="button"
-            onClick={handleEdit}
-            className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
-            title={t('common:buttons.edit', { defaultValue: 'Edit' })}
-          >
-            <Pencil size={18} />
-          </button>
-        </div>
-      )}
+      <button
+        type="button"
+        onClick={onOpenSettings}
+        className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+        title={t('scenes.settings')}
+      >
+        <Settings size={18} />
+      </button>
     </div>
   )
 }

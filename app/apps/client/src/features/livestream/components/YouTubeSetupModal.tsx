@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 
 import { BroadcastTemplateSelector } from './BroadcastTemplateSelector'
 import { Button } from '../../../ui/button/Button'
-import { useYouTubeConfig } from '../hooks'
+import { usePastBroadcasts, useYouTubeConfig } from '../hooks'
 import type { PastBroadcast } from '../types'
 import { openExternalUrl } from '../utils'
 
@@ -15,13 +15,38 @@ interface YouTubeSetupModalProps {
 export function YouTubeSetupModal({ isOpen, onClose }: YouTubeSetupModalProps) {
   const { t } = useTranslation('livestream')
   const dialogRef = useRef<HTMLDialogElement>(null)
-  const { update, isUpdating } = useYouTubeConfig()
+  const { config, update, isUpdating } = useYouTubeConfig()
+  const { broadcasts } = usePastBroadcasts(isOpen)
 
   const [selectedPastBroadcastId, setSelectedPastBroadcastId] = useState<
     string | null
   >(null)
   const [selectedPastBroadcast, setSelectedPastBroadcast] =
     useState<PastBroadcast | null>(null)
+  const [hasInitialized, setHasInitialized] = useState(false)
+
+  // Initialize selection from saved config when broadcasts are loaded
+  useEffect(() => {
+    if (hasInitialized || !config?.selectedBroadcastId || !broadcasts.length) {
+      return
+    }
+
+    const savedBroadcast = broadcasts.find(
+      (b) => b.broadcastId === config.selectedBroadcastId,
+    )
+    if (savedBroadcast) {
+      setSelectedPastBroadcastId(savedBroadcast.broadcastId)
+      setSelectedPastBroadcast(savedBroadcast)
+    }
+    setHasInitialized(true)
+  }, [config?.selectedBroadcastId, broadcasts, hasInitialized])
+
+  // Reset initialization when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setHasInitialized(false)
+    }
+  }, [isOpen])
 
   const handleSelectPastBroadcast = (broadcast: PastBroadcast | null) => {
     setSelectedPastBroadcastId(broadcast?.broadcastId ?? null)
@@ -33,6 +58,7 @@ export function YouTubeSetupModal({ isOpen, onClose }: YouTubeSetupModalProps) {
         titleTemplate: broadcast.title,
         description: broadcast.description,
         privacyStatus: broadcast.privacyStatus,
+        selectedBroadcastId: broadcast.broadcastId,
       })
     }
   }

@@ -1,9 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
+import { useLivestreamWebSocket } from './useLivestreamWebSocket'
 import { getActiveBroadcast, startStream, stopStream } from '../service'
 
 export function useStreaming() {
   const queryClient = useQueryClient()
+  const { streamStartProgress } = useLivestreamWebSocket()
 
   const activeBroadcastQuery = useQuery({
     queryKey: ['livestream', 'broadcast', 'active'],
@@ -37,5 +39,6 @@ export function useStreaming() {
     stopAsync: stopMutation.mutateAsync,
     isStopping: stopMutation.isPending,
     lastStartedBroadcast: startMutation.data?.broadcast,
+    streamStartProgress,
   }
 }
