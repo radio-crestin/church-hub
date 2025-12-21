@@ -9,6 +9,7 @@ import {
 } from './middleware'
 import { getOpenApiSpec, getScalarDocs } from './openapi'
 import { handleLivestreamRoutes } from './routes/livestream'
+import { handleMIDIRoutes } from './routes/midi'
 import {
   ALL_PERMISSIONS,
   type CreateUserInput,
@@ -54,6 +55,13 @@ import {
   initializeOBSAutoConnect,
   initializeOBSCallbacks,
 } from './service/livestream/obs'
+import {
+  initializeMIDI,
+  setAllLEDs,
+  setLED,
+  setMessageCallback,
+  shutdownMIDI,
+} from './service/midi'
 import { getExternalInterfaces } from './service/network'
 import {
   batchUpdateScreenConfigs,
@@ -146,11 +154,13 @@ import {
   upsertSongSlide,
 } from './service/songs'
 import {
+  broadcastMIDIMessage,
   broadcastPresentationState,
   broadcastScreenConfigUpdated,
   handleWebSocketClose,
   handleWebSocketMessage,
   handleWebSocketOpen,
+  setMIDIMessageHandler,
   type WebSocketData,
 } from './websocket'
 
@@ -169,6 +179,27 @@ async function main() {
 
   // Wire up OBS callbacks to WebSocket broadcasts
   initializeOBSCallbacks()
+
+  // Initialize MIDI service
+  initializeMIDI()
+
+  // Wire up MIDI message callback to WebSocket broadcast
+  setMessageCallback((message) => {
+    broadcastMIDIMessage(message)
+  })
+
+  // Wire up MIDI WebSocket message handler for LED control
+  setMIDIMessageHandler((type, payload) => {
+    if (type === 'midi_set_led') {
+      const { note, on } = payload as { note: number; on: boolean }
+      setLED(note, on)
+    } else if (type === 'midi_set_all_leds') {
+      const { ledStates } = payload as {
+        ledStates: Array<{ note: number; on: boolean }>
+      }
+      setAllLEDs(ledStates)
+    }
+  })
 
   const isProd = process.env.NODE_ENV === 'production'
 
@@ -3343,6 +3374,10 @@ async function main() {
       )
       if (livestreamResponse) return livestreamResponse
 
+      // MIDI routes
+      const midiResponse = await handleMIDIRoutes(req, url, handleCors)
+      if (midiResponse) return midiResponse
+
       return handleCors(req, new Response('Not Found', { status: 404 }))
     },
     websocket: {
@@ -3361,11 +3396,13 @@ async function main() {
 
   // Graceful shutdown
   process.on('SIGINT', () => {
+    shutdownMIDI()
     closeDatabase()
     process.exit(0)
   })
 
   process.on('SIGTERM', () => {
+    shutdownMIDI()
     closeDatabase()
     process.exit(0)
   })

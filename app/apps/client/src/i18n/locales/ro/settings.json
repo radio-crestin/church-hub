@@ -79,10 +79,27 @@
       "clickToRecord": "Click pentru înregistrare",
       "recording": "Înregistrare...",
       "recordShortcut": "Apasă tastele...",
+      "recordShortcutOrMidi": "Apasă tastă sau buton MIDI...",
       "removeShortcut": "Șterge",
       "conflicts": {
         "global": "Folosită deja de \"{{action}}\"",
         "scene": "Folosită deja de scena \"{{scene}}\""
+      },
+      "midi": {
+        "title": "Controller MIDI",
+        "description": "Folosește controllere MIDI hardware pentru scurtături cu feedback LED",
+        "notSupported": "API-ul Web MIDI nu este suportat în acest browser. Funcțiile controller MIDI nu sunt disponibile.",
+        "inputDevice": "Dispozitiv Intrare",
+        "outputDevice": "Dispozitiv Ieșire (LED-uri)",
+        "selectDevice": "Selectează dispozitiv...",
+        "noInputDevices": "Niciun dispozitiv MIDI de intrare detectat",
+        "noOutputDevices": "Niciun dispozitiv MIDI de ieșire detectat",
+        "refresh": "Reîmprospătează dispozitive",
+        "requestPermission": "Acordă Acces MIDI",
+        "permissionError": "Acces MIDI refuzat: {{error}}",
+        "fullyConnected": "Intrare și ieșire conectate",
+        "inputOnly": "Intrare conectată (fără feedback LED)",
+        "outputOnly": "Ieșire conectată (fără declanșatoare)"
       }
     },
     "users": {

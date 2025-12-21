@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useMemo } from 'react'
 
 import { getSetting, upsertSetting } from '~/service/settings'
+import type { MIDIConfig } from '../midi/types'
+import { DEFAULT_MIDI_CONFIG } from '../midi/types'
 import {
   DEFAULT_SHORTCUTS_CONFIG,
   type GlobalShortcutActionId,
@@ -41,6 +43,10 @@ export function useAppShortcuts() {
     }
   }, [setting])
 
+  const midiConfig = useMemo<MIDIConfig>(() => {
+    return shortcuts.midi ?? DEFAULT_MIDI_CONFIG
+  }, [shortcuts])
+
   const updateActionShortcuts = useCallback(
     async (actionId: GlobalShortcutActionId, config: ShortcutActionConfig) => {
       const updated: GlobalShortcutsConfig = {
@@ -49,6 +55,17 @@ export function useAppShortcuts() {
           ...shortcuts.actions,
           [actionId]: config,
         },
+      }
+      await mutation.mutateAsync(updated)
+    },
+    [shortcuts, mutation],
+  )
+
+  const updateMIDIConfig = useCallback(
+    async (config: MIDIConfig) => {
+      const updated: GlobalShortcutsConfig = {
+        ...shortcuts,
+        midi: config,
       }
       await mutation.mutateAsync(updated)
     },
@@ -64,9 +81,11 @@ export function useAppShortcuts() {
 
   return {
     shortcuts,
+    midiConfig,
     isLoading,
     isSaving: mutation.isPending,
     updateActionShortcuts,
+    updateMIDIConfig,
     updateFullConfig,
   }
 }
