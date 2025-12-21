@@ -284,6 +284,37 @@ export type LivestreamStatusMessage = {
   }
 }
 
+export type YouTubeAuthStatusMessage = {
+  type: 'youtube_auth_status'
+  payload: {
+    isAuthenticated: boolean
+    channelId?: string
+    channelName?: string
+    expiresAt?: number
+    updatedAt: number
+  }
+}
+
+export type StreamStartStep =
+  | 'creating_broadcast'
+  | 'waiting_for_ready'
+  | 'delay_before_stream'
+  | 'starting_obs'
+  | 'completed'
+  | 'error'
+
+export type StreamStartProgressMessage = {
+  type: 'stream_start_progress'
+  payload: {
+    step: StreamStartStep
+    progress: number
+    message: string
+    broadcastId?: string
+    error?: string
+    updatedAt: number
+  }
+}
+
 /**
  * Broadcasts OBS connection status to all connected clients
  */
@@ -366,6 +397,55 @@ export function broadcastLivestreamStatus(
   } satisfies LivestreamStatusMessage)
 
   log('debug', `Broadcasting livestream status to ${clients.size} clients`)
+
+  for (const [clientId, ws] of clients) {
+    try {
+      ws.send(message)
+    } catch (error) {
+      log('error', `Failed to send to ${clientId}: ${error}`)
+      clients.delete(clientId)
+    }
+  }
+}
+
+/**
+ * Broadcasts YouTube auth status to all connected clients
+ */
+export function broadcastYouTubeAuthStatus(
+  status: YouTubeAuthStatusMessage['payload'],
+) {
+  const message = JSON.stringify({
+    type: 'youtube_auth_status',
+    payload: status,
+  } satisfies YouTubeAuthStatusMessage)
+
+  log('debug', `Broadcasting YouTube auth status to ${clients.size} clients`)
+
+  for (const [clientId, ws] of clients) {
+    try {
+      ws.send(message)
+    } catch (error) {
+      log('error', `Failed to send to ${clientId}: ${error}`)
+      clients.delete(clientId)
+    }
+  }
+}
+
+/**
+ * Broadcasts stream start progress to all connected clients
+ */
+export function broadcastStreamStartProgress(
+  status: StreamStartProgressMessage['payload'],
+) {
+  const message = JSON.stringify({
+    type: 'stream_start_progress',
+    payload: status,
+  } satisfies StreamStartProgressMessage)
+
+  log(
+    'debug',
+    `Broadcasting stream start progress (${status.step}) to ${clients.size} clients`,
+  )
 
   for (const [clientId, ws] of clients) {
     try {

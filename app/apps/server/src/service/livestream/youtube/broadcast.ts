@@ -268,3 +268,78 @@ export async function getPastBroadcasts(): Promise<PastBroadcast[]> {
     ),
   }))
 }
+
+export async function getBroadcastStatus(broadcastId: string): Promise<{
+  lifeCycleStatus: string
+  streamStatus: string | null
+}> {
+  const youtube = await getYouTubeService()
+
+  if (!youtube) {
+    throw new Error('Not authenticated with YouTube')
+  }
+
+  const response = await youtube.liveBroadcasts.list({
+    part: ['status'],
+    id: [broadcastId],
+  })
+
+  const broadcast = response.data.items?.[0]
+  if (!broadcast) {
+    throw new Error(`Broadcast ${broadcastId} not found`)
+  }
+
+  return {
+    lifeCycleStatus: broadcast.status?.lifeCycleStatus || 'unknown',
+    streamStatus: broadcast.status?.streamStatus || null,
+  }
+}
+
+export interface WaitForReadyOptions {
+  timeoutMs?: number
+  pollIntervalMs?: number
+  onProgress?: (status: { lifeCycleStatus: string; elapsedMs: number }) => void
+}
+
+export async function waitForBroadcastReady(
+  broadcastId: string,
+  options: WaitForReadyOptions = {},
+): Promise<void> {
+  const { timeoutMs = 60000, pollIntervalMs = 2000, onProgress } = options
+
+  const startTime = Date.now()
+
+  while (true) {
+    const elapsedMs = Date.now() - startTime
+
+    if (elapsedMs >= timeoutMs) {
+      throw new Error(
+        `Timeout waiting for broadcast ${broadcastId} to become ready after ${timeoutMs}ms`,
+      )
+    }
+
+    const status = await getBroadcastStatus(broadcastId)
+
+    if (onProgress) {
+      onProgress({ lifeCycleStatus: status.lifeCycleStatus, elapsedMs })
+    }
+
+    if (
+      status.lifeCycleStatus === 'ready' ||
+      status.lifeCycleStatus === 'live'
+    ) {
+      return
+    }
+
+    if (
+      status.lifeCycleStatus === 'complete' ||
+      status.lifeCycleStatus === 'revoked'
+    ) {
+      throw new Error(
+        `Broadcast ${broadcastId} is in unexpected state: ${status.lifeCycleStatus}`,
+      )
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, pollIntervalMs))
+  }
+}

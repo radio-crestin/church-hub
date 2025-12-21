@@ -11,9 +11,17 @@ export function useBroadcastMessage() {
       generateBroadcastMessage(broadcastUrl),
   })
 
+  const fetchMessage = useCallback(
+    async (broadcastUrl?: string) => {
+      return await mutation.mutateAsync(broadcastUrl)
+    },
+    [mutation],
+  )
+
   const copyMessage = useCallback(
     async (broadcastUrl?: string) => {
-      const message = await mutation.mutateAsync(broadcastUrl)
+      const message =
+        mutation.data || (await mutation.mutateAsync(broadcastUrl))
       await navigator.clipboard.writeText(message)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
@@ -25,6 +33,7 @@ export function useBroadcastMessage() {
   return {
     message: mutation.data,
     isLoading: mutation.isPending,
+    fetchMessage,
     copyMessage,
     copied,
   }

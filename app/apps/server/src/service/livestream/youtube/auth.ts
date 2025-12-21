@@ -1,47 +1,25 @@
 import { eq } from 'drizzle-orm'
 import { google } from 'googleapis'
 
-import {
-  exchangeCodeForTokens,
-  getAuthenticatedClient,
-  getAuthUrl,
-  getOAuth2Client,
-} from './client'
+import { getAuthenticatedClient, getOAuth2Client } from './client'
 import { getDatabase } from '../../../db'
 import { youtubeAuth } from '../../../db/schema'
 import type { YouTubeAuthStatus } from '../types'
 
-export { getAuthUrl }
-
-export async function getAuthStatus(): Promise<YouTubeAuthStatus> {
-  const db = getDatabase()
-  const authRecords = await db.select().from(youtubeAuth).limit(1)
-
-  if (authRecords.length === 0) {
-    return { isAuthenticated: false }
-  }
-
-  const auth = authRecords[0]
-  const isExpired = auth.expiresAt.getTime() < Date.now()
-
-  if (isExpired) {
-    const client = await getAuthenticatedClient()
-    if (!client) {
-      return { isAuthenticated: false }
-    }
-  }
-
-  return {
-    isAuthenticated: true,
-    channelId: auth.channelId || undefined,
-    channelName: auth.channelName || undefined,
-    expiresAt: auth.expiresAt.getTime(),
-  }
+interface StoreTokensInput {
+  accessToken: string
+  refreshToken: string
+  expiresAt: Date
 }
 
-export async function handleCallback(code: string): Promise<YouTubeAuthStatus> {
+/**
+ * Stores OAuth tokens received from client after PKCE flow completion.
+ * This is called after the client exchanges the authorization code for tokens.
+ */
+export async function storeTokens(
+  tokens: StoreTokensInput,
+): Promise<YouTubeAuthStatus> {
   const db = getDatabase()
-  const tokens = await exchangeCodeForTokens(code)
 
   const client = getOAuth2Client()
   client.setCredentials({
@@ -89,6 +67,32 @@ export async function handleCallback(code: string): Promise<YouTubeAuthStatus> {
     channelId: channelId || undefined,
     channelName: channelName || undefined,
     expiresAt: tokens.expiresAt.getTime(),
+  }
+}
+
+export async function getAuthStatus(): Promise<YouTubeAuthStatus> {
+  const db = getDatabase()
+  const authRecords = await db.select().from(youtubeAuth).limit(1)
+
+  if (authRecords.length === 0) {
+    return { isAuthenticated: false }
+  }
+
+  const auth = authRecords[0]
+  const isExpired = auth.expiresAt.getTime() < Date.now()
+
+  if (isExpired) {
+    const client = await getAuthenticatedClient()
+    if (!client) {
+      return { isAuthenticated: false }
+    }
+  }
+
+  return {
+    isAuthenticated: true,
+    channelId: auth.channelId || undefined,
+    channelName: auth.channelName || undefined,
+    expiresAt: auth.expiresAt.getTime(),
   }
 }
 

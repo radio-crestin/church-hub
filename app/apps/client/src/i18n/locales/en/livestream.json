@@ -76,7 +76,15 @@
     "isLive": "LIVE",
     "notStreaming": "Not Streaming",
     "starting": "Starting...",
-    "stopping": "Stopping..."
+    "stopping": "Stopping...",
+    "progress": {
+      "creating_broadcast": "Creating broadcast",
+      "waiting_for_ready": "Waiting for YouTube",
+      "delay_before_stream": "Preparing stream",
+      "starting_obs": "Starting OBS",
+      "completed": "Stream started",
+      "error": "Error starting stream"
+    }
   },
   "broadcast": {
     "currentBroadcast": "Current Broadcast",
@@ -84,7 +92,9 @@
     "loading": "Loading broadcast info...",
     "copyMessage": "Copy Message",
     "messageCopied": "Message copied to clipboard",
-    "openInYouTube": "Open in YouTube"
+    "openInYouTube": "Open in YouTube",
+    "watchLive": "Watch Live",
+    "openStudio": "YouTube Studio"
   },
   "scenes": {
     "title": "Scenes",

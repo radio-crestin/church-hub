@@ -5,59 +5,27 @@ import { google } from 'googleapis'
 import { getDatabase } from '../../../db'
 import { youtubeAuth } from '../../../db/schema'
 
-const SCOPES = ['https://www.googleapis.com/auth/youtube.force-ssl']
-
 let oauth2Client: OAuth2Client | null = null
 
+/**
+ * Get or create the OAuth2 client.
+ * For Desktop app credentials with PKCE, client_secret is not required.
+ * Token refresh also works without client_secret for installed apps.
+ */
 export function getOAuth2Client(): OAuth2Client {
   if (!oauth2Client) {
     const clientId = process.env.YOUTUBE_CLIENT_ID
-    const clientSecret = process.env.YOUTUBE_CLIENT_SECRET
-    const redirectUri =
-      process.env.YOUTUBE_REDIRECT_URI ||
-      'http://localhost:3000/api/livestream/youtube/callback'
 
-    if (!clientId || !clientSecret) {
+    if (!clientId) {
       throw new Error(
-        'YouTube OAuth credentials not configured. Set YOUTUBE_CLIENT_ID and YOUTUBE_CLIENT_SECRET environment variables.',
+        'YouTube OAuth credentials not configured. Set YOUTUBE_CLIENT_ID environment variable.',
       )
     }
 
-    oauth2Client = new OAuth2Client(clientId, clientSecret, redirectUri)
+    oauth2Client = new OAuth2Client(clientId)
   }
 
   return oauth2Client
-}
-
-export function getAuthUrl(): string {
-  const client = getOAuth2Client()
-
-  return client.generateAuthUrl({
-    access_type: 'offline',
-    scope: SCOPES,
-    prompt: 'consent',
-  })
-}
-
-export async function exchangeCodeForTokens(code: string): Promise<{
-  accessToken: string
-  refreshToken: string
-  expiresAt: Date
-}> {
-  const client = getOAuth2Client()
-  const { tokens } = await client.getToken(code)
-
-  if (!tokens.access_token || !tokens.refresh_token) {
-    throw new Error('Failed to obtain tokens from Google')
-  }
-
-  const expiresAt = new Date(tokens.expiry_date || Date.now() + 3600 * 1000)
-
-  return {
-    accessToken: tokens.access_token,
-    refreshToken: tokens.refresh_token,
-    expiresAt,
-  }
 }
 
 export async function getAuthenticatedClient(): Promise<OAuth2Client | null> {

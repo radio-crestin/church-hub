@@ -24,6 +24,8 @@ export const youtubeConfig = sqliteTable('youtube_config', {
   streamKeyId: text('stream_key_id'),
   playlistId: text('playlist_id'),
   startSceneName: text('start_scene_name'),
+  selectedBroadcastId: text('selected_broadcast_id'),
+  broadcastMode: text('broadcast_mode').notNull().default('create'),
   createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()
     .default(sql`(unixepoch())`),
@@ -58,6 +60,7 @@ export const obsScenes = sqliteTable(
       .notNull()
       .default(true),
     sortOrder: integer('sort_order').notNull().default(0),
+    shortcuts: text('shortcuts').notNull().default('[]'),
     createdAt: integer('created_at', { mode: 'timestamp' })
       .notNull()
       .default(sql`(unixepoch())`),
@@ -89,4 +92,23 @@ export const broadcastHistory = sqliteTable(
       .default(sql`(unixepoch())`),
   },
   (table) => [index('idx_broadcast_history_status').on(table.status)],
+)
+
+export const broadcastTemplates = sqliteTable(
+  'broadcast_templates',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    name: text('name').notNull(),
+    title: text('title').notNull(),
+    description: text('description').notNull().default(''),
+    privacyStatus: text('privacy_status').notNull().default('unlisted'),
+    streamKeyId: text('stream_key_id'),
+    playlistId: text('playlist_id'),
+    category: text('category'),
+    usedAt: integer('used_at', { mode: 'timestamp' }).notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (table) => [index('idx_broadcast_templates_used_at').on(table.usedAt)],
 )

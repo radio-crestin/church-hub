@@ -34,11 +34,6 @@ export function SceneCard({ scene, onSwitch, isSwitching }: SceneCardProps) {
         <h3 className="font-medium text-gray-900 dark:text-gray-100">
           {scene.displayName}
         </h3>
-        {scene.displayName !== scene.obsSceneName && (
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            {scene.obsSceneName}
-          </p>
-        )}
       </div>
     </div>
   )
