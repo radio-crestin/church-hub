@@ -19,6 +19,8 @@ import {
 } from '../utils'
 
 const YOUTUBE_CLIENT_ID = import.meta.env.VITE_YOUTUBE_CLIENT_ID as string
+const YOUTUBE_CLIENT_SECRET = import.meta.env
+  .VITE_YOUTUBE_CLIENT_SECRET as string
 const YOUTUBE_SCOPE = 'https://www.googleapis.com/auth/youtube.force-ssl'
 const YOUTUBE_REDIRECT_URI =
   'http://localhost:3000/api/livestream/youtube/callback'
@@ -152,10 +154,10 @@ export function useYouTubeAuth() {
 
           try {
             // Exchange code for tokens using PKCE (direct call to Google)
-            // Note: client_secret is not required for installed/desktop apps with PKCE
             const tokens = await exchangeCodeForTokens({
               code,
               clientId: YOUTUBE_CLIENT_ID,
+              clientSecret: YOUTUBE_CLIENT_SECRET,
               redirectUri: YOUTUBE_REDIRECT_URI,
               codeVerifier: storedVerifier,
             })
