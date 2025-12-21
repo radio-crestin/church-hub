@@ -2,8 +2,18 @@ import { eq } from 'drizzle-orm'
 import { OAuth2Client } from 'google-auth-library'
 import { google } from 'googleapis'
 
+import { parseGoogleAuthError, type YouTubeAuthError } from './errors'
 import { getDatabase } from '../../../db'
 import { youtubeAuth } from '../../../db/schema'
+import { broadcastYouTubeAuthStatus } from '../../../websocket'
+
+const DEBUG = process.env.DEBUG === 'true'
+
+function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
+  if (level === 'debug' && !DEBUG) return
+  // biome-ignore lint/suspicious/noConsole: logging utility
+  console.log(`[${level.toUpperCase()}] [youtube-client] ${message}`)
+}
 
 let oauth2Client: OAuth2Client | null = null
 
@@ -28,6 +38,15 @@ export function getOAuth2Client(): OAuth2Client {
   return oauth2Client
 }
 
+/**
+ * Clears invalid authentication from database and broadcasts re-auth status.
+ */
+async function clearInvalidAuth(): Promise<void> {
+  const db = getDatabase()
+  await db.delete(youtubeAuth)
+  log('info', 'Cleared invalid YouTube authentication from database')
+}
+
 export async function getAuthenticatedClient(): Promise<OAuth2Client | null> {
   const db = getDatabase()
   const authRecords = await db.select().from(youtubeAuth).limit(1)
@@ -46,8 +65,10 @@ export async function getAuthenticatedClient(): Promise<OAuth2Client | null> {
   })
 
   if (auth.expiresAt.getTime() < Date.now() + 5 * 60 * 1000) {
+    log('debug', 'Access token expiring soon, attempting refresh')
     try {
       const { credentials } = await client.refreshAccessToken()
+      log('info', 'Token refreshed successfully')
 
       await db
         .update(youtubeAuth)
@@ -61,7 +82,23 @@ export async function getAuthenticatedClient(): Promise<OAuth2Client | null> {
         .where(eq(youtubeAuth.id, auth.id))
 
       client.setCredentials(credentials)
-    } catch {
+    } catch (error) {
+      const authError: YouTubeAuthError = parseGoogleAuthError(error)
+      log(
+        'error',
+        `Token refresh failed: ${authError.code} - ${authError.message}`,
+      )
+
+      if (authError.requiresReauth) {
+        await clearInvalidAuth()
+        broadcastYouTubeAuthStatus({
+          isAuthenticated: false,
+          requiresReauth: true,
+          error: authError.code,
+          updatedAt: Date.now(),
+        })
+      }
+
       return null
     }
   }
