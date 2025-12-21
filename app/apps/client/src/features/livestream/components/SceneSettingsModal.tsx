@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next'
 
 import { SceneSettingsItem } from './SceneSettingsItem'
 import { SceneSettingsPopup } from './SceneSettingsPopup'
+import { useYouTubeConfig } from '../hooks/useYouTubeConfig'
 import type { OBSScene } from '../types'
 
 interface SceneSettingsModalProps {
@@ -39,6 +40,8 @@ export function SceneSettingsModal({
 }: SceneSettingsModalProps) {
   const { t } = useTranslation('livestream')
   const [selectedScene, setSelectedScene] = useState<OBSScene | null>(null)
+  const { config: youtubeConfig, update: updateYouTubeConfig } =
+    useYouTubeConfig()
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -132,6 +135,8 @@ export function SceneSettingsModal({
         <SceneSettingsPopup
           scene={selectedScene}
           allScenes={scenes}
+          youtubeConfig={youtubeConfig}
+          onUpdateYouTubeConfig={updateYouTubeConfig}
           onClose={handleClosePopup}
           onSave={handleSaveSettings}
         />
