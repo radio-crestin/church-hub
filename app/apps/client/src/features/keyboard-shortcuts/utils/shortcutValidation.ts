@@ -1,3 +1,4 @@
+import { formatMIDIShortcutForDisplay, isMIDIShortcut } from '../midi/utils'
 import type {
   GlobalShortcutActionId,
   GlobalShortcutsConfig,
@@ -5,6 +6,12 @@ import type {
 } from '../types'
 
 export function formatShortcutForDisplay(shortcut: string): string {
+  // Handle MIDI shortcuts
+  if (isMIDIShortcut(shortcut)) {
+    return formatMIDIShortcutForDisplay(shortcut)
+  }
+
+  // Handle keyboard shortcuts
   const isMac = navigator.platform.includes('Mac')
 
   return shortcut
@@ -26,6 +33,22 @@ export interface SceneShortcutSource {
   shortcuts: string[]
 }
 
+// startLive and stopLive can share the same shortcut since they represent opposite states
+const ALLOWED_SHARED_SHORTCUTS: [
+  GlobalShortcutActionId,
+  GlobalShortcutActionId,
+][] = [['startLive', 'stopLive']]
+
+function canShareShortcut(
+  actionA: GlobalShortcutActionId,
+  actionB: GlobalShortcutActionId,
+): boolean {
+  return ALLOWED_SHARED_SHORTCUTS.some(
+    ([a, b]) =>
+      (actionA === a && actionB === b) || (actionA === b && actionB === a),
+  )
+}
+
 export function validateGlobalShortcut(
   shortcut: string,
   currentActionId: GlobalShortcutActionId,
@@ -34,6 +57,10 @@ export function validateGlobalShortcut(
 ): ShortcutConflict | null {
   for (const [actionId, config] of Object.entries(allGlobalShortcuts.actions)) {
     if (actionId === currentActionId) continue
+    // Allow startLive/stopLive to share the same shortcut
+    if (canShareShortcut(currentActionId, actionId as GlobalShortcutActionId)) {
+      continue
+    }
     if (config.shortcuts.includes(shortcut)) {
       return {
         shortcut,
