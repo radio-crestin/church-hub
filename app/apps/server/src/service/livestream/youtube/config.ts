@@ -30,6 +30,7 @@ export async function getYouTubeConfig(): Promise<YouTubeConfig> {
       streamKeyId: newConfig.streamKeyId || undefined,
       playlistId: newConfig.playlistId || undefined,
       startSceneName: newConfig.startSceneName || undefined,
+      stopSceneName: newConfig.stopSceneName || undefined,
       selectedBroadcastId: newConfig.selectedBroadcastId || undefined,
       broadcastMode: (newConfig.broadcastMode || 'create') as
         | 'create'
@@ -46,6 +47,7 @@ export async function getYouTubeConfig(): Promise<YouTubeConfig> {
     streamKeyId: config.streamKeyId || undefined,
     playlistId: config.playlistId || undefined,
     startSceneName: config.startSceneName || undefined,
+    stopSceneName: config.stopSceneName || undefined,
     selectedBroadcastId: config.selectedBroadcastId || undefined,
     broadcastMode: (config.broadcastMode || 'create') as 'create' | 'reuse',
   }
@@ -72,6 +74,9 @@ export async function updateYouTubeConfig(
       ...(data.startSceneName !== undefined && {
         startSceneName: data.startSceneName,
       }),
+      ...(data.stopSceneName !== undefined && {
+        stopSceneName: data.stopSceneName,
+      }),
       ...(data.selectedBroadcastId !== undefined && {
         selectedBroadcastId: data.selectedBroadcastId,
       }),
@@ -91,6 +96,7 @@ export async function updateYouTubeConfig(
     streamKeyId: updated.streamKeyId || undefined,
     playlistId: updated.playlistId || undefined,
     startSceneName: updated.startSceneName || undefined,
+    stopSceneName: updated.stopSceneName || undefined,
     selectedBroadcastId: updated.selectedBroadcastId || undefined,
     broadcastMode: (updated.broadcastMode || 'create') as 'create' | 'reuse',
   }

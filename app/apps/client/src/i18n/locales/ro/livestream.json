@@ -111,7 +111,12 @@
     "clickToRecord": "Click pentru a inregistra",
     "recording": "Se inregistreaza...",
     "noShortcuts": "Nicio scurtatura atribuita",
-    "shortcutConflict": "Deja folosita de \"{{scene}}\""
+    "shortcutConflict": "Deja folosita de \"{{scene}}\"",
+    "streamSceneSettings": "Setari scena stream",
+    "useAsStartScene": "Foloseste ca scena de start",
+    "useAsStartSceneDescription": "Aceasta scena va fi activata inainte de inceperea stream-ului",
+    "useAsStopScene": "Foloseste ca scena de stop",
+    "useAsStopSceneDescription": "Aceasta scena va fi activata dupa oprirea stream-ului"
   },
   "errors": {
     "obsConnectionFailed": "Conectarea la OBS a esuat",
