@@ -1,16 +1,57 @@
 import { fetcher } from '../../../utils/fetcher'
 import type {
   BroadcastInfo,
+  PastBroadcast,
   StreamKey,
+  UpcomingBroadcast,
   YouTubeAuthStatus,
   YouTubeConfig,
 } from '../types'
 
-export async function getYouTubeAuthUrl(): Promise<string> {
-  const response = await fetcher<{ data: { url: string } }>(
-    '/api/livestream/youtube/auth-url',
+interface StoreTokensInput {
+  accessToken: string
+  refreshToken: string
+  expiresAt: number
+}
+
+interface StorePKCESessionInput {
+  codeVerifier: string
+  codeChallenge: string
+}
+
+/**
+ * Store PKCE session on server for server-side token exchange.
+ * Used when auth is initiated from Tauri and callback can't use postMessage.
+ */
+export async function storePKCESession(
+  session: StorePKCESessionInput,
+): Promise<string> {
+  const response = await fetcher<{ data: { sessionId: string } }>(
+    '/api/livestream/youtube/pkce-session',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(session),
+    },
   )
-  return response.data.url
+  return response.data.sessionId
+}
+
+/**
+ * Store OAuth tokens on the server after PKCE exchange on the client.
+ */
+export async function storeYouTubeTokens(
+  tokens: StoreTokensInput,
+): Promise<YouTubeAuthStatus> {
+  const response = await fetcher<{ data: YouTubeAuthStatus }>(
+    '/api/livestream/youtube/tokens',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(tokens),
+    },
+  )
+  return response.data
 }
 
 export async function getYouTubeAuthStatus(): Promise<YouTubeAuthStatus> {
@@ -71,4 +112,18 @@ export async function endBroadcast(broadcastId: string): Promise<void> {
   await fetcher(`/api/livestream/youtube/broadcast/${broadcastId}/end`, {
     method: 'PUT',
   })
+}
+
+export async function getUpcomingBroadcasts(): Promise<UpcomingBroadcast[]> {
+  const response = await fetcher<{ data: UpcomingBroadcast[] }>(
+    '/api/livestream/youtube/broadcasts/upcoming',
+  )
+  return response.data
+}
+
+export async function getPastBroadcasts(): Promise<PastBroadcast[]> {
+  const response = await fetcher<{ data: PastBroadcast[] }>(
+    '/api/livestream/youtube/broadcasts/completed',
+  )
+  return response.data
 }

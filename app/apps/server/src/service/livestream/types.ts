@@ -18,6 +18,7 @@ export interface OBSScene {
   displayName: string
   isVisible: boolean
   sortOrder: number
+  shortcuts: string[]
   isCurrent: boolean
 }
 
@@ -44,6 +45,36 @@ export interface YouTubeConfig {
   streamKeyId?: string
   playlistId?: string
   startSceneName?: string
+  selectedBroadcastId?: string
+  broadcastMode: 'create' | 'reuse'
+}
+
+export interface UpcomingBroadcast {
+  broadcastId: string
+  title: string
+  scheduledStartTime: Date
+  privacyStatus: 'public' | 'unlisted' | 'private'
+  url: string
+}
+
+export interface BroadcastTemplate {
+  id: number
+  name: string
+  title: string
+  description: string
+  privacyStatus: 'public' | 'unlisted' | 'private'
+  streamKeyId?: string
+  playlistId?: string
+  category?: string
+  usedAt: Date
+}
+
+export interface PastBroadcast {
+  broadcastId: string
+  title: string
+  description: string
+  privacyStatus: 'public' | 'unlisted' | 'private'
+  completedAt: Date
 }
 
 export interface BroadcastInfo {
