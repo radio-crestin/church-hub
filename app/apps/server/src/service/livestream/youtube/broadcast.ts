@@ -4,7 +4,7 @@ import { getYouTubeService } from './client'
 import { getYouTubeConfig } from './config'
 import { getDatabase } from '../../../db'
 import { broadcastHistory } from '../../../db/schema'
-import type { BroadcastInfo } from '../types'
+import type { BroadcastInfo, PastBroadcast, UpcomingBroadcast } from '../types'
 
 export async function createBroadcast(): Promise<BroadcastInfo> {
   const youtube = await getYouTubeService()
@@ -210,5 +210,61 @@ export async function getStreamKeys(): Promise<{ id: string; name: string }[]> {
   return (response.data.items || []).map((stream) => ({
     id: stream.id!,
     name: stream.snippet?.title || stream.id!,
+  }))
+}
+
+export async function getUpcomingBroadcasts(): Promise<UpcomingBroadcast[]> {
+  const youtube = await getYouTubeService()
+
+  if (!youtube) {
+    throw new Error('Not authenticated with YouTube')
+  }
+
+  const response = await youtube.liveBroadcasts.list({
+    part: ['id', 'snippet', 'status'],
+    broadcastStatus: 'upcoming',
+    maxResults: 25,
+  })
+
+  return (response.data.items || []).map((broadcast) => ({
+    broadcastId: broadcast.id!,
+    title: broadcast.snippet?.title || '',
+    scheduledStartTime: new Date(
+      broadcast.snippet?.scheduledStartTime || Date.now(),
+    ),
+    privacyStatus: (broadcast.status?.privacyStatus || 'unlisted') as
+      | 'public'
+      | 'unlisted'
+      | 'private',
+    url: `https://youtu.be/${broadcast.id}`,
+  }))
+}
+
+export async function getPastBroadcasts(): Promise<PastBroadcast[]> {
+  const youtube = await getYouTubeService()
+
+  if (!youtube) {
+    throw new Error('Not authenticated with YouTube')
+  }
+
+  const response = await youtube.liveBroadcasts.list({
+    part: ['id', 'snippet', 'status'],
+    broadcastStatus: 'completed',
+    maxResults: 10,
+  })
+
+  return (response.data.items || []).map((broadcast) => ({
+    broadcastId: broadcast.id!,
+    title: broadcast.snippet?.title || '',
+    description: broadcast.snippet?.description || '',
+    privacyStatus: (broadcast.status?.privacyStatus || 'unlisted') as
+      | 'public'
+      | 'unlisted'
+      | 'private',
+    completedAt: new Date(
+      broadcast.snippet?.actualEndTime ||
+        broadcast.snippet?.actualStartTime ||
+        Date.now(),
+    ),
   }))
 }
