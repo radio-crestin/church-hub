@@ -22,19 +22,7 @@ export function validateShortcut(
   return null
 }
 
-export function formatShortcutForDisplay(shortcut: string): string {
-  const isMac = navigator.platform.includes('Mac')
-
-  return shortcut
-    .replace('CommandOrControl', isMac ? 'Cmd' : 'Ctrl')
-    .replace('Control', 'Ctrl')
-    .replace('Meta', 'Cmd')
-    .replace('ArrowUp', '\u2191')
-    .replace('ArrowDown', '\u2193')
-    .replace('ArrowLeft', '\u2190')
-    .replace('ArrowRight', '\u2192')
-}
-
-export function isModifierKey(key: string): boolean {
-  return ['Meta', 'Control', 'Alt', 'Shift'].includes(key)
-}
+export {
+  formatShortcutForDisplay,
+  isModifierKey,
+} from '~/features/keyboard-shortcuts'

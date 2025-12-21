@@ -3,6 +3,7 @@ import { Languages, Palette } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { BibleTranslationsManager } from '~/features/bible/components'
+import { ShortcutsSettingsSection } from '~/features/keyboard-shortcuts'
 import { ScreenManager } from '~/features/presentation'
 import { SynonymManager } from '~/features/search'
 import { SidebarConfigManager } from '~/features/sidebar-config'
@@ -106,6 +107,11 @@ function RouteComponent() {
               </p>
             </div>
           </div>
+        </div>
+
+        {/* Keyboard Shortcuts Section */}
+        <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
+          <ShortcutsSettingsSection />
         </div>
 
         {/* Bible Settings Section */}
