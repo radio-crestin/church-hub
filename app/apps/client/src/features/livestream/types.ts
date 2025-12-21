@@ -52,6 +52,7 @@ export interface YouTubeConfig {
   streamKeyId?: string
   playlistId?: string
   startSceneName?: string
+  stopSceneName?: string
   selectedBroadcastId?: string
   broadcastMode: 'create' | 'reuse'
 }

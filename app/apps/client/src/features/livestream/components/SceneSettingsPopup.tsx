@@ -1,14 +1,16 @@
-import { Eye, EyeOff, Plus, X } from 'lucide-react'
+import { Eye, EyeOff, Play, Plus, Square, X } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ShortcutRecorder } from './ShortcutRecorder'
-import type { OBSScene } from '../types'
+import type { OBSScene, YouTubeConfig } from '../types'
 import { validateShortcut } from '../utils/shortcutValidation'
 
 interface SceneSettingsPopupProps {
   scene: OBSScene
   allScenes: OBSScene[]
+  youtubeConfig?: YouTubeConfig
+  onUpdateYouTubeConfig?: (config: Partial<YouTubeConfig>) => void
   onClose: () => void
   onSave: (data: {
     displayName: string
@@ -20,6 +22,8 @@ interface SceneSettingsPopupProps {
 export function SceneSettingsPopup({
   scene,
   allScenes,
+  youtubeConfig,
+  onUpdateYouTubeConfig,
   onClose,
   onSave,
 }: SceneSettingsPopupProps) {
@@ -87,6 +91,23 @@ export function SceneSettingsPopup({
       shortcuts: validShortcuts,
     })
   }, [displayName, isVisible, shortcuts, scene, allScenes, onSave])
+
+  const isStartScene = youtubeConfig?.startSceneName === scene.obsSceneName
+  const isStopScene = youtubeConfig?.stopSceneName === scene.obsSceneName
+
+  const handleToggleStartScene = useCallback(() => {
+    if (!onUpdateYouTubeConfig) return
+    onUpdateYouTubeConfig({
+      startSceneName: isStartScene ? undefined : scene.obsSceneName,
+    })
+  }, [isStartScene, scene.obsSceneName, onUpdateYouTubeConfig])
+
+  const handleToggleStopScene = useCallback(() => {
+    if (!onUpdateYouTubeConfig) return
+    onUpdateYouTubeConfig({
+      stopSceneName: isStopScene ? undefined : scene.obsSceneName,
+    })
+  }, [isStopScene, scene.obsSceneName, onUpdateYouTubeConfig])
 
   const hasErrors = Object.keys(errors).length > 0
 
@@ -192,6 +213,60 @@ export function SceneSettingsPopup({
               {t('scenes.addShortcut')}
             </button>
           </div>
+
+          {youtubeConfig && onUpdateYouTubeConfig && (
+            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                {t('scenes.streamSceneSettings')}
+              </h4>
+
+              <button
+                type="button"
+                onClick={handleToggleStartScene}
+                className={`
+                  flex items-center gap-3 w-full px-3 py-2 rounded-lg transition-colors mb-2
+                  ${
+                    isStartScene
+                      ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }
+                `}
+              >
+                <Play size={20} />
+                <div className="flex-1 text-left">
+                  <span className="text-sm font-medium block">
+                    {t('scenes.useAsStartScene')}
+                  </span>
+                  <span className="text-xs opacity-75">
+                    {t('scenes.useAsStartSceneDescription')}
+                  </span>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleToggleStopScene}
+                className={`
+                  flex items-center gap-3 w-full px-3 py-2 rounded-lg transition-colors
+                  ${
+                    isStopScene
+                      ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }
+                `}
+              >
+                <Square size={20} />
+                <div className="flex-1 text-left">
+                  <span className="text-sm font-medium block">
+                    {t('scenes.useAsStopScene')}
+                  </span>
+                  <span className="text-xs opacity-75">
+                    {t('scenes.useAsStopSceneDescription')}
+                  </span>
+                </div>
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="flex justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-700">

@@ -885,6 +885,12 @@ export async function handleLivestreamRoutes(
         await endBroadcast(activeBroadcast.broadcastId)
       }
 
+      const youtubeConfig = await getYouTubeConfig()
+      if (youtubeConfig.stopSceneName) {
+        await switchScene(youtubeConfig.stopSceneName)
+        broadcastOBSCurrentScene(youtubeConfig.stopSceneName)
+      }
+
       const streamingStatus = obsConnection.getStreamingStatus()
       broadcastOBSStreamingStatus(streamingStatus)
       broadcastLivestreamStatus({
