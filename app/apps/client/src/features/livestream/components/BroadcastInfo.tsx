@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 
 import { Button } from '../../../ui/button/Button'
 import { useBroadcastMessage, useOBSConnection, useStreaming } from '../hooks'
+import type { StreamStartProgress } from '../types'
 
 function YouTubeIcon({ className }: { className?: string }) {
   return (
@@ -20,9 +21,62 @@ function StudioIcon({ className }: { className?: string }) {
   )
 }
 
+function StreamStartProgressUI({
+  progress,
+  t,
+}: {
+  progress: StreamStartProgress
+  t: (key: string) => string
+}) {
+  if (progress.step === 'error') {
+    return (
+      <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-red-600 dark:text-red-400">
+            {progress.error || t('errors.startStreamFailed')}
+          </span>
+        </div>
+      </div>
+    )
+  }
+
+  if (progress.step === 'completed') {
+    return null
+  }
+
+  return (
+    <div className="p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            {t(`stream.progress.${progress.step}`)}
+          </span>
+          <span className="text-sm text-gray-600 dark:text-gray-400">
+            {progress.progress}%
+          </span>
+        </div>
+        <div className="w-full h-2 bg-gray-300 dark:bg-gray-700 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-blue-600 dark:bg-blue-400 transition-all duration-300"
+            style={{ width: `${progress.progress}%` }}
+          />
+        </div>
+        <p className="text-xs text-gray-600 dark:text-gray-400">
+          {progress.message}
+        </p>
+      </div>
+    </div>
+  )
+}
+
 export function BroadcastInfo() {
   const { t } = useTranslation('livestream')
-  const { activeBroadcast, isLoadingBroadcast, isStopping } = useStreaming()
+  const {
+    activeBroadcast,
+    isLoadingBroadcast,
+    isStopping,
+    streamStartProgress,
+  } = useStreaming()
   const { isStreaming } = useOBSConnection()
   const { message, fetchMessage, copyMessage, copied, isLoading } =
     useBroadcastMessage()
@@ -33,6 +87,11 @@ export function BroadcastInfo() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeBroadcast?.url])
+
+  // Show progress during stream start
+  if (streamStartProgress && streamStartProgress.step !== 'completed') {
+    return <StreamStartProgressUI progress={streamStartProgress} t={t} />
+  }
 
   if (isLoadingBroadcast) {
     return (
