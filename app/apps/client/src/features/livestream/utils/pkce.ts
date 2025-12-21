@@ -1,8 +1,7 @@
 /**
  * PKCE (Proof Key for Code Exchange) utilities for OAuth 2.0 authentication.
- * Note: Google requires client_secret even for Desktop apps with PKCE.
- * Per Google's docs, for Desktop apps the secret is embedded in client code
- * and "not treated as a secret" - this is acceptable and expected.
+ * For installed/desktop apps with PKCE, client_secret is not required.
+ * See: https://developers.google.com/youtube/v3/guides/auth/installed-apps
  */
 
 /**
@@ -64,7 +63,6 @@ export function buildAuthUrl(params: BuildAuthUrlParams): string {
 interface ExchangeCodeParams {
   code: string
   clientId: string
-  clientSecret: string
   redirectUri: string
   codeVerifier: string
 }
@@ -77,7 +75,7 @@ interface TokenResponse {
 
 /**
  * Exchanges the authorization code for tokens using PKCE.
- * Google requires client_secret even for Desktop apps with PKCE.
+ * For installed/desktop apps with PKCE, client_secret is not required.
  */
 export async function exchangeCodeForTokens(
   params: ExchangeCodeParams,
@@ -89,7 +87,6 @@ export async function exchangeCodeForTokens(
     },
     body: new URLSearchParams({
       client_id: params.clientId,
-      client_secret: params.clientSecret,
       code: params.code,
       code_verifier: params.codeVerifier,
       grant_type: 'authorization_code',
