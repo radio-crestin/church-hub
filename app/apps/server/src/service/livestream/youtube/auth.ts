@@ -84,7 +84,12 @@ export async function getAuthStatus(): Promise<YouTubeAuthStatus> {
   if (isExpired) {
     const client = await getAuthenticatedClient()
     if (!client) {
-      return { isAuthenticated: false }
+      // Token refresh failed, requires re-authentication
+      return {
+        isAuthenticated: false,
+        requiresReauth: true,
+        error: 'refresh_failed',
+      }
     }
   }
 
