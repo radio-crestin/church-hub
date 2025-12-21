@@ -3,15 +3,18 @@ import { useCallback, useMemo } from 'react'
 
 import { useOBSScenes, useStreaming } from '~/features/livestream/hooks'
 import { createLogger } from '~/utils/logger'
+import { useShortcutRecording } from '../context'
 import { useAppShortcuts, useGlobalAppShortcuts } from '../hooks'
+import { useMIDILEDFeedback, useMIDIShortcuts } from '../midi/hooks'
 
 const logger = createLogger('keyboard-shortcuts:manager')
 
 export function GlobalAppShortcutManager() {
   const navigate = useNavigate()
   const { shortcuts, isLoading } = useAppShortcuts()
-  const { start, stop } = useStreaming()
-  const { scenes, switchScene } = useOBSScenes()
+  const { start, stop, isLive } = useStreaming()
+  const { scenes, switchScene, currentScene } = useOBSScenes()
+  const { isRecordingRef } = useShortcutRecording()
 
   // Build scene shortcuts array
   const sceneShortcuts = useMemo(() => {
@@ -56,6 +59,7 @@ export function GlobalAppShortcutManager() {
     [switchScene],
   )
 
+  // Register keyboard shortcuts
   useGlobalAppShortcuts({
     shortcuts: isLoading ? { actions: {} as never, version: 1 } : shortcuts,
     sceneShortcuts,
@@ -64,6 +68,27 @@ export function GlobalAppShortcutManager() {
     onSearchSong: handleSearchSong,
     onSearchBible: handleSearchBible,
     onSceneSwitch: handleSceneSwitch,
+    isRecordingRef,
+  })
+
+  // Register MIDI shortcuts (same handlers as keyboard)
+  useMIDIShortcuts({
+    shortcuts: isLoading ? { actions: {} as never, version: 1 } : shortcuts,
+    sceneShortcuts,
+    onStartLive: handleStartLive,
+    onStopLive: handleStopLive,
+    onSearchSong: handleSearchSong,
+    onSearchBible: handleSearchBible,
+    onSceneSwitch: handleSceneSwitch,
+    isRecordingRef,
+  })
+
+  // Sync MIDI LEDs with app state
+  useMIDILEDFeedback({
+    shortcuts: isLoading ? { actions: {} as never, version: 1 } : shortcuts,
+    sceneShortcuts,
+    isLive: isLive ?? false,
+    currentSceneName: currentScene?.obsSceneName ?? null,
   })
 
   return null

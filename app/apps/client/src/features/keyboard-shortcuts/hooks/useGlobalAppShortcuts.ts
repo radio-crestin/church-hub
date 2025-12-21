@@ -19,6 +19,8 @@ interface UseGlobalAppShortcutsOptions {
   onSearchSong: () => void
   onSearchBible: () => void
   onSceneSwitch: (sceneName: string) => void
+  /** Ref to check if a ShortcutRecorder is currently recording */
+  isRecordingRef?: React.RefObject<boolean>
 }
 
 export function useGlobalAppShortcuts({
@@ -29,6 +31,7 @@ export function useGlobalAppShortcuts({
   onSearchSong,
   onSearchBible,
   onSceneSwitch,
+  isRecordingRef,
 }: UseGlobalAppShortcutsOptions) {
   // Use refs to always have current handlers without causing re-registration
   const handlersRef = useRef({
@@ -89,6 +92,13 @@ export function useGlobalAppShortcuts({
               try {
                 await register(shortcut, (event) => {
                   if (event.state === 'Pressed') {
+                    // Skip if recording a new shortcut
+                    if (isRecordingRef?.current) {
+                      logger.debug(
+                        `Skipping shortcut ${shortcut} - recording in progress`,
+                      )
+                      return
+                    }
                     logger.info(
                       `App shortcut triggered: ${shortcut} -> ${actionId}`,
                     )
@@ -116,6 +126,13 @@ export function useGlobalAppShortcuts({
           try {
             await register(shortcut, (event) => {
               if (event.state === 'Pressed') {
+                // Skip if recording a new shortcut
+                if (isRecordingRef?.current) {
+                  logger.debug(
+                    `Skipping scene shortcut ${shortcut} - recording in progress`,
+                  )
+                  return
+                }
                 logger.info(
                   `Scene shortcut triggered: ${shortcut} -> ${sceneName}`,
                 )
