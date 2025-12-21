@@ -39,9 +39,10 @@ import {
 
 type HandleCors = (req: Request, res: Response) => Response
 
-// Environment variables for OAuth (needed for server-side token exchange with PKCE)
-// Note: client_secret is not required for installed/desktop apps with PKCE
+// Environment variables for OAuth (needed for server-side token exchange)
+// Note: Google requires client_secret even for Desktop apps with PKCE
 const YOUTUBE_CLIENT_ID = process.env.YOUTUBE_CLIENT_ID || ''
+const YOUTUBE_CLIENT_SECRET = process.env.YOUTUBE_CLIENT_SECRET || ''
 const YOUTUBE_REDIRECT_URI =
   'http://localhost:3000/api/livestream/youtube/callback'
 
@@ -149,7 +150,6 @@ export async function handleLivestreamRoutes(
       if (session) {
         try {
           // Exchange code for tokens on the server
-          // Note: client_secret is not required for installed/desktop apps with PKCE
           const tokenResponse = await fetch(
             'https://oauth2.googleapis.com/token',
             {
@@ -159,6 +159,7 @@ export async function handleLivestreamRoutes(
               },
               body: new URLSearchParams({
                 client_id: YOUTUBE_CLIENT_ID,
+                client_secret: YOUTUBE_CLIENT_SECRET,
                 code,
                 code_verifier: session.codeVerifier,
                 grant_type: 'authorization_code',
