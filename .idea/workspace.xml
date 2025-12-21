@@ -6,17 +6,40 @@
   <component name="ChangeListManager">
     <list default="true" id="66517e3f-2e4e-43cc-880d-deb242368f0c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/sidebar-config/constants.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/sidebar-config/constants.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/sidebar-config/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/sidebar-config/types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/config.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/sidebar.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/sidebar.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/sidebar.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/sidebar.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/routeTree.gen.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/routeTree.gen.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TODO.md" beforeDir="false" afterPath="$PROJECT_DIR$/TODO.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/BroadcastInfo.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/BroadcastInfo.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/LiveStreamPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/LiveStreamPage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/SceneCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/SceneCard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/SceneSettingsItem.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/SceneSettingsItem.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/SceneSettingsModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/SceneSettingsModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/YouTubeSetupModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/YouTubeSetupModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/livestream/hooks/useBroadcastMessage.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/livestream/hooks/useBroadcastMessage.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/livestream/hooks/useLivestreamWebSocket.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/livestream/hooks/useLivestreamWebSocket.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/livestream/hooks/useOBSScenes.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/livestream/hooks/useOBSScenes.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/livestream/hooks/useStreaming.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/livestream/hooks/useStreaming.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/livestream/hooks/useYouTubeAuth.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/livestream/hooks/useYouTubeAuth.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/livestream/hooks/useYouTubeConfig.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/livestream/hooks/useYouTubeConfig.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/livestream/service/obs.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/livestream/service/obs.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/QueueSlidePreview.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/QueueSlidePreview.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/hooks/useScrollIntoViewWithNeighbors.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/hooks/useScrollIntoViewWithNeighbors.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/livestream.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/livestream.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/livestream.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/livestream.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/vite.config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/vite.config.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/apps/server/drizzle/migrations/meta/_journal.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/drizzle/migrations/meta/_journal.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/schema/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/schema/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/schema/livestream.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/schema/livestream.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/routes/livestream.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/routes/livestream.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/livestream/obs/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/livestream/obs/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/livestream/obs/scenes.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/livestream/obs/scenes.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/livestream/youtube/auth.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/livestream/youtube/auth.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/livestream/youtube/client.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/livestream/youtube/client.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/livestream/youtube/config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/livestream/youtube/config.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/apps/server/src/websocket/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/websocket/index.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/bun.lock" beforeDir="false" afterPath="$PROJECT_DIR$/app/bun.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/tauri/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/Cargo.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/tauri/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/tauri/capabilities/default.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/capabilities/default.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/tauri/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/src/lib.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

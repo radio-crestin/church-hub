@@ -1,4 +1,4 @@
-import { useEffect, type RefObject } from 'react'
+import { type RefObject, useEffect } from 'react'
 
 function getScrollableParent(element: HTMLElement | null): HTMLElement | null {
   if (!element) return null
@@ -42,7 +42,8 @@ function scrollToSecondPosition(element: HTMLElement) {
   const idealScrollTop = elementTopInContainer - targetOffset
 
   // Clamp to valid scroll range
-  const maxScrollTop = scrollContainer.scrollHeight - scrollContainer.clientHeight
+  const maxScrollTop =
+    scrollContainer.scrollHeight - scrollContainer.clientHeight
   const clampedScrollTop = Math.max(0, Math.min(idealScrollTop, maxScrollTop))
 
   // Calculate where the element currently appears relative to the container viewport
@@ -51,7 +52,8 @@ function scrollToSecondPosition(element: HTMLElement) {
   // Check if element is already very close to the target position (within 5px)
   // to avoid unnecessary scrolling/jittering
   const tolerance = 5
-  const isAlreadyAtTarget = Math.abs(currentElementVisualTop - targetOffset) < tolerance
+  const isAlreadyAtTarget =
+    Math.abs(currentElementVisualTop - targetOffset) < tolerance
 
   if (!isAlreadyAtTarget) {
     scrollContainer.scrollTo({
@@ -63,7 +65,7 @@ function scrollToSecondPosition(element: HTMLElement) {
 
 export function useScrollIntoViewWithNeighbors(
   ref: RefObject<HTMLElement | null>,
-  isActive: boolean
+  isActive: boolean,
 ) {
   useEffect(() => {
     if (isActive && ref.current) {

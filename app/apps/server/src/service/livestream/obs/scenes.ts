@@ -5,6 +5,14 @@ import { getDatabase } from '../../../db'
 import { obsScenes } from '../../../db/schema'
 import type { OBSScene } from '../types'
 
+function parseShortcuts(shortcuts: string): string[] {
+  try {
+    return JSON.parse(shortcuts) as string[]
+  } catch {
+    return []
+  }
+}
+
 export async function getScenes(): Promise<OBSScene[]> {
   const db = getDatabase()
   const currentScene = obsConnection.getCurrentScene()
@@ -20,6 +28,7 @@ export async function getScenes(): Promise<OBSScene[]> {
       displayName: scene.displayName,
       isVisible: scene.isVisible,
       sortOrder: scene.sortOrder,
+      shortcuts: parseShortcuts(scene.shortcuts),
       isCurrent: scene.obsSceneName === currentScene,
     }))
   }
@@ -41,6 +50,7 @@ export async function getScenes(): Promise<OBSScene[]> {
           displayName: dbScene.displayName,
           isVisible: dbScene.isVisible,
           sortOrder: dbScene.sortOrder,
+          shortcuts: parseShortcuts(dbScene.shortcuts),
           isCurrent: dbScene.obsSceneName === currentScene,
         })
       }
@@ -67,6 +77,7 @@ export async function getScenes(): Promise<OBSScene[]> {
           displayName: newScene.displayName,
           isVisible: newScene.isVisible,
           sortOrder: newScene.sortOrder,
+          shortcuts: parseShortcuts(newScene.shortcuts),
           isCurrent: obsScene.sceneName === currentScene,
         })
       }
@@ -81,6 +92,7 @@ export async function getScenes(): Promise<OBSScene[]> {
       displayName: scene.displayName,
       isVisible: scene.isVisible,
       sortOrder: scene.sortOrder,
+      shortcuts: parseShortcuts(scene.shortcuts),
       isCurrent: scene.obsSceneName === currentScene,
     }))
   }
@@ -93,7 +105,7 @@ export async function getVisibleScenes(): Promise<OBSScene[]> {
 
 export async function updateScene(
   id: number,
-  data: { displayName?: string; isVisible?: boolean },
+  data: { displayName?: string; isVisible?: boolean; shortcuts?: string[] },
 ): Promise<OBSScene | null> {
   const db = getDatabase()
   const [updated] = await db
@@ -101,6 +113,9 @@ export async function updateScene(
     .set({
       ...(data.displayName !== undefined && { displayName: data.displayName }),
       ...(data.isVisible !== undefined && { isVisible: data.isVisible }),
+      ...(data.shortcuts !== undefined && {
+        shortcuts: JSON.stringify(data.shortcuts),
+      }),
       updatedAt: new Date(),
     })
     .where(eq(obsScenes.id, id))
@@ -115,6 +130,7 @@ export async function updateScene(
     displayName: updated.displayName,
     isVisible: updated.isVisible,
     sortOrder: updated.sortOrder,
+    shortcuts: parseShortcuts(updated.shortcuts),
     isCurrent: updated.obsSceneName === currentScene,
   }
 }
@@ -136,4 +152,23 @@ export async function reorderScenes(sceneIds: number[]): Promise<OBSScene[]> {
 
 export async function switchScene(sceneName: string): Promise<void> {
   await obsConnection.switchScene(sceneName)
+}
+
+export interface SceneShortcut {
+  shortcut: string
+  sceneName: string
+}
+
+export async function getAllSceneShortcuts(): Promise<SceneShortcut[]> {
+  const db = getDatabase()
+  const scenes = await db.select().from(obsScenes)
+
+  const shortcuts: SceneShortcut[] = []
+  for (const scene of scenes) {
+    const sceneShortcuts = parseShortcuts(scene.shortcuts)
+    for (const shortcut of sceneShortcuts) {
+      shortcuts.push({ shortcut, sceneName: scene.obsSceneName })
+    }
+  }
+  return shortcuts
 }

@@ -27,12 +27,14 @@ import {
   storePKCESession,
   storeTokens,
   updateYouTubeConfig,
+  waitForBroadcastReady,
 } from '../service/livestream/youtube'
 import {
   broadcastLivestreamStatus,
   broadcastOBSConnectionStatus,
   broadcastOBSCurrentScene,
   broadcastOBSStreamingStatus,
+  broadcastStreamStartProgress,
   broadcastYouTubeAuthStatus,
 } from '../websocket'
 
@@ -525,15 +527,9 @@ export async function handleLivestreamRoutes(
     req.method === 'PUT' &&
     url.pathname === '/api/livestream/youtube/config'
   ) {
+    let body: Partial<YouTubeConfig>
     try {
-      const body = (await req.json()) as Partial<YouTubeConfig>
-      const config = await updateYouTubeConfig(body)
-      return handleCors(
-        req,
-        new Response(JSON.stringify({ data: config }), {
-          headers: { 'Content-Type': 'application/json' },
-        }),
-      )
+      body = (await req.json()) as Partial<YouTubeConfig>
     } catch {
       return handleCors(
         req,
@@ -541,6 +537,34 @@ export async function handleLivestreamRoutes(
           status: 400,
           headers: { 'Content-Type': 'application/json' },
         }),
+      )
+    }
+
+    try {
+      const config = await updateYouTubeConfig(body)
+      return handleCors(
+        req,
+        new Response(JSON.stringify({ data: config }), {
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+    } catch (error) {
+      log(
+        'error',
+        `Failed to update YouTube config: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      )
+      return handleCors(
+        req,
+        new Response(
+          JSON.stringify({
+            error: 'Failed to update config',
+            details: error instanceof Error ? error.message : 'Unknown error',
+          }),
+          {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' },
+          },
+        ),
       )
     }
   }
@@ -760,14 +784,86 @@ export async function handleLivestreamRoutes(
     try {
       const youtubeConfig = await getYouTubeConfig()
 
+      // Step 1: Switch to start scene if configured
       if (youtubeConfig.startSceneName) {
         await switchScene(youtubeConfig.startSceneName)
         broadcastOBSCurrentScene(youtubeConfig.startSceneName)
       }
 
+      // Step 2: Create YouTube broadcast
+      broadcastStreamStartProgress({
+        step: 'creating_broadcast',
+        progress: 5,
+        message: 'Creating YouTube broadcast...',
+        updatedAt: Date.now(),
+      })
+
       const broadcast = await createBroadcast()
 
+      // Step 3: Wait for broadcast to be ready
+      broadcastStreamStartProgress({
+        step: 'waiting_for_ready',
+        progress: 15,
+        message: 'Waiting for YouTube to be ready...',
+        broadcastId: broadcast.broadcastId,
+        updatedAt: Date.now(),
+      })
+
+      await waitForBroadcastReady(broadcast.broadcastId, {
+        timeoutMs: 60000,
+        pollIntervalMs: 2000,
+        onProgress: ({ lifeCycleStatus, elapsedMs }) => {
+          const maxWaitMs = 60000
+          const progressPct = Math.min(75, 15 + (elapsedMs / maxWaitMs) * 60)
+          broadcastStreamStartProgress({
+            step: 'waiting_for_ready',
+            progress: Math.round(progressPct),
+            message: `YouTube status: ${lifeCycleStatus}`,
+            broadcastId: broadcast.broadcastId,
+            updatedAt: Date.now(),
+          })
+        },
+      })
+
+      // Step 4: Additional 5-second delay
+      broadcastStreamStartProgress({
+        step: 'delay_before_stream',
+        progress: 80,
+        message: 'Preparing to start stream...',
+        broadcastId: broadcast.broadcastId,
+        updatedAt: Date.now(),
+      })
+
+      for (let i = 0; i < 5; i++) {
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+        broadcastStreamStartProgress({
+          step: 'delay_before_stream',
+          progress: 80 + (i + 1) * 3,
+          message: `Starting in ${5 - i - 1} seconds...`,
+          broadcastId: broadcast.broadcastId,
+          updatedAt: Date.now(),
+        })
+      }
+
+      // Step 5: Start OBS streaming
+      broadcastStreamStartProgress({
+        step: 'starting_obs',
+        progress: 98,
+        message: 'Starting OBS stream...',
+        broadcastId: broadcast.broadcastId,
+        updatedAt: Date.now(),
+      })
+
       await startStreaming()
+
+      // Step 6: Complete
+      broadcastStreamStartProgress({
+        step: 'completed',
+        progress: 100,
+        message: 'Stream started successfully!',
+        broadcastId: broadcast.broadcastId,
+        updatedAt: Date.now(),
+      })
 
       const streamingStatus = obsConnection.getStreamingStatus()
       broadcastOBSStreamingStatus(streamingStatus)
@@ -787,12 +883,22 @@ export async function handleLivestreamRoutes(
         }),
       )
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to start stream'
+
+      broadcastStreamStartProgress({
+        step: 'error',
+        progress: 0,
+        message: 'Stream start failed',
+        error: errorMessage,
+        updatedAt: Date.now(),
+      })
+
       return handleCors(
         req,
         new Response(
           JSON.stringify({
-            error:
-              error instanceof Error ? error.message : 'Failed to start stream',
+            error: errorMessage,
           }),
           { status: 500, headers: { 'Content-Type': 'application/json' } },
         ),

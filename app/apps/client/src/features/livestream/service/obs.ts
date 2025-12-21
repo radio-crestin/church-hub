@@ -3,6 +3,7 @@ import type {
   OBSConfig,
   OBSScene,
   OBSStatus,
+  SceneShortcut,
   StartStreamResponse,
 } from '../types'
 
@@ -38,7 +39,7 @@ export async function getOBSScenes(visibleOnly = false): Promise<OBSScene[]> {
 
 export async function updateOBSScene(
   id: number,
-  data: { displayName?: string; isVisible?: boolean },
+  data: { displayName?: string; isVisible?: boolean; shortcuts?: string[] },
 ): Promise<OBSScene> {
   const response = await fetcher<{ data: OBSScene }>(
     `/api/livestream/obs/scenes/${id}`,
@@ -47,6 +48,13 @@ export async function updateOBSScene(
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     },
+  )
+  return response.data
+}
+
+export async function getSceneShortcuts(): Promise<SceneShortcut[]> {
+  const response = await fetcher<{ data: SceneShortcut[] }>(
+    '/api/livestream/obs/shortcuts',
   )
   return response.data
 }
