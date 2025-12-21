@@ -5,4 +5,9 @@ export { useOBSConnection } from './useOBSConnection'
 export { useOBSScenes } from './useOBSScenes'
 export { useStreaming } from './useStreaming'
 export { useYouTubeAuth } from './useYouTubeAuth'
-export { useStreamKeys, useYouTubeConfig } from './useYouTubeConfig'
+export {
+  usePastBroadcasts,
+  useStreamKeys,
+  useUpcomingBroadcasts,
+  useYouTubeConfig,
+} from './useYouTubeConfig'
