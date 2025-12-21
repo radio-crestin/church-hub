@@ -111,7 +111,12 @@
     "clickToRecord": "Click to record",
     "recording": "Recording...",
     "noShortcuts": "No shortcuts assigned",
-    "shortcutConflict": "Already used by \"{{scene}}\""
+    "shortcutConflict": "Already used by \"{{scene}}\"",
+    "streamSceneSettings": "Stream Scene Settings",
+    "useAsStartScene": "Use as stream start scene",
+    "useAsStartSceneDescription": "This scene will be activated before the stream starts",
+    "useAsStopScene": "Use as stream stop scene",
+    "useAsStopSceneDescription": "This scene will be activated after the stream stops"
   },
   "errors": {
     "obsConnectionFailed": "Failed to connect to OBS",

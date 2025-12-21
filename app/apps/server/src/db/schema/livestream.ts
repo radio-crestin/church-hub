@@ -24,6 +24,7 @@ export const youtubeConfig = sqliteTable('youtube_config', {
   streamKeyId: text('stream_key_id'),
   playlistId: text('playlist_id'),
   startSceneName: text('start_scene_name'),
+  stopSceneName: text('stop_scene_name'),
   selectedBroadcastId: text('selected_broadcast_id'),
   broadcastMode: text('broadcast_mode').notNull().default('create'),
   createdAt: integer('created_at', { mode: 'timestamp' })
