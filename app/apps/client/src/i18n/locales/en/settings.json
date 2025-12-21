@@ -79,10 +79,27 @@
       "clickToRecord": "Click to record",
       "recording": "Recording...",
       "recordShortcut": "Press keys...",
+      "recordShortcutOrMidi": "Press key or MIDI button...",
       "removeShortcut": "Remove",
       "conflicts": {
         "global": "Already used by \"{{action}}\"",
         "scene": "Already used by scene \"{{scene}}\""
+      },
+      "midi": {
+        "title": "MIDI Controller",
+        "description": "Use hardware MIDI controllers for shortcuts with LED feedback",
+        "notSupported": "Web MIDI API is not supported in this browser. MIDI controller features are unavailable.",
+        "inputDevice": "Input Device",
+        "outputDevice": "Output Device (LEDs)",
+        "selectDevice": "Select device...",
+        "noInputDevices": "No MIDI input devices detected",
+        "noOutputDevices": "No MIDI output devices detected",
+        "refresh": "Refresh devices",
+        "requestPermission": "Grant MIDI Access",
+        "permissionError": "MIDI access denied: {{error}}",
+        "fullyConnected": "Input and output connected",
+        "inputOnly": "Input connected (no LED feedback)",
+        "outputOnly": "Output connected (no triggers)"
       }
     },
     "users": {

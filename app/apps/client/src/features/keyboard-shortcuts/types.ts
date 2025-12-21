@@ -1,5 +1,7 @@
 import type { LucideIcon } from 'lucide-react'
 
+import type { MIDIConfig } from './midi/types'
+
 export type GlobalShortcutActionId =
   | 'startLive'
   | 'stopLive'
@@ -13,6 +15,7 @@ export interface ShortcutActionConfig {
 
 export interface GlobalShortcutsConfig {
   actions: Record<GlobalShortcutActionId, ShortcutActionConfig>
+  midi?: MIDIConfig
   version: number
 }
 
