@@ -1,6 +1,8 @@
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
 
 import type { SongSlide } from '~/features/songs/types'
+
+import { useScrollIntoViewWithNeighbors } from '../hooks'
 
 interface QueueSlidePreviewProps {
   slide: SongSlide
@@ -17,15 +19,7 @@ export function QueueSlidePreview({
 }: QueueSlidePreviewProps) {
   const buttonRef = useRef<HTMLButtonElement>(null)
 
-  // Auto-scroll to keep active slide visible at the top of the list
-  useEffect(() => {
-    if (isActive && buttonRef.current) {
-      buttonRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-      })
-    }
-  }, [isActive])
+  useScrollIntoViewWithNeighbors(buttonRef, isActive)
 
   // Strip HTML tags for preview text, replacing them with spaces to preserve word separation
   // Then decode HTML entities like &quot; &amp; etc.

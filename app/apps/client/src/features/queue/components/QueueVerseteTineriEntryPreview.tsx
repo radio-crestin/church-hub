@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
 
+import { useScrollIntoViewWithNeighbors } from '../hooks'
 import type { VerseteTineriEntry } from '../types'
 
 interface QueueVerseteTineriEntryPreviewProps {
@@ -7,57 +8,6 @@ interface QueueVerseteTineriEntryPreviewProps {
   entryIndex: number
   isActive: boolean
   onClick: () => void
-}
-
-// Find the nearest scrollable ancestor
-function getScrollableParent(element: HTMLElement | null): HTMLElement | null {
-  if (!element) return null
-
-  let parent = element.parentElement
-  while (parent) {
-    const { overflowY } = window.getComputedStyle(parent)
-    if (overflowY === 'auto' || overflowY === 'scroll') {
-      return parent
-    }
-    parent = parent.parentElement
-  }
-  return null
-}
-
-// Scroll element into view within its scrollable container, keeping neighbors visible
-function scrollIntoViewWithNeighbors(element: HTMLElement) {
-  const scrollContainer = getScrollableParent(element)
-  if (!scrollContainer) return
-
-  const elementRect = element.getBoundingClientRect()
-  const containerRect = scrollContainer.getBoundingClientRect()
-
-  // Calculate element position relative to the scroll container
-  const elementTop =
-    elementRect.top - containerRect.top + scrollContainer.scrollTop
-  const elementBottom = elementTop + elementRect.height
-
-  // Get the visible area
-  const visibleTop = scrollContainer.scrollTop
-  const visibleBottom = visibleTop + scrollContainer.clientHeight
-
-  // Add padding to ensure neighbors are visible (roughly one element height)
-  const padding = elementRect.height * 1.5
-
-  // Check if element is above visible area (with padding for previous neighbor)
-  if (elementTop - padding < visibleTop) {
-    scrollContainer.scrollTo({
-      top: elementTop - padding,
-      behavior: 'smooth',
-    })
-  }
-  // Check if element is below visible area (with padding for next neighbor)
-  else if (elementBottom + padding > visibleBottom) {
-    scrollContainer.scrollTo({
-      top: elementBottom + padding - scrollContainer.clientHeight,
-      behavior: 'smooth',
-    })
-  }
 }
 
 export function QueueVerseteTineriEntryPreview({
@@ -68,12 +18,7 @@ export function QueueVerseteTineriEntryPreview({
 }: QueueVerseteTineriEntryPreviewProps) {
   const buttonRef = useRef<HTMLButtonElement>(null)
 
-  // Auto-scroll to keep active entry visible with neighbors
-  useEffect(() => {
-    if (isActive && buttonRef.current) {
-      scrollIntoViewWithNeighbors(buttonRef.current)
-    }
-  }, [isActive])
+  useScrollIntoViewWithNeighbors(buttonRef, isActive)
 
   // Truncate verse text for preview
   const previewText =
