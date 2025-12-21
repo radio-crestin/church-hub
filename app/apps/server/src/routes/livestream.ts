@@ -27,7 +27,6 @@ import {
   storePKCESession,
   storeTokens,
   updateYouTubeConfig,
-  waitForBroadcastReady,
 } from '../service/livestream/youtube'
 import {
   broadcastLivestreamStatus,
@@ -800,55 +799,22 @@ export async function handleLivestreamRoutes(
 
       const broadcast = await createBroadcast()
 
-      // Step 3: Wait for broadcast to be ready
-      broadcastStreamStartProgress({
-        step: 'waiting_for_ready',
-        progress: 15,
-        message: 'Waiting for YouTube to be ready...',
-        broadcastId: broadcast.broadcastId,
-        updatedAt: Date.now(),
-      })
-
-      await waitForBroadcastReady(broadcast.broadcastId, {
-        timeoutMs: 60000,
-        pollIntervalMs: 2000,
-        onProgress: ({ lifeCycleStatus, elapsedMs }) => {
-          const maxWaitMs = 60000
-          const progressPct = Math.min(75, 15 + (elapsedMs / maxWaitMs) * 60)
-          broadcastStreamStartProgress({
-            step: 'waiting_for_ready',
-            progress: Math.round(progressPct),
-            message: `YouTube status: ${lifeCycleStatus}`,
-            broadcastId: broadcast.broadcastId,
-            updatedAt: Date.now(),
-          })
-        },
-      })
-
-      // Step 4: Additional 5-second delay
-      broadcastStreamStartProgress({
-        step: 'delay_before_stream',
-        progress: 80,
-        message: 'Preparing to start stream...',
-        broadcastId: broadcast.broadcastId,
-        updatedAt: Date.now(),
-      })
-
-      for (let i = 0; i < 5; i++) {
-        await new Promise((resolve) => setTimeout(resolve, 1000))
+      // Step 3: Wait 5 seconds for YouTube to process the broadcast
+      for (let i = 5; i > 0; i--) {
         broadcastStreamStartProgress({
           step: 'delay_before_stream',
-          progress: 80 + (i + 1) * 3,
-          message: `Starting in ${5 - i - 1} seconds...`,
+          progress: 15 + (5 - i) * 15,
+          message: `Starting in ${i} seconds...`,
           broadcastId: broadcast.broadcastId,
           updatedAt: Date.now(),
         })
+        await new Promise((resolve) => setTimeout(resolve, 1000))
       }
 
-      // Step 5: Start OBS streaming
+      // Step 4: Start OBS streaming
       broadcastStreamStartProgress({
         step: 'starting_obs',
-        progress: 98,
+        progress: 90,
         message: 'Starting OBS stream...',
         broadcastId: broadcast.broadcastId,
         updatedAt: Date.now(),
@@ -856,7 +822,7 @@ export async function handleLivestreamRoutes(
 
       await startStreaming()
 
-      // Step 6: Complete
+      // Step 5: Complete
       broadcastStreamStartProgress({
         step: 'completed',
         progress: 100,
