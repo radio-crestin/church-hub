@@ -1,5 +1,6 @@
 import { generateBroadcastMessage } from '../service/livestream/message'
 import {
+  getAllSceneShortcuts,
   getOBSConfig,
   getScenes,
   getVisibleScenes,
@@ -13,13 +14,17 @@ import {
 } from '../service/livestream/obs'
 import type { OBSConfig, YouTubeConfig } from '../service/livestream/types'
 import {
+  consumePKCESession,
   createBroadcast,
   endBroadcast,
   getActiveBroadcast,
   getAuthStatus,
+  getPastBroadcasts,
   getStreamKeys,
+  getUpcomingBroadcasts,
   getYouTubeConfig,
   logout,
+  storePKCESession,
   storeTokens,
   updateYouTubeConfig,
 } from '../service/livestream/youtube'
@@ -28,9 +33,16 @@ import {
   broadcastOBSConnectionStatus,
   broadcastOBSCurrentScene,
   broadcastOBSStreamingStatus,
+  broadcastYouTubeAuthStatus,
 } from '../websocket'
 
 type HandleCors = (req: Request, res: Response) => Response
+
+// Environment variables for OAuth (needed for server-side token exchange)
+const YOUTUBE_CLIENT_ID = process.env.VITE_YOUTUBE_CLIENT_ID || ''
+const YOUTUBE_CLIENT_SECRET = process.env.VITE_YOUTUBE_CLIENT_SECRET || ''
+const YOUTUBE_REDIRECT_URI =
+  'http://localhost:3000/api/livestream/youtube/callback'
 
 export async function handleLivestreamRoutes(
   req: Request,
@@ -39,14 +51,58 @@ export async function handleLivestreamRoutes(
 ): Promise<Response | null> {
   // YouTube OAuth endpoints
 
-  // GET /api/livestream/youtube/callback - Captures auth code and sends to client via postMessage
-  // The client will exchange the code for tokens using PKCE
+  // POST /api/livestream/youtube/pkce-session - Store PKCE session for server-side token exchange
+  // Used when auth is initiated from Tauri and callback can't use postMessage
+  if (
+    req.method === 'POST' &&
+    url.pathname === '/api/livestream/youtube/pkce-session'
+  ) {
+    try {
+      const body = (await req.json()) as {
+        codeVerifier: string
+        codeChallenge: string
+      }
+
+      if (!body.codeVerifier || !body.codeChallenge) {
+        return handleCors(
+          req,
+          new Response(
+            JSON.stringify({ error: 'Missing codeVerifier or codeChallenge' }),
+            { status: 400, headers: { 'Content-Type': 'application/json' } },
+          ),
+        )
+      }
+
+      const sessionId = storePKCESession(body.codeVerifier, body.codeChallenge)
+
+      return handleCors(
+        req,
+        new Response(JSON.stringify({ data: { sessionId } }), {
+          status: 201,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+    } catch {
+      return handleCors(
+        req,
+        new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+    }
+  }
+
+  // GET /api/livestream/youtube/callback - Handles OAuth callback
+  // If there's a PKCE session ID in state, exchanges tokens server-side
+  // Otherwise sends code to client via postMessage for client-side exchange
   if (
     req.method === 'GET' &&
     url.pathname === '/api/livestream/youtube/callback'
   ) {
     const code = url.searchParams.get('code')
     const error = url.searchParams.get('error')
+    const state = url.searchParams.get('state')
 
     if (error) {
       return handleCors(
@@ -86,7 +142,89 @@ export async function handleLivestreamRoutes(
       )
     }
 
-    // Send the authorization code to the client for PKCE token exchange
+    // Check if there's a PKCE session ID in state (used for Tauri/external browser flow)
+    if (state) {
+      const session = consumePKCESession(state)
+      if (session) {
+        try {
+          // Exchange code for tokens on the server
+          const tokenResponse = await fetch(
+            'https://oauth2.googleapis.com/token',
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+              },
+              body: new URLSearchParams({
+                client_id: YOUTUBE_CLIENT_ID,
+                client_secret: YOUTUBE_CLIENT_SECRET,
+                code,
+                code_verifier: session.codeVerifier,
+                grant_type: 'authorization_code',
+                redirect_uri: YOUTUBE_REDIRECT_URI,
+              }),
+            },
+          )
+
+          if (!tokenResponse.ok) {
+            const errorData = await tokenResponse.json()
+            throw new Error(
+              errorData.error_description || 'Token exchange failed',
+            )
+          }
+
+          const tokenData = await tokenResponse.json()
+
+          // Store tokens
+          const status = await storeTokens({
+            accessToken: tokenData.access_token,
+            refreshToken: tokenData.refresh_token,
+            expiresAt: new Date(Date.now() + tokenData.expires_in * 1000),
+          })
+
+          // Broadcast auth status to all clients
+          broadcastYouTubeAuthStatus({
+            isAuthenticated: status.isAuthenticated,
+            channelId: status.channelId,
+            channelName: status.channelName,
+            expiresAt: status.expiresAt,
+            updatedAt: Date.now(),
+          })
+
+          return handleCors(
+            req,
+            new Response(
+              `<!DOCTYPE html>
+              <html>
+              <body>
+                <p>Authorization successful! You can close this window.</p>
+                <p>Connected as: ${status.channelName || 'Unknown'}</p>
+              </body>
+              </html>`,
+              { headers: { 'Content-Type': 'text/html' } },
+            ),
+          )
+        } catch (err) {
+          const errorMessage =
+            err instanceof Error ? err.message : 'Token exchange failed'
+          return handleCors(
+            req,
+            new Response(
+              `<!DOCTYPE html>
+              <html>
+              <body>
+                <p>Authorization failed: ${errorMessage}</p>
+                <p>You can close this window and try again.</p>
+              </body>
+              </html>`,
+              { headers: { 'Content-Type': 'text/html' } },
+            ),
+          )
+        }
+      }
+    }
+
+    // No PKCE session - use postMessage for client-side token exchange (popup flow)
     return handleCors(
       req,
       new Response(
@@ -133,6 +271,15 @@ export async function handleLivestreamRoutes(
         expiresAt: new Date(body.expiresAt),
       })
 
+      // Broadcast auth status to all clients
+      broadcastYouTubeAuthStatus({
+        isAuthenticated: status.isAuthenticated,
+        channelId: status.channelId,
+        channelName: status.channelName,
+        expiresAt: status.expiresAt,
+        updatedAt: Date.now(),
+      })
+
       return handleCors(
         req,
         new Response(JSON.stringify({ data: status }), {
@@ -174,6 +321,13 @@ export async function handleLivestreamRoutes(
     url.pathname === '/api/livestream/youtube/logout'
   ) {
     await logout()
+
+    // Broadcast auth status to all clients
+    broadcastYouTubeAuthStatus({
+      isAuthenticated: false,
+      updatedAt: Date.now(),
+    })
+
     return handleCors(
       req,
       new Response(JSON.stringify({ data: { success: true } }), {
@@ -286,6 +440,64 @@ export async function handleLivestreamRoutes(
               error instanceof Error
                 ? error.message
                 : 'Failed to get stream keys',
+          }),
+          { status: 500, headers: { 'Content-Type': 'application/json' } },
+        ),
+      )
+    }
+  }
+
+  // GET /api/livestream/youtube/broadcasts/upcoming
+  if (
+    req.method === 'GET' &&
+    url.pathname === '/api/livestream/youtube/broadcasts/upcoming'
+  ) {
+    try {
+      const broadcasts = await getUpcomingBroadcasts()
+      return handleCors(
+        req,
+        new Response(JSON.stringify({ data: broadcasts }), {
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+    } catch (error) {
+      return handleCors(
+        req,
+        new Response(
+          JSON.stringify({
+            error:
+              error instanceof Error
+                ? error.message
+                : 'Failed to get upcoming broadcasts',
+          }),
+          { status: 500, headers: { 'Content-Type': 'application/json' } },
+        ),
+      )
+    }
+  }
+
+  // GET /api/livestream/youtube/broadcasts/completed
+  if (
+    req.method === 'GET' &&
+    url.pathname === '/api/livestream/youtube/broadcasts/completed'
+  ) {
+    try {
+      const broadcasts = await getPastBroadcasts()
+      return handleCors(
+        req,
+        new Response(JSON.stringify({ data: broadcasts }), {
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+    } catch (error) {
+      return handleCors(
+        req,
+        new Response(
+          JSON.stringify({
+            error:
+              error instanceof Error
+                ? error.message
+                : 'Failed to get past broadcasts',
           }),
           { status: 500, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -424,6 +636,20 @@ export async function handleLivestreamRoutes(
     )
   }
 
+  // GET /api/livestream/obs/shortcuts
+  if (
+    req.method === 'GET' &&
+    url.pathname === '/api/livestream/obs/shortcuts'
+  ) {
+    const shortcuts = await getAllSceneShortcuts()
+    return handleCors(
+      req,
+      new Response(JSON.stringify({ data: shortcuts }), {
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
+  }
+
   // PUT /api/livestream/obs/scenes/:id
   const updateSceneMatch = url.pathname.match(
     /^\/api\/livestream\/obs\/scenes\/(\d+)$/,
@@ -434,6 +660,7 @@ export async function handleLivestreamRoutes(
       const body = (await req.json()) as {
         displayName?: string
         isVisible?: boolean
+        shortcuts?: string[]
       }
       const scene = await updateScene(id, body)
       if (!scene) {
