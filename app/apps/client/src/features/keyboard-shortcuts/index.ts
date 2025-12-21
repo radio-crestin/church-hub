@@ -4,7 +4,23 @@ export {
   ShortcutRecorder,
   ShortcutsSettingsSection,
 } from './components'
+export {
+  ShortcutRecordingProvider,
+  useShortcutRecording,
+  useShortcutRecordingOptional,
+} from './context'
 export { useAppShortcuts, useGlobalAppShortcuts } from './hooks'
+export type { MIDIConfig, MIDIDevice, MIDIMessage } from './midi'
+// MIDI exports
+export {
+  isMIDIShortcut,
+  MIDIProvider,
+  MIDISettingsProvider,
+  useMIDI,
+  useMIDILEDFeedback,
+  useMIDIOptional,
+  useMIDIShortcuts,
+} from './midi'
 export type {
   GlobalShortcutActionId,
   GlobalShortcutsConfig,

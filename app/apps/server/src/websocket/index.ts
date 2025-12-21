@@ -168,6 +168,11 @@ export function handleWebSocketMessage(
         }
       }
     }
+
+    // Handle MIDI-related messages from clients
+    if (data.type?.startsWith('midi_') && midiMessageHandler) {
+      midiMessageHandler(data.type, data.payload || {})
+    }
   } catch (error) {
     log('error', `Failed to parse message: ${error}`)
   }
@@ -457,4 +462,117 @@ export function broadcastStreamStartProgress(
       clients.delete(clientId)
     }
   }
+}
+
+// MIDI message types
+export type MIDIMessageEvent = {
+  type: 'midi_message'
+  payload: {
+    type: 'note_on' | 'note_off' | 'control_change'
+    channel: number
+    note?: number
+    controller?: number
+    value: number
+    timestamp: number
+  }
+}
+
+export type MIDIDevicesEvent = {
+  type: 'midi_devices'
+  payload: {
+    inputs: Array<{ id: number; name: string; type: 'input' }>
+    outputs: Array<{ id: number; name: string; type: 'output' }>
+  }
+}
+
+export type MIDIConnectionStatusEvent = {
+  type: 'midi_connection_status'
+  payload: {
+    enabled: boolean
+    inputConnected: boolean
+    outputConnected: boolean
+    inputDevice: string | null
+    outputDevice: string | null
+    inputDeviceId: number | null
+    outputDeviceId: number | null
+  }
+}
+
+/**
+ * Broadcasts MIDI message to all connected clients
+ */
+export function broadcastMIDIMessage(message: MIDIMessageEvent['payload']) {
+  const wsMessage = JSON.stringify({
+    type: 'midi_message',
+    payload: message,
+  } satisfies MIDIMessageEvent)
+
+  log('debug', `Broadcasting MIDI message to ${clients.size} clients`)
+
+  for (const [clientId, ws] of clients) {
+    try {
+      ws.send(wsMessage)
+    } catch (error) {
+      log('error', `Failed to send to ${clientId}: ${error}`)
+      clients.delete(clientId)
+    }
+  }
+}
+
+/**
+ * Broadcasts MIDI devices list to all connected clients
+ */
+export function broadcastMIDIDevices(devices: MIDIDevicesEvent['payload']) {
+  const message = JSON.stringify({
+    type: 'midi_devices',
+    payload: devices,
+  } satisfies MIDIDevicesEvent)
+
+  log('debug', `Broadcasting MIDI devices to ${clients.size} clients`)
+
+  for (const [clientId, ws] of clients) {
+    try {
+      ws.send(message)
+    } catch (error) {
+      log('error', `Failed to send to ${clientId}: ${error}`)
+      clients.delete(clientId)
+    }
+  }
+}
+
+/**
+ * Broadcasts MIDI connection status to all connected clients
+ */
+export function broadcastMIDIConnectionStatus(
+  status: MIDIConnectionStatusEvent['payload'],
+) {
+  const message = JSON.stringify({
+    type: 'midi_connection_status',
+    payload: status,
+  } satisfies MIDIConnectionStatusEvent)
+
+  log('debug', `Broadcasting MIDI connection status to ${clients.size} clients`)
+
+  for (const [clientId, ws] of clients) {
+    try {
+      ws.send(message)
+    } catch (error) {
+      log('error', `Failed to send to ${clientId}: ${error}`)
+      clients.delete(clientId)
+    }
+  }
+}
+
+// Callback for handling MIDI-related WebSocket messages
+let midiMessageHandler:
+  | ((type: string, payload: Record<string, unknown>) => void)
+  | null = null
+
+/**
+ * Register a handler for MIDI WebSocket messages from clients
+ */
+export function setMIDIMessageHandler(
+  handler: (type: string, payload: Record<string, unknown>) => void,
+) {
+  midiMessageHandler = handler
 }

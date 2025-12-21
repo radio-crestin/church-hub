@@ -1,7 +1,11 @@
 import { createRootRoute, Outlet, useLocation } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
-import { GlobalAppShortcutManager } from '~/features/keyboard-shortcuts'
+import {
+  GlobalAppShortcutManager,
+  MIDISettingsProvider,
+  ShortcutRecordingProvider,
+} from '~/features/keyboard-shortcuts'
 import { useAutoOpenScreens } from '~/features/presentation/hooks'
 import { PptxDropZoneProvider } from '~/features/song-import'
 import { I18nProvider } from '~/provider/i18n-provider'
@@ -53,13 +57,17 @@ function MainLayout() {
         <PermissionsProvider>
           <I18nProvider>
             <ToastProvider>
-              <PptxDropZoneProvider>
-                <AutoOpenScreens />
-                <GlobalAppShortcutManager />
-                <AppLayout>
-                  <Outlet />
-                </AppLayout>
-              </PptxDropZoneProvider>
+              <MIDISettingsProvider>
+                <ShortcutRecordingProvider>
+                  <PptxDropZoneProvider>
+                    <AutoOpenScreens />
+                    <GlobalAppShortcutManager />
+                    <AppLayout>
+                      <Outlet />
+                    </AppLayout>
+                  </PptxDropZoneProvider>
+                </ShortcutRecordingProvider>
+              </MIDISettingsProvider>
               {isDev ? (
                 <TanStackRouterDevtools position="bottom-right" />
               ) : null}
