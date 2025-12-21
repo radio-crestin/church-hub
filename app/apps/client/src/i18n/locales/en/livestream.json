@@ -124,6 +124,8 @@
     "obsAuthFailed": "OBS authentication failed. Check your WebSocket password in OBS settings.",
     "obsTimeout": "Connection to OBS timed out. Check that the host and port are correct.",
     "youtubeAuthFailed": "YouTube authentication failed",
+    "youtubeSessionExpired": "Your YouTube session has expired. Please reconnect.",
+    "youtubeReauthRequired": "YouTube requires you to sign in again",
     "broadcastFailed": "Failed to create broadcast",
     "sceneSwitchFailed": "Failed to switch scene",
     "startStreamFailed": "Failed to start stream",
