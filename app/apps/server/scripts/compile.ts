@@ -52,6 +52,10 @@ async function main() {
   console.log(`\x1b[36mDetected:\x1b[0m ${os} (\x1b[33m${arch}\x1b[0m)`)
   console.log(`\x1b[36mOutput binary:\x1b[0m ${outfile}`)
 
+  // Generate embedded migrations before compiling
+  console.log('\x1b[34mGenerating embedded migrations...\x1b[0m')
+  await $`bun run ${path.join(__dirname, 'generate-embedded-migrations.ts')}`
+
   console.log('\x1b[34mCompiling server with Bun...\x1b[0m')
   await $`bun build --compile --production --minify --minify-syntax --target bun --bundle ./src/index.ts --outfile ${outfile}`
 

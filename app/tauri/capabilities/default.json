@@ -7,6 +7,10 @@
     "core:default",
     "opener:default",
     "shell:allow-open",
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [{ "name": "church-hub-sidecar", "sidecar": true }]
+    },
     "fs:default",
     "fs:allow-read",
     "fs:allow-download-write",
