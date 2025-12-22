@@ -92,6 +92,8 @@
     "loading": "Se incarca informatiile transmisiei...",
     "copyMessage": "Copiaza mesaj",
     "messageCopied": "Mesaj copiat",
+    "copyToClipboard": "Copiaza in clipboard",
+    "copied": "Copiat!",
     "openInYouTube": "Deschide in YouTube",
     "watchLive": "Vizualizare Live",
     "openStudio": "YouTube Studio"
