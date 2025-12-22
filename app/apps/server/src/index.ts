@@ -31,6 +31,7 @@ import {
   updateUserPermissions,
   upsertSetting,
 } from './service'
+import { getOrCreateSystemToken } from './service/app-sessions'
 import {
   type CreateTranslationInput,
   deleteTranslation,
@@ -52,6 +53,8 @@ import {
   convertPptToPptx,
 } from './service/conversion'
 import {
+  detectContentType,
+  handleContentTypeChange,
   initializeOBSAutoConnect,
   initializeOBSCallbacks,
 } from './service/livestream/obs'
@@ -176,6 +179,22 @@ async function main() {
 
   // Seed RCCV Bible translation if no translations exist
   ensureRCCVExists()
+
+  // Initialize system API token
+  const { token: systemToken, isNew: isNewToken } =
+    await getOrCreateSystemToken()
+  if (isNewToken && systemToken) {
+    // biome-ignore lint/suspicious/noConsole: Important system message that must be displayed
+    console.log('========================================')
+    // biome-ignore lint/suspicious/noConsole: Important system message that must be displayed
+    console.log('SYSTEM API TOKEN GENERATED')
+    // biome-ignore lint/suspicious/noConsole: Important system message that must be displayed
+    console.log('Save this token - it will only be shown once:')
+    // biome-ignore lint/suspicious/noConsole: Important system message that must be displayed
+    console.log(systemToken)
+    // biome-ignore lint/suspicious/noConsole: Important system message that must be displayed
+    console.log('========================================')
+  }
 
   // Wire up OBS callbacks to WebSocket broadcasts
   initializeOBSCallbacks()
@@ -1652,6 +1671,19 @@ async function main() {
       // Presentation State API Endpoints
       // ============================================================
 
+      // Helper function to handle scene automation after presentation state changes
+      async function triggerSceneAutomation(
+        state: ReturnType<typeof getPresentationState>,
+      ): Promise<void> {
+        try {
+          const contentType = await detectContentType(state)
+          await handleContentTypeChange(contentType, state.isPresenting)
+        } catch (error) {
+          // biome-ignore lint/suspicious/noConsole: Error logging
+          console.error('[scene-automation] Error:', error)
+        }
+      }
+
       // GET /api/presentation/state - Get current presentation state
       if (req.method === 'GET' && url.pathname === '/api/presentation/state') {
         const permError = checkPermission('control_room.view')
@@ -1675,6 +1707,7 @@ async function main() {
           const body = (await req.json()) as UpdatePresentationStateInput
           const state = updatePresentationState(body)
           broadcastPresentationState(state)
+          triggerSceneAutomation(state)
 
           return handleCors(
             req,
@@ -1700,6 +1733,7 @@ async function main() {
 
         const state = stopPresentation()
         broadcastPresentationState(state)
+        triggerSceneAutomation(state)
 
         return handleCors(
           req,
@@ -1716,6 +1750,7 @@ async function main() {
 
         const state = clearSlide()
         broadcastPresentationState(state)
+        triggerSceneAutomation(state)
 
         return handleCors(
           req,
@@ -1732,6 +1767,7 @@ async function main() {
 
         const state = showSlide()
         broadcastPresentationState(state)
+        triggerSceneAutomation(state)
 
         return handleCors(
           req,
@@ -1764,6 +1800,7 @@ async function main() {
 
           const state = navigateQueueSlide(body.direction)
           broadcastPresentationState(state)
+          triggerSceneAutomation(state)
 
           return handleCors(
             req,
@@ -2772,6 +2809,7 @@ async function main() {
               isHidden: false,
             })
             broadcastPresentationState(state)
+            triggerSceneAutomation(state)
           }
 
           return handleCors(
@@ -2973,6 +3011,7 @@ async function main() {
               isHidden: false,
             })
             broadcastPresentationState(state)
+            triggerSceneAutomation(state)
           }
 
           return handleCors(
@@ -3137,6 +3176,7 @@ async function main() {
             // Update the timestamp to trigger refetch on clients
             const updatedState = updatePresentationState({})
             broadcastPresentationState(updatedState)
+            triggerSceneAutomation(updatedState)
           }
 
           return handleCors(
