@@ -118,7 +118,49 @@
     "useAsStartScene": "Foloseste ca scena de start",
     "useAsStartSceneDescription": "Aceasta scena va fi activata inainte de inceperea stream-ului",
     "useAsStopScene": "Foloseste ca scena de stop",
-    "useAsStopSceneDescription": "Aceasta scena va fi activata dupa oprirea stream-ului"
+    "useAsStopSceneDescription": "Aceasta scena va fi activata dupa oprirea stream-ului",
+    "autoSceneSettings": "Setari auto-switch",
+    "autoSceneDescription": "Schimba la aceasta scena cand afisezi:",
+    "contentTypes": {
+      "song": "Cantari",
+      "bible": "Verset biblic",
+      "biblePassage": "Pasaj biblic",
+      "announcement": "Anunturi",
+      "verseteTineri": "Versete Tineri",
+      "empty": "Gol / Ceas"
+    },
+    "mixerActions": "Actiuni Mixer",
+    "mixerActionsDescription": "Configureaza canalele mixerului cand aceasta scena se activeaza:",
+    "unmute": "Porneste",
+    "mute": "Opreste",
+    "selectChannels": "Selecteaza canale...",
+    "selectContentTypes": "Selecteaza tipuri de continut...",
+    "addMore": "Adauga..."
+  },
+  "mixer": {
+    "title": "Mixer",
+    "connected": "Mixer Conectat",
+    "disconnected": "Mixer Deconectat",
+    "reconnecting": "Se reconecteaza...",
+    "testing": "Se testeaza...",
+    "enable": "Activeaza Mixer",
+    "disable": "Dezactiveaza Mixer",
+    "settings": "Setari Mixer",
+    "setup": {
+      "title": "Configurare Mixer",
+      "connectionSettings": "Setari Conexiune",
+      "host": "Adresa IP",
+      "port": "Port",
+      "enableControl": "Activeaza controlul mixerului",
+      "channelConfiguration": "Configurare Canale",
+      "channelCount": "Numar de canale",
+      "channelPlaceholder": "Eticheta canal",
+      "testConnection": "Testeaza conexiunea",
+      "testing": "Se testeaza...",
+      "testSuccess": "Conexiune reusita!",
+      "testFailed": "Conexiune esuata",
+      "save": "Salveaza"
+    }
   },
   "errors": {
     "obsConnectionFailed": "Conectarea la OBS a esuat",

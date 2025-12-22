@@ -25,14 +25,19 @@
 ~~- integreaza un modul de a schimba scenele cu ajutorul unor shortcuts~~
 ~~- adauga optiunea de a configura ce sceva sa se selecteze la start, stop~~
 ~~- creaza shortcuts pentru start/stop stream, cauta cantari, cauta Versete~~
-- creaza un modul pentru a trigger shortcuts folosind midi devices
-- acest modul trebuie sa permita afisarea state-ului curent in diferite locatii pe acel midi device (de exemplu, scena curenta va aprinde bec-ul unui anumit buton)
-- creaza mecanismul de schimbare scene in functie de tipul de slide afisat (de exemplu cand este un verset biblic tineri, sa se schimbe pe scena SOLO)
-- creaza un modul de control al mixerului, astfel incat fiecare scena va da mute/unmute la anumite canale audio
+~~- creaza un modul pentru a trigger shortcuts folosind midi devices~~
+~~- acest modul trebuie sa permita afisarea state-ului curent in diferite locatii pe acel midi device (de exemplu, scena curenta va aprinde bec-ul unui anumit buton)~~ - needs to be tested
+- ~~creaza mecanismul de schimbare scene in functie de tipul de slide afisat (de exemplu cand este un verset biblic tineri, sa se schimbe pe scena SOLO)~~
+~~- creaza un modul de control al mixerului, astfel incat fiecare scena va da mute/unmute la anumite canale audio~~
+~~- creaza o conexiune permanenta in youtube~~
+~~- adauga un ecran de customizare a prezentarii, dimensiune fonturi, culori, fundaluri, etc~~
+~~- adauga in setari un link catre openapi~~
+~~- implementeaza system token api~~
+~~- reorganizeaza pagina de setari si deasemenea asigura-te ca pagina web ascunde setarile disponibile numai in turso~~
+- fa build pe windows si testeaza aplicatia
 - inlocuieste aplicatia de scene monitor cu una care foloseste aplicatia turso si un UI similar cu cel al aplicatiei actuale
-- pentru Biblie va trebui sa afisezi in timp real ce se cauta pe pc-ul principal si sa afisezi lista de versete
-- pentru cantari, va fi ceva similar, fiecare cantare e echivalentul unui verset
-- adauga un ecran de customizare a prezentarii, dimensiune fonturi, culori, fundaluri, etc
-- adauga in setari un link catre openapi
-- implementeaza system token api 
-- implementeaza api-uri pentru search cantari, adaugare de cantari, programe, camera de control, preview, current queue, etc.
+  - pentru cantari, va fi ceva similar, fiecare cantare e echivalentul unui verset
+  - pentru Biblie va trebui sa afisezi in timp real ce se cauta pe pc-ul principal si sa afisezi lista de versete
+~~- implementeaza api-uri pentru search cantari, adaugare de cantari, programe, camera de control, preview, current queue, etc.~~
+- fix openapi endpoints and fix authentication layer
+- creaza optiunea de a adauga live-urile create intr-un playlist pe YouTube

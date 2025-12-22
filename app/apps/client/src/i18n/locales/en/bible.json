@@ -41,7 +41,9 @@
     "presentNow": "Present now",
     "addToQueue": "Add to queue",
     "import": "Import",
-    "importFirst": "Import Bible Translation"
+    "importFirst": "Import Bible Translation",
+    "settings": "Settings",
+    "openSettings": "Open Settings"
   },
   "empty": {
     "title": "No Bible translations",
@@ -54,6 +56,23 @@
     "error": "Failed to import translation",
     "errorTitle": "Import Error",
     "success": "Translation imported successfully"
+  },
+  "settings": {
+    "title": "Bible Settings",
+    "import": {
+      "title": "Import Translation",
+      "description": "Import a Bible translation from an USFX XML file.",
+      "button": "Select File",
+      "formatTitle": "Required Format: USFX XML",
+      "formatDescription": "The Bible translation must be in USFX (Unified Standard Format XML) format. This is a standardized format used for Scripture encoding.",
+      "structureTitle": "File Structure Example:",
+      "hints": {
+        "rootElement": "Root element must be <usfx>",
+        "bookElement": "Each book uses <book id=\"XXX\"> with standard abbreviations (GEN, EXO, etc.)",
+        "chapterElement": "Chapters use <c id=\"N\"> where N is the chapter number",
+        "verseElement": "Verses use <v id=\"N\">text</v> where N is the verse number"
+      }
+    }
   },
   "translation": {
     "select": "Select translation",

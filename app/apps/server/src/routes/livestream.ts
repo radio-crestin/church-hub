@@ -11,19 +11,33 @@ let streamStartInProgress = false
 
 import { generateBroadcastMessage } from '../service/livestream/message'
 import {
+  getMixerChannels,
+  getMixerConfig,
+  testMixerConnection,
+  updateMixerChannels,
+  updateMixerConfig,
+} from '../service/livestream/mixer'
+import {
   getAllSceneShortcuts,
   getOBSConfig,
+  getSceneAutomationState,
   getScenes,
   getVisibleScenes,
   obsConnection,
   reorderScenes,
+  setSceneAutomationEnabled,
   startStreaming,
   stopStreaming,
   switchScene,
   updateOBSConfig,
   updateScene,
 } from '../service/livestream/obs'
-import type { OBSConfig, YouTubeConfig } from '../service/livestream/types'
+import type {
+  ContentType,
+  MixerConfig,
+  OBSConfig,
+  YouTubeConfig,
+} from '../service/livestream/types'
 import {
   consumePKCESession,
   createBroadcast,
@@ -696,6 +710,7 @@ export async function handleLivestreamRoutes(
         displayName?: string
         isVisible?: boolean
         shortcuts?: string[]
+        contentTypes?: ContentType[]
       }
       const scene = await updateScene(id, body)
       if (!scene) {
@@ -744,6 +759,54 @@ export async function handleLivestreamRoutes(
       return handleCors(
         req,
         new Response(JSON.stringify({ data: scenes }), {
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+    } catch {
+      return handleCors(
+        req,
+        new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+    }
+  }
+
+  // GET /api/livestream/obs/scene-automation - Get scene automation state
+  if (
+    req.method === 'GET' &&
+    url.pathname === '/api/livestream/obs/scene-automation'
+  ) {
+    const state = getSceneAutomationState()
+    return handleCors(
+      req,
+      new Response(JSON.stringify({ data: state }), {
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
+  }
+
+  // PUT /api/livestream/obs/scene-automation - Enable/disable scene automation
+  if (
+    req.method === 'PUT' &&
+    url.pathname === '/api/livestream/obs/scene-automation'
+  ) {
+    try {
+      const body = (await req.json()) as { enabled: boolean }
+      if (typeof body.enabled !== 'boolean') {
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ error: 'Missing enabled boolean' }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+      const state = setSceneAutomationEnabled(body.enabled)
+      return handleCors(
+        req,
+        new Response(JSON.stringify({ data: state }), {
           headers: { 'Content-Type': 'application/json' },
         }),
       )
@@ -979,6 +1042,116 @@ export async function handleLivestreamRoutes(
           status: 400,
           headers: { 'Content-Type': 'application/json' },
         }),
+      )
+    }
+  }
+
+  // Mixer Config endpoints
+  // GET /api/livestream/mixer/config
+  if (req.method === 'GET' && url.pathname === '/api/livestream/mixer/config') {
+    const config = await getMixerConfig()
+    return handleCors(
+      req,
+      new Response(JSON.stringify({ data: config }), {
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
+  }
+
+  // PUT /api/livestream/mixer/config
+  if (req.method === 'PUT' && url.pathname === '/api/livestream/mixer/config') {
+    try {
+      const body = (await req.json()) as Partial<MixerConfig>
+      const config = await updateMixerConfig(body)
+      return handleCors(
+        req,
+        new Response(JSON.stringify({ data: config }), {
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+    } catch {
+      return handleCors(
+        req,
+        new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+    }
+  }
+
+  // GET /api/livestream/mixer/channels
+  if (
+    req.method === 'GET' &&
+    url.pathname === '/api/livestream/mixer/channels'
+  ) {
+    const channels = await getMixerChannels()
+    return handleCors(
+      req,
+      new Response(JSON.stringify({ data: channels }), {
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
+  }
+
+  // PUT /api/livestream/mixer/channels
+  if (
+    req.method === 'PUT' &&
+    url.pathname === '/api/livestream/mixer/channels'
+  ) {
+    try {
+      const body = (await req.json()) as {
+        channels: { channelNumber: number; label: string }[]
+      }
+      if (!body.channels || !Array.isArray(body.channels)) {
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ error: 'Invalid channels array' }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+      const channels = await updateMixerChannels(body.channels)
+      return handleCors(
+        req,
+        new Response(JSON.stringify({ data: channels }), {
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+    } catch {
+      return handleCors(
+        req,
+        new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+    }
+  }
+
+  // POST /api/livestream/mixer/test
+  if (req.method === 'POST' && url.pathname === '/api/livestream/mixer/test') {
+    try {
+      const result = await testMixerConnection()
+      return handleCors(
+        req,
+        new Response(JSON.stringify({ data: result }), {
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+    } catch (error) {
+      return handleCors(
+        req,
+        new Response(
+          JSON.stringify({
+            data: {
+              success: false,
+              error: error instanceof Error ? error.message : 'Unknown error',
+            },
+          }),
+          { headers: { 'Content-Type': 'application/json' } },
+        ),
       )
     }
   }

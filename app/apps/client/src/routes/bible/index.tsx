@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Book, FileUp, GripVertical, Loader2 } from 'lucide-react'
+import { Book, GripVertical, Loader2, Settings } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -7,12 +7,12 @@ import type { BibleSearchResult, BibleVerse } from '~/features/bible'
 import {
   BibleControlPanel,
   BibleNavigationPanel,
+  BibleSettingsModal,
   formatVerseReference,
   useBibleKeyboardShortcuts,
   useBibleNavigation,
   useBooks,
   useChapters,
-  useImportTranslation,
   useSelectedBibleTranslations,
   useVerse,
   useVerses,
@@ -23,7 +23,6 @@ import {
   useUpdatePresentationState,
 } from '~/features/presentation'
 import { useInsertBibleVerseToQueue, useQueue } from '~/features/queue'
-import { AlertModal } from '~/ui/modal'
 import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
 
 export const Route = createFileRoute('/bible/')({
@@ -32,7 +31,6 @@ export const Route = createFileRoute('/bible/')({
 
 function BiblePage() {
   const { t } = useTranslation('bible')
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const {
     selectedTranslations,
@@ -40,13 +38,11 @@ function BiblePage() {
     translations,
     isLoading: translationsLoading,
   } = useSelectedBibleTranslations()
-  const { mutateAsync: importTranslation, isPending: isImporting } =
-    useImportTranslation()
   const insertBibleVerse = useInsertBibleVerseToQueue()
   const updatePresentationState = useUpdatePresentationState()
   const clearSlide = useClearSlide()
 
-  const [importError, setImportError] = useState<string | null>(null)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [dividerPosition, setDividerPosition] = useState(40) // percentage
   const containerRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
@@ -337,33 +333,6 @@ function BiblePage() {
     enabled: navigation.state.level === 'verses',
   })
 
-  const handleImportClick = () => {
-    fileInputRef.current?.click()
-  }
-
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    try {
-      const text = await file.text()
-      const suggestedName = file.name.replace(/\.xml$/i, '').replace(/-/g, ' ')
-
-      await importTranslation({
-        xmlContent: text,
-        name: suggestedName,
-        abbreviation: suggestedName.substring(0, 10).toUpperCase(),
-        language: 'ro',
-      })
-    } catch (error) {
-      setImportError(error instanceof Error ? error.message : t('import.error'))
-    }
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-    }
-  }
-
   const canNavigateVerses =
     navigation.state.level === 'verses' && verses.length > 0
 
@@ -407,24 +376,12 @@ function BiblePage() {
           </div>
           <button
             type="button"
-            onClick={handleImportClick}
-            disabled={isImporting}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={() => setIsSettingsOpen(true)}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors"
           >
-            {isImporting ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <FileUp className="w-4 h-4" />
-            )}
-            {t('actions.import')}
+            <Settings className="w-4 h-4" />
+            {t('actions.settings')}
           </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".xml"
-            onChange={handleFileSelect}
-            className="hidden"
-          />
         </div>
 
         {translationsLoading ? (
@@ -495,26 +452,18 @@ function BiblePage() {
             </p>
             <button
               type="button"
-              onClick={handleImportClick}
-              disabled={isImporting}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50"
+              onClick={() => setIsSettingsOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
             >
-              {isImporting ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <FileUp className="w-5 h-5" />
-              )}
-              {t('actions.importFirst')}
+              <Settings className="w-5 h-5" />
+              {t('actions.openSettings')}
             </button>
           </div>
         )}
 
-        <AlertModal
-          isOpen={!!importError}
-          title={t('import.errorTitle')}
-          message={importError || ''}
-          onClose={() => setImportError(null)}
-          variant="error"
+        <BibleSettingsModal
+          isOpen={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
         />
       </div>
     </PagePermissionGuard>
