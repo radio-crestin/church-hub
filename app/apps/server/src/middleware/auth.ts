@@ -1,4 +1,5 @@
 import type { AuthResult } from './types'
+import { validateSystemToken } from '../service/app-sessions'
 import { getUserByToken, updateUserLastUsed } from '../service/users'
 
 const DEBUG = process.env.DEBUG === 'true'
@@ -78,9 +79,18 @@ function isLocalhost(req: Request): boolean {
   return false
 }
 
+function extractBearerToken(req: Request): string | null {
+  const authHeader = req.headers.get('Authorization')
+  if (!authHeader) return null
+
+  const match = authHeader.match(/^Bearer\s+(.+)$/i)
+  return match ? match[1] : null
+}
+
 /**
  * Simple authentication middleware
  * - Localhost requests get full admin access
+ * - System token via Authorization Bearer header gets admin access
  * - Remote requests need user_auth cookie token
  */
 export async function authMiddleware(req: Request): Promise<AuthResult> {
@@ -93,7 +103,21 @@ export async function authMiddleware(req: Request): Promise<AuthResult> {
     }
   }
 
-  // 2. Remote access - check user_auth cookie
+  // 2. Check for system token in Authorization Bearer header
+  const bearerToken = extractBearerToken(req)
+  if (bearerToken) {
+    const isValid = await validateSystemToken(bearerToken)
+    if (isValid) {
+      log('info', 'System token authenticated - granting app privileges')
+      return {
+        response: null,
+        context: { authType: 'app' },
+      }
+    }
+    log('info', 'Invalid system token provided')
+  }
+
+  // 3. Remote access - check user_auth cookie
   const cookieHeader = req.headers.get('Cookie') || ''
   const cookies = parseCookies(cookieHeader)
   const userToken = cookies['user_auth']
@@ -143,7 +167,7 @@ export async function authMiddleware(req: Request): Promise<AuthResult> {
 }
 
 /**
- * Admin-only middleware (localhost only)
+ * Admin-only middleware (localhost or system token)
  */
 export async function adminOnlyMiddleware(req: Request): Promise<AuthResult> {
   if (isLocalhost(req)) {
@@ -154,7 +178,19 @@ export async function adminOnlyMiddleware(req: Request): Promise<AuthResult> {
     }
   }
 
-  log('debug', 'Admin access denied: not localhost')
+  const bearerToken = extractBearerToken(req)
+  if (bearerToken) {
+    const isValid = await validateSystemToken(bearerToken)
+    if (isValid) {
+      log('debug', 'System token admin access granted')
+      return {
+        response: null,
+        context: { authType: 'app' },
+      }
+    }
+  }
+
+  log('debug', 'Admin access denied: not localhost or valid system token')
   return {
     response: new Response(JSON.stringify({ error: 'Admin access required' }), {
       status: 403,
