@@ -10,9 +10,13 @@ import { seedSongCategories } from './seed-song-categories'
 import { seedSongs } from './seed-songs'
 import type { Database } from 'bun:sqlite'
 import { createFtsTables } from '../fts'
+import { EMBEDDED_MIGRATIONS } from './embedded'
 
-// Resolve migrations folder relative to this file
+// Resolve migrations folder relative to this file (only used in dev mode)
 const MIGRATIONS_FOLDER = join(import.meta.dir, '../../../drizzle/migrations')
+
+// Check if running in Tauri production mode
+const IS_TAURI_PRODUCTION = process.env.TAURI_MODE === 'true'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -27,6 +31,62 @@ export interface MigrationResult {
 }
 
 /**
+ * Runs embedded migrations for production builds
+ * Uses the pre-generated SQL from embedded.ts
+ */
+function runEmbeddedMigrations(rawDb: Database): void {
+  log('info', 'Running embedded migrations (production mode)...')
+
+  // Create migrations table if not exists
+  rawDb.run(`
+    CREATE TABLE IF NOT EXISTS __drizzle_migrations (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      hash TEXT NOT NULL,
+      created_at INTEGER
+    )
+  `)
+
+  // Get already applied migrations
+  const applied = new Set(
+    rawDb
+      .query<{ hash: string }, []>(
+        'SELECT hash FROM __drizzle_migrations',
+      )
+      .all()
+      .map((row) => row.hash),
+  )
+
+  // Apply each migration that hasn't been applied
+  for (const migration of EMBEDDED_MIGRATIONS) {
+    const hash = migration.tag
+    if (applied.has(hash)) {
+      log('debug', `Skipping already applied: ${migration.tag}`)
+      continue
+    }
+
+    log('info', `Applying migration: ${migration.tag}`)
+
+    // Split by statement breakpoint and execute each statement
+    const statements = migration.sql
+      .split('--> statement-breakpoint')
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0)
+
+    for (const statement of statements) {
+      rawDb.run(statement)
+    }
+
+    // Record migration as applied
+    rawDb.run(
+      'INSERT INTO __drizzle_migrations (hash, created_at) VALUES (?, ?)',
+      [hash, migration.when],
+    )
+  }
+
+  log('info', 'Embedded migrations complete')
+}
+
+/**
  * Runs all database migrations using Drizzle
  * Also handles FTS tables and seed data which Drizzle cannot manage
  */
@@ -36,8 +96,13 @@ export function runMigrations(
 ): MigrationResult {
   log('info', 'Running Drizzle migrations...')
 
-  // Run Drizzle schema migrations
-  migrate(drizzleDb, { migrationsFolder: MIGRATIONS_FOLDER })
+  // Use embedded migrations in Tauri production mode, otherwise use file-based
+  if (IS_TAURI_PRODUCTION) {
+    runEmbeddedMigrations(rawDb)
+  } else {
+    // Run Drizzle schema migrations from filesystem
+    migrate(drizzleDb, { migrationsFolder: MIGRATIONS_FOLDER })
+  }
 
   log('info', 'Drizzle migrations complete')
 

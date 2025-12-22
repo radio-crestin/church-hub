@@ -66,14 +66,12 @@ pub fn start_server(app_handle: &AppHandle, server_port: u16) -> Result<(), Stri
                 CommandEvent::Stdout(data) => {
                     if let Ok(text) = String::from_utf8(data) {
                         let line = text.trim();
-                        #[cfg(debug_assertions)]
-                        println!("[sidecar] Server stdout: {line}");
+                        println!("[sidecar] stdout: {line}");
                     }
                 }
                 CommandEvent::Stderr(data) => {
-                    #[cfg(debug_assertions)]
                     if let Ok(text) = String::from_utf8(data) {
-                        eprintln!("[sidecar] Server stderr: {}", text.trim());
+                        eprintln!("[sidecar] stderr: {}", text.trim());
                     }
                 }
                 CommandEvent::Terminated(code) => {
