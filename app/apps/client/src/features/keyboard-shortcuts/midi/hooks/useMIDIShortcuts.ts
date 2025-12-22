@@ -58,13 +58,16 @@ export function useMIDIShortcuts({
     }
   }, [onStartLive, onStopLive, onSearchSong, onSearchBible, onSceneSwitch])
 
-  // Build a map of MIDI shortcuts to actions
+  // Build a map of MIDI shortcuts to actions (supports multiple actions per shortcut)
   const shortcutMapRef = useRef<
-    Map<string, { type: 'global' | 'scene'; action: string }>
+    Map<string, Array<{ type: 'global' | 'scene'; action: string }>>
   >(new Map())
 
   useEffect(() => {
-    const map = new Map<string, { type: 'global' | 'scene'; action: string }>()
+    const map = new Map<
+      string,
+      Array<{ type: 'global' | 'scene'; action: string }>
+    >()
 
     // Add global action shortcuts
     if (shortcuts?.actions) {
@@ -76,7 +79,9 @@ export function useMIDIShortcuts({
         if (config?.enabled && config.shortcuts) {
           for (const shortcut of config.shortcuts) {
             if (isMIDIShortcut(shortcut)) {
-              map.set(shortcut, { type: 'global', action: actionId })
+              const existing = map.get(shortcut) || []
+              existing.push({ type: 'global', action: actionId })
+              map.set(shortcut, existing)
               logger.debug(
                 `Mapped MIDI shortcut ${shortcut} to global action ${actionId}`,
               )
@@ -89,7 +94,9 @@ export function useMIDIShortcuts({
     // Add scene shortcuts
     for (const { shortcut, sceneName } of sceneShortcuts) {
       if (isMIDIShortcut(shortcut)) {
-        map.set(shortcut, { type: 'scene', action: sceneName })
+        const existing = map.get(shortcut) || []
+        existing.push({ type: 'scene', action: sceneName })
+        map.set(shortcut, existing)
         logger.debug(`Mapped MIDI shortcut ${shortcut} to scene ${sceneName}`)
       }
     }
@@ -117,29 +124,32 @@ export function useMIDIShortcuts({
       if (message.type === 'control_change' && message.value === 0) return
 
       const shortcutString = midiMessageToShortcutString(message as never)
-      const mapping = shortcutMapRef.current.get(shortcutString)
+      const mappings = shortcutMapRef.current.get(shortcutString)
 
-      if (!mapping) return
+      if (!mappings || mappings.length === 0) return
 
-      logger.info(`MIDI shortcut triggered: ${shortcutString}`, { mapping })
+      logger.info(`MIDI shortcut triggered: ${shortcutString}`, { mappings })
 
-      if (mapping.type === 'global') {
-        switch (mapping.action as GlobalShortcutActionId) {
-          case 'startLive':
-            handlersRef.current.onStartLive?.()
-            break
-          case 'stopLive':
-            handlersRef.current.onStopLive?.()
-            break
-          case 'searchSong':
-            handlersRef.current.onSearchSong?.()
-            break
-          case 'searchBible':
-            handlersRef.current.onSearchBible?.()
-            break
+      // Execute all mapped actions - handlers have state checks to determine which should run
+      for (const mapping of mappings) {
+        if (mapping.type === 'global') {
+          switch (mapping.action as GlobalShortcutActionId) {
+            case 'startLive':
+              handlersRef.current.onStartLive?.()
+              break
+            case 'stopLive':
+              handlersRef.current.onStopLive?.()
+              break
+            case 'searchSong':
+              handlersRef.current.onSearchSong?.()
+              break
+            case 'searchBible':
+              handlersRef.current.onSearchBible?.()
+              break
+          }
+        } else if (mapping.type === 'scene') {
+          handlersRef.current.onSceneSwitch?.(mapping.action)
         }
-      } else if (mapping.type === 'scene') {
-        handlersRef.current.onSceneSwitch?.(mapping.action)
       }
     },
     // Note: isRecordingRef is intentionally not in deps - it's a stable ref and we read .current at call time
@@ -149,16 +159,29 @@ export function useMIDIShortcuts({
 
   // Subscribe to MIDI messages
   useEffect(() => {
+    console.log('[useMIDIShortcuts] Effect triggered:', {
+      hasMidi: !!midi,
+      isEnabled: midi?.isEnabled,
+    })
+
     if (!midi || !midi.isEnabled) {
-      logger.debug('MIDI shortcuts disabled or no MIDI context')
+      console.log(
+        '[useMIDIShortcuts] Not subscribing - midi:',
+        !!midi,
+        'isEnabled:',
+        midi?.isEnabled,
+      )
       return
     }
 
-    logger.info('Subscribing to MIDI messages for shortcuts')
-    const unsubscribe = midi.subscribe(handleMIDIMessage)
+    console.log('[useMIDIShortcuts] Subscribing to MIDI messages')
+    const unsubscribe = midi.subscribe((message) => {
+      console.log('[useMIDIShortcuts] MIDI message received:', message)
+      handleMIDIMessage(message)
+    })
 
     return () => {
-      logger.info('Unsubscribing from MIDI messages')
+      console.log('[useMIDIShortcuts] Unsubscribing from MIDI messages')
       unsubscribe()
     }
   }, [midi, handleMIDIMessage])
