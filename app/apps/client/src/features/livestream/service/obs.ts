@@ -1,8 +1,11 @@
 import { fetcher } from '../../../utils/fetcher'
+import type { ContentType } from '../constants/content-types'
 import type {
+  MixerChannelActions,
   OBSConfig,
   OBSScene,
   OBSStatus,
+  SceneAutomationState,
   SceneShortcut,
   StartStreamResponse,
 } from '../types'
@@ -39,7 +42,13 @@ export async function getOBSScenes(visibleOnly = false): Promise<OBSScene[]> {
 
 export async function updateOBSScene(
   id: number,
-  data: { displayName?: string; isVisible?: boolean; shortcuts?: string[] },
+  data: {
+    displayName?: string
+    isVisible?: boolean
+    shortcuts?: string[]
+    contentTypes?: ContentType[]
+    mixerChannelActions?: MixerChannelActions
+  },
 ): Promise<OBSScene> {
   const response = await fetcher<{ data: OBSScene }>(
     `/api/livestream/obs/scenes/${id}`,
@@ -116,6 +125,27 @@ export async function updateOBSConfig(
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(config),
+    },
+  )
+  return response.data
+}
+
+export async function getSceneAutomation(): Promise<SceneAutomationState> {
+  const response = await fetcher<{ data: SceneAutomationState }>(
+    '/api/livestream/obs/scene-automation',
+  )
+  return response.data
+}
+
+export async function updateSceneAutomation(
+  enabled: boolean,
+): Promise<SceneAutomationState> {
+  const response = await fetcher<{ data: SceneAutomationState }>(
+    '/api/livestream/obs/scene-automation',
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled }),
     },
   )
   return response.data

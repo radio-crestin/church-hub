@@ -118,7 +118,49 @@
     "useAsStartScene": "Use as stream start scene",
     "useAsStartSceneDescription": "This scene will be activated before the stream starts",
     "useAsStopScene": "Use as stream stop scene",
-    "useAsStopSceneDescription": "This scene will be activated after the stream stops"
+    "useAsStopSceneDescription": "This scene will be activated after the stream stops",
+    "autoSceneSettings": "Auto-Switch Settings",
+    "autoSceneDescription": "Switch to this scene when showing:",
+    "contentTypes": {
+      "song": "Songs",
+      "bible": "Bible Verse",
+      "biblePassage": "Bible Passage",
+      "announcement": "Announcements",
+      "verseteTineri": "Versete Tineri",
+      "empty": "Empty / Clock"
+    },
+    "mixerActions": "Mixer Channel Actions",
+    "mixerActionsDescription": "Configure mixer channels when this scene activates:",
+    "unmute": "Unmute",
+    "mute": "Mute",
+    "selectChannels": "Select channels...",
+    "selectContentTypes": "Select content types...",
+    "addMore": "Add more..."
+  },
+  "mixer": {
+    "title": "Mixer",
+    "connected": "Mixer Connected",
+    "disconnected": "Mixer Disconnected",
+    "reconnecting": "Reconnecting...",
+    "testing": "Testing...",
+    "enable": "Enable Mixer",
+    "disable": "Disable Mixer",
+    "settings": "Mixer Settings",
+    "setup": {
+      "title": "Mixer Setup",
+      "connectionSettings": "Connection Settings",
+      "host": "Host IP",
+      "port": "Port",
+      "enableControl": "Enable Mixer Control",
+      "channelConfiguration": "Channel Configuration",
+      "channelCount": "Number of Channels",
+      "channelPlaceholder": "Channel label",
+      "testConnection": "Test Connection",
+      "testing": "Testing...",
+      "testSuccess": "Connection successful!",
+      "testFailed": "Connection failed",
+      "save": "Save"
+    }
   },
   "errors": {
     "obsConnectionFailed": "Failed to connect to OBS",

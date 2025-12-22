@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 
 import { BroadcastInfo } from './BroadcastInfo'
+import { MixerConnectionButton } from './MixerConnectionButton'
 import { OBSConnectionButton } from './OBSConnectionButton'
 import { SceneGrid } from './SceneGrid'
 import { StreamControls } from './StreamControls'
@@ -21,6 +22,7 @@ export function LiveStreamPage() {
           </h1>
           <YouTubeConnectionButton />
           <OBSConnectionButton />
+          <MixerConnectionButton />
         </div>
         <StreamControls />
       </div>

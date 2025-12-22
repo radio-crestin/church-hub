@@ -3,13 +3,29 @@ import { eq } from 'drizzle-orm'
 import { obsConnection } from './websocket-client'
 import { getDatabase } from '../../../db'
 import { obsScenes } from '../../../db/schema'
-import type { OBSScene } from '../types'
+import type { ContentType, MixerChannelActions, OBSScene } from '../types'
 
 function parseShortcuts(shortcuts: string): string[] {
   try {
     return JSON.parse(shortcuts) as string[]
   } catch {
     return []
+  }
+}
+
+function parseContentTypes(contentTypes: string): ContentType[] {
+  try {
+    return JSON.parse(contentTypes) as ContentType[]
+  } catch {
+    return []
+  }
+}
+
+function parseMixerChannelActions(actions: string): MixerChannelActions {
+  try {
+    return JSON.parse(actions) as MixerChannelActions
+  } catch {
+    return { mute: [], unmute: [] }
   }
 }
 
@@ -29,6 +45,8 @@ export async function getScenes(): Promise<OBSScene[]> {
       isVisible: scene.isVisible,
       sortOrder: scene.sortOrder,
       shortcuts: parseShortcuts(scene.shortcuts),
+      contentTypes: parseContentTypes(scene.contentTypes),
+      mixerChannelActions: parseMixerChannelActions(scene.mixerChannelActions),
       isCurrent: scene.obsSceneName === currentScene,
     }))
   }
@@ -51,6 +69,10 @@ export async function getScenes(): Promise<OBSScene[]> {
           isVisible: dbScene.isVisible,
           sortOrder: dbScene.sortOrder,
           shortcuts: parseShortcuts(dbScene.shortcuts),
+          contentTypes: parseContentTypes(dbScene.contentTypes),
+          mixerChannelActions: parseMixerChannelActions(
+            dbScene.mixerChannelActions,
+          ),
           isCurrent: dbScene.obsSceneName === currentScene,
         })
       }
@@ -78,6 +100,10 @@ export async function getScenes(): Promise<OBSScene[]> {
           isVisible: newScene.isVisible,
           sortOrder: newScene.sortOrder,
           shortcuts: parseShortcuts(newScene.shortcuts),
+          contentTypes: parseContentTypes(newScene.contentTypes),
+          mixerChannelActions: parseMixerChannelActions(
+            newScene.mixerChannelActions,
+          ),
           isCurrent: obsScene.sceneName === currentScene,
         })
       }
@@ -93,6 +119,8 @@ export async function getScenes(): Promise<OBSScene[]> {
       isVisible: scene.isVisible,
       sortOrder: scene.sortOrder,
       shortcuts: parseShortcuts(scene.shortcuts),
+      contentTypes: parseContentTypes(scene.contentTypes),
+      mixerChannelActions: parseMixerChannelActions(scene.mixerChannelActions),
       isCurrent: scene.obsSceneName === currentScene,
     }))
   }
@@ -105,7 +133,13 @@ export async function getVisibleScenes(): Promise<OBSScene[]> {
 
 export async function updateScene(
   id: number,
-  data: { displayName?: string; isVisible?: boolean; shortcuts?: string[] },
+  data: {
+    displayName?: string
+    isVisible?: boolean
+    shortcuts?: string[]
+    contentTypes?: ContentType[]
+    mixerChannelActions?: MixerChannelActions
+  },
 ): Promise<OBSScene | null> {
   const db = getDatabase()
   const [updated] = await db
@@ -115,6 +149,12 @@ export async function updateScene(
       ...(data.isVisible !== undefined && { isVisible: data.isVisible }),
       ...(data.shortcuts !== undefined && {
         shortcuts: JSON.stringify(data.shortcuts),
+      }),
+      ...(data.contentTypes !== undefined && {
+        contentTypes: JSON.stringify(data.contentTypes),
+      }),
+      ...(data.mixerChannelActions !== undefined && {
+        mixerChannelActions: JSON.stringify(data.mixerChannelActions),
       }),
       updatedAt: new Date(),
     })
@@ -131,6 +171,8 @@ export async function updateScene(
     isVisible: updated.isVisible,
     sortOrder: updated.sortOrder,
     shortcuts: parseShortcuts(updated.shortcuts),
+    contentTypes: parseContentTypes(updated.contentTypes),
+    mixerChannelActions: parseMixerChannelActions(updated.mixerChannelActions),
     isCurrent: updated.obsSceneName === currentScene,
   }
 }

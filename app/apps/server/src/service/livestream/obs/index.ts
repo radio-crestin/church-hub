@@ -6,8 +6,17 @@ import {
   broadcastOBSStreamingStatus,
   setOBSStatusProvider,
 } from '../../../websocket'
+import { handleSceneMixerActions } from '../mixer/scene-handler'
 
 export { getOBSConfig, updateOBSConfig } from './config'
+export { detectContentType } from './content-type-detector'
+export {
+  getSceneAutomationState,
+  getSceneForContentType,
+  handleContentTypeChange,
+  resetAutomationState,
+  setSceneAutomationEnabled,
+} from './scene-automation'
 export {
   getAllSceneShortcuts,
   getScenes,
@@ -23,10 +32,18 @@ export {
   stopStreaming,
 } from './streaming'
 export { obsConnection }
+export { broadcastOBSCurrentScene }
 
 export function initializeOBSCallbacks() {
-  obsConnection.setCurrentSceneCallback((sceneName) => {
+  obsConnection.setCurrentSceneCallback(async (sceneName) => {
     broadcastOBSCurrentScene(sceneName)
+    // Trigger mixer automation when scene changes
+    try {
+      await handleSceneMixerActions(sceneName)
+    } catch (error) {
+      // biome-ignore lint/suspicious/noConsole: Error logging
+      console.error('[obs] Failed to handle mixer actions:', error)
+    }
   })
 
   obsConnection.setConnectionStatusCallback((status) => {

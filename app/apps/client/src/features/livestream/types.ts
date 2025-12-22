@@ -1,3 +1,7 @@
+import type { ContentType } from './constants/content-types'
+
+export type { ContentType }
+
 export interface OBSConnectionStatus {
   connected: boolean
   host: string
@@ -14,6 +18,11 @@ export interface OBSStreamingStatus {
 
 export interface OBSStatus extends OBSConnectionStatus, OBSStreamingStatus {}
 
+export interface MixerChannelActions {
+  mute: string[]
+  unmute: string[]
+}
+
 export interface OBSScene {
   id?: number
   obsSceneName: string
@@ -21,7 +30,16 @@ export interface OBSScene {
   isVisible: boolean
   sortOrder: number
   shortcuts: string[]
+  contentTypes: ContentType[]
+  mixerChannelActions: MixerChannelActions
   isCurrent: boolean
+}
+
+export interface SceneAutomationState {
+  isEnabled: boolean
+  previousSceneName: string | null
+  currentAutoScene: string | null
+  lastContentType: ContentType | null
 }
 
 export interface SceneShortcut {
@@ -53,8 +71,8 @@ export interface YouTubeConfig {
   privacyStatus: 'public' | 'unlisted' | 'private'
   streamKeyId?: string
   playlistId?: string
-  startSceneName?: string
-  stopSceneName?: string
+  startSceneName?: string | null
+  stopSceneName?: string | null
   selectedBroadcastId?: string
   broadcastMode: 'create' | 'reuse'
 }
@@ -131,4 +149,18 @@ export interface StreamStartProgress {
   broadcastId?: string
   error?: string
   updatedAt: number
+}
+
+export interface MixerConfig {
+  id?: number
+  host: string
+  port: number
+  isEnabled: boolean
+  channelCount: number
+}
+
+export interface MixerChannel {
+  id?: number
+  channelNumber: number
+  label: string
 }

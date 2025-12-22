@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
+import type { ContentType } from '../constants/content-types'
 import {
   getOBSScenes,
   reorderOBSScenes,
@@ -23,7 +24,12 @@ export function useOBSScenes(visibleOnly = false) {
       data,
     }: {
       id: number
-      data: { displayName?: string; isVisible?: boolean; shortcuts?: string[] }
+      data: {
+        displayName?: string
+        isVisible?: boolean
+        shortcuts?: string[]
+        contentTypes?: ContentType[]
+      }
     }) => updateOBSScene(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({

@@ -100,6 +100,9 @@
     "libreOfficeNotInstalled": "LibreOffice este necesar pentru a importa fișiere .ppt",
     "libreOfficeNotInstalledDescription": "Te rugăm să instalezi LibreOffice de la https://www.libreoffice.org pentru a activa importul fișierelor .ppt. Alternativ, convertește fișierele în format .pptx mai întâi."
   },
+  "settings": {
+    "title": "Setări cântări"
+  },
   "metadata": {
     "detailsSection": "Detalii",
     "author": "Autor",

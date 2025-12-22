@@ -19,8 +19,9 @@ import { useTranslation } from 'react-i18next'
 
 import { SceneSettingsItem } from './SceneSettingsItem'
 import { SceneSettingsPopup } from './SceneSettingsPopup'
+import type { ContentType } from '../constants/content-types'
 import { useYouTubeConfig } from '../hooks/useYouTubeConfig'
-import type { OBSScene } from '../types'
+import type { MixerChannelActions, OBSScene } from '../types'
 
 interface SceneSettingsModalProps {
   scenes: OBSScene[]
@@ -28,7 +29,13 @@ interface SceneSettingsModalProps {
   onReorder: (sceneIds: number[]) => void
   onUpdateScene: (
     id: number,
-    data: { displayName?: string; isVisible?: boolean; shortcuts?: string[] },
+    data: {
+      displayName?: string
+      isVisible?: boolean
+      shortcuts?: string[]
+      contentTypes?: ContentType[]
+      mixerChannelActions?: MixerChannelActions
+    },
   ) => void
 }
 
@@ -77,6 +84,8 @@ export function SceneSettingsModal({
       displayName: string
       isVisible: boolean
       shortcuts: string[]
+      contentTypes: ContentType[]
+      mixerChannelActions: MixerChannelActions
     }) => {
       if (selectedScene) {
         onUpdateScene(selectedScene.id!, data)
