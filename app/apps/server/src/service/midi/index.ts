@@ -1,5 +1,3 @@
-import easymidi from 'easymidi'
-
 import {
   DEFAULT_MIDI_CONFIG,
   LED_VELOCITY_OFF,
@@ -10,10 +8,35 @@ import {
 } from './types'
 import { midiLogger } from '../../utils/fileLogger'
 
+// Lazy-loaded easymidi module (may not be available in production builds)
+let easymidi: typeof import('easymidi') | null = null
+let midiAvailable = true
+let midiLoadAttempted = false
+
+function loadMidi(): boolean {
+  if (midiLoadAttempted) return midiAvailable
+  midiLoadAttempted = true
+
+  try {
+    // Dynamic require to avoid crash at import time
+    easymidi = require('easymidi')
+    midiAvailable = true
+    midiLogger.info('MIDI native module loaded successfully')
+  } catch (error) {
+    midiAvailable = false
+    easymidi = null
+    midiLogger.warn(
+      `MIDI native module not available: ${error instanceof Error ? error.message : error}`,
+    )
+    midiLogger.warn('MIDI features will be disabled')
+  }
+  return midiAvailable
+}
+
 // Current state
 let config: MIDIConfig = { ...DEFAULT_MIDI_CONFIG }
-let currentInput: easymidi.Input | null = null
-let currentOutput: easymidi.Output | null = null
+let currentInput: import('easymidi').Input | null = null
+let currentOutput: import('easymidi').Output | null = null
 
 // Callback for MIDI messages to be sent via WebSocket
 type MIDIMessageCallback = (message: MIDIInputMessage) => void
@@ -23,6 +46,8 @@ let messageCallback: MIDIMessageCallback | null = null
  * Get list of available MIDI input devices
  */
 export function getInputDevices(): MIDIDevice[] {
+  if (!loadMidi() || !easymidi) return []
+
   try {
     const inputs = easymidi.getInputs()
     return inputs.map((name, index) => ({
@@ -40,6 +65,8 @@ export function getInputDevices(): MIDIDevice[] {
  * Get list of available MIDI output devices
  */
 export function getOutputDevices(): MIDIDevice[] {
+  if (!loadMidi() || !easymidi) return []
+
   try {
     const outputs = easymidi.getOutputs()
     return outputs.map((name, index) => ({
@@ -148,6 +175,11 @@ function handleControlChange(msg: {
  * Connect to a MIDI input device by index
  */
 export function connectInput(deviceId: number): boolean {
+  if (!loadMidi() || !easymidi) {
+    midiLogger.warn('Cannot connect to input: MIDI not available')
+    return false
+  }
+
   midiLogger.info(`Attempting to connect to input device ${deviceId}...`)
 
   // Disconnect existing input first
@@ -204,6 +236,11 @@ export function disconnectInput() {
  * Connect to a MIDI output device by index
  */
 export function connectOutput(deviceId: number): boolean {
+  if (!loadMidi() || !easymidi) {
+    midiLogger.warn('Cannot connect to output: MIDI not available')
+    return false
+  }
+
   // Disconnect existing output first
   disconnectOutput()
 
@@ -290,6 +327,13 @@ export function setMessageCallback(callback: MIDIMessageCallback | null) {
 }
 
 /**
+ * Check if MIDI native module is available
+ */
+export function isMidiAvailable(): boolean {
+  return loadMidi()
+}
+
+/**
  * Get current MIDI connection status
  */
 export function getConnectionStatus() {
@@ -297,6 +341,7 @@ export function getConnectionStatus() {
   const outputs = getOutputDevices()
 
   return {
+    available: midiAvailable,
     enabled: config.enabled,
     inputConnected: currentInput !== null,
     outputConnected: currentOutput !== null,
@@ -344,6 +389,12 @@ export function setEnabled(enabled: boolean) {
  */
 export function initializeMIDI() {
   midiLogger.info('Initializing MIDI service...')
+
+  // Try to load the MIDI module
+  if (!loadMidi()) {
+    midiLogger.warn('MIDI service disabled - native module not available')
+    return
+  }
 
   const devices = getAllDevices()
   midiLogger.info(
