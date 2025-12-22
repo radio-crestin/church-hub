@@ -12,7 +12,7 @@ const logger = createLogger('keyboard-shortcuts:manager')
 export function GlobalAppShortcutManager() {
   const navigate = useNavigate()
   const { shortcuts, isLoading } = useAppShortcuts()
-  const { start, stop, isLive } = useStreaming()
+  const { start, stop, isLive, isStarting, isStopping } = useStreaming()
   const { scenes, switchScene, currentScene } = useOBSScenes()
   const { isRecordingRef } = useShortcutRecording()
 
@@ -30,24 +30,24 @@ export function GlobalAppShortcutManager() {
   }, [scenes])
 
   const handleStartLive = useCallback(() => {
-    if (isLive) {
-      logger.debug('Skipping start - livestream is already live')
+    if (isLive || isStarting) {
+      logger.debug('Skipping start - livestream is already live or starting')
       return
     }
     logger.info('Starting live stream via shortcut')
     navigate({ to: '/livestream/' })
     start()
-  }, [start, navigate, isLive])
+  }, [start, navigate, isLive, isStarting])
 
   const handleStopLive = useCallback(() => {
-    if (!isLive) {
-      logger.debug('Skipping stop - livestream is not live')
+    if (!isLive || isStopping) {
+      logger.debug('Skipping stop - livestream is not live or already stopping')
       return
     }
     logger.info('Stopping live stream via shortcut')
     navigate({ to: '/livestream/' })
     stop()
-  }, [stop, navigate, isLive])
+  }, [stop, navigate, isLive, isStopping])
 
   const handleSearchSong = useCallback(() => {
     logger.debug('Navigating to song search via shortcut')
