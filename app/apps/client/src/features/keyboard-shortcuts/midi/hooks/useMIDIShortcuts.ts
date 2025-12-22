@@ -7,6 +7,9 @@ import { isMIDIShortcut, midiMessageToShortcutString } from '../utils'
 
 const logger = createLogger('midi:shortcuts')
 
+// Debounce time in milliseconds to prevent hardware double-triggers
+const MIDI_DEBOUNCE_MS = 200
+
 interface SceneShortcut {
   shortcut: string
   sceneName: string
@@ -62,6 +65,9 @@ export function useMIDIShortcuts({
   const shortcutMapRef = useRef<
     Map<string, Array<{ type: 'global' | 'scene'; action: string }>>
   >(new Map())
+
+  // Track last trigger time per shortcut for debouncing
+  const lastTriggerTimeRef = useRef<Map<string, number>>(new Map())
 
   useEffect(() => {
     const map = new Map<
@@ -124,6 +130,18 @@ export function useMIDIShortcuts({
       if (message.type === 'control_change' && message.value === 0) return
 
       const shortcutString = midiMessageToShortcutString(message as never)
+
+      // Debounce: prevent hardware double-triggers
+      const now = Date.now()
+      const lastTrigger = lastTriggerTimeRef.current.get(shortcutString) || 0
+      if (now - lastTrigger < MIDI_DEBOUNCE_MS) {
+        logger.debug(
+          `Debouncing MIDI shortcut: ${shortcutString} (${now - lastTrigger}ms since last)`,
+        )
+        return
+      }
+      lastTriggerTimeRef.current.set(shortcutString, now)
+
       const mappings = shortcutMapRef.current.get(shortcutString)
 
       if (!mappings || mappings.length === 0) return
@@ -159,29 +177,14 @@ export function useMIDIShortcuts({
 
   // Subscribe to MIDI messages
   useEffect(() => {
-    console.log('[useMIDIShortcuts] Effect triggered:', {
-      hasMidi: !!midi,
-      isEnabled: midi?.isEnabled,
-    })
-
     if (!midi || !midi.isEnabled) {
-      console.log(
-        '[useMIDIShortcuts] Not subscribing - midi:',
-        !!midi,
-        'isEnabled:',
-        midi?.isEnabled,
-      )
       return
     }
-
-    console.log('[useMIDIShortcuts] Subscribing to MIDI messages')
     const unsubscribe = midi.subscribe((message) => {
-      console.log('[useMIDIShortcuts] MIDI message received:', message)
       handleMIDIMessage(message)
     })
 
     return () => {
-      console.log('[useMIDIShortcuts] Unsubscribing from MIDI messages')
       unsubscribe()
     }
   }, [midi, handleMIDIMessage])

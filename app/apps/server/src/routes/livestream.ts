@@ -6,6 +6,9 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
   console.log(`[${level.toUpperCase()}] [livestream-routes] ${message}`)
 }
 
+// Mutex to prevent concurrent stream start requests
+let streamStartInProgress = false
+
 import { generateBroadcastMessage } from '../service/livestream/message'
 import {
   getAllSceneShortcuts,
@@ -789,6 +792,19 @@ export async function handleLivestreamRoutes(
     req.method === 'POST' &&
     url.pathname === '/api/livestream/obs/stream/start'
   ) {
+    // Prevent concurrent stream start requests
+    if (streamStartInProgress) {
+      log('warning', 'Stream start already in progress, rejecting request')
+      return handleCors(
+        req,
+        new Response(
+          JSON.stringify({ error: 'Stream start already in progress' }),
+          { status: 409, headers: { 'Content-Type': 'application/json' } },
+        ),
+      )
+    }
+
+    streamStartInProgress = true
     try {
       const youtubeConfig = await getYouTubeConfig()
 
@@ -878,6 +894,8 @@ export async function handleLivestreamRoutes(
           { status: 500, headers: { 'Content-Type': 'application/json' } },
         ),
       )
+    } finally {
+      streamStartInProgress = false
     }
   }
 

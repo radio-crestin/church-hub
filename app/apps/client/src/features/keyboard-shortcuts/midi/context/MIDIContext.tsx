@@ -126,14 +126,12 @@ export function MIDIProvider({
     }
 
     const wsUrl = `${getWsUrl()}/ws`
-    logger.debug(`Connecting to WebSocket at ${wsUrl}`)
 
     try {
       const ws = new WebSocket(wsUrl)
       wsRef.current = ws
 
       ws.onopen = () => {
-        logger.info('WebSocket connected')
         setHasPermission(true)
         setPermissionError(null)
       }
@@ -151,8 +149,6 @@ export function MIDIProvider({
               value: data.payload.value,
               timestamp: data.payload.timestamp,
             }
-
-            logger.debug('MIDI message received', message)
 
             // Notify all subscribers
             subscribersRef.current.forEach((callback) => {
@@ -203,13 +199,34 @@ export function MIDIProvider({
   // Request access (connect to server)
   const requestAccess = useCallback(async (): Promise<boolean> => {
     try {
-      logger.info('Requesting MIDI access from server')
-
       // Fetch devices
       await fetchDevices()
 
       // Connect to WebSocket
       connectWebSocket()
+
+      // Auto-connect to saved devices if we have them
+      const inputId = config.inputDeviceId
+        ? parseInt(config.inputDeviceId, 10)
+        : null
+      const outputId = config.outputDeviceId
+        ? parseInt(config.outputDeviceId, 10)
+        : null
+
+      if (inputId !== null || outputId !== null) {
+        try {
+          const response = await fetch(`${getApiUrl()}/api/midi/connect`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              inputDeviceId: inputId,
+              outputDeviceId: outputId,
+            }),
+          })
+          const _result = await response.json()
+        } catch (_error) {}
+      } else {
+      }
 
       return true
     } catch (error) {
@@ -221,7 +238,12 @@ export function MIDIProvider({
       setPermissionError(message)
       return false
     }
-  }, [fetchDevices, connectWebSocket])
+  }, [
+    fetchDevices,
+    connectWebSocket,
+    config.inputDeviceId,
+    config.outputDeviceId,
+  ])
 
   // Connect to devices on server
   const connectToDevices = useCallback(
@@ -390,15 +412,9 @@ export function MIDIProvider({
   const subscribe = useCallback(
     (callback: MIDIMessageCallback): (() => void) => {
       subscribersRef.current.add(callback)
-      logger.debug('MIDI subscriber added', {
-        count: subscribersRef.current.size,
-      })
 
       return () => {
         subscribersRef.current.delete(callback)
-        logger.debug('MIDI subscriber removed', {
-          count: subscribersRef.current.size,
-        })
       }
     },
     [],
