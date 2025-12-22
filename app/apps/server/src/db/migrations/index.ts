@@ -2,6 +2,7 @@ import { join } from 'node:path'
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite'
 import { migrate } from 'drizzle-orm/bun-sqlite/migrator'
 
+import { EMBEDDED_MIGRATIONS } from './embedded'
 import { seedSystemRoles } from './seed'
 import { seedBibleTranslations } from './seed-bibles'
 import { seedDefaultScreens } from './seed-screens'
@@ -10,7 +11,6 @@ import { seedSongCategories } from './seed-song-categories'
 import { seedSongs } from './seed-songs'
 import type { Database } from 'bun:sqlite'
 import { createFtsTables } from '../fts'
-import { EMBEDDED_MIGRATIONS } from './embedded'
 
 // Resolve migrations folder relative to this file (only used in dev mode)
 const MIGRATIONS_FOLDER = join(import.meta.dir, '../../../drizzle/migrations')
@@ -49,9 +49,7 @@ function runEmbeddedMigrations(rawDb: Database): void {
   // Get already applied migrations
   const applied = new Set(
     rawDb
-      .query<{ hash: string }, []>(
-        'SELECT hash FROM __drizzle_migrations',
-      )
+      .query<{ hash: string }, []>('SELECT hash FROM __drizzle_migrations')
       .all()
       .map((row) => row.hash),
   )
