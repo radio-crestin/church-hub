@@ -92,6 +92,8 @@
     "loading": "Loading broadcast info...",
     "copyMessage": "Copy Message",
     "messageCopied": "Message copied to clipboard",
+    "copyToClipboard": "Copy to clipboard",
+    "copied": "Copied!",
     "openInYouTube": "Open in YouTube",
     "watchLive": "Watch Live",
     "openStudio": "YouTube Studio"
