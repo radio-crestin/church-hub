@@ -19,12 +19,13 @@ let oauth2Client: OAuth2Client | null = null
 
 /**
  * Get or create the OAuth2 client.
- * For Desktop app credentials with PKCE, client_secret is not required.
- * Token refresh also works without client_secret for installed apps.
+ * Both client_id and client_secret are required for token refresh
+ * when the initial token exchange used client_secret.
  */
 export function getOAuth2Client(): OAuth2Client {
   if (!oauth2Client) {
     const clientId = process.env.YOUTUBE_CLIENT_ID
+    const clientSecret = process.env.YOUTUBE_CLIENT_SECRET
 
     if (!clientId) {
       throw new Error(
@@ -32,7 +33,13 @@ export function getOAuth2Client(): OAuth2Client {
       )
     }
 
-    oauth2Client = new OAuth2Client(clientId)
+    if (!clientSecret) {
+      throw new Error(
+        'YouTube OAuth credentials not configured. Set YOUTUBE_CLIENT_SECRET environment variable.',
+      )
+    }
+
+    oauth2Client = new OAuth2Client(clientId, clientSecret)
   }
 
   return oauth2Client

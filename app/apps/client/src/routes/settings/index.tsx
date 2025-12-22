@@ -3,7 +3,10 @@ import { ExternalLink, Languages, Palette } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { isLocalhost } from '~/config'
-import { ShortcutsSettingsSection } from '~/features/keyboard-shortcuts'
+import {
+  MIDIProvider,
+  ShortcutsSettingsSection,
+} from '~/features/keyboard-shortcuts'
 import { ScreenManager } from '~/features/presentation'
 import { SidebarConfigManager } from '~/features/sidebar-config'
 import { SystemTokenManager } from '~/features/system-token'
@@ -107,16 +110,6 @@ function RouteComponent() {
           </div>
         </div>
 
-        {/* Keyboard Shortcuts Section */}
-        <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
-          <ShortcutsSettingsSection />
-        </div>
-
-        {/* Authorized Users Section */}
-        <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
-          <UserList />
-        </div>
-
         {/* Screens Section */}
         <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
           <ScreenManager />
@@ -125,6 +118,18 @@ function RouteComponent() {
         {/* Sidebar Configuration Section */}
         <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
           <SidebarConfigManager />
+        </div>
+
+        {/* Authorized Users Section */}
+        <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
+          <UserList />
+        </div>
+
+        {/* Keyboard Shortcuts Section */}
+        <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
+          <MIDIProvider>
+            <ShortcutsSettingsSection />
+          </MIDIProvider>
         </div>
 
         {/* API & Developer Section */}

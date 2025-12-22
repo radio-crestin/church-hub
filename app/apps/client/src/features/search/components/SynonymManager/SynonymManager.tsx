@@ -95,8 +95,7 @@ export function SynonymManager() {
         <button
           type="button"
           onClick={() => setModal({ type: 'create' })}
-          className="flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700
-            text-white rounded-lg transition-colors text-sm"
+          className="flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors text-sm whitespace-nowrap shrink-0"
         >
           <Plus size={16} />
           {t('sections.synonyms.addSynonym')}
