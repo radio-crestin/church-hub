@@ -30,16 +30,24 @@ export function GlobalAppShortcutManager() {
   }, [scenes])
 
   const handleStartLive = useCallback(() => {
+    if (isLive) {
+      logger.debug('Skipping start - livestream is already live')
+      return
+    }
     logger.info('Starting live stream via shortcut')
     navigate({ to: '/livestream/' })
     start()
-  }, [start, navigate])
+  }, [start, navigate, isLive])
 
   const handleStopLive = useCallback(() => {
+    if (!isLive) {
+      logger.debug('Skipping stop - livestream is not live')
+      return
+    }
     logger.info('Stopping live stream via shortcut')
     navigate({ to: '/livestream/' })
     stop()
-  }, [stop, navigate])
+  }, [stop, navigate, isLive])
 
   const handleSearchSong = useCallback(() => {
     logger.debug('Navigating to song search via shortcut')
