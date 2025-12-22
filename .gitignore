@@ -94,3 +94,4 @@ fabric.properties
 
 # Secrets
 scripts/old-youtube-automation/secrets/
+app/logs/
