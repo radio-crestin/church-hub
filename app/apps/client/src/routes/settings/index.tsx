@@ -127,8 +127,9 @@ function RouteComponent() {
           <SidebarConfigManager />
         </div>
 
-        {/* API Documentation Link */}
-        <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
+        {/* API & Developer Section */}
+        <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800 space-y-6">
+          {/* API Documentation Link */}
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -148,14 +149,15 @@ function RouteComponent() {
               {t('sections.apiDocs.link')}
             </a>
           </div>
-        </div>
 
-        {/* System Token Section (localhost only) */}
-        {isLocalhost() && (
-          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
-            <SystemTokenManager />
-          </div>
-        )}
+          {/* System Token (localhost only) */}
+          {isLocalhost() && (
+            <>
+              <hr className="border-gray-200 dark:border-gray-700" />
+              <SystemTokenManager />
+            </>
+          )}
+        </div>
       </div>
     </PagePermissionGuard>
   )
