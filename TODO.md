@@ -34,7 +34,7 @@
 ~~- adauga in setari un link catre openapi~~
 ~~- implementeaza system token api~~
 ~~- reorganizeaza pagina de setari si deasemenea asigura-te ca pagina web ascunde setarile disponibile numai in turso~~
-- fa build pe windows si testeaza aplicatia
+~~- fa build pe windows si testeaza aplicatia~~
 - inlocuieste aplicatia de scene monitor cu una care foloseste aplicatia turso si un UI similar cu cel al aplicatiei actuale
   - pentru cantari, va fi ceva similar, fiecare cantare e echivalentul unui verset
   - pentru Biblie va trebui sa afisezi in timp real ce se cauta pe pc-ul principal si sa afisezi lista de versete
