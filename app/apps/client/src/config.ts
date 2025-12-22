@@ -35,3 +35,17 @@ export function getApiUrl(): string {
 export function getWsUrl(): string {
   return `ws://${getApiHost()}:${API_PORT}`
 }
+
+/**
+ * Checks if the client is accessing from localhost
+ */
+export function isLocalhost(): boolean {
+  if (typeof window === 'undefined') return false
+  const hostname = window.location.hostname.toLowerCase()
+  return (
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname === '::1' ||
+    hostname.startsWith('127.')
+  )
+}
