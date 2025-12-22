@@ -43,13 +43,13 @@ const config = defineConfig(({ mode }) => {
       port: 8086,
       strictPort: true,
       host: host || '0.0.0.0',
-      hmr: host
-        ? {
-            protocol: 'ws',
-            host,
-            port: 8087,
-          }
-        : undefined,
+      // Always configure HMR to connect directly to Vite's port
+      // This is needed because the app is accessed via port 3000 (proxy)
+      hmr: {
+        protocol: 'ws',
+        host: host || 'localhost',
+        port: 8086,
+      },
       watch: {
         ignored: ['**/src-tauri/**'],
       },
