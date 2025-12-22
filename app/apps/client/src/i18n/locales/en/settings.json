@@ -330,6 +330,28 @@
       "description": "Access the REST API documentation for developers",
       "link": "Open API Docs"
     },
+    "systemToken": {
+      "title": "System API Token",
+      "description": "Use this token to access the API with superuser privileges from external applications. This section is only visible on localhost.",
+      "token": "Token",
+      "showToken": "Show Token",
+      "loading": "Loading...",
+      "show": "Show token",
+      "hide": "Hide token",
+      "copy": "Copy to clipboard",
+      "regenerate": "Regenerate Token",
+      "regenerating": "Regenerating...",
+      "regenerateWarning": "Regenerating will invalidate the current token",
+      "createdAt": "Created",
+      "lastUsed": "Last used",
+      "never": "Never",
+      "toast": {
+        "copied": "Token copied to clipboard",
+        "regenerated": "System token regenerated successfully",
+        "fetchError": "Failed to fetch system token",
+        "regenerateError": "Failed to regenerate system token"
+      }
+    },
     "sidebar": {
       "title": "Sidebar Configuration",
       "description": "Customize sidebar menu items, their order, and add custom pages",

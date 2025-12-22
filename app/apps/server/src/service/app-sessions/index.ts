@@ -50,6 +50,66 @@ export async function getOrCreateSystemToken(): Promise<{
   return { token, isNew: true }
 }
 
+export function getSystemToken(): {
+  token: string
+  lastUsedAt: Date | null
+  createdAt: Date
+} | null {
+  const db = getDatabase()
+
+  const session = db
+    .select()
+    .from(appSessions)
+    .where(eq(appSessions.name, SYSTEM_TOKEN_NAME))
+    .get()
+
+  if (!session) {
+    return null
+  }
+
+  return {
+    token: session.sessionToken,
+    lastUsedAt: session.lastUsedAt,
+    createdAt: session.createdAt,
+  }
+}
+
+export async function regenerateSystemToken(): Promise<string> {
+  const db = getDatabase()
+
+  const token = generateSystemToken()
+  const tokenHash = await hashToken(token)
+
+  const existing = db
+    .select()
+    .from(appSessions)
+    .where(eq(appSessions.name, SYSTEM_TOKEN_NAME))
+    .get()
+
+  if (existing) {
+    db.update(appSessions)
+      .set({
+        sessionToken: token,
+        sessionTokenHash: tokenHash,
+        lastUsedAt: null,
+      })
+      .where(eq(appSessions.id, existing.id))
+      .run()
+    logger.info('System token regenerated')
+  } else {
+    db.insert(appSessions)
+      .values({
+        sessionToken: token,
+        sessionTokenHash: tokenHash,
+        name: SYSTEM_TOKEN_NAME,
+      })
+      .run()
+    logger.info('System token created')
+  }
+
+  return token
+}
+
 export async function validateSystemToken(token: string): Promise<boolean> {
   try {
     const db = getDatabase()

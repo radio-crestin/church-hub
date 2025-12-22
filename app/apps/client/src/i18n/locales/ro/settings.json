@@ -330,6 +330,28 @@
       "description": "Acceseaza documentatia API REST pentru dezvoltatori",
       "link": "Deschide Documentatia API"
     },
+    "systemToken": {
+      "title": "Token API de Sistem",
+      "description": "Foloseste acest token pentru a accesa API-ul cu privilegii de superutilizator din aplicatii externe. Aceasta sectiune este vizibila doar pe localhost.",
+      "token": "Token",
+      "showToken": "Afiseaza Token",
+      "loading": "Se incarca...",
+      "show": "Afiseaza token",
+      "hide": "Ascunde token",
+      "copy": "Copiaza in clipboard",
+      "regenerate": "Regenereaza Token",
+      "regenerating": "Se regenereaza...",
+      "regenerateWarning": "Regenerarea va invalida tokenul curent",
+      "createdAt": "Creat",
+      "lastUsed": "Ultima utilizare",
+      "never": "Niciodata",
+      "toast": {
+        "copied": "Token copiat in clipboard",
+        "regenerated": "Token de sistem regenerat cu succes",
+        "fetchError": "Nu s-a putut obtine tokenul de sistem",
+        "regenerateError": "Nu s-a putut regenera tokenul de sistem"
+      }
+    },
     "sidebar": {
       "title": "Configurare Bară Laterală",
       "description": "Personalizează elementele meniului din bara laterală, ordinea lor și adaugă pagini personalizate",

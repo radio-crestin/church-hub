@@ -31,7 +31,11 @@ import {
   updateUserPermissions,
   upsertSetting,
 } from './service'
-import { getOrCreateSystemToken } from './service/app-sessions'
+import {
+  getOrCreateSystemToken,
+  getSystemToken,
+  regenerateSystemToken,
+} from './service/app-sessions'
 import {
   type CreateTranslationInput,
   deleteTranslation,
@@ -509,6 +513,68 @@ async function main() {
           new Response(JSON.stringify({ data: roles }), {
             headers: { 'Content-Type': 'application/json' },
           }),
+        )
+      }
+
+      // Strict localhost check (no system token allowed)
+      function isStrictLocalhost(): boolean {
+        const host = req.headers.get('Host')
+        if (!host) return true
+        const hostname = host.split(':')[0].toLowerCase()
+        return (
+          hostname === 'localhost' ||
+          hostname === '127.0.0.1' ||
+          hostname === '::1' ||
+          hostname.startsWith('127.')
+        )
+      }
+
+      // GET /api/system-token - Get system token (localhost only)
+      if (req.method === 'GET' && url.pathname === '/api/system-token') {
+        if (!isStrictLocalhost()) {
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({ error: 'Only accessible from localhost' }),
+              { status: 403, headers: { 'Content-Type': 'application/json' } },
+            ),
+          )
+        }
+
+        const tokenInfo = getSystemToken()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: tokenInfo }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/system-token/regenerate - Regenerate system token (localhost only)
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/system-token/regenerate'
+      ) {
+        if (!isStrictLocalhost()) {
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({ error: 'Only accessible from localhost' }),
+              { status: 403, headers: { 'Content-Type': 'application/json' } },
+            ),
+          )
+        }
+
+        const newToken = await regenerateSystemToken()
+        return handleCors(
+          req,
+          new Response(
+            JSON.stringify({
+              data: { token: newToken },
+              message: 'System token regenerated successfully',
+            }),
+            { headers: { 'Content-Type': 'application/json' } },
+          ),
         )
       }
 
