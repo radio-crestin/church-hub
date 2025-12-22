@@ -132,6 +132,16 @@ jobs:
             |----------|--------------|----------|
             | macOS | Apple Silicon (M1/M2/M3/M4) | `.dmg` |
             | Windows | x64 | `.msi`, `.exe` |
+
+            ## macOS Installation Note
+
+            After installing, if you see **"church-hub.app is damaged and can't be opened"**, run this command in Terminal:
+
+            ```bash
+            xattr -c /Applications/church-hub.app
+            ```
+
+            This removes the quarantine flag from unsigned apps.
           releaseDraft: true
           prerelease: false
           includeUpdaterJson: false
