@@ -325,6 +325,11 @@
         "exportFailed": "Export failed: {{error}}"
       }
     },
+    "apiDocs": {
+      "title": "API Documentation",
+      "description": "Access the REST API documentation for developers",
+      "link": "Open API Docs"
+    },
     "sidebar": {
       "title": "Sidebar Configuration",
       "description": "Customize sidebar menu items, their order, and add custom pages",

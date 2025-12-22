@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Languages, Palette } from 'lucide-react'
+import { ExternalLink, Languages, Palette } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { BibleTranslationsManager } from '~/features/bible/components'
@@ -147,6 +147,29 @@ function RouteComponent() {
         {/* Sidebar Configuration Section */}
         <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
           <SidebarConfigManager />
+        </div>
+
+        {/* API Documentation Link */}
+        <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                {t('sections.apiDocs.title')}
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
+                {t('sections.apiDocs.description')}
+              </p>
+            </div>
+            <a
+              href="http://localhost:3000/api/docs"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-indigo-600 dark:text-indigo-400 hover:underline text-sm"
+            >
+              <ExternalLink className="w-4 h-4" />
+              {t('sections.apiDocs.link')}
+            </a>
+          </div>
         </div>
       </div>
     </PagePermissionGuard>
