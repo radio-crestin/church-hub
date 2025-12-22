@@ -1,0 +1,176 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+env:
+  TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+  TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+
+jobs:
+  build:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macOS ARM64 (Apple Silicon)
+          - platform: macos-latest
+            rust_target: aarch64-apple-darwin
+            bun_target: bun-darwin-arm64
+            sidecar_suffix: aarch64-apple-darwin
+
+          # macOS x64 (Intel)
+          - platform: macos-13
+            rust_target: x86_64-apple-darwin
+            bun_target: bun-darwin-x64
+            sidecar_suffix: x86_64-apple-darwin
+
+          # Linux x64
+          - platform: ubuntu-22.04
+            rust_target: x86_64-unknown-linux-gnu
+            bun_target: bun-linux-x64
+            sidecar_suffix: x86_64-unknown-linux-gnu
+
+          # Linux ARM64 (public repos only)
+          - platform: ubuntu-22.04-arm
+            rust_target: aarch64-unknown-linux-gnu
+            bun_target: bun-linux-arm64
+            sidecar_suffix: aarch64-unknown-linux-gnu
+
+          # Windows x64
+          - platform: windows-latest
+            rust_target: x86_64-pc-windows-msvc
+            bun_target: bun-windows-x64
+            sidecar_suffix: x86_64-pc-windows-msvc.exe
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        shell: bash
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION"
+
+      - name: Update version in tauri.conf.json
+        shell: bash
+        run: |
+          cd app/tauri
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            powershell -Command "(Get-Content tauri.conf.json) -replace '\"version\": \"[^\"]*\"', '\"version\": \"${{ steps.version.outputs.version }}\"' | Set-Content tauri.conf.json"
+          else
+            sed -i.bak 's/"version": "[^"]*"/"version": "${{ steps.version.outputs.version }}"/' tauri.conf.json
+            rm -f tauri.conf.json.bak
+          fi
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libasound2-dev
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+          cache-dependency-path: app/pnpm-lock.yaml
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust_target }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './app/tauri -> target'
+          cache-targets: true
+
+      - name: Install dependencies
+        working-directory: app
+        run: pnpm install --frozen-lockfile
+
+      - name: Build client
+        working-directory: app
+        run: bun run --filter client build
+
+      - name: Compile server sidecar
+        working-directory: app/apps/server
+        shell: bash
+        run: |
+          mkdir -p ../../tauri/bin
+          OUTFILE="../../tauri/bin/church-hub-sidecar-${{ matrix.sidecar_suffix }}"
+          echo "Compiling sidecar to: $OUTFILE"
+          bun build \
+            --compile \
+            --production \
+            --minify \
+            --minify-syntax \
+            --target ${{ matrix.bun_target }} \
+            --outfile "$OUTFILE" \
+            ./src/index.ts
+
+      - name: Verify sidecar binary
+        shell: bash
+        run: |
+          echo "Contents of tauri/bin:"
+          ls -la app/tauri/bin/
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            test -f "app/tauri/bin/church-hub-sidecar-${{ matrix.sidecar_suffix }}" || exit 1
+          else
+            test -x "app/tauri/bin/church-hub-sidecar-${{ matrix.sidecar_suffix }}" || exit 1
+          fi
+          echo "Sidecar binary verified successfully"
+
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: app
+          tauriScript: pnpm tauri
+          args: --target ${{ matrix.rust_target }}
+          tagName: v__VERSION__
+          releaseName: 'Church Hub v__VERSION__'
+          releaseBody: |
+            ## What's New
+
+            See the commits for details on changes in this release.
+
+            ## Downloads
+
+            | Platform | Architecture | Download |
+            |----------|--------------|----------|
+            | macOS | Apple Silicon (M1/M2/M3/M4) | `.dmg` |
+            | macOS | Intel | `.dmg` |
+            | Linux | x64 | `.deb`, `.AppImage` |
+            | Linux | ARM64 | `.deb`, `.AppImage` |
+            | Windows | x64 | `.msi`, `.exe` |
+          releaseDraft: true
+          prerelease: false
+          includeUpdaterJson: false
