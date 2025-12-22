@@ -33,10 +33,6 @@ export function useGlobalAppShortcuts({
   onSceneSwitch,
   isRecordingRef,
 }: UseGlobalAppShortcutsOptions) {
-  // Store recording ref in local ref to ensure stable access in callbacks
-  const recordingRef = useRef(isRecordingRef)
-  recordingRef.current = isRecordingRef
-
   // Use refs to always have current handlers without causing re-registration
   const handlersRef = useRef({
     onStartLive,
@@ -97,7 +93,7 @@ export function useGlobalAppShortcuts({
                 await register(shortcut, (event) => {
                   if (event.state === 'Pressed') {
                     // Skip if recording a new shortcut
-                    if (recordingRef.current?.current) {
+                    if (isRecordingRef?.current) {
                       logger.debug(
                         `Skipping shortcut ${shortcut} - recording in progress`,
                       )
@@ -131,7 +127,7 @@ export function useGlobalAppShortcuts({
             await register(shortcut, (event) => {
               if (event.state === 'Pressed') {
                 // Skip if recording a new shortcut
-                if (recordingRef.current?.current) {
+                if (isRecordingRef?.current) {
                   logger.debug(
                     `Skipping scene shortcut ${shortcut} - recording in progress`,
                   )

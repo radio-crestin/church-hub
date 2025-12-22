@@ -39,10 +39,6 @@ export function useMIDIShortcuts({
 }: UseMIDIShortcutsOptions) {
   const midi = useMIDIOptional()
 
-  // Store recording ref in local ref to ensure stable access in callbacks
-  const recordingRef = useRef(isRecordingRef)
-  recordingRef.current = isRecordingRef
-
   // Use refs to avoid re-subscription on handler changes
   const handlersRef = useRef({
     onStartLive,
@@ -111,7 +107,7 @@ export function useMIDIShortcuts({
       value: number
     }) => {
       // Skip if recording a new shortcut
-      if (recordingRef.current?.current) {
+      if (isRecordingRef?.current) {
         logger.debug('Skipping MIDI action - recording in progress')
         return
       }
