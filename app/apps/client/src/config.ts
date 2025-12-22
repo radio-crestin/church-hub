@@ -10,7 +10,7 @@ const isTauri =
 
 /**
  * Gets the API host - uses the same hostname the client used to access the app
- * This ensures that if user accesses via 192.168.88.12:8086, API calls go to 192.168.88.12:3000
+ * This ensures that if user accesses via 192.168.88.12:3000, API calls go to 192.168.88.12:3000
  * In Tauri mode, always use localhost since the sidecar runs locally
  */
 function getApiHost(): string {
