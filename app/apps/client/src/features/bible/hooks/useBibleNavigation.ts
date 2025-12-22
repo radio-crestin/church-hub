@@ -202,14 +202,19 @@ export function useBibleNavigation(
 
   /** Navigate to chapter (used by reference search and verse navigation) */
   const navigateToChapter = useCallback((params: NavigateToChapterParams) => {
+    const isSearchNavigation = params.clearSearch === false
     setState((prev) => ({
       ...prev,
       bookId: params.bookId,
       bookName: params.bookName,
       chapter: params.chapter,
-      presentedIndex: params.verseIndex ?? null, // Set presented verse for navigation
-      searchedIndex: null,
-      searchQuery: params.clearSearch === false ? prev.searchQuery : '',
+      // For search navigation, set searchedIndex (indigo highlight, not yet presented)
+      // For regular navigation, set presentedIndex (green highlight, presented on screen)
+      presentedIndex: isSearchNavigation
+        ? prev.presentedIndex
+        : (params.verseIndex ?? null),
+      searchedIndex: isSearchNavigation ? (params.verseIndex ?? null) : null,
+      searchQuery: isSearchNavigation ? prev.searchQuery : '',
       level: 'verses',
     }))
   }, [])
