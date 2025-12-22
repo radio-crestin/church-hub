@@ -1,11 +1,16 @@
 import { appendFileSync, existsSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
+import { getLogsDir } from './paths'
 
-const LOG_DIR = join(process.cwd(), 'logs')
+const LOG_DIR = getLogsDir()
 
-// Ensure log directory exists
-if (!existsSync(LOG_DIR)) {
-  mkdirSync(LOG_DIR, { recursive: true })
+// Ensure log directory exists (with error handling for read-only filesystems)
+try {
+  if (!existsSync(LOG_DIR)) {
+    mkdirSync(LOG_DIR, { recursive: true })
+  }
+} catch {
+  // Silently ignore if we can't create log directory (e.g., read-only filesystem)
 }
 
 function getTimestamp(): string {

@@ -5,6 +5,7 @@ import { type BunSQLiteDatabase, drizzle } from 'drizzle-orm/bun-sqlite'
 import { type MigrationResult, runMigrations } from './migrations'
 import * as schema from './schema'
 import { Database } from 'bun:sqlite'
+import { getDatabasePath } from '../utils/paths'
 
 interface InitializeResult {
   db: BunSQLiteDatabase<typeof schema>
@@ -12,7 +13,7 @@ interface InitializeResult {
 }
 
 const DEBUG = process.env.DEBUG === 'true'
-const DATABASE_PATH = process.env.DATABASE_PATH || './data/app.db'
+const DATABASE_PATH = getDatabasePath()
 
 let sqlite: Database | null = null
 let db: BunSQLiteDatabase<typeof schema> | null = null
