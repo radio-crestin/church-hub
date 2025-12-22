@@ -12,9 +12,16 @@ const logger = createLogger('keyboard-shortcuts:manager')
 export function GlobalAppShortcutManager() {
   const navigate = useNavigate()
   const { shortcuts, isLoading } = useAppShortcuts()
-  const { start, stop, isLive, isStarting, isStopping } = useStreaming()
+  const { start, stop, isLive, isStarting, isStopping, streamStartProgress } =
+    useStreaming()
   const { scenes, switchScene, currentScene } = useOBSScenes()
   const { isRecordingRef } = useShortcutRecording()
+
+  // Check if stream start is in progress (more reliable than just isStarting)
+  const isStartingStream =
+    streamStartProgress &&
+    streamStartProgress.step !== 'completed' &&
+    streamStartProgress.step !== 'error'
 
   // Build scene shortcuts array
   const sceneShortcuts = useMemo(() => {
@@ -30,24 +37,27 @@ export function GlobalAppShortcutManager() {
   }, [scenes])
 
   const handleStartLive = useCallback(() => {
-    if (isLive || isStarting) {
+    if (isLive || isStarting || isStartingStream) {
       logger.debug('Skipping start - livestream is already live or starting')
       return
     }
     logger.info('Starting live stream via shortcut')
     navigate({ to: '/livestream/' })
     start()
-  }, [start, navigate, isLive, isStarting])
+  }, [start, navigate, isLive, isStarting, isStartingStream])
 
   const handleStopLive = useCallback(() => {
-    if (!isLive || isStopping) {
-      logger.debug('Skipping stop - livestream is not live or already stopping')
+    // Allow stopping if live OR if currently starting (to cancel a start in progress)
+    if ((!isLive && !isStartingStream) || isStopping) {
+      logger.debug(
+        'Skipping stop - livestream is not live/starting or already stopping',
+      )
       return
     }
     logger.info('Stopping live stream via shortcut')
     navigate({ to: '/livestream/' })
     stop()
-  }, [stop, navigate, isLive, isStopping])
+  }, [stop, navigate, isLive, isStopping, isStartingStream])
 
   const handleSearchSong = useCallback(() => {
     logger.debug('Navigating to song search via shortcut')
