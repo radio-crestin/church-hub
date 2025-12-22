@@ -1,9 +1,20 @@
-import { Eye, EyeOff, Play, Plus, Square, X } from 'lucide-react'
+import {
+  Eye,
+  EyeOff,
+  Play,
+  Plus,
+  Square,
+  Volume2,
+  VolumeX,
+  X,
+} from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ShortcutRecorder } from '~/features/keyboard-shortcuts'
-import type { OBSScene, YouTubeConfig } from '../types'
+import { CONTENT_TYPES, type ContentType } from '../constants/content-types'
+import { useMixerChannels, useMixerConfig } from '../hooks'
+import type { MixerChannelActions, OBSScene, YouTubeConfig } from '../types'
 import { validateShortcut } from '../utils/shortcutValidation'
 
 interface SceneSettingsPopupProps {
@@ -16,6 +27,8 @@ interface SceneSettingsPopupProps {
     displayName: string
     isVisible: boolean
     shortcuts: string[]
+    contentTypes: ContentType[]
+    mixerChannelActions: MixerChannelActions
   }) => void
 }
 
@@ -28,9 +41,35 @@ export function SceneSettingsPopup({
   onSave,
 }: SceneSettingsPopupProps) {
   const { t } = useTranslation('livestream')
+  const { config: mixerConfig } = useMixerConfig()
+  const { channels: savedMixerChannels } = useMixerChannels()
+
+  // Generate all channels based on channelCount, using saved labels or defaults
+  const mixerChannels = Array.from(
+    { length: mixerConfig?.channelCount ?? 0 },
+    (_, i) => {
+      const channelNumber = i + 1
+      const savedChannel = savedMixerChannels.find(
+        (ch) => ch.channelNumber === channelNumber,
+      )
+      return {
+        channelNumber,
+        label: savedChannel?.label || '',
+      }
+    },
+  )
   const [displayName, setDisplayName] = useState(scene.displayName)
   const [isVisible, setIsVisible] = useState(scene.isVisible)
   const [shortcuts, setShortcuts] = useState<string[]>(scene.shortcuts || [])
+  const [contentTypes, setContentTypes] = useState<ContentType[]>(
+    scene.contentTypes || [],
+  )
+  const [mixerMute, setMixerMute] = useState<string[]>(
+    scene.mixerChannelActions?.mute || [],
+  )
+  const [mixerUnmute, setMixerUnmute] = useState<string[]>(
+    scene.mixerChannelActions?.unmute || [],
+  )
   const [errors, setErrors] = useState<Record<number, string>>({})
 
   const handleAddShortcut = useCallback(() => {
@@ -89,25 +128,82 @@ export function SceneSettingsPopup({
       displayName: displayName.trim() || scene.obsSceneName,
       isVisible,
       shortcuts: validShortcuts,
+      contentTypes,
+      mixerChannelActions: {
+        mute: mixerMute,
+        unmute: mixerUnmute,
+      },
     })
-  }, [displayName, isVisible, shortcuts, scene, allScenes, onSave])
+  }, [
+    displayName,
+    isVisible,
+    shortcuts,
+    contentTypes,
+    mixerMute,
+    mixerUnmute,
+    scene,
+    allScenes,
+    onSave,
+  ])
 
   const isStartScene = youtubeConfig?.startSceneName === scene.obsSceneName
   const isStopScene = youtubeConfig?.stopSceneName === scene.obsSceneName
 
   const handleToggleStartScene = useCallback(() => {
     if (!onUpdateYouTubeConfig) return
-    onUpdateYouTubeConfig({
-      startSceneName: isStartScene ? undefined : scene.obsSceneName,
-    })
-  }, [isStartScene, scene.obsSceneName, onUpdateYouTubeConfig])
+    if (isStartScene) {
+      // Unselect start scene
+      onUpdateYouTubeConfig({ startSceneName: null })
+    } else {
+      // Select as start scene and clear stop scene if this scene was stop
+      onUpdateYouTubeConfig({
+        startSceneName: scene.obsSceneName,
+        ...(isStopScene && { stopSceneName: null }),
+      })
+    }
+  }, [isStartScene, isStopScene, scene.obsSceneName, onUpdateYouTubeConfig])
 
   const handleToggleStopScene = useCallback(() => {
     if (!onUpdateYouTubeConfig) return
-    onUpdateYouTubeConfig({
-      stopSceneName: isStopScene ? undefined : scene.obsSceneName,
+    if (isStopScene) {
+      // Unselect stop scene
+      onUpdateYouTubeConfig({ stopSceneName: null })
+    } else {
+      // Select as stop scene and clear start scene if this scene was start
+      onUpdateYouTubeConfig({
+        stopSceneName: scene.obsSceneName,
+        ...(isStartScene && { startSceneName: null }),
+      })
+    }
+  }, [isStartScene, isStopScene, scene.obsSceneName, onUpdateYouTubeConfig])
+
+  const handleToggleContentType = useCallback((type: ContentType) => {
+    setContentTypes((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type],
+    )
+  }, [])
+
+  const handleToggleMixerMute = useCallback((channelNum: string) => {
+    setMixerMute((prev) => {
+      if (prev.includes(channelNum)) {
+        return prev.filter((c) => c !== channelNum)
+      }
+      return [...prev, channelNum]
     })
-  }, [isStopScene, scene.obsSceneName, onUpdateYouTubeConfig])
+    // Remove from unmute if adding to mute
+    setMixerUnmute((prev) => prev.filter((c) => c !== channelNum))
+  }, [])
+
+  const handleToggleMixerUnmute = useCallback((channelNum: string) => {
+    setMixerUnmute((prev) => {
+      if (prev.includes(channelNum)) {
+        return prev.filter((c) => c !== channelNum)
+      }
+      return [...prev, channelNum]
+    })
+    // Remove from mute if adding to unmute
+    setMixerMute((prev) => prev.filter((c) => c !== channelNum))
+  }, [])
 
   const hasErrors = Object.keys(errors).length > 0
 
@@ -266,6 +362,208 @@ export function SceneSettingsPopup({
                   </span>
                 </div>
               </button>
+            </div>
+          )}
+
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {t('scenes.autoSceneSettings')}
+            </h4>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+              {t('scenes.autoSceneDescription')}
+            </p>
+            <div className="flex flex-wrap gap-1.5 min-h-[36px] p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
+              {contentTypes.map((value) => {
+                const contentType = CONTENT_TYPES.find(
+                  (ct) => ct.value === value,
+                )
+                return (
+                  <span
+                    key={value}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 rounded-full"
+                  >
+                    {contentType ? t(contentType.labelKey) : value}
+                    <button
+                      type="button"
+                      onClick={() => handleToggleContentType(value)}
+                      className="hover:text-indigo-900 dark:hover:text-indigo-200"
+                    >
+                      <X size={12} />
+                    </button>
+                  </span>
+                )
+              })}
+              <select
+                value=""
+                onChange={(e) => {
+                  if (e.target.value) {
+                    handleToggleContentType(e.target.value as ContentType)
+                  }
+                }}
+                className="flex-1 min-w-[100px] text-sm bg-transparent border-none outline-none text-gray-500 dark:text-gray-400 cursor-pointer"
+              >
+                <option value="">
+                  {contentTypes.length === 0
+                    ? t('scenes.selectContentTypes')
+                    : t('scenes.addMore')}
+                </option>
+                {CONTENT_TYPES.filter(
+                  (ct) => !contentTypes.includes(ct.value),
+                ).map(({ value, labelKey }) => (
+                  <option key={value} value={value}>
+                    {t(labelKey)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {mixerChannels.length > 0 && (
+            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {t('scenes.mixerActions')}
+              </h4>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                {t('scenes.mixerActionsDescription')}
+              </p>
+
+              <div className="space-y-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Volume2
+                      size={16}
+                      className="text-green-600 dark:text-green-400"
+                    />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {t('scenes.unmute')}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 min-h-[36px] p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
+                    {mixerUnmute.map((channelStr) => {
+                      const channel = mixerChannels.find(
+                        (ch) =>
+                          ch.channelNumber.toString().padStart(2, '0') ===
+                          channelStr,
+                      )
+                      return (
+                        <span
+                          key={channelStr}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full"
+                        >
+                          {channel?.label || `CH${channelStr}`}
+                          <button
+                            type="button"
+                            onClick={() => handleToggleMixerUnmute(channelStr)}
+                            className="hover:text-green-900 dark:hover:text-green-200"
+                          >
+                            <X size={12} />
+                          </button>
+                        </span>
+                      )
+                    })}
+                    <select
+                      value=""
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          handleToggleMixerUnmute(e.target.value)
+                        }
+                      }}
+                      className="flex-1 min-w-[100px] text-sm bg-transparent border-none outline-none text-gray-500 dark:text-gray-400 cursor-pointer"
+                    >
+                      <option value="">
+                        {mixerUnmute.length === 0
+                          ? t('scenes.selectChannels')
+                          : t('scenes.addMore')}
+                      </option>
+                      {mixerChannels
+                        .filter(
+                          (ch) =>
+                            !mixerUnmute.includes(
+                              ch.channelNumber.toString().padStart(2, '0'),
+                            ),
+                        )
+                        .map((channel) => {
+                          const channelStr = channel.channelNumber
+                            .toString()
+                            .padStart(2, '0')
+                          return (
+                            <option key={channelStr} value={channelStr}>
+                              {channel.label || `CH${channelStr}`}
+                            </option>
+                          )
+                        })}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <VolumeX
+                      size={16}
+                      className="text-red-600 dark:text-red-400"
+                    />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {t('scenes.mute')}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 min-h-[36px] p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
+                    {mixerMute.map((channelStr) => {
+                      const channel = mixerChannels.find(
+                        (ch) =>
+                          ch.channelNumber.toString().padStart(2, '0') ===
+                          channelStr,
+                      )
+                      return (
+                        <span
+                          key={channelStr}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-full"
+                        >
+                          {channel?.label || `CH${channelStr}`}
+                          <button
+                            type="button"
+                            onClick={() => handleToggleMixerMute(channelStr)}
+                            className="hover:text-red-900 dark:hover:text-red-200"
+                          >
+                            <X size={12} />
+                          </button>
+                        </span>
+                      )
+                    })}
+                    <select
+                      value=""
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          handleToggleMixerMute(e.target.value)
+                        }
+                      }}
+                      className="flex-1 min-w-[100px] text-sm bg-transparent border-none outline-none text-gray-500 dark:text-gray-400 cursor-pointer"
+                    >
+                      <option value="">
+                        {mixerMute.length === 0
+                          ? t('scenes.selectChannels')
+                          : t('scenes.addMore')}
+                      </option>
+                      {mixerChannels
+                        .filter(
+                          (ch) =>
+                            !mixerMute.includes(
+                              ch.channelNumber.toString().padStart(2, '0'),
+                            ),
+                        )
+                        .map((channel) => {
+                          const channelStr = channel.channelNumber
+                            .toString()
+                            .padStart(2, '0')
+                          return (
+                            <option key={channelStr} value={channelStr}>
+                              {channel.label || `CH${channelStr}`}
+                            </option>
+                          )
+                        })}
+                    </select>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>

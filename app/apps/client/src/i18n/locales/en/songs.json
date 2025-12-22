@@ -100,6 +100,9 @@
     "libreOfficeNotInstalled": "LibreOffice is required to import .ppt files",
     "libreOfficeNotInstalledDescription": "Please install LibreOffice from https://www.libreoffice.org to enable .ppt file import. Alternatively, convert your files to .pptx format first."
   },
+  "settings": {
+    "title": "Songs Settings"
+  },
   "metadata": {
     "detailsSection": "Details",
     "author": "Author",

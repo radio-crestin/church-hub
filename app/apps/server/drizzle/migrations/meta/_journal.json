@@ -71,6 +71,27 @@
       "when": 1766700000000,
       "tag": "0009_add_selected_broadcast_config",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1766800000000,
+      "tag": "0010_add_stop_scene_name",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1766900000000,
+      "tag": "0011_add_scene_content_types",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1767000000000,
+      "tag": "0012_add_mixer_tables",
+      "breakpoints": true
     }
   ]
 }

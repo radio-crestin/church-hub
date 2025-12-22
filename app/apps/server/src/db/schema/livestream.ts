@@ -62,6 +62,10 @@ export const obsScenes = sqliteTable(
       .default(true),
     sortOrder: integer('sort_order').notNull().default(0),
     shortcuts: text('shortcuts').notNull().default('[]'),
+    contentTypes: text('content_types').notNull().default('[]'),
+    mixerChannelActions: text('mixer_channel_actions')
+      .notNull()
+      .default('{"mute":[],"unmute":[]}'),
     createdAt: integer('created_at', { mode: 'timestamp' })
       .notNull()
       .default(sql`(unixepoch())`),
@@ -74,6 +78,17 @@ export const obsScenes = sqliteTable(
     index('idx_obs_scenes_is_visible').on(table.isVisible),
   ],
 )
+
+export const sceneAutomationState = sqliteTable('scene_automation_state', {
+  id: integer('id').primaryKey(),
+  isEnabled: integer('is_enabled', { mode: 'boolean' }).notNull().default(true),
+  previousSceneName: text('previous_scene_name'),
+  currentAutoScene: text('current_auto_scene'),
+  lastContentType: text('last_content_type'),
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+})
 
 export const broadcastHistory = sqliteTable(
   'broadcast_history',
@@ -112,4 +127,36 @@ export const broadcastTemplates = sqliteTable(
       .default(sql`(unixepoch())`),
   },
   (table) => [index('idx_broadcast_templates_used_at').on(table.usedAt)],
+)
+
+export const mixerConfig = sqliteTable('mixer_config', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  host: text('host').notNull().default('192.168.0.50'),
+  port: integer('port').notNull().default(10024),
+  isEnabled: integer('is_enabled', { mode: 'boolean' })
+    .notNull()
+    .default(false),
+  channelCount: integer('channel_count').notNull().default(16),
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+})
+
+export const mixerChannels = sqliteTable(
+  'mixer_channels',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    channelNumber: integer('channel_number').notNull().unique(),
+    label: text('label').notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (table) => [index('idx_mixer_channels_number').on(table.channelNumber)],
 )
