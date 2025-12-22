@@ -325,6 +325,11 @@
         "exportFailed": "Exportul a eșuat: {{error}}"
       }
     },
+    "apiDocs": {
+      "title": "Documentatie API",
+      "description": "Acceseaza documentatia API REST pentru dezvoltatori",
+      "link": "Deschide Documentatia API"
+    },
     "sidebar": {
       "title": "Configurare Bară Laterală",
       "description": "Personalizează elementele meniului din bara laterală, ordinea lor și adaugă pagini personalizate",
