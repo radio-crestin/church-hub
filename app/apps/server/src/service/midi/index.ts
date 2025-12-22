@@ -8,14 +8,7 @@ import {
   type MIDIDevice,
   type MIDIInputMessage,
 } from './types'
-
-const DEBUG = process.env.DEBUG === 'true'
-
-function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
-  if (level === 'debug' && !DEBUG) return
-  // biome-ignore lint/suspicious/noConsole: logging utility
-  console.log(`[${level.toUpperCase()}] [midi] ${message}`)
-}
+import { midiLogger } from '../../utils/fileLogger'
 
 // Current state
 let config: MIDIConfig = { ...DEFAULT_MIDI_CONFIG }
@@ -38,7 +31,7 @@ export function getInputDevices(): MIDIDevice[] {
       type: 'input' as const,
     }))
   } catch (error) {
-    log('error', `Failed to get input devices: ${error}`)
+    midiLogger.error(`Failed to get input devices: ${error}`)
     return []
   }
 }
@@ -55,7 +48,7 @@ export function getOutputDevices(): MIDIDevice[] {
       type: 'output' as const,
     }))
   } catch (error) {
-    log('error', `Failed to get output devices: ${error}`)
+    midiLogger.error(`Failed to get output devices: ${error}`)
     return []
   }
 }
@@ -89,13 +82,15 @@ function handleNoteOn(msg: {
     timestamp: Date.now(),
   }
 
-  log(
-    'debug',
+  midiLogger.info(
     `Note ${msg.velocity > 0 ? 'on' : 'off'}: note=${msg.note} velocity=${msg.velocity} channel=${msg.channel}`,
   )
 
   if (messageCallback) {
+    midiLogger.debug('Calling messageCallback')
     messageCallback(message)
+  } else {
+    midiLogger.warn('No messageCallback registered!')
   }
 }
 
@@ -115,8 +110,7 @@ function handleNoteOff(msg: {
     timestamp: Date.now(),
   }
 
-  log(
-    'debug',
+  midiLogger.debug(
     `Note off: note=${msg.note} velocity=${msg.velocity} channel=${msg.channel}`,
   )
 
@@ -141,8 +135,7 @@ function handleControlChange(msg: {
     timestamp: Date.now(),
   }
 
-  log(
-    'debug',
+  midiLogger.info(
     `Control change: controller=${msg.controller} value=${msg.value} channel=${msg.channel}`,
   )
 
@@ -155,17 +148,23 @@ function handleControlChange(msg: {
  * Connect to a MIDI input device by index
  */
 export function connectInput(deviceId: number): boolean {
+  midiLogger.info(`Attempting to connect to input device ${deviceId}...`)
+
   // Disconnect existing input first
   disconnectInput()
 
   try {
     const inputs = easymidi.getInputs()
+    midiLogger.debug(`Available inputs: ${JSON.stringify(inputs)}`)
+
     if (deviceId < 0 || deviceId >= inputs.length) {
-      log('error', `Invalid input device ID: ${deviceId}`)
+      midiLogger.error(`Invalid input device ID: ${deviceId}`)
       return false
     }
 
     const deviceName = inputs[deviceId]
+    midiLogger.info(`Connecting to: ${deviceName}`)
+
     currentInput = new easymidi.Input(deviceName)
 
     // Listen for MIDI messages
@@ -174,10 +173,11 @@ export function connectInput(deviceId: number): boolean {
     currentInput.on('cc', handleControlChange)
 
     config.inputDeviceId = deviceId
-    log('info', `Connected to MIDI input: ${deviceName}`)
+    midiLogger.info(`✓ Connected to MIDI input: ${deviceName}`)
+    midiLogger.info(`Listening for MIDI events...`)
     return true
   } catch (error) {
-    log('error', `Failed to connect to input device ${deviceId}: ${error}`)
+    midiLogger.error(`Failed to connect to input device ${deviceId}: ${error}`)
     currentInput = null
     return false
   }
@@ -191,9 +191,9 @@ export function disconnectInput() {
     try {
       currentInput.removeAllListeners()
       currentInput.close()
-      log('info', 'Disconnected from MIDI input')
+      midiLogger.info('Disconnected from MIDI input')
     } catch (error) {
-      log('error', `Error disconnecting input: ${error}`)
+      midiLogger.error(`Error disconnecting input: ${error}`)
     }
     currentInput = null
   }
@@ -210,7 +210,7 @@ export function connectOutput(deviceId: number): boolean {
   try {
     const outputs = easymidi.getOutputs()
     if (deviceId < 0 || deviceId >= outputs.length) {
-      log('error', `Invalid output device ID: ${deviceId}`)
+      midiLogger.error(`Invalid output device ID: ${deviceId}`)
       return false
     }
 
@@ -218,10 +218,10 @@ export function connectOutput(deviceId: number): boolean {
     currentOutput = new easymidi.Output(deviceName)
 
     config.outputDeviceId = deviceId
-    log('info', `Connected to MIDI output: ${deviceName}`)
+    midiLogger.info(`Connected to MIDI output: ${deviceName}`)
     return true
   } catch (error) {
-    log('error', `Failed to connect to output device ${deviceId}: ${error}`)
+    midiLogger.error(`Failed to connect to output device ${deviceId}: ${error}`)
     currentOutput = null
     return false
   }
@@ -234,9 +234,9 @@ export function disconnectOutput() {
   if (currentOutput) {
     try {
       currentOutput.close()
-      log('info', 'Disconnected from MIDI output')
+      midiLogger.info('Disconnected from MIDI output')
     } catch (error) {
-      log('error', `Error disconnecting output: ${error}`)
+      midiLogger.error(`Error disconnecting output: ${error}`)
     }
     currentOutput = null
   }
@@ -248,7 +248,7 @@ export function disconnectOutput() {
  */
 export function setLED(note: number, on: boolean) {
   if (!currentOutput) {
-    log('debug', 'Cannot set LED: no output device connected')
+    midiLogger.debug('Cannot set LED: no output device connected')
     return
   }
 
@@ -258,9 +258,9 @@ export function setLED(note: number, on: boolean) {
       velocity: on ? LED_VELOCITY_ON : LED_VELOCITY_OFF,
       channel: 0,
     })
-    log('debug', `LED ${note} set to ${on ? 'ON' : 'OFF'}`)
+    midiLogger.debug(`LED ${note} set to ${on ? 'ON' : 'OFF'}`)
   } catch (error) {
-    log('error', `Error setting LED ${note}: ${error}`)
+    midiLogger.error(`Error setting LED ${note}: ${error}`)
   }
 }
 
@@ -343,27 +343,28 @@ export function setEnabled(enabled: boolean) {
  * Initialize MIDI service (called on server startup)
  */
 export function initializeMIDI() {
-  log('info', 'MIDI service initialized')
+  midiLogger.info('Initializing MIDI service...')
 
   const devices = getAllDevices()
-  log(
-    'info',
+  midiLogger.info(
     `Found ${devices.inputs.length} input(s), ${devices.outputs.length} output(s)`,
   )
 
   for (const device of devices.inputs) {
-    log('debug', `  Input ${device.id}: ${device.name}`)
+    midiLogger.info(`  Input ${device.id}: ${device.name}`)
   }
   for (const device of devices.outputs) {
-    log('debug', `  Output ${device.id}: ${device.name}`)
+    midiLogger.info(`  Output ${device.id}: ${device.name}`)
   }
+
+  midiLogger.info('Service initialized. Waiting for device connection...')
 }
 
 /**
  * Shutdown MIDI service (called on server shutdown)
  */
 export function shutdownMIDI() {
-  log('info', 'Shutting down MIDI service')
+  midiLogger.info('Shutting down MIDI service')
   disconnectInput()
   disconnectOutput()
 }

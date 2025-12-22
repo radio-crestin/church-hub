@@ -7,15 +7,8 @@ import {
   getConnectionStatus,
   setEnabled,
 } from '../service/midi'
+import { midiLogger } from '../utils/fileLogger'
 import { broadcastMIDIConnectionStatus } from '../websocket'
-
-const DEBUG = process.env.DEBUG === 'true'
-
-function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
-  if (level === 'debug' && !DEBUG) return
-  // biome-ignore lint/suspicious/noConsole: logging utility
-  console.log(`[${level.toUpperCase()}] [midi-routes] ${message}`)
-}
 
 type HandleCors = (req: Request, res: Response) => Response
 
@@ -28,8 +21,7 @@ export async function handleMIDIRoutes(
   if (req.method === 'GET' && url.pathname === '/api/midi/devices') {
     try {
       const devices = getAllDevices()
-      log(
-        'debug',
+      midiLogger.debug(
         `Found ${devices.inputs.length} inputs, ${devices.outputs.length} outputs`,
       )
 
@@ -41,7 +33,7 @@ export async function handleMIDIRoutes(
         }),
       )
     } catch (error) {
-      log('error', `Failed to get MIDI devices: ${error}`)
+      midiLogger.error(`Failed to get MIDI devices: ${error}`)
       return handleCors(
         req,
         new Response(JSON.stringify({ error: 'Failed to get MIDI devices' }), {
@@ -65,7 +57,7 @@ export async function handleMIDIRoutes(
         }),
       )
     } catch (error) {
-      log('error', `Failed to get MIDI status: ${error}`)
+      midiLogger.error(`Failed to get MIDI status: ${error}`)
       return handleCors(
         req,
         new Response(JSON.stringify({ error: 'Failed to get MIDI status' }), {
@@ -84,28 +76,37 @@ export async function handleMIDIRoutes(
         outputDeviceId?: number | null
       }
 
+      midiLogger.info('Connect request received', body)
+
       let inputConnected = false
       let outputConnected = false
 
       if (body.inputDeviceId !== undefined) {
         if (body.inputDeviceId === null) {
+          midiLogger.info('Disconnecting input device')
           disconnectInput()
         } else {
+          midiLogger.info(`Connecting to input device ${body.inputDeviceId}`)
           inputConnected = connectInput(body.inputDeviceId)
+          midiLogger.info(`Input connection result: ${inputConnected}`)
         }
       }
 
       if (body.outputDeviceId !== undefined) {
         if (body.outputDeviceId === null) {
+          midiLogger.info('Disconnecting output device')
           disconnectOutput()
         } else {
+          midiLogger.info(`Connecting to output device ${body.outputDeviceId}`)
           outputConnected = connectOutput(body.outputDeviceId)
+          midiLogger.info(`Output connection result: ${outputConnected}`)
         }
       }
 
       setEnabled(true)
 
       const status = getConnectionStatus()
+      midiLogger.info('Final connection status', status)
 
       // Broadcast status to all clients
       broadcastMIDIConnectionStatus(status)
@@ -124,7 +125,7 @@ export async function handleMIDIRoutes(
         ),
       )
     } catch (error) {
-      log('error', `Failed to connect MIDI devices: ${error}`)
+      midiLogger.error(`Failed to connect MIDI devices: ${error}`)
       return handleCors(
         req,
         new Response(
@@ -155,7 +156,7 @@ export async function handleMIDIRoutes(
         }),
       )
     } catch (error) {
-      log('error', `Failed to disconnect MIDI devices: ${error}`)
+      midiLogger.error(`Failed to disconnect MIDI devices: ${error}`)
       return handleCors(
         req,
         new Response(

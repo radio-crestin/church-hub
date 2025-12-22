@@ -1,12 +1,6 @@
 import type { ServerWebSocket } from 'bun'
 
-const DEBUG = process.env.DEBUG === 'true'
-
-function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
-  if (level === 'debug' && !DEBUG) return
-  // biome-ignore lint/suspicious/noConsole: logging utility
-  console.log(`[${level.toUpperCase()}] [websocket] ${message}`)
-}
+import { wsLogger } from '../utils/fileLogger'
 
 export interface WebSocketData {
   clientId: string
@@ -80,7 +74,7 @@ export function handleWebSocketOpen(ws: ServerWebSocket<WebSocketData>) {
   ws.data.clientId = clientId
   clients.set(clientId, ws)
 
-  log('info', `Client connected: ${clientId} (total: ${clients.size})`)
+  wsLogger.info(`Client connected: ${clientId} (total: ${clients.size})`)
 
   // Send initial OBS status to the new client
   if (getOBSStatusCallback) {
@@ -116,9 +110,11 @@ export function handleWebSocketOpen(ws: ServerWebSocket<WebSocketData>) {
         )
       }
 
-      log('debug', `Sent initial OBS status to ${clientId}`)
+      wsLogger.debug(`Sent initial OBS status to ${clientId}`)
     } catch (error) {
-      log('error', `Failed to send initial OBS status to ${clientId}: ${error}`)
+      wsLogger.error(
+        `Failed to send initial OBS status to ${clientId}: ${error}`,
+      )
     }
   }
 }
@@ -132,7 +128,7 @@ export function handleWebSocketMessage(
 ) {
   try {
     const data = JSON.parse(message.toString())
-    log('debug', `Message from ${ws.data.clientId}: ${JSON.stringify(data)}`)
+    wsLogger.debug(`Message from ${ws.data.clientId}: ${JSON.stringify(data)}`)
 
     // Handle ping/pong for keepalive
     if (data.type === 'ping') {
@@ -151,8 +147,7 @@ export function handleWebSocketMessage(
         },
       } satisfies ScreenConfigPreviewMessage)
 
-      log(
-        'debug',
+      wsLogger.debug(
         `Broadcasting screen config preview for screen ${data.payload.screenId}`,
       )
 
@@ -162,7 +157,7 @@ export function handleWebSocketMessage(
           try {
             client.send(previewMessage)
           } catch (error) {
-            log('error', `Failed to send preview to ${clientId}: ${error}`)
+            wsLogger.error(`Failed to send preview to ${clientId}: ${error}`)
             clients.delete(clientId)
           }
         }
@@ -174,7 +169,7 @@ export function handleWebSocketMessage(
       midiMessageHandler(data.type, data.payload || {})
     }
   } catch (error) {
-    log('error', `Failed to parse message: ${error}`)
+    wsLogger.error(`Failed to parse message: ${error}`)
   }
 }
 
@@ -184,8 +179,7 @@ export function handleWebSocketMessage(
 export function handleWebSocketClose(ws: ServerWebSocket<WebSocketData>) {
   if (ws.data.clientId) {
     clients.delete(ws.data.clientId)
-    log(
-      'info',
+    wsLogger.info(
       `Client disconnected: ${ws.data.clientId} (total: ${clients.size})`,
     )
   }
@@ -202,13 +196,13 @@ export function broadcastPresentationState(
     payload: state,
   } satisfies PresentationMessage)
 
-  log('debug', `Broadcasting to ${clients.size} clients`)
+  wsLogger.debug(`Broadcasting to ${clients.size} clients`)
 
   for (const [clientId, ws] of clients) {
     try {
       ws.send(message)
     } catch (error) {
-      log('error', `Failed to send to ${clientId}: ${error}`)
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
       clients.delete(clientId)
     }
   }
@@ -226,8 +220,7 @@ export function broadcastScreenConfigUpdated(screenId: number) {
     },
   } satisfies ScreenConfigUpdatedMessage)
 
-  log(
-    'debug',
+  wsLogger.debug(
     `Broadcasting screen config update for screen ${screenId} to ${clients.size} clients`,
   )
 
@@ -235,7 +228,7 @@ export function broadcastScreenConfigUpdated(screenId: number) {
     try {
       ws.send(message)
     } catch (error) {
-      log('error', `Failed to send to ${clientId}: ${error}`)
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
       clients.delete(clientId)
     }
   }
@@ -333,13 +326,15 @@ export function broadcastOBSConnectionStatus(
     payload: status,
   } satisfies OBSConnectionStatusMessage)
 
-  log('debug', `Broadcasting OBS connection status to ${clients.size} clients`)
+  wsLogger.debug(
+    `Broadcasting OBS connection status to ${clients.size} clients`,
+  )
 
   for (const [clientId, ws] of clients) {
     try {
       ws.send(message)
     } catch (error) {
-      log('error', `Failed to send to ${clientId}: ${error}`)
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
       clients.delete(clientId)
     }
   }
@@ -356,13 +351,13 @@ export function broadcastOBSStreamingStatus(
     payload: status,
   } satisfies OBSStreamingStatusMessage)
 
-  log('debug', `Broadcasting OBS streaming status to ${clients.size} clients`)
+  wsLogger.debug(`Broadcasting OBS streaming status to ${clients.size} clients`)
 
   for (const [clientId, ws] of clients) {
     try {
       ws.send(message)
     } catch (error) {
-      log('error', `Failed to send to ${clientId}: ${error}`)
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
       clients.delete(clientId)
     }
   }
@@ -380,13 +375,13 @@ export function broadcastOBSCurrentScene(sceneName: string) {
     },
   } satisfies OBSCurrentSceneMessage)
 
-  log('debug', `Broadcasting OBS current scene to ${clients.size} clients`)
+  wsLogger.debug(`Broadcasting OBS current scene to ${clients.size} clients`)
 
   for (const [clientId, ws] of clients) {
     try {
       ws.send(message)
     } catch (error) {
-      log('error', `Failed to send to ${clientId}: ${error}`)
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
       clients.delete(clientId)
     }
   }
@@ -403,13 +398,13 @@ export function broadcastLivestreamStatus(
     payload: status,
   } satisfies LivestreamStatusMessage)
 
-  log('debug', `Broadcasting livestream status to ${clients.size} clients`)
+  wsLogger.debug(`Broadcasting livestream status to ${clients.size} clients`)
 
   for (const [clientId, ws] of clients) {
     try {
       ws.send(message)
     } catch (error) {
-      log('error', `Failed to send to ${clientId}: ${error}`)
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
       clients.delete(clientId)
     }
   }
@@ -426,13 +421,13 @@ export function broadcastYouTubeAuthStatus(
     payload: status,
   } satisfies YouTubeAuthStatusMessage)
 
-  log('debug', `Broadcasting YouTube auth status to ${clients.size} clients`)
+  wsLogger.debug(`Broadcasting YouTube auth status to ${clients.size} clients`)
 
   for (const [clientId, ws] of clients) {
     try {
       ws.send(message)
     } catch (error) {
-      log('error', `Failed to send to ${clientId}: ${error}`)
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
       clients.delete(clientId)
     }
   }
@@ -449,8 +444,7 @@ export function broadcastStreamStartProgress(
     payload: status,
   } satisfies StreamStartProgressMessage)
 
-  log(
-    'debug',
+  wsLogger.debug(
     `Broadcasting stream start progress (${status.step}) to ${clients.size} clients`,
   )
 
@@ -458,7 +452,7 @@ export function broadcastStreamStartProgress(
     try {
       ws.send(message)
     } catch (error) {
-      log('error', `Failed to send to ${clientId}: ${error}`)
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
       clients.delete(clientId)
     }
   }
@@ -507,13 +501,14 @@ export function broadcastMIDIMessage(message: MIDIMessageEvent['payload']) {
     payload: message,
   } satisfies MIDIMessageEvent)
 
-  log('debug', `Broadcasting MIDI message to ${clients.size} clients`)
+  wsLogger.info(`Broadcasting MIDI message to ${clients.size} clients`, message)
 
   for (const [clientId, ws] of clients) {
     try {
       ws.send(wsMessage)
+      wsLogger.debug(`Sent MIDI message to client ${clientId}`)
     } catch (error) {
-      log('error', `Failed to send to ${clientId}: ${error}`)
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
       clients.delete(clientId)
     }
   }
@@ -528,13 +523,13 @@ export function broadcastMIDIDevices(devices: MIDIDevicesEvent['payload']) {
     payload: devices,
   } satisfies MIDIDevicesEvent)
 
-  log('debug', `Broadcasting MIDI devices to ${clients.size} clients`)
+  wsLogger.debug(`Broadcasting MIDI devices to ${clients.size} clients`)
 
   for (const [clientId, ws] of clients) {
     try {
       ws.send(message)
     } catch (error) {
-      log('error', `Failed to send to ${clientId}: ${error}`)
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
       clients.delete(clientId)
     }
   }
@@ -551,13 +546,15 @@ export function broadcastMIDIConnectionStatus(
     payload: status,
   } satisfies MIDIConnectionStatusEvent)
 
-  log('debug', `Broadcasting MIDI connection status to ${clients.size} clients`)
+  wsLogger.debug(
+    `Broadcasting MIDI connection status to ${clients.size} clients`,
+  )
 
   for (const [clientId, ws] of clients) {
     try {
       ws.send(message)
     } catch (error) {
-      log('error', `Failed to send to ${clientId}: ${error}`)
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
       clients.delete(clientId)
     }
   }
