@@ -6,7 +6,10 @@
   ],
   "scripts": {
     "dev": "tauri dev",
-    "dev:web": "concurrently --kill-others \"bun run --filter server dev\" \"bun run --filter client dev\"",
+    "dev:web": "concurrently --kill-others --names server,client \"bun run --filter server dev\" \"bun run --filter client dev\"",
+    "dev:apps": "concurrently -k -n server,client -c blue,green bun:dev:server bun:dev:client",
+    "dev:server": "bun run --filter server dev",
+    "dev:client": "bun run --filter client dev",
     "lint": "biome check ./apps",
     "lint:fix": "biome check ./apps --write",
     "tauri:build": "tauri build",
