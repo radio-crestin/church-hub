@@ -1,5 +1,6 @@
 import { appendFileSync, existsSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
+
 import { getLogsDir } from './paths'
 
 const LOG_DIR = getLogsDir()
