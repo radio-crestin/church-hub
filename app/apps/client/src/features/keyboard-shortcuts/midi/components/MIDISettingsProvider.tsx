@@ -26,7 +26,6 @@ export function MIDISettingsProvider({ children }: MIDISettingsProviderProps) {
   if (isLoading) {
     return <>{children}</>
   }
-
   return (
     <MIDIProvider
       initialConfig={midiConfig}
