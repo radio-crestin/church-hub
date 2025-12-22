@@ -2,9 +2,9 @@ import { createRouter, RouterProvider } from '@tanstack/react-router'
 import ReactDOM from 'react-dom/client'
 import './styles.css'
 
+import { getApiUrl } from './config'
 import { routeTree } from './routeTree.gen'
 import { getServerConfig } from './utils/tauri-commands'
-import { getApiUrl } from './config'
 
 const router = createRouter({
   routeTree,
@@ -44,15 +44,20 @@ function hideLoadingScreen() {
 }
 
 // Wait for server to be ready
-async function waitForServer(apiUrl: string, maxAttempts = 60): Promise<boolean> {
+async function waitForServer(
+  apiUrl: string,
+  maxAttempts = 60,
+): Promise<boolean> {
   const pingUrl = `${apiUrl}/ping`
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      addLoadingLog(`[${new Date().toLocaleTimeString()}] Checking server... (attempt ${attempt})`)
+      addLoadingLog(
+        `[${new Date().toLocaleTimeString()}] Checking server... (attempt ${attempt})`,
+      )
       const response = await fetch(pingUrl, {
         method: 'GET',
-        signal: AbortSignal.timeout(2000)
+        signal: AbortSignal.timeout(2000),
       })
 
       if (response.ok) {
@@ -65,11 +70,13 @@ async function waitForServer(apiUrl: string, maxAttempts = 60): Promise<boolean>
     }
 
     if (attempt < maxAttempts) {
-      await new Promise(resolve => setTimeout(resolve, 500))
+      await new Promise((resolve) => setTimeout(resolve, 500))
     }
   }
 
-  addLoadingLog(`[${new Date().toLocaleTimeString()}] Server failed to start after ${maxAttempts} attempts`)
+  addLoadingLog(
+    `[${new Date().toLocaleTimeString()}] Server failed to start after ${maxAttempts} attempts`,
+  )
   updateLoadingStatus('Failed to connect to server')
   return false
 }
@@ -82,7 +89,9 @@ if (typeof window !== 'undefined') {
 
   if (isTauri) {
     try {
-      addLoadingLog(`[${new Date().toLocaleTimeString()}] Initializing Tauri...`)
+      addLoadingLog(
+        `[${new Date().toLocaleTimeString()}] Initializing Tauri...`,
+      )
 
       // Get local server config from Tauri (just the port)
       const serverConfig = await getServerConfig()
@@ -91,7 +100,9 @@ if (typeof window !== 'undefined') {
         window.__serverConfig = {
           serverPort: serverConfig.serverPort,
         }
-        addLoadingLog(`[${new Date().toLocaleTimeString()}] Server port: ${serverConfig.serverPort}`)
+        addLoadingLog(
+          `[${new Date().toLocaleTimeString()}] Server port: ${serverConfig.serverPort}`,
+        )
       }
 
       // Wait for server to be ready
