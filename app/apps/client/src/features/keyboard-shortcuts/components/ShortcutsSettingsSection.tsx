@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { useOBSScenes } from '~/features/livestream/hooks'
 import { ShortcutActionRow } from './ShortcutActionRow'
 import { useAppShortcuts } from '../hooks'
+import { MIDIDeviceSelector } from '../midi/components'
 import type {
   GlobalShortcutActionId,
   ShortcutActionConfig,
@@ -84,7 +85,7 @@ export function ShortcutsSettingsSection() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex items-center gap-3">
         <Keyboard size={24} className="text-indigo-600 dark:text-indigo-400" />
         <div>
@@ -97,7 +98,13 @@ export function ShortcutsSettingsSection() {
         </div>
       </div>
 
-      <div className="space-y-3">
+      {/* MIDI Controller Section */}
+      <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+        <MIDIDeviceSelector />
+      </div>
+
+      {/* Keyboard Shortcuts */}
+      <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-3">
         {SHORTCUT_ACTIONS.map((action) => (
           <ShortcutActionRow
             key={action.id}
