@@ -2,13 +2,11 @@ import { createFileRoute } from '@tanstack/react-router'
 import { ExternalLink, Languages, Palette } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-import { BibleTranslationsManager } from '~/features/bible/components'
+import { isLocalhost } from '~/config'
 import { ShortcutsSettingsSection } from '~/features/keyboard-shortcuts'
 import { ScreenManager } from '~/features/presentation'
-import { SynonymManager } from '~/features/search'
 import { SidebarConfigManager } from '~/features/sidebar-config'
-import { ImportExportManager } from '~/features/song-export'
-import { CategoryManager } from '~/features/songs/components'
+import { SystemTokenManager } from '~/features/system-token'
 import { UserList } from '~/features/users'
 import { useI18n } from '~/provider/i18n-provider'
 import { useTheme } from '~/provider/theme-provider'
@@ -114,30 +112,17 @@ function RouteComponent() {
           <ShortcutsSettingsSection />
         </div>
 
-        {/* Bible Settings Section */}
-        <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
-          <BibleTranslationsManager />
-        </div>
-
-        {/* Song Categories Section */}
-        <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
-          <CategoryManager />
-        </div>
-
-        {/* Import/Export Section */}
-        <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
-          <ImportExportManager />
-        </div>
-
-        {/* Search Synonyms Section */}
-        <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
-          <SynonymManager />
-        </div>
-
         {/* Authorized Users Section */}
         <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
           <UserList />
         </div>
+
+        {/* System Token Section (localhost only) */}
+        {isLocalhost() && (
+          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
+            <SystemTokenManager />
+          </div>
+        )}
 
         {/* Screens Section */}
         <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
