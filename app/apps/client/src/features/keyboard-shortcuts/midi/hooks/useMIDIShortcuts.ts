@@ -39,6 +39,10 @@ export function useMIDIShortcuts({
 }: UseMIDIShortcutsOptions) {
   const midi = useMIDIOptional()
 
+  // Store recording ref in local ref to ensure stable access in callbacks
+  const recordingRef = useRef(isRecordingRef)
+  recordingRef.current = isRecordingRef
+
   // Use refs to avoid re-subscription on handler changes
   const handlersRef = useRef({
     onStartLive,
@@ -107,7 +111,7 @@ export function useMIDIShortcuts({
       value: number
     }) => {
       // Skip if recording a new shortcut
-      if (isRecordingRef?.current) {
+      if (recordingRef.current?.current) {
         logger.debug('Skipping MIDI action - recording in progress')
         return
       }
@@ -142,7 +146,9 @@ export function useMIDIShortcuts({
         handlersRef.current.onSceneSwitch?.(mapping.action)
       }
     },
-    [isRecordingRef],
+    // Note: isRecordingRef is intentionally not in deps - it's a stable ref and we read .current at call time
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
   )
 
   // Subscribe to MIDI messages
