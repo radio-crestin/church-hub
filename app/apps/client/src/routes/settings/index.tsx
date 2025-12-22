@@ -117,13 +117,6 @@ function RouteComponent() {
           <UserList />
         </div>
 
-        {/* System Token Section (localhost only) */}
-        {isLocalhost() && (
-          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
-            <SystemTokenManager />
-          </div>
-        )}
-
         {/* Screens Section */}
         <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
           <ScreenManager />
@@ -156,6 +149,13 @@ function RouteComponent() {
             </a>
           </div>
         </div>
+
+        {/* System Token Section (localhost only) */}
+        {isLocalhost() && (
+          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
+            <SystemTokenManager />
+          </div>
+        )}
       </div>
     </PagePermissionGuard>
   )
