@@ -1,5 +1,5 @@
 import { useNavigate } from '@tanstack/react-router'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 
 import { useOBSScenes, useStreaming } from '~/features/livestream/hooks'
 import { createLogger } from '~/utils/logger'
@@ -17,11 +17,29 @@ export function GlobalAppShortcutManager() {
   const { scenes, switchScene, currentScene } = useOBSScenes()
   const { isRecordingRef } = useShortcutRecording()
 
+  // Synchronous guards to prevent multiple rapid triggers (React state can be stale)
+  const isStartOperationRef = useRef(false)
+  const isStopOperationRef = useRef(false)
+
   // Check if stream start is in progress (more reliable than just isStarting)
   const isStartingStream =
     streamStartProgress &&
     streamStartProgress.step !== 'completed' &&
     streamStartProgress.step !== 'error'
+
+  // Reset start operation ref when operation completes
+  useEffect(() => {
+    if (!isStarting && !isStartingStream) {
+      isStartOperationRef.current = false
+    }
+  }, [isStarting, isStartingStream])
+
+  // Reset stop operation ref when operation completes
+  useEffect(() => {
+    if (!isStopping) {
+      isStopOperationRef.current = false
+    }
+  }, [isStopping])
 
   // Build scene shortcuts array
   const sceneShortcuts = useMemo(() => {
@@ -37,10 +55,17 @@ export function GlobalAppShortcutManager() {
   }, [scenes])
 
   const handleStartLive = useCallback(() => {
-    if (isLive || isStarting || isStartingStream) {
+    // Synchronous ref check works immediately (React state may be stale)
+    if (
+      isStartOperationRef.current ||
+      isLive ||
+      isStarting ||
+      isStartingStream
+    ) {
       logger.debug('Skipping start - livestream is already live or starting')
       return
     }
+    isStartOperationRef.current = true
     logger.info('Starting live stream via shortcut')
     navigate({ to: '/livestream/' })
     start()
@@ -48,12 +73,18 @@ export function GlobalAppShortcutManager() {
 
   const handleStopLive = useCallback(() => {
     // Allow stopping if live OR if currently starting (to cancel a start in progress)
-    if ((!isLive && !isStartingStream) || isStopping) {
+    // Synchronous ref check works immediately (React state may be stale)
+    if (
+      isStopOperationRef.current ||
+      (!isLive && !isStartingStream) ||
+      isStopping
+    ) {
       logger.debug(
         'Skipping stop - livestream is not live/starting or already stopping',
       )
       return
     }
+    isStopOperationRef.current = true
     logger.info('Stopping live stream via shortcut')
     navigate({ to: '/livestream/' })
     stop()
