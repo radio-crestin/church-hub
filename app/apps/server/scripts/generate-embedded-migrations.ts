@@ -3,7 +3,7 @@
  * This reads all migration SQL files and creates a TypeScript file
  * that can be bundled into the compiled binary
  */
-import { readFileSync, readdirSync, writeFileSync } from 'node:fs'
+import { readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const MIGRATIONS_DIR = join(__dirname, '../drizzle/migrations')
@@ -24,8 +24,6 @@ interface Journal {
 }
 
 function main() {
-  console.log('[embed-migrations] Reading migrations from:', MIGRATIONS_DIR)
-
   // Read the journal
   const journalPath = join(MIGRATIONS_DIR, 'meta/_journal.json')
   const journal: Journal = JSON.parse(readFileSync(journalPath, 'utf-8'))
@@ -42,8 +40,6 @@ function main() {
       when: entry.when,
     })
   }
-
-  console.log(`[embed-migrations] Found ${migrations.length} migrations`)
 
   // Generate TypeScript file
   const output = `/**
@@ -65,7 +61,6 @@ export const EMBEDDED_MIGRATIONS: EmbeddedMigration[] = ${JSON.stringify(migrati
 `
 
   writeFileSync(OUTPUT_FILE, output)
-  console.log('[embed-migrations] Generated:', OUTPUT_FILE)
 }
 
 main()
