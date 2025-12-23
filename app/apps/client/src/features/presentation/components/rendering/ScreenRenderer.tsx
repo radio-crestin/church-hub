@@ -1,6 +1,5 @@
 import { Maximize, Minimize } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 
 import { getApiUrl } from '~/config'
 import { ScreenContent } from './ScreenContent'
@@ -25,7 +24,6 @@ interface ScreenRendererProps {
 }
 
 export function ScreenRenderer({ screenId }: ScreenRendererProps) {
-  const { t } = useTranslation('presentation')
   useWebSocket()
 
   const { data: presentationState } = usePresentationState()
@@ -449,22 +447,19 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
 
   if (isError) {
     return (
-      <div className="w-screen h-screen bg-black flex items-center justify-center">
-        <div className="text-white text-center">
-          <div className="text-xl mb-2">{t('screens.renderer.error')}</div>
-          <div className="text-gray-400 text-sm">
-            {t('screens.renderer.notFound')}
-          </div>
-        </div>
-      </div>
+      <div
+        className="w-screen h-screen"
+        style={{ backgroundColor: 'black', background: 'transparent' }}
+      />
     )
   }
 
   if (isLoading || !screen) {
     return (
-      <div className="w-screen h-screen bg-black flex items-center justify-center">
-        <div className="text-white">{t('screens.renderer.loading')}</div>
-      </div>
+      <div
+        className="w-screen h-screen"
+        style={{ backgroundColor: 'black', background: 'transparent' }}
+      />
     )
   }
 
