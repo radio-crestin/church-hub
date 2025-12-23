@@ -6,24 +6,11 @@ import { useToast } from '~/ui/toast'
 import {
   getYouTubeAuthStatus,
   logoutYouTube,
-  storePKCESession,
   storeYouTubeTokens,
 } from '../service'
-import {
-  buildAuthUrl,
-  exchangeCodeForTokens,
-  generateCodeChallenge,
-  generateCodeVerifier,
-  isTauri,
-  openAuthUrl,
-} from '../utils'
+import { isTauri, openAuthUrl } from '../utils'
 
-const YOUTUBE_CLIENT_ID = import.meta.env.VITE_YOUTUBE_CLIENT_ID as string
-const YOUTUBE_CLIENT_SECRET = import.meta.env
-  .VITE_YOUTUBE_CLIENT_SECRET as string
-const YOUTUBE_SCOPE = 'https://www.googleapis.com/auth/youtube.force-ssl'
-const YOUTUBE_REDIRECT_URI =
-  'http://localhost:3000/api/livestream/youtube/callback'
+const YOUTUBE_OAUTH_SERVER = import.meta.env.VITE_YOUTUBE_OAUTH_SERVER as string
 
 export function useYouTubeAuth() {
   const queryClient = useQueryClient()
@@ -84,8 +71,8 @@ export function useYouTubeAuth() {
   }, [query.data?.isAuthenticated, isAuthenticating])
 
   const openLoginPopup = useCallback(async () => {
-    if (!YOUTUBE_CLIENT_ID) {
-      setAuthError('YouTube Client ID not configured')
+    if (!YOUTUBE_OAUTH_SERVER) {
+      setAuthError('YouTube OAuth server not configured')
       return
     }
 
@@ -93,40 +80,22 @@ export function useYouTubeAuth() {
     setAuthError(null)
 
     try {
-      // Generate PKCE values
-      const codeVerifier = generateCodeVerifier()
-      const codeChallenge = await generateCodeChallenge(codeVerifier)
+      // Always use localhost:3000 for OAuth callbacks (server handles the app)
+      const callbackOrigin = 'http://localhost:3000'
 
-      // Store verifier in sessionStorage for later use
-      sessionStorage.setItem('youtube_code_verifier', codeVerifier)
+      // Build auth server URL
+      const authUrl = new URL('/auth/youtube', YOUTUBE_OAUTH_SERVER)
+      authUrl.searchParams.set('origin', callbackOrigin)
 
-      // Build auth URL with PKCE parameters
-      const authUrl = buildAuthUrl({
-        clientId: YOUTUBE_CLIENT_ID,
-        redirectUri: YOUTUBE_REDIRECT_URI,
-        codeChallenge,
-        scope: YOUTUBE_SCOPE,
-      })
-
-      // In Tauri, open in external browser - auth status will sync via WebSocket
-      // when completed in the browser
+      // In Tauri, use redirect mode with a return URL
       if (isTauri()) {
-        // Store PKCE session on server for server-side token exchange
-        const sessionId = await storePKCESession({
-          codeVerifier,
-          codeChallenge,
-        })
+        authUrl.searchParams.set('mode', 'redirect')
+        authUrl.searchParams.set(
+          'returnUrl',
+          `${callbackOrigin}/auth/youtube/callback`,
+        )
 
-        // Rebuild auth URL with session ID in state parameter
-        const tauriAuthUrl = buildAuthUrl({
-          clientId: YOUTUBE_CLIENT_ID,
-          redirectUri: YOUTUBE_REDIRECT_URI,
-          codeChallenge,
-          scope: YOUTUBE_SCOPE,
-          state: sessionId,
-        })
-
-        await openAuthUrl(tauriAuthUrl, { popupName: 'youtube-auth' })
+        await openAuthUrl(authUrl.toString(), { popupName: 'youtube-auth' })
         // In Tauri, we don't wait for the popup - the WebSocket will notify us
         // Keep authenticating state until WebSocket updates or timeout
         setTimeout(() => {
@@ -137,43 +106,37 @@ export function useYouTubeAuth() {
         return
       }
 
-      const popup = await openAuthUrl(authUrl, { popupName: 'youtube-auth' })
+      // Browser popup flow - use postMessage mode (default)
+      authUrl.searchParams.set('mode', 'postMessage')
+
+      const popup = await openAuthUrl(authUrl.toString(), {
+        popupName: 'youtube-auth',
+      })
 
       const handleMessage = async (event: MessageEvent) => {
-        if (event.data?.type === 'youtube-auth-code') {
-          // Received authorization code from callback
-          const code = event.data.code as string
-          const storedVerifier = sessionStorage.getItem('youtube_code_verifier')
+        // Validate origin is from our OAuth server
+        const oauthServerOrigin = new URL(YOUTUBE_OAUTH_SERVER).origin
+        if (event.origin !== oauthServerOrigin) return
 
-          if (!storedVerifier) {
-            setAuthError('Code verifier not found')
-            setIsAuthenticating(false)
-            popup?.close()
-            return
+        if (event.data?.type === 'youtube-auth-success') {
+          const { tokens } = event.data as {
+            tokens: {
+              accessToken: string
+              refreshToken: string
+              expiresAt: number
+            }
           }
 
           try {
-            // Exchange code for tokens using PKCE (direct call to Google)
-            const tokens = await exchangeCodeForTokens({
-              code,
-              clientId: YOUTUBE_CLIENT_ID,
-              clientSecret: YOUTUBE_CLIENT_SECRET,
-              redirectUri: YOUTUBE_REDIRECT_URI,
-              codeVerifier: storedVerifier,
-            })
-
-            // Clear the verifier from storage
-            sessionStorage.removeItem('youtube_code_verifier')
-
             // Send tokens to server for storage
             await storeMutation.mutateAsync({
               accessToken: tokens.accessToken,
               refreshToken: tokens.refreshToken,
-              expiresAt: tokens.expiresAt.getTime(),
+              expiresAt: tokens.expiresAt,
             })
           } catch (err) {
             setAuthError(
-              err instanceof Error ? err.message : 'Token exchange failed',
+              err instanceof Error ? err.message : 'Failed to store tokens',
             )
             setIsAuthenticating(false)
           }
