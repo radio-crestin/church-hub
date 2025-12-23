@@ -15,6 +15,7 @@ export interface PresentationStateRecord {
   current_versete_tineri_entry_id: number | null
   is_presenting: number
   is_hidden: number
+  temporary_content: string | null
   updated_at: number
 }
 
@@ -29,6 +30,7 @@ export interface PresentationState {
   currentVerseteTineriEntryId: number | null
   isPresenting: boolean
   isHidden: boolean
+  temporaryContent: TemporaryContent | null
   updatedAt: number
 }
 
@@ -43,6 +45,82 @@ export interface UpdatePresentationStateInput {
   currentVerseteTineriEntryId?: number | null
   isPresenting?: boolean
   isHidden?: boolean
+  temporaryContent?: TemporaryContent | null
+}
+
+// ============================================================================
+// TEMPORARY CONTENT TYPES (bypasses queue for instant display)
+// ============================================================================
+
+/**
+ * Temporary Bible content for instant display
+ */
+export interface TemporaryBibleContent {
+  verseId: number
+  reference: string
+  text: string
+  translationAbbreviation: string
+  // Navigation context
+  translationId: number
+  bookId: number
+  bookCode: string
+  chapter: number
+  currentVerseIndex: number // 0-based index in chapter
+}
+
+/**
+ * Temporary slide for song display
+ */
+export interface TemporarySongSlide {
+  id: number
+  content: string
+  sortOrder: number
+}
+
+/**
+ * Temporary song content for instant display
+ */
+export interface TemporarySongContent {
+  songId: number
+  title: string
+  slides: TemporarySongSlide[]
+  currentSlideIndex: number // 0-based index
+}
+
+/**
+ * Union type for temporary content
+ */
+export type TemporaryContent =
+  | { type: 'bible'; data: TemporaryBibleContent }
+  | { type: 'song'; data: TemporarySongContent }
+
+/**
+ * Input for presenting a temporary Bible verse
+ */
+export interface PresentTemporaryBibleInput {
+  verseId: number
+  reference: string
+  text: string
+  translationAbbreviation: string
+  translationId: number
+  bookId: number
+  bookCode: string
+  chapter: number
+  currentVerseIndex: number
+}
+
+/**
+ * Input for presenting a temporary song
+ */
+export interface PresentTemporarySongInput {
+  songId: number
+}
+
+/**
+ * Input for navigating within temporary content
+ */
+export interface NavigateTemporaryInput {
+  direction: 'next' | 'prev'
 }
 
 /**

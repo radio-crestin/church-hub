@@ -220,6 +220,9 @@ export const presentationState = sqliteTable('presentation_state', {
   ).references(() => verseteTineriEntries.id, {
     onDelete: 'set null',
   }),
+  // Temporary content for instant display (bypasses queue)
+  // JSON: { type: 'bible' | 'song', data: TemporaryBibleContent | TemporarySongContent }
+  temporaryContent: text('temporary_content'),
   updatedAt: integer('updated_at', { mode: 'timestamp' })
     .notNull()
     .default(sql`(unixepoch())`),

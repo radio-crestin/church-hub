@@ -3,7 +3,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { presentationStateQueryKey } from './usePresentationState'
 import {
   clearSlide,
+  clearTemporaryContent,
   navigateQueueSlide,
+  navigateTemporary,
+  presentTemporaryBible,
+  presentTemporarySong,
   showSlide,
   stopPresentation,
   updatePresentationState,
@@ -59,6 +63,54 @@ export function useNavigateQueueSlide() {
 
   return useMutation({
     mutationFn: navigateQueueSlide,
+    onSuccess: (data: PresentationState) => {
+      queryClient.setQueryData(presentationStateQueryKey, data)
+    },
+  })
+}
+
+// ============================================================================
+// TEMPORARY CONTENT HOOKS (bypasses queue for instant display)
+// ============================================================================
+
+export function usePresentTemporaryBible() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: presentTemporaryBible,
+    onSuccess: (data: PresentationState) => {
+      queryClient.setQueryData(presentationStateQueryKey, data)
+    },
+  })
+}
+
+export function usePresentTemporarySong() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: presentTemporarySong,
+    onSuccess: (data: PresentationState) => {
+      queryClient.setQueryData(presentationStateQueryKey, data)
+    },
+  })
+}
+
+export function useNavigateTemporary() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: navigateTemporary,
+    onSuccess: (data: PresentationState) => {
+      queryClient.setQueryData(presentationStateQueryKey, data)
+    },
+  })
+}
+
+export function useClearTemporaryContent() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: clearTemporaryContent,
     onSuccess: (data: PresentationState) => {
       queryClient.setQueryData(presentationStateQueryKey, data)
     },

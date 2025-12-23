@@ -76,6 +76,7 @@ export interface BibleVerse {
 export interface BibleSearchResult {
   id: number
   translationId: number
+  bookId: number
   bookName: string
   bookCode: string
   chapter: number

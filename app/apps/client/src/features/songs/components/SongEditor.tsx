@@ -14,7 +14,7 @@ import {
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { useAddToQueue } from '~/features/queue'
+import { usePresentTemporarySong } from '~/features/presentation'
 import { AddSongToScheduleModal } from '~/features/schedules'
 import { useToast } from '~/ui/toast'
 import { CategoryPicker } from './CategoryPicker'
@@ -114,7 +114,7 @@ export function SongEditor({
   const [pendingAction, setPendingAction] = useState<PendingAction>(null)
   const [isSavingBeforeAction, setIsSavingBeforeAction] = useState(false)
   const unsavedChangesDialogRef = useRef<HTMLDialogElement>(null)
-  const addToQueueMutation = useAddToQueue()
+  const presentTemporarySong = usePresentTemporarySong()
 
   // Handle unsaved changes dialog open/close
   useEffect(() => {
@@ -128,14 +128,11 @@ export function SongEditor({
   const executePresentNow = async () => {
     if (!songId) return
 
-    const result = await addToQueueMutation.mutateAsync({
-      songId,
-      presentNow: true,
-    })
-    if (result.success) {
+    try {
+      await presentTemporarySong.mutateAsync({ songId })
       showToast(t('queue:messages.presenting'), 'success')
       navigate({ to: '/present' })
-    } else {
+    } catch {
       showToast(t('queue:messages.error'), 'error')
     }
   }
@@ -261,7 +258,7 @@ export function SongEditor({
               <button
                 type="button"
                 onClick={handlePresentNow}
-                disabled={isLoading || addToQueueMutation.isPending}
+                disabled={isLoading || presentTemporarySong.isPending}
                 className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
                 title={t('queue:actions.presentNow')}
               >
