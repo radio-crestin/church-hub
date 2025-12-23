@@ -36,7 +36,7 @@
       font-family: system-ui, -apple-system, sans-serif;
       z-index: 9999;
     ">
-      <div style="display: flex; flex-direction: column; align-items: center; gap: 24px;">
+      <div id="loading-content" style="display: flex; flex-direction: column; align-items: center; gap: 24px;">
         <img src="/logo.svg" alt="Church Hub" style="width: 80px; height: 80px;" onerror="this.style.display='none'" />
         <h1 style="margin: 0; font-size: 24px; font-weight: 600;">Church Hub</h1>
         <div style="display: flex; align-items: center; gap: 8px;">
@@ -71,6 +71,15 @@
         }
       </style>
     </div>
+    <script>
+      // For screen routes, show only black/transparent background - no loading content
+      if (window.location.pathname.startsWith('/screen/')) {
+        var loadingContent = document.getElementById('loading-content');
+        var loadingScreen = document.getElementById('loading-screen');
+        if (loadingContent) loadingContent.style.display = 'none';
+        if (loadingScreen) loadingScreen.style.background = 'black';
+      }
+    </script>
     <div id="app"></div>
     <div id="portal"></div>
     <script type="module" src="/src/router.tsx"></script>
