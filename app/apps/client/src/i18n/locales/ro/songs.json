@@ -103,6 +103,13 @@
   "settings": {
     "title": "Setări cântări"
   },
+  "preview": {
+    "backToSongs": "Înapoi",
+    "edit": "Editează",
+    "slides": "Slide-uri",
+    "noSlides": "Fără slide-uri",
+    "slideNumber": "Slide {{number}}"
+  },
   "metadata": {
     "detailsSection": "Detalii",
     "author": "Autor",

@@ -103,6 +103,13 @@
   "settings": {
     "title": "Songs Settings"
   },
+  "preview": {
+    "backToSongs": "Back",
+    "edit": "Edit",
+    "slides": "Slides",
+    "noSlides": "No slides",
+    "slideNumber": "Slide {{number}}"
+  },
   "metadata": {
     "detailsSection": "Details",
     "author": "Author",
