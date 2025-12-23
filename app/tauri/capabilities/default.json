@@ -6,6 +6,7 @@
   "permissions": [
     "core:default",
     "opener:default",
+    "opener:allow-open-url",
     "shell:allow-open",
     {
       "identifier": "shell:allow-execute",
