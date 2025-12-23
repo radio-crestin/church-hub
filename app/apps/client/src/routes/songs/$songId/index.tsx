@@ -142,7 +142,7 @@ function SongPreviewPage() {
         <button
           type="button"
           onClick={handleEdit}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
         >
           <Pencil size={16} />
           <span>{t('preview.edit')}</span>
