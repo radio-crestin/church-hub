@@ -31,15 +31,15 @@ export function isTauri(): boolean {
 
 /**
  * Gets the frontend base URL for display windows
- * In Tauri dev mode, window.location.origin returns tauri://localhost
- * so we need to use the actual dev server URL
+ * In Tauri mode, window.location.origin returns tauri://localhost
+ * so we need to use the actual server URL (localhost:3000)
  */
-function getFrontendUrl(): string {
-  // In development, use the dev server URL (for Tauri which uses tauri:// protocol)
-  if (import.meta.env.DEV) {
-    return 'http://localhost:8086'
+export function getFrontendUrl(): string {
+  // In Tauri mode, always use localhost:3000 (where sidecar serves the app)
+  if (isTauri()) {
+    return 'http://localhost:3000'
   }
-  // In production Tauri, use the current origin
+  // In browser mode, use the current origin
   return window.location.origin
 }
 

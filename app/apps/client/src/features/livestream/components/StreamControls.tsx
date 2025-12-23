@@ -53,17 +53,6 @@ export function StreamControls() {
         </Button>
       )}
 
-      {!isAuthenticated && (
-        <p className="text-sm text-amber-600 dark:text-amber-400">
-          {t('youtube.notConnected')}
-        </p>
-      )}
-
-      {!isConnected && (
-        <p className="text-sm text-amber-600 dark:text-amber-400">
-          {t('obs.disconnected')}
-        </p>
-      )}
     </div>
   )
 }
