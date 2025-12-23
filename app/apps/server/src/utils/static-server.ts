@@ -34,7 +34,7 @@ const MIME_TYPES: Record<string, string> = {
  */
 export async function serveStaticFile(
   pathname: string,
-  distPath: string
+  distPath: string,
 ): Promise<Response | null> {
   // Normalize the pathname
   const safePath = pathname.replace(/\.\./g, '')
@@ -49,7 +49,8 @@ export async function serveStaticFile(
     return new Response(file, {
       headers: {
         'Content-Type': mimeType,
-        'Cache-Control': ext === '.html' ? 'no-cache' : 'public, max-age=31536000',
+        'Cache-Control':
+          ext === '.html' ? 'no-cache' : 'public, max-age=31536000',
       },
     })
   }
@@ -95,11 +96,11 @@ export async function proxyToVite(req: Request): Promise<Response> {
       statusText: response.statusText,
       headers,
     })
-  } catch (error) {
+  } catch (_error) {
     // Vite server not running or unreachable
     return new Response(
       `Vite dev server not reachable at localhost:${VITE_DEV_PORT}. Make sure it's running.`,
-      { status: 502 }
+      { status: 502 },
     )
   }
 }

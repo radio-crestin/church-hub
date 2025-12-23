@@ -5,8 +5,7 @@
 const API_PORT = import.meta.env.VITE_API_PORT || '3000'
 
 // Check if we're running in Tauri mode
-const isTauri =
-  typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 
 /**
  * Gets the API host - uses the same hostname the client used to access the app
