@@ -581,6 +581,12 @@ export function presentTemporarySong(
       return getPresentationState()
     }
 
+    // Determine starting slide index (clamp to valid range)
+    const startIndex =
+      input.slideIndex !== undefined
+        ? Math.max(0, Math.min(input.slideIndex, slides.length - 1))
+        : 0
+
     const temporaryContent: TemporaryContent = {
       type: 'song',
       data: {
@@ -591,7 +597,7 @@ export function presentTemporarySong(
           content: s.content,
           sortOrder: s.sortOrder,
         })),
-        currentSlideIndex: 0,
+        currentSlideIndex: startIndex,
       },
     }
 
@@ -699,48 +705,9 @@ function navigateTemporaryBible(
     return updatePresentationState({ temporaryContent })
   }
 
-  // Handle chapter/book boundary
+  // Handle chapter boundary - end presentation at end of chapter
   if (direction === 'next') {
-    // Try next chapter
-    const nextChapterVerses = rawDb
-      .query(
-        `
-      SELECT id, verse, text, chapter
-      FROM bible_verses
-      WHERE translation_id = ? AND book_id = ? AND chapter = ?
-      ORDER BY verse ASC
-      LIMIT 1
-    `,
-      )
-      .all(data.translationId, data.bookId, data.chapter + 1) as {
-      id: number
-      verse: number
-      text: string
-      chapter: number
-    }[]
-
-    if (nextChapterVerses.length > 0) {
-      const newVerse = nextChapterVerses[0]
-      const bookName = data.reference.split(' ')[0]
-      const reference = `${bookName} ${newVerse.chapter}:${newVerse.verse} - ${data.translationAbbreviation}`
-
-      const temporaryContent: TemporaryContent = {
-        type: 'bible',
-        data: {
-          ...data,
-          verseId: newVerse.id,
-          reference,
-          text: newVerse.text,
-          chapter: newVerse.chapter,
-          currentVerseIndex: 0,
-        },
-      }
-
-      return updatePresentationState({ temporaryContent })
-    }
-
-    // End of book - hide presentation
-    log('info', 'Reached end of book, hiding temporary presentation')
+    log('info', 'Reached end of chapter, hiding temporary presentation')
     return updatePresentationState({
       temporaryContent: null,
       isHidden: true,
