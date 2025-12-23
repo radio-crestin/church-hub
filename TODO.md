@@ -38,8 +38,8 @@
 ~~- pentru cantari si versete Biblice, nu adauga in queue ci doar afiseaza-le~~
 ~~- foloseste numele display-ului in titlu~~
 - ascunde window-urile de screen din bara din OS
-- remove from screens the loading animation..
-- fix screen url in production
+~~- remove from screens the loading animation..~~
+~~- fix screen url in production~~
 - rezolva problema cu youtube login, cel mai probabil va trebui sa facem deploy la propriul server astfel incat aplicatia sa nu aiba nevoie de secret keys
 - fix livestream font size
 - implementeaza in livestream sa se puna 2 linii pe aceasi linie daca incape

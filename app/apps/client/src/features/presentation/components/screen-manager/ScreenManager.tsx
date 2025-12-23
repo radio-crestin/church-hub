@@ -23,6 +23,7 @@ import {
 import type { Screen, ScreenType, ScreenWithConfigs } from '../../types'
 import {
   closeDisplayWindow,
+  getFrontendUrl,
   openDisplayWindow,
   openInBrowser,
 } from '../../utils/openDisplayWindow'
@@ -142,7 +143,7 @@ export function ScreenManager() {
   }
 
   const handleCopyUrl = async (screen: Screen) => {
-    const url = `${window.location.origin}/screen/${screen.id}`
+    const url = `${getFrontendUrl()}/screen/${screen.id}`
     try {
       await navigator.clipboard.writeText(url)
       showToast('URL copied to clipboard', 'success')
@@ -152,7 +153,7 @@ export function ScreenManager() {
   }
 
   const handleOpenInNewTab = async (screen: Screen) => {
-    const url = `${window.location.origin}/screen/${screen.id}`
+    const url = `${getFrontendUrl()}/screen/${screen.id}`
     await openInBrowser(url)
   }
 
