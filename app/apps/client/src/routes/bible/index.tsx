@@ -11,8 +11,6 @@ import {
   formatVerseReference,
   useBibleKeyboardShortcuts,
   useBibleNavigation,
-  useBooks,
-  useChapters,
   useSelectedBibleTranslations,
   useVerse,
   useVerses,
@@ -92,10 +90,6 @@ function BiblePage() {
     })
     hasInitialSynced.current = true
   }, [currentVerse, navigation])
-
-  // Get books and chapters for navigation between chapters/books
-  const { data: books = [] } = useBooks(navigation.state.translationId)
-  const { data: chapters = [] } = useChapters(navigation.state.bookId)
 
   // Get verses for the current selection
   const { data: verses = [] } = useVerses(
