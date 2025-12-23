@@ -20,9 +20,9 @@ import {
 import {
   useClearSlide,
   usePresentationState,
-  useUpdatePresentationState,
+  usePresentTemporaryBible,
 } from '~/features/presentation'
-import { useInsertBibleVerseToQueue, useQueue } from '~/features/queue'
+import { useQueue } from '~/features/queue'
 import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
 
 export const Route = createFileRoute('/bible/')({
@@ -38,8 +38,7 @@ function BiblePage() {
     translations,
     isLoading: translationsLoading,
   } = useSelectedBibleTranslations()
-  const insertBibleVerse = useInsertBibleVerseToQueue()
-  const updatePresentationState = useUpdatePresentationState()
+  const presentTemporaryBible = usePresentTemporaryBible()
   const clearSlide = useClearSlide()
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
@@ -111,7 +110,7 @@ function BiblePage() {
 
   // Handle verse presentation to screen (API call)
   const presentVerseToScreen = useCallback(
-    async (verse: BibleVerse) => {
+    async (verse: BibleVerse, verseIndex: number) => {
       const reference = formatVerseReference(
         verse.bookName,
         verse.chapter,
@@ -119,29 +118,20 @@ function BiblePage() {
         currentTranslation?.abbreviation,
       )
 
-      // Insert to queue and present
-      const result = await insertBibleVerse.mutateAsync({
+      // Present temporarily (bypasses queue)
+      await presentTemporaryBible.mutateAsync({
         verseId: verse.id,
         reference,
         text: verse.text,
         translationAbbreviation: currentTranslation?.abbreviation || '',
-        presentNow: true,
+        translationId: verse.translationId,
+        bookId: verse.bookId,
+        bookCode: verse.bookCode,
+        chapter: verse.chapter,
+        currentVerseIndex: verseIndex,
       })
-
-      // Update presentation state to show this verse
-      if (result.success && result.data) {
-        await updatePresentationState.mutateAsync({
-          currentQueueItemId: result.data.id,
-          currentSongSlideId: null,
-          isHidden: false,
-        })
-      }
     },
-    [
-      currentTranslation?.abbreviation,
-      insertBibleVerse,
-      updatePresentationState,
-    ],
+    [currentTranslation?.abbreviation, presentTemporaryBible],
   )
 
   // Auto-present verse when navigating to a new chapter (for chapter/book transitions)
@@ -167,7 +157,7 @@ function BiblePage() {
         if (clampedIndex !== presentedIndex) {
           navigation.presentVerse(clampedIndex)
         }
-        presentVerseToScreen(verse)
+        presentVerseToScreen(verse, clampedIndex)
       }
     }
   }, [navigation, verses, presentVerseToScreen])
@@ -176,7 +166,7 @@ function BiblePage() {
   const handleSelectVerse = useCallback(
     async (verse: BibleVerse, index: number) => {
       navigation.presentVerse(index)
-      await presentVerseToScreen(verse)
+      await presentVerseToScreen(verse, index)
     },
     [navigation, presentVerseToScreen],
   )
@@ -188,15 +178,20 @@ function BiblePage() {
         result.reference ||
         `${result.bookName} ${result.chapter}:${result.verse}`
 
-      await insertBibleVerse.mutateAsync({
+      // Present search result temporarily
+      await presentTemporaryBible.mutateAsync({
         verseId: result.id,
         reference,
         text: result.text,
         translationAbbreviation: currentTranslation?.abbreviation || '',
-        presentNow: true,
+        translationId: result.translationId,
+        bookId: result.bookId,
+        bookCode: result.bookCode,
+        chapter: result.chapter,
+        currentVerseIndex: result.verse - 1, // Convert 1-based verse to 0-based index
       })
     },
-    [currentTranslation?.abbreviation, insertBibleVerse],
+    [currentTranslation?.abbreviation, presentTemporaryBible],
   )
 
   // Handle next/previous verse navigation - presents immediately
@@ -211,7 +206,7 @@ function BiblePage() {
       navigation.nextVerse()
       const verse = verses[nextIndex]
       if (verse) {
-        await presentVerseToScreen(verse)
+        await presentVerseToScreen(verse, nextIndex)
       }
       return
     }
@@ -262,7 +257,7 @@ function BiblePage() {
       navigation.previousVerse()
       const verse = verses[prevIndex]
       if (verse) {
-        await presentVerseToScreen(verse)
+        await presentVerseToScreen(verse, prevIndex)
       }
       return
     }
@@ -318,7 +313,7 @@ function BiblePage() {
       const verse = verses[searchedIndex]
       if (verse) {
         navigation.presentVerse(searchedIndex)
-        await presentVerseToScreen(verse)
+        await presentVerseToScreen(verse, searchedIndex)
       }
     }
   }, [navigation, verses, presentVerseToScreen])

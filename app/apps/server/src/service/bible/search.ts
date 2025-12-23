@@ -228,6 +228,7 @@ export function searchVersesByText(
         SELECT
           v.id,
           v.translation_id,
+          v.book_id,
           b.book_name,
           b.book_code,
           v.chapter,
@@ -248,6 +249,7 @@ export function searchVersesByText(
         SELECT
           v.id,
           v.translation_id,
+          v.book_id,
           b.book_name,
           b.book_code,
           v.chapter,
@@ -267,6 +269,7 @@ export function searchVersesByText(
     const results = rawDb.query(sql).all(...params) as Array<{
       id: number
       translation_id: number
+      book_id: number
       book_name: string
       book_code: string
       chapter: number
@@ -278,6 +281,7 @@ export function searchVersesByText(
     return results.map((r) => ({
       id: r.id,
       translationId: r.translation_id,
+      bookId: r.book_id,
       bookName: r.book_name,
       bookCode: r.book_code,
       chapter: r.chapter,
