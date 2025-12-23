@@ -169,7 +169,6 @@ function SongPreviewPage() {
             presentedSlideIndex={presentedSlideIndex}
             isLoading={isLoading}
             onSlideClick={handleSlideClick}
-            onGoBack={handleGoBack}
           />
         </div>
 
@@ -191,7 +190,6 @@ function SongPreviewPage() {
         >
           <SongControlPanel
             songId={numericId}
-            songTitle={song.title}
             onPrevSlide={handlePrevSlide}
             onNextSlide={handleNextSlide}
             canNavigatePrev={canNavigatePrev}
