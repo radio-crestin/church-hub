@@ -299,6 +299,15 @@ export function ScreenContent({
       canvasWidth,
       canvasHeight,
     )
+    const scaledBounds = {
+      x: bounds.x * scale,
+      y: bounds.y * scale,
+      width: bounds.width * scale,
+      height: bounds.height * scale,
+    }
+    const padding = 16 * scale
+    const labelHeight = ns.labelStyle.maxFontSize * scale + 8 * scale
+    const contentHeight = scaledBounds.height - padding * 2 - labelHeight
 
     // Render content based on whether we have versete_tineri summary
     const renderNextSlideContent = () => {
@@ -310,6 +319,8 @@ export function ScreenContent({
               display: 'flex',
               flexDirection: 'column',
               gap: 4 * scale,
+              ...getTextStyleCSS(ns.contentStyle),
+              fontSize: ns.contentStyle.maxFontSize * scale,
             }}
           >
             {entries.map((entry, index) => (
@@ -322,7 +333,22 @@ export function ScreenContent({
         )
       }
 
-      return nextSlideData?.preview || ''
+      const preview = nextSlideData?.preview || ''
+      if (!preview) return null
+
+      return (
+        <TextContent
+          content={preview}
+          style={{
+            ...ns.contentStyle,
+            autoScale: false,
+            maxFontSize: ns.contentStyle.maxFontSize * scale,
+          }}
+          containerWidth={scaledBounds.width - padding * 2}
+          containerHeight={contentHeight}
+          isHtml={true}
+        />
+      )
     }
 
     return (
@@ -330,11 +356,11 @@ export function ScreenContent({
         key="nextSlide"
         className="absolute overflow-hidden"
         style={{
-          left: bounds.x * scale,
-          top: bounds.y * scale,
-          width: bounds.width * scale,
-          height: bounds.height * scale,
-          padding: 16 * scale,
+          left: scaledBounds.x,
+          top: scaledBounds.y,
+          width: scaledBounds.width,
+          height: scaledBounds.height,
+          padding,
           display: 'flex',
           flexDirection: 'column',
           ...getBackgroundCSS(ns.background),
@@ -351,12 +377,9 @@ export function ScreenContent({
         </div>
         <div
           style={{
-            ...getTextStyleCSS(ns.contentStyle),
-            fontSize: ns.contentStyle.maxFontSize * scale,
             marginTop: 8 * scale,
             flex: 1,
             overflow: 'hidden',
-            wordBreak: 'break-word',
           }}
         >
           {renderNextSlideContent()}
