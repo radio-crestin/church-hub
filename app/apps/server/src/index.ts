@@ -75,6 +75,7 @@ import {
   batchUpdateScreenConfigs,
   type ContentType,
   clearSlide,
+  clearTemporaryContent,
   deleteScreen,
   getAllScreens,
   getContentConfig,
@@ -82,8 +83,14 @@ import {
   getPresentationState,
   getScreenById,
   getScreenWithConfigs,
+  type NavigateTemporaryInput,
   type NextSlideSectionConfig,
   navigateQueueSlide,
+  navigateTemporary,
+  type PresentTemporaryBibleInput,
+  type PresentTemporarySongInput,
+  presentTemporaryBible,
+  presentTemporarySong,
   type ScreenGlobalSettings,
   showSlide,
   stopPresentation,
@@ -1898,6 +1905,130 @@ async function main() {
             }),
           )
         }
+      }
+
+      // POST /api/presentation/temporary-bible - Present Bible verse temporarily (bypasses queue)
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/presentation/temporary-bible'
+      ) {
+        const permError = checkPermission('control_room.control')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as PresentTemporaryBibleInput
+          const state = presentTemporaryBible(body)
+          broadcastPresentationState(state)
+          triggerSceneAutomation(state)
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: state }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // POST /api/presentation/temporary-song - Present song temporarily (bypasses queue)
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/presentation/temporary-song'
+      ) {
+        const permError = checkPermission('control_room.control')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as PresentTemporarySongInput
+          const state = presentTemporarySong(body)
+          broadcastPresentationState(state)
+          triggerSceneAutomation(state)
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: state }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // POST /api/presentation/navigate-temporary - Navigate within temporary content
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/presentation/navigate-temporary'
+      ) {
+        const permError = checkPermission('control_room.control')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as NavigateTemporaryInput
+
+          if (!body.direction) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Missing direction' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const state = navigateTemporary(body.direction)
+          broadcastPresentationState(state)
+          triggerSceneAutomation(state)
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: state }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // POST /api/presentation/clear-temporary - Clear temporary content
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/presentation/clear-temporary'
+      ) {
+        const permError = checkPermission('control_room.control')
+        if (permError) return permError
+
+        const state = clearTemporaryContent()
+        broadcastPresentationState(state)
+        triggerSceneAutomation(state)
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: state }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
       }
 
       // ============================================================
