@@ -1,5 +1,6 @@
 use crate::domain::AppState;
 use std::time::{Duration, Instant};
+use tauri::path::BaseDirectory;
 use tauri::{AppHandle, Manager};
 use tauri_plugin_shell::{process::CommandEvent, ShellExt};
 
@@ -50,6 +51,13 @@ pub fn start_server(app_handle: &AppHandle, server_port: u16) -> Result<(), Stri
     sidecar = sidecar.env("NODE_ENV", "production");
     sidecar = sidecar.env("TAURI_MODE", "true");
     sidecar = sidecar.env("PORT", server_port.to_string());
+
+    // Pass the client dist path for static file serving
+    if let Ok(resource_dir) = app_handle.path().resolve("client-dist", BaseDirectory::Resource) {
+        let resource_path = resource_dir.to_string_lossy().to_string();
+        println!("[sidecar] Client dist path: {}", resource_path);
+        sidecar = sidecar.env("CLIENT_DIST_PATH", resource_path);
+    }
 
     let (mut rx, child) = sidecar.spawn().map_err(|err| err.to_string())?;
 
