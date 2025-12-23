@@ -124,7 +124,12 @@ export function ScreenManager() {
 
       if (isActive) {
         // Open native window when enabling (always use 'native' mode)
-        await openDisplayWindow(screen.id, 'native', screen.isFullscreen)
+        await openDisplayWindow(
+          screen.id,
+          'native',
+          screen.isFullscreen,
+          screen.name,
+        )
         showToast(`Screen "${screen.name}" enabled`, 'success')
       } else {
         // Close native window when disabling

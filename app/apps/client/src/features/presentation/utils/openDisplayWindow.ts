@@ -84,6 +84,7 @@ export async function openDisplayWindow(
   displayId: number,
   openMode: DisplayOpenMode,
   defaultFullscreen = false,
+  screenName?: string,
 ): Promise<void> {
   // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
   console.log(
@@ -100,7 +101,12 @@ export async function openDisplayWindow(
   } else {
     // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
     console.log('[openDisplayWindow] Opening in native mode')
-    await openInNativeWindow(displayId, displayUrl, defaultFullscreen)
+    await openInNativeWindow(
+      displayId,
+      displayUrl,
+      defaultFullscreen,
+      screenName,
+    )
   }
 }
 
@@ -142,6 +148,7 @@ async function openInNativeWindow(
   displayId: number,
   url: string,
   defaultFullscreen = false,
+  screenName?: string,
 ): Promise<void> {
   // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
   console.log(`[openInNativeWindow] called, isTauri: ${isTauri()}`)
@@ -181,7 +188,7 @@ async function openInNativeWindow(
 
       const windowOptions = {
         url,
-        title: `Display ${displayId}`,
+        title: screenName || `Display ${displayId}`,
         width: storedState?.width ?? 1280,
         height: storedState?.height ?? 720,
         x: storedState?.x,
@@ -368,7 +375,12 @@ export async function openAllActiveScreens(screens: Screen[]): Promise<void> {
 
   for (const screen of activeScreens) {
     // Always use 'native' mode (matching ScreenManager behavior)
-    await openDisplayWindow(screen.id, 'native', screen.isFullscreen)
+    await openDisplayWindow(
+      screen.id,
+      'native',
+      screen.isFullscreen,
+      screen.name,
+    )
     // Small delay to prevent overwhelming the system
     await new Promise((resolve) => setTimeout(resolve, 100))
   }
