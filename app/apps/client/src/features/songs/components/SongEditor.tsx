@@ -129,9 +129,9 @@ export function SongEditor({
     if (!songId) return
 
     try {
-      await presentTemporarySong.mutateAsync({ songId })
+      await presentTemporarySong.mutateAsync({ songId, slideIndex: 0 })
       showToast(t('queue:messages.presenting'), 'success')
-      navigate({ to: '/present' })
+      navigate({ to: '/songs/$songId', params: { songId: String(songId) } })
     } catch {
       showToast(t('queue:messages.error'), 'error')
     }

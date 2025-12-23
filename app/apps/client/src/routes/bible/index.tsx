@@ -195,7 +195,6 @@ function BiblePage() {
   )
 
   // Handle next/previous verse navigation - presents immediately
-  // Also handles chapter and book transitions
   const handleNextVerse = useCallback(async () => {
     const currentIndex =
       navigation.state.presentedIndex ?? navigation.state.searchedIndex ?? -1
@@ -211,93 +210,26 @@ function BiblePage() {
       return
     }
 
-    // End of chapter - try to go to next chapter
-    const currentChapter = navigation.state.chapter
-    const currentBookId = navigation.state.bookId
-    if (!currentChapter || !currentBookId) return
-
-    const currentChapterIndex = chapters.findIndex(
-      (c) => c.chapter === currentChapter,
-    )
-    const nextChapterData = chapters[currentChapterIndex + 1]
-
-    if (nextChapterData) {
-      // Go to next chapter, first verse
-      navigation.navigateToChapter({
-        bookId: currentBookId,
-        bookName: navigation.state.bookName || '',
-        chapter: nextChapterData.chapter,
-        verseIndex: 0,
-      })
-      return
-    }
-
-    // End of book - try to go to next book
-    const currentBookIndex = books.findIndex((b) => b.id === currentBookId)
-    const nextBook = books[currentBookIndex + 1]
-
-    if (nextBook) {
-      // Go to next book, first chapter, first verse
-      navigation.navigateToChapter({
-        bookId: nextBook.id,
-        bookName: nextBook.bookName,
-        chapter: 1,
-        verseIndex: 0,
-      })
-    }
-  }, [navigation, verses, chapters, books, presentVerseToScreen])
+    // End of chapter - end presentation
+    navigation.clearPresentation()
+    await clearSlide.mutateAsync()
+  }, [navigation, verses, presentVerseToScreen, clearSlide])
 
   const handlePreviousVerse = useCallback(async () => {
     const currentIndex =
       navigation.state.presentedIndex ?? navigation.state.searchedIndex ?? 0
     const prevIndex = currentIndex - 1
 
-    // If there are previous verses in current chapter
+    // If there are previous verses in current chapter, navigate to it
     if (prevIndex >= 0) {
       navigation.previousVerse()
       const verse = verses[prevIndex]
       if (verse) {
         await presentVerseToScreen(verse, prevIndex)
       }
-      return
     }
-
-    // Beginning of chapter - try to go to previous chapter
-    const currentChapter = navigation.state.chapter
-    const currentBookId = navigation.state.bookId
-    if (!currentChapter || !currentBookId) return
-
-    const currentChapterIndex = chapters.findIndex(
-      (c) => c.chapter === currentChapter,
-    )
-    const prevChapterData = chapters[currentChapterIndex - 1]
-
-    if (prevChapterData) {
-      // Go to previous chapter, last verse (use verseCount - 1)
-      navigation.navigateToChapter({
-        bookId: currentBookId,
-        bookName: navigation.state.bookName || '',
-        chapter: prevChapterData.chapter,
-        verseIndex: prevChapterData.verseCount - 1,
-      })
-      return
-    }
-
-    // Beginning of book - try to go to previous book
-    const currentBookIndex = books.findIndex((b) => b.id === currentBookId)
-    const prevBook = books[currentBookIndex - 1]
-
-    if (prevBook) {
-      // Go to previous book, last chapter
-      // We'll set verseIndex to a high number, the component will clamp it
-      navigation.navigateToChapter({
-        bookId: prevBook.id,
-        bookName: prevBook.bookName,
-        chapter: prevBook.chapterCount,
-        verseIndex: 999, // Will be clamped to last verse when verses load
-      })
-    }
-  }, [navigation, verses, chapters, books, presentVerseToScreen])
+    // At first verse - stay there (do nothing)
+  }, [navigation, verses, presentVerseToScreen])
 
   // Handle hide presentation (Escape) - clears slide but keeps selection
   const handleHidePresentation = useCallback(async () => {

@@ -173,15 +173,15 @@ export async function presentTemporarySong(
 /**
  * Navigate within temporary content (next/prev)
  */
-export async function navigateTemporary(
-  direction: 'next' | 'prev',
-): Promise<PresentationState> {
+export async function navigateTemporary(input: {
+  direction: 'next' | 'prev'
+}): Promise<PresentationState> {
   const response = await fetch(
     `${getApiUrl()}/api/presentation/navigate-temporary`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ direction }),
+      body: JSON.stringify({ direction: input.direction }),
       credentials: 'include',
     },
   )

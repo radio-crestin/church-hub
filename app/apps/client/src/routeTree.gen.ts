@@ -17,10 +17,11 @@ import { Route as LivestreamIndexRouteImport } from './routes/livestream/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as BibleIndexRouteImport } from './routes/bible/index'
 import { Route as rootIndexRouteImport } from './routes/(root)/index'
-import { Route as SongsSongIdRouteImport } from './routes/songs/$songId'
 import { Route as ScreenScreenIdRouteImport } from './routes/screen/$screenId'
 import { Route as SchedulesScheduleIdRouteImport } from './routes/schedules/$scheduleId'
 import { Route as CustomPagePageIdRouteImport } from './routes/custom-page/$pageId'
+import { Route as SongsSongIdIndexRouteImport } from './routes/songs/$songId/index'
+import { Route as SongsSongIdEditRouteImport } from './routes/songs/$songId/edit'
 
 const SongsIndexRoute = SongsIndexRouteImport.update({
   id: '/songs/',
@@ -62,11 +63,6 @@ const rootIndexRoute = rootIndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SongsSongIdRoute = SongsSongIdRouteImport.update({
-  id: '/songs/$songId',
-  path: '/songs/$songId',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ScreenScreenIdRoute = ScreenScreenIdRouteImport.update({
   id: '/screen/$screenId',
   path: '/screen/$screenId',
@@ -82,12 +78,21 @@ const CustomPagePageIdRoute = CustomPagePageIdRouteImport.update({
   path: '/custom-page/$pageId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SongsSongIdIndexRoute = SongsSongIdIndexRouteImport.update({
+  id: '/songs/$songId/',
+  path: '/songs/$songId/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SongsSongIdEditRoute = SongsSongIdEditRouteImport.update({
+  id: '/songs/$songId/edit',
+  path: '/songs/$songId/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/custom-page/$pageId': typeof CustomPagePageIdRoute
   '/schedules/$scheduleId': typeof SchedulesScheduleIdRoute
   '/screen/$screenId': typeof ScreenScreenIdRoute
-  '/songs/$songId': typeof SongsSongIdRoute
   '/': typeof rootIndexRoute
   '/bible': typeof BibleIndexRoute
   '/dashboard': typeof DashboardIndexRoute
@@ -96,12 +101,13 @@ export interface FileRoutesByFullPath {
   '/schedules': typeof SchedulesIndexRoute
   '/settings': typeof SettingsIndexRoute
   '/songs': typeof SongsIndexRoute
+  '/songs/$songId/edit': typeof SongsSongIdEditRoute
+  '/songs/$songId': typeof SongsSongIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/custom-page/$pageId': typeof CustomPagePageIdRoute
   '/schedules/$scheduleId': typeof SchedulesScheduleIdRoute
   '/screen/$screenId': typeof ScreenScreenIdRoute
-  '/songs/$songId': typeof SongsSongIdRoute
   '/': typeof rootIndexRoute
   '/bible': typeof BibleIndexRoute
   '/dashboard': typeof DashboardIndexRoute
@@ -110,13 +116,14 @@ export interface FileRoutesByTo {
   '/schedules': typeof SchedulesIndexRoute
   '/settings': typeof SettingsIndexRoute
   '/songs': typeof SongsIndexRoute
+  '/songs/$songId/edit': typeof SongsSongIdEditRoute
+  '/songs/$songId': typeof SongsSongIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/custom-page/$pageId': typeof CustomPagePageIdRoute
   '/schedules/$scheduleId': typeof SchedulesScheduleIdRoute
   '/screen/$screenId': typeof ScreenScreenIdRoute
-  '/songs/$songId': typeof SongsSongIdRoute
   '/(root)/': typeof rootIndexRoute
   '/bible/': typeof BibleIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
@@ -125,6 +132,8 @@ export interface FileRoutesById {
   '/schedules/': typeof SchedulesIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/songs/': typeof SongsIndexRoute
+  '/songs/$songId/edit': typeof SongsSongIdEditRoute
+  '/songs/$songId/': typeof SongsSongIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -132,7 +141,6 @@ export interface FileRouteTypes {
     | '/custom-page/$pageId'
     | '/schedules/$scheduleId'
     | '/screen/$screenId'
-    | '/songs/$songId'
     | '/'
     | '/bible'
     | '/dashboard'
@@ -141,12 +149,13 @@ export interface FileRouteTypes {
     | '/schedules'
     | '/settings'
     | '/songs'
+    | '/songs/$songId/edit'
+    | '/songs/$songId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/custom-page/$pageId'
     | '/schedules/$scheduleId'
     | '/screen/$screenId'
-    | '/songs/$songId'
     | '/'
     | '/bible'
     | '/dashboard'
@@ -155,12 +164,13 @@ export interface FileRouteTypes {
     | '/schedules'
     | '/settings'
     | '/songs'
+    | '/songs/$songId/edit'
+    | '/songs/$songId'
   id:
     | '__root__'
     | '/custom-page/$pageId'
     | '/schedules/$scheduleId'
     | '/screen/$screenId'
-    | '/songs/$songId'
     | '/(root)/'
     | '/bible/'
     | '/dashboard/'
@@ -169,13 +179,14 @@ export interface FileRouteTypes {
     | '/schedules/'
     | '/settings/'
     | '/songs/'
+    | '/songs/$songId/edit'
+    | '/songs/$songId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   CustomPagePageIdRoute: typeof CustomPagePageIdRoute
   SchedulesScheduleIdRoute: typeof SchedulesScheduleIdRoute
   ScreenScreenIdRoute: typeof ScreenScreenIdRoute
-  SongsSongIdRoute: typeof SongsSongIdRoute
   rootIndexRoute: typeof rootIndexRoute
   BibleIndexRoute: typeof BibleIndexRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
@@ -184,6 +195,8 @@ export interface RootRouteChildren {
   SchedulesIndexRoute: typeof SchedulesIndexRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
   SongsIndexRoute: typeof SongsIndexRoute
+  SongsSongIdEditRoute: typeof SongsSongIdEditRoute
+  SongsSongIdIndexRoute: typeof SongsSongIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -244,13 +257,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/songs/$songId': {
-      id: '/songs/$songId'
-      path: '/songs/$songId'
-      fullPath: '/songs/$songId'
-      preLoaderRoute: typeof SongsSongIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/screen/$screenId': {
       id: '/screen/$screenId'
       path: '/screen/$screenId'
@@ -272,6 +278,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CustomPagePageIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/songs/$songId/': {
+      id: '/songs/$songId/'
+      path: '/songs/$songId'
+      fullPath: '/songs/$songId'
+      preLoaderRoute: typeof SongsSongIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/songs/$songId/edit': {
+      id: '/songs/$songId/edit'
+      path: '/songs/$songId/edit'
+      fullPath: '/songs/$songId/edit'
+      preLoaderRoute: typeof SongsSongIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -279,7 +299,6 @@ const rootRouteChildren: RootRouteChildren = {
   CustomPagePageIdRoute: CustomPagePageIdRoute,
   SchedulesScheduleIdRoute: SchedulesScheduleIdRoute,
   ScreenScreenIdRoute: ScreenScreenIdRoute,
-  SongsSongIdRoute: SongsSongIdRoute,
   rootIndexRoute: rootIndexRoute,
   BibleIndexRoute: BibleIndexRoute,
   DashboardIndexRoute: DashboardIndexRoute,
@@ -288,6 +307,8 @@ const rootRouteChildren: RootRouteChildren = {
   SchedulesIndexRoute: SchedulesIndexRoute,
   SettingsIndexRoute: SettingsIndexRoute,
   SongsIndexRoute: SongsIndexRoute,
+  SongsSongIdEditRoute: SongsSongIdEditRoute,
+  SongsSongIdIndexRoute: SongsSongIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
