@@ -34,10 +34,25 @@
 ~~- adauga in setari un link catre openapi~~
 ~~- implementeaza system token api~~
 ~~- reorganizeaza pagina de setari si deasemenea asigura-te ca pagina web ascunde setarile disponibile numai in turso~~
-- fa build pe windows si testeaza aplicatia
+~~- fa build pe windows si testeaza aplicatia~~
+- pentru cantari si versete Biblice, nu adauga in queue ci doar afiseaza-le
+- foloseste numele display-ului in titlu
+- ascunde window-urile de screen din bara din OS
+- remove from screens the loading animation..
+- fix screen url in production
+- rezolva problema cu youtube login, cel mai probabil va trebui sa facem deploy la propriul server astfel incat aplicatia sa nu aiba nevoie de secret keys
+- fix livestream font size
+- implementeaza in livestream sa se puna 2 linii pe aceasi linie daca incape
+- implementeaza real transparent background, chiar si cand este dark mode
+- adauga posibilitatea de a face highlight pentru sesiunea curenta
+- deasemenea, incepe intotdeauna cu coada goala
+- asigura-te ca paginile web au reconnect cu websocket and when disconnected display an empty screen (with transparent bg or black)
+- creaza o sectiune pentru a face backup la sqlite db si deasemenea de a vedea path-ul catre db
+- do not display "YouTube not connected, OBS Disconnected""
 - inlocuieste aplicatia de scene monitor cu una care foloseste aplicatia turso si un UI similar cu cel al aplicatiei actuale
   - pentru cantari, va fi ceva similar, fiecare cantare e echivalentul unui verset
   - pentru Biblie va trebui sa afisezi in timp real ce se cauta pe pc-ul principal si sa afisezi lista de versete
 ~~- implementeaza api-uri pentru search cantari, adaugare de cantari, programe, camera de control, preview, current queue, etc.~~
 - fix openapi endpoints and fix authentication layer
 - creaza optiunea de a adauga live-urile create intr-un playlist pe YouTube
+
