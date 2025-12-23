@@ -1,0 +1,22 @@
+name = "churchub-youtube-oauth-worker"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+minify = true
+
+# Custom domain route
+routes = [
+  { pattern = "churchub-youtube-oauth-worker.bringes.io", custom_domain = true }
+]
+
+# Non-sensitive environment variables
+[vars]
+YOUTUBE_SCOPE = "https://www.googleapis.com/auth/youtube.force-ssl"
+COOKIE_NAME = "yt_oauth_state"
+COOKIE_MAX_AGE = 600
+
+# Secrets must be set via wrangler secret put:
+# - YOUTUBE_CLIENT_ID
+# - YOUTUBE_CLIENT_SECRET
+# - COOKIE_ENCRYPTION_KEY (generate: openssl rand -hex 32)
+# - ALLOWED_ORIGINS (comma-separated list)
+# - YOUTUBE_REDIRECT_URI

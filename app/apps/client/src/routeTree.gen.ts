@@ -22,6 +22,7 @@ import { Route as SchedulesScheduleIdRouteImport } from './routes/schedules/$sch
 import { Route as CustomPagePageIdRouteImport } from './routes/custom-page/$pageId'
 import { Route as SongsSongIdIndexRouteImport } from './routes/songs/$songId/index'
 import { Route as SongsSongIdEditRouteImport } from './routes/songs/$songId/edit'
+import { Route as AuthYoutubeCallbackRouteImport } from './routes/auth/youtube/callback'
 
 const SongsIndexRoute = SongsIndexRouteImport.update({
   id: '/songs/',
@@ -88,6 +89,11 @@ const SongsSongIdEditRoute = SongsSongIdEditRouteImport.update({
   path: '/songs/$songId/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthYoutubeCallbackRoute = AuthYoutubeCallbackRouteImport.update({
+  id: '/auth/youtube/callback',
+  path: '/auth/youtube/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/custom-page/$pageId': typeof CustomPagePageIdRoute
@@ -101,6 +107,7 @@ export interface FileRoutesByFullPath {
   '/schedules': typeof SchedulesIndexRoute
   '/settings': typeof SettingsIndexRoute
   '/songs': typeof SongsIndexRoute
+  '/auth/youtube/callback': typeof AuthYoutubeCallbackRoute
   '/songs/$songId/edit': typeof SongsSongIdEditRoute
   '/songs/$songId': typeof SongsSongIdIndexRoute
 }
@@ -116,6 +123,7 @@ export interface FileRoutesByTo {
   '/schedules': typeof SchedulesIndexRoute
   '/settings': typeof SettingsIndexRoute
   '/songs': typeof SongsIndexRoute
+  '/auth/youtube/callback': typeof AuthYoutubeCallbackRoute
   '/songs/$songId/edit': typeof SongsSongIdEditRoute
   '/songs/$songId': typeof SongsSongIdIndexRoute
 }
@@ -132,6 +140,7 @@ export interface FileRoutesById {
   '/schedules/': typeof SchedulesIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/songs/': typeof SongsIndexRoute
+  '/auth/youtube/callback': typeof AuthYoutubeCallbackRoute
   '/songs/$songId/edit': typeof SongsSongIdEditRoute
   '/songs/$songId/': typeof SongsSongIdIndexRoute
 }
@@ -149,6 +158,7 @@ export interface FileRouteTypes {
     | '/schedules'
     | '/settings'
     | '/songs'
+    | '/auth/youtube/callback'
     | '/songs/$songId/edit'
     | '/songs/$songId'
   fileRoutesByTo: FileRoutesByTo
@@ -164,6 +174,7 @@ export interface FileRouteTypes {
     | '/schedules'
     | '/settings'
     | '/songs'
+    | '/auth/youtube/callback'
     | '/songs/$songId/edit'
     | '/songs/$songId'
   id:
@@ -179,6 +190,7 @@ export interface FileRouteTypes {
     | '/schedules/'
     | '/settings/'
     | '/songs/'
+    | '/auth/youtube/callback'
     | '/songs/$songId/edit'
     | '/songs/$songId/'
   fileRoutesById: FileRoutesById
@@ -195,6 +207,7 @@ export interface RootRouteChildren {
   SchedulesIndexRoute: typeof SchedulesIndexRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
   SongsIndexRoute: typeof SongsIndexRoute
+  AuthYoutubeCallbackRoute: typeof AuthYoutubeCallbackRoute
   SongsSongIdEditRoute: typeof SongsSongIdEditRoute
   SongsSongIdIndexRoute: typeof SongsSongIdIndexRoute
 }
@@ -292,6 +305,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SongsSongIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/youtube/callback': {
+      id: '/auth/youtube/callback'
+      path: '/auth/youtube/callback'
+      fullPath: '/auth/youtube/callback'
+      preLoaderRoute: typeof AuthYoutubeCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -307,6 +327,7 @@ const rootRouteChildren: RootRouteChildren = {
   SchedulesIndexRoute: SchedulesIndexRoute,
   SettingsIndexRoute: SettingsIndexRoute,
   SongsIndexRoute: SongsIndexRoute,
+  AuthYoutubeCallbackRoute: AuthYoutubeCallbackRoute,
   SongsSongIdEditRoute: SongsSongIdEditRoute,
   SongsSongIdIndexRoute: SongsSongIdIndexRoute,
 }

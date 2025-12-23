@@ -314,22 +314,20 @@ export function ScreenContent({
       if (nextSlideData?.verseteTineriSummary) {
         const { entries, hasMore } = nextSlideData.verseteTineriSummary
         return (
-          <div
+          <span
             style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 4 * scale,
               ...getTextStyleCSS(ns.contentStyle),
               fontSize: ns.contentStyle.maxFontSize * scale,
             }}
           >
             {entries.map((entry, index) => (
-              <div key={index}>
+              <span key={index}>
                 {entry.personName} - {entry.reference}
-              </div>
+                {index < entries.length - 1 && ' • '}
+              </span>
             ))}
-            {hasMore && <div>...</div>}
-          </div>
+            {hasMore && ' ...'}
+          </span>
         )
       }
 
@@ -337,16 +335,12 @@ export function ScreenContent({
       if (!preview) return null
 
       return (
-        <TextContent
-          content={preview}
+        <span
           style={{
-            ...ns.contentStyle,
-            autoScale: false,
-            maxFontSize: ns.contentStyle.maxFontSize * scale,
+            ...getTextStyleCSS(ns.contentStyle),
+            fontSize: ns.contentStyle.maxFontSize * scale,
           }}
-          containerWidth={scaledBounds.width - padding * 2}
-          containerHeight={contentHeight}
-          isHtml={true}
+          dangerouslySetInnerHTML={{ __html: preview }}
         />
       )
     }
@@ -380,6 +374,8 @@ export function ScreenContent({
             marginTop: 8 * scale,
             flex: 1,
             overflow: 'hidden',
+            whiteSpace: 'nowrap',
+            textOverflow: 'ellipsis',
           }}
         >
           {renderNextSlideContent()}
