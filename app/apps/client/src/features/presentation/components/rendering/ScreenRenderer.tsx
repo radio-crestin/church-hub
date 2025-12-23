@@ -1,3 +1,4 @@
+import { Maximize, Minimize } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -9,10 +10,14 @@ import { getNextVerse } from '../../../bible/service/bible'
 import type { BibleVerse } from '../../../bible/types'
 import type { QueueItem } from '../../../queue/types'
 import type { SongSlide } from '../../../songs/types'
-import { usePresentationState, useWebSocket } from '../../hooks'
+import {
+  usePresentationState,
+  useUpsertScreen,
+  useWebSocket,
+} from '../../hooks'
 import { useScreen } from '../../hooks/useScreen'
 import type { ContentType, PresentationState } from '../../types'
-import { toggleWindowFullscreen } from '../../utils/fullscreen'
+import { setWindowFullscreen } from '../../utils/fullscreen'
 import { isTauri } from '../../utils/openDisplayWindow'
 
 interface ScreenRendererProps {
@@ -25,6 +30,7 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
 
   const { data: presentationState } = usePresentationState()
   const { data: screen, isLoading, isError } = useScreen(screenId)
+  const upsertScreen = useUpsertScreen()
 
   const containerRef = useRef<HTMLDivElement>(null)
   const [contentData, setContentData] = useState<ContentData | null>(null)
@@ -32,6 +38,12 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
   const [nextSlideData, setNextSlideData] = useState<
     NextSlideData | undefined
   >()
+
+  // Fullscreen state and toolbar visibility
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [showToolbar, setShowToolbar] = useState(false)
+  const toolbarTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const userExitedFullscreenRef = useRef(false)
 
   // Track container dimensions (start at 0, render only when measured)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
@@ -58,21 +70,135 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
     return () => resizeObserver.disconnect()
   }, [screen])
 
-  // Toggle fullscreen
+  // Track fullscreen state and auto-switch to fullscreen on maximize
+  useEffect(() => {
+    let unlistenResize: (() => void) | null = null
+
+    const setupTauriListeners = async () => {
+      if (!isTauri()) return
+
+      try {
+        const { getCurrentWebviewWindow } = await import(
+          '@tauri-apps/api/webviewWindow'
+        )
+        const win = getCurrentWebviewWindow()
+
+        // Check initial fullscreen state
+        const fs = await win.isFullscreen()
+        setIsFullscreen(fs)
+
+        // Listen for resize events to detect maximize
+        unlistenResize = await win.listen('tauri://resize', async () => {
+          const isMaximized = await win.isMaximized()
+          const isFs = await win.isFullscreen()
+
+          // If window is maximized but not fullscreen, switch to fullscreen
+          // But only if user didn't just exit fullscreen manually
+          if (isMaximized && !isFs && !userExitedFullscreenRef.current) {
+            await setWindowFullscreen(win, true)
+            setIsFullscreen(true)
+
+            // Save to database
+            if (screen) {
+              upsertScreen.mutate({
+                id: screen.id,
+                name: screen.name,
+                type: screen.type,
+                isFullscreen: true,
+              })
+            }
+          }
+
+          // Reset the flag after a short delay to allow re-maximizing later
+          if (!isMaximized && userExitedFullscreenRef.current) {
+            setTimeout(() => {
+              userExitedFullscreenRef.current = false
+            }, 500)
+          }
+
+          setIsFullscreen(await win.isFullscreen())
+        })
+      } catch (_error) {}
+    }
+
+    const checkFullscreen = () => {
+      if (!isTauri()) {
+        setIsFullscreen(!!document.fullscreenElement)
+      }
+    }
+
+    setupTauriListeners()
+
+    // Listen for fullscreen changes in browser
+    document.addEventListener('fullscreenchange', checkFullscreen)
+    return () => {
+      document.removeEventListener('fullscreenchange', checkFullscreen)
+      if (unlistenResize) {
+        unlistenResize()
+      }
+    }
+  }, [screen, upsertScreen])
+
+  // Toggle fullscreen and save to database
   const toggleFullscreen = useCallback(async () => {
+    const newFullscreen = !isFullscreen
+
+    // If exiting fullscreen, set flag to prevent auto-fullscreen on resize
+    if (!newFullscreen) {
+      userExitedFullscreenRef.current = true
+    }
+
     if (isTauri()) {
       try {
         const { getCurrentWebviewWindow } = await import(
           '@tauri-apps/api/webviewWindow'
         )
         const win = getCurrentWebviewWindow()
-        await toggleWindowFullscreen(win)
+        await setWindowFullscreen(win, newFullscreen)
+        setIsFullscreen(newFullscreen)
       } catch (_error) {}
     } else {
       if (document.fullscreenElement) {
-        document.exitFullscreen()
+        await document.exitFullscreen()
       } else {
-        document.documentElement.requestFullscreen()
+        await document.documentElement.requestFullscreen()
+      }
+      setIsFullscreen(newFullscreen)
+    }
+
+    // Save fullscreen state to database
+    if (screen) {
+      upsertScreen.mutate({
+        id: screen.id,
+        name: screen.name,
+        type: screen.type,
+        isFullscreen: newFullscreen,
+      })
+    }
+  }, [isFullscreen, screen, upsertScreen])
+
+  // Show toolbar on mouse move near the top
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      const threshold = 60 // pixels from top
+      if (e.clientY < threshold) {
+        setShowToolbar(true)
+        if (toolbarTimeoutRef.current) {
+          clearTimeout(toolbarTimeoutRef.current)
+        }
+        toolbarTimeoutRef.current = setTimeout(() => {
+          setShowToolbar(false)
+        }, 3000)
+      }
+    },
+    [],
+  )
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (toolbarTimeoutRef.current) {
+        clearTimeout(toolbarTimeoutRef.current)
       }
     }
   }, [])
@@ -316,7 +442,35 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
       className="w-screen h-screen overflow-hidden cursor-default"
       style={bg ? getBackgroundCSS(bg) : { backgroundColor: '#000000' }}
       onDoubleClick={toggleFullscreen}
+      onMouseMove={handleMouseMove}
     >
+      {/* Floating toolbar */}
+      <div
+        className={`fixed top-0 right-0 z-50 p-2 transition-opacity duration-300 ${
+          showToolbar ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        onMouseEnter={() => {
+          if (toolbarTimeoutRef.current) {
+            clearTimeout(toolbarTimeoutRef.current)
+          }
+          setShowToolbar(true)
+        }}
+        onMouseLeave={() => {
+          toolbarTimeoutRef.current = setTimeout(() => {
+            setShowToolbar(false)
+          }, 1000)
+        }}
+      >
+        <button
+          type="button"
+          onClick={toggleFullscreen}
+          className="p-2 rounded-lg bg-black/50 hover:bg-black/70 text-white transition-colors"
+          title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+        >
+          {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
+        </button>
+      </div>
+
       {containerSize.width > 0 && containerSize.height > 0 && (
         <ScreenContent
           screen={screen}
