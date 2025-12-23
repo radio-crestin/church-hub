@@ -199,6 +199,7 @@ async function openInNativeWindow(
         minimizable: true,
         decorations: true,
         alwaysOnTop: true,
+        skipTaskbar: true,
         focus: true,
       }
       // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
