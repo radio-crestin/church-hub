@@ -9,8 +9,8 @@ function isTauri(): boolean {
 export async function openExternalUrl(url: string): Promise<void> {
   if (isTauri()) {
     try {
-      const { open } = await import('@tauri-apps/plugin-shell')
-      await open(url)
+      const { openUrl } = await import('@tauri-apps/plugin-opener')
+      await openUrl(url)
     } catch (error) {
       // biome-ignore lint/suspicious/noConsole: Fallback logging
       console.error(
@@ -35,10 +35,17 @@ export async function openAuthUrl(
 ): Promise<Window | null> {
   const { popupName = 'auth', width = 600, height = 700 } = options || {}
 
+  // biome-ignore lint/suspicious/noConsole: Debug logging
+  console.log('[openAuthUrl] isTauri:', isTauri(), 'url:', url)
+
   if (isTauri()) {
     try {
-      const { open } = await import('@tauri-apps/plugin-shell')
-      await open(url)
+      const { openUrl } = await import('@tauri-apps/plugin-opener')
+      // biome-ignore lint/suspicious/noConsole: Debug logging
+      console.log('[openAuthUrl] Calling openUrl...')
+      await openUrl(url)
+      // biome-ignore lint/suspicious/noConsole: Debug logging
+      console.log('[openAuthUrl] openUrl completed successfully')
       // Return null since we can't get a reference to the external browser window
       return null
     } catch (error) {

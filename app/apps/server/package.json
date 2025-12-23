@@ -7,8 +7,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "bun --watch ./src/index.ts",
-    "compile": "bun ./scripts/compile.ts"
+    "dev": "node ../../scripts/run-bun.js --watch ./src/index.ts",
+    "compile": "node ../../scripts/run-bun.js ./scripts/compile.ts"
   },
   "dependencies": {
     "debug": "^4.4.3",

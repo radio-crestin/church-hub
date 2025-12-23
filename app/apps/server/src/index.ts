@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs'
 import process from 'node:process'
 
 import { closeDatabase, initializeDatabase } from './db'
@@ -160,6 +161,7 @@ import {
   upsertSong,
   upsertSongSlide,
 } from './service/songs'
+import { proxyToVite, serveStaticFile } from './utils/static-server'
 import {
   broadcastMIDIMessage,
   broadcastPresentationState,
@@ -226,12 +228,28 @@ async function main() {
 
   const isProd = process.env.NODE_ENV === 'production'
 
+  // Client serving configuration
+  // In production: serve static files from bundled client dist
+  // In development: proxy to Vite dev server
+  const clientDistPath = process.env['CLIENT_DIST_PATH']
+  const canServeStaticFiles =
+    isProd && clientDistPath && existsSync(clientDistPath)
+  const shouldProxyToVite = !isProd
+
+  if (canServeStaticFiles) {
+    // biome-ignore lint/suspicious/noConsole: Startup logging
+    console.log(`[server] Serving client from: ${clientDistPath}`)
+  } else if (shouldProxyToVite) {
+    // biome-ignore lint/suspicious/noConsole: Startup logging
+    console.log('[server] Proxying client requests to Vite dev server (port 8086)')
+  }
+
   // biome-ignore lint/suspicious/noConsole: Startup logging
   console.log('[server] Starting with simple auth (localhost = admin)')
 
   function handleCors(req: Request, res: Response) {
-    // Get the origin from the request, or use localhost as fallback
-    const origin = req.headers.get('Origin') || 'http://localhost:8086'
+    // Get the origin from the request, or use port 3000 as fallback (unified port)
+    const origin = req.headers.get('Origin') || 'http://localhost:3000'
     res.headers.set('Access-Control-Allow-Origin', origin)
     res.headers.set(
       'Access-Control-Allow-Methods',
@@ -291,8 +309,9 @@ async function main() {
         }
 
         // Redirect to frontend using the same host the user accessed from
+        // Always use port 3000 - both dev and prod serve client from this port
         const host = req.headers.get('host')?.split(':')[0] ?? 'localhost'
-        const frontendPort = process.env['VITE_PORT'] ?? 8086
+        const frontendPort = process.env['PORT'] ?? 3000
         const frontendUrl = `http://${host}:${frontendPort}/`
 
         // Build cookie with domain for cross-port sharing
@@ -334,12 +353,6 @@ async function main() {
         const authResult = await combinedAuthMiddleware(req)
         if (authResult.response) return handleCors(req, authResult.response)
         _context = authResult.context
-      }
-      if (url.pathname === '/') {
-        return new Response(null, {
-          status: 302,
-          headers: { Location: '/api/docs' },
-        })
       }
       if (url.pathname === '/ping') {
         return handleCors(req, new Response(JSON.stringify({ data: 'pong' })))
@@ -3483,6 +3496,18 @@ async function main() {
       // MIDI routes
       const midiResponse = await handleMIDIRoutes(req, url, handleCors)
       if (midiResponse) return midiResponse
+
+      // Serve client app (static files in production, proxy to Vite in development)
+      if (canServeStaticFiles && clientDistPath) {
+        // Production: serve from bundled static files
+        const staticResponse = await serveStaticFile(url.pathname, clientDistPath)
+        if (staticResponse) {
+          return handleCors(req, staticResponse)
+        }
+      } else if (shouldProxyToVite) {
+        // Development: proxy to Vite dev server
+        return proxyToVite(req)
+      }
 
       return handleCors(req, new Response('Not Found', { status: 404 }))
     },
