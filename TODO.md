@@ -35,8 +35,8 @@
 ~~- implementeaza system token api~~
 ~~- reorganizeaza pagina de setari si deasemenea asigura-te ca pagina web ascunde setarile disponibile numai in turso~~
 ~~- fa build pe windows si testeaza aplicatia~~
-- pentru cantari si versete Biblice, nu adauga in queue ci doar afiseaza-le
-- foloseste numele display-ului in titlu
+~~- pentru cantari si versete Biblice, nu adauga in queue ci doar afiseaza-le~~
+~~- foloseste numele display-ului in titlu~~
 - ascunde window-urile de screen din bara din OS
 - remove from screens the loading animation..
 - fix screen url in production

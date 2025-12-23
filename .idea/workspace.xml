@@ -6,14 +6,9 @@
   <component name="ChangeListManager">
     <list default="true" id="66517e3f-2e4e-43cc-880d-deb242368f0c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/config.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/keyboard-shortcuts/midi/context/MIDIContext.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/keyboard-shortcuts/midi/context/MIDIContext.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/keyboard-shortcuts/midi/hooks/useWebMIDI.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/keyboard-shortcuts/midi/hooks/useWebMIDI.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/ScreenRenderer.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/ScreenRenderer.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/ui/combobox/Combobox.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/ui/combobox/Combobox.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/migrations/embedded.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/migrations/embedded.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/utils/static-server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/utils/static-server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TODO.md" beforeDir="false" afterPath="$PROJECT_DIR$/TODO.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/ScreenContent.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/ScreenContent.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/routes/bible/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/routes/bible/index.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
