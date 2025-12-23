@@ -48,7 +48,7 @@ const defaultMetadata: SongMetadata = {
   sourceFilename: null,
 }
 
-export const Route = createFileRoute('/songs/$songId')({
+export const Route = createFileRoute('/songs/$songId/edit')({
   component: SongEditorPage,
   validateSearch: (search: Record<string, unknown>): SongSearchParams => ({
     q: typeof search.q === 'string' ? search.q : undefined,
@@ -59,7 +59,7 @@ function SongEditorPage() {
   const { t } = useTranslation(['songs', 'common'])
   const navigate = useNavigate()
   const { songId } = Route.useParams()
-  const { q: searchQuery } = useSearch({ from: '/songs/$songId' })
+  const { q: searchQuery } = useSearch({ from: '/songs/$songId/edit' })
   const { showToast } = useToast()
 
   const isNew = songId === 'new'
@@ -184,6 +184,7 @@ function SongEditorPage() {
       })
 
       if (isNew) {
+        // Navigate to the preview page after creating a new song
         navigate({
           to: '/songs/$songId',
           params: { songId: String(result.data.id) },
@@ -228,8 +229,14 @@ function SongEditorPage() {
   }, [handleSave, upsertMutation.isPending])
 
   const handleBack = useCallback(() => {
-    navigate({ to: '/songs/', search: { q: searchQuery } })
-  }, [navigate, searchQuery])
+    if (isNew) {
+      // Go back to songs list for new songs
+      navigate({ to: '/songs/', search: { q: searchQuery } })
+    } else {
+      // Go back to preview page for existing songs
+      navigate({ to: '/songs/$songId', params: { songId } })
+    }
+  }, [navigate, searchQuery, songId, isNew])
 
   const handleDeleteConfirm = async () => {
     if (!numericId) return
@@ -238,7 +245,8 @@ function SongEditorPage() {
     const success = await deleteMutation.mutateAsync(numericId)
     if (success) {
       showToast(t('songs:messages.deleted'), 'success')
-      handleBack()
+      // Navigate to songs list after deletion
+      navigate({ to: '/songs/', search: { q: searchQuery } })
     } else {
       showToast(t('songs:messages.error'), 'error')
     }

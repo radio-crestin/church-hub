@@ -114,6 +114,7 @@ export interface PresentTemporaryBibleInput {
  */
 export interface PresentTemporarySongInput {
   songId: number
+  slideIndex?: number // Optional: start from specific slide (0-based)
 }
 
 /**
