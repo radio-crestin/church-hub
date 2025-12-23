@@ -31,7 +31,8 @@ interface UseWebMIDIReturn extends WebMIDIState {
 
 export function useWebMIDI(): UseWebMIDIReturn {
   const [state, setState] = useState<WebMIDIState>({
-    isSupported: typeof navigator !== 'undefined' && 'requestMIDIAccess' in navigator,
+    isSupported:
+      typeof navigator !== 'undefined' && 'requestMIDIAccess' in navigator,
     hasPermission: false,
     permissionError: null,
     inputDevices: [],
@@ -44,12 +45,15 @@ export function useWebMIDI(): UseWebMIDIReturn {
   const subscribersRef = useRef<Set<(message: MIDIMessage) => void>>(new Set())
 
   // Convert Web MIDI device to our MIDIDevice format
-  const convertDevice = useCallback((device: MIDIInput | MIDIOutput): MIDIDevice => ({
-    id: device.id,
-    name: device.name || 'Unknown Device',
-    manufacturer: device.manufacturer || 'Unknown',
-    state: device.state === 'connected' ? 'connected' : 'disconnected',
-  }), [])
+  const convertDevice = useCallback(
+    (device: MIDIInput | MIDIOutput): MIDIDevice => ({
+      id: device.id,
+      name: device.name || 'Unknown Device',
+      manufacturer: device.manufacturer || 'Unknown',
+      state: device.state === 'connected' ? 'connected' : 'disconnected',
+    }),
+    [],
+  )
 
   // Update device lists from MIDIAccess
   const updateDeviceLists = useCallback(() => {
@@ -66,7 +70,10 @@ export function useWebMIDI(): UseWebMIDIReturn {
       outputs.push(convertDevice(output))
     })
 
-    logger.debug('Web MIDI devices updated', { inputs: inputs.length, outputs: outputs.length })
+    logger.debug('Web MIDI devices updated', {
+      inputs: inputs.length,
+      outputs: outputs.length,
+    })
 
     setState((prev) => ({
       ...prev,
@@ -160,7 +167,8 @@ export function useWebMIDI(): UseWebMIDIReturn {
       logger.info('Web MIDI access granted')
       return true
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to access MIDI devices'
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to access MIDI devices'
       logger.error('Web MIDI access denied', { error: errorMessage })
       setState((prev) => ({
         ...prev,
@@ -172,28 +180,31 @@ export function useWebMIDI(): UseWebMIDIReturn {
   }, [state.isSupported, updateDeviceLists])
 
   // Connect to input device
-  const connectInput = useCallback((deviceId: string) => {
-    if (!midiAccessRef.current) {
-      logger.warn('Cannot connect input: MIDI access not granted')
-      return
-    }
+  const connectInput = useCallback(
+    (deviceId: string) => {
+      if (!midiAccessRef.current) {
+        logger.warn('Cannot connect input: MIDI access not granted')
+        return
+      }
 
-    // Disconnect current input first
-    if (currentInputRef.current) {
-      currentInputRef.current.onmidimessage = null
-      currentInputRef.current = null
-    }
+      // Disconnect current input first
+      if (currentInputRef.current) {
+        currentInputRef.current.onmidimessage = null
+        currentInputRef.current = null
+      }
 
-    const input = midiAccessRef.current.inputs.get(deviceId)
-    if (!input) {
-      logger.error('Input device not found', { deviceId })
-      return
-    }
+      const input = midiAccessRef.current.inputs.get(deviceId)
+      if (!input) {
+        logger.error('Input device not found', { deviceId })
+        return
+      }
 
-    input.onmidimessage = handleMIDIMessage
-    currentInputRef.current = input
-    logger.info('Connected to Web MIDI input', { deviceId, name: input.name })
-  }, [handleMIDIMessage])
+      input.onmidimessage = handleMIDIMessage
+      currentInputRef.current = input
+      logger.info('Connected to Web MIDI input', { deviceId, name: input.name })
+    },
+    [handleMIDIMessage],
+  )
 
   // Disconnect input
   const disconnectInput = useCallback(() => {
@@ -248,19 +259,25 @@ export function useWebMIDI(): UseWebMIDIReturn {
   }, [])
 
   // Set multiple LEDs
-  const setAllLEDs = useCallback((ledStates: Array<{ note: number; on: boolean }>) => {
-    for (const { note, on } of ledStates) {
-      setLED(note, on)
-    }
-  }, [setLED])
+  const setAllLEDs = useCallback(
+    (ledStates: Array<{ note: number; on: boolean }>) => {
+      for (const { note, on } of ledStates) {
+        setLED(note, on)
+      }
+    },
+    [setLED],
+  )
 
   // Subscribe to MIDI messages
-  const subscribe = useCallback((callback: (message: MIDIMessage) => void): (() => void) => {
-    subscribersRef.current.add(callback)
-    return () => {
-      subscribersRef.current.delete(callback)
-    }
-  }, [])
+  const subscribe = useCallback(
+    (callback: (message: MIDIMessage) => void): (() => void) => {
+      subscribersRef.current.add(callback)
+      return () => {
+        subscribersRef.current.delete(callback)
+      }
+    },
+    [],
+  )
 
   // Refresh device list
   const refreshDevices = useCallback(() => {

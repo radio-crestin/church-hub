@@ -178,21 +178,18 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
   }, [isFullscreen, screen, upsertScreen])
 
   // Show toolbar on mouse move near the top
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent) => {
-      const threshold = 60 // pixels from top
-      if (e.clientY < threshold) {
-        setShowToolbar(true)
-        if (toolbarTimeoutRef.current) {
-          clearTimeout(toolbarTimeoutRef.current)
-        }
-        toolbarTimeoutRef.current = setTimeout(() => {
-          setShowToolbar(false)
-        }, 3000)
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    const threshold = 60 // pixels from top
+    if (e.clientY < threshold) {
+      setShowToolbar(true)
+      if (toolbarTimeoutRef.current) {
+        clearTimeout(toolbarTimeoutRef.current)
       }
-    },
-    [],
-  )
+      toolbarTimeoutRef.current = setTimeout(() => {
+        setShowToolbar(false)
+      }, 3000)
+    }
+  }, [])
 
   // Cleanup timeout on unmount
   useEffect(() => {
