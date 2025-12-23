@@ -6,21 +6,14 @@
   <component name="ChangeListManager">
     <list default="true" id="66517e3f-2e4e-43cc-880d-deb242368f0c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CLAUDE.md" beforeDir="false" afterPath="$PROJECT_DIR$/CLAUDE.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/package.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/apps/client/src/config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/config.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/keyboard-shortcuts/midi/context/MIDIContext.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/keyboard-shortcuts/midi/context/MIDIContext.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/livestream/utils/openInBrowser.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/livestream/utils/openInBrowser.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/vite.config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/vite.config.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/keyboard-shortcuts/midi/hooks/useWebMIDI.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/keyboard-shortcuts/midi/hooks/useWebMIDI.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/ScreenRenderer.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/ScreenRenderer.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/ui/combobox/Combobox.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/ui/combobox/Combobox.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/migrations/embedded.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/migrations/embedded.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/apps/server/src/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/bun.lock" beforeDir="false" afterPath="$PROJECT_DIR$/app/bun.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/package-lock.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/tauri/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/Cargo.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/tauri/capabilities/default.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/capabilities/default.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/tauri/src/server.rs" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/src/server.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/tauri/tauri.conf.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/tauri.conf.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/utils/static-server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/utils/static-server.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -95,7 +88,7 @@
       <recent name="$PROJECT_DIR$" />
     </key>
   </component>
-  <component name="RunManager">
+  <component name="RunManager" selected="npm.dev (2)">
     <configuration name="dev (2)" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
       <package-json value="$PROJECT_DIR$/app/package.json" />
       <command value="run" />

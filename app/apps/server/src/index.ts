@@ -241,7 +241,9 @@ async function main() {
     console.log(`[server] Serving client from: ${clientDistPath}`)
   } else if (shouldProxyToVite) {
     // biome-ignore lint/suspicious/noConsole: Startup logging
-    console.log('[server] Proxying client requests to Vite dev server (port 8086)')
+    console.log(
+      '[server] Proxying client requests to Vite dev server (port 8086)',
+    )
   }
 
   // biome-ignore lint/suspicious/noConsole: Startup logging
@@ -3500,7 +3502,10 @@ async function main() {
       // Serve client app (static files in production, proxy to Vite in development)
       if (canServeStaticFiles && clientDistPath) {
         // Production: serve from bundled static files
-        const staticResponse = await serveStaticFile(url.pathname, clientDistPath)
+        const staticResponse = await serveStaticFile(
+          url.pathname,
+          clientDistPath,
+        )
         if (staticResponse) {
           return handleCors(req, staticResponse)
         }
