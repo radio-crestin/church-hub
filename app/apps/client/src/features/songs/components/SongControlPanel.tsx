@@ -1,11 +1,4 @@
-import {
-  ChevronDown,
-  ChevronUp,
-  Eye,
-  EyeOff,
-  Loader2,
-  MonitorUp,
-} from 'lucide-react'
+import { ChevronDown, ChevronUp, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import {
@@ -18,7 +11,6 @@ import {
 
 interface SongControlPanelProps {
   songId: number
-  songTitle: string
   onPrevSlide: () => void
   onNextSlide: () => void
   canNavigatePrev: boolean
@@ -27,7 +19,6 @@ interface SongControlPanelProps {
 
 export function SongControlPanel({
   songId,
-  songTitle,
   onPrevSlide,
   onNextSlide,
   canNavigatePrev,
@@ -71,17 +62,8 @@ export function SongControlPanel({
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-      <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <MonitorUp
-            size={18}
-            className="text-indigo-600 dark:text-indigo-400 flex-shrink-0"
-          />
-          <h3 className="font-medium text-gray-900 dark:text-white truncate">
-            {songTitle}
-          </h3>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
+      <div className="flex items-center justify-end p-3 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center gap-2">
           <div
             className={`flex items-center gap-1.5 px-2 py-1 rounded-md ${
               isLive
