@@ -1,5 +1,6 @@
 import { Check, ChevronDown, Plus, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 export interface ComboboxOption {
   value: number | string
@@ -32,7 +33,10 @@ export function Combobox({
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [isCreating, setIsCreating] = useState(false)
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 })
   const containerRef = useRef<HTMLDivElement>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const selectedOption = options.find((o) => o.value === value)
@@ -48,10 +52,11 @@ export function Combobox({
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
+      const target = event.target as Node
+      const isOutsideContainer = containerRef.current && !containerRef.current.contains(target)
+      const isOutsideDropdown = dropdownRef.current && !dropdownRef.current.contains(target)
+
+      if (isOutsideContainer && isOutsideDropdown) {
         setIsOpen(false)
         setSearch('')
       }
@@ -64,6 +69,17 @@ export function Combobox({
   useEffect(() => {
     if (isOpen && inputRef.current) {
       inputRef.current.focus()
+    }
+  }, [isOpen])
+
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect()
+      setDropdownPosition({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+      })
     }
   }, [isOpen])
 
@@ -107,6 +123,7 @@ export function Combobox({
   return (
     <div ref={containerRef} className={`relative ${className}`}>
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
@@ -130,57 +147,67 @@ export function Combobox({
         </div>
       </button>
 
-      {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg overflow-hidden">
-          <div className="p-2 border-b border-gray-200 dark:border-gray-700">
-            <input
-              ref={inputRef}
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Search..."
-              className="w-full px-2 py-1 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            />
-          </div>
+      {isOpen &&
+        createPortal(
+          <div
+            ref={dropdownRef}
+            className="fixed z-[9999] bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg overflow-hidden"
+            style={{
+              top: dropdownPosition.top + 4,
+              left: dropdownPosition.left,
+              width: dropdownPosition.width,
+            }}
+          >
+            <div className="p-2 border-b border-gray-200 dark:border-gray-700">
+              <input
+                ref={inputRef}
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Search..."
+                className="w-full px-2 py-1 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
 
-          <div className="max-h-48 overflow-y-auto">
-            {showCreateOption && (
-              <button
-                type="button"
-                onClick={handleCreateNew}
-                disabled={isCreating}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 disabled:opacity-50"
-              >
-                <Plus className="w-4 h-4" />
-                {createNewLabel} "{search}"
-              </button>
-            )}
-
-            {filteredOptions.length === 0 && !showCreateOption ? (
-              <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
-                No options found
-              </div>
-            ) : (
-              filteredOptions.map((option) => (
+            <div className="max-h-48 overflow-y-auto">
+              {showCreateOption && (
                 <button
-                  key={option.value}
                   type="button"
-                  onClick={() => handleSelect(option)}
-                  className={`w-full flex items-center justify-between px-3 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                    option.value === value
-                      ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400'
-                      : 'text-gray-900 dark:text-white'
-                  }`}
+                  onClick={handleCreateNew}
+                  disabled={isCreating}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 disabled:opacity-50"
                 >
-                  {option.label}
-                  {option.value === value && <Check className="w-4 h-4" />}
+                  <Plus className="w-4 h-4" />
+                  {createNewLabel} "{search}"
                 </button>
-              ))
-            )}
-          </div>
-        </div>
-      )}
+              )}
+
+              {filteredOptions.length === 0 && !showCreateOption ? (
+                <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
+                  No options found
+                </div>
+              ) : (
+                filteredOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => handleSelect(option)}
+                    className={`w-full flex items-center justify-between px-3 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                      option.value === value
+                        ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400'
+                        : 'text-gray-900 dark:text-white'
+                    }`}
+                  >
+                    {option.label}
+                    {option.value === value && <Check className="w-4 h-4" />}
+                  </button>
+                ))
+              )}
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   )
 }
