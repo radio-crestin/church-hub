@@ -1,6 +1,5 @@
-import { ArrowLeft, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { useEffect, useRef } from 'react'
-import { useTranslation } from 'react-i18next'
 
 import type { SongSlide, SongWithSlides } from '../types'
 
@@ -9,7 +8,6 @@ interface SongSlidesPanelProps {
   presentedSlideIndex: number | null
   isLoading: boolean
   onSlideClick: (slide: SongSlide, index: number) => void
-  onGoBack: () => void
 }
 
 const SCROLL_OFFSET_TOP = 100
@@ -31,9 +29,7 @@ export function SongSlidesPanel({
   presentedSlideIndex,
   isLoading,
   onSlideClick,
-  onGoBack,
 }: SongSlidesPanelProps) {
-  const { t } = useTranslation('songs')
   const highlightedRef = useRef<HTMLButtonElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -71,28 +67,6 @@ export function SongSlidesPanel({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between mb-3">
-        <button
-          type="button"
-          onClick={onGoBack}
-          className="flex items-center gap-1.5 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
-        >
-          <ArrowLeft size={16} />
-          {t('preview.backToSongs')}
-        </button>
-      </div>
-
-      <div className="mb-3">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
-          {song.title}
-        </h2>
-        {song.category && (
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {song.category.name}
-          </p>
-        )}
-      </div>
-
       <div
         ref={containerRef}
         className="flex-1 min-h-0 space-y-1 overflow-y-auto px-0.5 py-0.5"
