@@ -1,5 +1,10 @@
 import { getApiUrl } from '~/config'
-import type { PresentationState, UpdatePresentationStateInput } from '../types'
+import type {
+  PresentationState,
+  PresentTemporaryBibleInput,
+  PresentTemporarySongInput,
+  UpdatePresentationStateInput,
+} from '../types'
 
 /**
  * Fetches the current presentation state
@@ -107,6 +112,102 @@ export async function navigateQueueSlide(
 
   if (!response.ok) {
     throw new Error('Failed to navigate queue')
+  }
+
+  const result = await response.json()
+  return result.data
+}
+
+// ============================================================================
+// TEMPORARY CONTENT FUNCTIONS (bypasses queue for instant display)
+// ============================================================================
+
+/**
+ * Present a Bible verse temporarily (bypasses queue)
+ */
+export async function presentTemporaryBible(
+  input: PresentTemporaryBibleInput,
+): Promise<PresentationState> {
+  const response = await fetch(
+    `${getApiUrl()}/api/presentation/temporary-bible`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+      credentials: 'include',
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error('Failed to present temporary Bible verse')
+  }
+
+  const result = await response.json()
+  return result.data
+}
+
+/**
+ * Present a song temporarily (bypasses queue)
+ */
+export async function presentTemporarySong(
+  input: PresentTemporarySongInput,
+): Promise<PresentationState> {
+  const response = await fetch(
+    `${getApiUrl()}/api/presentation/temporary-song`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+      credentials: 'include',
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error('Failed to present temporary song')
+  }
+
+  const result = await response.json()
+  return result.data
+}
+
+/**
+ * Navigate within temporary content (next/prev)
+ */
+export async function navigateTemporary(
+  direction: 'next' | 'prev',
+): Promise<PresentationState> {
+  const response = await fetch(
+    `${getApiUrl()}/api/presentation/navigate-temporary`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ direction }),
+      credentials: 'include',
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error('Failed to navigate temporary content')
+  }
+
+  const result = await response.json()
+  return result.data
+}
+
+/**
+ * Clear temporary content
+ */
+export async function clearTemporaryContent(): Promise<PresentationState> {
+  const response = await fetch(
+    `${getApiUrl()}/api/presentation/clear-temporary`,
+    {
+      method: 'POST',
+      credentials: 'include',
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error('Failed to clear temporary content')
   }
 
   const result = await response.json()

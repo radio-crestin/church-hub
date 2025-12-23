@@ -106,6 +106,13 @@ export const EMBEDDED_JOURNAL = {
       tag: '0012_add_mixer_tables',
       breakpoints: true,
     },
+    {
+      idx: 13,
+      version: '6',
+      when: 1767100000000,
+      tag: '0013_add_temporary_content',
+      breakpoints: true,
+    },
   ],
 } as const
 
@@ -174,5 +181,10 @@ export const EMBEDDED_MIGRATIONS: EmbeddedMigration[] = [
     tag: '0012_add_mixer_tables',
     sql: 'ALTER TABLE `obs_scenes` ADD COLUMN `mixer_channel_actions` text NOT NULL DEFAULT \'{"mute":[],"unmute":[]}\';\r\n--> statement-breakpoint\r\nCREATE TABLE `mixer_config` (\r\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\r\n\t`host` text DEFAULT \'192.168.0.50\' NOT NULL,\r\n\t`port` integer DEFAULT 10024 NOT NULL,\r\n\t`is_enabled` integer DEFAULT false NOT NULL,\r\n\t`channel_count` integer DEFAULT 16 NOT NULL,\r\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\r\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\r\n);\r\n--> statement-breakpoint\r\nCREATE TABLE `mixer_channels` (\r\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\r\n\t`channel_number` integer NOT NULL,\r\n\t`label` text NOT NULL,\r\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\r\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\r\n);\r\n--> statement-breakpoint\r\nCREATE UNIQUE INDEX `mixer_channels_channel_number_unique` ON `mixer_channels` (`channel_number`);\r\n--> statement-breakpoint\r\nCREATE INDEX `idx_mixer_channels_number` ON `mixer_channels` (`channel_number`);\r\n',
     when: 1767000000000,
+  },
+  {
+    tag: '0013_add_temporary_content',
+    sql: 'ALTER TABLE `presentation_state` ADD COLUMN `temporary_content` text;\r\n',
+    when: 1767100000000,
   },
 ]
