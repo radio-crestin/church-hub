@@ -1,5 +1,11 @@
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
-import { ArrowLeft, GripVertical, Loader2, Pencil } from 'lucide-react'
+import {
+  ArrowLeft,
+  CalendarPlus,
+  GripVertical,
+  Loader2,
+  Pencil,
+} from 'lucide-react'
 import { useCallback, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -9,6 +15,7 @@ import {
   usePresentationState,
   usePresentTemporarySong,
 } from '~/features/presentation'
+import { AddSongToScheduleModal } from '~/features/schedules'
 import { SongControlPanel, SongSlidesPanel } from '~/features/songs/components'
 import { useSong, useSongKeyboardShortcuts } from '~/features/songs/hooks'
 import type { SongSlide } from '~/features/songs/types'
@@ -36,6 +43,7 @@ function SongPreviewPage() {
   const { data: presentationState } = usePresentationState()
 
   const [dividerPosition, setDividerPosition] = useState(40)
+  const [showAddToScheduleModal, setShowAddToScheduleModal] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
 
@@ -80,6 +88,16 @@ function SongPreviewPage() {
   const handleEdit = useCallback(() => {
     navigate({ to: '/songs/$songId/edit', params: { songId } })
   }, [navigate, songId])
+
+  const handleSongAddedToSchedule = useCallback(
+    (scheduleId: number) => {
+      navigate({
+        to: '/schedules/$scheduleId',
+        params: { scheduleId: String(scheduleId) },
+      })
+    },
+    [navigate],
+  )
 
   // Keyboard shortcuts
   useSongKeyboardShortcuts({
@@ -145,14 +163,27 @@ function SongPreviewPage() {
             {song.title}
           </h1>
         </div>
-        <button
-          type="button"
-          onClick={handleEdit}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
-        >
-          <Pencil size={16} />
-          <span>{t('preview.edit')}</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowAddToScheduleModal(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+            title={t('actions.addToSchedule')}
+          >
+            <CalendarPlus size={20} />
+            <span className="hidden sm:inline">
+              {t('actions.addToSchedule')}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={handleEdit}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+          >
+            <Pencil size={16} />
+            <span>{t('preview.edit')}</span>
+          </button>
+        </div>
       </div>
 
       <div
@@ -197,6 +228,13 @@ function SongPreviewPage() {
           />
         </div>
       </div>
+
+      <AddSongToScheduleModal
+        isOpen={showAddToScheduleModal}
+        songId={numericId}
+        onClose={() => setShowAddToScheduleModal(false)}
+        onAdded={handleSongAddedToSchedule}
+      />
     </div>
   )
 }
