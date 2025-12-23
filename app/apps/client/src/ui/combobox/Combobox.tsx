@@ -33,7 +33,11 @@ export function Combobox({
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [isCreating, setIsCreating] = useState(false)
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 })
+  const [dropdownPosition, setDropdownPosition] = useState({
+    top: 0,
+    left: 0,
+    width: 0,
+  })
   const containerRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -53,8 +57,10 @@ export function Combobox({
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       const target = event.target as Node
-      const isOutsideContainer = containerRef.current && !containerRef.current.contains(target)
-      const isOutsideDropdown = dropdownRef.current && !dropdownRef.current.contains(target)
+      const isOutsideContainer =
+        containerRef.current && !containerRef.current.contains(target)
+      const isOutsideDropdown =
+        dropdownRef.current && !dropdownRef.current.contains(target)
 
       if (isOutsideContainer && isOutsideDropdown) {
         setIsOpen(false)

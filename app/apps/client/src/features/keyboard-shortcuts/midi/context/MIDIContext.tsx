@@ -10,7 +10,6 @@ import {
 
 import { getApiUrl, getWsUrl } from '~/config'
 import { createLogger } from '~/utils/logger'
-import { useWebMIDI } from '../hooks/useWebMIDI'
 import {
   DEFAULT_MIDI_CONFIG,
   type MIDIConfig,
@@ -19,9 +18,6 @@ import {
 } from '../types'
 
 const logger = createLogger('midi:context')
-
-// MIDI mode: 'server' uses native modules via server, 'web' uses browser Web MIDI API
-type MIDIMode = 'server' | 'web' | 'none'
 
 type MIDIMessageCallback = (message: MIDIMessage) => void
 
