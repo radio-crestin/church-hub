@@ -132,11 +132,21 @@ function SongPreviewPage() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center gap-3 mb-4">
-        <Music className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white truncate">
-          {t('title')}
-        </h1>
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <div className="flex items-center gap-3">
+          <Music className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white truncate">
+            {t('title')}
+          </h1>
+        </div>
+        <button
+          type="button"
+          onClick={handleEdit}
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
+        >
+          <Pencil size={16} />
+          <span>{t('preview.edit')}</span>
+        </button>
       </div>
 
       <div
@@ -170,7 +180,7 @@ function SongPreviewPage() {
 
         {/* Right Panel - Control Panel with Preview */}
         <div
-          className="min-h-0 flex-1 overflow-hidden flex flex-col gap-3"
+          className="min-h-0 flex-1 overflow-hidden"
           style={{ width: `${100 - dividerPosition}%` }}
         >
           <SongControlPanel
@@ -181,14 +191,6 @@ function SongPreviewPage() {
             canNavigatePrev={canNavigatePrev}
             canNavigateNext={canNavigateNext}
           />
-          <button
-            type="button"
-            onClick={handleEdit}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
-          >
-            <Pencil size={18} />
-            <span>{t('songs:preview.edit')}</span>
-          </button>
         </div>
       </div>
     </div>
