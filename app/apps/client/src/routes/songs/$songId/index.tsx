@@ -1,5 +1,5 @@
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
-import { GripVertical, Loader2, Music, Pencil } from 'lucide-react'
+import { ArrowLeft, GripVertical, Loader2, Pencil } from 'lucide-react'
 import { useCallback, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -132,11 +132,17 @@ function SongPreviewPage() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between gap-3 mb-4">
-        <div className="flex items-center gap-3">
-          <Music className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white truncate">
-            {t('title')}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={handleGoBack}
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+          >
+            <ArrowLeft size={20} className="text-gray-600 dark:text-gray-400" />
+          </button>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {song.title}
           </h1>
         </div>
         <button
