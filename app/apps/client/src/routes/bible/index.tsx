@@ -44,6 +44,7 @@ function BiblePage() {
   const [dividerPosition, setDividerPosition] = useState(40) // percentage
   const containerRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
+  const hasNavigatedOnOpen = useRef(false)
   const prevChapterRef = useRef<{ bookId: number; chapter: number } | null>(
     null,
   )
@@ -82,13 +83,16 @@ function BiblePage() {
     }
   }, [primaryTranslation, navigation])
 
-  // Sync navigation with current Bible verse on page open (temporary or queue-based)
+  // Sync navigation with current Bible verse only on initial page open
   useEffect(() => {
+    if (hasNavigatedOnOpen.current) return
+
     // Priority 1: Temporary Bible content
     if (presentationState?.temporaryContent?.type === 'bible') {
       const tempData = presentationState.temporaryContent.data
       const book = temporaryBooks.find((b) => b.id === tempData.bookId)
       if (book) {
+        hasNavigatedOnOpen.current = true
         navigation.navigateToVerse({
           translationId: tempData.translationId,
           bookId: tempData.bookId,
@@ -102,6 +106,7 @@ function BiblePage() {
 
     // Priority 2: Queue-based Bible verse
     if (currentVerse) {
+      hasNavigatedOnOpen.current = true
       navigation.navigateToVerse({
         translationId: currentVerse.translationId,
         bookId: currentVerse.bookId,
