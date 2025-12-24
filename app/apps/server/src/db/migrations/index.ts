@@ -5,6 +5,7 @@ import { migrate } from 'drizzle-orm/bun-sqlite/migrator'
 import { EMBEDDED_MIGRATIONS } from './embedded'
 import { seedSystemRoles } from './seed'
 import { seedBibleTranslations } from './seed-bibles'
+import { seedHighlightColors } from './seed-highlight-colors'
 import { seedDefaultScreens } from './seed-screens'
 import { seedAppSettings } from './seed-settings'
 import { seedSongCategories } from './seed-song-categories'
@@ -134,6 +135,10 @@ export function runMigrations(
   // Seed app settings (sidebar config, search synonyms, appearance, etc.)
   log('info', 'Seeding app settings...')
   seedAppSettings(rawDb)
+
+  // Seed highlight colors (predefined colors for text highlighting)
+  log('info', 'Seeding highlight colors...')
+  seedHighlightColors(rawDb)
 
   return { ftsRecreated: true }
 }

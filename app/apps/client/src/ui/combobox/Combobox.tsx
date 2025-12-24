@@ -33,10 +33,16 @@ export function Combobox({
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [isCreating, setIsCreating] = useState(false)
-  const [dropdownPosition, setDropdownPosition] = useState({
-    top: 0,
+  const [dropdownPosition, setDropdownPosition] = useState<{
+    top?: number
+    bottom?: number
+    left: number
+    width: number
+    openUpward: boolean
+  }>({
     left: 0,
     width: 0,
+    openUpward: false,
   })
   const containerRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -81,11 +87,26 @@ export function Combobox({
   useEffect(() => {
     if (isOpen && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect()
-      setDropdownPosition({
-        top: rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX,
-        width: rect.width,
-      })
+      const dropdownHeight = 250 // Approximate max height (max-h-48 + search input + padding)
+      const spaceBelow = window.innerHeight - rect.bottom
+      const spaceAbove = rect.top
+      const openUpward = spaceBelow < dropdownHeight && spaceAbove > spaceBelow
+
+      if (openUpward) {
+        setDropdownPosition({
+          bottom: window.innerHeight - rect.top + 4,
+          left: rect.left + window.scrollX,
+          width: rect.width,
+          openUpward: true,
+        })
+      } else {
+        setDropdownPosition({
+          top: rect.bottom + window.scrollY + 4,
+          left: rect.left + window.scrollX,
+          width: rect.width,
+          openUpward: false,
+        })
+      }
     }
   }, [isOpen])
 
@@ -159,7 +180,9 @@ export function Combobox({
             ref={dropdownRef}
             className="fixed z-[9999] bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg overflow-hidden"
             style={{
-              top: dropdownPosition.top + 4,
+              ...(dropdownPosition.openUpward
+                ? { bottom: dropdownPosition.bottom }
+                : { top: dropdownPosition.top }),
               left: dropdownPosition.left,
               width: dropdownPosition.width,
             }}

@@ -28,6 +28,8 @@
     "@tauri-apps/plugin-shell": "^2.2.0",
     "@tauri-apps/plugin-websocket": "^2.4.1",
     "@tiptap/core": "^3.11.1",
+    "@tiptap/extension-bubble-menu": "^3.14.0",
+    "@tiptap/extension-highlight": "^3.14.0",
     "@tiptap/extension-text-align": "^3.11.1",
     "@tiptap/pm": "^3.11.1",
     "@tiptap/react": "^3.11.1",

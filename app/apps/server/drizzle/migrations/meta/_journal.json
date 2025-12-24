@@ -99,6 +99,13 @@
       "when": 1767100000000,
       "tag": "0013_add_temporary_content",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1767200000000,
+      "tag": "0014_add_highlight_colors",
+      "breakpoints": true
     }
   ]
 }
