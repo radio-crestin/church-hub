@@ -8,6 +8,7 @@ import {
   biblePaths,
   categoriesPaths,
   conversionPaths,
+  databasePaths,
   devicesPaths,
   healthPaths,
   presentationPaths,
@@ -45,6 +46,7 @@ export const openApiSpec = {
   tags: [
     { name: 'Health', description: 'Health check endpoints' },
     { name: 'Settings', description: 'Application and user settings' },
+    { name: 'Database', description: 'Database management and backup' },
     { name: 'Devices', description: 'Device management and authorization' },
     { name: 'Authentication', description: 'Device authentication' },
     { name: 'Songs', description: 'Song management' },
@@ -63,6 +65,7 @@ export const openApiSpec = {
   paths: {
     ...healthPaths,
     ...settingsPaths,
+    ...databasePaths,
     ...devicesPaths,
     ...authPaths,
     ...songsPaths,

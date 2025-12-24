@@ -407,6 +407,26 @@
         "customPageDeleted": "Custom page deleted",
         "error": "An error occurred"
       }
+    },
+    "database": {
+      "title": "Database Management",
+      "description": "Manage your SQLite database backup and location",
+      "path": "Database Path",
+      "copyPath": "Copy path",
+      "openFolder": "Open in File Explorer",
+      "size": "Size",
+      "export": {
+        "title": "Export Database",
+        "description": "Create a backup copy of your database",
+        "button": "Export Database",
+        "exporting": "Exporting..."
+      },
+      "toast": {
+        "pathCopied": "Database path copied to clipboard",
+        "exportSuccess": "Database exported successfully to {{path}}",
+        "exportFailed": "Failed to export database: {{error}}",
+        "openFolderFailed": "Failed to open file explorer"
+      }
     }
   }
 }
