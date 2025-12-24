@@ -14,6 +14,7 @@ import type { LiveHighlight, TextStyle } from '../../types'
 interface TextSegment {
   text: string
   highlightColor?: string
+  textColor?: string
 }
 
 /**
@@ -189,7 +190,11 @@ function applyLiveHighlights(
     // Add highlighted text
     const highlightedText = fullText.slice(start, end)
     if (highlightedText) {
-      result.push({ text: highlightedText, highlightColor: highlight.color })
+      result.push({
+        text: highlightedText,
+        highlightColor: highlight.color,
+        textColor: highlight.textColor,
+      })
     }
 
     currentPos = end
@@ -277,13 +282,14 @@ function compressSegments(
 
 /**
  * Renders text segments with optional highlight colors.
+ * Returns plain text when no highlights, spans when highlights exist.
  */
 function renderSegments(segments: TextSegment[]): React.ReactNode {
   if (segments.length === 0) {
     return null
   }
 
-  // If no highlights, just return plain text
+  // If no highlights, just return plain text (simpler DOM, fewer reconciliation issues)
   const hasHighlights = segments.some((s) => s.highlightColor)
   if (!hasHighlights) {
     return segments.map((s) => s.text).join('')
@@ -292,20 +298,22 @@ function renderSegments(segments: TextSegment[]): React.ReactNode {
   // Render segments with highlights as spans
   return segments.map((segment, index) => {
     if (segment.highlightColor) {
+      const style: React.CSSProperties = {
+        backgroundColor: segment.highlightColor,
+        color: segment.textColor,
+        // Add padding for better visual appearance when text color is set
+        ...(segment.textColor && {
+          padding: '0.05em 0.1em',
+          borderRadius: '0.15em',
+        }),
+      }
       return (
-        <span
-          key={index}
-          style={{
-            backgroundColor: segment.highlightColor,
-            borderRadius: '2px',
-            padding: '0 2px',
-          }}
-        >
+        <span key={`hl-${index}`} style={style}>
           {segment.text}
         </span>
       )
     }
-    return <span key={index}>{segment.text}</span>
+    return <span key={`txt-${index}`}>{segment.text}</span>
   })
 }
 
@@ -344,28 +352,12 @@ export function TextContent({
     }
   }
 
-  // Compute processed content - compression happens here based on current settings
-  const [processedSegments, setProcessedSegments] =
-    useState<TextSegment[]>(baseSegments)
-
-  // Auto-scale text using binary search for accurate font fitting
-  // Also handles line compression with fit checking
-  useLayoutEffect(() => {
-    if (!textRef.current) {
-      return
-    }
-
-    const textElement = textRef.current
-    const maxWidth = containerWidth
-    const maxHeight = containerHeight
-
-    if (maxWidth <= 0 || maxHeight <= 0) {
-      return
-    }
-
-    // Handle line compression - always combine pairs when enabled
+  // Compute processed content synchronously - compression and highlights applied here
+  const { processedContent, processedSegments } = useMemo(() => {
     let finalContent = baseContent
     let finalSegments = baseSegments
+
+    // Handle line compression
     if (style.compressLines) {
       finalContent = compressLines(baseContent, style.lineSeparator ?? 'space')
       finalSegments = compressSegments(
@@ -379,8 +371,28 @@ export function TextContent({
       finalSegments = applyLiveHighlights(finalSegments, liveHighlights)
     }
 
-    // Always update processed segments to reflect current state
-    setProcessedSegments(finalSegments)
+    return { processedContent: finalContent, processedSegments: finalSegments }
+  }, [
+    baseContent,
+    baseSegments,
+    liveHighlights,
+    style.compressLines,
+    style.lineSeparator,
+  ])
+
+  // Auto-scale text using binary search for accurate font fitting
+  useLayoutEffect(() => {
+    if (!textRef.current) {
+      return
+    }
+
+    const textElement = textRef.current
+    const maxWidth = containerWidth
+    const maxHeight = containerHeight
+
+    if (maxWidth <= 0 || maxHeight <= 0) {
+      return
+    }
 
     if (!style.autoScale) {
       setCalculatedFontSize(style.maxFontSize)
@@ -394,7 +406,7 @@ export function TextContent({
     const result = style.fitLineToWidth
       ? findOptimalFontSizePerLine({
           measureElement: textElement,
-          text: finalContent,
+          text: processedContent,
           maxWidth,
           maxHeight,
           minFontSize,
@@ -403,7 +415,7 @@ export function TextContent({
         })
       : findOptimalFontSize({
           measureElement: textElement,
-          text: finalContent,
+          text: processedContent,
           maxWidth,
           maxHeight,
           minFontSize,
@@ -413,14 +425,10 @@ export function TextContent({
 
     setCalculatedFontSize(result.fontSize)
   }, [
-    baseContent,
-    baseSegments,
-    liveHighlights,
+    processedContent,
     style.autoScale,
     style.maxFontSize,
     style.minFontSize,
-    style.compressLines,
-    style.lineSeparator,
     style.fitLineToWidth,
     style.lineHeight,
     containerWidth,
@@ -458,7 +466,7 @@ export function TextContent({
   }
 
   return (
-    <div ref={textRef} style={textStyles}>
+    <div ref={textRef} style={{ ...textStyles, display: 'inline' }}>
       {renderSegments(processedSegments)}
     </div>
   )
