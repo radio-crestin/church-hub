@@ -57,6 +57,7 @@ import {
   checkLibreOfficeInstalled,
   convertPptToPptx,
 } from './service/conversion'
+import { checkpointAndExport, getDatabaseInfo } from './service/database'
 import {
   detectContentType,
   handleContentTypeChange,
@@ -601,6 +602,69 @@ async function main() {
             }),
             { headers: { 'Content-Type': 'application/json' } },
           ),
+        )
+      }
+
+      // GET /api/database/info - Get database info (localhost only)
+      if (req.method === 'GET' && url.pathname === '/api/database/info') {
+        if (!isStrictLocalhost()) {
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({ error: 'Only accessible from localhost' }),
+              { status: 403, headers: { 'Content-Type': 'application/json' } },
+            ),
+          )
+        }
+
+        const info = await getDatabaseInfo()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: info }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/database/export - Export database (localhost only)
+      if (req.method === 'POST' && url.pathname === '/api/database/export') {
+        if (!isStrictLocalhost()) {
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({ error: 'Only accessible from localhost' }),
+              { status: 403, headers: { 'Content-Type': 'application/json' } },
+            ),
+          )
+        }
+
+        const body = (await req.json()) as { destinationPath: string }
+        if (!body.destinationPath) {
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({ error: 'destinationPath is required' }),
+              { status: 400, headers: { 'Content-Type': 'application/json' } },
+            ),
+          )
+        }
+
+        const result = await checkpointAndExport(body.destinationPath)
+        if (!result.success) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: result.error }), {
+              status: 500,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: result }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
         )
       }
 

@@ -407,6 +407,26 @@
         "customPageDeleted": "Pagină personalizată ștearsă",
         "error": "A apărut o eroare"
       }
+    },
+    "database": {
+      "title": "Administrare Bază de Date",
+      "description": "Administrează locația și backup-ul bazei de date SQLite",
+      "path": "Calea Bazei de Date",
+      "copyPath": "Copiază calea",
+      "openFolder": "Deschide în Explorator",
+      "size": "Dimensiune",
+      "export": {
+        "title": "Exportă Baza de Date",
+        "description": "Creează o copie de siguranță a bazei de date",
+        "button": "Exportă Baza de Date",
+        "exporting": "Se exportă..."
+      },
+      "toast": {
+        "pathCopied": "Calea bazei de date copiată în clipboard",
+        "exportSuccess": "Baza de date exportată cu succes în {{path}}",
+        "exportFailed": "Exportul a eșuat: {{error}}",
+        "openFolderFailed": "Nu s-a putut deschide exploratorul de fișiere"
+      }
     }
   }
 }
