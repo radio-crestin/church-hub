@@ -17,12 +17,32 @@ export type SelectedElement =
   | { type: 'nextSlide' }
   | null
 
+export interface PreviewTexts {
+  main?: string
+  reference?: string
+  person?: string
+}
+
+export type PreviewTextKey = keyof PreviewTexts
+
+type PreviewTextsMap = Record<ContentType, PreviewTexts>
+
+const createEmptyPreviewTexts = (): PreviewTextsMap => ({
+  song: {},
+  bible: {},
+  bible_passage: {},
+  announcement: {},
+  versete_tineri: {},
+  empty: {},
+})
+
 interface EditorState {
   screen: ScreenWithConfigs | null
   selectedContentType: ContentType
   selectedElement: SelectedElement
   zoom: number
   isDirty: boolean
+  previewTexts: PreviewTextsMap
 }
 
 interface EditorActions {
@@ -39,6 +59,12 @@ interface EditorActions {
   updateGlobalSettings: (settings: ScreenGlobalSettings) => void
   clearSelection: () => void
   markClean: () => void
+  setPreviewText: (
+    contentType: ContentType,
+    key: keyof PreviewTexts,
+    text: string,
+  ) => void
+  resetPreviewTexts: (contentType: ContentType) => void
 }
 
 export function useEditorState(): [EditorState, EditorActions] {
@@ -48,6 +74,9 @@ export function useEditorState(): [EditorState, EditorActions] {
   const [selectedElement, setSelectedElement] = useState<SelectedElement>(null)
   const [zoom, setZoom] = useState(1)
   const [isDirty, setIsDirty] = useState(false)
+  const [previewTexts, setPreviewTexts] = useState<PreviewTextsMap>(
+    createEmptyPreviewTexts,
+  )
 
   const setScreen = useCallback((newScreen: ScreenWithConfigs) => {
     setScreenState(newScreen)
@@ -109,6 +138,26 @@ export function useEditorState(): [EditorState, EditorActions] {
     setIsDirty(false)
   }, [])
 
+  const setPreviewText = useCallback(
+    (contentType: ContentType, key: keyof PreviewTexts, text: string) => {
+      setPreviewTexts((prev) => ({
+        ...prev,
+        [contentType]: {
+          ...prev[contentType],
+          [key]: text,
+        },
+      }))
+    },
+    [],
+  )
+
+  const resetPreviewTexts = useCallback((contentType: ContentType) => {
+    setPreviewTexts((prev) => ({
+      ...prev,
+      [contentType]: {},
+    }))
+  }, [])
+
   const actions = useMemo(
     () => ({
       setScreen,
@@ -121,6 +170,8 @@ export function useEditorState(): [EditorState, EditorActions] {
       updateGlobalSettings,
       clearSelection,
       markClean,
+      setPreviewText,
+      resetPreviewTexts,
     }),
     [
       setScreen,
@@ -133,6 +184,8 @@ export function useEditorState(): [EditorState, EditorActions] {
       updateGlobalSettings,
       clearSelection,
       markClean,
+      setPreviewText,
+      resetPreviewTexts,
     ],
   )
 
@@ -143,6 +196,7 @@ export function useEditorState(): [EditorState, EditorActions] {
       selectedElement,
       zoom,
       isDirty,
+      previewTexts,
     },
     actions,
   ]
