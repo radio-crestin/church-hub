@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router'
 import { Plus, Settings } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { usePresentationState } from '~/features/presentation'
@@ -27,9 +27,11 @@ function SongsPage() {
 
   const { data: presentationState } = usePresentationState()
   const { data: queue } = useQueue()
+  const hasNavigatedOnOpen = useRef(false)
 
-  // Auto-navigate to presented song on page open
+  // Auto-navigate to presented song only on initial page open
   useEffect(() => {
+    if (hasNavigatedOnOpen.current) return
     if (!presentationState) return
 
     let presentedSongId: number | null = null
@@ -49,6 +51,7 @@ function SongsPage() {
     }
 
     if (presentedSongId) {
+      hasNavigatedOnOpen.current = true
       navigate({
         to: '/songs/$songId',
         params: { songId: String(presentedSongId) },
