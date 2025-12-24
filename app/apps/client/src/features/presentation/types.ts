@@ -4,15 +4,6 @@
 export type DisplayOpenMode = 'browser' | 'native'
 
 /**
- * Live highlight applied during presentation (in-memory only, not persisted)
- */
-export interface LiveHighlight {
-  startOffset: number
-  endOffset: number
-  color: string
-}
-
-/**
  * Presentation state
  */
 export interface PresentationState {
@@ -24,7 +15,6 @@ export interface PresentationState {
   isPresenting: boolean
   isHidden: boolean
   temporaryContent: TemporaryContent | null
-  liveHighlights: LiveHighlight[]
   updatedAt: number
 }
 
@@ -40,7 +30,6 @@ export interface UpdatePresentationStateInput {
   isPresenting?: boolean
   isHidden?: boolean
   temporaryContent?: TemporaryContent | null
-  liveHighlights?: LiveHighlight[]
 }
 
 // ============================================================================

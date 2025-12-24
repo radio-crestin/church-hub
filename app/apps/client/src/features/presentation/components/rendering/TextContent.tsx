@@ -6,7 +6,7 @@ import {
 } from './utils/fontFitting'
 import { getTextStyleCSS } from './utils/styleUtils'
 import { compressLines } from './utils/textProcessing'
-import type { LiveHighlight, TextStyle } from '../../types'
+import type { TextStyle } from '../../types'
 
 /**
  * Represents a text segment with optional highlight color.
@@ -144,66 +144,6 @@ interface TextContentProps {
   containerWidth: number
   containerHeight: number
   isHtml?: boolean
-  /** Live highlights applied during presentation (in-memory only) */
-  liveHighlights?: LiveHighlight[]
-}
-
-/**
- * Applies live highlights to text segments.
- * Live highlights are offset-based and override any existing HTML highlights.
- */
-function applyLiveHighlights(
-  segments: TextSegment[],
-  highlights: LiveHighlight[],
-): TextSegment[] {
-  if (!highlights.length) return segments
-
-  // First, flatten segments to get the full text
-  const fullText = segments.map((s) => s.text).join('')
-
-  // Sort highlights by start offset
-  const sortedHighlights = [...highlights].sort(
-    (a, b) => a.startOffset - b.startOffset,
-  )
-
-  // Build new segments by splitting at highlight boundaries
-  const result: TextSegment[] = []
-  let currentPos = 0
-
-  for (const highlight of sortedHighlights) {
-    // Skip invalid highlights
-    if (highlight.startOffset >= fullText.length) continue
-    if (highlight.endOffset <= 0) continue
-
-    const start = Math.max(0, highlight.startOffset)
-    const end = Math.min(fullText.length, highlight.endOffset)
-
-    // Add text before highlight
-    if (start > currentPos) {
-      const textBefore = fullText.slice(currentPos, start)
-      if (textBefore) {
-        result.push({ text: textBefore })
-      }
-    }
-
-    // Add highlighted text
-    const highlightedText = fullText.slice(start, end)
-    if (highlightedText) {
-      result.push({ text: highlightedText, highlightColor: highlight.color })
-    }
-
-    currentPos = end
-  }
-
-  // Add remaining text after last highlight
-  if (currentPos < fullText.length) {
-    const remaining = fullText.slice(currentPos)
-    if (remaining) {
-      result.push({ text: remaining })
-    }
-  }
-
-  return result.length > 0 ? result : segments
 }
 
 /**
@@ -315,7 +255,6 @@ export function TextContent({
   containerWidth,
   containerHeight,
   isHtml = false,
-  liveHighlights = [],
 }: TextContentProps) {
   const textRef = useRef<HTMLDivElement>(null)
   const [calculatedFontSize, setCalculatedFontSize] = useState<number | null>(
@@ -374,11 +313,6 @@ export function TextContent({
       )
     }
 
-    // Apply live highlights (in-memory, temporary highlights)
-    if (liveHighlights.length > 0) {
-      finalSegments = applyLiveHighlights(finalSegments, liveHighlights)
-    }
-
     // Always update processed segments to reflect current state
     setProcessedSegments(finalSegments)
 
@@ -415,7 +349,6 @@ export function TextContent({
   }, [
     baseContent,
     baseSegments,
-    liveHighlights,
     style.autoScale,
     style.maxFontSize,
     style.minFontSize,
