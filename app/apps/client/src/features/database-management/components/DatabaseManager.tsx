@@ -1,11 +1,12 @@
 import { invoke } from '@tauri-apps/api/core'
-import { Copy, Database, Download, FolderOpen } from 'lucide-react'
+import { AlertTriangle, Copy, Download, FolderOpen, Upload } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useToast } from '~/ui/toast'
 import { fetcher } from '~/utils/fetcher'
 import { useDatabaseExport } from '../hooks/useDatabaseExport'
+import { useDatabaseImport } from '../hooks/useDatabaseImport'
 
 interface DatabaseInfo {
   path: string
@@ -31,7 +32,17 @@ export function DatabaseManager() {
   const { showToast } = useToast()
   const [databaseInfo, setDatabaseInfo] = useState<DatabaseInfo | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [showImportConfirm, setShowImportConfirm] = useState(false)
+  const [pendingImportPath, setPendingImportPath] = useState<string | null>(
+    null,
+  )
+
   const { exportDatabase, isPending: isExporting } = useDatabaseExport()
+  const {
+    selectFile,
+    importDatabase,
+    isPending: isImporting,
+  } = useDatabaseImport()
 
   const fetchDatabaseInfo = useCallback(async () => {
     setIsLoading(true)
@@ -63,7 +74,6 @@ export function DatabaseManager() {
     if (!databaseInfo?.path) return
 
     try {
-      // Use invoke workaround for revealItemInDir
       await invoke('plugin:opener|reveal_item_in_dir', {
         path: databaseInfo.path,
       })
@@ -91,6 +101,36 @@ export function DatabaseManager() {
       )
     }
   }, [exportDatabase, showToast, t])
+
+  const handleImportClick = useCallback(async () => {
+    const path = await selectFile()
+    if (path) {
+      setPendingImportPath(path)
+      setShowImportConfirm(true)
+    }
+  }, [selectFile])
+
+  const handleImportConfirm = useCallback(async () => {
+    if (!pendingImportPath) return
+
+    setShowImportConfirm(false)
+    const result = await importDatabase(pendingImportPath)
+    setPendingImportPath(null)
+
+    if (result.success) {
+      showToast(t('sections.database.toast.importSuccess'), 'success')
+    } else {
+      showToast(
+        t('sections.database.toast.importFailed', { error: result.error }),
+        'error',
+      )
+    }
+  }, [pendingImportPath, importDatabase, showToast, t])
+
+  const handleImportCancel = useCallback(() => {
+    setShowImportConfirm(false)
+    setPendingImportPath(null)
+  }, [])
 
   return (
     <div>
@@ -143,28 +183,110 @@ export function DatabaseManager() {
           )}
         </div>
 
-        {/* Export Section */}
-        <div className="flex items-center gap-4 pt-2">
-          <button
-            type="button"
-            onClick={handleExport}
-            disabled={isExporting || isLoading}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 text-sm"
-          >
-            {isExporting ? (
-              <Database className="w-4 h-4 animate-pulse" />
-            ) : (
-              <Download className="w-4 h-4" />
-            )}
-            {isExporting
-              ? t('sections.database.export.exporting')
-              : t('sections.database.export.button')}
-          </button>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            {t('sections.database.export.description')}
-          </p>
+        {/* Export and Import Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Export Card */}
+          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                <Download className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                  {t('sections.database.export.title')}
+                </h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  {t('sections.database.export.description')}
+                </p>
+                <button
+                  type="button"
+                  onClick={handleExport}
+                  disabled={isExporting || isLoading || isImporting}
+                  className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 text-sm"
+                >
+                  <Download className="w-4 h-4" />
+                  {isExporting
+                    ? t('sections.database.export.exporting')
+                    : t('sections.database.export.button')}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Import Card */}
+          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+                <Upload className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                  {t('sections.database.import.title')}
+                </h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  {t('sections.database.import.description')}
+                </p>
+                <button
+                  type="button"
+                  onClick={handleImportClick}
+                  disabled={isImporting || isLoading || isExporting}
+                  className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-amber-600 text-white rounded-md hover:bg-amber-700 disabled:opacity-50 text-sm"
+                >
+                  <Upload className="w-4 h-4" />
+                  {isImporting
+                    ? t('sections.database.import.importing')
+                    : t('sections.database.import.button')}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Import Confirmation Modal */}
+      {showImportConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={handleImportCancel}
+            onKeyDown={(e) => e.key === 'Escape' && handleImportCancel()}
+          />
+          <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+            <div className="flex items-start gap-4">
+              <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-full">
+                <AlertTriangle className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {t('sections.database.import.confirm.title')}
+                </h3>
+                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                  {t('sections.database.import.confirm.message')}
+                </p>
+                <p className="mt-2 text-sm font-medium text-amber-600 dark:text-amber-400">
+                  {t('sections.database.import.confirm.warning')}
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={handleImportCancel}
+                className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
+              >
+                {t('sections.database.import.confirm.cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={handleImportConfirm}
+                className="px-4 py-2 text-sm bg-amber-600 text-white hover:bg-amber-700 rounded-md"
+              >
+                {t('sections.database.import.confirm.confirm')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
