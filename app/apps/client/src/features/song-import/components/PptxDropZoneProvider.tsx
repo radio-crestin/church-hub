@@ -61,7 +61,12 @@ export function PptxDropZoneProvider({ children }: Props) {
   )
 
   // Handle file association - check on mount if app was opened with a PPTX file
+  // This only works in Tauri desktop mode
   useEffect(() => {
+    const isTauri =
+      typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+    if (!isTauri) return
+
     async function checkPendingImport() {
       try {
         const filePath = await invoke<string | null>('get_pending_import')
