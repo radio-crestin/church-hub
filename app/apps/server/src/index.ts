@@ -57,7 +57,11 @@ import {
   checkLibreOfficeInstalled,
   convertPptToPptx,
 } from './service/conversion'
-import { checkpointAndExport, getDatabaseInfo } from './service/database'
+import {
+  checkpointAndExport,
+  getDatabaseInfo,
+  importDatabase,
+} from './service/database'
 import {
   detectContentType,
   handleContentTypeChange,
@@ -650,6 +654,48 @@ async function main() {
         }
 
         const result = await checkpointAndExport(body.destinationPath)
+        if (!result.success) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: result.error }), {
+              status: 500,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: result }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/database/import - Import database (localhost only)
+      if (req.method === 'POST' && url.pathname === '/api/database/import') {
+        if (!isStrictLocalhost()) {
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({ error: 'Only accessible from localhost' }),
+              { status: 403, headers: { 'Content-Type': 'application/json' } },
+            ),
+          )
+        }
+
+        const body = (await req.json()) as { sourcePath: string }
+        if (!body.sourcePath) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'sourcePath is required' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        const result = await importDatabase(body.sourcePath)
         if (!result.success) {
           return handleCors(
             req,

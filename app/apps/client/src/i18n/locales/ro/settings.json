@@ -421,11 +421,26 @@
         "button": "Exportă Baza de Date",
         "exporting": "Se exportă..."
       },
+      "import": {
+        "title": "Importă Baza de Date",
+        "description": "Restaurează dintr-o copie de siguranță",
+        "button": "Importă Baza de Date",
+        "importing": "Se importă...",
+        "confirm": {
+          "title": "Importă Baza de Date",
+          "message": "Aceasta va înlocui baza de date curentă cu fișierul selectat. O copie de siguranță a bazei de date curente va fi creată. Aplicația va trebui repornită după import.",
+          "warning": "Această acțiune nu poate fi anulată.",
+          "confirm": "Importă",
+          "cancel": "Anulează"
+        }
+      },
       "toast": {
         "pathCopied": "Calea bazei de date copiată în clipboard",
         "exportSuccess": "Baza de date exportată cu succes în {{path}}",
         "exportFailed": "Exportul a eșuat: {{error}}",
-        "openFolderFailed": "Nu s-a putut deschide exploratorul de fișiere"
+        "openFolderFailed": "Nu s-a putut deschide exploratorul de fișiere",
+        "importSuccess": "Baza de date importată cu succes. Te rugăm să repornești aplicația.",
+        "importFailed": "Importul a eșuat: {{error}}"
       }
     }
   }

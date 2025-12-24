@@ -137,4 +137,90 @@ export const databasePaths = {
       },
     },
   },
+  '/api/database/import': {
+    post: {
+      tags: ['Database'],
+      summary: 'Import database from a file',
+      description:
+        'Imports a database from the specified path, replacing the current database. Creates a backup before replacing. Requires app restart after successful import. Only accessible from localhost.',
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['sourcePath'],
+              properties: {
+                sourcePath: {
+                  type: 'string',
+                  description: 'Full path to the database file to import',
+                },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        '200': {
+          description: 'Database imported successfully',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean' },
+                      message: { type: 'string' },
+                      requiresRestart: { type: 'boolean' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        '400': {
+          description: 'Missing sourcePath',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  error: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+        '403': {
+          description: 'Only accessible from localhost',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  error: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+        '500': {
+          description: 'Import failed',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  error: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
 }
