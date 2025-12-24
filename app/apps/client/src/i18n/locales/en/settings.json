@@ -421,11 +421,26 @@
         "button": "Export Database",
         "exporting": "Exporting..."
       },
+      "import": {
+        "title": "Import Database",
+        "description": "Restore from a backup file",
+        "button": "Import Database",
+        "importing": "Importing...",
+        "confirm": {
+          "title": "Import Database",
+          "message": "This will replace your current database with the selected file. A backup of your current database will be created. The application will need to be restarted after import.",
+          "warning": "This action cannot be undone.",
+          "confirm": "Import",
+          "cancel": "Cancel"
+        }
+      },
       "toast": {
         "pathCopied": "Database path copied to clipboard",
         "exportSuccess": "Database exported successfully to {{path}}",
         "exportFailed": "Failed to export database: {{error}}",
-        "openFolderFailed": "Failed to open file explorer"
+        "openFolderFailed": "Failed to open file explorer",
+        "importSuccess": "Database imported successfully. Please restart the application.",
+        "importFailed": "Failed to import database: {{error}}"
       }
     }
   }
