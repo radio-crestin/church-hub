@@ -77,23 +77,15 @@ export async function checkpointAndExport(
 }
 
 /**
- * Validates that a file is a valid SQLite database
+ * Validates that a file is a valid SQLite database by checking the header
+ * We can't use PRAGMA integrity_check because WAL-mode databases fail in readonly mode
  */
-function validateSqliteDatabase(filePath: string): boolean {
+async function validateSqliteDatabase(filePath: string): Promise<boolean> {
   try {
-    const testDb = new Database(filePath, { readonly: true })
-    // Run a simple query to verify it's a valid SQLite database
-    // PRAGMA integrity_check returns 'ok' as the first column value
-    const result = testDb.query('PRAGMA integrity_check').all()
-    testDb.close()
-    // If we can open and query it, and integrity check passes, it's valid
-    // The result is an array of objects, first one should have 'ok' as value
-    if (result.length > 0) {
-      const firstResult = result[0] as Record<string, unknown>
-      const value = Object.values(firstResult)[0]
-      return value === 'ok'
-    }
-    return false
+    // SQLite files start with "SQLite format 3\0"
+    const file = Bun.file(filePath)
+    const header = await file.slice(0, 16).text()
+    return header.startsWith('SQLite format 3')
   } catch {
     return false
   }
@@ -124,7 +116,7 @@ export async function importDatabase(
     }
 
     // 2. Validate source is a valid SQLite database
-    const isValid = validateSqliteDatabase(sourcePath)
+    const isValid = await validateSqliteDatabase(sourcePath)
     if (!isValid) {
       return {
         success: false,
