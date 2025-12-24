@@ -164,18 +164,28 @@ function BibleRenderer({
   isVisible,
   showClock,
 }: BibleRendererProps) {
+  // Determine if reference should be included in content
+  const showReferenceElement =
+    !config.includeReferenceInContent && !config.referenceText.hidden
+  const displayContent =
+    config.includeReferenceInContent && reference
+      ? `${reference} ${content}`
+      : content
+
   return (
     <>
-      <TextElement
-        config={config.referenceText}
-        content={reference}
-        screenWidth={screenWidth}
-        screenHeight={screenHeight}
-        isVisible={isVisible}
-      />
+      {showReferenceElement && (
+        <TextElement
+          config={config.referenceText}
+          content={reference}
+          screenWidth={screenWidth}
+          screenHeight={screenHeight}
+          isVisible={isVisible}
+        />
+      )}
       <TextElement
         config={config.contentText}
-        content={content}
+        content={displayContent}
         screenWidth={screenWidth}
         screenHeight={screenHeight}
         isVisible={isVisible}

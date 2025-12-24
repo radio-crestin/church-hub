@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import type { SelectedElement } from './hooks/useEditorState'
+import type { PreviewTexts, SelectedElement } from './hooks/useEditorState'
 import type {
+  BibleContentConfig,
   Constraints,
   ContentType,
   ScreenWithConfigs,
@@ -19,6 +20,7 @@ interface ScreenEditorCanvasProps {
   contentType: ContentType
   selectedElement: SelectedElement
   zoom: number
+  previewTexts?: PreviewTexts
   onSelectElement: (element: SelectedElement) => void
   onUpdateElement: (
     elementType: string,
@@ -475,6 +477,7 @@ export function ScreenEditorCanvas({
   contentType,
   selectedElement,
   zoom,
+  previewTexts,
   onSelectElement,
   onUpdateElement,
 }: ScreenEditorCanvasProps) {
@@ -483,9 +486,19 @@ export function ScreenEditorCanvas({
   const [displaySize, setDisplaySize] = useState({ width: 800, height: 450 })
 
   const config = screen.contentConfigs[contentType]
-  const sample = SAMPLE_CONTENT[contentType]
+  const defaultSample = SAMPLE_CONTENT[contentType]
   const canvasWidth = screen.width
   const canvasHeight = screen.height
+
+  // Merge custom preview texts with defaults
+  const sample = useMemo(
+    () => ({
+      main: previewTexts?.main || defaultSample?.main,
+      reference: previewTexts?.reference || defaultSample?.reference,
+      person: previewTexts?.person || defaultSample?.person,
+    }),
+    [contentType, previewTexts, defaultSample],
+  )
 
   // Calculate display size to fit container while maintaining aspect ratio
   useEffect(() => {
@@ -571,7 +584,6 @@ export function ScreenEditorCanvas({
             style={{ ...mt.style, maxFontSize: mt.style.maxFontSize * scale }}
             containerWidth={bounds.width * scale}
             containerHeight={bounds.height * scale}
-            padding={mt.padding * scale}
             isHtml={true}
           />
         </DraggableElement>,
@@ -586,6 +598,14 @@ export function ScreenEditorCanvas({
         canvasWidth,
         canvasHeight,
       )
+
+      // Check if reference should be prepended to content (Bible types only)
+      const bibleConfig = config as BibleContentConfig
+      const shouldPrependReference =
+        bibleConfig.includeReferenceInContent && sample?.reference
+      const displayContent = shouldPrependReference
+        ? `${sample.reference} ${sample?.main ?? 'Content Text'}`
+        : (sample?.main ?? 'Content Text')
 
       els.push(
         <DraggableElement
@@ -608,7 +628,7 @@ export function ScreenEditorCanvas({
           canvasRef={canvasRef}
         >
           <TextContent
-            content={sample?.main ?? 'Content Text'}
+            content={displayContent}
             style={{ ...ct.style, maxFontSize: ct.style.maxFontSize * scale }}
             containerWidth={bounds.width * scale}
             containerHeight={bounds.height * scale}
@@ -627,6 +647,10 @@ export function ScreenEditorCanvas({
         canvasHeight,
       )
 
+      // Check if reference is included in content (Bible types only)
+      const bibleConfig = config as BibleContentConfig
+      const isHiddenByInlineReference = bibleConfig.includeReferenceInContent
+
       els.push(
         <DraggableElement
           key="referenceText"
@@ -637,7 +661,7 @@ export function ScreenEditorCanvas({
           constraints={rt.constraints}
           size={rt.size}
           isSelected={selectedElement?.type === 'referenceText'}
-          isHidden={rt.hidden}
+          isHidden={rt.hidden || isHiddenByInlineReference}
           onClick={() => onSelectElement({ type: 'referenceText' })}
           onConstraintChange={handleConstraintChange('referenceText')}
           onSizeChange={handleSizeChange('referenceText')}

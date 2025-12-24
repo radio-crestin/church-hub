@@ -22,7 +22,12 @@
       "zoom": "Zoom",
       "resetZoom": "Resetează Zoom",
       "save": "Salvează",
-      "unsavedChanges": "Modificări nesalvate"
+      "unsavedChanges": "Modificări nesalvate",
+      "previewText": "Text Previzualizare",
+      "previewTextDescription": "Personalizați textul de previzualizare pentru a testa cum arată stilul cu conținut diferit.",
+      "customPreviewText": "Text Personalizat",
+      "previewTextPlaceholder": "Introduceți text personalizat (multiline suportat)...",
+      "resetPreviewText": "Resetează la Implicit"
     },
     "contentTypes": {
       "song": "Cântec",
@@ -65,6 +70,8 @@
       "fontFamily": "Familie Font",
       "maxFontSize": "Dimensiune Max Font",
       "autoScale": "Scalare Automată",
+      "autoScaleDescription": "Scalează automat textul pentru a încăpea în container. Când este dezactivat, folosește o dimensiune fixă.",
+      "fontSize": "Dimensiune Font",
       "color": "Culoare",
       "bold": "Bold",
       "italic": "Italic",
@@ -78,7 +85,16 @@
       "middle": "Mijloc",
       "bottom": "Jos",
       "lineHeight": "Înălțime Linie",
-      "shadow": "Umbră Text"
+      "shadow": "Umbră Text",
+      "compressLines": "Comprimă Liniile",
+      "lineSeparator": "Separator Linii",
+      "separators": {
+        "space": "Spațiu Dublu",
+        "dash": "Liniuță Em (—)",
+        "pipe": "Bară Verticală (|)"
+      },
+      "fitLineToWidth": "Potrivește Fiecare Linie la Lățime",
+      "fitLineToWidthDescription": "Previne întreruperea liniilor - fiecare linie se scalează pentru a încăpea"
     },
     "animation": {
       "animationIn": "Animație Intrare",
@@ -131,6 +147,12 @@
       "labelStyle": "Stil Etichetă",
       "contentStyle": "Stil Conținut"
     },
+    "bibleOptions": {
+      "title": "Opțiuni Biblie",
+      "includeReferenceInContent": "Include referința în conținut",
+      "includeReferenceInContentDescription": "Adaugă referința biblică la începutul versetului și ascunde elementul separat de referință"
+    },
+    "nativeWindow": "Fereastră nativă",
     "messages": {
       "screenCreated": "Ecran creat cu succes",
       "screenCreateFailed": "Eroare la crearea ecranului",
@@ -227,5 +249,17 @@
     "slides": "Slide-uri",
     "noSlides": "Niciun slide în acest program",
     "preview": "Previzualizare"
+  },
+  "highlight": {
+    "title": "Evidențiere",
+    "colors": "Culori Evidențiere",
+    "addColor": "Adaugă Culoare",
+    "editColor": "Editează Culoare",
+    "colorName": "Nume Culoare",
+    "colorValue": "Valoare Culoare",
+    "removeHighlight": "Elimină Evidențierea",
+    "manageColors": "Gestionează Culorile",
+    "deleteConfirm": "Șterge această culoare?",
+    "noColors": "Nicio culoare definită încă"
   }
 }

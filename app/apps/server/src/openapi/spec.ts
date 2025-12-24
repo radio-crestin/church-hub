@@ -10,6 +10,7 @@ import {
   conversionPaths,
   devicesPaths,
   healthPaths,
+  highlightColorsPaths,
   presentationPaths,
   queuePaths,
   schedulesPaths,
@@ -21,6 +22,7 @@ import {
   bibleSchemas,
   commonSchemas,
   deviceSchemas,
+  highlightColorSchemas,
   presentationSchemas,
   queueSchemas,
   scheduleSchemas,
@@ -59,6 +61,10 @@ export const openApiSpec = {
     },
     { name: 'Presentation', description: 'Presentation state control' },
     { name: 'Conversion', description: 'File format conversion utilities' },
+    {
+      name: 'Highlight Colors',
+      description: 'Text highlight color management',
+    },
   ],
   paths: {
     ...healthPaths,
@@ -73,6 +79,7 @@ export const openApiSpec = {
     ...screensPaths,
     ...presentationPaths,
     ...conversionPaths,
+    ...highlightColorsPaths,
   },
   components: {
     securitySchemes,
@@ -85,6 +92,7 @@ export const openApiSpec = {
       ...scheduleSchemas,
       ...screenSchemas,
       ...presentationSchemas,
+      ...highlightColorSchemas,
     },
     responses,
   },

@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { getApiUrl } from '~/config'
+import { highlightColorsQueryKey } from './useHighlightColors'
 import { presentationStateQueryKey } from './usePresentationState'
 import { screenQueryKey } from './useScreen'
 import type { PresentationState } from '../types'
@@ -35,6 +36,18 @@ interface ScreenConfigPreviewMessage {
     screenId: number
     config: Record<string, unknown>
     updatedAt: number
+  }
+}
+
+interface HighlightColorsUpdatedMessage {
+  type: 'highlight_colors_updated'
+  payload: {
+    colors: Array<{
+      id: number
+      name: string
+      color: string
+      sortOrder: number
+    }>
   }
 }
 
@@ -79,6 +92,7 @@ export function useWebSocket() {
             | PresentationMessage
             | ScreenConfigUpdatedMessage
             | ScreenConfigPreviewMessage
+            | HighlightColorsUpdatedMessage
             | { type: 'pong' }
 
           if (data.type === 'pong') {
@@ -113,6 +127,14 @@ export function useWebSocket() {
               screenQueryKey(data.payload.screenId),
               data.payload.config,
             )
+          }
+
+          if (data.type === 'highlight_colors_updated') {
+            log('debug', 'Received highlight colors update')
+            // Invalidate the highlight colors query to refetch
+            queryClient.invalidateQueries({
+              queryKey: highlightColorsQueryKey,
+            })
           }
         } catch (error) {
           log('error', `Failed to parse message: ${error}`)

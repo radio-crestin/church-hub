@@ -198,6 +198,20 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
     }
   }, [])
 
+  // Make html and body transparent for screen display (allows user-configured backgrounds)
+  useEffect(() => {
+    const originalHtmlBg = document.documentElement.style.backgroundColor
+    const originalBodyBg = document.body.style.backgroundColor
+
+    document.documentElement.style.backgroundColor = 'transparent'
+    document.body.style.backgroundColor = 'transparent'
+
+    return () => {
+      document.documentElement.style.backgroundColor = originalHtmlBg
+      document.body.style.backgroundColor = originalBodyBg
+    }
+  }, [])
+
   // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -515,6 +529,8 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
           showClock={true}
           isVisible={isVisible}
           nextSlideData={nextSlideData}
+          fillContainer={true}
+          liveHighlights={presentationState?.liveHighlights}
         />
       )}
     </div>

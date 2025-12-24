@@ -320,6 +320,7 @@ export function ScreenEditor({
           contentType={state.selectedContentType}
           selectedElement={state.selectedElement}
           zoom={state.zoom}
+          previewTexts={state.previewTexts[state.selectedContentType]}
           onSelectElement={actions.setSelectedElement}
           onUpdateElement={handleUpdateElement}
         />
@@ -329,6 +330,13 @@ export function ScreenEditor({
           screen={state.screen}
           contentType={state.selectedContentType}
           selectedElement={state.selectedElement}
+          previewTexts={state.previewTexts[state.selectedContentType]}
+          onSetPreviewText={(key, text) =>
+            actions.setPreviewText(state.selectedContentType, key, text)
+          }
+          onResetPreviewTexts={() =>
+            actions.resetPreviewTexts(state.selectedContentType)
+          }
           onUpdateContentConfig={actions.updateContentConfig}
           onUpdateNextSlideConfig={actions.updateNextSlideConfig}
           onUpdateGlobalSettings={actions.updateGlobalSettings}
