@@ -253,13 +253,21 @@
   "highlight": {
     "title": "Highlight",
     "colors": "Highlight Colors",
+    "yourColors": "Your Colors",
     "addColor": "Add Color",
-    "editColor": "Edit Color",
+    "addColors": "Add colors",
+    "addFromPresets": "Add from presets",
+    "viewPresets": "View presets",
+    "presetColors": "Preset Colors",
+    "editColor": "Edit",
     "colorName": "Color Name",
+    "colorNamePlaceholder": "Color name (e.g., Yellow)",
     "colorValue": "Color Value",
     "removeHighlight": "Remove Highlight",
     "manageColors": "Manage Colors",
+    "manageColorsDesc": "Customize your highlight palette",
     "deleteConfirm": "Delete this color?",
-    "noColors": "No colors defined yet"
+    "noColors": "No colors defined yet",
+    "clearAll": "Clear All"
   }
 }
