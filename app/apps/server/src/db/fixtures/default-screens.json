@@ -1702,7 +1702,7 @@
             "bold": true,
             "italic": false,
             "underline": false,
-            "alignment": "left",
+            "alignment": "center",
             "verticalAlignment": "middle",
             "lineHeight": 1.3,
             "shadow": true
@@ -1830,7 +1830,7 @@
             },
             "left": {
               "enabled": true,
-              "value": 2.0950704225352124,
+              "value": 2.095070422535212,
               "unit": "%"
             },
             "right": {
@@ -1847,14 +1847,14 @@
           },
           "style": {
             "fontFamily": "system-ui",
-            "maxFontSize": 100,
+            "maxFontSize": 31,
             "autoScale": true,
             "color": "#ffffff",
             "bold": true,
             "italic": false,
             "underline": false,
             "alignment": "left",
-            "verticalAlignment": "top",
+            "verticalAlignment": "bottom",
             "lineHeight": 1.3,
             "shadow": true
           },
@@ -1918,7 +1918,8 @@
           },
           "format": "24h",
           "showSeconds": false
-        }
+        },
+        "includeReferenceInContent": true
       },
       "bible_passage": {
         "background": {
@@ -1999,14 +2000,14 @@
           },
           "style": {
             "fontFamily": "system-ui",
-            "maxFontSize": 100,
+            "maxFontSize": 31,
             "autoScale": true,
             "color": "#ffffff",
             "bold": true,
             "italic": false,
             "underline": false,
             "alignment": "left",
-            "verticalAlignment": "top",
+            "verticalAlignment": "bottom",
             "lineHeight": 1.3,
             "shadow": true
           },
@@ -2069,7 +2070,8 @@
           },
           "format": "24h",
           "showSeconds": false
-        }
+        },
+        "includeReferenceInContent": true
       },
       "announcement": {
         "background": {
