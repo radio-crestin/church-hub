@@ -1,4 +1,4 @@
-import { Eraser, Settings2, Sparkles, X } from 'lucide-react'
+import { Settings2, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -37,10 +37,8 @@ export function HighlightablePreview({
 }: HighlightablePreviewProps) {
   const { t } = useTranslation('presentation')
   const containerRef = useRef<HTMLDivElement>(null)
-  const popupRef = useRef<HTMLDivElement>(null)
   const [selection, setSelection] = useState<SelectionInfo | null>(null)
   const [isColorManagerOpen, setIsColorManagerOpen] = useState(false)
-  const [hoveredColor, setHoveredColor] = useState<string | null>(null)
 
   const { data: colors = [] } = useHighlightColors()
   const { data: presentationState } = usePresentationState()
@@ -88,9 +86,11 @@ export function HighlightablePreview({
   // Close selection popup when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (selection && popupRef.current) {
+      if (selection && containerRef.current) {
         const target = e.target as Node
-        if (!popupRef.current.contains(target)) {
+        // Check if click is outside the popup area
+        const popup = document.getElementById('highlight-popup')
+        if (popup && !popup.contains(target)) {
           setSelection(null)
         }
       }
@@ -102,21 +102,13 @@ export function HighlightablePreview({
 
   // Apply a highlight color
   const handleColorClick = useCallback(
-    (color: string, textColor?: string) => {
+    (color: string) => {
       if (!selection) return
-
-      // Clear selection FIRST to avoid stale DOM references
-      try {
-        window.getSelection()?.removeAllRanges()
-      } catch {
-        // Selection may reference removed nodes
-      }
 
       const newHighlight: LiveHighlight = {
         startOffset: selection.startOffset,
         endOffset: selection.endOffset,
         color,
-        textColor,
       }
 
       // Merge with existing highlights (avoid overlaps by replacing)
@@ -128,6 +120,7 @@ export function HighlightablePreview({
 
       updateHighlights.mutate([...filteredHighlights, newHighlight])
       setSelection(null)
+      window.getSelection()?.removeAllRanges()
     },
     [selection, currentHighlights, updateHighlights],
   )
@@ -135,13 +128,6 @@ export function HighlightablePreview({
   // Remove a specific highlight (when clicking on already highlighted text)
   const handleRemoveHighlight = useCallback(() => {
     if (!selection) return
-
-    // Clear selection FIRST to avoid stale DOM references
-    try {
-      window.getSelection()?.removeAllRanges()
-    } catch {
-      // Selection may reference removed nodes
-    }
 
     const filteredHighlights = currentHighlights.filter(
       (h) =>
@@ -151,6 +137,7 @@ export function HighlightablePreview({
 
     updateHighlights.mutate(filteredHighlights)
     setSelection(null)
+    window.getSelection()?.removeAllRanges()
   }, [selection, currentHighlights, updateHighlights])
 
   // Check if current selection overlaps with existing highlights
@@ -167,7 +154,7 @@ export function HighlightablePreview({
     ? {
         position: 'fixed',
         left: selection.rect.left + selection.rect.width / 2,
-        top: selection.rect.top - 60,
+        top: selection.rect.top - 50,
         transform: 'translateX(-50%)',
         zIndex: 1000,
       }
@@ -177,7 +164,7 @@ export function HighlightablePreview({
     <div
       ref={containerRef}
       onMouseUp={handleMouseUp}
-      className="relative w-full h-full"
+      className="relative"
       style={{ userSelect: enabled ? 'text' : 'none' }}
     >
       {children}
@@ -185,96 +172,50 @@ export function HighlightablePreview({
       {/* Highlight color popup */}
       {selection && (
         <div
-          ref={popupRef}
+          id="highlight-popup"
           style={popupStyle}
-          className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-2 animate-in fade-in zoom-in-95 duration-150"
+          className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-2 flex items-center gap-1"
         >
-          {/* Arrow pointer */}
-          <div className="absolute left-1/2 -bottom-2 -translate-x-1/2 w-4 h-4 rotate-45 bg-white dark:bg-gray-900 border-r border-b border-gray-200 dark:border-gray-700" />
+          {/* Color swatches */}
+          {colors.map((color) => (
+            <button
+              key={color.id}
+              type="button"
+              onClick={() => handleColorClick(color.color)}
+              className="w-6 h-6 rounded border-2 border-transparent hover:border-gray-400 dark:hover:border-gray-500 transition-all"
+              style={{ backgroundColor: color.color }}
+              title={color.name}
+            />
+          ))}
 
-          <div className="relative flex items-center gap-1.5">
-            {/* Color swatches */}
-            {colors.length > 0 ? (
-              colors.map((color) => (
-                <button
-                  key={color.id}
-                  type="button"
-                  onClick={() => handleColorClick(color.color, color.textColor)}
-                  onMouseEnter={() => setHoveredColor(color.id.toString())}
-                  onMouseLeave={() => setHoveredColor(null)}
-                  className="relative w-8 h-8 rounded-xl border-2 border-transparent hover:border-gray-300 dark:hover:border-gray-500 hover:scale-110 transition-all duration-150 flex items-center justify-center shadow-sm"
-                  style={{ backgroundColor: color.color }}
-                  title={color.name}
-                >
-                  <span
-                    className="text-[10px] font-bold opacity-70"
-                    style={{ color: color.textColor || '#000000' }}
-                  >
-                    A
-                  </span>
-                  {hoveredColor === color.id.toString() && (
-                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg whitespace-nowrap">
-                      {color.name}
-                    </div>
-                  )}
-                </button>
-              ))
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  setSelection(null)
-                  setIsColorManagerOpen(true)
-                }}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
-              >
-                <Sparkles size={14} />
-                <span>{t('highlight.addColors', 'Add colors')}</span>
-              </button>
-            )}
-
-            {/* Divider */}
-            {colors.length > 0 && (
-              <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-0.5" />
-            )}
-
-            {/* Remove highlight button */}
-            {hasExistingHighlight && (
+          {/* Remove highlight button */}
+          {hasExistingHighlight && (
+            <>
+              <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1" />
               <button
                 type="button"
                 onClick={handleRemoveHighlight}
-                className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-xl transition-all duration-150"
+                className="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
                 title={t('highlight.removeHighlight', 'Remove Highlight')}
               >
-                <Eraser className="w-4 h-4" />
+                <X className="w-4 h-4" />
               </button>
-            )}
+            </>
+          )}
 
-            {/* Manage colors button */}
-            {colors.length > 0 && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSelection(null)
-                  setIsColorManagerOpen(true)
-                }}
-                className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-all duration-150"
-                title={t('highlight.manageColors', 'Manage Colors')}
-              >
-                <Settings2 className="w-4 h-4" />
-              </button>
-            )}
-
-            {/* Close button */}
-            <button
-              type="button"
-              onClick={() => setSelection(null)}
-              className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-all duration-150"
-              title={t('common.close', 'Close')}
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
+          {/* Manage colors button */}
+          <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1" />
+          <button
+            type="button"
+            onClick={() => {
+              setSelection(null)
+              setIsColorManagerOpen(true)
+            }}
+            className="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+            title={t('highlight.manageColors', 'Manage Colors')}
+          >
+            <Settings2 className="w-4 h-4" />
+          </button>
         </div>
       )}
 
@@ -282,19 +223,10 @@ export function HighlightablePreview({
       {currentHighlights.length > 0 && (
         <button
           type="button"
-          onClick={() => {
-            // Clear any active text selection first to prevent DOM conflicts
-            try {
-              window.getSelection()?.removeAllRanges()
-            } catch {
-              // Selection may reference removed nodes
-            }
-            clearHighlights.mutate()
-          }}
-          className="absolute top-3 right-3 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-gray-900/80 dark:bg-gray-800/90 text-white rounded-full hover:bg-gray-800 dark:hover:bg-gray-700 transition-colors backdrop-blur-sm shadow-lg"
+          onClick={() => clearHighlights.mutate()}
+          className="absolute top-2 right-2 px-2 py-1 text-xs bg-gray-800/70 text-white rounded hover:bg-gray-700 transition-colors"
           title={t('highlight.clearAll', 'Clear All Highlights')}
         >
-          <Eraser className="w-3 h-3" />
           {t('highlight.clearAll', 'Clear All')}
         </button>
       )}
