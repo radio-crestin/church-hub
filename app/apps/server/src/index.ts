@@ -190,8 +190,9 @@ async function main() {
     rebuildScheduleSearchIndex()
   }
 
-  // Clear the presentation queue on startup to ensure a clean state
+  // Clear the presentation queue and displayed slide on startup to ensure a clean state
   clearQueue()
+  stopPresentation()
 
   // Seed RCCV Bible translation if no translations exist
   ensureRCCVExists()
