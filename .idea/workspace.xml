@@ -4,7 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="66517e3f-2e4e-43cc-880d-deb242368f0c" name="Changes" comment="" />
+    <list default="true" id="66517e3f-2e4e-43cc-880d-deb242368f0c" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TODO.md" beforeDir="false" afterPath="$PROJECT_DIR$/TODO.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-screens.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-screens.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-settings.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-settings.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-song-categories.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-song-categories.json" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
