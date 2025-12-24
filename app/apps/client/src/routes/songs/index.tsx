@@ -1,8 +1,10 @@
 import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router'
 import { Plus, Settings } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { usePresentationState } from '~/features/presentation'
+import { useQueue } from '~/features/queue'
 import { SongList, SongsSettingsModal } from '~/features/songs/components'
 import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
 
@@ -22,6 +24,38 @@ function SongsPage() {
   const navigate = useNavigate()
   const { q: searchQuery = '' } = useSearch({ from: '/songs/' })
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
+
+  const { data: presentationState } = usePresentationState()
+  const { data: queue } = useQueue()
+
+  // Auto-navigate to presented song on page open
+  useEffect(() => {
+    if (!presentationState) return
+
+    let presentedSongId: number | null = null
+
+    // Check temporary content first (priority)
+    if (presentationState.temporaryContent?.type === 'song') {
+      presentedSongId = presentationState.temporaryContent.data.songId
+    }
+    // Check queue-based presentation
+    else if (presentationState.currentQueueItemId && queue) {
+      const currentItem = queue.find(
+        (item) => item.id === presentationState.currentQueueItemId,
+      )
+      if (currentItem?.itemType === 'song' && currentItem.songId) {
+        presentedSongId = currentItem.songId
+      }
+    }
+
+    if (presentedSongId) {
+      navigate({
+        to: '/songs/$songId',
+        params: { songId: String(presentedSongId) },
+        search: { q: searchQuery || undefined },
+      })
+    }
+  }, [presentationState, queue, navigate, searchQuery])
 
   const handleSongClick = (songId: number) => {
     navigate({
