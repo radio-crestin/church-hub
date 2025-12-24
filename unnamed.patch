@@ -1,0 +1,4997 @@
+Index: app/apps/client/src/ui/combobox/Combobox.tsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/client/src/ui/combobox/Combobox.tsx b/app/apps/client/src/ui/combobox/Combobox.tsx
+--- a/app/apps/client/src/ui/combobox/Combobox.tsx
++++ b/app/apps/client/src/ui/combobox/Combobox.tsx
+@@ -33,10 +33,16 @@
+   const [isOpen, setIsOpen] = useState(false)
+   const [search, setSearch] = useState('')
+   const [isCreating, setIsCreating] = useState(false)
+-  const [dropdownPosition, setDropdownPosition] = useState({
+-    top: 0,
++  const [dropdownPosition, setDropdownPosition] = useState<{
++    top?: number
++    bottom?: number
++    left: number
++    width: number
++    openUpward: boolean
++  }>({
+     left: 0,
+     width: 0,
++    openUpward: false,
+   })
+   const containerRef = useRef<HTMLDivElement>(null)
+   const buttonRef = useRef<HTMLButtonElement>(null)
+@@ -81,11 +87,26 @@
+   useEffect(() => {
+     if (isOpen && buttonRef.current) {
+       const rect = buttonRef.current.getBoundingClientRect()
+-      setDropdownPosition({
+-        top: rect.bottom + window.scrollY,
+-        left: rect.left + window.scrollX,
+-        width: rect.width,
+-      })
++      const dropdownHeight = 250 // Approximate max height (max-h-48 + search input + padding)
++      const spaceBelow = window.innerHeight - rect.bottom
++      const spaceAbove = rect.top
++      const openUpward = spaceBelow < dropdownHeight && spaceAbove > spaceBelow
++
++      if (openUpward) {
++        setDropdownPosition({
++          bottom: window.innerHeight - rect.top + 4,
++          left: rect.left + window.scrollX,
++          width: rect.width,
++          openUpward: true,
++        })
++      } else {
++        setDropdownPosition({
++          top: rect.bottom + window.scrollY + 4,
++          left: rect.left + window.scrollX,
++          width: rect.width,
++          openUpward: false,
++        })
++      }
+     }
+   }, [isOpen])
+ 
+@@ -159,7 +180,9 @@
+             ref={dropdownRef}
+             className="fixed z-[9999] bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg overflow-hidden"
+             style={{
+-              top: dropdownPosition.top + 4,
++              ...(dropdownPosition.openUpward
++                ? { bottom: dropdownPosition.bottom }
++                : { top: dropdownPosition.top }),
+               left: dropdownPosition.left,
+               width: dropdownPosition.width,
+             }}
+Index: app/apps/client/src/i18n/locales/en/presentation.json
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/client/src/i18n/locales/en/presentation.json b/app/apps/client/src/i18n/locales/en/presentation.json
+--- a/app/apps/client/src/i18n/locales/en/presentation.json
++++ b/app/apps/client/src/i18n/locales/en/presentation.json
+@@ -22,7 +22,12 @@
+       "zoom": "Zoom",
+       "resetZoom": "Reset Zoom",
+       "save": "Save",
+-      "unsavedChanges": "Unsaved changes"
++      "unsavedChanges": "Unsaved changes",
++      "previewText": "Preview Text",
++      "previewTextDescription": "Customize the preview text to test how your styling looks with different content.",
++      "customPreviewText": "Custom Text",
++      "previewTextPlaceholder": "Enter custom preview text (multiline supported)...",
++      "resetPreviewText": "Reset to Default"
+     },
+     "contentTypes": {
+       "song": "Song",
+@@ -65,6 +70,8 @@
+       "fontFamily": "Font Family",
+       "maxFontSize": "Max Font Size",
+       "autoScale": "Auto Scale",
++      "autoScaleDescription": "Automatically scales text to fit the container. When disabled, uses a fixed font size.",
++      "fontSize": "Font Size",
+       "color": "Color",
+       "bold": "Bold",
+       "italic": "Italic",
+@@ -78,7 +85,16 @@
+       "middle": "Middle",
+       "bottom": "Bottom",
+       "lineHeight": "Line Height",
+-      "shadow": "Text Shadow"
++      "shadow": "Text Shadow",
++      "compressLines": "Compress Lines",
++      "lineSeparator": "Line Separator",
++      "separators": {
++        "space": "Double Space",
++        "dash": "Em Dash (—)",
++        "pipe": "Pipe (|)"
++      },
++      "fitLineToWidth": "Fit Each Line to Width",
++      "fitLineToWidthDescription": "Prevents line wrapping - each line scales to fit container width"
+     },
+     "animation": {
+       "animationIn": "Animation In",
+@@ -131,6 +147,12 @@
+       "labelStyle": "Label Style",
+       "contentStyle": "Content Style"
+     },
++    "bibleOptions": {
++      "title": "Bible Options",
++      "includeReferenceInContent": "Include reference in content",
++      "includeReferenceInContentDescription": "Prepends the Bible reference to the verse content and hides the separate reference element"
++    },
++    "nativeWindow": "Native Window",
+     "messages": {
+       "screenCreated": "Screen created successfully",
+       "screenCreateFailed": "Failed to create screen",
+@@ -227,5 +249,17 @@
+     "slides": "Slides",
+     "noSlides": "No slides in this program",
+     "preview": "Preview"
++  },
++  "highlight": {
++    "title": "Highlight",
++    "colors": "Highlight Colors",
++    "addColor": "Add Color",
++    "editColor": "Edit Color",
++    "colorName": "Color Name",
++    "colorValue": "Color Value",
++    "removeHighlight": "Remove Highlight",
++    "manageColors": "Manage Colors",
++    "deleteConfirm": "Delete this color?",
++    "noColors": "No colors defined yet"
+   }
+ }
+Index: app/apps/client/src/i18n/locales/ro/presentation.json
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/client/src/i18n/locales/ro/presentation.json b/app/apps/client/src/i18n/locales/ro/presentation.json
+--- a/app/apps/client/src/i18n/locales/ro/presentation.json
++++ b/app/apps/client/src/i18n/locales/ro/presentation.json
+@@ -22,7 +22,12 @@
+       "zoom": "Zoom",
+       "resetZoom": "Resetează Zoom",
+       "save": "Salvează",
+-      "unsavedChanges": "Modificări nesalvate"
++      "unsavedChanges": "Modificări nesalvate",
++      "previewText": "Text Previzualizare",
++      "previewTextDescription": "Personalizați textul de previzualizare pentru a testa cum arată stilul cu conținut diferit.",
++      "customPreviewText": "Text Personalizat",
++      "previewTextPlaceholder": "Introduceți text personalizat (multiline suportat)...",
++      "resetPreviewText": "Resetează la Implicit"
+     },
+     "contentTypes": {
+       "song": "Cântec",
+@@ -65,6 +70,8 @@
+       "fontFamily": "Familie Font",
+       "maxFontSize": "Dimensiune Max Font",
+       "autoScale": "Scalare Automată",
++      "autoScaleDescription": "Scalează automat textul pentru a încăpea în container. Când este dezactivat, folosește o dimensiune fixă.",
++      "fontSize": "Dimensiune Font",
+       "color": "Culoare",
+       "bold": "Bold",
+       "italic": "Italic",
+@@ -78,7 +85,16 @@
+       "middle": "Mijloc",
+       "bottom": "Jos",
+       "lineHeight": "Înălțime Linie",
+-      "shadow": "Umbră Text"
++      "shadow": "Umbră Text",
++      "compressLines": "Comprimă Liniile",
++      "lineSeparator": "Separator Linii",
++      "separators": {
++        "space": "Spațiu Dublu",
++        "dash": "Liniuță Em (—)",
++        "pipe": "Bară Verticală (|)"
++      },
++      "fitLineToWidth": "Potrivește Fiecare Linie la Lățime",
++      "fitLineToWidthDescription": "Previne întreruperea liniilor - fiecare linie se scalează pentru a încăpea"
+     },
+     "animation": {
+       "animationIn": "Animație Intrare",
+@@ -131,6 +147,12 @@
+       "labelStyle": "Stil Etichetă",
+       "contentStyle": "Stil Conținut"
+     },
++    "bibleOptions": {
++      "title": "Opțiuni Biblie",
++      "includeReferenceInContent": "Include referința în conținut",
++      "includeReferenceInContentDescription": "Adaugă referința biblică la începutul versetului și ascunde elementul separat de referință"
++    },
++    "nativeWindow": "Fereastră nativă",
+     "messages": {
+       "screenCreated": "Ecran creat cu succes",
+       "screenCreateFailed": "Eroare la crearea ecranului",
+@@ -227,5 +249,17 @@
+     "slides": "Slide-uri",
+     "noSlides": "Niciun slide în acest program",
+     "preview": "Previzualizare"
++  },
++  "highlight": {
++    "title": "Evidențiere",
++    "colors": "Culori Evidențiere",
++    "addColor": "Adaugă Culoare",
++    "editColor": "Editează Culoare",
++    "colorName": "Nume Culoare",
++    "colorValue": "Valoare Culoare",
++    "removeHighlight": "Elimină Evidențierea",
++    "manageColors": "Gestionează Culorile",
++    "deleteConfirm": "Șterge această culoare?",
++    "noColors": "Nicio culoare definită încă"
+   }
+ }
+Index: app/apps/client/src/features/queue/components/InsertSlideModal.tsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/client/src/features/queue/components/InsertSlideModal.tsx b/app/apps/client/src/features/queue/components/InsertSlideModal.tsx
+--- a/app/apps/client/src/features/queue/components/InsertSlideModal.tsx
++++ b/app/apps/client/src/features/queue/components/InsertSlideModal.tsx
+@@ -6,6 +6,9 @@
+ import { useTranslation } from 'react-i18next'
+ 
+ import { useDefaultBibleTranslation } from '~/features/bible/hooks'
++import { CustomHighlight } from '~/features/presentation/components/editor/extensions/CustomHighlight'
++import { HighlightColorManager } from '~/features/presentation/components/editor/HighlightColorManager'
++import { HighlightColorPicker } from '~/features/presentation/components/editor/HighlightColorPicker'
+ import { useToast } from '~/ui/toast'
+ import {
+   type LocalVerseteTineriEntry,
+@@ -68,6 +71,9 @@
+     LocalVerseteTineriEntry[]
+   >([])
+ 
++  // Highlight color manager state
++  const [isColorManagerOpen, setIsColorManagerOpen] = useState(false)
++
+   const editor = useEditor({
+     extensions: [
+       StarterKit.configure({
+@@ -78,6 +84,9 @@
+       TextAlign.configure({
+         types: ['heading', 'paragraph'],
+       }),
++      CustomHighlight.configure({
++        multicolor: true,
++      }),
+     ],
+     content: '',
+     onUpdate: ({ editor }) => {
+@@ -339,6 +348,13 @@
+                 >
+                   H2
+                 </button>
++                <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1" />
++                {editor && (
++                  <HighlightColorPicker
++                    editor={editor}
++                    onManageColors={() => setIsColorManagerOpen(true)}
++                  />
++                )}
+               </div>
+               <div className="border border-gray-200 dark:border-gray-700 rounded-b-lg overflow-hidden">
+                 <EditorContent editor={editor} />
+@@ -373,6 +389,12 @@
+           </button>
+         </div>
+       </div>
++
++      {/* Highlight Color Manager Modal */}
++      <HighlightColorManager
++        isOpen={isColorManagerOpen}
++        onClose={() => setIsColorManagerOpen(false)}
++      />
+     </dialog>
+   )
+ }
+Index: app/apps/client/src/features/songs/components/SongSlideCard.tsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/client/src/features/songs/components/SongSlideCard.tsx b/app/apps/client/src/features/songs/components/SongSlideCard.tsx
+--- a/app/apps/client/src/features/songs/components/SongSlideCard.tsx
++++ b/app/apps/client/src/features/songs/components/SongSlideCard.tsx
+@@ -4,9 +4,13 @@
+ import { EditorContent, useEditor } from '@tiptap/react'
+ import StarterKit from '@tiptap/starter-kit'
+ import { Copy, GripVertical, Redo2, Trash2, Undo2 } from 'lucide-react'
+-import { useEffect } from 'react'
++import { useEffect, useState } from 'react'
+ import { useTranslation } from 'react-i18next'
+ 
++import { CustomHighlight } from '../../presentation/components/editor/extensions/CustomHighlight'
++import { HighlightColorManager } from '../../presentation/components/editor/HighlightColorManager'
++import { HighlightColorPicker } from '../../presentation/components/editor/HighlightColorPicker'
++
+ interface LocalSlide {
+   id: string | number
+   content: string
+@@ -30,6 +34,7 @@
+   onDelete,
+ }: SongSlideCardProps) {
+   const { t } = useTranslation('songs')
++  const [isColorManagerOpen, setIsColorManagerOpen] = useState(false)
+   const {
+     attributes,
+     listeners,
+@@ -54,6 +59,9 @@
+       TextAlign.configure({
+         types: ['heading', 'paragraph'],
+       }),
++      CustomHighlight.configure({
++        multicolor: true,
++      }),
+     ],
+     content: slide.content,
+     editorProps: {
+@@ -209,6 +217,13 @@
+         >
+           →
+         </button>
++        <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1" />
++        {editor && (
++          <HighlightColorPicker
++            editor={editor}
++            onManageColors={() => setIsColorManagerOpen(true)}
++          />
++        )}
+         <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1" />
+         <button
+           type="button"
+@@ -230,6 +245,12 @@
+         </button>
+       </div>
+ 
++      {/* Highlight Color Manager Modal */}
++      <HighlightColorManager
++        isOpen={isColorManagerOpen}
++        onClose={() => setIsColorManagerOpen(false)}
++      />
++
+       {/* Editor Content */}
+       <div className="bg-gray-50 dark:bg-gray-900/50">
+         <EditorContent
+@@ -237,6 +258,7 @@
+           className="prose prose-sm dark:prose-invert max-w-none [&_.ProseMirror]:text-gray-900 [&_.ProseMirror]:dark:text-gray-100"
+         />
+       </div>
++
+     </div>
+   )
+ }
+Index: app/apps/client/src/features/presentation/hooks/useWebSocket.ts
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/client/src/features/presentation/hooks/useWebSocket.ts b/app/apps/client/src/features/presentation/hooks/useWebSocket.ts
+--- a/app/apps/client/src/features/presentation/hooks/useWebSocket.ts
++++ b/app/apps/client/src/features/presentation/hooks/useWebSocket.ts
+@@ -2,6 +2,7 @@
+ import { useCallback, useEffect, useRef, useState } from 'react'
+ 
+ import { getApiUrl } from '~/config'
++import { highlightColorsQueryKey } from './useHighlightColors'
+ import { presentationStateQueryKey } from './usePresentationState'
+ import { screenQueryKey } from './useScreen'
+ import type { PresentationState } from '../types'
+@@ -38,6 +39,18 @@
+   }
+ }
+ 
++interface HighlightColorsUpdatedMessage {
++  type: 'highlight_colors_updated'
++  payload: {
++    colors: Array<{
++      id: number
++      name: string
++      color: string
++      sortOrder: number
++    }>
++  }
++}
++
+ export function useWebSocket() {
+   const queryClient = useQueryClient()
+   const wsRef = useRef<WebSocket | null>(null)
+@@ -79,6 +92,7 @@
+             | PresentationMessage
+             | ScreenConfigUpdatedMessage
+             | ScreenConfigPreviewMessage
++            | HighlightColorsUpdatedMessage
+             | { type: 'pong' }
+ 
+           if (data.type === 'pong') {
+@@ -114,6 +128,14 @@
+               data.payload.config,
+             )
+           }
++
++          if (data.type === 'highlight_colors_updated') {
++            log('debug', 'Received highlight colors update')
++            // Invalidate the highlight colors query to refetch
++            queryClient.invalidateQueries({
++              queryKey: highlightColorsQueryKey,
++            })
++          }
+         } catch (error) {
+           log('error', `Failed to parse message: ${error}`)
+         }
+Index: app/apps/client/src/features/presentation/hooks/useHighlightColors.ts
+===================================================================
+diff --git a/app/apps/client/src/features/presentation/hooks/useHighlightColors.ts b/app/apps/client/src/features/presentation/hooks/useHighlightColors.ts
+new file mode 100644
+--- /dev/null
++++ b/app/apps/client/src/features/presentation/hooks/useHighlightColors.ts
+@@ -0,0 +1,68 @@
++import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
++
++import {
++  deleteHighlightColor,
++  getAllHighlightColors,
++  type HighlightColor,
++  reorderHighlightColors,
++  type UpsertHighlightColorInput,
++  upsertHighlightColor,
++} from '../service/highlight-colors'
++
++export const highlightColorsQueryKey = ['highlight-colors']
++
++/**
++ * Hook to fetch all highlight colors
++ */
++export function useHighlightColors() {
++  return useQuery({
++    queryKey: highlightColorsQueryKey,
++    queryFn: getAllHighlightColors,
++  })
++}
++
++/**
++ * Hook to create or update a highlight color
++ */
++export function useUpsertHighlightColor() {
++  const queryClient = useQueryClient()
++
++  return useMutation({
++    mutationFn: (input: UpsertHighlightColorInput) =>
++      upsertHighlightColor(input),
++    onSuccess: () => {
++      // Invalidate the query to refetch - WebSocket will also update but this ensures immediate refresh
++      queryClient.invalidateQueries({ queryKey: highlightColorsQueryKey })
++    },
++  })
++}
++
++/**
++ * Hook to delete a highlight color
++ */
++export function useDeleteHighlightColor() {
++  const queryClient = useQueryClient()
++
++  return useMutation({
++    mutationFn: (id: number) => deleteHighlightColor(id),
++    onSuccess: () => {
++      queryClient.invalidateQueries({ queryKey: highlightColorsQueryKey })
++    },
++  })
++}
++
++/**
++ * Hook to reorder highlight colors
++ */
++export function useReorderHighlightColors() {
++  const queryClient = useQueryClient()
++
++  return useMutation({
++    mutationFn: (colorIds: number[]) => reorderHighlightColors({ colorIds }),
++    onSuccess: () => {
++      queryClient.invalidateQueries({ queryKey: highlightColorsQueryKey })
++    },
++  })
++}
++
++export type { HighlightColor, UpsertHighlightColorInput }
+Index: app/apps/client/src/features/presentation/hooks/usePresentationControls.ts
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/client/src/features/presentation/hooks/usePresentationControls.ts b/app/apps/client/src/features/presentation/hooks/usePresentationControls.ts
+--- a/app/apps/client/src/features/presentation/hooks/usePresentationControls.ts
++++ b/app/apps/client/src/features/presentation/hooks/usePresentationControls.ts
+@@ -2,6 +2,7 @@
+ 
+ import { presentationStateQueryKey } from './usePresentationState'
+ import {
++  clearLiveHighlights,
+   clearSlide,
+   clearTemporaryContent,
+   navigateQueueSlide,
+@@ -10,9 +11,10 @@
+   presentTemporarySong,
+   showSlide,
+   stopPresentation,
++  updateLiveHighlights,
+   updatePresentationState,
+ } from '../service/presentation'
+-import type { PresentationState } from '../types'
++import type { LiveHighlight, PresentationState } from '../types'
+ 
+ export function useStopPresentation() {
+   const queryClient = useQueryClient()
+@@ -116,3 +118,30 @@
+     },
+   })
+ }
++
++// ============================================================================
++// LIVE HIGHLIGHTS HOOKS (in-memory only, for temporary highlighting)
++// ============================================================================
++
++export function useUpdateLiveHighlights() {
++  const queryClient = useQueryClient()
++
++  return useMutation({
++    mutationFn: (highlights: LiveHighlight[]) =>
++      updateLiveHighlights(highlights),
++    onSuccess: (data: PresentationState) => {
++      queryClient.setQueryData(presentationStateQueryKey, data)
++    },
++  })
++}
++
++export function useClearLiveHighlights() {
++  const queryClient = useQueryClient()
++
++  return useMutation({
++    mutationFn: clearLiveHighlights,
++    onSuccess: (data: PresentationState) => {
++      queryClient.setQueryData(presentationStateQueryKey, data)
++    },
++  })
++}
+Index: app/apps/client/src/features/presentation/utils/defaultConfigs.ts
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/client/src/features/presentation/utils/defaultConfigs.ts b/app/apps/client/src/features/presentation/utils/defaultConfigs.ts
+--- a/app/apps/client/src/features/presentation/utils/defaultConfigs.ts
++++ b/app/apps/client/src/features/presentation/utils/defaultConfigs.ts
+@@ -35,6 +35,8 @@
+     verticalAlignment: 'middle',
+     lineHeight: 1.3,
+     shadow: false,
++    compressLines: false,
++    lineSeparator: 'space',
+     ...overrides,
+   }
+ }
+@@ -183,6 +185,7 @@
+       animationOut: getDefaultAnimationOut(),
+     },
+     clock: getDefaultClockConfig(),
++    includeReferenceInContent: false,
+   }
+ }
+ 
+Index: app/apps/client/src/features/presentation/service/presentation.ts
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/client/src/features/presentation/service/presentation.ts b/app/apps/client/src/features/presentation/service/presentation.ts
+--- a/app/apps/client/src/features/presentation/service/presentation.ts
++++ b/app/apps/client/src/features/presentation/service/presentation.ts
+@@ -1,5 +1,6 @@
+ import { getApiUrl } from '~/config'
+ import type {
++  LiveHighlight,
+   PresentationState,
+   PresentTemporaryBibleInput,
+   PresentTemporarySongInput,
+@@ -213,3 +214,51 @@
+   const result = await response.json()
+   return result.data
+ }
++
++// ============================================================================
++// LIVE HIGHLIGHTS FUNCTIONS (in-memory only, for temporary highlighting)
++// ============================================================================
++
++/**
++ * Update live highlights (temporary, in-memory only)
++ */
++export async function updateLiveHighlights(
++  highlights: LiveHighlight[],
++): Promise<PresentationState> {
++  const response = await fetch(
++    `${getApiUrl()}/api/presentation/live-highlights`,
++    {
++      method: 'PUT',
++      headers: { 'Content-Type': 'application/json' },
++      body: JSON.stringify({ highlights }),
++      credentials: 'include',
++    },
++  )
++
++  if (!response.ok) {
++    throw new Error('Failed to update live highlights')
++  }
++
++  const result = await response.json()
++  return result.data
++}
++
++/**
++ * Clear all live highlights
++ */
++export async function clearLiveHighlights(): Promise<PresentationState> {
++  const response = await fetch(
++    `${getApiUrl()}/api/presentation/live-highlights`,
++    {
++      method: 'DELETE',
++      credentials: 'include',
++    },
++  )
++
++  if (!response.ok) {
++    throw new Error('Failed to clear live highlights')
++  }
++
++  const result = await response.json()
++  return result.data
++}
+Index: app/apps/client/src/features/presentation/service/highlight-colors.ts
+===================================================================
+diff --git a/app/apps/client/src/features/presentation/service/highlight-colors.ts b/app/apps/client/src/features/presentation/service/highlight-colors.ts
+new file mode 100644
+--- /dev/null
++++ b/app/apps/client/src/features/presentation/service/highlight-colors.ts
+@@ -0,0 +1,106 @@
++import { getApiUrl } from '~/config'
++
++const DEBUG = import.meta.env.DEV
++
++function log(level: 'debug' | 'info' | 'error', message: string) {
++  if (level === 'debug' && !DEBUG) return
++  // biome-ignore lint/suspicious/noConsole: logging utility
++  console.log(`[${level.toUpperCase()}] [highlight-colors-service] ${message}`)
++}
++
++export interface HighlightColor {
++  id: number
++  name: string
++  color: string
++  sortOrder: number
++  createdAt: number
++  updatedAt: number
++}
++
++export interface UpsertHighlightColorInput {
++  id?: number
++  name: string
++  color: string
++  sortOrder?: number
++}
++
++export interface ReorderHighlightColorsInput {
++  colorIds: number[]
++}
++
++/**
++ * Fetches all highlight colors
++ */
++export async function getAllHighlightColors(): Promise<HighlightColor[]> {
++  log('debug', 'Fetching all highlight colors')
++
++  const response = await fetch(`${getApiUrl()}/api/highlight-colors`, {
++    credentials: 'include',
++  })
++
++  if (!response.ok) {
++    throw new Error('Failed to fetch highlight colors')
++  }
++
++  const result = await response.json()
++  return result.data
++}
++
++/**
++ * Creates or updates a highlight color
++ */
++export async function upsertHighlightColor(
++  input: UpsertHighlightColorInput,
++): Promise<HighlightColor> {
++  log('debug', `Upserting highlight color: ${input.name}`)
++
++  const response = await fetch(`${getApiUrl()}/api/highlight-colors`, {
++    method: 'POST',
++    headers: { 'Content-Type': 'application/json' },
++    body: JSON.stringify(input),
++    credentials: 'include',
++  })
++
++  if (!response.ok) {
++    throw new Error('Failed to save highlight color')
++  }
++
++  const result = await response.json()
++  return result.data
++}
++
++/**
++ * Deletes a highlight color
++ */
++export async function deleteHighlightColor(id: number): Promise<void> {
++  log('debug', `Deleting highlight color: ${id}`)
++
++  const response = await fetch(`${getApiUrl()}/api/highlight-colors/${id}`, {
++    method: 'DELETE',
++    credentials: 'include',
++  })
++
++  if (!response.ok) {
++    throw new Error('Failed to delete highlight color')
++  }
++}
++
++/**
++ * Reorders highlight colors
++ */
++export async function reorderHighlightColors(
++  input: ReorderHighlightColorsInput,
++): Promise<void> {
++  log('debug', `Reordering ${input.colorIds.length} highlight colors`)
++
++  const response = await fetch(`${getApiUrl()}/api/highlight-colors/reorder`, {
++    method: 'PUT',
++    headers: { 'Content-Type': 'application/json' },
++    body: JSON.stringify(input),
++    credentials: 'include',
++  })
++
++  if (!response.ok) {
++    throw new Error('Failed to reorder highlight colors')
++  }
++}
+Index: app/apps/client/src/features/presentation/types.ts
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/client/src/features/presentation/types.ts b/app/apps/client/src/features/presentation/types.ts
+--- a/app/apps/client/src/features/presentation/types.ts
++++ b/app/apps/client/src/features/presentation/types.ts
+@@ -3,6 +3,15 @@
+  */
+ export type DisplayOpenMode = 'browser' | 'native'
+ 
++/**
++ * Live highlight applied during presentation (in-memory only, not persisted)
++ */
++export interface LiveHighlight {
++  startOffset: number
++  endOffset: number
++  color: string
++}
++
+ /**
+  * Presentation state
+  */
+@@ -15,6 +24,7 @@
+   isPresenting: boolean
+   isHidden: boolean
+   temporaryContent: TemporaryContent | null
++  liveHighlights: LiveHighlight[]
+   updatedAt: number
+ }
+ 
+@@ -30,6 +40,7 @@
+   isPresenting?: boolean
+   isHidden?: boolean
+   temporaryContent?: TemporaryContent | null
++  liveHighlights?: LiveHighlight[]
+ }
+ 
+ // ============================================================================
+@@ -180,6 +191,11 @@
+   heightUnit: PositionUnit
+ }
+ 
++/**
++ * Line separator type for compressed lines
++ */
++export type LineSeparatorType = 'space' | 'dash' | 'pipe'
++
+ /**
+  * Text styling configuration
+  */
+@@ -196,6 +212,9 @@
+   verticalAlignment: 'top' | 'middle' | 'bottom'
+   lineHeight: number
+   shadow?: boolean
++  compressLines?: boolean
++  lineSeparator?: LineSeparatorType
++  fitLineToWidth?: boolean
+ }
+ 
+ /**
+@@ -313,6 +332,7 @@
+   referenceText: ReferenceTextConfig
+   contentText: TextElementConfig
+   clock?: ClockElementConfig
++  includeReferenceInContent?: boolean
+ }
+ 
+ export interface AnnouncementContentConfig {
+Index: app/apps/client/src/features/presentation/components/HighlightablePreview.tsx
+===================================================================
+diff --git a/app/apps/client/src/features/presentation/components/HighlightablePreview.tsx b/app/apps/client/src/features/presentation/components/HighlightablePreview.tsx
+new file mode 100644
+--- /dev/null
++++ b/app/apps/client/src/features/presentation/components/HighlightablePreview.tsx
+@@ -0,0 +1,241 @@
++import { Settings2, X } from 'lucide-react'
++import { useCallback, useEffect, useRef, useState } from 'react'
++import { useTranslation } from 'react-i18next'
++
++import { HighlightColorManager } from './editor/HighlightColorManager'
++import { useHighlightColors } from '../hooks/useHighlightColors'
++import {
++  useClearLiveHighlights,
++  useUpdateLiveHighlights,
++} from '../hooks/usePresentationControls'
++import { usePresentationState } from '../hooks/usePresentationState'
++import type { LiveHighlight } from '../types'
++
++interface HighlightablePreviewProps {
++  children: React.ReactNode
++  /** Text content that is being displayed (used to calculate offsets) */
++  textContent: string
++  /** Whether highlighting is enabled */
++  enabled?: boolean
++}
++
++interface SelectionInfo {
++  startOffset: number
++  endOffset: number
++  rect: DOMRect
++}
++
++/**
++ * Wrapper component that enables live text highlighting on previews.
++ * When text is selected, shows a color picker popup.
++ * Highlights are stored in-memory and broadcast via WebSocket.
++ */
++export function HighlightablePreview({
++  children,
++  textContent,
++  enabled = true,
++}: HighlightablePreviewProps) {
++  const { t } = useTranslation('presentation')
++  const containerRef = useRef<HTMLDivElement>(null)
++  const [selection, setSelection] = useState<SelectionInfo | null>(null)
++  const [isColorManagerOpen, setIsColorManagerOpen] = useState(false)
++
++  const { data: colors = [] } = useHighlightColors()
++  const { data: presentationState } = usePresentationState()
++  const updateHighlights = useUpdateLiveHighlights()
++  const clearHighlights = useClearLiveHighlights()
++
++  const currentHighlights = presentationState?.liveHighlights ?? []
++
++  // Handle text selection
++  const handleMouseUp = useCallback(() => {
++    if (!enabled) return
++
++    const windowSelection = window.getSelection()
++    if (!windowSelection || windowSelection.isCollapsed) {
++      setSelection(null)
++      return
++    }
++
++    const selectedText = windowSelection.toString().trim()
++    if (!selectedText) {
++      setSelection(null)
++      return
++    }
++
++    // Check if selection is within our container
++    const range = windowSelection.getRangeAt(0)
++    if (!containerRef.current?.contains(range.commonAncestorContainer)) {
++      setSelection(null)
++      return
++    }
++
++    // Find the offset in the text content
++    const startOffset = textContent.indexOf(selectedText)
++    if (startOffset === -1) {
++      setSelection(null)
++      return
++    }
++
++    const endOffset = startOffset + selectedText.length
++    const rect = range.getBoundingClientRect()
++
++    setSelection({ startOffset, endOffset, rect })
++  }, [enabled, textContent])
++
++  // Close selection popup when clicking outside
++  useEffect(() => {
++    const handleClickOutside = (e: MouseEvent) => {
++      if (selection && containerRef.current) {
++        const target = e.target as Node
++        // Check if click is outside the popup area
++        const popup = document.getElementById('highlight-popup')
++        if (popup && !popup.contains(target)) {
++          setSelection(null)
++        }
++      }
++    }
++
++    document.addEventListener('mousedown', handleClickOutside)
++    return () => document.removeEventListener('mousedown', handleClickOutside)
++  }, [selection])
++
++  // Apply a highlight color
++  const handleColorClick = useCallback(
++    (color: string) => {
++      if (!selection) return
++
++      const newHighlight: LiveHighlight = {
++        startOffset: selection.startOffset,
++        endOffset: selection.endOffset,
++        color,
++      }
++
++      // Merge with existing highlights (avoid overlaps by replacing)
++      const filteredHighlights = currentHighlights.filter(
++        (h) =>
++          h.endOffset <= selection.startOffset ||
++          h.startOffset >= selection.endOffset,
++      )
++
++      updateHighlights.mutate([...filteredHighlights, newHighlight])
++      setSelection(null)
++      window.getSelection()?.removeAllRanges()
++    },
++    [selection, currentHighlights, updateHighlights],
++  )
++
++  // Remove a specific highlight (when clicking on already highlighted text)
++  const handleRemoveHighlight = useCallback(() => {
++    if (!selection) return
++
++    const filteredHighlights = currentHighlights.filter(
++      (h) =>
++        h.endOffset <= selection.startOffset ||
++        h.startOffset >= selection.endOffset,
++    )
++
++    updateHighlights.mutate(filteredHighlights)
++    setSelection(null)
++    window.getSelection()?.removeAllRanges()
++  }, [selection, currentHighlights, updateHighlights])
++
++  // Check if current selection overlaps with existing highlights
++  const hasExistingHighlight =
++    selection &&
++    currentHighlights.some(
++      (h) =>
++        h.startOffset < selection.endOffset &&
++        h.endOffset > selection.startOffset,
++    )
++
++  // Calculate popup position
++  const popupStyle: React.CSSProperties | undefined = selection
++    ? {
++        position: 'fixed',
++        left: selection.rect.left + selection.rect.width / 2,
++        top: selection.rect.top - 50,
++        transform: 'translateX(-50%)',
++        zIndex: 1000,
++      }
++    : undefined
++
++  return (
++    <div
++      ref={containerRef}
++      onMouseUp={handleMouseUp}
++      className="relative"
++      style={{ userSelect: enabled ? 'text' : 'none' }}
++    >
++      {children}
++
++      {/* Highlight color popup */}
++      {selection && (
++        <div
++          id="highlight-popup"
++          style={popupStyle}
++          className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-2 flex items-center gap-1"
++        >
++          {/* Color swatches */}
++          {colors.map((color) => (
++            <button
++              key={color.id}
++              type="button"
++              onClick={() => handleColorClick(color.color)}
++              className="w-6 h-6 rounded border-2 border-transparent hover:border-gray-400 dark:hover:border-gray-500 transition-all"
++              style={{ backgroundColor: color.color }}
++              title={color.name}
++            />
++          ))}
++
++          {/* Remove highlight button */}
++          {hasExistingHighlight && (
++            <>
++              <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1" />
++              <button
++                type="button"
++                onClick={handleRemoveHighlight}
++                className="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
++                title={t('highlight.removeHighlight', 'Remove Highlight')}
++              >
++                <X className="w-4 h-4" />
++              </button>
++            </>
++          )}
++
++          {/* Manage colors button */}
++          <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1" />
++          <button
++            type="button"
++            onClick={() => {
++              setSelection(null)
++              setIsColorManagerOpen(true)
++            }}
++            className="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
++            title={t('highlight.manageColors', 'Manage Colors')}
++          >
++            <Settings2 className="w-4 h-4" />
++          </button>
++        </div>
++      )}
++
++      {/* Clear all highlights button */}
++      {currentHighlights.length > 0 && (
++        <button
++          type="button"
++          onClick={() => clearHighlights.mutate()}
++          className="absolute top-2 right-2 px-2 py-1 text-xs bg-gray-800/70 text-white rounded hover:bg-gray-700 transition-colors"
++          title={t('highlight.clearAll', 'Clear All Highlights')}
++        >
++          {t('highlight.clearAll', 'Clear All')}
++        </button>
++      )}
++
++      {/* Highlight Color Manager Modal */}
++      <HighlightColorManager
++        isOpen={isColorManagerOpen}
++        onClose={() => setIsColorManagerOpen(false)}
++      />
++    </div>
++  )
++}
+Index: app/apps/client/src/features/presentation/components/rendering/utils/index.ts
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/client/src/features/presentation/components/rendering/utils/index.ts b/app/apps/client/src/features/presentation/components/rendering/utils/index.ts
+--- a/app/apps/client/src/features/presentation/components/rendering/utils/index.ts
++++ b/app/apps/client/src/features/presentation/components/rendering/utils/index.ts
+@@ -1,2 +1,3 @@
+ export * from './calculateNextSlide'
+ export * from './styleUtils'
++export * from './textProcessing'
+Index: app/apps/client/src/features/presentation/components/rendering/utils/fontFitting.ts
+===================================================================
+diff --git a/app/apps/client/src/features/presentation/components/rendering/utils/fontFitting.ts b/app/apps/client/src/features/presentation/components/rendering/utils/fontFitting.ts
+new file mode 100644
+--- /dev/null
++++ b/app/apps/client/src/features/presentation/components/rendering/utils/fontFitting.ts
+@@ -0,0 +1,209 @@
++interface FitFontSizeParams {
++  measureElement: HTMLElement
++  text: string
++  maxWidth: number
++  maxHeight: number
++  minFontSize: number
++  maxFontSize: number
++  lineHeight: number
++}
++
++interface FitFontSizeResult {
++  fontSize: number
++  fits: boolean
++}
++
++// Maximum iterations to prevent infinite loops
++const MAX_ITERATIONS = 20
++
++/**
++ * Binary search to find the largest font size that fits within bounds.
++ *
++ * Algorithm:
++ * 1. Start with low = minFontSize, high = maxFontSize
++ * 2. Test mid = (low + high) / 2
++ * 3. If text fits, try larger (low = mid)
++ * 4. If text doesn't fit, try smaller (high = mid)
++ * 5. Stop when high - low <= tolerance (1px)
++ *
++ * Complexity: O(log n) where n = maxFontSize - minFontSize (~8 iterations for 12-200px)
++ */
++export function findOptimalFontSize(
++  params: FitFontSizeParams,
++): FitFontSizeResult {
++  const {
++    measureElement,
++    text,
++    maxWidth,
++    maxHeight,
++    minFontSize,
++    maxFontSize,
++    lineHeight,
++  } = params
++
++  const tolerance = 1
++
++  // Save original inline styles that we'll modify
++  const savedFontSize = measureElement.style.fontSize
++  const savedWhiteSpace = measureElement.style.whiteSpace
++  const savedWordWrap = measureElement.style.wordWrap
++  const savedWidth = measureElement.style.width
++  const savedHeight = measureElement.style.height
++  const savedLineHeight = measureElement.style.lineHeight
++  const savedOverflow = measureElement.style.overflow
++  const savedTextContent = measureElement.textContent
++
++  try {
++    // Setup measurement styles - don't change position/visibility to avoid layout thrashing
++    measureElement.style.whiteSpace = 'pre-wrap'
++    measureElement.style.wordWrap = 'break-word'
++    measureElement.style.width = `${maxWidth}px`
++    measureElement.style.height = 'auto'
++    measureElement.style.lineHeight = `${lineHeight}`
++    measureElement.style.overflow = 'visible'
++    measureElement.textContent = text
++
++    // Check if even minFontSize doesn't fit
++    measureElement.style.fontSize = `${minFontSize}px`
++    if (measureElement.scrollHeight > maxHeight) {
++      return { fontSize: minFontSize, fits: false }
++    }
++
++    // Check if maxFontSize fits
++    measureElement.style.fontSize = `${maxFontSize}px`
++    if (measureElement.scrollHeight <= maxHeight) {
++      return { fontSize: maxFontSize, fits: true }
++    }
++
++    // Binary search for optimal size
++    let low = minFontSize
++    let high = maxFontSize
++    let iterations = 0
++
++    while (high - low > tolerance && iterations < MAX_ITERATIONS) {
++      iterations++
++      const mid = Math.floor((low + high) / 2)
++      measureElement.style.fontSize = `${mid}px`
++
++      if (measureElement.scrollHeight <= maxHeight) {
++        low = mid
++      } else {
++        high = mid
++      }
++    }
++
++    return { fontSize: low, fits: true }
++  } finally {
++    // Restore original styles
++    measureElement.style.fontSize = savedFontSize
++    measureElement.style.whiteSpace = savedWhiteSpace
++    measureElement.style.wordWrap = savedWordWrap
++    measureElement.style.width = savedWidth
++    measureElement.style.height = savedHeight
++    measureElement.style.lineHeight = savedLineHeight
++    measureElement.style.overflow = savedOverflow
++    measureElement.textContent = savedTextContent
++  }
++}
++
++/**
++ * For fitLineToWidth mode: calculate font size so each line fits width without wrapping.
++ * Returns the minimum font size that allows ALL lines to fit their width.
++ * All lines will use the same font size for visual consistency.
++ */
++export function findOptimalFontSizePerLine(
++  params: FitFontSizeParams,
++): FitFontSizeResult {
++  const {
++    measureElement,
++    text,
++    maxWidth,
++    minFontSize,
++    maxFontSize,
++    lineHeight,
++  } = params
++
++  const tolerance = 1
++  const lines = text.split('\n').filter((line) => line.trim() !== '')
++
++  if (lines.length === 0) {
++    return { fontSize: maxFontSize, fits: true }
++  }
++
++  // Save original inline styles
++  const savedFontSize = measureElement.style.fontSize
++  const savedWhiteSpace = measureElement.style.whiteSpace
++  const savedWidth = measureElement.style.width
++  const savedHeight = measureElement.style.height
++  const savedLineHeight = measureElement.style.lineHeight
++  const savedTextContent = measureElement.textContent
++  const savedDisplay = measureElement.style.display
++  const savedPosition = measureElement.style.position
++  const savedVisibility = measureElement.style.visibility
++
++  try {
++    // Setup measurement element for single-line measurement (no wrap)
++    // Use block display to ensure accurate scrollWidth measurement
++    measureElement.style.display = 'inline-block'
++    measureElement.style.position = 'absolute'
++    measureElement.style.visibility = 'hidden'
++    measureElement.style.whiteSpace = 'nowrap'
++    measureElement.style.width = 'auto'
++    measureElement.style.height = 'auto'
++    measureElement.style.lineHeight = `${lineHeight}`
++
++    // Find optimal size for each line (must fit width)
++    let minOptimalSize = maxFontSize
++
++    for (const line of lines) {
++      measureElement.textContent = line
++
++      // Check if maxFontSize fits for this line
++      measureElement.style.fontSize = `${maxFontSize}px`
++      const widthAtMax = measureElement.scrollWidth
++
++      if (widthAtMax <= maxWidth) {
++        continue
++      }
++
++      // Binary search for this line
++      let low = minFontSize
++      let high = maxFontSize
++      let iterations = 0
++
++      while (high - low > tolerance && iterations < MAX_ITERATIONS) {
++        iterations++
++        const mid = Math.floor((low + high) / 2)
++        measureElement.style.fontSize = `${mid}px`
++
++        if (measureElement.scrollWidth <= maxWidth) {
++          low = mid
++        } else {
++          high = mid
++        }
++      }
++
++      minOptimalSize = Math.min(minOptimalSize, low)
++    }
++
++    // For fitLineToWidth mode, we prioritize width fitting
++    // Do NOT apply height constraints - the user explicitly chose width-fitting behavior
++    // If text overflows vertically, that's acceptable (user can adjust element height)
++
++    return {
++      fontSize: Math.max(minOptimalSize, minFontSize),
++      fits: true,
++    }
++  } finally {
++    // Restore original styles - let React handle the content
++    measureElement.style.fontSize = savedFontSize
++    measureElement.style.whiteSpace = savedWhiteSpace
++    measureElement.style.width = savedWidth
++    measureElement.style.height = savedHeight
++    measureElement.style.lineHeight = savedLineHeight
++    measureElement.style.display = savedDisplay
++    measureElement.style.position = savedPosition
++    measureElement.style.visibility = savedVisibility
++    measureElement.textContent = savedTextContent
++  }
++}
+Index: app/apps/client/src/features/presentation/components/rendering/utils/textProcessing.ts
+===================================================================
+diff --git a/app/apps/client/src/features/presentation/components/rendering/utils/textProcessing.ts b/app/apps/client/src/features/presentation/components/rendering/utils/textProcessing.ts
+new file mode 100644
+--- /dev/null
++++ b/app/apps/client/src/features/presentation/components/rendering/utils/textProcessing.ts
+@@ -0,0 +1,112 @@
++import type { LineSeparatorType } from '../../../types'
++
++/**
++ * Map separator type to actual separator string
++ */
++const SEPARATOR_MAP: Record<LineSeparatorType, string> = {
++  space: '  ',
++  dash: ' — ',
++  pipe: ' | ',
++}
++
++/**
++ * Get the separator string for a given separator type
++ */
++export function getSeparatorString(separator: LineSeparatorType): string {
++  return SEPARATOR_MAP[separator] ?? SEPARATOR_MAP.space
++}
++
++/**
++ * Simple line compression - always combines pairs of lines.
++ * Font scaling will handle fitting the combined text.
++ *
++ * Example with 4 lines:
++ * Input:  "Line 1\nLine 2\nLine 3\nLine 4"
++ * Output: "Line 1 — Line 2\nLine 3 — Line 4"
++ */
++export function compressLines(
++  text: string,
++  separator: LineSeparatorType,
++): string {
++  const lines = text.split('\n').filter((line) => line.trim() !== '')
++
++  if (lines.length <= 1) {
++    return text.trim()
++  }
++
++  const separatorStr = getSeparatorString(separator)
++  const resultLines: string[] = []
++
++  for (let i = 0; i < lines.length; i += 2) {
++    const firstLine = lines[i].trim()
++    const secondLine = lines[i + 1]?.trim()
++
++    if (secondLine) {
++      resultLines.push(`${firstLine}${separatorStr}${secondLine}`)
++    } else {
++      resultLines.push(firstLine)
++    }
++  }
++
++  return resultLines.join('\n')
++}
++
++/**
++ * Compress lines only if combined text fits within threshold of container width.
++ * Uses a measurement function to check actual rendered width.
++ *
++ * Example with 4 lines where all pairs fit:
++ * Input:  ["Line 1", "Line 2", "Line 3", "Line 4"]
++ * Output: "Line 1 — Line 2\nLine 3 — Line 4"
++ *
++ * Example where first pair fits but second doesn't:
++ * Input:  ["Short", "Text", "Very long line here", "Another long line"]
++ * Output: "Short — Text\nVery long line here\nAnother long line"
++ *
++ * @param text - The text to compress (with newline-separated lines)
++ * @param separator - The separator type to use between combined lines
++ * @param measureWidth - Function that measures text width in pixels
++ * @param maxWidth - Container width in pixels
++ * @param fitThreshold - Fraction of maxWidth that combined text must fit (default 0.7 = 70%)
++ * @returns Compressed text with combined lines where they fit
++ */
++export function compressTextLinesWithFit(
++  text: string,
++  separator: LineSeparatorType,
++  measureWidth: (text: string) => number,
++  maxWidth: number,
++  fitThreshold: number = 0.7,
++): string {
++  const lines = text.split('\n').filter((line) => line.trim() !== '')
++
++  if (lines.length <= 1) {
++    return text.trim()
++  }
++
++  const separatorStr = getSeparatorString(separator)
++  const thresholdWidth = maxWidth * fitThreshold
++  const resultLines: string[] = []
++
++  for (let i = 0; i < lines.length; i += 2) {
++    const firstLine = lines[i].trim()
++    const secondLine = lines[i + 1]?.trim()
++
++    if (secondLine) {
++      const combined = `${firstLine}${separatorStr}${secondLine}`
++      const combinedWidth = measureWidth(combined)
++
++      if (combinedWidth <= thresholdWidth) {
++        // Fits - use compressed version
++        resultLines.push(combined)
++      } else {
++        // Doesn't fit - keep separate
++        resultLines.push(firstLine)
++        resultLines.push(secondLine)
++      }
++    } else {
++      resultLines.push(firstLine)
++    }
++  }
++
++  return resultLines.join('\n')
++}
+Index: app/apps/client/src/features/presentation/components/rendering/TextContent.tsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/client/src/features/presentation/components/rendering/TextContent.tsx b/app/apps/client/src/features/presentation/components/rendering/TextContent.tsx
+--- a/app/apps/client/src/features/presentation/components/rendering/TextContent.tsx
++++ b/app/apps/client/src/features/presentation/components/rendering/TextContent.tsx
+@@ -1,14 +1,42 @@
+ import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+ 
++import {
++  findOptimalFontSize,
++  findOptimalFontSizePerLine,
++} from './utils/fontFitting'
+ import { getTextStyleCSS } from './utils/styleUtils'
+-import type { TextStyle } from '../../types'
++import { compressLines } from './utils/textProcessing'
++import type { LiveHighlight, TextStyle } from '../../types'
++
++/**
++ * Represents a text segment with optional highlight color.
++ */
++interface TextSegment {
++  text: string
++  highlightColor?: string
++}
+ 
+ /**
+- * Converts HTML content to plain text with newlines.
+- * Replaces block elements like <p> with newlines and decodes HTML entities.
+- * This ensures auto-scaling works correctly (no margin issues from block elements).
++ * Decodes common HTML entities in a string.
+  */
+-function convertHtmlToText(html: string): string {
++function decodeHtmlEntities(text: string): string {
++  return text
++    .replace(/&quot;/g, '"')
++    .replace(/&amp;/g, '&')
++    .replace(/&lt;/g, '<')
++    .replace(/&gt;/g, '>')
++    .replace(/&apos;/g, "'")
++    .replace(/&nbsp;/g, ' ')
++    .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(Number(dec)))
++    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) =>
++      String.fromCharCode(parseInt(hex, 16)),
++    )
++}
++
++/**
++ * Preprocesses HTML to normalize block elements into newlines.
++ */
++function normalizeBlockElements(html: string): string {
+   return (
+     html
+       // Replace </p><p> with newline (paragraph transitions)
+@@ -19,23 +47,95 @@
+       .replace(/<(p|div|h[1-6])[^>]*>/gi, '')
+       // Replace closing block tags with newline
+       .replace(/<\/(p|div|h[1-6])>/gi, '\n')
+-      // Remove any remaining HTML tags
+-      .replace(/<[^>]*>/g, '')
+-      // Decode common HTML entities
+-      .replace(/&quot;/g, '"')
+-      .replace(/&amp;/g, '&')
+-      .replace(/&lt;/g, '<')
+-      .replace(/&gt;/g, '>')
+-      .replace(/&apos;/g, "'")
+-      .replace(/&nbsp;/g, ' ')
+-      .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(Number(dec)))
+-      .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) =>
+-        String.fromCharCode(parseInt(hex, 16)),
++  )
++}
++
++/**
++ * Parses HTML content into segments, preserving <mark> elements with their colors.
++ * Returns an array of text segments, each with optional highlight color.
++ */
++function parseHtmlToSegments(html: string): TextSegment[] {
++  // First normalize block elements
++  const normalized = normalizeBlockElements(html)
++
++  const segments: TextSegment[] = []
++
++  // Match <mark> tags with their attributes and content
++  // Pattern captures: full match, attributes, inner content
++  const markRegex = /<mark([^>]*)>(.*?)<\/mark>/gis
++
++  let lastIndex = 0
++  let match: RegExpExecArray | null
++
++  while ((match = markRegex.exec(normalized)) !== null) {
++    // Add text before this mark tag (if any)
++    if (match.index > lastIndex) {
++      const textBefore = normalized.slice(lastIndex, match.index)
++      const cleanedText = decodeHtmlEntities(textBefore.replace(/<[^>]*>/g, ''))
++      if (cleanedText) {
++        segments.push({ text: cleanedText })
++      }
++    }
++
++    // Extract color from mark attributes
++    const attributes = match[1]
++    const content = match[2]
++
++    // Try to get color from data-color attribute or style
++    let color: string | undefined
++    const dataColorMatch = attributes.match(/data-color=["']([^"']+)["']/)
++    if (dataColorMatch) {
++      color = dataColorMatch[1]
++    } else {
++      const styleMatch = attributes.match(
++        /style=["'][^"']*background-color:\s*([^;"']+)/i,
+       )
+-      // Clean up multiple consecutive newlines
+-      .replace(/\n{3,}/g, '\n\n')
+-      .trim()
+-  )
++      if (styleMatch) {
++        color = styleMatch[1].trim()
++      }
++    }
++
++    // Clean the content inside mark (remove any nested HTML tags)
++    const cleanedContent = decodeHtmlEntities(content.replace(/<[^>]*>/g, ''))
++    if (cleanedContent) {
++      segments.push({ text: cleanedContent, highlightColor: color })
++    }
++
++    lastIndex = match.index + match[0].length
++  }
++
++  // Add remaining text after the last mark tag
++  if (lastIndex < normalized.length) {
++    const remainingText = normalized.slice(lastIndex)
++    const cleanedText = decodeHtmlEntities(
++      remainingText.replace(/<[^>]*>/g, ''),
++    )
++    if (cleanedText) {
++      segments.push({ text: cleanedText })
++    }
++  }
++
++  // If no segments were created (no mark tags found), return the whole text as one segment
++  if (segments.length === 0) {
++    const cleanedText = decodeHtmlEntities(normalized.replace(/<[^>]*>/g, ''))
++    if (cleanedText) {
++      segments.push({ text: cleanedText })
++    }
++  }
++
++  return segments
++}
++
++/**
++ * Converts HTML content to plain text with newlines.
++ * Replaces block elements like <p> with newlines and decodes HTML entities.
++ * This ensures auto-scaling works correctly (no margin issues from block elements).
++ */
++function convertHtmlToText(html: string): string {
++  const normalized = normalizeBlockElements(html)
++  return decodeHtmlEntities(normalized.replace(/<[^>]*>/g, ''))
++    .replace(/\n{3,}/g, '\n\n')
++    .trim()
+ }
+ 
+ interface TextContentProps {
+@@ -43,8 +143,170 @@
+   style: TextStyle
+   containerWidth: number
+   containerHeight: number
+-  padding?: number
+   isHtml?: boolean
++  /** Live highlights applied during presentation (in-memory only) */
++  liveHighlights?: LiveHighlight[]
++}
++
++/**
++ * Applies live highlights to text segments.
++ * Live highlights are offset-based and override any existing HTML highlights.
++ */
++function applyLiveHighlights(
++  segments: TextSegment[],
++  highlights: LiveHighlight[],
++): TextSegment[] {
++  if (!highlights.length) return segments
++
++  // First, flatten segments to get the full text
++  const fullText = segments.map((s) => s.text).join('')
++
++  // Sort highlights by start offset
++  const sortedHighlights = [...highlights].sort(
++    (a, b) => a.startOffset - b.startOffset,
++  )
++
++  // Build new segments by splitting at highlight boundaries
++  const result: TextSegment[] = []
++  let currentPos = 0
++
++  for (const highlight of sortedHighlights) {
++    // Skip invalid highlights
++    if (highlight.startOffset >= fullText.length) continue
++    if (highlight.endOffset <= 0) continue
++
++    const start = Math.max(0, highlight.startOffset)
++    const end = Math.min(fullText.length, highlight.endOffset)
++
++    // Add text before highlight
++    if (start > currentPos) {
++      const textBefore = fullText.slice(currentPos, start)
++      if (textBefore) {
++        result.push({ text: textBefore })
++      }
++    }
++
++    // Add highlighted text
++    const highlightedText = fullText.slice(start, end)
++    if (highlightedText) {
++      result.push({ text: highlightedText, highlightColor: highlight.color })
++    }
++
++    currentPos = end
++  }
++
++  // Add remaining text after last highlight
++  if (currentPos < fullText.length) {
++    const remaining = fullText.slice(currentPos)
++    if (remaining) {
++      result.push({ text: remaining })
++    }
++  }
++
++  return result.length > 0 ? result : segments
++}
++
++/**
++ * Applies line compression to segments while preserving highlight information.
++ */
++function compressSegments(
++  segments: TextSegment[],
++  separator: 'space' | 'slash',
++): TextSegment[] {
++  // First, join all segments into one string to apply compression
++  const fullText = segments.map((s) => s.text).join('')
++  const compressedText = compressLines(fullText, separator)
++
++  // If no highlights exist, return simple compressed text
++  const hasHighlights = segments.some((s) => s.highlightColor)
++  if (!hasHighlights) {
++    return [{ text: compressedText }]
++  }
++
++  // For highlighted content, we need to map the compression back to segments
++  // This is complex because compression joins lines. For now, we'll
++  // rebuild segments by tracking character positions.
++  const result: TextSegment[] = []
++  let compressedPos = 0
++
++  for (const segment of segments) {
++    const segmentLength = segment.text.length
++    let segmentText = ''
++
++    // Find where this segment's text appears in the compressed output
++    for (
++      let i = 0;
++      i < segmentLength && compressedPos < compressedText.length;
++      i++
++    ) {
++      const origChar = segment.text[i]
++      const compChar = compressedText[compressedPos]
++
++      // Handle newlines that got converted to separators
++      if (origChar === '\n') {
++        // Skip the newline, the separator is already in compressedText
++        continue
++      }
++
++      if (origChar === compChar) {
++        segmentText += compChar
++        compressedPos++
++      }
++    }
++
++    if (segmentText) {
++      result.push({ text: segmentText, highlightColor: segment.highlightColor })
++    }
++  }
++
++  // Add any remaining compressed text
++  if (compressedPos < compressedText.length) {
++    const remaining = compressedText.slice(compressedPos)
++    if (remaining) {
++      // Attach to last segment if it exists, otherwise create new
++      if (result.length > 0) {
++        result[result.length - 1].text += remaining
++      } else {
++        result.push({ text: remaining })
++      }
++    }
++  }
++
++  return result
++}
++
++/**
++ * Renders text segments with optional highlight colors.
++ */
++function renderSegments(segments: TextSegment[]): React.ReactNode {
++  if (segments.length === 0) {
++    return null
++  }
++
++  // If no highlights, just return plain text
++  const hasHighlights = segments.some((s) => s.highlightColor)
++  if (!hasHighlights) {
++    return segments.map((s) => s.text).join('')
++  }
++
++  // Render segments with highlights as spans
++  return segments.map((segment, index) => {
++    if (segment.highlightColor) {
++      return (
++        <span
++          key={index}
++          style={{
++            backgroundColor: segment.highlightColor,
++            borderRadius: '2px',
++            padding: '0 2px',
++          }}
++        >
++          {segment.text}
++        </span>
++      )
++    }
++    return <span key={index}>{segment.text}</span>
++  })
+ }
+ 
+ export function TextContent({
+@@ -52,8 +314,8 @@
+   style,
+   containerWidth,
+   containerHeight,
+-  padding = 0,
+   isHtml = false,
++  liveHighlights = [],
+ }: TextContentProps) {
+   const textRef = useRef<HTMLDivElement>(null)
+   const [calculatedFontSize, setCalculatedFontSize] = useState<number | null>(
+@@ -61,10 +323,15 @@
+   )
+   const prevContentRef = useRef<string>(content)
+ 
+-  // Convert HTML to plain text if needed
+-  const processedContent = useMemo(() => {
++  // Convert HTML to plain text for font size calculation
++  const baseContent = useMemo(() => {
+     return isHtml ? convertHtmlToText(content) : content
+   }, [content, isHtml])
++
++  // Parse HTML to segments for rendering with highlights
++  const baseSegments = useMemo(() => {
++    return isHtml ? parseHtmlToSegments(content) : [{ text: content }]
++  }, [content, isHtml])
+ 
+   // Track if content changed THIS render cycle (for immediate hiding)
+   const contentChangedThisRender = prevContentRef.current !== content
+@@ -77,66 +344,85 @@
+     }
+   }
+ 
+-  // Auto-scale text using single-pass ratio calculation
++  // Compute processed content - compression happens here based on current settings
++  const [processedSegments, setProcessedSegments] =
++    useState<TextSegment[]>(baseSegments)
++
++  // Auto-scale text using binary search for accurate font fitting
++  // Also handles line compression with fit checking
+   useLayoutEffect(() => {
+-    if (!style.autoScale) {
+-      setCalculatedFontSize(style.maxFontSize)
+-      return
+-    }
+-
+     if (!textRef.current) {
+       return
+     }
+ 
+     const textElement = textRef.current
+-    const spanElement = textElement.querySelector('span')
+-    if (!spanElement) {
++    const maxWidth = containerWidth
++    const maxHeight = containerHeight
++
++    if (maxWidth <= 0 || maxHeight <= 0) {
++      return
++    }
++
++    // Handle line compression - always combine pairs when enabled
++    let finalContent = baseContent
++    let finalSegments = baseSegments
++    if (style.compressLines) {
++      finalContent = compressLines(baseContent, style.lineSeparator ?? 'space')
++      finalSegments = compressSegments(
++        baseSegments,
++        style.lineSeparator ?? 'space',
++      )
++    }
++
++    // Apply live highlights (in-memory, temporary highlights)
++    if (liveHighlights.length > 0) {
++      finalSegments = applyLiveHighlights(finalSegments, liveHighlights)
++    }
++
++    // Always update processed segments to reflect current state
++    setProcessedSegments(finalSegments)
++
++    if (!style.autoScale) {
+       setCalculatedFontSize(style.maxFontSize)
+       return
+     }
+ 
+-    const maxWidth = containerWidth - padding * 2
+-    const maxHeight = containerHeight - padding * 2
+-
+-    if (maxWidth <= 0 || maxHeight <= 0) {
+-      return
+-    }
+-
+-    // Set to max size for measurement (element is hidden, so user won't see this)
+-    textElement.style.fontSize = `${style.maxFontSize}px`
+-    textElement.style.overflow = 'visible'
+-    textElement.style.width = 'auto'
+-    textElement.style.height = 'auto'
+-    textElement.style.whiteSpace = 'pre-wrap'
+-
+-    // Force reflow and measure once
+-    const contentWidth = spanElement.offsetWidth
+-    const contentHeight = spanElement.offsetHeight
+-
+-    // Calculate scale ratio
+-    const widthRatio = maxWidth / contentWidth
+-    const heightRatio = maxHeight / contentHeight
+-    const ratio = Math.min(widthRatio, heightRatio, 1) // Don't scale up beyond max
+-
+-    // Calculate final font size using minFontSize from config (default 12px)
+     const minFontSize = style.minFontSize ?? 12
+-    const finalSize = Math.max(
+-      Math.floor(style.maxFontSize * ratio),
+-      minFontSize,
+-    )
++    const lineHeight = style.lineHeight ?? 1.3
++
++    // Use binary search for accurate font fitting
++    const result = style.fitLineToWidth
++      ? findOptimalFontSizePerLine({
++          measureElement: textElement,
++          text: finalContent,
++          maxWidth,
++          maxHeight,
++          minFontSize,
++          maxFontSize: style.maxFontSize,
++          lineHeight,
++        })
++      : findOptimalFontSize({
++          measureElement: textElement,
++          text: finalContent,
++          maxWidth,
++          maxHeight,
++          minFontSize,
++          maxFontSize: style.maxFontSize,
++          lineHeight,
++        })
+ 
+-    // Restore styles
+-    textElement.style.overflow = 'hidden'
+-    textElement.style.width = '100%'
+-    textElement.style.height = '100%'
+-
+-    setCalculatedFontSize(finalSize)
++    setCalculatedFontSize(result.fontSize)
+   }, [
+-    processedContent,
++    baseContent,
++    baseSegments,
++    liveHighlights,
+     style.autoScale,
+     style.maxFontSize,
+     style.minFontSize,
+-    padding,
++    style.compressLines,
++    style.lineSeparator,
++    style.fitLineToWidth,
++    style.lineHeight,
+     containerWidth,
+     containerHeight,
+   ])
+@@ -150,7 +436,6 @@
+   const textStyles: React.CSSProperties = {
+     ...getTextStyleCSS(style),
+     fontSize: `${fontSize}px`,
+-    padding,
+     width: '100%',
+     height: '100%',
+     display: 'flex',
+@@ -167,14 +452,14 @@
+           ? 'flex-end'
+           : 'flex-start',
+     overflow: 'hidden',
+-    wordWrap: 'break-word',
+-    whiteSpace: 'pre-wrap',
++    wordWrap: style.fitLineToWidth ? 'normal' : 'break-word',
++    whiteSpace: style.fitLineToWidth ? 'pre' : 'pre-wrap',
+     visibility: isReady ? 'visible' : 'hidden',
+   }
+ 
+   return (
+     <div ref={textRef} style={textStyles}>
+-      <span className="w-full">{processedContent}</span>
++      {renderSegments(processedSegments)}
+     </div>
+   )
+ }
+Index: app/apps/client/src/features/presentation/components/rendering/TextElement.tsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/client/src/features/presentation/components/rendering/TextElement.tsx b/app/apps/client/src/features/presentation/components/rendering/TextElement.tsx
+--- a/app/apps/client/src/features/presentation/components/rendering/TextElement.tsx
++++ b/app/apps/client/src/features/presentation/components/rendering/TextElement.tsx
+@@ -2,6 +2,7 @@
+ 
+ import { AnimatedElement } from './AnimatedElement'
+ import { calculatePixelBounds, getTextStyleCSS } from './utils/styleUtils'
++import { compressTextLinesWithFit } from './utils/textProcessing'
+ import type {
+   PersonLabelConfig,
+   ReferenceTextConfig,
+@@ -72,11 +73,21 @@
+   // Track previous content to detect changes
+   const prevContentRef = useRef<string>(content)
+ 
+-  // Convert HTML to plain text if needed - this ensures auto-scaling works correctly
+-  const processedContent = useMemo(() => {
++  // Convert HTML to plain text (compression happens in useLayoutEffect where we can measure)
++  const baseContent = useMemo(() => {
+     return isHtml ? convertHtmlToText(content) : content
+   }, [content, isHtml])
+ 
++  // Final processed content (after compression decision)
++  const [processedContent, setProcessedContent] = useState(baseContent)
++
++  // Update processedContent when baseContent changes
++  useLayoutEffect(() => {
++    if (!config.style.compressLines) {
++      setProcessedContent(baseContent)
++    }
++  }, [baseContent, config.style.compressLines])
++
+   // Track if content changed THIS render cycle (for immediate hiding)
+   const contentChangedThisRender = prevContentRef.current !== content
+ 
+@@ -89,7 +100,6 @@
+   }
+ 
+   // Get optional properties with defaults
+-  const padding = 'padding' in config ? (config.padding ?? 0) : 0
+   const animationIn = 'animationIn' in config ? config.animationIn : undefined
+   const animationOut =
+     'animationOut' in config ? config.animationOut : undefined
+@@ -114,12 +124,8 @@
+   const size = { width: bounds.width, height: bounds.height }
+ 
+   // Auto-scale text using single-pass ratio calculation
++  // Also handles line compression with fit checking
+   useLayoutEffect(() => {
+-    if (!config.style.autoScale) {
+-      setCalculatedFontSize(config.style.maxFontSize)
+-      return
+-    }
+-
+     if (!textRef.current) {
+       return
+     }
+@@ -127,12 +133,14 @@
+     const textElement = textRef.current
+     const spanElement = textElement.querySelector('span')
+     if (!spanElement) {
+-      setCalculatedFontSize(config.style.maxFontSize)
++      if (!config.style.autoScale) {
++        setCalculatedFontSize(config.style.maxFontSize)
++      }
+       return
+     }
+ 
+-    const maxWidth = size.width - padding * 2
+-    const maxHeight = size.height - padding * 2
++    const maxWidth = size.width
++    const maxHeight = size.height
+ 
+     if (maxWidth <= 0 || maxHeight <= 0) {
+       return
+@@ -145,7 +153,36 @@
+     textElement.style.height = 'auto'
+     textElement.style.whiteSpace = 'pre-wrap'
+ 
+-    // Force reflow and measure once
++    // Handle line compression with fit checking
++    let finalContent = baseContent
++    if (config.style.compressLines) {
++      const measureWidth = (text: string) => {
++        spanElement.textContent = text
++        return spanElement.offsetWidth
++      }
++      finalContent = compressTextLinesWithFit(
++        baseContent,
++        config.style.lineSeparator ?? 'space',
++        measureWidth,
++        maxWidth,
++        0.7, // 70% threshold
++      )
++    }
++
++    // Update the span with final content and measure
++    spanElement.textContent = finalContent
++    setProcessedContent(finalContent)
++
++    if (!config.style.autoScale) {
++      setCalculatedFontSize(config.style.maxFontSize)
++      // Restore styles
++      textElement.style.overflow = 'hidden'
++      textElement.style.width = '100%'
++      textElement.style.height = '100%'
++      return
++    }
++
++    // Force reflow and measure
+     const contentWidth = spanElement.offsetWidth
+     const contentHeight = spanElement.offsetHeight
+ 
+@@ -168,11 +205,12 @@
+ 
+     setCalculatedFontSize(finalSize)
+   }, [
+-    processedContent,
++    baseContent,
+     config.style.autoScale,
+     config.style.maxFontSize,
+     config.style.minFontSize,
+-    padding,
++    config.style.compressLines,
++    config.style.lineSeparator,
+     size.width,
+     size.height,
+   ])
+@@ -185,12 +223,10 @@
+   // Apply scale to font size for display
+   const baseFontSize = calculatedFontSize ?? config.style.maxFontSize
+   const scaledFontSize = baseFontSize * scale
+-  const scaledPadding = padding * scale
+ 
+   const textStyles: React.CSSProperties = {
+     ...getTextStyleCSS(config.style),
+     fontSize: `${scaledFontSize}px`,
+-    padding: scaledPadding,
+     width: '100%',
+     height: '100%',
+     display: 'flex',
+Index: app/apps/client/src/features/presentation/components/rendering/ScreenContent.tsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/client/src/features/presentation/components/rendering/ScreenContent.tsx b/app/apps/client/src/features/presentation/components/rendering/ScreenContent.tsx
+--- a/app/apps/client/src/features/presentation/components/rendering/ScreenContent.tsx
++++ b/app/apps/client/src/features/presentation/components/rendering/ScreenContent.tsx
+@@ -6,7 +6,12 @@
+   getBackgroundCSS,
+   getTextStyleCSS,
+ } from './utils/styleUtils'
+-import type { ContentType, ScreenWithConfigs } from '../../types'
++import type {
++  BibleContentConfig,
++  ContentType,
++  LiveHighlight,
++  ScreenWithConfigs,
++} from '../../types'
+ 
+ interface ScreenContentProps {
+   screen: ScreenWithConfigs
+@@ -17,6 +22,9 @@
+   showClock?: boolean
+   isVisible?: boolean
+   nextSlideData?: NextSlideData
++  fillContainer?: boolean
++  /** Live highlights applied during presentation (in-memory only) */
++  liveHighlights?: LiveHighlight[]
+ }
+ 
+ export function ScreenContent({
+@@ -28,10 +36,12 @@
+   showClock = true,
+   isVisible = true,
+   nextSlideData,
++  fillContainer = false,
++  liveHighlights = [],
+ }: ScreenContentProps) {
+   const config = screen.contentConfigs[contentType]
+-  const canvasWidth = screen.width
+-  const canvasHeight = screen.height
++  const canvasWidth = fillContainer ? containerWidth : screen.width
++  const canvasHeight = fillContainer ? containerHeight : screen.height
+ 
+   // Calculate scale maintaining aspect ratio
+   const scaleX = containerWidth / canvasWidth
+@@ -63,7 +73,6 @@
+       width: bounds.width * scale,
+       height: bounds.height * scale,
+     }
+-    const padding = ('padding' in mt ? (mt.padding ?? 0) : 0) * scale
+ 
+     return (
+       <AnimatedElement
+@@ -83,13 +92,12 @@
+           content={contentData.mainText}
+           style={{
+             ...mt.style,
+-            autoScale: true,
+             maxFontSize: mt.style.maxFontSize * scale,
+           }}
+           containerWidth={scaledBounds.width}
+           containerHeight={scaledBounds.height}
+-          padding={padding}
+           isHtml={true}
++          liveHighlights={liveHighlights}
+         />
+       </AnimatedElement>
+     )
+@@ -115,6 +123,14 @@
+       height: bounds.height * scale,
+     }
+ 
++    // Check if reference should be prepended to content
++    const bibleConfig = config as BibleContentConfig
++    const shouldPrependReference =
++      bibleConfig.includeReferenceInContent && contentData.referenceText
++    const displayContent = shouldPrependReference
++      ? `${contentData.referenceText} ${contentData.contentText}`
++      : contentData.contentText
++
+     return (
+       <AnimatedElement
+         key="contentText"
+@@ -130,15 +146,15 @@
+         }}
+       >
+         <TextContent
+-          content={contentData.contentText}
++          content={displayContent}
+           style={{
+             ...ct.style,
+-            autoScale: true,
+             maxFontSize: ct.style.maxFontSize * scale,
+           }}
+           containerWidth={scaledBounds.width}
+           containerHeight={scaledBounds.height}
+           isHtml={false}
++          liveHighlights={liveHighlights}
+         />
+       </AnimatedElement>
+     )
+@@ -151,6 +167,11 @@
+ 
+     const rt = config.referenceText
+     if (rt.hidden) return null
++
++    // Skip rendering if reference is included in content
++    const bibleConfig = config as BibleContentConfig
++    if (bibleConfig.includeReferenceInContent) return null
++
+     const bounds = calculatePixelBounds(
+       rt.constraints,
+       rt.size,
+@@ -182,7 +203,6 @@
+           content={contentData.referenceText}
+           style={{
+             ...rt.style,
+-            autoScale: true,
+             maxFontSize: rt.style.maxFontSize * scale,
+           }}
+           containerWidth={scaledBounds.width}
+@@ -231,7 +251,6 @@
+           content={contentData.personLabel}
+           style={{
+             ...pl.style,
+-            autoScale: true,
+             maxFontSize: pl.style.maxFontSize * scale,
+           }}
+           containerWidth={scaledBounds.width}
+Index: app/apps/client/src/features/presentation/components/rendering/ScreenRenderer.tsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/client/src/features/presentation/components/rendering/ScreenRenderer.tsx b/app/apps/client/src/features/presentation/components/rendering/ScreenRenderer.tsx
+--- a/app/apps/client/src/features/presentation/components/rendering/ScreenRenderer.tsx
++++ b/app/apps/client/src/features/presentation/components/rendering/ScreenRenderer.tsx
+@@ -198,6 +198,20 @@
+     }
+   }, [])
+ 
++  // Make html and body transparent for screen display (allows user-configured backgrounds)
++  useEffect(() => {
++    const originalHtmlBg = document.documentElement.style.backgroundColor
++    const originalBodyBg = document.body.style.backgroundColor
++
++    document.documentElement.style.backgroundColor = 'transparent'
++    document.body.style.backgroundColor = 'transparent'
++
++    return () => {
++      document.documentElement.style.backgroundColor = originalHtmlBg
++      document.body.style.backgroundColor = originalBodyBg
++    }
++  }, [])
++
+   // Handle keyboard shortcuts
+   useEffect(() => {
+     const handleKeyDown = (e: KeyboardEvent) => {
+@@ -515,6 +529,8 @@
+           showClock={true}
+           isVisible={isVisible}
+           nextSlideData={nextSlideData}
++          fillContainer={true}
++          liveHighlights={presentationState?.liveHighlights}
+         />
+       )}
+     </div>
+Index: app/apps/client/src/features/presentation/components/rendering/ContentRenderer.tsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/client/src/features/presentation/components/rendering/ContentRenderer.tsx b/app/apps/client/src/features/presentation/components/rendering/ContentRenderer.tsx
+--- a/app/apps/client/src/features/presentation/components/rendering/ContentRenderer.tsx
++++ b/app/apps/client/src/features/presentation/components/rendering/ContentRenderer.tsx
+@@ -164,18 +164,28 @@
+   isVisible,
+   showClock,
+ }: BibleRendererProps) {
++  // Determine if reference should be included in content
++  const showReferenceElement =
++    !config.includeReferenceInContent && !config.referenceText.hidden
++  const displayContent =
++    config.includeReferenceInContent && reference
++      ? `${reference} ${content}`
++      : content
++
+   return (
+     <>
+-      <TextElement
+-        config={config.referenceText}
+-        content={reference}
+-        screenWidth={screenWidth}
+-        screenHeight={screenHeight}
+-        isVisible={isVisible}
+-      />
++      {showReferenceElement && (
++        <TextElement
++          config={config.referenceText}
++          content={reference}
++          screenWidth={screenWidth}
++          screenHeight={screenHeight}
++          isVisible={isVisible}
++        />
++      )}
+       <TextElement
+         config={config.contentText}
+-        content={content}
++        content={displayContent}
+         screenWidth={screenWidth}
+         screenHeight={screenHeight}
+         isVisible={isVisible}
+Index: app/apps/client/src/features/presentation/components/screen-editor/hooks/useEditorState.ts
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/client/src/features/presentation/components/screen-editor/hooks/useEditorState.ts b/app/apps/client/src/features/presentation/components/screen-editor/hooks/useEditorState.ts
+--- a/app/apps/client/src/features/presentation/components/screen-editor/hooks/useEditorState.ts
++++ b/app/apps/client/src/features/presentation/components/screen-editor/hooks/useEditorState.ts
+@@ -17,12 +17,30 @@
+   | { type: 'nextSlide' }
+   | null
+ 
++export type PreviewTextKey = 'main' | 'reference' | 'person'
++
++export interface PreviewTexts {
++  main?: string
++  reference?: string
++  person?: string
++}
++
++const initialPreviewTexts: Record<ContentType, PreviewTexts> = {
++  song: {},
++  bible: {},
++  bible_passage: {},
++  announcement: {},
++  versete_tineri: {},
++  empty: {},
++}
++
+ interface EditorState {
+   screen: ScreenWithConfigs | null
+   selectedContentType: ContentType
+   selectedElement: SelectedElement
+   zoom: number
+   isDirty: boolean
++  previewTexts: Record<ContentType, PreviewTexts>
+ }
+ 
+ interface EditorActions {
+@@ -40,6 +58,12 @@
+   updateScreenSize: (width: number, height: number) => void
+   clearSelection: () => void
+   markClean: () => void
++  setPreviewText: (
++    contentType: ContentType,
++    key: PreviewTextKey,
++    text: string,
++  ) => void
++  resetPreviewTexts: (contentType?: ContentType) => void
+ }
+ 
+ export function useEditorState(): [EditorState, EditorActions] {
+@@ -49,6 +73,8 @@
+   const [selectedElement, setSelectedElement] = useState<SelectedElement>(null)
+   const [zoom, setZoom] = useState(1)
+   const [isDirty, setIsDirty] = useState(false)
++  const [previewTexts, setPreviewTexts] =
++    useState<Record<ContentType, PreviewTexts>>(initialPreviewTexts)
+ 
+   const setScreen = useCallback((newScreen: ScreenWithConfigs) => {
+     setScreenState(newScreen)
+@@ -122,6 +148,30 @@
+     setIsDirty(false)
+   }, [])
+ 
++  const setPreviewText = useCallback(
++    (contentType: ContentType, key: PreviewTextKey, text: string) => {
++      setPreviewTexts((prev) => ({
++        ...prev,
++        [contentType]: {
++          ...prev[contentType],
++          [key]: text || undefined,
++        },
++      }))
++    },
++    [],
++  )
++
++  const resetPreviewTexts = useCallback((contentType?: ContentType) => {
++    if (contentType) {
++      setPreviewTexts((prev) => ({
++        ...prev,
++        [contentType]: {},
++      }))
++    } else {
++      setPreviewTexts(initialPreviewTexts)
++    }
++  }, [])
++
+   const actions = useMemo(
+     () => ({
+       setScreen,
+@@ -135,6 +185,8 @@
+       updateScreenSize,
+       clearSelection,
+       markClean,
++      setPreviewText,
++      resetPreviewTexts,
+     }),
+     [
+       setScreen,
+@@ -148,6 +200,8 @@
+       updateScreenSize,
+       clearSelection,
+       markClean,
++      setPreviewText,
++      resetPreviewTexts,
+     ],
+   )
+ 
+@@ -158,6 +212,7 @@
+       selectedElement,
+       zoom,
+       isDirty,
++      previewTexts,
+     },
+     actions,
+   ]
+Index: app/apps/client/src/features/presentation/components/screen-editor/ScreenEditor.tsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/client/src/features/presentation/components/screen-editor/ScreenEditor.tsx b/app/apps/client/src/features/presentation/components/screen-editor/ScreenEditor.tsx
+--- a/app/apps/client/src/features/presentation/components/screen-editor/ScreenEditor.tsx
++++ b/app/apps/client/src/features/presentation/components/screen-editor/ScreenEditor.tsx
+@@ -320,6 +320,7 @@
+           contentType={state.selectedContentType}
+           selectedElement={state.selectedElement}
+           zoom={state.zoom}
++          previewTexts={state.previewTexts[state.selectedContentType]}
+           onSelectElement={actions.setSelectedElement}
+           onUpdateElement={handleUpdateElement}
+         />
+@@ -329,6 +330,13 @@
+           screen={state.screen}
+           contentType={state.selectedContentType}
+           selectedElement={state.selectedElement}
++          previewTexts={state.previewTexts[state.selectedContentType]}
++          onSetPreviewText={(key, text) =>
++            actions.setPreviewText(state.selectedContentType, key, text)
++          }
++          onResetPreviewTexts={() =>
++            actions.resetPreviewTexts(state.selectedContentType)
++          }
+           onUpdateContentConfig={actions.updateContentConfig}
+           onUpdateNextSlideConfig={actions.updateNextSlideConfig}
+           onUpdateGlobalSettings={actions.updateGlobalSettings}
+Index: app/apps/client/src/features/presentation/components/screen-editor/ScreenEditorCanvas.tsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/client/src/features/presentation/components/screen-editor/ScreenEditorCanvas.tsx b/app/apps/client/src/features/presentation/components/screen-editor/ScreenEditorCanvas.tsx
+--- a/app/apps/client/src/features/presentation/components/screen-editor/ScreenEditorCanvas.tsx
++++ b/app/apps/client/src/features/presentation/components/screen-editor/ScreenEditorCanvas.tsx
+@@ -1,7 +1,8 @@
+ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+ 
+-import type { SelectedElement } from './hooks/useEditorState'
++import type { PreviewTexts, SelectedElement } from './hooks/useEditorState'
+ import type {
++  BibleContentConfig,
+   Constraints,
+   ContentType,
+   ScreenWithConfigs,
+@@ -19,6 +20,7 @@
+   contentType: ContentType
+   selectedElement: SelectedElement
+   zoom: number
++  previewTexts?: PreviewTexts
+   onSelectElement: (element: SelectedElement) => void
+   onUpdateElement: (
+     elementType: string,
+@@ -475,6 +477,7 @@
+   contentType,
+   selectedElement,
+   zoom,
++  previewTexts,
+   onSelectElement,
+   onUpdateElement,
+ }: ScreenEditorCanvasProps) {
+@@ -483,10 +486,20 @@
+   const [displaySize, setDisplaySize] = useState({ width: 800, height: 450 })
+ 
+   const config = screen.contentConfigs[contentType]
+-  const sample = SAMPLE_CONTENT[contentType]
++  const defaultSample = SAMPLE_CONTENT[contentType]
+   const canvasWidth = screen.width
+   const canvasHeight = screen.height
+ 
++  // Merge custom preview texts with defaults
++  const sample = useMemo(
++    () => ({
++      main: previewTexts?.main || defaultSample?.main,
++      reference: previewTexts?.reference || defaultSample?.reference,
++      person: previewTexts?.person || defaultSample?.person,
++    }),
++    [contentType, previewTexts, defaultSample],
++  )
++
+   // Calculate display size to fit container while maintaining aspect ratio
+   useEffect(() => {
+     const updateSize = () => {
+@@ -571,7 +584,6 @@
+             style={{ ...mt.style, maxFontSize: mt.style.maxFontSize * scale }}
+             containerWidth={bounds.width * scale}
+             containerHeight={bounds.height * scale}
+-            padding={mt.padding * scale}
+             isHtml={true}
+           />
+         </DraggableElement>,
+@@ -587,6 +599,14 @@
+         canvasHeight,
+       )
+ 
++      // Check if reference should be prepended to content (Bible types only)
++      const bibleConfig = config as BibleContentConfig
++      const shouldPrependReference =
++        bibleConfig.includeReferenceInContent && sample?.reference
++      const displayContent = shouldPrependReference
++        ? `${sample.reference} ${sample?.main ?? 'Content Text'}`
++        : (sample?.main ?? 'Content Text')
++
+       els.push(
+         <DraggableElement
+           key="contentText"
+@@ -608,7 +628,7 @@
+           canvasRef={canvasRef}
+         >
+           <TextContent
+-            content={sample?.main ?? 'Content Text'}
++            content={displayContent}
+             style={{ ...ct.style, maxFontSize: ct.style.maxFontSize * scale }}
+             containerWidth={bounds.width * scale}
+             containerHeight={bounds.height * scale}
+@@ -627,6 +647,10 @@
+         canvasHeight,
+       )
+ 
++      // Check if reference is included in content (Bible types only)
++      const bibleConfig = config as BibleContentConfig
++      const isHiddenByInlineReference = bibleConfig.includeReferenceInContent
++
+       els.push(
+         <DraggableElement
+           key="referenceText"
+@@ -637,7 +661,7 @@
+           constraints={rt.constraints}
+           size={rt.size}
+           isSelected={selectedElement?.type === 'referenceText'}
+-          isHidden={rt.hidden}
++          isHidden={rt.hidden || isHiddenByInlineReference}
+           onClick={() => onSelectElement({ type: 'referenceText' })}
+           onConstraintChange={handleConstraintChange('referenceText')}
+           onSizeChange={handleSizeChange('referenceText')}
+Index: app/apps/client/src/features/presentation/components/screen-editor/ScreenEditorSidebar.tsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/client/src/features/presentation/components/screen-editor/ScreenEditorSidebar.tsx b/app/apps/client/src/features/presentation/components/screen-editor/ScreenEditorSidebar.tsx
+--- a/app/apps/client/src/features/presentation/components/screen-editor/ScreenEditorSidebar.tsx
++++ b/app/apps/client/src/features/presentation/components/screen-editor/ScreenEditorSidebar.tsx
+@@ -12,15 +12,21 @@
+ import { useState } from 'react'
+ import { useTranslation } from 'react-i18next'
+ 
++import { Button } from '~/ui/button/Button'
+ import { Checkbox } from '~/ui/checkbox/Checkbox'
+ import { Combobox } from '~/ui/combobox/Combobox'
+ import { Input } from '~/ui/input/Input'
+ import { Label } from '~/ui/label/Label'
+ import { Slider } from '~/ui/slider/Slider'
+ import { ConstraintControls } from './ConstraintControls'
+-import type { SelectedElement } from './hooks/useEditorState'
++import type {
++  PreviewTextKey,
++  PreviewTexts,
++  SelectedElement,
++} from './hooks/useEditorState'
+ import type {
+   AnimationConfig,
++  BibleContentConfig,
+   ClockElementConfig,
+   Constraints,
+   ContentType,
+@@ -37,6 +43,9 @@
+   screen: ScreenWithConfigs
+   contentType: ContentType
+   selectedElement: SelectedElement
++  previewTexts?: PreviewTexts
++  onSetPreviewText?: (key: PreviewTextKey, text: string) => void
++  onResetPreviewTexts?: () => void
+   onUpdateContentConfig: (
+     contentType: ContentType,
+     config: ContentTypeConfig,
+@@ -110,10 +119,20 @@
+   { value: 'video', label: 'Video' },
+ ]
+ 
++// Line separator options
++const LINE_SEPARATORS = [
++  { value: 'space', key: 'space' },
++  { value: 'dash', key: 'dash' },
++  { value: 'pipe', key: 'pipe' },
++]
++
+ export function ScreenEditorSidebar({
+   screen,
+   contentType,
+   selectedElement,
++  previewTexts,
++  onSetPreviewText,
++  onResetPreviewTexts,
+   onUpdateContentConfig,
+   onUpdateNextSlideConfig,
+   onUpdateGlobalSettings,
+@@ -307,10 +326,34 @@
+                     options={FONT_FAMILIES}
+                     className="w-full"
+                   />
++                </div>
++                <div className="space-y-2">
++                  <Checkbox
++                    checked={
++                      (selectedConfig.config as { style: TextStyle }).style
++                        .autoScale ?? true
++                    }
++                    onCheckedChange={(checked) => {
++                      const newStyle = {
++                        ...(selectedConfig.config as { style: TextStyle })
++                          .style,
++                        autoScale: !!checked,
++                      }
++                      updateConfig([...selectedConfig.path, 'style'], newStyle)
++                    }}
++                    label={t('screens.textStyle.autoScale')}
++                  />
++                  <p className="text-xs text-gray-500 dark:text-gray-400 ml-6">
++                    {t('screens.textStyle.autoScaleDescription')}
++                  </p>
+                 </div>
+                 <div>
+                   <Label className="text-xs text-gray-500 dark:text-gray-400">
+-                    Max Font Size (px)
++                    {((selectedConfig.config as { style: TextStyle }).style
++                      .autoScale ?? true)
++                      ? t('screens.textStyle.maxFontSize')
++                      : t('screens.textStyle.fontSize')}{' '}
++                    (px)
+                   </Label>
+                   <Input
+                     type="number"
+@@ -481,6 +524,137 @@
+                     ))}
+                   </div>
+                 </div>
++                {/* Line Compression Section */}
++                <div className="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-700">
++                  <Checkbox
++                    checked={
++                      (selectedConfig.config as { style: TextStyle }).style
++                        .compressLines ?? false
++                    }
++                    onCheckedChange={(checked) => {
++                      const newStyle = {
++                        ...(selectedConfig.config as { style: TextStyle })
++                          .style,
++                        compressLines: !!checked,
++                      }
++                      updateConfig([...selectedConfig.path, 'style'], newStyle)
++                    }}
++                    label={t('screens.textStyle.compressLines')}
++                  />
++                  {(selectedConfig.config as { style: TextStyle }).style
++                    .compressLines && (
++                    <div>
++                      <Label className="text-xs text-gray-500 dark:text-gray-400">
++                        {t('screens.textStyle.lineSeparator')}
++                      </Label>
++                      <Combobox
++                        value={
++                          (selectedConfig.config as { style: TextStyle }).style
++                            .lineSeparator ?? 'space'
++                        }
++                        onChange={(value) => {
++                          const newStyle = {
++                            ...(selectedConfig.config as { style: TextStyle })
++                              .style,
++                            lineSeparator: value as 'space' | 'dash' | 'pipe',
++                          }
++                          updateConfig(
++                            [...selectedConfig.path, 'style'],
++                            newStyle,
++                          )
++                        }}
++                        options={LINE_SEPARATORS.map((opt) => ({
++                          value: opt.value,
++                          label: t(`screens.textStyle.separators.${opt.key}`),
++                        }))}
++                        className="w-full"
++                      />
++                    </div>
++                  )}
++                  <Checkbox
++                    checked={
++                      (selectedConfig.config as { style: TextStyle }).style
++                        .fitLineToWidth ?? false
++                    }
++                    onCheckedChange={(checked) => {
++                      const newStyle = {
++                        ...(selectedConfig.config as { style: TextStyle })
++                          .style,
++                        fitLineToWidth: !!checked,
++                      }
++                      updateConfig([...selectedConfig.path, 'style'], newStyle)
++                    }}
++                    label={t('screens.textStyle.fitLineToWidth')}
++                  />
++                  <p className="text-xs text-gray-500 dark:text-gray-400 ml-6">
++                    {t('screens.textStyle.fitLineToWidthDescription')}
++                  </p>
++                </div>
++              </div>
++            </Section>
++          )}
++
++          {/* Preview Text Section */}
++          {'style' in selectedConfig.config && (
++            <Section
++              title={t('screens.editor.previewText')}
++              icon={Eye}
++              defaultOpen={false}
++            >
++              <div className="space-y-3">
++                <p className="text-xs text-gray-500 dark:text-gray-400">
++                  {t('screens.editor.previewTextDescription')}
++                </p>
++                <div>
++                  <Label className="text-xs text-gray-500 dark:text-gray-400">
++                    {t('screens.editor.customPreviewText')}
++                  </Label>
++                  <textarea
++                    className="w-full h-24 px-3 py-2 text-sm border rounded-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
++                    placeholder={t('screens.editor.previewTextPlaceholder')}
++                    value={(() => {
++                      if (!selectedElement || !previewTexts) return ''
++                      switch (selectedElement.type) {
++                        case 'mainText':
++                        case 'contentText':
++                          return previewTexts.main ?? ''
++                        case 'referenceText':
++                          return previewTexts.reference ?? ''
++                        case 'personLabel':
++                          return previewTexts.person ?? ''
++                        default:
++                          return ''
++                      }
++                    })()}
++                    onChange={(e) => {
++                      if (!selectedElement || !onSetPreviewText) return
++                      switch (selectedElement.type) {
++                        case 'mainText':
++                        case 'contentText':
++                          onSetPreviewText('main', e.target.value)
++                          break
++                        case 'referenceText':
++                          onSetPreviewText('reference', e.target.value)
++                          break
++                        case 'personLabel':
++                          onSetPreviewText('person', e.target.value)
++                          break
++                      }
++                    }}
++                  />
++                </div>
++                {previewTexts &&
++                  (previewTexts.main ||
++                    previewTexts.reference ||
++                    previewTexts.person) && (
++                    <Button
++                      variant="ghost"
++                      size="sm"
++                      onClick={() => onResetPreviewTexts?.()}
++                    >
++                      {t('screens.editor.resetPreviewText')}
++                    </Button>
++                  )}
+               </div>
+             </Section>
+           )}
+@@ -1156,6 +1330,37 @@
+               )}
+             </div>
+           </Section>
++
++          {/* Bible Options - only show for bible content types */}
++          {(contentType === 'bible' || contentType === 'bible_passage') && (
++            <Section
++              title={t('screens.bibleOptions.title')}
++              icon={Settings}
++              defaultOpen={false}
++            >
++              <div className="space-y-3">
++                <Checkbox
++                  checked={
++                    (config as BibleContentConfig).includeReferenceInContent ??
++                    false
++                  }
++                  onCheckedChange={(checked) => {
++                    const bibleConfig = config as BibleContentConfig
++                    onUpdateContentConfig(contentType, {
++                      ...bibleConfig,
++                      includeReferenceInContent: !!checked,
++                    })
++                  }}
++                  label={t('screens.bibleOptions.includeReferenceInContent')}
++                />
++                <p className="text-xs text-gray-500 dark:text-gray-400 ml-6">
++                  {t(
++                    'screens.bibleOptions.includeReferenceInContentDescription',
++                  )}
++                </p>
++              </div>
++            </Section>
++          )}
+ 
+           {/* Clock Settings */}
+           <Section title="Clock" icon={Type} defaultOpen={false}>
+Index: app/apps/client/src/features/presentation/components/screen-manager/ScreenManager.tsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/client/src/features/presentation/components/screen-manager/ScreenManager.tsx b/app/apps/client/src/features/presentation/components/screen-manager/ScreenManager.tsx
+--- a/app/apps/client/src/features/presentation/components/screen-manager/ScreenManager.tsx
++++ b/app/apps/client/src/features/presentation/components/screen-manager/ScreenManager.tsx
+@@ -8,6 +8,7 @@
+   Trash2,
+ } from 'lucide-react'
+ import { useCallback, useState } from 'react'
++import { useTranslation } from 'react-i18next'
+ 
+ import { Button } from '~/ui/button/Button'
+ import { Combobox } from '~/ui/combobox/Combobox'
+@@ -42,6 +43,7 @@
+ }
+ 
+ export function ScreenManager() {
++  const { t } = useTranslation('presentation')
+   const { showToast } = useToast()
+ 
+   const { data: screens, isLoading } = useScreens()
+@@ -89,22 +91,14 @@
+   const handleSaveScreen = useCallback(
+     async (screen: ScreenWithConfigs) => {
+       try {
+-        // Check if dimensions changed
+-        const dimensionsChanged =
+-          editingScreen &&
+-          (editingScreen.width !== screen.width ||
+-            editingScreen.height !== screen.height)
+-
+-        // Update dimensions if changed
+-        if (dimensionsChanged) {
+-          await upsertScreen.mutateAsync({
+-            id: screen.id,
+-            name: screen.name,
+-            type: screen.type,
+-            width: screen.width,
+-            height: screen.height,
+-          })
+-        }
++        // Always update screen properties (including dimensions)
++        await upsertScreen.mutateAsync({
++          id: screen.id,
++          name: screen.name,
++          type: screen.type,
++          width: screen.width,
++          height: screen.height,
++        })
+ 
+         // Single atomic batch update of all screen configs
+         await batchUpdateConfig.mutateAsync({
+@@ -120,7 +114,7 @@
+         showToast('Failed to save screen', 'error')
+       }
+     },
+-    [batchUpdateConfig, upsertScreen, editingScreen, showToast],
++    [batchUpdateConfig, upsertScreen, showToast],
+   )
+ 
+   const handleCloseEditor = () => {
+@@ -262,7 +256,7 @@
+               <div className="flex items-center gap-3">
+                 <div className="flex items-center gap-2">
+                   <span className="text-sm text-gray-500 dark:text-gray-400">
+-                    {screen.isActive ? 'Active' : 'Inactive'}
++                    {t('screens.nativeWindow')}
+                   </span>
+                   <Switch
+                     checked={screen.isActive}
+Index: app/apps/client/src/features/presentation/components/LivePreview.tsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/client/src/features/presentation/components/LivePreview.tsx b/app/apps/client/src/features/presentation/components/LivePreview.tsx
+--- a/app/apps/client/src/features/presentation/components/LivePreview.tsx
++++ b/app/apps/client/src/features/presentation/components/LivePreview.tsx
+@@ -1,6 +1,7 @@
+ import { useEffect, useMemo, useState } from 'react'
+ 
+ import { getApiUrl } from '~/config'
++import { HighlightablePreview } from './HighlightablePreview'
+ import { ScreenPreview } from './ScreenPreview'
+ import { usePresentationState, useWebSocket } from '../hooks'
+ import { useScreen } from '../hooks/useScreen'
+@@ -227,6 +228,21 @@
+ 
+   const hasContent = Object.keys(contentData).length > 0
+   const showClock = !hasContent || presentationState?.isHidden
++  const liveHighlights = presentationState?.liveHighlights ?? []
++
++  // Get text content for highlighting (combine all text elements)
++  const textContent = useMemo(() => {
++    const parts: string[] = []
++    if (contentData.mainText) parts.push(contentData.mainText)
++    if (contentData.contentText) parts.push(contentData.contentText)
++    if (contentData.referenceText) parts.push(contentData.referenceText)
++    if (contentData.personLabel) parts.push(contentData.personLabel)
++    // Strip HTML tags to get plain text for offset matching
++    return parts
++      .join(' ')
++      .replace(/<[^>]*>/g, '')
++      .trim()
++  }, [contentData])
+ 
+   // Loading state
+   if (!screen) {
+@@ -239,12 +255,18 @@
+ 
+   return (
+     <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow-lg">
+-      <ScreenPreview
+-        screen={screen}
+-        contentType={contentType}
+-        contentData={contentData}
+-        showClock={showClock}
+-      />
++      <HighlightablePreview
++        textContent={textContent}
++        enabled={hasContent && !presentationState?.isHidden}
++      >
++        <ScreenPreview
++          screen={screen}
++          contentType={contentType}
++          contentData={contentData}
++          showClock={showClock}
++          liveHighlights={liveHighlights}
++        />
++      </HighlightablePreview>
+     </div>
+   )
+ }
+Index: app/apps/client/src/features/presentation/components/ScreenPreview.tsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/client/src/features/presentation/components/ScreenPreview.tsx b/app/apps/client/src/features/presentation/components/ScreenPreview.tsx
+--- a/app/apps/client/src/features/presentation/components/ScreenPreview.tsx
++++ b/app/apps/client/src/features/presentation/components/ScreenPreview.tsx
+@@ -3,13 +3,15 @@
+ import { ScreenContent } from './rendering/ScreenContent'
+ import type { ContentData } from './rendering/types'
+ import { getBackgroundCSS } from './rendering/utils/styleUtils'
+-import type { ContentType, ScreenWithConfigs } from '../types'
++import type { ContentType, LiveHighlight, ScreenWithConfigs } from '../types'
+ 
+ interface ScreenPreviewProps {
+   screen: ScreenWithConfigs
+   contentType: ContentType
+   contentData: ContentData
+   showClock?: boolean
++  /** Live highlights applied during presentation (in-memory only) */
++  liveHighlights?: LiveHighlight[]
+ }
+ 
+ export function ScreenPreview({
+@@ -17,6 +19,7 @@
+   contentType,
+   contentData,
+   showClock = true,
++  liveHighlights = [],
+ }: ScreenPreviewProps) {
+   const containerRef = useRef<HTMLDivElement>(null)
+   const [displaySize, setDisplaySize] = useState({ width: 400, height: 225 })
+@@ -79,6 +82,7 @@
+         containerHeight={displaySize.height}
+         showClock={showClock}
+         isVisible={true}
++        liveHighlights={liveHighlights}
+       />
+     </div>
+   )
+Index: app/apps/client/src/features/keyboard-shortcuts/components/GlobalAppShortcutManager.tsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/client/src/features/keyboard-shortcuts/components/GlobalAppShortcutManager.tsx b/app/apps/client/src/features/keyboard-shortcuts/components/GlobalAppShortcutManager.tsx
+--- a/app/apps/client/src/features/keyboard-shortcuts/components/GlobalAppShortcutManager.tsx
++++ b/app/apps/client/src/features/keyboard-shortcuts/components/GlobalAppShortcutManager.tsx
+@@ -60,21 +60,38 @@
+   }, [scenes])
+ 
+   const handleStartLive = useCallback(() => {
+-    // Synchronous ref check works immediately (React state may be stale)
+-    if (
+-      isStartOperationRef.current ||
+-      isLive ||
+-      isStarting ||
+-      isStartingStream
+-    ) {
+-      logger.debug('Skipping start - livestream is already live or starting')
++    // Toggle behavior: if already streaming, stop instead
++    if (isStreaming || isLive) {
++      if (isStopOperationRef.current || isStopping) {
++        logger.debug('Skipping stop - already stopping')
++        return
++      }
++      isStopOperationRef.current = true
++      logger.info('Stopping live stream via shortcut (toggle)')
++      navigate({ to: '/livestream' })
++      stop()
++      return
++    }
++
++    // Start stream
++    if (isStartOperationRef.current || isStarting || isStartingStream) {
++      logger.debug('Skipping start - already starting')
+       return
+     }
+     isStartOperationRef.current = true
+     logger.info('Starting live stream via shortcut')
+-    navigate({ to: '/livestream/' })
++    navigate({ to: '/livestream' })
+     start()
+-  }, [start, navigate, isLive, isStarting, isStartingStream])
++  }, [
++    start,
++    stop,
++    navigate,
++    isLive,
++    isStreaming,
++    isStarting,
++    isStopping,
++    isStartingStream,
++  ])
+ 
+   const handleStopLive = useCallback(() => {
+     // Allow stopping if live OR if currently starting (to cancel a start in progress)
+Index: app/apps/client/package.json
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/client/package.json b/app/apps/client/package.json
+--- a/app/apps/client/package.json
++++ b/app/apps/client/package.json
+@@ -28,6 +28,8 @@
+     "@tauri-apps/plugin-shell": "^2.2.0",
+     "@tauri-apps/plugin-websocket": "^2.4.1",
+     "@tiptap/core": "^3.11.1",
++    "@tiptap/extension-bubble-menu": "^3.14.0",
++    "@tiptap/extension-highlight": "^3.14.0",
+     "@tiptap/extension-text-align": "^3.11.1",
+     "@tiptap/pm": "^3.11.1",
+     "@tiptap/react": "^3.11.1",
+Index: app/apps/server/src/db/schema/index.ts
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/server/src/db/schema/index.ts b/app/apps/server/src/db/schema/index.ts
+--- a/app/apps/server/src/db/schema/index.ts
++++ b/app/apps/server/src/db/schema/index.ts
+@@ -2,6 +2,7 @@
+ export * from './app-settings'
+ export * from './auth'
+ export * from './bible'
++export * from './highlight-colors'
+ export * from './livestream'
+ export * from './presentation'
+ export * from './relations'
+Index: app/apps/server/src/db/schema/highlight-colors.ts
+===================================================================
+diff --git a/app/apps/server/src/db/schema/highlight-colors.ts b/app/apps/server/src/db/schema/highlight-colors.ts
+new file mode 100644
+--- /dev/null
++++ b/app/apps/server/src/db/schema/highlight-colors.ts
+@@ -0,0 +1,19 @@
++import { sql } from 'drizzle-orm'
++import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
++
++export const highlightColors = sqliteTable(
++  'highlight_colors',
++  {
++    id: integer('id').primaryKey({ autoIncrement: true }),
++    name: text('name').notNull(),
++    color: text('color').notNull(), // Hex: "#FFEB3B"
++    sortOrder: integer('sort_order').notNull().default(0),
++    createdAt: integer('created_at', { mode: 'timestamp' })
++      .notNull()
++      .default(sql`(unixepoch())`),
++    updatedAt: integer('updated_at', { mode: 'timestamp' })
++      .notNull()
++      .default(sql`(unixepoch())`),
++  },
++  (table) => [index('idx_highlight_colors_sort_order').on(table.sortOrder)],
++)
+Index: app/apps/server/src/db/fixtures/default-highlight-colors.json
+===================================================================
+diff --git a/app/apps/server/src/db/fixtures/default-highlight-colors.json b/app/apps/server/src/db/fixtures/default-highlight-colors.json
+new file mode 100644
+--- /dev/null
++++ b/app/apps/server/src/db/fixtures/default-highlight-colors.json
+@@ -0,0 +1,5 @@
++[
++  { "name": "Yellow", "color": "#FFEB3B", "sortOrder": 0 },
++  { "name": "Red", "color": "#EF5350", "sortOrder": 1 },
++  { "name": "Green", "color": "#66BB6A", "sortOrder": 2 }
++]
+Index: app/apps/server/src/db/migrations/index.ts
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/server/src/db/migrations/index.ts b/app/apps/server/src/db/migrations/index.ts
+--- a/app/apps/server/src/db/migrations/index.ts
++++ b/app/apps/server/src/db/migrations/index.ts
+@@ -5,6 +5,7 @@
+ import { EMBEDDED_MIGRATIONS } from './embedded'
+ import { seedSystemRoles } from './seed'
+ import { seedBibleTranslations } from './seed-bibles'
++import { seedHighlightColors } from './seed-highlight-colors'
+ import { seedDefaultScreens } from './seed-screens'
+ import { seedAppSettings } from './seed-settings'
+ import { seedSongCategories } from './seed-song-categories'
+@@ -135,6 +136,10 @@
+   log('info', 'Seeding app settings...')
+   seedAppSettings(rawDb)
+ 
++  // Seed highlight colors (predefined colors for text highlighting)
++  log('info', 'Seeding highlight colors...')
++  seedHighlightColors(rawDb)
++
+   return { ftsRecreated: true }
+ }
+ 
+Index: app/apps/server/src/db/migrations/embedded.ts
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/server/src/db/migrations/embedded.ts b/app/apps/server/src/db/migrations/embedded.ts
+--- a/app/apps/server/src/db/migrations/embedded.ts
++++ b/app/apps/server/src/db/migrations/embedded.ts
+@@ -113,6 +113,13 @@
+       tag: '0013_add_temporary_content',
+       breakpoints: true,
+     },
++    {
++      idx: 14,
++      version: '6',
++      when: 1767200000000,
++      tag: '0014_add_highlight_colors',
++      breakpoints: true,
++    },
+   ],
+ } as const
+ 
+@@ -187,4 +194,9 @@
+     sql: 'ALTER TABLE `presentation_state` ADD COLUMN `temporary_content` text;\r\n',
+     when: 1767100000000,
+   },
++  {
++    tag: '0014_add_highlight_colors',
++    sql: 'CREATE TABLE `highlight_colors` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`name` text NOT NULL,\n\t`color` text NOT NULL,\n\t`sort_order` integer DEFAULT 0 NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE INDEX `idx_highlight_colors_sort_order` ON `highlight_colors` (`sort_order`);',
++    when: 1767200000000,
++  },
+ ]
+Index: app/apps/server/src/db/migrations/seed-highlight-colors.ts
+===================================================================
+diff --git a/app/apps/server/src/db/migrations/seed-highlight-colors.ts b/app/apps/server/src/db/migrations/seed-highlight-colors.ts
+new file mode 100644
+--- /dev/null
++++ b/app/apps/server/src/db/migrations/seed-highlight-colors.ts
+@@ -0,0 +1,57 @@
++import { existsSync } from 'node:fs'
++import { join } from 'node:path'
++
++import type { Database } from 'bun:sqlite'
++
++const DEBUG = process.env.DEBUG === 'true'
++
++function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
++  if (level === 'debug' && !DEBUG) return
++  // biome-ignore lint/suspicious/noConsole: seed logging
++  console.log(`[seed-highlight-colors:${level}] ${message}`)
++}
++
++interface HighlightColorFixture {
++  name: string
++  color: string
++  sortOrder: number
++}
++
++const FIXTURE_PATH = join(
++  import.meta.dir,
++  '../fixtures/default-highlight-colors.json',
++)
++
++/**
++ * Seeds default highlight colors from fixture file.
++ * Uses INSERT OR IGNORE to avoid duplicates on subsequent runs.
++ */
++export function seedHighlightColors(db: Database): void {
++  log('debug', 'Checking if highlight colors fixture exists...')
++
++  if (!existsSync(FIXTURE_PATH)) {
++    log('debug', 'No highlight colors fixture found, skipping seed')
++    return
++  }
++
++  const colors = require(FIXTURE_PATH) as HighlightColorFixture[]
++
++  if (!Array.isArray(colors) || colors.length === 0) {
++    log('debug', 'Highlight colors fixture is empty, skipping seed')
++    return
++  }
++
++  log('info', 'Seeding highlight colors from fixtures...')
++
++  for (const color of colors) {
++    db.run(
++      `INSERT OR IGNORE INTO highlight_colors
++        (name, color, sort_order, created_at, updated_at)
++        VALUES (?, ?, ?, unixepoch(), unixepoch())`,
++      [color.name, color.color, color.sortOrder],
++    )
++    log('debug', `Seeded highlight color: ${color.name} (${color.color})`)
++  }
++
++  log('info', `Seeded ${colors.length} highlight color(s) from fixtures`)
++}
+Index: app/apps/server/src/openapi/paths/index.ts
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/server/src/openapi/paths/index.ts b/app/apps/server/src/openapi/paths/index.ts
+--- a/app/apps/server/src/openapi/paths/index.ts
++++ b/app/apps/server/src/openapi/paths/index.ts
+@@ -4,6 +4,7 @@
+ export { conversionPaths } from './conversion'
+ export { devicesPaths } from './devices'
+ export { healthPaths } from './health'
++export { highlightColorsPaths } from './highlight-colors'
+ export { presentationPaths } from './presentation'
+ export { queuePaths } from './queue'
+ export { schedulesPaths } from './schedules'
+Index: app/apps/server/src/openapi/schemas/index.ts
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/server/src/openapi/schemas/index.ts b/app/apps/server/src/openapi/schemas/index.ts
+--- a/app/apps/server/src/openapi/schemas/index.ts
++++ b/app/apps/server/src/openapi/schemas/index.ts
+@@ -1,6 +1,7 @@
+ export { bibleSchemas } from './bible'
+ export { commonSchemas } from './common'
+ export { deviceSchemas } from './devices'
++export { highlightColorSchemas } from './highlight-colors'
+ export { presentationSchemas } from './presentation'
+ export { queueSchemas } from './queue'
+ export { scheduleSchemas } from './schedules'
+Index: app/apps/server/src/openapi/spec.ts
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/server/src/openapi/spec.ts b/app/apps/server/src/openapi/spec.ts
+--- a/app/apps/server/src/openapi/spec.ts
++++ b/app/apps/server/src/openapi/spec.ts
+@@ -10,6 +10,7 @@
+   conversionPaths,
+   devicesPaths,
+   healthPaths,
++  highlightColorsPaths,
+   presentationPaths,
+   queuePaths,
+   schedulesPaths,
+@@ -21,6 +22,7 @@
+   bibleSchemas,
+   commonSchemas,
+   deviceSchemas,
++  highlightColorSchemas,
+   presentationSchemas,
+   queueSchemas,
+   scheduleSchemas,
+@@ -59,6 +61,10 @@
+     },
+     { name: 'Presentation', description: 'Presentation state control' },
+     { name: 'Conversion', description: 'File format conversion utilities' },
++    {
++      name: 'Highlight Colors',
++      description: 'Text highlight color management',
++    },
+   ],
+   paths: {
+     ...healthPaths,
+@@ -73,6 +79,7 @@
+     ...screensPaths,
+     ...presentationPaths,
+     ...conversionPaths,
++    ...highlightColorsPaths,
+   },
+   components: {
+     securitySchemes,
+@@ -85,6 +92,7 @@
+       ...scheduleSchemas,
+       ...screenSchemas,
+       ...presentationSchemas,
++      ...highlightColorSchemas,
+     },
+     responses,
+   },
+Index: app/apps/server/src/service/presentation/types.ts
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/server/src/service/presentation/types.ts b/app/apps/server/src/service/presentation/types.ts
+--- a/app/apps/server/src/service/presentation/types.ts
++++ b/app/apps/server/src/service/presentation/types.ts
+@@ -3,6 +3,15 @@
+  */
+ export type DisplayOpenMode = 'browser' | 'native'
+ 
++/**
++ * Live highlight applied during presentation (in-memory only, not persisted)
++ */
++export interface LiveHighlight {
++  startOffset: number
++  endOffset: number
++  color: string
++}
++
+ /**
+  * Presentation state record from database
+  */
+@@ -31,6 +40,7 @@
+   isPresenting: boolean
+   isHidden: boolean
+   temporaryContent: TemporaryContent | null
++  liveHighlights: LiveHighlight[]
+   updatedAt: number
+ }
+ 
+@@ -46,6 +56,7 @@
+   isPresenting?: boolean
+   isHidden?: boolean
+   temporaryContent?: TemporaryContent | null
++  liveHighlights?: LiveHighlight[]
+ }
+ 
+ // ============================================================================
+@@ -278,6 +289,11 @@
+   heightUnit: PositionUnit
+ }
+ 
++/**
++ * Line separator type for compressed lines
++ */
++export type LineSeparatorType = 'space' | 'dash' | 'pipe'
++
+ /**
+  * Text style type
+  */
+@@ -294,6 +310,8 @@
+   verticalAlignment: 'top' | 'middle' | 'bottom'
+   lineHeight: number
+   shadow?: boolean
++  compressLines?: boolean
++  lineSeparator?: LineSeparatorType
+ }
+ 
+ /**
+Index: app/apps/server/src/service/presentation/screens.ts
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/server/src/service/presentation/screens.ts b/app/apps/server/src/service/presentation/screens.ts
+--- a/app/apps/server/src/service/presentation/screens.ts
++++ b/app/apps/server/src/service/presentation/screens.ts
+@@ -470,21 +470,25 @@
+       // Update existing screen
+       log('debug', `Updating screen: ${input.id}`)
+ 
+-      db.update(screens)
+-        .set({
+-          name: input.name,
+-          type: screenType,
+-          isActive: input.isActive !== false,
+-          openMode,
+-          isFullscreen: input.isFullscreen === true,
+-          width,
+-          height,
+-          globalSettings: globalSettingsJson,
+-          sortOrder: input.sortOrder ?? 0,
+-          updatedAt: sql`(unixepoch())` as unknown as Date,
+-        })
+-        .where(eq(screens.id, input.id))
+-        .run()
++      // Build update object - only include isActive if explicitly provided
++      const updateData: Record<string, unknown> = {
++        name: input.name,
++        type: screenType,
++        openMode,
++        isFullscreen: input.isFullscreen === true,
++        width,
++        height,
++        globalSettings: globalSettingsJson,
++        sortOrder: input.sortOrder ?? 0,
++        updatedAt: sql`(unixepoch())`,
++      }
++
++      // Only update isActive if explicitly provided
++      if (input.isActive !== undefined) {
++        updateData.isActive = input.isActive
++      }
++
++      db.update(screens).set(updateData).where(eq(screens.id, input.id)).run()
+ 
+       log('info', `Screen updated: ${input.id}`)
+       return getScreenById(input.id)
+@@ -498,7 +502,7 @@
+       .values({
+         name: input.name,
+         type: screenType,
+-        isActive: input.isActive !== false,
++        isActive: input.isActive === true,
+         openMode,
+         isFullscreen: input.isFullscreen === true,
+         width,
+Index: app/apps/server/src/service/presentation/presentation-state.ts
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/server/src/service/presentation/presentation-state.ts b/app/apps/server/src/service/presentation/presentation-state.ts
+--- a/app/apps/server/src/service/presentation/presentation-state.ts
++++ b/app/apps/server/src/service/presentation/presentation-state.ts
+@@ -1,6 +1,7 @@
+ import { eq, sql } from 'drizzle-orm'
+ 
+ import type {
++  LiveHighlight,
+   PresentationState,
+   PresentTemporaryBibleInput,
+   PresentTemporarySongInput,
+@@ -12,6 +13,10 @@
+ 
+ const DEBUG = process.env.DEBUG === 'true'
+ 
++// In-memory storage for live highlights (not persisted to database)
++// These are cleared when the slide changes
++let currentLiveHighlights: LiveHighlight[] = []
++
+ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
+   if (level === 'debug' && !DEBUG) return
+   // biome-ignore lint/suspicious/noConsole: logging utility
+@@ -75,6 +80,7 @@
+     isPresenting: record.isPresenting,
+     isHidden: record.isHidden,
+     temporaryContent: parseTemporaryContent(record.temporaryContent),
++    liveHighlights: currentLiveHighlights,
+     updatedAt: record.updatedAt,
+   }
+ }
+@@ -104,6 +110,7 @@
+         isPresenting: false,
+         isHidden: false,
+         temporaryContent: null,
++        liveHighlights: currentLiveHighlights,
+         updatedAt: Date.now(),
+       }
+     }
+@@ -120,6 +127,7 @@
+       isPresenting: false,
+       isHidden: false,
+       temporaryContent: null,
++      liveHighlights: currentLiveHighlights,
+       updatedAt: Date.now(),
+     }
+   }
+@@ -184,6 +192,31 @@
+       ? JSON.stringify(temporaryContent)
+       : null
+ 
++    // Handle live highlights (in-memory only)
++    // Clear highlights when the displayed content changes
++    const slideChanged =
++      (input.currentSongSlideId !== undefined &&
++        input.currentSongSlideId !== current.currentSongSlideId) ||
++      (input.currentQueueItemId !== undefined &&
++        input.currentQueueItemId !== current.currentQueueItemId) ||
++      (input.currentBiblePassageVerseId !== undefined &&
++        input.currentBiblePassageVerseId !==
++          current.currentBiblePassageVerseId) ||
++      (input.currentVerseteTineriEntryId !== undefined &&
++        input.currentVerseteTineriEntryId !==
++          current.currentVerseteTineriEntryId) ||
++      (input.temporaryContent !== undefined &&
++        JSON.stringify(input.temporaryContent) !==
++          JSON.stringify(current.temporaryContent))
++
++    if (input.liveHighlights !== undefined) {
++      // Explicitly set live highlights
++      currentLiveHighlights = input.liveHighlights
++    } else if (slideChanged) {
++      // Auto-clear live highlights when slide changes
++      currentLiveHighlights = []
++    }
++
+     db.insert(presentationState)
+       .values({
+         id: 1,
+@@ -824,3 +857,34 @@
+     return getPresentationState()
+   }
+ }
++
++/**
++ * Updates live highlights (in-memory only, for temporary highlighting during presentation)
++ */
++export function updateLiveHighlights(
++  highlights: LiveHighlight[],
++): PresentationState {
++  try {
++    log('debug', `Updating live highlights: ${highlights.length} highlights`)
++    currentLiveHighlights = highlights
++    // Return current state with updated highlights (no DB change needed)
++    return getPresentationState()
++  } catch (error) {
++    log('error', `Failed to update live highlights: ${error}`)
++    return getPresentationState()
++  }
++}
++
++/**
++ * Clears all live highlights
++ */
++export function clearLiveHighlights(): PresentationState {
++  try {
++    log('debug', 'Clearing live highlights')
++    currentLiveHighlights = []
++    return getPresentationState()
++  } catch (error) {
++    log('error', `Failed to clear live highlights: ${error}`)
++    return getPresentationState()
++  }
++}
+Index: app/apps/server/src/service/highlight-colors/index.ts
+===================================================================
+diff --git a/app/apps/server/src/service/highlight-colors/index.ts b/app/apps/server/src/service/highlight-colors/index.ts
+new file mode 100644
+--- /dev/null
++++ b/app/apps/server/src/service/highlight-colors/index.ts
+@@ -0,0 +1,215 @@
++import { eq, max, sql } from 'drizzle-orm'
++
++import type {
++  HighlightColor,
++  OperationResult,
++  ReorderHighlightColorsInput,
++  UpsertHighlightColorInput,
++} from './types'
++import { getDatabase, getRawDatabase } from '../../db'
++import { highlightColors } from '../../db/schema'
++
++const DEBUG = process.env.DEBUG === 'true'
++
++function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
++  if (level === 'debug' && !DEBUG) return
++  // biome-ignore lint/suspicious/noConsole: logging utility
++  console.log(`[${level.toUpperCase()}] [highlight-colors] ${message}`)
++}
++
++/**
++ * Converts database record to API format
++ */
++function toHighlightColor(
++  record: typeof highlightColors.$inferSelect,
++): HighlightColor {
++  return {
++    id: record.id,
++    name: record.name,
++    color: record.color,
++    sortOrder: record.sortOrder,
++    createdAt:
++      record.createdAt instanceof Date
++        ? Math.floor(record.createdAt.getTime() / 1000)
++        : (record.createdAt as unknown as number),
++    updatedAt:
++      record.updatedAt instanceof Date
++        ? Math.floor(record.updatedAt.getTime() / 1000)
++        : (record.updatedAt as unknown as number),
++  }
++}
++
++/**
++ * Gets all highlight colors ordered by sortOrder
++ */
++export function getAllHighlightColors(): HighlightColor[] {
++  try {
++    log('debug', 'Getting all highlight colors')
++
++    const db = getDatabase()
++    const records = db
++      .select()
++      .from(highlightColors)
++      .orderBy(highlightColors.sortOrder)
++      .all()
++
++    return records.map(toHighlightColor)
++  } catch (error) {
++    log('error', `Failed to get all highlight colors: ${error}`)
++    return []
++  }
++}
++
++/**
++ * Gets a highlight color by ID
++ */
++export function getHighlightColorById(id: number): HighlightColor | null {
++  try {
++    log('debug', `Getting highlight color by ID: ${id}`)
++
++    const db = getDatabase()
++    const record = db
++      .select()
++      .from(highlightColors)
++      .where(eq(highlightColors.id, id))
++      .get()
++
++    if (!record) {
++      log('debug', `Highlight color not found: ${id}`)
++      return null
++    }
++
++    return toHighlightColor(record)
++  } catch (error) {
++    log('error', `Failed to get highlight color: ${error}`)
++    return null
++  }
++}
++
++/**
++ * Creates or updates a highlight color
++ */
++export function upsertHighlightColor(
++  input: UpsertHighlightColorInput,
++): HighlightColor | null {
++  try {
++    const db = getDatabase()
++
++    if (input.id) {
++      log('debug', `Updating highlight color: ${input.id}`)
++
++      const updateData: Partial<typeof highlightColors.$inferInsert> = {
++        updatedAt: sql`(unixepoch())` as unknown as Date,
++      }
++
++      if (input.name !== undefined) {
++        updateData.name = input.name
++      }
++      if (input.color !== undefined) {
++        updateData.color = input.color
++      }
++      if (input.sortOrder !== undefined) {
++        updateData.sortOrder = input.sortOrder
++      }
++
++      db.update(highlightColors)
++        .set(updateData)
++        .where(eq(highlightColors.id, input.id))
++        .run()
++
++      log('info', `Highlight color updated: ${input.id}`)
++      return getHighlightColorById(input.id)
++    }
++
++    // For new colors, calculate next sortOrder (max + 1)
++    const result = db
++      .select({ maxSortOrder: max(highlightColors.sortOrder) })
++      .from(highlightColors)
++      .get()
++
++    const nextSortOrder = input.sortOrder ?? (result?.maxSortOrder ?? -1) + 1
++
++    log(
++      'debug',
++      `Creating highlight color: ${input.name} with sortOrder: ${nextSortOrder}`,
++    )
++
++    const inserted = db
++      .insert(highlightColors)
++      .values({
++        name: input.name,
++        color: input.color,
++        sortOrder: nextSortOrder,
++      })
++      .returning({ id: highlightColors.id })
++      .get()
++
++    log('info', `Highlight color created: ${inserted.id}`)
++    return getHighlightColorById(inserted.id)
++  } catch (error) {
++    log('error', `Failed to upsert highlight color: ${error}`)
++    return null
++  }
++}
++
++/**
++ * Deletes a highlight color
++ */
++export function deleteHighlightColor(id: number): OperationResult {
++  try {
++    log('debug', `Deleting highlight color: ${id}`)
++
++    const db = getDatabase()
++    db.delete(highlightColors).where(eq(highlightColors.id, id)).run()
++
++    log('info', `Highlight color deleted: ${id}`)
++    return { success: true }
++  } catch (error) {
++    log('error', `Failed to delete highlight color: ${error}`)
++    return { success: false, error: String(error) }
++  }
++}
++
++/**
++ * Reorders highlight colors by updating their sortOrder based on array order
++ */
++export function reorderHighlightColors(
++  input: ReorderHighlightColorsInput,
++): OperationResult {
++  try {
++    log('debug', `Reordering ${input.colorIds.length} highlight colors`)
++
++    const rawDb = getRawDatabase()
++
++    rawDb.exec('BEGIN TRANSACTION')
++
++    try {
++      const db = getDatabase()
++
++      for (let i = 0; i < input.colorIds.length; i++) {
++        const id = input.colorIds[i]
++        const sortOrder = i
++
++        db.update(highlightColors)
++          .set({
++            sortOrder,
++            updatedAt: sql`(unixepoch())` as unknown as Date,
++          })
++          .where(eq(highlightColors.id, id))
++          .run()
++      }
++
++      rawDb.exec('COMMIT')
++      log('info', 'Highlight colors reordered successfully')
++      return { success: true }
++    } catch (error) {
++      rawDb.exec('ROLLBACK')
++      throw error
++    }
++  } catch (error) {
++    log('error', `Failed to reorder highlight colors: ${error}`)
++    return { success: false, error: String(error) }
++  }
++}
++
++export type { HighlightColor, UpsertHighlightColorInput, OperationResult }
+Index: app/apps/server/src/service/highlight-colors/types.ts
+===================================================================
+diff --git a/app/apps/server/src/service/highlight-colors/types.ts b/app/apps/server/src/service/highlight-colors/types.ts
+new file mode 100644
+--- /dev/null
++++ b/app/apps/server/src/service/highlight-colors/types.ts
+@@ -0,0 +1,36 @@
++/**
++ * Highlight color API response format
++ */
++export interface HighlightColor {
++  id: number
++  name: string
++  color: string
++  sortOrder: number
++  createdAt: number
++  updatedAt: number
++}
++
++/**
++ * Input for creating/updating a highlight color
++ */
++export interface UpsertHighlightColorInput {
++  id?: number
++  name: string
++  color: string
++  sortOrder?: number
++}
++
++/**
++ * Input for reordering highlight colors
++ */
++export interface ReorderHighlightColorsInput {
++  colorIds: number[]
++}
++
++/**
++ * Result of a database operation
++ */
++export interface OperationResult {
++  success: boolean
++  error?: string
++}
+Index: app/apps/server/src/index.ts
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/server/src/index.ts b/app/apps/server/src/index.ts
+--- a/app/apps/server/src/index.ts
++++ b/app/apps/server/src/index.ts
+@@ -58,6 +58,14 @@
+   convertPptToPptx,
+ } from './service/conversion'
+ import {
++  deleteHighlightColor,
++  getAllHighlightColors,
++  type ReorderHighlightColorsInput,
++  reorderHighlightColors,
++  type UpsertHighlightColorInput,
++  upsertHighlightColor,
++} from './service/highlight-colors'
++import {
+   detectContentType,
+   handleContentTypeChange,
+   initializeOBSAutoConnect,
+@@ -74,6 +82,7 @@
+ import {
+   batchUpdateScreenConfigs,
+   type ContentType,
++  clearLiveHighlights,
+   clearSlide,
+   clearTemporaryContent,
+   deleteScreen,
+@@ -83,6 +92,7 @@
+   getPresentationState,
+   getScreenById,
+   getScreenWithConfigs,
++  type LiveHighlight,
+   type NavigateTemporaryInput,
+   type NextSlideSectionConfig,
+   navigateQueueSlide,
+@@ -98,6 +108,7 @@
+   type UpsertScreenInput,
+   updateContentConfig,
+   updateGlobalSettings,
++  updateLiveHighlights,
+   updateNextSlideConfig,
+   updatePresentationState,
+   upsertScreen,
+@@ -170,6 +181,7 @@
+ } from './service/songs'
+ import { proxyToVite, serveStaticFile } from './utils/static-server'
+ import {
++  broadcastHighlightColorsUpdated,
+   broadcastMIDIMessage,
+   broadcastPresentationState,
+   broadcastScreenConfigUpdated,
+@@ -2023,6 +2035,55 @@
+         broadcastPresentationState(state)
+         triggerSceneAutomation(state)
+ 
++        return handleCors(
++          req,
++          new Response(JSON.stringify({ data: state }), {
++            headers: { 'Content-Type': 'application/json' },
++          }),
++        )
++      }
++
++      // PUT /api/presentation/live-highlights - Update live highlights (in-memory only)
++      if (
++        req.method === 'PUT' &&
++        url.pathname === '/api/presentation/live-highlights'
++      ) {
++        const permError = checkPermission('control_room.control')
++        if (permError) return permError
++
++        try {
++          const body = (await req.json()) as { highlights: LiveHighlight[] }
++          const state = updateLiveHighlights(body.highlights || [])
++          broadcastPresentationState(state)
++
++          return handleCors(
++            req,
++            new Response(JSON.stringify({ data: state }), {
++              headers: { 'Content-Type': 'application/json' },
++            }),
++          )
++        } catch (_error) {
++          return handleCors(
++            req,
++            new Response(JSON.stringify({ error: 'Invalid request body' }), {
++              status: 400,
++              headers: { 'Content-Type': 'application/json' },
++            }),
++          )
++        }
++      }
++
++      // DELETE /api/presentation/live-highlights - Clear live highlights
++      if (
++        req.method === 'DELETE' &&
++        url.pathname === '/api/presentation/live-highlights'
++      ) {
++        const permError = checkPermission('control_room.control')
++        if (permError) return permError
++
++        const state = clearLiveHighlights()
++        broadcastPresentationState(state)
++
+         return handleCors(
+           req,
+           new Response(JSON.stringify({ data: state }), {
+@@ -2943,6 +3004,160 @@
+             )
+           }
+ 
++          return handleCors(
++            req,
++            new Response(JSON.stringify({ data: { success: true } }), {
++              headers: { 'Content-Type': 'application/json' },
++            }),
++          )
++        } catch {
++          return handleCors(
++            req,
++            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
++              status: 400,
++              headers: { 'Content-Type': 'application/json' },
++            }),
++          )
++        }
++      }
++
++      // ============================================================
++      // Highlight Colors API Endpoints
++      // ============================================================
++
++      // GET /api/highlight-colors - List all highlight colors
++      if (req.method === 'GET' && url.pathname === '/api/highlight-colors') {
++        const permError = checkPermission('songs.view')
++        if (permError) return permError
++
++        const colors = getAllHighlightColors()
++        return handleCors(
++          req,
++          new Response(JSON.stringify({ data: colors }), {
++            headers: { 'Content-Type': 'application/json' },
++          }),
++        )
++      }
++
++      // POST /api/highlight-colors - Create/update highlight color
++      if (req.method === 'POST' && url.pathname === '/api/highlight-colors') {
++        try {
++          const body = (await req.json()) as UpsertHighlightColorInput
++
++          const permError = checkPermission(
++            body.id ? 'songs.edit' : 'songs.create',
++          )
++          if (permError) return permError
++
++          if (!body.name || !body.color) {
++            return handleCors(
++              req,
++              new Response(
++                JSON.stringify({ error: 'Name and color are required' }),
++                {
++                  status: 400,
++                  headers: { 'Content-Type': 'application/json' },
++                },
++              ),
++            )
++          }
++
++          const color = upsertHighlightColor(body)
++
++          if (!color) {
++            return handleCors(
++              req,
++              new Response(
++                JSON.stringify({ error: 'Failed to save highlight color' }),
++                {
++                  status: 500,
++                  headers: { 'Content-Type': 'application/json' },
++                },
++              ),
++            )
++          }
++
++          // Broadcast update to all clients
++          broadcastHighlightColorsUpdated(getAllHighlightColors())
++
++          return handleCors(
++            req,
++            new Response(JSON.stringify({ data: color }), {
++              headers: { 'Content-Type': 'application/json' },
++            }),
++          )
++        } catch {
++          return handleCors(
++            req,
++            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
++              status: 400,
++              headers: { 'Content-Type': 'application/json' },
++            }),
++          )
++        }
++      }
++
++      // DELETE /api/highlight-colors/:id - Delete highlight color
++      const deleteHighlightColorMatch = url.pathname.match(
++        /^\/api\/highlight-colors\/(\d+)$/,
++      )
++      if (req.method === 'DELETE' && deleteHighlightColorMatch?.[1]) {
++        const permError = checkPermission('songs.delete')
++        if (permError) return permError
++
++        const id = Number.parseInt(deleteHighlightColorMatch[1], 10)
++        const result = deleteHighlightColor(id)
++
++        // Broadcast update to all clients
++        broadcastHighlightColorsUpdated(getAllHighlightColors())
++
++        return handleCors(
++          req,
++          new Response(JSON.stringify({ data: result }), {
++            headers: { 'Content-Type': 'application/json' },
++          }),
++        )
++      }
++
++      // PUT /api/highlight-colors/reorder - Reorder highlight colors
++      if (
++        req.method === 'PUT' &&
++        url.pathname === '/api/highlight-colors/reorder'
++      ) {
++        const permError = checkPermission('songs.edit')
++        if (permError) return permError
++
++        try {
++          const body = (await req.json()) as ReorderHighlightColorsInput
++
++          if (!body.colorIds || !Array.isArray(body.colorIds)) {
++            return handleCors(
++              req,
++              new Response(
++                JSON.stringify({ error: 'colorIds array is required' }),
++                {
++                  status: 400,
++                  headers: { 'Content-Type': 'application/json' },
++                },
++              ),
++            )
++          }
++
++          const result = reorderHighlightColors(body)
++
++          if (!result.success) {
++            return handleCors(
++              req,
++              new Response(JSON.stringify({ error: result.error }), {
++                status: 500,
++                headers: { 'Content-Type': 'application/json' },
++              }),
++            )
++          }
++
++          // Broadcast update to all clients
++          broadcastHighlightColorsUpdated(getAllHighlightColors())
++
+           return handleCors(
+             req,
+             new Response(JSON.stringify({ data: { success: true } }), {
+Index: app/apps/server/src/websocket/index.ts
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/server/src/websocket/index.ts b/app/apps/server/src/websocket/index.ts
+--- a/app/apps/server/src/websocket/index.ts
++++ b/app/apps/server/src/websocket/index.ts
+@@ -34,6 +34,18 @@
+   }
+ }
+ 
++export type HighlightColorsUpdatedMessage = {
++  type: 'highlight_colors_updated'
++  payload: {
++    colors: Array<{
++      id: number
++      name: string
++      color: string
++      sortOrder: number
++    }>
++  }
++}
++
+ // Store connected clients
+ const clients = new Map<string, ServerWebSocket<WebSocketData>>()
+ 
+@@ -241,6 +253,31 @@
+   return clients.size
+ }
+ 
++/**
++ * Broadcasts highlight colors update to all connected clients
++ */
++export function broadcastHighlightColorsUpdated(
++  colors: HighlightColorsUpdatedMessage['payload']['colors'],
++) {
++  const message = JSON.stringify({
++    type: 'highlight_colors_updated',
++    payload: { colors },
++  } satisfies HighlightColorsUpdatedMessage)
++
++  wsLogger.debug(
++    `Broadcasting highlight colors update to ${clients.size} clients`,
++  )
++
++  for (const [clientId, ws] of clients) {
++    try {
++      ws.send(message)
++    } catch (error) {
++      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
++      clients.delete(clientId)
++    }
++  }
++}
++
+ // OBS/Livestream message types
+ export type OBSConnectionStatusMessage = {
+   type: 'obs_connection_status'
+Index: app/apps/server/drizzle/migrations/meta/_journal.json
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/apps/server/drizzle/migrations/meta/_journal.json b/app/apps/server/drizzle/migrations/meta/_journal.json
+--- a/app/apps/server/drizzle/migrations/meta/_journal.json
++++ b/app/apps/server/drizzle/migrations/meta/_journal.json
+@@ -99,6 +99,13 @@
+       "when": 1767100000000,
+       "tag": "0013_add_temporary_content",
+       "breakpoints": true
++    },
++    {
++      "idx": 14,
++      "version": "6",
++      "when": 1767200000000,
++      "tag": "0014_add_highlight_colors",
++      "breakpoints": true
+     }
+   ]
+ }
+diff --git a/app/apps/client/src/features/presentation/components/editor/extensions/CustomHighlight.ts b/app/apps/client/src/features/presentation/components/editor/extensions/CustomHighlight.ts
+new file mode 100644
+diff --git a/app/apps/client/src/features/presentation/components/editor/HighlightColorPicker.tsx b/app/apps/client/src/features/presentation/components/editor/HighlightColorPicker.tsx
+new file mode 100644
+diff --git a/app/apps/client/src/features/presentation/components/editor/HighlightColorManager.tsx b/app/apps/client/src/features/presentation/components/editor/HighlightColorManager.tsx
+new file mode 100644
+diff --git a/app/apps/client/src/features/presentation/components/editor/HighlightBubbleMenu.tsx b/app/apps/client/src/features/presentation/components/editor/HighlightBubbleMenu.tsx
+new file mode 100644
+diff --git a/app/apps/server/src/openapi/paths/highlight-colors.ts b/app/apps/server/src/openapi/paths/highlight-colors.ts
+new file mode 100644
+diff --git a/app/apps/server/src/openapi/schemas/highlight-colors.ts b/app/apps/server/src/openapi/schemas/highlight-colors.ts
+new file mode 100644
+diff --git a/app/apps/server/drizzle/migrations/0014_add_highlight_colors.sql b/app/apps/server/drizzle/migrations/0014_add_highlight_colors.sql
+new file mode 100644
+diff --git a/app/apps/server/logs/server-2025-12-24.log b/app/apps/server/logs/server-2025-12-24.log
+new file mode 100644
+index 0000000000000000000000000000000000000000..4b415de7ade2a7fd79b8c2f30260a183c301594b
+GIT binary patch
+literal 1047492
+zc$~c5J+Jj>cA)3nzd}%6gR@EQuMQ0xj-1(v2NOuGmMp1zx~0~P)MNO+yXugq-o(MV
+zc!LWVV8R<Ly?yq@hl^bQdHGoGKi!s}mhJ!e`1s8)|8MzEw~zb(^<Vz#KmRZP>;L?J
+z{%=43|Ns8Gzy0$cfBVnB`?vq{SO5F({`}{^`G?>A)!+Z?AOG-Izy19`{_em2+fTRW
+z<8fba@7MbAUVi%1zx?4}{{GMFZ~p54`RjlC%b$Mt*T4DeKmFr>{fEE)fB&cd{QqBi
+zohscvwx9mE{r<PFzx%gum)_?}xBE}ezq|eAxBv0`t4qt{r$0P@_iyjt-mfmL&!7JI
+zPk;HRfBF3%zFWF|oGWdwpZ@i4*1ui;?tOLX@$u7N{@e4P{{9bFU(>SQfBM~j``usu
+z@VdOT{rrEYfBwtz@vpzVwzPfR*Ps4l`R!l+{PB0+F5S+RULQaG-9P{NAO6Qb{^jb@
+z`}WhHm-X*||L^~Paq0H4{`C6y|NCFIKRmB3-9O&jPwT(_)BBJA`sa&FKmP{&^f&+T
+zuaCd|+kd&bv^;-${L6j$_w`R#m)7@BfBxgY{q7IHz4-r5kB{g5r~md(e|Z1f-~7$h
+zrPuSP`~SH8?mwR2{(U-IdcS`9)AFys|A+th{@?O*rJw(b{q%=F{oNlQfBz3xmzLX4
+zfBWBG|MhSG@VdIR{`?nq{r&6XcguH5xAi~$?5R_~8n2JnPxs&c%|HL+-+k-%>6g;B
+zoGUFKKmF;Cf7<^0Z@=|#Z~Nt%PW{)@Yx<?Mo&2vS*L2$zwqCF0qqJSG<yI0cw~}c2
+zR_<y@%dI3@ZY9xjDv_33Nwi!_rsbpbxL(VxBw9X7&+D~ZN~YyhA}zO)X!#b-SWL^M
+zWLj<|(Q+$^mQ#te+)AS5RuV1W#<YAJ)ADUh%X?`%S(0m7!tax5Ih9DuOZZ!ET5cuL
+zax00Jm-GxkwA@Of<y0aqw~}bNluXM@c&=euZY9xjDv_3#@C?AToJyqSRuV0@l4!Y<
+zOv|k#T5cuLaw?IQm$9?uRuU~QV_M!zGqT*qu4x;(16cQ8jdLZ^@;avFRuV0@l4!Y=
+zM9ZxtT3*u~fM_|DNXxAxS}rBiax00J*EC%sT23X>aw(aXQ;D?PN}}af5-qP|lNhZe
+zT5cuLaw?IQTS>IsN}}a;Ov~%o+48z;`DDqi=~K(+<|F8uwz0G2E!jx4+)AS5RuV05
+z=^R$H+)AS5RuV0z5^1@WM9ZaQT5cuLax00JQ;D>^g;Q+Paw?IQw=pfZl4!Y<Ov|k#
+zT5cuLaw?IQTS>IsN}}a$*Yd#B!d{w@<)@a<O{wBFeQNn+Nv`Q$yhmETCmV^DTS>Is
+zN}}af5-s1uZ?0+i9{w7cmQ#te+)AS5QZg;Kl4!Y=M9Zl}TE2%9D${Z*k(OIYwA@Of
+z<x(;&w~}bNl|;*_L|Seo(Q+$^mhZck&nb*#xtC^SId!(Ym$sAt_2il!znOZ=?<ftt
+z<=0B0<yI0cAEkk}{2pVI7_B5)P9@TED~Xm%$+X-`qUBZ+EkDY132C{MOv|Z6T5cuL
+zax00JOUbm{N}}af5-q0^X}Og|%dI3@e(YKvIEUR!+qvH-l;t*b2e6m!1GCuAu}O?)
+zI<pilw~}bNl|;*}BwB7I(eiWbY&n%k%dI3@E+x})D~Xm{Nwl0wq~%gFEkDQ3mRm`*
+z+)AS5QZg;Kl4$uTojTt$EvFJ`xs^oAtt480j%j%>ZRbwiP?l4Z7<*|u_uQSX=`}Wq
+z@fw@NXeH5dD~Xm{NwoY*h7~Qhl4v=VNXxJAOK4gyCDU>%iI!VQw46$$<x(;&rxI!T
+z6&zt&ZY9xjDVdgANwnNbqUBT~Ew_?rxs^oAuQ4sZ#?F>syOvKH)~;zv%kSa{((=1F
+zg0$R9qUBZ+Ew_?rxs^oAtt47bCDL*$iIz*rwA@Of<yI0crxIzoluXO1L|Seo(eist
+z%cW#mZY9xjD~Xm<iL~5GqUBZ+Ex&gypFHsuS?;C#z$TCPuH}<1w`&@jTfTjiGfUC(
+zSLymmj93CKAEmRWqoCzj0xf@)&Q0fwmSYLD+)AS5uhO~q07T2FL|Tp|&~hw+mRm`*
+zoJyqSRuV0Ll}??7k(Of#w46$$<yZnO#}a6{l|;+21X_+I(DLnL>Mg&cG;j`k`<T-5
+zQJT<l*`8%uz9k!pmRm`*+)AS5RuV0@l4!Y=M9Zl}T5cuLaw(aXTS>IsN}}c4n3hY)
+zw0ujl6fL)sXt|X{%cW#mZY9xjD~Xm<iL~5GqUBZ+Egu{9uK(WhQMzCMz2)0&Y7*lp
+zZRbu$>6(`CFT%8(N~GnZbn^QVqUBZ+Ew_?rxs^oAN9p=+VtkdZ-%b)sqUBODEw_?r
+zxs^oAsYF^nO6PVrla^D7wA@Of<yI0c@1^DXNsL$$Egz**e_>6_sYF`dOXt2#Y+7z5
+z(ekm&Z$OsEF2503PHA~B4NRBZ)^Zj`T3*XDYSMBmiI!VQwA@Of<#kNUtt47bCDL*$
+ziIz*rwA@Of<u%+tnU+(Dv|LK2<y0aqw~}bNl|;*>WLj<|(Q+$^mQ#teyoUQ+({d|`
+zme;h8T4cG7Y5CaYcd}&HG^OQjOv~GtmRm`*+)AS5RuV0@l4yBLPa8zbsYF_CCDC#z
+znU=RPEw_?rIh9DurDR%8CDL*$iI!VQv|LK2<yI0cw~}Z%l}O85a=B=^l|;+i*xB-4
+z8u&Kx?bxt4FkP~jCZ<d7W0M&7^xR#v+)AS5RuV0@l4!Y=M9cRwwLn@<CDL*$iIz*r
+zwA@Of<yI0crxIzoluXO_u}O?p5-qoqXt|V3%SY+dsherJl|;*_L|Seo(Q+$^mXBS2
+z1Lv^!F)iQ6w0xi1PIBA#)hyTV^7|^CeC{q<ZY9xjD~Xm{NwoY36KJO8RuV0z5^4D;
+zojWBUEtisMxs^oAtt47bCDL*!nU+(DwA@Of<yI0cmy&6@l|;*}Bw9X716pn+(Q+$^
+zmLF+nh{*CW_LkqiVQ*r(<S}-(T=vzNmY?Y)QMBAjqUBZ+EkDD_hiSQ$M9ZxtT7HI8
+z0@HFUiIz*rwA@Of<-N3Azss+cNXw;UT23X>ax00JTS>HBN~Yzbbp0;BSQ0I#5^1@W
+zM9ZxtT7HhrE$^lKxzkaU<)@ZUmh757wS027i(J#Ih=sKLDvls6w~}bNl|;*}BwBuj
+zUk%f8D~Xm<iL~5GqUBODEw_?rxs^oAsYF^XCDZazI=RV1wA@Of<yI0cmy&6@l|;+0
+z@Z{LEoJyqSRuV0@l4$ugrsda|miG;N=l+%JHEm(Hi(J#^zM7BMz}fOq8kod5N&|Dt
+zM`_?}xs^oAtt47*CDC#!k(OIYv|LK2<yI0cw~}Z%l}O8_WLi!o(sC<_mXFfFBt|Kj
+zmRm`*+)AS5R3a_6l4!Y=M9cezy_37gNS1r)<Y^Ad@)yIN+<S-D^h@dFNupfS^0}|(
+z<9YpdlCRSBlNd+ob@I#-v>Z#I<*(B9o3CRDwER`NemhAkiI!stw46$$<yZnO#}a7y
+zt91Q#l2jrsw~}Z%mO#s~1X@ld(sC?;mcL5ZZzpLb(Q+(-mSYLD{B!9S!=BteEV4XG
+zGqU{D^7Xs?j?&5b2)d?QIq@YerxI!THg&cfOQPjg5-qoqXt|X{%eSes<yaCe-@?g<
+zX}Og|%dI3@K1%0iu}RCNWLi!o(sC<_miN;8`nly)GA*}~Xt|X{%c(?KZY9xjD~Xo(
+z4SToiCo#TC16tlU>`mMO?4@(_<#tWWe&T!m-11R6duAzGZY9xjD~Xm{NwnNbqUBZ+
+zEiYqd%S$*nGA);qX}Og|%dI3@P9@TEDVdg2iL|_gQ#aFcD~Xm%$+X-`qUBZ+EvFJ`
+zc?qX(rsY-=E$<ul2BsE{(u9`x4SNIAC10h1Yg%_LpDU4;*KlrRT5cuLax00JTS>Is
+zN}}bx^d6YRI7%lCD_U+P(Q+x7mXFf)bIW___Hq4NeqW_?yIn}jN9p?QB&|eRZY9xj
+zD~Xm%$+X-`qUBZ+EvFJ`xs^oAtt47r$0jk>sk!B4otj%dN)y+#m1$zq@|I?NMa!)u
+zTHeOamRm`*+)AS5RuV0z5^1@WM9bUQ+;S_4mRm`*oJyqSQZg;45^1@WM9ZxtTHeOy
+zmRm`*+)AS5R3a_6l4!Y=M9bTlmbWo2Z(~~C#<YA7Pf$$D_p!O<RuV1W$L5w>NwnNb
+zqUBZ+E#JrHmRm`*TuP?pRuV0@l4v=VNXw;UT23X>ax00JTS>HBN~Yyj5-s1ub3)T{
+zDv_33NwnNbqUHOTmhWR)zK_i<@1>I)_UM`(WzLecoJyqSRuV0@l4!Y=M9YtI|3q4D
+zCDC#!k(OIYv|LK2<yI0cw~}Z%l}O8_WLi!o(sC<_mRm`*TuP?pRuV0@l4v=VNXxAx
+zT7HbpEkCBdAa|4|-iUjQ%`HF1-tv2nY5AFKBwB7I(Q+$^mRm`*+)AS5RuU~g%hLwZ
+zax00JOUbm{N}}af5-q0^X}Oe4%c(?KZY9xjD~Xn$;YpWixs^oAtt47bCDL*$iI$(`
+z831W{->~;_?ujJH@;RpEeZ$_&HBD*xHKyg)n3h{fwA@Of<yI0cw~}bNl|;+0F)g=}
+zX!#X>HB8H`BwB7I(ei6-5~Gw%%c(?KZY9xjD~Xm%$+X-`qUBZ+EvFJ`xs^oAudzvt
+z*Vq^2_R`r6dnU_m?3$*u{2tTt*e<_iY?ogwiI!VQwA@Of<*{9UtwdTL+vS%^rsc6+
+zeoNV&Wm-N;1K(RNCDZa=dY}5$FfF%|Xt|X{%cW#mK1$bbzK$i)aw?IQTS>IsN}}as
+zm*2_BTao2^Ov~@FNsM>eu?^R>rp;}l<+W_aAuY!eX!)yj@(uvB97~|(SOP7_5@@-V
+zM9Z-RTK+0sf3_S;pygNsEw_?rIh9DuU#08MmcL3T_fdnEV+pjJN~Gmj0xic9Xt|X{
+z%drGnjwR6Y`Y|=Pe3WKnIdryslm_1NTgP_!t!;CgXnAaxUo451$9DO}l4v>Yy(2A;
+z?edEy(Q+x7mRm`*+)AS5R3a^xl4&`WNXxAxT5cuLaw(aXTS>IsN}}adA}zO)Xt`__
+zH7$?r@;gd1vK%^FK1$2E(^0ynvaiOpoJyqSRuV0@l4!Y=M9ZxtT3(XNMa!u~T5cuL
+zaw(aXmoY83l4v=VNXw;UT23X>ax00Jm$9?uQZg;Kl4!Y=M9Zl}T5cuL@)BmKOv}sE
+z7vzr8j4Y?LyqA`9zqxcxYdH%eEsyQ;izU(W8vgfWT5cuLax00Jj~#I*x5$W=Q;D?P
+zN}}abGA*xRqSLh8N}}bmN7A%hN~YyhA}zO)Xt|X{%cW#mZY9xjD~Xm<iL~5GqUBZ+
+zEw5vf7{@NZ5m`=6Vyt6x%Uk#tVOl;)*MDz0mPE^~BwB7I(Q+$^mRm`*oJyqSRuV0j
+zl4-e>M9ZxtT0TnGe{VUJOv|Z6T5cuLax00JOUbm{N}}af5-lI4fk}*35-qoqXn7l(
+z#5i{OoqKYOvi#KYNyFMTP0cOe$KLWwTLVeUW4rufNwnNbqUBZ+Ew_?rIh9Dutt475
+zCDU@*xoBE$CDC#!k(Nuzw46$$<yI0cw~}bNluXO5BwB7I(Q+!0mRm`*oOUjfmhV&F
+z#5hVbvYa|wzK@+PANy(s&X(KeHqmk`iI!VQwA@Of<*{9UYuS}#T23X>ax00JOUbm{
+zN}}af5-q0^X}Oe4%c(?KevE0kl|;*>WLj<|(Q+$^mQ#te+)AS5RuU~AyZi>uVIO02
+z%a5_M<;U1terfj@X}Rp+F)g=}Xt`|rF)g=}X!)6@zD3KeBw9`-(sC<_mP^UB{0x)q
+zrsY-=EvFJ`xs*)HsYF_CCDC##iIz*rwA@Of<yI0cKf_xTrsY-=Ew_?r`8lTL=a`nC
+zV`t0HF)f$PIHu)PA}zO)Xt|X{%dI3@ZY9xjD~Xm<iL~5GqUE%Wj<j5MTA7wxNwl0w
+zq~%gFEvFJ`xs^oAtt47bo7+gstt47*CDC%*dna0MCDHQOF2D8I<#*D1BFop<TYkqb
+zzmaR&hGwzf;r_|ATy`aymRm`*+)AS5RuV0@l4!Y=M9Zl}T5cuLaw(aXTS>IsN}}bm
+zr^~clN~YyhA}zO)Xt|X{%WdzSX!#x9Wi>6gl4v=VNXzf?<|1jil|;+$F)hExwEP~^
+z^0CYB+zFLj(^mFBk(Q6r+3$scmSYLD{8hSM%drGnjwR4?EP<9=NwoY`I`>RXw46$$
+z<yZnO#}a6{l|;*_L|Seo(ehX6l#NKsu>@L9CDL*%ftF(lwA@Of<yZnO#}a6H`<T-5
+zQ5rah-9DzYe3S<60JgHP#<ZMDq~%r;Ew_?r`4%S7Ov|k#T5cuLaw?IQTS>HBN~Yyj
+z5-qoqX!#cIs7=eIWLi!o(sC<_mRm`*TuP?pRuV0@l4v=VNXxAxT5cuL^0CYBq+vyt
+zx2dz`?bzjavSimZb+%kK<CvD0sY#4j5-qoqXt|X{%dI3@ZY9xjDv_33Nwi!_rsY-=
+zEw_?rIh9DurDR%8CDL*$iI$hCNsLr7Ew_?rxs^oAsYF_CCDC##iI$hKv*l$>%g2Vj
+z>)-PGDh+7)*xYvRzaD9MY?ogwiI!VQwA@Of<yI0cw~}Z%?I$EHw~}bNluXO5BwB7I
+z(Q+!0mP^UBoJyqSRuV0@l4!Y<Ov|k#T5cuLaw?IQTS>HBwxybu*Yp)+k>y@mPi_q~
+zS$>`^pERsp)0CFCF)eTDxw~k28=G5hCDC##iI!VQwA@Of<y0aqw~}ai8#`NWCDC##
+ziI!7|v|LK2<y0aqw~}bNl|;*>WLj<|(Q+$^mdj3H({d|`mRm`*eC+ZYm|EDz&X%{a
+zNsPU;o;<~tYr2<Tchd5GY!aiDM9ZxtT5cuLax00J@8yj+(sC-1mRm`*TuP?pdwAQ$
+zwA@Of<y0aqmy&5Yl}O92Bw9X7*KfW~CDU>%iI!VQw46$$<yI0cw~}c2KBnbkm*2VP
+zxhTsiEg!r52Ck{>t1&G<#?F=>V`s~)BwB7I(Q+$^mRm`*{1}^CZY9xjDVdgANwnNb
+zqUBT~EkDZSEou2NrsY-=Ew_?rxs*)Htt47*CDC#!k(M80T5cuL^0CWrU~1tprsc=j
+zB*tTG5+m&%BP~DENup@El|;*}BwB7I(Q+$^mY?A-tZ6xwNXxAxS}rBi@-zHun3h{f
+zw46$$<x(;&rxIzol|;*}Bw8*d({d|`mXFe@Z!MUXQ;D?PN}}af5-mT+&X$i|e&^0C
+zQI^}#cRrqDT7H$YFw*iX{EaXzw~}bNl|;*}BwB7I(Q+$^mS5rTo@u$2M9ZaQT5cuL
+zax00JQ;D=(N~YyhA}zO)X!$6ea)fEQluXO5BwB7I(Q+!0mRm`*+)AS5*O-=HV`s~+
+zv9sl4m*2o0z`M*xke0`G`NfiGd2E;8RyIwUmRm`*+)AS5R3a_6l4v<?qa!VsJzb{d
+zRuV0z5^1@VOv|Z6S}t48Ov|k#T27nWNXxAxT5cuLa@%_+S{~cw_f;A=TRwLAoiwb-
+zaxbkXzrJCzoYL}pO3U|Sm*2UwFwyc?>D>L3XgQWZ%drGnzNejwqUEpB^<R*SCD3v!
+ziI!stw46$$<yZnO#}a6{l|;*_L|XnTUH=8SSOP7_5@<P<NXxMVT8<^qax00JV+phz
+zOQ7ZZvCHqI_du3MY2a-6=h8NF2XK@ow0tXPVWj0-no<=lw~}bNl|;*}BwB7I(Q+$^
+zmQ#te+)AS5QZg;Kl4!Y=M9a6Sx#d(cEvFJ`xs^oAw>0x1S}rBiax00JTS>H>N~Gmh
+z5-qoqX!$mEwtSRkWI1%Ue3T~c0FHe%*MC9ot2ChHRuV0@l4!Y=M9ZxtT5cuL@=_+G
+zNz1JyT3)8+mSah@+)AS5CCnt6mP^UBoJyqSqjc(*(6ro2qUBODEw_?rxs^oAsYF_C
+zCDC##iI$f!EiY5sN$$(o+45eRxTbaNY<V5iax00JTS>IsN}}af5-qoqXn7seax00J
+zOUbm{N}}af5-q0^X}Oe4%c(?KZY9xjD~Xm%$+WzVoh`SLXgQTg%dI3@ZY9z3I;Q2Z
+zU4Hjtm*2p2$zB?m#lCMvETrXBA}w!4ETrXD5-qoqXn6~NBTUP!Bw9`-(sC<_mP^UB
+z+)AS5t(^FhmQ#teTuP?pR3a_6l4!Y=M9bUQ*>Wq1mRm`*oJyqSRuV0@l4$wZuy@k1
+zBFnuru=no1jh!uTV`s~0a~o;7?0+&Xw~}bNl|;*BuaIfEl|;*}Bw9`-(sC<_mP^UB
+z+)AS5``9E#Dv_2;$+VnGq~%r;Ew_?r`5s(uT5cuLax00JQ;D>EAJcLxiI(qUTE35+
+zE#Jq^mhV%WukUI17-_j|#xX6ol4$vnPDe${tt47*CDC##iI!7|wA@Of<wrV)6)m@t
+zXt|X{%c(?KE+y0QBhC1VmRm`*+)AS5QZg;Kl4!Y=M9Zl}T5cuLax00JA7kId*h}j<
+z8=)+JHth4{SG@3=ekr{N-tyb`)oj=A@@pm1ax00JTS>Hhluqsq7cIAvXt|X{%X{fQ
+z@J)=PG;p?DN~Yyj5-lI40WGHzX}Oe4%c(?KZY9xjD~Xm%$+X-`qUBZ+EvFJ`xs^oA
+ztt49h+_3k2Uca5>D4qPmDavviyQXdEn)ZD)_kpwJR3a_6l4$uTUBCG{mPE^~BwB7I
+z(Q+!0mRm`*{0esfrsY-=Ew_?rIh9DurDR%8CDL*$iI!VQwEPP9gr?<I5-qoqX!$4&
+zyye$QqUBZ+Ex*RJyq8XHh(K9>YI)#nc`u#Zut(SQF2C-i<y0aqw~}c2UCt~?%dI3@
+zZY9xjD~Xoh>BLvG+)AS5QZg;Kl4!Y=M9Zl}S}rBiaw?IQTS>J14q`Damy&6@l|;*}
+zBw9`-(sC<_mfvG%%kN#wC+8zXmV4>s7lTojQ)kP2>Etx=_pj;pn~!~8&35%SF@BV;
+zo?HG=Iyn#fZ7t{0x3!#0-_~+2eOt@9^ldHI()YFeqjc_X#P_uvOQ7Xk`nHyH>DyYa
+zrSEI`N9o+;?f11@OW)UWE`3|ex%6!<#}a7yN9oj)W6*LgeOt>vN>}gl%cXB?IhVez
+z<<HW{+48TY%g<pyOCx8?zm_ha#Q3>%D`#P(<y0aq-@-kiX}Og|%SY+z&DXgkT5cuL
+zaw?IQTS>Hhl&;=<olBzSRuV1mrN^l=7SnPmnU+(DwA@Of<yI0cmy&6@l|;*}Bw9X7
+zr_T3G%dI3@ZY9z3ZP)U-(;SlJUV5D@nJh=nmVYfx+yN}*O)Jv!GBdZFOQPjvW^Or`
+zM9ZxtT5cuLaw?IQTS>HBN~YyyW^Or`M9Zl}S}rBiaw?IQTS>IsN}}abGA%DNbIZ9T
+zT23X>ax00JTS>IM%uHhZTADbAU3M)G+yN}<>l<=S>)0g5IyQ;XN}}a;Y!aiDM9XV<
+zB57J~CDHO4o=BROTS>HBN~Yyj5-qoqXn75%1g7OuGA*YPX}Og|%X{fQaJF1ZrsY-=
+zEw_?rIh9Dutt47*CDHOacDB5Zoh`4smIv+t_R{5VF8*BFiY!UXTX6(wxs^oAtt49B
+z$}<4cax00JTS>H>N~Gmh5-pdKX}Og|%dI3@P9@TEDVdg2iL|_hr+231Ej&RnEpKCI
+z%dI3@ZY9xjDv_33NwnNbqUCMuY<VwDoWpKoXUp4|mha`sF=_c8{_UBTTS>HhPqWyf
+z<yI0cw~}bNl|;*_L|Q&dS8pfzQ5ty5ua!j0_b~NsT23X>aw(aXQ;D?PN}}af5-pdK
+zX}Og|%dI3@P9@TED~Xm{Nwj<))AD`h3v!>OPc5I5C0^5%mLJ6tq~%m1Ew_?rxs^oA
+ztt47*CDC##iIyM9u%hKw5-pdKX}Og|%dI3@P9@TEDVdg2iL~5GqUA@pQ!_1>l4-e>
+zM9ZxtT23X>ax00JTS>J1*tLA_e2--L7}N4&>}>hi8aOarGPKLDmPpG(yZnBXPR<gD
+zmWOuv<&tQ5XqVrwrE?Q#rsY-=EtisMxs^oAtt480hFJpBaw(aXQ;D?PN}}af5-pdK
+zX}Og|%dI3@P9@TED~Xn$;kmnM`8jsB{2ZHGevX|jAG`cc-fPG;y^2^!%c(?KZY9z3
+ztJsLN+)AS5RuV0@l4v=VNXxAxS}rBi^3X27ToNr0?ehCkx_UcFEs>U6NwnNbqUE7o
+zez_!C9@^zsOQhvi5-qoqX!+RXHz3Pnm)}X3n=H4X^YYi&+48=x=H#~)NXtj*<QEV`
+z%dI3@eviH7*Gi)0RuV0@l4v=VNXxAxS}rBiax00JTS>H>N~GmdGA*YPX}Og|%kOYc
+zXj(2M({d|`mRm`*oJyqSRuV0@l4$uorsen8TYm2`Ex)JEmTzU-4{7;UHsg?%V+phz
+zOQ7YWG;p>YOQ7Xg0xh?aX!)yj{r8qriL@L`pyjX9^=HeiBw9`-(sC<_mSYLD97~|(
+zR3a_M5@`9Wbp6?KD~Xn43A7wbpyk`gl$MXuj4X#HF^<x}+4AkSd+*%TH);7cb+#N!
+zqUBZ+E#Jnp+)AS5RuV0z5^1@WM9a4_c}rSuCDC##iI!7|v|LK2<y*L`F)g=}Xt|X{
+z%cW#mZY9xjD~Xm<iL~5GqUBZ+Eg!r5&h1kpS&r@UyWOVFmXFfJH7#Rj%c(?KZY9xj
+z+Js12ZY9xjD~Xm{Nwl0wq~%r;EtisMxs^oAtt47bCDL*!nU+(DwA@Of<yI0cFH@5k
+zu_Rh<CDC#!k(OIYwA@Of<z?(_c^NxfK6d#H+yN|8Uy!?{-D9NXR3a_6l4!Y=M9Zxt
+zT5cuLa@h!GT23X>ax00J(>6NNax00JTS>G$w#zS-Ov_`t{9;M8+)AS5v0Z+#Bw8NZ
+z<=0B2<uyF3F)g=}Xn7qwTVAK$^1H2LlNjsR-168izpv8C-OZxqRuV0@l4!Y=M9Zxt
+zT5cuLaw?IQw=&s8S}rBiax00JTS>H>N~Gm2Olz5zQ;D?PN}}bmE!DJKN~Yyj5-qoq
+zXgQTg%dI3@ZY9z3Hm2om>U+z#ZA{C@F29o{xu$zL3nMM35^1@WM9ZxtT5cuLax00J
+zTS>H>N~Goc*xYg{nU-5gwA@Of<y0aqmy&5Yl}O92BwB7I(ek~VB$Ad}NwnNbqUBT~
+zEw_?rx$HSMEg!r5&i!hTERS7&CtYr`oSMYAk7@Za_Lg5Nk(M80Z~3*7Xt|X{%dI3@
+zZY9xjDv_33Nwi!_rsY-=Ew_?rIh9DurDR%8CDL*$iI!VQwEP%5TW%%Max00JQ;D?P
+zN}}af5-mT*wEP&;@?-35`7t($k@l&PmfPkw(Q?|SMp|wq(Q?^fWLj<|(Q+$^mQ#te
+z+)AS5w2h9m+)AS5RuV0jJzb{dqjddtl2#%uw~}bNl|;*>WLiE-r{=;;%dI3@P9@TE
+zD~Xm{NwmCg*n6C_5y|q{<u`B+yKmT=xu&VJ<ySciBQ1~Z^1HPiaiZn1U4F47S{~cw
+z_f;Cuaw?IQTS>HBN~Yyj5-qoqXgQTg%cW#mP9@TED~Xn0;jYHCTuP?pRuV0@l4v=V
+zNXxAxT5cuL@@s5v`8D=UjMtc!k6nHP=jHFQxBT8?lNhZeT5cuLa@$WRT5cuLax00J
+zQ;D?PN}}blU4CDsfp228l4v=VNXw;UT23X>a@(*cS{~cwmrADPv0Z+#Bw8NZ<rhn$
+z<*{9UxA&Nq-(!;)$1cBt>5})<+46F1qdWIsPqh41I(JQ?<yZnO#}a7yt90(3P_!IN
+zpygNsEw_?rIhH`nU!_y`xuoT<(y1qsq~%xwEw_?rIh9DuU!_y`?xf{d0xic9XgQTg
+z%drGnjwR4?D~Xn43A7wbpylObY7*lp&B$^{%SUP84q!>!=t#?ByZmBFv^=)UFP22h
+ztt48$h0{^faw?IQTS>HBN~Yyj5-qoqXgQTg%cW#mP9@TED~XnG>AYODTuP?pRuV0@
+zl4v=VNXxAxT5cuL@@-7Zx2dz`<u<0}+nAP@aPnbVP9@TED~Xm{NwmDAnGex&D~Xm{
+zNwl0wq~%r;EtisMxs^oAtt47bCDL*!nU+(Dw7i5nYSVHniIz*rwA@Of<yI0crxIzo
+zl|;*}BwAj^w7iU+EiYqQUdFV%mS1<$aw?IQTS>IsN}}af5-qoqXt|X{%j?wK@{%?o
+zl9o%!wA@Of<yI0crxIy-Y?ogvk(S4H`NfiGxs*)Htt47*CDC#!k(OIYwA@Of<$c56
+z<J_+X$#NY#TVAK$@;gcc`w5qQU(Gr&iLsRlY0`2liI!VQwA@Of<yI0cZ)xgVw46$$
+z<yI0cmy&6@l|;*}Bw9`-(()E2*-gu-L|Seo(Q+$^mP^UB+)AS5RuV0z5^1@WM9Zxt
+zTHeOambbC9<$c56<D4w<nm$jlPu^?DHQmdvJ8Aiz-suu8-^b3DTS>HhADdflCDC##
+ziI!7|wA@Of<@?y#ax00JTS>H>N~GnoN7A&MN~Gmh5-qoqXt`_+G%dH1Xt|X{%c(?K
+zZY9xjD~XoxV`t09*1(f4H(73D*YtU|d~)VPu4&&_v!1&q((+Nd{(H-@Bw9YU{apXO
+z<yaCeKgQ0MTS>H>N~Gmh5-pdKY56gBw%kgh<wv-8H!YWvX*rch%a8EBhH1H#M9ZaQ
+zS}t2{P0Ot$T23X>ax00JTS>IMZ`gaBd;f`K`54pkvCHq=Ng`g;l$M`kZ}~mP=9XJY
+zwA@Of<>%Phax00JTS>H>_DGVJTS>HBN~Yyj5-qoqXgQTg%cW#mP9@TED~Xm{Nwi${
+zvYM7#NwnNbqUBT~Ew_?rxs^oA&#|-RW0&8EET_(v_tL~2z^j~Dl9p46wA@Of<yI0c
+zw~}bNl|;*}Bw9`-((-HUY`K(7%dI3@ZY9xjDv_2;$+VnGq~%r;Ew_?r`877T+)AS5
+zRuV0z5^1@WM9ZxtT7Hdb`PdpbFys3gJ6nE@%`K;Gbfo3BxlOd(N}}af5-pGI@>|M|
+zIMZ?~iI!7|v|RS7nU>q$JJIskF27h3EsyQ;ThcZ<(sJ8-Ct4oc<rhn$<*{9UU!_xb
+z0H)=mG@#|9bn3eVrsY-=Egz+GvpJ;YeZ$_w8*%TkNsP8(&#vj0();>t-s`@v=6?M*
+zF^<yX`m^P)()HiOh$YZ+EP<9|3A7wbpygH)EyogQ`KxsOH!)%fv>Z#I<yI0crxIzo
+zl|;*5rBh-dEyogQIh9Duu>@L<CD3v!iI!stwER`NUd!vgVeftYw~6=C>*M-KjP=;C
+zcl~+!UV438|5dzo-&b?L{w=?wbk;_q<yI0cw~}c27Jdm$%dI3@ZY9xjDv_33Nwi!_
+zrsbn_?u|Ioax00JQ;D=(N~YyolBH<5l|;*}Bw8*d({d|`mT$#-q~%m1Ew_?rxs^oA
+z$A-P@zaY1lMzp+d*n3}pw!D`{u4yU1?xf`<{EaXzFX3OgX}Og|%dI3@ZY9xjD~Xm<
+ziL~5GqUBODEw_?r`6!)w(q&psCDL*!nU+(DwA@Of<yI0cmy&7uD4jZ?GA*}~XgQTg
+z%dI3@ZY9z3GN$EaOv}fHy^(90(()QkK1|E0L|Seo(ej$^07T2JBwAj_wA@Of<y0aq
+zw~}bNluXO5BwB7I(Q+!0mP^UBoJyqSRuV0@l4!Y<Ov|k#T0TnGe?hL5NXxAxT5cuL
+z^08rWU}|9<)ABl|<#lWlV=L3dq~&ewY<U|yTi(L|o=nTFBwB7I(Q+$^mQ#te+)AS5
+zQZg;Kl4!Y=M9Zl}THeOamQ#te+)AS5RuV0jl4-e>M9ZxtT23X>ax00JTS>IMjh!uT
+zyOyut61{F?bIaS9mhWR{%l9!Y-^a9kAJcLxiI!VQwA@Of<y0aqw~}bNluXO5BwB7I
+z(Q+!0mP^UBoJyqSRuV0@l4$uprsY-=Ew_?rIh9Dutt47*CDHPIOw0E%E$<ulCf;1U
+zk4<7c#@_NfO4sl5izU(Wqnyl>mRm`*+)AS5RuV0z5^1@WM9YuxhN)@!G4_^UD~XmL
+z;ojY}{1}_Wc#LWJF?P1xN}}abGA*}~Xt|X{%a5_S<yI0cw~}c2F*b?u7@Nd+jA{9?
+zYkA-f;2C~%P0P=8;wxHyhQAS}<!AWclWDn?M9ZxtT5cuLaw?IQkJ9zuTTUg@ax00J
+zTS>H>N~GmdGA*YPX}Og|%X{g0{r8qr$+X-`qUBZ+EvFJ`xs^oAtt480j-4$(cP*d%
+zQiaKKYHs<tYkA<BUSnE*jlJdfN;4m#<yI0cw~}c2HTIU@YitrDl}O92BwBujdqUH4
+zD~Xm{Nwl0wq~%gFEvFJ`xs^oAtt475CDZb&oLQ2VTS>H>N~Gmh5-qoqX!$j!<=3v|
+zff?V|*xB-HOv~@Fx#f4Vk!ZP<M9ZxtT5cuLax00JTS>H>N~Gm?d9FcPE+x})D~Xm{
+zNwl0wq~%gFEvFJ``5hc#T5cuLaw(aXTS>IsN}}adA}znea}CpSD~XohV_JTXoh`q|
+z&X(U(Z~1K>#Sx<ARuV185@`9Wbp7V*SOP7_5@<P=K+CNpT8<^q@>l89?-OY`mO#s~
+z1X^w-(Q+!0mRm`*97~|(SOP7l5@|V>K+9jHbKVmzw~}Z%mO#s~1X|w4cKK}|Q(E3W
+zrp}hPv0Z-KvCD5j%V}#MX}Og|%dI3@ZY9xjD~Xm{Nwl0wq~%r;E#Jbstfu8w5-qoq
+zXgQTg%cW#mP9@TED~XnG;jLNIaw(aXTS>IsN}}adA}zO)Xt|X{%eOHt-=-!pw%eGN
+zZ(~|68;nfLsYF_CCDC##iI&S=A=7dziI!VQw46$$<yI0cmy&6@l|;*}Bw9`-(sC)8
+zmY1ow{9;M8yiC32mrADPRuV0@l4v=VNXxAxT5cuL@-n97WlYOsyZp9gOv`CU9BH|2
+zZWArHl4!Y=M9ZxtS{~cw7fYh$v0Z+#Bw8NZ<rhn$<*{9UtwdTb8^KJ=sYF_CCDC##
+ziI&^mJJE70iI&H9`Lz;hd2E+oEQyxaF)goSlNjsR+49&fzikW8)J)51YanU4l|;*}
+zBwB7I(ehC`_ivB1+)AS5R3a_6l4!Y<Ov^{<)L&TBax00JQ;D=(N~Yzbbn1<5({d|`
+zmRm`*TuP?pRuV0@l4v=VNXxAxT5cuL@;0XBZR~7$8`JW>%kOsmH>9_F`E@5P-@~tl
+zX*umDBrT8a^4rQ@A=7dziI!VQw46$$<yI0cmy&6@l|;*}Bw9`-(sC)8mhWS4`L&X0
+zxs^oArDR%eCDC##iI!7|wA@Of<yI0ckL~i??qga$cKKbuab-Jp`JMc)C)ZT=Kbe-x
+zW*pOUD~Xm{NwnNbqUA@JNi;3Dl4$u6CeTdFtt47LN&{!hM`_?}xs^oAsYF^XCDU>$
+zk(Q6rz}a#uiIz*rwA@Of<yI0crxIzol|;)&>C}{}Y59@nBSe;a>303zyY1Mpckav*
+zuj%t_`P>N=T~pd}Mp{l=&PdCxBwB7I(Q+$^mRm`*+)AS5wqZ}SJhsa(l}yWHyZmBF
+zv^=)UFO^KoW4rufNwhq+%P*Bo%g>@P((+L{HJxu-K1u^~%dI3@ZY9z3v0-mOmV4=T
+z?!6k6W!V{G*R&1Y0ldPUnrZnJ{zjOVU*T_rX}Og|%dI3@ZY9xjD~Xn0;qRVlxs^oA
+zM`>UZqm@L<tt47bCDL*!nU+(DwA@Of<)bt(iBU?X<yI0cw~}Z%l}O92BwB7I(ei6d
+z%dfGs<=5ER@?N@~EXg&!i(yI2sYF_Sk7>D;M9ZxtT5cuL^1H~Aw46$$<yI0cmy&7u
+zJ*MSW5-q0^X}Oe4%c(?KZY9xjD~Xm%$+X-`qUHCPmQ#te+)AS5RuU~A8}?2bR%E%C
+zCZ-nNV_M!zx04gna837*DJ_4MuK$8uEP<9|3A7wbpygNsEq|4+*K#X~mSYLDoJyqS
+zSOP7_5@@-VM9Zl}T5cuL@>l74EyogQIh9Duu>@L<CD3v!iI!stv>Z#I<@?9f+44~u
+zn8dgr8}_b$%kL-++yUHg#YUv%Tewp*Ew_?rxs^oAN9p>x<yaCew~}Z%l}O92BwF4}
+zuTyiDrsY-=Ew_?rIh9DurDR%8CDL*$iI!VQv|LK2<yI0cw~}c2D4lxe*tFbAqUBZ+
+zEgu{9P8wEZxtDI|PIFL}pISa?Si7bvEiYqd%gfl=@{-OhMa!)uT5cuL@)GW-P0LHV
+z*AOkI5^1@WM9ZaQT5cuL@)GVfOv|Z6S}rBiaw?IQTS>IsN}}abGA*}~Xt|X{%S&-N
+zX}Og|%dI3@UZ%c@ag-*syi84E9HoI-?E6~I!br=hL|Seo(efJp_hedbCDC##iI!VQ
+zw46$$<yI0cmy&6D4QDK-<yI0crxIzoluXO1L|Seo(Q+$^mP^UBe3VYv$h6!_qUBT~
+zEw_?rxs^oAZNr|(a-Eu6z8@R*uAjv|N)vO-`@WiUUu`ulAEoQJlf;r}xs^oAtt47L
+zN+)-_h?ZMPw46$$<*hucAuX4ZX}Og|%dI3@P9@TEDVdg2iL|_h=Y*!^RuV0jl4-e>
+zM9ZxtT23X>ax00JTS>IMjm<4@V`t0Tn3j)Segm`E_wwAGw0s|%TW%%Max00JTS>Hh
+zADdflCDC#!k(OIYv|LK2<yI0c-^b>bQ;D=(N~YyhA}zO)Xt|X{%cW#mZY9xjD~Xm<
+ziL~5GqUHP8-12=)%lEOf<@?wq#(iuOBkdj|EtgGGrsY-=Ew_?rxoj{pEw_?rxs^oA
+zsYF_CCDC#znU-5gv|P4lnU+(Dv|LK2<y0aqw~}c2F?P0GN~Yyj5-qoqXgQTg%dI3@
+zZY9z3V@%6qyZr8ByZnyQ#MyG$_G4Nun{iCbtt47*CDHOTy?ZBGZY9xjD~Xm<iL~5G
+zqUGn<TYjx1T5cuLaw?IQpJQ+Nr4nhml|;+Wv9sk;GA*}~Xt|X{%c(?KZY9xjD~XoJ
+zcKIEpiL>SBn3kVoT2A}aNXu!<8ELtdM9ZxtT5cuLa@o^mT5cuLaw?IQTS>G$w#zS;
+zM9XD+mT5VaNXuy(9cj7ky%R0Bl4yBsmtQKGmdAGa#gb@wY?ogwiI!jCp3t;Bw#)A*
+z&B$_UZuvE)<*{9U_qMrBwA@Of<yI0cw~}bNl|;*9yZl;-v^=)UFO^Kott47*CDC#!
+zk(S4H`Lz;hd2E+oEQyxKcKOAUXt|X{%c(?KZY9xjD~XoJcKIEpiMRZYU4AD^c1@pJ
+zKKHKB_pfRB&BsTXv;4l6f0VA?eEp+z^)A0$`nHyH>DyY)rEhCFm%gp#TKc}0f0VA)
+zax8(CbLrb!&ZTc_xt6}K<yZnO*V6a3oJ-%<axQ&a%drGn&ZTc_IhVez<sYT1wVX@e
+z)^aX=Tg#uN5iS2(y8ImWvovzH{A=m*>5`vIY4;duxovI}Ew_?rxs^oAWh;|uxs^oA
+zWml4EIh9Dutt47LN~hj1H7&Q2Xt|X{%SY+zxBOzsw46$$<yI0cAEm3`@{1+Y@=+Sl
+zax00JQ;D?PN}}af5-s1xw0xVHTmCG4YWd`euU*qGrDfm_;Mi9)aJIaJzec9zRuV0@
+zl4!Y=M9WL~8(~^*CDC#!k(OIYv|LK2<yI0cw~}Z%l}O8_WLiE-S5IQ(l4$uTT|KuP
+zOQz*k5-qoqXgQTg%dI3@K1x^5Eq|6i4SV%=l3z>9)!)SUEPbB%o;x?fYx>mk$*FI-
+zrZqfmFfFGNX}Og|%dI3@ZY9z38s4HXEw_?rIh9Dutt475CDU>%iI!VQw46$$<x(;&
+zrxIzol|;*BFRN*}luXO5BwB7I(Q+!0mRm`*+)AS5W5eFnZ~6UNnmC6&HtY@D0jy(M
+z-pa2#X?Yu)#Aqeaax00JTS>IsN}}af5-q0^X}Og|%UhV3F)g=}Xt|X{%c(?KE+x})
+zDv_33NwnNbqUBODEw_?rxs^oAsYF_CCDHO0rs_<~+nAQOF)eRtAGKZ6HgsOT@2h!V
+zz4`h_Y2a+Rl|;*}BwB7I(Q+$^mRm`*oJyqSRuV0jl4-e>M9W8M;A}aSNXw;UT23X>
+zax00JTS>HBN~Yyj5-lI4fwSdQA}zO)Xt|X{%lENKjQg0Dj}3bRcL4XXx#dThvm`A)
+z!mOKVxs^oAtt47*CDC##iI!VQw46$$<yI0cmy&7u5hevq%dI3@P9@TEDVdg2iL~5G
+zqUBZ+EtisMxs^oAtt47bCDQUEO%scjTS>J17&}|uOUu<?kozo^ebjbMQ(8Xu)m;6(
+z<sYT1zqkCOG@#{H5-qoqXt|X{%dI3@euls0rsY-=EtisMxs^oAtt480hF?O{aw(aX
+zQ;D?PN}}bx^d6YRC?(T!D~Xm{Nwl0wq~%r;Ew_?r`8lTL=h$0*&#|-Ry)<zLu<xrm
+z`K<-g@@q`XuQ4sRl4!Y=M9ZxtT5cuLaw?IQUt?M>CDU>%iI!VQwEP;=aw(aXQ;D?P
+zN}}af5-pdKX}Og|%dI3@P9@UvYfQ_nBw9W;><yg5zQ!goUSnE*jcNHEX68-H?=UlO
+zT5cuL@=-cBZ$w&dCDC##iI(5xPK~sjN~Gmh5-pdKY55)Qb4|;wBw9`-(sC)8mQ#te
+z+)AS5RuV0jl4<!J?%hqxtt47bCDL*$iI!VQwEP}BTYisCV!X#DG2T;?7`Kmd>Lyxl
+zCDC#$ftF(lwER^%`L#9Bax8(CV+pj}N}}ah0xhQ!X*rfa%drGnZY9xjDv_33NwgeG
+zpygNsEvFJ`IhH`nU#08MmRm`*97~|(SOP8IKBmr=kJ5maZy!@<%SUNK%eV6DPFlW&
+ze|x6oRuV1W!m}FFax00JkJ8DLdC_t!iI!7|wA@Of<)d`{F27h3Ew_?rIh9DurDR%8
+zCDL*$iI$JjfR>Na^^+KT>GpB`+;S|5mQ#te+)AS5RuU~A8}?2bR%E%Cmg{%<-ELE7
+z%SUPA4qz$M#H8hA>}+{SXO^PnRuU~Q=?*}&+)AS5RuV0z5@~rUcQvHtQZg;Kl4!Y=
+zM9Zl}S}rBiaw?IQTS>IMgu74Eaw(aXTS>IsN}}adA}ufBPR+F3N}}asm*2_LQIX{`
+zcD8)%@*BCPsk7yEOv~$-me(;Yw~}bNl|;+yn3h{fw46$$<yI0cmy&6@l|;+yn3hwC
+zv|LK2<y0aqw~}bNl|;*>WLj<|(Q+$^mQ#te+)AS5RuV0*W0M%`n3mVEv*lx#-@tkK
+zHm2omOv|k#T5cuL@;0XBRuV0@l4v=VNXxAxTHeOA+)AS5RuV0z5^1@VOv~GtmRm`*
+z+)AS5QZg;Kl4!Y=M9Zl}T5cuLax00Jx3Ni#ZEO<b*yT5JO`lpmxiwI(=^maon3j*y
+zxv6i`ax00JTS>IsN}}af5-qoqXgQTg%dI3@E+x})D~Xm{Nwl0wq~%gFEgz**r#YtO
+zRuV0@l4!Y<Ov|k#T5cuL@=-eVG~Be@N}}af5-s1yw0s}a@_lR)<36V4w0n%STsGsF
+zmRm`*{1|)7ua!j0tt47*CDC#!k(OIYwEPH@f~MtG5-qoqXgQTg%cW#mP9@UvW9%)z
+zRuV0jl4<!7?w?G{tt47bCDL*$iI!VQwEP&;@?%WPkFm4m$C#FntxV_6!br<$YanU4
+zl|;*}BwB7I(Q+$^mXFf)-&<}a(sC<_mP^UB+)AS5vhUNhoJyqSQZg-<-I%83RuV0@
+zl4!Y<Ov|k#S}waWP0Oi7S}uDeP0Ot$T0VC9oiwb-@;RpEeZ$_zz})gPxm>Pk-&gaz
+zemlum>EzZ6(Q+$^mRm`*+)AS5RuV0@l4v=VNXxAxS}rBiax00JTS>H>N~GmdGA*YP
+zX}Og|%dI3@K1wIgVMWWWBwB7I(Q+!0mRm`*+)AS5&kcLeb6+nsSsq&h&v_4Jx&3lY
+zCr^Csnm)CB?l+gNY2R1#xPJ5XSLyoA*Rdp8ZY9z3QM!Kfbu5XNTS>H>N~Gmh5-pdK
+zX}Og|%dI3@P9@UvQ5x7zl1ilIRuV0@l4!Y<Ov|k#T5cuLaw?IQTS>IsN}}cWuH}KV
+z<$agm$4Qr)EVr?1Dtl1inwF37FM_oERl0s|`6xZF-+UcQpygNsEyogQIhH`ntt48G
+zCD3vzk(Of#wER`N{%pCGM9Zl}T5cuLax8(CV+pjJN~Gmj0xic9Xt|X{%drGnjwR6Y
+z^090A`g7RjW9n>q`Pj95{dxIbnz#d4ZspgVw0xVI#E2!)ax00JTS>IsN}}af5-q0^
+zY56Ffo7N&NAEoQ(mSah@+)AS5qjde;aw?gYQ;D?PN}}af5-pdKY56E!Kerr9qUBT~
+zEgz-p&z56Jw7hTFJGV8^WO<u9TV8HsT0XW04%`7OQ<E59rRyg#zDn1BZ#kAk%dI3@
+zZY9xjD~Xnu@?3+o+)AS5QZg;Kl4!Y=M9Zl}S}rBi@)F)bF)g=}Xt|X{%cW#mZY9xj
+zD~XnuaO!4SZY9xjD~Xnuv9sl6Ov}sEB*wCgX?fpQ^SJ(d%U`AIzqcGqqUAMBmxz{I
+zNwmC{_dZF>tt47bCDL*$iI&%~NsLw!Ew_?rIh9DurDR%8CDL*$iI!VQw7iZ@VziQI
+zxs^oAsYF_CCDC##iI&$fEw5u*-Z$(`oR_a-bIaS<-10Uyx7<pi<yI0cw~}bNl|;*}
+zBw9`-(sC<_mbc(?({d|`mbWo2rxIy-8=G5BCDL*$iI!VQv|LK2<yI0cw~}Z%l}O7+
+z>H2SC#FA)v8`JVOrsZwwn;6SB^-YZBUVhz4%lEOl<yI0cw~}c29{!hWT5cuLax00J
+zQ;D?PN}}abGA-Z3EVgO6l|;*_L|QH-({d`2mhWM{+_c<EqUBODEw_?rxs^oAsYF_C
+zCDC##iI(qE-^AEUBU-+X%`M-@CNUo6$uVj9QQjvcEkDMz+)AS5RuV0@l4$ucrsY&3
+zEw_?rxs*)Htt47*CDHO@Ov|NYT7D#1ik4eRwA@Of<x(;&w~}bNl|;*_L|Seo(ek6b
+z_eolQOnq;8d5nD%<1u!&d~6LoCri4f=h)fuGfk<AmRm`*+)AS5RuV0@l4!Y=M9Zl}
+zT5cuLaw(aXTS>IsN}}adA}yDaY56%ex7<pi<yI0cmy&6@l|;*}Bw9`-((-d`Zn>32
+z%g?d1<>#1|pJQ5nj-4&P#^#n^V{^-`BwB7I(Q?|kNLp?s(Q+$^mQ#te+)AS5QZg;K
+zl4$ugHn*Hgq~%gFEsyQ;`zoEB`4BC)l4!Y<Ov|k#T5cuLaw?IQTS>IsN}}c0n3j)S
+zego&QW4rv8*O->yW0M%~vAN||5-q>eEP-gbl|;+$@HfJ=+)AS5R3a_6l4!Y<Ov|k#
+zT5cuLaw?IQOUbnS9-G8yCDC##iIz*rwA@Of<yI0crxIzol|;*}BwButO=7&q&X(U}
+zT7FMydHtBu^4d1HftF(lv>Z#I<yZnO#}a5cmO#s`BwCIo&~hq~mSYLD97~|(b!?Yk
+zDv_33NwgeGpygNsEvFJ`IhH`nU!`+jbr3DLl4v=WK+CZNT3$b<w7i!l-tt>NrnJ15
+zMzp-|t2wzLg0y@qGasbo+tegREQyv|NwnNbqUGDvBt|QdmRm`*TuP?pRuV0@l4v=V
+zNXungs%bfuNXxAxT5cuLaw(aXTS>IsN}}adA}zO)Xt|X{%eOHt-=@x%*RfrG>#@u4
+z-1A(zreo98xe{r4Y?ogwiI!VQwA@Of<yI0cw~}Z%Z4D$Xw~}ai33s2S<+2gXwA@Of
+z<y0aqr)_kk<z?(_xs^oAtt475CDU>%iI!VQw46$$<yI0cw~}ai8PoDIHMhJjV`t0D
+z)HgBKeP7LMU=rgf4NPLRl4!Y=M9ZxtT5cuLax00JQ;D?PN}}abGA$pab5jeX<yI0c
+zrxIzoluXO1L|Seo(Q+$^mP^UB+)AS5RuV0z5^1@WM9ZxtT0S=HojW%oS*~MRUdPUs
+z*D)=R?ebg8MljQID~XoNMljQID~Xm{NwnNbqUBT~Ew_?rxopoeEw_?rxs^oAsYF^H
+z+vV3vq~)<)ez7E4PMh0E%dI3@ZY9xj+j}Qk9^2&?OQPj%>}+`(o5a}0w7iXJ`95~G
+zoJyqSRuV0@l4!Y=M9ZxtT5cuLaw?IQ?_+1nrDR%eCDC##iI!7|v|LK2<y0aqw~}bN
+zl|;*>WLj<|(Q+$^mQ#te+)AS5RuV1W$FzJO)AF&)@A|Let@kl4Kf==n({d`2mRm`*
+z+)AS5RuU~ArRz6e$C79{l}O92Bw8*d({d|`mRm`*oJyqSQZg;45^1@WM9ZxtS}rBi
+zax00JTS>H>N~GnZbp7|1V@b5UZ`k`7nDO09%Yc?2>D@cKre8|S$vGCerhQ+{>-t@O
+zN9jFqw%kgh<yI0cw~}bNl|;*}Bw9`-(sC<_mP^UB+)AS5qcm`~oJyqSQZg;45^1@W
+zM9ZxtS}rBiax00JTS>H>N~Gmh5-qoqX!+Q%ck0W|Cd<7vBg<{<nm)CB@)TRH>DX5@
+zpyj>vI(JQ^<yI0cAElFD#S<;Jl4!Y=M9ZxtT23X>@~hl^l9o%!wA@Of<yI0crxIzo
+zluXO7a93kmZY9xjD~Xm%$+X-`qUBZ+EvFJ`xs^oAtt480jcIu=&B$^}%dfGs<$Yhx
+z>s*Pn{2tTtJ1I=G+)AS5RuV0@l4!Y=M9c4FSkZDTiIz*rwA@Of<yI0crxIzoluXO1
+zL|T52X}Og|%cW#mZY9xjD~Xm<iL~5GqUHD4+48YrZ{V94?=daE$F#hc*6XKBwvQ<-
+zf0eG^PV!Z{emhAlftF(lv>Z#I<yZnOw~}Z%mO#r#X<!l~mO#s~1X^w-(Q+!0mRm`*
+z97~|(uhR9C7^y^BjwR4?EP<9=NwgeGpygNsEpPjVy@46uqcou9?bxt){T;wj8aP|t
+z_I)+)b8jV)mXFf8dkxZZD~Xnm()HU(Vo9`olukYa5G}WoXgQTg%dI3@E+y0QQ98K?
+zMYP;XqUBT~EtisMIh9DuN9p7#wrIJPM9ZaQT5cuLax00JKTEfd>(7>BNwnNbqUGDv
+zB*sx%PQFiQvi#KY_20xeN)y+#@2h!V|4odq(#bC%h?ZMPw0xA#-4l|QTS>IMq<am~
+zax00JQ;D?PN}}abGA%FRPR+F3N}}adA}yDaX?Y3vPp0Ko5-qoqXt|V3%dI3@ZY9xj
+zDv_33NwnNbqUB@5-heFk(sJ@!btcOxEiY4V`E6@?a!guY!_zy{ax00JTS>IMhNnWN
+z<yI0cw~}Z%l}O8Lx%(t7my&6D4R@cW<yI0crxIzoluXNOxT7{Lw~}bNl|;*>WLj<|
+z(Q+$^mQ#te+)AS5HJnG7me;Ad<)bul4!cgxEgz)`EpKCI%c(?KZY9z3mQJxn%dI3@
+zZY9xjD~Xm<iL~5GqUBODEw_?rxs^oAsYF`diuXv%sYF_CCDC##iI%rwBhqp!iI!VQ
+zw46$$<yI0cw~}ai8#`Ox#<aYRoh|RBiSzP%dBRUxP9@UveQa*Il|;*}BwB7I(Q+$^
+zmQ#ted@u9mq~%gFEw_?rxs^oAsYF^XCDZbKY!aiDM9ZxtS}rBiax00JTS>H>N~Gmh
+z5-qoqX!+Q%cl~yfqckJSDJ|c}wEP&G#7HI5ax00JA7hgktt47*CDC##iIyK@lNhZe
+zS}rBiax00JTS>H>N~GmdGA*YPX}Og|%a8D!(6n4irsY-=Ew_?r`7w63{0MiSrsY-=
+zEgu{9PVR0NSw6<jmXBS219t#>X+1YfK-ZLZkCB$2W0M%IBwB7I(eiU_5~Gzw%dI3@
+zP9@Uvvphi|EkDQJ@@pm0@^kELIh9Du&vH6ST0Tkx-^6Go(Q+$^mP^UB{8_qv3~2c%
+z4a_YcrE~xFNXxAxT0TnWz9>RkevX|jKgZ6NpJQK;dyZ*2?H(g7m(4h)<yI0cw~}bN
+zl|;*}BwBurz2%omq~%r;EtisMxs^oAtt480m3Jgb%cW#mP9@TED~Xm{NwoY5chsik
+zRuV0@l4v=VNXxAxT5cuL@@q`XuQ4sZ#?F>sW0M$VGmdFFl}O8F2ajpFl|;*}BwB7I
+z(Q+$^mQ#te+)AS5QZg;Si!4dYtt47bCDL*!nU+(DwA@Of<yI0cmy&6@l|;*}Bw9`-
+z((-#u%dI3@eviH7_a2+Xc#q93zo)*pd@uWINXuWP>nAZ{3A7wbpygNsEyogQIhH`n
+zU#06OF=7d{oJyqSSOP7_5@@-VM9Zl}T5cuL@>l8lZ(_s}XgQTg%drGnjwR4?D~Xn4
+z3AFrGy8fFO_hXme$<tAg<xv{g5`F)eI$J(U>&dBaxu)BgmTzUEleFAQqUBZ+Ew_?r
+zxs^oAtt47bCDL*$iIz*rwA@Of<yI0crxIzoY!)>wrxIzol|;*}Bw8*d({d|`mRm`*
+zoJyqSRuV0@l4$uhb+&wz2BsG7$1cBtJAkoWe)oM}&FkF%ok+_^>D)DumRm`*+)AS5
+zrOcO;mRm`*+)AS5R3a@eW!{LiTuP?pRuV0@l4v=VNXw;UT3*7*hiSQ$M9ZxtS}rBi
+zax00JTS>H>N~Gnoeb}_zN}}auYHs-`O`I(+yJ1h3?3%WrYbu+jOv_~lk7>D;M9Zxt
+zT5cuLax00J%dRBTaw?IQTS>HBN~Yyj5-qoqXgQTg%cW#mK1%1l>`Yp2CDC##iIz*r
+zw0xAV|K4&eiI!7|wA@Of<yI0cuVa%Kdud{7VI7;qSjV)yjZI>t5@~sCmtQQ2mRm`*
+z+)AS5RuV0b?edEy(el_XzgQA2kL~hnCDQWPF27bHEsyQ;izU%=DVdhXcKOAUXnAax
+zUo451$9DPMw=pemV`t0T*d)f-F2DP}ujX<6H!;3S=Vm@g%dI3@ZY9xjD~Xnm(#h!(
+z(Q+$^mQ#te+)AS5QZg;Kl4!Y=M9Zl}S}rBi@=-eVt6^GhCDC##iIz*rwA@Of<yI0c
+zrxIzol|;*}BwGI5u=jioOfBrClP6Rt%byMVe4Z@XHT_b0oqHNi*R=1e*{<Jw{Z%^m
+zwQACGD~Xm{NwnNbqUBZ+Ew_?rIh9DuN9o*M4QaWQOv|k#T5cuLaw?IQOUbmHN~Gmh
+z5-qoqX!$5zznvtOM9ZxtT23X>ax00JTS>J1xnb}59C*ubFTGCg3^7?wX?ZWb&OOhi
+zYkHPnchd4R{M$1vw~}c2D4l#yO|;xfqUBZ+Ew_?rc`w~hzI!KHZY9xjDVdgANwj>F
+zuHR15N~GmdGA*YPX}Og|%dI3@E+y0QQM&$n%dsR{P9@TED~Xm{NwoajwLBopy)+}s
+zPc5G;*)@G?dEmT!-&eB@yyf>Qr`V+BRuV0@l4!Y=M9W9%<hysG<yI0crxIzol|;*>
+zWLj<|(ef)i128S85^1@VOv|Z6T5cuLax00JOUbm{N}}af5-q>NsherJl|;*}BwBv$
+zT0Z&ioyc-8&B$^ayQZnL<@eaxaw?IQTS>J1PN&$S<yI0cw~}bNl|;*_L|Seo(Q+x7
+zmRm`*+)AS5R3a^xl4<!Jp4FI^TS>IsN}}abGA*}~Xt|X{%c(?KZY9z3J3Lb}Ex&gy
+z56msU$F%(3wLEf7+r)Iq`kRlBGST^cE&nK8J&Ez7bn*%Rx3!#0-_~+2eOt@9^ldHY
+z(zmr-OW)V>ucgZ;F=7d{oJ-%<axQ&a%eC}<EyogQxt6}K<sYT1CoyvA+ggq#&~h$)
+zTg$ohZ7tW*_qCi$-_~+2eOt?)rIEAcUrU#3`Li^l<zGv$tG|l(bLlqomfw%k)o=Ob
+zl4$uhrsZ2v7-_kcM9ZxtT23X>@-6&@H7%EtX}Og|%dI3@P9@TEDVdg2iL~5GqUBZ+
+zEtisMxs^oAx0$)+S|TmCl4$uToqED=TK?Ry_dNL}C6eV{nvvx%hCTO15xu67x#eFz
+zzrB0!>MzLsD4m-wAuTU6bIZ9TT5cuLax00JmzlZcS|TmCl4!Y<Ov|k#T5cuL@-j2G
+z980F<R3a_6l4!Y=M9ZaQT3*ULENQuwM9Zl}T5cuLax00JmtD&PvRuZryo_miFFmjR
+z-ty0-b!-x2otazCCDC##iI!VQwA@Of<#lFmxt2)Ftt47r!*dPOax00JTS>H>N~Gmd
+zGA*xTXUnZ5T5cuLaw(aXTS>IsN}}a;>}<J}M9ZxtT3*MrypCyk-L-u6SMh!=o&8$1
+zT+_a<X1jWq-;dJC&26IPRuV0@l4yBLC-b7^RuV0@l4v=VNXxAxS}rBi@)n*pn3h{f
+zw46$$<x(;&rxIzol|;*}BwF6Wa}CpSD~Xm{Nwl0wq~%r;Ew_?rc^jL=*wP*pljYRe
+z@;0XBdwFt9TE36XEw_?rxs^oAtt48$kDV>Il4v=VNXxAxS}rBiax00JTS>HhA3Iwv
+zCDU>$k(OIYwA@Of<x(;&w~}bNl|;*_L|WcUXTMY-T5cuL^1fkj;vBYZ4K!J9Lw5l8
+zF)i==YSw{CjH5I#iE)&!-cFKBqUBZ+Egz+UZ(_8PXgQTg%a8IN0BQLVo(h?kTS>Is
+zN}}aQcq(LCE+x})Dv_33NwnNbqUBODEw_?rxs^oAsYF_SglB4|<yI0cKgQ0MA7fg6
+zj7?%Z#<ct#J6nE^oh`SLXt|X{%WXfQXnAOtUoMH3Q;D?PN}}abGA*}~Xt`|-6fLI`
+zX}Oe4%c(?KZY9xjD~Xm%$+X-`qUBZ+EvFJ`xs^oAtt480j-4$($F#g}*n6D(3bI|(
+z)EDGlW%8D^oVEs%mRm`*+_uq)mRm`*T=qYimRm`*oJyqSRuV0@y?3JJveU}6+)AS5
+zR3a^xl4&`WNXxAxT5cuLa@yQRT5cuLax00Jhj#h>D4jYtGA*}~X!$j!<zs8$$y02T
+z<<!~oYwT?KU7j41mfz)lLeg?8iI!VQwA@Of<#&2>QMBAjqUBT~Ew_?r`91cQUn_~0
+zTS>H>N~GmdGA*YPX}Og|%kQzb{7T8R+)AS5RuV0z5^1@WM9ZxtT7Hjd`Pdpb@U^w~
+z*xB-X>TLP8@2gp_-%j#XI(a$@T8<^qax8(CV+pkURl5EyzgPk-f0eHPf?O<tmQ#te
+z{8hSs5+jyC%dI3@P9@TED~Xn43AB8a&Yk9vmcL5Ze?cymK+CZNT5cuLax8(CV+pi;
+z`<T-5Q5rahy?sn+`6xY4{@0Uhx=l@De3h=B#E2!)ax00J)6PZGax00JTS>H>N~Gmh
+z5-pdKY55kWfK1D+Bw9`-(sC)8mdg%P({d|`mRm`*TuP?p+tegREQyv=iL`v1n#71D
+z(eiCf%eOHt-=-!pj?#pdmvR<HT3*6=glV~zM9XOtB5ApmM9ZxtT5cuLaw?IQTS>IM
+zgp&``ax00JTS>H>N~GmdGA*YPX?Y1}ET-jF5-pdKX}Og|%dI3@P9@TED~Xm{Nwj?I
+z@;i6NLb6<@=9X{AF28e6!||GicKO}b@-&>ZycU;}mRm`*+)AS5RuV0*>0U#$+)AS5
+zwM>1JmRm`*TuP?pRuV0@l4v=VNXw;UT3(YZMa!)uT5cuLaw(aXTS>IsN}}adA}zO)
+zXt|X{%j=ky_tL~U?6F~Q<eGjdy-&`3$TjWzYEEukAuaEv=gE^q(ehEc{w=>)5-qoq
+zX!$5z|CV1YiI!7|wA@Of<x(;&AEoQx@{1+Waw?IQOUbmHN~Gmh5-qoqX!$5z|CV1Y
+ziI!VQw46$$<yI0cw~}ai->`Sqdm_uv((7a39CqKZ_r89Y-(DKIrhQ+{$?sy5mhZ`X
+zqUC#1m}t3`M9ZxtT5cuLax00JQ;D?PN}}abGA*}~Xt|X{%l9!Ymy&5Yl}O92BwB7I
+z(Q+x7mRm`*+)AS5R3a_6l4!Y=M9cezy$M-<mR`4k??>FnwES6m-3Df{_kA@dXR%4k
+zsYF_Sl=E`Zax00JTS>IsN}}aQx_=TaKgP7&N}}abGA%#G&X!wAw46$$<x(;&rxIzo
+zl|;)&>D)V#q~%gFEw_?rxs^oAM`_?Kzg7}0AElGqyhY28F)csFwEWmld`}wIu4x;(
+zre}ECU|QZwC*Q^-Ew_?r`6vxcVziQIxs^oAtt47LN&{MMCDC#znU-5gw0x8Xw0xA#
+zeNlw8TuP?pqjXZ1qUEDB@J)<X5-pdKX}Og|%dI3@K1u^xZY9xjD~Xo(4SVnFH(&3i
+zk*S5}n3kVoT7He4Ex*dl2Wj~=cDDRVv)H2LRuV0@l4!Y=M9Z(Sv*lJ2EtisMxs^oA
+ztt47bCDQV1>})xeNXxAxT5cuLaw(aXTS>IsN}}adA}zO)Xt|X{%dfGs<=5ER@@v=f
+zxnDxOrm4B*eP7MVw=qe}N9p9AW6^ReiI!VQwERwUETZLB5-q>e{gY@pl}O92Bw8*d
+z({d|`mRm`*{0?{2rsYyHEvFJ`xs^oAtt475CDU>%iI(5tJi@e`N~Gmh5-qoqX!$*+
+z<@cDD-(z#j@BM7~<kvUgnwF1p4l7zdN(0}-h$YZ+EP<9|3AFrGx_%NPmO#s`BwCIo
+z&~hq~mSYLD{8hSs5~Gzw%c(?KZY9z3SLx(FYS3~lftFK=v>Z#I<yZnOw~}Z%mO#s~
+z1X^A`rY14=(!?8a%g2<K_tMBU-KNf#ze?AiEq|3xo{ox^TS>IsN}}akI`I`P-_pd4
+zX!%y|HAu_1sY#4fGA*}~Xt|X{%eOHtmy&5Yl}O92BwB7I(Q+x7mRm`*+)AS5R3a_k
+z#<bi@qUGDv+45c*lI4_^Z&P#2%QB|rqjYY!3u(EPM9ZxtT5cuLax00JTS>H>N~Gnb
+z+|`hlm#ImNSQ0I_l4v=VNXw;UT23X>@-j7v5lf=wQZg;Kl4!Y=M9Zl}T5cuLax00J
+zmoY6bQ<E6WGWC|<QJT1>b?Pm@uhR9KuaDBiB*vO%2}H}SBwB7I(Q+$^me;Ab{9;M8
+zTuP?pRuV0@l4v=VNXw;UT23X>ax00JTS>HBN~Yyj5-qoqXn7qwTW%%Max00J*D)=x
+zV`t09hP{F5l66eWW4rv8vKhy;e3Y(#%P*Eh%dI3@ZY9xjD~Xnm(#aEF(Q+$^mP^UB
+z+)AS5RuV0z5^1@VOv|Z6T5cuLax00JOUbm{N}}bXbV@9y<y0aqw~}c2C=Hw~Z(~~C
+z#<aYRoh|RB+qoylbWQj0Z_l*6mj=GK9803*RuV0@l4!Y=M9ZxtT23X>ax00JOUbm{
+zN}}af5-lI4b8jw^mP^UBoJyqSRuV0@l4$uT4V*2vl4!Y=M9Zl}T5cuLax00J_YHd!
+zvK-sxx7^3HeC+Z&`K>y+rnI?@v|RQ-nU-5gwA@Of<yI0cw~}bNl|;*_L|Seo(Q?~+
+zCt4oc<rhn$<*{9UsbpGygnJFsax00JTS>HBN~Yyj5-qoqX!#NDYD~+mBwB7I(eh(V
+z%VWFzma$!aM`=RK&oM1O(=@SY`I+WnMa$1JrAk_ECDC##iI!VQw46$$<)d`+eL~T4
+zDVdgANwoY7vpJ^aR3a^xl4&`WNXxAxT5cuLaw(aXTS>IsN}}awnJytMw~}bNl|;+W
+zF)csGwEP^KTYipd`Bh{|T25QeNXxAxS}xmuOv|k#T5cuLax00JQ;D?PN}}agcn`p|
+z+)AS5RuV0z5^4Dr?lnxysYF_CCDC##iI!huT5cuLax00JQ;D?PN}}af5-sl=_C8J;
+zR%AK0%Wrv&eL?Ou_LkqVSLobX7-@NIm*3L1(TSE@Nwhq+%P*Eh%dI3@9^2&?OQPkm
+zU4F47S{~cw*Gi=2QZg;45^1@WM9ZxtS}rBiax00J+txtQaw?IQTS>G$w##pMkDV<a
+zyZp|b=AbO6CNbVqXUpr@F28kbmtQP_mSYLD97~|(SOP7tW4ruXNwgeGpygB|EyogQ
+z`KxsO7vx$=w7jNmbfV=}5-rCPXgQWZ%c(?KjwR6YSLxJQ7-_kcM9Z-RT8<^q^7=7#
+zwtSRkWVwx9(>8Mlu%;bxq~*3FPPE*1#EF($Nwl1{(UF#0NwnNbqUEw_%Cy`{qUE%W
+zj<j5MTA7wxNwl0wq~%gFEvFJ`xs^oAtt47bo7+gsw`5q+ax00JQ;D?PN}}af5-s1R
+z&X$kTz}ME+eZ$_zNtfF-eQNpKw~6VR(v~yQ@-j7vv8H`$q~%r;Ew_?rxs^oAtt47*
+z8}>xYW4rv;v0Z+#Bw8NZ<=0B2<*{9UtwdUGCDC##iIz*rv^=)UFP22hW4rufNwhq+
+z%WqxAw0!LHJEt&|<)@afpIbgkx05Bgrej~t_1{}QN(0|pjwR9ZQM!JY-&g7SZ(_uf
+zXt|X{%SUP8Y`K+0%cW#mZY9xjD~Xm<iL`u_2F{jKiL~5GqUBZ+EtisMxs^oAtt47b
+zCDQUy8aP{SCDC%*uqU$IOUu9{#+s&y?V5fmEdzG|TlsY-EvFJ`xs^oAtt49B!e1lP
+zax00JTS>H>N~Gmh5-pdKX?Y938m8q|5-q0^X}Oe4%c(?KZY9xjD~Xnm()HiOh$Yc-
+zD~Xm<iL`u_uK$8uEQyxehCPwxURnkwF^&y;BiHn)<$+0zd-xY&T23X>ax00JkJ7;0
+zax00JTS>IsN}}bx^uB(VUo451kJ7+feyt>0ZY9xjDv_3t(y22R({d`2mRm`*+)AS5
+zQZg;Kl4!Y=M9Zl}T5cuLax00J@9Et;k>y^RIETHbckk?)wxK(KvaiOp{7BE;Ma!)u
+zT5cuLax00JAL+bYwA@Of<y0aqw~}bNluXNybc!unZY9xjDv_2;$+Y|!J6mog(Q+$^
+zmP^UB+)AS5RuV0z5^1@WM9ZxtT0S=HUBAiWC{3KhwheoBP213P$+IYowEP^K#CWDB
+z{G#Pn5-qoqXt|X{%dI3@P9@TED~Xm%$+Y|&o5W}((Q+!0mP^UB{0z_3Ov|k#T5cuL
+z@=+Ri%deG0%dI3@P9@TED~Xn$;n}BYxoy}JSw6?kmY-v1%g?d1<=5EU@+;X$wEPOc
+zPp0Ko5-qoqXt|X{%dI3@eub$z({d|`mP^UB{0d?*Ex*Dqp=mjlNXw;UT23X>ax00J
+zTS>HBN~Yyj5-q=q_ejgBL|Seo(Q+$^mS1USh{*Carsdbz+45`bZ28z%GcdQDN~GnZ
+zbn?s2qUBZ+Ew_?rxs^oAtt47LO6Mk|Nz1JyS}rBiax00JTS>H>N~GmdGA*YPX}Og|
+z%X{hE_l-=;rDR%eCDC##iI!7|wA@Of<yI0c9~<@tzP9!ro5W}v_UxL5-tyZ%idaO;
+zU!{}pbb*#*3A7wbpygNsEyogQ`6!+J(jREKl|;+21X@ld(sC?;mSYLD+)AS5uhOZf
+ztfb{u5-rCPXgQWZ%c(?KjwR4?EP<9=NwgeGpygNsEpKhZ9?0@2&B$_S65}WhoR@F6
+zsk7yyboRNsXt|X{%dI3@ZY9z3t;`aTmRm`*oJyqSRuV1W($s=zxs^oAtt47bCDL*!
+znU-(i$+2m<l|;*}Bw8*d({d|`mRm`*oJyqSRuV0@l4$uhHHmSQCbZl(?AbL<X?Ypb
+z@{*pri<XzMv*lJ2Ew_?rxs^oAtt47bCDL*$iIz*rwA@Of<z?(_Ih9DurDR%8CDL*$
+ziI!VQv|LK2<yI0cw~}ai89Q5UCDC##iI$hKv*l&#d&}E0rsch~oV?eNYbrZ<Ov`06
+zj%m4-M9ZxtT5cuL@;Y|5+)AS5R3a_6l4!Y<Ov|k#T3*xpgrenCA}yDaX*rch%dI3@
+zUZ>vjOC{5CD~Xm{Nwl0wq~%r;Ew_?rc^%X8I;Q1yY!c(x<#+P?dvZ-__ZVrpY-KVn
+zm%T!!<yI0cw~}bNl|;*BSCVNtl}O92Bw8*d({d|`mbbA<j8q~mmy&5Yl}O9m*d#_P
+ziIz*rwA@Of<yI0c@1=8FnM}*ABwB7I(egGniLs4MVjR2tuKz0DQJS~|7~AFdRT`MY
+zXeH5dD~Xm{Nwhq+%P*Eh%c(?KZY9xjDVdgANwi!xA)1y`iL_iwrscAq(6l_Z%P*Eh
+z%VWFzVo9`olujwkw46$$<yI0cw~}c2KJ~rjqcoxA``9GLee9bUWz&>txopNUEw_?r
+z`7w63+)AS5RuU~g#?F>giL~5GqUBODEkDNI@@pm0aw?IQOUbmHN~Gn-*x7O`iIz*r
+zwA@Of<yI0cKgQ0MTS>IsN}}asm*0Rak6nJ}exFd5Q(AtEz2%oS?2(q+<~Gst*e<_V
+z5-pdFV5a5gn3h{fw46$$<yI0cmy&6@l|;*BbDL>7l}O8J8y#u6Y&kP6w~}bNl|;*9
+zyZmBFw4Aolk(S%uJJE70iI&H9`EAd!x#h84e%shCzoRs92aq=Gk(S%$Hqr9fF27h3
+zEsyQ;izU(W*e<_TA}x>Y@=GPtax00JTS>H>_7jqpOUbmHN~Gmh5-pGI@=GPt^4KoF
+zSQ0I#5^1@WM9ZxtT0VC9ot(TCS-!^3miG;N9|LF0$JW4sJAh*=)4399d2E+oEQyv|
+zNwnNbqUEt&ez7E4P9@TED~Xm%$+X-`qUEt&eyv1W9^2*DN~GnnU4F47S}rBiax00J
+zTS>G$w#zS;M9X8l{I-3=-p9F}RwT=Ja=FR!Q_BOh*zfc{Azaga-&gZE_g_!6{8hSM
+z%drGn{wiJnmR~G^mSYLD97~|(RuV185@`9Wbp2a?u>@K^O3&-x@@pm0@>l8lU4E@3
+zT8<^qax8(Cze?A?<rhn!<yZnOw~}Z%mO#s~1X{j-ZrFRiuit!qKeh&*bh*j$Q_I&+
+zmmH;uYr2JB4b$>1{M$1vw~}bNl|;)&>D&|$X}Og|%dI3@P9@TED~Xm%$+X-`qUBZ+
+zEvFJ``6!)wB57JqCDL*$iI!VQv|LK2<yI0cw~}Z%l}O92BwB7I(eiETZ22giefQ2}
+zIdryslm^br@5`8$moY6bNnxVpRuV0@l4!Y=M9ZxtT3*86J=1b4iIz*rwA@Of<yI0c
+zrxIzoluXO1L|Q&dr+%MI%dI3@E+x})D~Xm{Nwl0wq~%r;Ew_?rc^NxfUZy57?)!$l
+zi93L0Y!YJ~)AAagshO77v9sk?5-qoqXt|X{%j=kyQ;D?PN}}abGA*xTT5cuLaw?IQ
+zOUbmHN~Gmh5-qoqXt|V3%dI3@ZY9z3I;Q1T5-qoqXn7qwTVB&16qDtYme;XKjD26t
+z<NCM!zDn0`Cy6D|@)jmKP0Ot$THeb26KT1XM9W*bQzI?6l4!Y<Ov|k#T5cuLaw?IQ
+zOUbmHN~Gm2+)<mBTS>HBN~Yyj5-qoqXgQTg%dI3@ZY9z3Hg>kWr9CJn%PB3lt$}h)
+z_wwYJw0sYDYNq8@5-qoqXt|X{%dI3@ZY9z3QM&$n%dsR{E+x})D~Xm{Nwj>FuK$8u
+zDw&p3iL`u_uK(V0EQyv&$+X-`qUBZ+EvFJ`xs^oAtt48$?^-^0zDKgWkDV=lZrB^T
+zrm3^#M|pBgT23X>@}t}Vkd|9XwA@Of<yI0cw~}Z%l}O92Bw8*d({d|`mRm`*oJyqS
+zQZg++(u}WYxs^oAtt475CDU>%iI!VQw46$$<yI0cw~}ai->^6FM%-iUZ22+vmfx{8
+z@Z{Gw<eHx4$uVj9Irf%cD~Xm{NwoYNd&{qtM9ZxtT23X>@^ehfrDR%eCDC##iI$(?
+zm(a9aN~YyhA}zO)X!#kQHkg)6$+X-`qUBZ+EvFJ`xs^oAtt480j!j}b$Ih0YV_JTW
+zoh|SCY9_w7e3S;hx7<pi<yV@J7A?1uXt|X{%da$xEm}?`(sC<_mP^UB{0j5srsY-=
+zEvFJ`xs*)HsYF_CCDHOL&0>p|OUbm{N}}af5-q0^X}Og|%dI3@evQ55_ZmA}e(jSO
+z19t$gvAN}UdDDut{2n`7ZY9xjD~XohV`s~)BwB7I(Q+!0mRm`*TuP?pRuV0@l4v=V
+zNXw;UT23X>ax00JTS>HBN~Yyj5-q>Ovl`QKDv_33NwnNbqUHD4+46f#%kMEQzh};t
+zx8HoE-DBU^@{iKVlf-XpIhVez<zGu@zv}R9E$7m=wVX@e)^aX=Tg$cdeJ$tGx3&DE
+zboDneew0q#6M~j=>DyYarSEGwmO#t3^nESo(zmsoOW)S=kJ8mz&ZTc_IhVez<y!i_
+zmUHRbTF#|!Yx%P@a<=?y>GDa8&(esNze=y|+$;fI)3LAS+%=Jw_tLqo>!#&a5-lI4
+zli!dQEw_?rxs^oAN9p9ryl6R<NXxAxS}rBiax00JkJ8m=%e6#WE+x})Dv_33Nwj>F
+zuKwO~ESZ*DNwj>Fu71m}mPpI3Bw9X7SI;efmTnVUqJJ$-X!+RXcd}&Hv<+R;GBdaQ
+zqjdG$@{iKh-&@Wl(Q+$^mRm`*+)AS5R3a_6l4yCEnOn{!(Q+$^mQ#teTuP?pR3a_6
+zl4!Z?nl&w#l4-e>M9ZxtT3%-6mVcD4{@!vfiI$hKv*lx#-@w$u&@R7UOA}gN$0jk>
+zu}O?p5-qoqXt|X{%dI3@PJ1Lt%c(?KZY9xjDVdgANwi${eVUe2iL_iwrsY&3Ew_?r
+zxs^oArDR%eCDC%(%W7IqCDL*$iI!VQv^=!S@7L0dET^=*&b;OKbE)jBF)eRl3dpp)
+zh3S0Lax00JTS>IsN}}af5-q0^Y56FfdsahQE+x})D~Xm{Nwl0wq~%gFEvFJ``6!+I
+zuA6ANl|;*>WLj<|(Q+$^mQ#te+)AS5RuU}_?ehC7jhroSV{^;f%=eamF5Qb^Nz183
+zT5cuLa@vGQT5cuLax00JTS>H>N~GnqpOCa%N~Yyj5-qoqXgQTg%Vj^IX*rch%WZ3*
+zXt|X{%cW#m9@^!XOQPkWU4FSFS{~Zv_gR|K^3X27&(f5Z?_-k~kMLB;wEQTi*rerF
+z5-qoqXt|X{%WdbPXt|X{%c(?KZY9xjDVdgANwhq)%deJ5%R{^TYKgSmN}}bVU4F4-
+zS{~Zv_oFm$wwy|&<yI0cw~}c2F*b=Yw9D_a^f`%f_2%neOSh9QmuuSh)tvkS0%`du
+zojgetEgz+G=X<2(RuV0@l4!Y=M9ZxtT23X>ax00JOUbm{N}}af5-q0^X}Oe4%c(?K
+zZY9z3Q5u-UC?(T!D~Xm{Nwl0wq~%r;Ew_?r`Pi^G@J)=pv<#fXKGTV>UDGe6<=k&B
+zUDGT4i!d$krT4%W<XTCz+)AS5qcrdZxmFS_w~}Z%l}O92Bw8*d({d|`mRm`*oJyqS
+zqcrfn<y0aqw~}bNl|;*>WLj<|(Q+$^mQ#tee3S;hx7<pi<zvI%xsyba<zAYR<u-Or
+zQ(E5l)tvk`F=_c-PO(YLtt47LN&}M^tt47*CDC##iI!7|w0x8XCNWCMwEP}BTW%%M
+zaw?IQOUbmHN~Gm?I`I`Pw~}bNluXO5BwB7I(Q+!0mRm`*+)AS5_n4OV(sHt7vYa|w
+z-b>5%+evO8VUnG+e3S;Zlf)8eIhH`nU#08MmSYLD97~|(RuV185@<P<NXuWP>$j7{
+z5@@-VM9Zl}T5cuL@>l8l?If`TT23X>ax8(CV+pj}N}}ah0xic9X!&+**gJVT3bH&(
+z1Lv@}k0~u5rHN}QTbWGDWrLAvxs^oAWv`HFxs^oAtt47*CDC%(%4Aw@CDC#znU-5g
+zwA@Of<)d`!Ji@emlun&Tn3hwCwA@Of<yI0cmy&6@l|;*}Bw9`-((+L{^-h;*xs^oA
+zx2dz`qcm|2du-SnxC6M2X?fpQ^FH@~C(`m!x_*~mEQyv|NwnNbqUBZ+Ew_?r`6yk#
+z%kQgn?)_ZSaw(aXTS>IsN}}adA}yDaX*rch%dI3@{w&?jeJ#MWTuP?pRuV0@l4v=V
+zNXxAxT5cuL@-p?7-%(o5o#vn{Kec?)<#tWm&^4`7bIV_)>*togO4oluE|x^gtt47*
+zCDC##iI!7|wA@Of<#lRq`KxsDyKbW8RuV0z5^1@VOv~%k+;S|5mRm`*yiUz6$C7Bd
+zl|;*HcvfRtZY9xjD~XoZu}O?|>}>hiuy@k1c1=@f%Uk#tVOrk8vl`QKD~Xm{NwnNb
+zqUBZ+Ew_?rc?-|fOv|k#S}rBiax00JTS>H>N~Gnzbnd%3rsY&3Ew_?rxs^oArDR%e
+zCDHOxI=N$8w46$$<yI0cw~}ai8=J(~#^#o{F)eRnXUqG(n)mfzkZUE<ax00JTS>Hh
+zADhHzCDC##iI!7|wA@Of<x(;&w~}bNl|;*_L|QH-)ABvc8=00{NwnNbqUBODEw_?r
+zxs^oAsYF_CCDHOd%o~}O?_+1nduchjGsI*$HHmQ_)AFOdl|)*8lv8Zd@?-35xs^oA
+ztt47*CDC##iI!7|wEP%5TP`Kjax00JTS>H>N~GmdGA%#G&X!wAwA@Of<x(;&w~}bN
+zl|;*_L|Seo(Q+$^mLFqUevHj6KgQ0MA7fvTdydU5Khu<|Xt|X{%dI3@ZY9xjD~Xn$
+zVe;0roJyqSRuV0j-I%83veU}6+)AS5XSjDaEtisMIh9Dutt47*CDHOT+)<mBTS>Is
+zN}}adA}zO)X!#lLb4|<7u}O^Q*xB-POv}eEzkzFdjm<5;#^#n=NwnNbqUBdPvm`CI
+zl4!Y=M9Zl}T5cuLaw(aXTS>HBc4L~BQ;D=(N~YzqpU|}2N}}af5-pGI@{1+W^4KoF
+zRw6C8l4!Y=M9ar6zX4euyZp}mKA|k9z92WY%kP$UkCB$kW*pOUD~XohX}UzT+)AS5
+zRuV0@l4v=VNXxAxS}rBi@;lrUnwDEhw46$$<x(;&rxIzol|;*}Bw8*d({d|`mRm`*
+zoJyqSRuV0@l4$uoHi@y9)^oE2D9b4=zo*WYm$Z9Kw7ir}Q>5jk?BF3S#}a5cmO#s~
+z1X_+I&~ht@mSYLDoJyqSSOP7_5@`9Wbp03PQi-(ON}}ah0xic9XgQTg%drGnjwR4?
+zD~XoBN~aV?T8<^q^71itwtSQZW_*`pm*2@#Y`dl@EvLPAq~)?b%e34|qUEx|$h6!_
+zqUBZ+Etg$MrsY&3Ew_?rxs*)Hw=^FiT5cuLaw?IQkJ7o_&7|d{G@#{H5-qoqXt|V3
+z%SY*)!br<U>H6<2w-RajC|!TH9803*+tk_eQ5rZ~UXERUCk<=Yv<+R;68@E&mdAGa
+z#gb@wY?t4Xw$YK6TS>IsN}}blU4F47S}rBiax00J$9DO(5@~sCmtQN9mdAGaEn~a<
+zQpvPDw#zS;M9X8l{9;M8JhsbkS;n-ym)3K$1SrcgO>EcnspaeEmX~$^7jgaE@>l8H
+zDK=@jl|;*}BwB7I(Q+$^mXFf8f90g*R3a_6l4!Y<Ov|k#T0TnGe-opXNXw;UT0TnG
+ze-k5?M9ZxtS}rBiax00JkJ9yX%dJFOZY9xjD~Xo(4SVbLo3D@3cFub!%TL2z|Gnj-
+zv<*yRZ2P~6b5D**%X{f|?!26|+)AS5RuV0@l4$uTo!n3^T5cuLaw?IQTS>HBN~Yyj
+z5-lI4Q@<Lf<y0aqmy&5Yl}O92BwB7I(Q+x7mRm`*+)AS5R3a_6l4!Y=M9bT*<?Fv7
+zca*k)bJ#7N_}VpnYWezaNH6zr@?l!O7nhTkTS>HhAJcLxiI!VQwA@Of<@=bHTS>HB
+zN~Yyj5-s1yw46$$<x(;&rxI!TD4m<dCM~y;Xt|V3%dI3@ZY9xjDv_33NwnNbqUC+V
+z-a7D>-(H%L<u-H&a39n1W9)4CF?P1xN}}aQIvo`)w~}bNl|;*}Bw9`-(sC<_mP^UB
+z+)AS5RuV0z5^1@VOv{fkEw_?rxs^oArDR%eCDC##iI!7|wA@Of<yI0c?;G~ElkcgC
+zERWK_)WW`DZ{iN%F*b?u3^P=w<!AV}XIgG0(eg9geVUeANwnNbqUBZ+EvFJ``6!*c
+zqb4nvl4-e>M9ZxtT23X>@=-eVMAEc;lm_OOTS>IsN}}abGA*}~Xt|X{%SUNoZn>32
+z%dI3@-Z$(`Of5Xe&X%8JlNir2Ex&dxpOYnN`BmO0BrUg+Xt|X{%dI3@ZY9z3E4@!B
+zT23X>ax00JOUbm{N}}af5-q0^X}Oe4%dhY@rfIpAM9ZxtS}rBiax00JTS>J13KN~C
+z<yI0cw~}c2HKyg)*xB-H>}+{2Z3EwseveIJq!MYll|;+$vAN||5-qoqXt|X{%c(?K
+zZY9xjDVdgANwoYPo5V;Z(sC)8mQ#te+)AS5RuV0jl4<!pHi^+nqUBT~Ew_?rxs^oA
+z@3Fb%y>uV=Ht~Dxn;7q@v*q=pOf86(ze?AiEyogQ`KxsO7vy3Iv>Z#I<yZnOw~}c2
+zt91Pr<Wh;W97~|(SOP77m9GDSTq=>4TS>GWOQ7Xg0xhQ!X*rfa%drGnZY9xjEP<9|
+z3ADWK8}<fdd6c%38}>|=Ls~vc_v^nQz23&Od>hkpD~Xm{NwnNbqUBZ+Ew_?rIh9Du
+ztt475CDU>%iI#6ubIYwnS}rBiaw?IQTS>IsN}}akxKlGNw~}bNl|;*_L|Seo(Q+$^
+zmTzNP-b*vG{M7RGyZnyQz<K$)OuglIlm_1N`zj4+xs^oAtt47*CDC##iI$hKv*lJ2
+zEtisMxs^oAtt47bCDQUT^_E{Nk(OIYwA@Of<x(;&w~}bNl|;*_L|Seo(Q+$^mX8g4
+z1F~Gkw7iUIc^T94T7KP0%c(?KUdz*P(sC<_mRm`*+)AS5RuV0z5^1@WM9XWLB_J)g
+zl4!Y=M9Zl}S}rBiaw?IQTS>Hhl&=3KMk<+>TS>IsN}}bXbp1CmVo9{zN}}a;>}+{2
+z-A`@}G+AylU&T906IwoY`CY&H`l~dc<yI0cw~}bNl|;*}BwF6W8{4MkR3a^>-I%21
+zQZg;Kl4!YXtTZjB5^1@VOv|Z6T5cuLa@iwkS}rBiax00J$9DO(5@~sCmtQQ2mXBS2
+zC#Q);mV4=b{pRcS*syo<6x*(8YHm60QzI?k$Ig~pNwnNbqUBZ+Ew_?rxs^oA_p!6(
+zRuV0jl4-e>M9ZxtTE35+EtisMIh9Dutt47*CDC#znU-5gwA@Of<y0aqw~}c2UQXso
+z%l9!Y@1^_64SOcbsY#4um*2pfi;uBMj7RuaZdz_7(efkw@5!{>N}}af5-mT%lP=S8
+zDv_33Nwi!_rsY-=Ew_?rIh9DurDR$@N~eA`Ov|k#T5cuLaw(aXTS>IsN}}adA}zO)
+zXt|X{%a1WFKc>DQw?4)uF&<-+7|*e@<y0aqKf{wQ({d|`mRm`*+%_SKmRm`*oJyqS
+zwlz?+Tz15nmRm`*{2ZHGP9@TEDVdhXcKOAUXnAaxUn-fF$9DO}l4yBsmtQQ2mdAGa
+zt<NznKgYEE9Mke%nwZ5d`)W+fN9p95rD(a8M9ZxtT0TlA&tXN&tt47*CDC#!k(U3z
+z-tO(lab(M)ph`&+;N$8q*i027yMF0dh9ki;nsrw?g8}ST5-pdKX}Og|%kOkUTC|)>
+zq~%gFEvFJ`xs^oAtt480htnL>ax00JTS>H>N~Gm?x%Ew2ZY9z3TG$(q<$LTYzqREz
+z@D1QSrsc9%V_N={Q#aD`XYAf`D~Xm{NwnNbqUBZ+Eq})DEw_?rxs*)Htt47*CDHO{
+z>}<J|Ov|Z6T5cuLax00JOUbm{N}}b@*x7O_k(OIYwA@Of<zr!Q;)%G=n3g|dPx*bO
+zw7jL2Gtu&vR?bAru>@L<CD3v#ftI(jU_@GuCD3v!iI!stw46$$<yZnO#}a7yw{+?+
+zA!#|4NXxAxT8<^qax8(CQ;D=3OQ7Xg0xh?aXgQWZ%drGn-hQUEyh;P_#Mq97z3t@l
+zg!Y;KYWd`DxO}Etc`AvtoJyqSTezKXT5cuL@=>~<y!9<wZY9xjD~Xm<iL~5GqUBOD
+zEw9q4f6GnFtt47bCDL*!nU+`S)ESFuxs^oAtt475CDU>%iI!VQw46$$<yI0cw~}c2
+zSlHXHe}BX(?bp9QV!Nd`RoG|xQ+i&17kfMQYVOy+Z@HC7%dI3@UZv}AV#JbYxs^oA
+ztt47bCDL*$iIz*rwA@Of<yE@=CPpifmP^UBoJyqSRl5ErMl6YzOUbm{N}}af5-qRN
+zz}a#uiI!VQw0s}a@=<zT|8C-~E$rE6+J-*UBm4_%T7HE8b4|;wBwB7I(Q+$^mRm`*
+z+)AS5R3a_6l4!Y<Ov{h(SHra2N}}adA}yDaX*rch%dI3@ZY9xjDVdgANwnNbqUBT~
+zEw_?rxs^oAkMyPrk>z7d%a5_M<;R$ox9~fmX?Y93YnYa|v9sk?5-qoqXt|X{%dI3@
+z-p0<BTS>HBN~Yyj5-qoqXgQTg%cW#m-p0<BTS>IsN}}abGA(aoXUnZ5T23X>ax00J
+zTS>IM7WM}2Egz-lz!P!XakhN&hO~XAZRj)Y<>oDEc~7@gMa!)uTHecd4bpNeiI(^D
+ztwyxmN}}a`Ov`)ut%kH*N~Yyj5-soPyj--LN~GmdGA*YPX}Og|%dI3@-p9_CTS>Is
+zN}}adA}zO)Xt|X{%X@nEPGotMo&!($?PE7F_OY|&XZhurwEPVJ?U|NaNwmC5C!bst
+zEw_?rd6iB+xhPt0CDC#!k(OIYv|LK2<yI0cw~}c2C_T<SBS~5=CDU>$k(OIYwA@Of
+z<x(;&w~}bNl|;*_L|Seo(Q+$^mY-v1%g-?_Kht~N>@)q<^1wSWUSnELCDL*$iI!VQ
+zwERln07T2JBwB7I(Q+!0mRm`*{0iTnOv|k#T5cuL@~gO<v|LK2<y0aqw~}c2HKyfK
+zGA*}~Xt|X{%c(?KZY9xjD~XoZ!rr;R8YIit*iDSr*iDSrn3msTPx-ymNup@El|;*}
+zBwB7I(Q+$^mRm`*oJyqScla09v|LK2<yI0cw~}Z%l}O8_WLi!o(sC<_mRm`*TuP?p
+zRuV0@l4v=VNXxAxT5cuL@_Xzi#(V5+xh?G3XWE87)2Ez;k(NK{E`ezIQ^Z1AUZsJ1
+z%d0f-lwT`}mRm`*oJyqSRT_B8uar#7tt47*CDC#!k(Nuzw7g0KPx-ZyXt|X{%cW#m
+zUZsJj{8~x0oJyqSRuV0@l4yA??43KaBv~G%=gE@Ea_VgPC=Gn3{ii(tBwB7I(Q+(-
+zmVZmvZ~4U%X!*Bv{Tt+B3AEfwqUGPx^*1qAX+X=d1X}(rUH`u2RuV0z5^1@WM9Z-R
+zT8<^qaw?IQV+phzOQ7Xe5-rCPXgQWZ%X?ec16i)p^W>YIO_oDiUZsJX82fGN-f}CE
+zmTyx}`NfiGxs^oAtt47*CDC#!k(OIYw0xVow;W5N<yI0crxI!THg#{gl}O92BwB7I
+z(Q+x7mRm`*+)AS5+tf{rSQ0I_l4$u@*gLyMC$e0n5n2A#^7YHtt2FVM?&U@&X*rch
+z%lE097_lT;ZY9xjD~Xm{Nwl0wq~&|Ln?qVICDU>%iI!VQw7g2EZq=EVOUbmHN~Gmh
+z5-qoqXt|V3%dI3@zK0uVrsY&3Ew_?rxs^oA$HLx(Ebn7lUR!?G-!56DiO*E_YD~+I
+zF)g=}Xt|X{%a1WFw~}bNl|;*_L|Seo(eh(V%dI3@ZY9xjDv_2;$+VnGq~%r;Ew_?r
+zxs*)Hk1;K`l4v=VNXxAxT5cuL@?%WPk1;Jj#?F@4mfy)YipXc$#?F?vWFygXD~Xm{
+zNwnNbqUBZ+Ew_?rc}pk0qUBZ+EtisMxs^oAtt47bCDL*!nU+(DwA@Of<!$V2xs*)H
+ztt47*CDC#!k(OIYwA@Of<+bH^(y$`SZA{DCq2-a!G^OQzOv`(51ZjB>|CO7TTS>Is
+zN}}af5-qoqXgQTg%dI3@-ox*NrsY-=Ew_?rIh9DurDR%8CDL*$iI!VQw7iFBSxw8W
+zBwB7I(Q+!0mRm`*+)AS5eN4;y*i(M{n3nf3EkDa&chYhyk(OIYwEPVJmYbGaNwnNb
+zqUBZ+EvFJ`xs^oArDR%eCDC##iI!7|v|LK2<!AWoZdz_7(Q+$^mP^UB+)AS5RuV0z
+z5^1@WM9ZxtT7FKgldRIj+49=*8~IFsO0VmeulKT7V_JTVoh`SLXt|X{%dI3@evO?i
+zw~}Z%l}O92BwBurX}Og|%dI3@euck;rsYyHEvFJ`xs^oAt2FQixm7y(Zer1LD~Xm{
+zNwl0wq~%r;Ew_?r`8D;v<yD$Ehh1BKCr`2MGfkZ>ua&cbH^_}``R!>>jkMfKqUBZ+
+zEw_?rxs^oAZDCKeJhtWcTN=2x+)AS5RuV0z5^1@VOv|Z6T5cuLax00JOUbm{N}}af
+z5-q0^X}Og|%dI3@evjS6c#moMJ$AOdw)_Temy`t~({fqHF)g=}Xt|X{%d0f-zU5Uq
+zxw$A>ZY9xjDv_33Nwi!_rsY-=Ew_?rIh9Dut2FSw<y0aqw~}bNl|;*>WLj<|(Q+$^
+zmXFdl@V@0%5-qoqX!$dy<)idE`DSO6<sZXtBcG|b{OixO|L<pQkDdF4|9dU}D_wnW
+zIhVfHaxQ(X<y`t&%enNmmUHQAE&nTBeQ!CJzSeRqftGXWYc2mPUA=r=OW$ibmO#t3
+z^u3mI>1!?L($`v!CD3v%eXZqO`dZ7i^u3mI>1!?L($`x4Tl!<zb1ny2{#V+s*7D!d
+zHujnRYWeDW%l}_G_G)eeT3)3AEw9qar^iIgtt47*CDHOKo!ku<Ew_?rIh9Dutt475
+zCDZaMo!p}qEw_?rIh9DurDR%8CDL*$iI!VQv|LK2<yI0cuhP}`mTQT$+)AS5RuU~A
+z3w!5&129=0rTv`3P?moTd-7LS{7l=>H-LLFENS_kY$RH4CDHOd{JUpbZY9xjD~Xm{
+zNwl0wq~%r;EtisMxs^oAtt47bCDQUe{LM8jrxIzol|;*}Bw8*d({d|`mRIT2Z`7vc
+zR3a_6l4!Y=M9cTFv*r8P+48ZlH}MT%tp*N!1330-e$IUZAT1xI+tuqN|4IWlF<MEq
+z+)AS5M>@q8Ew_?rIh9DukFm4mQZg;Kl4!Y=M9Zl}S}rBiaw?IQTS>IsN}}abGA*}~
+zX!(&&u|><NL|Seo(Q+$^mLFqUevF+hKgMoiJjQNf9D6lCSFe-&S2}s;gS5PjX}Og|
+z%iGvZj8+mYw~}Z%l}O92BwF6awA@Of<yI0crxIzoluXO1L|Seo(Q+$^mP^UB+)AS5
+zRuV0z5@~rG({d|`mbbB+7;80fM3z%p-o|cX?1z@morRH>SLy0^V&sx&xs^oAtt47*
+zCDC##iI!7|wA@Of<yAWMJE3X0l|;*}Bw9`-(sC)8mQ#te+)AS5RuV0jl4*Glzvr5k
+zTS>H>N~Gmh5-qoqXn7wyTi(aCypP?)*vHP6kG-1v)$1hxN&{!htt47*CDHOK4cx?N
+zCDC##iI!7|wA@Of<y9JZCq^rYmRm`*oJyqSRT?;3UZsJj{8~x0+)AS5QZg;C(!jmt
+zRuV0z5^1@WM9ZxtT0R!`wv+cGM3&F7n;6H!-geTk_L=@_`P}ch^qF4eegtXxm40^@
+zEw_?r`BiSIl9pRZwA@Of<yI0crxIzol|;*>WLkceC*nxUtt47bCDL*!nU-H;Px-Zy
+zXt|X{%cW#mZY9xjD~Xm<iL~5GqUBZ+Ex*Rjme*?Fh%BeH{2J5pu~%~&xVM~2q~%r;
+zEw_?rxs^oA@A7K{X}Og|%c(?KZY9xjDVdgANwnNbqUBT~EtisMIh9Dutt47*CDC#z
+znU-5gwA@Of<y0aqzr*jjrsY-=EguVe6S91doh`q|?k&H^wEQXeEJ@3sa4*cX+)AS5
+zPq^7+T5cuLax00JTS>H>N~Gmh5-pdKX}Og|%dI3@P9@TEDVdg2iL~5GqUBY(ddn}C
+zOv|k#T5cuLaw?IQTS>IsN}}b@*xB-DOv`J_Z{T*xXG+VrpYUq~Y5BKw(ng@=-_rGG
+z%drGnjwR4?EP<9|3AEfwqUBfuEvFJ`d6fpvmSYLD+)AS5-_ogbBhqp!iI!stv>Z#I
+z<y0aq#}a5cmO#s`BwCIo&~hw+mTx~(XUnTJpyk`ol$KX%Ld$7;jI`XA+eFK)Bw8-3
+zOs3^l5-qoqXt|X{%c(?KF8fcW<x(;&w~}bNl|;*_L|R^@>)(mdN~Gmh5-qoqX!#aS
+zb4<&vBwB7I(Q+!0mRm`*+)AS5+tgEjtF)i{ONg?Z((-L;o#b|(ddly&bp2C)u_Rh<
+ztAV2BRuV0@l4!Y=M9X7aez7E49^3M}mF+Rpax00JQ;D=Zw&mAKq~)<KzgQA2x7|C@
+zax00J$F}@hiL^Yn<rhn$<@?y#@_p(lzuSFG%WKQ;oFnKnrR_1&a#_YPEw_?rxs^oA
+ztt480l+#htax00JQ;D?v2>-&GmP^UB+)AS5M>x$fEvFJ`xs*)Hk8n4~wA@Of<yI0c
+zmy&6@l|;*rsi*u}iL~5GqUFcfO^nCb+49=*J9i%zW%*ajCtYrzX-dmwug0{TN~Gm2
+zDNMB7N}}af5-qoqXt|X{%c(?KZY9z3Hm2oP5-qoqXgQTg%iEZiQ;D?PN}}af5-pdK
+zX}Og|%Ug1}XgQTg%dI3@ZY9z3Hg>kWjh!uTQ*V%4r3o$X;hUOic@N*zOv|k#T5cuL
+zax00JTS>IsN}}adA}zO)Xt|V3%dI3@ZY9z3DxEsbF)f#pX*rch%dI3@ZY9xjDVdgA
+zNwnNbqUBT~Ew_?rxs^oA`=RBNw~0lTM`=cuf3<wFWS?p3DZgj=<(RabN~Gmh5-qoq
+zXt|X{%dI3@ZY9xjDv_3-;oQiyTuP?pRuV0@l4v=VNXw;UT23X>ax00JTS>HBN~Yyj
+z5-qoqXgQTg%dI3@ZY9z3+VUH?weTE!%I`ULZ+UI`4Sc4tEx+H=$(>`-^4OMNEQyv|
+zNwhq+<rhn$<*_ZlSQ0J2!taEp<yZLq$+X-`qUG1v+43r#`ajpSyh`Ubwn@vYbp7&m
+zEQyv^>H00dSQ0I_l4yCA2A=Y3CDC##iI&%v-@rNSYwT?KHFj_LHFgu@UCzQt%c(?K
+zZY9xjD~XoJw)|pAwA@Of<y0aqw~}bNluXO5BwB7I(Q+!0mP^UBoJyqSu`Rz?5-pEy
+z`NfiGd2GwCl}O92Bw8NZ^1HpqwEP}BTV7j!=YG${&op%t<1_Y@-zPoOC0cGJ(eh{P
+zCPpiXmRm`*+)AS5R3a_6l4!Y<Ov|k#T5cuL@@MQOMk$$=Q;D?PN}}aY`UW6cE+x})
+zD~Xm{Nwl0wq~%r;Ew_?r`7?GCV{Q4Jvk}U2O3R<An;7?>@(aIc`JPq-Ma!`ST8<^q
+z@^9&SEyogQIhH`ntt48GCD3vzk(Of#v>Z#I<=@ivT23X>^1ZA(l9po$v>Z#I<y0aq
+z#}a5cmO#t*vW-bvjwR4?EP<BqKT}Wnt<r#&?`zBN<h$zZGfio^?A4f-Z|Qe;(Q+$^
+zmRm`*d<*~QnwDEhwA@Of<y0aqw~}bNluXO5BwB7I(ef?)%4%A^g&WeQ<y0aqw~}bN
+zl|;*>WLj<|(Q+$^mQ#ted<)M3n3h{fw0xU7TVACJEw3%Vfo}k}F)gpXn(N;ncTcN<
+zq~&{ho=~*hN}}af5-qoqXt|X{%c(?KZY9xjDVdgANwi#6I8Do`L|QH-({d`2mRm`*
+z+)AS5QZg;Kl4!Z?eVUfXw)|pAv^=)ucfXHm`9AfO-~B$O<@=bH%QB8>`4PT-nwDEh
+zwA@Of<wy9QYg%q4(Q+$^mQ#te+)AS5Rl0upI+jGstt47rrR$fkQ^~ZPN~Gmh5-qoq
+zXt|V3%d2$#@^vhUmQ#te+)AS5RuV0*Ex(f|z9P$`^gQ`qH<RU*me-cw$s5x0naZw^
+zX}K)pn3h{fw7iXJc^lL67XE6OmXFe7;B0x72DIEtqUBODEw9qRz2#OCEvFJ`xs*)H
+zsYF_CCDC##iI!LC`u8ozl4yCA2JS7V5^1@WM9ZxtTHeOAyp7$&SX+K0pXpEOd2%&S
+zKGPmfb4<&7QkZDDl|;*X`1Wa9ZY9xjD~Xm{Nwl0wq~%q*ew`$hOv|k#T3)5=-yqjY
+zq~%gFEvFJ`xs^oAtt475CDU>%iI$Jj<N7zqwGwH$l|;*}BwF65-XOP1`^jhTOqNqx
+zUR!<x-vFNFo+WAdnNCMV%dI3@ZY9xjD~Xm{NwmC5*RPYb5^4EazI~FGpJQ5nhQAu7
+z<yI0crxIzoluXOd@LP>(d6iD?poo@RNwi!_rsY*Sd7D_Y+)AS5R3a^}(zzQmq~%r;
+zEkDQJiLti)25v1p$KHwY9Mf`H1T!s{oi5XID~Xm{NwnNbqUBZ+Ew_?rd6mxnRzq5D
+zCDC#znU-5gw44_9NXuhee)q90zg8kGw~}bNl|;*B3DLCNN}}af5-pd_MbmOCiI&q6
+zB58ST`Cb2R;#Jzuc@Jf|4V{<2#_lb@!*ide<*_ZlSQ0IlwI9=RD~Xm{NwnNbqUBT~
+zEx*f6cG7YwnU-5gwA@Of<y0aqzsIzkN~Gmh5-qoqXt|V3%dI3@ZY9xjDv_33NwoYf
+z-!(|f?=daE$8KW0$DZ;#O3!nrZuFTx<*z$wIh9Dutt49hjNQa&CDC##iI!VQw46$$
+z<yI0cmy&7u6V6yn%dI3@{)C(CrsYyHEvFJ`xs^oAtt475CDU>%iI!VQwEPM8!c5Dp
+zBwB7I(eh{PDZkH{mOo=!UR!?Gf2K#-t067_maf<GZ|VAb%drGnjwR4?EP<9|3AEfw
+zqUBfuE&rBIoqUj%V+phzOQ7Xe5-q0^X}Og|%fF>le+fy;u>@L9CDL*%ftF(lwA@Of
+z<yZnO#}a7y@iTR{yh<~&9J;r>N)w;yHgyx@F}CIRC_7!I<+Ao;T5cuLax00JTS>H>
+zN~Gmh5-pdKX}Og|%dI3@zLjSrNz1Er{W~#QiL~5GqUBZ+EtisMxs^oAxA26iX*rch
+z%dI3@ZY9z3ZR%`!l?LuDKi0zD$@>xZnTBp+JnrE+YSZ#PJacSXZY9xjD~Xm{NwnNb
+zqUBZ+EvFJ`xs^oArDR%eCDC##iI!LC+ztw9d6lkTCut?p@+w__6XUmZ>RXLzxs*)H
+ztt47*CDHOKUH`u2SQ0HCrR~(In`!x;PJBg{N9i>p%PqLvKGUDl>-xo&$0PjzWLi!o
+z(()tx|72QjCDC##iI!VQw0xAd>)(mdN~GmS_!ri+TuP?pRuV0*()CaIwGwH$luXO1
+zL|Seo(ef%?|CC=UnU-5gwA@Of<y0aqw~}bNl|;*HVejO=hRE_Ly-sdyn=H#_h<&DQ
+z=rg4~HPZ4HPIFAlTR3AeEw_?rxs^oAtt475J6)#bR3a_6l4!Z@-iemSw)`Gt<;=94
+zN~GmdGA)<wG1KxEzI~dOTS>HBN~Yyj5-qoqXgQTg%dI3@ZY9z3miDMcmfM(?*TUY&
+zXPVM-+Pxz!k8Sxq+D4pcd2GusmPE^ATYj-5T5bz_qUEtIzf>|Uk8Sxq#<u)giL^Yn
+z<=0B2<*_ZlSQ0IdZTUUg!k%b(Y|F2eNXuheez7E4-p90jlwK#_f^4#!((+N7_)O38
+zyE|$5nSOT{Ew_?rxs^oAtt47*CDC##iI!7|wA@Of<>%N<j8+mYw~}Z%l}O8_WLi!o
+z((-fcCPpiXmP^UB+)AS5RuV0z5^1@WM9ZxtT0R!`o&!($J;$_sEbKk6Ung0miO=*J
+z)ADOf%dI3@ewACQq~%r;Ex*FQ5vJu<5-q0^X}Og|%cW#mZY9xjD~Xm<iL_iwrsY&3
+zEx*!jV$pIdiIz*rwA@Of<yI0crxIzol|;*}Bw9We_9kR`lwK#_f^4$fhQ0wDrPuXa
+zevfy#XGvO4CDL*$iI!VQwA@Of<#&1-Q?%SlqUHD4*>Wq1mP^UB+)AS5RuV0z5^1@V
+zOv|Z6T5cuL@;jZEi<V2twA@Of<@eaxaw?IQTS>IsN}}cW*iDT0n3mVV-u3GwtMnRp
+z-|}Zn%b#Q;(Q+$^mRm`*+)AS5RuV0@l4$u;enBBEw~}bNluXN?F)g=}XgQTg%b&5E
+z7^y^BZY9xjD~Xm%$+X-`qUBZ+EvFJ`xs^oAtt49hjGZli#%^L93wzI#&)(T*8ai9v
+zex|hiTe@D$u>@L<CD8J3>H0Uw#S&;amO#s`BwCIo&~hq~mSYLDyh;OFZY9xjDv_33
+zNwoZ1y8hmBEP<9&iL@L`pygNsEw_?rIhH`nu>@M)j)lE}bJ$fH(DL>(b#Hl<2F}a3
+z+tj_~RT{Xr9803*RuV0@l4!Y=M9ZxtT23X>@~zx2CoPwfX}Og|%dI3@zD?a*{w<xm
+zc}rSOCDL*$iI!VQv|LK2<yI0cw~}Z%l}O92BwB7I(eiCf%SY*T{g&Uh7WS@RCt0P5
+z&s6qmOw0H1-=1l?l|;*}BwAjj>$m)3NwnNbqUBXO_pcFYxs^oArDR%eCDHOKoq96F
+zw46$$<x(;&uhPkdJ<)P2iI!VQv|LK2<yI0cw~}Z%l}O90bZ(!JwA@Of<@?l4j8&RA
+zTRs-{o+s}|*k}5y<&)17%4Zte^4r>Sn`pU}M9ZxtT232rq~%r;Ew_?rxh?F8mdCdI
+zwzhjGT5cuL^4OMNE0LDRw)|R&v^=)uw~cN2rIKlRY|Af}M9X7aez7E49^3NU9%E<A
+zYs+s$mVdQ;{hIeGy{}*M-pc-yX}K)pn3lJsFwt@=iI!VQwA@Of<t_ZpH7%zSX}Og|
+z%cW#mZY9z37XCh&mQ#teTuP?pR3a^J;a4Hkax00JOUbm{N}}af5-q0^X}Og|%Uk$O
+z&9uCYoh`2|zkw&>wlOVlV^8_5y_$31YDmlb*i(LcdU{N>ypNqNw~}bNl|;*}Bw9`-
+z((*obwp>c4<yI0cw~}Z%l}O8_WLi!o(sC<_mRm`*ypKKQ*Gi)0ee7&Gl}O9`n3h{f
+zw7gHPldRH=ET?W_>|<IU+w$ASw)|pAv^=)u7fYh$u`Rz?5-pEy`NfiGxs*)HV_SZ)
+zBw8NZ@=GPt^4OMNEQyxKw)|4bv^=)u7fYh$u`Rz?5-pEy`E6^<Z{Ufz=h#zz&#|-R
+z=h#zzud%b`RXX?miL~5GqUE+4C|Vxd@{1+Wax00JQ;D=Zw&j;frsc6MzgQA2k8Sy-
+zl4*Ht%P*Eh%VS%9sbpFn+wzMg(ei8TCPpiXmRm`*ycYIO-n<oAzQ)d$Ut?#>uQ4sB
+zJvGwuJ3KXOT5cuL@;f{=Yg%5Vf%h%9l4!Y=M9Zl}T5cuLaw(aXkJ5hqI!P>vmQ#te
+zTuP?pRT?;3ZY9xjD~Xm%$+X-`qUBZ+EvFJ`xs^oAt2A)7{2sfBv9|oK-@V)3V`t0n
+zF)e?}Sr}>g6Yk8LmRD)uY`K+0%dI3@ZY9xjD~Xm<iL~5GqUBODEw_?rxs^oAsYF^X
+zCDZaJoD!IpTS>IsN}}abGA*}~Xt|X{%c(?KZY9xjD~XoZmfyfR>}O2NpRu#$&y<$;
+zpYUq~X}Og|%fF?QE(b0Dmaf-wEP<9|3A7wbpygH)EyogQIh9Duu>@NFEuH!ombBbT
+zqUBT~E&rBI{UszV#}a5cmO#s?L|Tp|&~hw+mRm`*97~|(SOP8YYs>HYbJ$fHc-z|k
+zGj+DSN)uX6+he5VvYusHZY9xjD~XoNu8?WDl|;*}Bw9`-(sC<_mP^UBd<)-mP0Ot$
+zT23X>aw(aXQ;D?PN}}af5-pdKX}Og|%dI3@P9@UvEu4j!mRm`*e4Bd8Z<QvrJhtVx
+zk8SzwX?u*cTsEyt%dI3@ZY9xjD~Xm{NwnNbqUBT~Ew_?rx$WMGmRm`*JhtW6N~Gnq
+zMn_s6+wzMg(el`qUn-fF$F}@pNwhq+<rhn$<*_Zl{XTZKd>_;Dee7)cKDAD=m%SR(
+zaw?IQAL-7AXt|X{%dI3@ZY9xjD~Xm<iM0GE-#$sprDR%eCDC##iI!7|v|LK2<y0aq
+zKgwNf(sC<_mP^UB+)AS5RuV0z5^1@WM9ZxtT7Haa`6#`wU%uWSV`s~2%kSL%2>MK0
+zISV5#Z{a(kX}Og|%dI3@ZY9z37QRuNmRm`*oJyqSRuV0jl4-e>M9ZxtT3)4dZxkUd
+zmy&5Yl}O92BwB7I(Q+x7mRm`*e3Z_;kHxf{N~Gmh5-qoqXn8H{o%Ei_@+i&7^6&kK
+zbEl*DnWnT{_G(PadwTXxw7ieq#Aqeaax00JTS>IMr*8nF<y0aqw~}bNluXO5BwB7I
+z(Q+!0mP^UBypKKQ*Gi)0RuV0jl4-e>M9ZxtT23X>ax00JTS>IM7WU3P|3tFf$F#f_
+z_6EKI>|<Jfj-4$($Ih0Y>C95J+)AS5RuV0@l4!Y=M9Zl}T5cuL^0S<dl9pRZwA@Of
+z<y0aqmy&5Yl}O92BwB7I(eg8$!-|$$NwnNbqUBT~Ew9q`?^})~(eiWbZ22g?PoDUi
+zET^=5l-?)5YshDM6~mI2U*X?9({d|`mRm`*+)AS5RuV0@l4$uA{@pVzuhPjI(xT;6
+z8qo4ldS1Uy@>{xo`TDnX?u{a(<x(;&uhPIfF<MEq+)AS5QZg;C(!f)Gt2A)7oJyqS
+zRuV0@l4$ugcD8(!W@NdIeWq>b8$jB<BQ3YxJJE70iI&?MooIP%%P*Eh%VS%9twdTL
+z+ww~#({d|`mRm`*JhtVRN~YyhA}zO)Xt|X{%cW#mZY9xjD~Xm<iL~5GqUE+4C|Z7x
+zy+Q6hrsemTmfvGqPTOOo<+j`=S{~c-izU%=*%dM^w~}bNl|;*_L|Seo(Q+x7mRm`*
+z{26=7FO^8krDR%8CDL*$iI!VQv|LK2<yI0cw~}Z%l}O92BwB7I(ehf@JNc#xk>zLX
+zCdOw>%SY+*_k2A6_mg(-zSr`<($!kdrLVP|OJ8gGU+HQs=hD|&&ZV!lTua|;IhVfH
+zax8(C|CO$OCq^!Pt>s$!UdyorTCSz<wVX>|YdM#`)^aR?mUHQAE&nT>eEY`NTCSz<
+zwVX>|YdM#`*7D!dh?f5=z0ZjSWx0)groUP~XIT17Wv|Axd>hm9Eh$X2+)AS5RuV0@
+zl4!Y=M9a6Cr~GnBv|LK2<yI0cw~}Z%l}O8_WLi!o((-NQDZgA2EtisMxs^oAtt47b
+zCDL*$iI!VQw0tb=UH-PU|4K8m9C?G>f2E1fbPu<HOv|fu^*Tu|iI!VQwA@Of<yI0c
+zw~}Z%l}O92BwD_Q=Lt>Att47*CDC#!k(Nuzw46$$<yI0cw~}bNluXO3bZ$|ZwA@Of
+z<y0aqw~}bNl|;+;v9sm-n3nHjXUq37Ee~z^{VNTeEkDN2mRm`*+)AS5RuU~g$~i1)
+zIh9Dutt475CDU>%iI!VQwEPI?MyBObGA*YPX}Og|%dI3@euQ%)({d|`mRm`*oJyqS
+zRuV0@l4$uc^G=NaN)vZ{kA=P0$vYqRnf_||oLJ~HtzDt3*Gc}Bu3jg}CDC$PLL@D>
+zl4!Y=M9XcTP_#U><(EsM<+MgeS}vPbrsY-=Ew9qKch!-WSLxJWLeugV&caN~tt47*
+zCDC#znU+`S>gDTP5-q0^X}Og|%d2$mO@E~2ZR~7$ZTX$t*fv>C-Ne|&&X&{m7-_jI
+z<CvEB;0V)lD~Xo(a$|<H+)AS5RuV0z5^1@WM9ZaQT5cuLax00JQ;D=(N~YyhA}zO)
+vXt|X{%cW#mZY9xjD~Xo(@a@yI+)AS5RuV1mWA~Q#v8Vj@F)i<xoh|<#3EWSy
+
+diff --git a/app/apps/server/sqlite.db b/app/apps/server/sqlite.db
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+GIT binary patch
+literal 0
+Hc$@<O00001
+

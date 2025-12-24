@@ -55,21 +55,37 @@ export function GlobalAppShortcutManager() {
   }, [scenes])
 
   const handleStartLive = useCallback(() => {
-    // Synchronous ref check works immediately (React state may be stale)
-    if (
-      isStartOperationRef.current ||
-      isLive ||
-      isStarting ||
-      isStartingStream
-    ) {
-      logger.debug('Skipping start - livestream is already live or starting')
+    // Toggle behavior: if already streaming, stop instead
+    if (isLive) {
+      if (isStopOperationRef.current || isStopping) {
+        logger.debug('Skipping stop - already stopping')
+        return
+      }
+      isStopOperationRef.current = true
+      logger.info('Stopping live stream via shortcut (toggle)')
+      navigate({ to: '/livestream' })
+      stop()
+      return
+    }
+
+    // Start stream
+    if (isStartOperationRef.current || isStarting || isStartingStream) {
+      logger.debug('Skipping start - already starting')
       return
     }
     isStartOperationRef.current = true
     logger.info('Starting live stream via shortcut')
-    navigate({ to: '/livestream/' })
+    navigate({ to: '/livestream' })
     start()
-  }, [start, navigate, isLive, isStarting, isStartingStream])
+  }, [
+    start,
+    stop,
+    navigate,
+    isLive,
+    isStarting,
+    isStopping,
+    isStartingStream,
+  ])
 
   const handleStopLive = useCallback(() => {
     // Allow stopping if live OR if currently starting (to cancel a start in progress)

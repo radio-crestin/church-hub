@@ -2,6 +2,7 @@ import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 
 import { AnimatedElement } from './AnimatedElement'
 import { calculatePixelBounds, getTextStyleCSS } from './utils/styleUtils'
+import { compressTextLinesWithFit } from './utils/textProcessing'
 import type {
   PersonLabelConfig,
   ReferenceTextConfig,
@@ -72,10 +73,20 @@ export function TextElement({
   // Track previous content to detect changes
   const prevContentRef = useRef<string>(content)
 
-  // Convert HTML to plain text if needed - this ensures auto-scaling works correctly
-  const processedContent = useMemo(() => {
+  // Convert HTML to plain text (compression happens in useLayoutEffect where we can measure)
+  const baseContent = useMemo(() => {
     return isHtml ? convertHtmlToText(content) : content
   }, [content, isHtml])
+
+  // Final processed content (after compression decision)
+  const [processedContent, setProcessedContent] = useState(baseContent)
+
+  // Update processedContent when baseContent changes
+  useLayoutEffect(() => {
+    if (!config.style.compressLines) {
+      setProcessedContent(baseContent)
+    }
+  }, [baseContent, config.style.compressLines])
 
   // Track if content changed THIS render cycle (for immediate hiding)
   const contentChangedThisRender = prevContentRef.current !== content
@@ -89,7 +100,6 @@ export function TextElement({
   }
 
   // Get optional properties with defaults
-  const padding = 'padding' in config ? (config.padding ?? 0) : 0
   const animationIn = 'animationIn' in config ? config.animationIn : undefined
   const animationOut =
     'animationOut' in config ? config.animationOut : undefined
@@ -114,12 +124,8 @@ export function TextElement({
   const size = { width: bounds.width, height: bounds.height }
 
   // Auto-scale text using single-pass ratio calculation
+  // Also handles line compression with fit checking
   useLayoutEffect(() => {
-    if (!config.style.autoScale) {
-      setCalculatedFontSize(config.style.maxFontSize)
-      return
-    }
-
     if (!textRef.current) {
       return
     }
@@ -127,12 +133,14 @@ export function TextElement({
     const textElement = textRef.current
     const spanElement = textElement.querySelector('span')
     if (!spanElement) {
-      setCalculatedFontSize(config.style.maxFontSize)
+      if (!config.style.autoScale) {
+        setCalculatedFontSize(config.style.maxFontSize)
+      }
       return
     }
 
-    const maxWidth = size.width - padding * 2
-    const maxHeight = size.height - padding * 2
+    const maxWidth = size.width
+    const maxHeight = size.height
 
     if (maxWidth <= 0 || maxHeight <= 0) {
       return
@@ -145,7 +153,36 @@ export function TextElement({
     textElement.style.height = 'auto'
     textElement.style.whiteSpace = 'pre-wrap'
 
-    // Force reflow and measure once
+    // Handle line compression with fit checking
+    let finalContent = baseContent
+    if (config.style.compressLines) {
+      const measureWidth = (text: string) => {
+        spanElement.textContent = text
+        return spanElement.offsetWidth
+      }
+      finalContent = compressTextLinesWithFit(
+        baseContent,
+        config.style.lineSeparator ?? 'space',
+        measureWidth,
+        maxWidth,
+        0.7, // 70% threshold
+      )
+    }
+
+    // Update the span with final content and measure
+    spanElement.textContent = finalContent
+    setProcessedContent(finalContent)
+
+    if (!config.style.autoScale) {
+      setCalculatedFontSize(config.style.maxFontSize)
+      // Restore styles
+      textElement.style.overflow = 'hidden'
+      textElement.style.width = '100%'
+      textElement.style.height = '100%'
+      return
+    }
+
+    // Force reflow and measure
     const contentWidth = spanElement.offsetWidth
     const contentHeight = spanElement.offsetHeight
 
@@ -168,11 +205,12 @@ export function TextElement({
 
     setCalculatedFontSize(finalSize)
   }, [
-    processedContent,
+    baseContent,
     config.style.autoScale,
     config.style.maxFontSize,
     config.style.minFontSize,
-    padding,
+    config.style.compressLines,
+    config.style.lineSeparator,
     size.width,
     size.height,
   ])
@@ -185,12 +223,10 @@ export function TextElement({
   // Apply scale to font size for display
   const baseFontSize = calculatedFontSize ?? config.style.maxFontSize
   const scaledFontSize = baseFontSize * scale
-  const scaledPadding = padding * scale
 
   const textStyles: React.CSSProperties = {
     ...getTextStyleCSS(config.style),
     fontSize: `${scaledFontSize}px`,
-    padding: scaledPadding,
     width: '100%',
     height: '100%',
     display: 'flex',

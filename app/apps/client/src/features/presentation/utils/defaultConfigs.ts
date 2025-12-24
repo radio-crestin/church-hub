@@ -35,6 +35,8 @@ export function getDefaultTextStyle(overrides?: Partial<TextStyle>): TextStyle {
     verticalAlignment: 'middle',
     lineHeight: 1.3,
     shadow: false,
+    compressLines: false,
+    lineSeparator: 'space',
     ...overrides,
   }
 }
@@ -183,6 +185,7 @@ export function getDefaultBibleConfig(): BibleContentConfig {
       animationOut: getDefaultAnimationOut(),
     },
     clock: getDefaultClockConfig(),
+    includeReferenceInContent: false,
   }
 }
 

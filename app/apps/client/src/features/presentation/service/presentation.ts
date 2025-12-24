@@ -1,5 +1,6 @@
 import { getApiUrl } from '~/config'
 import type {
+  LiveHighlight,
   PresentationState,
   PresentTemporaryBibleInput,
   PresentTemporarySongInput,
@@ -208,6 +209,54 @@ export async function clearTemporaryContent(): Promise<PresentationState> {
 
   if (!response.ok) {
     throw new Error('Failed to clear temporary content')
+  }
+
+  const result = await response.json()
+  return result.data
+}
+
+// ============================================================================
+// LIVE HIGHLIGHTS FUNCTIONS (in-memory only, for temporary highlighting)
+// ============================================================================
+
+/**
+ * Update live highlights (temporary, in-memory only)
+ */
+export async function updateLiveHighlights(
+  highlights: LiveHighlight[],
+): Promise<PresentationState> {
+  const response = await fetch(
+    `${getApiUrl()}/api/presentation/live-highlights`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ highlights }),
+      credentials: 'include',
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error('Failed to update live highlights')
+  }
+
+  const result = await response.json()
+  return result.data
+}
+
+/**
+ * Clear all live highlights
+ */
+export async function clearLiveHighlights(): Promise<PresentationState> {
+  const response = await fetch(
+    `${getApiUrl()}/api/presentation/live-highlights`,
+    {
+      method: 'DELETE',
+      credentials: 'include',
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error('Failed to clear live highlights')
   }
 
   const result = await response.json()

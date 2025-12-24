@@ -470,21 +470,25 @@ export function upsertScreen(input: UpsertScreenInput): Screen | null {
       // Update existing screen
       log('debug', `Updating screen: ${input.id}`)
 
-      db.update(screens)
-        .set({
-          name: input.name,
-          type: screenType,
-          isActive: input.isActive !== false,
-          openMode,
-          isFullscreen: input.isFullscreen === true,
-          width,
-          height,
-          globalSettings: globalSettingsJson,
-          sortOrder: input.sortOrder ?? 0,
-          updatedAt: sql`(unixepoch())` as unknown as Date,
-        })
-        .where(eq(screens.id, input.id))
-        .run()
+      // Build update object - only include isActive if explicitly provided
+      const updateData: Record<string, unknown> = {
+        name: input.name,
+        type: screenType,
+        openMode,
+        isFullscreen: input.isFullscreen === true,
+        width,
+        height,
+        globalSettings: globalSettingsJson,
+        sortOrder: input.sortOrder ?? 0,
+        updatedAt: sql`(unixepoch())`,
+      }
+
+      // Only update isActive if explicitly provided
+      if (input.isActive !== undefined) {
+        updateData.isActive = input.isActive
+      }
+
+      db.update(screens).set(updateData).where(eq(screens.id, input.id)).run()
 
       log('info', `Screen updated: ${input.id}`)
       return getScreenById(input.id)
@@ -498,7 +502,7 @@ export function upsertScreen(input: UpsertScreenInput): Screen | null {
       .values({
         name: input.name,
         type: screenType,
-        isActive: input.isActive !== false,
+        isActive: input.isActive === true,
         openMode,
         isFullscreen: input.isFullscreen === true,
         width,

@@ -6,7 +6,12 @@ import {
   getBackgroundCSS,
   getTextStyleCSS,
 } from './utils/styleUtils'
-import type { ContentType, ScreenWithConfigs } from '../../types'
+import type {
+  BibleContentConfig,
+  ContentType,
+  LiveHighlight,
+  ScreenWithConfigs,
+} from '../../types'
 
 interface ScreenContentProps {
   screen: ScreenWithConfigs
@@ -17,6 +22,9 @@ interface ScreenContentProps {
   showClock?: boolean
   isVisible?: boolean
   nextSlideData?: NextSlideData
+  fillContainer?: boolean
+  /** Live highlights applied during presentation (in-memory only) */
+  liveHighlights?: LiveHighlight[]
 }
 
 export function ScreenContent({
@@ -28,10 +36,12 @@ export function ScreenContent({
   showClock = true,
   isVisible = true,
   nextSlideData,
+  fillContainer = false,
+  liveHighlights = [],
 }: ScreenContentProps) {
   const config = screen.contentConfigs[contentType]
-  const canvasWidth = screen.width
-  const canvasHeight = screen.height
+  const canvasWidth = fillContainer ? containerWidth : screen.width
+  const canvasHeight = fillContainer ? containerHeight : screen.height
 
   // Calculate scale maintaining aspect ratio
   const scaleX = containerWidth / canvasWidth
@@ -63,7 +73,6 @@ export function ScreenContent({
       width: bounds.width * scale,
       height: bounds.height * scale,
     }
-    const padding = ('padding' in mt ? (mt.padding ?? 0) : 0) * scale
 
     return (
       <AnimatedElement
@@ -83,13 +92,12 @@ export function ScreenContent({
           content={contentData.mainText}
           style={{
             ...mt.style,
-            autoScale: true,
             maxFontSize: mt.style.maxFontSize * scale,
           }}
           containerWidth={scaledBounds.width}
           containerHeight={scaledBounds.height}
-          padding={padding}
           isHtml={true}
+          liveHighlights={liveHighlights}
         />
       </AnimatedElement>
     )
@@ -115,6 +123,14 @@ export function ScreenContent({
       height: bounds.height * scale,
     }
 
+    // Check if reference should be prepended to content
+    const bibleConfig = config as BibleContentConfig
+    const shouldPrependReference =
+      bibleConfig.includeReferenceInContent && contentData.referenceText
+    const displayContent = shouldPrependReference
+      ? `${contentData.referenceText} ${contentData.contentText}`
+      : contentData.contentText
+
     return (
       <AnimatedElement
         key="contentText"
@@ -130,15 +146,15 @@ export function ScreenContent({
         }}
       >
         <TextContent
-          content={contentData.contentText}
+          content={displayContent}
           style={{
             ...ct.style,
-            autoScale: true,
             maxFontSize: ct.style.maxFontSize * scale,
           }}
           containerWidth={scaledBounds.width}
           containerHeight={scaledBounds.height}
           isHtml={false}
+          liveHighlights={liveHighlights}
         />
       </AnimatedElement>
     )
@@ -151,6 +167,11 @@ export function ScreenContent({
 
     const rt = config.referenceText
     if (rt.hidden) return null
+
+    // Skip rendering if reference is included in content
+    const bibleConfig = config as BibleContentConfig
+    if (bibleConfig.includeReferenceInContent) return null
+
     const bounds = calculatePixelBounds(
       rt.constraints,
       rt.size,
@@ -182,7 +203,6 @@ export function ScreenContent({
           content={contentData.referenceText}
           style={{
             ...rt.style,
-            autoScale: true,
             maxFontSize: rt.style.maxFontSize * scale,
           }}
           containerWidth={scaledBounds.width}
@@ -231,7 +251,6 @@ export function ScreenContent({
           content={contentData.personLabel}
           style={{
             ...pl.style,
-            autoScale: true,
             maxFontSize: pl.style.maxFontSize * scale,
           }}
           containerWidth={scaledBounds.width}

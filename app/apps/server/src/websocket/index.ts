@@ -34,6 +34,18 @@ export type ScreenConfigPreviewMessage = {
   }
 }
 
+export type HighlightColorsUpdatedMessage = {
+  type: 'highlight_colors_updated'
+  payload: {
+    colors: Array<{
+      id: number
+      name: string
+      color: string
+      sortOrder: number
+    }>
+  }
+}
+
 // Store connected clients
 const clients = new Map<string, ServerWebSocket<WebSocketData>>()
 
@@ -239,6 +251,31 @@ export function broadcastScreenConfigUpdated(screenId: number) {
  */
 export function getConnectedClients(): number {
   return clients.size
+}
+
+/**
+ * Broadcasts highlight colors update to all connected clients
+ */
+export function broadcastHighlightColorsUpdated(
+  colors: HighlightColorsUpdatedMessage['payload']['colors'],
+) {
+  const message = JSON.stringify({
+    type: 'highlight_colors_updated',
+    payload: { colors },
+  } satisfies HighlightColorsUpdatedMessage)
+
+  wsLogger.debug(
+    `Broadcasting highlight colors update to ${clients.size} clients`,
+  )
+
+  for (const [clientId, ws] of clients) {
+    try {
+      ws.send(message)
+    } catch (error) {
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
+      clients.delete(clientId)
+    }
+  }
 }
 
 // OBS/Livestream message types

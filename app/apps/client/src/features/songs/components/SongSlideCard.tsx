@@ -4,8 +4,12 @@ import TextAlign from '@tiptap/extension-text-align'
 import { EditorContent, useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { Copy, GripVertical, Redo2, Trash2, Undo2 } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+
+import { CustomHighlight } from '../../presentation/components/editor/extensions/CustomHighlight'
+import { HighlightColorManager } from '../../presentation/components/editor/HighlightColorManager'
+import { HighlightColorPicker } from '../../presentation/components/editor/HighlightColorPicker'
 
 interface LocalSlide {
   id: string | number
@@ -30,6 +34,7 @@ export function SongSlideCard({
   onDelete,
 }: SongSlideCardProps) {
   const { t } = useTranslation('songs')
+  const [isColorManagerOpen, setIsColorManagerOpen] = useState(false)
   const {
     attributes,
     listeners,
@@ -53,6 +58,9 @@ export function SongSlideCard({
       }),
       TextAlign.configure({
         types: ['heading', 'paragraph'],
+      }),
+      CustomHighlight.configure({
+        multicolor: true,
       }),
     ],
     content: slide.content,
@@ -210,6 +218,13 @@ export function SongSlideCard({
           →
         </button>
         <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1" />
+        {editor && (
+          <HighlightColorPicker
+            editor={editor}
+            onManageColors={() => setIsColorManagerOpen(true)}
+          />
+        )}
+        <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1" />
         <button
           type="button"
           onClick={() => editor?.chain().focus().undo().run()}
@@ -230,6 +245,12 @@ export function SongSlideCard({
         </button>
       </div>
 
+      {/* Highlight Color Manager Modal */}
+      <HighlightColorManager
+        isOpen={isColorManagerOpen}
+        onClose={() => setIsColorManagerOpen(false)}
+      />
+
       {/* Editor Content */}
       <div className="bg-gray-50 dark:bg-gray-900/50">
         <EditorContent
@@ -237,6 +258,7 @@ export function SongSlideCard({
           className="prose prose-sm dark:prose-invert max-w-none [&_.ProseMirror]:text-gray-900 [&_.ProseMirror]:dark:text-gray-100"
         />
       </div>
+
     </div>
   )
 }

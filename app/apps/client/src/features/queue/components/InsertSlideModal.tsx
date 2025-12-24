@@ -6,6 +6,9 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useDefaultBibleTranslation } from '~/features/bible/hooks'
+import { CustomHighlight } from '~/features/presentation/components/editor/extensions/CustomHighlight'
+import { HighlightColorManager } from '~/features/presentation/components/editor/HighlightColorManager'
+import { HighlightColorPicker } from '~/features/presentation/components/editor/HighlightColorPicker'
 import { useToast } from '~/ui/toast'
 import {
   type LocalVerseteTineriEntry,
@@ -68,6 +71,9 @@ export function InsertSlideModal({
     LocalVerseteTineriEntry[]
   >([])
 
+  // Highlight color manager state
+  const [isColorManagerOpen, setIsColorManagerOpen] = useState(false)
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -77,6 +83,9 @@ export function InsertSlideModal({
       }),
       TextAlign.configure({
         types: ['heading', 'paragraph'],
+      }),
+      CustomHighlight.configure({
+        multicolor: true,
       }),
     ],
     content: '',
@@ -339,6 +348,13 @@ export function InsertSlideModal({
                 >
                   H2
                 </button>
+                <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1" />
+                {editor && (
+                  <HighlightColorPicker
+                    editor={editor}
+                    onManageColors={() => setIsColorManagerOpen(true)}
+                  />
+                )}
               </div>
               <div className="border border-gray-200 dark:border-gray-700 rounded-b-lg overflow-hidden">
                 <EditorContent editor={editor} />
@@ -373,6 +389,12 @@ export function InsertSlideModal({
           </button>
         </div>
       </div>
+
+      {/* Highlight Color Manager Modal */}
+      <HighlightColorManager
+        isOpen={isColorManagerOpen}
+        onClose={() => setIsColorManagerOpen(false)}
+      />
     </dialog>
   )
 }

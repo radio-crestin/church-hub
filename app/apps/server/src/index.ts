@@ -58,6 +58,14 @@ import {
   convertPptToPptx,
 } from './service/conversion'
 import {
+  deleteHighlightColor,
+  getAllHighlightColors,
+  type ReorderHighlightColorsInput,
+  reorderHighlightColors,
+  type UpsertHighlightColorInput,
+  upsertHighlightColor,
+} from './service/highlight-colors'
+import {
   detectContentType,
   handleContentTypeChange,
   initializeOBSAutoConnect,
@@ -74,6 +82,7 @@ import { getExternalInterfaces } from './service/network'
 import {
   batchUpdateScreenConfigs,
   type ContentType,
+  clearLiveHighlights,
   clearSlide,
   clearTemporaryContent,
   deleteScreen,
@@ -83,6 +92,7 @@ import {
   getPresentationState,
   getScreenById,
   getScreenWithConfigs,
+  type LiveHighlight,
   type NavigateTemporaryInput,
   type NextSlideSectionConfig,
   navigateQueueSlide,
@@ -98,6 +108,7 @@ import {
   type UpsertScreenInput,
   updateContentConfig,
   updateGlobalSettings,
+  updateLiveHighlights,
   updateNextSlideConfig,
   updatePresentationState,
   upsertScreen,
@@ -170,6 +181,7 @@ import {
 } from './service/songs'
 import { proxyToVite, serveStaticFile } from './utils/static-server'
 import {
+  broadcastHighlightColorsUpdated,
   broadcastMIDIMessage,
   broadcastPresentationState,
   broadcastScreenConfigUpdated,
@@ -2031,6 +2043,55 @@ async function main() {
         )
       }
 
+      // PUT /api/presentation/live-highlights - Update live highlights (in-memory only)
+      if (
+        req.method === 'PUT' &&
+        url.pathname === '/api/presentation/live-highlights'
+      ) {
+        const permError = checkPermission('control_room.control')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as { highlights: LiveHighlight[] }
+          const state = updateLiveHighlights(body.highlights || [])
+          broadcastPresentationState(state)
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: state }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch (_error) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid request body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // DELETE /api/presentation/live-highlights - Clear live highlights
+      if (
+        req.method === 'DELETE' &&
+        url.pathname === '/api/presentation/live-highlights'
+      ) {
+        const permError = checkPermission('control_room.control')
+        if (permError) return permError
+
+        const state = clearLiveHighlights()
+        broadcastPresentationState(state)
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: state }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
       // ============================================================
       // Songs API Endpoints
       // ============================================================
@@ -2942,6 +3003,160 @@ async function main() {
               }),
             )
           }
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: { success: true } }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // ============================================================
+      // Highlight Colors API Endpoints
+      // ============================================================
+
+      // GET /api/highlight-colors - List all highlight colors
+      if (req.method === 'GET' && url.pathname === '/api/highlight-colors') {
+        const permError = checkPermission('songs.view')
+        if (permError) return permError
+
+        const colors = getAllHighlightColors()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: colors }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/highlight-colors - Create/update highlight color
+      if (req.method === 'POST' && url.pathname === '/api/highlight-colors') {
+        try {
+          const body = (await req.json()) as UpsertHighlightColorInput
+
+          const permError = checkPermission(
+            body.id ? 'songs.edit' : 'songs.create',
+          )
+          if (permError) return permError
+
+          if (!body.name || !body.color) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({ error: 'Name and color are required' }),
+                {
+                  status: 400,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          const color = upsertHighlightColor(body)
+
+          if (!color) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({ error: 'Failed to save highlight color' }),
+                {
+                  status: 500,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          // Broadcast update to all clients
+          broadcastHighlightColorsUpdated(getAllHighlightColors())
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: color }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // DELETE /api/highlight-colors/:id - Delete highlight color
+      const deleteHighlightColorMatch = url.pathname.match(
+        /^\/api\/highlight-colors\/(\d+)$/,
+      )
+      if (req.method === 'DELETE' && deleteHighlightColorMatch?.[1]) {
+        const permError = checkPermission('songs.delete')
+        if (permError) return permError
+
+        const id = Number.parseInt(deleteHighlightColorMatch[1], 10)
+        const result = deleteHighlightColor(id)
+
+        // Broadcast update to all clients
+        broadcastHighlightColorsUpdated(getAllHighlightColors())
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: result }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // PUT /api/highlight-colors/reorder - Reorder highlight colors
+      if (
+        req.method === 'PUT' &&
+        url.pathname === '/api/highlight-colors/reorder'
+      ) {
+        const permError = checkPermission('songs.edit')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as ReorderHighlightColorsInput
+
+          if (!body.colorIds || !Array.isArray(body.colorIds)) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({ error: 'colorIds array is required' }),
+                {
+                  status: 400,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          const result = reorderHighlightColors(body)
+
+          if (!result.success) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: result.error }), {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          // Broadcast update to all clients
+          broadcastHighlightColorsUpdated(getAllHighlightColors())
 
           return handleCors(
             req,

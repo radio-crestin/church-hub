@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 
 import { getApiUrl } from '~/config'
+import { HighlightablePreview } from './HighlightablePreview'
 import { ScreenPreview } from './ScreenPreview'
 import { usePresentationState, useWebSocket } from '../hooks'
 import { useScreen } from '../hooks/useScreen'
@@ -227,6 +228,21 @@ export function LivePreview() {
 
   const hasContent = Object.keys(contentData).length > 0
   const showClock = !hasContent || presentationState?.isHidden
+  const liveHighlights = presentationState?.liveHighlights ?? []
+
+  // Get text content for highlighting (combine all text elements)
+  const textContent = useMemo(() => {
+    const parts: string[] = []
+    if (contentData.mainText) parts.push(contentData.mainText)
+    if (contentData.contentText) parts.push(contentData.contentText)
+    if (contentData.referenceText) parts.push(contentData.referenceText)
+    if (contentData.personLabel) parts.push(contentData.personLabel)
+    // Strip HTML tags to get plain text for offset matching
+    return parts
+      .join(' ')
+      .replace(/<[^>]*>/g, '')
+      .trim()
+  }, [contentData])
 
   // Loading state
   if (!screen) {
@@ -239,12 +255,18 @@ export function LivePreview() {
 
   return (
     <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow-lg">
-      <ScreenPreview
-        screen={screen}
-        contentType={contentType}
-        contentData={contentData}
-        showClock={showClock}
-      />
+      <HighlightablePreview
+        textContent={textContent}
+        enabled={hasContent && !presentationState?.isHidden}
+      >
+        <ScreenPreview
+          screen={screen}
+          contentType={contentType}
+          contentData={contentData}
+          showClock={showClock}
+          liveHighlights={liveHighlights}
+        />
+      </HighlightablePreview>
     </div>
   )
 }
