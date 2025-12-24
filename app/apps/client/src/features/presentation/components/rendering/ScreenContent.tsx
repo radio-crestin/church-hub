@@ -320,7 +320,7 @@ export function ScreenContent({
     }
     const padding = 16 * scale
     const labelHeight = ns.labelStyle.maxFontSize * scale + 8 * scale
-    const contentHeight = scaledBounds.height - padding * 2 - labelHeight
+    const _contentHeight = scaledBounds.height - padding * 2 - labelHeight
 
     // Render content based on whether we have versete_tineri summary
     const renderNextSlideContent = () => {

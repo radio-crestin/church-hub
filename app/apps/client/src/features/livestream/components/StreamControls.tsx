@@ -52,7 +52,6 @@ export function StreamControls() {
           {isStopping ? t('stream.stopping') : t('stream.stopStream')}
         </Button>
       )}
-
     </div>
   )
 }

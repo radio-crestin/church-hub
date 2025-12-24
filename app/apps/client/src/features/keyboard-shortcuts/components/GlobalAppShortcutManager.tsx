@@ -77,15 +77,7 @@ export function GlobalAppShortcutManager() {
     logger.info('Starting live stream via shortcut')
     navigate({ to: '/livestream' })
     start()
-  }, [
-    start,
-    stop,
-    navigate,
-    isLive,
-    isStarting,
-    isStopping,
-    isStartingStream,
-  ])
+  }, [start, stop, navigate, isLive, isStarting, isStopping, isStartingStream])
 
   const handleStopLive = useCallback(() => {
     // Allow stopping if live OR if currently starting (to cancel a start in progress)
