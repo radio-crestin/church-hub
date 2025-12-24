@@ -22,7 +22,12 @@
       "zoom": "Zoom",
       "resetZoom": "Reset Zoom",
       "save": "Save",
-      "unsavedChanges": "Unsaved changes"
+      "unsavedChanges": "Unsaved changes",
+      "previewText": "Preview Text",
+      "previewTextDescription": "Customize the preview text to test how your styling looks with different content.",
+      "customPreviewText": "Custom Text",
+      "previewTextPlaceholder": "Enter custom preview text (multiline supported)...",
+      "resetPreviewText": "Reset to Default"
     },
     "contentTypes": {
       "song": "Song",
@@ -65,6 +70,8 @@
       "fontFamily": "Font Family",
       "maxFontSize": "Max Font Size",
       "autoScale": "Auto Scale",
+      "autoScaleDescription": "Automatically scales text to fit the container. When disabled, uses a fixed font size.",
+      "fontSize": "Font Size",
       "color": "Color",
       "bold": "Bold",
       "italic": "Italic",
@@ -78,7 +85,16 @@
       "middle": "Middle",
       "bottom": "Bottom",
       "lineHeight": "Line Height",
-      "shadow": "Text Shadow"
+      "shadow": "Text Shadow",
+      "compressLines": "Compress Lines",
+      "lineSeparator": "Line Separator",
+      "separators": {
+        "space": "Double Space",
+        "dash": "Em Dash (—)",
+        "pipe": "Pipe (|)"
+      },
+      "fitLineToWidth": "Fit Each Line to Width",
+      "fitLineToWidthDescription": "Prevents line wrapping - each line scales to fit container width"
     },
     "animation": {
       "animationIn": "Animation In",
@@ -131,6 +147,12 @@
       "labelStyle": "Label Style",
       "contentStyle": "Content Style"
     },
+    "bibleOptions": {
+      "title": "Bible Options",
+      "includeReferenceInContent": "Include reference in content",
+      "includeReferenceInContentDescription": "Prepends the Bible reference to the verse content and hides the separate reference element"
+    },
+    "nativeWindow": "Native Window",
     "messages": {
       "screenCreated": "Screen created successfully",
       "screenCreateFailed": "Failed to create screen",
@@ -227,5 +249,17 @@
     "slides": "Slides",
     "noSlides": "No slides in this program",
     "preview": "Preview"
+  },
+  "highlight": {
+    "title": "Highlight",
+    "colors": "Highlight Colors",
+    "addColor": "Add Color",
+    "editColor": "Edit Color",
+    "colorName": "Color Name",
+    "colorValue": "Color Value",
+    "removeHighlight": "Remove Highlight",
+    "manageColors": "Manage Colors",
+    "deleteConfirm": "Delete this color?",
+    "noColors": "No colors defined yet"
   }
 }

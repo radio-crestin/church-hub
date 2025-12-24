@@ -12,15 +12,21 @@ import {
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { Button } from '~/ui/button/Button'
 import { Checkbox } from '~/ui/checkbox/Checkbox'
 import { Combobox } from '~/ui/combobox/Combobox'
 import { Input } from '~/ui/input/Input'
 import { Label } from '~/ui/label/Label'
 import { Slider } from '~/ui/slider/Slider'
 import { ConstraintControls } from './ConstraintControls'
-import type { SelectedElement } from './hooks/useEditorState'
+import type {
+  PreviewTextKey,
+  PreviewTexts,
+  SelectedElement,
+} from './hooks/useEditorState'
 import type {
   AnimationConfig,
+  BibleContentConfig,
   ClockElementConfig,
   Constraints,
   ContentType,
@@ -37,6 +43,9 @@ interface ScreenEditorSidebarProps {
   screen: ScreenWithConfigs
   contentType: ContentType
   selectedElement: SelectedElement
+  previewTexts?: PreviewTexts
+  onSetPreviewText?: (key: PreviewTextKey, text: string) => void
+  onResetPreviewTexts?: () => void
   onUpdateContentConfig: (
     contentType: ContentType,
     config: ContentTypeConfig,
@@ -109,10 +118,20 @@ const BACKGROUND_TYPES = [
   { value: 'video', label: 'Video' },
 ]
 
+// Line separator options
+const LINE_SEPARATORS = [
+  { value: 'space', key: 'space' },
+  { value: 'dash', key: 'dash' },
+  { value: 'pipe', key: 'pipe' },
+]
+
 export function ScreenEditorSidebar({
   screen,
   contentType,
   selectedElement,
+  previewTexts,
+  onSetPreviewText,
+  onResetPreviewTexts,
   onUpdateContentConfig,
   onUpdateNextSlideConfig,
   onUpdateGlobalSettings,
@@ -306,9 +325,33 @@ export function ScreenEditorSidebar({
                     className="w-full"
                   />
                 </div>
+                <div className="space-y-2">
+                  <Checkbox
+                    checked={
+                      (selectedConfig.config as { style: TextStyle }).style
+                        .autoScale ?? true
+                    }
+                    onCheckedChange={(checked) => {
+                      const newStyle = {
+                        ...(selectedConfig.config as { style: TextStyle })
+                          .style,
+                        autoScale: !!checked,
+                      }
+                      updateConfig([...selectedConfig.path, 'style'], newStyle)
+                    }}
+                    label={t('screens.textStyle.autoScale')}
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 ml-6">
+                    {t('screens.textStyle.autoScaleDescription')}
+                  </p>
+                </div>
                 <div>
                   <Label className="text-xs text-gray-500 dark:text-gray-400">
-                    Max Font Size (px)
+                    {((selectedConfig.config as { style: TextStyle }).style
+                      .autoScale ?? true)
+                      ? t('screens.textStyle.maxFontSize')
+                      : t('screens.textStyle.fontSize')}{' '}
+                    (px)
                   </Label>
                   <Input
                     type="number"
@@ -1013,6 +1056,137 @@ export function ScreenEditorSidebar({
                     ))}
                   </div>
                 </div>
+                {/* Line Compression Section */}
+                <div className="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                  <Checkbox
+                    checked={
+                      (selectedConfig.config as { style: TextStyle }).style
+                        .compressLines ?? false
+                    }
+                    onCheckedChange={(checked) => {
+                      const newStyle = {
+                        ...(selectedConfig.config as { style: TextStyle })
+                          .style,
+                        compressLines: !!checked,
+                      }
+                      updateConfig([...selectedConfig.path, 'style'], newStyle)
+                    }}
+                    label={t('screens.textStyle.compressLines')}
+                  />
+                  {(selectedConfig.config as { style: TextStyle }).style
+                    .compressLines && (
+                    <div>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400">
+                        {t('screens.textStyle.lineSeparator')}
+                      </Label>
+                      <Combobox
+                        value={
+                          (selectedConfig.config as { style: TextStyle }).style
+                            .lineSeparator ?? 'space'
+                        }
+                        onChange={(value) => {
+                          const newStyle = {
+                            ...(selectedConfig.config as { style: TextStyle })
+                              .style,
+                            lineSeparator: value as 'space' | 'dash' | 'pipe',
+                          }
+                          updateConfig(
+                            [...selectedConfig.path, 'style'],
+                            newStyle,
+                          )
+                        }}
+                        options={LINE_SEPARATORS.map((opt) => ({
+                          value: opt.value,
+                          label: t(`screens.textStyle.separators.${opt.key}`),
+                        }))}
+                        className="w-full"
+                      />
+                    </div>
+                  )}
+                  <Checkbox
+                    checked={
+                      (selectedConfig.config as { style: TextStyle }).style
+                        .fitLineToWidth ?? false
+                    }
+                    onCheckedChange={(checked) => {
+                      const newStyle = {
+                        ...(selectedConfig.config as { style: TextStyle })
+                          .style,
+                        fitLineToWidth: !!checked,
+                      }
+                      updateConfig([...selectedConfig.path, 'style'], newStyle)
+                    }}
+                    label={t('screens.textStyle.fitLineToWidth')}
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 ml-6">
+                    {t('screens.textStyle.fitLineToWidthDescription')}
+                  </p>
+                </div>
+              </div>
+            </Section>
+          )}
+
+          {/* Preview Text Section */}
+          {'style' in selectedConfig.config && (
+            <Section
+              title={t('screens.editor.previewText')}
+              icon={Eye}
+              defaultOpen={false}
+            >
+              <div className="space-y-3">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {t('screens.editor.previewTextDescription')}
+                </p>
+                <div>
+                  <Label className="text-xs text-gray-500 dark:text-gray-400">
+                    {t('screens.editor.customPreviewText')}
+                  </Label>
+                  <textarea
+                    className="w-full h-24 px-3 py-2 text-sm border rounded-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder={t('screens.editor.previewTextPlaceholder')}
+                    value={(() => {
+                      if (!selectedElement || !previewTexts) return ''
+                      switch (selectedElement.type) {
+                        case 'mainText':
+                        case 'contentText':
+                          return previewTexts.main ?? ''
+                        case 'referenceText':
+                          return previewTexts.reference ?? ''
+                        case 'personLabel':
+                          return previewTexts.person ?? ''
+                        default:
+                          return ''
+                      }
+                    })()}
+                    onChange={(e) => {
+                      if (!selectedElement || !onSetPreviewText) return
+                      switch (selectedElement.type) {
+                        case 'mainText':
+                        case 'contentText':
+                          onSetPreviewText('main', e.target.value)
+                          break
+                        case 'referenceText':
+                          onSetPreviewText('reference', e.target.value)
+                          break
+                        case 'personLabel':
+                          onSetPreviewText('person', e.target.value)
+                          break
+                      }
+                    }}
+                  />
+                </div>
+                {previewTexts &&
+                  (previewTexts.main ||
+                    previewTexts.reference ||
+                    previewTexts.person) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onResetPreviewTexts?.()}
+                    >
+                      {t('screens.editor.resetPreviewText')}
+                    </Button>
+                  )}
               </div>
             </Section>
           )}
@@ -1142,6 +1316,37 @@ export function ScreenEditorSidebar({
               )}
             </div>
           </Section>
+
+          {/* Bible Options - only show for bible content types */}
+          {(contentType === 'bible' || contentType === 'bible_passage') && (
+            <Section
+              title={t('screens.bibleOptions.title')}
+              icon={Settings}
+              defaultOpen={false}
+            >
+              <div className="space-y-3">
+                <Checkbox
+                  checked={
+                    (config as BibleContentConfig).includeReferenceInContent ??
+                    false
+                  }
+                  onCheckedChange={(checked) => {
+                    const bibleConfig = config as BibleContentConfig
+                    onUpdateContentConfig(contentType, {
+                      ...bibleConfig,
+                      includeReferenceInContent: !!checked,
+                    })
+                  }}
+                  label={t('screens.bibleOptions.includeReferenceInContent')}
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 ml-6">
+                  {t(
+                    'screens.bibleOptions.includeReferenceInContentDescription',
+                  )}
+                </p>
+              </div>
+            </Section>
+          )}
 
           {/* Clock Settings */}
           <Section title="Clock" icon={Type} defaultOpen={false}>
