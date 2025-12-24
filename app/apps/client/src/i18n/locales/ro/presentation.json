@@ -253,21 +253,13 @@
   "highlight": {
     "title": "Evidențiere",
     "colors": "Culori Evidențiere",
-    "yourColors": "Culorile Tale",
     "addColor": "Adaugă Culoare",
-    "addColors": "Adaugă culori",
-    "addFromPresets": "Adaugă din presetări",
-    "viewPresets": "Vezi presetări",
-    "presetColors": "Culori Presetate",
-    "editColor": "Editează",
+    "editColor": "Editează Culoare",
     "colorName": "Nume Culoare",
-    "colorNamePlaceholder": "Nume culoare (ex. Galben)",
     "colorValue": "Valoare Culoare",
     "removeHighlight": "Elimină Evidențierea",
     "manageColors": "Gestionează Culorile",
-    "manageColorsDesc": "Personalizează paleta de evidențiere",
     "deleteConfirm": "Șterge această culoare?",
-    "noColors": "Nicio culoare definită încă",
-    "clearAll": "Șterge Tot"
+    "noColors": "Nicio culoare definită încă"
   }
 }
