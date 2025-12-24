@@ -11,6 +11,7 @@ import {
   formatVerseReference,
   useBibleKeyboardShortcuts,
   useBibleNavigation,
+  useBooks,
   useSelectedBibleTranslations,
   useVerse,
   useVerses,
@@ -43,7 +44,6 @@ function BiblePage() {
   const [dividerPosition, setDividerPosition] = useState(40) // percentage
   const containerRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
-  const hasInitialSynced = useRef(false)
   const prevChapterRef = useRef<{ bookId: number; chapter: number } | null>(
     null,
   )
@@ -68,6 +68,13 @@ function BiblePage() {
     currentBibleItem?.bibleVerseId ?? undefined,
   )
 
+  // Fetch books for temporary content to get bookName
+  const temporaryBibleTranslationId =
+    presentationState?.temporaryContent?.type === 'bible'
+      ? presentationState.temporaryContent.data.translationId
+      : undefined
+  const { data: temporaryBooks = [] } = useBooks(temporaryBibleTranslationId)
+
   // Auto-select primary translation when loaded
   useEffect(() => {
     if (primaryTranslation && !navigation.state.translationId) {
@@ -75,21 +82,35 @@ function BiblePage() {
     }
   }, [primaryTranslation, navigation])
 
-  // Sync navigation with current Bible verse from presentation queue on initial load
+  // Sync navigation with current Bible verse on page open (temporary or queue-based)
   useEffect(() => {
-    if (hasInitialSynced.current) return
-    if (!currentVerse) return
+    // Priority 1: Temporary Bible content
+    if (presentationState?.temporaryContent?.type === 'bible') {
+      const tempData = presentationState.temporaryContent.data
+      const book = temporaryBooks.find((b) => b.id === tempData.bookId)
+      if (book) {
+        navigation.navigateToVerse({
+          translationId: tempData.translationId,
+          bookId: tempData.bookId,
+          bookName: book.bookName,
+          chapter: tempData.chapter,
+          verseIndex: tempData.currentVerseIndex,
+        })
+      }
+      return
+    }
 
-    // Navigate to the current verse
-    navigation.navigateToVerse({
-      translationId: currentVerse.translationId,
-      bookId: currentVerse.bookId,
-      bookName: currentVerse.bookName,
-      chapter: currentVerse.chapter,
-      verseIndex: currentVerse.verse - 1, // verse number is 1-based, index is 0-based
-    })
-    hasInitialSynced.current = true
-  }, [currentVerse, navigation])
+    // Priority 2: Queue-based Bible verse
+    if (currentVerse) {
+      navigation.navigateToVerse({
+        translationId: currentVerse.translationId,
+        bookId: currentVerse.bookId,
+        bookName: currentVerse.bookName,
+        chapter: currentVerse.chapter,
+        verseIndex: currentVerse.verse - 1, // verse number is 1-based, index is 0-based
+      })
+    }
+  }, [presentationState, currentVerse, temporaryBooks, navigation])
 
   // Get verses for the current selection
   const { data: verses = [] } = useVerses(
