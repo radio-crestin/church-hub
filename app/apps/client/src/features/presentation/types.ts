@@ -10,7 +10,6 @@ export interface LiveHighlight {
   startOffset: number
   endOffset: number
   color: string
-  textColor?: string
 }
 
 /**
