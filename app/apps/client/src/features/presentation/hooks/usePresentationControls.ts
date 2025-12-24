@@ -2,7 +2,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 import { presentationStateQueryKey } from './usePresentationState'
 import {
-  clearLiveHighlights,
   clearSlide,
   clearTemporaryContent,
   navigateQueueSlide,
@@ -11,10 +10,9 @@ import {
   presentTemporarySong,
   showSlide,
   stopPresentation,
-  updateLiveHighlights,
   updatePresentationState,
 } from '../service/presentation'
-import type { LiveHighlight, PresentationState } from '../types'
+import type { PresentationState } from '../types'
 
 export function useStopPresentation() {
   const queryClient = useQueryClient()
@@ -113,33 +111,6 @@ export function useClearTemporaryContent() {
 
   return useMutation({
     mutationFn: clearTemporaryContent,
-    onSuccess: (data: PresentationState) => {
-      queryClient.setQueryData(presentationStateQueryKey, data)
-    },
-  })
-}
-
-// ============================================================================
-// LIVE HIGHLIGHTS HOOKS (in-memory only, for temporary highlighting)
-// ============================================================================
-
-export function useUpdateLiveHighlights() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: (highlights: LiveHighlight[]) =>
-      updateLiveHighlights(highlights),
-    onSuccess: (data: PresentationState) => {
-      queryClient.setQueryData(presentationStateQueryKey, data)
-    },
-  })
-}
-
-export function useClearLiveHighlights() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: clearLiveHighlights,
     onSuccess: (data: PresentationState) => {
       queryClient.setQueryData(presentationStateQueryKey, data)
     },

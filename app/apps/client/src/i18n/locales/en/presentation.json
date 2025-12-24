@@ -249,17 +249,5 @@
     "slides": "Slides",
     "noSlides": "No slides in this program",
     "preview": "Preview"
-  },
-  "highlight": {
-    "title": "Highlight",
-    "colors": "Highlight Colors",
-    "addColor": "Add Color",
-    "editColor": "Edit Color",
-    "colorName": "Color Name",
-    "colorValue": "Color Value",
-    "removeHighlight": "Remove Highlight",
-    "manageColors": "Manage Colors",
-    "deleteConfirm": "Delete this color?",
-    "noColors": "No colors defined yet"
   }
 }

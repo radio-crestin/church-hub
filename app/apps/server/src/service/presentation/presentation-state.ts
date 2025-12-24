@@ -1,7 +1,6 @@
 import { eq, sql } from 'drizzle-orm'
 
 import type {
-  LiveHighlight,
   PresentationState,
   PresentTemporaryBibleInput,
   PresentTemporarySongInput,
@@ -12,10 +11,6 @@ import { getDatabase, getRawDatabase } from '../../db'
 import { presentationState, songSlides, songs } from '../../db/schema'
 
 const DEBUG = process.env.DEBUG === 'true'
-
-// In-memory storage for live highlights (not persisted to database)
-// These are cleared when the slide changes
-let currentLiveHighlights: LiveHighlight[] = []
 
 function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
   if (level === 'debug' && !DEBUG) return
@@ -80,7 +75,6 @@ function toPresentationState(
     isPresenting: record.isPresenting,
     isHidden: record.isHidden,
     temporaryContent: parseTemporaryContent(record.temporaryContent),
-    liveHighlights: currentLiveHighlights,
     updatedAt: record.updatedAt,
   }
 }
@@ -110,7 +104,6 @@ export function getPresentationState(): PresentationState {
         isPresenting: false,
         isHidden: false,
         temporaryContent: null,
-        liveHighlights: currentLiveHighlights,
         updatedAt: Date.now(),
       }
     }
@@ -127,7 +120,6 @@ export function getPresentationState(): PresentationState {
       isPresenting: false,
       isHidden: false,
       temporaryContent: null,
-      liveHighlights: currentLiveHighlights,
       updatedAt: Date.now(),
     }
   }
@@ -191,31 +183,6 @@ export function updatePresentationState(
     const temporaryContentJson = temporaryContent
       ? JSON.stringify(temporaryContent)
       : null
-
-    // Handle live highlights (in-memory only)
-    // Clear highlights when the displayed content changes
-    const slideChanged =
-      (input.currentSongSlideId !== undefined &&
-        input.currentSongSlideId !== current.currentSongSlideId) ||
-      (input.currentQueueItemId !== undefined &&
-        input.currentQueueItemId !== current.currentQueueItemId) ||
-      (input.currentBiblePassageVerseId !== undefined &&
-        input.currentBiblePassageVerseId !==
-          current.currentBiblePassageVerseId) ||
-      (input.currentVerseteTineriEntryId !== undefined &&
-        input.currentVerseteTineriEntryId !==
-          current.currentVerseteTineriEntryId) ||
-      (input.temporaryContent !== undefined &&
-        JSON.stringify(input.temporaryContent) !==
-          JSON.stringify(current.temporaryContent))
-
-    if (input.liveHighlights !== undefined) {
-      // Explicitly set live highlights
-      currentLiveHighlights = input.liveHighlights
-    } else if (slideChanged) {
-      // Auto-clear live highlights when slide changes
-      currentLiveHighlights = []
-    }
 
     db.insert(presentationState)
       .values({
@@ -854,37 +821,6 @@ export function clearTemporaryContent(): PresentationState {
     })
   } catch (error) {
     log('error', `Failed to clear temporary content: ${error}`)
-    return getPresentationState()
-  }
-}
-
-/**
- * Updates live highlights (in-memory only, for temporary highlighting during presentation)
- */
-export function updateLiveHighlights(
-  highlights: LiveHighlight[],
-): PresentationState {
-  try {
-    log('debug', `Updating live highlights: ${highlights.length} highlights`)
-    currentLiveHighlights = highlights
-    // Return current state with updated highlights (no DB change needed)
-    return getPresentationState()
-  } catch (error) {
-    log('error', `Failed to update live highlights: ${error}`)
-    return getPresentationState()
-  }
-}
-
-/**
- * Clears all live highlights
- */
-export function clearLiveHighlights(): PresentationState {
-  try {
-    log('debug', 'Clearing live highlights')
-    currentLiveHighlights = []
-    return getPresentationState()
-  } catch (error) {
-    log('error', `Failed to clear live highlights: ${error}`)
     return getPresentationState()
   }
 }
