@@ -2,7 +2,6 @@
 export * from './app-settings'
 export * from './auth'
 export * from './bible'
-export * from './highlight-colors'
 export * from './livestream'
 export * from './presentation'
 export * from './relations'

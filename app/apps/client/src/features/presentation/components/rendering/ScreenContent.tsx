@@ -9,7 +9,6 @@ import {
 import type {
   BibleContentConfig,
   ContentType,
-  LiveHighlight,
   ScreenWithConfigs,
 } from '../../types'
 
@@ -23,8 +22,6 @@ interface ScreenContentProps {
   isVisible?: boolean
   nextSlideData?: NextSlideData
   fillContainer?: boolean
-  /** Live highlights applied during presentation (in-memory only) */
-  liveHighlights?: LiveHighlight[]
 }
 
 export function ScreenContent({
@@ -37,7 +34,6 @@ export function ScreenContent({
   isVisible = true,
   nextSlideData,
   fillContainer = false,
-  liveHighlights = [],
 }: ScreenContentProps) {
   const config = screen.contentConfigs[contentType]
   const canvasWidth = fillContainer ? containerWidth : screen.width
@@ -97,7 +93,6 @@ export function ScreenContent({
           containerWidth={scaledBounds.width}
           containerHeight={scaledBounds.height}
           isHtml={true}
-          liveHighlights={liveHighlights}
         />
       </AnimatedElement>
     )
@@ -154,7 +149,6 @@ export function ScreenContent({
           containerWidth={scaledBounds.width}
           containerHeight={scaledBounds.height}
           isHtml={false}
-          liveHighlights={liveHighlights}
         />
       </AnimatedElement>
     )

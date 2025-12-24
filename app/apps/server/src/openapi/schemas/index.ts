@@ -1,7 +1,6 @@
 export { bibleSchemas } from './bible'
 export { commonSchemas } from './common'
 export { deviceSchemas } from './devices'
-export { highlightColorSchemas } from './highlight-colors'
 export { presentationSchemas } from './presentation'
 export { queueSchemas } from './queue'
 export { scheduleSchemas } from './schedules'

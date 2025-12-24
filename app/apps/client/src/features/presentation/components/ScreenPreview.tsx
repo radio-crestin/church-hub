@@ -3,15 +3,13 @@ import { useEffect, useRef, useState } from 'react'
 import { ScreenContent } from './rendering/ScreenContent'
 import type { ContentData } from './rendering/types'
 import { getBackgroundCSS } from './rendering/utils/styleUtils'
-import type { ContentType, LiveHighlight, ScreenWithConfigs } from '../types'
+import type { ContentType, ScreenWithConfigs } from '../types'
 
 interface ScreenPreviewProps {
   screen: ScreenWithConfigs
   contentType: ContentType
   contentData: ContentData
   showClock?: boolean
-  /** Live highlights applied during presentation (in-memory only) */
-  liveHighlights?: LiveHighlight[]
 }
 
 export function ScreenPreview({
@@ -19,7 +17,6 @@ export function ScreenPreview({
   contentType,
   contentData,
   showClock = true,
-  liveHighlights = [],
 }: ScreenPreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [displaySize, setDisplaySize] = useState({ width: 400, height: 225 })
@@ -82,7 +79,6 @@ export function ScreenPreview({
         containerHeight={displaySize.height}
         showClock={showClock}
         isVisible={true}
-        liveHighlights={liveHighlights}
       />
     </div>
   )
