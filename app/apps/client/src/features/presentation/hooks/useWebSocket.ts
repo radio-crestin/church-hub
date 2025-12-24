@@ -135,6 +135,14 @@ export function useWebSocket() {
       ws.onerror = (error) => {
         log('error', `WebSocket error: ${error}`)
         setStatus('error')
+
+        // Schedule reconnection in case onclose doesn't fire
+        if (!reconnectTimeoutRef.current) {
+          reconnectTimeoutRef.current = setTimeout(() => {
+            log('debug', 'Attempting reconnect after error...')
+            connect()
+          }, 3000)
+        }
       }
 
       ws.onclose = () => {
@@ -145,6 +153,12 @@ export function useWebSocket() {
         if (pingIntervalRef.current) {
           clearInterval(pingIntervalRef.current)
           pingIntervalRef.current = null
+        }
+
+        // Clear any existing reconnect timeout (from error handler)
+        if (reconnectTimeoutRef.current) {
+          clearTimeout(reconnectTimeoutRef.current)
+          reconnectTimeoutRef.current = null
         }
 
         // Reconnect after delay
