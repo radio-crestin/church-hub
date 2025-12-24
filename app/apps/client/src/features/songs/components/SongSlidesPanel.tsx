@@ -13,15 +13,26 @@ interface SongSlidesPanelProps {
 const SCROLL_OFFSET_TOP = 100
 
 /**
+ * Decode HTML entities to their corresponding characters
+ */
+function decodeHtmlEntities(text: string): string {
+  const textarea = document.createElement('textarea')
+  textarea.innerHTML = text
+  return textarea.value
+}
+
+/**
  * Strip HTML tags and extract plain text content
  */
 function stripHtmlTags(html: string): string {
   // Replace </p><p> and <br> with newlines, then strip remaining tags
-  return html
+  const stripped = html
     .replace(/<\/p>\s*<p>/gi, '\n')
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<[^>]*>/g, '')
     .trim()
+
+  return decodeHtmlEntities(stripped)
 }
 
 export function SongSlidesPanel({
@@ -96,13 +107,8 @@ export function SongSlidesPanel({
             return 'text-gray-700 dark:text-gray-200'
           }
 
-          // Get first line or truncated content for preview (strip HTML tags)
+          // Get full content for display (strip HTML tags and decode entities)
           const plainText = stripHtmlTags(slide.content)
-          const contentPreview = plainText
-            .split('\n')
-            .filter((line) => line.trim())
-            .slice(0, 2)
-            .join(' / ')
 
           return (
             <button
@@ -118,8 +124,10 @@ export function SongSlidesPanel({
                 >
                   {slideNumber}
                 </span>
-                <span className={`text-sm line-clamp-2 ${getTextClass()}`}>
-                  {contentPreview}
+                <span
+                  className={`text-sm whitespace-pre-line ${getTextClass()}`}
+                >
+                  {plainText}
                 </span>
               </div>
               {slide.label && (
