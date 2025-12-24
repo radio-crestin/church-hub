@@ -1,6 +1,7 @@
-import { copyFile, stat } from 'node:fs/promises'
+import { copyFile, stat, unlink } from 'node:fs/promises'
 
-import { getRawDatabase } from '../../db/connection'
+import { Database } from 'bun:sqlite'
+import { closeDatabase, getRawDatabase } from '../../db/connection'
 import { getDatabasePath, getDataDir } from '../../utils/paths'
 
 export interface DatabaseInfo {
@@ -12,6 +13,13 @@ export interface DatabaseInfo {
 export interface ExportResult {
   success: boolean
   exportedPath: string
+  error?: string
+}
+
+export interface ImportResult {
+  success: boolean
+  message: string
+  requiresRestart: boolean
   error?: string
 }
 
@@ -63,6 +71,105 @@ export async function checkpointAndExport(
     return {
       success: false,
       exportedPath: destinationPath,
+      error: message,
+    }
+  }
+}
+
+/**
+ * Validates that a file is a valid SQLite database
+ */
+async function validateSqliteDatabase(filePath: string): Promise<boolean> {
+  try {
+    const testDb = new Database(filePath, { readonly: true })
+    // Run integrity check
+    const result = testDb.query('PRAGMA integrity_check').get() as {
+      integrity_check: string
+    }
+    testDb.close()
+    return result.integrity_check === 'ok'
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Imports a database from the specified path, replacing the current database
+ * Creates a backup of the current database before replacing
+ * Requires app restart after successful import
+ */
+export async function importDatabase(
+  sourcePath: string,
+): Promise<ImportResult> {
+  const destPath = getDatabasePath()
+  const backupPath = `${destPath}.backup`
+
+  try {
+    // 1. Validate source file exists
+    try {
+      await stat(sourcePath)
+    } catch {
+      return {
+        success: false,
+        message: 'Source file not found',
+        requiresRestart: false,
+        error: 'Source file does not exist',
+      }
+    }
+
+    // 2. Validate source is a valid SQLite database
+    const isValid = await validateSqliteDatabase(sourcePath)
+    if (!isValid) {
+      return {
+        success: false,
+        message: 'Invalid database file',
+        requiresRestart: false,
+        error: 'The selected file is not a valid SQLite database',
+      }
+    }
+
+    // 3. Checkpoint current WAL to flush pending writes
+    const sqlite = getRawDatabase()
+    sqlite.run('PRAGMA wal_checkpoint(TRUNCATE)')
+
+    // 4. Close current database connection
+    closeDatabase()
+
+    // 5. Backup current database
+    try {
+      await copyFile(destPath, backupPath)
+    } catch {
+      // If backup fails, it might be because the file doesn't exist yet
+      // Continue anyway
+    }
+
+    // 6. Remove WAL and SHM files if they exist
+    try {
+      await unlink(`${destPath}-wal`)
+    } catch {
+      // File might not exist
+    }
+    try {
+      await unlink(`${destPath}-shm`)
+    } catch {
+      // File might not exist
+    }
+
+    // 7. Copy source file to database path
+    await copyFile(sourcePath, destPath)
+
+    return {
+      success: true,
+      message:
+        'Database imported successfully. Please restart the application.',
+      requiresRestart: true,
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    return {
+      success: false,
+      message: 'Failed to import database',
+      requiresRestart: false,
       error: message,
     }
   }
