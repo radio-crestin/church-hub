@@ -4,47 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="66517e3f-2e4e-43cc-880d-deb242368f0c" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TODO.md" beforeDir="false" afterPath="$PROJECT_DIR$/TODO.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/HighlightablePreview.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/LivePreview.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/LivePreview.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/ScreenPreview.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/ScreenPreview.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/editor/HighlightBubbleMenu.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/editor/HighlightColorManager.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/editor/HighlightColorPicker.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/editor/extensions/CustomHighlight.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/ScreenContent.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/ScreenContent.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/ScreenRenderer.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/ScreenRenderer.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/TextContent.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/TextContent.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/hooks/useHighlightColors.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/hooks/usePresentationControls.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/hooks/usePresentationControls.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/hooks/useWebSocket.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/hooks/useWebSocket.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/service/highlight-colors.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/service/presentation.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/service/presentation.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/InsertSlideModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/InsertSlideModal.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/songs/components/SongSlideCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/songs/components/SongSlideCard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/presentation.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/presentation.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/presentation.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/presentation.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-highlight-colors.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/migrations/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/migrations/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/migrations/seed-highlight-colors.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/schema/highlight-colors.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/schema/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/schema/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/openapi/paths/highlight-colors.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/openapi/paths/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/openapi/paths/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/openapi/schemas/highlight-colors.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/openapi/schemas/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/openapi/schemas/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/openapi/spec.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/openapi/spec.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/highlight-colors/index.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/highlight-colors/types.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/presentation/presentation-state.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/presentation/presentation-state.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/presentation/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/presentation/types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/websocket/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/websocket/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/unnamed.patch" beforeDir="false" />
-    </list>
+    <list default="true" id="66517e3f-2e4e-43cc-880d-deb242368f0c" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -120,7 +80,7 @@
       <recent name="$PROJECT_DIR$" />
     </key>
   </component>
-  <component name="RunManager" selected="npm.dev">
+  <component name="RunManager" selected="npm.fixtures">
     <configuration name="deploy:prod" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
       <package-json value="$PROJECT_DIR$/youtube-oauth-worker/package.json" />
       <command value="run" />
@@ -141,11 +101,11 @@
       <envs />
       <method v="2" />
     </configuration>
-    <configuration name="fixtures:screens" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
+    <configuration name="fixtures" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
       <package-json value="$PROJECT_DIR$/app/package.json" />
       <command value="run" />
       <scripts>
-        <script value="fixtures:screens" />
+        <script value="fixtures" />
       </scripts>
       <node-interpreter value="project" />
       <envs />
@@ -173,6 +133,7 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="npm.fixtures" />
         <item itemvalue="npm.dev" />
         <item itemvalue="npm.deploy:prod" />
       </list>
