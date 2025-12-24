@@ -8,36 +8,6 @@ import { useScreen } from '../hooks/useScreen'
 import { useScreens } from '../hooks/useScreens'
 import type { ContentType } from '../types'
 
-/**
- * Normalizes HTML to plain text matching TextContent's processing.
- * Converts block elements to newlines before stripping tags.
- */
-function normalizeHtmlToText(html: string): string {
-  return (
-    html
-      // Replace </p><p> with newline (paragraph transitions)
-      .replace(/<\/p>\s*<p[^>]*>/gi, '\n')
-      // Replace <br> tags with newlines
-      .replace(/<br\s*\/?>/gi, '\n')
-      // Remove opening block tags
-      .replace(/<(p|div|h[1-6])[^>]*>/gi, '')
-      // Replace closing block tags with newline
-      .replace(/<\/(p|div|h[1-6])>/gi, '\n')
-      // Strip remaining HTML tags
-      .replace(/<[^>]*>/g, '')
-      // Decode common HTML entities
-      .replace(/&quot;/g, '"')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&apos;/g, "'")
-      .replace(/&nbsp;/g, ' ')
-      // Collapse multiple newlines
-      .replace(/\n{3,}/g, '\n\n')
-      .trim()
-  )
-}
-
 interface SongSlideData {
   id: number
   content: string
@@ -261,14 +231,17 @@ export function LivePreview() {
   const liveHighlights = presentationState?.liveHighlights ?? []
 
   // Get text content for highlighting (combine all text elements)
-  // Must match TextContent's HTML processing for offset alignment
   const textContent = useMemo(() => {
     const parts: string[] = []
-    if (contentData.mainText) parts.push(normalizeHtmlToText(contentData.mainText))
-    if (contentData.contentText) parts.push(normalizeHtmlToText(contentData.contentText))
-    if (contentData.referenceText) parts.push(normalizeHtmlToText(contentData.referenceText))
-    if (contentData.personLabel) parts.push(normalizeHtmlToText(contentData.personLabel))
-    return parts.join(' ').trim()
+    if (contentData.mainText) parts.push(contentData.mainText)
+    if (contentData.contentText) parts.push(contentData.contentText)
+    if (contentData.referenceText) parts.push(contentData.referenceText)
+    if (contentData.personLabel) parts.push(contentData.personLabel)
+    // Strip HTML tags to get plain text for offset matching
+    return parts
+      .join(' ')
+      .replace(/<[^>]*>/g, '')
+      .trim()
   }, [contentData])
 
   // Loading state

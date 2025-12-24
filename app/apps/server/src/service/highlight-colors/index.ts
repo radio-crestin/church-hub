@@ -27,7 +27,6 @@ function toHighlightColor(
     id: record.id,
     name: record.name,
     color: record.color,
-    textColor: record.textColor,
     sortOrder: record.sortOrder,
     createdAt:
       record.createdAt instanceof Date
@@ -109,9 +108,6 @@ export function upsertHighlightColor(
       if (input.color !== undefined) {
         updateData.color = input.color
       }
-      if (input.textColor !== undefined) {
-        updateData.textColor = input.textColor
-      }
       if (input.sortOrder !== undefined) {
         updateData.sortOrder = input.sortOrder
       }
@@ -143,7 +139,6 @@ export function upsertHighlightColor(
       .values({
         name: input.name,
         color: input.color,
-        textColor: input.textColor ?? '#000000',
         sortOrder: nextSortOrder,
       })
       .returning({ id: highlightColors.id })

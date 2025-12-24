@@ -5,7 +5,6 @@ export interface HighlightColor {
   id: number
   name: string
   color: string
-  textColor: string
   sortOrder: number
   createdAt: number
   updatedAt: number
@@ -18,7 +17,6 @@ export interface UpsertHighlightColorInput {
   id?: number
   name: string
   color: string
-  textColor?: string
   sortOrder?: number
 }
 
