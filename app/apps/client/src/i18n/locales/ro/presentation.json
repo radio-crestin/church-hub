@@ -249,17 +249,5 @@
     "slides": "Slide-uri",
     "noSlides": "Niciun slide în acest program",
     "preview": "Previzualizare"
-  },
-  "highlight": {
-    "title": "Evidențiere",
-    "colors": "Culori Evidențiere",
-    "addColor": "Adaugă Culoare",
-    "editColor": "Editează Culoare",
-    "colorName": "Nume Culoare",
-    "colorValue": "Valoare Culoare",
-    "removeHighlight": "Elimină Evidențierea",
-    "manageColors": "Gestionează Culorile",
-    "deleteConfirm": "Șterge această culoare?",
-    "noColors": "Nicio culoare definită încă"
   }
 }

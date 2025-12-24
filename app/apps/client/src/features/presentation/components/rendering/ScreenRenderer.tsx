@@ -530,7 +530,6 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
           isVisible={isVisible}
           nextSlideData={nextSlideData}
           fillContainer={true}
-          liveHighlights={presentationState?.liveHighlights}
         />
       )}
     </div>

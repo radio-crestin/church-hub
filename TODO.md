@@ -40,10 +40,10 @@
 - ascunde window-urile de screen din bara din OS
 ~~- remove from screens the loading animation..~~
 ~~- fix screen url in production~~
-- rezolva problema cu youtube login, cel mai probabil va trebui sa facem deploy la propriul server astfel incat aplicatia sa nu aiba nevoie de secret keys
-- fix livestream font size
-- implementeaza in livestream sa se puna 2 linii pe aceasi linie daca incape
-- implementeaza real transparent background, chiar si cand este dark mode
+~~- rezolva problema cu youtube login, cel mai probabil va trebui sa facem deploy la propriul server astfel incat aplicatia sa nu aiba nevoie de secret keys~~
+~~- fix livestream font size~~
+~~- implementeaza in livestream sa se puna 2 linii pe aceasi linie daca incape~~
+~~- implementeaza real transparent background, chiar si cand este dark mode~~
 - adauga posibilitatea de a face highlight pentru sesiunea curenta
 - deasemenea, incepe intotdeauna cu coada goala
 - asigura-te ca paginile web au reconnect cu websocket and when disconnected display an empty screen (with transparent bg or black)
