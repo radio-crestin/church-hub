@@ -3,6 +3,7 @@ import { ExternalLink, Languages, Palette } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { isLocalhost } from '~/config'
+import { DatabaseManager } from '~/features/database-management'
 import {
   MIDIProvider,
   ShortcutsSettingsSection,
@@ -160,6 +161,14 @@ function RouteComponent() {
             <>
               <hr className="border-gray-200 dark:border-gray-700" />
               <SystemTokenManager />
+            </>
+          )}
+
+          {/* Database Management (localhost only) */}
+          {isLocalhost() && (
+            <>
+              <hr className="border-gray-200 dark:border-gray-700" />
+              <DatabaseManager />
             </>
           )}
         </div>
