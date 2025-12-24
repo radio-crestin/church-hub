@@ -44,15 +44,15 @@
 ~~- fix livestream font size~~
 ~~- implementeaza in livestream sa se puna 2 linii pe aceasi linie daca incape~~
 ~~- implementeaza real transparent background, chiar si cand este dark mode~~
-- adauga posibilitatea de a face highlight pentru sesiunea curenta
-- deasemenea, incepe intotdeauna cu coada goala
+~~- deasemenea, incepe intotdeauna cu coada goala~~
 - asigura-te ca paginile web au reconnect cu websocket and when disconnected display an empty screen (with transparent bg or black)
 - creaza o sectiune pentru a face backup la sqlite db si deasemenea de a vedea path-ul catre db
-- do not display "YouTube not connected, OBS Disconnected""
+~~- do not display "YouTube not connected, OBS Disconnected""~~
 - inlocuieste aplicatia de scene monitor cu una care foloseste aplicatia turso si un UI similar cu cel al aplicatiei actuale
   - pentru cantari, va fi ceva similar, fiecare cantare e echivalentul unui verset
   - pentru Biblie va trebui sa afisezi in timp real ce se cauta pe pc-ul principal si sa afisezi lista de versete
 ~~- implementeaza api-uri pentru search cantari, adaugare de cantari, programe, camera de control, preview, current queue, etc.~~
 - fix openapi endpoints and fix authentication layer
 - creaza optiunea de a adauga live-urile create intr-un playlist pe YouTube
+- adauga posibilitatea de a face highlight pentru sesiunea curenta
 
