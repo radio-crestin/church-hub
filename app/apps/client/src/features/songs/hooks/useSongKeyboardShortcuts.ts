@@ -3,7 +3,6 @@ import { useEffect } from 'react'
 interface UseSongKeyboardShortcutsOptions {
   onNextSlide: () => void
   onPreviousSlide: () => void
-  onGoBack: () => void
   onHidePresentation: () => void
   enabled?: boolean
 }
@@ -11,7 +10,6 @@ interface UseSongKeyboardShortcutsOptions {
 export function useSongKeyboardShortcuts({
   onNextSlide,
   onPreviousSlide,
-  onGoBack,
   onHidePresentation,
   enabled = true,
 }: UseSongKeyboardShortcutsOptions) {
@@ -41,11 +39,6 @@ export function useSongKeyboardShortcuts({
           onPreviousSlide()
           break
 
-        case 'Backspace':
-          event.preventDefault()
-          onGoBack()
-          break
-
         case 'Escape':
           event.preventDefault()
           onHidePresentation()
@@ -58,5 +51,5 @@ export function useSongKeyboardShortcuts({
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [enabled, onNextSlide, onPreviousSlide, onGoBack, onHidePresentation])
+  }, [enabled, onNextSlide, onPreviousSlide, onHidePresentation])
 }

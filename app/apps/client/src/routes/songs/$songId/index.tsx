@@ -56,12 +56,17 @@ function SongPreviewPage() {
 
   const handleSlideClick = useCallback(
     async (_slide: SongSlide, index: number) => {
+      // If clicking the currently presented slide, navigate back to songs list
+      if (presentedSlideIndex === index) {
+        navigate({ to: '/songs/', search: { fromSong: true } })
+        return
+      }
       await presentTemporarySong.mutateAsync({
         songId: numericId,
         slideIndex: index,
       })
     },
-    [numericId, presentTemporarySong],
+    [numericId, presentTemporarySong, presentedSlideIndex, navigate],
   )
 
   const handleGoBack = useCallback(() => {
@@ -103,7 +108,6 @@ function SongPreviewPage() {
   useSongKeyboardShortcuts({
     onNextSlide: handleNextSlide,
     onPreviousSlide: handlePrevSlide,
-    onGoBack: handleGoBack,
     onHidePresentation: handleHidePresentation,
     enabled: presentedSlideIndex !== null,
   })
