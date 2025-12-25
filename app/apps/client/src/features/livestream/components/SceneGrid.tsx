@@ -8,14 +8,8 @@ import { useOBSScenes } from '../hooks'
 
 export function SceneGrid() {
   const { t } = useTranslation('livestream')
-  const {
-    scenes,
-    isLoading,
-    switchScene,
-    isSwitching,
-    reorderScenes,
-    updateScene,
-  } = useOBSScenes()
+  const { scenes, isLoading, switchScene, reorderScenes, updateScene } =
+    useOBSScenes()
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
   const visibleScenes = scenes.filter((s) => s.isVisible)
@@ -73,12 +67,7 @@ export function SceneGrid() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {visibleScenes.map((scene) => (
-            <SceneCard
-              key={scene.id}
-              scene={scene}
-              onSwitch={switchScene}
-              isSwitching={isSwitching}
-            />
+            <SceneCard key={scene.id} scene={scene} onSwitch={switchScene} />
           ))}
         </div>
       </div>

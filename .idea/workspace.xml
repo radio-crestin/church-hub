@@ -7,12 +7,9 @@
     <list default="true" id="66517e3f-2e4e-43cc-880d-deb242368f0c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TODO.md" beforeDir="false" afterPath="$PROJECT_DIR$/TODO.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/LivePreview.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/LivePreview.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/LivePreviewRenderer.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/LivePreviewRenderer.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/screen-manager/ScreenManager.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/screen-manager/ScreenManager.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/hooks/useScreen.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/hooks/useScreen.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/utils/openDisplayWindow.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/utils/openDisplayWindow.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/tauri/capabilities/default.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/capabilities/default.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/SceneCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/SceneCard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/SceneGrid.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/SceneGrid.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/livestream/hooks/useOBSScenes.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/livestream/hooks/useOBSScenes.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
