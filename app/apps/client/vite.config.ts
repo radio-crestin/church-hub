@@ -3,12 +3,35 @@ import tailwindcss from '@tailwindcss/vite'
 import { TanStackRouterVite } from '@tanstack/router-plugin/vite'
 import viteReact from '@vitejs/plugin-react'
 import { codeInspectorPlugin } from 'code-inspector-plugin'
+import type { Plugin } from 'vite'
 import { defineConfig, loadEnv } from 'vite'
 import viteTsConfigPaths from 'vite-tsconfig-paths'
 
 import packageJSON from './package.json'
 
 const host = process.env.TAURI_DEV_HOST
+
+/**
+ * Plugin to handle socket errors gracefully in development.
+ * Prevents crashes from ECONNRESET errors when proxied connections are closed.
+ */
+function socketErrorHandler(): Plugin {
+  return {
+    name: 'socket-error-handler',
+    configureServer(server) {
+      server.httpServer?.on('connection', (socket) => {
+        socket.on('error', (err: NodeJS.ErrnoException) => {
+          // Ignore common socket errors that occur when clients disconnect
+          if (err.code === 'ECONNRESET' || err.code === 'EPIPE') {
+            return
+          }
+          // Log other socket errors for debugging
+          console.error('[vite] Socket error:', err.message)
+        })
+      })
+    },
+  }
+}
 
 const config = defineConfig(({ mode }) => {
   // Load env from app/ directory (two levels up from apps/client)
@@ -19,6 +42,7 @@ const config = defineConfig(({ mode }) => {
 
   return {
     plugins: [
+      socketErrorHandler(),
       viteTsConfigPaths({
         projects: ['./tsconfig.json'],
       }),
