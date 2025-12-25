@@ -7,11 +7,8 @@
     <list default="true" id="66517e3f-2e4e-43cc-880d-deb242368f0c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TODO.md" beforeDir="false" afterPath="$PROJECT_DIR$/TODO.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/songs/hooks/useSongKeyboardShortcuts.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/songs/hooks/useSongKeyboardShortcuts.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/routes/songs/$songId/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/routes/songs/$songId/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/routes/songs/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/routes/songs/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-screens.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-screens.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-songs.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-songs.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/routeTree.gen.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/routeTree.gen.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/vite.config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/vite.config.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -88,7 +85,7 @@
       <recent name="$PROJECT_DIR$" />
     </key>
   </component>
-  <component name="RunManager" selected="npm.fixtures">
+  <component name="RunManager">
     <configuration name="deploy:prod" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
       <package-json value="$PROJECT_DIR$/youtube-oauth-worker/package.json" />
       <command value="run" />
@@ -139,13 +136,6 @@
       <envs />
       <method v="2" />
     </configuration>
-    <recent_temporary>
-      <list>
-        <item itemvalue="npm.fixtures" />
-        <item itemvalue="npm.dev" />
-        <item itemvalue="npm.deploy:prod" />
-      </list>
-    </recent_temporary>
   </component>
   <component name="RustProjectSettings">
     <option name="toolchainHomeDirectory" value="$USER_HOME$/.cargo/bin" />
