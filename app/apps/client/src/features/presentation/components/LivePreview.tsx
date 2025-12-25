@@ -45,18 +45,18 @@ export function LivePreview() {
   const { data: presentationState } = usePresentationState()
   const { data: screens } = useScreens()
 
-  // Find first active primary screen
+  // Find first primary screen (regardless of window open state)
   const primaryScreen = useMemo(() => {
     if (!screens) return null
     return (
       screens
-        .filter((s) => s.type === 'primary' && s.isActive)
+        .filter((s) => s.type === 'primary')
         .sort((a, b) => a.sortOrder - b.sortOrder)[0] || null
     )
   }, [screens])
 
-  // Get full config for the primary screen
-  const { data: screen } = useScreen(primaryScreen?.id ?? 0)
+  // Get full config for the primary screen (use undefined if no primary screen exists)
+  const { data: screen } = useScreen(primaryScreen?.id ?? undefined)
 
   const [contentType, setContentType] = useState<ContentType>('empty')
   const [contentData, setContentData] = useState<ContentData>({})

@@ -48,8 +48,8 @@
 ~~- asigura-te ca paginile web au reconnect cu websocket and when disconnected display an empty screen (with transparent bg or black)~~
 ~~- creaza o sectiune pentru a face backup la sqlite db si deasemenea de a vedea path-ul catre db~~
 ~~- do not display "YouTube not connected, OBS Disconnected""~~
-- cand dau dezactivare la un screen, sa se inchida fereastra respectiva
-- deasemenea, butonul de full screen nu functioneaza
+~~- cand dau dezactivare la un screen, sa se inchida fereastra respectiva~~
+~~- deasemenea, butonul de full screen nu functioneaza~~
 - optimistic scene change
 - fa listen pe orice port 3000
 - inlocuieste aplicatia de scene monitor cu una care foloseste aplicatia turso si un UI similar cu cel al aplicatiei actuale

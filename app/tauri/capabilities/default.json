@@ -46,6 +46,7 @@
     "core:window:allow-is-fullscreen",
     "core:window:allow-set-simple-fullscreen",
     "core:window:allow-set-decorations",
+    "core:window:allow-close",
     {
       "identifier": "http:default",
       "allow": [{ "url": "https://*:*" }, { "url": "http://*:*" }]
