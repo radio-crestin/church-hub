@@ -45,8 +45,8 @@
 ~~- implementeaza in livestream sa se puna 2 linii pe aceasi linie daca incape~~
 ~~- implementeaza real transparent background, chiar si cand este dark mode~~
 ~~- deasemenea, incepe intotdeauna cu coada goala~~
-- asigura-te ca paginile web au reconnect cu websocket and when disconnected display an empty screen (with transparent bg or black)
-- creaza o sectiune pentru a face backup la sqlite db si deasemenea de a vedea path-ul catre db
+~~- asigura-te ca paginile web au reconnect cu websocket and when disconnected display an empty screen (with transparent bg or black)~~
+~~- creaza o sectiune pentru a face backup la sqlite db si deasemenea de a vedea path-ul catre db~~
 ~~- do not display "YouTube not connected, OBS Disconnected""~~
 - inlocuieste aplicatia de scene monitor cu una care foloseste aplicatia turso si un UI similar cu cel al aplicatiei actuale
   - pentru cantari, va fi ceva similar, fiecare cantare e echivalentul unui verset

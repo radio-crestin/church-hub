@@ -10,19 +10,21 @@ import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
 
 interface SongsSearchParams {
   q?: string
+  fromSong?: boolean
 }
 
 export const Route = createFileRoute('/songs/')({
   component: SongsPage,
   validateSearch: (search: Record<string, unknown>): SongsSearchParams => ({
     q: typeof search.q === 'string' ? search.q : undefined,
+    fromSong: search.fromSong === true || search.fromSong === 'true',
   }),
 })
 
 function SongsPage() {
   const { t } = useTranslation('songs')
   const navigate = useNavigate()
-  const { q: searchQuery = '' } = useSearch({ from: '/songs/' })
+  const { q: searchQuery = '', fromSong } = useSearch({ from: '/songs/' })
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
 
   const { data: presentationState } = usePresentationState()
@@ -32,6 +34,7 @@ function SongsPage() {
   // Auto-navigate to presented song only on initial page open
   useEffect(() => {
     if (hasNavigatedOnOpen.current) return
+    if (fromSong) return // Skip auto-navigation when coming back from a song
     if (!presentationState) return
 
     let presentedSongId: number | null = null
@@ -58,7 +61,7 @@ function SongsPage() {
         search: { q: searchQuery || undefined },
       })
     }
-  }, [presentationState, queue, navigate, searchQuery])
+  }, [presentationState, queue, navigate, searchQuery, fromSong])
 
   const handleSongClick = (songId: number) => {
     navigate({
