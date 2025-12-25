@@ -50,8 +50,9 @@
 ~~- do not display "YouTube not connected, OBS Disconnected""~~
 ~~- cand dau dezactivare la un screen, sa se inchida fereastra respectiva~~
 ~~- deasemenea, butonul de full screen nu functioneaza~~
-- optimistic scene change
-- fa listen pe orice port 3000
+~~- optimistic scene change~~
+~~- fa listen pe orice port 3000~~
+- rezolva problema cu generarea titlului, elimina orice alt caracter in afara de litere si - 
 - inlocuieste aplicatia de scene monitor cu una care foloseste aplicatia turso si un UI similar cu cel al aplicatiei actuale
   - pentru cantari, va fi ceva similar, fiecare cantare e echivalentul unui verset
   - pentru Biblie va trebui sa afisezi in timp real ce se cauta pe pc-ul principal si sa afisezi lista de versete
