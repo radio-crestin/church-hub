@@ -30,6 +30,25 @@ export function isTauri(): boolean {
 }
 
 /**
+ * Gets the current platform using browser detection
+ */
+function getCurrentPlatform(): string {
+  const userAgent = navigator.userAgent.toLowerCase()
+  const platform = navigator.platform.toLowerCase()
+
+  if (platform.includes('win') || userAgent.includes('windows')) {
+    return 'windows'
+  }
+  if (platform.includes('mac') || userAgent.includes('macintosh') || userAgent.includes('mac os')) {
+    return 'macos'
+  }
+  if (platform.includes('linux') || userAgent.includes('linux')) {
+    return 'linux'
+  }
+  return 'unknown'
+}
+
+/**
  * Gets the frontend base URL for display windows
  * In Tauri mode, window.location.origin returns tauri://localhost
  * so we need to use the actual server URL (localhost:3000)
@@ -186,6 +205,12 @@ async function openInNativeWindow(
       // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
       console.log('[openInNativeWindow] Stored state:', storedState)
 
+      // On Windows, don't skip taskbar as it can cause issues with fullscreen
+      const platform = getCurrentPlatform()
+      const shouldSkipTaskbar = platform !== 'windows'
+      // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
+      console.log(`[openInNativeWindow] Platform: ${platform}, skipTaskbar: ${shouldSkipTaskbar}`)
+
       const windowOptions = {
         url,
         title: screenName || `Display ${displayId}`,
@@ -199,7 +224,7 @@ async function openInNativeWindow(
         minimizable: true,
         decorations: true,
         alwaysOnTop: true,
-        skipTaskbar: true,
+        skipTaskbar: shouldSkipTaskbar,
         focus: true,
       }
       // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
@@ -306,14 +331,27 @@ async function openInNativeWindow(
  * Closes a native display window
  */
 export async function closeDisplayWindow(displayId: number): Promise<void> {
+  // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
+  console.log(
+    `[closeDisplayWindow] Closing display ${displayId}, isTauri: ${isTauri()}`,
+  )
   if (!isTauri()) return
 
   try {
     const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow')
     const windowLabel = `display-${displayId}`
+    // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
+    console.log(`[closeDisplayWindow] Looking for window: ${windowLabel}`)
     const win = await WebviewWindow.getByLabel(windowLabel)
+    // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
+    console.log(`[closeDisplayWindow] Window found: ${!!win}`)
     if (win) {
       await win.close()
+      // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
+      console.log('[closeDisplayWindow] Window closed successfully')
+    } else {
+      // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
+      console.warn(`[closeDisplayWindow] Window not found: ${windowLabel}`)
     }
   } catch (error) {
     // biome-ignore lint/suspicious/noConsole: Error logging

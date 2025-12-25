@@ -121,30 +121,74 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
 
     const checkFullscreen = () => {
       if (!isTauri()) {
-        setIsFullscreen(!!document.fullscreenElement)
+        // Cross-browser fullscreen element check
+        const fullscreenElement =
+          document.fullscreenElement ||
+          (document as unknown as { webkitFullscreenElement?: Element }).webkitFullscreenElement ||
+          (document as unknown as { msFullscreenElement?: Element }).msFullscreenElement
+        setIsFullscreen(!!fullscreenElement)
       }
     }
 
     setupTauriListeners()
 
-    // Listen for fullscreen changes in browser
+    // Listen for fullscreen changes in browser (cross-browser support)
     document.addEventListener('fullscreenchange', checkFullscreen)
+    document.addEventListener('webkitfullscreenchange', checkFullscreen)
+    document.addEventListener('MSFullscreenChange', checkFullscreen)
     return () => {
       document.removeEventListener('fullscreenchange', checkFullscreen)
+      document.removeEventListener('webkitfullscreenchange', checkFullscreen)
+      document.removeEventListener('MSFullscreenChange', checkFullscreen)
       if (unlistenResize) {
         unlistenResize()
       }
     }
   }, [screen, upsertScreen])
 
+  // Helper function for browser fullscreen (cross-browser support)
+  const useBrowserFullscreen = async (enterFullscreen: boolean): Promise<boolean> => {
+    try {
+      if (enterFullscreen) {
+        const elem = document.documentElement
+        if (elem.requestFullscreen) {
+          await elem.requestFullscreen()
+        } else if ((elem as unknown as { webkitRequestFullscreen?: () => Promise<void> }).webkitRequestFullscreen) {
+          await (elem as unknown as { webkitRequestFullscreen: () => Promise<void> }).webkitRequestFullscreen()
+        } else if ((elem as unknown as { msRequestFullscreen?: () => Promise<void> }).msRequestFullscreen) {
+          await (elem as unknown as { msRequestFullscreen: () => Promise<void> }).msRequestFullscreen()
+        }
+      } else {
+        if (document.fullscreenElement) {
+          if (document.exitFullscreen) {
+            await document.exitFullscreen()
+          } else if ((document as unknown as { webkitExitFullscreen?: () => Promise<void> }).webkitExitFullscreen) {
+            await (document as unknown as { webkitExitFullscreen: () => Promise<void> }).webkitExitFullscreen()
+          } else if ((document as unknown as { msExitFullscreen?: () => Promise<void> }).msExitFullscreen) {
+            await (document as unknown as { msExitFullscreen: () => Promise<void> }).msExitFullscreen()
+          }
+        }
+      }
+      return true
+    } catch (error) {
+      // biome-ignore lint/suspicious/noConsole: Critical debugging for fullscreen
+      console.error('[useBrowserFullscreen] Error:', error)
+      return false
+    }
+  }
+
   // Toggle fullscreen and save to database
   const toggleFullscreen = useCallback(async () => {
     const newFullscreen = !isFullscreen
+    // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
+    console.log(`[toggleFullscreen] Toggling fullscreen to: ${newFullscreen}`)
 
     // If exiting fullscreen, set flag to prevent auto-fullscreen on resize
     if (!newFullscreen) {
       userExitedFullscreenRef.current = true
     }
+
+    let success = false
 
     if (isTauri()) {
       try {
@@ -152,16 +196,50 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
           '@tauri-apps/api/webviewWindow'
         )
         const win = getCurrentWebviewWindow()
-        await setWindowFullscreen(win, newFullscreen)
-        setIsFullscreen(newFullscreen)
-      } catch (_error) {}
-    } else {
-      if (document.fullscreenElement) {
-        await document.exitFullscreen()
-      } else {
-        await document.documentElement.requestFullscreen()
+        // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
+        console.log('[toggleFullscreen] Got window:', win?.label)
+
+        // setWindowFullscreen now returns boolean indicating success
+        const tauriSuccess = await setWindowFullscreen(win, newFullscreen)
+
+        if (tauriSuccess) {
+          setIsFullscreen(newFullscreen)
+          success = true
+          // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
+          console.log('[toggleFullscreen] Tauri fullscreen set successfully')
+        } else {
+          // Tauri methods failed, try browser fullscreen as fallback
+          // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
+          console.log('[toggleFullscreen] Tauri methods failed, trying browser fullscreen fallback...')
+          success = await useBrowserFullscreen(newFullscreen)
+          if (success) {
+            setIsFullscreen(newFullscreen)
+            // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
+            console.log('[toggleFullscreen] Browser fullscreen fallback succeeded')
+          }
+        }
+      } catch (error) {
+        // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
+        console.error('[toggleFullscreen] Tauri fullscreen threw error, trying browser fallback:', error)
+        // Fallback to browser fullscreen API when Tauri fails
+        success = await useBrowserFullscreen(newFullscreen)
+        if (success) {
+          setIsFullscreen(newFullscreen)
+          // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
+          console.log('[toggleFullscreen] Browser fullscreen fallback succeeded after error')
+        }
       }
-      setIsFullscreen(newFullscreen)
+    } else {
+      // Not in Tauri, use browser fullscreen directly
+      success = await useBrowserFullscreen(newFullscreen)
+      if (success) {
+        setIsFullscreen(newFullscreen)
+      }
+    }
+
+    if (!success) {
+      // biome-ignore lint/suspicious/noConsole: Critical debugging for fullscreen
+      console.error('[toggleFullscreen] All fullscreen methods failed')
     }
 
     // Save fullscreen state to database
