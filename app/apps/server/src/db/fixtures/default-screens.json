@@ -765,10 +765,10 @@
             }
           },
           "size": {
-            "width": 15,
-            "widthUnit": "%",
-            "height": 8,
-            "heightUnit": "%"
+            "width": 288,
+            "widthUnit": "px",
+            "height": 86.4,
+            "heightUnit": "px"
           },
           "style": {
             "fontFamily": "system-ui",
@@ -1555,10 +1555,10 @@
             }
           },
           "size": {
-            "width": 19.489436619718308,
-            "widthUnit": "%",
-            "height": 8,
-            "heightUnit": "%"
+            "width": 374.19718309859155,
+            "widthUnit": "px",
+            "height": 86.4,
+            "heightUnit": "px"
           },
           "style": {
             "fontFamily": "system-ui",
