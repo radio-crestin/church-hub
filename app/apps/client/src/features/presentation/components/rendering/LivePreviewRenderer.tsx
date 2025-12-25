@@ -48,9 +48,9 @@ export function LivePreviewRenderer() {
   const [contentData, setContentData] = useState<ContentData | null>(null)
   const [contentType, setContentType] = useState<ContentType>('empty')
 
-  // Get the first active primary screen for preview
+  // Get the first primary screen for preview (regardless of window open state)
   const primaryScreen = screens?.find(
-    (s) => s.type === 'primary' && s.isActive,
+    (s) => s.type === 'primary',
   ) as ScreenWithConfigs | undefined
 
   // Fetch content based on presentation state

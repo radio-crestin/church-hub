@@ -6,10 +6,10 @@ export function screenQueryKey(id: number) {
   return ['screens', id]
 }
 
-export function useScreen(id: number | null) {
+export function useScreen(id: number | null | undefined) {
   return useQuery({
     queryKey: screenQueryKey(id ?? 0),
     queryFn: () => getScreenById(id!),
-    enabled: id !== null,
+    enabled: id != null,
   })
 }

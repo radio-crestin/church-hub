@@ -30,25 +30,6 @@ export function isTauri(): boolean {
 }
 
 /**
- * Gets the current platform using browser detection
- */
-function getCurrentPlatform(): string {
-  const userAgent = navigator.userAgent.toLowerCase()
-  const platform = navigator.platform.toLowerCase()
-
-  if (platform.includes('win') || userAgent.includes('windows')) {
-    return 'windows'
-  }
-  if (platform.includes('mac') || userAgent.includes('macintosh') || userAgent.includes('mac os')) {
-    return 'macos'
-  }
-  if (platform.includes('linux') || userAgent.includes('linux')) {
-    return 'linux'
-  }
-  return 'unknown'
-}
-
-/**
  * Gets the frontend base URL for display windows
  * In Tauri mode, window.location.origin returns tauri://localhost
  * so we need to use the actual server URL (localhost:3000)
@@ -205,12 +186,6 @@ async function openInNativeWindow(
       // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
       console.log('[openInNativeWindow] Stored state:', storedState)
 
-      // On Windows, don't skip taskbar as it can cause issues with fullscreen
-      const platform = getCurrentPlatform()
-      const shouldSkipTaskbar = platform !== 'windows'
-      // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
-      console.log(`[openInNativeWindow] Platform: ${platform}, skipTaskbar: ${shouldSkipTaskbar}`)
-
       const windowOptions = {
         url,
         title: screenName || `Display ${displayId}`,
@@ -224,7 +199,7 @@ async function openInNativeWindow(
         minimizable: true,
         decorations: true,
         alwaysOnTop: true,
-        skipTaskbar: shouldSkipTaskbar,
+        skipTaskbar: true,
         focus: true,
       }
       // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation

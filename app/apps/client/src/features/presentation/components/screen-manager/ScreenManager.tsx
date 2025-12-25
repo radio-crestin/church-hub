@@ -55,6 +55,9 @@ export function ScreenManager() {
   const [editingScreenId, setEditingScreenId] = useState<number | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<Screen | null>(null)
 
+  // Track which windows are currently open (local state, not persisted)
+  const [openWindows, setOpenWindows] = useState<Set<number>>(new Set())
+
   // Fetch full screen config when editing
   const { data: editingScreen } = useScreen(editingScreenId)
 
@@ -114,31 +117,33 @@ export function ScreenManager() {
     setDeleteConfirm(screen)
   }
 
-  const handleToggleActive = async (screen: Screen, isActive: boolean) => {
-    try {
-      await upsertScreen.mutateAsync({
-        id: screen.id,
-        name: screen.name,
-        type: screen.type,
-        isActive,
-      })
+  // Toggle window open/close (local state only, no database update)
+  const handleToggleWindow = async (screen: Screen) => {
+    const isCurrentlyOpen = openWindows.has(screen.id)
 
-      if (isActive) {
-        // Open native window when enabling (always use 'native' mode)
+    try {
+      if (isCurrentlyOpen) {
+        // Close the native window
+        await closeDisplayWindow(screen.id)
+        setOpenWindows((prev) => {
+          const next = new Set(prev)
+          next.delete(screen.id)
+          return next
+        })
+        showToast(`Window "${screen.name}" closed`, 'success')
+      } else {
+        // Open the native window
         await openDisplayWindow(
           screen.id,
           'native',
           screen.isFullscreen,
           screen.name,
         )
-        showToast(`Screen "${screen.name}" enabled`, 'success')
-      } else {
-        // Close native window when disabling
-        await closeDisplayWindow(screen.id)
-        showToast(`Screen "${screen.name}" disabled`, 'success')
+        setOpenWindows((prev) => new Set(prev).add(screen.id))
+        showToast(`Window "${screen.name}" opened`, 'success')
       }
     } catch {
-      showToast('Failed to update screen', 'error')
+      showToast('Failed to toggle window', 'error')
     }
   }
 
@@ -161,6 +166,16 @@ export function ScreenManager() {
     if (!deleteConfirm) return
 
     try {
+      // Close the window first if it's open
+      await closeDisplayWindow(deleteConfirm.id)
+
+      // Remove from local open windows state
+      setOpenWindows((prev) => {
+        const next = new Set(prev)
+        next.delete(deleteConfirm.id)
+        return next
+      })
+
       await deleteScreen.mutateAsync(deleteConfirm.id)
       setDeleteConfirm(null)
       showToast('Screen deleted successfully', 'success')
@@ -223,7 +238,7 @@ export function ScreenManager() {
               <div className="flex items-center gap-4">
                 <div
                   className={`w-3 h-3 rounded-full ${
-                    screen.isActive ? 'bg-green-500' : 'bg-gray-400'
+                    openWindows.has(screen.id) ? 'bg-green-500' : 'bg-gray-400'
                   }`}
                 />
                 <div>
@@ -245,13 +260,11 @@ export function ScreenManager() {
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-500 dark:text-gray-400">
-                    {screen.isActive ? 'Active' : 'Inactive'}
+                    {openWindows.has(screen.id) ? 'Open' : 'Closed'}
                   </span>
                   <Switch
-                    checked={screen.isActive}
-                    onCheckedChange={(checked) =>
-                      handleToggleActive(screen, checked)
-                    }
+                    checked={openWindows.has(screen.id)}
+                    onCheckedChange={() => handleToggleWindow(screen)}
                   />
                 </div>
                 <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
