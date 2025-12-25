@@ -37,7 +37,7 @@
 ~~- fa build pe windows si testeaza aplicatia~~
 ~~- pentru cantari si versete Biblice, nu adauga in queue ci doar afiseaza-le~~
 ~~- foloseste numele display-ului in titlu~~
-- ascunde window-urile de screen din bara din OS
+~~- ascunde window-urile de screen din bara din OS~~
 ~~- remove from screens the loading animation..~~
 ~~- fix screen url in production~~
 ~~- rezolva problema cu youtube login, cel mai probabil va trebui sa facem deploy la propriul server astfel incat aplicatia sa nu aiba nevoie de secret keys~~
@@ -48,6 +48,10 @@
 ~~- asigura-te ca paginile web au reconnect cu websocket and when disconnected display an empty screen (with transparent bg or black)~~
 ~~- creaza o sectiune pentru a face backup la sqlite db si deasemenea de a vedea path-ul catre db~~
 ~~- do not display "YouTube not connected, OBS Disconnected""~~
+- cand dau dezactivare la un screen, sa se inchida fereastra respectiva
+- deasemenea, butonul de full screen nu functioneaza
+- optimistic scene change
+- fa listen pe orice port 3000
 - inlocuieste aplicatia de scene monitor cu una care foloseste aplicatia turso si un UI similar cu cel al aplicatiei actuale
   - pentru cantari, va fi ceva similar, fiecare cantare e echivalentul unui verset
   - pentru Biblie va trebui sa afisezi in timp real ce se cauta pe pc-ul principal si sa afisezi lista de versete
