@@ -1,6 +1,6 @@
 /**
  * Sanitizes a song title by removing special characters
- * Keeps only: letters (including accented), numbers, spaces, hyphens (including en/em dashes), underscores
+ * Keeps only: letters (including accented), numbers, spaces, hyphens (including en/em dashes)
  * Leading numbers are also removed (e.g., "1. Song" → "Song")
  *
  * Examples:
@@ -16,9 +16,9 @@ export function sanitizeSongTitle(title: string): string {
   // \p{L} matches any letter (including accented characters)
   let cleaned = title.replace(/^[^\p{L}]+/u, '')
 
-  // Keep only letters, numbers, spaces, hyphens (regular, en-dash, em-dash), and underscores
+  // Keep only letters, numbers, spaces, hyphens (regular, en-dash, em-dash)
   // \- is regular hyphen (U+002D), \u2013 is en-dash (–), \u2014 is em-dash (—)
-  cleaned = cleaned.replace(/[^\p{L}\p{N}\s\-_\u2013\u2014]/gu, '').trim()
+  cleaned = cleaned.replace(/[^\p{L}\p{N}\s\-\u2013\u2014]/gu, '').trim()
 
   return cleaned || 'Untitled Song'
 }

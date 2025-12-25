@@ -12,6 +12,7 @@ import {
   type ProcessedImport,
   processImportFiles,
   processZipFromBuffer,
+  sanitizeSongTitle,
   useBatchImportSongs,
 } from '~/features/song-import'
 import { useCategories, useUpsertCategory } from '~/features/songs/hooks'
@@ -115,9 +116,9 @@ export function ImportExportManager() {
           if (options.useFirstVerseAsTitle && s.parsed.slides.length > 0) {
             const firstSlide = s.parsed.slides[0]
             const firstLine = firstSlide.text.split('\n')[0]?.trim()
-            title = firstLine || s.parsed.title
+            title = sanitizeSongTitle(firstLine || s.parsed.title)
           } else if (s.sourceFilename) {
-            // Use filename without extension as title
+            // Use exact filename without extension as title (no sanitization)
             title = s.sourceFilename.replace(/\.[^.]+$/, '') || s.parsed.title
           } else {
             title = s.parsed.title
