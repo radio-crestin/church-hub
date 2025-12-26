@@ -1,68 +1,160 @@
 import { eq } from 'drizzle-orm'
 
-import { getYouTubeService } from './client'
+import { getYouTubeService, youtubeApiFetch } from './client'
 import { getYouTubeConfig } from './config'
 import { getDatabase } from '../../../db'
 import { broadcastHistory } from '../../../db/schema'
 import type { BroadcastInfo, PastBroadcast, UpcomingBroadcast } from '../types'
 
+// YouTube API response types for direct fetch calls
+interface YouTubeBroadcastItem {
+  id: string
+  snippet?: {
+    title?: string
+    description?: string
+    scheduledStartTime?: string
+    actualStartTime?: string
+    actualEndTime?: string
+  }
+  status?: {
+    lifeCycleStatus?: string
+    privacyStatus?: string
+    streamStatus?: string
+  }
+}
+
+interface YouTubeBroadcastListResponse {
+  items?: YouTubeBroadcastItem[]
+}
+
+interface YouTubeStreamItem {
+  id: string
+  snippet?: {
+    title?: string
+  }
+}
+
+interface YouTubeStreamListResponse {
+  items?: YouTubeStreamItem[]
+}
+
 export async function createBroadcast(): Promise<BroadcastInfo> {
   const youtube = await getYouTubeService()
-
-  if (!youtube) {
-    throw new Error('Not authenticated with YouTube')
-  }
-
   const config = await getYouTubeConfig()
   const now = new Date()
 
-  const broadcastResponse = await youtube.liveBroadcasts.insert({
-    part: ['snippet', 'status', 'contentDetails'],
-    requestBody: {
-      snippet: {
-        title: config.titleTemplate,
-        description: config.description,
-        scheduledStartTime: now.toISOString(),
-      },
-      status: {
-        privacyStatus: config.privacyStatus,
-        selfDeclaredMadeForKids: false,
-      },
-      contentDetails: {
-        enableAutoStart: true,
-        enableAutoStop: true,
-        latencyPreference: 'normal',
-      },
-    },
-  })
+  let broadcastId: string
 
-  const broadcast = broadcastResponse.data
-  const broadcastId = broadcast.id!
-
-  if (config.streamKeyId) {
-    await youtube.liveBroadcasts.bind({
-      id: broadcastId,
-      part: ['id', 'contentDetails'],
-      streamId: config.streamKeyId,
+  if (youtube) {
+    const broadcastResponse = await youtube.liveBroadcasts.insert({
+      part: ['snippet', 'status', 'contentDetails'],
+      requestBody: {
+        snippet: {
+          title: config.titleTemplate,
+          description: config.description,
+          scheduledStartTime: now.toISOString(),
+        },
+        status: {
+          privacyStatus: config.privacyStatus,
+          selfDeclaredMadeForKids: false,
+        },
+        contentDetails: {
+          enableAutoStart: true,
+          enableAutoStop: true,
+          latencyPreference: 'normal',
+        },
+      },
     })
-  }
 
-  if (config.playlistId) {
-    try {
-      await youtube.playlistItems.insert({
-        part: ['snippet'],
-        requestBody: {
-          snippet: {
-            playlistId: config.playlistId,
-            resourceId: {
-              kind: 'youtube#video',
-              videoId: broadcastId,
+    broadcastId = broadcastResponse.data.id!
+
+    if (config.streamKeyId) {
+      await youtube.liveBroadcasts.bind({
+        id: broadcastId,
+        part: ['id', 'contentDetails'],
+        streamId: config.streamKeyId,
+      })
+    }
+
+    if (config.playlistId) {
+      try {
+        await youtube.playlistItems.insert({
+          part: ['snippet'],
+          requestBody: {
+            snippet: {
+              playlistId: config.playlistId,
+              resourceId: {
+                kind: 'youtube#video',
+                videoId: broadcastId,
+              },
             },
           },
+        })
+      } catch {
+        // Failed to add to playlist, continue silently
+      }
+    }
+  } else {
+    // Fallback to direct API fetch
+    const broadcastResponse = await youtubeApiFetch<{ id: string }>(
+      'liveBroadcasts',
+      { part: 'snippet,status,contentDetails' },
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          snippet: {
+            title: config.titleTemplate,
+            description: config.description,
+            scheduledStartTime: now.toISOString(),
+          },
+          status: {
+            privacyStatus: config.privacyStatus,
+            selfDeclaredMadeForKids: false,
+          },
+          contentDetails: {
+            enableAutoStart: true,
+            enableAutoStop: true,
+            latencyPreference: 'normal',
+          },
+        }),
+      },
+    )
+
+    broadcastId = broadcastResponse.id
+
+    if (config.streamKeyId) {
+      await youtubeApiFetch(
+        'liveBroadcasts/bind',
+        {
+          id: broadcastId,
+          part: 'id,contentDetails',
+          streamId: config.streamKeyId,
         },
-      })
-    } catch {
-      // Failed to add to playlist, continue silently
+        { method: 'POST' },
+      )
+    }
+
+    if (config.playlistId) {
+      try {
+        await youtubeApiFetch(
+          'playlistItems',
+          { part: 'snippet' },
+          {
+            method: 'POST',
+            body: JSON.stringify({
+              snippet: {
+                playlistId: config.playlistId,
+                resourceId: {
+                  kind: 'youtube#video',
+                  videoId: broadcastId,
+                },
+              },
+            }),
+          },
+        )
+      } catch {
+        // Failed to add to playlist, continue silently
+      }
     }
   }
 
@@ -89,30 +181,80 @@ export async function createBroadcast(): Promise<BroadcastInfo> {
 export async function getActiveBroadcast(): Promise<BroadcastInfo | null> {
   const youtube = await getYouTubeService()
 
-  if (!youtube) {
-    return null
-  }
-
-  try {
-    const response = await youtube.liveBroadcasts.list({
-      part: ['snippet', 'status'],
-      broadcastStatus: 'active',
-    })
-
-    const broadcast = response.data.items?.[0]
-    if (!broadcast) {
-      const upcomingResponse = await youtube.liveBroadcasts.list({
+  if (youtube) {
+    try {
+      const response = await youtube.liveBroadcasts.list({
         part: ['snippet', 'status'],
-        broadcastStatus: 'upcoming',
+        broadcastStatus: 'active',
       })
 
-      const upcomingBroadcast = upcomingResponse.data.items?.[0]
+      const broadcast = response.data.items?.[0]
+      if (!broadcast) {
+        const upcomingResponse = await youtube.liveBroadcasts.list({
+          part: ['snippet', 'status'],
+          broadcastStatus: 'upcoming',
+        })
+
+        const upcomingBroadcast = upcomingResponse.data.items?.[0]
+        if (!upcomingBroadcast) {
+          return null
+        }
+
+        return {
+          broadcastId: upcomingBroadcast.id!,
+          title: upcomingBroadcast.snippet?.title || '',
+          url: `https://youtu.be/${upcomingBroadcast.id}`,
+          status: 'scheduled',
+          scheduledStartTime: new Date(
+            upcomingBroadcast.snippet?.scheduledStartTime || Date.now(),
+          ),
+        }
+      }
+
+      return {
+        broadcastId: broadcast.id!,
+        title: broadcast.snippet?.title || '',
+        url: `https://youtu.be/${broadcast.id}`,
+        status: 'live',
+        scheduledStartTime: new Date(
+          broadcast.snippet?.scheduledStartTime || Date.now(),
+        ),
+        actualStartTime: broadcast.snippet?.actualStartTime
+          ? new Date(broadcast.snippet.actualStartTime)
+          : undefined,
+      }
+    } catch {
+      return null
+    }
+  }
+
+  // Fallback to direct API fetch
+  try {
+    const response = await youtubeApiFetch<YouTubeBroadcastListResponse>(
+      'liveBroadcasts',
+      {
+        part: 'snippet,status',
+        broadcastStatus: 'active',
+      },
+    )
+
+    const broadcast = response.items?.[0]
+    if (!broadcast) {
+      const upcomingResponse = await youtubeApiFetch<YouTubeBroadcastListResponse>(
+        'liveBroadcasts',
+        {
+          part: 'snippet,status',
+          broadcastStatus: 'upcoming',
+        },
+      )
+
+      const upcomingBroadcast = upcomingResponse.items?.[0]
       if (!upcomingBroadcast) {
         return null
       }
 
       return {
-        broadcastId: upcomingBroadcast.id!,
+        broadcastId: upcomingBroadcast.id,
         title: upcomingBroadcast.snippet?.title || '',
         url: `https://youtu.be/${upcomingBroadcast.id}`,
         status: 'scheduled',
@@ -123,7 +265,7 @@ export async function getActiveBroadcast(): Promise<BroadcastInfo | null> {
     }
 
     return {
-      broadcastId: broadcast.id!,
+      broadcastId: broadcast.id,
       title: broadcast.snippet?.title || '',
       url: `https://youtu.be/${broadcast.id}`,
       status: 'live',
@@ -142,16 +284,25 @@ export async function getActiveBroadcast(): Promise<BroadcastInfo | null> {
 export async function endBroadcast(broadcastId: string): Promise<void> {
   const youtube = await getYouTubeService()
 
-  if (!youtube) {
-    throw new Error('Not authenticated with YouTube')
-  }
-
   try {
-    await youtube.liveBroadcasts.transition({
-      id: broadcastId,
-      broadcastStatus: 'complete',
-      part: ['id', 'status'],
-    })
+    if (youtube) {
+      await youtube.liveBroadcasts.transition({
+        id: broadcastId,
+        broadcastStatus: 'complete',
+        part: ['id', 'status'],
+      })
+    } else {
+      // Fallback to direct API fetch
+      await youtubeApiFetch(
+        'liveBroadcasts/transition',
+        {
+          id: broadcastId,
+          broadcastStatus: 'complete',
+          part: 'id,status',
+        },
+        { method: 'POST' },
+      )
+    }
   } catch {
     // Failed to transition, continue with updating local status
   }
@@ -168,29 +319,55 @@ export async function endBroadcast(broadcastId: string): Promise<void> {
 
 export async function deleteUpcomingBroadcasts(): Promise<void> {
   const youtube = await getYouTubeService()
-
-  if (!youtube) {
-    throw new Error('Not authenticated with YouTube')
-  }
-
-  const response = await youtube.liveBroadcasts.list({
-    part: ['id'],
-    broadcastStatus: 'upcoming',
-  })
-
-  const broadcasts = response.data.items || []
-
   const db = getDatabase()
-  for (const broadcast of broadcasts) {
-    try {
-      await youtube.liveBroadcasts.delete({ id: broadcast.id! })
 
-      await db
-        .update(broadcastHistory)
-        .set({ status: 'deleted' })
-        .where(eq(broadcastHistory.broadcastId, broadcast.id!))
-    } catch {
-      // Failed to delete broadcast, continue with next
+  if (youtube) {
+    const response = await youtube.liveBroadcasts.list({
+      part: ['id'],
+      broadcastStatus: 'upcoming',
+    })
+
+    const broadcasts = response.data.items || []
+
+    for (const broadcast of broadcasts) {
+      try {
+        await youtube.liveBroadcasts.delete({ id: broadcast.id! })
+
+        await db
+          .update(broadcastHistory)
+          .set({ status: 'deleted' })
+          .where(eq(broadcastHistory.broadcastId, broadcast.id!))
+      } catch {
+        // Failed to delete broadcast, continue with next
+      }
+    }
+  } else {
+    // Fallback to direct API fetch
+    const response = await youtubeApiFetch<YouTubeBroadcastListResponse>(
+      'liveBroadcasts',
+      {
+        part: 'id',
+        broadcastStatus: 'upcoming',
+      },
+    )
+
+    const broadcasts = response.items || []
+
+    for (const broadcast of broadcasts) {
+      try {
+        await youtubeApiFetch(
+          'liveBroadcasts',
+          { id: broadcast.id },
+          { method: 'DELETE' },
+        )
+
+        await db
+          .update(broadcastHistory)
+          .set({ status: 'deleted' })
+          .where(eq(broadcastHistory.broadcastId, broadcast.id))
+      } catch {
+        // Failed to delete broadcast, continue with next
+      }
     }
   }
 }
@@ -198,36 +375,69 @@ export async function deleteUpcomingBroadcasts(): Promise<void> {
 export async function getStreamKeys(): Promise<{ id: string; name: string }[]> {
   const youtube = await getYouTubeService()
 
-  if (!youtube) {
-    throw new Error('Not authenticated with YouTube')
+  if (youtube) {
+    const response = await youtube.liveStreams.list({
+      part: ['id', 'snippet'],
+      mine: true,
+    })
+
+    return (response.data.items || []).map((stream) => ({
+      id: stream.id!,
+      name: stream.snippet?.title || stream.id!,
+    }))
   }
 
-  const response = await youtube.liveStreams.list({
-    part: ['id', 'snippet'],
-    mine: true,
-  })
+  // Fallback to direct API fetch
+  const response = await youtubeApiFetch<YouTubeStreamListResponse>(
+    'liveStreams',
+    {
+      part: 'id,snippet',
+      mine: 'true',
+    },
+  )
 
-  return (response.data.items || []).map((stream) => ({
-    id: stream.id!,
-    name: stream.snippet?.title || stream.id!,
+  return (response.items || []).map((stream) => ({
+    id: stream.id,
+    name: stream.snippet?.title || stream.id,
   }))
 }
 
 export async function getUpcomingBroadcasts(): Promise<UpcomingBroadcast[]> {
   const youtube = await getYouTubeService()
 
-  if (!youtube) {
-    throw new Error('Not authenticated with YouTube')
+  if (youtube) {
+    const response = await youtube.liveBroadcasts.list({
+      part: ['id', 'snippet', 'status'],
+      broadcastStatus: 'upcoming',
+      maxResults: 25,
+    })
+
+    return (response.data.items || []).map((broadcast) => ({
+      broadcastId: broadcast.id!,
+      title: broadcast.snippet?.title || '',
+      scheduledStartTime: new Date(
+        broadcast.snippet?.scheduledStartTime || Date.now(),
+      ),
+      privacyStatus: (broadcast.status?.privacyStatus || 'unlisted') as
+        | 'public'
+        | 'unlisted'
+        | 'private',
+      url: `https://youtu.be/${broadcast.id}`,
+    }))
   }
 
-  const response = await youtube.liveBroadcasts.list({
-    part: ['id', 'snippet', 'status'],
-    broadcastStatus: 'upcoming',
-    maxResults: 25,
-  })
+  // Fallback to direct API fetch
+  const response = await youtubeApiFetch<YouTubeBroadcastListResponse>(
+    'liveBroadcasts',
+    {
+      part: 'id,snippet,status',
+      broadcastStatus: 'upcoming',
+      maxResults: '25',
+    },
+  )
 
-  return (response.data.items || []).map((broadcast) => ({
-    broadcastId: broadcast.id!,
+  return (response.items || []).map((broadcast) => ({
+    broadcastId: broadcast.id,
     title: broadcast.snippet?.title || '',
     scheduledStartTime: new Date(
       broadcast.snippet?.scheduledStartTime || Date.now(),
@@ -243,18 +453,41 @@ export async function getUpcomingBroadcasts(): Promise<UpcomingBroadcast[]> {
 export async function getPastBroadcasts(): Promise<PastBroadcast[]> {
   const youtube = await getYouTubeService()
 
-  if (!youtube) {
-    throw new Error('Not authenticated with YouTube')
+  if (youtube) {
+    const response = await youtube.liveBroadcasts.list({
+      part: ['id', 'snippet', 'status'],
+      broadcastStatus: 'completed',
+      maxResults: 10,
+    })
+
+    return (response.data.items || []).map((broadcast) => ({
+      broadcastId: broadcast.id!,
+      title: broadcast.snippet?.title || '',
+      description: broadcast.snippet?.description || '',
+      privacyStatus: (broadcast.status?.privacyStatus || 'unlisted') as
+        | 'public'
+        | 'unlisted'
+        | 'private',
+      completedAt: new Date(
+        broadcast.snippet?.actualEndTime ||
+          broadcast.snippet?.actualStartTime ||
+          Date.now(),
+      ),
+    }))
   }
 
-  const response = await youtube.liveBroadcasts.list({
-    part: ['id', 'snippet', 'status'],
-    broadcastStatus: 'completed',
-    maxResults: 10,
-  })
+  // Fallback to direct API fetch when OAuth credentials not configured
+  const response = await youtubeApiFetch<YouTubeBroadcastListResponse>(
+    'liveBroadcasts',
+    {
+      part: 'id,snippet,status',
+      broadcastStatus: 'completed',
+      maxResults: '10',
+    },
+  )
 
-  return (response.data.items || []).map((broadcast) => ({
-    broadcastId: broadcast.id!,
+  return (response.items || []).map((broadcast) => ({
+    broadcastId: broadcast.id,
     title: broadcast.snippet?.title || '',
     description: broadcast.snippet?.description || '',
     privacyStatus: (broadcast.status?.privacyStatus || 'unlisted') as
@@ -275,16 +508,33 @@ export async function getBroadcastStatus(broadcastId: string): Promise<{
 }> {
   const youtube = await getYouTubeService()
 
-  if (!youtube) {
-    throw new Error('Not authenticated with YouTube')
+  if (youtube) {
+    const response = await youtube.liveBroadcasts.list({
+      part: ['status'],
+      id: [broadcastId],
+    })
+
+    const broadcast = response.data.items?.[0]
+    if (!broadcast) {
+      throw new Error(`Broadcast ${broadcastId} not found`)
+    }
+
+    return {
+      lifeCycleStatus: broadcast.status?.lifeCycleStatus || 'unknown',
+      streamStatus: broadcast.status?.streamStatus || null,
+    }
   }
 
-  const response = await youtube.liveBroadcasts.list({
-    part: ['status'],
-    id: [broadcastId],
-  })
+  // Fallback to direct API fetch
+  const response = await youtubeApiFetch<YouTubeBroadcastListResponse>(
+    'liveBroadcasts',
+    {
+      part: 'status',
+      id: broadcastId,
+    },
+  )
 
-  const broadcast = response.data.items?.[0]
+  const broadcast = response.items?.[0]
   if (!broadcast) {
     throw new Error(`Broadcast ${broadcastId} not found`)
   }

@@ -140,3 +140,102 @@ export async function getYouTubeService() {
 
   return google.youtube({ version: 'v3', auth: client })
 }
+
+/**
+ * Gets the current valid access token from the database.
+ * Returns null if not authenticated or token is expired.
+ * This can be used for direct API calls without needing OAuth credentials.
+ */
+export async function getAccessToken(): Promise<string | null> {
+  const db = getDatabase()
+  const authRecords = await db.select().from(youtubeAuth).limit(1)
+
+  if (authRecords.length === 0) {
+    return null
+  }
+
+  const auth = authRecords[0]
+
+  // Check if token is expired
+  if (auth.expiresAt.getTime() < Date.now()) {
+    // Try to refresh if credentials available
+    const client = getOAuth2Client()
+    if (client) {
+      try {
+        client.setCredentials({
+          access_token: auth.accessToken,
+          refresh_token: auth.refreshToken,
+          expiry_date: auth.expiresAt.getTime(),
+        })
+        const { credentials } = await client.refreshAccessToken()
+        log('info', 'Token refreshed successfully')
+
+        await db
+          .update(youtubeAuth)
+          .set({
+            accessToken: credentials.access_token!,
+            expiresAt: new Date(
+              credentials.expiry_date || Date.now() + 3600 * 1000,
+            ),
+            updatedAt: new Date(),
+          })
+          .where(eq(youtubeAuth.id, auth.id))
+
+        return credentials.access_token!
+      } catch (error) {
+        log('error', `Token refresh failed: ${error}`)
+        return null
+      }
+    }
+
+    // No credentials to refresh, token is expired
+    log('info', 'Token expired and no credentials for refresh')
+    broadcastYouTubeAuthStatus({
+      isAuthenticated: false,
+      requiresReauth: true,
+      error: 'token_expired',
+      updatedAt: Date.now(),
+    })
+    return null
+  }
+
+  return auth.accessToken
+}
+
+/**
+ * Makes a direct call to the YouTube API using the access token.
+ * This works without OAuth credentials configured.
+ */
+export async function youtubeApiFetch<T>(
+  endpoint: string,
+  params: Record<string, string> = {},
+  options: RequestInit = {},
+): Promise<T> {
+  const accessToken = await getAccessToken()
+
+  if (!accessToken) {
+    throw new Error('Not authenticated with YouTube')
+  }
+
+  const url = new URL(`https://www.googleapis.com/youtube/v3/${endpoint}`)
+  for (const [key, value] of Object.entries(params)) {
+    url.searchParams.set(key, value)
+  }
+
+  const response = await fetch(url.toString(), {
+    ...options,
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    const errorMessage = (errorData as { error?: { message?: string } })?.error?.message || response.statusText
+    throw new Error(`YouTube API error: ${errorMessage}`)
+  }
+
+  return response.json()
+}

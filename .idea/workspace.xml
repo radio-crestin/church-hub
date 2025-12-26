@@ -6,27 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="66517e3f-2e4e-43cc-880d-deb242368f0c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/.env.sample" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/.env.sample" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/BibleControlPanel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/BibleControlPanel.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/BibleNavigationPanel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/BibleNavigationPanel.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/LiveStreamPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/LiveStreamPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/MixerConnectionButton.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/MixerConnectionButton.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/OBSConnectionButton.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/OBSConnectionButton.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/StreamControls.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/StreamControls.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/YouTubeConnectionButton.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/YouTubeConnectionButton.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/livestream/hooks/useLivestreamWebSocket.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/livestream/hooks/useLivestreamWebSocket.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/livestream/hooks/useYouTubeAuth.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/livestream/hooks/useYouTubeAuth.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/livestream/utils/openInBrowser.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/livestream/utils/openInBrowser.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/ScreenPreview.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/ScreenPreview.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/screen-manager/ScreenManager.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/screen-manager/ScreenManager.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/songs/components/SongControlPanel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/songs/components/SongControlPanel.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/songs/components/SongSlidesPanel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/songs/components/SongSlidesPanel.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/routes/bible/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/routes/bible/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/routes/songs/$songId/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/routes/songs/$songId/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/styles.css" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/styles.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/ui/layout/app-layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/ui/layout/app-layout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/routes/livestream.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/routes/livestream.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/websocket/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/websocket/index.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
