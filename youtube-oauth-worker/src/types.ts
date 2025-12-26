@@ -29,4 +29,6 @@ export interface TokenResult {
   accessToken: string
   refreshToken: string
   expiresAt: number
+  channelId?: string
+  channelName?: string
 }

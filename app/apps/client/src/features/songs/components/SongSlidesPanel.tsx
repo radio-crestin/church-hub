@@ -80,7 +80,7 @@ export function SongSlidesPanel({
     <div className="flex flex-col h-full">
       <div
         ref={containerRef}
-        className="flex-1 min-h-0 space-y-1 overflow-y-auto px-0.5 py-0.5"
+        className="flex-1 min-h-0 space-y-1 overflow-hidden lg:overflow-y-auto px-0.5 py-0.5"
       >
         {sortedSlides.map((slide, index) => {
           const isPresented = index === presentedSlideIndex

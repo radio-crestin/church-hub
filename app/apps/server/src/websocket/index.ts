@@ -421,13 +421,20 @@ export function broadcastYouTubeAuthStatus(
     payload: status,
   } satisfies YouTubeAuthStatusMessage)
 
-  wsLogger.debug(`Broadcasting YouTube auth status to ${clients.size} clients`)
+  // Always log this important event
+  wsLogger.info(`Broadcasting YouTube auth status to ${clients.size} clients: isAuthenticated=${status.isAuthenticated}`)
+  // biome-ignore lint/suspicious/noConsole: debug logging
+  console.log(`[websocket] Broadcasting YouTube auth status to ${clients.size} clients:`, status)
 
   for (const [clientId, ws] of clients) {
     try {
       ws.send(message)
+      // biome-ignore lint/suspicious/noConsole: debug logging
+      console.log(`[websocket] Sent YouTube auth status to client ${clientId}`)
     } catch (error) {
       wsLogger.error(`Failed to send to ${clientId}: ${error}`)
+      // biome-ignore lint/suspicious/noConsole: debug logging
+      console.error(`[websocket] Failed to send to ${clientId}:`, error)
       clients.delete(clientId)
     }
   }

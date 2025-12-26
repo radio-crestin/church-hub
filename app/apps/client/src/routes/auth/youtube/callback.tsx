@@ -8,13 +8,15 @@ export const Route = createFileRoute('/auth/youtube/callback')({
     accessToken: (search.accessToken as string) || '',
     refreshToken: (search.refreshToken as string) || '',
     expiresAt: (search.expiresAt as string) || '',
+    channelId: (search.channelId as string) || '',
+    channelName: (search.channelName as string) || '',
     error: (search.error as string) || '',
   }),
   component: YouTubeCallbackPage,
 })
 
 function YouTubeCallbackPage() {
-  const { accessToken, refreshToken, expiresAt, error } = Route.useSearch()
+  const { accessToken, refreshToken, expiresAt, channelId, channelName, error } = Route.useSearch()
   const navigate = useNavigate()
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>(
     'processing',
@@ -40,6 +42,8 @@ function YouTubeCallbackPage() {
           accessToken,
           refreshToken,
           expiresAt: parseInt(expiresAt, 10),
+          channelId: channelId || undefined,
+          channelName: channelName || undefined,
         })
 
         setStatus('success')

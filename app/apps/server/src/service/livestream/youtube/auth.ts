@@ -1,5 +1,4 @@
 import { eq } from 'drizzle-orm'
-import { google } from 'googleapis'
 
 import { getAuthenticatedClient, getOAuth2Client } from './client'
 import { getDatabase } from '../../../db'
@@ -10,33 +9,22 @@ interface StoreTokensInput {
   accessToken: string
   refreshToken: string
   expiresAt: Date
+  channelId?: string
+  channelName?: string
 }
 
 /**
  * Stores OAuth tokens received from client after PKCE flow completion.
- * This is called after the client exchanges the authorization code for tokens.
+ * Channel info is provided by the OAuth worker, no YouTube API call needed.
  */
 export async function storeTokens(
   tokens: StoreTokensInput,
 ): Promise<YouTubeAuthStatus> {
   const db = getDatabase()
 
-  const client = getOAuth2Client()
-  client.setCredentials({
-    access_token: tokens.accessToken,
-    refresh_token: tokens.refreshToken,
-    expiry_date: tokens.expiresAt.getTime(),
-  })
-
-  const youtube = google.youtube({ version: 'v3', auth: client })
-  const channelResponse = await youtube.channels.list({
-    part: ['snippet'],
-    mine: true,
-  })
-
-  const channel = channelResponse.data.items?.[0]
-  const channelId = channel?.id || null
-  const channelName = channel?.snippet?.title || null
+  // Channel info is provided directly from the OAuth worker
+  const channelId = tokens.channelId || null
+  const channelName = tokens.channelName || null
 
   const existingAuth = await db.select().from(youtubeAuth).limit(1)
 
@@ -106,15 +94,18 @@ export async function logout(): Promise<void> {
   const authRecords = await db.select().from(youtubeAuth).limit(1)
 
   if (authRecords.length > 0) {
-    try {
-      const client = getOAuth2Client()
-      client.setCredentials({
-        access_token: authRecords[0].accessToken,
-        refresh_token: authRecords[0].refreshToken,
-      })
-      await client.revokeCredentials()
-    } catch {
-      // Revoke credentials silently failed
+    // Try to revoke credentials if OAuth client is available
+    const client = getOAuth2Client()
+    if (client) {
+      try {
+        client.setCredentials({
+          access_token: authRecords[0].accessToken,
+          refresh_token: authRecords[0].refreshToken,
+        })
+        await client.revokeCredentials()
+      } catch {
+        // Revoke credentials silently failed
+      }
     }
 
     await db.delete(youtubeAuth).where(eq(youtubeAuth.id, authRecords[0].id))

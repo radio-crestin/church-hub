@@ -275,11 +275,15 @@ export async function handleLivestreamRoutes(
     req.method === 'POST' &&
     url.pathname === '/api/livestream/youtube/tokens'
   ) {
+    // biome-ignore lint/suspicious/noConsole: debug logging
+    console.log('[livestream-routes] Received POST /api/livestream/youtube/tokens')
     try {
       const body = (await req.json()) as {
         accessToken: string
         refreshToken: string
         expiresAt: number
+        channelId?: string
+        channelName?: string
       }
 
       if (!body.accessToken || !body.refreshToken || !body.expiresAt) {
@@ -292,13 +296,28 @@ export async function handleLivestreamRoutes(
         )
       }
 
-      const status = await storeTokens({
-        accessToken: body.accessToken,
-        refreshToken: body.refreshToken,
-        expiresAt: new Date(body.expiresAt),
-      })
+      // biome-ignore lint/suspicious/noConsole: debug logging
+      console.log('[livestream-routes] Storing YouTube tokens...')
+      let status: Awaited<ReturnType<typeof storeTokens>>
+      try {
+        status = await storeTokens({
+          accessToken: body.accessToken,
+          refreshToken: body.refreshToken,
+          expiresAt: new Date(body.expiresAt),
+          channelId: body.channelId,
+          channelName: body.channelName,
+        })
+        // biome-ignore lint/suspicious/noConsole: debug logging
+        console.log('[livestream-routes] Tokens stored, status:', status)
+      } catch (storeError) {
+        // biome-ignore lint/suspicious/noConsole: debug logging
+        console.error('[livestream-routes] ERROR storing tokens:', storeError)
+        throw storeError
+      }
 
       // Broadcast auth status to all clients
+      // biome-ignore lint/suspicious/noConsole: debug logging
+      console.log('[livestream-routes] Broadcasting YouTube auth status...')
       broadcastYouTubeAuthStatus({
         isAuthenticated: status.isAuthenticated,
         channelId: status.channelId,

@@ -12,6 +12,8 @@ interface StoreTokensInput {
   accessToken: string
   refreshToken: string
   expiresAt: number
+  channelId?: string
+  channelName?: string
 }
 
 interface StorePKCESessionInput {

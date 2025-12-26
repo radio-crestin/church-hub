@@ -6,7 +6,7 @@ import {
   Loader2,
   Pencil,
 } from 'lucide-react'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import {
@@ -44,8 +44,19 @@ function SongPreviewPage() {
 
   const [dividerPosition, setDividerPosition] = useState(40)
   const [showAddToScheduleModal, setShowAddToScheduleModal] = useState(false)
+  const [isLargeScreen, setIsLargeScreen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
+
+  // Track screen size for responsive layout
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsLargeScreen(window.innerWidth >= 1024)
+    }
+    checkScreenSize()
+    window.addEventListener('resize', checkScreenSize)
+    return () => window.removeEventListener('resize', checkScreenSize)
+  }, [])
 
   // Get the currently presented slide index from presentation state
   const presentedSlideIndex =
@@ -153,9 +164,10 @@ function SongPreviewPage() {
   const canNavigateNext = presentedSlideIndex !== null
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-4">
+    <div className="flex flex-col h-full lg:overflow-hidden overflow-auto scrollbar-thin">
+      {/* Header - Back button and title, action buttons on desktop */}
+      <div className="flex items-center justify-between mb-3 lg:mb-4 flex-shrink-0">
+        <div className="flex items-center gap-3 lg:gap-4">
           <button
             type="button"
             onClick={handleGoBack}
@@ -163,11 +175,12 @@ function SongPreviewPage() {
           >
             <ArrowLeft size={20} className="text-gray-600 dark:text-gray-400" />
           </button>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
             {song.title}
           </h1>
         </div>
-        <div className="flex items-center gap-2">
+        {/* Action buttons - hidden on mobile, shown in header on desktop */}
+        <div className="hidden lg:flex items-center gap-2">
           <button
             type="button"
             onClick={() => setShowAddToScheduleModal(true)}
@@ -175,9 +188,7 @@ function SongPreviewPage() {
             title={t('actions.addToSchedule')}
           >
             <CalendarPlus size={20} />
-            <span className="hidden sm:inline">
-              {t('actions.addToSchedule')}
-            </span>
+            <span>{t('actions.addToSchedule')}</span>
           </button>
           <button
             type="button"
@@ -192,12 +203,12 @@ function SongPreviewPage() {
 
       <div
         ref={containerRef}
-        className="flex flex-col lg:flex-row flex-1 min-h-0"
+        className="flex flex-col lg:flex-row lg:flex-1 lg:min-h-0 gap-3 lg:gap-0"
       >
-        {/* Left Panel - Slides List */}
+        {/* Left Panel - Slides List (shows last on mobile) */}
         <div
-          className="min-h-0 h-full flex-1 lg:flex-initial overflow-hidden bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4"
-          style={{ width: `${dividerPosition}%` }}
+          className="order-3 lg:order-1 lg:min-h-0 lg:h-full lg:flex-initial overflow-hidden bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 lg:p-4"
+          style={isLargeScreen ? { width: `${dividerPosition}%` } : undefined}
         >
           <SongSlidesPanel
             song={song}
@@ -218,10 +229,10 @@ function SongPreviewPage() {
           />
         </div>
 
-        {/* Right Panel - Control Panel with Preview */}
+        {/* Right Panel - Control Panel with Preview (shows first on mobile) */}
         <div
-          className="min-h-0 flex-1 overflow-hidden"
-          style={{ width: `${100 - dividerPosition}%` }}
+          className="order-1 lg:order-2 lg:min-h-0 lg:flex-1 overflow-hidden"
+          style={isLargeScreen ? { width: `${100 - dividerPosition}%` } : undefined}
         >
           <SongControlPanel
             songId={numericId}
@@ -230,6 +241,27 @@ function SongPreviewPage() {
             canNavigatePrev={canNavigatePrev}
             canNavigateNext={canNavigateNext}
           />
+        </div>
+
+        {/* Action buttons - shown on mobile only, below presentation */}
+        <div className="order-2 lg:hidden flex items-center justify-center gap-2 py-2">
+          <button
+            type="button"
+            onClick={() => setShowAddToScheduleModal(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+            title={t('actions.addToSchedule')}
+          >
+            <CalendarPlus size={18} />
+            <span className="text-sm">{t('actions.addToSchedule')}</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleEdit}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+          >
+            <Pencil size={16} />
+            <span>{t('preview.edit')}</span>
+          </button>
         </div>
       </div>
 

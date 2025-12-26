@@ -16,27 +16,27 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
 }
 
 let oauth2Client: OAuth2Client | null = null
+let credentialsAvailable = true
 
 /**
  * Get or create the OAuth2 client.
- * Both client_id and client_secret are required for token refresh
- * when the initial token exchange used client_secret.
+ * Returns null if credentials are not configured.
+ * Credentials are optional - if not available, token refresh won't work
+ * and users will need to re-authenticate when tokens expire.
  */
-export function getOAuth2Client(): OAuth2Client {
+export function getOAuth2Client(): OAuth2Client | null {
+  if (!credentialsAvailable) {
+    return null
+  }
+
   if (!oauth2Client) {
     const clientId = process.env.YOUTUBE_CLIENT_ID
     const clientSecret = process.env.YOUTUBE_CLIENT_SECRET
 
-    if (!clientId) {
-      throw new Error(
-        'YouTube OAuth credentials not configured. Set YOUTUBE_CLIENT_ID environment variable.',
-      )
-    }
-
-    if (!clientSecret) {
-      throw new Error(
-        'YouTube OAuth credentials not configured. Set YOUTUBE_CLIENT_SECRET environment variable.',
-      )
+    if (!clientId || !clientSecret) {
+      log('info', 'YouTube OAuth credentials not configured. Token refresh will not be available.')
+      credentialsAvailable = false
+      return null
     }
 
     oauth2Client = new OAuth2Client(clientId, clientSecret)
@@ -64,6 +64,24 @@ export async function getAuthenticatedClient(): Promise<OAuth2Client | null> {
 
   const auth = authRecords[0]
   const client = getOAuth2Client()
+
+  // If no OAuth client (credentials not configured), we can't refresh tokens
+  // Check if token is expired and require re-auth if so
+  if (!client) {
+    if (auth.expiresAt.getTime() < Date.now()) {
+      log('info', 'Token expired and no credentials for refresh - requires re-auth')
+      broadcastYouTubeAuthStatus({
+        isAuthenticated: false,
+        requiresReauth: true,
+        error: 'token_expired',
+        updatedAt: Date.now(),
+      })
+      return null
+    }
+    // Token still valid, but we can't return a client without credentials
+    // Return null - API calls won't work but auth status can still be shown
+    return null
+  }
 
   client.setCredentials({
     access_token: auth.accessToken,
