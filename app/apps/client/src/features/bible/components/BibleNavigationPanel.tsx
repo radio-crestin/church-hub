@@ -93,7 +93,7 @@ export function BibleNavigationPanel({
   const isTextSearchActive = state.searchQuery.length >= 2 && !isReferenceSearch
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+    <div className="flex flex-col lg:h-full bg-white dark:bg-gray-800 lg:rounded-lg lg:border lg:border-gray-200 lg:dark:border-gray-700">
       <div className="p-3 space-y-2 border-b border-gray-200 dark:border-gray-700">
         <div className="relative">
           <Search
@@ -121,7 +121,7 @@ export function BibleNavigationPanel({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3">
+      <div className="lg:flex-1 overflow-hidden lg:overflow-y-auto lg:scrollbar-thin p-3">
         {isTextSearchActive ? (
           <SearchResults
             results={searchResults?.results || []}

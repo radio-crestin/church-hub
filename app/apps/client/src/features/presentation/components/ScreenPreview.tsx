@@ -21,41 +21,25 @@ export function ScreenPreview({
   const containerRef = useRef<HTMLDivElement>(null)
   const [displaySize, setDisplaySize] = useState({ width: 400, height: 225 })
 
-  const canvasWidth = screen.width
-  const canvasHeight = screen.height
-
-  // Calculate display size to fit parent container while maintaining aspect ratio
+  // Calculate display size based on container dimensions
   useEffect(() => {
     const updateSize = () => {
       if (!containerRef.current) return
-      const container = containerRef.current.parentElement
-      if (!container) return
-
-      const maxWidth = container.clientWidth
-      const maxHeight = container.clientHeight || maxWidth * 0.5625 // 16:9 fallback
-      const aspectRatio = canvasWidth / canvasHeight
-
-      let width = maxWidth
-      let height = width / aspectRatio
-
-      if (height > maxHeight) {
-        height = maxHeight
-        width = height * aspectRatio
+      const rect = containerRef.current.getBoundingClientRect()
+      if (rect.width > 0 && rect.height > 0) {
+        setDisplaySize({ width: rect.width, height: rect.height })
       }
-
-      setDisplaySize({ width, height })
     }
 
     updateSize()
 
-    // Use ResizeObserver for parent container changes
-    const container = containerRef.current?.parentElement
-    if (container) {
+    // Use ResizeObserver for container changes
+    if (containerRef.current) {
       const resizeObserver = new ResizeObserver(updateSize)
-      resizeObserver.observe(container)
+      resizeObserver.observe(containerRef.current)
       return () => resizeObserver.disconnect()
     }
-  }, [canvasWidth, canvasHeight])
+  }, [])
 
   // Get background from screen config
   const config = screen.contentConfigs[contentType]
@@ -64,12 +48,8 @@ export function ScreenPreview({
   return (
     <div
       ref={containerRef}
-      className="relative overflow-hidden rounded-lg shadow-lg"
-      style={{
-        width: displaySize.width,
-        height: displaySize.height,
-        ...(bg ? getBackgroundCSS(bg) : { backgroundColor: '#000000' }),
-      }}
+      className="absolute inset-0 overflow-hidden"
+      style={bg ? getBackgroundCSS(bg) : { backgroundColor: '#000000' }}
     >
       <ScreenContent
         screen={screen}

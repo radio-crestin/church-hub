@@ -10,7 +10,9 @@ import {
 } from '../service'
 import { isTauri, openAuthUrl } from '../utils'
 
-const YOUTUBE_OAUTH_SERVER = import.meta.env.VITE_YOUTUBE_OAUTH_SERVER as string
+const YOUTUBE_OAUTH_SERVER =
+  (import.meta.env.VITE_YOUTUBE_OAUTH_SERVER as string) ||
+  'https://churchub-youtube-oauth-worker.bringes.io'
 
 export function useYouTubeAuth() {
   const queryClient = useQueryClient()
@@ -71,7 +73,14 @@ export function useYouTubeAuth() {
   }, [query.data?.isAuthenticated, isAuthenticating])
 
   const openLoginPopup = useCallback(async () => {
+    // biome-ignore lint/suspicious/noConsole: Debug logging
+    console.log('[useYouTubeAuth] openLoginPopup called')
+    console.log('[useYouTubeAuth] YOUTUBE_OAUTH_SERVER:', YOUTUBE_OAUTH_SERVER)
+    console.log('[useYouTubeAuth] isTauri:', isTauri())
+
     if (!YOUTUBE_OAUTH_SERVER) {
+      // biome-ignore lint/suspicious/noConsole: Debug logging
+      console.error('[useYouTubeAuth] OAuth server not configured!')
       setAuthError('YouTube OAuth server not configured')
       return
     }
@@ -95,6 +104,8 @@ export function useYouTubeAuth() {
           `${callbackOrigin}/auth/youtube/callback`,
         )
 
+        // biome-ignore lint/suspicious/noConsole: Debug logging
+        console.log('[useYouTubeAuth] Opening auth URL:', authUrl.toString())
         await openAuthUrl(authUrl.toString(), { popupName: 'youtube-auth' })
         // In Tauri, we don't wait for the popup - the WebSocket will notify us
         // Keep authenticating state until WebSocket updates or timeout

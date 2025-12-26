@@ -233,16 +233,16 @@ export function ScreenManager() {
           {screens.map((screen) => (
             <div
               key={screen.id}
-              className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+              className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-3 md:p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
             >
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3 md:gap-4">
                 <div
-                  className={`w-3 h-3 rounded-full ${
+                  className={`w-3 h-3 rounded-full flex-shrink-0 ${
                     openWindows.has(screen.id) ? 'bg-green-500' : 'bg-gray-400'
                   }`}
                 />
-                <div>
-                  <h3 className="font-medium text-gray-900 dark:text-white">
+                <div className="min-w-0">
+                  <h3 className="font-medium text-gray-900 dark:text-white truncate">
                     {screen.name}
                   </h3>
                   <div className="flex items-center gap-2 mt-1">
@@ -257,9 +257,9 @@ export function ScreenManager() {
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 md:gap-3 flex-wrap">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                  <span className="text-sm text-gray-500 dark:text-gray-400 hidden md:inline">
                     {openWindows.has(screen.id) ? 'Open' : 'Closed'}
                   </span>
                   <Switch
@@ -267,39 +267,43 @@ export function ScreenManager() {
                     onCheckedChange={() => handleToggleWindow(screen)}
                   />
                 </div>
-                <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleOpenInNewTab(screen)}
-                  title="Open in new tab"
-                >
-                  <ExternalLink size={16} />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleCopyUrl(screen)}
-                  title="Copy URL to clipboard"
-                >
-                  <Copy size={16} />
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => handleEdit(screen)}
-                >
-                  <Edit size={16} className="mr-1" />
-                  Edit
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleDelete(screen)}
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-                >
-                  <Trash2 size={16} />
-                </Button>
+                <div className="hidden md:block h-6 w-px bg-gray-200 dark:bg-gray-700" />
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleOpenInNewTab(screen)}
+                    title="Open in new tab"
+                  >
+                    <ExternalLink size={16} />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleCopyUrl(screen)}
+                    title="Copy URL to clipboard"
+                  >
+                    <Copy size={16} />
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleEdit(screen)}
+                    title="Edit screen"
+                  >
+                    <Edit size={16} />
+                    <span className="hidden md:inline ml-1">Edit</span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDelete(screen)}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    title="Delete screen"
+                  >
+                    <Trash2 size={16} />
+                  </Button>
+                </div>
               </div>
             </div>
           ))}

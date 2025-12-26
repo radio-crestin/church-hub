@@ -191,7 +191,7 @@ export function MixerConnectionButton() {
         onClick={handleButtonClick}
         disabled={isBusy}
         className={`
-          inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium
+          inline-flex items-center gap-1.5 sm:gap-2 px-2 py-1 sm:px-3 sm:py-1.5 rounded-full text-sm font-medium
           transition-all duration-200 ease-in-out
           ${
             isConnected
@@ -205,7 +205,7 @@ export function MixerConnectionButton() {
           ${isBusy ? 'opacity-75 cursor-wait' : 'cursor-pointer'}
         `}
       >
-        <div className="relative flex items-center gap-2">
+        <div className="relative flex items-center gap-1.5 sm:gap-2">
           <svg
             className="w-4 h-4"
             fill="none"
@@ -222,7 +222,7 @@ export function MixerConnectionButton() {
           <span className="font-medium">{t('mixer.title')}</span>
         </div>
 
-        <span className="text-xs opacity-75">{getStatusText()}</span>
+        <span className="text-xs opacity-75 hidden sm:inline">{getStatusText()}</span>
 
         {(isTesting || (isEnabled && !isConnected)) && (
           <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -232,7 +232,7 @@ export function MixerConnectionButton() {
       {isMenuOpen && (
         <div
           ref={menuRef}
-          className="absolute left-0 top-full mt-2 z-50 w-max bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-1.5 space-y-1"
+          className="absolute left-0 top-full mt-2 z-50 min-w-[140px] bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-1.5 space-y-1"
         >
           <button
             type="button"

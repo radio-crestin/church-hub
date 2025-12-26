@@ -97,6 +97,8 @@ export function useLivestreamWebSocket() {
 
       ws.onopen = () => {
         log('info', 'WebSocket connected')
+        // biome-ignore lint/suspicious/noConsole: debug logging
+        console.log('[livestream-ws] WebSocket CONNECTED to', wsUrl)
         setStatus('connected')
 
         pingIntervalRef.current = setInterval(() => {
@@ -148,7 +150,9 @@ export function useLivestreamWebSocket() {
           }
 
           if (data.type === 'youtube_auth_status') {
-            log('debug', 'Received YouTube auth status update')
+            log('info', `Received YouTube auth status update: isAuthenticated=${data.payload.isAuthenticated}`)
+            // biome-ignore lint/suspicious/noConsole: debug logging
+            console.log('[livestream-ws] YouTube auth status payload:', data.payload)
             queryClient.invalidateQueries({
               queryKey: ['livestream', 'youtube', 'auth'],
             })

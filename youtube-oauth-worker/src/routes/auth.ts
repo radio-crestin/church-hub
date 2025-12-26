@@ -113,6 +113,32 @@ auth.get('/auth/youtube/callback', async (c) => {
       expiresAt: Date.now() + tokenResponse.expires_in * 1000,
     }
 
+    // Fetch channel info using the access token
+    try {
+      const channelResponse = await fetch(
+        'https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true',
+        {
+          headers: {
+            Authorization: `Bearer ${tokens.accessToken}`,
+          },
+        }
+      )
+
+      if (channelResponse.ok) {
+        const channelData = await channelResponse.json() as {
+          items?: Array<{ id: string; snippet?: { title: string } }>
+        }
+        const channel = channelData.items?.[0]
+        if (channel) {
+          tokens.channelId = channel.id
+          tokens.channelName = channel.snippet?.title
+        }
+      }
+    } catch {
+      // Channel fetch failed, continue without channel info
+      console.error('Failed to fetch channel info')
+    }
+
     // Return tokens based on return mode
     if (state.returnMode === 'postMessage') {
       return renderPostMessageResponse(c, state.origin, tokens)
@@ -177,6 +203,12 @@ function renderRedirectResponse(
   url.searchParams.set('accessToken', tokens.accessToken)
   url.searchParams.set('refreshToken', tokens.refreshToken)
   url.searchParams.set('expiresAt', tokens.expiresAt.toString())
+  if (tokens.channelId) {
+    url.searchParams.set('channelId', tokens.channelId)
+  }
+  if (tokens.channelName) {
+    url.searchParams.set('channelName', tokens.channelName)
+  }
 
   return c.redirect(url.toString())
 }

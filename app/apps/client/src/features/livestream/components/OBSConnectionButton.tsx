@@ -77,7 +77,7 @@ export function OBSConnectionButton() {
           onClick={handleButtonClick}
           disabled={isLoading}
           className={`
-            inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium
+            inline-flex items-center gap-1.5 sm:gap-2 px-2 py-1 sm:px-3 sm:py-1.5 rounded-full text-sm font-medium
             transition-all duration-200 ease-in-out
             ${
               isConnected
@@ -89,7 +89,7 @@ export function OBSConnectionButton() {
             ${isLoading ? 'opacity-75 cursor-wait' : 'cursor-pointer'}
           `}
         >
-          <div className="relative flex items-center gap-2">
+          <div className="relative flex items-center gap-1.5 sm:gap-2">
             <div
               className={`w-2 h-2 rounded-full ${
                 isConnected
@@ -99,10 +99,13 @@ export function OBSConnectionButton() {
                     : 'bg-gray-400 dark:bg-gray-500'
               }`}
             />
-            <span className="font-medium">OBS Studio</span>
+            <span className="font-medium">
+              <span className="sm:hidden">OBS</span>
+              <span className="hidden sm:inline">OBS Studio</span>
+            </span>
           </div>
 
-          <span className="text-xs opacity-75">
+          <span className="text-xs opacity-75 hidden sm:inline">
             {isConnecting
               ? t('obs.connecting')
               : isDisconnecting
@@ -116,7 +119,7 @@ export function OBSConnectionButton() {
         {isMenuOpen && (
           <div
             ref={menuRef}
-            className="absolute left-0 top-full mt-2 z-50 min-w-[180px] bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-1.5 space-y-1"
+            className="absolute left-0 top-full mt-2 z-50 min-w-[140px] bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-1.5 space-y-1"
           >
             {isConnected ? (
               <button

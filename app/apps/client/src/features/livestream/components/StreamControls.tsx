@@ -7,7 +7,7 @@ export function StreamControls() {
   const { t } = useTranslation('livestream')
   const { isAuthenticated } = useYouTubeAuth()
   const { isConnected, isStreaming } = useOBSConnection()
-  const { start, stop, isStarting, isStopping, isLive, streamStartProgress } =
+  const { start, stop, isStarting, isStopping, streamStartProgress } =
     useStreaming()
 
   const canStart = isAuthenticated && isConnected && !isStreaming
@@ -19,23 +19,14 @@ export function StreamControls() {
     streamStartProgress.step !== 'error'
 
   return (
-    <div className="flex items-center gap-4">
-      {isLive && (
-        <div className="flex items-center gap-2 px-3 py-1 bg-red-600 rounded-full animate-pulse">
-          <div className="w-2 h-2 bg-white rounded-full" />
-          <span className="text-sm font-bold text-white">
-            {t('stream.isLive')}
-          </span>
-        </div>
-      )}
-
+    <div className="flex items-center gap-2 sm:gap-4">
       {!isStreaming ? (
         <Button
           variant="primary"
           size="lg"
           onClick={() => start()}
           disabled={!canStart || isStarting || !!isStartingStream}
-          className="min-w-[160px]"
+          className="text-sm sm:text-base px-3 sm:px-4"
         >
           {isStarting || isStartingStream
             ? t('stream.starting')
@@ -47,7 +38,7 @@ export function StreamControls() {
           size="lg"
           onClick={() => stop()}
           disabled={!canStop || isStopping}
-          className="min-w-[160px]"
+          className="text-sm sm:text-base px-3 sm:px-4"
         >
           {isStopping ? t('stream.stopping') : t('stream.stopStream')}
         </Button>

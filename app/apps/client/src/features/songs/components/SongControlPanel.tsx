@@ -61,8 +61,8 @@ export function SongControlPanel({
   }
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-      <div className="flex items-center justify-end p-3 border-b border-gray-200 dark:border-gray-700">
+    <div className="flex flex-col lg:h-full bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+      <div className="flex items-center justify-end p-2 lg:p-3 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center gap-2">
           <div
             className={`flex items-center gap-1.5 px-2 py-1 rounded-md ${
@@ -93,7 +93,7 @@ export function SongControlPanel({
               type="button"
               onClick={handleHide}
               disabled={clearTemporary.isPending}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+              className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
               title={`${t('bible:controls.hide')} (Esc)`}
             >
               {clearTemporary.isPending ? (
@@ -101,26 +101,28 @@ export function SongControlPanel({
               ) : (
                 <EyeOff size={18} />
               )}
-              <span>{t('bible:controls.hide')}</span>
-              <span className="text-xs opacity-75">(Esc)</span>
+              <span className="hidden sm:inline">{t('bible:controls.hide')}</span>
+              <span className="text-xs opacity-75 hidden sm:inline">(Esc)</span>
             </button>
           ) : (
             <button
               type="button"
               disabled
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-400 dark:text-gray-500 rounded-lg border border-gray-300 dark:border-gray-600 opacity-50 cursor-not-allowed"
+              className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 text-sm text-gray-400 dark:text-gray-500 rounded-lg border border-gray-300 dark:border-gray-600 opacity-50 cursor-not-allowed"
             >
               <Eye size={18} />
-              <span>{t('bible:controls.show')}</span>
+              <span className="hidden sm:inline">{t('bible:controls.show')}</span>
             </button>
           )}
         </div>
       </div>
 
-      <div className="flex-1 p-3 space-y-3">
-        <LivePreview />
+      <div className="p-2 lg:p-3 lg:flex-1 lg:min-h-0 flex flex-col">
+        <div className="w-full lg:flex-1 lg:min-h-0 lg:flex lg:items-center lg:justify-center">
+          <LivePreview />
+        </div>
 
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-2 pt-2 lg:pt-3 flex-shrink-0">
           <button
             type="button"
             onClick={handlePrev}

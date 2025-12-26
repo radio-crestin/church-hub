@@ -52,14 +52,14 @@ export function BibleControlPanel({
   }
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-      <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700">
+    <div className="flex flex-col lg:h-full bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+      <div className="flex items-center justify-between p-2 lg:p-3 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center gap-2">
           <MonitorUp
             size={18}
             className="text-indigo-600 dark:text-indigo-400"
           />
-          <h3 className="font-medium text-gray-900 dark:text-white">
+          <h3 className="font-medium text-gray-900 dark:text-white text-sm lg:text-base">
             {t('controls.title')}
           </h3>
         </div>
@@ -93,7 +93,7 @@ export function BibleControlPanel({
               type="button"
               onClick={handleHide}
               disabled={clearSlide.isPending}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+              className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
               title={`${t('controls.hide')} (Esc)`}
             >
               {clearSlide.isPending ? (
@@ -101,15 +101,15 @@ export function BibleControlPanel({
               ) : (
                 <EyeOff size={18} />
               )}
-              <span>{t('controls.hide')}</span>
-              <span className="text-xs opacity-75">(Esc)</span>
+              <span className="hidden sm:inline">{t('controls.hide')}</span>
+              <span className="text-xs opacity-75 hidden sm:inline">(Esc)</span>
             </button>
           ) : (
             <button
               type="button"
               onClick={handleShow}
               disabled={!hasContent || showSlide.isPending}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+              className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
               title={`${t('controls.show')} (F10)`}
             >
               {showSlide.isPending ? (
@@ -117,17 +117,19 @@ export function BibleControlPanel({
               ) : (
                 <Eye size={18} />
               )}
-              <span>{t('controls.show')}</span>
-              <span className="text-xs opacity-75">(F10)</span>
+              <span className="hidden sm:inline">{t('controls.show')}</span>
+              <span className="text-xs opacity-75 hidden sm:inline">(F10)</span>
             </button>
           )}
         </div>
       </div>
 
-      <div className="flex-1 p-3 space-y-3">
-        <LivePreview />
+      <div className="p-2 lg:p-3 lg:flex-1 lg:min-h-0 flex flex-col">
+        <div className="w-full lg:flex-1 lg:min-h-0 lg:flex lg:items-center lg:justify-center">
+          <LivePreview />
+        </div>
 
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-2 pt-2 lg:pt-3 flex-shrink-0">
           <button
             type="button"
             onClick={onPrevVerse}
