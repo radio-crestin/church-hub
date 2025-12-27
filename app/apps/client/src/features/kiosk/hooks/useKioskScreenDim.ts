@@ -119,7 +119,9 @@ export function useKioskScreenDim({
     setDismissedByTouch(true)
     // Always try to restore brightness when user taps
     restoreBrightness().then((success) => {
-      logger.debug(`Brightness restore on tap: ${success ? 'success' : 'skipped'}`)
+      logger.debug(
+        `Brightness restore on tap: ${success ? 'success' : 'skipped'}`,
+      )
     })
   }, [])
 
