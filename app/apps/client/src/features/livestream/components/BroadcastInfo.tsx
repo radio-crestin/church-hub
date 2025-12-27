@@ -157,7 +157,7 @@ export function BroadcastInfo() {
   return (
     <div className="p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
       <div className="flex items-center gap-3">
-        <div className="flex-1 relative px-3 py-2 pr-10 text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg whitespace-pre-wrap break-words">
+        <div className="relative flex-1 px-3 py-2 pr-10 text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg whitespace-pre-wrap break-words">
           {displayMessage}
           <Tooltip
             content={
@@ -169,7 +169,7 @@ export function BroadcastInfo() {
               type="button"
               onClick={() => copyMessage(activeBroadcast.url)}
               disabled={isLoading}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
+              className="absolute right-2 top-2 p-1.5 rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
             >
               {copied ? (
                 <CheckIcon className="w-4 h-4 text-green-500" />

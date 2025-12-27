@@ -5,7 +5,7 @@ import { getActiveBroadcast, startStream, stopStream } from '../service'
 
 export function useStreaming() {
   const queryClient = useQueryClient()
-  const { streamStartProgress } = useLivestreamWebSocket()
+  const { streamStartProgress, livestreamStatus } = useLivestreamWebSocket()
 
   const activeBroadcastQuery = useQuery({
     queryKey: ['livestream', 'broadcast', 'active'],
@@ -28,10 +28,16 @@ export function useStreaming() {
     },
   })
 
+  // Use WebSocket livestream status if available, otherwise fall back to query
+  // This ensures immediate UI updates when the server broadcasts status changes
+  const isLive = livestreamStatus !== null
+    ? livestreamStatus.isLive
+    : activeBroadcastQuery.data?.status === 'live'
+
   return {
     activeBroadcast: activeBroadcastQuery.data,
     isLoadingBroadcast: activeBroadcastQuery.isLoading,
-    isLive: activeBroadcastQuery.data?.status === 'live',
+    isLive,
     start: startMutation.mutate,
     startAsync: startMutation.mutateAsync,
     isStarting: startMutation.isPending,

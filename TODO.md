@@ -54,6 +54,7 @@
 ~~- fa listen pe orice port 3000~~
 ~~- rezolva problema cu generarea titlului, elimina orice alt caracter in afara de litere si -~~ 
 ~~- imbunatateste performanta aplicatiei~~
+~~- debug why the web server is slow when accessed externally~~
 - inlocuieste aplicatia de scene monitor cu una care foloseste aplicatia turso si un UI similar cu cel al aplicatiei actuale
   - pentru cantari, va fi ceva similar, fiecare cantare e echivalentul unui verset
   - pentru Biblie va trebui sa afisezi in timp real ce se cauta pe pc-ul principal si sa afisezi lista de versete

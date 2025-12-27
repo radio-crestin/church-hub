@@ -178,83 +178,51 @@ export async function createBroadcast(): Promise<BroadcastInfo> {
   }
 }
 
+// Cache for active broadcast to avoid repeated API calls
+let activeBroadcastCache: {
+  data: BroadcastInfo | null
+  timestamp: number
+} | null = null
+const ACTIVE_BROADCAST_CACHE_TTL = 10 * 1000 // 10 seconds
+
 export async function getActiveBroadcast(): Promise<BroadcastInfo | null> {
-  const youtube = await getYouTubeService()
-
-  if (youtube) {
-    try {
-      const response = await youtube.liveBroadcasts.list({
-        part: ['snippet', 'status'],
-        broadcastStatus: 'active',
-      })
-
-      const broadcast = response.data.items?.[0]
-      if (!broadcast) {
-        const upcomingResponse = await youtube.liveBroadcasts.list({
-          part: ['snippet', 'status'],
-          broadcastStatus: 'upcoming',
-        })
-
-        const upcomingBroadcast = upcomingResponse.data.items?.[0]
-        if (!upcomingBroadcast) {
-          return null
-        }
-
-        return {
-          broadcastId: upcomingBroadcast.id!,
-          title: upcomingBroadcast.snippet?.title || '',
-          url: `https://youtu.be/${upcomingBroadcast.id}`,
-          status: 'scheduled',
-          scheduledStartTime: new Date(
-            upcomingBroadcast.snippet?.scheduledStartTime || Date.now(),
-          ),
-        }
-      }
-
-      return {
-        broadcastId: broadcast.id!,
-        title: broadcast.snippet?.title || '',
-        url: `https://youtu.be/${broadcast.id}`,
-        status: 'live',
-        scheduledStartTime: new Date(
-          broadcast.snippet?.scheduledStartTime || Date.now(),
-        ),
-        actualStartTime: broadcast.snippet?.actualStartTime
-          ? new Date(broadcast.snippet.actualStartTime)
-          : undefined,
-      }
-    } catch {
-      return null
-    }
+  // Return cached result if still fresh
+  if (
+    activeBroadcastCache &&
+    Date.now() - activeBroadcastCache.timestamp < ACTIVE_BROADCAST_CACHE_TTL
+  ) {
+    return activeBroadcastCache.data
   }
 
-  // Fallback to direct API fetch
+  const youtube = await getYouTubeService()
+
+  // If not authenticated, return null immediately without making API calls
+  if (!youtube) {
+    activeBroadcastCache = { data: null, timestamp: Date.now() }
+    return null
+  }
+
   try {
-    const response = await youtubeApiFetch<YouTubeBroadcastListResponse>(
-      'liveBroadcasts',
-      {
-        part: 'snippet,status',
-        broadcastStatus: 'active',
-      },
-    )
+    const response = await youtube.liveBroadcasts.list({
+      part: ['snippet', 'status'],
+      broadcastStatus: 'active',
+    })
 
-    const broadcast = response.items?.[0]
+    const broadcast = response.data.items?.[0]
     if (!broadcast) {
-      const upcomingResponse = await youtubeApiFetch<YouTubeBroadcastListResponse>(
-        'liveBroadcasts',
-        {
-          part: 'snippet,status',
-          broadcastStatus: 'upcoming',
-        },
-      )
+      const upcomingResponse = await youtube.liveBroadcasts.list({
+        part: ['snippet', 'status'],
+        broadcastStatus: 'upcoming',
+      })
 
-      const upcomingBroadcast = upcomingResponse.items?.[0]
+      const upcomingBroadcast = upcomingResponse.data.items?.[0]
       if (!upcomingBroadcast) {
+        activeBroadcastCache = { data: null, timestamp: Date.now() }
         return null
       }
 
-      return {
-        broadcastId: upcomingBroadcast.id,
+      const result: BroadcastInfo = {
+        broadcastId: upcomingBroadcast.id!,
         title: upcomingBroadcast.snippet?.title || '',
         url: `https://youtu.be/${upcomingBroadcast.id}`,
         status: 'scheduled',
@@ -262,10 +230,12 @@ export async function getActiveBroadcast(): Promise<BroadcastInfo | null> {
           upcomingBroadcast.snippet?.scheduledStartTime || Date.now(),
         ),
       }
+      activeBroadcastCache = { data: result, timestamp: Date.now() }
+      return result
     }
 
-    return {
-      broadcastId: broadcast.id,
+    const result: BroadcastInfo = {
+      broadcastId: broadcast.id!,
       title: broadcast.snippet?.title || '',
       url: `https://youtu.be/${broadcast.id}`,
       status: 'live',
@@ -276,9 +246,17 @@ export async function getActiveBroadcast(): Promise<BroadcastInfo | null> {
         ? new Date(broadcast.snippet.actualStartTime)
         : undefined,
     }
+    activeBroadcastCache = { data: result, timestamp: Date.now() }
+    return result
   } catch {
+    activeBroadcastCache = { data: null, timestamp: Date.now() }
     return null
   }
+}
+
+// Clear the cache when broadcast status changes (start/stop)
+export function clearActiveBroadcastCache(): void {
+  activeBroadcastCache = null
 }
 
 export async function endBroadcast(broadcastId: string): Promise<void> {
@@ -303,8 +281,16 @@ export async function endBroadcast(broadcastId: string): Promise<void> {
         { method: 'POST' },
       )
     }
-  } catch {
-    // Failed to transition, continue with updating local status
+    // biome-ignore lint/suspicious/noConsole: logging
+    console.log(`[youtube-broadcast] Successfully ended broadcast ${broadcastId}`)
+  } catch (error) {
+    // Log the error but continue with updating local status
+    // This can happen if YouTube already auto-stopped the broadcast
+    // biome-ignore lint/suspicious/noConsole: logging
+    console.log(
+      `[youtube-broadcast] Failed to transition broadcast ${broadcastId} to complete:`,
+      error instanceof Error ? error.message : error,
+    )
   }
 
   const db = getDatabase()
