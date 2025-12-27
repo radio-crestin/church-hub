@@ -21,8 +21,8 @@
     "ios:dev": "tauri ios dev",
     "ios:dev:device": "tauri ios dev --open",
     "ios:open": "open tauri/gen/apple/church-hub.xcodeproj",
-    "ios:build": "tauri ios build",
-    "ios:build:release": "tauri ios build --release",
+    "ios:build": "tauri ios build -d",
+    "ios:build:release": "tauri ios build",
     "ios:install": "xcrun devicectl device install app --device 'Iosif'\"'\"'s Phone' tauri/gen/apple/build/arm64/church-hub.ipa",
     "ios:launch": "xcrun devicectl device process launch --device 'Iosif'\"'\"'s Phone' com.church-hub",
     "ios:run": "pnpm ios:build && pnpm ios:install && pnpm ios:launch"
