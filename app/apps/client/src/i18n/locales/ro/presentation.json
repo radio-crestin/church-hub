@@ -72,6 +72,7 @@
       "autoScale": "Scalare Automată",
       "autoScaleDescription": "Scalează automat textul pentru a încăpea în container. Când este dezactivat, folosește o dimensiune fixă.",
       "fontSize": "Dimensiune Font",
+      "minFontSize": "Dimensiune Min Font",
       "color": "Culoare",
       "bold": "Bold",
       "italic": "Italic",

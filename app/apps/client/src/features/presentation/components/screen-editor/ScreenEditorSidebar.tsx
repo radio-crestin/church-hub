@@ -370,6 +370,33 @@ export function ScreenEditorSidebar({
                     className="h-8"
                   />
                 </div>
+                {(selectedConfig.config as { style: TextStyle }).style
+                  .autoScale && (
+                  <div>
+                    <Label className="text-xs text-gray-500 dark:text-gray-400">
+                      {t('screens.textStyle.minFontSize')} (px)
+                    </Label>
+                    <Input
+                      type="number"
+                      value={
+                        (selectedConfig.config as { style: TextStyle }).style
+                          .minFontSize ?? 12
+                      }
+                      onChange={(e) => {
+                        const newStyle = {
+                          ...(selectedConfig.config as { style: TextStyle })
+                            .style,
+                          minFontSize: parseInt(e.target.value) || 12,
+                        }
+                        updateConfig(
+                          [...selectedConfig.path, 'style'],
+                          newStyle,
+                        )
+                      }}
+                      className="h-8"
+                    />
+                  </div>
+                )}
                 <div>
                   <Label className="text-xs text-gray-500 dark:text-gray-400">
                     Color
@@ -522,6 +549,54 @@ export function ScreenEditorSidebar({
                     ))}
                   </div>
                 </div>
+                <div>
+                  <Label className="text-xs text-gray-500 dark:text-gray-400">
+                    {t('screens.textStyle.lineHeight')}
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <Slider
+                      value={[
+                        (selectedConfig.config as { style: TextStyle }).style
+                          .lineHeight ?? 1.3,
+                      ]}
+                      onValueChange={([value]) => {
+                        const newStyle = {
+                          ...(selectedConfig.config as { style: TextStyle })
+                            .style,
+                          lineHeight: value,
+                        }
+                        updateConfig(
+                          [...selectedConfig.path, 'style'],
+                          newStyle,
+                        )
+                      }}
+                      min={0.8}
+                      max={3}
+                      step={0.1}
+                      className="flex-1"
+                    />
+                    <span className="text-xs text-gray-500 dark:text-gray-400 w-8 text-right">
+                      {(
+                        (selectedConfig.config as { style: TextStyle }).style
+                          .lineHeight ?? 1.3
+                      ).toFixed(1)}
+                    </span>
+                  </div>
+                </div>
+                <Checkbox
+                  checked={
+                    (selectedConfig.config as { style: TextStyle }).style
+                      .shadow ?? false
+                  }
+                  onCheckedChange={(checked) => {
+                    const newStyle = {
+                      ...(selectedConfig.config as { style: TextStyle }).style,
+                      shadow: !!checked,
+                    }
+                    updateConfig([...selectedConfig.path, 'style'], newStyle)
+                  }}
+                  label={t('screens.textStyle.shadow')}
+                />
 
                 {/* Line Compression */}
                 <div className="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-700">

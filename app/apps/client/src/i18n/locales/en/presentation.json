@@ -72,6 +72,7 @@
       "autoScale": "Auto Scale",
       "autoScaleDescription": "Automatically scales text to fit the container. When disabled, uses a fixed font size.",
       "fontSize": "Font Size",
+      "minFontSize": "Min Font Size",
       "color": "Color",
       "bold": "Bold",
       "italic": "Italic",
