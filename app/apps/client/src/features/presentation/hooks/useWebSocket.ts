@@ -4,9 +4,12 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { getApiUrl, getWsUrl, isMobile } from '~/config'
 import { getStoredUserToken } from '~/service/api-url'
+import { createLogger } from '~/utils/logger'
 import { presentationStateQueryKey } from './usePresentationState'
 import { screenQueryKey } from './useScreen'
 import type { PresentationState } from '../types'
+
+const logger = createLogger('WebSocket')
 
 type WebSocketStatus = 'connecting' | 'connected' | 'disconnected' | 'error'
 
@@ -54,6 +57,11 @@ type MessageData =
 // Check if we should use Tauri WebSocket plugin (on mobile)
 const useTauriWebSocket = isMobile()
 
+// Ping configuration for connection health check
+const PING_INTERVAL_MS = 3000 // Send ping every 3 seconds
+const PONG_TIMEOUT_MS = 2000 // Wait 2 seconds for pong response
+const MAX_MISSED_PONGS = 3 // After 3 missed pongs, consider connection dead
+
 export function useWebSocket() {
   const queryClient = useQueryClient()
   // For native WebSocket (desktop/browser)
@@ -62,6 +70,8 @@ export function useWebSocket() {
   const tauriWsRef = useRef<TauriWebSocket | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const pingIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const pongTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const missedPongsRef = useRef(0)
   const [status, setStatus] = useState<WebSocketStatus>('disconnected')
   const isConnectingRef = useRef(false)
 
@@ -71,6 +81,13 @@ export function useWebSocket() {
         const data = JSON.parse(messageData) as MessageData
 
         if (data.type === 'pong') {
+          // Reset missed pongs counter on successful pong
+          missedPongsRef.current = 0
+          // Clear pong timeout
+          if (pongTimeoutRef.current) {
+            clearTimeout(pongTimeoutRef.current)
+            pongTimeoutRef.current = null
+          }
           return
         }
 
@@ -122,16 +139,37 @@ export function useWebSocket() {
 
       ws.onopen = () => {
         setStatus('connected')
+        missedPongsRef.current = 0
 
         // Invalidate presentation state to refetch current state on reconnection
         queryClient.invalidateQueries({ queryKey: presentationStateQueryKey })
 
-        // Start ping interval
+        // Start ping interval with 3-strike rule
         pingIntervalRef.current = setInterval(() => {
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ type: 'ping' }))
+
+            // Start timeout to wait for pong
+            pongTimeoutRef.current = setTimeout(() => {
+              missedPongsRef.current++
+              logger.debug(
+                `Missed pong ${missedPongsRef.current}/${MAX_MISSED_PONGS}`,
+              )
+
+              if (missedPongsRef.current >= MAX_MISSED_PONGS) {
+                logger.debug('Connection lost - 3 pongs missed')
+                setStatus('disconnected')
+
+                if (pingIntervalRef.current) {
+                  clearInterval(pingIntervalRef.current)
+                  pingIntervalRef.current = null
+                }
+
+                ws.close()
+              }
+            }, PONG_TIMEOUT_MS)
           }
-        }, 30000)
+        }, PING_INTERVAL_MS)
       }
 
       ws.onmessage = (event) => {
@@ -154,6 +192,11 @@ export function useWebSocket() {
         if (pingIntervalRef.current) {
           clearInterval(pingIntervalRef.current)
           pingIntervalRef.current = null
+        }
+
+        if (pongTimeoutRef.current) {
+          clearTimeout(pongTimeoutRef.current)
+          pongTimeoutRef.current = null
         }
 
         if (reconnectTimeoutRef.current) {
@@ -212,6 +255,7 @@ export function useWebSocket() {
       isConnectingRef.current = false
 
       setStatus('connected')
+      missedPongsRef.current = 0
 
       // Invalidate presentation state to refetch current state on reconnection
       queryClient.invalidateQueries({ queryKey: presentationStateQueryKey })
@@ -220,13 +264,18 @@ export function useWebSocket() {
       ws.addListener((message) => {
         // Handle close event from Tauri WebSocket
         if (message.type === 'Close') {
-          console.log('[WebSocket] Tauri WebSocket closed')
+          logger.debug('Tauri WebSocket closed')
           setStatus('disconnected')
           tauriWsRef.current = null
 
           if (pingIntervalRef.current) {
             clearInterval(pingIntervalRef.current)
             pingIntervalRef.current = null
+          }
+
+          if (pongTimeoutRef.current) {
+            clearTimeout(pongTimeoutRef.current)
+            pongTimeoutRef.current = null
           }
 
           // Reconnect after delay
@@ -245,35 +294,66 @@ export function useWebSocket() {
         }
       })
 
-      // Start ping interval - also detects disconnection when ping fails
+      // Helper function to handle connection loss
+      const handleConnectionLost = async () => {
+        logger.debug('Connection lost - 3 pongs missed')
+        setStatus('disconnected')
+
+        if (pingIntervalRef.current) {
+          clearInterval(pingIntervalRef.current)
+          pingIntervalRef.current = null
+        }
+
+        if (pongTimeoutRef.current) {
+          clearTimeout(pongTimeoutRef.current)
+          pongTimeoutRef.current = null
+        }
+
+        if (tauriWsRef.current) {
+          try {
+            await tauriWsRef.current.disconnect()
+          } catch {
+            // Ignore disconnect errors
+          }
+          tauriWsRef.current = null
+        }
+
+        // Reconnect after delay
+        reconnectTimeoutRef.current = setTimeout(() => {
+          connectTauri()
+        }, 3000)
+      }
+
+      // Start ping interval with 3-strike rule
       pingIntervalRef.current = setInterval(async () => {
         if (tauriWsRef.current) {
           try {
             await tauriWsRef.current.send(JSON.stringify({ type: 'ping' }))
+
+            // Start timeout to wait for pong
+            pongTimeoutRef.current = setTimeout(() => {
+              missedPongsRef.current++
+              logger.debug(
+                `Missed pong ${missedPongsRef.current}/${MAX_MISSED_PONGS}`,
+              )
+
+              if (missedPongsRef.current >= MAX_MISSED_PONGS) {
+                handleConnectionLost()
+              }
+            }, PONG_TIMEOUT_MS)
           } catch {
-            // Ping failed - connection is likely dead
-            console.log('[WebSocket] Ping failed, connection lost')
-            setStatus('disconnected')
+            // Ping send failed - count as missed pong
+            missedPongsRef.current++
+            logger.debug(
+              `Ping send failed ${missedPongsRef.current}/${MAX_MISSED_PONGS}`,
+            )
 
-            if (pingIntervalRef.current) {
-              clearInterval(pingIntervalRef.current)
-              pingIntervalRef.current = null
+            if (missedPongsRef.current >= MAX_MISSED_PONGS) {
+              handleConnectionLost()
             }
-
-            try {
-              await tauriWsRef.current.disconnect()
-            } catch {
-              // Ignore disconnect errors
-            }
-            tauriWsRef.current = null
-
-            // Reconnect after delay
-            reconnectTimeoutRef.current = setTimeout(() => {
-              connectTauri()
-            }, 3000)
           }
         }
-      }, 30000)
+      }, PING_INTERVAL_MS)
     } catch {
       isConnectingRef.current = false
       setStatus('error')
@@ -302,6 +382,11 @@ export function useWebSocket() {
     if (pingIntervalRef.current) {
       clearInterval(pingIntervalRef.current)
       pingIntervalRef.current = null
+    }
+
+    if (pongTimeoutRef.current) {
+      clearTimeout(pongTimeoutRef.current)
+      pongTimeoutRef.current = null
     }
 
     if (useTauriWebSocket) {
