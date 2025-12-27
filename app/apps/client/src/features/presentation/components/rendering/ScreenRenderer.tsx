@@ -334,6 +334,21 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
     }
   }, [])
 
+  // Show toolbar on touch near the top
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const threshold = 60 // pixels from top
+    const touch = e.touches[0]
+    if (touch && touch.clientY < threshold) {
+      setShowToolbar(true)
+      if (toolbarTimeoutRef.current) {
+        clearTimeout(toolbarTimeoutRef.current)
+      }
+      toolbarTimeoutRef.current = setTimeout(() => {
+        setShowToolbar(false)
+      }, 3000)
+    }
+  }, [])
+
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
@@ -636,6 +651,7 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
       style={bg ? getBackgroundCSS(bg) : { backgroundColor: '#000000' }}
       onDoubleClick={toggleFullscreen}
       onMouseMove={handleMouseMove}
+      onTouchStart={handleTouchStart}
     >
       {/* Floating toolbar */}
       <div
