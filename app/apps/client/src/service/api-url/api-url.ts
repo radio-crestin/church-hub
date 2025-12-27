@@ -9,8 +9,10 @@ import { fetch as tauriFetch } from '@tauri-apps/plugin-http'
 const API_URL_STORAGE_KEY = 'church-hub-api-url'
 const USER_AUTH_STORAGE_KEY = 'church-hub-user-auth'
 
-// Check if running in Tauri
-const isTauri = typeof window !== 'undefined' && '__TAURI__' in window
+// Check if running in Tauri (v2 uses __TAURI_INTERNALS__)
+const isTauri =
+  typeof window !== 'undefined' &&
+  ('__TAURI_INTERNALS__' in window || '__TAURI__' in window)
 
 // Pattern to match auth URL: /api/auth/user/{token}
 const AUTH_URL_PATTERN = /\/api\/auth\/user\/(usr_[A-Za-z0-9_]+)$/

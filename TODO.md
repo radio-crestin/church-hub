@@ -55,9 +55,11 @@
 ~~- rezolva problema cu generarea titlului, elimina orice alt caracter in afara de litere si -~~ 
 ~~- imbunatateste performanta aplicatiei~~
 ~~- debug why the web server is slow when accessed externally~~
-- inlocuieste aplicatia de scene monitor cu una care foloseste aplicatia turso si un UI similar cu cel al aplicatiei actuale
-  - pentru cantari, va fi ceva similar, fiecare cantare e echivalentul unui verset
-  - pentru Biblie va trebui sa afisezi in timp real ce se cauta pe pc-ul principal si sa afisezi lista de versete
+~~- inlocuieste aplicatia de scene monitor cu una care foloseste aplicatia turso si un UI similar cu cel al aplicatiei actuale~~
+  ~~- pentru cantari, va fi ceva similar, fiecare cantare e echivalentul unui verset~~
+  ~~- pentru Biblie va trebui sa afisezi in timp real ce se cauta pe pc-ul principal si sa afisezi lista de versete~~
+- adauga wake lock
+- si apoi seteaza luminiozitatea la 0 daca conexiunea websocket nu este available 5 minute
 ~~- implementeaza api-uri pentru search cantari, adaugare de cantari, programe, camera de control, preview, current queue, etc.~~
 ~~- in versiunea mobila a site-ului, asigura-te ca totul este scalabil corect~~
 - fix openapi endpoints and fix authentication layer

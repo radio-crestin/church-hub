@@ -26,15 +26,6 @@ import { isTauri } from '../../utils/openDisplayWindow'
 // Use Tauri fetch on mobile (iOS WKWebView blocks HTTP fetch)
 const fetchFn = isTauri() && isMobile() ? tauriFetch : window.fetch.bind(window)
 
-// Debug logging for mobile performance analysis
-function debugLog(message: string, data?: unknown) {
-  if (isMobile()) {
-    const timestamp = new Date().toISOString()
-    // biome-ignore lint/suspicious/noConsole: mobile debug logging
-    console.log(`[${timestamp}] [ScreenRenderer] ${message}`, data ?? '')
-  }
-}
-
 // Get headers with auth token for mobile
 function getHeaders(): Record<string, string> {
   const headers: Record<string, string> = {
@@ -477,28 +468,15 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
   // Fetch content based on presentation state
   useEffect(() => {
     const fetchContent = async () => {
-      const startTime = Date.now()
-      debugLog('fetchContent START', {
-        currentSongSlideId: presentationState?.currentSongSlideId,
-        currentQueueItemId: presentationState?.currentQueueItemId,
-        updatedAt: presentationState?.updatedAt,
-      })
-
       if (!presentationState) {
         setContentData(null)
         setContentType('empty')
-        debugLog('fetchContent END (no state)', {
-          duration: Date.now() - startTime,
-        })
         return
       }
 
       if (presentationState.isHidden) {
         setContentData(null)
         setContentType('empty')
-        debugLog('fetchContent END (hidden)', {
-          duration: Date.now() - startTime,
-        })
         return
       }
 
@@ -515,9 +493,6 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
             contentText: temp.data.text,
           })
           setNextSlideData(undefined) // Temporary content doesn't have next slide preview
-          debugLog('fetchContent END (temp bible)', {
-            duration: Date.now() - startTime,
-          })
           return
         }
 
@@ -541,46 +516,27 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
             } else {
               setNextSlideData(undefined)
             }
-            debugLog('fetchContent END (temp song)', {
-              duration: Date.now() - startTime,
-            })
             return
           }
         }
       }
 
       try {
-        debugLog('Fetching /api/queue...')
-        const queueFetchStart = Date.now()
-
         const queueResponse = await fetchFn(`${getApiUrl()}/api/queue`, {
           cache: 'no-store',
           headers: getHeaders(),
           credentials: 'include',
         })
 
-        debugLog(`Queue fetch response received`, {
-          duration: Date.now() - queueFetchStart,
-          ok: queueResponse.ok,
-          status: queueResponse.status,
-        })
-
         if (!queueResponse.ok) {
           setContentData(null)
           setContentType('empty')
           setNextSlideData(undefined)
-          debugLog('fetchContent END (queue error)', {
-            duration: Date.now() - startTime,
-          })
           return
         }
 
         const queueResult = await queueResponse.json()
         const queueItems: QueueItem[] = queueResult.data || []
-        debugLog(`Queue parsed`, {
-          duration: Date.now() - queueFetchStart,
-          itemCount: queueItems.length,
-        })
 
         let foundContentType: ContentType = 'empty'
         let foundContentData: ContentData | null = null
@@ -664,11 +620,6 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
         // Set content state
         setContentType(foundContentType)
         setContentData(foundContentData)
-        debugLog('Content state set', {
-          contentType: foundContentType,
-          hasContent: foundContentData !== null,
-          duration: Date.now() - startTime,
-        })
 
         // Calculate next slide if enabled in screen config
         if (screen?.nextSlideConfig?.enabled) {
@@ -719,23 +670,13 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
             nextBibleVerse,
           })
           setNextSlideData(nextSlide)
-          debugLog('fetchContent COMPLETE (with next slide)', {
-            duration: Date.now() - startTime,
-          })
         } else {
           setNextSlideData(undefined)
-          debugLog('fetchContent COMPLETE (no next slide)', {
-            duration: Date.now() - startTime,
-          })
         }
-      } catch (_error) {
+      } catch {
         setContentData(null)
         setContentType('empty')
         setNextSlideData(undefined)
-        debugLog('fetchContent ERROR', {
-          error: _error,
-          duration: Date.now() - startTime,
-        })
       }
     }
 

@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
+import TauriWebSocket from '@tauri-apps/plugin-websocket'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { getApiUrl, getWsUrl, isMobile } from '~/config'
@@ -6,14 +7,6 @@ import { getStoredUserToken } from '~/service/api-url'
 import { presentationStateQueryKey } from './usePresentationState'
 import { screenQueryKey } from './useScreen'
 import type { PresentationState } from '../types'
-
-const DEBUG = import.meta.env.DEV
-
-function log(level: 'debug' | 'info' | 'error', message: string) {
-  if (level === 'debug' && !DEBUG) return
-  // biome-ignore lint/suspicious/noConsole: logging utility
-  console.log(`[${level.toUpperCase()}] [websocket] ${message}`)
-}
 
 type WebSocketStatus = 'connecting' | 'connected' | 'disconnected' | 'error'
 
@@ -51,25 +44,69 @@ interface HighlightColorsUpdatedMessage {
   }
 }
 
+type MessageData =
+  | PresentationMessage
+  | ScreenConfigUpdatedMessage
+  | ScreenConfigPreviewMessage
+  | HighlightColorsUpdatedMessage
+  | { type: 'pong' }
+
+// Check if we should use Tauri WebSocket plugin (on mobile)
+const useTauriWebSocket = isMobile()
+
 export function useWebSocket() {
   const queryClient = useQueryClient()
-  const wsRef = useRef<WebSocket | null>(null)
+  // For native WebSocket (desktop/browser)
+  const nativeWsRef = useRef<WebSocket | null>(null)
+  // For Tauri WebSocket (mobile)
+  const tauriWsRef = useRef<TauriWebSocket | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const pingIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const [status, setStatus] = useState<WebSocketStatus>('disconnected')
+  const isConnectingRef = useRef(false)
 
-  const connect = useCallback(() => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
+  const handleMessage = useCallback(
+    (messageData: string) => {
+      try {
+        const data = JSON.parse(messageData) as MessageData
+
+        if (data.type === 'pong') {
+          return
+        }
+
+        if (data.type === 'presentation_state') {
+          queryClient.setQueryData(presentationStateQueryKey, data.payload)
+        }
+
+        if (data.type === 'screen_config_updated') {
+          queryClient.invalidateQueries({
+            queryKey: screenQueryKey(data.payload.screenId),
+          })
+        }
+
+        if (data.type === 'screen_config_preview') {
+          queryClient.setQueryData(
+            screenQueryKey(data.payload.screenId),
+            data.payload.config,
+          )
+        }
+      } catch {
+        // Failed to parse message
+      }
+    },
+    [queryClient],
+  )
+
+  const connectNative = useCallback(() => {
+    if (nativeWsRef.current?.readyState === WebSocket.OPEN) {
       return
     }
 
-    // Get WebSocket URL - use getWsUrl for mobile support
+    // Get WebSocket URL
     let wsUrl = getWsUrl()
     if (!wsUrl) {
-      // Fallback to API URL conversion
       const apiUrl = getApiUrl()
       if (!apiUrl) {
-        log('error', 'No API URL configured')
         setStatus('error')
         return
       }
@@ -77,26 +114,16 @@ export function useWebSocket() {
     }
     wsUrl = wsUrl + '/ws'
 
-    // Add auth token as query parameter for mobile (WebSocket doesn't support Cookie headers)
-    if (isMobile()) {
-      const token = getStoredUserToken()
-      if (token) {
-        wsUrl = `${wsUrl}?token=${encodeURIComponent(token)}`
-      }
-    }
-
-    log('debug', `Connecting to ${wsUrl}`)
     setStatus('connecting')
 
     try {
       const ws = new WebSocket(wsUrl)
-      wsRef.current = ws
+      nativeWsRef.current = ws
 
       ws.onopen = () => {
-        log('info', 'WebSocket connected')
         setStatus('connected')
 
-        // Start ping interval to keep connection alive
+        // Start ping interval
         pingIntervalRef.current = setInterval(() => {
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ type: 'ping' }))
@@ -105,99 +132,124 @@ export function useWebSocket() {
       }
 
       ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data) as
-            | PresentationMessage
-            | ScreenConfigUpdatedMessage
-            | ScreenConfigPreviewMessage
-            | HighlightColorsUpdatedMessage
-            | { type: 'pong' }
-
-          if (data.type === 'pong') {
-            log('debug', 'Received pong')
-            return
-          }
-
-          if (data.type === 'presentation_state') {
-            log('debug', 'Received presentation state update')
-            // Update React Query cache with new state
-            queryClient.setQueryData(presentationStateQueryKey, data.payload)
-          }
-
-          if (data.type === 'screen_config_updated') {
-            log(
-              'debug',
-              `Received screen config update for screen ${data.payload.screenId}`,
-            )
-            // Invalidate the screen query to trigger a refetch
-            queryClient.invalidateQueries({
-              queryKey: screenQueryKey(data.payload.screenId),
-            })
-          }
-
-          if (data.type === 'screen_config_preview') {
-            log(
-              'debug',
-              `Received screen config preview for screen ${data.payload.screenId}`,
-            )
-            // Update React Query cache directly with preview config
-            queryClient.setQueryData(
-              screenQueryKey(data.payload.screenId),
-              data.payload.config,
-            )
-          }
-        } catch (error) {
-          log('error', `Failed to parse message: ${error}`)
-        }
+        handleMessage(event.data)
       }
 
-      ws.onerror = (error) => {
-        log('error', `WebSocket error: ${error}`)
+      ws.onerror = () => {
         setStatus('error')
 
-        // Schedule reconnection in case onclose doesn't fire
         if (!reconnectTimeoutRef.current) {
           reconnectTimeoutRef.current = setTimeout(() => {
-            log('debug', 'Attempting reconnect after error...')
-            connect()
+            connectNative()
           }, 3000)
         }
       }
 
       ws.onclose = () => {
-        log('info', 'WebSocket disconnected')
         setStatus('disconnected')
 
-        // Clear ping interval
         if (pingIntervalRef.current) {
           clearInterval(pingIntervalRef.current)
           pingIntervalRef.current = null
         }
 
-        // Clear any existing reconnect timeout (from error handler)
         if (reconnectTimeoutRef.current) {
           clearTimeout(reconnectTimeoutRef.current)
           reconnectTimeoutRef.current = null
         }
 
-        // Reconnect after delay
         reconnectTimeoutRef.current = setTimeout(() => {
-          log('debug', 'Attempting reconnect...')
-          connect()
+          connectNative()
         }, 3000)
       }
-    } catch (error) {
-      log('error', `Failed to connect: ${error}`)
+    } catch {
+      setStatus('error')
+
+      reconnectTimeoutRef.current = setTimeout(() => {
+        connectNative()
+      }, 5000)
+    }
+  }, [handleMessage])
+
+  const connectTauri = useCallback(async () => {
+    if (isConnectingRef.current) {
+      return
+    }
+
+    if (tauriWsRef.current) {
+      return
+    }
+
+    isConnectingRef.current = true
+
+    // Get WebSocket URL
+    let wsUrl = getWsUrl()
+    if (!wsUrl) {
+      const apiUrl = getApiUrl()
+      if (!apiUrl) {
+        setStatus('error')
+        isConnectingRef.current = false
+        return
+      }
+      wsUrl = apiUrl.replace(/^http/, 'ws')
+    }
+    wsUrl = wsUrl + '/ws'
+
+    // Add auth token as query parameter
+    const token = getStoredUserToken()
+    if (token) {
+      wsUrl = `${wsUrl}?token=${encodeURIComponent(token)}`
+    }
+
+    setStatus('connecting')
+
+    try {
+      const ws = await TauriWebSocket.connect(wsUrl)
+      tauriWsRef.current = ws
+      isConnectingRef.current = false
+
+      setStatus('connected')
+
+      // Listen for messages
+      ws.addListener((message) => {
+        if (typeof message.data === 'string') {
+          handleMessage(message.data)
+        } else if (message.data instanceof ArrayBuffer) {
+          const text = new TextDecoder().decode(message.data)
+          handleMessage(text)
+        }
+      })
+
+      // Start ping interval
+      pingIntervalRef.current = setInterval(async () => {
+        if (tauriWsRef.current) {
+          try {
+            await tauriWsRef.current.send(JSON.stringify({ type: 'ping' }))
+          } catch {
+            // Failed to send ping
+          }
+        }
+      }, 30000)
+    } catch {
+      isConnectingRef.current = false
       setStatus('error')
 
       // Retry connection
       reconnectTimeoutRef.current = setTimeout(() => {
-        connect()
-      }, 5000)
+        connectTauri()
+      }, 3000)
     }
-  }, [queryClient])
+  }, [handleMessage])
 
-  const disconnect = useCallback(() => {
+  const connect = useCallback(() => {
+    if (useTauriWebSocket) {
+      connectTauri()
+    } else {
+      connectNative()
+    }
+  }, [connectTauri, connectNative])
+
+  const disconnect = useCallback(async () => {
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current)
       reconnectTimeoutRef.current = null
@@ -208,18 +260,42 @@ export function useWebSocket() {
       pingIntervalRef.current = null
     }
 
-    if (wsRef.current) {
-      wsRef.current.close()
-      wsRef.current = null
+    if (useTauriWebSocket) {
+      if (tauriWsRef.current) {
+        try {
+          await tauriWsRef.current.disconnect()
+        } catch {
+          // Failed to disconnect
+        }
+        tauriWsRef.current = null
+      }
+    } else {
+      if (nativeWsRef.current) {
+        nativeWsRef.current.close()
+        nativeWsRef.current = null
+      }
     }
   }, [])
 
-  const send = useCallback((message: Record<string, unknown>) => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify(message))
-      return true
+  const send = useCallback(async (message: Record<string, unknown>) => {
+    const messageStr = JSON.stringify(message)
+
+    if (useTauriWebSocket) {
+      if (tauriWsRef.current) {
+        try {
+          await tauriWsRef.current.send(messageStr)
+          return true
+        } catch {
+          return false
+        }
+      }
+    } else {
+      if (nativeWsRef.current?.readyState === WebSocket.OPEN) {
+        nativeWsRef.current.send(messageStr)
+        return true
+      }
     }
-    log('error', 'Cannot send message: WebSocket not connected')
+
     return false
   }, [])
 
