@@ -24,7 +24,9 @@ export const screens = sqliteTable(
     id: integer('id').primaryKey({ autoIncrement: true }),
     name: text('name').notNull(),
     type: text('type', { enum: screenTypes }).notNull().default('primary'),
-    isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
+    isActive: integer('is_active', { mode: 'boolean' })
+      .notNull()
+      .default(false),
     openMode: text('open_mode').notNull().default('browser'),
     isFullscreen: integer('is_fullscreen', { mode: 'boolean' })
       .notNull()
