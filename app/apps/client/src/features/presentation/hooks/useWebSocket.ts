@@ -210,8 +210,27 @@ export function useWebSocket() {
 
       setStatus('connected')
 
-      // Listen for messages
+      // Listen for messages and connection events
       ws.addListener((message) => {
+        // Handle close event from Tauri WebSocket
+        if (message.type === 'Close') {
+          console.log('[WebSocket] Tauri WebSocket closed')
+          setStatus('disconnected')
+          tauriWsRef.current = null
+
+          if (pingIntervalRef.current) {
+            clearInterval(pingIntervalRef.current)
+            pingIntervalRef.current = null
+          }
+
+          // Reconnect after delay
+          reconnectTimeoutRef.current = setTimeout(() => {
+            connectTauri()
+          }, 3000)
+          return
+        }
+
+        // Handle text/binary messages
         if (typeof message.data === 'string') {
           handleMessage(message.data)
         } else if (message.data instanceof ArrayBuffer) {
@@ -220,13 +239,32 @@ export function useWebSocket() {
         }
       })
 
-      // Start ping interval
+      // Start ping interval - also detects disconnection when ping fails
       pingIntervalRef.current = setInterval(async () => {
         if (tauriWsRef.current) {
           try {
             await tauriWsRef.current.send(JSON.stringify({ type: 'ping' }))
           } catch {
-            // Failed to send ping
+            // Ping failed - connection is likely dead
+            console.log('[WebSocket] Ping failed, connection lost')
+            setStatus('disconnected')
+
+            if (pingIntervalRef.current) {
+              clearInterval(pingIntervalRef.current)
+              pingIntervalRef.current = null
+            }
+
+            try {
+              await tauriWsRef.current.disconnect()
+            } catch {
+              // Ignore disconnect errors
+            }
+            tauriWsRef.current = null
+
+            // Reconnect after delay
+            reconnectTimeoutRef.current = setTimeout(() => {
+              connectTauri()
+            }, 3000)
           }
         }
       }, 30000)
