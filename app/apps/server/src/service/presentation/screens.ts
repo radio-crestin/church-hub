@@ -818,6 +818,8 @@ export interface BatchUpdateScreenConfigInput {
   globalSettings: ScreenGlobalSettings
   contentConfigs: Record<ContentType, Record<string, unknown>>
   nextSlideConfig?: NextSlideSectionConfig
+  width?: number
+  height?: number
 }
 
 export function batchUpdateScreenConfigs(
@@ -828,13 +830,20 @@ export function batchUpdateScreenConfigs(
 
     const db = getDatabase()
 
-    // Update global settings
+    // Update global settings and screen dimensions
     const settingsJson = JSON.stringify(input.globalSettings)
+    const updateData: Record<string, unknown> = {
+      globalSettings: settingsJson,
+      updatedAt: sql`(unixepoch())` as unknown as Date,
+    }
+    if (input.width !== undefined) {
+      updateData.width = input.width
+    }
+    if (input.height !== undefined) {
+      updateData.height = input.height
+    }
     db.update(screens)
-      .set({
-        globalSettings: settingsJson,
-        updatedAt: sql`(unixepoch())` as unknown as Date,
-      })
+      .set(updateData)
       .where(eq(screens.id, input.screenId))
       .run()
 

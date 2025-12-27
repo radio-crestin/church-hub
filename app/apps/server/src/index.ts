@@ -1817,6 +1817,8 @@ async function main() {
             globalSettings: ScreenGlobalSettings
             contentConfigs: Record<ContentType, Record<string, unknown>>
             nextSlideConfig?: NextSlideSectionConfig
+            width?: number
+            height?: number
           }
 
           if (!body.globalSettings || !body.contentConfigs) {
@@ -1839,6 +1841,8 @@ async function main() {
             globalSettings: body.globalSettings,
             contentConfigs: body.contentConfigs,
             nextSlideConfig: body.nextSlideConfig,
+            width: body.width,
+            height: body.height,
           })
 
           if (!result.success) {
