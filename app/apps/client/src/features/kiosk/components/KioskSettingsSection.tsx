@@ -135,83 +135,81 @@ export function KioskSettingsSection() {
         </p>
       </div>
 
-      {/* Debug: Test Screen Dim Overlay */}
-      {import.meta.env.DEV && (
-        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-2 mb-3">
-            <Bug className="w-4 h-4 text-yellow-600" />
-            <span className="text-sm font-medium text-yellow-600">
-              Debug Tools
-            </span>
+      {/* Debug: Test Screen Dim Overlay - Always show for testing */}
+      <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex items-center gap-2 mb-3">
+          <Bug className="w-4 h-4 text-yellow-600" />
+          <span className="text-sm font-medium text-yellow-600">
+            Debug Tools
+          </span>
+        </div>
+
+        <div className="space-y-3">
+          {/* Overlay Test */}
+          <div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowDebugOverlay(true)}
+            >
+              Test Screen Dim Overlay
+            </Button>
+            <p className="text-gray-500 text-xs mt-1">
+              Tap anywhere on the overlay to dismiss it
+            </p>
           </div>
 
-          <div className="space-y-3">
-            {/* Overlay Test */}
-            <div>
+          {/* Brightness Controls */}
+          <div className="space-y-2">
+            <p className="text-gray-500 text-xs">
+              Brightness Control (iOS only):{' '}
+              {isBrightnessControlSupported() ? 'Supported' : 'Not supported'}
+            </p>
+            <div className="flex flex-wrap gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setShowDebugOverlay(true)}
+                onClick={() => setBrightness(0)}
               >
-                Test Screen Dim Overlay
+                0%
               </Button>
-              <p className="text-gray-500 text-xs mt-1">
-                Tap anywhere on the overlay to dismiss it
-              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setBrightness(0.25)}
+              >
+                25%
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setBrightness(0.5)}
+              >
+                50%
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setBrightness(1)}
+              >
+                100%
+              </Button>
             </div>
-
-            {/* Brightness Controls */}
-            <div className="space-y-2">
-              <p className="text-gray-500 text-xs">
-                Brightness Control (iOS only):{' '}
-                {isBrightnessControlSupported() ? 'Supported' : 'Not supported'}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setBrightness(0)}
-                >
-                  0%
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setBrightness(0.25)}
-                >
-                  25%
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setBrightness(0.5)}
-                >
-                  50%
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setBrightness(1)}
-                >
-                  100%
-                </Button>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => dimScreen()}>
-                  Dim Screen
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => restoreBrightness()}
-                >
-                  Restore Brightness
-                </Button>
-              </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => dimScreen()}>
+                Dim Screen
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => restoreBrightness()}
+              >
+                Restore Brightness
+              </Button>
             </div>
           </div>
         </div>
-      )}
+      </div>
 
       {/* Debug Overlay */}
       {showDebugOverlay && (
