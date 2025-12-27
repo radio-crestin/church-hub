@@ -317,6 +317,12 @@
           "type": "string",
           "const": "deny-set-brightness",
           "markdownDescription": "Denies the set_brightness command without any pre-configured scope."
+        },
+        {
+          "description": "Default permissions for the screen-brightness plugin\n#### This default permission set includes:\n\n- `allow-get-brightness`\n- `allow-set-brightness`",
+          "type": "string",
+          "const": "default",
+          "markdownDescription": "Default permissions for the screen-brightness plugin\n#### This default permission set includes:\n\n- `allow-get-brightness`\n- `allow-set-brightness`"
         }
       ]
     }

@@ -1,3 +1,12 @@
+## Default Permission
+
+Default permissions for the screen-brightness plugin
+
+#### This default permission set includes the following:
+
+- `allow-get-brightness`
+- `allow-set-brightness`
+
 ## Permission Table
 
 <table>
