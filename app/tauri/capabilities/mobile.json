@@ -16,6 +16,7 @@
       "allow": [{ "url": "https://*:*" }, { "url": "http://*:*" }]
     },
     "websocket:default",
-    "keep-screen-on:default"
+    "keep-screen-on:default",
+    "screen-brightness:default"
   ]
 }
