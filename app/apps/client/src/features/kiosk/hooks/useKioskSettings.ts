@@ -1,56 +1,54 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect } from 'react'
 
-import { getSetting, upsertSetting } from '~/service/settings'
-import type { KioskSettings, KioskStartupPage } from '../types'
-import { KIOSK_SETTINGS_KEYS } from '../types'
+import {
+  getKioskSettings,
+  STORAGE_KEY,
+  updateKioskSettings,
+} from '../service/kioskStorage'
+import type { KioskSettings } from '../types'
 
 const QUERY_KEY = ['kiosk-settings']
 
+/**
+ * React Query hook for reading kiosk settings from localStorage
+ * Uses staleTime: Infinity since data is local and never "stale"
+ */
 export function useKioskSettings() {
+  const queryClient = useQueryClient()
+
+  // Listen for storage events (cross-tab synchronization)
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === STORAGE_KEY) {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEY })
+      }
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
+  }, [queryClient])
+
   return useQuery({
     queryKey: QUERY_KEY,
-    queryFn: async (): Promise<KioskSettings> => {
-      const [enabled, startupPage] = await Promise.all([
-        getSetting('app_settings', KIOSK_SETTINGS_KEYS.ENABLED),
-        getSetting('app_settings', KIOSK_SETTINGS_KEYS.STARTUP_PAGE),
-      ])
-
-      return {
-        enabled: enabled?.value === 'true',
-        startupPage: startupPage?.value
-          ? JSON.parse(startupPage.value)
-          : { type: 'route', path: '/present' },
-      }
+    queryFn: (): KioskSettings => {
+      // Synchronous read from localStorage
+      return getKioskSettings()
     },
+    staleTime: Infinity, // Never stale - local storage doesn't change externally
   })
 }
 
+/**
+ * Mutation hook for updating kiosk settings in localStorage
+ */
 export function useUpdateKioskSettings() {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: async (settings: Partial<KioskSettings>) => {
-      const updates: Promise<boolean>[] = []
-
-      if (settings.enabled !== undefined) {
-        updates.push(
-          upsertSetting('app_settings', {
-            key: KIOSK_SETTINGS_KEYS.ENABLED,
-            value: String(settings.enabled),
-          }),
-        )
-      }
-
-      if (settings.startupPage !== undefined) {
-        updates.push(
-          upsertSetting('app_settings', {
-            key: KIOSK_SETTINGS_KEYS.STARTUP_PAGE,
-            value: JSON.stringify(settings.startupPage),
-          }),
-        )
-      }
-
-      await Promise.all(updates)
+      // Synchronous update to localStorage
+      updateKioskSettings(settings)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY })
@@ -59,18 +57,9 @@ export function useUpdateKioskSettings() {
 }
 
 /**
- * Fetches kiosk settings directly (for use outside React components)
+ * Synchronous function to get kiosk settings (for use outside React components)
+ * Use this in route beforeLoad handlers
  */
-export async function fetchKioskSettings(): Promise<KioskSettings> {
-  const [enabled, startupPage] = await Promise.all([
-    getSetting('app_settings', KIOSK_SETTINGS_KEYS.ENABLED),
-    getSetting('app_settings', KIOSK_SETTINGS_KEYS.STARTUP_PAGE),
-  ])
-
-  return {
-    enabled: enabled?.value === 'true',
-    startupPage: startupPage?.value
-      ? (JSON.parse(startupPage.value) as KioskStartupPage)
-      : { type: 'route', path: '/present' },
-  }
+export function getKioskSettingsSync(): KioskSettings {
+  return getKioskSettings()
 }
