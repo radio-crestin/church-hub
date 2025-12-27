@@ -1,9 +1,11 @@
 export { KioskSettingsSection } from './components/KioskSettingsSection'
+export { KioskWakeLockManager } from './components/KioskWakeLockManager'
 export {
   getKioskSettingsSync,
   useKioskSettings,
   useUpdateKioskSettings,
 } from './hooks/useKioskSettings'
+export { useKioskWakeLock } from './hooks/useKioskWakeLock'
 export {
   clearKioskSettings,
   getKioskSettings,
