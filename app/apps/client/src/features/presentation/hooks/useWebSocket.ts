@@ -1,7 +1,8 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { getApiUrl } from '~/config'
+import { getApiUrl, getWsUrl, isMobile } from '~/config'
+import { getStoredUserToken } from '~/service/api-url'
 import { presentationStateQueryKey } from './usePresentationState'
 import { screenQueryKey } from './useScreen'
 import type { PresentationState } from '../types'
@@ -62,9 +63,27 @@ export function useWebSocket() {
       return
     }
 
-    // Get WebSocket URL from API URL
-    const apiUrl = getApiUrl()
-    const wsUrl = apiUrl.replace(/^http/, 'ws') + '/ws'
+    // Get WebSocket URL - use getWsUrl for mobile support
+    let wsUrl = getWsUrl()
+    if (!wsUrl) {
+      // Fallback to API URL conversion
+      const apiUrl = getApiUrl()
+      if (!apiUrl) {
+        log('error', 'No API URL configured')
+        setStatus('error')
+        return
+      }
+      wsUrl = apiUrl.replace(/^http/, 'ws')
+    }
+    wsUrl = wsUrl + '/ws'
+
+    // Add auth token as query parameter for mobile (WebSocket doesn't support Cookie headers)
+    if (isMobile()) {
+      const token = getStoredUserToken()
+      if (token) {
+        wsUrl = `${wsUrl}?token=${encodeURIComponent(token)}`
+      }
+    }
 
     log('debug', `Connecting to ${wsUrl}`)
     setStatus('connecting')

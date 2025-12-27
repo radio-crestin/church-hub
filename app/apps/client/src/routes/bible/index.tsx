@@ -354,7 +354,9 @@ function BiblePage() {
             {/* Left Panel - Navigation (shows last on mobile) */}
             <div
               className="order-3 lg:order-1 lg:min-h-0 lg:h-full lg:flex-initial overflow-hidden"
-              style={isLargeScreen ? { width: `${dividerPosition}%` } : undefined}
+              style={
+                isLargeScreen ? { width: `${dividerPosition}%` } : undefined
+              }
             >
               <BibleNavigationPanel
                 navigation={navigation}
@@ -378,7 +380,11 @@ function BiblePage() {
             {/* Right Panel - Control Panel with Preview (shows first on mobile) */}
             <div
               className="order-1 lg:order-2 lg:min-h-0 lg:flex-1 overflow-hidden"
-              style={isLargeScreen ? { width: `${100 - dividerPosition}%` } : undefined}
+              style={
+                isLargeScreen
+                  ? { width: `${100 - dividerPosition}%` }
+                  : undefined
+              }
             >
               <BibleControlPanel
                 onPrevVerse={handlePreviousVerse}
@@ -386,7 +392,6 @@ function BiblePage() {
                 canNavigate={canNavigateVerses}
               />
             </div>
-
           </div>
         ) : translations.length > 0 ? (
           // Translations exist but none selected - prompt to go to settings

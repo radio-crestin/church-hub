@@ -16,7 +16,14 @@ export const Route = createFileRoute('/auth/youtube/callback')({
 })
 
 function YouTubeCallbackPage() {
-  const { accessToken, refreshToken, expiresAt, channelId, channelName, error } = Route.useSearch()
+  const {
+    accessToken,
+    refreshToken,
+    expiresAt,
+    channelId,
+    channelName,
+    error,
+  } = Route.useSearch()
   const navigate = useNavigate()
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>(
     'processing',

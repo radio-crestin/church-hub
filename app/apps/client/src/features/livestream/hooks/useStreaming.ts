@@ -30,9 +30,10 @@ export function useStreaming() {
 
   // Use WebSocket livestream status if available, otherwise fall back to query
   // This ensures immediate UI updates when the server broadcasts status changes
-  const isLive = livestreamStatus !== null
-    ? livestreamStatus.isLive
-    : activeBroadcastQuery.data?.status === 'live'
+  const isLive =
+    livestreamStatus !== null
+      ? livestreamStatus.isLive
+      : activeBroadcastQuery.data?.status === 'live'
 
   return {
     activeBroadcast: activeBroadcastQuery.data,

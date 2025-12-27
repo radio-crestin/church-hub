@@ -150,9 +150,15 @@ export function useLivestreamWebSocket() {
           }
 
           if (data.type === 'youtube_auth_status') {
-            log('info', `Received YouTube auth status update: isAuthenticated=${data.payload.isAuthenticated}`)
+            log(
+              'info',
+              `Received YouTube auth status update: isAuthenticated=${data.payload.isAuthenticated}`,
+            )
             // biome-ignore lint/suspicious/noConsole: debug logging
-            console.log('[livestream-ws] YouTube auth status payload:', data.payload)
+            console.log(
+              '[livestream-ws] YouTube auth status payload:',
+              data.payload,
+            )
             queryClient.invalidateQueries({
               queryKey: ['livestream', 'youtube', 'auth'],
             })

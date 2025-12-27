@@ -37,7 +37,10 @@ export function getOAuth2Client(): OAuth2Client | null {
     const clientSecret = process.env.YOUTUBE_CLIENT_SECRET
 
     if (!clientId || !clientSecret) {
-      log('info', 'YouTube OAuth credentials not configured. Token refresh will not be available.')
+      log(
+        'info',
+        'YouTube OAuth credentials not configured. Token refresh will not be available.',
+      )
       credentialsAvailable = false
       return null
     }
@@ -73,16 +76,19 @@ interface RefreshTokenResponse {
  * This allows token refresh even without local OAuth credentials.
  */
 async function refreshTokensViaWorker(
-  refreshToken: string
+  refreshToken: string,
 ): Promise<RefreshTokenResponse> {
   try {
-    const response = await fetch(`${YOUTUBE_OAUTH_SERVER}/auth/youtube/refresh`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const response = await fetch(
+      `${YOUTUBE_OAUTH_SERVER}/auth/youtube/refresh`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refreshToken }),
       },
-      body: JSON.stringify({ refreshToken }),
-    })
+    )
 
     const data = (await response.json()) as RefreshTokenResponse
 
@@ -204,7 +210,10 @@ export async function getAuthenticatedClient(): Promise<OAuth2Client | null> {
 
     // Network error or other non-auth failure - still try to use existing token if not fully expired
     if (auth.expiresAt.getTime() > Date.now()) {
-      log('warning', 'Token refresh failed but token not yet expired, using existing token')
+      log(
+        'warning',
+        'Token refresh failed but token not yet expired, using existing token',
+      )
       const client = new OAuth2Client()
       client.setCredentials({
         access_token: auth.accessToken,
@@ -376,7 +385,9 @@ export async function youtubeApiFetch<T>(
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}))
-    const errorMessage = (errorData as { error?: { message?: string } })?.error?.message || response.statusText
+    const errorMessage =
+      (errorData as { error?: { message?: string } })?.error?.message ||
+      response.statusText
     throw new Error(`YouTube API error: ${errorMessage}`)
   }
 

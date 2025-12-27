@@ -1,13 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import type { ContentType } from '../constants/content-types'
-import type { OBSScene } from '../types'
 import {
   getOBSScenes,
   reorderOBSScenes,
   switchOBSScene,
   updateOBSScene,
 } from '../service'
+import type { OBSScene } from '../types'
 
 export function useOBSScenes(visibleOnly = false) {
   const queryClient = useQueryClient()
@@ -52,7 +52,9 @@ export function useOBSScenes(visibleOnly = false) {
     mutationFn: (sceneName: string) => switchOBSScene(sceneName),
     onMutate: async (sceneName) => {
       // Cancel any outgoing refetches to prevent overwriting our optimistic update
-      await queryClient.cancelQueries({ queryKey: ['livestream', 'obs', 'scenes'] })
+      await queryClient.cancelQueries({
+        queryKey: ['livestream', 'obs', 'scenes'],
+      })
 
       // Snapshot current state for potential rollback
       const previousScenes = queryClient.getQueryData([

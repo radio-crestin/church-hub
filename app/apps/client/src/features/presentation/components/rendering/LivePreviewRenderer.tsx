@@ -1,11 +1,33 @@
+import { fetch as tauriFetch } from '@tauri-apps/plugin-http'
 import { useEffect, useState } from 'react'
 
-import { getApiUrl } from '~/config'
+import { getApiUrl, isMobile } from '~/config'
+import { getStoredUserToken } from '~/service/api-url'
 import { ClockElement } from './ClockElement'
 import { ContentRenderer } from './ContentRenderer'
 import { getBackgroundCSS } from './utils/styleUtils'
 import { usePresentationState, useScreens, useWebSocket } from '../../hooks'
 import type { ContentType, ScreenWithConfigs } from '../../types'
+
+// Check if we're running in Tauri context
+const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+
+// Use Tauri fetch on mobile (iOS WKWebView blocks HTTP fetch)
+const fetchFn = isTauri && isMobile() ? tauriFetch : window.fetch.bind(window)
+
+// Get headers with auth token for mobile
+function getHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {
+    'Cache-Control': 'no-cache',
+  }
+  if (isMobile()) {
+    const userToken = getStoredUserToken()
+    if (userToken) {
+      headers['Cookie'] = `user_auth=${userToken}`
+    }
+  }
+  return headers
+}
 
 interface SongSlideData {
   id: number
@@ -49,9 +71,9 @@ export function LivePreviewRenderer() {
   const [contentType, setContentType] = useState<ContentType>('empty')
 
   // Get the first primary screen for preview (regardless of window open state)
-  const primaryScreen = screens?.find(
-    (s) => s.type === 'primary',
-  ) as ScreenWithConfigs | undefined
+  const primaryScreen = screens?.find((s) => s.type === 'primary') as
+    | ScreenWithConfigs
+    | undefined
 
   // Fetch content based on presentation state
   useEffect(() => {
@@ -69,9 +91,9 @@ export function LivePreviewRenderer() {
       }
 
       try {
-        const queueResponse = await fetch(`${getApiUrl()}/api/queue`, {
+        const queueResponse = await fetchFn(`${getApiUrl()}/api/queue`, {
           cache: 'no-store',
-          headers: { 'Cache-Control': 'no-cache' },
+          headers: getHeaders(),
           credentials: 'include',
         })
 

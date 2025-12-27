@@ -1,7 +1,9 @@
+import { fetch as tauriFetch } from '@tauri-apps/plugin-http'
 import { Maximize, Minimize } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { getApiUrl } from '~/config'
+import { getApiUrl, isMobile } from '~/config'
+import { getStoredUserToken } from '~/service/api-url'
 import { ScreenContent } from './ScreenContent'
 import type { ContentData, NextSlideData } from './types'
 import { calculateNextSlideData, getBackgroundCSS } from './utils'
@@ -18,6 +20,23 @@ import { useScreen } from '../../hooks/useScreen'
 import type { ContentType, PresentationState } from '../../types'
 import { setWindowFullscreen } from '../../utils/fullscreen'
 import { isTauri } from '../../utils/openDisplayWindow'
+
+// Use Tauri fetch on mobile (iOS WKWebView blocks HTTP fetch)
+const fetchFn = isTauri() && isMobile() ? tauriFetch : window.fetch.bind(window)
+
+// Get headers with auth token for mobile
+function getHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {
+    'Cache-Control': 'no-cache',
+  }
+  if (isMobile()) {
+    const userToken = getStoredUserToken()
+    if (userToken) {
+      headers['Cookie'] = `user_auth=${userToken}`
+    }
+  }
+  return headers
+}
 
 interface ScreenRendererProps {
   screenId: number
@@ -124,8 +143,10 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
         // Cross-browser fullscreen element check
         const fullscreenElement =
           document.fullscreenElement ||
-          (document as unknown as { webkitFullscreenElement?: Element }).webkitFullscreenElement ||
-          (document as unknown as { msFullscreenElement?: Element }).msFullscreenElement
+          (document as unknown as { webkitFullscreenElement?: Element })
+            .webkitFullscreenElement ||
+          (document as unknown as { msFullscreenElement?: Element })
+            .msFullscreenElement
         setIsFullscreen(!!fullscreenElement)
       }
     }
@@ -147,25 +168,52 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
   }, [screen, upsertScreen])
 
   // Helper function for browser fullscreen (cross-browser support)
-  const useBrowserFullscreen = async (enterFullscreen: boolean): Promise<boolean> => {
+  const useBrowserFullscreen = async (
+    enterFullscreen: boolean,
+  ): Promise<boolean> => {
     try {
       if (enterFullscreen) {
         const elem = document.documentElement
         if (elem.requestFullscreen) {
           await elem.requestFullscreen()
-        } else if ((elem as unknown as { webkitRequestFullscreen?: () => Promise<void> }).webkitRequestFullscreen) {
-          await (elem as unknown as { webkitRequestFullscreen: () => Promise<void> }).webkitRequestFullscreen()
-        } else if ((elem as unknown as { msRequestFullscreen?: () => Promise<void> }).msRequestFullscreen) {
-          await (elem as unknown as { msRequestFullscreen: () => Promise<void> }).msRequestFullscreen()
+        } else if (
+          (elem as unknown as { webkitRequestFullscreen?: () => Promise<void> })
+            .webkitRequestFullscreen
+        ) {
+          await (
+            elem as unknown as { webkitRequestFullscreen: () => Promise<void> }
+          ).webkitRequestFullscreen()
+        } else if (
+          (elem as unknown as { msRequestFullscreen?: () => Promise<void> })
+            .msRequestFullscreen
+        ) {
+          await (
+            elem as unknown as { msRequestFullscreen: () => Promise<void> }
+          ).msRequestFullscreen()
         }
       } else {
         if (document.fullscreenElement) {
           if (document.exitFullscreen) {
             await document.exitFullscreen()
-          } else if ((document as unknown as { webkitExitFullscreen?: () => Promise<void> }).webkitExitFullscreen) {
-            await (document as unknown as { webkitExitFullscreen: () => Promise<void> }).webkitExitFullscreen()
-          } else if ((document as unknown as { msExitFullscreen?: () => Promise<void> }).msExitFullscreen) {
-            await (document as unknown as { msExitFullscreen: () => Promise<void> }).msExitFullscreen()
+          } else if (
+            (
+              document as unknown as {
+                webkitExitFullscreen?: () => Promise<void>
+              }
+            ).webkitExitFullscreen
+          ) {
+            await (
+              document as unknown as {
+                webkitExitFullscreen: () => Promise<void>
+              }
+            ).webkitExitFullscreen()
+          } else if (
+            (document as unknown as { msExitFullscreen?: () => Promise<void> })
+              .msExitFullscreen
+          ) {
+            await (
+              document as unknown as { msExitFullscreen: () => Promise<void> }
+            ).msExitFullscreen()
           }
         }
       }
@@ -210,23 +258,32 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
         } else {
           // Tauri methods failed, try browser fullscreen as fallback
           // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
-          console.log('[toggleFullscreen] Tauri methods failed, trying browser fullscreen fallback...')
+          console.log(
+            '[toggleFullscreen] Tauri methods failed, trying browser fullscreen fallback...',
+          )
           success = await useBrowserFullscreen(newFullscreen)
           if (success) {
             setIsFullscreen(newFullscreen)
             // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
-            console.log('[toggleFullscreen] Browser fullscreen fallback succeeded')
+            console.log(
+              '[toggleFullscreen] Browser fullscreen fallback succeeded',
+            )
           }
         }
       } catch (error) {
         // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
-        console.error('[toggleFullscreen] Tauri fullscreen threw error, trying browser fallback:', error)
+        console.error(
+          '[toggleFullscreen] Tauri fullscreen threw error, trying browser fallback:',
+          error,
+        )
         // Fallback to browser fullscreen API when Tauri fails
         success = await useBrowserFullscreen(newFullscreen)
         if (success) {
           setIsFullscreen(newFullscreen)
           // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
-          console.log('[toggleFullscreen] Browser fullscreen fallback succeeded after error')
+          console.log(
+            '[toggleFullscreen] Browser fullscreen fallback succeeded after error',
+          )
         }
       }
     } else {
@@ -367,9 +424,9 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
       }
 
       try {
-        const queueResponse = await fetch(`${getApiUrl()}/api/queue`, {
+        const queueResponse = await fetchFn(`${getApiUrl()}/api/queue`, {
           cache: 'no-store',
-          headers: { 'Cache-Control': 'no-cache' },
+          headers: getHeaders(),
           credentials: 'include',
         })
 

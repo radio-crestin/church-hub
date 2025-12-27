@@ -422,9 +422,14 @@ export function broadcastYouTubeAuthStatus(
   } satisfies YouTubeAuthStatusMessage)
 
   // Always log this important event
-  wsLogger.info(`Broadcasting YouTube auth status to ${clients.size} clients: isAuthenticated=${status.isAuthenticated}`)
+  wsLogger.info(
+    `Broadcasting YouTube auth status to ${clients.size} clients: isAuthenticated=${status.isAuthenticated}`,
+  )
   // biome-ignore lint/suspicious/noConsole: debug logging
-  console.log(`[websocket] Broadcasting YouTube auth status to ${clients.size} clients:`, status)
+  console.log(
+    `[websocket] Broadcasting YouTube auth status to ${clients.size} clients:`,
+    status,
+  )
 
   for (const [clientId, ws] of clients) {
     try {

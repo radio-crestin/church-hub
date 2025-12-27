@@ -19,7 +19,7 @@ export function SongCard({ song, onClick }: SongCardProps) {
     <button
       type="button"
       onClick={onClick}
-      className="w-full flex items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-indigo-300 dark:hover:border-indigo-600 hover:shadow-sm transition-all text-left group"
+      className="w-full min-w-0 flex items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-indigo-300 dark:hover:border-indigo-600 hover:shadow-sm transition-all text-left group overflow-hidden"
     >
       <div className="flex-1 min-w-0">
         {hasHighlight ? (

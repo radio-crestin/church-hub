@@ -1,0 +1,11 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "build": {
+    "beforeDevCommand": "",
+    "devUrl": "http://localhost:3000"
+  },
+  "bundle": {
+    "externalBin": [],
+    "resources": {}
+  }
+}

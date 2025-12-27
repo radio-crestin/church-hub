@@ -1,8 +1,11 @@
 import { createRouter, RouterProvider } from '@tanstack/react-router'
+import { fetch as tauriFetch } from '@tauri-apps/plugin-http'
+import React from 'react'
 import ReactDOM from 'react-dom/client'
 import './styles.css'
 
-import { getApiUrl } from './config'
+import { getApiUrl, isMobile, needsApiUrlConfiguration } from './config'
+import { ApiUrlSetup } from './features/api-url-config'
 import { routeTree } from './routeTree.gen'
 import { getServerConfig } from './utils/tauri-commands'
 
@@ -20,10 +23,15 @@ declare module '@tanstack/react-router' {
 // Check if we're running in Tauri context
 const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 
+// Use Tauri fetch on mobile (iOS WKWebView blocks HTTP fetch)
+const fetchFn = isTauri && isMobile() ? tauriFetch : window.fetch.bind(window)
+
 // Startup timing
 const clientStartTime = performance.now()
 const logClientTiming = (label: string) => {
-  console.log(`[client-startup] ${label}: ${(performance.now() - clientStartTime).toFixed(1)}ms`)
+  console.log(
+    `[client-startup] ${label}: ${(performance.now() - clientStartTime).toFixed(1)}ms`,
+  )
 }
 
 logClientTiming('script_loaded')
@@ -31,11 +39,14 @@ logClientTiming('script_loaded')
 // Log time since HTML loaded (shows Vite module transformation time)
 if (typeof window !== 'undefined' && window.__htmlLoadTime) {
   const moduleLoadTime = performance.now() - window.__htmlLoadTime
-  console.log(`[client-startup] module_executed (time since HTML): ${moduleLoadTime.toFixed(1)}ms`)
+  console.log(
+    `[client-startup] module_executed (time since HTML): ${moduleLoadTime.toFixed(1)}ms`,
+  )
 }
 
 // Check Tauri context early
-const isTauriCheck = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+const isTauriCheck =
+  typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 logClientTiming(`tauri_check (isTauri=${isTauriCheck})`)
 
 // Loading screen helpers
@@ -83,22 +94,29 @@ async function waitForServer(
       addLoadingLog(
         `[${new Date().toLocaleTimeString()}] Checking server... (attempt ${attempt})`,
       )
-      const response = await fetch(pingUrl, {
+      // Use Tauri fetch on mobile to bypass WKWebView HTTP restrictions
+      const response = await fetchFn(pingUrl, {
         method: 'GET',
-        signal: AbortSignal.timeout(isTauriCheck ? 500 : 2000), // Shorter timeout in Tauri
       })
 
       if (response.ok) {
         const totalTime = (performance.now() - waitStart).toFixed(1)
         const attemptTime = (performance.now() - attemptStart).toFixed(1)
-        addLoadingLog(`[${new Date().toLocaleTimeString()}] Server is ready! (attempt took ${attemptTime}ms, total wait ${totalTime}ms)`)
-        console.log(`[client-startup] waitForServer success: attempt=${attempt}, attemptTime=${attemptTime}ms, totalWait=${totalTime}ms`)
+        addLoadingLog(
+          `[${new Date().toLocaleTimeString()}] Server is ready! (attempt took ${attemptTime}ms, total wait ${totalTime}ms)`,
+        )
+        console.log(
+          `[client-startup] waitForServer success: attempt=${attempt}, attemptTime=${attemptTime}ms, totalWait=${totalTime}ms`,
+        )
         updateLoadingStatus('Server ready, loading app...')
         return true
       }
     } catch (err) {
       // Server not ready yet, continue waiting
-      console.log(`[client-startup] waitForServer attempt ${attempt} failed:`, err)
+      console.log(
+        `[client-startup] waitForServer attempt ${attempt} failed:`,
+        err,
+      )
     }
 
     if (attempt < maxAttempts) {
@@ -122,41 +140,89 @@ if (typeof window !== 'undefined') {
   if (isTauri) {
     try {
       logClientTiming('tauri_block_start')
-      addLoadingLog(`[${new Date().toLocaleTimeString()}] Church Hub starting...`)
-      addLoadingLog(`[${new Date().toLocaleTimeString()}] Initializing Tauri context...`)
+      addLoadingLog(
+        `[${new Date().toLocaleTimeString()}] Church Hub starting...`,
+      )
+      addLoadingLog(
+        `[${new Date().toLocaleTimeString()}] Initializing Tauri context...`,
+      )
 
-      // Get local server config from Tauri (just the port)
-      addLoadingLog(`[${new Date().toLocaleTimeString()}] Getting server configuration...`)
-      logClientTiming('before_getServerConfig')
-      const serverConfig = await getServerConfig()
-      logClientTiming('after_getServerConfig')
-
-      if (serverConfig) {
-        window.__serverConfig = {
-          serverPort: serverConfig.serverPort,
-        }
+      // On mobile, we connect to a remote server - skip sidecar logic
+      if (isMobile()) {
+        logClientTiming('mobile_mode')
         addLoadingLog(
-          `[${new Date().toLocaleTimeString()}] Server port: ${serverConfig.serverPort}`,
+          `[${new Date().toLocaleTimeString()}] Mobile mode detected`,
         )
-      }
 
-      // Wait for server to be ready
-      // Note: In Tauri mode, Rust already confirmed server is ready before showing webview
-      // So this should succeed on first attempt
-      updateLoadingStatus('Waiting for server...')
-      const apiUrl = getApiUrl()
-      addLoadingLog(`[${new Date().toLocaleTimeString()}] API URL: ${apiUrl}`)
-      logClientTiming('before_waitForServer')
+        // Check if API URL is configured
+        if (needsApiUrlConfiguration()) {
+          addLoadingLog(
+            `[${new Date().toLocaleTimeString()}] API URL not configured - showing setup`,
+          )
+          hideLoadingScreen()
+        } else {
+          const apiUrl = getApiUrl()
+          if (apiUrl) {
+            addLoadingLog(
+              `[${new Date().toLocaleTimeString()}] API URL: ${apiUrl}`,
+            )
+            updateLoadingStatus('Connecting to server...')
+            logClientTiming('before_waitForServer')
 
-      // In Tauri mode, Rust already waited for server, so use fewer attempts
-      const serverReady = await waitForServer(apiUrl, 5) // Only 5 attempts in Tauri (Rust already waited)
-      logClientTiming('after_waitForServer')
+            const serverReady = await waitForServer(apiUrl, 10)
+            logClientTiming('after_waitForServer')
 
-      if (!serverReady) {
-        // biome-ignore lint/suspicious/noConsole: error logging for startup
-        console.error('[router] Server failed to start')
+            if (!serverReady) {
+              console.error('[router] Failed to connect to remote server')
+              addLoadingLog(
+                `[${new Date().toLocaleTimeString()}] Failed to connect to server`,
+              )
+            } else {
+              addLoadingLog(
+                `[${new Date().toLocaleTimeString()}] Connected! Mounting React application...`,
+              )
+            }
+          }
+        }
       } else {
-        addLoadingLog(`[${new Date().toLocaleTimeString()}] Mounting React application...`)
+        // Desktop mode: use local sidecar server
+        // Get local server config from Tauri (just the port)
+        addLoadingLog(
+          `[${new Date().toLocaleTimeString()}] Getting server configuration...`,
+        )
+        logClientTiming('before_getServerConfig')
+        const serverConfig = await getServerConfig()
+        logClientTiming('after_getServerConfig')
+
+        if (serverConfig) {
+          window.__serverConfig = {
+            serverPort: serverConfig.serverPort,
+          }
+          addLoadingLog(
+            `[${new Date().toLocaleTimeString()}] Server port: ${serverConfig.serverPort}`,
+          )
+        }
+
+        // Wait for server to be ready
+        // Note: In Tauri mode, Rust already confirmed server is ready before showing webview
+        // So this should succeed on first attempt
+        updateLoadingStatus('Waiting for server...')
+        const apiUrl = getApiUrl()
+        addLoadingLog(`[${new Date().toLocaleTimeString()}] API URL: ${apiUrl}`)
+        logClientTiming('before_waitForServer')
+
+        // In Tauri mode, Rust already waited for server, so use fewer attempts
+        const serverReady = await waitForServer(apiUrl as string, 5) // Only 5 attempts in Tauri (Rust already waited)
+        logClientTiming('after_waitForServer')
+
+        if (!serverReady) {
+          // biome-ignore lint/suspicious/noConsole: error logging for startup
+          console.error('[router] Server failed to start')
+        } else {
+          addLoadingLog(
+            `[${new Date().toLocaleTimeString()}] Mounting React application...`,
+          )
+        }
       }
     } catch (error) {
       // biome-ignore lint/suspicious/noConsole: error logging for startup
@@ -173,10 +239,29 @@ logClientTiming('before_react_mount')
 
 const rootElement = document.getElementById('app')!
 
+// App wrapper that handles mobile API URL configuration
+function App() {
+  const [needsSetup, setNeedsSetup] = React.useState(needsApiUrlConfiguration())
+
+  if (needsSetup) {
+    return (
+      <ApiUrlSetup
+        onComplete={() => {
+          setNeedsSetup(false)
+          // Reload to reinitialize with the new API URL
+          window.location.reload()
+        }}
+      />
+    )
+  }
+
+  return <RouterProvider router={router} />
+}
+
 if (!rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement)
   logClientTiming('react_root_created')
-  root.render(<RouterProvider router={router} />)
+  root.render(<App />)
   logClientTiming('react_render_called')
 
   // Hide loading screen after React mounts

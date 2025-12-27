@@ -282,7 +282,9 @@ export async function endBroadcast(broadcastId: string): Promise<void> {
       )
     }
     // biome-ignore lint/suspicious/noConsole: logging
-    console.log(`[youtube-broadcast] Successfully ended broadcast ${broadcastId}`)
+    console.log(
+      `[youtube-broadcast] Successfully ended broadcast ${broadcastId}`,
+    )
   } catch (error) {
     // Log the error but continue with updating local status
     // This can happen if YouTube already auto-stopped the broadcast

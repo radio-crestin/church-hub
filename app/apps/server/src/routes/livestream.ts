@@ -277,7 +277,9 @@ export async function handleLivestreamRoutes(
     url.pathname === '/api/livestream/youtube/tokens'
   ) {
     // biome-ignore lint/suspicious/noConsole: debug logging
-    console.log('[livestream-routes] Received POST /api/livestream/youtube/tokens')
+    console.log(
+      '[livestream-routes] Received POST /api/livestream/youtube/tokens',
+    )
     try {
       const body = (await req.json()) as {
         accessToken: string

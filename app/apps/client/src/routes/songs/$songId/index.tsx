@@ -67,22 +67,18 @@ function SongPreviewPage() {
 
   const handleSlideClick = useCallback(
     async (_slide: SongSlide, index: number) => {
-      // If clicking the currently presented slide, navigate back to songs list
-      if (presentedSlideIndex === index) {
-        navigate({ to: '/songs/', search: { fromSong: true } })
-        return
-      }
       await presentTemporarySong.mutateAsync({
         songId: numericId,
         slideIndex: index,
       })
     },
-    [numericId, presentTemporarySong, presentedSlideIndex, navigate],
+    [numericId, presentTemporarySong],
   )
 
   const handleGoBack = useCallback(() => {
-    navigate({ to: '/songs/' })
-  }, [navigate])
+    // Pass fromSong: true when something is presented to prevent auto-redirect back
+    navigate({ to: '/songs/', search: presentedSlideIndex !== null ? { fromSong: true } : undefined })
+  }, [navigate, presentedSlideIndex])
 
   const handlePrevSlide = useCallback(async () => {
     if (presentedSlideIndex !== null && presentedSlideIndex > 0) {
@@ -232,7 +228,9 @@ function SongPreviewPage() {
         {/* Right Panel - Control Panel with Preview (shows first on mobile) */}
         <div
           className="order-1 lg:order-2 lg:min-h-0 lg:flex-1 overflow-hidden"
-          style={isLargeScreen ? { width: `${100 - dividerPosition}%` } : undefined}
+          style={
+            isLargeScreen ? { width: `${100 - dividerPosition}%` } : undefined
+          }
         >
           <SongControlPanel
             songId={numericId}

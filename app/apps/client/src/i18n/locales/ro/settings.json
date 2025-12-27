@@ -408,6 +408,29 @@
         "error": "A apărut o eroare"
       }
     },
+    "apiUrl": {
+      "title": "Conexiune Server",
+      "label": "URL Server",
+      "hint": "Introdu URL-ul de autentificare din Church Hub (ex., http://192.168.1.100:3000/api/auth/user/usr_TOKEN)",
+      "settingsDescription": "Configurează serverul la care se conectează aplicația mobilă",
+      "testConnection": "Testează Conexiunea",
+      "testing": "Se testează...",
+      "retry": "Reîncearcă",
+      "save": "Salvează și Continuă",
+      "saved": "URL-ul serverului salvat cu succes",
+      "connectionSuccess": "Conexiune reușită",
+      "authTokenDetected": "Token de autentificare detectat",
+      "setup": {
+        "title": "Conectare la Server",
+        "description": "Scanează codul QR sau lipește URL-ul de autentificare din Church Hub"
+      },
+      "errors": {
+        "emptyUrl": "Te rugăm să introduci un URL de server",
+        "invalidUrl": "Te rugăm să introduci un URL valid (ex., http://192.168.1.100:3000/api/auth/user/usr_TOKEN)",
+        "connectionFailed": "Nu s-a putut conecta la server. Verifică URL-ul și încearcă din nou.",
+        "testFirst": "Te rugăm să testezi conexiunea înainte de a salva"
+      }
+    },
     "database": {
       "title": "Administrare Bază de Date",
       "description": "Administrează locația și backup-ul bazei de date SQLite",
