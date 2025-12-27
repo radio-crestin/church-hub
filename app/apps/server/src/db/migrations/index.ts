@@ -92,50 +92,75 @@ export function runMigrations(
   drizzleDb: BunSQLiteDatabase,
   rawDb: Database,
 ): MigrationResult {
+  const logTiming = (label: string, start: number) => {
+    // biome-ignore lint/suspicious/noConsole: Startup timing logs
+    console.log(
+      `[startup] ${label}: ${(performance.now() - start).toFixed(1)}ms`,
+    )
+  }
+
   log('info', 'Running Drizzle migrations...')
 
   // Use embedded migrations in Tauri production mode, otherwise use file-based
+  let t = performance.now()
   if (IS_TAURI_PRODUCTION) {
     runEmbeddedMigrations(rawDb)
   } else {
     // Run Drizzle schema migrations from filesystem
     migrate(drizzleDb, { migrationsFolder: MIGRATIONS_FOLDER })
   }
+  logTiming('drizzle_migrations', t)
 
   log('info', 'Drizzle migrations complete')
 
   // Create FTS virtual tables (Drizzle cannot manage these)
   log('info', 'Creating FTS tables...')
-  createFtsTables()
+  t = performance.now()
+  const ftsCreated = createFtsTables()
+  logTiming('fts_tables', t)
 
   // Initialize presentation_state singleton row
+  t = performance.now()
   initializePresentationState(rawDb)
+  logTiming('init_presentation_state', t)
 
   // Seed system roles and permissions
   log('info', 'Seeding system roles...')
+  t = performance.now()
   seedSystemRoles(rawDb)
+  logTiming('seed_roles', t)
 
   // Seed default screens
   log('info', 'Seeding default screens...')
+  t = performance.now()
   seedDefaultScreens(rawDb)
+  logTiming('seed_screens', t)
 
   // Seed song categories (before songs, as songs reference categories)
   log('info', 'Seeding song categories...')
+  t = performance.now()
   seedSongCategories(rawDb)
+  logTiming('seed_song_categories', t)
 
   // Seed songs
   log('info', 'Seeding songs...')
+  t = performance.now()
   seedSongs(rawDb)
+  logTiming('seed_songs', t)
 
   // Seed bible translations metadata
   log('info', 'Seeding bible translations...')
+  t = performance.now()
   seedBibleTranslations(rawDb)
+  logTiming('seed_bible_translations', t)
 
   // Seed app settings (sidebar config, search synonyms, appearance, etc.)
   log('info', 'Seeding app settings...')
+  t = performance.now()
   seedAppSettings(rawDb)
+  logTiming('seed_app_settings', t)
 
-  return { ftsRecreated: true }
+  return { ftsRecreated: ftsCreated }
 }
 
 /**
