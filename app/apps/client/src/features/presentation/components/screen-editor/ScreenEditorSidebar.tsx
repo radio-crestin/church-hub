@@ -522,6 +522,73 @@ export function ScreenEditorSidebar({
                     ))}
                   </div>
                 </div>
+
+                {/* Line Compression */}
+                <div className="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                  <Checkbox
+                    checked={
+                      (selectedConfig.config as { style: TextStyle }).style
+                        .compressLines ?? false
+                    }
+                    onCheckedChange={(checked) => {
+                      const newStyle = {
+                        ...(selectedConfig.config as { style: TextStyle })
+                          .style,
+                        compressLines: !!checked,
+                      }
+                      updateConfig([...selectedConfig.path, 'style'], newStyle)
+                    }}
+                    label={t('screens.textStyle.compressLines')}
+                  />
+                  {(selectedConfig.config as { style: TextStyle }).style
+                    .compressLines && (
+                    <div>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400">
+                        {t('screens.textStyle.lineSeparator')}
+                      </Label>
+                      <Combobox
+                        value={
+                          (selectedConfig.config as { style: TextStyle }).style
+                            .lineSeparator ?? 'space'
+                        }
+                        onChange={(value) => {
+                          const newStyle = {
+                            ...(selectedConfig.config as { style: TextStyle })
+                              .style,
+                            lineSeparator: value as 'space' | 'dash' | 'pipe',
+                          }
+                          updateConfig(
+                            [...selectedConfig.path, 'style'],
+                            newStyle,
+                          )
+                        }}
+                        options={LINE_SEPARATORS.map((opt) => ({
+                          value: opt.value,
+                          label: t(`screens.textStyle.separators.${opt.key}`),
+                        }))}
+                        className="w-full"
+                      />
+                    </div>
+                  )}
+                  <Checkbox
+                    checked={
+                      (selectedConfig.config as { style: TextStyle }).style
+                        .fitLineToWidth ?? false
+                    }
+                    onCheckedChange={(checked) => {
+                      const newStyle = {
+                        ...(selectedConfig.config as { style: TextStyle })
+                          .style,
+                        fitLineToWidth: !!checked,
+                      }
+                      updateConfig([...selectedConfig.path, 'style'], newStyle)
+                    }}
+                    label={t('screens.textStyle.fitLineToWidth')}
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 ml-6">
+                    {t('screens.textStyle.fitLineToWidthDescription')}
+                  </p>
+                </div>
               </div>
             </Section>
           )}
@@ -1055,72 +1122,6 @@ export function ScreenEditorSidebar({
                       </button>
                     ))}
                   </div>
-                </div>
-                {/* Line Compression Section */}
-                <div className="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                  <Checkbox
-                    checked={
-                      (selectedConfig.config as { style: TextStyle }).style
-                        .compressLines ?? false
-                    }
-                    onCheckedChange={(checked) => {
-                      const newStyle = {
-                        ...(selectedConfig.config as { style: TextStyle })
-                          .style,
-                        compressLines: !!checked,
-                      }
-                      updateConfig([...selectedConfig.path, 'style'], newStyle)
-                    }}
-                    label={t('screens.textStyle.compressLines')}
-                  />
-                  {(selectedConfig.config as { style: TextStyle }).style
-                    .compressLines && (
-                    <div>
-                      <Label className="text-xs text-gray-500 dark:text-gray-400">
-                        {t('screens.textStyle.lineSeparator')}
-                      </Label>
-                      <Combobox
-                        value={
-                          (selectedConfig.config as { style: TextStyle }).style
-                            .lineSeparator ?? 'space'
-                        }
-                        onChange={(value) => {
-                          const newStyle = {
-                            ...(selectedConfig.config as { style: TextStyle })
-                              .style,
-                            lineSeparator: value as 'space' | 'dash' | 'pipe',
-                          }
-                          updateConfig(
-                            [...selectedConfig.path, 'style'],
-                            newStyle,
-                          )
-                        }}
-                        options={LINE_SEPARATORS.map((opt) => ({
-                          value: opt.value,
-                          label: t(`screens.textStyle.separators.${opt.key}`),
-                        }))}
-                        className="w-full"
-                      />
-                    </div>
-                  )}
-                  <Checkbox
-                    checked={
-                      (selectedConfig.config as { style: TextStyle }).style
-                        .fitLineToWidth ?? false
-                    }
-                    onCheckedChange={(checked) => {
-                      const newStyle = {
-                        ...(selectedConfig.config as { style: TextStyle })
-                          .style,
-                        fitLineToWidth: !!checked,
-                      }
-                      updateConfig([...selectedConfig.path, 'style'], newStyle)
-                    }}
-                    label={t('screens.textStyle.fitLineToWidth')}
-                  />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 ml-6">
-                    {t('screens.textStyle.fitLineToWidthDescription')}
-                  </p>
                 </div>
               </div>
             </Section>
