@@ -688,7 +688,6 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
           showClock={true}
           isVisible={isVisible}
           nextSlideData={nextSlideData}
-          fillContainer={true}
         />
       )}
     </div>
