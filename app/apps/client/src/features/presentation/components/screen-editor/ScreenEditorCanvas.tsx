@@ -772,8 +772,8 @@ export function ScreenEditorCanvas({
       )
     }
 
-    // Next slide section (stage screens)
-    if (screen.type === 'stage' && screen.nextSlideConfig?.enabled) {
+    // Next slide section (configurable per screen)
+    if (screen.nextSlideConfig?.enabled) {
       const ns = screen.nextSlideConfig
       const bounds = calculatePixelBounds(
         ns.constraints,

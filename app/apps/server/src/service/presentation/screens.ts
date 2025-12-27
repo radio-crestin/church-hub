@@ -423,21 +423,23 @@ export function getScreenWithConfigs(id: number): ScreenWithConfigs | null {
       }
     }
 
-    // Get next slide config if stage screen
+    // Get next slide config for all screen types
     let nextSlideConfig: NextSlideSectionConfig | undefined
-    if (screen.type === 'stage') {
-      const nextSlideRecord = db
-        .select()
-        .from(screenNextSlideConfigs)
-        .where(eq(screenNextSlideConfigs.screenId, id))
-        .get()
+    const nextSlideRecord = db
+      .select()
+      .from(screenNextSlideConfigs)
+      .where(eq(screenNextSlideConfigs.screenId, id))
+      .get()
 
-      if (nextSlideRecord) {
-        nextSlideConfig = parseConfig(
-          nextSlideRecord.config,
-        ) as NextSlideSectionConfig
-      } else {
-        nextSlideConfig = getDefaultNextSlideConfig()
+    if (nextSlideRecord) {
+      nextSlideConfig = parseConfig(
+        nextSlideRecord.config,
+      ) as NextSlideSectionConfig
+    } else {
+      // Create default config - enabled by default only for stage screens
+      nextSlideConfig = {
+        ...getDefaultNextSlideConfig(),
+        enabled: screen.type === 'stage',
       }
     }
 
@@ -559,6 +561,7 @@ function getScreenDimensions(type: ScreenType): {
   switch (type) {
     case 'primary':
     case 'stage':
+    case 'kiosk':
       return { width: 1920, height: 1080 }
     case 'livestream':
       return { width: 1080, height: 420 }

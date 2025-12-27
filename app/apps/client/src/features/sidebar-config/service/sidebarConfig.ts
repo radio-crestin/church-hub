@@ -15,13 +15,16 @@ import type {
  * Merges stored configuration with defaults to handle new built-in items
  * that may have been added to the app since the config was saved
  */
+// Items that are not configurable in the sidebar config manager
+const NON_CONFIGURABLE_ITEMS: BuiltInMenuItemId[] = ['settings', 'kiosk']
+
 function mergeWithDefaults(stored: SidebarConfiguration): SidebarConfiguration {
   const defaultBuiltinIds = Object.keys(BUILTIN_ITEMS) as BuiltInMenuItemId[]
   const storedIds = new Set(stored.items.map((item) => item.id))
 
-  // Find new built-in items not in stored config
+  // Find new built-in items not in stored config (excluding non-configurable items)
   const newItems: SidebarMenuItem[] = defaultBuiltinIds
-    .filter((id) => !storedIds.has(id))
+    .filter((id) => !storedIds.has(id) && !NON_CONFIGURABLE_ITEMS.includes(id))
     .map((id, index) => ({
       id,
       type: 'builtin' as const,

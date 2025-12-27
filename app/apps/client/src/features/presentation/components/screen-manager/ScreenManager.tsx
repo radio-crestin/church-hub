@@ -33,12 +33,14 @@ const SCREEN_TYPE_OPTIONS: { value: ScreenType; label: string }[] = [
   { value: 'primary', label: 'Primary / Audience' },
   { value: 'stage', label: 'Stage Monitor' },
   { value: 'livestream', label: 'Live Stream' },
+  { value: 'kiosk', label: 'Kiosk' },
 ]
 
 const SCREEN_TYPE_COLORS: Record<ScreenType, string> = {
   primary: 'bg-blue-600',
   stage: 'bg-purple-600',
   livestream: 'bg-green-600',
+  kiosk: 'bg-orange-600',
 }
 
 export function ScreenManager() {

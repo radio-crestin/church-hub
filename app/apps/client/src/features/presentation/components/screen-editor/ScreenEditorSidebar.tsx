@@ -1410,6 +1410,49 @@ export function ScreenEditorSidebar({
                 )}
             </div>
           </Section>
+
+          {/* Next Slide Section Settings */}
+          <Section
+            title={t('screens.nextSlide.title')}
+            icon={Eye}
+            defaultOpen={false}
+          >
+            <div className="space-y-3">
+              <Checkbox
+                checked={screen.nextSlideConfig?.enabled ?? false}
+                onCheckedChange={(checked) => {
+                  if (screen.nextSlideConfig) {
+                    onUpdateNextSlideConfig({
+                      ...screen.nextSlideConfig,
+                      enabled: !!checked,
+                    })
+                  }
+                }}
+                label={t('screens.nextSlide.enable')}
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 ml-6">
+                {t('screens.nextSlide.description')}
+              </p>
+              {screen.nextSlideConfig?.enabled && (
+                <div>
+                  <Label className="text-xs text-gray-500 dark:text-gray-400">
+                    {t('screens.nextSlide.labelText')}
+                  </Label>
+                  <Input
+                    value={screen.nextSlideConfig.labelText}
+                    onChange={(e) => {
+                      onUpdateNextSlideConfig({
+                        ...screen.nextSlideConfig!,
+                        labelText: e.target.value,
+                      })
+                    }}
+                    placeholder="Urmeaza:"
+                    className="h-8"
+                  />
+                </div>
+              )}
+            </div>
+          </Section>
         </>
       )}
     </div>

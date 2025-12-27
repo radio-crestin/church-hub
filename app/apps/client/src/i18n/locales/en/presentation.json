@@ -142,6 +142,9 @@
       "defaultBackground": "Default Background"
     },
     "nextSlide": {
+      "title": "Next Slide Preview",
+      "enable": "Show next slide preview",
+      "description": "Displays a preview of the upcoming content at the bottom of the screen, useful for stage monitors.",
       "enabled": "Show Next Slide Section",
       "labelText": "Label Text",
       "labelStyle": "Label Style",

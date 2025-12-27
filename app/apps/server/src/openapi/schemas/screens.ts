@@ -1,9 +1,9 @@
 export const screenSchemas = {
   ScreenType: {
     type: 'string',
-    enum: ['primary', 'stage', 'livestream'],
+    enum: ['primary', 'stage', 'livestream', 'kiosk'],
     description:
-      'Type of screen - primary (audience), stage (performers), or livestream (overlay)',
+      'Type of screen - primary (audience), stage (performers), livestream (overlay), or kiosk (single fullscreen display)',
   },
   ContentType: {
     type: 'string',

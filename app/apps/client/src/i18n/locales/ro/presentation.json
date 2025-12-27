@@ -142,6 +142,9 @@
       "defaultBackground": "Fundal Implicit"
     },
     "nextSlide": {
+      "title": "Previzualizare Slide Următor",
+      "enable": "Afișează previzualizarea slide-ului următor",
+      "description": "Afișează o previzualizare a conținutului următor în partea de jos a ecranului, util pentru monitoarele de scenă.",
       "enabled": "Afișează Secțiunea Slide Următor",
       "labelText": "Text Etichetă",
       "labelStyle": "Stil Etichetă",

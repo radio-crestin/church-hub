@@ -115,7 +115,7 @@ export interface NavigateTemporaryInput {
 /**
  * Screen types
  */
-export type ScreenType = 'primary' | 'stage' | 'livestream'
+export type ScreenType = 'primary' | 'stage' | 'livestream' | 'kiosk'
 
 /**
  * Content types that can be rendered on screens

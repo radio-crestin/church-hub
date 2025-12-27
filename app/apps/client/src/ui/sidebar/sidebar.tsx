@@ -1,10 +1,18 @@
-import { useLocation } from '@tanstack/react-router'
-import { ChevronLeft, ChevronRight, Menu, Settings, X } from 'lucide-react'
+import { useLocation, useNavigate } from '@tanstack/react-router'
+import {
+  ChevronLeft,
+  ChevronRight,
+  Menu,
+  Monitor,
+  Settings,
+  X,
+} from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { SidebarHeader } from './sidebar-header'
 import { SidebarItem } from './sidebar-item'
+import { useKioskSettings } from '../../features/kiosk'
 import {
   hideAllCustomPageWebviews,
   updateCurrentWebviewBounds,
@@ -18,6 +26,7 @@ export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const location = useLocation()
+  const navigate = useNavigate()
   const { t } = useTranslation(['sidebar', 'common'])
   const { hasPermission } = usePermissions()
 
@@ -25,10 +34,13 @@ export function Sidebar() {
   const { config } = useSidebarConfig()
   const resolvedItems = useResolvedSidebarItems(config?.items)
 
-  // Filter items by permission (excluding settings - it's fixed at the bottom)
+  // Get kiosk settings to determine if kiosk menu item should be visible
+  const { data: kioskSettings } = useKioskSettings()
+
+  // Filter items by permission (excluding settings and kiosk - they're rendered separately)
   const menuItems = resolvedItems.filter((item) => {
-    // Exclude settings from configurable items - it's rendered separately at the bottom
-    if (item.id === 'settings') {
+    // Exclude settings and kiosk - they're rendered separately
+    if (item.id === 'settings' || item.id === 'kiosk') {
       return false
     }
     // Custom pages: check dynamic permission
@@ -42,13 +54,32 @@ export function Sidebar() {
   // Check if user has permission to view settings
   const canViewSettings = hasPermission('settings.view')
 
+  // Kiosk is shown when kiosk mode is enabled and user has settings permission
+  const showKiosk =
+    kioskSettings?.enabled === true && hasPermission('settings.view')
+
   // Hide webview when clicking on non-custom-page items (keep running in background)
-  const handleSidebarItemClick = useCallback((destinationPath: string) => {
-    // If navigating to a non-custom-page, hide ALL custom page webviews
-    if (!destinationPath.startsWith('/custom-page/')) {
-      void hideAllCustomPageWebviews()
-    }
-  }, [])
+  // For kiosk item, navigate to the configured startup page
+  const handleSidebarItemClick = useCallback(
+    (destinationPath: string, e?: React.MouseEvent<HTMLAnchorElement>) => {
+      // If navigating to a non-custom-page, hide ALL custom page webviews
+      if (!destinationPath.startsWith('/custom-page/')) {
+        void hideAllCustomPageWebviews()
+      }
+
+      // Handle kiosk navigation - go to configured startup page instead of /kiosk
+      if (destinationPath === '/kiosk' && kioskSettings?.enabled) {
+        e?.preventDefault()
+        const { startupPage } = kioskSettings
+        if (startupPage.type === 'screen') {
+          navigate({ to: `/screen/${startupPage.screenId}` })
+        } else {
+          navigate({ to: startupPage.path })
+        }
+      }
+    },
+    [kioskSettings, navigate],
+  )
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -150,13 +181,27 @@ export function Sidebar() {
                 location.pathname.startsWith(`${item.to}/`)
               }
               className="md:flex"
-              onClick={() => handleSidebarItemClick(item.to)}
+              onClick={(e) => handleSidebarItemClick(item.to, e)}
             />
           ))}
 
-          {/* Settings - fixed at the bottom, above the collapse button */}
-          {canViewSettings && (
-            <div className="mt-auto">
+          {/* Kiosk and Settings - fixed at the bottom, above the collapse button */}
+          <div className="mt-auto space-y-2">
+            {/* Kiosk - shown when kiosk mode is enabled */}
+            {showKiosk && (
+              <SidebarItem
+                icon={Monitor}
+                label={t('sidebar:navigation.kiosk')}
+                to="/kiosk"
+                isCollapsed={isCollapsed}
+                isActive={false}
+                className="md:flex"
+                onClick={(e) => handleSidebarItemClick('/kiosk', e)}
+              />
+            )}
+
+            {/* Settings */}
+            {canViewSettings && (
               <SidebarItem
                 icon={Settings}
                 label={t('sidebar:navigation.settings')}
@@ -167,10 +212,10 @@ export function Sidebar() {
                   location.pathname.startsWith('/settings/')
                 }
                 className="md:flex"
-                onClick={() => handleSidebarItemClick('/settings')}
+                onClick={(e) => handleSidebarItemClick('/settings', e)}
               />
-            </div>
-          )}
+            )}
+          </div>
         </nav>
 
         <div className="p-3 border-t border-gray-200 dark:border-gray-800 space-y-2">

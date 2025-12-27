@@ -77,7 +77,10 @@ function SongPreviewPage() {
 
   const handleGoBack = useCallback(() => {
     // Pass fromSong: true when something is presented to prevent auto-redirect back
-    navigate({ to: '/songs/', search: presentedSlideIndex !== null ? { fromSong: true } : undefined })
+    navigate({
+      to: '/songs/',
+      search: presentedSlideIndex !== null ? { fromSong: true } : undefined,
+    })
   }, [navigate, presentedSlideIndex])
 
   const handlePrevSlide = useCallback(async () => {
