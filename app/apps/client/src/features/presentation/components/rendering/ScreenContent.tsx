@@ -37,13 +37,18 @@ export function ScreenContent({
   fillContainer = false,
 }: ScreenContentProps) {
   const config = screen.contentConfigs[contentType]
-  const canvasWidth = fillContainer ? containerWidth : screen.width
-  const canvasHeight = fillContainer ? containerHeight : screen.height
+  // Always use screen dimensions for bounds calculations
+  // Constraints are defined relative to the screen's native resolution
+  const canvasWidth = screen.width
+  const canvasHeight = screen.height
 
-  // Calculate scale maintaining aspect ratio
+  // Calculate scale to transform from screen space to container space
   const scaleX = containerWidth / canvasWidth
   const scaleY = containerHeight / canvasHeight
-  const scale = Math.min(scaleX, scaleY)
+  // fillContainer: use max scale to fill (may crop), otherwise min to fit (may have black bars)
+  const scale = fillContainer
+    ? Math.max(scaleX, scaleY)
+    : Math.min(scaleX, scaleY)
 
   // Calculate actual display size (centered if aspect ratio differs)
   const displayWidth = canvasWidth * scale
