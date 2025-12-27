@@ -1,0 +1,6 @@
+cargo:rerun-if-changed=permissions
+cargo:PERMISSION_FILES_PATH=/Users/iosif/Documents/Projects/church-hub/app/tauri-plugins/tauri-plugin-screen-brightness/target/debug/build/tauri-plugin-screen-brightness-31c476e657db52e4/out/tauri-plugin-screen-brightness-permission-files
+cargo:rerun-if-env-changed=REMOVE_UNUSED_COMMANDS
+cargo:rustc-check-cfg=cfg(mobile)
+cargo:rustc-check-cfg=cfg(desktop)
+cargo:rustc-cfg=desktop

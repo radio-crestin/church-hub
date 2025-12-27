@@ -28,14 +28,14 @@ impl<R: Runtime> ScreenBrightness<R> {
         let clamped = value.clamp(0.0, 1.0);
         self.0
             .run_mobile_plugin("setBrightness", serde_json::json!({ "value": clamped }))
-            .map_err(Into::into)
+            .map_err(|e| crate::Error::Plugin(e.to_string()))
     }
 
     pub fn get_brightness(&self) -> crate::Result<f32> {
         let result: serde_json::Value = self
             .0
             .run_mobile_plugin("getBrightness", ())
-            .map_err(Into::into)?;
+            .map_err(|e| crate::Error::Plugin(e.to_string()))?;
 
         Ok(result["brightness"].as_f64().unwrap_or(1.0) as f32)
     }
