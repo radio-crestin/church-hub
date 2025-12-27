@@ -2,7 +2,7 @@
   {
     "name": "Main",
     "type": "primary",
-    "isActive": true,
+    "isActive": false,
     "openMode": "browser",
     "isFullscreen": false,
     "width": 1920,
@@ -792,7 +792,7 @@
   {
     "name": "Stage",
     "type": "stage",
-    "isActive": true,
+    "isActive": false,
     "openMode": "browser",
     "isFullscreen": false,
     "width": 1920,
