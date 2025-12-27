@@ -234,6 +234,8 @@ function BiblePage() {
   // Handle verse selection - immediately present it
   const handleSelectVerse = useCallback(
     async (verse: BibleVerse, index: number) => {
+      // Mark as navigated so sync effect works for subsequent chapter changes
+      hasNavigatedOnOpen.current = true
       navigation.presentVerse(index)
       await presentVerseToScreen(verse, index)
     },
@@ -243,6 +245,9 @@ function BiblePage() {
   // Handle search result selection
   const handleSelectSearchResult = useCallback(
     async (result: BibleSearchResult) => {
+      // Mark as navigated so sync effect works for subsequent chapter changes
+      hasNavigatedOnOpen.current = true
+
       const reference =
         result.reference ||
         `${result.bookName} ${result.chapter}:${result.verse}`
