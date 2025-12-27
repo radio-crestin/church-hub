@@ -53,11 +53,12 @@
 ~~- optimistic scene change~~
 ~~- fa listen pe orice port 3000~~
 ~~- rezolva problema cu generarea titlului, elimina orice alt caracter in afara de litere si -~~ 
+~~- imbunatateste performanta aplicatiei~~
 - inlocuieste aplicatia de scene monitor cu una care foloseste aplicatia turso si un UI similar cu cel al aplicatiei actuale
   - pentru cantari, va fi ceva similar, fiecare cantare e echivalentul unui verset
   - pentru Biblie va trebui sa afisezi in timp real ce se cauta pe pc-ul principal si sa afisezi lista de versete
 ~~- implementeaza api-uri pentru search cantari, adaugare de cantari, programe, camera de control, preview, current queue, etc.~~
-- in versiunea mobila a site-ului, asigura-te ca totul este scalabil corect
+~~- in versiunea mobila a site-ului, asigura-te ca totul este scalabil corect~~
 - fix openapi endpoints and fix authentication layer
 - creaza optiunea de a adauga live-urile create intr-un playlist pe YouTube
 - adauga posibilitatea de a face highlight pentru sesiunea curenta

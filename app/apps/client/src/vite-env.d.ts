@@ -9,6 +9,8 @@ declare global {
     __appVersion: string
     __envMode: string
     __serverConfig: ServerConfig
+    __htmlLoadTime?: number
+    __htmlLoadTimestamp?: number
   }
 
   declare const __appVersion: string

@@ -12,26 +12,50 @@ use domain::AppState;
 use parking_lot::Mutex;
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::time::Instant;
 use tauri::{Manager, RunEvent};
 use tauri::WindowEvent;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let app_start = Instant::now();
+    println!("[startup] === Tauri Starting ===");
+
     // Enable GPU acceleration on Windows by ignoring the GPU blocklist
     // This ensures hardware-accelerated rendering for video playback (e.g., YouTube)
     #[cfg(target_os = "windows")]
-    std::env::set_var(
-        "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS",
-        "--ignore-gpu-blocklist --enable-gpu-rasterization --enable-accelerated-video-decode",
-    );
+    {
+        let t = Instant::now();
+        std::env::set_var(
+            "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS",
+            "--ignore-gpu-blocklist --enable-gpu-rasterization --enable-accelerated-video-decode",
+        );
+        println!("[startup] gpu_config: {:?}", t.elapsed());
+    }
 
-    tauri::Builder::default()
+    let builder_start = Instant::now();
+
+    // Essential plugins only - minimal set for fast startup
+    let t = Instant::now();
+    let builder = tauri::Builder::default()
+        .plugin(tauri_plugin_shell::init());  // Needed for sidecar
+    println!("[startup] plugin_shell: {:?}", t.elapsed());
+
+    let t = Instant::now();
+    let builder = builder
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_fs::init())
-        .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .plugin(tauri_plugin_dialog::init());
+    println!("[startup] plugins_core: {:?}", t.elapsed());
+
+    let t = Instant::now();
+    let builder = builder
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build());
+    println!("[startup] plugin_shortcut: {:?}", t.elapsed());
+
+    let t = Instant::now();
+    let builder = builder
         .plugin(
             tauri_plugin_window_state::Builder::new()
                 .with_state_flags(
@@ -43,7 +67,10 @@ pub fn run() {
                         | tauri_plugin_window_state::StateFlags::VISIBLE,
                 )
                 .build(),
-        )
+        );
+    println!("[startup] plugin_window_state: {:?}", t.elapsed());
+
+    let builder = builder
         .on_window_event(|window, event| {
             // When the main window is closed, close all display windows and exit
             if let WindowEvent::CloseRequested { .. } = event {
@@ -97,16 +124,22 @@ pub fn run() {
                 }
             }
         })
-        .setup(|app| {
+        .setup(move |app| {
+            println!("[startup] tauri_builder: {:?}", builder_start.elapsed());
+            let setup_start = Instant::now();
+
             let server_port: u16 = 3000;
 
+            let t = Instant::now();
             let app_state = AppState {
                 server: Arc::new(Mutex::new(None)),
                 server_port,
             };
             app.manage(app_state);
+            println!("[startup] setup_app_state: {:?}", t.elapsed());
 
             // Handle file association - check CLI args for PPTX file
+            let t = Instant::now();
             let pending_import = PendingImport {
                 file_path: Mutex::new(None),
             };
@@ -121,30 +154,40 @@ pub fn run() {
             }
 
             app.manage(pending_import);
+            println!("[startup] setup_file_association: {:?}", t.elapsed());
 
             // In dev mode, the server is started by beforeDevCommand, so skip sidecar
             // In release mode, start the sidecar server
             #[cfg(not(debug_assertions))]
             {
                 // Start the sidecar server
+                let t = Instant::now();
                 if let Err(err) = server::start_server(app.handle(), server_port) {
                     println!("[sidecar] Failed to start the server: {err}");
                 }
+                println!("[startup] sidecar_spawn: {:?}", t.elapsed());
 
                 // Wait for server to be ready before showing UI
+                let t = Instant::now();
                 if let Err(err) = server::wait_for_server_ready(server_port, 30) {
                     println!("[sidecar] {err}");
                 }
+                println!("[startup] server_ready_wait: {:?}", t.elapsed());
             }
 
             #[cfg(debug_assertions)]
             {
                 println!("[dev] Skipping sidecar - using dev server from beforeDevCommand");
                 // Wait for dev server to be ready
+                let t = Instant::now();
                 if let Err(err) = server::wait_for_server_ready(server_port, 30) {
                     println!("[dev] {err}");
                 }
+                println!("[startup] dev_server_ready_wait: {:?}", t.elapsed());
             }
+
+            println!("[startup] setup_hook_total: {:?}", setup_start.elapsed());
+            println!("[startup] === Tauri Ready (total: {:?}) ===", app_start.elapsed());
 
             Ok(())
         })
@@ -158,19 +201,27 @@ pub fn run() {
             hide_child_webview,
             update_child_webview,
             webview_exists
-        ])
+        ]);
+
+    println!("[startup] builder_chain_setup: {:?}", builder_start.elapsed());
+    let build_start = Instant::now();
+
+    let app = builder
         .build(tauri::generate_context!())
-        .expect("error while running tauri application")
-        .run(|app_handle, event| {
-            match event {
-                RunEvent::ExitRequested { .. } | RunEvent::Exit => {
-                    // Only shutdown sidecar in release mode (we started it)
-                    #[cfg(not(debug_assertions))]
-                    if let Err(e) = server::shutdown_server(app_handle) {
-                        println!("[sidecar] Failed to shut down server on exit: {e}");
-                    }
+        .expect("error while running tauri application");
+
+    println!("[startup] tauri_build: {:?}", build_start.elapsed());
+
+    app.run(|_app_handle, event| {
+        match event {
+            RunEvent::ExitRequested { .. } | RunEvent::Exit => {
+                // Only shutdown sidecar in release mode (we started it)
+                #[cfg(not(debug_assertions))]
+                if let Err(e) = server::shutdown_server(_app_handle) {
+                    println!("[sidecar] Failed to shut down server on exit: {e}");
                 }
-                _ => {}
             }
-        });
+            _ => {}
+        }
+    });
 }

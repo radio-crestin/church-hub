@@ -1,3 +1,4 @@
+import { execSync } from 'child_process'
 import { fileURLToPath } from 'url'
 import tailwindcss from '@tailwindcss/vite'
 import { TanStackRouterVite } from '@tanstack/router-plugin/vite'
@@ -10,6 +11,58 @@ import viteTsConfigPaths from 'vite-tsconfig-paths'
 import packageJSON from './package.json'
 
 const host = process.env.TAURI_DEV_HOST
+
+/**
+ * Kill any process using a specific port.
+ * Called synchronously before Vite starts to prevent "Port is already in use" errors.
+ */
+function killPortProcess(port: number): void {
+  // Get our own PID to avoid killing ourselves or parent processes
+  const currentPid = process.pid
+  const parentPid = process.ppid
+
+  try {
+    // Find PID using the port (Windows) - only LISTENING state
+    const result = execSync(`netstat -ano | findstr :${port} | findstr LISTENING`, {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    })
+    const lines = result.trim().split('\n')
+    const pids = new Set<string>()
+    for (const line of lines) {
+      // Parse: TCP 0.0.0.0:8086 0.0.0.0:0 LISTENING 1234
+      const parts = line.trim().split(/\s+/)
+      // Verify this is actually our port (not just containing the number)
+      const localAddress = parts[1]
+      if (!localAddress?.endsWith(`:${port}`)) {
+        continue
+      }
+      const pid = parts[parts.length - 1]
+      if (pid && /^\d+$/.test(pid)) {
+        const pidNum = Number.parseInt(pid, 10)
+        // Don't kill ourselves or our parent
+        if (pidNum !== currentPid && pidNum !== parentPid) {
+          pids.add(pid)
+        }
+      }
+    }
+    for (const pid of pids) {
+      console.log(`[vite] Killing stale process ${pid} on port ${port}`)
+      try {
+        execSync(`powershell -Command "Stop-Process -Id ${pid} -Force"`, {
+          stdio: 'ignore',
+        })
+      } catch {
+        // Process may have already exited
+      }
+    }
+  } catch {
+    // No process found on port, which is fine
+  }
+}
+
+// Kill any stale process on port 8086 before Vite starts
+killPortProcess(8086)
 
 /**
  * Plugin to handle socket errors gracefully in development.
@@ -50,7 +103,6 @@ const config = defineConfig(({ mode }) => {
         routeFileIgnorePattern: '(^[A-Z].*)',
       }),
       tailwindcss(),
-      viteReact(),
       codeInspectorPlugin({
         bundler: 'vite',
         behavior: {
@@ -58,6 +110,7 @@ const config = defineConfig(({ mode }) => {
           locate: false,
         },
       }),
+      viteReact(),
     ],
     // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
     // 1. prevent Vite from obscuring rust errors
@@ -77,11 +130,49 @@ const config = defineConfig(({ mode }) => {
       watch: {
         ignored: ['**/src-tauri/**'],
       },
+      // Pre-transform entry files when server starts for faster first load
+      warmup: {
+        clientFiles: [
+          './src/router.tsx',
+          './index.html',
+        ],
+      },
     },
     resolve: {
       alias: {
         '~': fileURLToPath(new URL('./src', import.meta.url)),
       },
+    },
+    // Pre-bundle heavy dependencies for faster dev startup
+    optimizeDeps: {
+      include: [
+        'react',
+        'react-dom',
+        'react-dom/client',
+        '@tanstack/react-router',
+        '@tanstack/react-query',
+        '@tauri-apps/api',
+        '@tauri-apps/api/core',
+        '@tauri-apps/plugin-dialog',
+        '@tauri-apps/plugin-fs',
+        '@tauri-apps/plugin-global-shortcut',
+        '@tauri-apps/plugin-http',
+        '@tauri-apps/plugin-opener',
+        '@tauri-apps/plugin-shell',
+        '@dnd-kit/core',
+        '@dnd-kit/sortable',
+        '@dnd-kit/utilities',
+        '@tiptap/react',
+        '@tiptap/core',
+        '@tiptap/starter-kit',
+        'i18next',
+        'react-i18next',
+        'i18next-browser-languagedetector',
+        'lucide-react',
+        'zod',
+        'jszip',
+        'qrcode',
+      ],
     },
     // See `src/router.tsx` file to assign these defined values to window.
     define: {
