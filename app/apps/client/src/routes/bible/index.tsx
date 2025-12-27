@@ -280,7 +280,7 @@ function BiblePage() {
     }
 
     // End of chapter - use server-side navigation to move to next chapter
-    await navigateTemporary.mutateAsync('next')
+    await navigateTemporary.mutateAsync({ direction: 'next' })
   }, [navigation, verses, presentVerseToScreen, navigateTemporary])
 
   const handlePreviousVerse = useCallback(async () => {
