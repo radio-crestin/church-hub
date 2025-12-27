@@ -215,8 +215,8 @@ export function ScreenEditor({
           ...(updates.size && { size: updates.size }),
         }
       } else if (elementType === 'nextSlide' && state.screen.nextSlideConfig) {
+        // Pass only the changed fields - updateNextSlideConfig will merge with previous state
         actions.updateNextSlideConfig({
-          ...state.screen.nextSlideConfig,
           ...(updates.constraints && { constraints: updates.constraints }),
           ...(updates.size && { size: updates.size }),
         })

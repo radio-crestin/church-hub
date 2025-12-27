@@ -55,7 +55,7 @@ interface EditorActions {
     contentType: ContentType,
     config: ContentTypeConfig,
   ) => void
-  updateNextSlideConfig: (config: NextSlideSectionConfig) => void
+  updateNextSlideConfig: (config: Partial<NextSlideSectionConfig>) => void
   updateGlobalSettings: (settings: ScreenGlobalSettings) => void
   clearSelection: () => void
   markClean: () => void
@@ -106,12 +106,15 @@ export function useEditorState(): [EditorState, EditorActions] {
   )
 
   const updateNextSlideConfig = useCallback(
-    (config: NextSlideSectionConfig) => {
+    (config: Partial<NextSlideSectionConfig>) => {
       setScreenState((prev) => {
-        if (!prev) return prev
+        if (!prev || !prev.nextSlideConfig) return prev
         return {
           ...prev,
-          nextSlideConfig: config,
+          nextSlideConfig: {
+            ...prev.nextSlideConfig,
+            ...config,
+          },
         }
       })
       setIsDirty(true)
