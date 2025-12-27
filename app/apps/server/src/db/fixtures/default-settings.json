@@ -1,5 +1,13 @@
 [
   {
+    "key": "kiosk_mode_enabled",
+    "value": "true"
+  },
+  {
+    "key": "kiosk_startup_page",
+    "value": "{\"type\":\"screen\",\"screenId\":4}"
+  },
+  {
     "key": "selected_bible_translations",
     "value": "{\"translationIds\":[1]}"
   }
