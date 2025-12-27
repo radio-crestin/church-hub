@@ -22,10 +22,3 @@ impl Serialize for Error {
         serializer.serialize_str(self.to_string().as_str())
     }
 }
-
-#[cfg(mobile)]
-impl From<tauri::plugin::mobile::PluginInvokeError> for Error {
-    fn from(error: tauri::plugin::mobile::PluginInvokeError) -> Self {
-        Error::Plugin(error.to_string())
-    }
-}
