@@ -694,9 +694,36 @@ export function ScreenEditorSidebar({
                       className="w-full"
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Checkbox
+                      checked={
+                        (
+                          selectedConfig.config as {
+                            labelStyle: TextStyle
+                          }
+                        ).labelStyle.autoScale ?? true
+                      }
+                      onCheckedChange={(checked) => {
+                        updateNextSlideStyle('labelStyle', {
+                          autoScale: !!checked,
+                        })
+                      }}
+                      label={t('screens.textStyle.autoScale')}
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 ml-6">
+                      {t('screens.textStyle.autoScaleDescription')}
+                    </p>
+                  </div>
                   <div>
                     <Label className="text-xs text-gray-500 dark:text-gray-400">
-                      Max Font Size (px)
+                      {((
+                        selectedConfig.config as {
+                          labelStyle: TextStyle
+                        }
+                      ).labelStyle.autoScale ?? true)
+                        ? t('screens.textStyle.maxFontSize')
+                        : t('screens.textStyle.fontSize')}{' '}
+                      (px)
                     </Label>
                     <Input
                       type="number"
@@ -715,6 +742,33 @@ export function ScreenEditorSidebar({
                       className="h-8"
                     />
                   </div>
+                  {(
+                    selectedConfig.config as {
+                      labelStyle: TextStyle
+                    }
+                  ).labelStyle.autoScale && (
+                    <div>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400">
+                        {t('screens.textStyle.minFontSize')} (px)
+                      </Label>
+                      <Input
+                        type="number"
+                        value={
+                          (
+                            selectedConfig.config as {
+                              labelStyle: TextStyle
+                            }
+                          ).labelStyle.minFontSize ?? 12
+                        }
+                        onChange={(e) => {
+                          updateNextSlideStyle('labelStyle', {
+                            minFontSize: parseInt(e.target.value) || 12,
+                          })
+                        }}
+                        className="h-8"
+                      />
+                    </div>
+                  )}
                   <div>
                     <Label className="text-xs text-gray-500 dark:text-gray-400">
                       Color
@@ -826,6 +880,68 @@ export function ScreenEditorSidebar({
                       ))}
                     </div>
                   </div>
+                  <div>
+                    <Label className="text-xs text-gray-500 dark:text-gray-400">
+                      Vertical Alignment
+                    </Label>
+                    <div className="flex gap-2 mt-1">
+                      {(['top', 'middle', 'bottom'] as const).map((align) => (
+                        <button
+                          key={align}
+                          className={`flex-1 py-1.5 text-xs font-medium rounded ${
+                            (
+                              selectedConfig.config as {
+                                labelStyle: TextStyle
+                              }
+                            ).labelStyle.verticalAlignment === align
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                          }`}
+                          onClick={() => {
+                            updateNextSlideStyle('labelStyle', {
+                              verticalAlignment: align,
+                            })
+                          }}
+                        >
+                          {align.charAt(0).toUpperCase() + align.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500 dark:text-gray-400">
+                      {t('screens.textStyle.lineHeight')}
+                    </Label>
+                    <div className="flex items-center gap-2">
+                      <Slider
+                        value={[
+                          (
+                            selectedConfig.config as {
+                              labelStyle: TextStyle
+                            }
+                          ).labelStyle.lineHeight ?? 1.3,
+                        ]}
+                        onValueChange={([value]) => {
+                          updateNextSlideStyle('labelStyle', {
+                            lineHeight: value,
+                          })
+                        }}
+                        min={0.8}
+                        max={3}
+                        step={0.1}
+                        className="flex-1"
+                      />
+                      <span className="text-xs text-gray-500 dark:text-gray-400 w-8 text-right">
+                        {(
+                          (
+                            selectedConfig.config as {
+                              labelStyle: TextStyle
+                            }
+                          ).labelStyle.lineHeight ?? 1.3
+                        ).toFixed(1)}
+                      </span>
+                    </div>
+                  </div>
                   <Checkbox
                     checked={
                       (
@@ -837,8 +953,75 @@ export function ScreenEditorSidebar({
                     onCheckedChange={(checked) => {
                       updateNextSlideStyle('labelStyle', { shadow: !!checked })
                     }}
-                    label="Shadow"
+                    label={t('screens.textStyle.shadow')}
                   />
+
+                  {/* Line Compression */}
+                  <div className="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <Checkbox
+                      checked={
+                        (
+                          selectedConfig.config as {
+                            labelStyle: TextStyle
+                          }
+                        ).labelStyle.compressLines ?? false
+                      }
+                      onCheckedChange={(checked) => {
+                        updateNextSlideStyle('labelStyle', {
+                          compressLines: !!checked,
+                        })
+                      }}
+                      label={t('screens.textStyle.compressLines')}
+                    />
+                    {(
+                      selectedConfig.config as {
+                        labelStyle: TextStyle
+                      }
+                    ).labelStyle.compressLines && (
+                      <div>
+                        <Label className="text-xs text-gray-500 dark:text-gray-400">
+                          {t('screens.textStyle.lineSeparator')}
+                        </Label>
+                        <Combobox
+                          value={
+                            (
+                              selectedConfig.config as {
+                                labelStyle: TextStyle
+                              }
+                            ).labelStyle.lineSeparator ?? 'space'
+                          }
+                          onChange={(value) => {
+                            updateNextSlideStyle('labelStyle', {
+                              lineSeparator: value as 'space' | 'dash' | 'pipe',
+                            })
+                          }}
+                          options={LINE_SEPARATORS.map((opt) => ({
+                            value: opt.value,
+                            label: t(`screens.textStyle.separators.${opt.key}`),
+                          }))}
+                          className="w-full"
+                        />
+                      </div>
+                    )}
+                    <Checkbox
+                      checked={
+                        (
+                          selectedConfig.config as {
+                            labelStyle: TextStyle
+                          }
+                        ).labelStyle.fitLineToWidth ?? false
+                      }
+                      onCheckedChange={(checked) => {
+                        updateNextSlideStyle('labelStyle', {
+                          fitLineToWidth: !!checked,
+                        })
+                      }}
+                      label={t('screens.textStyle.fitLineToWidth')}
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 ml-6">
+                      {t('screens.textStyle.fitLineToWidthDescription')}
+                    </p>
+                  </div>
                 </div>
               </Section>
             )}
@@ -869,9 +1052,36 @@ export function ScreenEditorSidebar({
                       className="w-full"
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Checkbox
+                      checked={
+                        (
+                          selectedConfig.config as {
+                            contentStyle: TextStyle
+                          }
+                        ).contentStyle.autoScale ?? true
+                      }
+                      onCheckedChange={(checked) => {
+                        updateNextSlideStyle('contentStyle', {
+                          autoScale: !!checked,
+                        })
+                      }}
+                      label={t('screens.textStyle.autoScale')}
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 ml-6">
+                      {t('screens.textStyle.autoScaleDescription')}
+                    </p>
+                  </div>
                   <div>
                     <Label className="text-xs text-gray-500 dark:text-gray-400">
-                      Max Font Size (px)
+                      {((
+                        selectedConfig.config as {
+                          contentStyle: TextStyle
+                        }
+                      ).contentStyle.autoScale ?? true)
+                        ? t('screens.textStyle.maxFontSize')
+                        : t('screens.textStyle.fontSize')}{' '}
+                      (px)
                     </Label>
                     <Input
                       type="number"
@@ -890,6 +1100,33 @@ export function ScreenEditorSidebar({
                       className="h-8"
                     />
                   </div>
+                  {(
+                    selectedConfig.config as {
+                      contentStyle: TextStyle
+                    }
+                  ).contentStyle.autoScale && (
+                    <div>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400">
+                        {t('screens.textStyle.minFontSize')} (px)
+                      </Label>
+                      <Input
+                        type="number"
+                        value={
+                          (
+                            selectedConfig.config as {
+                              contentStyle: TextStyle
+                            }
+                          ).contentStyle.minFontSize ?? 12
+                        }
+                        onChange={(e) => {
+                          updateNextSlideStyle('contentStyle', {
+                            minFontSize: parseInt(e.target.value) || 12,
+                          })
+                        }}
+                        className="h-8"
+                      />
+                    </div>
+                  )}
                   <div>
                     <Label className="text-xs text-gray-500 dark:text-gray-400">
                       Color
@@ -1003,6 +1240,68 @@ export function ScreenEditorSidebar({
                       ))}
                     </div>
                   </div>
+                  <div>
+                    <Label className="text-xs text-gray-500 dark:text-gray-400">
+                      Vertical Alignment
+                    </Label>
+                    <div className="flex gap-2 mt-1">
+                      {(['top', 'middle', 'bottom'] as const).map((align) => (
+                        <button
+                          key={align}
+                          className={`flex-1 py-1.5 text-xs font-medium rounded ${
+                            (
+                              selectedConfig.config as {
+                                contentStyle: TextStyle
+                              }
+                            ).contentStyle.verticalAlignment === align
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                          }`}
+                          onClick={() => {
+                            updateNextSlideStyle('contentStyle', {
+                              verticalAlignment: align,
+                            })
+                          }}
+                        >
+                          {align.charAt(0).toUpperCase() + align.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500 dark:text-gray-400">
+                      {t('screens.textStyle.lineHeight')}
+                    </Label>
+                    <div className="flex items-center gap-2">
+                      <Slider
+                        value={[
+                          (
+                            selectedConfig.config as {
+                              contentStyle: TextStyle
+                            }
+                          ).contentStyle.lineHeight ?? 1.3,
+                        ]}
+                        onValueChange={([value]) => {
+                          updateNextSlideStyle('contentStyle', {
+                            lineHeight: value,
+                          })
+                        }}
+                        min={0.8}
+                        max={3}
+                        step={0.1}
+                        className="flex-1"
+                      />
+                      <span className="text-xs text-gray-500 dark:text-gray-400 w-8 text-right">
+                        {(
+                          (
+                            selectedConfig.config as {
+                              contentStyle: TextStyle
+                            }
+                          ).contentStyle.lineHeight ?? 1.3
+                        ).toFixed(1)}
+                      </span>
+                    </div>
+                  </div>
                   <Checkbox
                     checked={
                       (
@@ -1016,8 +1315,75 @@ export function ScreenEditorSidebar({
                         shadow: !!checked,
                       })
                     }}
-                    label="Shadow"
+                    label={t('screens.textStyle.shadow')}
                   />
+
+                  {/* Line Compression */}
+                  <div className="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <Checkbox
+                      checked={
+                        (
+                          selectedConfig.config as {
+                            contentStyle: TextStyle
+                          }
+                        ).contentStyle.compressLines ?? false
+                      }
+                      onCheckedChange={(checked) => {
+                        updateNextSlideStyle('contentStyle', {
+                          compressLines: !!checked,
+                        })
+                      }}
+                      label={t('screens.textStyle.compressLines')}
+                    />
+                    {(
+                      selectedConfig.config as {
+                        contentStyle: TextStyle
+                      }
+                    ).contentStyle.compressLines && (
+                      <div>
+                        <Label className="text-xs text-gray-500 dark:text-gray-400">
+                          {t('screens.textStyle.lineSeparator')}
+                        </Label>
+                        <Combobox
+                          value={
+                            (
+                              selectedConfig.config as {
+                                contentStyle: TextStyle
+                              }
+                            ).contentStyle.lineSeparator ?? 'space'
+                          }
+                          onChange={(value) => {
+                            updateNextSlideStyle('contentStyle', {
+                              lineSeparator: value as 'space' | 'dash' | 'pipe',
+                            })
+                          }}
+                          options={LINE_SEPARATORS.map((opt) => ({
+                            value: opt.value,
+                            label: t(`screens.textStyle.separators.${opt.key}`),
+                          }))}
+                          className="w-full"
+                        />
+                      </div>
+                    )}
+                    <Checkbox
+                      checked={
+                        (
+                          selectedConfig.config as {
+                            contentStyle: TextStyle
+                          }
+                        ).contentStyle.fitLineToWidth ?? false
+                      }
+                      onCheckedChange={(checked) => {
+                        updateNextSlideStyle('contentStyle', {
+                          fitLineToWidth: !!checked,
+                        })
+                      }}
+                      label={t('screens.textStyle.fitLineToWidth')}
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 ml-6">
+                      {t('screens.textStyle.fitLineToWidthDescription')}
+                    </p>
+                  </div>
                 </div>
               </Section>
             )}
