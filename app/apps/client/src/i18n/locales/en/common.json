@@ -6,13 +6,16 @@
     "confirm": "Confirm",
     "delete": "Delete",
     "save": "Save",
-    "ok": "OK"
+    "ok": "OK",
+    "retry": "Retry"
   },
   "errors": {
     "pageNotFound": "The page you are looking for does not exist.",
     "noPermission": "You don't have permission to access this page.",
     "noPermissionTitle": "Access Denied",
-    "contactAdmin": "Please contact your administrator if you believe this is an error."
+    "contactAdmin": "Please contact your administrator if you believe this is an error.",
+    "connectionLostTitle": "Connection Lost",
+    "connectionLost": "Unable to connect to the server. Please check your network connection and try again."
   },
   "theme": {
     "system": "System",
