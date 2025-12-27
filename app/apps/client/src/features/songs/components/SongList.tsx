@@ -126,8 +126,8 @@ export function SongList({
           )}
         </div>
       ) : (
-        <div className="grid gap-3">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="grid gap-3 min-w-0 overflow-hidden">
+          <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
             {isSearching
               ? t('search.resultsCount', { count: totalCount })
               : t('search.showingCount', {

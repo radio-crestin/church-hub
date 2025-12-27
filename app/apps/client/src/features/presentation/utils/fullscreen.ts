@@ -10,7 +10,11 @@ function getCurrentPlatform(): string {
   if (platform.includes('win') || userAgent.includes('windows')) {
     return 'windows'
   }
-  if (platform.includes('mac') || userAgent.includes('macintosh') || userAgent.includes('mac os')) {
+  if (
+    platform.includes('mac') ||
+    userAgent.includes('macintosh') ||
+    userAgent.includes('mac os')
+  ) {
     return 'macos'
   }
   if (platform.includes('linux') || userAgent.includes('linux')) {
@@ -68,11 +72,15 @@ export async function setWindowFullscreen(
 
     if (await verifyFullscreen()) {
       // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
-      console.log(`[setWindowFullscreen] setFullscreen(${fullscreen}) succeeded!`)
+      console.log(
+        `[setWindowFullscreen] setFullscreen(${fullscreen}) succeeded!`,
+      )
       return true
     }
     // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
-    console.log('[setWindowFullscreen] setFullscreen did not achieve desired state')
+    console.log(
+      '[setWindowFullscreen] setFullscreen did not achieve desired state',
+    )
   } catch (error) {
     // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
     console.error('[setWindowFullscreen] setFullscreen threw error:', error)
@@ -86,7 +94,9 @@ export async function setWindowFullscreen(
       await win.setSimpleFullscreen(fullscreen)
       // setSimpleFullscreen doesn't update isFullscreen, so assume success if no error
       // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
-      console.log(`[setWindowFullscreen] setSimpleFullscreen(${fullscreen}) called`)
+      console.log(
+        `[setWindowFullscreen] setSimpleFullscreen(${fullscreen}) called`,
+      )
       return true
     } catch (error) {
       // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
@@ -95,7 +105,9 @@ export async function setWindowFullscreen(
   } else if (currentPlatform === 'windows') {
     try {
       // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
-      console.log('[setWindowFullscreen] Trying Windows maximize+decorations fallback...')
+      console.log(
+        '[setWindowFullscreen] Trying Windows maximize+decorations fallback...',
+      )
       if (fullscreen) {
         await win.setDecorations(false)
         await win.maximize()
@@ -110,7 +122,9 @@ export async function setWindowFullscreen(
         return true
       }
       // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
-      console.log('[setWindowFullscreen] Windows fallback did not achieve desired state')
+      console.log(
+        '[setWindowFullscreen] Windows fallback did not achieve desired state',
+      )
     } catch (error) {
       // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
       console.error('[setWindowFullscreen] Windows fallback failed:', error)
@@ -118,7 +132,9 @@ export async function setWindowFullscreen(
   }
 
   // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
-  console.error(`[setWindowFullscreen] All Tauri methods failed for platform: ${currentPlatform}`)
+  console.error(
+    `[setWindowFullscreen] All Tauri methods failed for platform: ${currentPlatform}`,
+  )
   return false
 }
 

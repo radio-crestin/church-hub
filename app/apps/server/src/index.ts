@@ -265,18 +265,22 @@ async function main() {
   t = performance.now()
 
   function handleCors(req: Request, res: Response) {
-    // Get the origin from the request, or use port 3000 as fallback (unified port)
-    const origin = req.headers.get('Origin') || 'http://localhost:3000'
+    // Allow any origin - this app is designed for LAN use
+    // Reflect the origin header if present, otherwise allow all
+    const origin = req.headers.get('Origin') || '*'
     res.headers.set('Access-Control-Allow-Origin', origin)
     res.headers.set(
       'Access-Control-Allow-Methods',
-      'GET, POST, PUT, DELETE, OPTIONS',
+      'GET, POST, PUT, DELETE, OPTIONS, PATCH',
     )
+    // When credentials are allowed, wildcard (*) doesn't work for headers
+    // Must explicitly list all allowed headers
     res.headers.set(
       'Access-Control-Allow-Headers',
-      'Content-Type, Authorization, X-App-Session, Cache-Control',
+      'Content-Type, Authorization, Cookie, Accept, Origin, X-Requested-With, Cache-Control, Pragma',
     )
     res.headers.set('Access-Control-Allow-Credentials', 'true')
+    res.headers.set('Access-Control-Max-Age', '86400')
     return res
   }
 

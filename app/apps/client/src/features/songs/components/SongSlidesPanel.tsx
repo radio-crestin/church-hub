@@ -115,7 +115,7 @@ export function SongSlidesPanel({
               key={slide.id}
               ref={isPresented ? highlightedRef : null}
               type="button"
-              onClick={() => onSlideClick(slide, index)}
+              onClick={() => !isPresented && onSlideClick(slide, index)}
               className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${getButtonClass()}`}
             >
               <div className="flex items-start gap-2">

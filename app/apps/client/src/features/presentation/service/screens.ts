@@ -1,4 +1,7 @@
-import { getApiUrl } from '~/config'
+import { fetch as tauriFetch } from '@tauri-apps/plugin-http'
+
+import { getApiUrl, isMobile } from '~/config'
+import { getStoredUserToken } from '~/service/api-url'
 import type {
   ContentType,
   ContentTypeConfig,
@@ -17,14 +20,36 @@ function log(level: 'debug' | 'info' | 'error', message: string) {
   console.log(`[${level.toUpperCase()}] [screens-service] ${message}`)
 }
 
+// Check if we're running in Tauri context
+const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+
+// Use Tauri fetch on mobile (iOS WKWebView blocks HTTP fetch)
+const fetchFn = isTauri && isMobile() ? tauriFetch : window.fetch.bind(window)
+
+// Get headers with auth token for mobile
+function getHeaders(contentType?: string): Record<string, string> {
+  const headers: Record<string, string> = {}
+  if (contentType) {
+    headers['Content-Type'] = contentType
+  }
+  if (isMobile()) {
+    const userToken = getStoredUserToken()
+    if (userToken) {
+      headers['Cookie'] = `user_auth=${userToken}`
+    }
+  }
+  return headers
+}
+
 /**
  * Fetches all screens
  */
 export async function getAllScreens(): Promise<Screen[]> {
   log('debug', 'Fetching all screens')
 
-  const response = await fetch(`${getApiUrl()}/api/screens`, {
+  const response = await fetchFn(`${getApiUrl()}/api/screens`, {
     credentials: 'include',
+    headers: getHeaders(),
   })
 
   if (!response.ok) {
@@ -41,8 +66,9 @@ export async function getAllScreens(): Promise<Screen[]> {
 export async function getScreenById(id: number): Promise<ScreenWithConfigs> {
   log('debug', `Fetching screen: ${id}`)
 
-  const response = await fetch(`${getApiUrl()}/api/screens/${id}`, {
+  const response = await fetchFn(`${getApiUrl()}/api/screens/${id}`, {
     credentials: 'include',
+    headers: getHeaders(),
   })
 
   if (!response.ok) {
@@ -59,9 +85,9 @@ export async function getScreenById(id: number): Promise<ScreenWithConfigs> {
 export async function upsertScreen(input: UpsertScreenInput): Promise<Screen> {
   log('debug', `Upserting screen: ${input.name}`)
 
-  const response = await fetch(`${getApiUrl()}/api/screens`, {
+  const response = await fetchFn(`${getApiUrl()}/api/screens`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getHeaders('application/json'),
     body: JSON.stringify(input),
     credentials: 'include',
   })
@@ -80,8 +106,9 @@ export async function upsertScreen(input: UpsertScreenInput): Promise<Screen> {
 export async function deleteScreen(id: number): Promise<void> {
   log('debug', `Deleting screen: ${id}`)
 
-  const response = await fetch(`${getApiUrl()}/api/screens/${id}`, {
+  const response = await fetchFn(`${getApiUrl()}/api/screens/${id}`, {
     method: 'DELETE',
+    headers: getHeaders(),
     credentials: 'include',
   })
 
@@ -100,11 +127,11 @@ export async function updateScreenContentConfig(
 ): Promise<ContentTypeConfig> {
   log('debug', `Updating screen content config: ${screenId} / ${contentType}`)
 
-  const response = await fetch(
+  const response = await fetchFn(
     `${getApiUrl()}/api/screens/${screenId}/config/${contentType}`,
     {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getHeaders('application/json'),
       body: JSON.stringify({ config }),
       credentials: 'include',
     },
@@ -127,11 +154,11 @@ export async function updateScreenNextSlideConfig(
 ): Promise<NextSlideSectionConfig> {
   log('debug', `Updating screen next slide config: ${screenId}`)
 
-  const response = await fetch(
+  const response = await fetchFn(
     `${getApiUrl()}/api/screens/${screenId}/next-slide-config`,
     {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getHeaders('application/json'),
       body: JSON.stringify({ config }),
       credentials: 'include',
     },
@@ -154,11 +181,11 @@ export async function updateScreenGlobalSettings(
 ): Promise<Screen> {
   log('debug', `Updating screen global settings: ${screenId}`)
 
-  const response = await fetch(
+  const response = await fetchFn(
     `${getApiUrl()}/api/screens/${screenId}/global-settings`,
     {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getHeaders('application/json'),
       body: JSON.stringify({ settings }),
       credentials: 'include',
     },
@@ -183,11 +210,11 @@ export async function batchUpdateScreenConfig(
 ): Promise<ScreenWithConfigs> {
   log('debug', `Batch updating screen config: ${screenId}`)
 
-  const response = await fetch(
+  const response = await fetchFn(
     `${getApiUrl()}/api/screens/${screenId}/batch-config`,
     {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getHeaders('application/json'),
       body: JSON.stringify({
         globalSettings,
         contentConfigs,

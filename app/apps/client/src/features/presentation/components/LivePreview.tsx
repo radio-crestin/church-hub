@@ -1,11 +1,33 @@
+import { fetch as tauriFetch } from '@tauri-apps/plugin-http'
 import { useEffect, useMemo, useState } from 'react'
 
-import { getApiUrl } from '~/config'
+import { getApiUrl, isMobile } from '~/config'
+import { getStoredUserToken } from '~/service/api-url'
 import { ScreenPreview } from './ScreenPreview'
 import { usePresentationState, useWebSocket } from '../hooks'
 import { useScreen } from '../hooks/useScreen'
 import { useScreens } from '../hooks/useScreens'
 import type { ContentType } from '../types'
+
+// Check if we're running in Tauri context
+const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+
+// Use Tauri fetch on mobile (iOS WKWebView blocks HTTP fetch)
+const fetchFn = isTauri && isMobile() ? tauriFetch : window.fetch.bind(window)
+
+// Get headers with auth token for mobile
+function getHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {
+    'Cache-Control': 'no-cache',
+  }
+  if (isMobile()) {
+    const userToken = getStoredUserToken()
+    if (userToken) {
+      headers['Cookie'] = `user_auth=${userToken}`
+    }
+  }
+  return headers
+}
 
 interface SongSlideData {
   id: number
@@ -103,9 +125,9 @@ export function LivePreview() {
       }
 
       try {
-        const queueResponse = await fetch(`${getApiUrl()}/api/queue`, {
+        const queueResponse = await fetchFn(`${getApiUrl()}/api/queue`, {
           cache: 'no-store',
-          headers: { 'Cache-Control': 'no-cache' },
+          headers: getHeaders(),
           credentials: 'include',
         })
 

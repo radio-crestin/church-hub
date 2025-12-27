@@ -222,7 +222,9 @@ export function MixerConnectionButton() {
           <span className="font-medium">{t('mixer.title')}</span>
         </div>
 
-        <span className="text-xs opacity-75 hidden sm:inline">{getStatusText()}</span>
+        <span className="text-xs opacity-75 hidden sm:inline">
+          {getStatusText()}
+        </span>
 
         {(isTesting || (isEnabled && !isConnected)) && (
           <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />

@@ -23,10 +23,13 @@ function killPortProcess(port: number): void {
 
   try {
     // Find PID using the port (Windows) - only LISTENING state
-    const result = execSync(`netstat -ano | findstr :${port} | findstr LISTENING`, {
-      encoding: 'utf-8',
-      stdio: ['pipe', 'pipe', 'pipe'],
-    })
+    const result = execSync(
+      `netstat -ano | findstr :${port} | findstr LISTENING`,
+      {
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+      },
+    )
     const lines = result.trim().split('\n')
     const pids = new Set<string>()
     for (const line of lines) {
@@ -132,10 +135,7 @@ const config = defineConfig(({ mode }) => {
       },
       // Pre-transform entry files when server starts for faster first load
       warmup: {
-        clientFiles: [
-          './src/router.tsx',
-          './index.html',
-        ],
+        clientFiles: ['./src/router.tsx', './index.html'],
       },
     },
     resolve: {

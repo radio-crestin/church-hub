@@ -101,7 +101,9 @@ export function SongControlPanel({
               ) : (
                 <EyeOff size={18} />
               )}
-              <span className="hidden sm:inline">{t('bible:controls.hide')}</span>
+              <span className="hidden sm:inline">
+                {t('bible:controls.hide')}
+              </span>
               <span className="text-xs opacity-75 hidden sm:inline">(Esc)</span>
             </button>
           ) : (
@@ -111,7 +113,9 @@ export function SongControlPanel({
               className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 text-sm text-gray-400 dark:text-gray-500 rounded-lg border border-gray-300 dark:border-gray-600 opacity-50 cursor-not-allowed"
             >
               <Eye size={18} />
-              <span className="hidden sm:inline">{t('bible:controls.show')}</span>
+              <span className="hidden sm:inline">
+                {t('bible:controls.show')}
+              </span>
             </button>
           )}
         </div>

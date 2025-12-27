@@ -52,7 +52,10 @@ export function seedSongs(db: Database): void {
     .query<{ count: number }, []>('SELECT COUNT(*) as count FROM songs')
     .get()?.count
   if (existingCount && existingCount > 0) {
-    log('info', `Songs already seeded (${existingCount} songs), skipping fixture load`)
+    log(
+      'info',
+      `Songs already seeded (${existingCount} songs), skipping fixture load`,
+    )
     return
   }
 

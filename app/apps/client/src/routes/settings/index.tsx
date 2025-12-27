@@ -2,7 +2,8 @@ import { createFileRoute } from '@tanstack/react-router'
 import { ExternalLink, Languages, Palette } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-import { isLocalhost } from '~/config'
+import { isLocalhost, isMobile } from '~/config'
+import { ApiUrlSettings } from '~/features/api-url-config'
 import { DatabaseManager } from '~/features/database-management'
 import {
   MIDIProvider,
@@ -110,6 +111,13 @@ function RouteComponent() {
             </div>
           </div>
         </div>
+
+        {/* Server Connection Section (Mobile only) */}
+        {isMobile() && (
+          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
+            <ApiUrlSettings />
+          </div>
+        )}
 
         {/* Screens Section */}
         <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">

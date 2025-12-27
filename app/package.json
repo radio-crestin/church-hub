@@ -16,7 +16,16 @@
     "tauri:build:debug": "tauri build --debug",
     "build:apps": "bun run --filter client build && bun run --filter server compile",
     "tsc:check": "tsc --noEmit --skipLibCheck",
-    "fixtures": "bun run apps/server/src/db/fixtures/dump-fixtures.ts"
+    "fixtures": "bun run apps/server/src/db/fixtures/dump-fixtures.ts",
+    "ios:init": "tauri ios init",
+    "ios:dev": "tauri ios dev",
+    "ios:dev:device": "tauri ios dev --open",
+    "ios:open": "open tauri/gen/apple/church-hub.xcodeproj",
+    "ios:build": "tauri ios build",
+    "ios:build:release": "tauri ios build --release",
+    "ios:install": "xcrun devicectl device install app --device 'Iosif'\"'\"'s Phone' tauri/gen/apple/build/arm64/church-hub.ipa",
+    "ios:launch": "xcrun devicectl device process launch --device 'Iosif'\"'\"'s Phone' com.church-hub",
+    "ios:run": "pnpm ios:build && pnpm ios:install && pnpm ios:launch"
   },
   "devDependencies": {
     "@biomejs/biome": "2.3.2",
