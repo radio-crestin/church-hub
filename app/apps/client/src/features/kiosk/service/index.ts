@@ -5,3 +5,9 @@ export {
   setKioskSettings,
   updateKioskSettings,
 } from './kioskStorage'
+export {
+  acquireWakeLock,
+  isWakeLockActive,
+  isWakeLockSupported,
+  releaseWakeLock,
+} from './wakeLockService'
