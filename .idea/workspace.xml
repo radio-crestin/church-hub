@@ -6,20 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="66517e3f-2e4e-43cc-880d-deb242368f0c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TODO.md" beforeDir="false" afterPath="$PROJECT_DIR$/TODO.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/router.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/router.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/vite-env.d.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/vite-env.d.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/vite.config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/vite.config.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/connection.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/connection.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/fts.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/fts.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/migrations/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/migrations/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/migrations/seed-bibles.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/migrations/seed-bibles.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/migrations/seed-songs.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/migrations/seed-songs.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/tauri/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/tauri/src/server.rs" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/src/server.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/tauri/tauri.conf.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/tauri.conf.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

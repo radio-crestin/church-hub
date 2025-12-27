@@ -4,7 +4,7 @@ import { getCookie, setCookie, deleteCookie } from 'hono/cookie'
 import type { Bindings, OAuthState, TokenResult } from '../types'
 import { encryptState, decryptState } from '../utils/crypto'
 import { generateCodeVerifier, generateCodeChallenge } from '../utils/pkce'
-import { buildAuthUrl, exchangeCodeForTokens } from '../utils/oauth'
+import { buildAuthUrl, exchangeCodeForTokens, refreshTokens } from '../utils/oauth'
 import { isAllowedOrigin } from '../middleware/security'
 
 const auth = new Hono<{ Bindings: Bindings }>()
@@ -248,5 +248,58 @@ function renderErrorResponse(
     400
   )
 }
+
+/**
+ * POST /auth/youtube/refresh
+ * Refreshes an access token using a refresh token.
+ * Used by the server when access tokens expire.
+ */
+auth.post('/auth/youtube/refresh', async (c) => {
+  const origin = c.req.header('Origin')
+
+  // Validate origin for CORS
+  if (origin && !isAllowedOrigin(origin, c.env.ALLOWED_ORIGINS)) {
+    return c.json({ error: 'Invalid origin' }, 403)
+  }
+
+  try {
+    const body = await c.req.json<{ refreshToken: string }>()
+
+    if (!body.refreshToken) {
+      return c.json({ error: 'Missing refresh token' }, 400)
+    }
+
+    const tokenResponse = await refreshTokens({
+      refreshToken: body.refreshToken,
+      clientId: c.env.YOUTUBE_CLIENT_ID,
+      clientSecret: c.env.YOUTUBE_CLIENT_SECRET,
+    })
+
+    const result: TokenResult = {
+      accessToken: tokenResponse.access_token,
+      // Refresh tokens don't return a new refresh token, keep the original
+      refreshToken: body.refreshToken,
+      expiresAt: Date.now() + tokenResponse.expires_in * 1000,
+    }
+
+    return c.json({ success: true, tokens: result })
+  } catch (err) {
+    const errorMessage =
+      err instanceof Error ? err.message : 'Token refresh failed'
+
+    // Check for invalid_grant which means re-auth is required
+    const requiresReauth =
+      errorMessage.includes('invalid_grant') ||
+      errorMessage.includes('Token has been expired or revoked')
+
+    return c.json(
+      {
+        error: errorMessage,
+        requiresReauth,
+      },
+      requiresReauth ? 401 : 500
+    )
+  }
+})
 
 export default auth
