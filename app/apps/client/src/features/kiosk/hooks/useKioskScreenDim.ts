@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { createLogger } from '~/utils/logger'
+import { dimScreen, restoreBrightness } from '../service/brightnessService'
 
 const logger = createLogger('kiosk:screen-dim')
 
@@ -18,8 +19,8 @@ interface UseKioskScreenDimResult {
 
 /**
  * Hook to manage screen dim overlay for kiosk mode
- * Shows black overlay when WebSocket disconnects in kiosk mode
- * Dismisses on reconnection or user touch
+ * Shows black overlay and dims screen brightness when WebSocket disconnects
+ * Restores brightness on reconnection or user touch
  */
 export function useKioskScreenDim({
   kioskEnabled,
@@ -27,6 +28,7 @@ export function useKioskScreenDim({
 }: UseKioskScreenDimOptions): UseKioskScreenDimResult {
   const [isOverlayVisible, setIsOverlayVisible] = useState(false)
   const [dismissedByTouch, setDismissedByTouch] = useState(false)
+  const hasDimmedRef = useRef(false)
 
   useEffect(() => {
     // When connected, hide overlay and reset touch dismissal
@@ -34,6 +36,11 @@ export function useKioskScreenDim({
       if (isOverlayVisible) {
         logger.debug('WebSocket reconnected, hiding overlay')
         setIsOverlayVisible(false)
+      }
+      // Restore brightness when reconnected
+      if (hasDimmedRef.current) {
+        restoreBrightness()
+        hasDimmedRef.current = false
       }
       // Reset touch dismissal on reconnect to allow overlay on next disconnect
       if (dismissedByTouch) {
@@ -55,6 +62,12 @@ export function useKioskScreenDim({
     if (shouldShowOverlay && !isOverlayVisible) {
       logger.debug('WebSocket disconnected in kiosk mode, showing overlay')
       setIsOverlayVisible(true)
+      // Dim the screen brightness
+      dimScreen().then((success) => {
+        if (success) {
+          hasDimmedRef.current = true
+        }
+      })
     }
   }, [kioskEnabled, wsStatus, dismissedByTouch, isOverlayVisible])
 
@@ -62,6 +75,11 @@ export function useKioskScreenDim({
     logger.debug('Overlay dismissed by user touch')
     setIsOverlayVisible(false)
     setDismissedByTouch(true)
+    // Restore brightness when user taps
+    if (hasDimmedRef.current) {
+      restoreBrightness()
+      hasDimmedRef.current = false
+    }
   }, [])
 
   return {
