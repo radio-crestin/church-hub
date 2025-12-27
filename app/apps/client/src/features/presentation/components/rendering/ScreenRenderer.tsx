@@ -72,6 +72,9 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
   const toolbarTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const userExitedFullscreenRef = useRef(false)
 
+  // Track if we're in a native display window (fullscreen only allowed there)
+  const [isNativeDisplayWindow, setIsNativeDisplayWindow] = useState(false)
+
   // Track container dimensions (start at 0, render only when measured)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
 
@@ -97,6 +100,31 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
     return () => resizeObserver.disconnect()
   }, [screen])
 
+  // Detect if we're in a native display window (only those can go fullscreen)
+  useEffect(() => {
+    const detectDisplayWindow = async () => {
+      if (!isTauri()) {
+        // In browser mode, check if URL contains /display/ route
+        setIsNativeDisplayWindow(window.location.pathname.includes('/display/'))
+        return
+      }
+
+      try {
+        const { getCurrentWebviewWindow } = await import(
+          '@tauri-apps/api/webviewWindow'
+        )
+        const win = getCurrentWebviewWindow()
+        // Native display windows have labels like "display-{id}"
+        const isDisplayWindow = win.label.startsWith('display-')
+        setIsNativeDisplayWindow(isDisplayWindow)
+      } catch {
+        setIsNativeDisplayWindow(false)
+      }
+    }
+
+    detectDisplayWindow()
+  }, [])
+
   // Track fullscreen state and auto-switch to fullscreen on maximize
   useEffect(() => {
     let unlistenResize: (() => void) | null = null
@@ -110,6 +138,9 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
         )
         const win = getCurrentWebviewWindow()
 
+        // Only apply fullscreen logic to native display windows
+        const isDisplayWindow = win.label.startsWith('display-')
+
         // Check initial fullscreen state
         const fs = await win.isFullscreen()
         setIsFullscreen(fs)
@@ -121,7 +152,13 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
 
           // If window is maximized but not fullscreen, switch to fullscreen
           // But only if user didn't just exit fullscreen manually
-          if (isMaximized && !isFs && !userExitedFullscreenRef.current) {
+          // And only for native display windows
+          if (
+            isDisplayWindow &&
+            isMaximized &&
+            !isFs &&
+            !userExitedFullscreenRef.current
+          ) {
             await setWindowFullscreen(win, true)
             setIsFullscreen(true)
 
@@ -235,8 +272,13 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
     }
   }
 
-  // Toggle fullscreen and save to database
+  // Toggle fullscreen and save to database (only in native display windows)
   const toggleFullscreen = useCallback(async () => {
+    // Only allow fullscreen in native display windows, not in main window
+    if (!isNativeDisplayWindow) {
+      return
+    }
+
     const newFullscreen = !isFullscreen
     // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
     console.log(`[toggleFullscreen] Toggling fullscreen to: ${newFullscreen}`)
@@ -318,7 +360,7 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
         isFullscreen: newFullscreen,
       })
     }
-  }, [isFullscreen, screen, upsertScreen])
+  }, [isFullscreen, isNativeDisplayWindow, screen, upsertScreen])
 
   // Show toolbar on mouse move near the top
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
@@ -692,7 +734,7 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
       ref={containerRef}
       className="w-screen h-screen overflow-hidden cursor-default"
       style={bg ? getBackgroundCSS(bg) : { backgroundColor: '#000000' }}
-      onDoubleClick={toggleFullscreen}
+      onDoubleClick={isNativeDisplayWindow ? toggleFullscreen : undefined}
       onMouseMove={handleMouseMove}
       onTouchStart={handleTouchStart}
       onClick={handleClick}
@@ -726,14 +768,17 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
               <Minimize size={20} />
             </button>
           ) : (
-            <button
-              type="button"
-              onClick={toggleFullscreen}
-              className="p-2 rounded-lg bg-black/50 hover:bg-black/70 text-white transition-colors"
-              title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-            >
-              {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
-            </button>
+            // Only show fullscreen button in native display windows
+            isNativeDisplayWindow && (
+              <button
+                type="button"
+                onClick={toggleFullscreen}
+                className="p-2 rounded-lg bg-black/50 hover:bg-black/70 text-white transition-colors"
+                title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+              >
+                {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
+              </button>
+            )
           )}
         </div>
       </div>
