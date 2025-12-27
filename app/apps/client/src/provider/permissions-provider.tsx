@@ -16,6 +16,7 @@ interface PermissionsContextType {
   isApp: boolean
   isAuthenticated: boolean
   isLoading: boolean
+  isConnectionError: boolean
   userId: number | null
   userName: string | null
   refresh: () => Promise<void>
@@ -25,6 +26,23 @@ const PermissionsContext = createContext<PermissionsContextType | undefined>(
   undefined,
 )
 
+function isNetworkError(error: unknown): boolean {
+  if (error instanceof TypeError && error.message.includes('fetch')) {
+    return true
+  }
+  if (error instanceof Error) {
+    const message = error.message.toLowerCase()
+    return (
+      message.includes('network') ||
+      message.includes('failed to fetch') ||
+      message.includes('connection') ||
+      message.includes('timeout') ||
+      message.includes('econnrefused')
+    )
+  }
+  return false
+}
+
 export function PermissionsProvider({
   children,
 }: {
@@ -32,13 +50,16 @@ export function PermissionsProvider({
 }) {
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isConnectionError, setIsConnectionError] = useState(false)
 
   const loadPermissions = async () => {
     try {
       const user = await getCurrentUser()
       setCurrentUser(user)
-    } catch {
+      setIsConnectionError(false)
+    } catch (error) {
       setCurrentUser(null)
+      setIsConnectionError(isNetworkError(error))
     } finally {
       setIsLoading(false)
     }
@@ -86,6 +107,7 @@ export function PermissionsProvider({
     isApp,
     isAuthenticated: currentUser !== null,
     isLoading,
+    isConnectionError,
     userId: currentUser?.id ?? null,
     userName: currentUser?.name ?? null,
     refresh: loadPermissions,
