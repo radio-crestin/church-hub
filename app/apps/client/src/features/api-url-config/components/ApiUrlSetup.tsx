@@ -2,7 +2,12 @@ import { KeyRound, Loader2, Server, Wifi, WifiOff } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { isValidApiUrl, parseAuthUrl, setApiUrl, testApiConnection } from '~/service/api-url'
+import {
+  isValidApiUrl,
+  parseAuthUrl,
+  setApiUrl,
+  testApiConnection,
+} from '~/service/api-url'
 import { Button } from '~/ui/button'
 import { Input } from '~/ui/input'
 
@@ -52,7 +57,9 @@ export function ApiUrlSetup({ onComplete }: ApiUrlSetupProps) {
     } else {
       setConnectionStatus('error')
       // Show the actual error message for debugging
-      setErrorMessage(result.error || t('sections.apiUrl.errors.connectionFailed'))
+      setErrorMessage(
+        result.error || t('sections.apiUrl.errors.connectionFailed'),
+      )
     }
 
     setIsLoading(false)

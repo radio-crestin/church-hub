@@ -29,6 +29,7 @@ const fetchFn = isTauri && isMobile() ? tauriFetch : window.fetch.bind(window)
 // Startup timing
 const clientStartTime = performance.now()
 const logClientTiming = (label: string) => {
+  // biome-ignore lint/suspicious/noConsole: startup timing logging
   console.log(
     `[client-startup] ${label}: ${(performance.now() - clientStartTime).toFixed(1)}ms`,
   )
@@ -39,6 +40,7 @@ logClientTiming('script_loaded')
 // Log time since HTML loaded (shows Vite module transformation time)
 if (typeof window !== 'undefined' && window.__htmlLoadTime) {
   const moduleLoadTime = performance.now() - window.__htmlLoadTime
+  // biome-ignore lint/suspicious/noConsole: startup timing logging
   console.log(
     `[client-startup] module_executed (time since HTML): ${moduleLoadTime.toFixed(1)}ms`,
   )
@@ -105,6 +107,7 @@ async function waitForServer(
         addLoadingLog(
           `[${new Date().toLocaleTimeString()}] Server is ready! (attempt took ${attemptTime}ms, total wait ${totalTime}ms)`,
         )
+        // biome-ignore lint/suspicious/noConsole: startup timing logging
         console.log(
           `[client-startup] waitForServer success: attempt=${attempt}, attemptTime=${attemptTime}ms, totalWait=${totalTime}ms`,
         )
@@ -112,7 +115,7 @@ async function waitForServer(
         return true
       }
     } catch (err) {
-      // Server not ready yet, continue waiting
+      // biome-ignore lint/suspicious/noConsole: startup timing logging
       console.log(
         `[client-startup] waitForServer attempt ${attempt} failed:`,
         err,
@@ -173,6 +176,7 @@ if (typeof window !== 'undefined') {
             logClientTiming('after_waitForServer')
 
             if (!serverReady) {
+              // biome-ignore lint/suspicious/noConsole: error logging for startup
               console.error('[router] Failed to connect to remote server')
               addLoadingLog(
                 `[${new Date().toLocaleTimeString()}] Failed to connect to server`,

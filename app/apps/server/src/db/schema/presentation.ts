@@ -5,7 +5,7 @@ import { bibleVerses } from './bible'
 import { songSlides, songs } from './songs'
 
 // Screen types enum
-export const screenTypes = ['primary', 'stage', 'livestream'] as const
+export const screenTypes = ['primary', 'stage', 'livestream', 'kiosk'] as const
 
 // Content types that can be rendered on screens
 export const contentTypes = [

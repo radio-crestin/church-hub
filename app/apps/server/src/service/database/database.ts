@@ -1,6 +1,5 @@
 import { copyFile, stat, unlink } from 'node:fs/promises'
 
-import { Database } from 'bun:sqlite'
 import { closeDatabase, getRawDatabase } from '../../db/connection'
 import { getDatabasePath, getDataDir } from '../../utils/paths'
 

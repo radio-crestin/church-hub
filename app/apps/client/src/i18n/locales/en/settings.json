@@ -431,6 +431,32 @@
         "testFirst": "Please test the connection before saving"
       }
     },
+    "kiosk": {
+      "title": "Kiosk Mode",
+      "description": "Configure kiosk mode to start the app on a specific page or screen in fullscreen mode.",
+      "enable": {
+        "label": "Enable Kiosk Mode",
+        "description": "When enabled, the app will start on the configured startup page"
+      },
+      "startupPage": {
+        "label": "Startup Page",
+        "description": "Select the page or screen to display when the app starts"
+      },
+      "routes": {
+        "present": "Control Room",
+        "songs": "Songs",
+        "bible": "Bible",
+        "schedules": "Schedules",
+        "livestream": "Livestream",
+        "settings": "Settings"
+      },
+      "screenPrefix": "Screen",
+      "noKioskScreens": "No kiosk screens configured. Create a screen with type 'Kiosk' in the Screens section above to use as a startup display.",
+      "toast": {
+        "saved": "Kiosk settings saved",
+        "error": "Failed to save kiosk settings"
+      }
+    },
     "database": {
       "title": "Database Management",
       "description": "Manage your SQLite database backup and location",

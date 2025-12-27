@@ -9,7 +9,7 @@ interface SidebarItemProps {
   isActive: boolean
   className?: string
   disabled?: boolean
-  onClick?: () => void
+  onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void
 }
 
 export function SidebarItem({

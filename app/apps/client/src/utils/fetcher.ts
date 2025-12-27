@@ -1,4 +1,5 @@
 import { ClientOptions, fetch as tauriFetch } from '@tauri-apps/plugin-http'
+
 import { getStoredApiUrl, getStoredUserToken } from '~/service/api-url'
 
 // Check if we're running in Tauri mode
@@ -50,7 +51,7 @@ export async function fetcher<T>(
 
   // Build headers with auth token if on mobile
   const headers: Record<string, string> = {
-    ...(options?.headers as Record<string, string> ?? {}),
+    ...((options?.headers as Record<string, string>) ?? {}),
   }
 
   // Add auth cookie header for mobile (Tauri HTTP plugin needs explicit Cookie header)

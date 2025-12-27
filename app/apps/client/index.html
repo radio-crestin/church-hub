@@ -28,7 +28,6 @@
       // Capture HTML load time (before any modules)
       window.__htmlLoadTime = performance.now();
       window.__htmlLoadTimestamp = Date.now();
-      console.log('[html-startup] HTML body started at:', new Date().toISOString());
     </script>
     <div id="loading-screen" style="
       position: fixed;
@@ -90,9 +89,7 @@
     <div id="app"></div>
     <div id="portal"></div>
     <script>
-      // Log before module loading starts
-      console.log('[html-startup] Before module load at:', new Date().toISOString(),
-        'HTML parse time:', (performance.now() - window.__htmlLoadTime).toFixed(1) + 'ms');
+      // Module load timing captured in router.tsx
     </script>
     <script type="module" src="/src/router.tsx"></script>
   </body>

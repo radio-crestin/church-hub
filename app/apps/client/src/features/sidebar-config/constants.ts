@@ -1,6 +1,7 @@
 import {
   Book,
   CalendarDays,
+  Monitor,
   Music,
   Radio,
   Settings,
@@ -50,6 +51,13 @@ export const BUILTIN_ITEMS: Record<BuiltInMenuItemId, BuiltInItemDefinition> = {
     icon: Radio,
     labelKey: 'sidebar:navigation.livestream',
     to: '/livestream',
+    permission: 'settings.view',
+  },
+  kiosk: {
+    id: 'kiosk',
+    icon: Monitor,
+    labelKey: 'sidebar:navigation.kiosk',
+    to: '/kiosk', // Special marker - actual navigation handled by sidebar
     permission: 'settings.view',
   },
   settings: {
@@ -103,6 +111,7 @@ export const DEFAULT_SIDEBAR_CONFIG: SidebarConfiguration = {
       isVisible: true,
     },
     // Note: Settings is not configurable - it's fixed at the bottom of the sidebar
+    // Note: Kiosk is not configurable - it's dynamically shown when kiosk mode is enabled
   ],
 }
 

@@ -4,6 +4,7 @@ import type { ContentData, NextSlideData } from './types'
 import {
   calculatePixelBounds,
   getBackgroundCSS,
+  getJustifyContent,
   getTextStyleCSS,
 } from './utils/styleUtils'
 import type {
@@ -285,7 +286,7 @@ export function ScreenContent({
     return (
       <div
         key="clock"
-        className="absolute overflow-hidden flex items-center justify-end"
+        className="absolute overflow-hidden flex items-center"
         style={{
           left: bounds.x * scale,
           top: bounds.y * scale,
@@ -293,6 +294,7 @@ export function ScreenContent({
           height: bounds.height * scale,
           ...getTextStyleCSS(clockConfig.style),
           fontSize: clockConfig.style.maxFontSize * scale,
+          justifyContent: getJustifyContent(clockConfig.style.alignment),
         }}
       >
         {timeString}
@@ -300,9 +302,9 @@ export function ScreenContent({
     )
   }
 
-  // Render next slide section (stage screens)
+  // Render next slide section (configurable per screen)
   const renderNextSlideSection = () => {
-    if (screen.type !== 'stage' || !screen.nextSlideConfig?.enabled) return null
+    if (!screen.nextSlideConfig?.enabled) return null
     const ns = screen.nextSlideConfig
     if (ns.hidden) return null
 

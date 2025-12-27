@@ -21,6 +21,7 @@ declare global {
 async function openInTauriBrowser(url: string): Promise<boolean> {
   // biome-ignore lint/suspicious/noConsole: Debug logging
   console.log('[openInTauriBrowser] Attempting to open:', url)
+  // biome-ignore lint/suspicious/noConsole: Debug logging
   console.log('[openInTauriBrowser] window.__TAURI__:', window.__TAURI__)
 
   // Try global Tauri API first (available when withGlobalTauri: true)

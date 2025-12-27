@@ -75,7 +75,9 @@ export function useYouTubeAuth() {
   const openLoginPopup = useCallback(async () => {
     // biome-ignore lint/suspicious/noConsole: Debug logging
     console.log('[useYouTubeAuth] openLoginPopup called')
+    // biome-ignore lint/suspicious/noConsole: Debug logging
     console.log('[useYouTubeAuth] YOUTUBE_OAUTH_SERVER:', YOUTUBE_OAUTH_SERVER)
+    // biome-ignore lint/suspicious/noConsole: Debug logging
     console.log('[useYouTubeAuth] isTauri:', isTauri())
 
     if (!YOUTUBE_OAUTH_SERVER) {

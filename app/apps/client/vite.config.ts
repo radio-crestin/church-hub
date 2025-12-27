@@ -50,6 +50,7 @@ function killPortProcess(port: number): void {
       }
     }
     for (const pid of pids) {
+      // biome-ignore lint/suspicious/noConsole: vite config logging
       console.log(`[vite] Killing stale process ${pid} on port ${port}`)
       try {
         execSync(`powershell -Command "Stop-Process -Id ${pid} -Force"`, {
@@ -81,7 +82,7 @@ function socketErrorHandler(): Plugin {
           if (err.code === 'ECONNRESET' || err.code === 'EPIPE') {
             return
           }
-          // Log other socket errors for debugging
+          // biome-ignore lint/suspicious/noConsole: vite config logging
           console.error('[vite] Socket error:', err.message)
         })
       })

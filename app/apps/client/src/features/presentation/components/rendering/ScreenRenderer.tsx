@@ -1,3 +1,4 @@
+import { useNavigate } from '@tanstack/react-router'
 import { fetch as tauriFetch } from '@tauri-apps/plugin-http'
 import { Maximize, Minimize } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -9,6 +10,7 @@ import type { ContentData, NextSlideData } from './types'
 import { calculateNextSlideData, getBackgroundCSS } from './utils'
 import { getNextVerse } from '../../../bible/service/bible'
 import type { BibleVerse } from '../../../bible/types'
+import { useKioskSettings } from '../../../kiosk'
 import type { QueueItem } from '../../../queue/types'
 import type { SongSlide } from '../../../songs/types'
 import {
@@ -44,10 +46,18 @@ interface ScreenRendererProps {
 
 export function ScreenRenderer({ screenId }: ScreenRendererProps) {
   useWebSocket()
+  const navigate = useNavigate()
 
   const { data: presentationState } = usePresentationState()
   const { data: screen, isLoading, isError } = useScreen(screenId)
   const upsertScreen = useUpsertScreen()
+  const { data: kioskSettings } = useKioskSettings()
+
+  // Determine if current screen is being viewed in kiosk mode context
+  const isKioskModeScreen =
+    kioskSettings?.enabled === true &&
+    kioskSettings?.startupPage?.type === 'screen' &&
+    kioskSettings?.startupPage?.screenId === screenId
 
   const containerRef = useRef<HTMLDivElement>(null)
   const [contentData, setContentData] = useState<ContentData | null>(null)
@@ -403,8 +413,8 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
           if (currentSlide) {
             setContentType('song')
             setContentData({ mainText: currentSlide.content })
-            // For stage screens, show next slide preview
-            if (screen?.type === 'stage') {
+            // Show next slide preview if enabled in screen config
+            if (screen?.nextSlideConfig?.enabled) {
               const nextSlide =
                 temp.data.slides[temp.data.currentSlideIndex + 1]
               if (nextSlide) {
@@ -523,8 +533,8 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
         setContentType(foundContentType)
         setContentData(foundContentData)
 
-        // Calculate next slide for stage screens
-        if (screen?.type === 'stage') {
+        // Calculate next slide if enabled in screen config
+        if (screen?.nextSlideConfig?.enabled) {
           // Check if we need to fetch next Bible verse (when at end of Bible content with no next queue item)
           let nextBibleVerse: BibleVerse | null = null
           const currentItemIndex = queueItems.findIndex(
@@ -644,14 +654,28 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
           }, 1000)
         }}
       >
-        <button
-          type="button"
-          onClick={toggleFullscreen}
-          className="p-2 rounded-lg bg-black/50 hover:bg-black/70 text-white transition-colors"
-          title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-        >
-          {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
-        </button>
+        <div className="flex gap-2">
+          {/* For kiosk screens (by type or kiosk mode), show exit button */}
+          {screen?.type === 'kiosk' || isKioskModeScreen ? (
+            <button
+              type="button"
+              onClick={() => navigate({ to: '/settings' })}
+              className="p-2 rounded-lg bg-black/50 hover:bg-black/70 text-white transition-colors"
+              title="Exit Kiosk"
+            >
+              <Minimize size={20} />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={toggleFullscreen}
+              className="p-2 rounded-lg bg-black/50 hover:bg-black/70 text-white transition-colors"
+              title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+            >
+              {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
+            </button>
+          )}
+        </div>
       </div>
 
       {containerSize.width > 0 && containerSize.height > 0 && (

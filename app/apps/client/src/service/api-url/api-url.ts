@@ -20,7 +20,10 @@ const AUTH_URL_PATTERN = /\/api\/auth\/user\/(usr_[A-Za-z0-9_]+)$/
  * Input: http://192.168.88.12:3000/api/auth/user/usr_P7qMH2S1iFKVoJxX6c6uvUp8_D36OYju
  * Returns: { baseUrl: 'http://192.168.88.12:3000', userToken: 'usr_P7qMH2S1iFKVoJxX6c6uvUp8_D36OYju' }
  */
-export function parseAuthUrl(url: string): { baseUrl: string; userToken: string | null } {
+export function parseAuthUrl(url: string): {
+  baseUrl: string
+  userToken: string | null
+} {
   const match = url.match(AUTH_URL_PATTERN)
   if (match) {
     const userToken = match[1]
@@ -77,8 +80,8 @@ export function setApiUrl(url: string): void {
       // Set cookie for API authentication
       document.cookie = `user_auth=${userToken}; path=/; SameSite=Lax`
     }
-  } catch (error) {
-    console.error('Failed to save API URL:', error)
+  } catch {
+    // Silently fail - storage errors are not critical
   }
 }
 
@@ -92,9 +95,10 @@ export function clearApiUrl(): void {
     localStorage.removeItem(API_URL_STORAGE_KEY)
     localStorage.removeItem(USER_AUTH_STORAGE_KEY)
     // Clear cookie
-    document.cookie = 'user_auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-  } catch (error) {
-    console.error('Failed to clear API URL:', error)
+    document.cookie =
+      'user_auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+  } catch {
+    // Silently fail - storage errors are not critical
   }
 }
 
@@ -117,7 +121,9 @@ export function isValidApiUrl(url: string): boolean {
  * If the URL contains an auth token, also verifies the token is valid
  * Returns { success: boolean, error?: string }
  */
-export async function testApiConnection(url: string): Promise<{ success: boolean; error?: string }> {
+export async function testApiConnection(
+  url: string,
+): Promise<{ success: boolean; error?: string }> {
   try {
     const { baseUrl, userToken } = parseAuthUrl(url)
 

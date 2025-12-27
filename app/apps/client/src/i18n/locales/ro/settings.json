@@ -431,6 +431,32 @@
         "testFirst": "Te rugăm să testezi conexiunea înainte de a salva"
       }
     },
+    "kiosk": {
+      "title": "Mod Kiosk",
+      "description": "Configurează modul kiosk pentru a porni aplicația pe o pagină sau ecran specific în modul fullscreen.",
+      "enable": {
+        "label": "Activează Modul Kiosk",
+        "description": "Când este activat, aplicația va porni pe pagina de start configurată"
+      },
+      "startupPage": {
+        "label": "Pagina de Start",
+        "description": "Selectează pagina sau ecranul de afișat când pornește aplicația"
+      },
+      "routes": {
+        "present": "Cameră de Control",
+        "songs": "Cântări",
+        "bible": "Biblie",
+        "schedules": "Programe",
+        "livestream": "Transmisiune Live",
+        "settings": "Setări"
+      },
+      "screenPrefix": "Ecran",
+      "noKioskScreens": "Niciun ecran kiosk configurat. Creează un ecran de tip 'Kiosk' în secțiunea Ecrane de mai sus pentru a-l folosi ca afișaj de pornire.",
+      "toast": {
+        "saved": "Setările kiosk au fost salvate",
+        "error": "Nu s-au putut salva setările kiosk"
+      }
+    },
     "database": {
       "title": "Administrare Bază de Date",
       "description": "Administrează locația și backup-ul bazei de date SQLite",
