@@ -1,10 +1,13 @@
-import { Monitor, PlayCircle } from 'lucide-react'
+import { Bug, Monitor, PlayCircle } from 'lucide-react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useScreens } from '~/features/presentation'
+import { Button } from '~/ui/button'
 import { Combobox } from '~/ui/combobox'
 import { Switch } from '~/ui/switch/Switch'
 import { useToast } from '~/ui/toast/useToast'
+import { KioskScreenDimOverlay } from './KioskScreenDimOverlay'
 import {
   useKioskSettings,
   useUpdateKioskSettings,
@@ -15,6 +18,7 @@ import { KIOSK_ROUTE_OPTIONS } from '../types'
 export function KioskSettingsSection() {
   const { t } = useTranslation('settings')
   const { showToast } = useToast()
+  const [showDebugOverlay, setShowDebugOverlay] = useState(false)
 
   const { data: settings, isLoading } = useKioskSettings()
   const updateSettings = useUpdateKioskSettings()
@@ -124,6 +128,33 @@ export function KioskSettingsSection() {
           {t('sections.kiosk.startupPage.description')}
         </p>
       </div>
+
+      {/* Debug: Test Screen Dim Overlay */}
+      {import.meta.env.DEV && (
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-2 mb-2">
+            <Bug className="w-4 h-4 text-yellow-600" />
+            <span className="text-sm font-medium text-yellow-600">
+              Debug Tools
+            </span>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowDebugOverlay(true)}
+          >
+            Test Screen Dim Overlay
+          </Button>
+          <p className="text-gray-500 dark:text-gray-500 text-xs mt-1">
+            Tap anywhere on the overlay to dismiss it
+          </p>
+        </div>
+      )}
+
+      {/* Debug Overlay */}
+      {showDebugOverlay && (
+        <KioskScreenDimOverlay onDismiss={() => setShowDebugOverlay(false)} />
+      )}
     </div>
   )
 }
