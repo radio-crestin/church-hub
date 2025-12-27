@@ -22,7 +22,6 @@ interface ScreenContentProps {
   showClock?: boolean
   isVisible?: boolean
   nextSlideData?: NextSlideData
-  fillContainer?: boolean
 }
 
 export function ScreenContent({
@@ -34,7 +33,6 @@ export function ScreenContent({
   showClock = true,
   isVisible = true,
   nextSlideData,
-  fillContainer = false,
 }: ScreenContentProps) {
   const config = screen.contentConfigs[contentType]
   // Always use screen dimensions for bounds calculations
@@ -43,12 +41,10 @@ export function ScreenContent({
   const canvasHeight = screen.height
 
   // Calculate scale to transform from screen space to container space
+  // Always use Math.min to ensure content fits within container (responsive to any size)
   const scaleX = containerWidth / canvasWidth
   const scaleY = containerHeight / canvasHeight
-  // fillContainer: use max scale to fill (may crop), otherwise min to fit (may have black bars)
-  const scale = fillContainer
-    ? Math.max(scaleX, scaleY)
-    : Math.min(scaleX, scaleY)
+  const scale = Math.min(scaleX, scaleY)
 
   // Calculate actual display size (centered if aspect ratio differs)
   const displayWidth = canvasWidth * scale
