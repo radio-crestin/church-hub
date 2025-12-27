@@ -6,7 +6,11 @@ import {
   MIDISettingsProvider,
   ShortcutRecordingProvider,
 } from '~/features/keyboard-shortcuts'
-import { KioskScreenDimManager, KioskWakeLockManager } from '~/features/kiosk'
+import {
+  KioskFullscreenManager,
+  KioskScreenDimManager,
+  KioskWakeLockManager,
+} from '~/features/kiosk'
 import { useAutoOpenScreens } from '~/features/presentation/hooks'
 import { PptxDropZoneProvider } from '~/features/song-import'
 import { I18nProvider } from '~/provider/i18n-provider'
@@ -43,6 +47,7 @@ function ScreenLayout() {
     <ThemeProvider>
       <QueryClientProvider>
         <KioskWakeLockManager />
+        <KioskFullscreenManager />
         <KioskScreenDimManager />
         <Outlet />
       </QueryClientProvider>
@@ -58,6 +63,7 @@ function MainLayout() {
     <ThemeProvider>
       <QueryClientProvider>
         <KioskWakeLockManager />
+        <KioskFullscreenManager />
         <KioskScreenDimManager />
         <PermissionsProvider>
           <I18nProvider>
