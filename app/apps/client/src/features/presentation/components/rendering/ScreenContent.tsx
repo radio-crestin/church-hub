@@ -321,43 +321,26 @@ export function ScreenContent({
       height: bounds.height * scale,
     }
     const padding = 16 * scale
-    const labelHeight = ns.labelStyle.maxFontSize * scale + 8 * scale
-    const _contentHeight = scaledBounds.height - padding * 2 - labelHeight
+    const gap = 8 * scale
 
-    // Render content based on whether we have versete_tineri summary
-    const renderNextSlideContent = () => {
+    // Calculate heights for label and content
+    // Label takes a portion based on its style, content gets the rest
+    const labelHeight = Math.min(
+      scaledBounds.height * 0.3,
+      ns.labelStyle.maxFontSize * scale * 1.5,
+    )
+    const contentHeight = scaledBounds.height - padding * 2 - labelHeight - gap
+
+    // Get content text
+    const getContentText = () => {
       if (nextSlideData?.verseteTineriSummary) {
         const { entries, hasMore } = nextSlideData.verseteTineriSummary
-        return (
-          <span
-            style={{
-              ...getTextStyleCSS(ns.contentStyle),
-              fontSize: ns.contentStyle.maxFontSize * scale,
-            }}
-          >
-            {entries.map((entry, index) => (
-              <span key={index}>
-                {entry.personName} - {entry.reference}
-                {index < entries.length - 1 && ' • '}
-              </span>
-            ))}
-            {hasMore && ' ...'}
-          </span>
-        )
+        const text = entries
+          .map((entry) => `${entry.personName} - ${entry.reference}`)
+          .join(' • ')
+        return hasMore ? `${text} ...` : text
       }
-
-      const preview = nextSlideData?.preview || ''
-      if (!preview) return null
-
-      return (
-        <span
-          style={{
-            ...getTextStyleCSS(ns.contentStyle),
-            fontSize: ns.contentStyle.maxFontSize * scale,
-          }}
-          dangerouslySetInnerHTML={{ __html: preview }}
-        />
-      )
+      return nextSlideData?.preview || '—'
     }
 
     return (
@@ -372,28 +355,36 @@ export function ScreenContent({
           padding,
           display: 'flex',
           flexDirection: 'column',
+          gap,
           ...getBackgroundCSS(ns.background),
         }}
       >
-        <div
-          style={{
-            ...getTextStyleCSS(ns.labelStyle),
-            fontSize: ns.labelStyle.maxFontSize * scale,
-            flexShrink: 0,
-          }}
-        >
-          {ns.labelText}
+        <div style={{ height: labelHeight, flexShrink: 0 }}>
+          <TextContent
+            content={ns.labelText}
+            style={{
+              ...ns.labelStyle,
+              maxFontSize: ns.labelStyle.maxFontSize * scale,
+              minFontSize: (ns.labelStyle.minFontSize ?? 12) * scale,
+            }}
+            containerWidth={scaledBounds.width - padding * 2}
+            containerHeight={labelHeight}
+          />
         </div>
-        <div
-          style={{
-            marginTop: 8 * scale,
-            flex: 1,
-            overflow: 'hidden',
-            whiteSpace: 'nowrap',
-            textOverflow: 'ellipsis',
-          }}
-        >
-          {renderNextSlideContent()}
+        <div style={{ flex: 1, minHeight: 0 }}>
+          <TextContent
+            content={getContentText()}
+            style={{
+              ...ns.contentStyle,
+              maxFontSize: ns.contentStyle.maxFontSize * scale,
+              minFontSize: (ns.contentStyle.minFontSize ?? 12) * scale,
+            }}
+            containerWidth={scaledBounds.width - padding * 2}
+            containerHeight={contentHeight}
+            isHtml={
+              !!nextSlideData?.preview && !nextSlideData?.verseteTineriSummary
+            }
+          />
         </div>
       </div>
     )
