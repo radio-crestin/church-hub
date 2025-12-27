@@ -185,26 +185,40 @@ import {
   type WebSocketData,
 } from './websocket'
 
-async function main() {
-  // Initialize database (Drizzle ORM wrapper) and run migrations
-  const { migrationResult } = await initializeDatabase()
+// Startup timing helper
+const startupStart = performance.now()
+const logTiming = (label: string, start: number) => {
+  // biome-ignore lint/suspicious/noConsole: Startup timing logs
+  console.log(`[startup] ${label}: ${(performance.now() - start).toFixed(1)}ms`)
+}
 
-  // Only rebuild search indexes when FTS tables were recreated
-  if (migrationResult.ftsRecreated) {
-    rebuildSearchIndex()
-    rebuildScheduleSearchIndex()
-  }
+async function main() {
+  // biome-ignore lint/suspicious/noConsole: Startup timing logs
+  console.log('[startup] === Server Starting ===')
+
+  // Initialize database (Drizzle ORM wrapper) and run migrations
+  let t = performance.now()
+  const { migrationResult } = await initializeDatabase()
+  logTiming('database_init', t)
+
+  // Note: Search index rebuild is deferred to after server starts (if ftsRecreated is true)
 
   // Clear the presentation queue and displayed slide on startup to ensure a clean state
+  t = performance.now()
   clearQueue()
   stopPresentation()
+  logTiming('clear_queue_and_presentation', t)
 
   // Seed RCCV Bible translation if no translations exist
+  t = performance.now()
   ensureRCCVExists()
+  logTiming('ensure_rccv_exists', t)
 
   // Initialize system API token
+  t = performance.now()
   const { token: systemToken, isNew: isNewToken } =
     await getOrCreateSystemToken()
+  logTiming('init_system_token', t)
   if (isNewToken && systemToken) {
     // biome-ignore lint/suspicious/noConsole: Important system message that must be displayed
     console.log('========================================')
@@ -219,28 +233,11 @@ async function main() {
   }
 
   // Wire up OBS callbacks to WebSocket broadcasts
+  t = performance.now()
   initializeOBSCallbacks()
+  logTiming('init_obs_callbacks', t)
 
-  // Initialize MIDI service
-  initializeMIDI()
-
-  // Wire up MIDI message callback to WebSocket broadcast
-  setMessageCallback((message) => {
-    broadcastMIDIMessage(message)
-  })
-
-  // Wire up MIDI WebSocket message handler for LED control
-  setMIDIMessageHandler((type, payload) => {
-    if (type === 'midi_set_led') {
-      const { note, on } = payload as { note: number; on: boolean }
-      setLED(note, on)
-    } else if (type === 'midi_set_all_leds') {
-      const { ledStates } = payload as {
-        ledStates: Array<{ note: number; on: boolean }>
-      }
-      setAllLEDs(ledStates)
-    }
-  })
+  // Note: MIDI initialization is deferred to after server starts
 
   const isProd = process.env.NODE_ENV === 'production'
 
@@ -264,6 +261,8 @@ async function main() {
 
   // biome-ignore lint/suspicious/noConsole: Startup logging
   console.log('[server] Starting with simple auth (localhost = admin)')
+
+  t = performance.now()
 
   function handleCors(req: Request, res: Response) {
     // Get the origin from the request, or use port 3000 as fallback (unified port)
@@ -3768,12 +3767,59 @@ async function main() {
     },
   })
 
+  logTiming('bun_server_bind', t)
+
   // biome-ignore lint/suspicious/noConsole: <>
   console.log(`Bun server running at ${server.url}`)
 
   // Start permanent OBS connection if auto-connect is enabled
   // This must be done AFTER the WebSocket server starts so clients can receive status broadcasts
+  t = performance.now()
   initializeOBSAutoConnect()
+  logTiming('init_obs_auto_connect', t)
+
+  // Initialize MIDI service (deferred to after server is ready for faster /ping response)
+  t = performance.now()
+  initializeMIDI()
+  logTiming('init_midi', t)
+
+  // Wire up MIDI message callback to WebSocket broadcast
+  setMessageCallback((message) => {
+    broadcastMIDIMessage(message)
+  })
+
+  // Wire up MIDI WebSocket message handler for LED control
+  setMIDIMessageHandler((type, payload) => {
+    if (type === 'midi_set_led') {
+      const { note, on } = payload as { note: number; on: boolean }
+      setLED(note, on)
+    } else if (type === 'midi_set_all_leds') {
+      const { ledStates } = payload as {
+        ledStates: Array<{ note: number; on: boolean }>
+      }
+      setAllLEDs(ledStates)
+    }
+  })
+
+  // biome-ignore lint/suspicious/noConsole: Startup timing logs
+  console.log(
+    `[startup] === Server Ready (total: ${(performance.now() - startupStart).toFixed(1)}ms) ===`,
+  )
+
+  // Rebuild search indexes in background if FTS tables were just created (first run)
+  if (migrationResult.ftsRecreated) {
+    // biome-ignore lint/suspicious/noConsole: Startup timing logs
+    console.log('[startup] Starting background search index rebuild...')
+    setTimeout(() => {
+      const rebuildStart = performance.now()
+      rebuildSearchIndex()
+      rebuildScheduleSearchIndex()
+      // biome-ignore lint/suspicious/noConsole: Startup timing logs
+      console.log(
+        `[startup] Background search index rebuild complete: ${(performance.now() - rebuildStart).toFixed(1)}ms`,
+      )
+    }, 0)
+  }
 
   // Graceful shutdown
   process.on('SIGINT', () => {

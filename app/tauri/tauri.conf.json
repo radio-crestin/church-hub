@@ -19,7 +19,9 @@
         "height": 800,
         "center": true,
         "resizable": true,
-        "decorations": true
+        "decorations": true,
+        "transparent": false,
+        "backgroundColor": "#030712"
       }
     ],
     "security": {

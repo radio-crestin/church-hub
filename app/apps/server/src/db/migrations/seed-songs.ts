@@ -47,6 +47,15 @@ const FIXTURE_PATH = join(import.meta.dir, '../fixtures/default-songs.json')
  * 2. Run: bun run fixtures
  */
 export function seedSongs(db: Database): void {
+  // Check if songs already exist in database BEFORE loading large fixture file
+  const existingCount = db
+    .query<{ count: number }, []>('SELECT COUNT(*) as count FROM songs')
+    .get()?.count
+  if (existingCount && existingCount > 0) {
+    log('info', `Songs already seeded (${existingCount} songs), skipping fixture load`)
+    return
+  }
+
   log('debug', 'Checking if songs fixture exists...')
 
   if (!existsSync(FIXTURE_PATH)) {

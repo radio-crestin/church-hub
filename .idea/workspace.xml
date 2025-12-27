@@ -6,6 +6,20 @@
   <component name="ChangeListManager">
     <list default="true" id="66517e3f-2e4e-43cc-880d-deb242368f0c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TODO.md" beforeDir="false" afterPath="$PROJECT_DIR$/TODO.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/router.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/router.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/vite-env.d.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/vite-env.d.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/vite.config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/vite.config.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/connection.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/connection.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/fts.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/fts.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/migrations/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/migrations/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/migrations/seed-bibles.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/migrations/seed-bibles.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/migrations/seed-songs.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/migrations/seed-songs.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/tauri/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/src/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/tauri/src/server.rs" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/src/server.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/tauri/tauri.conf.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/tauri.conf.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -34,48 +48,49 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;SHELLCHECK.PATH&quot;: &quot;/Users/iosif/Library/Application Support/JetBrains/IntelliJIdea2025.2/plugins/Shell Script/shellcheck&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/iosif/Documents/Projects/church-hub/scripts&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;bun&quot;,
-    &quot;npm.compile.executor&quot;: &quot;Run&quot;,
-    &quot;npm.deploy:prod.executor&quot;: &quot;Run&quot;,
-    &quot;npm.dev (1).executor&quot;: &quot;Run&quot;,
-    &quot;npm.dev (2).executor&quot;: &quot;Run&quot;,
-    &quot;npm.dev (3).executor&quot;: &quot;Run&quot;,
-    &quot;npm.dev.executor&quot;: &quot;Run&quot;,
-    &quot;npm.dev:tauri.executor&quot;: &quot;Run&quot;,
-    &quot;npm.fixtures.executor&quot;: &quot;Run&quot;,
-    &quot;npm.fixtures:screens.executor&quot;: &quot;Run&quot;,
-    &quot;npm.lint.executor&quot;: &quot;Run&quot;,
-    &quot;npm.tauri:dev.executor&quot;: &quot;Run&quot;,
-    &quot;npm.tsc:check.executor&quot;: &quot;Run&quot;,
-    &quot;org.rust.first.attach.projects&quot;: &quot;true&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.5&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.black.configuration.BlackFormatterConfigurable&quot;,
-    &quot;ts.external.directory.path&quot;: &quot;/Users/iosif/Documents/Projects/church-hub/app/node_modules/typescript/lib&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "SHELLCHECK.PATH": "/Users/iosif/Library/Application Support/JetBrains/IntelliJIdea2025.2/plugins/Shell Script/shellcheck",
+    "git-widget-placeholder": "main",
+    "ignore.virus.scanning.warn.message": "true",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "/Users/iosif/Documents/Projects/church-hub/scripts",
+    "node.js.detected.package.eslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "nodejs_package_manager_path": "bun",
+    "npm.compile.executor": "Run",
+    "npm.deploy:prod.executor": "Run",
+    "npm.dev (1).executor": "Run",
+    "npm.dev (2).executor": "Run",
+    "npm.dev (3).executor": "Run",
+    "npm.dev.executor": "Run",
+    "npm.dev:tauri.executor": "Run",
+    "npm.fixtures.executor": "Run",
+    "npm.fixtures:screens.executor": "Run",
+    "npm.lint.executor": "Run",
+    "npm.tauri:dev.executor": "Run",
+    "npm.tsc:check.executor": "Run",
+    "org.rust.first.attach.projects": "true",
+    "project.structure.last.edited": "Modules",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.5",
+    "settings.editor.selected.configurable": "com.jetbrains.python.black.configuration.BlackFormatterConfigurable",
+    "ts.external.directory.path": "/Users/iosif/Documents/Projects/church-hub/app/node_modules/typescript/lib",
+    "vue.rearranger.settings.migration": "true"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;DatabaseDriversLRU&quot;: [
-      &quot;sqlite&quot;
+  "keyToStringList": {
+    "DatabaseDriversLRU": [
+      "sqlite"
     ],
-    &quot;com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File&quot;: [
-      &quot;TEXT&quot;
+    "com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File": [
+      "TEXT"
     ]
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/scripts" />

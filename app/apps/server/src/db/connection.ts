@@ -33,30 +33,47 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
  * Returns both the database instance and migration result
  */
 export async function initializeDatabase(): Promise<InitializeResult> {
+  const logTiming = (label: string, start: number) => {
+    // biome-ignore lint/suspicious/noConsole: Startup timing logs
+    console.log(
+      `[startup] ${label}: ${(performance.now() - start).toFixed(1)}ms`,
+    )
+  }
+
   try {
     log('info', `Initializing database at: ${DATABASE_PATH}`)
 
     // Ensure data directory exists
+    let t = performance.now()
     const dbDir = dirname(DATABASE_PATH)
     await mkdir(dbDir, { recursive: true })
+    logTiming('db_mkdir', t)
     log('debug', `Data directory ensured: ${dbDir}`)
 
     // Create database connection using Bun's built-in SQLite
+    t = performance.now()
     sqlite = new Database(DATABASE_PATH, { create: true })
+    logTiming('sqlite_connect', t)
 
     // Enable WAL mode for better concurrency
+    t = performance.now()
     sqlite.run('PRAGMA journal_mode = WAL')
 
     // Enable foreign keys
     sqlite.run('PRAGMA foreign_keys = ON')
+    logTiming('sqlite_pragma', t)
 
     // Initialize Drizzle ORM with schema
+    t = performance.now()
     db = drizzle(sqlite, { schema })
+    logTiming('drizzle_init', t)
 
     log('info', 'Database connection established with Drizzle ORM')
 
     // Run migrations
+    t = performance.now()
     const migrationResult = runMigrations(db, sqlite)
+    logTiming('run_migrations', t)
 
     return { db, migrationResult }
   } catch (error) {

@@ -42,11 +42,14 @@ pub fn start_server(app_handle: &AppHandle, server_port: u16) -> Result<(), Stri
         }
     }
 
+    let t = Instant::now();
     let shell = app_handle.shell();
     let mut sidecar = shell
         .sidecar("church-hub-sidecar")
         .map_err(|err| err.to_string())?;
+    println!("[startup] sidecar_create: {:?}", t.elapsed());
 
+    let t = Instant::now();
     sidecar = sidecar.env("TZ", "UTC");
     sidecar = sidecar.env("NODE_ENV", "production");
     sidecar = sidecar.env("TAURI_MODE", "true");
@@ -58,8 +61,11 @@ pub fn start_server(app_handle: &AppHandle, server_port: u16) -> Result<(), Stri
         println!("[sidecar] Client dist path: {}", resource_path);
         sidecar = sidecar.env("CLIENT_DIST_PATH", resource_path);
     }
+    println!("[startup] sidecar_env_setup: {:?}", t.elapsed());
 
+    let t = Instant::now();
     let (mut rx, child) = sidecar.spawn().map_err(|err| err.to_string())?;
+    println!("[startup] sidecar_process_spawn: {:?}", t.elapsed());
 
     if let Some(app_state) = app_handle.try_state::<AppState>() {
         let mut server_lock = app_state.server.lock();
