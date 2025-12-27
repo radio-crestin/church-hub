@@ -21,7 +21,8 @@
         "resizable": true,
         "decorations": true,
         "transparent": false,
-        "backgroundColor": "#030712"
+        "backgroundColor": "#030712",
+        "backgroundThrottling": "disabled"
       }
     ],
     "security": {

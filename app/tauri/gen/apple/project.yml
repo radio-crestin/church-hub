@@ -2,7 +2,7 @@ name: church-hub
 options:
   bundleIdPrefix: com.church-hub
   deploymentTarget:
-    iOS: 14.0
+    iOS: 17.0
 fileGroups: [../../src]
 configs:
   debug: debug

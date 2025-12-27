@@ -51,6 +51,7 @@
       "identifier": "http:default",
       "allow": [{ "url": "https://*:*" }, { "url": "http://*:*" }]
     },
+    "websocket:default",
     "global-shortcut:allow-register",
     "global-shortcut:allow-unregister",
     "global-shortcut:allow-unregister-all",
