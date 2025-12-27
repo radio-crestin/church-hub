@@ -61,7 +61,8 @@ pub fn run() {
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_websocket::init());
+        .plugin(tauri_plugin_websocket::init())
+        .plugin(tauri_plugin_keep_screen_on::init());
     println!("[startup] plugins_core: {:?}", t.elapsed());
 
     // Global shortcut plugin is desktop-only
