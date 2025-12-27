@@ -336,9 +336,24 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
 
   // Show toolbar on touch near the top
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    const threshold = 60 // pixels from top
+    // Use larger threshold for mobile to account for iOS safe area insets
+    const threshold = isMobile() ? 120 : 60
     const touch = e.touches[0]
     if (touch && touch.clientY < threshold) {
+      setShowToolbar(true)
+      if (toolbarTimeoutRef.current) {
+        clearTimeout(toolbarTimeoutRef.current)
+      }
+      toolbarTimeoutRef.current = setTimeout(() => {
+        setShowToolbar(false)
+      }, 3000)
+    }
+  }, [])
+
+  // Show toolbar on click near the top
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    const threshold = isMobile() ? 120 : 60
+    if (e.clientY < threshold) {
       setShowToolbar(true)
       if (toolbarTimeoutRef.current) {
         clearTimeout(toolbarTimeoutRef.current)
@@ -359,18 +374,46 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
   }, [])
 
   // Make html and body transparent for screen display (allows user-configured backgrounds)
+  // In kiosk mode with a screen, lock dimensions to screen size and disable scrolling
   useEffect(() => {
-    const originalHtmlBg = document.documentElement.style.backgroundColor
-    const originalBodyBg = document.body.style.backgroundColor
+    const html = document.documentElement
+    const body = document.body
 
-    document.documentElement.style.backgroundColor = 'transparent'
-    document.body.style.backgroundColor = 'transparent'
+    // Store original styles
+    const originalHtmlBg = html.style.backgroundColor
+    const originalBodyBg = body.style.backgroundColor
+    const originalHtmlOverflow = html.style.overflow
+    const originalBodyOverflow = body.style.overflow
+    const originalHtmlWidth = html.style.width
+    const originalHtmlHeight = html.style.height
+    const originalBodyWidth = body.style.width
+    const originalBodyHeight = body.style.height
+
+    // Set transparent background
+    html.style.backgroundColor = 'transparent'
+    body.style.backgroundColor = 'transparent'
+
+    // In kiosk mode with a screen, lock to screen dimensions and disable scrolling
+    if (isKioskModeScreen && screen) {
+      html.style.overflow = 'hidden'
+      body.style.overflow = 'hidden'
+      html.style.width = `${screen.width}px`
+      html.style.height = `${screen.height}px`
+      body.style.width = `${screen.width}px`
+      body.style.height = `${screen.height}px`
+    }
 
     return () => {
-      document.documentElement.style.backgroundColor = originalHtmlBg
-      document.body.style.backgroundColor = originalBodyBg
+      html.style.backgroundColor = originalHtmlBg
+      body.style.backgroundColor = originalBodyBg
+      html.style.overflow = originalHtmlOverflow
+      body.style.overflow = originalBodyOverflow
+      html.style.width = originalHtmlWidth
+      html.style.height = originalHtmlHeight
+      body.style.width = originalBodyWidth
+      body.style.height = originalBodyHeight
     }
-  }, [])
+  }, [isKioskModeScreen, screen])
 
   // Handle keyboard shortcuts
   useEffect(() => {
@@ -652,6 +695,7 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
       onDoubleClick={toggleFullscreen}
       onMouseMove={handleMouseMove}
       onTouchStart={handleTouchStart}
+      onClick={handleClick}
     >
       {/* Floating toolbar */}
       <div
