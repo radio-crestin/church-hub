@@ -18,6 +18,7 @@ import {
 } from '~/features/bible'
 import {
   useClearSlide,
+  useNavigateTemporary,
   usePresentationState,
   usePresentTemporaryBible,
 } from '~/features/presentation'
@@ -39,6 +40,7 @@ function BiblePage() {
   } = useSelectedBibleTranslations()
   const presentTemporaryBible = usePresentTemporaryBible()
   const clearSlide = useClearSlide()
+  const navigateTemporary = useNavigateTemporary()
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [dividerPosition, setDividerPosition] = useState(40) // percentage
@@ -127,6 +129,42 @@ function BiblePage() {
       })
     }
   }, [presentationState, currentVerse, temporaryBooks, navigation])
+
+  // Sync navigation when server moves to a different chapter (e.g., via navigateTemporary)
+  useEffect(() => {
+    // Only sync after initial navigation has happened
+    if (!hasNavigatedOnOpen.current) return
+
+    if (presentationState?.temporaryContent?.type === 'bible') {
+      const tempData = presentationState.temporaryContent.data
+      const book = temporaryBooks.find((b) => b.id === tempData.bookId)
+
+      // Check if the server moved to a different chapter than what we're showing
+      const serverChapter = tempData.chapter
+      const serverVerseIndex = tempData.currentVerseIndex
+      const currentChapter = navigation.state.chapter
+      const currentBookId = navigation.state.bookId
+
+      if (
+        book &&
+        (currentChapter !== serverChapter || currentBookId !== tempData.bookId)
+      ) {
+        // Server moved to a different chapter, sync the UI
+        navigation.navigateToChapter({
+          bookId: tempData.bookId,
+          bookName: book.bookName,
+          chapter: serverChapter,
+          verseIndex: serverVerseIndex,
+        })
+      } else if (
+        currentChapter === serverChapter &&
+        currentBookId === tempData.bookId
+      ) {
+        // Same chapter but possibly different verse, update the presented index
+        navigation.presentVerse(serverVerseIndex)
+      }
+    }
+  }, [presentationState?.temporaryContent, temporaryBooks, navigation])
 
   // Get verses for the current selection
   const { data: verses = [] } = useVerses(
@@ -241,10 +279,9 @@ function BiblePage() {
       return
     }
 
-    // End of chapter - end presentation
-    navigation.clearPresentation()
-    await clearSlide.mutateAsync()
-  }, [navigation, verses, presentVerseToScreen, clearSlide])
+    // End of chapter - use server-side navigation to move to next chapter
+    await navigateTemporary.mutateAsync('next')
+  }, [navigation, verses, presentVerseToScreen, navigateTemporary])
 
   const handlePreviousVerse = useCallback(async () => {
     const currentIndex =
