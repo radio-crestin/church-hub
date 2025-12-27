@@ -40,17 +40,25 @@ export function ScreenContent({
   const canvasWidth = screen.width
   const canvasHeight = screen.height
 
-  // Calculate scale to transform from screen space to container space
-  // Always use Math.min to ensure content fits within container (responsive to any size)
+  // Calculate separate X and Y scales to stretch-fill the container
+  // This ensures content fills the entire viewport regardless of aspect ratio
   const scaleX = containerWidth / canvasWidth
   const scaleY = containerHeight / canvasHeight
-  const scale = Math.min(scaleX, scaleY)
+  // Use minimum scale for fonts to avoid excessive distortion
+  const fontScale = Math.min(scaleX, scaleY)
 
-  // Calculate actual display size (centered if aspect ratio differs)
-  const displayWidth = canvasWidth * scale
-  const displayHeight = canvasHeight * scale
-  const offsetX = (containerWidth - displayWidth) / 2
-  const offsetY = (containerHeight - displayHeight) / 2
+  // Helper to scale bounds with separate X/Y scaling
+  const scaleBounds = (bounds: {
+    x: number
+    y: number
+    width: number
+    height: number
+  }) => ({
+    x: bounds.x * scaleX,
+    y: bounds.y * scaleY,
+    width: bounds.width * scaleX,
+    height: bounds.height * scaleY,
+  })
 
   // Render main text
   const renderMainText = () => {
@@ -65,12 +73,7 @@ export function ScreenContent({
       canvasWidth,
       canvasHeight,
     )
-    const scaledBounds = {
-      x: bounds.x * scale,
-      y: bounds.y * scale,
-      width: bounds.width * scale,
-      height: bounds.height * scale,
-    }
+    const scaledBounds = scaleBounds(bounds)
 
     return (
       <AnimatedElement
@@ -90,7 +93,7 @@ export function ScreenContent({
           content={contentData.mainText}
           style={{
             ...mt.style,
-            maxFontSize: mt.style.maxFontSize * scale,
+            maxFontSize: mt.style.maxFontSize * fontScale,
           }}
           containerWidth={scaledBounds.width}
           containerHeight={scaledBounds.height}
@@ -113,12 +116,7 @@ export function ScreenContent({
       canvasWidth,
       canvasHeight,
     )
-    const scaledBounds = {
-      x: bounds.x * scale,
-      y: bounds.y * scale,
-      width: bounds.width * scale,
-      height: bounds.height * scale,
-    }
+    const scaledBounds = scaleBounds(bounds)
 
     // Check if reference should be prepended to content
     const bibleConfig = config as BibleContentConfig
@@ -146,7 +144,7 @@ export function ScreenContent({
           content={displayContent}
           style={{
             ...ct.style,
-            maxFontSize: ct.style.maxFontSize * scale,
+            maxFontSize: ct.style.maxFontSize * fontScale,
           }}
           containerWidth={scaledBounds.width}
           containerHeight={scaledBounds.height}
@@ -174,12 +172,7 @@ export function ScreenContent({
       canvasWidth,
       canvasHeight,
     )
-    const scaledBounds = {
-      x: bounds.x * scale,
-      y: bounds.y * scale,
-      width: bounds.width * scale,
-      height: bounds.height * scale,
-    }
+    const scaledBounds = scaleBounds(bounds)
 
     return (
       <AnimatedElement
@@ -199,7 +192,7 @@ export function ScreenContent({
           content={contentData.referenceText}
           style={{
             ...rt.style,
-            maxFontSize: rt.style.maxFontSize * scale,
+            maxFontSize: rt.style.maxFontSize * fontScale,
           }}
           containerWidth={scaledBounds.width}
           containerHeight={scaledBounds.height}
@@ -222,12 +215,7 @@ export function ScreenContent({
       canvasWidth,
       canvasHeight,
     )
-    const scaledBounds = {
-      x: bounds.x * scale,
-      y: bounds.y * scale,
-      width: bounds.width * scale,
-      height: bounds.height * scale,
-    }
+    const scaledBounds = scaleBounds(bounds)
 
     return (
       <AnimatedElement
@@ -247,7 +235,7 @@ export function ScreenContent({
           content={contentData.personLabel}
           style={{
             ...pl.style,
-            maxFontSize: pl.style.maxFontSize * scale,
+            maxFontSize: pl.style.maxFontSize * fontScale,
           }}
           containerWidth={scaledBounds.width}
           containerHeight={scaledBounds.height}
@@ -274,6 +262,7 @@ export function ScreenContent({
       canvasWidth,
       canvasHeight,
     )
+    const scaledBounds = scaleBounds(bounds)
 
     const now = new Date()
     const timeString = clockConfig.showSeconds
@@ -289,12 +278,12 @@ export function ScreenContent({
         key="clock"
         className="absolute overflow-hidden flex items-center"
         style={{
-          left: bounds.x * scale,
-          top: bounds.y * scale,
-          width: bounds.width * scale,
-          height: bounds.height * scale,
+          left: scaledBounds.x,
+          top: scaledBounds.y,
+          width: scaledBounds.width,
+          height: scaledBounds.height,
           ...getTextStyleCSS(clockConfig.style),
-          fontSize: clockConfig.style.maxFontSize * scale,
+          fontSize: clockConfig.style.maxFontSize * fontScale,
           justifyContent: getJustifyContent(clockConfig.style.alignment),
         }}
       >
@@ -315,20 +304,15 @@ export function ScreenContent({
       canvasWidth,
       canvasHeight,
     )
-    const scaledBounds = {
-      x: bounds.x * scale,
-      y: bounds.y * scale,
-      width: bounds.width * scale,
-      height: bounds.height * scale,
-    }
-    const padding = 16 * scale
-    const gap = 8 * scale
+    const scaledBounds = scaleBounds(bounds)
+    const padding = 16 * fontScale
+    const gap = 8 * fontScale
 
     // Calculate heights for label and content
     // Label takes a portion based on its style, content gets the rest
     const labelHeight = Math.min(
       scaledBounds.height * 0.3,
-      ns.labelStyle.maxFontSize * scale * 1.5,
+      ns.labelStyle.maxFontSize * fontScale * 1.5,
     )
     const contentHeight = scaledBounds.height - padding * 2 - labelHeight - gap
 
@@ -365,8 +349,8 @@ export function ScreenContent({
             content={ns.labelText}
             style={{
               ...ns.labelStyle,
-              maxFontSize: ns.labelStyle.maxFontSize * scale,
-              minFontSize: (ns.labelStyle.minFontSize ?? 12) * scale,
+              maxFontSize: ns.labelStyle.maxFontSize * fontScale,
+              minFontSize: (ns.labelStyle.minFontSize ?? 12) * fontScale,
             }}
             containerWidth={scaledBounds.width - padding * 2}
             containerHeight={labelHeight}
@@ -377,8 +361,8 @@ export function ScreenContent({
             content={getContentText()}
             style={{
               ...ns.contentStyle,
-              maxFontSize: ns.contentStyle.maxFontSize * scale,
-              minFontSize: (ns.contentStyle.minFontSize ?? 12) * scale,
+              maxFontSize: ns.contentStyle.maxFontSize * fontScale,
+              minFontSize: (ns.contentStyle.minFontSize ?? 12) * fontScale,
             }}
             containerWidth={scaledBounds.width - padding * 2}
             containerHeight={contentHeight}
@@ -393,34 +377,23 @@ export function ScreenContent({
 
   return (
     <div
-      className="relative overflow-hidden"
+      className="relative"
       style={{
         width: containerWidth,
         height: containerHeight,
       }}
     >
-      {/* Single container at display dimensions, centered - no background (parent handles it) */}
-      <div
-        className="absolute"
-        style={{
-          left: offsetX,
-          top: offsetY,
-          width: displayWidth,
-          height: displayHeight,
-          position: 'relative',
-        }}
-      >
-        {isVisible && (
-          <>
-            {renderMainText()}
-            {renderContentText()}
-            {renderReferenceText()}
-            {renderPersonLabel()}
-          </>
-        )}
-        {renderClock()}
-        {renderNextSlideSection()}
-      </div>
+      {/* Content fills entire container - no letterboxing */}
+      {isVisible && (
+        <>
+          {renderMainText()}
+          {renderContentText()}
+          {renderReferenceText()}
+          {renderPersonLabel()}
+        </>
+      )}
+      {renderClock()}
+      {renderNextSlideSection()}
     </div>
   )
 }
