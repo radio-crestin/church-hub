@@ -6,6 +6,13 @@
   <component name="ChangeListManager">
     <list default="true" id="66517e3f-2e4e-43cc-880d-deb242368f0c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TODO.md" beforeDir="false" afterPath="$PROJECT_DIR$/TODO.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/BroadcastInfo.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/BroadcastInfo.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/livestream/hooks/useStreaming.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/livestream/hooks/useStreaming.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/routes/livestream.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/routes/livestream.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/livestream/youtube/auth.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/livestream/youtube/auth.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/livestream/youtube/broadcast.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/livestream/youtube/broadcast.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/livestream/youtube/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/livestream/youtube/index.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

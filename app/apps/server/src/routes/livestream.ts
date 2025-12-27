@@ -39,6 +39,7 @@ import type {
   YouTubeConfig,
 } from '../service/livestream/types'
 import {
+  clearActiveBroadcastCache,
   consumePKCESession,
   createBroadcast,
   endBroadcast,
@@ -949,6 +950,9 @@ export async function handleLivestreamRoutes(
         updatedAt: Date.now(),
       })
 
+      // Clear cache so next query fetches fresh data
+      clearActiveBroadcastCache()
+
       return handleCors(
         req,
         new Response(JSON.stringify({ data: { success: true, broadcast } }), {
@@ -987,9 +991,14 @@ export async function handleLivestreamRoutes(
     url.pathname === '/api/livestream/obs/stream/stop'
   ) {
     try {
+      // Get the active broadcast BEFORE stopping OBS streaming
+      // This is important because YouTube's auto-stop (enableAutoStop: true)
+      // may transition the broadcast to 'complete' as soon as the stream stops,
+      // making it impossible to find via getActiveBroadcast()
+      const activeBroadcast = await getActiveBroadcast()
+
       await stopStreaming()
 
-      const activeBroadcast = await getActiveBroadcast()
       if (activeBroadcast) {
         await endBroadcast(activeBroadcast.broadcastId)
       }
@@ -1010,6 +1019,9 @@ export async function handleLivestreamRoutes(
         startedAt: null,
         updatedAt: Date.now(),
       })
+
+      // Clear cache so next query fetches fresh data
+      clearActiveBroadcastCache()
 
       return handleCors(
         req,

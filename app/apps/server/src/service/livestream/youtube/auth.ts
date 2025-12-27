@@ -13,6 +13,18 @@ interface StoreTokensInput {
   channelName?: string
 }
 
+// Cache for auth status to avoid repeated token refresh attempts
+let authStatusCache: {
+  data: YouTubeAuthStatus
+  timestamp: number
+} | null = null
+const AUTH_STATUS_CACHE_TTL = 30 * 1000 // 30 seconds
+
+// Clear the auth status cache (call when auth state changes)
+export function clearAuthStatusCache(): void {
+  authStatusCache = null
+}
+
 /**
  * Stores OAuth tokens received from client after PKCE flow completion.
  * Channel info is provided by the OAuth worker, no YouTube API call needed.
@@ -50,20 +62,35 @@ export async function storeTokens(
     })
   }
 
-  return {
+  const result: YouTubeAuthStatus = {
     isAuthenticated: true,
     channelId: channelId || undefined,
     channelName: channelName || undefined,
     expiresAt: tokens.expiresAt.getTime(),
   }
+
+  // Update cache with new auth status
+  authStatusCache = { data: result, timestamp: Date.now() }
+
+  return result
 }
 
 export async function getAuthStatus(): Promise<YouTubeAuthStatus> {
+  // Return cached result if still fresh
+  if (
+    authStatusCache &&
+    Date.now() - authStatusCache.timestamp < AUTH_STATUS_CACHE_TTL
+  ) {
+    return authStatusCache.data
+  }
+
   const db = getDatabase()
   const authRecords = await db.select().from(youtubeAuth).limit(1)
 
   if (authRecords.length === 0) {
-    return { isAuthenticated: false }
+    const result: YouTubeAuthStatus = { isAuthenticated: false }
+    authStatusCache = { data: result, timestamp: Date.now() }
+    return result
   }
 
   const auth = authRecords[0]
@@ -73,23 +100,30 @@ export async function getAuthStatus(): Promise<YouTubeAuthStatus> {
     const client = await getAuthenticatedClient()
     if (!client) {
       // Token refresh failed, requires re-authentication
-      return {
+      const result: YouTubeAuthStatus = {
         isAuthenticated: false,
         requiresReauth: true,
         error: 'refresh_failed',
       }
+      authStatusCache = { data: result, timestamp: Date.now() }
+      return result
     }
   }
 
-  return {
+  const result: YouTubeAuthStatus = {
     isAuthenticated: true,
     channelId: auth.channelId || undefined,
     channelName: auth.channelName || undefined,
     expiresAt: auth.expiresAt.getTime(),
   }
+  authStatusCache = { data: result, timestamp: Date.now() }
+  return result
 }
 
 export async function logout(): Promise<void> {
+  // Clear cache immediately
+  clearAuthStatusCache()
+
   const db = getDatabase()
   const authRecords = await db.select().from(youtubeAuth).limit(1)
 
