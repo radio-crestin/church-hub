@@ -1,4 +1,5 @@
 name = "churchub-youtube-oauth-worker"
+account_id = "c53124cf4d8c039271e3d52917a56b96"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
 minify = true
