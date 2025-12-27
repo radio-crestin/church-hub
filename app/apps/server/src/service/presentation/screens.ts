@@ -536,15 +536,18 @@ export function upsertScreen(input: UpsertScreenInput): Screen | null {
         .run()
     }
 
-    // Create default next slide config for stage screens
-    if (screenType === 'stage') {
-      db.insert(screenNextSlideConfigs)
-        .values({
-          screenId: inserted.id,
-          config: JSON.stringify(getDefaultNextSlideConfig()),
-        })
-        .run()
+    // Create default next slide config for all screen types
+    // Stage screens have it enabled by default, others have it disabled
+    const nextSlideConfig = {
+      ...getDefaultNextSlideConfig(),
+      enabled: screenType === 'stage',
     }
+    db.insert(screenNextSlideConfigs)
+      .values({
+        screenId: inserted.id,
+        config: JSON.stringify(nextSlideConfig),
+      })
+      .run()
 
     log('info', `Screen created: ${inserted.id}`)
     return getScreenById(inserted.id)

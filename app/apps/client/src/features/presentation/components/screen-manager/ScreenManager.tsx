@@ -99,8 +99,7 @@ export function ScreenManager() {
           screenId: screen.id,
           globalSettings: screen.globalSettings,
           contentConfigs: screen.contentConfigs,
-          nextSlideConfig:
-            screen.type === 'stage' ? screen.nextSlideConfig : undefined,
+          nextSlideConfig: screen.nextSlideConfig,
         })
 
         showToast('Screen saved successfully', 'success')

@@ -50,7 +50,7 @@ interface ScreenEditorSidebarProps {
     contentType: ContentType,
     config: ContentTypeConfig,
   ) => void
-  onUpdateNextSlideConfig: (config: NextSlideSectionConfig) => void
+  onUpdateNextSlideConfig: (config: Partial<NextSlideSectionConfig>) => void
   onUpdateGlobalSettings: (settings: ScreenGlobalSettings) => void
 }
 
