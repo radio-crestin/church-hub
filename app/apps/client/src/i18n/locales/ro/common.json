@@ -6,13 +6,16 @@
     "confirm": "Confirmă",
     "delete": "Șterge",
     "save": "Salvează",
-    "ok": "OK"
+    "ok": "OK",
+    "retry": "Reîncearcă"
   },
   "errors": {
     "pageNotFound": "Pagina pe care o căutați nu există.",
     "noPermission": "Nu aveți permisiunea de a accesa această pagină.",
     "noPermissionTitle": "Acces interzis",
-    "contactAdmin": "Vă rugăm să contactați administratorul dacă credeți că aceasta este o eroare."
+    "contactAdmin": "Vă rugăm să contactați administratorul dacă credeți că aceasta este o eroare.",
+    "connectionLostTitle": "Conexiune pierdută",
+    "connectionLost": "Nu s-a putut conecta la server. Verificați conexiunea la rețea și încercați din nou."
   },
   "theme": {
     "system": "Sistem",
