@@ -340,6 +340,7 @@ export function ScreenEditor({
           onUpdateContentConfig={actions.updateContentConfig}
           onUpdateNextSlideConfig={actions.updateNextSlideConfig}
           onUpdateGlobalSettings={actions.updateGlobalSettings}
+          onUpdateScreenDimensions={actions.updateScreenDimensions}
         />
       </div>
     </div>

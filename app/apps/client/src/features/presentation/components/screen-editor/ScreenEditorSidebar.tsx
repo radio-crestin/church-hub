@@ -52,6 +52,7 @@ interface ScreenEditorSidebarProps {
   ) => void
   onUpdateNextSlideConfig: (config: Partial<NextSlideSectionConfig>) => void
   onUpdateGlobalSettings: (settings: ScreenGlobalSettings) => void
+  onUpdateScreenDimensions: (width: number, height: number) => void
 }
 
 // Collapsible section component
@@ -135,6 +136,7 @@ export function ScreenEditorSidebar({
   onUpdateContentConfig,
   onUpdateNextSlideConfig,
   onUpdateGlobalSettings,
+  onUpdateScreenDimensions,
 }: ScreenEditorSidebarProps) {
   const { t } = useTranslation('presentation')
   const config = screen.contentConfigs[contentType]
@@ -1652,7 +1654,13 @@ export function ScreenEditorSidebar({
                 <Input
                   type="number"
                   value={screen.width}
-                  disabled
+                  min={100}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value, 10)
+                    if (!isNaN(value) && value >= 100) {
+                      onUpdateScreenDimensions(value, screen.height)
+                    }
+                  }}
                   className="h-8"
                 />
               </div>
@@ -1663,7 +1671,13 @@ export function ScreenEditorSidebar({
                 <Input
                   type="number"
                   value={screen.height}
-                  disabled
+                  min={100}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value, 10)
+                    if (!isNaN(value) && value >= 100) {
+                      onUpdateScreenDimensions(screen.width, value)
+                    }
+                  }}
                   className="h-8"
                 />
               </div>

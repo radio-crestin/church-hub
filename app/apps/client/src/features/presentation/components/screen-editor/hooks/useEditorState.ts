@@ -57,6 +57,7 @@ interface EditorActions {
   ) => void
   updateNextSlideConfig: (config: Partial<NextSlideSectionConfig>) => void
   updateGlobalSettings: (settings: ScreenGlobalSettings) => void
+  updateScreenDimensions: (width: number, height: number) => void
   clearSelection: () => void
   markClean: () => void
   setPreviewText: (
@@ -133,6 +134,21 @@ export function useEditorState(): [EditorState, EditorActions] {
     setIsDirty(true)
   }, [])
 
+  const updateScreenDimensions = useCallback(
+    (width: number, height: number) => {
+      setScreenState((prev) => {
+        if (!prev) return prev
+        return {
+          ...prev,
+          width,
+          height,
+        }
+      })
+      setIsDirty(true)
+    },
+    [],
+  )
+
   const clearSelection = useCallback(() => {
     setSelectedElement(null)
   }, [])
@@ -171,6 +187,7 @@ export function useEditorState(): [EditorState, EditorActions] {
       updateContentConfig,
       updateNextSlideConfig,
       updateGlobalSettings,
+      updateScreenDimensions,
       clearSelection,
       markClean,
       setPreviewText,
@@ -185,6 +202,7 @@ export function useEditorState(): [EditorState, EditorActions] {
       updateContentConfig,
       updateNextSlideConfig,
       updateGlobalSettings,
+      updateScreenDimensions,
       clearSelection,
       markClean,
       setPreviewText,
