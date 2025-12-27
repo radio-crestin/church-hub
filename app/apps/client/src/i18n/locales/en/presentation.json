@@ -252,6 +252,8 @@
     "openDisplay": "Open Display",
     "slides": "Slides",
     "noSlides": "No slides in this program",
-    "preview": "Preview"
+    "preview": "Preview",
+    "openSong": "Open Song",
+    "openBible": "Open Bible"
   }
 }

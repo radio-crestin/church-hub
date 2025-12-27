@@ -252,6 +252,8 @@
     "openDisplay": "Deschide Ecran",
     "slides": "Slide-uri",
     "noSlides": "Niciun slide în acest program",
-    "preview": "Previzualizare"
+    "preview": "Previzualizare",
+    "openSong": "Deschide Cântec",
+    "openBible": "Deschide Biblia"
   }
 }

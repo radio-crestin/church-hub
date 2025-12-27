@@ -2,6 +2,7 @@ import { useNavigate } from '@tanstack/react-router'
 import {
   ChevronLeft,
   ChevronRight,
+  ExternalLink,
   Eye,
   EyeOff,
   Loader2,
@@ -168,6 +169,45 @@ export function ControlRoom() {
   const canNavigate = hasQueueSlide
   const isNavigating = navigateQueueSlide.isPending
 
+  // Find the current queue item to determine content type for navigation button
+  const currentQueueItem = queue?.find(
+    (item) => item.id === state?.currentQueueItemId,
+  )
+
+  // Handle opening the current content (song or Bible)
+  const handleOpenContent = () => {
+    if (!currentQueueItem) return
+
+    if (currentQueueItem.itemType === 'song' && currentQueueItem.song?.id) {
+      navigate({
+        to: '/songs/$songId',
+        params: { songId: String(currentQueueItem.song.id) },
+      })
+    } else if (
+      currentQueueItem.itemType === 'bible' ||
+      currentQueueItem.itemType === 'bible_passage'
+    ) {
+      navigate({ to: '/bible/' })
+    }
+  }
+
+  // Determine which button label to show
+  const getContentButtonLabel = () => {
+    if (!currentQueueItem) return null
+    if (currentQueueItem.itemType === 'song') {
+      return t('presentation:controlRoom.openSong')
+    }
+    if (
+      currentQueueItem.itemType === 'bible' ||
+      currentQueueItem.itemType === 'bible_passage'
+    ) {
+      return t('presentation:controlRoom.openBible')
+    }
+    return null
+  }
+
+  const contentButtonLabel = getContentButtonLabel()
+
   return (
     <div className="flex flex-col h-full gap-3">
       {/* Main Content: Two-Column Layout */}
@@ -185,6 +225,20 @@ export function ControlRoom() {
               </div>
               {/* Show/Hide Button */}
               <div className="flex items-center gap-2">
+                {/* Open Content Button */}
+                {contentButtonLabel && (
+                  <button
+                    type="button"
+                    onClick={handleOpenContent}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-indigo-600 dark:text-indigo-400 rounded-lg border border-indigo-300 dark:border-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
+                    title={contentButtonLabel}
+                  >
+                    <ExternalLink size={16} />
+                    <span className="hidden sm:inline">
+                      {contentButtonLabel}
+                    </span>
+                  </button>
+                )}
                 {/* LIVE Indicator */}
                 <div
                   className={`flex items-center gap-1.5 px-2 py-1 rounded-md ${
