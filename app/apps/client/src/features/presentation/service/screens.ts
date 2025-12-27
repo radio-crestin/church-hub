@@ -207,6 +207,8 @@ export async function batchUpdateScreenConfig(
   globalSettings: ScreenGlobalSettings,
   contentConfigs: Record<ContentType, ContentTypeConfig>,
   nextSlideConfig?: NextSlideSectionConfig,
+  width?: number,
+  height?: number,
 ): Promise<ScreenWithConfigs> {
   log('debug', `Batch updating screen config: ${screenId}`)
 
@@ -219,6 +221,8 @@ export async function batchUpdateScreenConfig(
         globalSettings,
         contentConfigs,
         nextSlideConfig,
+        width,
+        height,
       }),
       credentials: 'include',
     },

@@ -100,6 +100,8 @@ export function ScreenManager() {
           globalSettings: screen.globalSettings,
           contentConfigs: screen.contentConfigs,
           nextSlideConfig: screen.nextSlideConfig,
+          width: screen.width,
+          height: screen.height,
         })
 
         showToast('Screen saved successfully', 'success')

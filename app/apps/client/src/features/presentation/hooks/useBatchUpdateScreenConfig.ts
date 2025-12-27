@@ -13,6 +13,8 @@ interface BatchUpdateInput {
   globalSettings: ScreenGlobalSettings
   contentConfigs: Record<ContentType, ContentTypeConfig>
   nextSlideConfig?: NextSlideSectionConfig
+  width?: number
+  height?: number
 }
 
 export function useBatchUpdateScreenConfig() {
@@ -22,12 +24,16 @@ export function useBatchUpdateScreenConfig() {
       globalSettings,
       contentConfigs,
       nextSlideConfig,
+      width,
+      height,
     }: BatchUpdateInput) =>
       batchUpdateScreenConfig(
         screenId,
         globalSettings,
         contentConfigs,
         nextSlideConfig,
+        width,
+        height,
       ),
     // Note: Query invalidation is handled by WebSocket broadcast from server
   })
