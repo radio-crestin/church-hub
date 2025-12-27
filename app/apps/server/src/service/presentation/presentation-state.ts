@@ -705,9 +705,62 @@ function navigateTemporaryBible(
     return updatePresentationState({ temporaryContent })
   }
 
-  // Handle chapter boundary - end presentation at end of chapter
+  // Handle chapter boundary - move to next chapter if available
   if (direction === 'next') {
-    log('info', 'Reached end of chapter, hiding temporary presentation')
+    // Get the book's chapter count to check if there's a next chapter
+    const book = rawDb
+      .query(
+        `
+      SELECT chapter_count
+      FROM bible_books
+      WHERE translation_id = ? AND id = ?
+    `,
+      )
+      .get(data.translationId, data.bookId) as { chapter_count: number } | null
+
+    if (book && data.chapter < book.chapter_count) {
+      // Move to first verse of next chapter
+      const nextChapter = data.chapter + 1
+      const nextChapterVerses = rawDb
+        .query(
+          `
+        SELECT id, verse, text
+        FROM bible_verses
+        WHERE translation_id = ? AND book_id = ? AND chapter = ?
+        ORDER BY verse ASC
+        LIMIT 1
+      `,
+        )
+        .all(data.translationId, data.bookId, nextChapter) as {
+        id: number
+        verse: number
+        text: string
+      }[]
+
+      if (nextChapterVerses.length > 0) {
+        const newVerse = nextChapterVerses[0]
+        const bookName = data.reference.split(' ')[0]
+        const reference = `${bookName} ${nextChapter}:${newVerse.verse} - ${data.translationAbbreviation}`
+
+        const temporaryContent: TemporaryContent = {
+          type: 'bible',
+          data: {
+            ...data,
+            verseId: newVerse.id,
+            reference,
+            text: newVerse.text,
+            chapter: nextChapter,
+            currentVerseIndex: 0,
+          },
+        }
+
+        log('info', `Moving to next chapter: ${nextChapter}`)
+        return updatePresentationState({ temporaryContent })
+      }
+    }
+
+    // No next chapter available - end of book, hide presentation
+    log('info', 'Reached end of book, hiding temporary presentation')
     return updatePresentationState({
       temporaryContent: null,
       isHidden: true,
