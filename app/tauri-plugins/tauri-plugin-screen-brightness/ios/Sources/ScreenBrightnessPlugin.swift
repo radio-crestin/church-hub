@@ -1,26 +1,28 @@
 import UIKit
 import Tauri
 
+struct SetBrightnessArgs: Decodable {
+    let value: Float
+}
+
 class ScreenBrightnessPlugin: Plugin {
     @objc public func setBrightness(_ invoke: Invoke) throws {
         let args = try invoke.parseArgs(SetBrightnessArgs.self)
-        let brightness = max(0.0, min(1.0, args.value))
+        let brightness = max(0.0, min(1.0, CGFloat(args.value)))
 
+        // Must be called on main thread
         DispatchQueue.main.async {
-            UIScreen.main.brightness = CGFloat(brightness)
+            UIScreen.main.brightness = brightness
+            invoke.resolve()
         }
-
-        invoke.resolve()
     }
 
     @objc public func getBrightness(_ invoke: Invoke) throws {
-        let brightness = Float(UIScreen.main.brightness)
-        invoke.resolve(["brightness": brightness])
+        DispatchQueue.main.async {
+            let brightness = Float(UIScreen.main.brightness)
+            invoke.resolve(["brightness": brightness])
+        }
     }
-}
-
-struct SetBrightnessArgs: Decodable {
-    let value: Float
 }
 
 @_cdecl("init_plugin_screen_brightness")

@@ -176,6 +176,22 @@ export function ControlRoom() {
 
   // Handle opening the current content (song or Bible)
   const handleOpenContent = () => {
+    // Check temporary content first (takes priority)
+    if (state?.temporaryContent) {
+      if (state.temporaryContent.type === 'song') {
+        navigate({
+          to: '/songs/$songId',
+          params: { songId: String(state.temporaryContent.data.songId) },
+        })
+        return
+      }
+      if (state.temporaryContent.type === 'bible') {
+        navigate({ to: '/bible/' })
+        return
+      }
+    }
+
+    // Fall back to queue-based content
     if (!currentQueueItem) return
 
     if (currentQueueItem.itemType === 'song' && currentQueueItem.song?.id) {
@@ -193,6 +209,17 @@ export function ControlRoom() {
 
   // Determine which button label to show
   const getContentButtonLabel = () => {
+    // Check temporary content first (takes priority)
+    if (state?.temporaryContent) {
+      if (state.temporaryContent.type === 'song') {
+        return t('presentation:controlRoom.openSong')
+      }
+      if (state.temporaryContent.type === 'bible') {
+        return t('presentation:controlRoom.openBible')
+      }
+    }
+
+    // Fall back to queue-based content
     if (!currentQueueItem) return null
     if (currentQueueItem.itemType === 'song') {
       return t('presentation:controlRoom.openSong')

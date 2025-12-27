@@ -1,62 +1,62 @@
 use tauri::{
     plugin::{Builder, TauriPlugin},
-    Runtime,
+    Manager, Runtime,
 };
-use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct BrightnessResult {
-    pub brightness: f32,
+#[cfg(desktop)]
+mod desktop;
+#[cfg(mobile)]
+mod mobile;
+
+mod commands;
+mod error;
+
+pub use error::{Error, Result};
+
+#[cfg(desktop)]
+pub use desktop::ScreenBrightness;
+#[cfg(mobile)]
+pub use mobile::ScreenBrightness;
+
+/// Extensions to [`tauri::App`], [`tauri::AppHandle`] and [`tauri::Window`] to access the screen-brightness APIs.
+#[cfg(desktop)]
+pub trait ScreenBrightnessExt<R: Runtime> {
+    fn screen_brightness(&self) -> &ScreenBrightness;
 }
 
-#[cfg(target_os = "ios")]
-mod ios {
-    use objc::{class, msg_send, sel, sel_impl};
-    use objc::runtime::Object;
-
-    pub fn set_brightness(value: f32) {
-        unsafe {
-            let ui_screen: *mut Object = msg_send![class!(UIScreen), mainScreen];
-            let _: () = msg_send![ui_screen, setBrightness: value as f64];
-        }
-    }
-
-    pub fn get_brightness() -> f32 {
-        unsafe {
-            let ui_screen: *mut Object = msg_send![class!(UIScreen), mainScreen];
-            let brightness: f64 = msg_send![ui_screen, brightness];
-            brightness as f32
-        }
-    }
-}
-
-#[cfg(not(target_os = "ios"))]
-mod ios {
-    pub fn set_brightness(_value: f32) {
-        // No-op on non-iOS platforms
-    }
-
-    pub fn get_brightness() -> f32 {
-        1.0 // Default to full brightness on non-iOS
+#[cfg(desktop)]
+impl<R: Runtime, T: Manager<R>> ScreenBrightnessExt<R> for T {
+    fn screen_brightness(&self) -> &ScreenBrightness {
+        self.state::<ScreenBrightness>().inner()
     }
 }
 
-#[tauri::command]
-fn set_brightness(value: f32) -> Result<(), String> {
-    let clamped = value.clamp(0.0, 1.0);
-    ios::set_brightness(clamped);
-    Ok(())
+#[cfg(mobile)]
+pub trait ScreenBrightnessExt<R: Runtime> {
+    fn screen_brightness(&self) -> &ScreenBrightness<R>;
 }
 
-#[tauri::command]
-fn get_brightness() -> Result<BrightnessResult, String> {
-    Ok(BrightnessResult {
-        brightness: ios::get_brightness(),
-    })
+#[cfg(mobile)]
+impl<R: Runtime, T: Manager<R>> ScreenBrightnessExt<R> for T {
+    fn screen_brightness(&self) -> &ScreenBrightness<R> {
+        self.state::<ScreenBrightness<R>>().inner()
+    }
 }
 
+/// Initializes the plugin.
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("screen-brightness")
-        .invoke_handler(tauri::generate_handler![set_brightness, get_brightness])
+        .invoke_handler(tauri::generate_handler![
+            commands::set_brightness,
+            commands::get_brightness
+        ])
+        .setup(|app, api| {
+            #[cfg(mobile)]
+            let screen_brightness = mobile::init(app, api)?;
+            #[cfg(desktop)]
+            let screen_brightness = desktop::init(app, api)?;
+            app.manage(screen_brightness);
+            Ok(())
+        })
         .build()
 }
