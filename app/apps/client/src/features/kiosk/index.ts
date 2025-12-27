@@ -1,3 +1,4 @@
+export { KioskFullscreenManager } from './components/KioskFullscreenManager'
 export { KioskScreenDimManager } from './components/KioskScreenDimManager'
 export { KioskSettingsSection } from './components/KioskSettingsSection'
 export { KioskWakeLockManager } from './components/KioskWakeLockManager'

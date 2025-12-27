@@ -5,6 +5,9 @@ import { dimScreen, restoreBrightness } from '../service/brightnessService'
 
 const logger = createLogger('kiosk:screen-dim')
 
+/** Delay before dimming screen after WebSocket disconnect (in milliseconds) */
+const DIM_DELAY_MS = 60 * 1000 // 1 minute
+
 type WebSocketStatus = 'connecting' | 'connected' | 'disconnected' | 'error'
 
 interface UseKioskScreenDimOptions {
@@ -20,6 +23,7 @@ interface UseKioskScreenDimResult {
 /**
  * Hook to manage screen dim overlay for kiosk mode
  * Shows black overlay and dims screen brightness when WebSocket disconnects
+ * Waits 1 minute after disconnect before dimming
  * Restores brightness on reconnection or user touch
  */
 export function useKioskScreenDim({
@@ -29,10 +33,22 @@ export function useKioskScreenDim({
   const [isOverlayVisible, setIsOverlayVisible] = useState(false)
   const [dismissedByTouch, setDismissedByTouch] = useState(false)
   const hasDimmedRef = useRef(false)
+  const dimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Clear the dim timer
+  const clearDimTimer = useCallback(() => {
+    if (dimTimerRef.current) {
+      logger.debug('Clearing dim timer')
+      clearTimeout(dimTimerRef.current)
+      dimTimerRef.current = null
+    }
+  }, [])
 
   useEffect(() => {
-    // When connected, hide overlay and reset touch dismissal
+    // When connected, hide overlay, cancel timer, and reset touch dismissal
     if (wsStatus === 'connected') {
+      clearDimTimer()
+
       if (isOverlayVisible) {
         logger.debug('WebSocket reconnected, hiding overlay')
         setIsOverlayVisible(false)
@@ -50,26 +66,56 @@ export function useKioskScreenDim({
       return
     }
 
-    // Show overlay only if:
+    // Start dim timer only if:
     // 1. Kiosk mode is enabled
     // 2. WebSocket is disconnected or error
     // 3. User hasn't dismissed via touch
-    const shouldShowOverlay =
+    // 4. Overlay is not already visible
+    // 5. Timer is not already running
+    const shouldStartTimer =
       kioskEnabled &&
       (wsStatus === 'disconnected' || wsStatus === 'error') &&
-      !dismissedByTouch
+      !dismissedByTouch &&
+      !isOverlayVisible &&
+      !dimTimerRef.current
 
-    if (shouldShowOverlay && !isOverlayVisible) {
-      logger.debug('WebSocket disconnected in kiosk mode, showing overlay')
-      setIsOverlayVisible(true)
-      // Dim the screen brightness
-      dimScreen().then((success) => {
-        if (success) {
-          hasDimmedRef.current = true
-        }
-      })
+    if (shouldStartTimer) {
+      logger.debug(
+        `WebSocket disconnected in kiosk mode, starting ${DIM_DELAY_MS / 1000}s dim timer`,
+      )
+
+      dimTimerRef.current = setTimeout(() => {
+        logger.debug('Dim timer elapsed, showing overlay and dimming screen')
+        setIsOverlayVisible(true)
+        // Dim the screen brightness
+        dimScreen().then((success) => {
+          if (success) {
+            hasDimmedRef.current = true
+          }
+        })
+        dimTimerRef.current = null
+      }, DIM_DELAY_MS)
     }
-  }, [kioskEnabled, wsStatus, dismissedByTouch, isOverlayVisible])
+
+    // Cleanup timer on unmount or dependency change
+    return () => {
+      // Only clear if we're about to start a new effect cycle
+      // Don't clear on unmount if overlay is visible (let it stay)
+    }
+  }, [
+    kioskEnabled,
+    wsStatus,
+    dismissedByTouch,
+    isOverlayVisible,
+    clearDimTimer,
+  ])
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      clearDimTimer()
+    }
+  }, [clearDimTimer])
 
   const dismissOverlay = useCallback(() => {
     logger.debug('Overlay dismissed by user touch')
