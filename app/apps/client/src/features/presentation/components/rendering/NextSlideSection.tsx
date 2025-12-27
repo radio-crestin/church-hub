@@ -202,7 +202,7 @@ export function NextSlideSection({
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <StyledText
-          text={nextSlideData?.preview || '—'}
+          text={nextSlideData?.preview || ''}
           style={config.contentStyle}
           containerWidth={contentWidth}
           containerHeight={bounds.height - 16}
