@@ -18,7 +18,11 @@ let isNativeWakeLockActive = false
  * This is preferred on mobile devices (iOS/Android) where the Web API is unreliable
  */
 function shouldUseNativePlugin(): boolean {
-  return isTauri() && isMobile()
+  const inTauri = isTauri()
+  const onMobile = isMobile()
+  const useNative = inTauri && onMobile
+  logger.debug('shouldUseNativePlugin:', { inTauri, onMobile, useNative })
+  return useNative
 }
 
 /**
@@ -38,13 +42,25 @@ export function isWakeLockSupported(): boolean {
  */
 async function acquireNativeWakeLock(): Promise<boolean> {
   try {
-    const { keepScreenOn } = await import('tauri-plugin-keep-screen-on-api')
+    logger.debug('Attempting to acquire native wake lock...')
+    logger.debug('Importing tauri-plugin-keep-screen-on-api...')
+    const plugin = await import('tauri-plugin-keep-screen-on-api')
+    logger.debug('Plugin imported successfully:', Object.keys(plugin))
+
+    const { keepScreenOn } = plugin
+    logger.debug('Calling keepScreenOn(true)...')
     await keepScreenOn(true)
     isNativeWakeLockActive = true
     logger.debug('Native wake lock acquired via Tauri plugin')
     return true
   } catch (error) {
-    logger.debug('Failed to acquire native wake lock:', error)
+    logger.error('Failed to acquire native wake lock:', error)
+    // Log more details about the error
+    if (error instanceof Error) {
+      logger.error('Error name:', error.name)
+      logger.error('Error message:', error.message)
+      logger.error('Error stack:', error.stack)
+    }
     return false
   }
 }

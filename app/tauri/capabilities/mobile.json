@@ -1,0 +1,21 @@
+{
+  "$schema": "../gen/schemas/mobile-schema.json",
+  "identifier": "mobile",
+  "description": "Capability for mobile devices (iOS/Android)",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "opener:default",
+    "opener:allow-open-url",
+    "fs:default",
+    "fs:allow-read",
+    "dialog:default",
+    "dialog:allow-open",
+    {
+      "identifier": "http:default",
+      "allow": [{ "url": "https://*:*" }, { "url": "http://*:*" }]
+    },
+    "websocket:default",
+    "keep-screen-on:default"
+  ]
+}
