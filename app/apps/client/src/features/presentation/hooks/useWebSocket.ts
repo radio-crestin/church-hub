@@ -123,6 +123,9 @@ export function useWebSocket() {
       ws.onopen = () => {
         setStatus('connected')
 
+        // Invalidate presentation state to refetch current state on reconnection
+        queryClient.invalidateQueries({ queryKey: presentationStateQueryKey })
+
         // Start ping interval
         pingIntervalRef.current = setInterval(() => {
           if (ws.readyState === WebSocket.OPEN) {
@@ -169,7 +172,7 @@ export function useWebSocket() {
         connectNative()
       }, 5000)
     }
-  }, [handleMessage])
+  }, [handleMessage, queryClient])
 
   const connectTauri = useCallback(async () => {
     if (isConnectingRef.current) {
@@ -209,6 +212,9 @@ export function useWebSocket() {
       isConnectingRef.current = false
 
       setStatus('connected')
+
+      // Invalidate presentation state to refetch current state on reconnection
+      queryClient.invalidateQueries({ queryKey: presentationStateQueryKey })
 
       // Listen for messages and connection events
       ws.addListener((message) => {
@@ -277,7 +283,7 @@ export function useWebSocket() {
         connectTauri()
       }, 3000)
     }
-  }, [handleMessage])
+  }, [handleMessage, queryClient])
 
   const connect = useCallback(() => {
     if (useTauriWebSocket) {
