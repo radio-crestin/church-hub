@@ -340,7 +340,7 @@ export function ScreenContent({
           .join(' • ')
         return hasMore ? `${text} ...` : text
       }
-      return nextSlideData?.preview || '—'
+      return nextSlideData?.preview || ''
     }
 
     return (
