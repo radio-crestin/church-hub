@@ -31,6 +31,12 @@ interface ExchangeCodeParams {
   codeVerifier: string
 }
 
+interface RefreshTokenParams {
+  refreshToken: string
+  clientId: string
+  clientSecret: string
+}
+
 /**
  * Exchanges the authorization code for tokens using PKCE.
  */
@@ -57,6 +63,37 @@ export async function exchangeCodeForTokens(
     throw new Error(
       (error as { error_description?: string }).error_description ||
         'Token exchange failed'
+    )
+  }
+
+  return response.json() as Promise<GoogleTokenResponse>
+}
+
+/**
+ * Refreshes an access token using a refresh token.
+ */
+export async function refreshTokens(
+  params: RefreshTokenParams
+): Promise<GoogleTokenResponse> {
+  const response = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({
+      client_id: params.clientId,
+      client_secret: params.clientSecret,
+      refresh_token: params.refreshToken,
+      grant_type: 'refresh_token',
+    }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(
+      (error as { error_description?: string; error?: string }).error_description ||
+        (error as { error?: string }).error ||
+        'Token refresh failed'
     )
   }
 

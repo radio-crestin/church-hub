@@ -9,11 +9,24 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
 }
 
 /**
- * Creates FTS5 virtual tables
+ * Creates FTS5 virtual tables if they don't exist
  * These cannot be created via Drizzle schema - must be raw SQL
+ * @returns true if tables were created, false if they already existed
  */
-export function createFtsTables(): void {
+export function createFtsTables(): boolean {
   const db = getRawDatabase()
+
+  // Check if FTS tables already exist
+  const existingTables = db
+    .query<{ name: string }, []>(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE '%_fts%'",
+    )
+    .all()
+
+  if (existingTables.length >= 4) {
+    log('info', 'FTS5 virtual tables already exist, skipping creation')
+    return false // Tables already existed, no rebuild needed
+  }
 
   log('info', 'Creating FTS5 virtual tables...')
 
@@ -61,6 +74,7 @@ export function createFtsTables(): void {
   `)
 
   log('info', 'FTS5 virtual tables created')
+  return true // Tables were created, rebuild needed
 }
 
 /**

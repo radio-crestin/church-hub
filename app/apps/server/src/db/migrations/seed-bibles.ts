@@ -44,6 +44,20 @@ const FIXTURE_PATH = join(import.meta.dir, '../fixtures/default-bibles.json')
  * 2. Run: bun run fixtures
  */
 export function seedBibleTranslations(db: Database): void {
+  // Check if translations already exist in database BEFORE loading large fixture file
+  const existingCount = db
+    .query<{ count: number }, []>(
+      'SELECT COUNT(*) as count FROM bible_translations',
+    )
+    .get()?.count
+  if (existingCount && existingCount > 0) {
+    log(
+      'info',
+      `Bible translations already seeded (${existingCount} translations), skipping fixture load`,
+    )
+    return
+  }
+
   log('debug', 'Checking if bibles fixture exists...')
 
   if (!existsSync(FIXTURE_PATH)) {
