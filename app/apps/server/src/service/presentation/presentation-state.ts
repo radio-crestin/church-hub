@@ -417,6 +417,13 @@ export function navigateQueueSlide(
     log('debug', `Navigating queue slide: ${direction}`)
 
     const current = getPresentationState()
+
+    // If there's temporary content, use temporary navigation instead
+    if (current.temporaryContent) {
+      log('debug', 'Delegating to temporary navigation')
+      return navigateTemporary(direction)
+    }
+
     const slides = getQueueSlides()
 
     if (slides.length === 0) {
