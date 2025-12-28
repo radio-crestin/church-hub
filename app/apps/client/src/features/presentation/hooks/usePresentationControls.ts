@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useRef } from 'react'
 
 import { presentationStateQueryKey } from './usePresentationState'
 import {
@@ -32,34 +31,32 @@ function getUniqueTimestamp(): number {
 }
 
 /**
- * Tracks the last successfully applied response sequence.
- * Used to prevent stale responses from overwriting newer state.
+ * Tracks the last applied updatedAt timestamp.
+ * Shared between HTTP responses and WebSocket to ensure consistent ordering.
  */
-let lastAppliedSequence = 0
+let lastAppliedUpdatedAt = 0
 
 /**
- * Helper to update presentation state only if the response is from a newer request.
- * Uses request sequence numbers to handle out-of-order responses.
+ * Helper to update presentation state only if the new state is newer.
+ * Uses server's updatedAt (which is monotonically increasing) for ordering.
+ * Exported so WebSocket handler can use the same logic.
  */
-function updateStateIfNewer(
+export function updateStateIfNewer(
   queryClient: ReturnType<typeof useQueryClient>,
   newState: PresentationState,
-  requestSequence: number,
 ): void {
-  // Only apply if this response is from a newer request than the last applied
-  if (requestSequence > lastAppliedSequence) {
-    lastAppliedSequence = requestSequence
+  // Only apply if this state is newer than the last applied
+  if (newState.updatedAt > lastAppliedUpdatedAt) {
+    lastAppliedUpdatedAt = newState.updatedAt
     queryClient.setQueryData(presentationStateQueryKey, newState)
   }
 }
 
 /**
- * Reset the applied sequence when presenting new content.
- * This allows the first navigation after presenting to be applied.
+ * Reset the tracking when presenting new content.
  */
-export function resetNavigationSequence(): void {
-  lastAppliedSequence = 0
-  // Also reset the server-side timestamp tracker
+export function resetNavigationTracking(): void {
+  lastAppliedUpdatedAt = 0
   lastRequestTimestamp = 0
 }
 
@@ -107,21 +104,13 @@ export function useUpdatePresentationState() {
   })
 }
 
-// Navigation sequence counter for queue slide navigation
-let queueNavigationSequence = 0
-
 export function useNavigateQueueSlide() {
   const queryClient = useQueryClient()
-  const sequenceRef = useRef(0)
 
   return useMutation({
-    mutationFn: async (direction: 'next' | 'prev') => {
-      queueNavigationSequence++
-      sequenceRef.current = queueNavigationSequence
-      return navigateQueueSlide(direction)
-    },
+    mutationFn: navigateQueueSlide,
     onSuccess: (data: PresentationState) => {
-      updateStateIfNewer(queryClient, data, sequenceRef.current)
+      updateStateIfNewer(queryClient, data)
     },
   })
 }
@@ -136,8 +125,8 @@ export function usePresentTemporaryBible() {
   return useMutation({
     mutationFn: presentTemporaryBible,
     onSuccess: (data: PresentationState) => {
-      // Reset navigation sequence when presenting new content
-      resetNavigationSequence()
+      // Reset tracking when presenting new content
+      resetNavigationTracking()
       queryClient.setQueryData(presentationStateQueryKey, data)
     },
   })
@@ -149,31 +138,24 @@ export function usePresentTemporarySong() {
   return useMutation({
     mutationFn: presentTemporarySong,
     onSuccess: (data: PresentationState) => {
-      // Reset navigation sequence when presenting new content
-      resetNavigationSequence()
+      // Reset tracking when presenting new content
+      resetNavigationTracking()
       queryClient.setQueryData(presentationStateQueryKey, data)
     },
   })
 }
 
-// Navigation sequence counter for temporary content navigation
-let temporaryNavigationSequence = 0
-
 export function useNavigateTemporary() {
   const queryClient = useQueryClient()
-  const sequenceRef = useRef(0)
 
   return useMutation({
-    mutationFn: async (input: { direction: 'next' | 'prev' }) => {
-      temporaryNavigationSequence++
-      sequenceRef.current = temporaryNavigationSequence
-      return navigateTemporary({
+    mutationFn: (input: { direction: 'next' | 'prev' }) =>
+      navigateTemporary({
         direction: input.direction,
         requestTimestamp: getUniqueTimestamp(),
-      })
-    },
+      }),
     onSuccess: (data: PresentationState) => {
-      updateStateIfNewer(queryClient, data, sequenceRef.current)
+      updateStateIfNewer(queryClient, data)
     },
   })
 }

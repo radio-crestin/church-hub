@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { getApiUrl, getWsUrl, isMobile } from '~/config'
 import { getStoredUserToken } from '~/service/api-url'
 import { createLogger } from '~/utils/logger'
+import { updateStateIfNewer } from './usePresentationControls'
 import { presentationStateQueryKey } from './usePresentationState'
 import { screenQueryKey } from './useScreen'
 import type { PresentationState } from '../types'
@@ -92,17 +93,9 @@ export function useWebSocket() {
         }
 
         if (data.type === 'presentation_state') {
-          // Only update if new state is strictly newer than cached state
-          // Server now uses monotonically increasing timestamps to prevent collisions
-          const currentState = queryClient.getQueryData<PresentationState>(
-            presentationStateQueryKey,
-          )
-          if (
-            !currentState ||
-            data.payload.updatedAt > currentState.updatedAt
-          ) {
-            queryClient.setQueryData(presentationStateQueryKey, data.payload)
-          }
+          // Use shared updateStateIfNewer to ensure consistent ordering
+          // between HTTP responses and WebSocket messages
+          updateStateIfNewer(queryClient, data.payload)
         }
 
         if (data.type === 'screen_config_updated') {
