@@ -28,6 +28,7 @@ export {
   useBibleNavigation,
   useBooks,
   useChapters,
+  useDefaultBibleTranslation,
   useDeleteTranslation,
   useImportTranslation,
   useMultiTranslationVerse,
@@ -60,3 +61,6 @@ export type {
   SearchBibleResponse,
 } from './types'
 export { formatVerseReference } from './types'
+// Utils
+export type { ParsedPassageRange } from './utils/parsePassageRange'
+export { parsePassageRange } from './utils/parsePassageRange'

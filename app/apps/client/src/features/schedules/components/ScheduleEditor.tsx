@@ -15,6 +15,7 @@ import { useSaveScheduleToFile } from '~/features/schedule-export'
 import { SongPickerModal } from '~/features/songs/components'
 import { useToast } from '~/ui/toast'
 import { AddToScheduleMenu } from './AddToScheduleMenu'
+import { BiblePassagePickerModal } from './BiblePassagePickerModal'
 import { EditAsTextModal } from './EditAsTextModal'
 import { InsertSlideModal } from './InsertSlideModal'
 import { ScheduleItemList } from './ScheduleItemList'
@@ -68,6 +69,7 @@ export function ScheduleEditor({
     useState<SlideTemplate>('announcement')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showEditAsText, setShowEditAsText] = useState(false)
+  const [showBiblePassagePicker, setShowBiblePassagePicker] = useState(false)
   // Track created schedule ID for auto-save flow
   const [createdScheduleId, setCreatedScheduleId] = useState<number | null>(
     null,
@@ -186,6 +188,13 @@ export function ScheduleEditor({
     if (id !== null) {
       setSlideTemplate(template)
       setShowSlideModal(true)
+    }
+  }
+
+  const handleAddBiblePassage = async () => {
+    const id = await ensureScheduleId()
+    if (id !== null) {
+      setShowBiblePassagePicker(true)
     }
   }
 
@@ -355,6 +364,7 @@ export function ScheduleEditor({
             )}
             <AddToScheduleMenu
               onAddSong={handleAddSong}
+              onAddBiblePassage={handleAddBiblePassage}
               onAddSlide={handleAddSlide}
             />
           </div>
@@ -450,6 +460,18 @@ export function ScheduleEditor({
           refetch()
         }}
       />
+
+      {/* Bible Passage Picker Modal */}
+      {effectiveScheduleId !== null && (
+        <BiblePassagePickerModal
+          isOpen={showBiblePassagePicker}
+          onClose={() => setShowBiblePassagePicker(false)}
+          scheduleId={effectiveScheduleId}
+          onSaved={() => {
+            refetch()
+          }}
+        />
+      )}
     </div>
   )
 }
