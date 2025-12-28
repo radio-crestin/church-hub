@@ -92,7 +92,16 @@ export function useWebSocket() {
         }
 
         if (data.type === 'presentation_state') {
-          queryClient.setQueryData(presentationStateQueryKey, data.payload)
+          // Only update if new state is newer than cached state (prevents race conditions)
+          const currentState = queryClient.getQueryData<PresentationState>(
+            presentationStateQueryKey,
+          )
+          if (
+            !currentState ||
+            data.payload.updatedAt >= currentState.updatedAt
+          ) {
+            queryClient.setQueryData(presentationStateQueryKey, data.payload)
+          }
         }
 
         if (data.type === 'screen_config_updated') {
