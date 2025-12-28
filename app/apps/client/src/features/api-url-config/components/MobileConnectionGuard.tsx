@@ -3,7 +3,6 @@ import type { ReactNode } from 'react'
 import { isMobile } from '~/config'
 import { usePermissions } from '~/provider/permissions-provider'
 import { clearApiUrl } from '~/service/api-url'
-
 import { ApiUrlSetup } from './ApiUrlSetup'
 
 interface MobileConnectionGuardProps {
@@ -17,7 +16,9 @@ interface MobileConnectionGuardProps {
  *
  * This allows users to reconfigure the server URL and token when they can't connect.
  */
-export function MobileConnectionGuard({ children }: MobileConnectionGuardProps) {
+export function MobileConnectionGuard({
+  children,
+}: MobileConnectionGuardProps) {
   const { isLoading, isConnectionError, isAuthenticated } = usePermissions()
 
   // Only apply this guard on mobile
