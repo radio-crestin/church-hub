@@ -58,14 +58,14 @@
 ~~- inlocuieste aplicatia de scene monitor cu una care foloseste aplicatia turso si un UI similar cu cel al aplicatiei actuale~~
   ~~- pentru cantari, va fi ceva similar, fiecare cantare e echivalentul unui verset~~
   ~~- pentru Biblie va trebui sa afisezi in timp real ce se cauta pe pc-ul principal si sa afisezi lista de versete~~
-- adauga wake lock pentru intreaga aplicatie, nu numai pentru kiosk
-- fix clock position to be the same as other things
-- imbunatateste search-ul ca sa fie super rapid
-- adauga optiune de a creste font-ul default al aplicatiei
-- adauga optiunea de a edita programul ca si text
-- adauga buton pentru a salva shortcuts pe desktop (atat pentru cantari cat si pentru programe)
-- adauga optiunea pentru a deschide opensong xml files 
-- si apoi seteaza luminiozitatea la 0 daca conexiunea websocket nu este available 5 minute
+~~- adauga wake lock pentru intreaga aplicatie, nu numai pentru kiosk~~
+~~- fix clock position to be the same as other things~~
+~~- imbunatateste search-ul ca sa fie super rapid~~
+~~- adauga optiune de a creste font-ul default al aplicatiei~~
+~~- adauga buton pentru a salva shortcuts pe desktop (atat pentru cantari cat si pentru programe)~~
+- ~~adauga optiunea de a edita programul ca si text~~
+~~- adauga optiunea pentru a deschide opensong xml files~~ 
+~~- si apoi seteaza luminiozitatea la 0 daca conexiunea websocket nu este available 5 minute~~
 ~~- implementeaza api-uri pentru search cantari, adaugare de cantari, programe, camera de control, preview, current queue, etc.~~
 ~~- in versiunea mobila a site-ului, asigura-te ca totul este scalabil corect~~
 - fix openapi endpoints and fix authentication layer
