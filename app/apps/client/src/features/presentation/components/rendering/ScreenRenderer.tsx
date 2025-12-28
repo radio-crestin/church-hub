@@ -492,7 +492,25 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
             referenceText: reference,
             contentText: temp.data.text,
           })
-          setNextSlideData(undefined) // Temporary content doesn't have next slide preview
+          // Show next verse preview if enabled in screen config
+          if (screen?.nextSlideConfig?.enabled && temp.data.verseId) {
+            try {
+              const nextVerse = await getNextVerse(temp.data.verseId)
+              if (nextVerse) {
+                const nextReference = `${nextVerse.bookName} ${nextVerse.chapter}:${nextVerse.verse}`
+                setNextSlideData({
+                  contentType: 'bible',
+                  preview: `${nextReference}: ${nextVerse.text}`,
+                })
+              } else {
+                setNextSlideData(undefined)
+              }
+            } catch {
+              setNextSlideData(undefined)
+            }
+          } else {
+            setNextSlideData(undefined)
+          }
           return
         }
 
@@ -687,7 +705,6 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
     presentationState?.currentBiblePassageVerseId,
     presentationState?.currentVerseteTineriEntryId,
     presentationState?.isHidden,
-    presentationState?.temporaryContent,
     presentationState?.updatedAt,
     screen?.type,
   ])
