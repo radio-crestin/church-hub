@@ -2,7 +2,11 @@
  * Parse text input into structured schedule items
  */
 
-export type ParsedItemType = 'song' | 'announcement' | 'bible_verse'
+export type ParsedItemType =
+  | 'song'
+  | 'announcement'
+  | 'bible_passage'
+  | 'versete_tineri'
 
 export interface ParsedScheduleItem {
   type: ParsedItemType
@@ -15,13 +19,15 @@ export interface ParseScheduleTextResult {
   errors: Array<{ line: number; message: string }>
 }
 
-// Matches: S:, A:, V: (case-insensitive) followed by content
-const PREFIX_REGEX = /^([SAV]):\s*(.+)$/i
+// Matches: S:, A:, V:, VT: (case-insensitive) followed by content
+// VT must come before V in alternation to match first
+const PREFIX_REGEX = /^(S|A|VT|V):\s*(.+)$/i
 
 const TYPE_MAP: Record<string, ParsedItemType> = {
   S: 'song',
   A: 'announcement',
-  V: 'bible_verse',
+  V: 'bible_passage',
+  VT: 'versete_tineri',
 }
 
 export function parseScheduleText(text: string): ParseScheduleTextResult {
@@ -42,7 +48,7 @@ export function parseScheduleText(text: string): ParseScheduleTextResult {
     if (!match) {
       errors.push({
         line: lineNumber,
-        message: 'Invalid format. Use S:, A:, or V: prefix',
+        message: 'Invalid format. Use S:, A:, V:, or VT: prefix',
       })
       return
     }

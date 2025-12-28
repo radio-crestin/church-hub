@@ -208,8 +208,8 @@ export function EditAsTextModal({
             slideType: 'announcement',
             slideContent: `<p>${escapeHtml(item.content)}</p>`,
           })
-        } else if (item.type === 'bible_verse') {
-          // Parse and fetch Bible verse
+        } else if (item.type === 'bible_passage') {
+          // V: prefix - Bible passage
           if (primaryTranslationId && books.length > 0) {
             const parsed = parsePassageRange({
               input: item.content,
@@ -217,14 +217,14 @@ export function EditAsTextModal({
             })
 
             if (parsed.status === 'valid' && parsed.formattedReference) {
-              // Create versete_tineri slide with reference
+              // Create announcement slide with Bible reference
               processedItems.push({
                 type: 'slide',
-                slideType: 'versete_tineri',
+                slideType: 'announcement',
                 slideContent: `<p><strong>${escapeHtml(parsed.formattedReference)}</strong></p>`,
               })
             } else {
-              // Invalid reference, add as announcement with the text
+              // Invalid reference, add as announcement with the raw text
               processedItems.push({
                 type: 'slide',
                 slideType: 'announcement',
@@ -236,6 +236,41 @@ export function EditAsTextModal({
             processedItems.push({
               type: 'slide',
               slideType: 'announcement',
+              slideContent: `<p>${escapeHtml(item.content)}</p>`,
+            })
+          }
+        } else if (item.type === 'versete_tineri') {
+          // VT: prefix - Versete Tineri (Person Name - Reference)
+          // Parse format: "PersonName - Reference"
+          const vtMatch = item.content.match(/^(.+?)\s*[-–—]\s*(.+)$/)
+
+          if (vtMatch) {
+            const personName = vtMatch[1].trim()
+            const reference = vtMatch[2].trim()
+
+            // Validate reference if Bible is configured
+            let formattedReference = reference
+            if (primaryTranslationId && books.length > 0) {
+              const parsed = parsePassageRange({
+                input: reference,
+                books,
+              })
+              if (parsed.status === 'valid' && parsed.formattedReference) {
+                formattedReference = parsed.formattedReference
+              }
+            }
+
+            // Create versete_tineri slide with person name and reference
+            processedItems.push({
+              type: 'slide',
+              slideType: 'versete_tineri',
+              slideContent: `<p><strong>${escapeHtml(personName)}</strong> - ${escapeHtml(formattedReference)}</p>`,
+            })
+          } else {
+            // Invalid format, add as versete_tineri with just the content
+            processedItems.push({
+              type: 'slide',
+              slideType: 'versete_tineri',
               slideContent: `<p>${escapeHtml(item.content)}</p>`,
             })
           }

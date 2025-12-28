@@ -10,7 +10,8 @@ export function generateScheduleText(items: ScheduleItem[]): string {
   lines.push('# Format examples:')
   lines.push('# S: Song Title')
   lines.push('# A: Announcement text')
-  lines.push('# V: Ioan 3:16')
+  lines.push('# V: Ioan 3:16 (Bible passage)')
+  lines.push('# VT: Person Name - Ioan 3:16 (Youth verse)')
   lines.push('')
 
   for (const item of items) {
@@ -24,15 +25,21 @@ export function generateScheduleText(items: ScheduleItem[]): string {
           lines.push(`A: ${plainText}`)
         }
       } else if (item.slideType === 'versete_tineri') {
-        // Try to extract reference from content, or use generic marker
-        const reference = extractBibleReference(item.slideContent || '')
-        if (reference) {
-          lines.push(`V: ${reference}`)
+        // Try to extract person name and reference for VT: format
+        const vtData = extractVerseteTineriData(item.slideContent || '')
+        if (vtData) {
+          lines.push(`VT: ${vtData.personName} - ${vtData.reference}`)
         } else {
-          // Fallback: show as announcement since we can't reconstruct the reference
-          const plainText = stripHtml(item.slideContent || '')
-          if (plainText) {
-            lines.push(`A: ${plainText}`)
+          // Fallback: try to extract just Bible reference as V:
+          const reference = extractBibleReference(item.slideContent || '')
+          if (reference) {
+            lines.push(`V: ${reference}`)
+          } else {
+            // Last fallback: show as announcement
+            const plainText = stripHtml(item.slideContent || '')
+            if (plainText) {
+              lines.push(`A: ${plainText}`)
+            }
           }
         }
       }
@@ -73,6 +80,31 @@ function extractBibleReference(html: string): string | null {
   const match = plainText.match(referencePattern)
   if (match) {
     return match[0].trim()
+  }
+
+  return null
+}
+
+/**
+ * Try to extract person name and Bible reference from versete_tineri content
+ * Format: "PersonName - Reference" (e.g., "Ion Popescu - Ioan 3:16")
+ */
+function extractVerseteTineriData(
+  html: string,
+): { personName: string; reference: string } | null {
+  const plainText = stripHtml(html)
+
+  // Try to find pattern: Name - Reference
+  // Match text before " - " as name, and Bible reference after
+  const vtPattern =
+    /^(.+?)\s*[-–—]\s*(\d?\s*[a-zA-ZăâîșțĂÂÎȘȚ]+\s+\d+\s*[:.,]\s*\d+(?:\s*[-–—]\s*(?:\d+\s*[:.,]\s*)?\d+)?)/i
+
+  const match = plainText.match(vtPattern)
+  if (match) {
+    return {
+      personName: match[1].trim(),
+      reference: match[2].trim(),
+    }
   }
 
   return null

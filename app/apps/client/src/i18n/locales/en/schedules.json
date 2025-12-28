@@ -60,7 +60,7 @@
   "editAsText": {
     "title": "Edit Schedule as Text",
     "description": "Enter items using prefixes. Lines starting with # are comments.",
-    "formatHelp": "# Format examples:\n# S: Song Title\n# A: Announcement text\n# V: John 3:16",
+    "formatHelp": "# Format examples:\n# S: Song Title\n# A: Announcement text\n# V: John 3:16 (Bible passage)\n# VT: Person Name - John 3:16 (Youth verse)",
     "preview": "{{count}} items detected",
     "preview_one": "{{count}} item detected",
     "preview_other": "{{count}} items detected",
