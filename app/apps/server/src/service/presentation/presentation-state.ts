@@ -12,6 +12,9 @@ import { presentationState, songSlides, songs } from '../../db/schema'
 
 const DEBUG = process.env.DEBUG === 'true'
 
+// Track last navigation timestamp to prevent race conditions
+let lastNavigationTimestamp = 0
+
 function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
   if (level === 'debug' && !DEBUG) return
   // biome-ignore lint/suspicious/noConsole: logging utility
@@ -421,7 +424,7 @@ export function navigateQueueSlide(
     // If there's temporary content, use temporary navigation instead
     if (current.temporaryContent) {
       log('debug', 'Delegating to temporary navigation')
-      return navigateTemporary(direction)
+      return navigateTemporary(direction, Date.now())
     }
 
     const slides = getQueueSlides()
@@ -517,6 +520,9 @@ export function presentTemporaryBible(
   try {
     log('debug', `Presenting temporary Bible verse: ${input.reference}`)
 
+    // Reset navigation timestamp when presenting new content
+    lastNavigationTimestamp = 0
+
     const temporaryContent: TemporaryContent = {
       type: 'bible',
       data: {
@@ -556,6 +562,9 @@ export function presentTemporarySong(
 ): PresentationState {
   try {
     log('debug', `Presenting temporary song: ${input.songId}`)
+
+    // Reset navigation timestamp when presenting new content
+    lastNavigationTimestamp = 0
 
     const db = getDatabase()
 
@@ -633,12 +642,29 @@ export function presentTemporarySong(
 
 /**
  * Navigates within temporary content (next/prev)
+ * Uses requestTimestamp to prevent race conditions when navigating rapidly
  */
 export function navigateTemporary(
   direction: 'next' | 'prev',
+  requestTimestamp: number,
 ): PresentationState {
   try {
-    log('debug', `Navigating temporary content: ${direction}`)
+    log(
+      'debug',
+      `Navigating temporary content: ${direction}, timestamp: ${requestTimestamp}`,
+    )
+
+    // Reject stale requests (race condition prevention)
+    if (requestTimestamp <= lastNavigationTimestamp) {
+      log(
+        'debug',
+        `Ignoring stale navigation request: ${requestTimestamp} <= ${lastNavigationTimestamp}`,
+      )
+      return getPresentationState()
+    }
+
+    // Update last navigation timestamp
+    lastNavigationTimestamp = requestTimestamp
 
     const current = getPresentationState()
 

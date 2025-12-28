@@ -2111,7 +2111,20 @@ async function main() {
             )
           }
 
-          const state = navigateTemporary(body.direction)
+          if (!body.requestTimestamp) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({ error: 'Missing requestTimestamp' }),
+                {
+                  status: 400,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          const state = navigateTemporary(body.direction, body.requestTimestamp)
           broadcastPresentationState(state)
           triggerSceneAutomation(state)
 

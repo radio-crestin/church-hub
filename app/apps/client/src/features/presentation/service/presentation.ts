@@ -201,16 +201,21 @@ export async function presentTemporarySong(
 
 /**
  * Navigate within temporary content (next/prev)
+ * Includes timestamp to prevent race conditions when navigating rapidly
  */
 export async function navigateTemporary(input: {
   direction: 'next' | 'prev'
+  requestTimestamp: number
 }): Promise<PresentationState> {
   const response = await fetchFn(
     `${getApiUrl()}/api/presentation/navigate-temporary`,
     {
       method: 'POST',
       headers: getHeaders('application/json'),
-      body: JSON.stringify({ direction: input.direction }),
+      body: JSON.stringify({
+        direction: input.direction,
+        requestTimestamp: input.requestTimestamp,
+      }),
       credentials: 'include',
     },
   )

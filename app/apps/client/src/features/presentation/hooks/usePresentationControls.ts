@@ -99,7 +99,11 @@ export function useNavigateTemporary() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: navigateTemporary,
+    mutationFn: (input: { direction: 'next' | 'prev' }) =>
+      navigateTemporary({
+        direction: input.direction,
+        requestTimestamp: Date.now(),
+      }),
     onSuccess: (data: PresentationState) => {
       queryClient.setQueryData(presentationStateQueryKey, data)
     },
