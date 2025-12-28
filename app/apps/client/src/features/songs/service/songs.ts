@@ -49,9 +49,13 @@ export async function deleteSong(id: number): Promise<boolean> {
   return response.data?.success ?? false
 }
 
-export async function searchSongs(query: string): Promise<SongSearchResult[]> {
+export async function searchSongs(
+  query: string,
+  signal?: AbortSignal,
+): Promise<SongSearchResult[]> {
   const response = await fetcher<ApiResponse<SongSearchResult[]>>(
     `/api/songs/search?q=${encodeURIComponent(query)}`,
+    { signal },
   )
   return response.data ?? []
 }
