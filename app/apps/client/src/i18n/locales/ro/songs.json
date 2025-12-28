@@ -9,7 +9,8 @@
     "importFromText": "Importă din text",
     "addSlide": "Adaugă slide",
     "cloneSlide": "Clonează slide",
-    "addToSchedule": "Adaugă în program"
+    "addToSchedule": "Adaugă în program",
+    "saveToFile": "Salvează în fișier"
   },
   "editor": {
     "titlePlaceholder": "Introdu titlul cântării...",
@@ -51,7 +52,8 @@
     "slideDeleted": "Slide șters",
     "slideCloned": "Slide clonat",
     "reorderFailed": "Nu s-a putut reordona slide-urile",
-    "categoryCreated": "Categoria a fost creată"
+    "categoryCreated": "Categoria a fost creată",
+    "savedToFile": "Cântarea a fost salvată în fișier"
   },
   "modal": {
     "deleteTitle": "Șterge cântarea",

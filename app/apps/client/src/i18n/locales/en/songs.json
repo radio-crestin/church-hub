@@ -9,7 +9,8 @@
     "importFromText": "Import from Text",
     "addSlide": "Add Slide",
     "cloneSlide": "Clone Slide",
-    "addToSchedule": "Add to Schedule"
+    "addToSchedule": "Add to Schedule",
+    "saveToFile": "Save to File"
   },
   "editor": {
     "titlePlaceholder": "Enter song title...",
@@ -51,7 +52,8 @@
     "slideDeleted": "Slide deleted",
     "slideCloned": "Slide cloned",
     "reorderFailed": "Failed to reorder slides",
-    "categoryCreated": "Category created"
+    "categoryCreated": "Category created",
+    "savedToFile": "Song saved to file"
   },
   "modal": {
     "deleteTitle": "Delete Song",

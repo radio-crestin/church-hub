@@ -26,7 +26,7 @@ use std::path::PathBuf;
 #[cfg(desktop)]
 use std::sync::Arc;
 use std::time::Instant;
-use tauri::RunEvent;
+use tauri::{Emitter, RunEvent};
 #[cfg(desktop)]
 use tauri::Manager;
 #[cfg(desktop)]
@@ -184,8 +184,10 @@ pub fn run() {
         let args: Vec<String> = std::env::args().collect();
         if args.len() > 1 {
             let path = PathBuf::from(&args[1]);
-            if path.extension().is_some_and(|ext| ext.eq_ignore_ascii_case("pptx")) {
-                println!("[file-association] PPTX file detected: {path:?}");
+            if path.extension().is_some_and(|ext| {
+                ext.eq_ignore_ascii_case("pptx") || ext.eq_ignore_ascii_case("opensong")
+            }) {
+                println!("[file-association] File detected: {path:?}");
                 *pending_import.file_path.lock() = Some(path);
             }
         }
@@ -350,12 +352,31 @@ pub fn run() {
 
     println!("[startup] tauri_build: {:?}", build_start.elapsed());
 
-    app.run(|_app_handle, event| {
+    app.run(|app_handle, event| {
         match event {
+            RunEvent::Opened { urls } => {
+                // Handle file association when app is already running (macOS Apple Events)
+                for url in urls {
+                    if let Ok(path) = url.to_file_path() {
+                        if path.extension().is_some_and(|ext| {
+                            ext.eq_ignore_ascii_case("pptx") || ext.eq_ignore_ascii_case("opensong")
+                        }) {
+                            println!("[file-association] Opened event: {path:?}");
+
+                            // Emit event to frontend
+                            if let Err(e) =
+                                app_handle.emit("file-opened", path.to_string_lossy().to_string())
+                            {
+                                println!("[file-association] Failed to emit: {e}");
+                            }
+                        }
+                    }
+                }
+            }
             RunEvent::ExitRequested { .. } | RunEvent::Exit => {
                 // Only shutdown sidecar on desktop in release mode (we started it)
                 #[cfg(all(desktop, not(debug_assertions)))]
-                if let Err(e) = server::shutdown_server(_app_handle) {
+                if let Err(e) = server::shutdown_server(app_handle) {
                     println!("[sidecar] Failed to shut down server on exit: {e}");
                 }
             }
