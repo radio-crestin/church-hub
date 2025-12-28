@@ -2,6 +2,7 @@ import { fetcher } from '~/utils/fetcher'
 import type {
   AddToScheduleInput,
   ReorderScheduleItemsInput,
+  ReplaceScheduleItemsInput,
   Schedule,
   ScheduleItem,
   ScheduleSearchResult,
@@ -143,4 +144,33 @@ export async function importScheduleToQueue(
     },
   )
   return response.data?.success ?? false
+}
+
+export async function replaceScheduleItems(
+  scheduleId: number,
+  input: ReplaceScheduleItemsInput,
+): Promise<{
+  success: boolean
+  schedule?: { id: number; title: string; itemCount: number }
+  error?: string
+}> {
+  const response = await fetcher<
+    ApiResponse<{
+      success: boolean
+      schedule?: { id: number; title: string; itemCount: number }
+    }>
+  >(`/api/schedules/${scheduleId}/items/replace`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+
+  if (response.error) {
+    return { success: false, error: response.error }
+  }
+
+  return {
+    success: response.data?.success ?? false,
+    schedule: response.data?.schedule,
+  }
 }

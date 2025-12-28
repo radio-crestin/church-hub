@@ -95,3 +95,24 @@ export interface ScheduleSearchResult {
   itemCount: number
   matchedContent: string
 }
+
+/**
+ * Input for replacing all items in a schedule
+ */
+export interface ReplaceScheduleItemsInput {
+  items: Array<{
+    type: 'song' | 'slide'
+    songId?: number
+    slideType?: SlideTemplate
+    slideContent?: string
+  }>
+}
+
+/**
+ * Missing song item (for text editing flow)
+ */
+export interface MissingSongItem {
+  title: string
+  lineNumber: number
+  resolved?: { type: 'existing'; songId: number } | { type: 'create' }
+}

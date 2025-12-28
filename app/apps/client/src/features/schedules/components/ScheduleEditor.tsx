@@ -1,5 +1,13 @@
 import { useNavigate } from '@tanstack/react-router'
-import { ArrowLeft, Download, ListPlus, Loader2, Trash2, X } from 'lucide-react'
+import {
+  ArrowLeft,
+  Download,
+  FileText,
+  ListPlus,
+  Loader2,
+  Trash2,
+  X,
+} from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -7,6 +15,7 @@ import { useSaveScheduleToFile } from '~/features/schedule-export'
 import { SongPickerModal } from '~/features/songs/components'
 import { useToast } from '~/ui/toast'
 import { AddToScheduleMenu } from './AddToScheduleMenu'
+import { EditAsTextModal } from './EditAsTextModal'
 import { InsertSlideModal } from './InsertSlideModal'
 import { ScheduleItemList } from './ScheduleItemList'
 import {
@@ -37,7 +46,11 @@ export function ScheduleEditor({
   const { showToast } = useToast()
   const navigate = useNavigate()
 
-  const { data: schedule, isLoading } = useSchedule(scheduleId ?? undefined)
+  const {
+    data: schedule,
+    isLoading,
+    refetch,
+  } = useSchedule(scheduleId ?? undefined)
   const upsertSchedule = useUpsertSchedule()
   const deleteSchedule = useDeleteSchedule()
   const addItem = useAddItemToSchedule()
@@ -54,6 +67,7 @@ export function ScheduleEditor({
   const [slideTemplate, setSlideTemplate] =
     useState<SlideTemplate>('announcement')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showEditAsText, setShowEditAsText] = useState(false)
   // Track created schedule ID for auto-save flow
   const [createdScheduleId, setCreatedScheduleId] = useState<number | null>(
     null,
@@ -280,6 +294,14 @@ export function ScheduleEditor({
               </button>
               <button
                 type="button"
+                onClick={() => setShowEditAsText(true)}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm text-white bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 rounded-lg transition-colors"
+              >
+                <FileText size={16} />
+                {t('actions.editAsText')}
+              </button>
+              <button
+                type="button"
                 onClick={handleImportToQueue}
                 disabled={importToQueue.isPending}
                 className="flex items-center gap-2 px-3 py-1.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-lg transition-colors disabled:opacity-50"
@@ -413,6 +435,17 @@ export function ScheduleEditor({
           </div>
         </div>
       </dialog>
+
+      {/* Edit as Text Modal */}
+      <EditAsTextModal
+        isOpen={showEditAsText}
+        onClose={() => setShowEditAsText(false)}
+        scheduleId={effectiveScheduleId}
+        currentItems={localItems}
+        onItemsUpdated={() => {
+          refetch()
+        }}
+      />
     </div>
   )
 }

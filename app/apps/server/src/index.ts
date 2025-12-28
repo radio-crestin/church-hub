@@ -136,9 +136,11 @@ import {
   getSchedules,
   importScheduleToQueue,
   type ReorderScheduleItemsInput,
+  type ReplaceScheduleItemsInput,
   rebuildScheduleSearchIndex,
   removeItemFromSchedule,
   reorderScheduleItems,
+  replaceScheduleItems,
   searchSchedules,
   type UpdateScheduleSlideInput,
   type UpsertScheduleInput,
@@ -1443,6 +1445,65 @@ async function main() {
           return handleCors(
             req,
             new Response(JSON.stringify({ data: { success: true } }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // PUT /api/schedules/:id/items/replace - Replace all items in schedule
+      const replaceScheduleItemsMatch = url.pathname.match(
+        /^\/api\/schedules\/(\d+)\/items\/replace$/,
+      )
+      if (req.method === 'PUT' && replaceScheduleItemsMatch?.[1]) {
+        const permError = checkPermission('programs.edit')
+        if (permError) return permError
+
+        try {
+          const scheduleId = parseInt(replaceScheduleItemsMatch[1], 10)
+          const body = (await req.json()) as ReplaceScheduleItemsInput
+
+          if (!body.items || !Array.isArray(body.items)) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Missing items array' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const result = replaceScheduleItems({
+            scheduleId,
+            items: body.items,
+          })
+
+          if (!result.success) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({
+                  error: result.error || 'Failed to replace items',
+                }),
+                {
+                  status: 500,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: result }), {
               headers: { 'Content-Type': 'application/json' },
             }),
           )

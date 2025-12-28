@@ -8,7 +8,8 @@
     "addItem": "Add",
     "importToQueue": "Import to Queue",
     "saveToFile": "Save to File",
-    "importFromFile": "Import"
+    "importFromFile": "Import",
+    "editAsText": "Edit as Text"
   },
   "editor": {
     "titlePlaceholder": "Enter schedule title...",
@@ -55,5 +56,32 @@
   "noSchedulesDescription": "Create your first schedule to plan your presentations",
   "itemCount_one": "{{count}} item",
   "itemCount_other": "{{count}} items",
-  "createdAt": "Created {{date}}"
+  "createdAt": "Created {{date}}",
+  "editAsText": {
+    "title": "Edit Schedule as Text",
+    "description": "Enter items using prefixes. Lines starting with # are comments.",
+    "formatHelp": "# Format examples:\n# S: Song Title\n# A: Announcement text\n# V: John 3:16",
+    "preview": "{{count}} items detected",
+    "preview_one": "{{count}} item detected",
+    "preview_other": "{{count}} items detected",
+    "errors": "{{count}} errors found",
+    "errors_one": "{{count}} error found",
+    "errors_other": "{{count}} errors found",
+    "save": "Apply Changes",
+    "cancel": "Cancel",
+    "processing": "Applying changes...",
+    "missingSongs": {
+      "title": "Songs Not Found",
+      "description": "The following songs were not found in your library:",
+      "searchAndSelect": "Search",
+      "createNew": "Create",
+      "continue": "Continue",
+      "skip": "Skip"
+    },
+    "messages": {
+      "applied": "Schedule updated from text",
+      "error": "Failed to update schedule",
+      "songCreated": "Song \"{{title}}\" created"
+    }
+  }
 }
