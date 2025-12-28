@@ -110,21 +110,23 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile Header */}
-      <header className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
-        <div className="flex items-center gap-3">
-          <img src="/logo192.png" alt="Church Hub" className="w-8 h-8" />
-          <span className="font-semibold text-gray-900 dark:text-white">
-            Church Hub
-          </span>
+      {/* Mobile Header - extends behind status bar for fullscreen effect */}
+      <header className="md:hidden fixed top-0 left-0 right-0 z-40 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 safe-area-top safe-area-left safe-area-right">
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-3">
+            <img src="/logo192.png" alt="Church Hub" className="w-8 h-8" />
+            <span className="font-semibold text-gray-900 dark:text-white">
+              Church Hub
+            </span>
+          </div>
+          <button
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            aria-label={t('sidebar:actions.openMenu')}
+          >
+            <Menu size={24} />
+          </button>
         </div>
-        <button
-          onClick={() => setIsMobileMenuOpen(true)}
-          className="p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          aria-label={t('sidebar:actions.openMenu')}
-        >
-          <Menu size={24} />
-        </button>
       </header>
 
       {/* Mobile Overlay */}
@@ -142,6 +144,7 @@ export function Sidebar() {
           flex flex-col h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800
           transition-all duration-300 ease-in-out
           w-72 md:w-auto top-0 left-0
+          safe-area-top safe-area-left safe-area-bottom
           ${isCollapsed ? 'md:w-20' : 'md:w-64'}
           ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         `}
