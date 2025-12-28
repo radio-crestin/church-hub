@@ -305,7 +305,7 @@ export function ScheduleEditor({
                 type="button"
                 onClick={handleImportToQueue}
                 disabled={importToQueue.isPending}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-lg transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-3 py-1.5 text-sm text-white bg-green-700 hover:bg-green-800 dark:bg-green-700 dark:hover:bg-green-800 rounded-lg transition-colors disabled:opacity-50"
               >
                 {importToQueue.isPending ? (
                   <Loader2 size={16} className="animate-spin" />
