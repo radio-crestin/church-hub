@@ -2,11 +2,13 @@ import { Music, Search } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useDebouncedValue } from '~/hooks/useDebouncedValue'
 import { SongCard } from './SongCard'
 import { useCategories, useSearchSongs, useSongs } from '../hooks'
 import type { Song, SongSearchResult } from '../types'
 
 const MAX_DISPLAY_SONGS = 50
+const SEARCH_DEBOUNCE_MS = 1500
 
 interface SongListProps {
   onSongClick: (songId: number) => void
@@ -23,9 +25,20 @@ export function SongList({
   const searchInputRef = useRef<HTMLInputElement>(null)
   // Local state for immediate input feedback
   const [localQuery, setLocalQuery] = useState(searchQuery)
+
+  // Debounced query for API calls - waits 1.5s after typing stops
+  const {
+    debouncedValue: debouncedQuery,
+    triggerImmediately,
+    isPending,
+  } = useDebouncedValue(localQuery, SEARCH_DEBOUNCE_MS)
+
   const { data: songs, isLoading: songsLoading } = useSongs()
-  const { data: searchResults, isLoading: searchLoading } =
-    useSearchSongs(localQuery)
+  const {
+    data: searchResults,
+    isLoading: searchLoading,
+    isFetching,
+  } = useSearchSongs(debouncedQuery)
   const { data: categories } = useCategories()
 
   // Sync local state when URL search param changes (e.g., navigation)
@@ -39,7 +52,9 @@ export function SongList({
   }, [])
 
   const isSearching = localQuery.length > 0
-  const isLoading = isSearching ? searchLoading : songsLoading
+  const hasSearchQuery = debouncedQuery.length > 0
+  const isLoading = hasSearchQuery ? searchLoading || isFetching : songsLoading
+  const showPendingIndicator = isPending && localQuery.length > 0
 
   const { displaySongs, totalCount } = useMemo(() => {
     let allSongs: Array<{
@@ -51,7 +66,7 @@ export function SongList({
       matchedContent?: string
     }>
 
-    if (isSearching && searchResults) {
+    if (hasSearchQuery && searchResults) {
       allSongs = searchResults.map((result: SongSearchResult) => ({
         id: result.id,
         title: result.title,
@@ -75,12 +90,19 @@ export function SongList({
       displaySongs: allSongs.slice(0, MAX_DISPLAY_SONGS),
       totalCount: allSongs.length,
     }
-  }, [isSearching, searchResults, songs, categories])
+  }, [hasSearchQuery, searchResults, songs, categories])
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
     setLocalQuery(value)
     onSearchChange?.(value)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      triggerImmediately()
+    }
   }
 
   const hasMore = totalCount > MAX_DISPLAY_SONGS
@@ -94,9 +116,15 @@ export function SongList({
           type="text"
           value={localQuery}
           onChange={handleSearchChange}
+          onKeyDown={handleKeyDown}
           placeholder={t('search.placeholder')}
-          className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+          className="w-full pl-10 pr-8 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
         />
+        {showPendingIndicator && (
+          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+            <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" />
+          </div>
+        )}
       </div>
 
       {isLoading ? (
