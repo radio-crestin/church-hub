@@ -31,6 +31,13 @@ function getUniqueTimestamp(): number {
 }
 
 /**
+ * Promise queue for serializing navigation requests.
+ * Ensures each navigation completes before the next one starts,
+ * preventing race conditions where multiple requests read stale state.
+ */
+let navigationQueue: Promise<unknown> = Promise.resolve()
+
+/**
  * Tracks the last applied updatedAt timestamp.
  * Shared between HTTP responses and WebSocket to ensure consistent ordering.
  */
@@ -58,6 +65,7 @@ export function updateStateIfNewer(
 export function resetNavigationTracking(): void {
   lastAppliedUpdatedAt = 0
   lastRequestTimestamp = 0
+  navigationQueue = Promise.resolve()
 }
 
 export function useStopPresentation() {
@@ -149,11 +157,20 @@ export function useNavigateTemporary() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (input: { direction: 'next' | 'prev' }) =>
-      navigateTemporary({
-        direction: input.direction,
-        requestTimestamp: getUniqueTimestamp(),
-      }),
+    mutationFn: (input: { direction: 'next' | 'prev' }) => {
+      // Chain this navigation to the queue to ensure sequential processing
+      // This prevents race conditions where multiple requests read stale state
+      const navigationPromise = navigationQueue.then(() =>
+        navigateTemporary({
+          direction: input.direction,
+          requestTimestamp: getUniqueTimestamp(),
+        }),
+      )
+      // Update the queue to wait for this navigation to complete
+      // Use .catch to prevent queue from breaking on errors
+      navigationQueue = navigationPromise.catch(() => {})
+      return navigationPromise
+    },
     onSuccess: (data: PresentationState) => {
       updateStateIfNewer(queryClient, data)
     },
