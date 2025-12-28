@@ -244,6 +244,8 @@ export function LivePreview() {
     presentationState?.currentVerseteTineriEntryId,
     presentationState?.isHidden,
     presentationState?.updatedAt,
+    // Include temporaryContent to ensure re-render when navigating temporary songs/bible
+    presentationState?.temporaryContent,
   ])
 
   const hasContent = Object.keys(contentData).length > 0
