@@ -59,8 +59,18 @@ export function ClockElement({
   const styles: React.CSSProperties = {
     ...constraintStyles,
     display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems:
+      config.style.verticalAlignment === 'top'
+        ? 'flex-start'
+        : config.style.verticalAlignment === 'bottom'
+          ? 'flex-end'
+          : 'center',
+    justifyContent:
+      config.style.alignment === 'center'
+        ? 'center'
+        : config.style.alignment === 'right'
+          ? 'flex-end'
+          : 'flex-start',
     ...getTextStyleCSS(config.style),
     fontSize: config.style.maxFontSize,
   }
