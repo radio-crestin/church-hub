@@ -96,3 +96,6 @@ fabric.properties
 scripts/old-youtube-automation/secrets/
 app/logs/
 app/apps/server/church-hub.db
+
+# Tauri generated files
+app/tauri/gen/
