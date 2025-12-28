@@ -1,16 +1,10 @@
 import { ClientOptions, fetch as tauriFetch } from '@tauri-apps/plugin-http'
 
+import { isMobile } from '~/config'
 import { getStoredApiUrl, getStoredUserToken } from '~/service/api-url'
 
 // Check if we're running in Tauri mode
 const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-
-// Check if on mobile (iOS/Android in Tauri)
-function isMobile(): boolean {
-  if (!isTauri) return false
-  const ua = navigator.userAgent.toLowerCase()
-  return ua.includes('iphone') || ua.includes('ipad') || ua.includes('android')
-}
 
 // Use Tauri fetch in Tauri mode, browser fetch in web mode
 const fetchFn = isTauri ? tauriFetch : window.fetch.bind(window)

@@ -6,5 +6,12 @@
     ],
     "deny": [],
     "ask": []
+  },
+  "remote": {
+    "defaultEnvironmentId": "env_014ryfSMymBc5zTrvwMA45AV"
+  },
+  "sandbox": {
+    "enabled": false,
+    "autoAllowBashIfSandboxed": false
   }
 }

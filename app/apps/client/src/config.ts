@@ -11,18 +11,26 @@ const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 
 /**
  * Checks if we're running on a mobile platform (iOS/Android) in Tauri
+ * Note: iPadOS 13+ identifies as Mac in user agent, so we also check for touch support
  */
 export function isMobile(): boolean {
   if (typeof window === 'undefined') return false
   if (!isTauri) return false
 
   const ua = navigator.userAgent.toLowerCase()
-  return (
-    ua.includes('iphone') ||
-    ua.includes('ipad') ||
-    ua.includes('ipod') ||
-    ua.includes('android')
-  )
+
+  // Direct mobile detection
+  if (ua.includes('iphone') || ua.includes('ipad') || ua.includes('ipod') || ua.includes('android')) {
+    return true
+  }
+
+  // iPadOS 13+ detection: identifies as Mac but has touch support
+  // This catches iPad in "desktop mode" which reports as Macintosh
+  if (ua.includes('macintosh') && navigator.maxTouchPoints > 1) {
+    return true
+  }
+
+  return false
 }
 
 /**

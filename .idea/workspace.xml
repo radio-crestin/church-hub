@@ -5,14 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="66517e3f-2e4e-43cc-880d-deb242368f0c" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.claude/settings.local.json" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/settings.local.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TODO.md" beforeDir="false" afterPath="$PROJECT_DIR$/TODO.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/BroadcastInfo.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/BroadcastInfo.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/livestream/hooks/useStreaming.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/livestream/hooks/useStreaming.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/routes/livestream.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/routes/livestream.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/livestream/youtube/auth.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/livestream/youtube/auth.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/livestream/youtube/broadcast.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/livestream/youtube/broadcast.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/livestream/youtube/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/livestream/youtube/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/config.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/api-url-config/components/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/api-url-config/components/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/api-url-config/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/api-url-config/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/routes/__root.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/routes/__root.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/utils/fetcher.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/utils/fetcher.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/tauri/tauri.conf.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/tauri.conf.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -21,6 +22,10 @@
   </component>
   <component name="ComposerSettings">
     <execution />
+  </component>
+  <component name="EmbeddingIndexingInfo">
+    <option name="cachedIndexableFilesCount" value="107247" />
+    <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -32,6 +37,10 @@
   <component name="MacroExpansionManager">
     <option name="directoryName" value="pZQ4YZEb" />
   </component>
+  <component name="McpProjectServerCommands">
+    <commands />
+    <urls />
+  </component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
   &quot;associatedIndex&quot;: 5
@@ -41,66 +50,59 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "SHELLCHECK.PATH": "/Users/iosif/Library/Application Support/JetBrains/IntelliJIdea2025.2/plugins/Shell Script/shellcheck",
-    "git-widget-placeholder": "main",
-    "ignore.virus.scanning.warn.message": "true",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "/Users/iosif/Documents/Projects/church-hub/scripts",
-    "node.js.detected.package.eslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "nodejs_package_manager_path": "bun",
-    "npm.compile.executor": "Run",
-    "npm.deploy:prod.executor": "Run",
-    "npm.dev (1).executor": "Run",
-    "npm.dev (2).executor": "Run",
-    "npm.dev (3).executor": "Run",
-    "npm.dev.executor": "Run",
-    "npm.dev:tauri.executor": "Run",
-    "npm.fixtures.executor": "Run",
-    "npm.fixtures:screens.executor": "Run",
-    "npm.lint.executor": "Run",
-    "npm.tauri:dev.executor": "Run",
-    "npm.tsc:check.executor": "Run",
-    "org.rust.first.attach.projects": "true",
-    "project.structure.last.edited": "Modules",
-    "project.structure.proportion": "0.0",
-    "project.structure.side.proportion": "0.5",
-    "settings.editor.selected.configurable": "com.jetbrains.python.black.configuration.BlackFormatterConfigurable",
-    "ts.external.directory.path": "/Users/iosif/Documents/Projects/church-hub/app/node_modules/typescript/lib",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;SHELLCHECK.PATH&quot;: &quot;/Users/iosif/Library/Application Support/JetBrains/IntelliJIdea2025.2/plugins/Shell Script/shellcheck&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/iosif/Documents/Projects/church-hub/scripts&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;bun&quot;,
+    &quot;npm.compile.executor&quot;: &quot;Run&quot;,
+    &quot;npm.deploy:prod.executor&quot;: &quot;Run&quot;,
+    &quot;npm.dev (1).executor&quot;: &quot;Run&quot;,
+    &quot;npm.dev (2).executor&quot;: &quot;Run&quot;,
+    &quot;npm.dev (3).executor&quot;: &quot;Run&quot;,
+    &quot;npm.dev.executor&quot;: &quot;Run&quot;,
+    &quot;npm.dev:tauri.executor&quot;: &quot;Run&quot;,
+    &quot;npm.fixtures.executor&quot;: &quot;Run&quot;,
+    &quot;npm.fixtures:screens.executor&quot;: &quot;Run&quot;,
+    &quot;npm.ios:run.executor&quot;: &quot;Run&quot;,
+    &quot;npm.lint.executor&quot;: &quot;Run&quot;,
+    &quot;npm.tauri:dev.executor&quot;: &quot;Run&quot;,
+    &quot;npm.tsc:check.executor&quot;: &quot;Run&quot;,
+    &quot;org.rust.first.attach.projects&quot;: &quot;true&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.5&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;ml.llm.LLMThirdPartyAiProvidersConfigurable&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;/Users/iosif/Documents/Projects/church-hub/app/node_modules/typescript/lib&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   },
-  "keyToStringList": {
-    "DatabaseDriversLRU": [
-      "sqlite"
+  &quot;keyToStringList&quot;: {
+    &quot;DatabaseDriversLRU&quot;: [
+      &quot;sqlite&quot;
     ],
-    "com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File": [
-      "TEXT"
+    &quot;com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File&quot;: [
+      &quot;TEXT&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/scripts" />
       <recent name="$PROJECT_DIR$" />
     </key>
   </component>
-  <component name="RunManager">
-    <configuration name="deploy:prod" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
-      <package-json value="$PROJECT_DIR$/youtube-oauth-worker/package.json" />
-      <command value="run" />
-      <scripts>
-        <script value="deploy:prod" />
-      </scripts>
-      <node-interpreter value="project" />
-      <envs />
-      <method v="2" />
-    </configuration>
+  <component name="RunManager" selected="npm.ios:run">
     <configuration name="dev" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
       <package-json value="$PROJECT_DIR$/app/package.json" />
       <command value="run" />
@@ -116,6 +118,16 @@
       <command value="run" />
       <scripts>
         <script value="fixtures" />
+      </scripts>
+      <node-interpreter value="project" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <configuration name="ios:run" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
+      <package-json value="$PROJECT_DIR$/app/package.json" />
+      <command value="run" />
+      <scripts>
+        <script value="ios:run" />
       </scripts>
       <node-interpreter value="project" />
       <envs />
@@ -141,6 +153,12 @@
       <envs />
       <method v="2" />
     </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="npm.ios:run" />
+        <item itemvalue="npm.dev" />
+      </list>
+    </recent_temporary>
   </component>
   <component name="RustProjectSettings">
     <option name="toolchainHomeDirectory" value="$USER_HOME$/.cargo/bin" />
@@ -148,7 +166,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-python-sdk-53e2683a6804-9cdd278e9d02-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-251.26094.141" />
+        <option value="bundled-jdk-30f59d01ecdd-26cb7f24e5b0-intellij.indexing.shared.core-IU-253.29346.138" />
+        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-IU-253.29346.138" />
       </set>
     </attachedChunks>
   </component>
@@ -164,6 +183,7 @@
       <workItem from="1764529520395" duration="23258000" />
       <workItem from="1765113262440" duration="193467000" />
       <workItem from="1766606925029" duration="959000" />
+      <workItem from="1766918516260" duration="5741000" />
     </task>
     <servers />
   </component>
