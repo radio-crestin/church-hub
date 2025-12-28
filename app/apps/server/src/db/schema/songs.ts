@@ -70,7 +70,11 @@ export const songSlides = sqliteTable(
       .default(sql`(unixepoch())`),
   },
   (table) => [
-    index('idx_song_slides_song_id').on(table.songId),
-    index('idx_song_slides_sort_order').on(table.sortOrder),
+    // Compound index optimizes queries filtering by song_id and ordering by sort_order
+    // Also covers song_id-only lookups since it's the index prefix
+    index('idx_song_slides_song_id_sort_order').on(
+      table.songId,
+      table.sortOrder,
+    ),
   ],
 )
