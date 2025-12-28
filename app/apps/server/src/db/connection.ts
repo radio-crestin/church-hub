@@ -61,6 +61,17 @@ export async function initializeDatabase(): Promise<InitializeResult> {
 
     // Enable foreign keys
     sqlite.run('PRAGMA foreign_keys = ON')
+
+    // RAM optimizations for better performance on slow machines
+    // 64MB page cache (negative value = KB)
+    sqlite.run('PRAGMA cache_size = -65536')
+    // Store temporary tables and indexes in memory
+    sqlite.run('PRAGMA temp_store = MEMORY')
+    // 256MB memory-mapped I/O for faster file access
+    sqlite.run('PRAGMA mmap_size = 268435456')
+    // NORMAL sync is safe with WAL and faster than FULL
+    sqlite.run('PRAGMA synchronous = NORMAL')
+
     logTiming('sqlite_pragma', t)
 
     // Initialize Drizzle ORM with schema
