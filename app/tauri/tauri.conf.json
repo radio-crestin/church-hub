@@ -53,6 +53,12 @@
         "name": "PowerPoint Presentation",
         "description": "Import PowerPoint as Song",
         "role": "Viewer"
+      },
+      {
+        "ext": ["opensong"],
+        "name": "OpenSong File",
+        "description": "Church Hub Song",
+        "role": "Editor"
       }
     ],
     "iOS": {

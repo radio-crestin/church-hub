@@ -61,6 +61,7 @@ function extractMetadata(
     (filename ? extractFilenameWithoutExtension(filename) : 'Untitled Song')
   const title = sanitizeSongTitle(rawTitle)
 
+  const churchHubIdStr = getTextContent(song, 'church_hub_id')
   const metadata: OpenSongMetadata = {
     author: getTextContent(song, 'author'),
     copyright: getTextContent(song, 'copyright'),
@@ -73,6 +74,7 @@ function extractMetadata(
     hymnNumber: getTextContent(song, 'hymn_number'),
     keyLine: getTextContent(song, 'key_line'),
     presentationOrder: getTextContent(song, 'presentation'),
+    churchHubId: churchHubIdStr ? parseInt(churchHubIdStr, 10) : null,
   }
 
   return { title, metadata }

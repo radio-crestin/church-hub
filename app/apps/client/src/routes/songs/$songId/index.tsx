@@ -2,6 +2,7 @@ import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import {
   ArrowLeft,
   CalendarPlus,
+  Download,
   GripVertical,
   Loader2,
   Pencil,
@@ -16,9 +17,11 @@ import {
   usePresentTemporarySong,
 } from '~/features/presentation'
 import { AddSongToScheduleModal } from '~/features/schedules'
+import { useSaveSongToFile } from '~/features/song-export'
 import { SongControlPanel, SongSlidesPanel } from '~/features/songs/components'
 import { useSong, useSongKeyboardShortcuts } from '~/features/songs/hooks'
 import type { SongSlide } from '~/features/songs/types'
+import { useToast } from '~/ui/toast'
 
 export const Route = createFileRoute('/songs/$songId/')({
   component: SongPreviewPage,
@@ -41,6 +44,8 @@ function SongPreviewPage() {
   const navigateTemporary = useNavigateTemporary()
   const clearTemporary = useClearTemporaryContent()
   const { data: presentationState } = usePresentationState()
+  const { saveSong, isPending: isSaving } = useSaveSongToFile()
+  const { showToast } = useToast()
 
   const [dividerPosition, setDividerPosition] = useState(40)
   const [showAddToScheduleModal, setShowAddToScheduleModal] = useState(false)
@@ -114,6 +119,16 @@ function SongPreviewPage() {
     [navigate],
   )
 
+  const handleSaveToFile = useCallback(async () => {
+    if (!song) return
+    const result = await saveSong(song)
+    if (result.success) {
+      showToast(t('messages.savedToFile'), 'success')
+    } else if (result.error) {
+      showToast(result.error, 'error')
+    }
+  }, [song, saveSong, showToast, t])
+
   // Keyboard shortcuts
   useSongKeyboardShortcuts({
     onNextSlide: handleNextSlide,
@@ -182,6 +197,16 @@ function SongPreviewPage() {
         <div className="hidden lg:flex items-center gap-2">
           <button
             type="button"
+            onClick={handleSaveToFile}
+            disabled={isSaving}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50"
+            title={t('actions.saveToFile')}
+          >
+            <Download size={20} />
+            <span>{t('actions.saveToFile')}</span>
+          </button>
+          <button
+            type="button"
             onClick={() => setShowAddToScheduleModal(true)}
             className="inline-flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
             title={t('actions.addToSchedule')}
@@ -246,6 +271,16 @@ function SongPreviewPage() {
 
         {/* Action buttons - shown on mobile only, below presentation */}
         <div className="order-2 lg:hidden flex items-center justify-center gap-2 py-2">
+          <button
+            type="button"
+            onClick={handleSaveToFile}
+            disabled={isSaving}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50"
+            title={t('actions.saveToFile')}
+          >
+            <Download size={18} />
+            <span className="text-sm">{t('actions.saveToFile')}</span>
+          </button>
           <button
             type="button"
             onClick={() => setShowAddToScheduleModal(true)}

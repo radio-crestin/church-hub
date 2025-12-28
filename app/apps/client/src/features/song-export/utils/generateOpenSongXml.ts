@@ -89,6 +89,7 @@ export function generateOpenSongXml(song: SongWithSlides): string {
 
   // Add metadata elements
   parts.push(xmlElement('title', song.title))
+  parts.push(xmlElement('church_hub_id', String(song.id)))
   parts.push(xmlElement('author', song.author))
   parts.push(xmlElement('copyright', song.copyright))
   parts.push(xmlElement('ccli', song.ccli))

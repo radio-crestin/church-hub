@@ -57,6 +57,7 @@ export interface OpenSongMetadata {
   hymnNumber: string | null
   keyLine: string | null
   presentationOrder: string | null
+  churchHubId: number | null
 }
 
 /**
