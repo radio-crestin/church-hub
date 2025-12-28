@@ -11,6 +11,8 @@ use commands::{clear_pending_import, get_pending_import, get_server_config};
 #[cfg(desktop)]
 use commands::PendingImport;
 #[cfg(desktop)]
+use commands::{reset_zoom, toggle_devtools, zoom_in, zoom_out, ZoomState};
+#[cfg(desktop)]
 use webview::{
     close_child_webview, create_child_webview, hide_child_webview, show_child_webview,
     update_child_webview, webview_exists,
@@ -165,6 +167,12 @@ pub fn run() {
             server_port,
         };
         app.manage(app_state);
+
+        // Initialize zoom state for tracking zoom levels per webview
+        let zoom_state = ZoomState {
+            zoom_levels: Mutex::new(std::collections::HashMap::new()),
+        };
+        app.manage(zoom_state);
         println!("[startup] setup_app_state: {:?}", t.elapsed());
 
         // Handle file association - check CLI args for PPTX file
@@ -215,6 +223,83 @@ pub fn run() {
             println!("[startup] dev_server_ready_wait: {:?}", t.elapsed());
         }
 
+        // Inject keyboard shortcut handler into main webview
+        let t = Instant::now();
+        if app.webview_windows().get("main").is_some() {
+            let keyboard_handler = r#"
+                (function() {
+                    if (window.__tauriKeyboardHandlerInstalled) return;
+                    window.__tauriKeyboardHandlerInstalled = true;
+
+                    document.addEventListener('keydown', async (e) => {
+                        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+                        const ctrlOrCmd = isMac ? e.metaKey : e.ctrlKey;
+
+                        // F12 or Ctrl+Shift+I: Toggle DevTools
+                        if (e.key === 'F12' || (ctrlOrCmd && e.shiftKey && e.key === 'I')) {
+                            e.preventDefault();
+                            try {
+                                await window.__TAURI__.core.invoke('toggle_devtools');
+                            } catch (err) {
+                                console.error('Failed to toggle devtools:', err);
+                            }
+                            return;
+                        }
+
+                        // Ctrl/Cmd + Plus or Ctrl/Cmd + =: Zoom in
+                        if (ctrlOrCmd && (e.key === '+' || e.key === '=')) {
+                            e.preventDefault();
+                            try {
+                                await window.__TAURI__.core.invoke('zoom_in');
+                            } catch (err) {
+                                console.error('Failed to zoom in:', err);
+                            }
+                            return;
+                        }
+
+                        // Ctrl/Cmd + Minus: Zoom out
+                        if (ctrlOrCmd && e.key === '-') {
+                            e.preventDefault();
+                            try {
+                                await window.__TAURI__.core.invoke('zoom_out');
+                            } catch (err) {
+                                console.error('Failed to zoom out:', err);
+                            }
+                            return;
+                        }
+
+                        // Ctrl/Cmd + 0: Reset zoom
+                        if (ctrlOrCmd && e.key === '0') {
+                            e.preventDefault();
+                            try {
+                                await window.__TAURI__.core.invoke('reset_zoom');
+                            } catch (err) {
+                                console.error('Failed to reset zoom:', err);
+                            }
+                            return;
+                        }
+                    });
+
+                    console.log('[tauri] Keyboard shortcuts installed: F12/Ctrl+Shift+I (DevTools), Ctrl+/-/0 (Zoom)');
+                })();
+            "#;
+
+            // We need to inject after page load, so we'll add a listener
+            let handle = app.handle().clone();
+            std::thread::spawn(move || {
+                // Small delay to ensure page is loaded
+                std::thread::sleep(std::time::Duration::from_millis(500));
+                if let Some(wv) = handle.webview_windows().get("main") {
+                    if let Err(e) = wv.eval(keyboard_handler) {
+                        println!("[keyboard] Failed to inject keyboard handler: {e}");
+                    } else {
+                        println!("[keyboard] Keyboard shortcuts installed");
+                    }
+                }
+            });
+        }
+        println!("[startup] keyboard_handler_setup: {:?}", t.elapsed());
+
         println!("[startup] setup_hook_total: {:?}", setup_start.elapsed());
         println!("[startup] === Tauri Ready (total: {:?}) ===", app_start.elapsed());
 
@@ -241,7 +326,11 @@ pub fn run() {
         show_child_webview,
         hide_child_webview,
         update_child_webview,
-        webview_exists
+        webview_exists,
+        toggle_devtools,
+        zoom_in,
+        zoom_out,
+        reset_zoom
     ]);
 
     // Mobile: only basic commands (no webview management)
