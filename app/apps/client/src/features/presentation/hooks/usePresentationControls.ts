@@ -14,6 +14,24 @@ import {
 } from '../service/presentation'
 import type { PresentationState } from '../types'
 
+/**
+ * Helper to update presentation state only if the new state is newer than cached.
+ * Prevents race conditions when responses arrive out of order.
+ */
+function updateStateIfNewer(
+  queryClient: ReturnType<typeof useQueryClient>,
+  newState: PresentationState,
+): void {
+  const currentState = queryClient.getQueryData<PresentationState>(
+    presentationStateQueryKey,
+  )
+
+  // Only update if new state is newer (or no current state exists)
+  if (!currentState || newState.updatedAt >= currentState.updatedAt) {
+    queryClient.setQueryData(presentationStateQueryKey, newState)
+  }
+}
+
 export function useStopPresentation() {
   const queryClient = useQueryClient()
 
@@ -64,7 +82,7 @@ export function useNavigateQueueSlide() {
   return useMutation({
     mutationFn: navigateQueueSlide,
     onSuccess: (data: PresentationState) => {
-      queryClient.setQueryData(presentationStateQueryKey, data)
+      updateStateIfNewer(queryClient, data)
     },
   })
 }
@@ -105,7 +123,7 @@ export function useNavigateTemporary() {
         requestTimestamp: Date.now(),
       }),
     onSuccess: (data: PresentationState) => {
-      queryClient.setQueryData(presentationStateQueryKey, data)
+      updateStateIfNewer(queryClient, data)
     },
   })
 }
