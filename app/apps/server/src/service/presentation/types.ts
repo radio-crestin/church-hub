@@ -122,6 +122,7 @@ export interface PresentTemporarySongInput {
  */
 export interface NavigateTemporaryInput {
   direction: 'next' | 'prev'
+  requestTimestamp: number
 }
 
 /**
