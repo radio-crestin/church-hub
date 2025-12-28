@@ -60,7 +60,7 @@
   "editAsText": {
     "title": "Editeaza Programul ca Text",
     "description": "Introdu elemente folosind prefixe. Liniile care incep cu # sunt comentarii.",
-    "formatHelp": "# Exemple de format:\n# S: Titlu Cantare\n# A: Text anunt\n# V: Ioan 3:16",
+    "formatHelp": "# Exemple de format:\n# S: Titlu Cantare\n# A: Text anunt\n# V: Ioan 3:16 (Pasaj biblic)\n# VT: Nume Persoana - Ioan 3:16 (Verset tineri)",
     "preview": "{{count}} elemente detectate",
     "preview_one": "{{count}} element detectat",
     "preview_other": "{{count}} elemente detectate",
