@@ -14,6 +14,17 @@ const logger = createLogger('WebSocket')
 
 type WebSocketStatus = 'connecting' | 'connected' | 'disconnected' | 'error'
 
+export interface WebSocketDebugInfo {
+  status: WebSocketStatus
+  url: string | null
+  messageCount: number
+  presentationStateCount: number
+  lastMessageAt: number | null
+  lastPresentationUpdatedAt: number | null
+  lastSlideIndex: number | null
+  staleMessagesBlocked: number
+}
+
 interface PresentationMessage {
   type: 'presentation_state'
   payload: PresentationState
@@ -76,6 +87,18 @@ export function useWebSocket() {
   const [status, setStatus] = useState<WebSocketStatus>('disconnected')
   const isConnectingRef = useRef(false)
 
+  // Debug info state
+  const [debugInfo, setDebugInfo] = useState<WebSocketDebugInfo>({
+    status: 'disconnected',
+    url: null,
+    messageCount: 0,
+    presentationStateCount: 0,
+    lastMessageAt: null,
+    lastPresentationUpdatedAt: null,
+    lastSlideIndex: null,
+    staleMessagesBlocked: 0,
+  })
+
   const handleMessage = useCallback(
     (messageData: string) => {
       try {
@@ -92,10 +115,31 @@ export function useWebSocket() {
           return
         }
 
+        // Update debug info for all non-pong messages
+        setDebugInfo((prev) => ({
+          ...prev,
+          messageCount: prev.messageCount + 1,
+          lastMessageAt: Date.now(),
+        }))
+
         if (data.type === 'presentation_state') {
-          // Use shared updateStateIfNewer to ensure consistent ordering
-          // between HTTP responses and WebSocket messages
-          updateStateIfNewer(queryClient, data.payload)
+          const wasApplied = updateStateIfNewer(queryClient, data.payload)
+
+          // Extract slide index from temporary content if present
+          let slideIndex: number | null = null
+          if (data.payload.temporaryContent?.type === 'song') {
+            slideIndex = data.payload.temporaryContent.data.currentSlideIndex
+          }
+
+          setDebugInfo((prev) => ({
+            ...prev,
+            presentationStateCount: prev.presentationStateCount + 1,
+            lastPresentationUpdatedAt: data.payload.updatedAt,
+            lastSlideIndex: slideIndex,
+            staleMessagesBlocked: wasApplied
+              ? prev.staleMessagesBlocked
+              : prev.staleMessagesBlocked + 1,
+          }))
         }
 
         if (data.type === 'screen_config_updated') {
@@ -128,6 +172,7 @@ export function useWebSocket() {
       const apiUrl = getApiUrl()
       if (!apiUrl) {
         setStatus('error')
+        setDebugInfo((prev) => ({ ...prev, status: 'error' }))
         return
       }
       wsUrl = apiUrl.replace(/^http/, 'ws')
@@ -135,6 +180,7 @@ export function useWebSocket() {
     wsUrl = wsUrl + '/ws'
 
     setStatus('connecting')
+    setDebugInfo((prev) => ({ ...prev, status: 'connecting', url: wsUrl }))
 
     try {
       const ws = new WebSocket(wsUrl)
@@ -142,6 +188,7 @@ export function useWebSocket() {
 
       ws.onopen = () => {
         setStatus('connected')
+        setDebugInfo((prev) => ({ ...prev, status: 'connected' }))
         missedPongsRef.current = 0
 
         // Invalidate presentation state to refetch current state on reconnection
@@ -181,6 +228,7 @@ export function useWebSocket() {
 
       ws.onerror = () => {
         setStatus('error')
+        setDebugInfo((prev) => ({ ...prev, status: 'error' }))
 
         if (!reconnectTimeoutRef.current) {
           reconnectTimeoutRef.current = setTimeout(() => {
@@ -191,6 +239,7 @@ export function useWebSocket() {
 
       ws.onclose = () => {
         setStatus('disconnected')
+        setDebugInfo((prev) => ({ ...prev, status: 'disconnected' }))
 
         if (pingIntervalRef.current) {
           clearInterval(pingIntervalRef.current)
@@ -213,6 +262,7 @@ export function useWebSocket() {
       }
     } catch {
       setStatus('error')
+      setDebugInfo((prev) => ({ ...prev, status: 'error' }))
 
       reconnectTimeoutRef.current = setTimeout(() => {
         connectNative()
@@ -439,5 +489,5 @@ export function useWebSocket() {
     }
   }, [connect, disconnect])
 
-  return { status, connect, disconnect, send }
+  return { status, connect, disconnect, send, debugInfo }
 }
