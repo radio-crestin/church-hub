@@ -59,6 +59,7 @@
   ~~- pentru cantari, va fi ceva similar, fiecare cantare e echivalentul unui verset~~
   ~~- pentru Biblie va trebui sa afisezi in timp real ce se cauta pe pc-ul principal si sa afisezi lista de versete~~
 - adauga wake lock pentru intreaga aplicatie, nu numai pentru kiosk
+- fix clock position to be the same as other things
 - imbunatateste search-ul ca sa fie super rapid
 - adauga optiune de a creste font-ul default al aplicatiei
 - adauga optiunea de a edita programul ca si text
