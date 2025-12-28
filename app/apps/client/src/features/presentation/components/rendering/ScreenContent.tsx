@@ -1,13 +1,7 @@
 import { AnimatedElement } from './AnimatedElement'
 import { TextContent } from './TextContent'
 import type { ContentData, NextSlideData } from './types'
-import {
-  calculatePixelBounds,
-  getAlignItems,
-  getBackgroundCSS,
-  getJustifyContent,
-  getTextStyleCSS,
-} from './utils/styleUtils'
+import { calculatePixelBounds, getBackgroundCSS } from './utils/styleUtils'
 import type {
   BibleContentConfig,
   ContentType,
@@ -256,10 +250,18 @@ export function ScreenContent({
     if (!clockConfig?.enabled) return null
     if (clockConfig.hidden) return null
 
+    // Default size for backwards compatibility (must match ScreenEditorCanvas.tsx)
+    const clockSize = clockConfig.size ?? {
+      width: 10,
+      widthUnit: '%' as const,
+      height: 5,
+      heightUnit: '%' as const,
+    }
+
     // Calculate pixel bounds and scale
     const bounds = calculatePixelBounds(
       clockConfig.constraints,
-      clockConfig.size,
+      clockSize,
       canvasWidth,
       canvasHeight,
     )
@@ -277,19 +279,23 @@ export function ScreenContent({
     return (
       <div
         key="clock"
-        className="absolute overflow-hidden flex"
+        className="absolute overflow-hidden"
         style={{
           left: scaledBounds.x,
           top: scaledBounds.y,
           width: scaledBounds.width,
           height: scaledBounds.height,
-          ...getTextStyleCSS(clockConfig.style),
-          fontSize: clockConfig.style.maxFontSize * fontScale,
-          alignItems: getAlignItems(clockConfig.style.verticalAlignment),
-          justifyContent: getJustifyContent(clockConfig.style.alignment),
         }}
       >
-        {timeString}
+        <TextContent
+          content={timeString}
+          style={{
+            ...clockConfig.style,
+            maxFontSize: clockConfig.style.maxFontSize * fontScale,
+          }}
+          containerWidth={scaledBounds.width}
+          containerHeight={scaledBounds.height}
+        />
       </div>
     )
   }
