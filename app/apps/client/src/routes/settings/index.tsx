@@ -1,8 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { ExternalLink, Languages, Palette } from 'lucide-react'
+import { Bug, ExternalLink, Languages, Palette } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { isLocalhost, isMobile } from '~/config'
+import { useDebugMode } from '~/hooks/useDebugMode'
 import { ApiUrlSettings } from '~/features/api-url-config'
 import { DatabaseManager } from '~/features/database-management'
 import {
@@ -37,6 +38,8 @@ function RouteComponent() {
     setThemePreference,
     isLoading: isThemeLoading,
   } = useTheme()
+
+  const { isDebugMode, setDebugMode, isLoading: isDebugLoading } = useDebugMode()
 
   const languageOptions: { value: LanguagePreference; label: string }[] = [
     { value: 'system', label: t('sections.language.options.system') },
@@ -149,6 +152,37 @@ function RouteComponent() {
 
         {/* API & Developer Section */}
         <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800 space-y-6">
+          {/* Debug Mode Toggle */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Bug className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {t('sections.debug.title')}
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
+                  {t('sections.debug.description')}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setDebugMode(!isDebugMode)}
+              disabled={isDebugLoading}
+              className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 ${
+                isDebugMode ? 'bg-indigo-600' : 'bg-gray-200 dark:bg-gray-700'
+              } ${isDebugLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                  isDebugMode ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+
+          <hr className="border-gray-200 dark:border-gray-700" />
+
           {/* API Documentation Link */}
           <div className="flex items-center justify-between">
             <div>

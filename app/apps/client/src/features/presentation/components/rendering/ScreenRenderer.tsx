@@ -734,9 +734,11 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
   const config = screen.contentConfigs[contentType]
   const bg = config?.background || screen.contentConfigs.empty?.background
 
+  // On mobile, use safe area wrapper to avoid content going behind status bar
+  const isMobileDevice = isMobile()
+
   return (
     <div
-      ref={containerRef}
       className="w-screen h-screen overflow-hidden cursor-default"
       style={bg ? getBackgroundCSS(bg) : { backgroundColor: '#000000' }}
       onDoubleClick={isNativeDisplayWindow ? toggleFullscreen : undefined}
@@ -744,62 +746,82 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
       onTouchStart={handleTouchStart}
       onClick={handleClick}
     >
-      {/* Floating toolbar */}
+      {/* Safe area wrapper - adds padding on mobile to avoid status bar */}
       <div
-        className={`fixed top-0 right-0 z-50 p-2 transition-opacity duration-300 ${
-          showToolbar ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
-        onMouseEnter={() => {
-          if (toolbarTimeoutRef.current) {
-            clearTimeout(toolbarTimeoutRef.current)
-          }
-          setShowToolbar(true)
-        }}
-        onMouseLeave={() => {
-          toolbarTimeoutRef.current = setTimeout(() => {
-            setShowToolbar(false)
-          }, 1000)
-        }}
+        className={
+          isMobileDevice
+            ? 'w-full h-full safe-area-inset box-border flex flex-col'
+            : 'w-full h-full'
+        }
       >
-        <div className="flex gap-2">
-          {/* For kiosk screens (by type or kiosk mode), show exit button */}
-          {screen?.type === 'kiosk' || isKioskModeScreen ? (
-            <button
-              type="button"
-              onClick={() => navigate({ to: '/settings' })}
-              className="p-2 rounded-lg bg-black/50 hover:bg-black/70 text-white transition-colors"
-              title="Exit Kiosk"
-            >
-              <Minimize size={20} />
-            </button>
-          ) : (
-            // Only show fullscreen button in native display windows
-            isNativeDisplayWindow && (
+        {/* Floating toolbar */}
+        <div
+          className={`fixed z-50 p-2 transition-opacity duration-300 safe-area-top safe-area-right ${
+            showToolbar ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
+          style={{ top: 0, right: 0 }}
+          onMouseEnter={() => {
+            if (toolbarTimeoutRef.current) {
+              clearTimeout(toolbarTimeoutRef.current)
+            }
+            setShowToolbar(true)
+          }}
+          onMouseLeave={() => {
+            toolbarTimeoutRef.current = setTimeout(() => {
+              setShowToolbar(false)
+            }, 1000)
+          }}
+        >
+          <div className="flex gap-2">
+            {/* For kiosk screens (by type or kiosk mode), show exit button */}
+            {screen?.type === 'kiosk' || isKioskModeScreen ? (
               <button
                 type="button"
-                onClick={toggleFullscreen}
+                onClick={() => navigate({ to: '/settings' })}
                 className="p-2 rounded-lg bg-black/50 hover:bg-black/70 text-white transition-colors"
-                title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                title="Exit Kiosk"
               >
-                {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
+                <Minimize size={20} />
               </button>
-            )
+            ) : (
+              // Only show fullscreen button in native display windows
+              isNativeDisplayWindow && (
+                <button
+                  type="button"
+                  onClick={toggleFullscreen}
+                  className="p-2 rounded-lg bg-black/50 hover:bg-black/70 text-white transition-colors"
+                  title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                >
+                  {isFullscreen ? (
+                    <Minimize size={20} />
+                  ) : (
+                    <Maximize size={20} />
+                  )}
+                </button>
+              )
+            )}
+          </div>
+        </div>
+
+        {/* Content container - measured for actual available space */}
+        <div
+          ref={containerRef}
+          className={isMobileDevice ? 'flex-1 relative' : 'w-full h-full'}
+        >
+          {containerSize.width > 0 && containerSize.height > 0 && (
+            <ScreenContent
+              screen={screen}
+              contentType={contentType}
+              contentData={contentData}
+              containerWidth={containerSize.width}
+              containerHeight={containerSize.height}
+              showClock={true}
+              isVisible={isVisible}
+              nextSlideData={nextSlideData}
+            />
           )}
         </div>
       </div>
-
-      {containerSize.width > 0 && containerSize.height > 0 && (
-        <ScreenContent
-          screen={screen}
-          contentType={contentType}
-          contentData={contentData}
-          containerWidth={containerSize.width}
-          containerHeight={containerSize.height}
-          showClock={true}
-          isVisible={isVisible}
-          nextSlideData={nextSlideData}
-        />
-      )}
     </div>
   )
 }

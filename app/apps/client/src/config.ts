@@ -20,7 +20,12 @@ export function isMobile(): boolean {
   const ua = navigator.userAgent.toLowerCase()
 
   // Direct mobile detection
-  if (ua.includes('iphone') || ua.includes('ipad') || ua.includes('ipod') || ua.includes('android')) {
+  if (
+    ua.includes('iphone') ||
+    ua.includes('ipad') ||
+    ua.includes('ipod') ||
+    ua.includes('android')
+  ) {
     return true
   }
 

@@ -491,6 +491,10 @@
         "importSuccess": "Baza de date importată cu succes. Te rugăm să repornești aplicația.",
         "importFailed": "Importul a eșuat: {{error}}"
       }
+    },
+    "debug": {
+      "title": "Mod Depanare",
+      "description": "Afișează panoul de depanare WebSocket cu starea conexiunii și numărul de mesaje"
     }
   }
 }

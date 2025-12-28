@@ -491,6 +491,10 @@
         "importSuccess": "Database imported successfully. Please restart the application.",
         "importFailed": "Failed to import database: {{error}}"
       }
+    },
+    "debug": {
+      "title": "Debug Mode",
+      "description": "Show WebSocket debug panel with connection status and message counts"
     }
   }
 }
