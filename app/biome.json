@@ -14,7 +14,8 @@
       "**/vite.config.ts",
       "!**/dist",
       "!src-tauri/src",
-      "!**/src/routeTree.gen.ts"
+      "!**/src/routeTree.gen.ts",
+      "!**/db/fixtures/*.json"
     ]
   },
   "formatter": {

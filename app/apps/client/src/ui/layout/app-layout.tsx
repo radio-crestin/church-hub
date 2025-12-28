@@ -1,6 +1,6 @@
 import { useLocation } from '@tanstack/react-router'
 
-import { WebSocketDebugPanel, useWebSocket } from '~/features/presentation'
+import { useWebSocket, WebSocketDebugPanel } from '~/features/presentation'
 import { WebviewRouteManager } from '~/features/sidebar-config/components/WebviewRouteManager'
 import { useDebugMode } from '~/hooks/useDebugMode'
 import { Sidebar } from '../sidebar/sidebar'
