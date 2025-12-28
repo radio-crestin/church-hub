@@ -47,16 +47,19 @@ let lastAppliedUpdatedAt = 0
  * Helper to update presentation state only if the new state is newer.
  * Uses server's updatedAt (which is monotonically increasing) for ordering.
  * Exported so WebSocket handler can use the same logic.
+ * Returns true if the state was applied, false if it was stale.
  */
 export function updateStateIfNewer(
   queryClient: ReturnType<typeof useQueryClient>,
   newState: PresentationState,
-): void {
+): boolean {
   // Only apply if this state is newer than the last applied
   if (newState.updatedAt > lastAppliedUpdatedAt) {
     lastAppliedUpdatedAt = newState.updatedAt
     queryClient.setQueryData(presentationStateQueryKey, newState)
+    return true
   }
+  return false
 }
 
 /**
@@ -66,6 +69,13 @@ export function resetNavigationTracking(): void {
   lastAppliedUpdatedAt = 0
   lastRequestTimestamp = 0
   navigationQueue = Promise.resolve()
+}
+
+/**
+ * Get the last applied updatedAt timestamp for debugging.
+ */
+export function getLastAppliedUpdatedAt(): number {
+  return lastAppliedUpdatedAt
 }
 
 export function useStopPresentation() {

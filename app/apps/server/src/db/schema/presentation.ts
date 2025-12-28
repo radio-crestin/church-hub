@@ -225,7 +225,8 @@ export const presentationState = sqliteTable('presentation_state', {
   // Temporary content for instant display (bypasses queue)
   // JSON: { type: 'bible' | 'song', data: TemporaryBibleContent | TemporarySongContent }
   temporaryContent: text('temporary_content'),
-  updatedAt: integer('updated_at', { mode: 'timestamp' })
+  // Store as milliseconds (not seconds) for precise ordering of rapid updates
+  updatedAt: integer('updated_at')
     .notNull()
-    .default(sql`(unixepoch())`),
+    .default(sql`(unixepoch() * 1000)`),
 })

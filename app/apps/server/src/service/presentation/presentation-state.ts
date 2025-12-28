@@ -16,11 +16,11 @@ const DEBUG = process.env.DEBUG === 'true'
 let lastNavigationTimestamp = 0
 
 /**
- * Generates a unique, monotonically increasing timestamp.
+ * Generates a unique, monotonically increasing timestamp in milliseconds.
  * Ensures each update gets a strictly greater timestamp even within same millisecond.
  */
 let lastUpdatedAtTimestamp = 0
-function getUniqueUpdatedAt(): Date {
+function getUniqueUpdatedAt(): number {
   const now = Date.now()
   // If called within the same millisecond, increment to ensure uniqueness
   if (now <= lastUpdatedAtTimestamp) {
@@ -28,7 +28,7 @@ function getUniqueUpdatedAt(): Date {
   } else {
     lastUpdatedAtTimestamp = now
   }
-  return new Date(lastUpdatedAtTimestamp)
+  return lastUpdatedAtTimestamp
 }
 
 function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
@@ -94,8 +94,8 @@ function toPresentationState(
     isPresenting: record.isPresenting,
     isHidden: record.isHidden,
     temporaryContent: parseTemporaryContent(record.temporaryContent),
-    // Convert Date to timestamp (number) for JSON serialization
-    updatedAt: record.updatedAt.getTime(),
+    // updatedAt is already stored as milliseconds (number)
+    updatedAt: record.updatedAt,
   }
 }
 
