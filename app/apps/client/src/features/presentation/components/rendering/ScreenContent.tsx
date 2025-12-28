@@ -258,14 +258,49 @@ export function ScreenContent({
       heightUnit: '%' as const,
     }
 
-    // Calculate pixel bounds and scale
+    // Calculate pixel bounds
     const bounds = calculatePixelBounds(
       clockConfig.constraints,
       clockSize,
       canvasWidth,
       canvasHeight,
     )
-    const scaledBounds = scaleBounds(bounds)
+
+    // For clock, use uniform scaling (fontScale) to maintain aspect ratio
+    // This prevents distortion when scaleX !== scaleY
+    const scaledWidth = bounds.width * fontScale
+    const scaledHeight = bounds.height * fontScale
+
+    // Calculate position based on constraints with proper scaling
+    const constraints = clockConfig.constraints
+    let scaledX: number
+    let scaledY: number
+
+    // Horizontal positioning
+    if (constraints.right.enabled && !constraints.left.enabled) {
+      // Right-aligned: position from right edge
+      const rightPx =
+        constraints.right.unit === '%'
+          ? (constraints.right.value / 100) * containerWidth
+          : constraints.right.value * scaleX
+      scaledX = containerWidth - rightPx - scaledWidth
+    } else {
+      // Left-aligned or both: use standard scaling
+      scaledX = bounds.x * scaleX
+    }
+
+    // Vertical positioning
+    if (constraints.bottom.enabled && !constraints.top.enabled) {
+      // Bottom-aligned: position from bottom edge
+      const bottomPx =
+        constraints.bottom.unit === '%'
+          ? (constraints.bottom.value / 100) * containerHeight
+          : constraints.bottom.value * scaleY
+      scaledY = containerHeight - bottomPx - scaledHeight
+    } else {
+      // Top-aligned or both: use standard scaling
+      scaledY = bounds.y * scaleY
+    }
 
     const now = new Date()
     const timeString = clockConfig.showSeconds
@@ -281,10 +316,10 @@ export function ScreenContent({
         key="clock"
         className="absolute overflow-hidden"
         style={{
-          left: scaledBounds.x,
-          top: scaledBounds.y,
-          width: scaledBounds.width,
-          height: scaledBounds.height,
+          left: scaledX,
+          top: scaledY,
+          width: scaledWidth,
+          height: scaledHeight,
         }}
       >
         <TextContent
@@ -293,8 +328,8 @@ export function ScreenContent({
             ...clockConfig.style,
             maxFontSize: clockConfig.style.maxFontSize * fontScale,
           }}
-          containerWidth={scaledBounds.width}
-          containerHeight={scaledBounds.height}
+          containerWidth={scaledWidth}
+          containerHeight={scaledHeight}
         />
       </div>
     )
