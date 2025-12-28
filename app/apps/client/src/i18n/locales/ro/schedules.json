@@ -8,7 +8,8 @@
     "addItem": "Adauga",
     "importToQueue": "Adauga in Coada",
     "saveToFile": "Salveaza in Fisier",
-    "importFromFile": "Importa"
+    "importFromFile": "Importa",
+    "editAsText": "Editeaza ca Text"
   },
   "editor": {
     "titlePlaceholder": "Introdu titlul programului...",
@@ -55,5 +56,32 @@
   "noSchedulesDescription": "Creeaza primul tau program pentru a planifica prezentarile",
   "itemCount_one": "{{count}} element",
   "itemCount_other": "{{count}} elemente",
-  "createdAt": "Creat pe {{date}}"
+  "createdAt": "Creat pe {{date}}",
+  "editAsText": {
+    "title": "Editeaza Programul ca Text",
+    "description": "Introdu elemente folosind prefixe. Liniile care incep cu # sunt comentarii.",
+    "formatHelp": "# Exemple de format:\n# S: Titlu Cantare\n# A: Text anunt\n# V: Ioan 3:16",
+    "preview": "{{count}} elemente detectate",
+    "preview_one": "{{count}} element detectat",
+    "preview_other": "{{count}} elemente detectate",
+    "errors": "{{count}} erori gasite",
+    "errors_one": "{{count}} eroare gasita",
+    "errors_other": "{{count}} erori gasite",
+    "save": "Aplica Modificarile",
+    "cancel": "Anuleaza",
+    "processing": "Se aplica modificarile...",
+    "missingSongs": {
+      "title": "Cantari Negasite",
+      "description": "Urmatoarele cantari nu au fost gasite in biblioteca:",
+      "searchAndSelect": "Cauta",
+      "createNew": "Creeaza",
+      "continue": "Continua",
+      "skip": "Omite"
+    },
+    "messages": {
+      "applied": "Programul a fost actualizat din text",
+      "error": "Nu s-a putut actualiza programul",
+      "songCreated": "Cantarea \"{{title}}\" a fost creata"
+    }
+  }
 }

@@ -8,6 +8,12 @@ export {
 export { importScheduleToQueue } from './importToQueue'
 export { removeItemFromSchedule } from './removeItemFromSchedule'
 export { reorderScheduleItems } from './reorderScheduleItems'
+export type {
+  ReplaceItemInput,
+  ReplaceScheduleItemsInput,
+  ReplaceScheduleItemsResult,
+} from './replaceScheduleItems'
+export { replaceScheduleItems } from './replaceScheduleItems'
 export {
   rebuildScheduleSearchIndex,
   removeFromScheduleSearchIndex,
