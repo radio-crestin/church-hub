@@ -23,8 +23,8 @@
     "ios:open": "open tauri/gen/apple/church-hub.xcodeproj",
     "ios:build": "tauri ios build -d",
     "ios:build:release": "tauri ios build",
-    "ios:install": "xcrun devicectl device install app --device 'Iosif'\"'\"'s Phone' tauri/gen/apple/build/arm64/church-hub.ipa",
-    "ios:launch": "xcrun devicectl device process launch --device 'Iosif'\"'\"'s Phone' com.church-hub",
+    "ios:install": "xcrun devicectl device install app --device A0B78F24-E37A-5781-A622-4C1933760D99 tauri/gen/apple/build/arm64/church-hub.ipa",
+    "ios:launch": "xcrun devicectl device process launch --device A0B78F24-E37A-5781-A622-4C1933760D99 com.church-hub",
     "ios:run": "pnpm ios:build && pnpm ios:install && pnpm ios:launch"
   },
   "devDependencies": {

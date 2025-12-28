@@ -1,6 +1,7 @@
 import { createRootRoute, Outlet, useLocation } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
+import { MobileConnectionGuard } from '~/features/api-url-config'
 import {
   GlobalAppShortcutManager,
   MIDISettingsProvider,
@@ -66,24 +67,26 @@ function MainLayout() {
         <KioskFullscreenManager />
         <KioskScreenDimManager />
         <PermissionsProvider>
-          <I18nProvider>
-            <ToastProvider>
-              <MIDISettingsProvider>
-                <ShortcutRecordingProvider>
-                  <PptxDropZoneProvider>
-                    <AutoOpenScreens />
-                    <GlobalAppShortcutManager />
-                    <AppLayout>
-                      <Outlet />
-                    </AppLayout>
-                  </PptxDropZoneProvider>
-                </ShortcutRecordingProvider>
-              </MIDISettingsProvider>
-              {isDev ? (
-                <TanStackRouterDevtools position="bottom-right" />
-              ) : null}
-            </ToastProvider>
-          </I18nProvider>
+          <MobileConnectionGuard>
+            <I18nProvider>
+              <ToastProvider>
+                <MIDISettingsProvider>
+                  <ShortcutRecordingProvider>
+                    <PptxDropZoneProvider>
+                      <AutoOpenScreens />
+                      <GlobalAppShortcutManager />
+                      <AppLayout>
+                        <Outlet />
+                      </AppLayout>
+                    </PptxDropZoneProvider>
+                  </ShortcutRecordingProvider>
+                </MIDISettingsProvider>
+                {isDev ? (
+                  <TanStackRouterDevtools position="bottom-right" />
+                ) : null}
+              </ToastProvider>
+            </I18nProvider>
+          </MobileConnectionGuard>
         </PermissionsProvider>
       </QueryClientProvider>
     </ThemeProvider>
