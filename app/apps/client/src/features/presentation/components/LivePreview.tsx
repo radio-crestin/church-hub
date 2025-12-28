@@ -243,7 +243,6 @@ export function LivePreview() {
     presentationState?.currentBiblePassageVerseId,
     presentationState?.currentVerseteTineriEntryId,
     presentationState?.isHidden,
-    presentationState?.temporaryContent,
     presentationState?.updatedAt,
   ])
 

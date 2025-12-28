@@ -675,7 +675,7 @@ function navigateTemporaryBible(
   const chapterVerses = rawDb
     .query(
       `
-    SELECT id, verse, text, book_code
+    SELECT id, verse, text
     FROM bible_verses
     WHERE translation_id = ? AND book_id = ? AND chapter = ?
     ORDER BY verse ASC
@@ -685,7 +685,6 @@ function navigateTemporaryBible(
     id: number
     verse: number
     text: string
-    book_code: string
   }[]
 
   const newIndex =

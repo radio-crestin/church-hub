@@ -90,6 +90,35 @@ export function LivePreviewRenderer() {
         return
       }
 
+      // Check for temporary content first (bypasses queue)
+      if (presentationState.temporaryContent) {
+        const temp = presentationState.temporaryContent
+
+        if (temp.type === 'bible') {
+          // Remove translation abbreviation from reference if present
+          const reference = temp.data.reference.replace(/\s*-\s*[A-Z]+\s*$/, '')
+          setContentType('bible')
+          setContentData({
+            type: 'bible',
+            referenceText: reference,
+            contentText: temp.data.text,
+          })
+          return
+        }
+
+        if (temp.type === 'song') {
+          const currentSlide = temp.data.slides[temp.data.currentSlideIndex]
+          if (currentSlide) {
+            setContentType('song')
+            setContentData({
+              type: 'song',
+              mainText: currentSlide.content,
+            })
+            return
+          }
+        }
+      }
+
       try {
         const queueResponse = await fetchFn(`${getApiUrl()}/api/queue`, {
           cache: 'no-store',

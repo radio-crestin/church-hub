@@ -130,41 +130,61 @@ function BiblePage() {
     }
   }, [presentationState, currentVerse, temporaryBooks, navigation])
 
+  // Extract primitive values from temporary content to avoid object reference comparisons
+  const tempContentType = presentationState?.temporaryContent?.type
+  const tempContentData =
+    tempContentType === 'bible'
+      ? presentationState?.temporaryContent?.data
+      : null
+  const serverChapter = tempContentData?.chapter
+  const serverBookId = tempContentData?.bookId
+  const serverVerseIndex = tempContentData?.currentVerseIndex
+
   // Sync navigation when server moves to a different chapter (e.g., via navigateTemporary)
   useEffect(() => {
     // Only sync after initial navigation has happened
     if (!hasNavigatedOnOpen.current) return
 
-    if (presentationState?.temporaryContent?.type === 'bible') {
-      const tempData = presentationState.temporaryContent.data
-      const book = temporaryBooks.find((b) => b.id === tempData.bookId)
+    if (
+      tempContentType === 'bible' &&
+      serverChapter !== undefined &&
+      serverBookId !== undefined &&
+      serverVerseIndex !== undefined
+    ) {
+      const book = temporaryBooks.find((b) => b.id === serverBookId)
 
       // Check if the server moved to a different chapter than what we're showing
-      const serverChapter = tempData.chapter
-      const serverVerseIndex = tempData.currentVerseIndex
       const currentChapter = navigation.state.chapter
       const currentBookId = navigation.state.bookId
 
       if (
         book &&
-        (currentChapter !== serverChapter || currentBookId !== tempData.bookId)
+        (currentChapter !== serverChapter || currentBookId !== serverBookId)
       ) {
         // Server moved to a different chapter, sync the UI
         navigation.navigateToChapter({
-          bookId: tempData.bookId,
+          bookId: serverBookId,
           bookName: book.bookName,
           chapter: serverChapter,
           verseIndex: serverVerseIndex,
         })
       } else if (
         currentChapter === serverChapter &&
-        currentBookId === tempData.bookId
+        currentBookId === serverBookId &&
+        navigation.state.presentedIndex !== serverVerseIndex
       ) {
-        // Same chapter but possibly different verse, update the presented index
+        // Same chapter but different verse, update the presented index
         navigation.presentVerse(serverVerseIndex)
       }
     }
-  }, [presentationState?.temporaryContent, temporaryBooks, navigation])
+  }, [
+    tempContentType,
+    serverChapter,
+    serverBookId,
+    serverVerseIndex,
+    temporaryBooks,
+    navigation,
+  ])
 
   // Get verses for the current selection
   const { data: verses = [] } = useVerses(
@@ -268,15 +288,14 @@ function BiblePage() {
     [currentTranslation?.abbreviation, presentTemporaryBible],
   )
 
-  // Handle next/previous verse navigation - presents immediately
+  // Handle next/previous verse navigation - server-driven to avoid double animations
   const handleNextVerse = useCallback(async () => {
     const currentIndex =
       navigation.state.presentedIndex ?? navigation.state.searchedIndex ?? -1
     const nextIndex = currentIndex + 1
 
-    // If there are more verses in current chapter
+    // If there are more verses in current chapter, present it
     if (nextIndex < verses.length) {
-      navigation.nextVerse()
       const verse = verses[nextIndex]
       if (verse) {
         await presentVerseToScreen(verse, nextIndex)
@@ -286,23 +305,25 @@ function BiblePage() {
 
     // End of chapter - use server-side navigation to move to next chapter
     await navigateTemporary.mutateAsync({ direction: 'next' })
-  }, [navigation, verses, presentVerseToScreen, navigateTemporary])
+  }, [navigation.state, verses, presentVerseToScreen, navigateTemporary])
 
   const handlePreviousVerse = useCallback(async () => {
     const currentIndex =
       navigation.state.presentedIndex ?? navigation.state.searchedIndex ?? 0
     const prevIndex = currentIndex - 1
 
-    // If there are previous verses in current chapter, navigate to it
+    // If there are previous verses in current chapter, present it
     if (prevIndex >= 0) {
-      navigation.previousVerse()
       const verse = verses[prevIndex]
       if (verse) {
         await presentVerseToScreen(verse, prevIndex)
       }
+      return
     }
-    // At first verse - stay there (do nothing)
-  }, [navigation, verses, presentVerseToScreen])
+
+    // Start of chapter - use server-side navigation to move to previous chapter
+    await navigateTemporary.mutateAsync({ direction: 'prev' })
+  }, [navigation.state, verses, presentVerseToScreen, navigateTemporary])
 
   // Handle hide presentation (Escape) - clears slide but keeps selection
   const handleHidePresentation = useCallback(async () => {
