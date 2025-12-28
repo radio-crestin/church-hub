@@ -185,7 +185,9 @@ pub fn run() {
         if args.len() > 1 {
             let path = PathBuf::from(&args[1]);
             if path.extension().is_some_and(|ext| {
-                ext.eq_ignore_ascii_case("pptx") || ext.eq_ignore_ascii_case("opensong")
+                ext.eq_ignore_ascii_case("pptx")
+                    || ext.eq_ignore_ascii_case("opensong")
+                    || ext.eq_ignore_ascii_case("churchprogram")
             }) {
                 println!("[file-association] File detected: {path:?}");
                 *pending_import.file_path.lock() = Some(path);
@@ -359,7 +361,9 @@ pub fn run() {
                 for url in urls {
                     if let Ok(path) = url.to_file_path() {
                         if path.extension().is_some_and(|ext| {
-                            ext.eq_ignore_ascii_case("pptx") || ext.eq_ignore_ascii_case("opensong")
+                            ext.eq_ignore_ascii_case("pptx")
+                                || ext.eq_ignore_ascii_case("opensong")
+                                || ext.eq_ignore_ascii_case("churchprogram")
                         }) {
                             println!("[file-association] Opened event: {path:?}");
 

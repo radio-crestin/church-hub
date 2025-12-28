@@ -59,6 +59,12 @@
         "name": "OpenSong File",
         "description": "Church Hub Song",
         "role": "Editor"
+      },
+      {
+        "ext": ["churchprogram"],
+        "name": "Church Program",
+        "description": "Church Hub Schedule",
+        "role": "Editor"
       }
     ],
     "iOS": {

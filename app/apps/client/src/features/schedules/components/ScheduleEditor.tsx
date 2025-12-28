@@ -1,8 +1,9 @@
 import { useNavigate } from '@tanstack/react-router'
-import { ArrowLeft, ListPlus, Loader2, Trash2, X } from 'lucide-react'
+import { ArrowLeft, Download, ListPlus, Loader2, Trash2, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useSaveScheduleToFile } from '~/features/schedule-export'
 import { SongPickerModal } from '~/features/songs/components'
 import { useToast } from '~/ui/toast'
 import { AddToScheduleMenu } from './AddToScheduleMenu'
@@ -43,6 +44,7 @@ export function ScheduleEditor({
   const importToQueue = useImportScheduleToQueue()
   const reorderItems = useReorderScheduleItems()
   const removeItem = useRemoveItemFromSchedule()
+  const { saveSchedule, isPending: isSaving } = useSaveScheduleToFile()
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -229,6 +231,16 @@ export function ScheduleEditor({
     }
   }
 
+  const handleSaveToFile = useCallback(async () => {
+    if (!schedule) return
+    const result = await saveSchedule(schedule)
+    if (result.success) {
+      showToast(t('messages.savedToFile'), 'success')
+    } else if (result.error) {
+      showToast(result.error, 'error')
+    }
+  }, [schedule, saveSchedule, showToast, t])
+
   if (isLoading && scheduleId !== null) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -253,6 +265,19 @@ export function ScheduleEditor({
         <div className="flex items-center gap-2">
           {effectiveScheduleId !== null && (
             <>
+              <button
+                type="button"
+                onClick={handleSaveToFile}
+                disabled={isSaving}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm text-white bg-gray-600 hover:bg-gray-700 dark:bg-gray-500 dark:hover:bg-gray-600 rounded-lg transition-colors disabled:opacity-50"
+              >
+                {isSaving ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Download size={16} />
+                )}
+                {t('actions.saveToFile')}
+              </button>
               <button
                 type="button"
                 onClick={handleImportToQueue}

@@ -6,7 +6,9 @@
     "delete": "Sterge",
     "back": "Inapoi la Programe",
     "addItem": "Adauga",
-    "importToQueue": "Adauga in Coada"
+    "importToQueue": "Adauga in Coada",
+    "saveToFile": "Salveaza in Fisier",
+    "importFromFile": "Importa"
   },
   "editor": {
     "titlePlaceholder": "Introdu titlul programului...",
@@ -26,6 +28,11 @@
     "itemAdded": "Element adaugat la program",
     "itemRemoved": "Element eliminat din program",
     "importedToQueue": "Programul a fost importat in coada",
+    "savedToFile": "Programul a fost salvat in fisier",
+    "imported": "Programul a fost importat cu succes",
+    "importedWithSongs_one": "Program importat cu {{count}} cantare noua creata",
+    "importedWithSongs_other": "Program importat cu {{count}} cantari noi create",
+    "importError": "Importul programului a esuat",
     "error": "A aparut o eroare"
   },
   "modal": {
