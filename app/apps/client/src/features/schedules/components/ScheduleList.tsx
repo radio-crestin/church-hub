@@ -8,9 +8,15 @@ import type { Schedule, ScheduleSearchResult } from '../types'
 
 interface ScheduleListProps {
   onScheduleClick: (scheduleId: number) => void
+  onSaveClick?: (scheduleId: number) => void
+  savingScheduleId?: number | null
 }
 
-export function ScheduleList({ onScheduleClick }: ScheduleListProps) {
+export function ScheduleList({
+  onScheduleClick,
+  onSaveClick,
+  savingScheduleId,
+}: ScheduleListProps) {
   const { t } = useTranslation('schedules')
   const [searchQuery, setSearchQuery] = useState('')
   const { data: schedules, isLoading: schedulesLoading } = useSchedules()
@@ -92,6 +98,8 @@ export function ScheduleList({ onScheduleClick }: ScheduleListProps) {
               key={schedule.id}
               schedule={schedule}
               onClick={() => onScheduleClick(schedule.id)}
+              onSaveClick={onSaveClick}
+              isSaving={savingScheduleId === schedule.id}
             />
           ))}
         </div>

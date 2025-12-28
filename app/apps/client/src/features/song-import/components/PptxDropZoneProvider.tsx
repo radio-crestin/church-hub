@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { invoke } from '@tauri-apps/api/core'
 import { listen, type UnlistenFn } from '@tauri-apps/api/event'
@@ -13,8 +14,14 @@ import {
 } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { parseChurchProgram } from '~/features/schedule-import'
+import {
+  addItemToSchedule,
+  upsertSchedule,
+} from '~/features/schedules/service/schedules'
 import { useUpsertSong } from '~/features/songs/hooks'
-import { getSongById } from '~/features/songs/service'
+import { getSongById, searchSongs, upsertSong } from '~/features/songs/service'
+import type { SlideInput } from '~/features/songs/types'
 import { parseOpenSongXml } from '../utils/parseOpenSong'
 import { type ParsedPptx, parsePptxFile } from '../utils/parsePptx'
 
@@ -37,6 +44,7 @@ interface Props {
 export function PptxDropZoneProvider({ children }: Props) {
   const { t } = useTranslation('songs')
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [isDragging, setIsDragging] = useState(false)
   const dragCounterRef = useRef(0)
   const upsertMutation = useUpsertSong()
@@ -113,6 +121,105 @@ export function PptxDropZoneProvider({ children }: Props) {
     [navigate, upsertMutation],
   )
 
+  // Handle Church Program file import
+  const handleChurchProgramFile = useCallback(
+    async (content: string) => {
+      const parseResult = parseChurchProgram(content)
+      if (!parseResult.success || !parseResult.data) {
+        // biome-ignore lint/suspicious/noConsole: error logging
+        console.error(
+          '[file-import] Failed to parse church program:',
+          parseResult.error,
+        )
+        return
+      }
+
+      const programData = parseResult.data
+
+      // Create the schedule
+      const scheduleResult = await upsertSchedule({
+        title: programData.schedule.title,
+        description: programData.schedule.description,
+      })
+
+      if (!scheduleResult.success || !scheduleResult.data) {
+        // biome-ignore lint/suspicious/noConsole: error logging
+        console.error(
+          '[file-import] Failed to create schedule:',
+          scheduleResult.error,
+        )
+        return
+      }
+
+      const scheduleId = scheduleResult.data.id
+
+      // Process items in order
+      for (const item of programData.items.sort(
+        (a, b) => a.sortOrder - b.sortOrder,
+      )) {
+        if (item.itemType === 'slide') {
+          await addItemToSchedule(scheduleId, {
+            slideType: item.slideType,
+            slideContent: item.slideContent,
+          })
+        } else if (item.itemType === 'song' && item.song) {
+          // Search for existing song by title
+          const searchResults = await searchSongs(item.song.title)
+          const exactMatch = searchResults.find(
+            (s) => s.title.toLowerCase() === item.song!.title.toLowerCase(),
+          )
+
+          let songId: number
+
+          if (exactMatch) {
+            songId = exactMatch.id
+          } else {
+            // Create new song
+            const slides: SlideInput[] = item.song.slides.map((slide) => ({
+              content: slide.content,
+              sortOrder: slide.sortOrder,
+              label: slide.label,
+            }))
+
+            const songResult = await upsertSong({
+              title: item.song.title,
+              author: item.song.author,
+              copyright: item.song.copyright,
+              ccli: item.song.ccli,
+              key: item.song.key,
+              tempo: item.song.tempo,
+              slides,
+            })
+
+            if (!songResult.success || !songResult.data) {
+              // biome-ignore lint/suspicious/noConsole: error logging
+              console.error(
+                '[file-import] Failed to create song:',
+                item.song.title,
+              )
+              continue
+            }
+
+            songId = songResult.data.id
+          }
+
+          await addItemToSchedule(scheduleId, { songId })
+        }
+      }
+
+      // Invalidate queries to refresh the UI
+      await queryClient.invalidateQueries({ queryKey: ['schedules'] })
+      await queryClient.invalidateQueries({ queryKey: ['songs'] })
+
+      // Navigate to the new schedule
+      navigate({
+        to: '/schedules/$scheduleId',
+        params: { scheduleId: String(scheduleId) },
+      })
+    },
+    [navigate, queryClient],
+  )
+
   // Handle file association - check on mount if app was opened with a PPTX file
   // This only works in Tauri desktop mode
   useEffect(() => {
@@ -136,6 +243,11 @@ export function PptxDropZoneProvider({ children }: Props) {
           const decoder = new TextDecoder()
           const content = decoder.decode(fileData)
           await handleOpenSongFile(content, filePath)
+        } else if (lowerPath.endsWith('.churchprogram')) {
+          const fileData = await readFile(filePath)
+          const decoder = new TextDecoder()
+          const content = decoder.decode(fileData)
+          await handleChurchProgramFile(content)
         }
       } catch (error) {
         // biome-ignore lint/suspicious/noConsole: error logging
@@ -144,7 +256,7 @@ export function PptxDropZoneProvider({ children }: Props) {
     }
 
     checkPendingImport()
-  }, [importPptxAsSong, handleOpenSongFile])
+  }, [importPptxAsSong, handleOpenSongFile, handleChurchProgramFile])
 
   // Listen for file-opened events (when app is already running and file is opened)
   useEffect(() => {
@@ -172,6 +284,11 @@ export function PptxDropZoneProvider({ children }: Props) {
             const decoder = new TextDecoder()
             const content = decoder.decode(fileData)
             await handleOpenSongFile(content, filePath)
+          } else if (lowerPath.endsWith('.churchprogram')) {
+            const fileData = await readFile(filePath)
+            const decoder = new TextDecoder()
+            const content = decoder.decode(fileData)
+            await handleChurchProgramFile(content)
           }
         } catch (error) {
           // biome-ignore lint/suspicious/noConsole: error logging
@@ -188,7 +305,7 @@ export function PptxDropZoneProvider({ children }: Props) {
     return () => {
       unlisten?.()
     }
-  }, [importPptxAsSong, handleOpenSongFile])
+  }, [importPptxAsSong, handleOpenSongFile, handleChurchProgramFile])
 
   // Use document-level event listeners for reliable drag and drop
   useEffect(() => {
@@ -262,6 +379,21 @@ export function PptxDropZoneProvider({ children }: Props) {
           // biome-ignore lint/suspicious/noConsole: error logging
           console.error('[file-import] Failed to parse OpenSong:', error)
         }
+        return
+      }
+
+      // Handle Church Program files
+      const churchProgramFile = files.find((f) =>
+        f.name.toLowerCase().endsWith('.churchprogram'),
+      )
+      if (churchProgramFile) {
+        try {
+          const content = await churchProgramFile.text()
+          await handleChurchProgramFile(content)
+        } catch (error) {
+          // biome-ignore lint/suspicious/noConsole: error logging
+          console.error('[file-import] Failed to parse Church Program:', error)
+        }
       }
     }
 
@@ -276,7 +408,7 @@ export function PptxDropZoneProvider({ children }: Props) {
       document.removeEventListener('dragleave', handleDragLeave)
       document.removeEventListener('drop', handleDrop)
     }
-  }, [importPptxAsSong, handleOpenSongFile])
+  }, [importPptxAsSong, handleOpenSongFile, handleChurchProgramFile])
 
   return (
     <PptxDropZoneContext.Provider value={{ isDragging }}>

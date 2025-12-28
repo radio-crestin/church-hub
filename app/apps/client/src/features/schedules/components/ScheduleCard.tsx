@@ -1,4 +1,11 @@
-import { CalendarDays, ChevronRight, Clock, ListMusic } from 'lucide-react'
+import {
+  CalendarDays,
+  ChevronRight,
+  Clock,
+  Download,
+  ListMusic,
+  Loader2,
+} from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 interface ScheduleCardProps {
@@ -11,9 +18,16 @@ interface ScheduleCardProps {
     matchedContent?: string
   }
   onClick: () => void
+  onSaveClick?: (scheduleId: number) => void
+  isSaving?: boolean
 }
 
-export function ScheduleCard({ schedule, onClick }: ScheduleCardProps) {
+export function ScheduleCard({
+  schedule,
+  onClick,
+  onSaveClick,
+  isSaving,
+}: ScheduleCardProps) {
   const { t, i18n } = useTranslation('schedules')
 
   const formatDate = (timestamp: number) => {
@@ -67,7 +81,27 @@ export function ScheduleCard({ schedule, onClick }: ScheduleCardProps) {
           )}
         </div>
       </div>
-      <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-indigo-500 transition-colors flex-shrink-0 ml-2" />
+      <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+        {onSaveClick && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              onSaveClick(schedule.id)
+            }}
+            disabled={isSaving}
+            className="p-1.5 text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded transition-colors disabled:opacity-50"
+            title={t('actions.saveToFile')}
+          >
+            {isSaving ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4" />
+            )}
+          </button>
+        )}
+        <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-indigo-500 transition-colors" />
+      </div>
     </button>
   )
 }

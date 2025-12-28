@@ -6,7 +6,9 @@
     "delete": "Delete",
     "back": "Back to Schedules",
     "addItem": "Add",
-    "importToQueue": "Import to Queue"
+    "importToQueue": "Import to Queue",
+    "saveToFile": "Save to File",
+    "importFromFile": "Import"
   },
   "editor": {
     "titlePlaceholder": "Enter schedule title...",
@@ -26,6 +28,11 @@
     "itemAdded": "Item added to schedule",
     "itemRemoved": "Item removed from schedule",
     "importedToQueue": "Schedule imported to queue",
+    "savedToFile": "Schedule saved to file",
+    "imported": "Schedule imported successfully",
+    "importedWithSongs_one": "Schedule imported with {{count}} new song created",
+    "importedWithSongs_other": "Schedule imported with {{count}} new songs created",
+    "importError": "Failed to import schedule",
     "error": "An error occurred"
   },
   "modal": {
