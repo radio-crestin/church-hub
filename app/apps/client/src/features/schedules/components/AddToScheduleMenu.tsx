@@ -51,9 +51,9 @@ export function AddToScheduleMenu({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-md transition-colors"
+        className="flex items-center gap-2 px-3 py-1.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-lg transition-colors"
       >
-        <Plus size={14} />
+        <Plus size={16} />
         {t('addToQueue.button')}
       </button>
 
