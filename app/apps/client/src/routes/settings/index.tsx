@@ -3,7 +3,6 @@ import { Bug, ExternalLink, Languages, Palette } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { isLocalhost, isMobile } from '~/config'
-import { useDebugMode } from '~/hooks/useDebugMode'
 import { ApiUrlSettings } from '~/features/api-url-config'
 import { DatabaseManager } from '~/features/database-management'
 import {
@@ -15,6 +14,7 @@ import { ScreenManager } from '~/features/presentation'
 import { SidebarConfigManager } from '~/features/sidebar-config'
 import { SystemTokenManager } from '~/features/system-token'
 import { UserList } from '~/features/users'
+import { useDebugMode } from '~/hooks/useDebugMode'
 import { useI18n } from '~/provider/i18n-provider'
 import { useTheme } from '~/provider/theme-provider'
 import type { LanguagePreference } from '~/service/locale'
@@ -39,7 +39,11 @@ function RouteComponent() {
     isLoading: isThemeLoading,
   } = useTheme()
 
-  const { isDebugMode, setDebugMode, isLoading: isDebugLoading } = useDebugMode()
+  const {
+    isDebugMode,
+    setDebugMode,
+    isLoading: isDebugLoading,
+  } = useDebugMode()
 
   const languageOptions: { value: LanguagePreference; label: string }[] = [
     { value: 'system', label: t('sections.language.options.system') },

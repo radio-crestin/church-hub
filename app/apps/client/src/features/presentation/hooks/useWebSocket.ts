@@ -309,6 +309,7 @@ export function useWebSocket() {
       isConnectingRef.current = false
 
       setStatus('connected')
+      setDebugInfo((prev) => ({ ...prev, status: 'connected' }))
       missedPongsRef.current = 0
 
       // Invalidate presentation state to refetch current state on reconnection
@@ -320,6 +321,7 @@ export function useWebSocket() {
         if (message.type === 'Close') {
           logger.debug('Tauri WebSocket closed')
           setStatus('disconnected')
+          setDebugInfo((prev) => ({ ...prev, status: 'disconnected' }))
           tauriWsRef.current = null
 
           if (pingIntervalRef.current) {
@@ -352,6 +354,7 @@ export function useWebSocket() {
       const handleConnectionLost = async () => {
         logger.debug('Connection lost - 3 pongs missed')
         setStatus('disconnected')
+        setDebugInfo((prev) => ({ ...prev, status: 'disconnected' }))
 
         if (pingIntervalRef.current) {
           clearInterval(pingIntervalRef.current)
@@ -411,6 +414,7 @@ export function useWebSocket() {
     } catch {
       isConnectingRef.current = false
       setStatus('error')
+      setDebugInfo((prev) => ({ ...prev, status: 'error' }))
 
       // Retry connection
       reconnectTimeoutRef.current = setTimeout(() => {

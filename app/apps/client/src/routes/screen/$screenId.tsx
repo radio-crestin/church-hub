@@ -1,6 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
 
-import { ScreenRenderer, WebSocketDebugPanel, useWebSocket } from '~/features/presentation'
+import {
+  ScreenRenderer,
+  useWebSocket,
+  WebSocketDebugPanel,
+} from '~/features/presentation'
 import { useDebugMode } from '~/hooks/useDebugMode'
 
 export const Route = createFileRoute('/screen/$screenId')({
