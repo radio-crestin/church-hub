@@ -294,14 +294,6 @@ export function ScheduleEditor({
               </button>
               <button
                 type="button"
-                onClick={() => setShowEditAsText(true)}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm text-white bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 rounded-lg transition-colors"
-              >
-                <FileText size={16} />
-                {t('actions.editAsText')}
-              </button>
-              <button
-                type="button"
                 onClick={handleImportToQueue}
                 disabled={importToQueue.isPending}
                 className="flex items-center gap-2 px-3 py-1.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-lg transition-colors disabled:opacity-50"
@@ -350,10 +342,22 @@ export function ScheduleEditor({
           <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
             {t('editor.items')}
           </h3>
-          <AddToScheduleMenu
-            onAddSong={handleAddSong}
-            onAddSlide={handleAddSlide}
-          />
+          <div className="flex items-center gap-2">
+            {effectiveScheduleId !== null && (
+              <button
+                type="button"
+                onClick={() => setShowEditAsText(true)}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm text-amber-900 bg-amber-400 hover:bg-amber-500 dark:text-amber-100 dark:bg-amber-700 dark:hover:bg-amber-600 rounded-lg transition-colors"
+              >
+                <FileText size={16} />
+                {t('actions.editAsText')}
+              </button>
+            )}
+            <AddToScheduleMenu
+              onAddSong={handleAddSong}
+              onAddSlide={handleAddSlide}
+            />
+          </div>
         </div>
 
         {effectiveScheduleId !== null ? (
