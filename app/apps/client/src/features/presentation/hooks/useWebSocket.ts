@@ -301,6 +301,7 @@ export function useWebSocket() {
     }
 
     setStatus('connecting')
+    setDebugInfo((prev) => ({ ...prev, status: 'connecting', url: wsUrl }))
 
     try {
       const ws = await TauriWebSocket.connect(wsUrl)
