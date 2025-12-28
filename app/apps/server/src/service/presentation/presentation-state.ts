@@ -94,7 +94,8 @@ function toPresentationState(
     isPresenting: record.isPresenting,
     isHidden: record.isHidden,
     temporaryContent: parseTemporaryContent(record.temporaryContent),
-    updatedAt: record.updatedAt,
+    // Convert Date to timestamp (number) for JSON serialization
+    updatedAt: record.updatedAt.getTime(),
   }
 }
 
