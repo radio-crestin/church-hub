@@ -3,6 +3,7 @@ import { TextContent } from './TextContent'
 import type { ContentData, NextSlideData } from './types'
 import {
   calculatePixelBounds,
+  getAlignItems,
   getBackgroundCSS,
   getJustifyContent,
   getTextStyleCSS,
@@ -276,7 +277,7 @@ export function ScreenContent({
     return (
       <div
         key="clock"
-        className="absolute overflow-hidden flex items-center"
+        className="absolute overflow-hidden flex"
         style={{
           left: scaledBounds.x,
           top: scaledBounds.y,
@@ -284,6 +285,7 @@ export function ScreenContent({
           height: scaledBounds.height,
           ...getTextStyleCSS(clockConfig.style),
           fontSize: clockConfig.style.maxFontSize * fontScale,
+          alignItems: getAlignItems(clockConfig.style.verticalAlignment),
           justifyContent: getJustifyContent(clockConfig.style.alignment),
         }}
       >

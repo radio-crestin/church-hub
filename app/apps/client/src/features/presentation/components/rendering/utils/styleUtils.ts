@@ -102,6 +102,21 @@ export function getJustifyContent(
   }
 }
 
+export function getAlignItems(
+  verticalAlignment: 'top' | 'middle' | 'bottom',
+): React.CSSProperties['alignItems'] {
+  switch (verticalAlignment) {
+    case 'top':
+      return 'flex-start'
+    case 'middle':
+      return 'center'
+    case 'bottom':
+      return 'flex-end'
+    default:
+      return 'center'
+  }
+}
+
 export function getBackgroundCSS(
   config: BackgroundConfig,
 ): React.CSSProperties {
