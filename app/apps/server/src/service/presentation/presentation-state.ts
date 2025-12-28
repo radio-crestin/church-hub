@@ -15,6 +15,22 @@ const DEBUG = process.env.DEBUG === 'true'
 // Track last navigation timestamp to prevent race conditions
 let lastNavigationTimestamp = 0
 
+/**
+ * Generates a unique, monotonically increasing timestamp.
+ * Ensures each update gets a strictly greater timestamp even within same millisecond.
+ */
+let lastUpdatedAtTimestamp = 0
+function getUniqueUpdatedAt(): Date {
+  const now = Date.now()
+  // If called within the same millisecond, increment to ensure uniqueness
+  if (now <= lastUpdatedAtTimestamp) {
+    lastUpdatedAtTimestamp++
+  } else {
+    lastUpdatedAtTimestamp = now
+  }
+  return new Date(lastUpdatedAtTimestamp)
+}
+
 function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
   if (level === 'debug' && !DEBUG) return
   // biome-ignore lint/suspicious/noConsole: logging utility
@@ -138,7 +154,7 @@ export function updatePresentationState(
     log('debug', 'Updating presentation state')
 
     const db = getDatabase()
-    const now = new Date()
+    const now = getUniqueUpdatedAt()
     const current = getPresentationState()
 
     const currentQueueItemId =

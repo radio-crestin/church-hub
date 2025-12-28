@@ -92,13 +92,14 @@ export function useWebSocket() {
         }
 
         if (data.type === 'presentation_state') {
-          // Only update if new state is newer than cached state (prevents race conditions)
+          // Only update if new state is strictly newer than cached state
+          // Server now uses monotonically increasing timestamps to prevent collisions
           const currentState = queryClient.getQueryData<PresentationState>(
             presentationStateQueryKey,
           )
           if (
             !currentState ||
-            data.payload.updatedAt >= currentState.updatedAt
+            data.payload.updatedAt > currentState.updatedAt
           ) {
             queryClient.setQueryData(presentationStateQueryKey, data.payload)
           }
