@@ -892,9 +892,10 @@ export async function handleLivestreamRoutes(
     streamStartInProgress = true
     try {
       const youtubeConfig = await getYouTubeConfig()
+      const obsStatus = obsConnection.getConnectionStatus()
 
-      // Step 1: Switch to start scene if configured
-      if (youtubeConfig.startSceneName) {
+      // Step 1: Switch to start scene if configured (only if OBS is connected)
+      if (youtubeConfig.startSceneName && obsStatus.isConnected) {
         await switchScene(youtubeConfig.startSceneName)
         broadcastOBSCurrentScene(youtubeConfig.startSceneName)
       }
@@ -921,16 +922,34 @@ export async function handleLivestreamRoutes(
         await new Promise((resolve) => setTimeout(resolve, 1000))
       }
 
-      // Step 4: Start OBS streaming
-      broadcastStreamStartProgress({
-        step: 'starting_obs',
-        progress: 90,
-        message: 'Starting OBS stream...',
-        broadcastId: broadcast.broadcastId,
-        updatedAt: Date.now(),
-      })
+      // Step 4: Start OBS streaming (only if OBS is connected)
+      if (obsStatus.isConnected) {
+        broadcastStreamStartProgress({
+          step: 'starting_obs',
+          progress: 90,
+          message: 'Starting OBS stream...',
+          broadcastId: broadcast.broadcastId,
+          updatedAt: Date.now(),
+        })
 
-      await startStreaming()
+        try {
+          await startStreaming()
+        } catch (obsError) {
+          // OBS was connected but failed to start - this is an error
+          const obsErrorMessage =
+            obsError instanceof Error ? obsError.message : 'Failed to start OBS'
+          broadcastStreamStartProgress({
+            step: 'error',
+            progress: 0,
+            message: 'Failed to start OBS streaming',
+            error: obsErrorMessage,
+            updatedAt: Date.now(),
+          })
+          throw obsError
+        }
+      } else {
+        log('info', 'OBS not connected, skipping OBS streaming start')
+      }
 
       // Step 5: Complete
       broadcastStreamStartProgress({
@@ -999,14 +1018,18 @@ export async function handleLivestreamRoutes(
       // making it impossible to find via getActiveBroadcast()
       const activeBroadcast = await getActiveBroadcast()
 
-      await stopStreaming()
+      // Only stop OBS streaming if OBS is connected
+      const obsStatus = obsConnection.getConnectionStatus()
+      if (obsStatus.isConnected) {
+        await stopStreaming()
+      }
 
       if (activeBroadcast) {
         await endBroadcast(activeBroadcast.broadcastId)
       }
 
       const youtubeConfig = await getYouTubeConfig()
-      if (youtubeConfig.stopSceneName) {
+      if (youtubeConfig.stopSceneName && obsStatus.isConnected) {
         await switchScene(youtubeConfig.stopSceneName)
         broadcastOBSCurrentScene(youtubeConfig.stopSceneName)
       }
