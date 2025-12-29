@@ -1,8 +1,8 @@
 import type {
   AnimationConfig,
   BackgroundConfig,
-  ContentTypeConfig,
   Constraints,
+  ContentTypeConfig,
   Position,
   PositionUnit,
   Size,
