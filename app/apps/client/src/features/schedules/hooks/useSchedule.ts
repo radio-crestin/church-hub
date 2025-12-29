@@ -8,5 +8,6 @@ export function useSchedule(id: number) {
     queryKey: ['schedule', id],
     queryFn: () => getScheduleById(id),
     enabled: id > 0,
+    staleTime: 30 * 1000, // 30 seconds - data stays fresh, prevents constant refetching
   })
 }
