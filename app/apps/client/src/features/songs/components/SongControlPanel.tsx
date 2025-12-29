@@ -122,11 +122,11 @@ export function SongControlPanel({
       </div>
 
       <div className="p-2 lg:p-3 lg:flex-1 lg:min-h-0 flex flex-col">
-        <div className="w-full lg:flex-1 lg:min-h-0 lg:flex lg:items-center lg:justify-center">
+        <div className="w-full flex-shrink-0">
           <LivePreview />
         </div>
 
-        <div className="flex items-center justify-center gap-3 pt-2 lg:pt-3 flex-shrink-0">
+        <div className="flex items-center justify-center gap-3 pt-3 flex-shrink-0">
           <button
             type="button"
             onClick={handlePrev}
