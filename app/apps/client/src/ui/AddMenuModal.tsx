@@ -11,6 +11,8 @@ import {
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { Tooltip } from '~/ui/tooltip/Tooltip'
+
 export interface AddMenuModalProps {
   /** Show Bible Verse option */
   showBibleVerse?: boolean
@@ -66,14 +68,15 @@ export function AddMenuModal({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setIsOpen(true)}
-        className="flex items-center gap-2 px-3 py-1.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-lg transition-colors"
-      >
-        <Plus size={16} />
-        {t('addToQueue.button')}
-      </button>
+      <Tooltip content={t('addToQueue.button')} position="bottom">
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          className="p-2 text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-lg transition-colors"
+        >
+          <Plus size={20} />
+        </button>
+      </Tooltip>
 
       <dialog
         ref={dialogRef}

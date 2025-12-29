@@ -9,6 +9,7 @@ import { ScheduleList } from '~/features/schedules/components'
 import { getScheduleById } from '~/features/schedules/service/schedules'
 import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
 import { useToast } from '~/ui/toast'
+import { Tooltip } from '~/ui/tooltip/Tooltip'
 
 export const Route = createFileRoute('/schedules/')({
   component: SchedulesPage,
@@ -70,36 +71,38 @@ function SchedulesPage() {
     <PagePermissionGuard permission="programs.view">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
             {t('title')}
           </h1>
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleImportSchedule}
-              disabled={isImporting}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors disabled:opacity-50"
-            >
-              {isImporting ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <Upload className="w-5 h-5" />
-              )}
-              {t('actions.importFromFile')}
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                navigate({
-                  to: '/schedules/$scheduleId',
-                  params: { scheduleId: 'new' },
-                })
-              }
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
-            >
-              <Plus className="w-5 h-5" />
-              {t('actions.create')}
-            </button>
+            <Tooltip content={t('actions.importFromFile')} position="bottom">
+              <button
+                type="button"
+                onClick={handleImportSchedule}
+                disabled={isImporting}
+                className="p-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors disabled:opacity-50"
+              >
+                {isImporting ? (
+                  <Loader2 size={20} className="animate-spin" />
+                ) : (
+                  <Upload size={20} />
+                )}
+              </button>
+            </Tooltip>
+            <Tooltip content={t('actions.create')} position="bottom">
+              <button
+                type="button"
+                onClick={() =>
+                  navigate({
+                    to: '/schedules/$scheduleId',
+                    params: { scheduleId: 'new' },
+                  })
+                }
+                className="p-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
+              >
+                <Plus size={20} />
+              </button>
+            </Tooltip>
           </div>
         </div>
 

@@ -18,6 +18,7 @@ import {
 } from '~/features/schedule-export'
 import { SongPickerModal } from '~/features/songs/components'
 import { useToast } from '~/ui/toast'
+import { Tooltip } from '~/ui/tooltip/Tooltip'
 import { AddToScheduleMenu } from './AddToScheduleMenu'
 import { BiblePassagePickerModal } from './BiblePassagePickerModal'
 import { EditAsTextModal } from './EditAsTextModal'
@@ -185,8 +186,8 @@ export function ScheduleEditor({
   const handleDelete = async () => {
     if (!effectiveScheduleId) return
 
-    const result = await deleteSchedule.mutateAsync(effectiveScheduleId)
-    if (result.success) {
+    const success = await deleteSchedule.mutateAsync(effectiveScheduleId)
+    if (success) {
       showToast(t('messages.deleted'), 'success')
       setShowDeleteConfirm(false)
       onDeleted?.()
@@ -312,51 +313,56 @@ export function ScheduleEditor({
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <button
-          type="button"
-          onClick={onBack}
-          className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 dark:bg-gray-500 dark:hover:bg-gray-600 rounded-lg transition-colors"
-        >
-          <ArrowLeft size={16} />
-          {t('actions.back')}
-        </button>
+        <Tooltip content={t('actions.back')} position="bottom">
+          <button
+            type="button"
+            onClick={onBack}
+            className="p-2 text-white bg-gray-600 hover:bg-gray-700 dark:bg-gray-500 dark:hover:bg-gray-600 rounded-lg transition-colors"
+          >
+            <ArrowLeft size={20} />
+          </button>
+        </Tooltip>
 
         <div className="flex items-center gap-2">
           {effectiveScheduleId !== null && (
             <>
-              <button
-                type="button"
-                onClick={handleOpenExportModal}
-                disabled={isSaving}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm text-white bg-gray-600 hover:bg-gray-700 dark:bg-gray-500 dark:hover:bg-gray-600 rounded-lg transition-colors disabled:opacity-50"
-              >
-                {isSaving ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  <Download size={16} />
-                )}
-                {t('actions.saveToFile')}
-              </button>
-              <button
-                type="button"
-                onClick={handleImportToQueue}
-                disabled={importToQueue.isPending}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm text-white bg-green-700 hover:bg-green-800 dark:bg-green-700 dark:hover:bg-green-800 rounded-lg transition-colors disabled:opacity-50"
-              >
-                {importToQueue.isPending ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  <ListPlus size={16} />
-                )}
-                {t('actions.importToQueue')}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(true)}
-                className="p-2 text-white bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 rounded-lg transition-colors"
-              >
-                <Trash2 size={16} />
-              </button>
+              <Tooltip content={t('actions.saveToFile')} position="bottom">
+                <button
+                  type="button"
+                  onClick={handleOpenExportModal}
+                  disabled={isSaving}
+                  className="p-2 text-white bg-gray-600 hover:bg-gray-700 dark:bg-gray-500 dark:hover:bg-gray-600 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {isSaving ? (
+                    <Loader2 size={20} className="animate-spin" />
+                  ) : (
+                    <Download size={20} />
+                  )}
+                </button>
+              </Tooltip>
+              <Tooltip content={t('actions.importToQueue')} position="bottom">
+                <button
+                  type="button"
+                  onClick={handleImportToQueue}
+                  disabled={importToQueue.isPending}
+                  className="p-2 text-white bg-green-700 hover:bg-green-800 dark:bg-green-700 dark:hover:bg-green-800 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {importToQueue.isPending ? (
+                    <Loader2 size={20} className="animate-spin" />
+                  ) : (
+                    <ListPlus size={20} />
+                  )}
+                </button>
+              </Tooltip>
+              <Tooltip content={t('actions.delete')} position="bottom">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="p-2 text-white bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 rounded-lg transition-colors"
+                >
+                  <Trash2 size={20} />
+                </button>
+              </Tooltip>
             </>
           )}
         </div>
@@ -389,14 +395,15 @@ export function ScheduleEditor({
           </h3>
           <div className="flex items-center gap-2">
             {effectiveScheduleId !== null && (
-              <button
-                type="button"
-                onClick={() => setShowEditAsText(true)}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm text-amber-900 bg-amber-400 hover:bg-amber-500 dark:text-amber-100 dark:bg-amber-700 dark:hover:bg-amber-600 rounded-lg transition-colors"
-              >
-                <FileText size={16} />
-                {t('actions.editAsText')}
-              </button>
+              <Tooltip content={t('actions.editAsText')} position="bottom">
+                <button
+                  type="button"
+                  onClick={() => setShowEditAsText(true)}
+                  className="p-2 text-amber-900 bg-amber-400 hover:bg-amber-500 dark:text-amber-100 dark:bg-amber-700 dark:hover:bg-amber-600 rounded-lg transition-colors"
+                >
+                  <FileText size={20} />
+                </button>
+              </Tooltip>
             )}
             <AddToScheduleMenu
               onAddSong={handleAddSong}
