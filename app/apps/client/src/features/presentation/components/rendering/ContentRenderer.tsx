@@ -3,6 +3,7 @@ import { TextElement } from './TextElement'
 import type {
   AnnouncementContentConfig,
   BibleContentConfig,
+  ClockElementConfig,
   ContentConfigs,
   ContentType,
   EmptyContentConfig,
@@ -38,7 +39,9 @@ export function ContentRenderer({
   screenHeight,
   isVisible,
 }: ContentRendererProps) {
+  // Use global clock settings for all content types to keep position/config synced
   const showClock = globalSettings.clockEnabled
+  const clockConfig = globalSettings.clockConfig
 
   switch (contentType) {
     case 'song':
@@ -50,6 +53,7 @@ export function ContentRenderer({
           screenHeight={screenHeight}
           isVisible={isVisible}
           showClock={showClock}
+          clockConfig={clockConfig}
         />
       )
 
@@ -64,6 +68,7 @@ export function ContentRenderer({
           screenHeight={screenHeight}
           isVisible={isVisible}
           showClock={showClock}
+          clockConfig={clockConfig}
         />
       )
 
@@ -76,6 +81,7 @@ export function ContentRenderer({
           screenHeight={screenHeight}
           isVisible={isVisible}
           showClock={showClock}
+          clockConfig={clockConfig}
         />
       )
 
@@ -90,6 +96,7 @@ export function ContentRenderer({
           screenHeight={screenHeight}
           isVisible={isVisible}
           showClock={showClock}
+          clockConfig={clockConfig}
         />
       )
 
@@ -99,6 +106,7 @@ export function ContentRenderer({
           config={config as EmptyContentConfig}
           screenWidth={screenWidth}
           screenHeight={screenHeight}
+          clockConfig={clockConfig}
         />
       )
 
@@ -114,6 +122,7 @@ interface SongRendererProps {
   screenHeight: number
   isVisible: boolean
   showClock: boolean
+  clockConfig?: ClockElementConfig
 }
 
 function SongRenderer({
@@ -123,6 +132,7 @@ function SongRenderer({
   screenHeight,
   isVisible,
   showClock,
+  clockConfig,
 }: SongRendererProps) {
   return (
     <>
@@ -134,9 +144,9 @@ function SongRenderer({
         isVisible={isVisible}
         isHtml={true}
       />
-      {showClock && config.clock && (
+      {showClock && clockConfig && (
         <ClockElement
-          config={config.clock}
+          config={clockConfig}
           screenWidth={screenWidth}
           screenHeight={screenHeight}
         />
@@ -153,6 +163,7 @@ interface BibleRendererProps {
   screenHeight: number
   isVisible: boolean
   showClock: boolean
+  clockConfig?: ClockElementConfig
 }
 
 function BibleRenderer({
@@ -163,6 +174,7 @@ function BibleRenderer({
   screenHeight,
   isVisible,
   showClock,
+  clockConfig,
 }: BibleRendererProps) {
   // Determine if reference should be included in content
   const showReferenceElement =
@@ -190,9 +202,9 @@ function BibleRenderer({
         screenHeight={screenHeight}
         isVisible={isVisible}
       />
-      {showClock && config.clock && (
+      {showClock && clockConfig && (
         <ClockElement
-          config={config.clock}
+          config={clockConfig}
           screenWidth={screenWidth}
           screenHeight={screenHeight}
         />
@@ -208,6 +220,7 @@ interface AnnouncementRendererProps {
   screenHeight: number
   isVisible: boolean
   showClock: boolean
+  clockConfig?: ClockElementConfig
 }
 
 function AnnouncementRenderer({
@@ -217,6 +230,7 @@ function AnnouncementRenderer({
   screenHeight,
   isVisible,
   showClock,
+  clockConfig,
 }: AnnouncementRendererProps) {
   return (
     <>
@@ -228,9 +242,9 @@ function AnnouncementRenderer({
         isVisible={isVisible}
         isHtml={true}
       />
-      {showClock && config.clock && (
+      {showClock && clockConfig && (
         <ClockElement
-          config={config.clock}
+          config={clockConfig}
           screenWidth={screenWidth}
           screenHeight={screenHeight}
         />
@@ -248,6 +262,7 @@ interface VerseteTineriRendererProps {
   screenHeight: number
   isVisible: boolean
   showClock: boolean
+  clockConfig?: ClockElementConfig
 }
 
 function VerseteTineriRenderer({
@@ -259,6 +274,7 @@ function VerseteTineriRenderer({
   screenHeight,
   isVisible,
   showClock,
+  clockConfig,
 }: VerseteTineriRendererProps) {
   return (
     <>
@@ -283,9 +299,9 @@ function VerseteTineriRenderer({
         screenHeight={screenHeight}
         isVisible={isVisible}
       />
-      {showClock && config.clock && (
+      {showClock && clockConfig && (
         <ClockElement
-          config={config.clock}
+          config={clockConfig}
           screenWidth={screenWidth}
           screenHeight={screenHeight}
         />
@@ -298,16 +314,18 @@ interface EmptyRendererProps {
   config: EmptyContentConfig
   screenWidth: number
   screenHeight: number
+  clockConfig?: ClockElementConfig
 }
 
 function EmptyRenderer({
-  config,
   screenWidth,
   screenHeight,
+  clockConfig,
 }: EmptyRendererProps) {
+  if (!clockConfig) return null
   return (
     <ClockElement
-      config={config.clock}
+      config={clockConfig}
       screenWidth={screenWidth}
       screenHeight={screenHeight}
     />

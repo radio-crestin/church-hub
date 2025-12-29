@@ -299,12 +299,9 @@ export function ScreenContent({
   // Render clock
   const renderClock = () => {
     if (!showClock) return null
-    // Always use current config for clock (not cached), so clock shows on empty screen
-    const clockConfig =
-      currentConfig && 'clock' in currentConfig
-        ? currentConfig.clock
-        : screen.globalSettings.clockConfig
-    if (!clockConfig?.enabled) return null
+    // Always use global clock config to keep position/style synced across all slide types
+    const clockConfig = screen.globalSettings.clockConfig
+    if (!clockConfig) return null
     if (clockConfig.hidden) return null
 
     // Default size for backwards compatibility (must match ScreenEditorCanvas.tsx)
