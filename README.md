@@ -10,7 +10,6 @@
 
 <p align="center">
   <a href="#-download">Download</a> •
-  <a href="#-screenshots">Screenshots</a> •
   <a href="#-features">Features</a> •
   <a href="#-tech-stack">Tech Stack</a> •
   <a href="#-getting-started">Getting Started</a>
@@ -27,8 +26,6 @@ Built with modern web technologies and powered by Tauri, Church Hub runs as a na
 ---
 
 ## 📥 Download
-
-Download the latest version for your operating system:
 
 <table>
   <tr>
@@ -64,137 +61,97 @@ Download the latest version for your operating system:
 
 ---
 
-## 📸 Screenshots
+## ✨ Features
 
-<details open>
-<summary><b>🎛️ Control Room</b> - Main presentation interface with live preview and queue</summary>
-<br/>
+### 🎛️ Control Room
+
 <img src="docs/screenshots/control-room.png" alt="Control Room" width="100%">
-</details>
 
-<details open>
-<summary><b>🎵 Songs Library</b> - Browse and search 40,000+ songs</summary>
-<br/>
-<img src="docs/screenshots/songs-list.png" alt="Songs Library" width="100%">
-</details>
+> Main presentation interface with live preview and presentation queue
 
-<details>
-<summary><b>📝 Song Viewer</b> - View lyrics with slide navigation</summary>
-<br/>
-<img src="docs/screenshots/songs-view.png" alt="Song Viewer" width="100%">
-</details>
-
-<details>
-<summary><b>📖 Bible</b> - Search verses with multiple translations</summary>
-<br/>
-<img src="docs/screenshots/bible.png" alt="Bible" width="100%">
-</details>
-
-<details>
-<summary><b>📋 Service Programs</b> - Create and manage schedules</summary>
-<br/>
-<img src="docs/screenshots/schedules.png" alt="Schedules" width="100%">
-</details>
-
-<details>
-<summary><b>🔴 Live Stream</b> - YouTube & OBS integration</summary>
-<br/>
-<img src="docs/screenshots/livestream.png" alt="Live Stream" width="100%">
-</details>
-
-<details>
-<summary><b>⚙️ Settings</b> - Configure screens, users & preferences</summary>
-<br/>
-<img src="docs/screenshots/settings.png" alt="Settings" width="100%">
-</details>
+- ▶️ **Live Preview** — See exactly what's displayed on screen
+- 📋 **Presentation Queue** — Drag & drop to reorder items
+- ⌨️ **Keyboard Navigation** — Quick slide control with hotkeys
+- 🖥️ **Multi-Screen** — Primary, stage, livestream & kiosk outputs
 
 ---
 
-## ✨ Features
+### 🎵 Songs Library
 
-### 🎵 Song Management
+<img src="docs/screenshots/songs-list.png" alt="Songs Library" width="100%">
 
-| Feature | Description |
-|---------|-------------|
-| 📚 **Massive Library** | Store and manage **40,000+ songs** with lightning-fast full-text search |
-| ✏️ **Slide Editor** | Create lyrics with verse, chorus, and bridge markers |
-| 📥 **Smart Import** | Import from **OpenSong** and **PowerPoint** formats |
-| 🔍 **Duplicate Detection** | AI-powered content comparison prevents duplicates |
-| 🏷️ **Categories** | Organize with custom tags and categories |
-| 📋 **CCLI Support** | Track license numbers, authors & copyright |
+> Browse and search through 40,000+ songs instantly
 
-### 📖 Bible Integration
+- 🔍 **Fast Search** — Full-text search across all songs
+- 🏷️ **Categories** — Organize with custom tags
+- 📥 **Smart Import** — OpenSong & PowerPoint formats
+- 🔄 **Duplicate Detection** — Prevents duplicates automatically
 
-| Feature | Description |
-|---------|-------------|
-| 🌐 **Multiple Translations** | Support for various Bible versions |
-| 🔎 **Smart Search** | Find by reference (`Gen 1:1`) or keyword |
-| 📑 **Quick Navigation** | Browse Old & New Testament books |
-| 👁️ **Live Preview** | See verses exactly as they'll appear on screen |
+---
+
+### 📝 Song Viewer
+
+<img src="docs/screenshots/songs-view.png" alt="Song Viewer" width="100%">
+
+> View and present song lyrics with slide navigation
+
+- 📑 **Slide Navigation** — Easy verse/chorus switching
+- ✏️ **Slide Editor** — Edit lyrics with markers (V1, C, B)
+- 📋 **CCLI Support** — Track license & copyright info
+- ➕ **Add to Queue** — One-click add to presentation
+
+---
+
+### 📖 Bible
+
+<img src="docs/screenshots/bible.png" alt="Bible" width="100%">
+
+> Search and display Bible verses with live preview
+
+- 🔎 **Smart Search** — By reference (`Gen 1:1`) or keyword
+- 📚 **Multiple Translations** — Support for various versions
+- 📑 **Quick Navigation** — Browse all books easily
+- 👁️ **Live Preview** — See verses before presenting
+
+---
 
 ### 📋 Service Programs
 
-| Feature | Description |
-|---------|-------------|
-| 📝 **Schedule Builder** | Create programs with songs, verses & custom slides |
-| 🖱️ **Drag & Drop** | Intuitive reordering of service items |
-| 💾 **Import/Export** | Share programs as ZIP files |
-| ⚡ **Quick Load** | One-click import to presentation queue |
+<img src="docs/screenshots/schedules.png" alt="Schedules" width="100%">
 
-### 🖥️ Multi-Screen Presentation
+> Create and manage service schedules
 
-| Screen Type | Resolution | Purpose |
-|-------------|------------|---------|
-| 🖥️ **Primary** | 1920×1080 | Main congregation display |
-| 🎭 **Stage** | 1920×1080 | Confidence monitor for worship team |
-| 📺 **Livestream** | 1080×420 | Dedicated streaming output |
-| 📱 **Kiosk** | 1080×1920 | Lobby information display |
+- 📝 **Schedule Builder** — Songs, verses & custom slides
+- 🖱️ **Drag & Drop** — Intuitive item reordering
+- 💾 **Import/Export** — Share programs as files
+- ⚡ **Quick Load** — Import entire program to queue
 
-### 🔴 YouTube Livestream
+---
 
-| Feature | Description |
-|---------|-------------|
-| ▶️ **One-Click Start** | Launch broadcasts directly from the app |
-| 📋 **Templates** | Save & reuse broadcast configurations |
-| 📅 **Scheduled Events** | Support for pre-scheduled broadcasts |
-| 🔒 **Privacy Controls** | Public, unlisted, or private streaming |
-| 📊 **History** | Track all past broadcasts |
+### 🔴 Live Stream
 
-### 🎬 OBS Studio Integration
+<img src="docs/screenshots/livestream.png" alt="Live Stream" width="100%">
 
-| Feature | Description |
-|---------|-------------|
-| 🎬 **Scene Control** | Switch OBS scenes from Church Hub |
-| 🤖 **Auto-Switch** | Automatic scenes based on content type |
-| 📡 **Live Status** | Real-time streaming/recording indicators |
-| ⌨️ **Hotkeys** | Custom keyboard shortcuts for scenes |
+> YouTube livestream and OBS Studio integration
 
-### 🎚️ Audio & MIDI
+- ▶️ **One-Click Start** — Launch YouTube broadcasts
+- 🎬 **OBS Scenes** — Switch scenes from the app
+- 🤖 **Auto-Switch** — Scenes change with content type
+- 🎚️ **Mixer Control** — Audio mixer integration (16+ ch)
 
-| Feature | Description |
-|---------|-------------|
-| 🎛️ **Mixer Control** | Network-connected audio mixers (16+ channels) |
-| 🔇 **Per-Scene Audio** | Automatic mute/unmute per OBS scene |
-| 🎹 **MIDI Controllers** | Use hardware controllers with LED feedback |
-| ⚡ **Custom Shortcuts** | Map any MIDI button to app actions |
+---
 
-### 👥 User Management
+### ⚙️ Settings
 
-| Feature | Description |
-|---------|-------------|
-| 🎭 **Roles** | Admin, Presenter, Viewer, Queue Manager |
-| 🔐 **34+ Permissions** | Granular access control |
-| 📱 **QR Login** | Easy mobile device authentication |
-| 👀 **Sessions** | Track active user sessions |
+<img src="docs/screenshots/settings.png" alt="Settings" width="100%">
 
-### 🌐 Additional Features
+> Configure screens, users, and preferences
 
-| Feature | Description |
-|---------|-------------|
-| 🌙 **Dark Mode** | Beautiful dark interface |
-| 🌍 **Multi-Language** | English & Romanian support |
-| 💾 **Database Backup** | Export/import your data |
-| 📚 **API Docs** | Built-in Scalar documentation |
+- 🖥️ **Screen Setup** — Configure multiple displays
+- 👥 **User Management** — Roles & 34+ permissions
+- 📱 **QR Login** — Easy mobile authentication
+- 🌙 **Dark Mode** — Beautiful dark interface
+- 🌍 **Multi-Language** — English & Romanian
 
 ---
 
@@ -205,40 +162,36 @@ Download the latest version for your operating system:
     <td valign="top">
       <h4>🎨 Frontend</h4>
       <ul>
-        <li><b>React 19</b> - UI Framework</li>
-        <li><b>TypeScript</b> - Type Safety</li>
-        <li><b>Vite</b> - Build Tool</li>
-        <li><b>TailwindCSS 4</b> - Styling</li>
-        <li><b>TanStack Router</b> - Routing</li>
-        <li><b>TanStack Query</b> - Data Fetching</li>
-        <li><b>i18next</b> - i18n</li>
+        <li><b>React 19</b></li>
+        <li><b>TypeScript</b></li>
+        <li><b>Vite</b></li>
+        <li><b>TailwindCSS 4</b></li>
+        <li><b>TanStack Router</b></li>
       </ul>
     </td>
     <td valign="top">
       <h4>⚙️ Backend</h4>
       <ul>
-        <li><b>Bun</b> - Runtime</li>
-        <li><b>Drizzle ORM</b> - Database</li>
-        <li><b>SQLite</b> - Storage</li>
-        <li><b>WebSocket</b> - Real-time</li>
-        <li><b>OpenAPI 3.1</b> - API Docs</li>
+        <li><b>Bun</b></li>
+        <li><b>Drizzle ORM</b></li>
+        <li><b>SQLite</b></li>
+        <li><b>WebSocket</b></li>
+        <li><b>OpenAPI 3.1</b></li>
       </ul>
     </td>
     <td valign="top">
       <h4>🖥️ Desktop</h4>
       <ul>
-        <li><b>Tauri 2.9</b> - Framework</li>
-        <li><b>Rust</b> - Performance</li>
-        <li><b>Custom Plugins</b> - Extensions</li>
+        <li><b>Tauri 2.9</b></li>
+        <li><b>Rust</b></li>
       </ul>
     </td>
     <td valign="top">
       <h4>🔌 Integrations</h4>
       <ul>
-        <li><b>YouTube API</b> - Streaming</li>
-        <li><b>OBS WebSocket</b> - Scene Control</li>
-        <li><b>MIDI</b> - Hardware</li>
-        <li><b>LibreOffice</b> - Conversion</li>
+        <li><b>YouTube API</b></li>
+        <li><b>OBS WebSocket</b></li>
+        <li><b>MIDI</b></li>
       </ul>
     </td>
   </tr>
@@ -276,73 +229,32 @@ npm run dev
 - 🌐 **Web**: http://localhost:3000
 - 📚 **API Docs**: http://localhost:3000/api/docs
 
-### Build
-
-```bash
-# Build web apps
-npm run build:apps
-
-# Build desktop app
-npm run tauri:build
-```
-
----
-
-## 📁 Project Structure
-
-```
-church-hub/
-├── 📁 app/
-│   ├── 📁 apps/
-│   │   ├── 📁 client/         # 🎨 React frontend
-│   │   │   └── 📁 src/
-│   │   │       ├── 📁 features/   # Feature modules
-│   │   │       ├── 📁 routes/     # File-based routes
-│   │   │       ├── 📁 ui/         # Components
-│   │   │       └── 📁 i18n/       # Translations
-│   │   └── 📁 server/         # ⚙️ Bun backend
-│   │       └── 📁 src/
-│   │           ├── 📁 db/         # Database
-│   │           ├── 📁 service/    # Business logic
-│   │           └── 📁 openapi/    # API docs
-│   ├── 📁 tauri/              # 🖥️ Desktop app
-│   └── 📁 tauri-plugins/      # 🔌 Custom plugins
-├── 📁 youtube-oauth-worker/   # ☁️ OAuth handler
-└── 📁 docs/screenshots/       # 📸 Screenshots
-```
-
 ---
 
 ## 📜 Scripts
 
 | Script | Description |
 |--------|-------------|
-| `npm run dev` | 🖥️ Start Tauri desktop development |
-| `npm run dev:web` | 🌐 Start web development |
-| `npm run dev:server` | ⚙️ Start backend only |
-| `npm run dev:client` | 🎨 Start frontend only |
-| `npm run build:apps` | 📦 Build for production |
-| `npm run tauri:build` | 🖥️ Build desktop app |
-| `npm run lint` | 🔍 Run linter |
-| `npm run lint:fix` | 🔧 Auto-fix issues |
+| `npm run dev` | 🖥️ Desktop development |
+| `npm run dev:web` | 🌐 Web development |
+| `npm run build:apps` | 📦 Production build |
+| `npm run tauri:build` | 🖥️ Desktop build |
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
-
 1. 🍴 Fork the repository
-2. 🌿 Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. 💾 Commit your changes (`git commit -m 'Add amazing feature'`)
-4. 📤 Push to the branch (`git push origin feature/amazing-feature`)
+2. 🌿 Create your feature branch
+3. 💾 Commit your changes
+4. 📤 Push to the branch
 5. 🔃 Open a Pull Request
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
