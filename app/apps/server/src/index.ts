@@ -2370,6 +2370,7 @@ async function main() {
         if (permError) return permError
 
         try {
+          const apiStart = performance.now()
           const body = (await req.json()) as {
             songs: BatchImportSongInput[]
             categoryId?: number | null
@@ -2387,15 +2388,25 @@ async function main() {
             )
           }
 
+          const importStart = performance.now()
           const result = batchImportSongs(
             body.songs,
             body.categoryId,
             body.overwriteDuplicates,
             body.skipManuallyEdited,
           )
+          const importTime = performance.now() - importStart
 
           // Update search index for all imported songs in a single batch operation
+          const searchStart = performance.now()
           batchUpdateSearchIndex(result.songIds)
+          const searchTime = performance.now() - searchStart
+
+          const totalTime = performance.now() - apiStart
+          // biome-ignore lint/suspicious/noConsole: performance logging
+          console.log(
+            `[INFO] [batch-import] [PERF] API total: ${totalTime.toFixed(2)}ms | Import: ${importTime.toFixed(0)}ms | Search index: ${searchTime.toFixed(0)}ms | Songs: ${body.songs.length}`,
+          )
 
           return handleCors(
             req,
@@ -2411,6 +2422,121 @@ async function main() {
               status: 400,
               headers: { 'Content-Type': 'application/json' },
             }),
+          )
+        }
+      }
+
+      // ============================================================
+      // Proxy Download Endpoint (for CORS bypass)
+      // ============================================================
+
+      // GET /api/proxy/download - Proxy download from external URL
+      if (req.method === 'GET' && url.pathname === '/api/proxy/download') {
+        const permError = checkPermission('songs.create')
+        if (permError) return permError
+
+        const targetUrl = url.searchParams.get('url')
+        if (!targetUrl) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Missing url parameter' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        // Only allow specific trusted domains
+        const allowedDomains = [
+          'download.resursecrestine.ro',
+          'resursecrestine.ro',
+        ]
+        let parsedUrl: URL
+        try {
+          parsedUrl = new URL(targetUrl)
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid URL' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        if (!allowedDomains.includes(parsedUrl.hostname)) {
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({
+                error: 'Domain not allowed for proxy download',
+              }),
+              {
+                status: 403,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        }
+
+        try {
+          // biome-ignore lint/suspicious/noConsole: logging
+          console.log(`[INFO] [proxy] Downloading from ${targetUrl}`)
+          const proxyStart = performance.now()
+
+          const response = await fetch(targetUrl, {
+            method: 'GET',
+            redirect: 'follow',
+          })
+
+          if (!response.ok) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({
+                  error: `Failed to download: ${response.status} ${response.statusText}`,
+                }),
+                {
+                  status: response.status,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          const data = await response.arrayBuffer()
+          const proxyTime = performance.now() - proxyStart
+
+          // biome-ignore lint/suspicious/noConsole: logging
+          console.log(
+            `[INFO] [proxy] [PERF] Download completed: ${proxyTime.toFixed(0)}ms, ${(data.byteLength / 1024 / 1024).toFixed(2)}MB`,
+          )
+
+          // Return the file with appropriate headers
+          return handleCors(
+            req,
+            new Response(data, {
+              status: 200,
+              headers: {
+                'Content-Type':
+                  response.headers.get('Content-Type') ||
+                  'application/octet-stream',
+                'Content-Length': data.byteLength.toString(),
+              },
+            }),
+          )
+        } catch (error) {
+          // biome-ignore lint/suspicious/noConsole: logging
+          console.error(`[ERROR] [proxy] Download failed: ${error}`)
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({ error: `Download failed: ${String(error)}` }),
+              {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
           )
         }
       }
