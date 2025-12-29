@@ -16,6 +16,7 @@ interface ImportConfirmationModalProps {
   defaultCategoryId?: number | null
   defaultUseFirstVerseAsTitle?: boolean
   defaultOverwriteDuplicates?: boolean
+  defaultSkipManuallyEdited?: boolean
 }
 
 export function ImportConfirmationModal({
@@ -28,6 +29,7 @@ export function ImportConfirmationModal({
   defaultCategoryId = null,
   defaultUseFirstVerseAsTitle = true,
   defaultOverwriteDuplicates = false,
+  defaultSkipManuallyEdited = false,
 }: ImportConfirmationModalProps) {
   const { t } = useTranslation('songs')
   const dialogRef = useRef<HTMLDialogElement>(null)
@@ -56,13 +58,14 @@ export function ImportConfirmationModal({
       setCategoryId(defaultCategoryId)
       setOverwriteDuplicates(defaultOverwriteDuplicates)
       setUseFirstVerseAsTitle(defaultUseFirstVerseAsTitle)
-      setSkipManuallyEdited(false)
+      setSkipManuallyEdited(defaultSkipManuallyEdited)
     }
   }, [
     isOpen,
     defaultCategoryId,
     defaultOverwriteDuplicates,
     defaultUseFirstVerseAsTitle,
+    defaultSkipManuallyEdited,
   ])
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
