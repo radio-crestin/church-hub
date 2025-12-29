@@ -11,8 +11,10 @@ export function addAminToLastSlide(
   if (!isLastSlide) return content
   if (/amin/i.test(content)) return content
 
-  // Remove trailing empty paragraphs to ensure only one empty line before Amin
+  // Remove trailing empty paragraphs and whitespace
   const trimmedContent = content.replace(/(<p><br><\/p>|\s)+$/gi, '')
 
-  return `${trimmedContent}<p><br></p><p style="text-align: right;">Amin!</p>`
+  // Add Amin! as a simple paragraph - the text-align style is lost during HTML-to-text
+  // conversion, so we just add it as regular text with a single line break
+  return `${trimmedContent}<p>Amin!</p>`
 }
