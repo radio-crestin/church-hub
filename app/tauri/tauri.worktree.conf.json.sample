@@ -1,0 +1,14 @@
+{
+  "identifier": "com.church-hub.worktree",
+  "build": {
+    "devUrl": "http://localhost:3002",
+    "beforeDevCommand": "PORT=3002 VITE_DEV_PORT=8088 npm run dev:apps"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Church Hub (Worktree)"
+      }
+    ]
+  }
+}

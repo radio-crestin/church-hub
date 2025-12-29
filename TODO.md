@@ -83,4 +83,6 @@
 - creaza optiunea de a adauga live-urile create intr-un playlist pe YouTube
 - adauga posibilitatea de a face highlight pentru sesiunea curenta
 - adauga o iconita pentru fisierele atasate Church Hub
+- fix drag and drop pentru fisiere si apoi implementeaza export/import din pptx
+- adauga optiunea de a deschide fisiere pptx direct in ChurchHub
 

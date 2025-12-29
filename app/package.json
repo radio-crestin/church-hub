@@ -6,6 +6,7 @@
   ],
   "scripts": {
     "dev": "tauri dev",
+    "dev:worktree": "tauri dev --config tauri/tauri.worktree.conf.json",
     "dev:web": "concurrently --kill-others --names server,client \"bun run --filter server dev\" \"bun run --filter client dev\"",
     "dev:apps": "concurrently -k -n server,client -c blue,green npm:dev:server npm:dev:client",
     "dev:server": "bun run --filter server dev",
