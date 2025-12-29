@@ -80,11 +80,12 @@
 ~~- când se editează o cantare, modifica importa din text ca să se numească editează ca și text~~
 ~~- deasemenea, fă pagina mobile responsive~~
 ~~- adauga Amin la fiecare cantare~~
-- adauga o iconita pentru fisierele atasate Church Hub
-- fix drag and drop pentru fisiere si apoi implementeaza export/import din pptx
-- adauga optiunea de a deschide fisiere pptx direct in ChurchHub
+~~- adauga o iconita pentru fisierele atasate Church Hub~~
+~~- fix drag and drop pentru fisiere si apoi implementeaza export/import din pptx~~
+~~- adauga optiunea de a deschide fisiere pptx direct in ChurchHub~~
 - create un README cu screenshots si o descriere a functionalitatilor
 - asigura-te ca animatiile functioneaza la afisare/ascundere, deasemenea cand se schimba urmatorul slide
+- adauga buton de feedback cu adresa de email si whatsapp + github issues
 - adauga posibilitatea de a face highlight pentru sesiunea curenta
 - fix openapi endpoints and fix authentication layer
 - importa toate cantarile existente si apoi creaza un backup ca si sqlite si importa-l pe PC-ul de la Adunare
