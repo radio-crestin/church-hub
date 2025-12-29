@@ -87,12 +87,13 @@
 ~~- fix extracting songs titles~~
 ~~- asigura-te ca animatiile functioneaza la afisare/ascundere, deasemenea cand se schimba urmatorul slide~~
 - afiseaza ceasul pe toate slide-urile
-- adauga buton de feedback care va crea un github issue
-- adauga posibilitatea de a face highlight pentru sesiunea curenta
-- fix openapi endpoints and fix authentication layer
+~~- adauga buton de feedback care va crea un github issue~~
 - importa toate cantarile existente si apoi creaza un backup ca si sqlite si importa-l pe PC-ul de la Adunare
+- fix openapi endpoints and fix authentication layer
 --- Later ---
 - creaza un quickstart guide pentru utilizatori
 - adauga optiune de a cauta cantari folosind AI
+- adauga posibilitatea de a face highlight pentru sesiunea curenta
 - exportul ca si pptx ar trebui sa aiba textul ceva mai mare
 - creaza optiunea de a adauga live-urile create intr-un playlist pe YouTube
+- adauga optiunea de a afisa pe un ecran separat continutul in anumita limba (o versiune a Bibliei diferita, traduceri cu AI ale cantarilor.. si eventual traduceri in timp real)
