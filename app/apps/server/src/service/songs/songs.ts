@@ -365,6 +365,32 @@ export function deleteSong(id: number): OperationResult {
 }
 
 /**
+ * Deletes multiple songs by their IDs in a single query
+ */
+export function deleteSongsByIds(
+  ids: number[],
+): OperationResult & { deletedCount: number } {
+  try {
+    if (ids.length === 0) {
+      return { success: true, deletedCount: 0 }
+    }
+
+    log('debug', `Deleting ${ids.length} songs`)
+
+    const db = getDatabase()
+
+    // Slides are deleted automatically via CASCADE
+    const result = db.delete(songs).where(inArray(songs.id, ids)).run()
+
+    log('info', `Songs deleted: ${result.changes}`)
+    return { success: true, deletedCount: result.changes }
+  } catch (error) {
+    log('error', `Failed to delete songs: ${error}`)
+    return { success: false, error: String(error), deletedCount: 0 }
+  }
+}
+
+/**
  * Batch imports multiple songs in a single transaction
  * Optimized for high performance with:
  * - UPSERT (INSERT ... ON CONFLICT) for single-statement insert/update
@@ -467,8 +493,8 @@ export function batchImportSongs(
 
       try {
         const categoryId = input.categoryId ?? defaultCategoryId ?? null
-        // Use the title as-is from the client (client already determines the final title)
-        const title = input.title?.trim() || 'Untitled Song'
+        // Sanitize the title to remove special characters like /: from the beginning
+        const title = sanitizeSongTitle(input.title || '')
 
         // Check if song was manually edited and should be skipped (O(1) lookup)
         if (manuallyEditedTitles?.has(title.toLowerCase())) {
