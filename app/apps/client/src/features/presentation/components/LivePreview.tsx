@@ -322,7 +322,6 @@ export function LivePreview() {
   // After animation completes, contentData becomes empty
   const isVisible =
     !presentationState?.isHidden && !isExitAnimating && hasContent
-  const showClock = !hasContent
 
   // Loading state
   if (!screen) {
@@ -339,7 +338,6 @@ export function LivePreview() {
         screen={screen}
         contentType={contentType}
         contentData={contentData}
-        showClock={showClock}
         isVisible={isVisible}
       />
     </div>

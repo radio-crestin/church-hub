@@ -9,7 +9,6 @@ interface ScreenPreviewProps {
   screen: ScreenWithConfigs
   contentType: ContentType
   contentData: ContentData
-  showClock?: boolean
   isVisible?: boolean
 }
 
@@ -17,7 +16,6 @@ export function ScreenPreview({
   screen,
   contentType,
   contentData,
-  showClock = true,
   isVisible = true,
 }: ScreenPreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -59,7 +57,6 @@ export function ScreenPreview({
         contentData={contentData}
         containerWidth={displaySize.width}
         containerHeight={displaySize.height}
-        showClock={showClock}
         isVisible={isVisible}
       />
     </div>

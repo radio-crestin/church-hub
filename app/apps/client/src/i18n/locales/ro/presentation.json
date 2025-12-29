@@ -158,6 +158,14 @@
       "includeReferenceInContent": "Include referința în conținut",
       "includeReferenceInContentDescription": "Adaugă referința biblică la începutul versetului și ascunde elementul separat de referință"
     },
+    "clock": {
+      "enableForSlideType": "Afișează ceasul pe acest tip de slide",
+      "enableDescription": "Activează afișarea ceasului pentru acest tip de conținut specific",
+      "sharedSettings": "Setări Ceas (comune pentru toate tipurile de slide)",
+      "format": "Format",
+      "showSeconds": "Afișează secundele",
+      "positionHint": "Trageți elementul ceas pe canvas pentru a ajusta poziția"
+    },
     "nativeWindow": "Fereastră nativă",
     "messages": {
       "screenCreated": "Ecran creat cu succes",
