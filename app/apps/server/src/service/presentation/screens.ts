@@ -317,6 +317,7 @@ function toScreen(record: typeof screens.$inferSelect): Screen {
     isActive: record.isActive,
     openMode: (record.openMode as DisplayOpenMode) || 'browser',
     isFullscreen: record.isFullscreen,
+    alwaysOnTop: record.alwaysOnTop,
     width: record.width,
     height: record.height,
     globalSettings: parseGlobalSettings(record.globalSettings),
@@ -472,7 +473,7 @@ export function upsertScreen(input: UpsertScreenInput): Screen | null {
       // Update existing screen
       log('debug', `Updating screen: ${input.id}`)
 
-      // Build update object - only include isActive if explicitly provided
+      // Build update object - only include isActive/alwaysOnTop if explicitly provided
       const updateData: Record<string, unknown> = {
         name: input.name,
         type: screenType,
@@ -488,6 +489,11 @@ export function upsertScreen(input: UpsertScreenInput): Screen | null {
       // Only update isActive if explicitly provided
       if (input.isActive !== undefined) {
         updateData.isActive = input.isActive
+      }
+
+      // Only update alwaysOnTop if explicitly provided
+      if (input.alwaysOnTop !== undefined) {
+        updateData.alwaysOnTop = input.alwaysOnTop
       }
 
       db.update(screens).set(updateData).where(eq(screens.id, input.id)).run()
@@ -507,6 +513,7 @@ export function upsertScreen(input: UpsertScreenInput): Screen | null {
         isActive: input.isActive === true,
         openMode,
         isFullscreen: input.isFullscreen === true,
+        alwaysOnTop: input.alwaysOnTop === true,
         width,
         height,
         globalSettings: globalSettingsJson,
