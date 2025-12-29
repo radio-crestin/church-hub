@@ -17,6 +17,8 @@ interface AnimationContextValue {
   isExitPhase: boolean
   // Exit frame ID - increments when all elements should start exiting
   exitFrame: number
+  // Whether this is a slide transition (content change while visible) vs initial visibility
+  isSlideTransition: boolean
 }
 
 const AnimationContext = createContext<AnimationContextValue>({
@@ -24,6 +26,7 @@ const AnimationContext = createContext<AnimationContextValue>({
   isStartPhase: false,
   isExitPhase: false,
   exitFrame: 0,
+  isSlideTransition: false,
 })
 
 interface AnimationProviderProps {
@@ -48,6 +51,7 @@ export function AnimationProvider({
   const [isStartPhase, setIsStartPhase] = useState(false)
   const [isExitPhase, setIsExitPhase] = useState(false)
   const [exitFrame, setExitFrame] = useState(0)
+  const [isSlideTransition, setIsSlideTransition] = useState(false)
   const prevContentKeyRef = useRef(contentKey)
   const prevVisibleRef = useRef(isVisible)
   const rafRef = useRef<number | null>(null)
@@ -56,6 +60,9 @@ export function AnimationProvider({
     const contentChanged = prevContentKeyRef.current !== contentKey
     const becomingVisible = isVisible && !prevVisibleRef.current
     const becomingHidden = !isVisible && prevVisibleRef.current
+    // Slide transition: content changed while already visible (navigating between slides)
+    const slideTransition =
+      isVisible && prevVisibleRef.current && contentChanged
 
     // Clear any pending RAF
     if (rafRef.current) {
@@ -68,6 +75,7 @@ export function AnimationProvider({
       // Phase 1: Set start phase (all elements go to initial hidden state)
       setIsExitPhase(false)
       setIsStartPhase(true)
+      setIsSlideTransition(slideTransition)
       setAnimationFrame((f) => f + 1)
 
       // Phase 2: After one frame, trigger the animation
@@ -81,6 +89,7 @@ export function AnimationProvider({
       // Start the synchronized exit animation sequence
       // All elements should start exiting at the same time
       setIsExitPhase(true)
+      setIsSlideTransition(false)
       setExitFrame((f) => f + 1)
     }
 
@@ -100,8 +109,9 @@ export function AnimationProvider({
       isStartPhase,
       isExitPhase,
       exitFrame,
+      isSlideTransition,
     }),
-    [animationFrame, isStartPhase, isExitPhase, exitFrame],
+    [animationFrame, isStartPhase, isExitPhase, exitFrame, isSlideTransition],
   )
 
   return (

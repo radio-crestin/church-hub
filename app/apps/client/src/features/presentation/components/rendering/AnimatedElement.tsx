@@ -7,6 +7,7 @@ interface AnimatedElementProps {
   children: ReactNode
   animationIn?: AnimationConfig
   animationOut?: AnimationConfig
+  slideTransition?: AnimationConfig // Animation used when transitioning between slides
   isVisible: boolean
   contentKey?: string // Used to detect content changes for this specific element
   className?: string
@@ -37,13 +38,19 @@ export function AnimatedElement({
   children,
   animationIn,
   animationOut,
+  slideTransition,
   isVisible,
   contentKey,
   className = '',
   style = {},
 }: AnimatedElementProps) {
-  const { animationFrame, isStartPhase, isExitPhase, exitFrame } =
-    useAnimationContext()
+  const {
+    animationFrame,
+    isStartPhase,
+    isExitPhase,
+    exitFrame,
+    isSlideTransition,
+  } = useAnimationContext()
   const [shouldRender, setShouldRender] = useState(isVisible)
   const [phase, setPhase] = useState<AnimationPhase>(
     isVisible ? 'idle' : 'idle',
@@ -133,7 +140,15 @@ export function AnimatedElement({
   const getAnimationStyles = (): React.CSSProperties => {
     // Determine which animation config to use
     const isEntering = phase === 'entering-start' || phase === 'entering'
-    const currentAnimation = isEntering ? animationIn : animationOut
+    // Use slideTransition for content changes (navigating between slides)
+    // Use animationIn for initial visibility, animationOut for exit
+    let currentAnimation: AnimationConfig | undefined
+    if (isEntering) {
+      currentAnimation =
+        isSlideTransition && slideTransition ? slideTransition : animationIn
+    } else {
+      currentAnimation = animationOut
+    }
     // Default to 'fade' animation if not configured (ensures all elements animate together)
     const animationType = currentAnimation?.type ?? 'fade'
 

@@ -109,6 +109,9 @@ export function ScreenContent({
         key="mainText"
         animationIn={'animationIn' in mt ? mt.animationIn : undefined}
         animationOut={'animationOut' in mt ? mt.animationOut : undefined}
+        slideTransition={
+          'slideTransition' in mt ? mt.slideTransition : undefined
+        }
         isVisible={elementVisible}
         contentKey={`mainText-${contentKey}`}
         style={{
@@ -163,6 +166,9 @@ export function ScreenContent({
         key="contentText"
         animationIn={'animationIn' in ct ? ct.animationIn : undefined}
         animationOut={'animationOut' in ct ? ct.animationOut : undefined}
+        slideTransition={
+          'slideTransition' in ct ? ct.slideTransition : undefined
+        }
         isVisible={elementVisible}
         contentKey={`contentText-${contentKey}`}
         style={{
@@ -214,6 +220,9 @@ export function ScreenContent({
         key="referenceText"
         animationIn={'animationIn' in rt ? rt.animationIn : undefined}
         animationOut={'animationOut' in rt ? rt.animationOut : undefined}
+        slideTransition={
+          'slideTransition' in rt ? rt.slideTransition : undefined
+        }
         isVisible={elementVisible}
         contentKey={`referenceText-${contentKey}`}
         style={{
@@ -260,6 +269,9 @@ export function ScreenContent({
         key="personLabel"
         animationIn={'animationIn' in pl ? pl.animationIn : undefined}
         animationOut={'animationOut' in pl ? pl.animationOut : undefined}
+        slideTransition={
+          'slideTransition' in pl ? pl.slideTransition : undefined
+        }
         isVisible={elementVisible}
         contentKey={`personLabel-${contentKey}`}
         style={{
