@@ -192,8 +192,8 @@ export function Sidebar() {
             />
           ))}
 
-          {/* Kiosk and Settings - fixed at the bottom, above the collapse button */}
-          <div className="mt-auto space-y-2">
+          {/* Bottom section - fixed at the bottom, above the collapse button */}
+          <div className="mt-auto space-y-1">
             {/* Kiosk - shown when kiosk mode is enabled */}
             {showKiosk && (
               <SidebarItem
@@ -207,21 +207,8 @@ export function Sidebar() {
               />
             )}
 
-            {/* Settings */}
-            {canViewSettings && (
-              <SidebarItem
-                icon={Settings}
-                label={t('sidebar:navigation.settings')}
-                to="/settings"
-                isCollapsed={isCollapsed}
-                isActive={
-                  location.pathname === '/settings' ||
-                  location.pathname.startsWith('/settings/')
-                }
-                className="md:flex"
-                onClick={(e) => handleSidebarItemClick('/settings', e)}
-              />
-            )}
+            {/* Divider */}
+            <div className="my-2 border-t border-gray-200 dark:border-gray-700" />
 
             {/* Feedback */}
             <button
@@ -239,6 +226,22 @@ export function Sidebar() {
                 {t('sidebar:navigation.feedback')}
               </span>
             </button>
+
+            {/* Settings */}
+            {canViewSettings && (
+              <SidebarItem
+                icon={Settings}
+                label={t('sidebar:navigation.settings')}
+                to="/settings"
+                isCollapsed={isCollapsed}
+                isActive={
+                  location.pathname === '/settings' ||
+                  location.pathname.startsWith('/settings/')
+                }
+                className="md:flex"
+                onClick={(e) => handleSidebarItemClick('/settings', e)}
+              />
+            )}
           </div>
         </nav>
 
