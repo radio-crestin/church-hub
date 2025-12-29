@@ -9,13 +9,13 @@ import { useOBSConnection, useStreaming, useYouTubeAuth } from '../hooks'
 export function StreamControls() {
   const { t } = useTranslation('livestream')
   const { isAuthenticated } = useYouTubeAuth()
-  const { isConnected, isStreaming } = useOBSConnection()
-  const { start, stop, isStarting, isStopping, streamStartProgress } =
+  const { isConnected } = useOBSConnection()
+  const { start, stop, isStarting, isStopping, streamStartProgress, isLive } =
     useStreaming()
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
 
   const hasConnection = isAuthenticated || isConnected
-  const canStart = hasConnection && !isStreaming
+  const canStart = hasConnection && !isLive
 
   const isStartingStream =
     streamStartProgress &&
@@ -59,7 +59,7 @@ export function StreamControls() {
   return (
     <>
       <div className="flex items-center">
-        {!isStreaming ? (
+        {!isLive ? (
           !hasConnection ? (
             <Tooltip content={t('stream.connectRequired')} position="bottom">
               {startButton}
