@@ -66,7 +66,7 @@ This worker provides a stateless OAuth flow for YouTube authentication using:
 
    **Production:**
    ```
-   https://churchub-youtube-oauth-worker.bringes.io/auth/youtube/callback
+   https://churchub-backend.radiocrestin.ro/auth/youtube/callback
    ```
 
 2. Click **Save**
@@ -134,9 +134,9 @@ Create `.prod.vars` with your production values:
 ```env
 YOUTUBE_CLIENT_ID=your-client-id
 YOUTUBE_CLIENT_SECRET=your-client-secret
-YOUTUBE_REDIRECT_URI=https://churchub-youtube-oauth-worker.bringes.io/auth/youtube/callback
+YOUTUBE_REDIRECT_URI=https://churchub-backend.radiocrestin.ro/auth/youtube/callback
 COOKIE_ENCRYPTION_KEY=<generate with: openssl rand -hex 32>
-ALLOWED_ORIGINS=https://churchub-youtube-oauth-worker.bringes.io,http://localhost:3000
+ALLOWED_ORIGINS=https://churchub-backend.radiocrestin.ro,http://localhost:3000
 ```
 
 Then deploy with production vars:
@@ -147,13 +147,13 @@ npm run deploy:prod
 
 ### 3. Configure Custom Domain (Optional)
 
-The `wrangler.toml` is configured to use `churchub-youtube-oauth-worker.bringes.io`.
+The `wrangler.toml` is configured to use `churchub-backend.radiocrestin.ro`.
 
 To set up the custom domain:
 1. Go to Cloudflare Dashboard > Workers & Pages
 2. Select the worker
 3. Go to **Settings** > **Triggers** > **Custom Domains**
-4. Add `churchub-youtube-oauth-worker.bringes.io`
+4. Add `churchub-backend.radiocrestin.ro`
 5. Cloudflare will automatically configure DNS and SSL
 
 ### 4. Update Client Configuration
@@ -161,7 +161,7 @@ To set up the custom domain:
 In your ChurchHub app, update the environment variable:
 
 ```env
-VITE_YOUTUBE_OAUTH_SERVER=https://churchub-youtube-oauth-worker.bringes.io
+VITE_YOUTUBE_OAUTH_SERVER=https://churchub-backend.radiocrestin.ro
 ```
 
 ## Security Considerations

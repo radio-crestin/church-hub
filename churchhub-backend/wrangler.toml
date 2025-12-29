@@ -1,4 +1,4 @@
-name = "churchub-youtube-oauth-worker"
+name = "churchhub-backend"
 account_id = "c53124cf4d8c039271e3d52917a56b96"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
@@ -6,7 +6,7 @@ minify = true
 
 # Custom domain route
 routes = [
-  { pattern = "churchub-youtube-oauth-worker.bringes.io", custom_domain = true }
+  { pattern = "churchub-backend.radiocrestin.ro", custom_domain = true }
 ]
 
 # Non-sensitive environment variables
@@ -21,3 +21,4 @@ COOKIE_MAX_AGE = 600
 # - COOKIE_ENCRYPTION_KEY (generate: openssl rand -hex 32)
 # - ALLOWED_ORIGINS (comma-separated list)
 # - YOUTUBE_REDIRECT_URI
+# - GITHUB_TOKEN (GitHub PAT with repo scope for creating issues)

@@ -6,6 +6,7 @@ import {
   createCorsMiddleware,
 } from './middleware/security'
 import auth from './routes/auth'
+import feedback from './routes/feedback'
 import health from './routes/health'
 
 const app = new Hono<{ Bindings: Bindings }>()
@@ -24,6 +25,7 @@ app.use('*', logger())
 // Mount routes
 app.route('/', health)
 app.route('/', auth)
+app.route('/', feedback)
 
 // 404 handler
 app.notFound((c) => c.json({ error: 'Not found' }, 404))
