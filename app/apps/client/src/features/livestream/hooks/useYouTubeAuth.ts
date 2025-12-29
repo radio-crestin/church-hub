@@ -12,7 +12,7 @@ import { isTauri, openAuthUrl } from '../utils'
 
 const YOUTUBE_OAUTH_SERVER =
   (import.meta.env.VITE_YOUTUBE_OAUTH_SERVER as string) ||
-  'https://churchub-youtube-oauth-worker.bringes.io'
+  'https://churchub-backend.radiocrestin.ro'
 
 export function useYouTubeAuth() {
   const queryClient = useQueryClient()
