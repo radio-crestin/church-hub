@@ -1,3 +1,5 @@
+import { useMemo, useRef } from 'react'
+
 import { AnimatedElement } from './AnimatedElement'
 import { TextContent } from './TextContent'
 import type { ContentData, NextSlideData } from './types'
@@ -5,6 +7,7 @@ import { calculatePixelBounds, getBackgroundCSS } from './utils/styleUtils'
 import type {
   BibleContentConfig,
   ContentType,
+  ContentTypeConfig,
   ScreenWithConfigs,
 } from '../../types'
 
@@ -29,7 +32,35 @@ export function ScreenContent({
   isVisible = true,
   nextSlideData,
 }: ScreenContentProps) {
-  const config = screen.contentConfigs[contentType]
+  const currentConfig = screen.contentConfigs[contentType]
+
+  // Cache the previous config when visible so we can use it for exit animations
+  // When contentType changes to 'empty', we still need the old config to animate out
+  const cachedConfigRef = useRef<{
+    config: ContentTypeConfig | undefined
+    contentType: ContentType
+  }>({ config: currentConfig, contentType })
+
+  // Update cached config when visible and we have a non-empty content type
+  if (isVisible && contentType !== 'empty' && currentConfig) {
+    cachedConfigRef.current = { config: currentConfig, contentType }
+  }
+
+  // Use cached config when not visible (for exit animation), otherwise use current
+  const config = isVisible ? currentConfig : cachedConfigRef.current.config
+
+  // Generate a content key that changes when the actual content changes
+  // This triggers re-animation when navigating between slides
+  const contentKey = useMemo(() => {
+    if (!contentData) return 'empty'
+    const parts: string[] = [contentType]
+    if (contentData.mainText) parts.push(contentData.mainText.slice(0, 50))
+    if (contentData.contentText)
+      parts.push(contentData.contentText.slice(0, 50))
+    if (contentData.referenceText) parts.push(contentData.referenceText)
+    if (contentData.personLabel) parts.push(contentData.personLabel)
+    return parts.join('|')
+  }, [contentType, contentData])
   // Always use screen dimensions for bounds calculations
   // Constraints are defined relative to the screen's native resolution
   const canvasWidth = screen.width
@@ -57,8 +88,7 @@ export function ScreenContent({
 
   // Render main text
   const renderMainText = () => {
-    if (!config || !('mainText' in config) || !contentData?.mainText)
-      return null
+    if (!config || !('mainText' in config)) return null
 
     const mt = config.mainText
     if (mt.hidden) return null
@@ -70,12 +100,16 @@ export function ScreenContent({
     )
     const scaledBounds = scaleBounds(bounds)
 
+    // Only show if visible AND has content
+    const elementVisible = isVisible && !!contentData?.mainText
+
     return (
       <AnimatedElement
         key="mainText"
         animationIn={'animationIn' in mt ? mt.animationIn : undefined}
         animationOut={'animationOut' in mt ? mt.animationOut : undefined}
-        isVisible={true}
+        isVisible={elementVisible}
+        contentKey={`mainText-${contentKey}`}
         style={{
           position: 'absolute',
           left: scaledBounds.x,
@@ -85,7 +119,7 @@ export function ScreenContent({
         }}
       >
         <TextContent
-          content={contentData.mainText}
+          content={contentData?.mainText ?? ''}
           style={{
             ...mt.style,
             maxFontSize: mt.style.maxFontSize * fontScale,
@@ -100,8 +134,7 @@ export function ScreenContent({
 
   // Render content text
   const renderContentText = () => {
-    if (!config || !('contentText' in config) || !contentData?.contentText)
-      return null
+    if (!config || !('contentText' in config)) return null
 
     const ct = config.contentText
     if (ct.hidden) return null
@@ -116,17 +149,21 @@ export function ScreenContent({
     // Check if reference should be prepended to content
     const bibleConfig = config as BibleContentConfig
     const shouldPrependReference =
-      bibleConfig.includeReferenceInContent && contentData.referenceText
+      bibleConfig.includeReferenceInContent && contentData?.referenceText
     const displayContent = shouldPrependReference
-      ? `${contentData.referenceText} ${contentData.contentText}`
-      : contentData.contentText
+      ? `${contentData?.referenceText} ${contentData?.contentText ?? ''}`
+      : (contentData?.contentText ?? '')
+
+    // Only show if visible AND has content
+    const elementVisible = isVisible && !!contentData?.contentText
 
     return (
       <AnimatedElement
         key="contentText"
         animationIn={'animationIn' in ct ? ct.animationIn : undefined}
         animationOut={'animationOut' in ct ? ct.animationOut : undefined}
-        isVisible={true}
+        isVisible={elementVisible}
+        contentKey={`contentText-${contentKey}`}
         style={{
           position: 'absolute',
           left: scaledBounds.x,
@@ -151,8 +188,7 @@ export function ScreenContent({
 
   // Render reference text
   const renderReferenceText = () => {
-    if (!config || !('referenceText' in config) || !contentData?.referenceText)
-      return null
+    if (!config || !('referenceText' in config)) return null
 
     const rt = config.referenceText
     if (rt.hidden) return null
@@ -169,12 +205,16 @@ export function ScreenContent({
     )
     const scaledBounds = scaleBounds(bounds)
 
+    // Only show if visible AND has content
+    const elementVisible = isVisible && !!contentData?.referenceText
+
     return (
       <AnimatedElement
         key="referenceText"
         animationIn={'animationIn' in rt ? rt.animationIn : undefined}
         animationOut={'animationOut' in rt ? rt.animationOut : undefined}
-        isVisible={true}
+        isVisible={elementVisible}
+        contentKey={`referenceText-${contentKey}`}
         style={{
           position: 'absolute',
           left: scaledBounds.x,
@@ -184,7 +224,7 @@ export function ScreenContent({
         }}
       >
         <TextContent
-          content={contentData.referenceText}
+          content={contentData?.referenceText ?? ''}
           style={{
             ...rt.style,
             maxFontSize: rt.style.maxFontSize * fontScale,
@@ -199,8 +239,7 @@ export function ScreenContent({
 
   // Render person label
   const renderPersonLabel = () => {
-    if (!config || !('personLabel' in config) || !contentData?.personLabel)
-      return null
+    if (!config || !('personLabel' in config)) return null
 
     const pl = config.personLabel
     if (pl.hidden) return null
@@ -212,12 +251,16 @@ export function ScreenContent({
     )
     const scaledBounds = scaleBounds(bounds)
 
+    // Only show if visible AND has content
+    const elementVisible = isVisible && !!contentData?.personLabel
+
     return (
       <AnimatedElement
         key="personLabel"
         animationIn={'animationIn' in pl ? pl.animationIn : undefined}
         animationOut={'animationOut' in pl ? pl.animationOut : undefined}
-        isVisible={true}
+        isVisible={elementVisible}
+        contentKey={`personLabel-${contentKey}`}
         style={{
           position: 'absolute',
           left: scaledBounds.x,
@@ -227,7 +270,7 @@ export function ScreenContent({
         }}
       >
         <TextContent
-          content={contentData.personLabel}
+          content={contentData?.personLabel ?? ''}
           style={{
             ...pl.style,
             maxFontSize: pl.style.maxFontSize * fontScale,
@@ -426,15 +469,11 @@ export function ScreenContent({
         height: containerHeight,
       }}
     >
-      {/* Content fills entire container - no letterboxing */}
-      {isVisible && (
-        <>
-          {renderMainText()}
-          {renderContentText()}
-          {renderReferenceText()}
-          {renderPersonLabel()}
-        </>
-      )}
+      {/* Content elements handle their own visibility/animation */}
+      {renderMainText()}
+      {renderContentText()}
+      {renderReferenceText()}
+      {renderPersonLabel()}
       {renderClock()}
       {renderNextSlideSection()}
     </div>
