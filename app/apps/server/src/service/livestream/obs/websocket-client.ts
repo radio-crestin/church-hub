@@ -618,6 +618,13 @@ export class OBSWebSocketClient {
     return this.currentScene
   }
 
+  setCurrentScene(sceneName: string): void {
+    this.currentScene = sceneName
+    if (this.currentSceneCallback) {
+      this.currentSceneCallback(sceneName)
+    }
+  }
+
   isConnected(): boolean {
     return this.connected
   }
