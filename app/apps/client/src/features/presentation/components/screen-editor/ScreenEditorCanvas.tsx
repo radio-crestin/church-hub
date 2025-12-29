@@ -721,10 +721,10 @@ export function ScreenEditorCanvas({
       )
     }
 
-    // Clock
-    const clockConfig =
-      'clock' in config ? config.clock : screen.globalSettings.clockConfig
-    if (clockConfig?.enabled) {
+    // Clock - use global clockEnabled flag and always use global config for sync
+    const clockConfig = screen.globalSettings.clockConfig
+    const isClockEnabled = screen.globalSettings.clockEnabled && clockConfig
+    if (isClockEnabled) {
       // Default size for backwards compatibility with configs that don't have size
       const clockSize = clockConfig.size ?? {
         width: 10,
