@@ -174,11 +174,12 @@ export function ImportExportManager() {
 
   const handleConfirmExport = async (
     categoryId: number | null,
-    format: 'zip' | 'folder',
+    destination: 'zip' | 'folder',
+    fileFormat: 'opensong' | 'pptx',
   ) => {
     setModalState({ type: 'none' })
 
-    const result = await exportSongs({ categoryId, format })
+    const result = await exportSongs({ categoryId, destination, fileFormat })
 
     if (result.cancelled) {
       // User cancelled the save dialog, do nothing

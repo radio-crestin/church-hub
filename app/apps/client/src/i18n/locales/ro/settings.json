@@ -299,13 +299,20 @@
       },
       "export": {
         "title": "Export Cântări",
-        "description": "Exportă cântările în format OpenSong XML",
+        "description": "Exportă cântările în format OpenSong sau PowerPoint",
         "button": "Exportă Cântări",
         "allSongs": "Toate cântările",
         "byCategory": "După categorie",
         "selectCategory": "Selectează o categorie",
-        "formatLabel": "Format Export",
-        "formats": {
+        "fileFormatLabel": "Format Fișier",
+        "fileFormats": {
+          "opensong": "OpenSong",
+          "opensongDescription": "Format XML pentru OpenSong",
+          "pptx": "PowerPoint",
+          "pptxDescription": "Prezentare PPTX cu slide-uri"
+        },
+        "destinationLabel": "Destinație Export",
+        "destinations": {
           "folder": "Folder",
           "folderDescription": "Mai rapid, export direct",
           "folderUnavailable": "Doar în aplicația desktop",
@@ -314,7 +321,7 @@
         },
         "exporting": "Se exportă...",
         "fetching": "Se exportă cântările...",
-        "generating": "Se generează fișierele XML...",
+        "generating": "Se generează fișierele...",
         "zipping": "Se creează arhiva ZIP...",
         "writing": "Se scriu fișierele...",
         "saving": "Se salvează fișierul...",

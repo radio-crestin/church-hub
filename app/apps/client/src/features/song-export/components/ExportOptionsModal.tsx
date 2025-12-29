@@ -1,13 +1,24 @@
-import { Download, FolderOpen, Package, X } from 'lucide-react'
+import {
+  Download,
+  FileText,
+  FolderOpen,
+  Package,
+  Presentation,
+  X,
+} from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { CategoryPicker } from '~/features/songs/components'
-import type { ExportFormat } from '../types'
+import type { ExportDestination, SongFileFormat } from '../types'
 
 interface ExportOptionsModalProps {
   isOpen: boolean
-  onConfirm: (categoryId: number | null, format: ExportFormat) => void
+  onConfirm: (
+    categoryId: number | null,
+    destination: ExportDestination,
+    fileFormat: SongFileFormat,
+  ) => void
   onCancel: () => void
 }
 
@@ -20,7 +31,8 @@ export function ExportOptionsModal({
   const dialogRef = useRef<HTMLDialogElement>(null)
   const [exportScope, setExportScope] = useState<'all' | 'category'>('all')
   const [categoryId, setCategoryId] = useState<number | null>(null)
-  const [exportFormat, setExportFormat] = useState<ExportFormat>('folder')
+  const [destination, setDestination] = useState<ExportDestination>('folder')
+  const [fileFormat, setFileFormat] = useState<SongFileFormat>('opensong')
 
   // Check if we're in Tauri (folder export only available in desktop app)
   const isTauri =
@@ -41,7 +53,8 @@ export function ExportOptionsModal({
     if (!isOpen) {
       setExportScope('all')
       setCategoryId(null)
-      setExportFormat(isTauri ? 'folder' : 'zip')
+      setDestination(isTauri ? 'folder' : 'zip')
+      setFileFormat('opensong')
     }
   }, [isOpen, isTauri])
 
@@ -52,13 +65,17 @@ export function ExportOptionsModal({
   }
 
   const handleConfirm = () => {
-    onConfirm(exportScope === 'all' ? null : categoryId, exportFormat)
+    onConfirm(
+      exportScope === 'all' ? null : categoryId,
+      destination,
+      fileFormat,
+    )
   }
 
   return (
     <dialog
       ref={dialogRef}
-      className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800"
+      className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800 max-h-[90vh] overflow-y-auto"
       onClose={onCancel}
       onClick={handleBackdropClick}
     >
@@ -83,6 +100,7 @@ export function ExportOptionsModal({
           {t('sections.importExport.export.description')}
         </p>
 
+        {/* Song Selection */}
         <div className="space-y-4 mb-6">
           <label className="flex items-center gap-3 cursor-pointer">
             <input
@@ -121,72 +139,146 @@ export function ExportOptionsModal({
           )}
         </div>
 
-        {/* Format Selection */}
+        {/* File Format Selection */}
         <div className="mb-6">
           <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-            {t('sections.importExport.export.formatLabel')}
+            {t('sections.importExport.export.fileFormatLabel')}
           </h3>
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
-              onClick={() => isTauri && setExportFormat('folder')}
+              onClick={() => setFileFormat('opensong')}
+              className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all cursor-pointer ${
+                fileFormat === 'opensong'
+                  ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20'
+                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+              }`}
+            >
+              <FileText
+                className={`w-8 h-8 ${
+                  fileFormat === 'opensong'
+                    ? 'text-indigo-600 dark:text-indigo-400'
+                    : 'text-gray-500 dark:text-gray-400'
+                }`}
+              />
+              <span
+                className={`text-sm font-medium ${
+                  fileFormat === 'opensong'
+                    ? 'text-indigo-600 dark:text-indigo-400'
+                    : 'text-gray-700 dark:text-gray-300'
+                }`}
+              >
+                {t('sections.importExport.export.fileFormats.opensong')}
+              </span>
+              <span className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                {t(
+                  'sections.importExport.export.fileFormats.opensongDescription',
+                )}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setFileFormat('pptx')}
+              className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all cursor-pointer ${
+                fileFormat === 'pptx'
+                  ? 'border-orange-600 bg-orange-50 dark:bg-orange-900/20'
+                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+              }`}
+            >
+              <Presentation
+                className={`w-8 h-8 ${
+                  fileFormat === 'pptx'
+                    ? 'text-orange-600 dark:text-orange-400'
+                    : 'text-gray-500 dark:text-gray-400'
+                }`}
+              />
+              <span
+                className={`text-sm font-medium ${
+                  fileFormat === 'pptx'
+                    ? 'text-orange-600 dark:text-orange-400'
+                    : 'text-gray-700 dark:text-gray-300'
+                }`}
+              >
+                {t('sections.importExport.export.fileFormats.pptx')}
+              </span>
+              <span className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                {t('sections.importExport.export.fileFormats.pptxDescription')}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {/* Destination Selection */}
+        <div className="mb-6">
+          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+            {t('sections.importExport.export.destinationLabel')}
+          </h3>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => isTauri && setDestination('folder')}
               disabled={!isTauri}
               className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${
-                exportFormat === 'folder' && isTauri
+                destination === 'folder' && isTauri
                   ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20'
                   : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
               } ${!isTauri ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             >
               <FolderOpen
                 className={`w-8 h-8 ${
-                  exportFormat === 'folder' && isTauri
+                  destination === 'folder' && isTauri
                     ? 'text-indigo-600 dark:text-indigo-400'
                     : 'text-gray-500 dark:text-gray-400'
                 }`}
               />
               <span
                 className={`text-sm font-medium ${
-                  exportFormat === 'folder' && isTauri
+                  destination === 'folder' && isTauri
                     ? 'text-indigo-600 dark:text-indigo-400'
                     : 'text-gray-700 dark:text-gray-300'
                 }`}
               >
-                {t('sections.importExport.export.formats.folder')}
+                {t('sections.importExport.export.destinations.folder')}
               </span>
               <span className="text-xs text-gray-500 dark:text-gray-400 text-center">
                 {isTauri
-                  ? t('sections.importExport.export.formats.folderDescription')
-                  : t('sections.importExport.export.formats.folderUnavailable')}
+                  ? t(
+                      'sections.importExport.export.destinations.folderDescription',
+                    )
+                  : t(
+                      'sections.importExport.export.destinations.folderUnavailable',
+                    )}
               </span>
             </button>
 
             <button
               type="button"
-              onClick={() => setExportFormat('zip')}
+              onClick={() => setDestination('zip')}
               className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all cursor-pointer ${
-                exportFormat === 'zip'
+                destination === 'zip'
                   ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20'
                   : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
               }`}
             >
               <Package
                 className={`w-8 h-8 ${
-                  exportFormat === 'zip'
+                  destination === 'zip'
                     ? 'text-indigo-600 dark:text-indigo-400'
                     : 'text-gray-500 dark:text-gray-400'
                 }`}
               />
               <span
                 className={`text-sm font-medium ${
-                  exportFormat === 'zip'
+                  destination === 'zip'
                     ? 'text-indigo-600 dark:text-indigo-400'
                     : 'text-gray-700 dark:text-gray-300'
                 }`}
               >
-                {t('sections.importExport.export.formats.zip')}
+                {t('sections.importExport.export.destinations.zip')}
               </span>
               <span className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                {t('sections.importExport.export.formats.zipDescription')}
+                {t('sections.importExport.export.destinations.zipDescription')}
               </span>
             </button>
           </div>

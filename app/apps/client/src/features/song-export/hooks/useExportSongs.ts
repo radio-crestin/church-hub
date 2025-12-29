@@ -1,21 +1,85 @@
 import { open, save } from '@tauri-apps/plugin-dialog'
-import { writeFile, writeTextFile } from '@tauri-apps/plugin-fs'
+import { writeFile } from '@tauri-apps/plugin-fs'
 import { useCallback, useState } from 'react'
 
+import type { SongWithSlides } from '~/features/songs/types'
 import { fetchSongsForExport } from '../service'
-import type { ExportOptions, ExportProgress, ExportResult } from '../types'
+import type {
+  ExportOptions,
+  ExportProgress,
+  ExportResult,
+  SongFileFormat,
+} from '../types'
 import {
-  createExportZip,
   downloadBlob,
   generateOpenSongXml,
+  generatePptxBase64,
   sanitizeFilename,
 } from '../utils'
 
 // Check if we're in Tauri (folder export only available in desktop app)
 const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 
+// Batch size for parallel processing
+const PARALLEL_BATCH_SIZE = 10
+
 /**
- * Hook for exporting songs to OpenSong XML format
+ * Get file extension for the given format
+ */
+function getFileExtension(format: SongFileFormat): string {
+  return format === 'pptx' ? 'pptx' : 'opensong'
+}
+
+/**
+ * Generate file content for a song in the specified format
+ */
+async function generateFileContent(
+  song: SongWithSlides,
+  format: SongFileFormat,
+): Promise<Uint8Array> {
+  if (format === 'pptx') {
+    const base64Data = await generatePptxBase64(song)
+    const binaryString = atob(base64Data)
+    const bytes = new Uint8Array(binaryString.length)
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i)
+    }
+    return bytes
+  }
+  // OpenSong XML
+  const xmlContent = generateOpenSongXml(song)
+  return new TextEncoder().encode(xmlContent)
+}
+
+/**
+ * Process songs in parallel batches
+ */
+async function processSongsInBatches<T>(
+  songs: SongWithSlides[],
+  processor: (song: SongWithSlides, index: number) => Promise<T>,
+  onProgress: (current: number, total: number, currentSong?: string) => void,
+): Promise<T[]> {
+  const results: T[] = []
+  let processed = 0
+
+  for (let i = 0; i < songs.length; i += PARALLEL_BATCH_SIZE) {
+    const batch = songs.slice(i, i + PARALLEL_BATCH_SIZE)
+    const batchResults = await Promise.all(
+      batch.map(async (song, batchIndex) => {
+        const result = await processor(song, i + batchIndex)
+        processed++
+        onProgress(processed, songs.length, song.title)
+        return result
+      }),
+    )
+    results.push(...batchResults)
+  }
+
+  return results
+}
+
+/**
+ * Hook for exporting songs to OpenSong XML or PPTX format
  */
 export function useExportSongs() {
   const [isPending, setIsPending] = useState(false)
@@ -23,7 +87,8 @@ export function useExportSongs() {
 
   const exportToZip = useCallback(
     async (options: ExportOptions): Promise<ExportResult> => {
-      // Generate default filename with date
+      const { fileFormat } = options
+      const extension = getFileExtension(fileFormat)
       const date = new Date().toISOString().split('T')[0]
       const defaultFilename = `songs-export-${date}.zip`
 
@@ -60,23 +125,41 @@ export function useExportSongs() {
           }
         }
 
+        // Generate files in parallel batches
         setProgress({ phase: 'generating', current: 0, total: songs.length })
-        const xmlFiles = songs.map((song, index) => {
-          setProgress({
-            phase: 'generating',
-            current: index + 1,
-            total: songs.length,
-            currentSong: song.title,
-          })
-          return {
-            filename: song.title,
-            xmlContent: generateOpenSongXml(song),
-          }
-        })
 
-        setProgress({ phase: 'zipping', current: 0, total: xmlFiles.length })
-        const zipBlob = await createExportZip(xmlFiles, (current, total) => {
-          setProgress({ phase: 'zipping', current, total })
+        const files = await processSongsInBatches(
+          songs,
+          async (song) => {
+            const content = await generateFileContent(song, fileFormat)
+            return {
+              filename: `${sanitizeFilename(song.title)}.${extension}`,
+              content,
+            }
+          },
+          (current, total, currentSong) => {
+            setProgress({ phase: 'generating', current, total, currentSong })
+          },
+        )
+
+        // Create ZIP archive
+        setProgress({ phase: 'zipping', current: 0, total: files.length })
+
+        // For ZIP, we need to convert to the format createExportZip expects
+        // Since createExportZip expects string content, we need to handle binary differently
+        const { default: JSZip } = await import('jszip')
+        const zip = new JSZip()
+
+        for (let i = 0; i < files.length; i++) {
+          const { filename, content } = files[i]
+          zip.file(filename, content)
+          setProgress({ phase: 'zipping', current: i + 1, total: files.length })
+        }
+
+        const zipBlob = await zip.generateAsync({
+          type: 'blob',
+          compression: 'DEFLATE',
+          compressionOptions: { level: 6 },
         })
 
         setProgress({ phase: 'saving', current: 0, total: 1 })
@@ -123,6 +206,9 @@ export function useExportSongs() {
         }
       }
 
+      const { fileFormat } = options
+      const extension = getFileExtension(fileFormat)
+
       // Show directory picker
       const selectedFolder = await open({
         directory: true,
@@ -154,24 +240,22 @@ export function useExportSongs() {
           }
         }
 
-        // Generate XML for each song and write directly to folder
+        // Generate and write files in parallel batches
         setProgress({ phase: 'writing', current: 0, total: songs.length })
 
-        for (let i = 0; i < songs.length; i++) {
-          const song = songs[i]
-          const safeFilename = sanitizeFilename(song.title)
-          const xmlContent = generateOpenSongXml(song)
-          const filePath = `${selectedFolder}/${safeFilename}`
-
-          await writeTextFile(filePath, xmlContent)
-
-          setProgress({
-            phase: 'writing',
-            current: i + 1,
-            total: songs.length,
-            currentSong: song.title,
-          })
-        }
+        await processSongsInBatches(
+          songs,
+          async (song) => {
+            const safeFilename = sanitizeFilename(song.title)
+            const filePath = `${selectedFolder}/${safeFilename}.${extension}`
+            const content = await generateFileContent(song, fileFormat)
+            await writeFile(filePath, content)
+            return filePath
+          },
+          (current, total, currentSong) => {
+            setProgress({ phase: 'writing', current, total, currentSong })
+          },
+        )
 
         return {
           success: true,
@@ -195,7 +279,7 @@ export function useExportSongs() {
 
   const exportSongs = useCallback(
     async (options: ExportOptions): Promise<ExportResult> => {
-      if (options.format === 'folder') {
+      if (options.destination === 'folder') {
         return exportToFolder(options)
       }
       return exportToZip(options)
