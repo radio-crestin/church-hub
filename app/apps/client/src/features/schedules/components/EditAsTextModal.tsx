@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { getSelectedBibleTranslationIds } from '~/service/bible/bible'
 import { useToast } from '~/ui/toast'
 import { MissingSongResolver } from './MissingSongResolver'
-import { getBooks } from '../../bible/service/bible'
+import { getBooks, getTranslationById } from '../../bible/service/bible'
 import { parsePassageRange } from '../../bible/utils/parsePassageRange'
 import { searchSongs, upsertSong } from '../../songs/service/songs'
 import { replaceScheduleItems } from '../service/schedules'
@@ -24,11 +24,35 @@ interface EditAsTextModalProps {
 
 type ModalState = 'editing' | 'resolving' | 'processing'
 
+interface VerseteTineriEntryInput {
+  personName: string
+  translationId: number
+  bookCode: string
+  bookName: string
+  startChapter: number
+  startVerse: number
+  endChapter: number
+  endVerse: number
+}
+
 interface ProcessedItem {
   type: 'song' | 'slide'
   songId?: number
   slideType?: SlideTemplate
   slideContent?: string
+  // Bible passage fields
+  biblePassage?: {
+    translationId: number
+    translationAbbreviation: string
+    bookCode: string
+    bookName: string
+    startChapter: number
+    startVerse: number
+    endChapter: number
+    endVerse: number
+  }
+  // Versete Tineri entries
+  verseteTineriEntries?: VerseteTineriEntryInput[]
 }
 
 export function EditAsTextModal({
@@ -150,9 +174,12 @@ export function EditAsTextModal({
       const translationIds = await getSelectedBibleTranslationIds()
       const primaryTranslationId = translationIds[0]
       let books: Awaited<ReturnType<typeof getBooks>> = []
+      let translationAbbr = 'VDCC'
 
       if (primaryTranslationId) {
         books = await getBooks(primaryTranslationId)
+        const translation = await getTranslationById(primaryTranslationId)
+        translationAbbr = translation.abbreviation || 'VDCC'
       }
 
       for (const item of items) {
@@ -209,19 +236,35 @@ export function EditAsTextModal({
             slideContent: `<p>${escapeHtml(item.content)}</p>`,
           })
         } else if (item.type === 'bible_passage') {
-          // V: prefix - Bible passage
+          // V: prefix - Bible passage (create proper bible_passage item)
           if (primaryTranslationId && books.length > 0) {
             const parsed = parsePassageRange({
               input: item.content,
               books,
             })
 
-            if (parsed.status === 'valid' && parsed.formattedReference) {
-              // Create announcement slide with Bible reference
+            if (
+              parsed.status === 'valid' &&
+              parsed.bookCode &&
+              parsed.bookName &&
+              parsed.startChapter &&
+              parsed.startVerse &&
+              parsed.endChapter &&
+              parsed.endVerse
+            ) {
+              // Create proper bible_passage item
               processedItems.push({
-                type: 'slide',
-                slideType: 'announcement',
-                slideContent: `<p><strong>${escapeHtml(parsed.formattedReference)}</strong></p>`,
+                type: 'slide', // Will be converted to bible_passage on server
+                biblePassage: {
+                  translationId: primaryTranslationId,
+                  translationAbbreviation: translationAbbr,
+                  bookCode: parsed.bookCode,
+                  bookName: parsed.bookName,
+                  startChapter: parsed.startChapter,
+                  startVerse: parsed.startVerse,
+                  endChapter: parsed.endChapter,
+                  endVerse: parsed.endVerse,
+                },
               })
             } else {
               // Invalid reference, add as announcement with the raw text
@@ -240,34 +283,56 @@ export function EditAsTextModal({
             })
           }
         } else if (item.type === 'versete_tineri') {
-          // VT: prefix - Versete Tineri (Person Name - Reference)
-          // Parse format: "PersonName - Reference"
-          const vtMatch = item.content.match(/^(.+?)\s*[-–—]\s*(.+)$/)
+          // VT: prefix - Versete Tineri (supports multiple entries: "Name1 - Ref1, Name2 - Ref2")
+          // Split by comma to get multiple entries
+          const entries = item.content.split(',').map((e) => e.trim())
+          const vtEntries: VerseteTineriEntryInput[] = []
 
-          if (vtMatch) {
-            const personName = vtMatch[1].trim()
-            const reference = vtMatch[2].trim()
+          for (const entryText of entries) {
+            // Parse format: "PersonName - Reference"
+            const vtMatch = entryText.match(/^(.+?)\s*[-–—]\s*(.+)$/)
 
-            // Validate reference if Bible is configured
-            let formattedReference = reference
-            if (primaryTranslationId && books.length > 0) {
+            if (vtMatch && primaryTranslationId && books.length > 0) {
+              const personName = vtMatch[1].trim()
+              const reference = vtMatch[2].trim()
+
               const parsed = parsePassageRange({
                 input: reference,
                 books,
               })
-              if (parsed.status === 'valid' && parsed.formattedReference) {
-                formattedReference = parsed.formattedReference
+
+              if (
+                parsed.status === 'valid' &&
+                parsed.bookCode &&
+                parsed.bookName &&
+                parsed.startChapter &&
+                parsed.startVerse &&
+                parsed.endChapter &&
+                parsed.endVerse
+              ) {
+                vtEntries.push({
+                  personName,
+                  translationId: primaryTranslationId,
+                  bookCode: parsed.bookCode,
+                  bookName: parsed.bookName,
+                  startChapter: parsed.startChapter,
+                  startVerse: parsed.startVerse,
+                  endChapter: parsed.endChapter,
+                  endVerse: parsed.endVerse,
+                })
               }
             }
+          }
 
-            // Create versete_tineri slide with person name and reference
+          if (vtEntries.length > 0) {
+            // Create versete_tineri slide with structured entries
             processedItems.push({
               type: 'slide',
               slideType: 'versete_tineri',
-              slideContent: `<p><strong>${escapeHtml(personName)}</strong> - ${escapeHtml(formattedReference)}</p>`,
+              verseteTineriEntries: vtEntries,
             })
           } else {
-            // Invalid format, add as versete_tineri with just the content
+            // Fallback: Invalid format, add as versete_tineri with just the content
             processedItems.push({
               type: 'slide',
               slideType: 'versete_tineri',

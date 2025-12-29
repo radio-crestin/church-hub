@@ -2,9 +2,19 @@ import { eq } from 'drizzle-orm'
 
 import { getScheduleById } from './getSchedules'
 import { updateScheduleSearchIndex } from './search'
-import type { OperationResult, SlideTemplate } from './types'
+import type {
+  OperationResult,
+  SlideTemplate,
+  VerseteTineriEntryInput,
+} from './types'
 import { getDatabase } from '../../db'
-import { scheduleItems, schedules } from '../../db/schema'
+import {
+  scheduleBiblePassageVerses,
+  scheduleItems,
+  schedules,
+  scheduleVerseteTineriEntries,
+} from '../../db/schema'
+import { getVerseRange, getVersesAcrossChapters } from '../bible'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -15,6 +25,30 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
 }
 
 /**
+ * Formats a passage reference string for cross-chapter or same-chapter ranges
+ */
+function formatPassageReference(
+  bookName: string,
+  startChapter: number,
+  startVerse: number,
+  endChapter: number,
+  endVerse: number,
+  translationAbbreviation?: string,
+): string {
+  let ref: string
+  if (startChapter === endChapter) {
+    if (startVerse === endVerse) {
+      ref = `${bookName} ${startChapter}:${startVerse}`
+    } else {
+      ref = `${bookName} ${startChapter}:${startVerse}-${endVerse}`
+    }
+  } else {
+    ref = `${bookName} ${startChapter}:${startVerse} - ${endChapter}:${endVerse}`
+  }
+  return translationAbbreviation ? `${ref} - ${translationAbbreviation}` : ref
+}
+
+/**
  * Input for a single item to replace
  */
 export interface ReplaceItemInput {
@@ -22,6 +56,19 @@ export interface ReplaceItemInput {
   songId?: number
   slideType?: SlideTemplate
   slideContent?: string
+  // Bible passage fields
+  biblePassage?: {
+    translationId: number
+    translationAbbreviation: string
+    bookCode: string
+    bookName: string
+    startChapter: number
+    startVerse: number
+    endChapter: number
+    endVerse: number
+  }
+  // Versete Tineri entries
+  verseteTineriEntries?: VerseteTineriEntryInput[]
 }
 
 /**
@@ -85,6 +132,157 @@ export function replaceScheduleItems(
             updatedAt: now,
           })
           .run()
+      } else if (item.biblePassage) {
+        // Handle Bible passage item
+        const passage = item.biblePassage
+        const passageRef = formatPassageReference(
+          passage.bookName,
+          passage.startChapter,
+          passage.startVerse,
+          passage.endChapter,
+          passage.endVerse,
+          passage.translationAbbreviation,
+        )
+
+        // Fetch verses in the range
+        const verses =
+          passage.startChapter === passage.endChapter
+            ? getVerseRange(
+                passage.translationId,
+                passage.bookCode,
+                passage.startChapter,
+                passage.startVerse,
+                passage.endVerse,
+              )
+            : getVersesAcrossChapters(
+                passage.translationId,
+                passage.bookCode,
+                passage.startChapter,
+                passage.startVerse,
+                passage.endChapter,
+                passage.endVerse,
+              )
+
+        if (verses.length === 0) {
+          log('warning', `No verses found for passage: ${passageRef}`)
+          continue
+        }
+
+        const result = db
+          .insert(scheduleItems)
+          .values({
+            scheduleId: input.scheduleId,
+            itemType: 'bible_passage',
+            biblePassageReference: passageRef,
+            biblePassageTranslation: passage.translationAbbreviation,
+            sortOrder: i,
+            createdAt: now,
+            updatedAt: now,
+          })
+          .returning({ id: scheduleItems.id })
+          .get()
+        const itemId = result.id
+
+        // Insert individual verses
+        for (let j = 0; j < verses.length; j++) {
+          const verse = verses[j]
+          const verseReference = `${verse.bookName} ${verse.chapter}:${verse.verse}`
+
+          db.insert(scheduleBiblePassageVerses)
+            .values({
+              scheduleItemId: itemId,
+              verseId: verse.id,
+              reference: verseReference,
+              text: verse.text,
+              sortOrder: j,
+            })
+            .run()
+        }
+
+        log('debug', `Bible passage added with ${verses.length} verses`)
+      } else if (
+        item.slideType === 'versete_tineri' &&
+        item.verseteTineriEntries
+      ) {
+        // Handle Versete Tineri slide with entries
+        const result = db
+          .insert(scheduleItems)
+          .values({
+            scheduleId: input.scheduleId,
+            itemType: 'slide',
+            slideType: 'versete_tineri',
+            slideContent: null,
+            sortOrder: i,
+            createdAt: now,
+            updatedAt: now,
+          })
+          .returning({ id: scheduleItems.id })
+          .get()
+        const itemId = result.id
+
+        // Insert versete tineri entries
+        const entries = item.verseteTineriEntries
+        for (let j = 0; j < entries.length; j++) {
+          const entry = entries[j]
+
+          // Fetch verses for this entry
+          const verses =
+            entry.startChapter === entry.endChapter
+              ? getVerseRange(
+                  entry.translationId,
+                  entry.bookCode,
+                  entry.startChapter,
+                  entry.startVerse,
+                  entry.endVerse,
+                )
+              : getVersesAcrossChapters(
+                  entry.translationId,
+                  entry.bookCode,
+                  entry.startChapter,
+                  entry.startVerse,
+                  entry.endChapter,
+                  entry.endVerse,
+                )
+
+          if (verses.length === 0) {
+            log(
+              'warning',
+              `No verses found for entry ${j}: ${entry.bookName} ${entry.startChapter}:${entry.startVerse}`,
+            )
+            continue
+          }
+
+          // Combine verse text
+          const combinedText = verses.map((v) => v.text).join(' ')
+
+          // Format reference
+          const reference = formatPassageReference(
+            entry.bookName,
+            entry.startChapter,
+            entry.startVerse,
+            entry.endChapter,
+            entry.endVerse,
+          )
+
+          db.insert(scheduleVerseteTineriEntries)
+            .values({
+              scheduleItemId: itemId,
+              personName: entry.personName,
+              translationId: entry.translationId,
+              bookCode: entry.bookCode,
+              bookName: entry.bookName,
+              reference,
+              text: combinedText,
+              startChapter: entry.startChapter,
+              startVerse: entry.startVerse,
+              endChapter: entry.endChapter,
+              endVerse: entry.endVerse,
+              sortOrder: j,
+            })
+            .run()
+        }
+
+        log('debug', `Versete Tineri added with ${entries.length} entries`)
       } else if (item.type === 'slide' && item.slideType && item.slideContent) {
         db.insert(scheduleItems)
           .values({
