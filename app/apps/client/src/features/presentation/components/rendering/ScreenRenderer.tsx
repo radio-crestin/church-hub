@@ -20,6 +20,7 @@ import {
 } from '../../hooks'
 import { useScreen } from '../../hooks/useScreen'
 import type { ContentType, PresentationState } from '../../types'
+import { addAminToLastSlide } from '../../utils/addAminToLastSlide'
 import { setWindowFullscreen } from '../../utils/fullscreen'
 import { isTauri } from '../../utils/openDisplayWindow'
 
@@ -517,8 +518,12 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
         if (temp.type === 'song') {
           const currentSlide = temp.data.slides[temp.data.currentSlideIndex]
           if (currentSlide) {
+            const isLastSlide =
+              temp.data.currentSlideIndex === temp.data.slides.length - 1
             setContentType('song')
-            setContentData({ mainText: currentSlide.content })
+            setContentData({
+              mainText: addAminToLastSlide(currentSlide.content, isLastSlide),
+            })
             // Show next slide preview if enabled in screen config
             if (screen?.nextSlideConfig?.enabled) {
               const nextSlide =
@@ -562,12 +567,16 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
         // Find current content - song slide
         if (presentationState.currentSongSlideId) {
           for (const item of queueItems) {
-            const slide = item.slides?.find(
+            const slideIndex = item.slides?.findIndex(
               (s: SongSlide) => s.id === presentationState.currentSongSlideId,
             )
-            if (slide) {
+            if (slideIndex !== undefined && slideIndex !== -1 && item.slides) {
+              const slide = item.slides[slideIndex]
+              const isLastSlide = slideIndex === item.slides.length - 1
               foundContentType = 'song'
-              foundContentData = { mainText: slide.content }
+              foundContentData = {
+                mainText: addAminToLastSlide(slide.content, isLastSlide),
+              }
               break
             }
           }

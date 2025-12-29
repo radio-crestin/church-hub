@@ -151,6 +151,7 @@ function SongEditorPage() {
       hymnNumber: metadata.hymnNumber,
       keyLine: metadata.keyLine,
       presentationOrder: metadata.presentationOrder,
+      sourceFilename: metadata.sourceFilename,
     })
 
     if (result.success && result.data) {
@@ -175,6 +176,7 @@ function SongEditorPage() {
         hymnNumber: result.data.hymnNumber,
         keyLine: result.data.keyLine,
         presentationOrder: result.data.presentationOrder,
+        sourceFilename: result.data.sourceFilename,
       }
       setSavedState({
         title: result.data.title,
