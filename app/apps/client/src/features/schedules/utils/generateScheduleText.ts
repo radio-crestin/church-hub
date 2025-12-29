@@ -11,7 +11,9 @@ export function generateScheduleText(items: ScheduleItem[]): string {
   lines.push('# S: Song Title')
   lines.push('# A: Announcement text')
   lines.push('# V: Ioan 3:16 (Bible passage)')
-  lines.push('# VT: Person Name - Ioan 3:16, Person 2 - Ioan 3:17 (Youth verses)')
+  lines.push(
+    '# VT: Person Name - Ioan 3:16, Person 2 - Ioan 3:17 (Youth verses)',
+  )
   lines.push('')
 
   for (const item of items) {

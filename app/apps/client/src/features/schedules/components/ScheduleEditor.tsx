@@ -81,17 +81,26 @@ export function ScheduleEditor({
   const deleteDialogRef = useRef<HTMLDialogElement>(null)
   const titleInputRef = useRef<HTMLInputElement>(null)
 
+  // Track last saved values to detect actual changes
+  const lastSavedRef = useRef({ title: '', description: '' })
+
   // Load schedule data
   useEffect(() => {
     if (schedule) {
       setTitle(schedule.title)
       setDescription(schedule.description ?? '')
       setLocalItems(schedule.items ?? [])
+      // Update last saved values when loading from server
+      lastSavedRef.current = {
+        title: schedule.title,
+        description: schedule.description ?? '',
+      }
     } else if (scheduleId === null) {
       // New schedule
       setTitle('')
       setDescription('')
       setLocalItems([])
+      lastSavedRef.current = { title: '', description: '' }
       titleInputRef.current?.focus()
     }
   }, [schedule, scheduleId])
@@ -131,6 +140,12 @@ export function ScheduleEditor({
       if (result.success && result.data) {
         const savedScheduleId = result.data.id
 
+        // Update last saved values
+        lastSavedRef.current = {
+          title: currentTitle.trim(),
+          description: currentDescription.trim(),
+        }
+
         // If this was a new schedule, track the ID
         if (scheduleId === null && savedScheduleId) {
           setCreatedScheduleId(savedScheduleId)
@@ -147,6 +162,13 @@ export function ScheduleEditor({
   useEffect(() => {
     // Skip auto-save if no title yet
     if (!title.trim()) return
+
+    // Check if values actually changed from last saved state
+    const hasChanges =
+      title.trim() !== lastSavedRef.current.title ||
+      description.trim() !== lastSavedRef.current.description
+
+    if (!hasChanges) return
 
     const timeoutId = setTimeout(() => {
       handleSave(title, description)
