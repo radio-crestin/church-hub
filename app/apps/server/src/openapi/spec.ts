@@ -10,6 +10,7 @@ import {
   conversionPaths,
   databasePaths,
   devicesPaths,
+  feedbackPaths,
   healthPaths,
   presentationPaths,
   queuePaths,
@@ -61,6 +62,7 @@ export const openApiSpec = {
     },
     { name: 'Presentation', description: 'Presentation state control' },
     { name: 'Conversion', description: 'File format conversion utilities' },
+    { name: 'Feedback', description: 'User feedback submission' },
   ],
   paths: {
     ...healthPaths,
@@ -76,6 +78,7 @@ export const openApiSpec = {
     ...screensPaths,
     ...presentationPaths,
     ...conversionPaths,
+    ...feedbackPaths,
   },
   components: {
     securitySchemes,

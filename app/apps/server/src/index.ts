@@ -4041,6 +4041,74 @@ async function main() {
         }
       }
 
+      // ============================================================
+      // Feedback API Endpoint (proxies to Cloudflare worker)
+      // ============================================================
+
+      // POST /api/feedback - Submit feedback (creates GitHub issue)
+      if (req.method === 'POST' && url.pathname === '/api/feedback') {
+        try {
+          const body = (await req.json()) as {
+            message: string
+            osVersion: string
+            appVersion: string
+          }
+
+          if (!body.message?.trim()) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({
+                  success: false,
+                  error: 'Message is required',
+                }),
+                {
+                  status: 400,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          // Proxy to Cloudflare worker backend
+          const backendUrl =
+            process.env.FEEDBACK_BACKEND_URL ||
+            'https://churchub-backend.radiocrestin.ro'
+
+          const response = await fetch(`${backendUrl}/feedback`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(body),
+          })
+
+          const result = await response.json()
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify(result), {
+              status: response.status,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({
+                success: false,
+                error: 'Failed to submit feedback',
+              }),
+              {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        }
+      }
+
       // Livestream routes (YouTube, OBS integration)
       const livestreamResponse = await handleLivestreamRoutes(
         req,
