@@ -289,8 +289,8 @@ export interface ReferenceTextConfig {
   size: SizeWithUnits
   style: TextStyle
   padding?: number
-  animationIn?: AnimationConfig
-  animationOut?: AnimationConfig
+  animationIn: AnimationConfig
+  animationOut: AnimationConfig
   hidden?: boolean
 }
 
@@ -302,8 +302,8 @@ export interface PersonLabelConfig {
   size: SizeWithUnits
   style: TextStyle
   padding?: number
-  animationIn?: AnimationConfig
-  animationOut?: AnimationConfig
+  animationIn: AnimationConfig
+  animationOut: AnimationConfig
   hidden?: boolean
 }
 

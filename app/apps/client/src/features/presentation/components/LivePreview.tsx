@@ -3,8 +3,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { getApiUrl, isMobile } from '~/config'
 import { getStoredUserToken } from '~/service/api-url'
-import { ScreenPreview } from './ScreenPreview'
 import { calculateMaxExitAnimationDuration } from './rendering/utils/styleUtils'
+import { ScreenPreview } from './ScreenPreview'
 import { usePresentationState, useWebSocket } from '../hooks'
 import { useScreen } from '../hooks/useScreen'
 import { useScreens } from '../hooks/useScreens'
@@ -113,7 +113,8 @@ export function LivePreview() {
       setIsExitAnimating(true)
 
       // Calculate the max exit animation duration from the current content type's config
-      const currentConfig = screen?.contentConfigs[currentContentTypeRef.current]
+      const currentConfig =
+        screen?.contentConfigs[currentContentTypeRef.current]
       const animationDuration = calculateMaxExitAnimationDuration(currentConfig)
       const totalDelay = animationDuration + EXIT_ANIMATION_BUFFER
 
@@ -319,7 +320,8 @@ export function LivePreview() {
   // Visibility is false when hidden or during exit animation (triggers exit animation in ScreenContent)
   // During exit animation, content is still rendered but animating out
   // After animation completes, contentData becomes empty
-  const isVisible = !presentationState?.isHidden && !isExitAnimating && hasContent
+  const isVisible =
+    !presentationState?.isHidden && !isExitAnimating && hasContent
   const showClock = !hasContent
 
   // Loading state

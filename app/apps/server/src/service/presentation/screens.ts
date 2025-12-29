@@ -159,6 +159,8 @@ function getDefaultBibleConfig() {
         alignment: 'left',
         bold: true,
       }),
+      animationIn: getDefaultAnimation('in'),
+      animationOut: getDefaultAnimation('out'),
     },
     contentText: {
       constraints: constraints(12, 5),
@@ -199,6 +201,8 @@ function getDefaultVerseteTineriConfig() {
         alignment: 'left',
         italic: true,
       }),
+      animationIn: getDefaultAnimation('in'),
+      animationOut: getDefaultAnimation('out'),
     },
     referenceText: {
       constraints: constraints(8, 5),
@@ -209,6 +213,8 @@ function getDefaultVerseteTineriConfig() {
         alignment: 'left',
         bold: true,
       }),
+      animationIn: getDefaultAnimation('in'),
+      animationOut: getDefaultAnimation('out'),
     },
     contentText: {
       constraints: constraints(18, 5),

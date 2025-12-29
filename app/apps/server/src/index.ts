@@ -2674,7 +2674,7 @@ async function main() {
               },
             ),
           )
-        } catch (error) {
+        } catch (_error) {
           return handleCors(
             req,
             new Response(JSON.stringify({ error: 'Invalid request body' }), {

@@ -495,7 +495,8 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
       setIsExitAnimating(true)
 
       // Calculate the max exit animation duration from the current content type's config
-      const currentConfig = screen?.contentConfigs[currentContentTypeRef.current]
+      const currentConfig =
+        screen?.contentConfigs[currentContentTypeRef.current]
       const animationDuration = calculateMaxExitAnimationDuration(currentConfig)
       const totalDelay = animationDuration + EXIT_ANIMATION_BUFFER
 
@@ -802,7 +803,8 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
   // Visibility is false when hidden or during exit animation (triggers exit animation in ScreenContent)
   // During exit animation, content is still rendered but animating out
   // After animation completes, contentData becomes null
-  const isVisible = hasContent && !presentationState?.isHidden && !isExitAnimating
+  const isVisible =
+    hasContent && !presentationState?.isHidden && !isExitAnimating
 
   // Get background from screen config for fullscreen display
   const config = screen.contentConfigs[contentType]
