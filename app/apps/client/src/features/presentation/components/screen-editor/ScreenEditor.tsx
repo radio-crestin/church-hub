@@ -206,14 +206,18 @@ export function ScreenEditor({
         }
       } else if (
         elementType === 'clock' &&
-        'clock' in newConfig &&
-        newConfig.clock
+        state.screen.globalSettings.clockConfig
       ) {
-        newConfig.clock = {
-          ...newConfig.clock,
-          ...(updates.constraints && { constraints: updates.constraints }),
-          ...(updates.size && { size: updates.size }),
-        }
+        // Clock uses global settings, not content config
+        actions.updateGlobalSettings({
+          ...state.screen.globalSettings,
+          clockConfig: {
+            ...state.screen.globalSettings.clockConfig,
+            ...(updates.constraints && { constraints: updates.constraints }),
+            ...(updates.size && { size: updates.size }),
+          },
+        })
+        return
       } else if (elementType === 'nextSlide' && state.screen.nextSlideConfig) {
         // Pass only the changed fields - updateNextSlideConfig will merge with previous state
         actions.updateNextSlideConfig({

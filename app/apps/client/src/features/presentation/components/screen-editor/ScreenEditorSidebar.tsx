@@ -234,8 +234,9 @@ export function ScreenEditorSidebar({
           },
         }
       case 'clock':
-        return 'clock' in config && config.clock
-          ? { path: ['clock'], config: config.clock }
+        // Clock uses global settings, not content config
+        return screen.globalSettings.clockConfig
+          ? { path: [], config: screen.globalSettings.clockConfig, isClock: true }
           : null
       case 'nextSlide':
         return screen.nextSlideConfig
@@ -261,6 +262,35 @@ export function ScreenEditorSidebar({
         ...updates,
       },
     })
+  }
+
+  // Helper to update clock style (stored in global settings)
+  const updateClockStyle = (updates: Partial<TextStyle>) => {
+    if (!screen.globalSettings.clockConfig) return
+    onUpdateGlobalSettings({
+      ...screen.globalSettings,
+      clockConfig: {
+        ...screen.globalSettings.clockConfig,
+        style: {
+          ...screen.globalSettings.clockConfig.style,
+          ...updates,
+        },
+      },
+    })
+  }
+
+  // Helper to update element style - handles clock vs regular elements
+  const updateElementStyle = (updates: Partial<TextStyle>) => {
+    if (!selectedConfig) return
+    if (selectedConfig.isClock) {
+      updateClockStyle(updates)
+    } else {
+      const currentStyle = (selectedConfig.config as { style: TextStyle }).style
+      updateConfig([...selectedConfig.path, 'style'], {
+        ...currentStyle,
+        ...updates,
+      })
+    }
   }
 
   return (
@@ -298,6 +328,16 @@ export function ScreenEditorSidebar({
                       ...screen.nextSlideConfig!,
                       constraints: newConstraints,
                       size: newSize,
+                    })
+                  } else if (selectedConfig.isClock) {
+                    // Clock uses global settings
+                    onUpdateGlobalSettings({
+                      ...screen.globalSettings,
+                      clockConfig: {
+                        ...screen.globalSettings.clockConfig!,
+                        constraints: newConstraints,
+                        size: newSize,
+                      },
                     })
                   } else {
                     // Update both constraints and size together to avoid overwrites
@@ -338,6 +378,15 @@ export function ScreenEditorSidebar({
                       ...screen.nextSlideConfig!,
                       hidden: !!checked,
                     })
+                  } else if (selectedConfig.isClock) {
+                    // Clock uses global settings
+                    onUpdateGlobalSettings({
+                      ...screen.globalSettings,
+                      clockConfig: {
+                        ...screen.globalSettings.clockConfig!,
+                        hidden: !!checked,
+                      },
+                    })
                   } else {
                     updateConfig([...selectedConfig.path, 'hidden'], !!checked)
                   }
@@ -361,12 +410,7 @@ export function ScreenEditorSidebar({
                         .fontFamily
                     }
                     onChange={(value) => {
-                      const newStyle = {
-                        ...(selectedConfig.config as { style: TextStyle })
-                          .style,
-                        fontFamily: value,
-                      }
-                      updateConfig([...selectedConfig.path, 'style'], newStyle)
+                      updateElementStyle({ fontFamily: value })
                     }}
                     options={FONT_FAMILIES}
                     className="w-full"
@@ -379,12 +423,7 @@ export function ScreenEditorSidebar({
                         .autoScale ?? true
                     }
                     onCheckedChange={(checked) => {
-                      const newStyle = {
-                        ...(selectedConfig.config as { style: TextStyle })
-                          .style,
-                        autoScale: !!checked,
-                      }
-                      updateConfig([...selectedConfig.path, 'style'], newStyle)
+                      updateElementStyle({ autoScale: !!checked })
                     }}
                     label={t('screens.textStyle.autoScale')}
                   />
@@ -407,12 +446,9 @@ export function ScreenEditorSidebar({
                         .maxFontSize
                     }
                     onChange={(e) => {
-                      const newStyle = {
-                        ...(selectedConfig.config as { style: TextStyle })
-                          .style,
+                      updateElementStyle({
                         maxFontSize: parseInt(e.target.value) || 24,
-                      }
-                      updateConfig([...selectedConfig.path, 'style'], newStyle)
+                      })
                     }}
                     className="h-8"
                   />
@@ -430,15 +466,9 @@ export function ScreenEditorSidebar({
                           .minFontSize ?? 12
                       }
                       onChange={(e) => {
-                        const newStyle = {
-                          ...(selectedConfig.config as { style: TextStyle })
-                            .style,
+                        updateElementStyle({
                           minFontSize: parseInt(e.target.value) || 12,
-                        }
-                        updateConfig(
-                          [...selectedConfig.path, 'style'],
-                          newStyle,
-                        )
+                        })
                       }}
                       className="h-8"
                     />
@@ -456,15 +486,7 @@ export function ScreenEditorSidebar({
                           .color
                       }
                       onChange={(e) => {
-                        const newStyle = {
-                          ...(selectedConfig.config as { style: TextStyle })
-                            .style,
-                          color: e.target.value,
-                        }
-                        updateConfig(
-                          [...selectedConfig.path, 'style'],
-                          newStyle,
-                        )
+                        updateElementStyle({ color: e.target.value })
                       }}
                       className="w-10 h-8 rounded cursor-pointer"
                     />
@@ -474,15 +496,7 @@ export function ScreenEditorSidebar({
                           .color
                       }
                       onChange={(e) => {
-                        const newStyle = {
-                          ...(selectedConfig.config as { style: TextStyle })
-                            .style,
-                          color: e.target.value,
-                        }
-                        updateConfig(
-                          [...selectedConfig.path, 'style'],
-                          newStyle,
-                        )
+                        updateElementStyle({ color: e.target.value })
                       }}
                       className="h-8 flex-1"
                     />
@@ -494,12 +508,7 @@ export function ScreenEditorSidebar({
                       (selectedConfig.config as { style: TextStyle }).style.bold
                     }
                     onCheckedChange={(checked) => {
-                      const newStyle = {
-                        ...(selectedConfig.config as { style: TextStyle })
-                          .style,
-                        bold: checked,
-                      }
-                      updateConfig([...selectedConfig.path, 'style'], newStyle)
+                      updateElementStyle({ bold: !!checked })
                     }}
                     label="Bold"
                   />
@@ -509,12 +518,7 @@ export function ScreenEditorSidebar({
                         .italic
                     }
                     onCheckedChange={(checked) => {
-                      const newStyle = {
-                        ...(selectedConfig.config as { style: TextStyle })
-                          .style,
-                        italic: checked,
-                      }
-                      updateConfig([...selectedConfig.path, 'style'], newStyle)
+                      updateElementStyle({ italic: !!checked })
                     }}
                     label="Italic"
                   />
@@ -524,12 +528,7 @@ export function ScreenEditorSidebar({
                         .underline
                     }
                     onCheckedChange={(checked) => {
-                      const newStyle = {
-                        ...(selectedConfig.config as { style: TextStyle })
-                          .style,
-                        underline: checked,
-                      }
-                      updateConfig([...selectedConfig.path, 'style'], newStyle)
+                      updateElementStyle({ underline: !!checked })
                     }}
                     label="Underline"
                   />
@@ -549,15 +548,7 @@ export function ScreenEditorSidebar({
                             : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                         }`}
                         onClick={() => {
-                          const newStyle = {
-                            ...(selectedConfig.config as { style: TextStyle })
-                              .style,
-                            alignment: align,
-                          }
-                          updateConfig(
-                            [...selectedConfig.path, 'style'],
-                            newStyle,
-                          )
+                          updateElementStyle({ alignment: align })
                         }}
                       >
                         {align.charAt(0).toUpperCase() + align.slice(1)}
@@ -580,15 +571,7 @@ export function ScreenEditorSidebar({
                             : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                         }`}
                         onClick={() => {
-                          const newStyle = {
-                            ...(selectedConfig.config as { style: TextStyle })
-                              .style,
-                            verticalAlignment: align,
-                          }
-                          updateConfig(
-                            [...selectedConfig.path, 'style'],
-                            newStyle,
-                          )
+                          updateElementStyle({ verticalAlignment: align })
                         }}
                       >
                         {align.charAt(0).toUpperCase() + align.slice(1)}
@@ -607,15 +590,7 @@ export function ScreenEditorSidebar({
                           .lineHeight ?? 1.3,
                       ]}
                       onValueChange={([value]) => {
-                        const newStyle = {
-                          ...(selectedConfig.config as { style: TextStyle })
-                            .style,
-                          lineHeight: value,
-                        }
-                        updateConfig(
-                          [...selectedConfig.path, 'style'],
-                          newStyle,
-                        )
+                        updateElementStyle({ lineHeight: value })
                       }}
                       min={0.8}
                       max={3}
@@ -636,11 +611,7 @@ export function ScreenEditorSidebar({
                       .shadow ?? false
                   }
                   onCheckedChange={(checked) => {
-                    const newStyle = {
-                      ...(selectedConfig.config as { style: TextStyle }).style,
-                      shadow: !!checked,
-                    }
-                    updateConfig([...selectedConfig.path, 'style'], newStyle)
+                    updateElementStyle({ shadow: !!checked })
                   }}
                   label={t('screens.textStyle.shadow')}
                 />
@@ -653,12 +624,7 @@ export function ScreenEditorSidebar({
                         .compressLines ?? false
                     }
                     onCheckedChange={(checked) => {
-                      const newStyle = {
-                        ...(selectedConfig.config as { style: TextStyle })
-                          .style,
-                        compressLines: !!checked,
-                      }
-                      updateConfig([...selectedConfig.path, 'style'], newStyle)
+                      updateElementStyle({ compressLines: !!checked })
                     }}
                     label={t('screens.textStyle.compressLines')}
                   />
@@ -674,15 +640,9 @@ export function ScreenEditorSidebar({
                             .lineSeparator ?? 'space'
                         }
                         onChange={(value) => {
-                          const newStyle = {
-                            ...(selectedConfig.config as { style: TextStyle })
-                              .style,
+                          updateElementStyle({
                             lineSeparator: value as 'space' | 'dash' | 'pipe',
-                          }
-                          updateConfig(
-                            [...selectedConfig.path, 'style'],
-                            newStyle,
-                          )
+                          })
                         }}
                         options={LINE_SEPARATORS.map((opt) => ({
                           value: opt.value,
@@ -698,12 +658,7 @@ export function ScreenEditorSidebar({
                         .fitLineToWidth ?? false
                     }
                     onCheckedChange={(checked) => {
-                      const newStyle = {
-                        ...(selectedConfig.config as { style: TextStyle })
-                          .style,
-                        fitLineToWidth: !!checked,
-                      }
-                      updateConfig([...selectedConfig.path, 'style'], newStyle)
+                      updateElementStyle({ fitLineToWidth: !!checked })
                     }}
                     label={t('screens.textStyle.fitLineToWidth')}
                   />
@@ -1640,7 +1595,7 @@ export function ScreenEditorSidebar({
           )}
 
           {/* Clock-specific Settings */}
-          {selectedElement?.type === 'clock' && (
+          {selectedElement?.type === 'clock' && selectedConfig?.isClock && (
             <Section title="Clock Settings" icon={Clock}>
               <div className="space-y-3">
                 <Checkbox
@@ -1648,10 +1603,13 @@ export function ScreenEditorSidebar({
                     (selectedConfig.config as ClockElementConfig).showSeconds
                   }
                   onCheckedChange={(checked) => {
-                    updateConfig(
-                      [...selectedConfig.path, 'showSeconds'],
-                      !!checked,
-                    )
+                    onUpdateGlobalSettings({
+                      ...screen.globalSettings,
+                      clockConfig: {
+                        ...screen.globalSettings.clockConfig!,
+                        showSeconds: !!checked,
+                      },
+                    })
                   }}
                   label="Show seconds"
                 />
@@ -1670,10 +1628,13 @@ export function ScreenEditorSidebar({
                             : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                         }`}
                         onClick={() => {
-                          updateConfig(
-                            [...selectedConfig.path, 'format'],
-                            format,
-                          )
+                          onUpdateGlobalSettings({
+                            ...screen.globalSettings,
+                            clockConfig: {
+                              ...screen.globalSettings.clockConfig!,
+                              format,
+                            },
+                          })
                         }}
                       >
                         {format}
