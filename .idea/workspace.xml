@@ -6,26 +6,12 @@
   <component name="ChangeListManager">
     <list default="true" id="66517e3f-2e4e-43cc-880d-deb242368f0c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TODO.md" beforeDir="false" afterPath="$PROJECT_DIR$/TODO.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/database-management/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/database-management/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/AnimatedElement.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/AnimatedElement.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/AnimationContext.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/AnimationContext.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/index.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/ScreenContent.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/ScreenContent.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/utils/styleUtils.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/utils/styleUtils.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/screen-editor/ScreenEditorSidebar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/screen-editor/ScreenEditorSidebar.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/presentation.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/presentation.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/settings.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/settings.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/presentation.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/presentation.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/settings.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/settings.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/routes/settings/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/routes/settings/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-screens.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-screens.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-settings.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-settings.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-song-categories.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-song-categories.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-songs.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/fixtures/default-songs.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/openapi/paths/database.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/openapi/paths/database.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/database/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/database/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/TextContent.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/TextContent.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/TextElement.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/TextElement.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/tauri/tauri.conf.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/tauri.conf.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
