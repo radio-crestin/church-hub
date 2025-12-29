@@ -535,7 +535,7 @@
       "actions": {
         "openInNewTab": "Deschide în tab nou",
         "copyUrl": "Copiază URL în clipboard",
-        "edit": "Editează ecran",
+        "edit": "Editează",
         "delete": "Șterge ecran"
       },
       "toast": {

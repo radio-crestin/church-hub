@@ -70,10 +70,10 @@
 ~~- in versiunea mobila a site-ului, asigura-te ca totul este scalabil corect~~
 ~~- rezolva problema cu scaling-ul din camera de control~~
 ~~- elimina slide-urile din pagina programului~~
-- rezolva problema cu versete tineri si anunturi
-- fa configurabil dacă sa fie always on top
-- (optional) exportă ca și pptx întreg programul său fiecare cantare
-- cand faci export, lăsa utilizatorul să aleagă dacă vrea un zip sau un folder
+~~- rezolva problema cu versete tineri si anunturi~~
+~~- fa configurabil dacă sa fie always on top~~
+~~- (optional) exportă ca și pptx întreg programul său fiecare cantare~~
+~~- cand faci export la cantari, lăsa utilizatorul să aleagă dacă vrea un zip sau un folder~~
 - importul din resurse creștine nu trebuie să facă override la cântările modificate
 - dezactivează tunelul cloudflare pt portul 3000
 - când se editează o cantare, modifica importa din text ca să se numească editează ca și text
@@ -85,4 +85,4 @@
 - adauga o iconita pentru fisierele atasate Church Hub
 - fix drag and drop pentru fisiere si apoi implementeaza export/import din pptx
 - adauga optiunea de a deschide fisiere pptx direct in ChurchHub
-
+- exportul ca si pptx ar trebui sa aiba textul ceva mai mare
