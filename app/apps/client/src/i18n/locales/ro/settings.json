@@ -247,6 +247,30 @@
         "deleted": "Categorie ștearsă cu succes",
         "reordered": "Ordinea categoriilor actualizată",
         "error": "A apărut o eroare"
+      },
+      "uncategorized": {
+        "title": "Fără categorie",
+        "count": "{{count}} cântare fără categorie",
+        "count_other": "{{count}} cântări fără categorie",
+        "deleteSong": "Șterge cântare",
+        "deleteAll": "Șterge Tot",
+        "modals": {
+          "delete": {
+            "title": "Șterge Cântare",
+            "message": "Ești sigur că vrei să ștergi \"{{name}}\"? Această acțiune nu poate fi anulată.",
+            "confirm": "Șterge"
+          },
+          "deleteAll": {
+            "title": "Șterge Toate Cântările Fără Categorie",
+            "message": "Ești sigur că vrei să ștergi toate cele {{count}} cântări fără categorie? Această acțiune nu poate fi anulată.",
+            "confirm": "Șterge {{count}} cântări",
+            "deleting": "Se șterg..."
+          }
+        },
+        "toast": {
+          "deleted": "Cântare ștearsă cu succes",
+          "deletedAll": "{{count}} cântări șterse cu succes"
+        }
       }
     },
     "synonyms": {

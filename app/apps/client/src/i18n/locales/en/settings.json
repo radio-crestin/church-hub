@@ -247,6 +247,30 @@
         "deleted": "Category deleted successfully",
         "reordered": "Category order updated",
         "error": "An error occurred"
+      },
+      "uncategorized": {
+        "title": "Uncategorized",
+        "count": "{{count}} song without category",
+        "count_other": "{{count}} songs without category",
+        "deleteSong": "Delete song",
+        "deleteAll": "Delete All",
+        "modals": {
+          "delete": {
+            "title": "Delete Song",
+            "message": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+            "confirm": "Delete"
+          },
+          "deleteAll": {
+            "title": "Delete All Uncategorized Songs",
+            "message": "Are you sure you want to delete all {{count}} uncategorized songs? This action cannot be undone.",
+            "confirm": "Delete {{count}} songs",
+            "deleting": "Deleting..."
+          }
+        },
+        "toast": {
+          "deleted": "Song deleted successfully",
+          "deletedAll": "{{count}} songs deleted successfully"
+        }
       }
     },
     "synonyms": {
