@@ -37,6 +37,18 @@ export async function deleteCategory(id: number): Promise<boolean> {
   return response.data?.success ?? false
 }
 
+export async function deleteUncategorizedSongs(): Promise<{
+  success: boolean
+  deletedCount: number
+}> {
+  const response = await fetcher<
+    ApiResponse<{ success: boolean; deletedCount: number }>
+  >('/api/categories/uncategorized', {
+    method: 'DELETE',
+  })
+  return response.data ?? { success: false, deletedCount: 0 }
+}
+
 export async function reorderCategories(
   categoryIds: number[],
 ): Promise<{ success: boolean; error?: string }> {

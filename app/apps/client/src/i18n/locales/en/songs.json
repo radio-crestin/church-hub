@@ -60,6 +60,7 @@
     "saved": "Song saved successfully",
     "deleted": "Song deleted successfully",
     "error": "An error occurred",
+    "notFound": "Song not found",
     "slideSaved": "Slide saved",
     "slideDeleted": "Slide deleted",
     "slideCloned": "Slide cloned",

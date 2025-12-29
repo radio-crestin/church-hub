@@ -1,4 +1,4 @@
-import { desc, eq, max, sql } from 'drizzle-orm'
+import { desc, eq, isNull, max, sql } from 'drizzle-orm'
 
 import type {
   OperationResult,
@@ -177,6 +177,36 @@ export function deleteCategory(id: number): OperationResult {
   } catch (error) {
     log('error', `Failed to delete category: ${error}`)
     return { success: false, error: String(error) }
+  }
+}
+
+/**
+ * Deletes all songs without a category (categoryId is null)
+ * Songs' slides are automatically deleted via CASCADE
+ */
+export function deleteUncategorizedSongs(): OperationResult & {
+  deletedCount: number
+  deletedIds: number[]
+} {
+  try {
+    log('debug', 'Deleting uncategorized songs')
+
+    const db = getDatabase()
+
+    // Delete all songs without a category
+    const deletedSongs = db
+      .delete(songs)
+      .where(isNull(songs.categoryId))
+      .returning({ id: songs.id })
+      .all()
+
+    const deletedIds = deletedSongs.map((s) => s.id)
+
+    log('info', `Deleted ${deletedSongs.length} uncategorized songs`)
+    return { success: true, deletedCount: deletedSongs.length, deletedIds }
+  } catch (error) {
+    log('error', `Failed to delete uncategorized songs: ${error}`)
+    return { success: false, error: String(error), deletedCount: 0, deletedIds: [] }
   }
 }
 
