@@ -1,0 +1,24 @@
+# Copy this file to .dev.vars and fill in your values
+# DO NOT commit .dev.vars to version control
+
+YOUTUBE_CLIENT_ID=your-client-id
+YOUTUBE_CLIENT_SECRET=your-client-secret
+COOKIE_ENCRYPTION_KEY=your-32-byte-hex-key
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8086
+
+# Development
+YOUTUBE_REDIRECT_URI=http://localhost:8787/auth/youtube/callback
+
+# Production (set via wrangler secret)
+# YOUTUBE_REDIRECT_URI=https://churchub-backend.radiocrestin.ro/auth/youtube/callback
+
+# GitHub API Token for creating issues from user feedback
+# How to create:
+# 1. Go to https://github.com/settings/tokens?type=beta (Fine-grained tokens)
+# 2. Click "Generate new token"
+# 3. Name: "ChurchHub Feedback Bot" (or similar)
+# 4. Expiration: Choose as needed (recommend 1 year or no expiration)
+# 5. Repository access: Select "Only select repositories" -> radio-crestin/church-hub
+# 6. Permissions -> Repository permissions -> Issues: Read and Write
+# 7. Click "Generate token" and copy the value
+GITHUB_TOKEN=github_pat_xxxxxxxxxxxxxxxxxxxx

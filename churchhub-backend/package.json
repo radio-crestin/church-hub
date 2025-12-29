@@ -1,5 +1,5 @@
 {
-  "name": "youtube-oauth-worker",
+  "name": "churchhub-backend",
   "version": "1.0.0",
   "type": "module",
   "scripts": {

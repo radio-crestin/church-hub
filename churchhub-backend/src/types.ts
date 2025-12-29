@@ -7,6 +7,7 @@ export interface Bindings {
   COOKIE_NAME: string
   COOKIE_MAX_AGE: number
   ALLOWED_ORIGINS: string
+  GITHUB_TOKEN: string
 }
 
 export interface OAuthState {
