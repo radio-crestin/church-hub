@@ -26,6 +26,8 @@ export function ExportProgressModal({
         return t('sections.importExport.export.generating')
       case 'zipping':
         return t('sections.importExport.export.zipping')
+      case 'writing':
+        return t('sections.importExport.export.writing')
       case 'saving':
         return t('sections.importExport.export.saving')
       default:

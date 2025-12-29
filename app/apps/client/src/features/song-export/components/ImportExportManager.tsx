@@ -172,10 +172,13 @@ export function ImportExportManager() {
     setModalState({ type: 'exportOptions' })
   }
 
-  const handleConfirmExport = async (categoryId: number | null) => {
+  const handleConfirmExport = async (
+    categoryId: number | null,
+    format: 'zip' | 'folder',
+  ) => {
     setModalState({ type: 'none' })
 
-    const result = await exportSongs({ categoryId })
+    const result = await exportSongs({ categoryId, format })
 
     if (result.cancelled) {
       // User cancelled the save dialog, do nothing
