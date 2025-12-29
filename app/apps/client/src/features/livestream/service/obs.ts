@@ -101,6 +101,14 @@ export async function deleteOBSScene(id: number): Promise<void> {
   )
 }
 
+export async function syncOBSScenes(): Promise<OBSScene[]> {
+  const response = await fetcher<{ data: OBSScene[] }>(
+    '/api/livestream/obs/scenes/sync',
+    { method: 'POST' },
+  )
+  return response.data
+}
+
 export async function switchOBSScene(
   sceneName: string,
 ): Promise<{ success: boolean; sceneName: string }> {

@@ -709,6 +709,33 @@ export async function handleLivestreamRoutes(
     )
   }
 
+  // POST /api/livestream/obs/scenes/sync - Sync scenes from OBS
+  if (
+    req.method === 'POST' &&
+    url.pathname === '/api/livestream/obs/scenes/sync'
+  ) {
+    try {
+      // getScenes() already syncs from OBS - it fetches OBS scenes and upserts new ones
+      const scenes = await getScenes()
+      return handleCors(
+        req,
+        new Response(JSON.stringify({ data: scenes }), {
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to sync scenes'
+      return handleCors(
+        req,
+        new Response(JSON.stringify({ error: message }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+    }
+  }
+
   // POST /api/livestream/obs/scenes - Create custom scene
   if (req.method === 'POST' && url.pathname === '/api/livestream/obs/scenes') {
     try {

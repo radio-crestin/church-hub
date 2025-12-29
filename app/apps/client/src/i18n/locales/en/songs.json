@@ -7,6 +7,7 @@
     "back": "Back to Songs",
     "import": "Import",
     "importFromText": "Import from Text",
+    "editAsText": "Edit as Text",
     "addSlide": "Add Slide",
     "cloneSlide": "Clone Slide",
     "addToSchedule": "Add to Schedule",
@@ -36,6 +37,17 @@
     "placeholder": "Paste song lyrics here...",
     "preview": "Preview: {{count}} slides",
     "confirm": "Import",
+    "cancel": "Cancel"
+  },
+  "editAsText": {
+    "title": "Edit Slides as Text",
+    "description": "Edit all slides as text. Empty lines or --- separate slides.",
+    "placeholder": "First slide lyrics here\nSecond line of first slide\n\n---\n\nSecond slide starts here\nAnother line",
+    "formatHelp": "Use **bold**, *italic*, __underline__. Empty lines or --- separate slides.",
+    "preview": "{{count}} slides",
+    "preview_one": "{{count}} slide",
+    "preview_other": "{{count}} slides",
+    "save": "Apply Changes",
     "cancel": "Cancel"
   },
   "category": {

@@ -16,6 +16,10 @@ export function SceneGrid() {
     updateScene,
     createSceneAsync,
     isCreating,
+    deleteSceneAsync,
+    isDeleting,
+    syncScenesAsync,
+    isSyncing,
   } = useOBSScenes()
   const { isConnected } = useOBSConnection()
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
@@ -93,6 +97,11 @@ export function SceneGrid() {
           onUpdateScene={handleUpdateScene}
           onCreateScene={createSceneAsync}
           isCreating={isCreating}
+          onDeleteScene={deleteSceneAsync}
+          isDeleting={isDeleting}
+          onSyncScenes={syncScenesAsync}
+          isSyncing={isSyncing}
+          isOBSConnected={isConnected}
         />
       )}
     </>

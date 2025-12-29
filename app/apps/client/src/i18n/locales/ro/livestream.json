@@ -146,7 +146,11 @@
     "addCustomScene": "Adauga scena personalizata",
     "newScenePlaceholder": "Nume scena",
     "add": "Adauga",
-    "adding": "Se adauga..."
+    "adding": "Se adauga...",
+    "sync": "Sincronizeaza",
+    "syncFromOBS": "Sincronizeaza scenele din OBS",
+    "delete": "Sterge",
+    "deleting": "Se sterge..."
   },
   "mixer": {
     "title": "Mixer",

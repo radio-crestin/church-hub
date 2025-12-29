@@ -14,12 +14,12 @@ const positionStyles = {
 }
 
 const arrowStyles = {
-  top: 'top-full left-1/2 -translate-x-1/2 border-t-gray-900 dark:border-t-gray-100 border-x-transparent border-b-transparent',
+  top: 'top-full left-1/2 -translate-x-1/2 border-t-gray-900 dark:border-t-gray-700 border-x-transparent border-b-transparent',
   bottom:
-    'bottom-full left-1/2 -translate-x-1/2 border-b-gray-900 dark:border-b-gray-100 border-x-transparent border-t-transparent',
-  left: 'left-full top-1/2 -translate-y-1/2 border-l-gray-900 dark:border-l-gray-100 border-y-transparent border-r-transparent',
+    'bottom-full left-1/2 -translate-x-1/2 border-b-gray-900 dark:border-b-gray-700 border-x-transparent border-t-transparent',
+  left: 'left-full top-1/2 -translate-y-1/2 border-l-gray-900 dark:border-l-gray-700 border-y-transparent border-r-transparent',
   right:
-    'right-full top-1/2 -translate-y-1/2 border-r-gray-900 dark:border-r-gray-100 border-y-transparent border-l-transparent',
+    'right-full top-1/2 -translate-y-1/2 border-r-gray-900 dark:border-r-gray-700 border-y-transparent border-l-transparent',
 }
 
 export function Tooltip({ content, children, position = 'top' }: TooltipProps) {
@@ -36,7 +36,7 @@ export function Tooltip({ content, children, position = 'top' }: TooltipProps) {
         <div
           className={`absolute z-50 pointer-events-none ${positionStyles[position]}`}
         >
-          <div className="px-2 py-1 text-xs font-medium text-white dark:text-gray-900 bg-gray-900 dark:bg-gray-100 rounded shadow-lg whitespace-nowrap">
+          <div className="px-3 py-1.5 text-sm font-medium text-white dark:text-gray-100 bg-gray-900 dark:bg-gray-700 rounded-lg shadow-lg whitespace-nowrap">
             {content}
           </div>
           <div

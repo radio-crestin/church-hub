@@ -4,6 +4,7 @@ import {
   Play,
   Plus,
   Square,
+  Trash2,
   Volume2,
   VolumeX,
   X,
@@ -30,6 +31,8 @@ interface SceneSettingsPopupProps {
     contentTypes: ContentType[]
     mixerChannelActions: MixerChannelActions
   }) => void
+  onDelete?: () => Promise<void>
+  isDeleting?: boolean
 }
 
 export function SceneSettingsPopup({
@@ -39,6 +42,8 @@ export function SceneSettingsPopup({
   onUpdateYouTubeConfig,
   onClose,
   onSave,
+  onDelete,
+  isDeleting,
 }: SceneSettingsPopupProps) {
   const { t } = useTranslation('livestream')
   const { config: mixerConfig } = useMixerConfig()
@@ -568,22 +573,37 @@ export function SceneSettingsPopup({
           )}
         </div>
 
-        <div className="flex justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-700">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
-          >
-            {t('common:buttons.cancel', { defaultValue: 'Cancel' })}
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={hasErrors}
-            className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed rounded-lg transition-colors"
-          >
-            {t('common:buttons.save', { defaultValue: 'Save' })}
-          </button>
+        <div className="flex items-center justify-between gap-3 p-4 border-t border-gray-200 dark:border-gray-700">
+          {onDelete ? (
+            <button
+              type="button"
+              onClick={onDelete}
+              disabled={isDeleting}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
+            >
+              <Trash2 size={16} />
+              {isDeleting ? t('scenes.deleting') : t('scenes.delete')}
+            </button>
+          ) : (
+            <div />
+          )}
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+            >
+              {t('common:buttons.cancel', { defaultValue: 'Cancel' })}
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={hasErrors}
+              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed rounded-lg transition-colors"
+            >
+              {t('common:buttons.save', { defaultValue: 'Save' })}
+            </button>
+          </div>
         </div>
       </div>
     </div>

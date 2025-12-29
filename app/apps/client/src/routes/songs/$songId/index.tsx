@@ -193,60 +193,67 @@ function SongPreviewPage() {
 
   return (
     <div className="flex flex-col h-full lg:overflow-hidden overflow-auto scrollbar-thin">
-      {/* Header - Back button and title, action buttons on desktop */}
-      <div className="flex items-center justify-between mb-3 lg:mb-4 flex-shrink-0">
-        <div className="flex items-center gap-3 lg:gap-4">
+      {/* Header - Back button, title, and action buttons */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-3 lg:mb-4 flex-shrink-0">
+        <div className="flex items-center gap-3 lg:gap-4 min-w-0 flex-1">
           <button
             type="button"
             onClick={handleGoBack}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 shrink-0"
           >
             <ArrowLeft size={20} className="text-gray-600 dark:text-gray-400" />
           </button>
-          <h1 className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white truncate">
             {song.title}
           </h1>
         </div>
-        {/* Action buttons - hidden on mobile, shown in header on desktop */}
-        <div className="hidden lg:flex items-center gap-2">
+        {/* Action buttons */}
+        <div className="flex items-center gap-2 justify-end shrink-0">
           <button
             type="button"
             onClick={handleOpenExportModal}
             disabled={isSaving}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50"
+            className="p-2 sm:px-4 sm:py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50 inline-flex items-center gap-2"
             title={t('actions.saveToFile')}
           >
             <Download size={20} />
-            <span>{t('actions.saveToFile')}</span>
+            <span className="hidden sm:inline">{t('actions.saveToFile')}</span>
           </button>
           <button
             type="button"
             onClick={() => setShowAddToScheduleModal(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+            className="p-2 sm:px-4 sm:py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors inline-flex items-center gap-2"
             title={t('actions.addToSchedule')}
           >
             <CalendarPlus size={20} />
-            <span>{t('actions.addToSchedule')}</span>
+            <span className="hidden sm:inline">
+              {t('actions.addToSchedule')}
+            </span>
           </button>
           <button
             type="button"
             onClick={handleEdit}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+            className="p-2 sm:px-4 sm:py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors inline-flex items-center gap-2"
+            title={t('preview.edit')}
           >
             <Pencil size={16} />
-            <span>{t('preview.edit')}</span>
+            <span className="hidden sm:inline">{t('preview.edit')}</span>
           </button>
         </div>
       </div>
 
       <div
         ref={containerRef}
-        className="flex flex-col lg:flex-row lg:flex-1 lg:min-h-0 gap-3 lg:gap-0"
+        className="flex flex-col lg:flex-row lg:flex-1 lg:min-h-0 gap-3"
       >
         {/* Left Panel - Slides List (shows last on mobile) */}
         <div
-          className="order-3 lg:order-1 lg:min-h-0 lg:h-full lg:flex-initial overflow-hidden bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 lg:p-4"
-          style={isLargeScreen ? { width: `${dividerPosition}%` } : undefined}
+          className="order-2 lg:order-1 lg:min-h-0 lg:h-full lg:flex-initial overflow-hidden bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 lg:p-4"
+          style={
+            isLargeScreen
+              ? { width: `calc(${dividerPosition}% - 8px)` }
+              : undefined
+          }
         >
           <SongSlidesPanel
             song={song}
@@ -258,7 +265,7 @@ function SongPreviewPage() {
 
         {/* Draggable Divider */}
         <div
-          className="hidden lg:flex items-center justify-center w-2 cursor-col-resize hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors group"
+          className="hidden lg:flex items-center justify-center w-4 cursor-col-resize hover:bg-indigo-100 dark:hover:bg-indigo-900/30 rounded transition-colors group"
           onMouseDown={handleDividerMouseDown}
         >
           <GripVertical
@@ -269,9 +276,11 @@ function SongPreviewPage() {
 
         {/* Right Panel - Control Panel with Preview (shows first on mobile) */}
         <div
-          className="order-1 lg:order-2 lg:min-h-0 lg:flex-1 overflow-hidden"
+          className="order-1 lg:order-2 lg:min-h-0 lg:flex-1 overflow-hidden shrink-0"
           style={
-            isLargeScreen ? { width: `${100 - dividerPosition}%` } : undefined
+            isLargeScreen
+              ? { width: `calc(${100 - dividerPosition}% - 8px)` }
+              : undefined
           }
         >
           <SongControlPanel
@@ -281,37 +290,6 @@ function SongPreviewPage() {
             canNavigatePrev={canNavigatePrev}
             canNavigateNext={canNavigateNext}
           />
-        </div>
-
-        {/* Action buttons - shown on mobile only, below presentation */}
-        <div className="order-2 lg:hidden flex items-center justify-center gap-2 py-2">
-          <button
-            type="button"
-            onClick={handleOpenExportModal}
-            disabled={isSaving}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50"
-            title={t('actions.saveToFile')}
-          >
-            <Download size={18} />
-            <span className="text-sm">{t('actions.saveToFile')}</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowAddToScheduleModal(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-            title={t('actions.addToSchedule')}
-          >
-            <CalendarPlus size={18} />
-            <span className="text-sm">{t('actions.addToSchedule')}</span>
-          </button>
-          <button
-            type="button"
-            onClick={handleEdit}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
-          >
-            <Pencil size={16} />
-            <span>{t('preview.edit')}</span>
-          </button>
         </div>
       </div>
 

@@ -7,6 +7,7 @@ import {
   getOBSScenes,
   reorderOBSScenes,
   switchOBSScene,
+  syncOBSScenes,
   updateOBSScene,
 } from '../service'
 import type { OBSScene } from '../types'
@@ -115,6 +116,15 @@ export function useOBSScenes(visibleOnly = false) {
     },
   })
 
+  const syncMutation = useMutation({
+    mutationFn: () => syncOBSScenes(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['livestream', 'obs', 'scenes'],
+      })
+    },
+  })
+
   const currentScene = query.data?.find((scene) => scene.isCurrent)
 
   return {
@@ -134,5 +144,8 @@ export function useOBSScenes(visibleOnly = false) {
     deleteScene: deleteMutation.mutate,
     deleteSceneAsync: deleteMutation.mutateAsync,
     isDeleting: deleteMutation.isPending,
+    syncScenes: syncMutation.mutate,
+    syncScenesAsync: syncMutation.mutateAsync,
+    isSyncing: syncMutation.isPending,
   }
 }
