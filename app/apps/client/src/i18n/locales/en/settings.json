@@ -511,6 +511,46 @@
     "debug": {
       "title": "Debug Mode",
       "description": "Show WebSocket debug panel with connection status and message counts"
+    },
+    "screens": {
+      "title": "Screens",
+      "description": "Configure screens for different display purposes. Each screen type has its own layout and configuration options.",
+      "addScreen": "Add Screen",
+      "noScreens": "No screens configured",
+      "window": {
+        "active": "Window Active",
+        "inactive": "Window Inactive",
+        "openTooltip": "Open display window",
+        "closeTooltip": "Close display window"
+      },
+      "alwaysOnTop": {
+        "pin": "Enable always on top",
+        "unpin": "Disable always on top",
+        "enabled": "Always on Top",
+        "disabled": "Not on Top",
+        "pinned": "Window set to always on top",
+        "unpinned": "Window no longer always on top",
+        "error": "Failed to update always on top setting"
+      },
+      "actions": {
+        "openInNewTab": "Open in new tab",
+        "copyUrl": "Copy URL to clipboard",
+        "edit": "Edit screen",
+        "delete": "Delete screen"
+      },
+      "toast": {
+        "created": "Screen created successfully",
+        "saved": "Screen saved successfully",
+        "deleted": "Screen deleted successfully",
+        "windowOpened": "Window \"{{name}}\" opened",
+        "windowClosed": "Window \"{{name}}\" closed",
+        "urlCopied": "URL copied to clipboard",
+        "toggleError": "Failed to toggle window",
+        "copyError": "Failed to copy URL",
+        "deleteError": "Failed to delete screen",
+        "saveError": "Failed to save screen",
+        "createError": "Failed to create screen"
+      }
     }
   }
 }
