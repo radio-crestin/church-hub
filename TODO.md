@@ -84,6 +84,7 @@
 ~~- fix drag and drop pentru fisiere si apoi implementeaza export/import din pptx~~
 ~~- adauga optiunea de a deschide fisiere pptx direct in ChurchHub~~
 - create un README cu screenshots si o descriere a functionalitatilor
+- fix extracting songs titles
 - asigura-te ca animatiile functioneaza la afisare/ascundere, deasemenea cand se schimba urmatorul slide
 - adauga buton de feedback cu adresa de email si whatsapp + github issues
 - adauga posibilitatea de a face highlight pentru sesiunea curenta
