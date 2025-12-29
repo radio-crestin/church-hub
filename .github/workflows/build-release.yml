@@ -22,12 +22,18 @@ jobs:
             rust_target: aarch64-apple-darwin
             bun_target: bun-darwin-arm64
             sidecar_suffix: aarch64-apple-darwin
+            artifact_name: church-hub-macos-arm64.dmg
+            artifact_pattern: "*.dmg"
+            bundle_path: dmg
 
           # Windows x64
           - platform: windows-latest
             rust_target: x86_64-pc-windows-msvc
             bun_target: bun-windows-x64
             sidecar_suffix: x86_64-pc-windows-msvc.exe
+            artifact_name: church-hub-windows-x64.exe
+            artifact_pattern: "*-setup.exe"
+            bundle_path: nsis
 
     runs-on: ${{ matrix.platform }}
 
@@ -112,6 +118,7 @@ jobs:
           echo "Sidecar binary verified successfully"
 
       - name: Build Tauri app
+        id: tauri_build
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -128,25 +135,18 @@ jobs:
 
             ---
 
-            ## 📥 Downloads
+            ## 📥 Direct Downloads
 
-            | Platform | Architecture | File | Download |
-            |----------|--------------|------|----------|
-            | 🍎 **macOS** | Apple Silicon (M1/M2/M3/M4) | `.dmg` | [Download](https://github.com/radio-crestin/church-hub/releases/download/v__VERSION__/church-hub___VERSION___aarch64.dmg) |
-            | 🪟 **Windows** | x64 | `.msi` | [Download](https://github.com/radio-crestin/church-hub/releases/download/v__VERSION__/church-hub___VERSION___x64-setup.msi) |
-            | 🪟 **Windows** | x64 | `.exe` | [Download](https://github.com/radio-crestin/church-hub/releases/download/v__VERSION__/church-hub___VERSION___x64-setup.exe) |
-
-            ---
-
-            ## ✨ What's New
-
-            See the [commit history](https://github.com/radio-crestin/church-hub/commits/v__VERSION__) for detailed changes.
+            | Platform | Download |
+            |----------|----------|
+            | 🍎 **macOS** (Apple Silicon) | [⬇️ Download .dmg](https://github.com/radio-crestin/church-hub/releases/latest/download/church-hub-macos-arm64.dmg) |
+            | 🪟 **Windows** (x64) | [⬇️ Download .exe](https://github.com/radio-crestin/church-hub/releases/latest/download/church-hub-windows-x64.exe) |
 
             ---
 
             ## 🚀 Quick Start
 
-            1. Download the installer for your platform above
+            1. Click the download link for your platform above
             2. Run the installer
             3. Launch Church Hub
             4. Access the web interface at `http://localhost:3000`
@@ -176,3 +176,43 @@ jobs:
           releaseDraft: true
           prerelease: false
           includeUpdaterJson: false
+
+      - name: Create consistently named artifact (macOS)
+        if: matrix.platform == 'macos-latest'
+        shell: bash
+        run: |
+          BUNDLE_DIR="app/tauri/target/${{ matrix.rust_target }}/release/bundle/${{ matrix.bundle_path }}"
+          echo "Looking for artifacts in: $BUNDLE_DIR"
+          ls -la "$BUNDLE_DIR" || true
+          ARTIFACT=$(find "$BUNDLE_DIR" -name "${{ matrix.artifact_pattern }}" -type f | head -1)
+          if [ -n "$ARTIFACT" ]; then
+            cp "$ARTIFACT" "${{ matrix.artifact_name }}"
+            echo "Created: ${{ matrix.artifact_name }}"
+          else
+            echo "No artifact found matching pattern: ${{ matrix.artifact_pattern }}"
+            exit 1
+          fi
+
+      - name: Create consistently named artifact (Windows)
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        run: |
+          $bundleDir = "app/tauri/target/${{ matrix.rust_target }}/release/bundle/${{ matrix.bundle_path }}"
+          Write-Host "Looking for artifacts in: $bundleDir"
+          Get-ChildItem -Path $bundleDir -ErrorAction SilentlyContinue
+          $artifact = Get-ChildItem -Path $bundleDir -Filter "${{ matrix.artifact_pattern }}" -File | Select-Object -First 1
+          if ($artifact) {
+            Copy-Item $artifact.FullName -Destination "${{ matrix.artifact_name }}"
+            Write-Host "Created: ${{ matrix.artifact_name }}"
+          } else {
+            Write-Host "No artifact found matching pattern: ${{ matrix.artifact_pattern }}"
+            exit 1
+          }
+
+      - name: Upload consistently named artifact to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.artifact_name }}
+          tag_name: v${{ steps.version.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -27,37 +27,39 @@ Built with modern web technologies and powered by Tauri, Church Hub runs as a na
 
 ## 📥 Download
 
-<table>
+<p align="center">
+  <a href="https://github.com/radio-crestin/church-hub/releases/latest">
+    <img src="https://img.shields.io/github/v/release/radio-crestin/church-hub?style=for-the-badge&label=Latest%20Release&color=blue" alt="Latest Release"/>
+  </a>
+</p>
+
+<table align="center">
   <tr>
     <td align="center">
-      <a href="https://github.com/radio-crestin/church-hub/releases/latest/download/church-hub_windows_x64.msi">
+      <a href="https://github.com/radio-crestin/church-hub/releases/latest/download/church-hub-windows-x64.exe">
         <img src="https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Windows"/>
         <br/>
         <sub><b>Windows (x64)</b></sub>
         <br/>
-        <sub>.msi installer</sub>
+        <sub>⬇️ <code>.exe</code> installer</sub>
       </a>
     </td>
     <td align="center">
-      <a href="https://github.com/radio-crestin/church-hub/releases/latest/download/church-hub_macos_universal.dmg">
+      <a href="https://github.com/radio-crestin/church-hub/releases/latest/download/church-hub-macos-arm64.dmg">
         <img src="https://img.shields.io/badge/macOS-000000?style=for-the-badge&logo=apple&logoColor=white" alt="macOS"/>
         <br/>
         <sub><b>macOS (Apple Silicon)</b></sub>
         <br/>
-        <sub>.dmg installer</sub>
+        <sub>⬇️ <code>.dmg</code> installer</sub>
       </a>
     </td>
   </tr>
 </table>
 
-<p align="center">
-  <a href="https://github.com/radio-crestin/church-hub/releases/latest">
-    <img src="https://img.shields.io/github/v/release/radio-crestin/church-hub?style=flat-square&label=Latest%20Release" alt="Latest Release"/>
-  </a>
-  <a href="https://github.com/radio-crestin/church-hub/releases">
-    <img src="https://img.shields.io/github/downloads/radio-crestin/church-hub/total?style=flat-square&label=Downloads" alt="Downloads"/>
-  </a>
-</p>
+> **🍎 macOS Note:** If you see *"church-hub.app is damaged and can't be opened"*, run this in Terminal:
+> ```bash
+> xattr -c /Applications/church-hub.app
+> ```
 
 ---
 
