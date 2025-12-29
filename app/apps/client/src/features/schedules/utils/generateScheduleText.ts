@@ -11,12 +11,21 @@ export function generateScheduleText(items: ScheduleItem[]): string {
   lines.push('# S: Song Title')
   lines.push('# A: Announcement text')
   lines.push('# V: Ioan 3:16 (Bible passage)')
-  lines.push('# VT: Person Name - Ioan 3:16 (Youth verse)')
+  lines.push('# VT: Person Name - Ioan 3:16, Person 2 - Ioan 3:17 (Youth verses)')
   lines.push('')
 
   for (const item of items) {
     if (item.itemType === 'song' && item.song) {
       lines.push(`S: ${item.song.title}`)
+    } else if (item.itemType === 'bible_passage') {
+      // Bible passage item - use the reference directly
+      if (item.biblePassageReference) {
+        // Remove translation suffix if present (e.g., "Ioan 3:16 - VDCC" -> "Ioan 3:16")
+        const refWithoutTranslation = item.biblePassageReference
+          .replace(/\s*-\s*[A-Z]+$/, '')
+          .trim()
+        lines.push(`V: ${refWithoutTranslation}`)
+      }
     } else if (item.itemType === 'slide') {
       if (item.slideType === 'announcement') {
         // Strip HTML tags to get plain text
@@ -25,20 +34,29 @@ export function generateScheduleText(items: ScheduleItem[]): string {
           lines.push(`A: ${plainText}`)
         }
       } else if (item.slideType === 'versete_tineri') {
-        // Try to extract person name and reference for VT: format
-        const vtData = extractVerseteTineriData(item.slideContent || '')
-        if (vtData) {
-          lines.push(`VT: ${vtData.personName} - ${vtData.reference}`)
+        // Check if we have structured entries
+        if (item.verseteTineriEntries && item.verseteTineriEntries.length > 0) {
+          // Format all entries on one line, comma-separated
+          const entriesText = item.verseteTineriEntries
+            .map((entry) => `${entry.personName} - ${entry.reference}`)
+            .join(', ')
+          lines.push(`VT: ${entriesText}`)
         } else {
-          // Fallback: try to extract just Bible reference as V:
-          const reference = extractBibleReference(item.slideContent || '')
-          if (reference) {
-            lines.push(`V: ${reference}`)
+          // Fallback: try to extract from HTML content (legacy format)
+          const vtData = extractVerseteTineriData(item.slideContent || '')
+          if (vtData) {
+            lines.push(`VT: ${vtData.personName} - ${vtData.reference}`)
           } else {
-            // Last fallback: show as announcement
-            const plainText = stripHtml(item.slideContent || '')
-            if (plainText) {
-              lines.push(`A: ${plainText}`)
+            // Fallback: try to extract just Bible reference as V:
+            const reference = extractBibleReference(item.slideContent || '')
+            if (reference) {
+              lines.push(`V: ${reference}`)
+            } else {
+              // Last fallback: show as announcement
+              const plainText = stripHtml(item.slideContent || '')
+              if (plainText) {
+                lines.push(`A: ${plainText}`)
+              }
             }
           }
         }
