@@ -176,7 +176,7 @@
     "description": "Configure output displays for your presentations. Each display can have its own theme and settings.",
     "add": "Add Display",
     "addFirst": "Add Your First Display",
-    "edit": "Edit Display",
+    "edit": "Edit",
     "empty": "No Displays",
     "emptyDescription": "Create displays to output your presentations to different screens or windows.",
     "name": "Display Name",

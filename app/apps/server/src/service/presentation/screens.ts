@@ -473,25 +473,35 @@ export function upsertScreen(input: UpsertScreenInput): Screen | null {
       // Update existing screen
       log('debug', `Updating screen: ${input.id}`)
 
-      // Build update object - only include isActive/alwaysOnTop if explicitly provided
+      // Build update object - only update fields that are explicitly provided
       const updateData: Record<string, unknown> = {
         name: input.name,
         type: screenType,
-        openMode,
-        isFullscreen: input.isFullscreen === true,
-        width,
-        height,
-        globalSettings: globalSettingsJson,
-        sortOrder: input.sortOrder ?? 0,
         updatedAt: sql`(unixepoch())`,
       }
 
-      // Only update isActive if explicitly provided
+      // Only update optional fields if explicitly provided
+      if (input.openMode !== undefined) {
+        updateData.openMode = input.openMode
+      }
+      if (input.isFullscreen !== undefined) {
+        updateData.isFullscreen = input.isFullscreen
+      }
+      if (input.width !== undefined) {
+        updateData.width = input.width
+      }
+      if (input.height !== undefined) {
+        updateData.height = input.height
+      }
+      if (input.globalSettings !== undefined) {
+        updateData.globalSettings = JSON.stringify(input.globalSettings)
+      }
+      if (input.sortOrder !== undefined) {
+        updateData.sortOrder = input.sortOrder
+      }
       if (input.isActive !== undefined) {
         updateData.isActive = input.isActive
       }
-
-      // Only update alwaysOnTop if explicitly provided
       if (input.alwaysOnTop !== undefined) {
         updateData.alwaysOnTop = input.alwaysOnTop
       }

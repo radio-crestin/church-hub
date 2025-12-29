@@ -535,7 +535,7 @@
       "actions": {
         "openInNewTab": "Open in new tab",
         "copyUrl": "Copy URL to clipboard",
-        "edit": "Edit screen",
+        "edit": "Edit",
         "delete": "Delete screen"
       },
       "toast": {

@@ -1628,6 +1628,8 @@ async function main() {
           const screen = upsertScreen(body)
 
           if (!screen) {
+            // biome-ignore lint/suspicious/noConsole: Debug logging for save failures
+            console.error('[screens] Failed to save screen with body:', JSON.stringify(body))
             return handleCors(
               req,
               new Response(JSON.stringify({ error: 'Failed to save screen' }), {

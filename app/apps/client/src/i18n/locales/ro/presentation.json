@@ -176,7 +176,7 @@
     "description": "Configurați ecranele de ieșire pentru prezentările dumneavoastră. Fiecare ecran poate avea propria temă și setări.",
     "add": "Adaugă Ecran",
     "addFirst": "Adaugă Primul Ecran",
-    "edit": "Editează Ecran",
+    "edit": "Editează",
     "empty": "Niciun Ecran",
     "emptyDescription": "Creați ecrane pentru a proiecta prezentările pe diferite monitoare sau ferestre.",
     "name": "Nume Ecran",
