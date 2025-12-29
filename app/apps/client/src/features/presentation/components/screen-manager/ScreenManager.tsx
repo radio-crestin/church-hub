@@ -4,10 +4,13 @@ import {
   ExternalLink,
   Loader2,
   MonitorUp,
+  Pin,
+  PinOff,
   Plus,
   Trash2,
 } from 'lucide-react'
 import { useCallback, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { Button } from '~/ui/button/Button'
 import { Combobox } from '~/ui/combobox/Combobox'
@@ -26,6 +29,7 @@ import {
   getFrontendUrl,
   openDisplayWindow,
   openInBrowser,
+  setDisplayAlwaysOnTop,
 } from '../../utils/openDisplayWindow'
 import { ScreenEditor } from '../screen-editor'
 
@@ -44,6 +48,7 @@ const SCREEN_TYPE_COLORS: Record<ScreenType, string> = {
 }
 
 export function ScreenManager() {
+  const { t } = useTranslation('settings')
   const { showToast } = useToast()
 
   const { data: screens, isLoading } = useScreens()
@@ -145,6 +150,7 @@ export function ScreenManager() {
           'native',
           screen.isFullscreen,
           screen.name,
+          screen.alwaysOnTop,
         )
         showToast(`Window "${screen.name}" opened`, 'success')
       }
@@ -166,6 +172,34 @@ export function ScreenManager() {
   const handleOpenInNewTab = async (screen: Screen) => {
     const url = `${getFrontendUrl()}/screen/${screen.id}`
     await openInBrowser(url)
+  }
+
+  const handleToggleAlwaysOnTop = async (screen: Screen) => {
+    const newValue = !screen.alwaysOnTop
+
+    try {
+      // Update in database
+      await upsertScreen.mutateAsync({
+        id: screen.id,
+        name: screen.name,
+        type: screen.type,
+        alwaysOnTop: newValue,
+      })
+
+      // If window is active, update it immediately
+      if (screen.isActive) {
+        await setDisplayAlwaysOnTop(screen.id, newValue)
+      }
+
+      showToast(
+        newValue
+          ? t('sections.screens.alwaysOnTop.pinned')
+          : t('sections.screens.alwaysOnTop.unpinned'),
+        'success',
+      )
+    } catch {
+      showToast(t('sections.screens.alwaysOnTop.error'), 'error')
+    }
   }
 
   const confirmDelete = async () => {
@@ -268,6 +302,27 @@ export function ScreenManager() {
                 </div>
                 <div className="hidden md:block h-6 w-px bg-gray-200 dark:bg-gray-700" />
                 <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleToggleAlwaysOnTop(screen)}
+                    title={
+                      screen.alwaysOnTop
+                        ? t('sections.screens.alwaysOnTop.unpin')
+                        : t('sections.screens.alwaysOnTop.pin')
+                    }
+                    className={
+                      screen.alwaysOnTop
+                        ? 'text-indigo-600 dark:text-indigo-400'
+                        : ''
+                    }
+                  >
+                    {screen.alwaysOnTop ? (
+                      <Pin size={16} />
+                    ) : (
+                      <PinOff size={16} />
+                    )}
+                  </Button>
                   <Button
                     variant="ghost"
                     size="sm"
