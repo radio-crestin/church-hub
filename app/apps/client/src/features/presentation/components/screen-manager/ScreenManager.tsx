@@ -1,4 +1,5 @@
 import {
+  AppWindow,
   Copy,
   Edit,
   ExternalLink,
@@ -14,7 +15,6 @@ import { useTranslation } from 'react-i18next'
 
 import { Button } from '~/ui/button/Button'
 import { Combobox } from '~/ui/combobox/Combobox'
-import { Switch } from '~/ui/switch/Switch'
 import { useToast } from '~/ui/toast/useToast'
 import {
   useBatchUpdateScreenConfig,
@@ -290,44 +290,57 @@ export function ScreenManager() {
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2 md:gap-3 flex-wrap">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-500 dark:text-gray-400 hidden md:inline">
-                    {screen.isActive ? 'Open' : 'Closed'}
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button
+                  variant={screen.isActive ? 'primary' : 'secondary'}
+                  size="sm"
+                  onClick={() => handleToggleWindow(screen)}
+                  title={
+                    screen.isActive
+                      ? t('sections.screens.window.closeTooltip')
+                      : t('sections.screens.window.openTooltip')
+                  }
+                >
+                  <AppWindow size={16} />
+                  <span className="ml-1">
+                    {screen.isActive
+                      ? t('sections.screens.window.active')
+                      : t('sections.screens.window.inactive')}
                   </span>
-                  <Switch
-                    checked={screen.isActive}
-                    onCheckedChange={() => handleToggleWindow(screen)}
-                  />
-                </div>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleToggleAlwaysOnTop(screen)}
+                  title={
+                    screen.alwaysOnTop
+                      ? t('sections.screens.alwaysOnTop.unpin')
+                      : t('sections.screens.alwaysOnTop.pin')
+                  }
+                  className={
+                    screen.alwaysOnTop
+                      ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20'
+                      : ''
+                  }
+                >
+                  {screen.alwaysOnTop ? (
+                    <Pin size={16} />
+                  ) : (
+                    <PinOff size={16} />
+                  )}
+                  <span className="ml-1">
+                    {screen.alwaysOnTop
+                      ? t('sections.screens.alwaysOnTop.enabled')
+                      : t('sections.screens.alwaysOnTop.disabled')}
+                  </span>
+                </Button>
                 <div className="hidden md:block h-6 w-px bg-gray-200 dark:bg-gray-700" />
                 <div className="flex items-center gap-1">
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleToggleAlwaysOnTop(screen)}
-                    title={
-                      screen.alwaysOnTop
-                        ? t('sections.screens.alwaysOnTop.unpin')
-                        : t('sections.screens.alwaysOnTop.pin')
-                    }
-                    className={
-                      screen.alwaysOnTop
-                        ? 'text-indigo-600 dark:text-indigo-400'
-                        : ''
-                    }
-                  >
-                    {screen.alwaysOnTop ? (
-                      <Pin size={16} />
-                    ) : (
-                      <PinOff size={16} />
-                    )}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
                     onClick={() => handleOpenInNewTab(screen)}
-                    title="Open in new tab"
+                    title={t('sections.screens.actions.openInNewTab')}
                   >
                     <ExternalLink size={16} />
                   </Button>
@@ -335,7 +348,7 @@ export function ScreenManager() {
                     variant="ghost"
                     size="sm"
                     onClick={() => handleCopyUrl(screen)}
-                    title="Copy URL to clipboard"
+                    title={t('sections.screens.actions.copyUrl')}
                   >
                     <Copy size={16} />
                   </Button>
@@ -343,17 +356,17 @@ export function ScreenManager() {
                     variant="secondary"
                     size="sm"
                     onClick={() => handleEdit(screen)}
-                    title="Edit screen"
+                    title={t('sections.screens.actions.edit')}
                   >
                     <Edit size={16} />
-                    <span className="hidden md:inline ml-1">Edit</span>
+                    <span className="ml-1">{t('sections.screens.actions.edit')}</span>
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => handleDelete(screen)}
                     className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-                    title="Delete screen"
+                    title={t('sections.screens.actions.delete')}
                   >
                     <Trash2 size={16} />
                   </Button>

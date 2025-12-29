@@ -502,14 +502,18 @@
       "addScreen": "Add Screen",
       "noScreens": "No screens configured",
       "window": {
-        "open": "Window",
-        "closed": "Closed"
+        "active": "Window Active",
+        "inactive": "Window Inactive",
+        "openTooltip": "Open display window",
+        "closeTooltip": "Close display window"
       },
       "alwaysOnTop": {
-        "pin": "Pin to top (always on top)",
-        "unpin": "Unpin from top",
-        "pinned": "Window pinned to top",
-        "unpinned": "Window unpinned",
+        "pin": "Enable always on top",
+        "unpin": "Disable always on top",
+        "enabled": "Always on Top",
+        "disabled": "Not on Top",
+        "pinned": "Window set to always on top",
+        "unpinned": "Window no longer always on top",
         "error": "Failed to update always on top setting"
       },
       "actions": {

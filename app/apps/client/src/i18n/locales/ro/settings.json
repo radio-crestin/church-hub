@@ -502,15 +502,19 @@
       "addScreen": "Adaugă Ecran",
       "noScreens": "Niciun ecran configurat",
       "window": {
-        "open": "Fereastră",
-        "closed": "Închis"
+        "active": "Fereastră Activă",
+        "inactive": "Fereastră Dezactivată",
+        "openTooltip": "Deschide fereastra de afișare",
+        "closeTooltip": "Închide fereastra de afișare"
       },
       "alwaysOnTop": {
-        "pin": "Fixează deasupra (mereu vizibil)",
-        "unpin": "Anulează fixarea",
-        "pinned": "Fereastra fixată deasupra",
-        "unpinned": "Fereastra nu mai este fixată",
-        "error": "Nu s-a putut actualiza setarea de fixare"
+        "pin": "Activează mereu deasupra",
+        "unpin": "Dezactivează mereu deasupra",
+        "enabled": "Mereu Deasupra",
+        "disabled": "Normal",
+        "pinned": "Fereastra setată mereu deasupra",
+        "unpinned": "Fereastra nu mai este mereu deasupra",
+        "error": "Nu s-a putut actualiza setarea"
       },
       "actions": {
         "openInNewTab": "Deschide în tab nou",
