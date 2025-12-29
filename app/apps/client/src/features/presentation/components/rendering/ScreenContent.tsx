@@ -1,6 +1,7 @@
 import { useMemo, useRef } from 'react'
 
 import { AnimatedElement } from './AnimatedElement'
+import { AnimationProvider } from './AnimationContext'
 import { TextContent } from './TextContent'
 import type { ContentData, NextSlideData } from './types'
 import { calculatePixelBounds, getBackgroundCSS } from './utils/styleUtils'
@@ -463,20 +464,22 @@ export function ScreenContent({
   }
 
   return (
-    <div
-      className="relative"
-      style={{
-        width: containerWidth,
-        height: containerHeight,
-      }}
-    >
-      {/* Content elements handle their own visibility/animation */}
-      {renderMainText()}
-      {renderContentText()}
-      {renderReferenceText()}
-      {renderPersonLabel()}
-      {renderClock()}
-      {renderNextSlideSection()}
-    </div>
+    <AnimationProvider contentKey={contentKey} isVisible={isVisible}>
+      <div
+        className="relative"
+        style={{
+          width: containerWidth,
+          height: containerHeight,
+        }}
+      >
+        {/* Content elements handle their own visibility/animation */}
+        {renderMainText()}
+        {renderContentText()}
+        {renderReferenceText()}
+        {renderPersonLabel()}
+        {renderClock()}
+        {renderNextSlideSection()}
+      </div>
+    </AnimationProvider>
   )
 }
