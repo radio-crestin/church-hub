@@ -430,11 +430,11 @@ function BiblePage() {
         ) : selectedTranslations.length > 0 ? (
           <div
             ref={containerRef}
-            className="flex flex-col lg:flex-row lg:flex-1 lg:min-h-0 gap-3"
+            className="flex flex-col lg:flex-row lg:flex-1 lg:min-h-0 gap-3 lg:gap-1"
           >
             {/* Left Panel - Navigation (shows last on mobile) */}
             <div
-              className="order-3 lg:order-1 lg:min-h-0 lg:h-full lg:flex-initial overflow-hidden"
+              className="order-2 lg:order-1 lg:min-h-0 lg:h-full lg:flex-initial overflow-hidden"
               style={
                 isLargeScreen
                   ? { width: `calc(${dividerPosition}% - 8px)` }
@@ -452,7 +452,7 @@ function BiblePage() {
 
             {/* Draggable Divider */}
             <div
-              className="hidden lg:flex items-center justify-center w-4 cursor-col-resize hover:bg-indigo-100 dark:hover:bg-indigo-900/30 rounded transition-colors group"
+              className="hidden lg:flex lg:order-2 items-center justify-center w-2 cursor-col-resize hover:bg-indigo-100 dark:hover:bg-indigo-900/30 rounded transition-colors group"
               onMouseDown={handleDividerMouseDown}
             >
               <GripVertical
@@ -463,7 +463,7 @@ function BiblePage() {
 
             {/* Right Panel - Control Panel with Preview (shows first on mobile) */}
             <div
-              className="order-1 lg:order-2 lg:min-h-0 lg:flex-1 overflow-hidden"
+              className="order-1 lg:order-3 lg:min-h-0 lg:flex-1 overflow-hidden shrink-0"
               style={
                 isLargeScreen
                   ? { width: `calc(${100 - dividerPosition}% - 8px)` }
