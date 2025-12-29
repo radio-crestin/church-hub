@@ -446,6 +446,7 @@ export interface UpsertScreenInput {
   isActive?: boolean
   openMode?: DisplayOpenMode
   isFullscreen?: boolean
+  alwaysOnTop?: boolean
   width?: number
   height?: number
   globalSettings?: ScreenGlobalSettings
