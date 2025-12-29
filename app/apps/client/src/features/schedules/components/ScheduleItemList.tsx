@@ -21,8 +21,10 @@ import { useTranslation } from 'react-i18next'
 import { SongEditorModal, SongPickerModal } from '~/features/songs/components'
 import { useToast } from '~/ui/toast'
 import { InsertSlideModal } from './InsertSlideModal'
+import { ScheduleItemBiblePassage } from './ScheduleItemBiblePassage'
 import { ScheduleItemSlide } from './ScheduleItemSlide'
 import { ScheduleItemSong } from './ScheduleItemSong'
+import { ScheduleItemVerseteTineri } from './ScheduleItemVerseteTineri'
 import {
   useAddItemToSchedule,
   useRemoveItemFromSchedule,
@@ -75,6 +77,39 @@ function SortableScheduleItem({
         showToast(t('messages.itemRemoved'), 'success')
       }
     }
+  }
+
+  if (item.itemType === 'bible_passage') {
+    return (
+      <div ref={setNodeRef} style={style}>
+        <ScheduleItemBiblePassage
+          item={item}
+          onRemove={handleRemove}
+          onInsertSongAfter={() => onInsertSongAfter(item.id)}
+          onInsertSlideAfter={(template) =>
+            onInsertSlideAfter(item.id, template)
+          }
+          dragHandleProps={{ ...attributes, ...listeners }}
+        />
+      </div>
+    )
+  }
+
+  if (item.itemType === 'slide' && item.slideType === 'versete_tineri') {
+    return (
+      <div ref={setNodeRef} style={style}>
+        <ScheduleItemVerseteTineri
+          item={item}
+          onRemove={handleRemove}
+          onEditSlide={() => onEditSlide(item)}
+          onInsertSongAfter={() => onInsertSongAfter(item.id)}
+          onInsertSlideAfter={(template) =>
+            onInsertSlideAfter(item.id, template)
+          }
+          dragHandleProps={{ ...attributes, ...listeners }}
+        />
+      </div>
+    )
   }
 
   if (item.itemType === 'slide') {
@@ -285,6 +320,7 @@ export function ScheduleItemList({
             id: editingSlideItem.id,
             slideType: editingSlideItem.slideType,
             slideContent: editingSlideItem.slideContent,
+            verseteTineriEntries: editingSlideItem.verseteTineriEntries,
           }}
           scheduleId={scheduleId}
           onClose={() => setEditingSlideItem(null)}

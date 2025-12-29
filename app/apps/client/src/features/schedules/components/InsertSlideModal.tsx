@@ -18,6 +18,18 @@ interface EditingItem {
   id: number
   slideType: SlideTemplate | null
   slideContent: string | null
+  verseteTineriEntries?: Array<{
+    id: number
+    personName: string
+    reference: string
+    bookCode: string
+    bookName: string
+    startChapter: number
+    startVerse: number
+    endChapter: number
+    endVerse: number
+    sortOrder: number
+  }>
 }
 
 interface InsertSlideModalProps {
@@ -102,7 +114,32 @@ export function InsertSlideModal({
         setSelectedTemplate(editingItem.slideType ?? 'announcement')
         setContent(editingItem.slideContent ?? '')
         editor?.commands.setContent(editingItem.slideContent ?? '')
-        setVerseteTineriEntries([])
+
+        // Load versete tineri entries if editing a versete_tineri slide
+        if (
+          editingItem.slideType === 'versete_tineri' &&
+          editingItem.verseteTineriEntries
+        ) {
+          const localEntries: LocalVerseteTineriEntry[] =
+            editingItem.verseteTineriEntries.map((entry) => ({
+              id: entry.id,
+              personName: entry.personName,
+              referenceInput: entry.reference,
+              parsedResult: {
+                status: 'valid' as const,
+                bookCode: entry.bookCode,
+                bookName: entry.bookName,
+                startChapter: entry.startChapter,
+                startVerse: entry.startVerse,
+                endChapter: entry.endChapter,
+                endVerse: entry.endVerse,
+              },
+              sortOrder: entry.sortOrder,
+            }))
+          setVerseteTineriEntries(localEntries)
+        } else {
+          setVerseteTineriEntries([])
+        }
       } else {
         setSelectedTemplate(initialTemplate ?? 'announcement')
         setContent('')
@@ -133,14 +170,17 @@ export function InsertSlideModal({
         return
       }
 
-      // Convert entries to HTML content for schedule slide
-      const htmlContent = validEntries
-        .map((entry) => {
-          const name = escapeHtml(entry.personName.trim())
-          const reference = escapeHtml(entry.parsedResult!.formattedReference!)
-          return `<p><strong>${name}</strong> - ${reference}</p>`
-        })
-        .join('')
+      // Convert entries to structured format
+      const structuredEntries = validEntries.map((entry) => ({
+        personName: entry.personName.trim(),
+        translationId: defaultTranslation.id,
+        bookCode: entry.parsedResult!.bookCode!,
+        bookName: entry.parsedResult!.bookName!,
+        startChapter: entry.parsedResult!.startChapter!,
+        startVerse: entry.parsedResult!.startVerse!,
+        endChapter: entry.parsedResult!.endChapter!,
+        endVerse: entry.parsedResult!.endVerse!,
+      }))
 
       if (isEditMode && editingItem) {
         const result = await updateMutation.mutateAsync({
@@ -148,7 +188,7 @@ export function InsertSlideModal({
           itemId: editingItem.id,
           input: {
             slideType: 'versete_tineri',
-            slideContent: htmlContent,
+            verseteTineriEntries: structuredEntries,
           },
         })
 
@@ -164,7 +204,7 @@ export function InsertSlideModal({
           scheduleId,
           input: {
             slideType: 'versete_tineri',
-            slideContent: htmlContent,
+            verseteTineriEntries: structuredEntries,
             afterItemId,
           },
         })
@@ -397,13 +437,4 @@ export function InsertSlideModal({
       </div>
     </dialog>
   )
-}
-
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;')
 }
