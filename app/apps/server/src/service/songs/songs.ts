@@ -386,6 +386,7 @@ export function batchImportSongs(
   const errors: string[] = []
   const now = Math.floor(Date.now() / 1000)
 
+  const totalStart = performance.now()
   log('info', `Starting batch import of ${songsInput.length} songs`)
 
   try {
@@ -448,6 +449,7 @@ export function batchImportSongs(
         : null
 
     // Phase 1: Insert/Update all songs and collect IDs
+    const phase1Start = performance.now()
     for (let i = 0; i < songsInput.length; i++) {
       const input = songsInput[i]
 
@@ -505,7 +507,14 @@ export function batchImportSongs(
       }
     }
 
+    const phase1Time = performance.now() - phase1Start
+    log(
+      'info',
+      `[PERF] Phase 1 (upsert songs): ${phase1Time.toFixed(2)}ms for ${songsInput.length} songs (${(phase1Time / songsInput.length).toFixed(2)}ms/song)`,
+    )
+
     // Phase 2: Bulk delete old slides for all imported songs (when overwriting)
+    const phase2Start = performance.now()
     if (overwriteDuplicates && songIds.length > 0) {
       const placeholders = songIds.map(() => '?').join(',')
       rawDb
@@ -513,7 +522,11 @@ export function batchImportSongs(
         .run(...songIds)
     }
 
+    const phase2Time = performance.now() - phase2Start
+    log('info', `[PERF] Phase 2 (delete slides): ${phase2Time.toFixed(2)}ms`)
+
     // Phase 3: Bulk insert all slides at once (super batch)
+    const phase3Start = performance.now()
     const allSlides: Array<{
       songId: number
       content: string
@@ -535,8 +548,18 @@ export function batchImportSongs(
     if (allSlides.length > 0) {
       insertSlidesBulkAll(rawDb, allSlides, now)
     }
+    const phase3Time = performance.now() - phase3Start
+    log(
+      'info',
+      `[PERF] Phase 3 (insert slides): ${phase3Time.toFixed(2)}ms for ${allSlides.length} slides`,
+    )
 
     rawDb.exec('COMMIT')
+    const totalTime = performance.now() - totalStart
+    log(
+      'info',
+      `[PERF] Batch import total: ${totalTime.toFixed(2)}ms | Phase1: ${phase1Time.toFixed(0)}ms | Phase2: ${phase2Time.toFixed(0)}ms | Phase3: ${phase3Time.toFixed(0)}ms`,
+    )
     log(
       'info',
       `Batch import completed: ${successCount} success, ${failedCount} failed, ${skippedCount} skipped`,
