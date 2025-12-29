@@ -354,7 +354,9 @@ export function ScreenManager() {
                     title={t('sections.screens.actions.edit')}
                   >
                     <Edit size={16} />
-                    <span className="ml-1">{t('sections.screens.actions.edit')}</span>
+                    <span className="ml-1">
+                      {t('sections.screens.actions.edit')}
+                    </span>
                   </Button>
                   <Button
                     variant="ghost"

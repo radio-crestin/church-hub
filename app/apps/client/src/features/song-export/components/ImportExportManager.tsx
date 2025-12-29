@@ -62,6 +62,7 @@ export function ImportExportManager() {
   const [defaultImportOptions, setDefaultImportOptions] = useState({
     useFirstVerseAsTitle: true,
     overwriteDuplicates: false,
+    skipManuallyEdited: false,
   })
 
   const handleImport = async () => {
@@ -86,6 +87,7 @@ export function ImportExportManager() {
           setDefaultImportOptions({
             useFirstVerseAsTitle: true,
             overwriteDuplicates: false,
+            skipManuallyEdited: false,
           })
           setModalState({ type: 'importConfirm' })
         } else {
@@ -147,7 +149,10 @@ export function ImportExportManager() {
         }),
         categoryId,
       },
-      { overwriteDuplicates: options.overwriteDuplicates },
+      {
+        overwriteDuplicates: options.overwriteDuplicates,
+        skipManuallyEdited: options.skipManuallyEdited,
+      },
     )
 
     setModalState({ type: 'none' })
@@ -265,6 +270,7 @@ export function ImportExportManager() {
       setDefaultImportOptions({
         useFirstVerseAsTitle: true,
         overwriteDuplicates: true,
+        skipManuallyEdited: true,
       })
       setModalState({ type: 'importConfirm' })
     } catch (error) {
@@ -377,6 +383,7 @@ export function ImportExportManager() {
         defaultCategoryId={defaultImportCategoryId}
         defaultUseFirstVerseAsTitle={defaultImportOptions.useFirstVerseAsTitle}
         defaultOverwriteDuplicates={defaultImportOptions.overwriteDuplicates}
+        defaultSkipManuallyEdited={defaultImportOptions.skipManuallyEdited}
       />
 
       <AlertModal
