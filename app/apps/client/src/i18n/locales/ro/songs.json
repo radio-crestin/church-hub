@@ -158,5 +158,13 @@
         "description": "Prezentare PPTX cu fundal negru și text alb centrat. Gata pentru proiecție."
       }
     }
+  },
+  "duplicateDialog": {
+    "title": "Cântare duplicată găsită",
+    "description": "O cântare cu titlul \"{{title}}\" există deja. Ce vrei să faci?",
+    "overwrite": "Actualizează cântarea existentă",
+    "overwriteDescription": "Înlocuiește slide-urile cântării existente cu conținutul nou",
+    "createNew": "Creează cântare nouă",
+    "createNewDescription": "Păstrează ambele cântări cu un sufix numerotat"
   }
 }

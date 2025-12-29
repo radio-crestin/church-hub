@@ -13,7 +13,7 @@ import {
   KioskWakeLockManager,
 } from '~/features/kiosk'
 import { useAutoOpenScreens } from '~/features/presentation/hooks'
-import { PptxDropZoneProvider } from '~/features/song-import'
+import { FileDropZoneProvider } from '~/features/song-import'
 import { I18nProvider } from '~/provider/i18n-provider'
 import { PermissionsProvider } from '~/provider/permissions-provider'
 import { QueryClientProvider } from '~/provider/QueryClientProvider'
@@ -72,13 +72,13 @@ function MainLayout() {
               <ToastProvider>
                 <MIDISettingsProvider>
                   <ShortcutRecordingProvider>
-                    <PptxDropZoneProvider>
+                    <FileDropZoneProvider>
                       <AutoOpenScreens />
                       <GlobalAppShortcutManager />
                       <AppLayout>
                         <Outlet />
                       </AppLayout>
-                    </PptxDropZoneProvider>
+                    </FileDropZoneProvider>
                   </ShortcutRecordingProvider>
                 </MIDISettingsProvider>
                 {isDev ? (

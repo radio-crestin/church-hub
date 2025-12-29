@@ -158,5 +158,13 @@
         "description": "PPTX presentation with black background and centered white text. Ready for projection."
       }
     }
+  },
+  "duplicateDialog": {
+    "title": "Duplicate Song Found",
+    "description": "A song with the title \"{{title}}\" already exists. What would you like to do?",
+    "overwrite": "Update Existing Song",
+    "overwriteDescription": "Replace the existing song's slides with the new content",
+    "createNew": "Create New Song",
+    "createNewDescription": "Keep both songs with a numbered suffix"
   }
 }
