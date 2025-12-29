@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { invoke } from '@tauri-apps/api/core'
 import { listen, type UnlistenFn } from '@tauri-apps/api/event'
+import { getCurrentWebview } from '@tauri-apps/api/webview'
 import { readFile } from '@tauri-apps/plugin-fs'
 import {
   createContext,
@@ -496,6 +497,89 @@ export function FileDropZoneProvider({ children }: Props) {
       document.removeEventListener('drop', handleDrop)
     }
   }, [importPptxAsSong, handleOpenSongFile, handleChurchProgramFile])
+
+  // Helper function to process file paths (used by Tauri drag-drop)
+  const processFilePaths = useCallback(
+    async (paths: string[]) => {
+      for (const filePath of paths) {
+        const lowerPath = filePath.toLowerCase()
+
+        try {
+          if (lowerPath.endsWith('.pptx')) {
+            const fileData = await readFile(filePath)
+            const parsed = await parsePptxFile(fileData.buffer, filePath)
+            await importPptxAsSong(parsed, filePath)
+            return // Process only the first valid file
+          }
+
+          if (lowerPath.endsWith('.opensong')) {
+            const fileData = await readFile(filePath)
+            const decoder = new TextDecoder()
+            const content = decoder.decode(fileData)
+            await handleOpenSongFile(content, filePath)
+            return
+          }
+
+          if (lowerPath.endsWith('.churchprogram')) {
+            const fileData = await readFile(filePath)
+            const decoder = new TextDecoder()
+            const content = decoder.decode(fileData)
+            await handleChurchProgramFile(content)
+            return
+          }
+        } catch (error) {
+          // biome-ignore lint/suspicious/noConsole: error logging
+          console.error(
+            '[file-import] Failed to process file:',
+            filePath,
+            error,
+          )
+        }
+      }
+    },
+    [importPptxAsSong, handleOpenSongFile, handleChurchProgramFile],
+  )
+
+  // Tauri-specific drag and drop handler
+  // Browser drag/drop events don't work in Tauri webview, so we use the Tauri API
+  useEffect(() => {
+    const isTauri =
+      typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+    if (!isTauri) return
+
+    let unlisten: UnlistenFn | undefined
+
+    async function setupTauriDragDrop() {
+      try {
+        const webview = getCurrentWebview()
+        unlisten = await webview.onDragDropEvent(async (event) => {
+          if (event.payload.type === 'over') {
+            // User is hovering files over the window
+            setIsDragging(true)
+          } else if (event.payload.type === 'drop') {
+            // User dropped files
+            setIsDragging(false)
+            const paths = event.payload.paths
+            if (paths && paths.length > 0) {
+              await processFilePaths(paths)
+            }
+          } else if (event.payload.type === 'cancel') {
+            // User cancelled the drag
+            setIsDragging(false)
+          }
+        })
+      } catch (error) {
+        // biome-ignore lint/suspicious/noConsole: error logging
+        console.error('[file-import] Failed to setup Tauri drag-drop:', error)
+      }
+    }
+
+    setupTauriDragDrop()
+
+    return () => {
+      unlisten?.()
+    }
+  }, [processFilePaths])
 
   // Handle duplicate dialog action
   const handleDuplicateAction = useCallback(
