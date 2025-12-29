@@ -3,6 +3,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Menu,
+  MessageSquarePlus,
   Monitor,
   Settings,
   X,
@@ -12,6 +13,7 @@ import { useTranslation } from 'react-i18next'
 
 import { SidebarHeader } from './sidebar-header'
 import { SidebarItem } from './sidebar-item'
+import { ContactModal, FeedbackModal } from '../../features/feedback'
 import { useKioskSettings } from '../../features/kiosk'
 import {
   hideAllCustomPageWebviews,
@@ -25,6 +27,8 @@ import { usePermissions } from '../../provider/permissions-provider'
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false)
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
   const { t } = useTranslation(['sidebar', 'common'])
@@ -218,6 +222,23 @@ export function Sidebar() {
                 onClick={(e) => handleSidebarItemClick('/settings', e)}
               />
             )}
+
+            {/* Feedback */}
+            <button
+              onClick={() => setIsFeedbackModalOpen(true)}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors w-full ${isCollapsed ? 'md:justify-center' : ''}`}
+              title={t('sidebar:navigation.feedback')}
+            >
+              <MessageSquarePlus size={20} className="flex-shrink-0" />
+              {!isCollapsed && (
+                <span className="text-sm font-medium md:block">
+                  {t('sidebar:navigation.feedback')}
+                </span>
+              )}
+              <span className="md:hidden text-sm font-medium">
+                {t('sidebar:navigation.feedback')}
+              </span>
+            </button>
           </div>
         </nav>
 
@@ -247,6 +268,19 @@ export function Sidebar() {
           </button>
         </div>
       </aside>
+
+      {/* Feedback Modal */}
+      <FeedbackModal
+        isOpen={isFeedbackModalOpen}
+        onClose={() => setIsFeedbackModalOpen(false)}
+        onOpenContact={() => setIsContactModalOpen(true)}
+      />
+
+      {/* Contact Modal */}
+      <ContactModal
+        isOpen={isContactModalOpen}
+        onClose={() => setIsContactModalOpen(false)}
+      />
     </>
   )
 }
