@@ -134,14 +134,17 @@ export function AnimatedElement({
     // Determine which animation config to use
     const isEntering = phase === 'entering-start' || phase === 'entering'
     const currentAnimation = isEntering ? animationIn : animationOut
-    const animationType = currentAnimation?.type ?? 'none'
+    // Default to 'fade' animation if not configured (ensures all elements animate together)
+    const animationType = currentAnimation?.type ?? 'fade'
 
-    // No animation configured
+    // Only skip animation if explicitly set to 'none'
     if (animationType === 'none') {
       return { opacity: phase === 'exiting' ? 0 : 1 }
     }
 
-    const duration = currentAnimation?.duration ?? 300
+    // Use consistent default durations for synchronization
+    const defaultDuration = isEntering ? 300 : 200
+    const duration = currentAnimation?.duration ?? defaultDuration
     // Force delay to 0 for all animations to ensure synchronization
     const delay = 0
     const easing = currentAnimation?.easing ?? 'ease-out'
