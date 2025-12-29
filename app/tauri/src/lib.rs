@@ -356,8 +356,9 @@ pub fn run() {
 
     app.run(|app_handle, event| {
         match event {
+            // Handle file association when app is already running (macOS Apple Events only)
+            #[cfg(target_os = "macos")]
             RunEvent::Opened { urls } => {
-                // Handle file association when app is already running (macOS Apple Events)
                 for url in urls {
                     if let Ok(path) = url.to_file_path() {
                         if path.extension().is_some_and(|ext| {
