@@ -218,6 +218,7 @@ export function batchUpdateSearchIndex(songIds: number[]): void {
   if (songIds.length === 0) return
 
   try {
+    const totalStart = performance.now()
     log('info', `Batch updating search index for ${songIds.length} songs`)
 
     const db = getRawDatabase()
@@ -229,14 +230,17 @@ export function batchUpdateSearchIndex(songIds: number[]): void {
       const placeholders = songIds.map(() => '?').join(',')
 
       // Delete existing FTS entries for these songs
+      const deleteStart = performance.now()
       db.query(`DELETE FROM songs_fts WHERE song_id IN (${placeholders})`).run(
         ...songIds,
       )
       db.query(
         `DELETE FROM songs_fts_trigram WHERE song_id IN (${placeholders})`,
       ).run(...songIds)
+      const deleteTime = performance.now() - deleteStart
 
       // Batch insert all songs with their slides in a single query
+      const ftsStart = performance.now()
       db.query(`
         INSERT INTO songs_fts (song_id, title, category_name, content)
         SELECT
@@ -252,8 +256,10 @@ export function batchUpdateSearchIndex(songIds: number[]): void {
         WHERE s.id IN (${placeholders})
         GROUP BY s.id
       `).run(...songIds)
+      const ftsTime = performance.now() - ftsStart
 
       // Also update trigram index
+      const trigramStart = performance.now()
       db.query(`
         INSERT INTO songs_fts_trigram (song_id, title, content)
         SELECT
@@ -267,9 +273,14 @@ export function batchUpdateSearchIndex(songIds: number[]): void {
         WHERE s.id IN (${placeholders})
         GROUP BY s.id
       `).run(...songIds)
+      const trigramTime = performance.now() - trigramStart
 
       db.exec('COMMIT')
-      log('info', `Batch search index updated for ${songIds.length} songs`)
+      const totalTime = performance.now() - totalStart
+      log(
+        'info',
+        `[PERF] Search index update: ${totalTime.toFixed(2)}ms | Delete: ${deleteTime.toFixed(0)}ms | FTS: ${ftsTime.toFixed(0)}ms | Trigram: ${trigramTime.toFixed(0)}ms`,
+      )
     } catch (error) {
       db.exec('ROLLBACK')
       throw error
