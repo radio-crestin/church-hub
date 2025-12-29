@@ -15,8 +15,9 @@ export function SceneCard({
 }: SceneCardProps) {
   const { t } = useTranslation('livestream')
 
-  // When OBS is disconnected, the current scene is not confirmed by OBS
-  const isUnconfirmedCurrent = scene.isCurrent && !isOBSConnected
+  // When OBS is disconnected or scene is custom, the current scene is not confirmed by OBS
+  const isUnconfirmedCurrent =
+    scene.isCurrent && (!isOBSConnected || scene.isCustom)
 
   return (
     <div

@@ -33,6 +33,7 @@ export interface OBSScene {
   contentTypes: ContentType[]
   mixerChannelActions: MixerChannelActions
   isCurrent: boolean
+  isCustom?: boolean
 }
 
 export interface SceneAutomationState {
