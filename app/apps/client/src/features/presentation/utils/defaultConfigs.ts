@@ -165,7 +165,7 @@ export function getDefaultSongConfig(): SongContentConfig {
       animationOut: getDefaultAnimationOut(),
       slideTransition: getDefaultSlideTransition(),
     },
-    clock: getDefaultClockConfig(),
+    clockEnabled: false,
   }
 }
 
@@ -198,7 +198,7 @@ export function getDefaultBibleConfig(): BibleContentConfig {
       animationOut: getDefaultAnimationOut(),
       slideTransition: getDefaultSlideTransition(),
     },
-    clock: getDefaultClockConfig(),
+    clockEnabled: false,
     includeReferenceInContent: false,
   }
 }
@@ -219,7 +219,7 @@ export function getDefaultAnnouncementConfig(): AnnouncementContentConfig {
       animationOut: getDefaultAnimationOut(),
       slideTransition: getDefaultSlideTransition(),
     },
-    clock: getDefaultClockConfig(),
+    clockEnabled: false,
   }
 }
 
@@ -265,7 +265,7 @@ export function getDefaultVerseteTineriConfig(): VerseteTineriContentConfig {
       animationOut: getDefaultAnimationOut(),
       slideTransition: getDefaultSlideTransition(),
     },
-    clock: getDefaultClockConfig(),
+    clockEnabled: false,
   }
 }
 
@@ -276,18 +276,7 @@ export function getDefaultVerseteTineriConfig(): VerseteTineriContentConfig {
 export function getDefaultEmptyConfig(): EmptyContentConfig {
   return {
     background: getDefaultBackground(),
-    clock: {
-      enabled: true,
-      constraints: constraints(5, 80),
-      size: sizeWithUnits(15, 8),
-      style: getDefaultTextStyle({
-        maxFontSize: 48,
-        autoScale: false,
-        alignment: 'right',
-      }),
-      format: '24h',
-      showSeconds: true,
-    },
+    clockEnabled: true, // Clock typically enabled on empty/idle screen
   }
 }
 
@@ -328,7 +317,6 @@ export function getDefaultNextSlideConfig(): NextSlideSectionConfig {
 export function getDefaultGlobalSettings(): ScreenGlobalSettings {
   return {
     defaultBackground: getDefaultBackground(),
-    clockEnabled: false,
     clockConfig: getDefaultClockConfig(),
   }
 }

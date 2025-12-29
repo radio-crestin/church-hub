@@ -79,7 +79,7 @@ function getDefaultGlobalSettings(): ScreenGlobalSettings {
       color: '#000000',
       opacity: 1,
     },
-    clockEnabled: false,
+    clockConfig: getDefaultClockConfig(),
   }
 }
 
@@ -143,7 +143,7 @@ function getDefaultSongConfig() {
       animationIn: getDefaultAnimation('in'),
       animationOut: getDefaultAnimation('out'),
     },
-    clock: getDefaultClockConfig(),
+    clockEnabled: false,
   }
 }
 
@@ -170,7 +170,7 @@ function getDefaultBibleConfig() {
       animationIn: getDefaultAnimation('in'),
       animationOut: getDefaultAnimation('out'),
     },
-    clock: getDefaultClockConfig(),
+    clockEnabled: false,
   }
 }
 
@@ -185,7 +185,7 @@ function getDefaultAnnouncementConfig() {
       animationIn: getDefaultAnimation('in'),
       animationOut: getDefaultAnimation('out'),
     },
-    clock: getDefaultClockConfig(),
+    clockEnabled: false,
   }
 }
 
@@ -224,25 +224,14 @@ function getDefaultVerseteTineriConfig() {
       animationIn: getDefaultAnimation('in'),
       animationOut: getDefaultAnimation('out'),
     },
-    clock: getDefaultClockConfig(),
+    clockEnabled: false,
   }
 }
 
 function getDefaultEmptyConfig() {
   return {
     background: getDefaultBackground(),
-    clock: {
-      enabled: true,
-      constraints: constraints(5, 80),
-      size: sizeWithUnits(15, 8),
-      style: getDefaultTextStyle({
-        maxFontSize: 48,
-        autoScale: false,
-        alignment: 'right',
-      }),
-      format: '24h' as const,
-      showSeconds: true,
-    },
+    clockEnabled: true, // Clock typically enabled on empty/idle screen
   }
 }
 
