@@ -32,6 +32,8 @@ import type {
   ContentType,
   ContentTypeConfig,
   NextSlideSectionConfig,
+  PersonLabelConfig,
+  ReferenceTextConfig,
   ScreenBackgroundConfig,
   ScreenGlobalSettings,
   ScreenWithConfigs,
@@ -126,6 +128,21 @@ const LINE_SEPARATORS = [
   { value: 'pipe', key: 'pipe' },
 ]
 
+// Default animation config for elements that may be missing it (backwards compatibility)
+const DEFAULT_ANIMATION_IN: AnimationConfig = {
+  type: 'fade',
+  duration: 300,
+  delay: 0,
+  easing: 'ease-out',
+}
+
+const DEFAULT_ANIMATION_OUT: AnimationConfig = {
+  type: 'fade',
+  duration: 200,
+  delay: 0,
+  easing: 'ease-in',
+}
+
 export function ScreenEditorSidebar({
   screen,
   contentType,
@@ -168,6 +185,7 @@ export function ScreenEditorSidebar({
   }
 
   // Get the currently selected element's config
+  // Ensures referenceText and personLabel always have animation configs (backwards compatibility)
   const getSelectedElementConfig = () => {
     if (!selectedElement) return null
 
@@ -181,13 +199,29 @@ export function ScreenEditorSidebar({
           ? { path: ['contentText'], config: config.contentText }
           : null
       case 'referenceText':
-        return 'referenceText' in config
-          ? { path: ['referenceText'], config: config.referenceText }
-          : null
+        if (!('referenceText' in config)) return null
+        // Ensure animation configs exist for backwards compatibility
+        const refConfig = config.referenceText as ReferenceTextConfig
+        return {
+          path: ['referenceText'],
+          config: {
+            ...refConfig,
+            animationIn: refConfig.animationIn ?? DEFAULT_ANIMATION_IN,
+            animationOut: refConfig.animationOut ?? DEFAULT_ANIMATION_OUT,
+          },
+        }
       case 'personLabel':
-        return 'personLabel' in config
-          ? { path: ['personLabel'], config: config.personLabel }
-          : null
+        if (!('personLabel' in config)) return null
+        // Ensure animation configs exist for backwards compatibility
+        const personConfig = config.personLabel as PersonLabelConfig
+        return {
+          path: ['personLabel'],
+          config: {
+            ...personConfig,
+            animationIn: personConfig.animationIn ?? DEFAULT_ANIMATION_IN,
+            animationOut: personConfig.animationOut ?? DEFAULT_ANIMATION_OUT,
+          },
+        }
       case 'clock':
         return 'clock' in config && config.clock
           ? { path: ['clock'], config: config.clock }
