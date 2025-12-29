@@ -6,6 +6,21 @@
   <component name="ChangeListManager">
     <list default="true" id="66517e3f-2e4e-43cc-880d-deb242368f0c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TODO.md" beforeDir="false" afterPath="$PROJECT_DIR$/TODO.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/hooks/useScrollIntoViewWithNeighbors.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/hooks/useScrollIntoViewWithNeighbors.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/schedules/components/BiblePassagePickerModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/schedules/components/BiblePassagePickerModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/schedules/components/InsertSlideModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/schedules/components/InsertSlideModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/schedules/components/ScheduleItemList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/schedules/components/ScheduleItemList.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/schedules/components/ScheduleItemSong.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/schedules/components/ScheduleItemSong.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/schedules/components/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/schedules/components/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/schedules/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/schedules/types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/songs/components/SongEditorModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/songs/components/SongEditorModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/drizzle/migrations/meta/_journal.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/drizzle/migrations/meta/_journal.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/schema/schedules.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/schema/schedules.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/schedules/addItemToSchedule.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/schedules/addItemToSchedule.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/schedules/getSchedules.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/schedules/getSchedules.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/schedules/importToQueue.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/schedules/importToQueue.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/schedules/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/schedules/types.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -69,6 +84,7 @@
     &quot;npm.fixtures:screens.executor&quot;: &quot;Run&quot;,
     &quot;npm.ios:run.executor&quot;: &quot;Run&quot;,
     &quot;npm.lint.executor&quot;: &quot;Run&quot;,
+    &quot;npm.tauri:build.executor&quot;: &quot;Run&quot;,
     &quot;npm.tauri:dev.executor&quot;: &quot;Run&quot;,
     &quot;npm.tsc:check.executor&quot;: &quot;Run&quot;,
     &quot;org.rust.first.attach.projects&quot;: &quot;true&quot;,
@@ -94,22 +110,12 @@
       <recent name="$PROJECT_DIR$" />
     </key>
   </component>
-  <component name="RunManager" selected="npm.ios:run">
+  <component name="RunManager" selected="npm.tauri:build">
     <configuration name="dev" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
       <package-json value="$PROJECT_DIR$/app/package.json" />
       <command value="run" />
       <scripts>
         <script value="dev" />
-      </scripts>
-      <node-interpreter value="project" />
-      <envs />
-      <method v="2" />
-    </configuration>
-    <configuration name="fixtures" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
-      <package-json value="$PROJECT_DIR$/app/package.json" />
-      <command value="run" />
-      <scripts>
-        <script value="fixtures" />
       </scripts>
       <node-interpreter value="project" />
       <envs />
@@ -135,6 +141,16 @@
       <envs />
       <method v="2" />
     </configuration>
+    <configuration name="tauri:build" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
+      <package-json value="$PROJECT_DIR$/app/package.json" />
+      <command value="run" />
+      <scripts>
+        <script value="tauri:build" />
+      </scripts>
+      <node-interpreter value="project" />
+      <envs />
+      <method v="2" />
+    </configuration>
     <configuration name="tsc:check" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
       <package-json value="$PROJECT_DIR$/app/package.json" />
       <command value="run" />
@@ -147,6 +163,7 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="npm.tauri:build" />
         <item itemvalue="npm.ios:run" />
         <item itemvalue="npm.dev" />
       </list>
@@ -175,7 +192,7 @@
       <workItem from="1764529520395" duration="23258000" />
       <workItem from="1765113262440" duration="193467000" />
       <workItem from="1766606925029" duration="959000" />
-      <workItem from="1766918516260" duration="9315000" />
+      <workItem from="1766918516260" duration="28567000" />
     </task>
     <servers />
   </component>

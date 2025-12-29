@@ -3,12 +3,41 @@ import type { SongSlide } from '../songs/types'
 /**
  * Schedule item types (same as queue)
  */
-export type ScheduleItemType = 'song' | 'slide'
+export type ScheduleItemType = 'song' | 'slide' | 'bible_passage'
 
 /**
  * Slide template types for standalone slides (same as queue)
  */
 export type SlideTemplate = 'announcement' | 'versete_tineri'
+
+/**
+ * Bible passage verse (nested within bible_passage schedule items)
+ */
+export interface ScheduleBiblePassageVerse {
+  id: number
+  verseId: number
+  reference: string
+  text: string
+  sortOrder: number
+}
+
+/**
+ * Versete Tineri entry (nested within versete_tineri slides)
+ */
+export interface ScheduleVerseteTineriEntry {
+  id: number
+  personName: string
+  translationId: number
+  bookCode: string
+  bookName: string
+  reference: string
+  text: string
+  startChapter: number
+  startVerse: number
+  endChapter: number
+  endVerse: number
+  sortOrder: number
+}
 
 /**
  * Schedule list item
@@ -39,6 +68,12 @@ export interface ScheduleItem {
   slides: SongSlide[]
   slideType: SlideTemplate | null
   slideContent: string | null
+  // Bible passage fields (present when itemType === 'bible_passage')
+  biblePassageReference: string | null
+  biblePassageTranslation: string | null
+  biblePassageVerses: ScheduleBiblePassageVerse[]
+  // Versete Tineri fields (present when itemType === 'slide' && slideType === 'versete_tineri')
+  verseteTineriEntries: ScheduleVerseteTineriEntry[]
   sortOrder: number
   createdAt: number
   updatedAt: number
@@ -61,6 +96,20 @@ export interface UpsertScheduleInput {
 }
 
 /**
+ * Single entry for Versete Tineri input
+ */
+export interface VerseteTineriEntryInput {
+  personName: string
+  translationId: number
+  bookCode: string
+  bookName: string
+  startChapter: number
+  startVerse: number
+  endChapter: number
+  endVerse: number
+}
+
+/**
  * Input for adding an item to a schedule
  */
 export interface AddToScheduleInput {
@@ -68,6 +117,19 @@ export interface AddToScheduleInput {
   slideType?: SlideTemplate
   slideContent?: string
   afterItemId?: number
+  // Bible passage fields
+  biblePassage?: {
+    translationId: number
+    translationAbbreviation: string
+    bookCode: string
+    bookName: string
+    startChapter: number
+    startVerse: number
+    endChapter: number
+    endVerse: number
+  }
+  // Versete Tineri entries
+  verseteTineriEntries?: VerseteTineriEntryInput[]
 }
 
 /**
@@ -75,7 +137,9 @@ export interface AddToScheduleInput {
  */
 export interface UpdateScheduleSlideInput {
   slideType: SlideTemplate
-  slideContent: string
+  slideContent?: string
+  // Versete Tineri entries (for versete_tineri slides)
+  verseteTineriEntries?: VerseteTineriEntryInput[]
 }
 
 /**
@@ -105,6 +169,19 @@ export interface ReplaceScheduleItemsInput {
     songId?: number
     slideType?: SlideTemplate
     slideContent?: string
+    // Bible passage fields
+    biblePassage?: {
+      translationId: number
+      translationAbbreviation: string
+      bookCode: string
+      bookName: string
+      startChapter: number
+      startVerse: number
+      endChapter: number
+      endVerse: number
+    }
+    // Versete Tineri entries
+    verseteTineriEntries?: VerseteTineriEntryInput[]
   }>
 }
 

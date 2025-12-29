@@ -92,14 +92,25 @@ export function BiblePassagePickerModal({
       return
     }
 
-    // Add Bible passage as an announcement slide with formatted reference
-    const content = `<p><strong>${escapeHtml(parsedResult.formattedReference!)}</strong></p>`
+    if (!selectedTranslation) {
+      showToast(t('messages.error'), 'error')
+      return
+    }
 
+    // Add Bible passage as a proper bible_passage item
     const result = await addItemMutation.mutateAsync({
       scheduleId,
       input: {
-        slideType: 'announcement',
-        slideContent: content,
+        biblePassage: {
+          translationId: selectedTranslation.id,
+          translationAbbreviation: selectedTranslation.abbreviation,
+          bookCode: parsedResult.bookCode!,
+          bookName: parsedResult.bookName!,
+          startChapter: parsedResult.startChapter!,
+          startVerse: parsedResult.startVerse!,
+          endChapter: parsedResult.endChapter!,
+          endVerse: parsedResult.endVerse!,
+        },
         afterItemId,
       },
     })
@@ -222,13 +233,4 @@ export function BiblePassagePickerModal({
       </div>
     </dialog>
   )
-}
-
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;')
 }

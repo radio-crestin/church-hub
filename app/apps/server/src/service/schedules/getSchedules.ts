@@ -1,10 +1,18 @@
 import { asc, desc, eq, sql } from 'drizzle-orm'
 
-import type { Schedule, ScheduleItem, ScheduleWithItems } from './types'
+import type {
+  Schedule,
+  ScheduleBiblePassageVerse,
+  ScheduleItem,
+  ScheduleVerseteTineriEntry,
+  ScheduleWithItems,
+} from './types'
 import { getDatabase } from '../../db'
 import {
+  scheduleBiblePassageVerses,
   scheduleItems,
   schedules,
+  scheduleVerseteTineriEntries,
   songCategories,
   songs,
 } from '../../db/schema'
@@ -16,6 +24,59 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
   if (level === 'debug' && !DEBUG) return
   // biome-ignore lint/suspicious/noConsole: logging utility
   console.log(`[${level.toUpperCase()}] [schedules] ${message}`)
+}
+
+/**
+ * Gets bible passage verses for a schedule item
+ */
+function getBiblePassageVerses(
+  scheduleItemId: number,
+): ScheduleBiblePassageVerse[] {
+  const db = getDatabase()
+  const verses = db
+    .select()
+    .from(scheduleBiblePassageVerses)
+    .where(eq(scheduleBiblePassageVerses.scheduleItemId, scheduleItemId))
+    .orderBy(asc(scheduleBiblePassageVerses.sortOrder))
+    .all()
+
+  return verses.map((v) => ({
+    id: v.id,
+    verseId: v.verseId,
+    reference: v.reference,
+    text: v.text,
+    sortOrder: v.sortOrder,
+  }))
+}
+
+/**
+ * Gets versete tineri entries for a schedule item
+ */
+function getVerseteTineriEntries(
+  scheduleItemId: number,
+): ScheduleVerseteTineriEntry[] {
+  const db = getDatabase()
+  const entries = db
+    .select()
+    .from(scheduleVerseteTineriEntries)
+    .where(eq(scheduleVerseteTineriEntries.scheduleItemId, scheduleItemId))
+    .orderBy(asc(scheduleVerseteTineriEntries.sortOrder))
+    .all()
+
+  return entries.map((e) => ({
+    id: e.id,
+    personName: e.personName,
+    translationId: e.translationId,
+    bookCode: e.bookCode,
+    bookName: e.bookName,
+    reference: e.reference,
+    text: e.text,
+    startChapter: e.startChapter,
+    startVerse: e.startVerse,
+    endChapter: e.endChapter,
+    endVerse: e.endVerse,
+    sortOrder: e.sortOrder,
+  }))
 }
 
 /**
@@ -89,6 +150,8 @@ export function getScheduleById(id: number): ScheduleWithItems | null {
         categoryName: songCategories.name,
         slideType: scheduleItems.slideType,
         slideContent: scheduleItems.slideContent,
+        biblePassageReference: scheduleItems.biblePassageReference,
+        biblePassageTranslation: scheduleItems.biblePassageTranslation,
         sortOrder: scheduleItems.sortOrder,
         createdAt: scheduleItems.createdAt,
         updatedAt: scheduleItems.updatedAt,
@@ -108,6 +171,18 @@ export function getScheduleById(id: number): ScheduleWithItems | null {
           ? getSlidesBySongId(record.songId)
           : []
 
+      // Fetch bible passage verses if this is a bible_passage item
+      const biblePassageVerses =
+        record.itemType === 'bible_passage'
+          ? getBiblePassageVerses(record.id)
+          : []
+
+      // Fetch versete tineri entries if this is a versete_tineri slide
+      const verseteTineriEntries =
+        record.itemType === 'slide' && record.slideType === 'versete_tineri'
+          ? getVerseteTineriEntries(record.id)
+          : []
+
       return {
         id: record.id,
         scheduleId: record.scheduleId,
@@ -122,6 +197,10 @@ export function getScheduleById(id: number): ScheduleWithItems | null {
           : null,
         slideType: record.slideType,
         slideContent: record.slideContent,
+        biblePassageReference: record.biblePassageReference,
+        biblePassageTranslation: record.biblePassageTranslation,
+        biblePassageVerses,
+        verseteTineriEntries,
         sortOrder: record.sortOrder,
         createdAt: Math.floor(record.createdAt.getTime() / 1000),
         updatedAt: Math.floor(record.updatedAt.getTime() / 1000),
@@ -165,6 +244,8 @@ export function getScheduleItemById(id: number): ScheduleItem | null {
         categoryName: songCategories.name,
         slideType: scheduleItems.slideType,
         slideContent: scheduleItems.slideContent,
+        biblePassageReference: scheduleItems.biblePassageReference,
+        biblePassageTranslation: scheduleItems.biblePassageTranslation,
         sortOrder: scheduleItems.sortOrder,
         createdAt: scheduleItems.createdAt,
         updatedAt: scheduleItems.updatedAt,
@@ -186,6 +267,18 @@ export function getScheduleItemById(id: number): ScheduleItem | null {
         ? getSlidesBySongId(record.songId)
         : []
 
+    // Fetch bible passage verses if this is a bible_passage item
+    const biblePassageVerses =
+      record.itemType === 'bible_passage'
+        ? getBiblePassageVerses(record.id)
+        : []
+
+    // Fetch versete tineri entries if this is a versete_tineri slide
+    const verseteTineriEntries =
+      record.itemType === 'slide' && record.slideType === 'versete_tineri'
+        ? getVerseteTineriEntries(record.id)
+        : []
+
     return {
       id: record.id,
       scheduleId: record.scheduleId,
@@ -200,6 +293,10 @@ export function getScheduleItemById(id: number): ScheduleItem | null {
         : null,
       slideType: record.slideType,
       slideContent: record.slideContent,
+      biblePassageReference: record.biblePassageReference,
+      biblePassageTranslation: record.biblePassageTranslation,
+      biblePassageVerses,
+      verseteTineriEntries,
       sortOrder: record.sortOrder,
       createdAt: Math.floor(record.createdAt.getTime() / 1000),
       updatedAt: Math.floor(record.updatedAt.getTime() / 1000),

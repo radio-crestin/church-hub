@@ -3,41 +3,40 @@ import {
   ChevronRight,
   GripVertical,
   MoreVertical,
-  Music,
   Pencil,
   Plus,
   Trash2,
+  Users,
 } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { ScheduleItem, SlideTemplate } from '../types'
 
-interface ScheduleItemSongProps {
+interface ScheduleItemVerseteTineriProps {
   item: ScheduleItem
   onRemove: () => void
-  onEditSong: () => void
+  onEditSlide: () => void
   onInsertSongAfter: () => void
-  onInsertSlideAfter: (template: SlideTemplate) => void
+  onInsertSlideAfter?: (template: SlideTemplate) => void
   dragHandleProps?: React.HTMLAttributes<HTMLDivElement>
 }
 
-export function ScheduleItemSong({
+export function ScheduleItemVerseteTineri({
   item,
   onRemove,
-  onEditSong,
+  onEditSlide,
   onInsertSongAfter,
-  onInsertSlideAfter,
   dragHandleProps,
-}: ScheduleItemSongProps) {
+}: ScheduleItemVerseteTineriProps) {
   const { t } = useTranslation('queue')
-  const [isExpanded, setIsExpanded] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
   return (
     <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-      {/* Song Header */}
+      {/* Header */}
       <div className="flex items-center gap-2 p-3">
         {/* Drag Handle */}
         <div
@@ -64,24 +63,27 @@ export function ScheduleItemSong({
           )}
         </button>
 
-        {/* Song Icon & Title - Clickable to edit */}
+        {/* Icon & Title - Clickable to edit */}
         <button
           type="button"
-          onClick={onEditSong}
+          onClick={onEditSlide}
           className="flex items-center gap-3 flex-1 min-w-0 text-left"
         >
-          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 flex items-center justify-center">
-            <Music size={16} />
+          <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-purple-100 dark:bg-purple-900/30">
+            <Users size={16} className="text-purple-600 dark:text-purple-400" />
           </div>
 
-          {/* Song Title & Info */}
+          {/* Title & Info */}
           <div className="flex-1 min-w-0">
-            <div className="font-medium text-sm truncate text-gray-900 dark:text-white">
-              {item.song?.title}
+            <div className="flex items-center gap-2">
+              <span className="font-medium text-sm truncate text-gray-900 dark:text-white">
+                {t('slideTemplates.versete_tineri')}
+              </span>
             </div>
             <div className="text-xs text-gray-500 dark:text-gray-400">
-              {item.slides.length} slides
-              {item.song?.categoryName && ` • ${item.song.categoryName}`}
+              {t('verseteTineri.entriesCount', {
+                count: item.verseteTineriEntries.length,
+              })}
             </div>
           </div>
         </button>
@@ -107,12 +109,12 @@ export function ScheduleItemSong({
                   type="button"
                   onClick={() => {
                     setShowMenu(false)
-                    onEditSong()
+                    onEditSlide()
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
                   <Pencil size={14} />
-                  {t('actions.editSong')}
+                  {t('actions.editSlide')}
                 </button>
                 <button
                   type="button"
@@ -143,21 +145,25 @@ export function ScheduleItemSong({
         </div>
       </div>
 
-      {/* Expanded Slides */}
-      {isExpanded && item.slides.length > 0 && (
+      {/* Expanded Entries */}
+      {isExpanded && item.verseteTineriEntries.length > 0 && (
         <div className="px-3 pb-3 space-y-1.5">
-          {item.slides.map((slide, idx) => (
+          {item.verseteTineriEntries.map((entry) => (
             <div
-              key={slide.id}
-              className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-sm"
+              key={entry.id}
+              className="p-2 rounded bg-gray-50 dark:bg-gray-700/50 text-sm"
             >
-              <span className="flex-shrink-0 w-5 h-5 rounded bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs flex items-center justify-center">
-                {idx + 1}
-              </span>
-              <span className="text-gray-600 dark:text-gray-400 line-clamp-1">
-                {slide.content.replace(/<[^>]*>/g, '').substring(0, 60)}
-                {slide.content.length > 60 ? '...' : ''}
-              </span>
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-medium text-purple-700 dark:text-purple-400">
+                  {entry.personName}
+                </span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  {entry.reference}
+                </span>
+              </div>
+              <div className="text-gray-600 dark:text-gray-300 line-clamp-2 text-xs">
+                {entry.text}
+              </div>
             </div>
           ))}
         </div>

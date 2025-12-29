@@ -53,6 +53,7 @@ export function SongEditorModal({
   const { t } = useTranslation(['songs', 'common'])
   const { showToast } = useToast()
   const dialogRef = useRef<HTMLDialogElement>(null)
+  const mouseDownTargetRef = useRef<EventTarget | null>(null)
 
   const { data: song, isLoading } = useSong(songId)
   const upsertMutation = useUpsertSong()
@@ -207,8 +208,16 @@ export function SongEditorModal({
     }
   }
 
+  const handleBackdropMouseDown = (e: React.MouseEvent<HTMLDialogElement>) => {
+    mouseDownTargetRef.current = e.target
+  }
+
   const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
-    if (e.target === dialogRef.current) {
+    // Only close if both mousedown and mouseup happened on the backdrop
+    if (
+      e.target === dialogRef.current &&
+      mouseDownTargetRef.current === dialogRef.current
+    ) {
       handleClose()
     }
   }
@@ -219,6 +228,7 @@ export function SongEditorModal({
     <dialog
       ref={dialogRef}
       onCancel={handleClose}
+      onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
       className="fixed inset-0 m-auto w-full max-w-4xl p-0 rounded-lg bg-white dark:bg-gray-800 backdrop:bg-black/50"
     >
