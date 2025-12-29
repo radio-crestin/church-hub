@@ -80,13 +80,16 @@ function SchedulesPage() {
                 type="button"
                 onClick={handleImportSchedule}
                 disabled={isImporting}
-                className="p-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 p-2 sm:px-4 sm:py-2 text-sm bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors disabled:opacity-50"
               >
                 {isImporting ? (
-                  <Loader2 size={20} className="animate-spin" />
+                  <Loader2 size={16} className="animate-spin" />
                 ) : (
-                  <Upload size={20} />
+                  <Upload size={16} />
                 )}
+                <span className="hidden sm:inline">
+                  {t('actions.importFromFile')}
+                </span>
               </button>
             </Tooltip>
             <Tooltip content={t('actions.create')} position="bottom">
@@ -98,9 +101,10 @@ function SchedulesPage() {
                     params: { scheduleId: 'new' },
                   })
                 }
-                className="p-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
+                className="flex items-center gap-2 p-2 sm:px-4 sm:py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
               >
-                <Plus size={20} />
+                <Plus size={16} />
+                <span className="hidden sm:inline">{t('actions.create')}</span>
               </button>
             </Tooltip>
           </div>

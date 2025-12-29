@@ -317,9 +317,10 @@ export function ScheduleEditor({
           <button
             type="button"
             onClick={onBack}
-            className="p-2 text-white bg-gray-600 hover:bg-gray-700 dark:bg-gray-500 dark:hover:bg-gray-600 rounded-lg transition-colors"
+            className="flex items-center gap-2 p-2 sm:px-3 sm:py-1.5 text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 dark:bg-gray-500 dark:hover:bg-gray-600 rounded-lg transition-colors"
           >
-            <ArrowLeft size={20} />
+            <ArrowLeft size={16} />
+            <span className="hidden sm:inline">{t('actions.back')}</span>
           </button>
         </Tooltip>
 
@@ -331,13 +332,16 @@ export function ScheduleEditor({
                   type="button"
                   onClick={handleOpenExportModal}
                   disabled={isSaving}
-                  className="p-2 text-white bg-gray-600 hover:bg-gray-700 dark:bg-gray-500 dark:hover:bg-gray-600 rounded-lg transition-colors disabled:opacity-50"
+                  className="flex items-center gap-2 p-2 sm:px-3 sm:py-1.5 text-sm text-white bg-gray-600 hover:bg-gray-700 dark:bg-gray-500 dark:hover:bg-gray-600 rounded-lg transition-colors disabled:opacity-50"
                 >
                   {isSaving ? (
-                    <Loader2 size={20} className="animate-spin" />
+                    <Loader2 size={16} className="animate-spin" />
                   ) : (
-                    <Download size={20} />
+                    <Download size={16} />
                   )}
+                  <span className="hidden sm:inline">
+                    {t('actions.saveToFile')}
+                  </span>
                 </button>
               </Tooltip>
               <Tooltip content={t('actions.importToQueue')} position="bottom">
@@ -345,13 +349,16 @@ export function ScheduleEditor({
                   type="button"
                   onClick={handleImportToQueue}
                   disabled={importToQueue.isPending}
-                  className="p-2 text-white bg-green-700 hover:bg-green-800 dark:bg-green-700 dark:hover:bg-green-800 rounded-lg transition-colors disabled:opacity-50"
+                  className="flex items-center gap-2 p-2 sm:px-3 sm:py-1.5 text-sm text-white bg-green-700 hover:bg-green-800 dark:bg-green-700 dark:hover:bg-green-800 rounded-lg transition-colors disabled:opacity-50"
                 >
                   {importToQueue.isPending ? (
-                    <Loader2 size={20} className="animate-spin" />
+                    <Loader2 size={16} className="animate-spin" />
                   ) : (
-                    <ListPlus size={20} />
+                    <ListPlus size={16} />
                   )}
+                  <span className="hidden sm:inline">
+                    {t('actions.importToQueue')}
+                  </span>
                 </button>
               </Tooltip>
               <Tooltip content={t('actions.delete')} position="bottom">
@@ -360,7 +367,7 @@ export function ScheduleEditor({
                   onClick={() => setShowDeleteConfirm(true)}
                   className="p-2 text-white bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 rounded-lg transition-colors"
                 >
-                  <Trash2 size={20} />
+                  <Trash2 size={16} />
                 </button>
               </Tooltip>
             </>
@@ -399,9 +406,12 @@ export function ScheduleEditor({
                 <button
                   type="button"
                   onClick={() => setShowEditAsText(true)}
-                  className="p-2 text-amber-900 bg-amber-400 hover:bg-amber-500 dark:text-amber-100 dark:bg-amber-700 dark:hover:bg-amber-600 rounded-lg transition-colors"
+                  className="flex items-center gap-2 p-2 sm:px-3 sm:py-1.5 text-sm text-amber-900 bg-amber-400 hover:bg-amber-500 dark:text-amber-100 dark:bg-amber-700 dark:hover:bg-amber-600 rounded-lg transition-colors"
                 >
-                  <FileText size={20} />
+                  <FileText size={16} />
+                  <span className="hidden sm:inline">
+                    {t('actions.editAsText')}
+                  </span>
                 </button>
               </Tooltip>
             )}
