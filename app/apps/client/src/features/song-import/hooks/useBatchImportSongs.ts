@@ -28,10 +28,19 @@ export function useBatchImportSongs() {
     let failedCount = 0
     let skippedCount = 0
 
+    const totalStart = performance.now()
+    // biome-ignore lint/suspicious/noConsole: performance logging
+    console.log(
+      `[PERF] Starting batch import of ${input.songs.length} songs in batches of ${BATCH_SIZE}`,
+    )
+
     try {
       // Process in batches to avoid overwhelming the server
+      let batchNum = 0
       for (let i = 0; i < input.songs.length; i += BATCH_SIZE) {
+        batchNum++
         const batch = input.songs.slice(i, i + BATCH_SIZE)
+        const batchStart = performance.now()
 
         const response = await fetch(`${getApiUrl()}/api/songs/batch`, {
           method: 'POST',
@@ -82,10 +91,22 @@ export function useBatchImportSongs() {
         failedCount += data.data.failedCount
         skippedCount += data.data.skippedCount
 
+        const batchTime = performance.now() - batchStart
+        // biome-ignore lint/suspicious/noConsole: performance logging
+        console.log(
+          `[PERF] Batch ${batchNum}: ${batchTime.toFixed(0)}ms for ${batch.length} songs (${(batchTime / batch.length).toFixed(2)}ms/song)`,
+        )
+
         // Update progress
         const processed = Math.min(i + BATCH_SIZE, input.songs.length)
         setProgress(Math.round((processed / input.songs.length) * 100))
       }
+
+      const totalTime = performance.now() - totalStart
+      // biome-ignore lint/suspicious/noConsole: performance logging
+      console.log(
+        `[PERF] Total import: ${totalTime.toFixed(0)}ms for ${input.songs.length} songs (${(totalTime / input.songs.length).toFixed(2)}ms/song avg)`,
+      )
 
       queryClient.invalidateQueries({ queryKey: ['songs'] })
     } finally {

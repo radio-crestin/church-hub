@@ -1,19 +1,32 @@
 import { fetch as tauriFetch } from '@tauri-apps/plugin-http'
 
+import { getApiUrl } from '~/config'
+
 const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-const fetchFn = isTauri ? tauriFetch : window.fetch.bind(window)
 
 /**
  * Downloads a file from a URL and returns it as an ArrayBuffer
+ * Uses Tauri fetch when available (no CORS), otherwise proxies through the server
  */
 export async function downloadFromUrl(
   url: string,
   onProgress?: (downloaded: number, total: number | null) => void,
 ): Promise<ArrayBuffer> {
-  const response = await fetchFn(url, {
-    method: 'GET',
-    redirect: 'follow',
-  })
+  let response: Response
+
+  if (isTauri) {
+    // Tauri mode: direct fetch (no CORS issues)
+    response = await tauriFetch(url, {
+      method: 'GET',
+      redirect: 'follow',
+    })
+  } else {
+    // Browser mode: use server proxy to bypass CORS
+    const proxyUrl = `${getApiUrl()}/api/proxy/download?url=${encodeURIComponent(url)}`
+    response = await fetch(proxyUrl, {
+      method: 'GET',
+    })
+  }
 
   if (!response.ok) {
     throw new Error(
