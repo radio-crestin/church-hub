@@ -155,7 +155,7 @@ export function FeedbackModal({
               <button
                 type="button"
                 onClick={handleContactClick}
-                className="px-4 py-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors font-medium"
+                className="px-4 py-2 border border-indigo-600 dark:border-indigo-400 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors font-medium"
               >
                 {t('common:contact.title')}
               </button>
