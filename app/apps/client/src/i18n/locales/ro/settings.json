@@ -495,6 +495,42 @@
     "debug": {
       "title": "Mod Depanare",
       "description": "Afișează panoul de depanare WebSocket cu starea conexiunii și numărul de mesaje"
+    },
+    "screens": {
+      "title": "Ecrane",
+      "description": "Configurează ecranele pentru diferite scopuri de afișare. Fiecare tip de ecran are propriile opțiuni de configurare.",
+      "addScreen": "Adaugă Ecran",
+      "noScreens": "Niciun ecran configurat",
+      "window": {
+        "open": "Fereastră",
+        "closed": "Închis"
+      },
+      "alwaysOnTop": {
+        "pin": "Fixează deasupra (mereu vizibil)",
+        "unpin": "Anulează fixarea",
+        "pinned": "Fereastra fixată deasupra",
+        "unpinned": "Fereastra nu mai este fixată",
+        "error": "Nu s-a putut actualiza setarea de fixare"
+      },
+      "actions": {
+        "openInNewTab": "Deschide în tab nou",
+        "copyUrl": "Copiază URL în clipboard",
+        "edit": "Editează ecran",
+        "delete": "Șterge ecran"
+      },
+      "toast": {
+        "created": "Ecran creat cu succes",
+        "saved": "Ecran salvat cu succes",
+        "deleted": "Ecran șters cu succes",
+        "windowOpened": "Fereastra \"{{name}}\" deschisă",
+        "windowClosed": "Fereastra \"{{name}}\" închisă",
+        "urlCopied": "URL copiat în clipboard",
+        "toggleError": "Nu s-a putut comuta fereastra",
+        "copyError": "Nu s-a putut copia URL-ul",
+        "deleteError": "Nu s-a putut șterge ecranul",
+        "saveError": "Nu s-a putut salva ecranul",
+        "createError": "Nu s-a putut crea ecranul"
+      }
     }
   }
 }

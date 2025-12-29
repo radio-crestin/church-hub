@@ -85,10 +85,11 @@ export async function openDisplayWindow(
   openMode: DisplayOpenMode,
   defaultFullscreen = false,
   screenName?: string,
+  alwaysOnTop = false,
 ): Promise<void> {
   // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
   console.log(
-    `[openDisplayWindow] Opening display ${displayId} in ${openMode} mode, isTauri: ${isTauri()}, defaultFullscreen: ${defaultFullscreen}`,
+    `[openDisplayWindow] Opening display ${displayId} in ${openMode} mode, isTauri: ${isTauri()}, defaultFullscreen: ${defaultFullscreen}, alwaysOnTop: ${alwaysOnTop}`,
   )
   const displayUrl = `${getFrontendUrl()}/screen/${displayId}`
   // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
@@ -106,6 +107,7 @@ export async function openDisplayWindow(
       displayUrl,
       defaultFullscreen,
       screenName,
+      alwaysOnTop,
     )
   }
 }
@@ -149,6 +151,7 @@ async function openInNativeWindow(
   url: string,
   defaultFullscreen = false,
   screenName?: string,
+  alwaysOnTop = false,
 ): Promise<void> {
   // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
   console.log(`[openInNativeWindow] called, isTauri: ${isTauri()}`)
@@ -177,7 +180,7 @@ async function openInNativeWindow(
         // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
         console.log('[openInNativeWindow] Window exists, focusing')
         await existingWindow.setFocus()
-        await existingWindow.setAlwaysOnTop(true)
+        await existingWindow.setAlwaysOnTop(alwaysOnTop)
         return
       }
 
@@ -198,7 +201,7 @@ async function openInNativeWindow(
         maximizable: true,
         minimizable: true,
         decorations: true,
-        alwaysOnTop: true,
+        alwaysOnTop,
         skipTaskbar: true,
         focus: true,
       }
@@ -382,6 +385,28 @@ export async function setDisplayFullscreen(
 }
 
 /**
+ * Sets always-on-top mode for a native display window
+ */
+export async function setDisplayAlwaysOnTop(
+  displayId: number,
+  alwaysOnTop: boolean,
+): Promise<void> {
+  if (!isTauri()) return
+
+  try {
+    const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow')
+    const windowLabel = `display-${displayId}`
+    const win = await WebviewWindow.getByLabel(windowLabel)
+    if (win) {
+      await win.setAlwaysOnTop(alwaysOnTop)
+    }
+  } catch (error) {
+    // biome-ignore lint/suspicious/noConsole: Error logging
+    console.error('[setDisplayAlwaysOnTop] Failed to set always on top:', error)
+  }
+}
+
+/**
  * Opens all active screens with native windows
  */
 export async function openAllActiveScreens(screens: Screen[]): Promise<void> {
@@ -394,6 +419,7 @@ export async function openAllActiveScreens(screens: Screen[]): Promise<void> {
       'native',
       screen.isFullscreen,
       screen.name,
+      screen.alwaysOnTop,
     )
     // Small delay to prevent overwhelming the system
     await new Promise((resolve) => setTimeout(resolve, 100))
