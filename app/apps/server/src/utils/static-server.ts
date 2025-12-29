@@ -1,7 +1,9 @@
 import { existsSync, statSync } from 'node:fs'
 import { extname, join } from 'node:path'
 
-const VITE_DEV_PORT = 8086
+// Vite dev server port - configurable via VITE_DEV_PORT env var
+// Default: 8086, but can be changed for worktrees to avoid port conflicts
+const VITE_DEV_PORT = process.env['VITE_DEV_PORT'] ?? '8086'
 
 const MIME_TYPES: Record<string, string> = {
   '.html': 'text/html',

@@ -131,5 +131,20 @@
     "presentationCount": "Times Presented",
     "lastManualEdit": "Last Manual Edit",
     "neverEdited": "Never edited"
+  },
+  "export": {
+    "formatTitle": "Export Format",
+    "formatDescription": "Choose the format you want to export this song to.",
+    "confirmButton": "Export",
+    "formats": {
+      "opensong": {
+        "name": "OpenSong",
+        "description": "XML format compatible with OpenSong and other worship software. Best for data portability."
+      },
+      "pptx": {
+        "name": "PowerPoint",
+        "description": "PPTX presentation with black background and centered white text. Ready for projection."
+      }
+    }
   }
 }

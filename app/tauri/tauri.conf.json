@@ -4,7 +4,7 @@
   "version": "0.1.4",
   "identifier": "com.church-hub",
   "build": {
-    "devUrl": "http://localhost:8086",
+    "devUrl": "http://localhost:3001",
     "beforeDevCommand": "npm run dev:apps",
     "beforeBuildCommand": "npm run build:apps",
     "frontendDist": "../apps/client/dist"
