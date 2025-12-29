@@ -1,14 +1,20 @@
 /**
- * Export format options
+ * Export destination format (how files are packaged)
  */
-export type ExportFormat = 'zip' | 'folder'
+export type ExportDestination = 'zip' | 'folder'
+
+/**
+ * File format for exported songs
+ */
+export type SongFileFormat = 'opensong' | 'pptx'
 
 /**
  * Options for exporting songs
  */
 export interface ExportOptions {
   categoryId: number | null // null = all songs
-  format: ExportFormat
+  destination: ExportDestination
+  fileFormat: SongFileFormat
 }
 
 /**
