@@ -309,18 +309,13 @@ export function ScreenManager() {
                   </span>
                 </Button>
                 <Button
-                  variant="ghost"
+                  variant={screen.alwaysOnTop ? 'primary' : 'secondary'}
                   size="sm"
                   onClick={() => handleToggleAlwaysOnTop(screen)}
                   title={
                     screen.alwaysOnTop
                       ? t('sections.screens.alwaysOnTop.unpin')
                       : t('sections.screens.alwaysOnTop.pin')
-                  }
-                  className={
-                    screen.alwaysOnTop
-                      ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20'
-                      : ''
                   }
                 >
                   {screen.alwaysOnTop ? (
