@@ -257,7 +257,7 @@ async function main() {
   } else if (shouldProxyToVite) {
     // biome-ignore lint/suspicious/noConsole: Startup logging
     console.log(
-      '[server] Proxying client requests to Vite dev server (port 8086)',
+      `[server] Proxying client requests to Vite dev server (port ${process.env['VITE_DEV_PORT'] ?? '8086'})`,
     )
   }
 

@@ -12,6 +12,10 @@ import packageJSON from './package.json'
 
 const host = process.env.TAURI_DEV_HOST
 
+// Vite dev server port - configurable via VITE_DEV_PORT env var
+// Default: 8086, but can be changed for worktrees to avoid port conflicts
+const VITE_PORT = Number.parseInt(process.env['VITE_DEV_PORT'] ?? '8086', 10)
+
 /**
  * Kill any process using a specific port.
  * Called synchronously before Vite starts to prevent "Port is already in use" errors.
@@ -65,8 +69,8 @@ function killPortProcess(port: number): void {
   }
 }
 
-// Kill any stale process on port 8086 before Vite starts
-killPortProcess(8086)
+// Kill any stale process on the Vite port before Vite starts
+killPortProcess(VITE_PORT)
 
 /**
  * Plugin to handle socket errors gracefully in development.
@@ -121,7 +125,7 @@ const config = defineConfig(({ mode }) => {
     clearScreen: false,
     // 2. tauri expects a fixed port, fail if that port is not available
     server: {
-      port: 8086,
+      port: VITE_PORT,
       strictPort: true,
       host: host || '0.0.0.0',
       // Always configure HMR to connect directly to Vite's port
@@ -129,7 +133,7 @@ const config = defineConfig(({ mode }) => {
       hmr: {
         protocol: 'ws',
         host: host || 'localhost',
-        port: 8086,
+        port: VITE_PORT,
       },
       watch: {
         ignored: ['**/src-tauri/**'],
