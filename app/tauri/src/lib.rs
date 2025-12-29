@@ -26,7 +26,9 @@ use std::path::PathBuf;
 #[cfg(desktop)]
 use std::sync::Arc;
 use std::time::Instant;
-use tauri::{Emitter, RunEvent};
+#[cfg(target_os = "macos")]
+use tauri::Emitter;
+use tauri::RunEvent;
 #[cfg(desktop)]
 use tauri::Manager;
 #[cfg(desktop)]
