@@ -12,215 +12,215 @@ export interface EmbeddedMigration {
 }
 
 export const EMBEDDED_JOURNAL = {
-  "version": "7",
-  "dialect": "sqlite",
-  "entries": [
+  version: '7',
+  dialect: 'sqlite',
+  entries: [
     {
-      "idx": 0,
-      "version": "6",
-      "when": 1765882083276,
-      "tag": "0000_initial_schema",
-      "breakpoints": true
+      idx: 0,
+      version: '6',
+      when: 1765882083276,
+      tag: '0000_initial_schema',
+      breakpoints: true,
     },
     {
-      "idx": 1,
-      "version": "6",
-      "when": 1765883977764,
-      "tag": "0001_dazzling_bruce_banner",
-      "breakpoints": true
+      idx: 1,
+      version: '6',
+      when: 1765883977764,
+      tag: '0001_dazzling_bruce_banner',
+      breakpoints: true,
     },
     {
-      "idx": 2,
-      "version": "6",
-      "when": 1765907330713,
-      "tag": "0002_add_bible_passage_support",
-      "breakpoints": true
+      idx: 2,
+      version: '6',
+      when: 1765907330713,
+      tag: '0002_add_bible_passage_support',
+      breakpoints: true,
     },
     {
-      "idx": 3,
-      "version": "6",
-      "when": 1766086800000,
-      "tag": "0003_add_versete_tineri_support",
-      "breakpoints": true
+      idx: 3,
+      version: '6',
+      when: 1766086800000,
+      tag: '0003_add_versete_tineri_support',
+      breakpoints: true,
     },
     {
-      "idx": 4,
-      "version": "6",
-      "when": 1766200000000,
-      "tag": "0004_add_screens_tables",
-      "breakpoints": true
+      idx: 4,
+      version: '6',
+      when: 1766200000000,
+      tag: '0004_add_screens_tables',
+      breakpoints: true,
     },
     {
-      "idx": 5,
-      "version": "6",
-      "when": 1766300000000,
-      "tag": "0005_drop_displays_table",
-      "breakpoints": true
+      idx: 5,
+      version: '6',
+      when: 1766300000000,
+      tag: '0005_drop_displays_table',
+      breakpoints: true,
     },
     {
-      "idx": 6,
-      "version": "6",
-      "when": 1766400000000,
-      "tag": "0006_add_livestream_tables",
-      "breakpoints": true
+      idx: 6,
+      version: '6',
+      when: 1766400000000,
+      tag: '0006_add_livestream_tables',
+      breakpoints: true,
     },
     {
-      "idx": 7,
-      "version": "6",
-      "when": 1766500000000,
-      "tag": "0007_add_scene_shortcuts",
-      "breakpoints": true
+      idx: 7,
+      version: '6',
+      when: 1766500000000,
+      tag: '0007_add_scene_shortcuts',
+      breakpoints: true,
     },
     {
-      "idx": 8,
-      "version": "6",
-      "when": 1766600000000,
-      "tag": "0008_add_broadcast_templates",
-      "breakpoints": true
+      idx: 8,
+      version: '6',
+      when: 1766600000000,
+      tag: '0008_add_broadcast_templates',
+      breakpoints: true,
     },
     {
-      "idx": 9,
-      "version": "6",
-      "when": 1766700000000,
-      "tag": "0009_add_selected_broadcast_config",
-      "breakpoints": true
+      idx: 9,
+      version: '6',
+      when: 1766700000000,
+      tag: '0009_add_selected_broadcast_config',
+      breakpoints: true,
     },
     {
-      "idx": 10,
-      "version": "6",
-      "when": 1766800000000,
-      "tag": "0010_add_stop_scene_name",
-      "breakpoints": true
+      idx: 10,
+      version: '6',
+      when: 1766800000000,
+      tag: '0010_add_stop_scene_name',
+      breakpoints: true,
     },
     {
-      "idx": 11,
-      "version": "6",
-      "when": 1766900000000,
-      "tag": "0011_add_scene_content_types",
-      "breakpoints": true
+      idx: 11,
+      version: '6',
+      when: 1766900000000,
+      tag: '0011_add_scene_content_types',
+      breakpoints: true,
     },
     {
-      "idx": 12,
-      "version": "6",
-      "when": 1767000000000,
-      "tag": "0012_add_mixer_tables",
-      "breakpoints": true
+      idx: 12,
+      version: '6',
+      when: 1767000000000,
+      tag: '0012_add_mixer_tables',
+      breakpoints: true,
     },
     {
-      "idx": 13,
-      "version": "6",
-      "when": 1767100000000,
-      "tag": "0013_add_temporary_content",
-      "breakpoints": true
+      idx: 13,
+      version: '6',
+      when: 1767100000000,
+      tag: '0013_add_temporary_content',
+      breakpoints: true,
     },
     {
-      "idx": 14,
-      "version": "6",
-      "when": 1767200000000,
-      "tag": "0014_add_highlight_colors",
-      "breakpoints": true
+      idx: 14,
+      version: '6',
+      when: 1767200000000,
+      tag: '0014_add_highlight_colors',
+      breakpoints: true,
     },
     {
-      "idx": 15,
-      "version": "6",
-      "when": 1767300000000,
-      "tag": "0015_add_schedule_bible_passage_versete_tineri",
-      "breakpoints": true
+      idx: 15,
+      version: '6',
+      when: 1767300000000,
+      tag: '0015_add_schedule_bible_passage_versete_tineri',
+      breakpoints: true,
     },
     {
-      "idx": 16,
-      "version": "6",
-      "when": 1767400000000,
-      "tag": "0016_add_always_on_top_to_screens",
-      "breakpoints": true
-    }
-  ]
+      idx: 16,
+      version: '6',
+      when: 1767400000000,
+      tag: '0016_add_always_on_top_to_screens',
+      breakpoints: true,
+    },
+  ],
 } as const
 
 export const EMBEDDED_MIGRATIONS: EmbeddedMigration[] = [
   {
-    "tag": "0000_initial_schema",
-    "sql": "CREATE TABLE `app_settings` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`key` text NOT NULL,\n\t`value` text NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX `app_settings_key_unique` ON `app_settings` (`key`);--> statement-breakpoint\nCREATE INDEX `idx_app_settings_key` ON `app_settings` (`key`);--> statement-breakpoint\nCREATE TABLE `cache_metadata` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`key` text NOT NULL,\n\t`value` text NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX `cache_metadata_key_unique` ON `cache_metadata` (`key`);--> statement-breakpoint\nCREATE INDEX `idx_cache_metadata_key` ON `cache_metadata` (`key`);--> statement-breakpoint\nCREATE TABLE `user_preferences` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`key` text NOT NULL,\n\t`value` text NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX `user_preferences_key_unique` ON `user_preferences` (`key`);--> statement-breakpoint\nCREATE INDEX `idx_user_preferences_key` ON `user_preferences` (`key`);--> statement-breakpoint\nCREATE TABLE `app_sessions` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`session_token` text NOT NULL,\n\t`session_token_hash` text NOT NULL,\n\t`name` text DEFAULT 'Local Admin' NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`last_used_at` integer\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX `app_sessions_session_token_unique` ON `app_sessions` (`session_token`);--> statement-breakpoint\nCREATE UNIQUE INDEX `app_sessions_session_token_hash_unique` ON `app_sessions` (`session_token_hash`);--> statement-breakpoint\nCREATE INDEX `idx_app_sessions_token_hash` ON `app_sessions` (`session_token_hash`);--> statement-breakpoint\nCREATE TABLE `role_permissions` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`role_id` integer NOT NULL,\n\t`permission` text NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tFOREIGN KEY (`role_id`) REFERENCES `roles`(`id`) ON UPDATE no action ON DELETE cascade\n);\n--> statement-breakpoint\nCREATE INDEX `idx_role_permissions_role_id` ON `role_permissions` (`role_id`);--> statement-breakpoint\nCREATE UNIQUE INDEX `role_permission_unique` ON `role_permissions` (`role_id`,`permission`);--> statement-breakpoint\nCREATE TABLE `roles` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`name` text NOT NULL,\n\t`is_system` integer DEFAULT false NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX `roles_name_unique` ON `roles` (`name`);--> statement-breakpoint\nCREATE INDEX `idx_roles_name` ON `roles` (`name`);--> statement-breakpoint\nCREATE TABLE `user_permissions` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`user_id` integer NOT NULL,\n\t`permission` text NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tFOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade\n);\n--> statement-breakpoint\nCREATE INDEX `idx_user_permissions_user_id` ON `user_permissions` (`user_id`);--> statement-breakpoint\nCREATE UNIQUE INDEX `user_permission_unique` ON `user_permissions` (`user_id`,`permission`);--> statement-breakpoint\nCREATE TABLE `users` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`name` text NOT NULL,\n\t`token` text NOT NULL,\n\t`token_hash` text NOT NULL,\n\t`is_active` integer DEFAULT true NOT NULL,\n\t`role_id` integer,\n\t`last_used_at` integer,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tFOREIGN KEY (`role_id`) REFERENCES `roles`(`id`) ON UPDATE no action ON DELETE set null\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX `users_token_hash_unique` ON `users` (`token_hash`);--> statement-breakpoint\nCREATE INDEX `idx_users_token_hash` ON `users` (`token_hash`);--> statement-breakpoint\nCREATE INDEX `idx_users_is_active` ON `users` (`is_active`);--> statement-breakpoint\nCREATE INDEX `idx_users_role_id` ON `users` (`role_id`);--> statement-breakpoint\nCREATE TABLE `bible_books` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`translation_id` integer NOT NULL,\n\t`book_code` text NOT NULL,\n\t`book_name` text NOT NULL,\n\t`book_order` integer NOT NULL,\n\t`chapter_count` integer DEFAULT 0 NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tFOREIGN KEY (`translation_id`) REFERENCES `bible_translations`(`id`) ON UPDATE no action ON DELETE cascade\n);\n--> statement-breakpoint\nCREATE INDEX `idx_bible_books_translation_id` ON `bible_books` (`translation_id`);--> statement-breakpoint\nCREATE INDEX `idx_bible_books_order` ON `bible_books` (`translation_id`,`book_order`);--> statement-breakpoint\nCREATE UNIQUE INDEX `bible_books_translation_book` ON `bible_books` (`translation_id`,`book_code`);--> statement-breakpoint\nCREATE TABLE `bible_translations` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`name` text NOT NULL,\n\t`abbreviation` text NOT NULL,\n\t`language` text NOT NULL,\n\t`source_filename` text,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX `bible_translations_abbreviation_unique` ON `bible_translations` (`abbreviation`);--> statement-breakpoint\nCREATE INDEX `idx_bible_translations_abbreviation` ON `bible_translations` (`abbreviation`);--> statement-breakpoint\nCREATE TABLE `bible_verses` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`translation_id` integer NOT NULL,\n\t`book_id` integer NOT NULL,\n\t`chapter` integer NOT NULL,\n\t`verse` integer NOT NULL,\n\t`text` text NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tFOREIGN KEY (`translation_id`) REFERENCES `bible_translations`(`id`) ON UPDATE no action ON DELETE cascade,\n\tFOREIGN KEY (`book_id`) REFERENCES `bible_books`(`id`) ON UPDATE no action ON DELETE cascade\n);\n--> statement-breakpoint\nCREATE INDEX `idx_bible_verses_lookup` ON `bible_verses` (`book_id`,`chapter`,`verse`);--> statement-breakpoint\nCREATE INDEX `idx_bible_verses_translation` ON `bible_verses` (`translation_id`);--> statement-breakpoint\nCREATE UNIQUE INDEX `bible_verses_unique` ON `bible_verses` (`translation_id`,`book_id`,`chapter`,`verse`);--> statement-breakpoint\nCREATE TABLE `displays` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`name` text NOT NULL,\n\t`is_active` integer DEFAULT true NOT NULL,\n\t`open_mode` text DEFAULT 'browser' NOT NULL,\n\t`is_fullscreen` integer DEFAULT false NOT NULL,\n\t`theme` text DEFAULT '{}' NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE INDEX `idx_displays_is_active` ON `displays` (`is_active`);--> statement-breakpoint\nCREATE TABLE `presentation_queue` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`item_type` text NOT NULL,\n\t`song_id` integer,\n\t`slide_type` text,\n\t`slide_content` text,\n\t`sort_order` integer DEFAULT 0 NOT NULL,\n\t`is_expanded` integer DEFAULT true NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tFOREIGN KEY (`song_id`) REFERENCES `songs`(`id`) ON UPDATE no action ON DELETE cascade\n);\n--> statement-breakpoint\nCREATE INDEX `idx_presentation_queue_sort_order` ON `presentation_queue` (`sort_order`);--> statement-breakpoint\nCREATE INDEX `idx_presentation_queue_song_id` ON `presentation_queue` (`song_id`);--> statement-breakpoint\nCREATE TABLE `presentation_state` (\n\t`id` integer PRIMARY KEY NOT NULL,\n\t`is_presenting` integer DEFAULT false NOT NULL,\n\t`is_hidden` integer DEFAULT false NOT NULL,\n\t`current_queue_item_id` integer,\n\t`current_song_slide_id` integer,\n\t`last_song_slide_id` integer,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tFOREIGN KEY (`current_queue_item_id`) REFERENCES `presentation_queue`(`id`) ON UPDATE no action ON DELETE set null,\n\tFOREIGN KEY (`current_song_slide_id`) REFERENCES `song_slides`(`id`) ON UPDATE no action ON DELETE set null,\n\tFOREIGN KEY (`last_song_slide_id`) REFERENCES `song_slides`(`id`) ON UPDATE no action ON DELETE set null\n);\n--> statement-breakpoint\nCREATE TABLE `schedule_items` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`schedule_id` integer NOT NULL,\n\t`item_type` text NOT NULL,\n\t`song_id` integer,\n\t`slide_type` text,\n\t`slide_content` text,\n\t`sort_order` integer DEFAULT 0 NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tFOREIGN KEY (`schedule_id`) REFERENCES `schedules`(`id`) ON UPDATE no action ON DELETE cascade,\n\tFOREIGN KEY (`song_id`) REFERENCES `songs`(`id`) ON UPDATE no action ON DELETE cascade\n);\n--> statement-breakpoint\nCREATE INDEX `idx_schedule_items_schedule_id` ON `schedule_items` (`schedule_id`);--> statement-breakpoint\nCREATE INDEX `idx_schedule_items_sort_order` ON `schedule_items` (`sort_order`);--> statement-breakpoint\nCREATE INDEX `idx_schedule_items_song_id` ON `schedule_items` (`song_id`);--> statement-breakpoint\nCREATE TABLE `schedules` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`title` text NOT NULL,\n\t`description` text,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE INDEX `idx_schedules_title` ON `schedules` (`title`);--> statement-breakpoint\nCREATE TABLE `song_categories` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`name` text NOT NULL,\n\t`priority` integer DEFAULT 1 NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX `song_categories_name_unique` ON `song_categories` (`name`);--> statement-breakpoint\nCREATE INDEX `idx_song_categories_name` ON `song_categories` (`name`);--> statement-breakpoint\nCREATE TABLE `song_slides` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`song_id` integer NOT NULL,\n\t`content` text NOT NULL,\n\t`label` text,\n\t`sort_order` integer DEFAULT 0 NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tFOREIGN KEY (`song_id`) REFERENCES `songs`(`id`) ON UPDATE no action ON DELETE cascade\n);\n--> statement-breakpoint\nCREATE INDEX `idx_song_slides_song_id` ON `song_slides` (`song_id`);--> statement-breakpoint\nCREATE INDEX `idx_song_slides_sort_order` ON `song_slides` (`sort_order`);--> statement-breakpoint\nCREATE TABLE `songs` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`title` text NOT NULL,\n\t`category_id` integer,\n\t`source_filename` text,\n\t`author` text,\n\t`copyright` text,\n\t`ccli` text,\n\t`key` text,\n\t`tempo` text,\n\t`time_signature` text,\n\t`theme` text,\n\t`alt_theme` text,\n\t`hymn_number` text,\n\t`key_line` text,\n\t`presentation_order` text,\n\t`presentation_count` integer DEFAULT 0 NOT NULL,\n\t`last_manual_edit` integer,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tFOREIGN KEY (`category_id`) REFERENCES `song_categories`(`id`) ON UPDATE no action ON DELETE set null\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX `songs_title_unique` ON `songs` (`title`);--> statement-breakpoint\nCREATE INDEX `idx_songs_title` ON `songs` (`title`);--> statement-breakpoint\nCREATE INDEX `idx_songs_category_id` ON `songs` (`category_id`);",
-    "when": 1765882083276
+    tag: '0000_initial_schema',
+    sql: "CREATE TABLE `app_settings` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`key` text NOT NULL,\n\t`value` text NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX `app_settings_key_unique` ON `app_settings` (`key`);--> statement-breakpoint\nCREATE INDEX `idx_app_settings_key` ON `app_settings` (`key`);--> statement-breakpoint\nCREATE TABLE `cache_metadata` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`key` text NOT NULL,\n\t`value` text NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX `cache_metadata_key_unique` ON `cache_metadata` (`key`);--> statement-breakpoint\nCREATE INDEX `idx_cache_metadata_key` ON `cache_metadata` (`key`);--> statement-breakpoint\nCREATE TABLE `user_preferences` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`key` text NOT NULL,\n\t`value` text NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX `user_preferences_key_unique` ON `user_preferences` (`key`);--> statement-breakpoint\nCREATE INDEX `idx_user_preferences_key` ON `user_preferences` (`key`);--> statement-breakpoint\nCREATE TABLE `app_sessions` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`session_token` text NOT NULL,\n\t`session_token_hash` text NOT NULL,\n\t`name` text DEFAULT 'Local Admin' NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`last_used_at` integer\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX `app_sessions_session_token_unique` ON `app_sessions` (`session_token`);--> statement-breakpoint\nCREATE UNIQUE INDEX `app_sessions_session_token_hash_unique` ON `app_sessions` (`session_token_hash`);--> statement-breakpoint\nCREATE INDEX `idx_app_sessions_token_hash` ON `app_sessions` (`session_token_hash`);--> statement-breakpoint\nCREATE TABLE `role_permissions` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`role_id` integer NOT NULL,\n\t`permission` text NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tFOREIGN KEY (`role_id`) REFERENCES `roles`(`id`) ON UPDATE no action ON DELETE cascade\n);\n--> statement-breakpoint\nCREATE INDEX `idx_role_permissions_role_id` ON `role_permissions` (`role_id`);--> statement-breakpoint\nCREATE UNIQUE INDEX `role_permission_unique` ON `role_permissions` (`role_id`,`permission`);--> statement-breakpoint\nCREATE TABLE `roles` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`name` text NOT NULL,\n\t`is_system` integer DEFAULT false NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX `roles_name_unique` ON `roles` (`name`);--> statement-breakpoint\nCREATE INDEX `idx_roles_name` ON `roles` (`name`);--> statement-breakpoint\nCREATE TABLE `user_permissions` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`user_id` integer NOT NULL,\n\t`permission` text NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tFOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade\n);\n--> statement-breakpoint\nCREATE INDEX `idx_user_permissions_user_id` ON `user_permissions` (`user_id`);--> statement-breakpoint\nCREATE UNIQUE INDEX `user_permission_unique` ON `user_permissions` (`user_id`,`permission`);--> statement-breakpoint\nCREATE TABLE `users` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`name` text NOT NULL,\n\t`token` text NOT NULL,\n\t`token_hash` text NOT NULL,\n\t`is_active` integer DEFAULT true NOT NULL,\n\t`role_id` integer,\n\t`last_used_at` integer,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tFOREIGN KEY (`role_id`) REFERENCES `roles`(`id`) ON UPDATE no action ON DELETE set null\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX `users_token_hash_unique` ON `users` (`token_hash`);--> statement-breakpoint\nCREATE INDEX `idx_users_token_hash` ON `users` (`token_hash`);--> statement-breakpoint\nCREATE INDEX `idx_users_is_active` ON `users` (`is_active`);--> statement-breakpoint\nCREATE INDEX `idx_users_role_id` ON `users` (`role_id`);--> statement-breakpoint\nCREATE TABLE `bible_books` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`translation_id` integer NOT NULL,\n\t`book_code` text NOT NULL,\n\t`book_name` text NOT NULL,\n\t`book_order` integer NOT NULL,\n\t`chapter_count` integer DEFAULT 0 NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tFOREIGN KEY (`translation_id`) REFERENCES `bible_translations`(`id`) ON UPDATE no action ON DELETE cascade\n);\n--> statement-breakpoint\nCREATE INDEX `idx_bible_books_translation_id` ON `bible_books` (`translation_id`);--> statement-breakpoint\nCREATE INDEX `idx_bible_books_order` ON `bible_books` (`translation_id`,`book_order`);--> statement-breakpoint\nCREATE UNIQUE INDEX `bible_books_translation_book` ON `bible_books` (`translation_id`,`book_code`);--> statement-breakpoint\nCREATE TABLE `bible_translations` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`name` text NOT NULL,\n\t`abbreviation` text NOT NULL,\n\t`language` text NOT NULL,\n\t`source_filename` text,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX `bible_translations_abbreviation_unique` ON `bible_translations` (`abbreviation`);--> statement-breakpoint\nCREATE INDEX `idx_bible_translations_abbreviation` ON `bible_translations` (`abbreviation`);--> statement-breakpoint\nCREATE TABLE `bible_verses` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`translation_id` integer NOT NULL,\n\t`book_id` integer NOT NULL,\n\t`chapter` integer NOT NULL,\n\t`verse` integer NOT NULL,\n\t`text` text NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tFOREIGN KEY (`translation_id`) REFERENCES `bible_translations`(`id`) ON UPDATE no action ON DELETE cascade,\n\tFOREIGN KEY (`book_id`) REFERENCES `bible_books`(`id`) ON UPDATE no action ON DELETE cascade\n);\n--> statement-breakpoint\nCREATE INDEX `idx_bible_verses_lookup` ON `bible_verses` (`book_id`,`chapter`,`verse`);--> statement-breakpoint\nCREATE INDEX `idx_bible_verses_translation` ON `bible_verses` (`translation_id`);--> statement-breakpoint\nCREATE UNIQUE INDEX `bible_verses_unique` ON `bible_verses` (`translation_id`,`book_id`,`chapter`,`verse`);--> statement-breakpoint\nCREATE TABLE `displays` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`name` text NOT NULL,\n\t`is_active` integer DEFAULT true NOT NULL,\n\t`open_mode` text DEFAULT 'browser' NOT NULL,\n\t`is_fullscreen` integer DEFAULT false NOT NULL,\n\t`theme` text DEFAULT '{}' NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE INDEX `idx_displays_is_active` ON `displays` (`is_active`);--> statement-breakpoint\nCREATE TABLE `presentation_queue` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`item_type` text NOT NULL,\n\t`song_id` integer,\n\t`slide_type` text,\n\t`slide_content` text,\n\t`sort_order` integer DEFAULT 0 NOT NULL,\n\t`is_expanded` integer DEFAULT true NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tFOREIGN KEY (`song_id`) REFERENCES `songs`(`id`) ON UPDATE no action ON DELETE cascade\n);\n--> statement-breakpoint\nCREATE INDEX `idx_presentation_queue_sort_order` ON `presentation_queue` (`sort_order`);--> statement-breakpoint\nCREATE INDEX `idx_presentation_queue_song_id` ON `presentation_queue` (`song_id`);--> statement-breakpoint\nCREATE TABLE `presentation_state` (\n\t`id` integer PRIMARY KEY NOT NULL,\n\t`is_presenting` integer DEFAULT false NOT NULL,\n\t`is_hidden` integer DEFAULT false NOT NULL,\n\t`current_queue_item_id` integer,\n\t`current_song_slide_id` integer,\n\t`last_song_slide_id` integer,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tFOREIGN KEY (`current_queue_item_id`) REFERENCES `presentation_queue`(`id`) ON UPDATE no action ON DELETE set null,\n\tFOREIGN KEY (`current_song_slide_id`) REFERENCES `song_slides`(`id`) ON UPDATE no action ON DELETE set null,\n\tFOREIGN KEY (`last_song_slide_id`) REFERENCES `song_slides`(`id`) ON UPDATE no action ON DELETE set null\n);\n--> statement-breakpoint\nCREATE TABLE `schedule_items` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`schedule_id` integer NOT NULL,\n\t`item_type` text NOT NULL,\n\t`song_id` integer,\n\t`slide_type` text,\n\t`slide_content` text,\n\t`sort_order` integer DEFAULT 0 NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tFOREIGN KEY (`schedule_id`) REFERENCES `schedules`(`id`) ON UPDATE no action ON DELETE cascade,\n\tFOREIGN KEY (`song_id`) REFERENCES `songs`(`id`) ON UPDATE no action ON DELETE cascade\n);\n--> statement-breakpoint\nCREATE INDEX `idx_schedule_items_schedule_id` ON `schedule_items` (`schedule_id`);--> statement-breakpoint\nCREATE INDEX `idx_schedule_items_sort_order` ON `schedule_items` (`sort_order`);--> statement-breakpoint\nCREATE INDEX `idx_schedule_items_song_id` ON `schedule_items` (`song_id`);--> statement-breakpoint\nCREATE TABLE `schedules` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`title` text NOT NULL,\n\t`description` text,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE INDEX `idx_schedules_title` ON `schedules` (`title`);--> statement-breakpoint\nCREATE TABLE `song_categories` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`name` text NOT NULL,\n\t`priority` integer DEFAULT 1 NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX `song_categories_name_unique` ON `song_categories` (`name`);--> statement-breakpoint\nCREATE INDEX `idx_song_categories_name` ON `song_categories` (`name`);--> statement-breakpoint\nCREATE TABLE `song_slides` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`song_id` integer NOT NULL,\n\t`content` text NOT NULL,\n\t`label` text,\n\t`sort_order` integer DEFAULT 0 NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tFOREIGN KEY (`song_id`) REFERENCES `songs`(`id`) ON UPDATE no action ON DELETE cascade\n);\n--> statement-breakpoint\nCREATE INDEX `idx_song_slides_song_id` ON `song_slides` (`song_id`);--> statement-breakpoint\nCREATE INDEX `idx_song_slides_sort_order` ON `song_slides` (`sort_order`);--> statement-breakpoint\nCREATE TABLE `songs` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`title` text NOT NULL,\n\t`category_id` integer,\n\t`source_filename` text,\n\t`author` text,\n\t`copyright` text,\n\t`ccli` text,\n\t`key` text,\n\t`tempo` text,\n\t`time_signature` text,\n\t`theme` text,\n\t`alt_theme` text,\n\t`hymn_number` text,\n\t`key_line` text,\n\t`presentation_order` text,\n\t`presentation_count` integer DEFAULT 0 NOT NULL,\n\t`last_manual_edit` integer,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tFOREIGN KEY (`category_id`) REFERENCES `song_categories`(`id`) ON UPDATE no action ON DELETE set null\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX `songs_title_unique` ON `songs` (`title`);--> statement-breakpoint\nCREATE INDEX `idx_songs_title` ON `songs` (`title`);--> statement-breakpoint\nCREATE INDEX `idx_songs_category_id` ON `songs` (`category_id`);",
+    when: 1765882083276,
   },
   {
-    "tag": "0001_dazzling_bruce_banner",
-    "sql": "ALTER TABLE `presentation_queue` ADD `bible_verse_id` integer REFERENCES bible_verses(id);--> statement-breakpoint\nALTER TABLE `presentation_queue` ADD `bible_reference` text;--> statement-breakpoint\nALTER TABLE `presentation_queue` ADD `bible_text` text;--> statement-breakpoint\nALTER TABLE `presentation_queue` ADD `bible_translation` text;--> statement-breakpoint\nCREATE INDEX `idx_presentation_queue_bible_verse_id` ON `presentation_queue` (`bible_verse_id`);",
-    "when": 1765883977764
+    tag: '0001_dazzling_bruce_banner',
+    sql: 'ALTER TABLE `presentation_queue` ADD `bible_verse_id` integer REFERENCES bible_verses(id);--> statement-breakpoint\nALTER TABLE `presentation_queue` ADD `bible_reference` text;--> statement-breakpoint\nALTER TABLE `presentation_queue` ADD `bible_text` text;--> statement-breakpoint\nALTER TABLE `presentation_queue` ADD `bible_translation` text;--> statement-breakpoint\nCREATE INDEX `idx_presentation_queue_bible_verse_id` ON `presentation_queue` (`bible_verse_id`);',
+    when: 1765883977764,
   },
   {
-    "tag": "0002_add_bible_passage_support",
-    "sql": "CREATE TABLE `bible_passage_verses` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`queue_item_id` integer,\n\t`verse_id` integer NOT NULL,\n\t`reference` text NOT NULL,\n\t`text` text NOT NULL,\n\t`sort_order` integer DEFAULT 0 NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tFOREIGN KEY (`queue_item_id`) REFERENCES `presentation_queue`(`id`) ON UPDATE no action ON DELETE cascade,\n\tFOREIGN KEY (`verse_id`) REFERENCES `bible_verses`(`id`) ON UPDATE no action ON DELETE cascade\n);\n--> statement-breakpoint\nCREATE INDEX `idx_bible_passage_verses_queue_item_id` ON `bible_passage_verses` (`queue_item_id`);--> statement-breakpoint\nCREATE INDEX `idx_bible_passage_verses_sort_order` ON `bible_passage_verses` (`sort_order`);--> statement-breakpoint\nALTER TABLE `presentation_queue` ADD `bible_passage_reference` text;--> statement-breakpoint\nALTER TABLE `presentation_queue` ADD `bible_passage_translation` text;--> statement-breakpoint\nALTER TABLE `presentation_state` ADD `current_bible_passage_verse_id` integer REFERENCES bible_passage_verses(id);",
-    "when": 1765907330713
+    tag: '0002_add_bible_passage_support',
+    sql: 'CREATE TABLE `bible_passage_verses` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`queue_item_id` integer,\n\t`verse_id` integer NOT NULL,\n\t`reference` text NOT NULL,\n\t`text` text NOT NULL,\n\t`sort_order` integer DEFAULT 0 NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tFOREIGN KEY (`queue_item_id`) REFERENCES `presentation_queue`(`id`) ON UPDATE no action ON DELETE cascade,\n\tFOREIGN KEY (`verse_id`) REFERENCES `bible_verses`(`id`) ON UPDATE no action ON DELETE cascade\n);\n--> statement-breakpoint\nCREATE INDEX `idx_bible_passage_verses_queue_item_id` ON `bible_passage_verses` (`queue_item_id`);--> statement-breakpoint\nCREATE INDEX `idx_bible_passage_verses_sort_order` ON `bible_passage_verses` (`sort_order`);--> statement-breakpoint\nALTER TABLE `presentation_queue` ADD `bible_passage_reference` text;--> statement-breakpoint\nALTER TABLE `presentation_queue` ADD `bible_passage_translation` text;--> statement-breakpoint\nALTER TABLE `presentation_state` ADD `current_bible_passage_verse_id` integer REFERENCES bible_passage_verses(id);',
+    when: 1765907330713,
   },
   {
-    "tag": "0003_add_versete_tineri_support",
-    "sql": "CREATE TABLE `versete_tineri_entries` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`queue_item_id` integer NOT NULL,\n\t`person_name` text NOT NULL,\n\t`translation_id` integer NOT NULL,\n\t`book_code` text NOT NULL,\n\t`book_name` text NOT NULL,\n\t`reference` text NOT NULL,\n\t`text` text NOT NULL,\n\t`start_chapter` integer NOT NULL,\n\t`start_verse` integer NOT NULL,\n\t`end_chapter` integer NOT NULL,\n\t`end_verse` integer NOT NULL,\n\t`sort_order` integer DEFAULT 0 NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tFOREIGN KEY (`queue_item_id`) REFERENCES `presentation_queue`(`id`) ON UPDATE no action ON DELETE cascade\n);\n--> statement-breakpoint\nCREATE INDEX `idx_versete_tineri_entries_queue_item_id` ON `versete_tineri_entries` (`queue_item_id`);--> statement-breakpoint\nCREATE INDEX `idx_versete_tineri_entries_sort_order` ON `versete_tineri_entries` (`sort_order`);--> statement-breakpoint\nALTER TABLE `presentation_state` ADD `current_versete_tineri_entry_id` integer REFERENCES versete_tineri_entries(id);\n",
-    "when": 1766086800000
+    tag: '0003_add_versete_tineri_support',
+    sql: 'CREATE TABLE `versete_tineri_entries` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`queue_item_id` integer NOT NULL,\n\t`person_name` text NOT NULL,\n\t`translation_id` integer NOT NULL,\n\t`book_code` text NOT NULL,\n\t`book_name` text NOT NULL,\n\t`reference` text NOT NULL,\n\t`text` text NOT NULL,\n\t`start_chapter` integer NOT NULL,\n\t`start_verse` integer NOT NULL,\n\t`end_chapter` integer NOT NULL,\n\t`end_verse` integer NOT NULL,\n\t`sort_order` integer DEFAULT 0 NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tFOREIGN KEY (`queue_item_id`) REFERENCES `presentation_queue`(`id`) ON UPDATE no action ON DELETE cascade\n);\n--> statement-breakpoint\nCREATE INDEX `idx_versete_tineri_entries_queue_item_id` ON `versete_tineri_entries` (`queue_item_id`);--> statement-breakpoint\nCREATE INDEX `idx_versete_tineri_entries_sort_order` ON `versete_tineri_entries` (`sort_order`);--> statement-breakpoint\nALTER TABLE `presentation_state` ADD `current_versete_tineri_entry_id` integer REFERENCES versete_tineri_entries(id);\n',
+    when: 1766086800000,
   },
   {
-    "tag": "0004_add_screens_tables",
-    "sql": "CREATE TABLE `screens` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`name` text NOT NULL,\n\t`type` text DEFAULT 'primary' NOT NULL,\n\t`is_active` integer DEFAULT true NOT NULL,\n\t`open_mode` text DEFAULT 'browser' NOT NULL,\n\t`is_fullscreen` integer DEFAULT false NOT NULL,\n\t`width` integer DEFAULT 1920 NOT NULL,\n\t`height` integer DEFAULT 1080 NOT NULL,\n\t`global_settings` text DEFAULT '{}' NOT NULL,\n\t`sort_order` integer DEFAULT 0 NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE INDEX `idx_screens_is_active` ON `screens` (`is_active`);--> statement-breakpoint\nCREATE INDEX `idx_screens_type` ON `screens` (`type`);--> statement-breakpoint\nCREATE INDEX `idx_screens_sort_order` ON `screens` (`sort_order`);--> statement-breakpoint\nCREATE TABLE `screen_content_configs` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`screen_id` integer NOT NULL,\n\t`content_type` text NOT NULL,\n\t`config` text DEFAULT '{}' NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tFOREIGN KEY (`screen_id`) REFERENCES `screens`(`id`) ON UPDATE no action ON DELETE cascade\n);\n--> statement-breakpoint\nCREATE INDEX `idx_screen_content_configs_screen_id` ON `screen_content_configs` (`screen_id`);--> statement-breakpoint\nCREATE INDEX `idx_screen_content_configs_content_type` ON `screen_content_configs` (`content_type`);--> statement-breakpoint\nCREATE TABLE `screen_next_slide_configs` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`screen_id` integer NOT NULL,\n\t`config` text DEFAULT '{}' NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tFOREIGN KEY (`screen_id`) REFERENCES `screens`(`id`) ON UPDATE no action ON DELETE cascade\n);\n--> statement-breakpoint\nCREATE INDEX `idx_screen_next_slide_configs_screen_id` ON `screen_next_slide_configs` (`screen_id`);\n",
-    "when": 1766200000000
+    tag: '0004_add_screens_tables',
+    sql: "CREATE TABLE `screens` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`name` text NOT NULL,\n\t`type` text DEFAULT 'primary' NOT NULL,\n\t`is_active` integer DEFAULT true NOT NULL,\n\t`open_mode` text DEFAULT 'browser' NOT NULL,\n\t`is_fullscreen` integer DEFAULT false NOT NULL,\n\t`width` integer DEFAULT 1920 NOT NULL,\n\t`height` integer DEFAULT 1080 NOT NULL,\n\t`global_settings` text DEFAULT '{}' NOT NULL,\n\t`sort_order` integer DEFAULT 0 NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE INDEX `idx_screens_is_active` ON `screens` (`is_active`);--> statement-breakpoint\nCREATE INDEX `idx_screens_type` ON `screens` (`type`);--> statement-breakpoint\nCREATE INDEX `idx_screens_sort_order` ON `screens` (`sort_order`);--> statement-breakpoint\nCREATE TABLE `screen_content_configs` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`screen_id` integer NOT NULL,\n\t`content_type` text NOT NULL,\n\t`config` text DEFAULT '{}' NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tFOREIGN KEY (`screen_id`) REFERENCES `screens`(`id`) ON UPDATE no action ON DELETE cascade\n);\n--> statement-breakpoint\nCREATE INDEX `idx_screen_content_configs_screen_id` ON `screen_content_configs` (`screen_id`);--> statement-breakpoint\nCREATE INDEX `idx_screen_content_configs_content_type` ON `screen_content_configs` (`content_type`);--> statement-breakpoint\nCREATE TABLE `screen_next_slide_configs` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`screen_id` integer NOT NULL,\n\t`config` text DEFAULT '{}' NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tFOREIGN KEY (`screen_id`) REFERENCES `screens`(`id`) ON UPDATE no action ON DELETE cascade\n);\n--> statement-breakpoint\nCREATE INDEX `idx_screen_next_slide_configs_screen_id` ON `screen_next_slide_configs` (`screen_id`);\n",
+    when: 1766200000000,
   },
   {
-    "tag": "0005_drop_displays_table",
-    "sql": "DROP TABLE IF EXISTS `displays`;\n--> statement-breakpoint\nDROP INDEX IF EXISTS `idx_displays_is_active`;\n",
-    "when": 1766300000000
+    tag: '0005_drop_displays_table',
+    sql: 'DROP TABLE IF EXISTS `displays`;\n--> statement-breakpoint\nDROP INDEX IF EXISTS `idx_displays_is_active`;\n',
+    when: 1766300000000,
   },
   {
-    "tag": "0006_add_livestream_tables",
-    "sql": "CREATE TABLE `youtube_auth` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`access_token` text NOT NULL,\n\t`refresh_token` text NOT NULL,\n\t`expires_at` integer NOT NULL,\n\t`channel_id` text,\n\t`channel_name` text,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE TABLE `youtube_config` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`title_template` text DEFAULT 'Live' NOT NULL,\n\t`description` text DEFAULT '' NOT NULL,\n\t`privacy_status` text DEFAULT 'unlisted' NOT NULL,\n\t`stream_key_id` text,\n\t`playlist_id` text,\n\t`start_scene_name` text,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE TABLE `obs_config` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`host` text DEFAULT '127.0.0.1' NOT NULL,\n\t`port` integer DEFAULT 4455 NOT NULL,\n\t`password` text DEFAULT '' NOT NULL,\n\t`auto_connect` integer DEFAULT false NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE TABLE `obs_scenes` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`obs_scene_name` text NOT NULL,\n\t`display_name` text NOT NULL,\n\t`is_visible` integer DEFAULT true NOT NULL,\n\t`sort_order` integer DEFAULT 0 NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX `obs_scenes_obs_scene_name_unique` ON `obs_scenes` (`obs_scene_name`);--> statement-breakpoint\nCREATE INDEX `idx_obs_scenes_sort_order` ON `obs_scenes` (`sort_order`);--> statement-breakpoint\nCREATE INDEX `idx_obs_scenes_is_visible` ON `obs_scenes` (`is_visible`);--> statement-breakpoint\nCREATE TABLE `broadcast_history` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`broadcast_id` text NOT NULL,\n\t`title` text NOT NULL,\n\t`scheduled_start_time` integer NOT NULL,\n\t`actual_start_time` integer,\n\t`end_time` integer,\n\t`url` text NOT NULL,\n\t`status` text DEFAULT 'scheduled' NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE INDEX `idx_broadcast_history_status` ON `broadcast_history` (`status`);\n",
-    "when": 1766400000000
+    tag: '0006_add_livestream_tables',
+    sql: "CREATE TABLE `youtube_auth` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`access_token` text NOT NULL,\n\t`refresh_token` text NOT NULL,\n\t`expires_at` integer NOT NULL,\n\t`channel_id` text,\n\t`channel_name` text,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE TABLE `youtube_config` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`title_template` text DEFAULT 'Live' NOT NULL,\n\t`description` text DEFAULT '' NOT NULL,\n\t`privacy_status` text DEFAULT 'unlisted' NOT NULL,\n\t`stream_key_id` text,\n\t`playlist_id` text,\n\t`start_scene_name` text,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE TABLE `obs_config` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`host` text DEFAULT '127.0.0.1' NOT NULL,\n\t`port` integer DEFAULT 4455 NOT NULL,\n\t`password` text DEFAULT '' NOT NULL,\n\t`auto_connect` integer DEFAULT false NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE TABLE `obs_scenes` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`obs_scene_name` text NOT NULL,\n\t`display_name` text NOT NULL,\n\t`is_visible` integer DEFAULT true NOT NULL,\n\t`sort_order` integer DEFAULT 0 NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX `obs_scenes_obs_scene_name_unique` ON `obs_scenes` (`obs_scene_name`);--> statement-breakpoint\nCREATE INDEX `idx_obs_scenes_sort_order` ON `obs_scenes` (`sort_order`);--> statement-breakpoint\nCREATE INDEX `idx_obs_scenes_is_visible` ON `obs_scenes` (`is_visible`);--> statement-breakpoint\nCREATE TABLE `broadcast_history` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`broadcast_id` text NOT NULL,\n\t`title` text NOT NULL,\n\t`scheduled_start_time` integer NOT NULL,\n\t`actual_start_time` integer,\n\t`end_time` integer,\n\t`url` text NOT NULL,\n\t`status` text DEFAULT 'scheduled' NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE INDEX `idx_broadcast_history_status` ON `broadcast_history` (`status`);\n",
+    when: 1766400000000,
   },
   {
-    "tag": "0007_add_scene_shortcuts",
-    "sql": "ALTER TABLE `obs_scenes` ADD COLUMN `shortcuts` text NOT NULL DEFAULT '[]';\r\n",
-    "when": 1766500000000
+    tag: '0007_add_scene_shortcuts',
+    sql: "ALTER TABLE `obs_scenes` ADD COLUMN `shortcuts` text NOT NULL DEFAULT '[]';\r\n",
+    when: 1766500000000,
   },
   {
-    "tag": "0008_add_broadcast_templates",
-    "sql": "CREATE TABLE `broadcast_templates` (\r\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\r\n\t`name` text NOT NULL,\r\n\t`title` text NOT NULL,\r\n\t`description` text DEFAULT '' NOT NULL,\r\n\t`privacy_status` text DEFAULT 'unlisted' NOT NULL,\r\n\t`stream_key_id` text,\r\n\t`playlist_id` text,\r\n\t`category` text,\r\n\t`used_at` integer NOT NULL,\r\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL\r\n);\r\n--> statement-breakpoint\r\nCREATE INDEX `idx_broadcast_templates_used_at` ON `broadcast_templates` (`used_at`);\r\n",
-    "when": 1766600000000
+    tag: '0008_add_broadcast_templates',
+    sql: "CREATE TABLE `broadcast_templates` (\r\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\r\n\t`name` text NOT NULL,\r\n\t`title` text NOT NULL,\r\n\t`description` text DEFAULT '' NOT NULL,\r\n\t`privacy_status` text DEFAULT 'unlisted' NOT NULL,\r\n\t`stream_key_id` text,\r\n\t`playlist_id` text,\r\n\t`category` text,\r\n\t`used_at` integer NOT NULL,\r\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL\r\n);\r\n--> statement-breakpoint\r\nCREATE INDEX `idx_broadcast_templates_used_at` ON `broadcast_templates` (`used_at`);\r\n",
+    when: 1766600000000,
   },
   {
-    "tag": "0009_add_selected_broadcast_config",
-    "sql": "ALTER TABLE `youtube_config` ADD COLUMN `selected_broadcast_id` text;\r\n--> statement-breakpoint\r\nALTER TABLE `youtube_config` ADD COLUMN `broadcast_mode` text DEFAULT 'create' NOT NULL;\r\n",
-    "when": 1766700000000
+    tag: '0009_add_selected_broadcast_config',
+    sql: "ALTER TABLE `youtube_config` ADD COLUMN `selected_broadcast_id` text;\r\n--> statement-breakpoint\r\nALTER TABLE `youtube_config` ADD COLUMN `broadcast_mode` text DEFAULT 'create' NOT NULL;\r\n",
+    when: 1766700000000,
   },
   {
-    "tag": "0010_add_stop_scene_name",
-    "sql": "ALTER TABLE `youtube_config` ADD COLUMN `stop_scene_name` text;\r\n",
-    "when": 1766800000000
+    tag: '0010_add_stop_scene_name',
+    sql: 'ALTER TABLE `youtube_config` ADD COLUMN `stop_scene_name` text;\r\n',
+    when: 1766800000000,
   },
   {
-    "tag": "0011_add_scene_content_types",
-    "sql": "ALTER TABLE `obs_scenes` ADD COLUMN `content_types` text NOT NULL DEFAULT '[]';\n--> statement-breakpoint\nCREATE TABLE `scene_automation_state` (\n\t`id` integer PRIMARY KEY NOT NULL,\n\t`is_enabled` integer DEFAULT true NOT NULL,\n\t`previous_scene_name` text,\n\t`current_auto_scene` text,\n\t`last_content_type` text,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nINSERT INTO `scene_automation_state` (`id`, `is_enabled`) VALUES (1, 1);\n",
-    "when": 1766900000000
+    tag: '0011_add_scene_content_types',
+    sql: "ALTER TABLE `obs_scenes` ADD COLUMN `content_types` text NOT NULL DEFAULT '[]';\n--> statement-breakpoint\nCREATE TABLE `scene_automation_state` (\n\t`id` integer PRIMARY KEY NOT NULL,\n\t`is_enabled` integer DEFAULT true NOT NULL,\n\t`previous_scene_name` text,\n\t`current_auto_scene` text,\n\t`last_content_type` text,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nINSERT INTO `scene_automation_state` (`id`, `is_enabled`) VALUES (1, 1);\n",
+    when: 1766900000000,
   },
   {
-    "tag": "0012_add_mixer_tables",
-    "sql": "ALTER TABLE `obs_scenes` ADD COLUMN `mixer_channel_actions` text NOT NULL DEFAULT '{\"mute\":[],\"unmute\":[]}';\n--> statement-breakpoint\nCREATE TABLE `mixer_config` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`host` text DEFAULT '192.168.0.50' NOT NULL,\n\t`port` integer DEFAULT 10024 NOT NULL,\n\t`is_enabled` integer DEFAULT false NOT NULL,\n\t`channel_count` integer DEFAULT 16 NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE TABLE `mixer_channels` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`channel_number` integer NOT NULL,\n\t`label` text NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX `mixer_channels_channel_number_unique` ON `mixer_channels` (`channel_number`);\n--> statement-breakpoint\nCREATE INDEX `idx_mixer_channels_number` ON `mixer_channels` (`channel_number`);\n",
-    "when": 1767000000000
+    tag: '0012_add_mixer_tables',
+    sql: 'ALTER TABLE `obs_scenes` ADD COLUMN `mixer_channel_actions` text NOT NULL DEFAULT \'{"mute":[],"unmute":[]}\';\n--> statement-breakpoint\nCREATE TABLE `mixer_config` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`host` text DEFAULT \'192.168.0.50\' NOT NULL,\n\t`port` integer DEFAULT 10024 NOT NULL,\n\t`is_enabled` integer DEFAULT false NOT NULL,\n\t`channel_count` integer DEFAULT 16 NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE TABLE `mixer_channels` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`channel_number` integer NOT NULL,\n\t`label` text NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX `mixer_channels_channel_number_unique` ON `mixer_channels` (`channel_number`);\n--> statement-breakpoint\nCREATE INDEX `idx_mixer_channels_number` ON `mixer_channels` (`channel_number`);\n',
+    when: 1767000000000,
   },
   {
-    "tag": "0013_add_temporary_content",
-    "sql": "ALTER TABLE `presentation_state` ADD COLUMN `temporary_content` text;\r\n",
-    "when": 1767100000000
+    tag: '0013_add_temporary_content',
+    sql: 'ALTER TABLE `presentation_state` ADD COLUMN `temporary_content` text;\r\n',
+    when: 1767100000000,
   },
   {
-    "tag": "0014_add_highlight_colors",
-    "sql": "CREATE TABLE `highlight_colors` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`name` text NOT NULL,\n\t`color` text NOT NULL,\n\t`sort_order` integer DEFAULT 0 NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE INDEX `idx_highlight_colors_sort_order` ON `highlight_colors` (`sort_order`);\n",
-    "when": 1767200000000
+    tag: '0014_add_highlight_colors',
+    sql: 'CREATE TABLE `highlight_colors` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`name` text NOT NULL,\n\t`color` text NOT NULL,\n\t`sort_order` integer DEFAULT 0 NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE INDEX `idx_highlight_colors_sort_order` ON `highlight_colors` (`sort_order`);\n',
+    when: 1767200000000,
   },
   {
-    "tag": "0015_add_schedule_bible_passage_versete_tineri",
-    "sql": "-- Add bible_passage support to schedule_items table\r\nALTER TABLE schedule_items ADD COLUMN bible_passage_reference TEXT;\r\n--> statement-breakpoint\r\nALTER TABLE schedule_items ADD COLUMN bible_passage_translation TEXT;\r\n--> statement-breakpoint\r\n\r\n-- Create schedule_bible_passage_verses table for nested verses in bible_passage items\r\nCREATE TABLE IF NOT EXISTS schedule_bible_passage_verses (\r\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\r\n  schedule_item_id INTEGER NOT NULL REFERENCES schedule_items(id) ON DELETE CASCADE,\r\n  verse_id INTEGER NOT NULL REFERENCES bible_verses(id) ON DELETE CASCADE,\r\n  reference TEXT NOT NULL,\r\n  text TEXT NOT NULL,\r\n  sort_order INTEGER NOT NULL DEFAULT 0,\r\n  created_at INTEGER NOT NULL DEFAULT (unixepoch())\r\n);\r\n--> statement-breakpoint\r\nCREATE INDEX IF NOT EXISTS idx_schedule_bible_passage_verses_item_id ON schedule_bible_passage_verses(schedule_item_id);\r\n--> statement-breakpoint\r\nCREATE INDEX IF NOT EXISTS idx_schedule_bible_passage_verses_sort_order ON schedule_bible_passage_verses(sort_order);\r\n--> statement-breakpoint\r\n\r\n-- Create schedule_versete_tineri_entries table for nested entries in versete_tineri slides\r\nCREATE TABLE IF NOT EXISTS schedule_versete_tineri_entries (\r\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\r\n  schedule_item_id INTEGER NOT NULL REFERENCES schedule_items(id) ON DELETE CASCADE,\r\n  person_name TEXT NOT NULL,\r\n  translation_id INTEGER NOT NULL,\r\n  book_code TEXT NOT NULL,\r\n  book_name TEXT NOT NULL,\r\n  reference TEXT NOT NULL,\r\n  text TEXT NOT NULL,\r\n  start_chapter INTEGER NOT NULL,\r\n  start_verse INTEGER NOT NULL,\r\n  end_chapter INTEGER NOT NULL,\r\n  end_verse INTEGER NOT NULL,\r\n  sort_order INTEGER NOT NULL DEFAULT 0,\r\n  created_at INTEGER NOT NULL DEFAULT (unixepoch())\r\n);\r\n--> statement-breakpoint\r\nCREATE INDEX IF NOT EXISTS idx_schedule_versete_tineri_entries_item_id ON schedule_versete_tineri_entries(schedule_item_id);\r\n--> statement-breakpoint\r\nCREATE INDEX IF NOT EXISTS idx_schedule_versete_tineri_entries_sort_order ON schedule_versete_tineri_entries(sort_order);\r\n",
-    "when": 1767300000000
+    tag: '0015_add_schedule_bible_passage_versete_tineri',
+    sql: '-- Add bible_passage support to schedule_items table\r\nALTER TABLE schedule_items ADD COLUMN bible_passage_reference TEXT;\r\n--> statement-breakpoint\r\nALTER TABLE schedule_items ADD COLUMN bible_passage_translation TEXT;\r\n--> statement-breakpoint\r\n\r\n-- Create schedule_bible_passage_verses table for nested verses in bible_passage items\r\nCREATE TABLE IF NOT EXISTS schedule_bible_passage_verses (\r\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\r\n  schedule_item_id INTEGER NOT NULL REFERENCES schedule_items(id) ON DELETE CASCADE,\r\n  verse_id INTEGER NOT NULL REFERENCES bible_verses(id) ON DELETE CASCADE,\r\n  reference TEXT NOT NULL,\r\n  text TEXT NOT NULL,\r\n  sort_order INTEGER NOT NULL DEFAULT 0,\r\n  created_at INTEGER NOT NULL DEFAULT (unixepoch())\r\n);\r\n--> statement-breakpoint\r\nCREATE INDEX IF NOT EXISTS idx_schedule_bible_passage_verses_item_id ON schedule_bible_passage_verses(schedule_item_id);\r\n--> statement-breakpoint\r\nCREATE INDEX IF NOT EXISTS idx_schedule_bible_passage_verses_sort_order ON schedule_bible_passage_verses(sort_order);\r\n--> statement-breakpoint\r\n\r\n-- Create schedule_versete_tineri_entries table for nested entries in versete_tineri slides\r\nCREATE TABLE IF NOT EXISTS schedule_versete_tineri_entries (\r\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\r\n  schedule_item_id INTEGER NOT NULL REFERENCES schedule_items(id) ON DELETE CASCADE,\r\n  person_name TEXT NOT NULL,\r\n  translation_id INTEGER NOT NULL,\r\n  book_code TEXT NOT NULL,\r\n  book_name TEXT NOT NULL,\r\n  reference TEXT NOT NULL,\r\n  text TEXT NOT NULL,\r\n  start_chapter INTEGER NOT NULL,\r\n  start_verse INTEGER NOT NULL,\r\n  end_chapter INTEGER NOT NULL,\r\n  end_verse INTEGER NOT NULL,\r\n  sort_order INTEGER NOT NULL DEFAULT 0,\r\n  created_at INTEGER NOT NULL DEFAULT (unixepoch())\r\n);\r\n--> statement-breakpoint\r\nCREATE INDEX IF NOT EXISTS idx_schedule_versete_tineri_entries_item_id ON schedule_versete_tineri_entries(schedule_item_id);\r\n--> statement-breakpoint\r\nCREATE INDEX IF NOT EXISTS idx_schedule_versete_tineri_entries_sort_order ON schedule_versete_tineri_entries(sort_order);\r\n',
+    when: 1767300000000,
   },
   {
-    "tag": "0016_add_always_on_top_to_screens",
-    "sql": "ALTER TABLE `screens` ADD COLUMN `always_on_top` integer NOT NULL DEFAULT 0;\r\n",
-    "when": 1767400000000
-  }
+    tag: '0016_add_always_on_top_to_screens',
+    sql: 'ALTER TABLE `screens` ADD COLUMN `always_on_top` integer NOT NULL DEFAULT 0;\r\n',
+    when: 1767400000000,
+  },
 ]
