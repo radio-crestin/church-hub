@@ -9,8 +9,7 @@ import { broadcastYouTubeAuthStatus } from '../../../websocket'
 
 const DEBUG = process.env.DEBUG === 'true'
 const YOUTUBE_OAUTH_SERVER =
-  process.env.YOUTUBE_OAUTH_SERVER ||
-  'https://churchub-youtube-oauth-worker.bringes.io'
+  process.env.YOUTUBE_OAUTH_SERVER || 'https://churchub-backend.radiocrestin.ro'
 
 function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
   if (level === 'debug' && !DEBUG) return
