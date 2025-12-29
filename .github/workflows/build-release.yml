@@ -122,18 +122,38 @@ jobs:
           tagName: v__VERSION__
           releaseName: 'Church Hub v__VERSION__'
           releaseBody: |
-            ## What's New
+            # 🎉 Church Hub v__VERSION__
 
-            See the commits for details on changes in this release.
+            A modern, feature-rich church presentation and livestream management system.
 
-            ## Downloads
+            ---
 
-            | Platform | Architecture | Download |
-            |----------|--------------|----------|
-            | macOS | Apple Silicon (M1/M2/M3/M4) | `.dmg` |
-            | Windows | x64 | `.msi`, `.exe` |
+            ## 📥 Downloads
 
-            ## macOS Installation Note
+            | Platform | Architecture | File | Download |
+            |----------|--------------|------|----------|
+            | 🍎 **macOS** | Apple Silicon (M1/M2/M3/M4) | `.dmg` | [Download](https://github.com/radio-crestin/church-hub/releases/download/v__VERSION__/church-hub___VERSION___aarch64.dmg) |
+            | 🪟 **Windows** | x64 | `.msi` | [Download](https://github.com/radio-crestin/church-hub/releases/download/v__VERSION__/church-hub___VERSION___x64-setup.msi) |
+            | 🪟 **Windows** | x64 | `.exe` | [Download](https://github.com/radio-crestin/church-hub/releases/download/v__VERSION__/church-hub___VERSION___x64-setup.exe) |
+
+            ---
+
+            ## ✨ What's New
+
+            See the [commit history](https://github.com/radio-crestin/church-hub/commits/v__VERSION__) for detailed changes.
+
+            ---
+
+            ## 🚀 Quick Start
+
+            1. Download the installer for your platform above
+            2. Run the installer
+            3. Launch Church Hub
+            4. Access the web interface at `http://localhost:3000`
+
+            ---
+
+            ## 🍎 macOS Installation Note
 
             After installing, if you see **"church-hub.app is damaged and can't be opened"**, run this command in Terminal:
 
@@ -142,6 +162,17 @@ jobs:
             ```
 
             This removes the quarantine flag from unsigned apps.
+
+            ---
+
+            ## 📚 Documentation
+
+            - [README](https://github.com/radio-crestin/church-hub#readme)
+            - [API Documentation](http://localhost:3000/api/docs) (after installation)
+
+            ---
+
+            <sub>Made with ❤️ for churches everywhere</sub>
           releaseDraft: true
           prerelease: false
           includeUpdaterJson: false
