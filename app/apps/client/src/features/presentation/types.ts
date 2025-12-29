@@ -265,7 +265,8 @@ export interface TextElementConfig {
   padding: number
   animationIn: AnimationConfig
   animationOut: AnimationConfig
-  slideTransition?: AnimationConfig // Animation used when transitioning between slides
+  slideTransitionIn?: AnimationConfig // Animation for new content entering during slide change
+  slideTransitionOut?: AnimationConfig // Animation for old content leaving during slide change
   hidden?: boolean
 }
 
@@ -292,7 +293,8 @@ export interface ReferenceTextConfig {
   padding?: number
   animationIn: AnimationConfig
   animationOut: AnimationConfig
-  slideTransition?: AnimationConfig // Animation used when transitioning between slides
+  slideTransitionIn?: AnimationConfig // Animation for new content entering during slide change
+  slideTransitionOut?: AnimationConfig // Animation for old content leaving during slide change
   hidden?: boolean
 }
 
@@ -306,7 +308,8 @@ export interface PersonLabelConfig {
   padding?: number
   animationIn: AnimationConfig
   animationOut: AnimationConfig
-  slideTransition?: AnimationConfig // Animation used when transitioning between slides
+  slideTransitionIn?: AnimationConfig // Animation for new content entering during slide change
+  slideTransitionOut?: AnimationConfig // Animation for old content leaving during slide change
   hidden?: boolean
 }
 

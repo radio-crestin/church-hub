@@ -5,6 +5,8 @@ import { AnimationProvider } from './AnimationContext'
 import { TextContent } from './TextContent'
 import type { ContentData, NextSlideData } from './types'
 import {
+  calculateMaxSlideTransitionInDuration,
+  calculateMaxSlideTransitionOutDuration,
   calculatePixelBounds,
   clampBoundsToScreen,
   getBackgroundCSS,
@@ -111,8 +113,11 @@ export function ScreenContent({
         key="mainText"
         animationIn={'animationIn' in mt ? mt.animationIn : undefined}
         animationOut={'animationOut' in mt ? mt.animationOut : undefined}
-        slideTransition={
-          'slideTransition' in mt ? mt.slideTransition : undefined
+        slideTransitionIn={
+          'slideTransitionIn' in mt ? mt.slideTransitionIn : undefined
+        }
+        slideTransitionOut={
+          'slideTransitionOut' in mt ? mt.slideTransitionOut : undefined
         }
         isVisible={elementVisible}
         contentKey={`mainText-${contentKey}`}
@@ -168,8 +173,11 @@ export function ScreenContent({
         key="contentText"
         animationIn={'animationIn' in ct ? ct.animationIn : undefined}
         animationOut={'animationOut' in ct ? ct.animationOut : undefined}
-        slideTransition={
-          'slideTransition' in ct ? ct.slideTransition : undefined
+        slideTransitionIn={
+          'slideTransitionIn' in ct ? ct.slideTransitionIn : undefined
+        }
+        slideTransitionOut={
+          'slideTransitionOut' in ct ? ct.slideTransitionOut : undefined
         }
         isVisible={elementVisible}
         contentKey={`contentText-${contentKey}`}
@@ -222,8 +230,11 @@ export function ScreenContent({
         key="referenceText"
         animationIn={'animationIn' in rt ? rt.animationIn : undefined}
         animationOut={'animationOut' in rt ? rt.animationOut : undefined}
-        slideTransition={
-          'slideTransition' in rt ? rt.slideTransition : undefined
+        slideTransitionIn={
+          'slideTransitionIn' in rt ? rt.slideTransitionIn : undefined
+        }
+        slideTransitionOut={
+          'slideTransitionOut' in rt ? rt.slideTransitionOut : undefined
         }
         isVisible={elementVisible}
         contentKey={`referenceText-${contentKey}`}
@@ -271,8 +282,11 @@ export function ScreenContent({
         key="personLabel"
         animationIn={'animationIn' in pl ? pl.animationIn : undefined}
         animationOut={'animationOut' in pl ? pl.animationOut : undefined}
-        slideTransition={
-          'slideTransition' in pl ? pl.slideTransition : undefined
+        slideTransitionIn={
+          'slideTransitionIn' in pl ? pl.slideTransitionIn : undefined
+        }
+        slideTransitionOut={
+          'slideTransitionOut' in pl ? pl.slideTransitionOut : undefined
         }
         isVisible={elementVisible}
         contentKey={`personLabel-${contentKey}`}
@@ -486,8 +500,19 @@ export function ScreenContent({
     )
   }
 
+  // Calculate the max slide transition durations for timing the two-phase animation
+  const slideTransitionOutDuration =
+    calculateMaxSlideTransitionOutDuration(config)
+  const slideTransitionInDuration =
+    calculateMaxSlideTransitionInDuration(config)
+
   return (
-    <AnimationProvider contentKey={contentKey} isVisible={isVisible}>
+    <AnimationProvider
+      contentKey={contentKey}
+      isVisible={isVisible}
+      slideTransitionOutDuration={slideTransitionOutDuration}
+      slideTransitionInDuration={slideTransitionInDuration}
+    >
       <div
         className="relative"
         style={{

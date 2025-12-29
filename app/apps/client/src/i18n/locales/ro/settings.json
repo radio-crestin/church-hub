@@ -575,6 +575,33 @@
         "saveError": "Nu s-a putut salva ecranul",
         "createError": "Nu s-a putut crea ecranul"
       }
+    },
+    "developer": {
+      "title": "Instrumente pentru Dezvoltatori",
+      "description": "Setări avansate pentru dezvoltatori și depanare"
+    },
+    "factoryReset": {
+      "title": "Resetare la Setări Fabrică",
+      "description": "Resetează configurația aplicației la setările implicite",
+      "card": {
+        "title": "Resetare la Setări Implicite",
+        "description": "Șterge ecranele și setările, apoi restaurează valorile implicite. Cântările și traducerile biblice sunt păstrate."
+      },
+      "button": {
+        "reset": "Resetare Fabrică",
+        "resetting": "Se resetează..."
+      },
+      "confirm": {
+        "title": "Resetare la Setări Fabrică",
+        "message": "Aceasta va reseta toate ecranele și setările aplicației la valorile implicite. Cântările, categoriile și traducerile biblice vor fi păstrate.",
+        "warning": "Această acțiune nu poate fi anulată.",
+        "cancel": "Anulează",
+        "confirm": "Resetează la Setări Implicite"
+      },
+      "toast": {
+        "success": "Resetare completă. Setările au fost restaurate la valorile implicite.",
+        "failed": "Resetarea a eșuat: {{error}}"
+      }
     }
   }
 }

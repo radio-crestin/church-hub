@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 
 import { isLocalhost, isMobile } from '~/config'
 import { ApiUrlSettings } from '~/features/api-url-config'
-import { DatabaseManager } from '~/features/database-management'
+import { DatabaseManager, FactoryReset } from '~/features/database-management'
 import {
   MIDIProvider,
   ShortcutsSettingsSection,
@@ -154,75 +154,86 @@ function RouteComponent() {
           </MIDIProvider>
         </div>
 
-        {/* API & Developer Section */}
-        <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800 space-y-6">
-          {/* Debug Mode Toggle */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Bug className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {t('sections.debug.title')}
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
-                  {t('sections.debug.description')}
-                </p>
+        {/* Developer Tools Section */}
+        <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+            {t('sections.developer.title')}
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400 text-sm mb-6">
+            {t('sections.developer.description')}
+          </p>
+
+          <div className="space-y-6">
+            {/* Debug Mode and API Docs Row */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Debug Mode Card */}
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Bug className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                        {t('sections.debug.title')}
+                      </h4>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        {t('sections.debug.description')}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setDebugMode(!isDebugMode)}
+                    disabled={isDebugLoading}
+                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 ${
+                      isDebugMode
+                        ? 'bg-indigo-600'
+                        : 'bg-gray-200 dark:bg-gray-700'
+                    } ${isDebugLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                        isDebugMode ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
+
+              {/* API Documentation Card */}
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <ExternalLink className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                        {t('sections.apiDocs.title')}
+                      </h4>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        {t('sections.apiDocs.description')}
+                      </p>
+                    </div>
+                  </div>
+                  <a
+                    href="http://localhost:3000/api/docs"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm"
+                  >
+                    {t('sections.apiDocs.link')}
+                  </a>
+                </div>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => setDebugMode(!isDebugMode)}
-              disabled={isDebugLoading}
-              className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 ${
-                isDebugMode ? 'bg-indigo-600' : 'bg-gray-200 dark:bg-gray-700'
-              } ${isDebugLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              <span
-                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                  isDebugMode ? 'translate-x-5' : 'translate-x-0'
-                }`}
-              />
-            </button>
+
+            {/* System Token (localhost only) */}
+            {isLocalhost() && <SystemTokenManager />}
+
+            {/* Database Management (localhost only) */}
+            {isLocalhost() && <DatabaseManager />}
+
+            {/* Factory Reset (localhost only) */}
+            {isLocalhost() && <FactoryReset />}
           </div>
-
-          <hr className="border-gray-200 dark:border-gray-700" />
-
-          {/* API Documentation Link */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                {t('sections.apiDocs.title')}
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
-                {t('sections.apiDocs.description')}
-              </p>
-            </div>
-            <a
-              href="http://localhost:3000/api/docs"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-indigo-600 dark:text-indigo-400 hover:underline text-sm"
-            >
-              <ExternalLink className="w-4 h-4" />
-              {t('sections.apiDocs.link')}
-            </a>
-          </div>
-
-          {/* System Token (localhost only) */}
-          {isLocalhost() && (
-            <>
-              <hr className="border-gray-200 dark:border-gray-700" />
-              <SystemTokenManager />
-            </>
-          )}
-
-          {/* Database Management (localhost only) */}
-          {isLocalhost() && (
-            <>
-              <hr className="border-gray-200 dark:border-gray-700" />
-              <DatabaseManager />
-            </>
-          )}
         </div>
       </div>
     </PagePermissionGuard>

@@ -61,6 +61,7 @@ import {
   checkpointAndExport,
   getDatabaseInfo,
   importDatabase,
+  performFactoryReset,
 } from './service/database'
 import {
   detectContentType,
@@ -703,6 +704,40 @@ async function main() {
         }
 
         const result = await importDatabase(body.sourcePath)
+        if (!result.success) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: result.error }), {
+              status: 500,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: result }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/database/factory-reset - Factory reset (localhost only)
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/database/factory-reset'
+      ) {
+        if (!isStrictLocalhost()) {
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({ error: 'Only accessible from localhost' }),
+              { status: 403, headers: { 'Content-Type': 'application/json' } },
+            ),
+          )
+        }
+
+        const result = performFactoryReset()
         if (!result.success) {
           return handleCors(
             req,

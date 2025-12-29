@@ -1,5 +1,9 @@
 [
   {
+    "key": "debug_mode",
+    "value": "false"
+  },
+  {
     "key": "kiosk_mode_enabled",
     "value": "true"
   },
@@ -8,7 +12,15 @@
     "value": "{\"type\":\"screen\",\"screenId\":4}"
   },
   {
+    "key": "language",
+    "value": "ro"
+  },
+  {
     "key": "selected_bible_translations",
     "value": "{\"translationIds\":[1]}"
+  },
+  {
+    "key": "theme",
+    "value": "dark"
   }
 ]

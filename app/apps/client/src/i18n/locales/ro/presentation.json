@@ -100,8 +100,10 @@
     "animation": {
       "animationIn": "Animație Intrare",
       "animationOut": "Animație Ieșire",
-      "slideTransition": "Tranziție Slide",
-      "slideTransitionDescription": "Animație folosită la navigarea între slide-uri",
+      "slideTransitionOut": "Tranziție Slide - Ieșire",
+      "slideTransitionOutDescription": "Animație pentru conținutul vechi care dispare la schimbarea slide-ului",
+      "slideTransitionIn": "Tranziție Slide - Intrare",
+      "slideTransitionInDescription": "Animație pentru conținutul nou care apare la schimbarea slide-ului",
       "type": "Tip",
       "duration": "Durată",
       "delay": "Întârziere",
