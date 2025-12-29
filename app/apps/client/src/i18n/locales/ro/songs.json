@@ -60,6 +60,7 @@
     "saved": "Cântarea a fost salvată cu succes",
     "deleted": "Cântarea a fost ștearsă cu succes",
     "error": "A apărut o eroare",
+    "notFound": "Cântarea nu a fost găsită",
     "slideSaved": "Slide salvat",
     "slideDeleted": "Slide șters",
     "slideCloned": "Slide clonat",

@@ -154,7 +154,9 @@ import {
   cloneSongSlide,
   deleteCategory,
   deleteSong,
+  deleteSongsByIds,
   deleteSongSlide,
+  deleteUncategorizedSongs,
   getAllCategories,
   getAllSongs,
   getAllSongsWithSlides,
@@ -2626,6 +2628,63 @@ async function main() {
         }
       }
 
+      // DELETE /api/songs/bulk - Delete multiple songs
+      if (req.method === 'DELETE' && url.pathname === '/api/songs/bulk') {
+        const permError = checkPermission('songs.delete')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as { ids: number[] }
+
+          if (!body.ids || !Array.isArray(body.ids)) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Missing ids array' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const result = deleteSongsByIds(body.ids)
+
+          if (!result.success) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: result.error }), {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          // Remove from search index
+          for (const id of body.ids) {
+            removeFromSearchIndex(id)
+          }
+
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({
+                data: { success: true, deletedCount: result.deletedCount },
+              }),
+              {
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        } catch (error) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid request body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
       // DELETE /api/songs/:id - Delete song
       const deleteSongMatch = url.pathname.match(/^\/api\/songs\/(\d+)$/)
       if (req.method === 'DELETE' && deleteSongMatch?.[1]) {
@@ -3205,6 +3264,44 @@ async function main() {
             }),
           )
         }
+      }
+
+      // DELETE /api/categories/uncategorized - Delete all uncategorized songs
+      if (
+        req.method === 'DELETE' &&
+        url.pathname === '/api/categories/uncategorized'
+      ) {
+        const permError = checkPermission('songs.delete')
+        if (permError) return permError
+
+        const result = deleteUncategorizedSongs()
+
+        if (!result.success) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: result.error }), {
+              status: 500,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        // Remove deleted songs from search index
+        for (const id of result.deletedIds) {
+          removeFromSearchIndex(id)
+        }
+
+        return handleCors(
+          req,
+          new Response(
+            JSON.stringify({
+              data: { success: true, deletedCount: result.deletedCount },
+            }),
+            {
+              headers: { 'Content-Type': 'application/json' },
+            },
+          ),
+        )
       }
 
       // DELETE /api/categories/:id - Delete category

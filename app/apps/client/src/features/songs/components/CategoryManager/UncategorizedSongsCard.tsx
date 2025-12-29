@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { ChevronDown, ChevronUp, FileQuestion, Trash2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -5,11 +6,13 @@ import { useTranslation } from 'react-i18next'
 import { ConfirmModal } from '~/ui/modal'
 import { useToast } from '~/ui/toast'
 import { useDeleteSong, useSongs } from '../../hooks'
+import { deleteUncategorizedSongs } from '../../service'
 import type { Song } from '../../types'
 
 export function UncategorizedSongsCard() {
   const { t } = useTranslation('settings')
   const { showToast } = useToast()
+  const queryClient = useQueryClient()
   const { data: songs } = useSongs()
   const deleteSong = useDeleteSong()
 
@@ -40,25 +43,17 @@ export function UncategorizedSongsCard() {
 
   const handleDeleteAll = async () => {
     setIsDeletingAll(true)
-    let successCount = 0
-    let failCount = 0
 
-    for (const song of uncategorizedSongs) {
-      const success = await deleteSong.mutateAsync(song.id)
-      if (success) {
-        successCount++
-      } else {
-        failCount++
-      }
-    }
+    const result = await deleteUncategorizedSongs()
 
     setIsDeletingAll(false)
     setShowDeleteAllModal(false)
 
-    if (failCount === 0) {
+    if (result.success) {
+      queryClient.invalidateQueries({ queryKey: ['songs'] })
       showToast(
         t('sections.categories.uncategorized.toast.deletedAll', {
-          count: successCount,
+          count: result.deletedCount,
         }),
         'success',
       )
@@ -74,7 +69,21 @@ export function UncategorizedSongsCard() {
   return (
     <>
       <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
-        <div className="flex items-center gap-2 p-3">
+        <div className="flex items-center gap-3 p-3">
+          <FileQuestion
+            size={20}
+            className="text-amber-600 dark:text-amber-400 shrink-0"
+          />
+          <div className="flex-1 min-w-0">
+            <span className="text-sm font-medium text-gray-900 dark:text-white block">
+              {t('sections.categories.uncategorized.title')}
+            </span>
+            <span className="text-xs text-amber-600 dark:text-amber-400">
+              {t('sections.categories.uncategorized.count', {
+                count: uncategorizedSongs.length,
+              })}
+            </span>
+          </div>
           <button
             type="button"
             onClick={() => setShowDeleteAllModal(true)}
@@ -87,26 +96,12 @@ export function UncategorizedSongsCard() {
           <button
             type="button"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="flex-1 flex items-center gap-3 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors rounded-lg p-1 -m-1"
+            className="p-1 hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded transition-colors shrink-0"
           >
-            <FileQuestion
-              size={20}
-              className="text-amber-600 dark:text-amber-400 shrink-0"
-            />
-            <div className="flex-1 min-w-0 text-left">
-              <span className="text-sm font-medium text-gray-900 dark:text-white block">
-                {t('sections.categories.uncategorized.title')}
-              </span>
-              <span className="text-xs text-amber-600 dark:text-amber-400">
-                {t('sections.categories.uncategorized.count', {
-                  count: uncategorizedSongs.length,
-                })}
-              </span>
-            </div>
             {isExpanded ? (
-              <ChevronUp size={20} className="text-gray-400 shrink-0" />
+              <ChevronUp size={20} className="text-gray-400" />
             ) : (
-              <ChevronDown size={20} className="text-gray-400 shrink-0" />
+              <ChevronDown size={20} className="text-gray-400" />
             )}
           </button>
         </div>

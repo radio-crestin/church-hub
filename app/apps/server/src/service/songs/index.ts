@@ -3,6 +3,7 @@
 // Categories
 export {
   deleteCategory,
+  deleteUncategorizedSongs,
   getAllCategories,
   getCategoryById,
   reorderCategories,
@@ -30,6 +31,7 @@ export {
 export {
   batchImportSongs,
   deleteSong,
+  deleteSongsByIds,
   getAllSongs,
   getAllSongsWithSlides,
   getSongById,

@@ -1,5 +1,6 @@
 export {
   deleteCategory,
+  deleteUncategorizedSongs,
   getAllCategories,
   reorderCategories,
   upsertCategory,

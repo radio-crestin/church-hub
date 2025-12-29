@@ -43,7 +43,7 @@ function SongPreviewPage() {
   const { songId } = Route.useParams()
   const numericId = parseInt(songId, 10)
 
-  const { data: song, isLoading } = useSong(numericId)
+  const { data: song, isLoading, isError } = useSong(numericId)
   const presentTemporarySong = usePresentTemporarySong()
   const navigateTemporary = useNavigateTemporary()
   const clearTemporary = useClearTemporaryContent()
@@ -57,6 +57,14 @@ function SongPreviewPage() {
   const [isLargeScreen, setIsLargeScreen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
+
+  // Handle song not found - redirect to search with toast
+  useEffect(() => {
+    if (!isLoading && (!song || isError)) {
+      showToast(t('messages.notFound'), 'error')
+      navigate({ to: '/songs/' })
+    }
+  }, [isLoading, song, isError, showToast, t, navigate])
 
   // Track screen size for responsive layout
   useEffect(() => {
