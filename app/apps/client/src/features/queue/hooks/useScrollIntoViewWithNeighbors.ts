@@ -62,7 +62,10 @@ function scrollToKeepNeighborsVisible(element: HTMLElement) {
   const minSpaceAbove = elementHeight
 
   // If not enough space below and we can scroll further, scroll down by one element
-  if (spaceBelow < minSpaceBelow && scrollContainer.scrollTop < maxScrollTop - 5) {
+  if (
+    spaceBelow < minSpaceBelow &&
+    scrollContainer.scrollTop < maxScrollTop - 5
+  ) {
     scrollContainer.scrollTo({
       top: Math.min(maxScrollTop, scrollContainer.scrollTop + elementHeight),
       behavior: 'smooth',

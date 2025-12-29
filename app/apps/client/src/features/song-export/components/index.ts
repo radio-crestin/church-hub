@@ -1,3 +1,5 @@
+export type { ExportFormat } from './ExportFormatModal'
+export { ExportFormatModal } from './ExportFormatModal'
 export { ExportOptionsModal } from './ExportOptionsModal'
 export { ExportProgressModal } from './ExportProgressModal'
 export { ImportExportManager } from './ImportExportManager'

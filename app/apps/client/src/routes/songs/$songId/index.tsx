@@ -17,7 +17,11 @@ import {
   usePresentTemporarySong,
 } from '~/features/presentation'
 import { AddSongToScheduleModal } from '~/features/schedules'
-import { useSaveSongToFile } from '~/features/song-export'
+import {
+  type ExportFormat,
+  ExportFormatModal,
+  useSaveSongToFile,
+} from '~/features/song-export'
 import { SongControlPanel, SongSlidesPanel } from '~/features/songs/components'
 import { useSong, useSongKeyboardShortcuts } from '~/features/songs/hooks'
 import type { SongSlide } from '~/features/songs/types'
@@ -49,6 +53,7 @@ function SongPreviewPage() {
 
   const [dividerPosition, setDividerPosition] = useState(40)
   const [showAddToScheduleModal, setShowAddToScheduleModal] = useState(false)
+  const [showExportFormatModal, setShowExportFormatModal] = useState(false)
   const [isLargeScreen, setIsLargeScreen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
@@ -119,15 +124,24 @@ function SongPreviewPage() {
     [navigate],
   )
 
-  const handleSaveToFile = useCallback(async () => {
-    if (!song) return
-    const result = await saveSong(song)
-    if (result.success) {
-      showToast(t('messages.savedToFile'), 'success')
-    } else if (result.error) {
-      showToast(result.error, 'error')
-    }
-  }, [song, saveSong, showToast, t])
+  const handleOpenExportModal = useCallback(() => {
+    setShowExportFormatModal(true)
+  }, [])
+
+  const handleExportFormatConfirm = useCallback(
+    async (format: ExportFormat) => {
+      setShowExportFormatModal(false)
+      if (!song) return
+
+      const result = await saveSong(song, format)
+      if (result.success) {
+        showToast(t('messages.savedToFile'), 'success')
+      } else if (result.error) {
+        showToast(result.error, 'error')
+      }
+    },
+    [song, saveSong, showToast, t],
+  )
 
   // Keyboard shortcuts
   useSongKeyboardShortcuts({
@@ -197,7 +211,7 @@ function SongPreviewPage() {
         <div className="hidden lg:flex items-center gap-2">
           <button
             type="button"
-            onClick={handleSaveToFile}
+            onClick={handleOpenExportModal}
             disabled={isSaving}
             className="inline-flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50"
             title={t('actions.saveToFile')}
@@ -273,7 +287,7 @@ function SongPreviewPage() {
         <div className="order-2 lg:hidden flex items-center justify-center gap-2 py-2">
           <button
             type="button"
-            onClick={handleSaveToFile}
+            onClick={handleOpenExportModal}
             disabled={isSaving}
             className="inline-flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50"
             title={t('actions.saveToFile')}
@@ -306,6 +320,12 @@ function SongPreviewPage() {
         songId={numericId}
         onClose={() => setShowAddToScheduleModal(false)}
         onAdded={handleSongAddedToSchedule}
+      />
+
+      <ExportFormatModal
+        isOpen={showExportFormatModal}
+        onConfirm={handleExportFormatConfirm}
+        onCancel={() => setShowExportFormatModal(false)}
       />
     </div>
   )

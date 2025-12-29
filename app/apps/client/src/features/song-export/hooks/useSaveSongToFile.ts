@@ -3,7 +3,12 @@ import { writeFile } from '@tauri-apps/plugin-fs'
 import { useCallback, useState } from 'react'
 
 import type { SongWithSlides } from '~/features/songs/types'
-import { generateOpenSongXml, sanitizeFilename } from '../utils'
+import type { ExportFormat } from '../components/ExportFormatModal'
+import {
+  generateOpenSongXml,
+  generatePptxBase64,
+  sanitizeFilename,
+} from '../utils'
 
 const LAST_SAVE_PATH_KEY = 'church-hub-last-song-save-path'
 
@@ -14,20 +19,41 @@ export interface SaveSongResult {
   error?: string
 }
 
+interface FileTypeConfig {
+  extension: string
+  filterName: string
+}
+
+function getFileTypeConfig(format: ExportFormat): FileTypeConfig {
+  switch (format) {
+    case 'pptx':
+      return { extension: 'pptx', filterName: 'PowerPoint' }
+    case 'opensong':
+    default:
+      return { extension: 'opensong', filterName: 'OpenSong' }
+  }
+}
+
 export function useSaveSongToFile() {
   const [isPending, setIsPending] = useState(false)
 
   const saveSong = useCallback(
-    async (song: SongWithSlides): Promise<SaveSongResult> => {
+    async (
+      song: SongWithSlides,
+      format: ExportFormat = 'opensong',
+    ): Promise<SaveSongResult> => {
       const lastPath = localStorage.getItem(LAST_SAVE_PATH_KEY)
       const sanitizedTitle = sanitizeFilename(song.title)
-      const defaultFilename = `${sanitizedTitle}.opensong`
+      const fileConfig = getFileTypeConfig(format)
+      const defaultFilename = `${sanitizedTitle}.${fileConfig.extension}`
 
       const savePath = await save({
         defaultPath: lastPath
           ? `${lastPath}/${defaultFilename}`
           : defaultFilename,
-        filters: [{ name: 'OpenSong', extensions: ['opensong'] }],
+        filters: [
+          { name: fileConfig.filterName, extensions: [fileConfig.extension] },
+        ],
       })
 
       if (!savePath) {
@@ -45,9 +71,21 @@ export function useSaveSongToFile() {
           localStorage.setItem(LAST_SAVE_PATH_KEY, dirPath)
         }
 
-        const xmlContent = generateOpenSongXml(song)
-        const encoder = new TextEncoder()
-        await writeFile(savePath, encoder.encode(xmlContent))
+        if (format === 'pptx') {
+          // Generate PPTX and write as binary
+          const base64Data = await generatePptxBase64(song)
+          const binaryString = atob(base64Data)
+          const bytes = new Uint8Array(binaryString.length)
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i)
+          }
+          await writeFile(savePath, bytes)
+        } else {
+          // Generate OpenSong XML
+          const xmlContent = generateOpenSongXml(song)
+          const encoder = new TextEncoder()
+          await writeFile(savePath, encoder.encode(xmlContent))
+        }
 
         return { success: true, filePath: savePath }
       } catch (error) {
