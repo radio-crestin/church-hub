@@ -1,8 +1,9 @@
 ; Church Hub NSIS Installer Hooks
 ; File association helper macros (from electron-builder/Saivert)
+; Prefixed with CH_ to avoid conflicts with Tauri's built-in macros
 
-; APP_ASSOCIATE macro - registers file extension with icon
-!macro APP_ASSOCIATE EXT FILECLASS DESCRIPTION ICON COMMANDTEXT COMMAND
+; CH_APP_ASSOCIATE macro - registers file extension with icon
+!macro CH_APP_ASSOCIATE EXT FILECLASS DESCRIPTION ICON COMMANDTEXT COMMAND
   WriteRegStr SHELL_CONTEXT "Software\Classes\.${EXT}" "" "${FILECLASS}"
   WriteRegNone SHELL_CONTEXT "Software\Classes\.${EXT}\OpenWithProgids" "${FILECLASS}"
 
@@ -13,49 +14,53 @@
   WriteRegStr SHELL_CONTEXT "Software\Classes\${FILECLASS}\shell\open\command" "" `${COMMAND}`
 !macroend
 
-; APP_UNASSOCIATE macro - removes file extension registration
-!macro APP_UNASSOCIATE EXT FILECLASS
+; CH_APP_UNASSOCIATE macro - removes file extension registration
+!macro CH_APP_UNASSOCIATE EXT FILECLASS
   DeleteRegValue SHELL_CONTEXT "Software\Classes\.${EXT}\OpenWithProgids" "${FILECLASS}"
   DeleteRegKey SHELL_CONTEXT `Software\Classes\${FILECLASS}`
 !macroend
 
-; Shell notification defines
+; Shell notification defines (check if already defined)
+!ifndef SHCNE_ASSOCCHANGED
 !define SHCNE_ASSOCCHANGED 0x08000000
+!endif
+!ifndef SHCNF_FLUSH
 !define SHCNF_FLUSH        0x1000
+!endif
 
-!macro UPDATEFILEASSOC
+!macro CH_UPDATEFILEASSOC
   System::Call "shell32::SHChangeNotify(i,i,i,i) (${SHCNE_ASSOCCHANGED}, ${SHCNF_FLUSH}, 0, 0)"
 !macroend
 
 ; Post-install hook - register file associations with custom icons
 !macro NSIS_HOOK_POSTINSTALL
   ; Register .opensong files
-  !insertmacro APP_ASSOCIATE "opensong" "ChurchHub.OpenSong" "Church Hub Song" \
+  !insertmacro CH_APP_ASSOCIATE "opensong" "ChurchHub.OpenSong" "Church Hub Song" \
     "$INSTDIR\church-hub.exe,0" "Open with Church Hub" "$INSTDIR\church-hub.exe $\"%1$\""
 
   ; Register .churchprogram files
-  !insertmacro APP_ASSOCIATE "churchprogram" "ChurchHub.Program" "Church Hub Schedule" \
+  !insertmacro CH_APP_ASSOCIATE "churchprogram" "ChurchHub.Program" "Church Hub Schedule" \
     "$INSTDIR\church-hub.exe,0" "Open with Church Hub" "$INSTDIR\church-hub.exe $\"%1$\""
 
   ; Register .pptx files (as secondary handler - won't override PowerPoint)
-  !insertmacro APP_ASSOCIATE "pptx" "ChurchHub.PowerPoint" "PowerPoint Presentation" \
+  !insertmacro CH_APP_ASSOCIATE "pptx" "ChurchHub.PowerPoint" "PowerPoint Presentation" \
     "$INSTDIR\church-hub.exe,0" "Import to Church Hub" "$INSTDIR\church-hub.exe $\"%1$\""
 
   ; Notify shell of changes
-  !insertmacro UPDATEFILEASSOC
+  !insertmacro CH_UPDATEFILEASSOC
 !macroend
 
 ; Post-uninstall hook - remove file associations
 !macro NSIS_HOOK_POSTUNINSTALL
   ; Unregister .opensong files
-  !insertmacro APP_UNASSOCIATE "opensong" "ChurchHub.OpenSong"
+  !insertmacro CH_APP_UNASSOCIATE "opensong" "ChurchHub.OpenSong"
 
   ; Unregister .churchprogram files
-  !insertmacro APP_UNASSOCIATE "churchprogram" "ChurchHub.Program"
+  !insertmacro CH_APP_UNASSOCIATE "churchprogram" "ChurchHub.Program"
 
   ; Unregister .pptx files
-  !insertmacro APP_UNASSOCIATE "pptx" "ChurchHub.PowerPoint"
+  !insertmacro CH_APP_UNASSOCIATE "pptx" "ChurchHub.PowerPoint"
 
   ; Notify shell of changes
-  !insertmacro UPDATEFILEASSOC
+  !insertmacro CH_UPDATEFILEASSOC
 !macroend
