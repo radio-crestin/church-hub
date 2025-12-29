@@ -259,7 +259,7 @@ export function ScreenManager() {
               <div className="flex items-center gap-2 md:gap-3 flex-wrap">
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-500 dark:text-gray-400 hidden md:inline">
-                    {screen.isActive ? 'Open' : 'Closed'}
+                    {screen.isActive ? 'Window' : 'Closed'}
                   </span>
                   <Switch
                     checked={screen.isActive}

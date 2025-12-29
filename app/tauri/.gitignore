@@ -11,3 +11,6 @@
 data
 gen
 
+# Worktree-specific config (copy from sample)
+tauri.worktree.conf.json
+

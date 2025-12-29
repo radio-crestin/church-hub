@@ -1,6 +1,7 @@
 import JSZip from 'jszip'
 
 import type { ScheduleWithItems } from '../../schedules/types'
+import { generateScheduleText } from '../../schedules/utils/generateScheduleText'
 import { sanitizeFilename } from '../../song-export/utils/createExportZip'
 import { generatePptx } from '../../song-export/utils/generatePptx'
 
@@ -8,103 +9,6 @@ import { generatePptx } from '../../song-export/utils/generatePptx'
  * Progress callback type for schedule ZIP generation
  */
 type ProgressCallback = (current: number, total: number) => void
-
-/**
- * Converts HTML content to plain text
- */
-function htmlToPlainText(html: string): string {
-  let text = html
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/p>/gi, '\n')
-    .replace(/<p>/gi, '')
-
-  text = text.replace(/<[^>]+>/g, '')
-
-  text = text
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#039;/g, "'")
-    .replace(/&apos;/g, "'")
-    .replace(/&nbsp;/g, ' ')
-
-  return text.replace(/\n+$/, '').trim()
-}
-
-/**
- * Generates a text file content with the schedule information
- */
-function generateScheduleText(schedule: ScheduleWithItems): string {
-  const lines: string[] = []
-
-  lines.push('='.repeat(60))
-  lines.push(schedule.title.toUpperCase())
-  lines.push('='.repeat(60))
-  lines.push('')
-
-  if (schedule.description) {
-    lines.push(schedule.description)
-    lines.push('')
-    lines.push('-'.repeat(60))
-    lines.push('')
-  }
-
-  let itemNumber = 1
-  for (const item of schedule.items) {
-    if (item.itemType === 'song' && item.song) {
-      lines.push(`${itemNumber}. [SONG] ${item.song.title}`)
-      if (item.song.categoryName) {
-        lines.push(`   Category: ${item.song.categoryName}`)
-      }
-      lines.push(`   Slides: ${item.slides.length}`)
-      lines.push('')
-    } else if (item.itemType === 'slide') {
-      const slideTypeName =
-        item.slideType === 'announcement'
-          ? 'Announcement'
-          : item.slideType === 'versete_tineri'
-            ? 'Versete Tineri'
-            : 'Slide'
-      lines.push(`${itemNumber}. [${slideTypeName.toUpperCase()}]`)
-      if (item.slideContent) {
-        const content = htmlToPlainText(item.slideContent)
-        const contentLines = content.split('\n').map((line) => `   ${line}`)
-        lines.push(...contentLines)
-      }
-      if (
-        item.slideType === 'versete_tineri' &&
-        item.verseteTineriEntries?.length
-      ) {
-        for (const entry of item.verseteTineriEntries) {
-          lines.push(
-            `   - ${entry.personName}: ${entry.bookName} ${entry.reference}`,
-          )
-        }
-      }
-      lines.push('')
-    } else if (item.itemType === 'bible_passage') {
-      lines.push(
-        `${itemNumber}. [BIBLE PASSAGE] ${item.biblePassageReference || 'Unknown reference'}`,
-      )
-      if (item.biblePassageTranslation) {
-        lines.push(`   Translation: ${item.biblePassageTranslation}`)
-      }
-      if (item.biblePassageVerses?.length) {
-        lines.push(`   Verses: ${item.biblePassageVerses.length}`)
-      }
-      lines.push('')
-    }
-    itemNumber++
-  }
-
-  lines.push('-'.repeat(60))
-  lines.push(`Total items: ${schedule.items.length}`)
-  lines.push(`Generated: ${new Date().toLocaleString()}`)
-  lines.push('')
-
-  return lines.join('\n')
-}
 
 /**
  * Generates a song with slides for PPTX generation
@@ -125,8 +29,8 @@ export async function generateScheduleZip(
 ): Promise<Blob> {
   const zip = new JSZip()
 
-  // Add schedule text file
-  const scheduleText = generateScheduleText(schedule)
+  // Add schedule text file (using same format as Edit as Text modal)
+  const scheduleText = generateScheduleText(schedule.items)
   const sanitizedScheduleTitle = sanitizeFilename(schedule.title)
   zip.file(`${sanitizedScheduleTitle} - Schedule.txt`, scheduleText)
 
