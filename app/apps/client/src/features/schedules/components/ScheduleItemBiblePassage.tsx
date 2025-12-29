@@ -1,10 +1,9 @@
 import {
+  Book,
   ChevronDown,
   ChevronRight,
   GripVertical,
   MoreVertical,
-  Music,
-  Pencil,
   Plus,
   Trash2,
 } from 'lucide-react'
@@ -13,31 +12,28 @@ import { useTranslation } from 'react-i18next'
 
 import type { ScheduleItem, SlideTemplate } from '../types'
 
-interface ScheduleItemSongProps {
+interface ScheduleItemBiblePassageProps {
   item: ScheduleItem
   onRemove: () => void
-  onEditSong: () => void
   onInsertSongAfter: () => void
-  onInsertSlideAfter: (template: SlideTemplate) => void
+  onInsertSlideAfter?: (template: SlideTemplate) => void
   dragHandleProps?: React.HTMLAttributes<HTMLDivElement>
 }
 
-export function ScheduleItemSong({
+export function ScheduleItemBiblePassage({
   item,
   onRemove,
-  onEditSong,
   onInsertSongAfter,
-  onInsertSlideAfter,
   dragHandleProps,
-}: ScheduleItemSongProps) {
+}: ScheduleItemBiblePassageProps) {
   const { t } = useTranslation('queue')
-  const [isExpanded, setIsExpanded] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
   return (
     <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-      {/* Song Header */}
+      {/* Passage Header */}
       <div className="flex items-center gap-2 p-3">
         {/* Drag Handle */}
         <div
@@ -64,27 +60,26 @@ export function ScheduleItemSong({
           )}
         </button>
 
-        {/* Song Icon & Title - Clickable to edit */}
-        <button
-          type="button"
-          onClick={onEditSong}
-          className="flex items-center gap-3 flex-1 min-w-0 text-left"
-        >
-          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 flex items-center justify-center">
-            <Music size={16} />
+        {/* Passage Icon & Title */}
+        <div className="flex items-center gap-3 flex-1 min-w-0 text-left">
+          <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-teal-100 dark:bg-teal-900/30">
+            <Book size={16} className="text-teal-600 dark:text-teal-400" />
           </div>
 
-          {/* Song Title & Info */}
+          {/* Passage Reference & Info */}
           <div className="flex-1 min-w-0">
-            <div className="font-medium text-sm truncate text-gray-900 dark:text-white">
-              {item.song?.title}
+            <div className="flex items-center gap-2">
+              <span className="font-medium text-sm truncate text-gray-900 dark:text-white">
+                {item.biblePassageReference || t('biblePassage.passage')}
+              </span>
             </div>
             <div className="text-xs text-gray-500 dark:text-gray-400">
-              {item.slides.length} slides
-              {item.song?.categoryName && ` • ${item.song.categoryName}`}
+              {t('biblePassage.versesCount', {
+                count: item.biblePassageVerses.length,
+              })}
             </div>
           </div>
-        </button>
+        </div>
 
         {/* Context Menu */}
         <div className="relative" ref={menuRef}>
@@ -103,17 +98,6 @@ export function ScheduleItemSong({
                 onClick={() => setShowMenu(false)}
               />
               <div className="absolute right-0 top-full mt-1 z-20 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowMenu(false)
-                    onEditSong()
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                >
-                  <Pencil size={14} />
-                  {t('actions.editSong')}
-                </button>
                 <button
                   type="button"
                   onClick={() => {
@@ -143,21 +127,20 @@ export function ScheduleItemSong({
         </div>
       </div>
 
-      {/* Expanded Slides */}
-      {isExpanded && item.slides.length > 0 && (
+      {/* Expanded Verses */}
+      {isExpanded && item.biblePassageVerses.length > 0 && (
         <div className="px-3 pb-3 space-y-1.5">
-          {item.slides.map((slide, idx) => (
+          {item.biblePassageVerses.map((verse) => (
             <div
-              key={slide.id}
-              className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-sm"
+              key={verse.id}
+              className="p-2 rounded bg-gray-50 dark:bg-gray-700/50 text-sm"
             >
-              <span className="flex-shrink-0 w-5 h-5 rounded bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs flex items-center justify-center">
-                {idx + 1}
-              </span>
-              <span className="text-gray-600 dark:text-gray-400 line-clamp-1">
-                {slide.content.replace(/<[^>]*>/g, '').substring(0, 60)}
-                {slide.content.length > 60 ? '...' : ''}
-              </span>
+              <div className="font-medium text-teal-700 dark:text-teal-400 text-xs mb-1">
+                {verse.reference}
+              </div>
+              <div className="text-gray-600 dark:text-gray-300 line-clamp-2">
+                {verse.text}
+              </div>
             </div>
           ))}
         </div>

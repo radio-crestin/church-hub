@@ -2,7 +2,11 @@ import { max } from 'drizzle-orm'
 
 import { getScheduleById } from './getSchedules'
 import { getDatabase } from '../../db'
-import { presentationQueue } from '../../db/schema'
+import {
+  biblePassageVerses,
+  presentationQueue,
+  verseteTineriEntries,
+} from '../../db/schema'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -55,7 +59,84 @@ export function importScheduleToQueue(scheduleId: number): boolean {
             updatedAt: now,
           })
           .run()
+      } else if (item.itemType === 'bible_passage') {
+        // Insert Bible passage as proper bible_passage queue item
+        const inserted = db
+          .insert(presentationQueue)
+          .values({
+            itemType: 'bible_passage',
+            biblePassageReference: item.biblePassageReference,
+            biblePassageTranslation: item.biblePassageTranslation,
+            sortOrder: nextOrder,
+            isExpanded: true,
+            createdAt: now,
+            updatedAt: now,
+          })
+          .returning({ id: presentationQueue.id })
+          .get()
+
+        // Copy bible passage verses from schedule to queue
+        for (const verse of item.biblePassageVerses) {
+          db.insert(biblePassageVerses)
+            .values({
+              queueItemId: inserted.id,
+              verseId: verse.verseId,
+              reference: verse.reference,
+              text: verse.text,
+              sortOrder: verse.sortOrder,
+            })
+            .run()
+        }
+
+        log(
+          'debug',
+          `Imported bible_passage with ${item.biblePassageVerses.length} verses`,
+        )
+      } else if (
+        item.itemType === 'slide' &&
+        item.slideType === 'versete_tineri'
+      ) {
+        // Insert Versete Tineri slide with entries
+        const inserted = db
+          .insert(presentationQueue)
+          .values({
+            itemType: 'slide',
+            slideType: 'versete_tineri',
+            slideContent: null, // Content stored in entries
+            sortOrder: nextOrder,
+            isExpanded: true,
+            createdAt: now,
+            updatedAt: now,
+          })
+          .returning({ id: presentationQueue.id })
+          .get()
+
+        // Copy versete tineri entries from schedule to queue
+        for (const entry of item.verseteTineriEntries) {
+          db.insert(verseteTineriEntries)
+            .values({
+              queueItemId: inserted.id,
+              personName: entry.personName,
+              translationId: entry.translationId,
+              bookCode: entry.bookCode,
+              bookName: entry.bookName,
+              reference: entry.reference,
+              text: entry.text,
+              startChapter: entry.startChapter,
+              startVerse: entry.startVerse,
+              endChapter: entry.endChapter,
+              endVerse: entry.endVerse,
+              sortOrder: entry.sortOrder,
+            })
+            .run()
+        }
+
+        log(
+          'debug',
+          `Imported versete_tineri with ${item.verseteTineriEntries.length} entries`,
+        )
       } else if (item.itemType === 'slide') {
+        // Regular announcement slide
         db.insert(presentationQueue)
           .values({
             itemType: 'slide',

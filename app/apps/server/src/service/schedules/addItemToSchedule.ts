@@ -4,7 +4,13 @@ import { getScheduleItemById } from './getSchedules'
 import { updateScheduleSearchIndex } from './search'
 import type { AddToScheduleInput, ScheduleItem } from './types'
 import { getDatabase } from '../../db'
-import { scheduleItems, schedules } from '../../db/schema'
+import {
+  scheduleBiblePassageVerses,
+  scheduleItems,
+  schedules,
+  scheduleVerseteTineriEntries,
+} from '../../db/schema'
+import { getVerseRange, getVersesAcrossChapters } from '../bible'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -15,17 +21,48 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
 }
 
 /**
- * Adds an item (song or slide) to a schedule
+ * Formats a passage reference string for cross-chapter or same-chapter ranges
+ */
+function formatPassageReference(
+  bookName: string,
+  startChapter: number,
+  startVerse: number,
+  endChapter: number,
+  endVerse: number,
+  translationAbbreviation?: string,
+): string {
+  let ref: string
+  if (startChapter === endChapter) {
+    if (startVerse === endVerse) {
+      ref = `${bookName} ${startChapter}:${startVerse}`
+    } else {
+      ref = `${bookName} ${startChapter}:${startVerse}-${endVerse}`
+    }
+  } else {
+    ref = `${bookName} ${startChapter}:${startVerse} - ${endChapter}:${endVerse}`
+  }
+  return translationAbbreviation ? `${ref} - ${translationAbbreviation}` : ref
+}
+
+/**
+ * Adds an item (song, slide, or bible_passage) to a schedule
  */
 export function addItemToSchedule(
   input: AddToScheduleInput,
 ): ScheduleItem | null {
   try {
     const isSong = input.songId !== undefined
-    log(
-      'debug',
-      `Adding ${isSong ? 'song' : 'slide'} to schedule: ${input.scheduleId}`,
-    )
+    const isBiblePassage = input.biblePassage !== undefined
+    const isVerseteTineri =
+      input.slideType === 'versete_tineri' &&
+      input.verseteTineriEntries !== undefined
+
+    let itemTypeStr = 'slide'
+    if (isSong) itemTypeStr = 'song'
+    else if (isBiblePassage) itemTypeStr = 'bible_passage'
+    else if (isVerseteTineri) itemTypeStr = 'versete_tineri'
+
+    log('debug', `Adding ${itemTypeStr} to schedule: ${input.scheduleId}`)
 
     const db = getDatabase()
     const now = new Date()
@@ -72,6 +109,7 @@ export function addItemToSchedule(
 
     // Insert the item
     let itemId: number
+
     if (isSong) {
       const result = db
         .insert(scheduleItems)
@@ -86,7 +124,156 @@ export function addItemToSchedule(
         .returning({ id: scheduleItems.id })
         .get()
       itemId = result.id
+    } else if (isBiblePassage) {
+      // Handle Bible passage item
+      const passage = input.biblePassage!
+      const passageRef = formatPassageReference(
+        passage.bookName,
+        passage.startChapter,
+        passage.startVerse,
+        passage.endChapter,
+        passage.endVerse,
+        passage.translationAbbreviation,
+      )
+
+      // Fetch verses in the range
+      const verses =
+        passage.startChapter === passage.endChapter
+          ? getVerseRange(
+              passage.translationId,
+              passage.bookCode,
+              passage.startChapter,
+              passage.startVerse,
+              passage.endVerse,
+            )
+          : getVersesAcrossChapters(
+              passage.translationId,
+              passage.bookCode,
+              passage.startChapter,
+              passage.startVerse,
+              passage.endChapter,
+              passage.endVerse,
+            )
+
+      if (verses.length === 0) {
+        log('error', `No verses found for passage: ${passageRef}`)
+        return null
+      }
+
+      const result = db
+        .insert(scheduleItems)
+        .values({
+          scheduleId: input.scheduleId,
+          itemType: 'bible_passage',
+          biblePassageReference: passageRef,
+          biblePassageTranslation: passage.translationAbbreviation,
+          sortOrder: targetOrder,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .returning({ id: scheduleItems.id })
+        .get()
+      itemId = result.id
+
+      // Insert individual verses
+      for (let i = 0; i < verses.length; i++) {
+        const verse = verses[i]
+        const verseReference = `${verse.bookName} ${verse.chapter}:${verse.verse}`
+
+        db.insert(scheduleBiblePassageVerses)
+          .values({
+            scheduleItemId: itemId,
+            verseId: verse.id,
+            reference: verseReference,
+            text: verse.text,
+            sortOrder: i,
+          })
+          .run()
+      }
+
+      log('info', `Bible passage added with ${verses.length} verses`)
+    } else if (isVerseteTineri) {
+      // Handle Versete Tineri slide with entries
+      const result = db
+        .insert(scheduleItems)
+        .values({
+          scheduleId: input.scheduleId,
+          itemType: 'slide',
+          slideType: 'versete_tineri',
+          slideContent: null, // Content is stored in entries
+          sortOrder: targetOrder,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .returning({ id: scheduleItems.id })
+        .get()
+      itemId = result.id
+
+      // Insert versete tineri entries
+      const entries = input.verseteTineriEntries!
+      for (let i = 0; i < entries.length; i++) {
+        const entry = entries[i]
+
+        // Fetch verses for this entry
+        const verses =
+          entry.startChapter === entry.endChapter
+            ? getVerseRange(
+                entry.translationId,
+                entry.bookCode,
+                entry.startChapter,
+                entry.startVerse,
+                entry.endVerse,
+              )
+            : getVersesAcrossChapters(
+                entry.translationId,
+                entry.bookCode,
+                entry.startChapter,
+                entry.startVerse,
+                entry.endChapter,
+                entry.endVerse,
+              )
+
+        if (verses.length === 0) {
+          log(
+            'warning',
+            `No verses found for entry ${i}: ${entry.bookName} ${entry.startChapter}:${entry.startVerse}`,
+          )
+          continue
+        }
+
+        // Combine verse text
+        const combinedText = verses.map((v) => v.text).join(' ')
+
+        // Format reference
+        const reference = formatPassageReference(
+          entry.bookName,
+          entry.startChapter,
+          entry.startVerse,
+          entry.endChapter,
+          entry.endVerse,
+        )
+
+        db.insert(scheduleVerseteTineriEntries)
+          .values({
+            scheduleItemId: itemId,
+            personName: entry.personName,
+            translationId: entry.translationId,
+            bookCode: entry.bookCode,
+            bookName: entry.bookName,
+            reference,
+            text: combinedText,
+            startChapter: entry.startChapter,
+            startVerse: entry.startVerse,
+            endChapter: entry.endChapter,
+            endVerse: entry.endVerse,
+            sortOrder: i,
+          })
+          .run()
+      }
+
+      log('info', `Versete Tineri added with ${entries.length} entries`)
     } else {
+      // Regular slide (announcement)
       const result = db
         .insert(scheduleItems)
         .values({
