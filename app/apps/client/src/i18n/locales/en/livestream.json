@@ -77,6 +77,7 @@
     "notStreaming": "Not Streaming",
     "starting": "Starting...",
     "stopping": "Stopping...",
+    "connectRequired": "Connect YouTube or OBS to start streaming",
     "progress": {
       "creating_broadcast": "Creating broadcast",
       "waiting_for_ready": "Waiting for YouTube",
@@ -84,6 +85,12 @@
       "starting_obs": "Starting OBS",
       "completed": "Stream started",
       "error": "Error starting stream"
+    },
+    "cancelConfirm": {
+      "title": "Cancel Stream Start?",
+      "message": "The stream is currently starting. Are you sure you want to cancel and stop the stream?",
+      "confirm": "Stop Stream",
+      "cancel": "Continue"
     }
   },
   "broadcast": {
