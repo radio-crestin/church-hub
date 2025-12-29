@@ -11,7 +11,11 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { useSaveScheduleToFile } from '~/features/schedule-export'
+import {
+  type ScheduleExportFormat,
+  ScheduleExportFormatModal,
+  useSaveScheduleToFile,
+} from '~/features/schedule-export'
 import { SongPickerModal } from '~/features/songs/components'
 import { useToast } from '~/ui/toast'
 import { AddToScheduleMenu } from './AddToScheduleMenu'
@@ -70,6 +74,7 @@ export function ScheduleEditor({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showEditAsText, setShowEditAsText] = useState(false)
   const [showBiblePassagePicker, setShowBiblePassagePicker] = useState(false)
+  const [showExportFormatModal, setShowExportFormatModal] = useState(false)
   // Track created schedule ID for auto-save flow
   const [createdScheduleId, setCreatedScheduleId] = useState<number | null>(
     null,
@@ -276,15 +281,24 @@ export function ScheduleEditor({
     }
   }
 
-  const handleSaveToFile = useCallback(async () => {
-    if (!schedule) return
-    const result = await saveSchedule(schedule)
-    if (result.success) {
-      showToast(t('messages.savedToFile'), 'success')
-    } else if (result.error) {
-      showToast(result.error, 'error')
-    }
-  }, [schedule, saveSchedule, showToast, t])
+  const handleOpenExportModal = useCallback(() => {
+    setShowExportFormatModal(true)
+  }, [])
+
+  const handleExportFormatConfirm = useCallback(
+    async (format: ScheduleExportFormat) => {
+      setShowExportFormatModal(false)
+      if (!schedule) return
+
+      const result = await saveSchedule(schedule, format)
+      if (result.success) {
+        showToast(t('messages.savedToFile'), 'success')
+      } else if (result.error) {
+        showToast(result.error, 'error')
+      }
+    },
+    [schedule, saveSchedule, showToast, t],
+  )
 
   if (isLoading && scheduleId !== null) {
     return (
@@ -312,7 +326,7 @@ export function ScheduleEditor({
             <>
               <button
                 type="button"
-                onClick={handleSaveToFile}
+                onClick={handleOpenExportModal}
                 disabled={isSaving}
                 className="flex items-center gap-2 px-3 py-1.5 text-sm text-white bg-gray-600 hover:bg-gray-700 dark:bg-gray-500 dark:hover:bg-gray-600 rounded-lg transition-colors disabled:opacity-50"
               >
@@ -494,6 +508,13 @@ export function ScheduleEditor({
           }}
         />
       )}
+
+      {/* Export Format Modal */}
+      <ScheduleExportFormatModal
+        isOpen={showExportFormatModal}
+        onConfirm={handleExportFormatConfirm}
+        onCancel={() => setShowExportFormatModal(false)}
+      />
     </div>
   )
 }
