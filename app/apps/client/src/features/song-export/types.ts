@@ -1,15 +1,21 @@
 /**
+ * Export format options
+ */
+export type ExportFormat = 'zip' | 'folder'
+
+/**
  * Options for exporting songs
  */
 export interface ExportOptions {
   categoryId: number | null // null = all songs
+  format: ExportFormat
 }
 
 /**
  * Progress tracking for export operation
  */
 export interface ExportProgress {
-  phase: 'fetching' | 'generating' | 'zipping' | 'saving'
+  phase: 'fetching' | 'generating' | 'zipping' | 'writing' | 'saving'
   current: number
   total: number
   currentSong?: string
