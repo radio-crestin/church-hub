@@ -53,33 +53,33 @@ export async function getScenes(): Promise<OBSScene[]> {
 
   try {
     const obsSceneList = await obsConnection.getSceneList()
+    const obsSceneNames = new Set(obsSceneList.map((s) => s.sceneName))
     const result: OBSScene[] = []
     const existingSceneNames = new Set<string>()
 
+    // Include ALL database scenes (both OBS scenes and custom scenes)
     for (const dbScene of dbScenes) {
-      const obsScene = obsSceneList.find(
-        (s) => s.sceneName === dbScene.obsSceneName,
-      )
-      if (obsScene) {
-        existingSceneNames.add(dbScene.obsSceneName)
-        result.push({
-          id: dbScene.id,
-          obsSceneName: dbScene.obsSceneName,
-          displayName: dbScene.displayName,
-          isVisible: dbScene.isVisible,
-          sortOrder: dbScene.sortOrder,
-          shortcuts: parseShortcuts(dbScene.shortcuts),
-          contentTypes: parseContentTypes(dbScene.contentTypes),
-          mixerChannelActions: parseMixerChannelActions(
-            dbScene.mixerChannelActions,
-          ),
-          isCurrent: dbScene.obsSceneName === currentScene,
-        })
-      }
+      existingSceneNames.add(dbScene.obsSceneName)
+      const existsInOBS = obsSceneNames.has(dbScene.obsSceneName)
+      result.push({
+        id: dbScene.id,
+        obsSceneName: dbScene.obsSceneName,
+        displayName: dbScene.displayName,
+        isVisible: dbScene.isVisible,
+        sortOrder: dbScene.sortOrder,
+        shortcuts: parseShortcuts(dbScene.shortcuts),
+        contentTypes: parseContentTypes(dbScene.contentTypes),
+        mixerChannelActions: parseMixerChannelActions(
+          dbScene.mixerChannelActions,
+        ),
+        isCurrent: dbScene.obsSceneName === currentScene,
+        isCustom: !existsInOBS,
+      })
     }
 
     let maxSortOrder = Math.max(...dbScenes.map((s) => s.sortOrder), -1)
 
+    // Add new OBS scenes that are not in database
     for (const obsScene of obsSceneList) {
       if (!existingSceneNames.has(obsScene.sceneName)) {
         maxSortOrder++
@@ -105,6 +105,7 @@ export async function getScenes(): Promise<OBSScene[]> {
             newScene.mixerChannelActions,
           ),
           isCurrent: obsScene.sceneName === currentScene,
+          isCustom: false,
         })
       }
     }
