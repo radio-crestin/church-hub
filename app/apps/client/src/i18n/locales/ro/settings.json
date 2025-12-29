@@ -299,15 +299,24 @@
       },
       "export": {
         "title": "Export Cântări",
-        "description": "Exportă cântările în format OpenSong XML într-o arhivă ZIP",
+        "description": "Exportă cântările în format OpenSong XML",
         "button": "Exportă Cântări",
         "allSongs": "Toate cântările",
         "byCategory": "După categorie",
         "selectCategory": "Selectează o categorie",
+        "formatLabel": "Format Export",
+        "formats": {
+          "folder": "Folder",
+          "folderDescription": "Mai rapid, export direct",
+          "folderUnavailable": "Doar în aplicația desktop",
+          "zip": "Arhivă ZIP",
+          "zipDescription": "Un singur fișier comprimat"
+        },
         "exporting": "Se exportă...",
         "fetching": "Se exportă cântările...",
         "generating": "Se generează fișierele XML...",
         "zipping": "Se creează arhiva ZIP...",
+        "writing": "Se scriu fișierele...",
         "saving": "Se salvează fișierul...",
         "processingProgress": "Se procesează {{current}} din {{total}}"
       },

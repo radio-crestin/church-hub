@@ -299,15 +299,24 @@
       },
       "export": {
         "title": "Export Songs",
-        "description": "Export songs to OpenSong XML format in a ZIP archive",
+        "description": "Export songs to OpenSong XML format",
         "button": "Export Songs",
         "allSongs": "All songs",
         "byCategory": "By category",
         "selectCategory": "Select a category",
+        "formatLabel": "Export Format",
+        "formats": {
+          "folder": "Folder",
+          "folderDescription": "Faster, direct file export",
+          "folderUnavailable": "Desktop app only",
+          "zip": "ZIP Archive",
+          "zipDescription": "Single compressed file"
+        },
         "exporting": "Exporting...",
         "fetching": "Exporting songs...",
         "generating": "Generating XML files...",
         "zipping": "Creating ZIP archive...",
+        "writing": "Writing files...",
         "saving": "Saving file...",
         "processingProgress": "Processing {{current}} of {{total}}"
       },
