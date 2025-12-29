@@ -120,6 +120,13 @@ export const EMBEDDED_JOURNAL = {
       tag: '0014_add_highlight_colors',
       breakpoints: true,
     },
+    {
+      idx: 15,
+      version: '6',
+      when: 1767300000000,
+      tag: '0015_add_always_on_top_to_screens',
+      breakpoints: true,
+    },
   ],
 } as const
 
@@ -198,5 +205,10 @@ export const EMBEDDED_MIGRATIONS: EmbeddedMigration[] = [
     tag: '0014_add_highlight_colors',
     sql: 'CREATE TABLE `highlight_colors` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`name` text NOT NULL,\n\t`color` text NOT NULL,\n\t`sort_order` integer DEFAULT 0 NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE INDEX `idx_highlight_colors_sort_order` ON `highlight_colors` (`sort_order`);\n',
     when: 1767200000000,
+  },
+  {
+    tag: '0015_add_always_on_top_to_screens',
+    sql: 'ALTER TABLE `screens` ADD COLUMN `always_on_top` integer NOT NULL DEFAULT 0;\n',
+    when: 1767300000000,
   },
 ]
