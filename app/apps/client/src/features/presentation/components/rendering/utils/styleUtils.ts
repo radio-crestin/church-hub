@@ -312,6 +312,34 @@ export function calculatePixelBounds(
 }
 
 /**
+ * Clamp pixel bounds to ensure they stay within the screen boundaries.
+ * Useful for preventing elements from being positioned outside the visible area.
+ */
+export function clampBoundsToScreen(
+  bounds: PixelBounds,
+  screenWidth: number,
+  screenHeight: number,
+): PixelBounds {
+  // Ensure width and height are at least 1px and don't exceed screen
+  const width = Math.max(1, Math.min(bounds.width, screenWidth))
+  const height = Math.max(1, Math.min(bounds.height, screenHeight))
+
+  // Clamp x position: ensure element stays within horizontal bounds
+  // x must be >= 0 and x + width must be <= screenWidth
+  let x = bounds.x
+  if (x < 0) x = 0
+  if (x + width > screenWidth) x = screenWidth - width
+
+  // Clamp y position: ensure element stays within vertical bounds
+  // y must be >= 0 and y + height must be <= screenHeight
+  let y = bounds.y
+  if (y < 0) y = 0
+  if (y + height > screenHeight) y = screenHeight - height
+
+  return { x, y, width, height }
+}
+
+/**
  * Calculate pixel size from SizeWithUnits
  */
 export function calculatePixelSizeWithUnits(

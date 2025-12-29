@@ -4,7 +4,11 @@ import { AnimatedElement } from './AnimatedElement'
 import { AnimationProvider } from './AnimationContext'
 import { TextContent } from './TextContent'
 import type { ContentData, NextSlideData } from './types'
-import { calculatePixelBounds, getBackgroundCSS } from './utils/styleUtils'
+import {
+  calculatePixelBounds,
+  clampBoundsToScreen,
+  getBackgroundCSS,
+} from './utils/styleUtils'
 import type {
   BibleContentConfig,
   ContentType,
@@ -302,10 +306,15 @@ export function ScreenContent({
     if (clockConfig.hidden) return null
 
     // Check if clock is enabled for current content type
+    // Support both new structure (clockEnabled: boolean) and old structure (clock: { enabled: boolean })
     const isClockEnabledForType =
       currentConfig &&
-      'clockEnabled' in currentConfig &&
-      currentConfig.clockEnabled
+      (('clockEnabled' in currentConfig && currentConfig.clockEnabled) ||
+        ('clock' in currentConfig &&
+          currentConfig.clock &&
+          typeof currentConfig.clock === 'object' &&
+          'enabled' in currentConfig.clock &&
+          currentConfig.clock.enabled))
     if (!isClockEnabledForType) return null
 
     // Default size for backwards compatibility (must match ScreenEditorCanvas.tsx)
@@ -316,13 +325,14 @@ export function ScreenContent({
       heightUnit: '%' as const,
     }
 
-    // Calculate pixel bounds
-    const bounds = calculatePixelBounds(
+    // Calculate pixel bounds and clamp to screen boundaries
+    const rawBounds = calculatePixelBounds(
       clockConfig.constraints,
       clockSize,
       canvasWidth,
       canvasHeight,
     )
+    const bounds = clampBoundsToScreen(rawBounds, canvasWidth, canvasHeight)
 
     // For clock, use uniform scaling (fontScale) to maintain aspect ratio
     // This prevents distortion when scaleX !== scaleY
