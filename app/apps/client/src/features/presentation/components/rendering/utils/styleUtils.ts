@@ -1,5 +1,7 @@
 import type {
+  AnimationConfig,
   BackgroundConfig,
+  ContentTypeConfig,
   Constraints,
   Position,
   PositionUnit,
@@ -320,4 +322,40 @@ export function calculatePixelSizeWithUnits(
     width: toPixels(size.width, size.widthUnit, screenDimensions.width),
     height: toPixels(size.height, size.heightUnit, screenDimensions.height),
   }
+}
+
+/**
+ * Calculate the maximum exit animation duration from a content type config.
+ * This finds the longest (duration + delay) across all animated elements.
+ * Returns 0 if no exit animations are configured.
+ */
+export function calculateMaxExitAnimationDuration(
+  config: ContentTypeConfig | undefined,
+): number {
+  if (!config) return 0
+
+  const durations: number[] = []
+
+  // Helper to get total duration from an animation config
+  const getTotalDuration = (anim: AnimationConfig | undefined): number => {
+    if (!anim || anim.type === 'none') return 0
+    return (anim.duration ?? 300) + (anim.delay ?? 0)
+  }
+
+  // Check all possible animated elements
+  if ('mainText' in config && config.mainText?.animationOut) {
+    durations.push(getTotalDuration(config.mainText.animationOut))
+  }
+  if ('contentText' in config && config.contentText?.animationOut) {
+    durations.push(getTotalDuration(config.contentText.animationOut))
+  }
+  if ('referenceText' in config && config.referenceText?.animationOut) {
+    durations.push(getTotalDuration(config.referenceText.animationOut))
+  }
+  if ('personLabel' in config && config.personLabel?.animationOut) {
+    durations.push(getTotalDuration(config.personLabel.animationOut))
+  }
+
+  // Return the maximum duration, or 0 if none found
+  return durations.length > 0 ? Math.max(...durations) : 0
 }

@@ -1,14 +1,18 @@
 import { fetch as tauriFetch } from '@tauri-apps/plugin-http'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { getApiUrl, isMobile } from '~/config'
 import { getStoredUserToken } from '~/service/api-url'
 import { ScreenPreview } from './ScreenPreview'
+import { calculateMaxExitAnimationDuration } from './rendering/utils/styleUtils'
 import { usePresentationState, useWebSocket } from '../hooks'
 import { useScreen } from '../hooks/useScreen'
 import { useScreens } from '../hooks/useScreens'
 import type { ContentType } from '../types'
 import { addAminToLastSlide } from '../utils/addAminToLastSlide'
+
+// Extra buffer time after animation completes before transitioning to empty state (ms)
+const EXIT_ANIMATION_BUFFER = 100
 
 // Check if we're running in Tauri context
 const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
@@ -83,6 +87,61 @@ export function LivePreview() {
 
   const [contentType, setContentType] = useState<ContentType>('empty')
   const [contentData, setContentData] = useState<ContentData>({})
+  const [isExitAnimating, setIsExitAnimating] = useState(false)
+  const exitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const prevHiddenRef = useRef(presentationState?.isHidden)
+  const currentContentTypeRef = useRef<ContentType>(contentType)
+
+  // Keep track of current content type for exit animation calculation
+  if (contentType !== 'empty') {
+    currentContentTypeRef.current = contentType
+  }
+
+  // Handle exit animation timing - delay empty state transition
+  useEffect(() => {
+    const wasHidden = prevHiddenRef.current
+    const isHidden = presentationState?.isHidden
+
+    // Detect transition from visible to hidden
+    if (!wasHidden && isHidden) {
+      // Clear any existing timeout
+      if (exitTimeoutRef.current) {
+        clearTimeout(exitTimeoutRef.current)
+      }
+
+      // Start exit animation
+      setIsExitAnimating(true)
+
+      // Calculate the max exit animation duration from the current content type's config
+      const currentConfig = screen?.contentConfigs[currentContentTypeRef.current]
+      const animationDuration = calculateMaxExitAnimationDuration(currentConfig)
+      const totalDelay = animationDuration + EXIT_ANIMATION_BUFFER
+
+      // After animation duration + buffer, transition to empty state
+      exitTimeoutRef.current = setTimeout(() => {
+        setContentData({})
+        setContentType('empty')
+        setIsExitAnimating(false)
+      }, totalDelay)
+    }
+
+    // If becoming visible, cancel any pending exit transition
+    if (wasHidden && !isHidden) {
+      if (exitTimeoutRef.current) {
+        clearTimeout(exitTimeoutRef.current)
+        exitTimeoutRef.current = null
+      }
+      setIsExitAnimating(false)
+    }
+
+    prevHiddenRef.current = isHidden
+
+    return () => {
+      if (exitTimeoutRef.current) {
+        clearTimeout(exitTimeoutRef.current)
+      }
+    }
+  }, [presentationState?.isHidden, screen])
 
   // Fetch content based on presentation state
   useEffect(() => {
@@ -93,10 +152,9 @@ export function LivePreview() {
         return
       }
 
-      // Check if hidden
-      if (presentationState.isHidden) {
-        setContentData({})
-        setContentType('empty')
+      // When hidden or exit animating, don't fetch new content
+      // The exit animation effect will handle transitioning to empty state
+      if (presentationState.isHidden || isExitAnimating) {
         return
       }
 
@@ -253,10 +311,16 @@ export function LivePreview() {
     presentationState?.updatedAt,
     // Include temporaryContent to ensure re-render when navigating temporary songs/bible
     presentationState?.temporaryContent,
+    isExitAnimating,
   ])
 
   const hasContent = Object.keys(contentData).length > 0
-  const showClock = !hasContent || presentationState?.isHidden
+
+  // Visibility is false when hidden or during exit animation (triggers exit animation in ScreenContent)
+  // During exit animation, content is still rendered but animating out
+  // After animation completes, contentData becomes empty
+  const isVisible = !presentationState?.isHidden && !isExitAnimating && hasContent
+  const showClock = !hasContent
 
   // Loading state
   if (!screen) {
@@ -274,6 +338,7 @@ export function LivePreview() {
         contentType={contentType}
         contentData={contentData}
         showClock={showClock}
+        isVisible={isVisible}
       />
     </div>
   )

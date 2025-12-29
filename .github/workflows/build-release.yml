@@ -22,18 +22,14 @@ jobs:
             rust_target: aarch64-apple-darwin
             bun_target: bun-darwin-arm64
             sidecar_suffix: aarch64-apple-darwin
-            artifact_name: church-hub-macos-arm64.dmg
-            artifact_pattern: "*.dmg"
-            bundle_path: dmg
+            consistent_name: church-hub-macos-arm64.dmg
 
           # Windows x64
           - platform: windows-latest
             rust_target: x86_64-pc-windows-msvc
             bun_target: bun-windows-x64
             sidecar_suffix: x86_64-pc-windows-msvc.exe
-            artifact_name: church-hub-windows-x64.exe
-            artifact_pattern: "*-setup.exe"
-            bundle_path: nsis
+            consistent_name: church-hub-windows-x64.exe
 
     runs-on: ${{ matrix.platform }}
 
@@ -177,42 +173,54 @@ jobs:
           prerelease: false
           includeUpdaterJson: false
 
+      - name: Debug - List all bundle outputs
+        shell: bash
+        run: |
+          echo "=== Listing all bundle directories ==="
+          find app/tauri/target -type d -name "bundle" 2>/dev/null | while read dir; do
+            echo "Found bundle dir: $dir"
+            find "$dir" -type f \( -name "*.dmg" -o -name "*.exe" -o -name "*.msi" \) 2>/dev/null
+          done
+          echo "=== Done ==="
+
       - name: Create consistently named artifact (macOS)
         if: matrix.platform == 'macos-latest'
         shell: bash
         run: |
-          BUNDLE_DIR="app/tauri/target/${{ matrix.rust_target }}/release/bundle/${{ matrix.bundle_path }}"
-          echo "Looking for artifacts in: $BUNDLE_DIR"
-          ls -la "$BUNDLE_DIR" || true
-          ARTIFACT=$(find "$BUNDLE_DIR" -name "${{ matrix.artifact_pattern }}" -type f | head -1)
-          if [ -n "$ARTIFACT" ]; then
-            cp "$ARTIFACT" "${{ matrix.artifact_name }}"
-            echo "Created: ${{ matrix.artifact_name }}"
+          echo "Looking for .dmg files..."
+          DMG_FILE=$(find app/tauri/target -name "*.dmg" -type f 2>/dev/null | head -1)
+          echo "Found: $DMG_FILE"
+          if [ -n "$DMG_FILE" ] && [ -f "$DMG_FILE" ]; then
+            cp "$DMG_FILE" "${{ matrix.consistent_name }}"
+            echo "✅ Created: ${{ matrix.consistent_name }}"
+            ls -la "${{ matrix.consistent_name }}"
           else
-            echo "No artifact found matching pattern: ${{ matrix.artifact_pattern }}"
+            echo "❌ No .dmg file found!"
+            find app/tauri/target -type f -name "*" | grep -E '\.(dmg|app)' || echo "No dmg/app files found"
             exit 1
           fi
 
       - name: Create consistently named artifact (Windows)
         if: matrix.platform == 'windows-latest'
-        shell: pwsh
+        shell: bash
         run: |
-          $bundleDir = "app/tauri/target/${{ matrix.rust_target }}/release/bundle/${{ matrix.bundle_path }}"
-          Write-Host "Looking for artifacts in: $bundleDir"
-          Get-ChildItem -Path $bundleDir -ErrorAction SilentlyContinue
-          $artifact = Get-ChildItem -Path $bundleDir -Filter "${{ matrix.artifact_pattern }}" -File | Select-Object -First 1
-          if ($artifact) {
-            Copy-Item $artifact.FullName -Destination "${{ matrix.artifact_name }}"
-            Write-Host "Created: ${{ matrix.artifact_name }}"
-          } else {
-            Write-Host "No artifact found matching pattern: ${{ matrix.artifact_pattern }}"
+          echo "Looking for setup .exe files..."
+          EXE_FILE=$(find app/tauri/target -name "*-setup.exe" -type f 2>/dev/null | head -1)
+          echo "Found: $EXE_FILE"
+          if [ -n "$EXE_FILE" ] && [ -f "$EXE_FILE" ]; then
+            cp "$EXE_FILE" "${{ matrix.consistent_name }}"
+            echo "✅ Created: ${{ matrix.consistent_name }}"
+            ls -la "${{ matrix.consistent_name }}"
+          else
+            echo "❌ No setup exe file found!"
+            find app/tauri/target -type f -name "*.exe" || echo "No exe files found"
             exit 1
-          }
+          fi
 
       - name: Upload consistently named artifact to release
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ matrix.artifact_name }}
+          files: ${{ matrix.consistent_name }}
           tag_name: v${{ steps.version.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

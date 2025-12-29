@@ -143,6 +143,23 @@ Built with modern web technologies and powered by Tauri, Church Hub runs as a na
 
 ---
 
+### 🎨 Screen Editor
+
+<img src="docs/screenshots/screen-editor.png" alt="Screen Editor" width="100%">
+
+> Visual WYSIWYG editor for customizing presentation layouts
+
+- 📐 **Visual Positioning** — Drag & resize elements on canvas
+- 🔤 **Text Styling** — Font, size, color, alignment & shadows
+- ✨ **Animations** — Fade, slide & zoom transitions for elements
+- 📏 **Auto-Scaling** — Text automatically fits container bounds
+- 📝 **Compress Lines** — Optimize text density for readability
+- 🎬 **OBS Browser Source** — Embed URL for livestream captions
+- 👁️ **Live Preview** — See changes with real content types
+- 🖥️ **Multi-Layout** — Edit primary, stage & livestream screens
+
+---
+
 ### ⚙️ Settings
 
 <img src="docs/screenshots/settings.png" alt="Settings" width="100%">
