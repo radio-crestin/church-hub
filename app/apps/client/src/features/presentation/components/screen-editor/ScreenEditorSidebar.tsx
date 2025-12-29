@@ -143,6 +143,13 @@ const DEFAULT_ANIMATION_OUT: AnimationConfig = {
   easing: 'ease-in',
 }
 
+const DEFAULT_SLIDE_TRANSITION: AnimationConfig = {
+  type: 'fade',
+  duration: 250,
+  delay: 0,
+  easing: 'ease-out',
+}
+
 export function ScreenEditorSidebar({
   screen,
   contentType,
@@ -208,6 +215,8 @@ export function ScreenEditorSidebar({
             ...refConfig,
             animationIn: refConfig.animationIn ?? DEFAULT_ANIMATION_IN,
             animationOut: refConfig.animationOut ?? DEFAULT_ANIMATION_OUT,
+            slideTransition:
+              refConfig.slideTransition ?? DEFAULT_SLIDE_TRANSITION,
           },
         }
       case 'personLabel':
@@ -220,6 +229,8 @@ export function ScreenEditorSidebar({
             ...personConfig,
             animationIn: personConfig.animationIn ?? DEFAULT_ANIMATION_IN,
             animationOut: personConfig.animationOut ?? DEFAULT_ANIMATION_OUT,
+            slideTransition:
+              personConfig.slideTransition ?? DEFAULT_SLIDE_TRANSITION,
           },
         }
       case 'clock':
@@ -1491,7 +1502,77 @@ export function ScreenEditorSidebar({
                     </div>
                   </div>
                 </div>
-                <div>
+                <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+                  <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">
+                    {t('screens.animation.slideTransition')}
+                  </Label>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">
+                    {t('screens.animation.slideTransitionDescription')}
+                  </p>
+                  <Combobox
+                    value={
+                      (
+                        selectedConfig.config as {
+                          slideTransition?: AnimationConfig
+                        }
+                      ).slideTransition?.type ?? 'fade'
+                    }
+                    onChange={(value) => {
+                      const currentTransition =
+                        (
+                          selectedConfig.config as {
+                            slideTransition?: AnimationConfig
+                          }
+                        ).slideTransition ?? DEFAULT_SLIDE_TRANSITION
+                      const newAnim = {
+                        ...currentTransition,
+                        type: value,
+                      }
+                      updateConfig(
+                        [...selectedConfig.path, 'slideTransition'],
+                        newAnim,
+                      )
+                    }}
+                    options={ANIMATION_TYPES}
+                    className="w-full mb-2"
+                  />
+                  <div className="space-y-2">
+                    <div>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400">
+                        Duration (ms)
+                      </Label>
+                      <Slider
+                        value={[
+                          (
+                            selectedConfig.config as {
+                              slideTransition?: AnimationConfig
+                            }
+                          ).slideTransition?.duration ?? 250,
+                        ]}
+                        onValueChange={([value]) => {
+                          const currentTransition =
+                            (
+                              selectedConfig.config as {
+                                slideTransition?: AnimationConfig
+                              }
+                            ).slideTransition ?? DEFAULT_SLIDE_TRANSITION
+                          const newAnim = {
+                            ...currentTransition,
+                            duration: value,
+                          }
+                          updateConfig(
+                            [...selectedConfig.path, 'slideTransition'],
+                            newAnim,
+                          )
+                        }}
+                        min={0}
+                        max={1000}
+                        step={50}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
                   <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">
                     Animation Out
                   </Label>

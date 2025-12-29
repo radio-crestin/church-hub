@@ -100,6 +100,8 @@
     "animation": {
       "animationIn": "Animation In",
       "animationOut": "Animation Out",
+      "slideTransition": "Slide Transition",
+      "slideTransitionDescription": "Animation used when navigating between slides",
       "type": "Type",
       "duration": "Duration",
       "delay": "Delay",

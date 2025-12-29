@@ -59,6 +59,15 @@ export function getDefaultAnimationOut(): AnimationConfig {
   }
 }
 
+export function getDefaultSlideTransition(): AnimationConfig {
+  return {
+    type: 'fade',
+    duration: 250,
+    delay: 0,
+    easing: 'ease-out',
+  }
+}
+
 export function getDefaultBackground(): ScreenBackgroundConfig {
   return {
     type: 'color',
@@ -154,6 +163,7 @@ export function getDefaultSongConfig(): SongContentConfig {
       padding: 20,
       animationIn: getDefaultAnimationIn(),
       animationOut: getDefaultAnimationOut(),
+      slideTransition: getDefaultSlideTransition(),
     },
     clock: getDefaultClockConfig(),
   }
@@ -175,6 +185,9 @@ export function getDefaultBibleConfig(): BibleContentConfig {
         alignment: 'left',
         bold: true,
       }),
+      animationIn: getDefaultAnimationIn(),
+      animationOut: getDefaultAnimationOut(),
+      slideTransition: getDefaultSlideTransition(),
     },
     contentText: {
       constraints: constraints(12, 5),
@@ -183,6 +196,7 @@ export function getDefaultBibleConfig(): BibleContentConfig {
       padding: 20,
       animationIn: getDefaultAnimationIn(),
       animationOut: getDefaultAnimationOut(),
+      slideTransition: getDefaultSlideTransition(),
     },
     clock: getDefaultClockConfig(),
     includeReferenceInContent: false,
@@ -203,6 +217,7 @@ export function getDefaultAnnouncementConfig(): AnnouncementContentConfig {
       padding: 20,
       animationIn: getDefaultAnimationIn(),
       animationOut: getDefaultAnimationOut(),
+      slideTransition: getDefaultSlideTransition(),
     },
     clock: getDefaultClockConfig(),
   }
@@ -224,6 +239,9 @@ export function getDefaultVerseteTineriConfig(): VerseteTineriContentConfig {
         alignment: 'left',
         italic: true,
       }),
+      animationIn: getDefaultAnimationIn(),
+      animationOut: getDefaultAnimationOut(),
+      slideTransition: getDefaultSlideTransition(),
     },
     referenceText: {
       constraints: constraints(8, 5),
@@ -234,6 +252,9 @@ export function getDefaultVerseteTineriConfig(): VerseteTineriContentConfig {
         alignment: 'left',
         bold: true,
       }),
+      animationIn: getDefaultAnimationIn(),
+      animationOut: getDefaultAnimationOut(),
+      slideTransition: getDefaultSlideTransition(),
     },
     contentText: {
       constraints: constraints(18, 5),
@@ -242,6 +263,7 @@ export function getDefaultVerseteTineriConfig(): VerseteTineriContentConfig {
       padding: 20,
       animationIn: getDefaultAnimationIn(),
       animationOut: getDefaultAnimationOut(),
+      slideTransition: getDefaultSlideTransition(),
     },
     clock: getDefaultClockConfig(),
   }
