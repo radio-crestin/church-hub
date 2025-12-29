@@ -891,7 +891,6 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
               contentData={contentData}
               containerWidth={containerSize.width}
               containerHeight={containerSize.height}
-              showClock={true}
               isVisible={isVisible}
               nextSlideData={nextSlideData}
             />

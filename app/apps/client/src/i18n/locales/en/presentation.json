@@ -158,6 +158,14 @@
       "includeReferenceInContent": "Include reference in content",
       "includeReferenceInContentDescription": "Prepends the Bible reference to the verse content and hides the separate reference element"
     },
+    "clock": {
+      "enableForSlideType": "Show clock on this slide type",
+      "enableDescription": "Enable clock display for this specific content type",
+      "sharedSettings": "Clock Settings (shared across all slide types)",
+      "format": "Format",
+      "showSeconds": "Show seconds",
+      "positionHint": "Drag the clock element on the canvas to adjust position"
+    },
     "nativeWindow": "Native Window",
     "messages": {
       "screenCreated": "Screen created successfully",

@@ -312,25 +312,26 @@ export interface PersonLabelConfig {
 
 /**
  * Content type configuration - different for each content type
+ * Clock is enabled per-content-type but uses shared global config for position/style
  */
 export interface SongContentConfig {
   background: ScreenBackgroundConfig
   mainText: TextElementConfig
-  clock?: ClockElementConfig
+  clockEnabled?: boolean // Per-slide-type enable, uses global clockConfig for position/style
 }
 
 export interface BibleContentConfig {
   background: ScreenBackgroundConfig
   referenceText: ReferenceTextConfig
   contentText: TextElementConfig
-  clock?: ClockElementConfig
+  clockEnabled?: boolean // Per-slide-type enable, uses global clockConfig for position/style
   includeReferenceInContent?: boolean
 }
 
 export interface AnnouncementContentConfig {
   background: ScreenBackgroundConfig
   mainText: TextElementConfig
-  clock?: ClockElementConfig
+  clockEnabled?: boolean // Per-slide-type enable, uses global clockConfig for position/style
 }
 
 export interface VerseteTineriContentConfig {
@@ -338,12 +339,12 @@ export interface VerseteTineriContentConfig {
   personLabel: PersonLabelConfig
   referenceText: ReferenceTextConfig
   contentText: TextElementConfig
-  clock?: ClockElementConfig
+  clockEnabled?: boolean // Per-slide-type enable, uses global clockConfig for position/style
 }
 
 export interface EmptyContentConfig {
   background: ScreenBackgroundConfig
-  clock: ClockElementConfig
+  clockEnabled?: boolean // Per-slide-type enable, uses global clockConfig for position/style
 }
 
 /**
@@ -389,8 +390,7 @@ export interface NextSlideSectionConfig {
  */
 export interface ScreenGlobalSettings {
   defaultBackground: ScreenBackgroundConfig
-  clockEnabled: boolean
-  clockConfig?: ClockElementConfig
+  clockConfig?: ClockElementConfig // Shared clock config (position, style, format) - enable is per-content-type
 }
 
 /**

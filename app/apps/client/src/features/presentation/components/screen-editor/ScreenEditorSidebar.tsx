@@ -1919,66 +1919,82 @@ export function ScreenEditorSidebar({
             </Section>
           )}
 
-          {/* Clock Settings */}
-          <Section title="Clock" icon={Type} defaultOpen={false}>
+          {/* Clock Settings - per-content-type enable with shared config */}
+          <Section title="Clock" icon={Clock} defaultOpen={false}>
             <div className="space-y-3">
+              {/* Per-content-type enable toggle */}
               <Checkbox
-                checked={screen.globalSettings.clockEnabled}
+                checked={
+                  'clockEnabled' in config
+                    ? (config.clockEnabled ?? false)
+                    : false
+                }
                 onCheckedChange={(checked) => {
-                  onUpdateGlobalSettings({
-                    ...screen.globalSettings,
+                  onUpdateContentConfig(contentType, {
+                    ...config,
                     clockEnabled: !!checked,
                   })
                 }}
-                label="Show clock on all slides"
+                label={t('screens.clock.enableForSlideType')}
               />
-              {screen.globalSettings.clockEnabled &&
-                screen.globalSettings.clockConfig && (
-                  <>
-                    <div>
-                      <Label className="text-xs text-gray-500 dark:text-gray-400">
-                        Format
-                      </Label>
-                      <div className="flex gap-2 mt-1">
-                        {(['24h', '12h'] as const).map((format) => (
-                          <button
-                            key={format}
-                            className={`flex-1 py-1.5 text-xs font-medium rounded ${
-                              screen.globalSettings.clockConfig?.format ===
-                              format
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-                            }`}
-                            onClick={() => {
-                              onUpdateGlobalSettings({
-                                ...screen.globalSettings,
-                                clockConfig: {
-                                  ...screen.globalSettings.clockConfig!,
-                                  format,
-                                },
-                              })
-                            }}
-                          >
-                            {format}
-                          </button>
-                        ))}
-                      </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 ml-6">
+                {t('screens.clock.enableDescription')}
+              </p>
+
+              {/* Shared clock configuration - always visible for editing */}
+              {screen.globalSettings.clockConfig && (
+                <>
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
+                    <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">
+                      {t('screens.clock.sharedSettings')}
+                    </Label>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500 dark:text-gray-400">
+                      {t('screens.clock.format')}
+                    </Label>
+                    <div className="flex gap-2 mt-1">
+                      {(['24h', '12h'] as const).map((format) => (
+                        <button
+                          key={format}
+                          className={`flex-1 py-1.5 text-xs font-medium rounded ${
+                            screen.globalSettings.clockConfig?.format === format
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                          }`}
+                          onClick={() => {
+                            onUpdateGlobalSettings({
+                              ...screen.globalSettings,
+                              clockConfig: {
+                                ...screen.globalSettings.clockConfig!,
+                                format,
+                              },
+                            })
+                          }}
+                        >
+                          {format}
+                        </button>
+                      ))}
                     </div>
-                    <Checkbox
-                      checked={screen.globalSettings.clockConfig.showSeconds}
-                      onCheckedChange={(checked) => {
-                        onUpdateGlobalSettings({
-                          ...screen.globalSettings,
-                          clockConfig: {
-                            ...screen.globalSettings.clockConfig!,
-                            showSeconds: !!checked,
-                          },
-                        })
-                      }}
-                      label="Show seconds"
-                    />
-                  </>
-                )}
+                  </div>
+                  <Checkbox
+                    checked={screen.globalSettings.clockConfig.showSeconds}
+                    onCheckedChange={(checked) => {
+                      onUpdateGlobalSettings({
+                        ...screen.globalSettings,
+                        clockConfig: {
+                          ...screen.globalSettings.clockConfig!,
+                          showSeconds: !!checked,
+                        },
+                      })
+                    }}
+                    label={t('screens.clock.showSeconds')}
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 ml-6">
+                    {t('screens.clock.positionHint')}
+                  </p>
+                </>
+              )}
             </div>
           </Section>
 

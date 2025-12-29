@@ -39,76 +39,90 @@ export function ContentRenderer({
   screenHeight,
   isVisible,
 }: ContentRendererProps) {
-  // Use global clock settings for all content types to keep position/config synced
-  const showClock = globalSettings.clockEnabled
+  // Use global clockConfig for position/style, per-content-type clockEnabled for enable
   const clockConfig = globalSettings.clockConfig
 
+  // Helper to check if clock is enabled for a content type
+  const isClockEnabled = (cfg: ContentConfigs[ContentType]) =>
+    'clockEnabled' in cfg && cfg.clockEnabled && clockConfig
+
   switch (contentType) {
-    case 'song':
+    case 'song': {
+      const songConfig = config as SongContentConfig
       return (
         <SongRenderer
-          config={config as SongContentConfig}
+          config={songConfig}
           content={contentData.mainText || ''}
           screenWidth={screenWidth}
           screenHeight={screenHeight}
           isVisible={isVisible}
-          showClock={showClock}
+          showClock={isClockEnabled(songConfig)}
           clockConfig={clockConfig}
         />
       )
+    }
 
     case 'bible':
-    case 'bible_passage':
+    case 'bible_passage': {
+      const bibleConfig = config as BibleContentConfig
       return (
         <BibleRenderer
-          config={config as BibleContentConfig}
+          config={bibleConfig}
           reference={contentData.referenceText || ''}
           content={contentData.contentText || ''}
           screenWidth={screenWidth}
           screenHeight={screenHeight}
           isVisible={isVisible}
-          showClock={showClock}
+          showClock={isClockEnabled(bibleConfig)}
           clockConfig={clockConfig}
         />
       )
+    }
 
-    case 'announcement':
+    case 'announcement': {
+      const announcementConfig = config as AnnouncementContentConfig
       return (
         <AnnouncementRenderer
-          config={config as AnnouncementContentConfig}
+          config={announcementConfig}
           content={contentData.mainText || ''}
           screenWidth={screenWidth}
           screenHeight={screenHeight}
           isVisible={isVisible}
-          showClock={showClock}
+          showClock={isClockEnabled(announcementConfig)}
           clockConfig={clockConfig}
         />
       )
+    }
 
-    case 'versete_tineri':
+    case 'versete_tineri': {
+      const vtConfig = config as VerseteTineriContentConfig
       return (
         <VerseteTineriRenderer
-          config={config as VerseteTineriContentConfig}
+          config={vtConfig}
           personLabel={contentData.personLabel || ''}
           reference={contentData.referenceText || ''}
           content={contentData.contentText || ''}
           screenWidth={screenWidth}
           screenHeight={screenHeight}
           isVisible={isVisible}
-          showClock={showClock}
+          showClock={isClockEnabled(vtConfig)}
           clockConfig={clockConfig}
         />
       )
+    }
 
-    case 'empty':
+    case 'empty': {
+      const emptyConfig = config as EmptyContentConfig
       return (
         <EmptyRenderer
-          config={config as EmptyContentConfig}
+          config={emptyConfig}
           screenWidth={screenWidth}
           screenHeight={screenHeight}
+          showClock={isClockEnabled(emptyConfig)}
           clockConfig={clockConfig}
         />
       )
+    }
 
     default:
       return null
@@ -314,15 +328,17 @@ interface EmptyRendererProps {
   config: EmptyContentConfig
   screenWidth: number
   screenHeight: number
+  showClock: boolean
   clockConfig?: ClockElementConfig
 }
 
 function EmptyRenderer({
   screenWidth,
   screenHeight,
+  showClock,
   clockConfig,
 }: EmptyRendererProps) {
-  if (!clockConfig) return null
+  if (!showClock || !clockConfig) return null
   return (
     <ClockElement
       config={clockConfig}

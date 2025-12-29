@@ -18,7 +18,6 @@ interface ScreenContentProps {
   contentData: ContentData | null
   containerWidth: number
   containerHeight: number
-  showClock?: boolean
   isVisible?: boolean
   nextSlideData?: NextSlideData
 }
@@ -29,7 +28,6 @@ export function ScreenContent({
   contentData,
   containerWidth,
   containerHeight,
-  showClock = true,
   isVisible = true,
   nextSlideData,
 }: ScreenContentProps) {
@@ -298,11 +296,17 @@ export function ScreenContent({
 
   // Render clock
   const renderClock = () => {
-    if (!showClock) return null
-    // Always use global clock config to keep position/style synced across all slide types
+    // Check per-content-type clockEnabled, use global config for position/style
     const clockConfig = screen.globalSettings.clockConfig
     if (!clockConfig) return null
     if (clockConfig.hidden) return null
+
+    // Check if clock is enabled for current content type
+    const isClockEnabledForType =
+      currentConfig &&
+      'clockEnabled' in currentConfig &&
+      currentConfig.clockEnabled
+    if (!isClockEnabledForType) return null
 
     // Default size for backwards compatibility (must match ScreenEditorCanvas.tsx)
     const clockSize = clockConfig.size ?? {
