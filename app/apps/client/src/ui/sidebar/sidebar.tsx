@@ -207,6 +207,9 @@ export function Sidebar() {
               />
             )}
 
+            {/* Divider */}
+            <div className="my-2 border-t border-gray-200 dark:border-gray-700" />
+
             {/* Feedback */}
             <button
               onClick={() => setIsFeedbackModalOpen(true)}
@@ -223,9 +226,6 @@ export function Sidebar() {
                 {t('sidebar:navigation.feedback')}
               </span>
             </button>
-
-            {/* Divider */}
-            <div className="my-2 border-t border-gray-200 dark:border-gray-700" />
 
             {/* Settings */}
             {canViewSettings && (
