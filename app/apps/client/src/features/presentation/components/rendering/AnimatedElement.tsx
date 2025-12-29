@@ -1,5 +1,6 @@
 import { type ReactNode, useEffect, useRef, useState } from 'react'
 
+import { useAnimationContext } from './AnimationContext'
 import type { AnimationConfig } from '../../types'
 
 interface AnimatedElementProps {
@@ -7,7 +8,7 @@ interface AnimatedElementProps {
   animationIn?: AnimationConfig
   animationOut?: AnimationConfig
   isVisible: boolean
-  contentKey?: string // Unique key that changes when content changes (triggers re-animation)
+  contentKey?: string // Used to detect content changes for this specific element
   className?: string
   style?: React.CSSProperties
 }
@@ -27,9 +28,9 @@ const EASING_FUNCTIONS: Record<string, string> = {
 
 // Animation phases:
 // - idle: fully visible, no animation
-// - entering-start: initial hidden state before animation
+// - entering-start: initial hidden state before animation (synchronized via context)
 // - entering: animating to visible
-// - exiting: animating to hidden (only when hiding presentation, NOT on slide changes)
+// - exiting: animating to hidden (synchronized via context)
 type AnimationPhase = 'idle' | 'entering-start' | 'entering' | 'exiting'
 
 export function AnimatedElement({
@@ -41,14 +42,16 @@ export function AnimatedElement({
   className = '',
   style = {},
 }: AnimatedElementProps) {
+  const { animationFrame, isStartPhase, isExitPhase, exitFrame } =
+    useAnimationContext()
   const [shouldRender, setShouldRender] = useState(isVisible)
   const [phase, setPhase] = useState<AnimationPhase>(
     isVisible ? 'idle' : 'idle',
   )
   const prevContentKeyRef = useRef(contentKey)
-  const prevVisibleRef = useRef(isVisible)
+  const prevAnimationFrameRef = useRef(animationFrame)
+  const prevExitFrameRef = useRef(exitFrame)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const rafRef = useRef<number | null>(null)
   // Cache children when visible so we can animate them out even if parent stops providing them
   const cachedChildrenRef = useRef<ReactNode>(children)
 
@@ -57,62 +60,68 @@ export function AnimatedElement({
     cachedChildrenRef.current = children
   }
 
-  // Handle visibility and content changes
+  // Handle synchronized exit animations via context
   useEffect(() => {
-    const contentChanged =
-      contentKey !== undefined && prevContentKeyRef.current !== contentKey
-    const becomingVisible = isVisible && !prevVisibleRef.current
-    const becomingHidden = !isVisible && prevVisibleRef.current
+    const exitFrameChanged = prevExitFrameRef.current !== exitFrame
 
-    // Clear any pending animations
+    // Clear any pending timeouts
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
       timeoutRef.current = null
     }
-    if (rafRef.current) {
-      cancelAnimationFrame(rafRef.current)
-      rafRef.current = null
-    }
 
-    if (becomingVisible || (isVisible && contentChanged)) {
-      // Case 1: Becoming visible (show presentation)
-      // Case 2: Content changed while visible (next slide)
-      // Both cases: animate IN the new content (no exit animation)
-      setShouldRender(true)
-      // Start from hidden state, then animate to visible
-      setPhase('entering-start')
-      // Use double RAF to ensure browser paints the start state first
-      rafRef.current = requestAnimationFrame(() => {
-        rafRef.current = requestAnimationFrame(() => {
-          setPhase('entering')
-        })
-      })
-    } else if (becomingHidden) {
-      // Case 3: Hiding presentation (ESC pressed, etc.)
-      // Animate OUT using cached children, then stop rendering
+    if (isExitPhase && exitFrameChanged) {
+      // Context signaled to start exit animation - all elements exit together
       setPhase('exiting')
-      const duration = animationOut?.duration ?? 300
+      const duration = animationOut?.duration ?? 200
       const delay = animationOut?.delay ?? 0
       timeoutRef.current = setTimeout(() => {
         setShouldRender(false)
         setPhase('idle')
-        // Clear cached children after exit animation completes
         cachedChildrenRef.current = null
       }, duration + delay)
     }
 
-    prevVisibleRef.current = isVisible
+    prevExitFrameRef.current = exitFrame
+  }, [isExitPhase, exitFrame, animationOut?.duration, animationOut?.delay])
+
+  // Handle synchronized enter animations via context
+  // This effect responds to the shared animationFrame changes
+  useEffect(() => {
+    const animationFrameChanged =
+      prevAnimationFrameRef.current !== animationFrame
+    const contentChanged =
+      contentKey !== undefined && prevContentKeyRef.current !== contentKey
+
+    if (isVisible && (animationFrameChanged || contentChanged)) {
+      // New animation cycle started - ensure we're rendering
+      setShouldRender(true)
+
+      // Set phase based on shared context
+      if (isStartPhase) {
+        setPhase('entering-start')
+      } else {
+        setPhase('entering')
+      }
+    }
+
+    prevAnimationFrameRef.current = animationFrame
     prevContentKeyRef.current = contentKey
-  }, [isVisible, contentKey, animationOut?.duration, animationOut?.delay])
+  }, [animationFrame, isStartPhase, isVisible, contentKey])
+
+  // Respond to isStartPhase changes from context (synchronized animation trigger)
+  useEffect(() => {
+    if (isVisible && phase === 'entering-start' && !isStartPhase) {
+      // Context signaled to start animation - all elements transition together
+      setPhase('entering')
+    }
+  }, [isStartPhase, isVisible, phase])
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
-      }
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current)
       }
     }
   }, [])
@@ -133,7 +142,8 @@ export function AnimatedElement({
     }
 
     const duration = currentAnimation?.duration ?? 300
-    const delay = currentAnimation?.delay ?? 0
+    // Force delay to 0 for all animations to ensure synchronization
+    const delay = 0
     const easing = currentAnimation?.easing ?? 'ease-out'
     const easingFunc = EASING_FUNCTIONS[easing] ?? 'ease-out'
 
