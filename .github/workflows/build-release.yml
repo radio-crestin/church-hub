@@ -8,6 +8,10 @@ on:
 env:
   TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
   TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_RETRY: 10
+  CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
+  RUSTUP_MAX_RETRIES: 10
 
 jobs:
   build:
@@ -66,6 +70,17 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        id: bun-cache
+        with:
+          path: |
+            ~/.bun/install/cache
+            app/node_modules
+          key: ${{ runner.os }}-bun-${{ hashFiles('app/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -76,16 +91,42 @@ jobs:
         with:
           workspaces: './app/tauri -> target'
           cache-targets: true
+          cache-on-failure: true
+          shared-key: ${{ matrix.rust_target }}
 
       - name: Install dependencies
         working-directory: app
         run: bun install --frozen-lockfile
 
+      - name: Cache frontend build
+        uses: actions/cache@v4
+        id: frontend-cache
+        with:
+          path: app/apps/client/dist
+          key: ${{ runner.os }}-frontend-${{ hashFiles('app/apps/client/src/**', 'app/apps/client/package.json', 'app/apps/client/vite.config.ts', 'app/apps/client/tsconfig.json') }}
+          restore-keys: |
+            ${{ runner.os }}-frontend-
+
       - name: Build client
+        if: steps.frontend-cache.outputs.cache-hit != 'true'
         working-directory: app
         run: bun run --filter client build
 
+      - name: Ensure sidecar bin directory exists
+        shell: bash
+        run: mkdir -p app/tauri/bin
+
+      - name: Cache sidecar binary
+        uses: actions/cache@v4
+        id: sidecar-cache
+        with:
+          path: app/tauri/bin/church-hub-sidecar-${{ matrix.sidecar_suffix }}
+          key: ${{ runner.os }}-sidecar-${{ matrix.sidecar_suffix }}-${{ hashFiles('app/apps/server/src/**', 'app/apps/server/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-sidecar-${{ matrix.sidecar_suffix }}-
+
       - name: Compile server sidecar
+        if: steps.sidecar-cache.outputs.cache-hit != 'true'
         working-directory: app/apps/server
         shell: bash
         run: |
@@ -125,22 +166,22 @@ jobs:
           tagName: v__VERSION__
           releaseName: 'Church Hub v__VERSION__'
           releaseBody: |
-            # 🎉 Church Hub v__VERSION__
+            # Church Hub v__VERSION__
 
             A modern, feature-rich church presentation and livestream management system.
 
             ---
 
-            ## 📥 Direct Downloads
+            ## Direct Downloads
 
             | Platform | Download |
             |----------|----------|
-            | 🍎 **macOS** (Apple Silicon) | [⬇️ Download .dmg](https://github.com/radio-crestin/church-hub/releases/latest/download/church-hub-macos-arm64.dmg) |
-            | 🪟 **Windows** (x64) | [⬇️ Download .exe](https://github.com/radio-crestin/church-hub/releases/latest/download/church-hub-windows-x64.exe) |
+            | **macOS** (Apple Silicon) | [Download .dmg](https://github.com/radio-crestin/church-hub/releases/latest/download/church-hub-macos-arm64.dmg) |
+            | **Windows** (x64) | [Download .exe](https://github.com/radio-crestin/church-hub/releases/latest/download/church-hub-windows-x64.exe) |
 
             ---
 
-            ## 🚀 Quick Start
+            ## Quick Start
 
             1. Click the download link for your platform above
             2. Run the installer
@@ -149,7 +190,7 @@ jobs:
 
             ---
 
-            ## 🍎 macOS Installation Note
+            ## macOS Installation Note
 
             After installing, if you see **"church-hub.app is damaged and can't be opened"**, run this command in Terminal:
 
@@ -161,14 +202,14 @@ jobs:
 
             ---
 
-            ## 📚 Documentation
+            ## Documentation
 
             - [README](https://github.com/radio-crestin/church-hub#readme)
             - [API Documentation](http://localhost:3000/api/docs) (after installation)
 
             ---
 
-            <sub>Made with ❤️ for churches everywhere</sub>
+            <sub>Made with love for churches everywhere</sub>
           releaseDraft: true
           prerelease: false
           includeUpdaterJson: false
@@ -192,10 +233,10 @@ jobs:
           echo "Found: $DMG_FILE"
           if [ -n "$DMG_FILE" ] && [ -f "$DMG_FILE" ]; then
             cp "$DMG_FILE" "${{ matrix.consistent_name }}"
-            echo "✅ Created: ${{ matrix.consistent_name }}"
+            echo "Created: ${{ matrix.consistent_name }}"
             ls -la "${{ matrix.consistent_name }}"
           else
-            echo "❌ No .dmg file found!"
+            echo "No .dmg file found!"
             find app/tauri/target -type f -name "*" | grep -E '\.(dmg|app)' || echo "No dmg/app files found"
             exit 1
           fi
@@ -209,10 +250,10 @@ jobs:
           echo "Found: $EXE_FILE"
           if [ -n "$EXE_FILE" ] && [ -f "$EXE_FILE" ]; then
             cp "$EXE_FILE" "${{ matrix.consistent_name }}"
-            echo "✅ Created: ${{ matrix.consistent_name }}"
+            echo "Created: ${{ matrix.consistent_name }}"
             ls -la "${{ matrix.consistent_name }}"
           else
-            echo "❌ No setup exe file found!"
+            echo "No setup exe file found!"
             find app/tauri/target -type f -name "*.exe" || echo "No exe files found"
             exit 1
           fi
