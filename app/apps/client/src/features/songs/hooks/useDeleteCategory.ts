@@ -10,6 +10,7 @@ export function useDeleteCategory() {
     onSuccess: (success) => {
       if (success) {
         queryClient.invalidateQueries({ queryKey: ['categories'] })
+        queryClient.invalidateQueries({ queryKey: ['songs'] })
       }
     },
   })
