@@ -69,6 +69,11 @@
     ],
     "iOS": {
       "developmentTeam": "2KNY2RZVGC"
+    },
+    "windows": {
+      "nsis": {
+        "installerHooks": "./windows/hooks.nsh"
+      }
     }
   }
 }
