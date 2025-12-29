@@ -145,7 +145,7 @@ export function QueueSongItem({
 
       {/* Expanded Slides */}
       {isExpanded && item.slides.length > 0 && (
-        <div className="px-3 pb-3 space-y-1.5">
+        <div className="px-3 pb-3 flex flex-col gap-[6px]">
           {item.slides.map((slide, idx) => (
             <QueueSlidePreview
               key={slide.id}

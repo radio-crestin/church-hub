@@ -42,7 +42,7 @@ export function QueueSlidePreview({
       ref={buttonRef}
       type="button"
       onClick={onClick}
-      className={`w-full text-left p-2 pl-10 rounded-lg border transition-all ${
+      className={`w-full text-left p-2 rounded-lg border transition-all ${
         isActive
           ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20'
           : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'

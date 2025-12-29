@@ -68,7 +68,17 @@
 ~~- si apoi seteaza luminiozitatea la 0 daca conexiunea websocket nu este available 5 minute~~
 ~~- implementeaza api-uri pentru search cantari, adaugare de cantari, programe, camera de control, preview, current queue, etc.~~
 ~~- in versiunea mobila a site-ului, asigura-te ca totul este scalabil corect~~
+~~- rezolva problema cu scaling-ul din camera de control~~
+- elimina slide-urile din pagina programului
+- fa configurabil dacă sa fie always on top
+- (optional) exportă ca și pptx întreg programul său fiecare cantare
+- cand faci export, lăsa utilizatorul să aleagă dacă vrea un zip sau un folder
+- importul din resurse creștine nu trebuie să facă override la cântările modificate
+- dezactivează tunelul cloudflare pt portul 3000
+- când se editează o cantare, modifica importa din text ca să se numească editează ca și text
+- deasemenea, fă pagina mobile responsive
 - fix openapi endpoints and fix authentication layer
 - creaza optiunea de a adauga live-urile create intr-un playlist pe YouTube
 - adauga posibilitatea de a face highlight pentru sesiunea curenta
+- adauga o iconita pentru fisierele atasate Church Hub
 

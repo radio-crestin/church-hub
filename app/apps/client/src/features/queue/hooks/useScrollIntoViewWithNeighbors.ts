@@ -15,49 +15,65 @@ function getScrollableParent(element: HTMLElement | null): HTMLElement | null {
 }
 
 /**
- * Scrolls the element to the "second position" from the top of the container.
- * This means there will be approximately one element's worth of space above
- * the active element, allowing the user to see context above and below.
+ * Scrolls the container to keep neighbor items visible.
  *
- * Edge cases:
- * - First item: Scrolls to top (can't show item above)
- * - Near end: Scrolls as far as possible if container can't scroll further
+ * Only scrolls when necessary:
+ * - If the element is not visible, scrolls to show it with context
+ * - If fewer than 2 items worth of space below, scrolls down by one element
+ * - If element is too close to top (less than 1 element), scrolls up by one element
+ *
+ * This creates a smoother experience by only adjusting scroll position incrementally
+ * rather than jumping to a fixed position every time.
  */
-function scrollToSecondPosition(element: HTMLElement) {
+function scrollToKeepNeighborsVisible(element: HTMLElement) {
   const scrollContainer = getScrollableParent(element)
   if (!scrollContainer) return
 
   const elementRect = element.getBoundingClientRect()
   const containerRect = scrollContainer.getBoundingClientRect()
-
-  // Calculate element's position relative to the container's scroll position
-  const elementTopInContainer =
-    elementRect.top - containerRect.top + scrollContainer.scrollTop
-
-  // Target position: element should be one element height from the top
-  // This puts it in the "second position" visually
-  const targetOffset = elementRect.height
-
-  // Calculate the ideal scroll position to put element in second position
-  const idealScrollTop = elementTopInContainer - targetOffset
-
-  // Clamp to valid scroll range
+  const elementHeight = elementRect.height
   const maxScrollTop =
     scrollContainer.scrollHeight - scrollContainer.clientHeight
-  const clampedScrollTop = Math.max(0, Math.min(idealScrollTop, maxScrollTop))
 
-  // Calculate where the element currently appears relative to the container viewport
-  const currentElementVisualTop = elementRect.top - containerRect.top
+  // Check if element is fully hidden (not visible at all)
+  const isFullyAboveViewport = elementRect.bottom <= containerRect.top
+  const isFullyBelowViewport = elementRect.top >= containerRect.bottom
 
-  // Check if element is already very close to the target position (within 5px)
-  // to avoid unnecessary scrolling/jittering
-  const tolerance = 5
-  const isAlreadyAtTarget =
-    Math.abs(currentElementVisualTop - targetOffset) < tolerance
+  if (isFullyAboveViewport || isFullyBelowViewport) {
+    // Element not visible - scroll to show it with one element of context above
+    const elementTopInContainer =
+      elementRect.top - containerRect.top + scrollContainer.scrollTop
+    const targetScrollTop = elementTopInContainer - elementHeight
 
-  if (!isAlreadyAtTarget) {
     scrollContainer.scrollTo({
-      top: clampedScrollTop,
+      top: Math.max(0, Math.min(maxScrollTop, targetScrollTop)),
+      behavior: 'smooth',
+    })
+    return
+  }
+
+  // Element is at least partially visible - check if we need to adjust
+  const spaceAbove = elementRect.top - containerRect.top
+  const spaceBelow = containerRect.bottom - elementRect.bottom
+
+  // Want at least 2 elements worth of space below (for next items)
+  const minSpaceBelow = elementHeight * 2
+  // Want at least 1 element worth of space above (for previous item)
+  const minSpaceAbove = elementHeight
+
+  // If not enough space below and we can scroll further, scroll down by one element
+  if (spaceBelow < minSpaceBelow && scrollContainer.scrollTop < maxScrollTop - 5) {
+    scrollContainer.scrollTo({
+      top: Math.min(maxScrollTop, scrollContainer.scrollTop + elementHeight),
+      behavior: 'smooth',
+    })
+    return
+  }
+
+  // If not enough space above and we can scroll up, scroll up by one element
+  if (spaceAbove < minSpaceAbove && scrollContainer.scrollTop > 5) {
+    scrollContainer.scrollTo({
+      top: Math.max(0, scrollContainer.scrollTop - elementHeight),
       behavior: 'smooth',
     })
   }
@@ -69,7 +85,7 @@ export function useScrollIntoViewWithNeighbors(
 ) {
   useEffect(() => {
     if (isActive && ref.current) {
-      scrollToSecondPosition(ref.current)
+      scrollToKeepNeighborsVisible(ref.current)
     }
   }, [isActive, ref])
 }
