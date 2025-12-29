@@ -86,7 +86,8 @@
 ~~- create un README cu screenshots si o descriere a functionalitatilor~~
 ~~- fix extracting songs titles~~
 ~~- asigura-te ca animatiile functioneaza la afisare/ascundere, deasemenea cand se schimba urmatorul slide~~
-- adauga buton de feedback cu adresa de email si whatsapp + github issues
+- afiseaza ceasul pe toate slide-urile
+- adauga buton de feedback care va crea un github issue
 - adauga posibilitatea de a face highlight pentru sesiunea curenta
 - fix openapi endpoints and fix authentication layer
 - importa toate cantarile existente si apoi creaza un backup ca si sqlite si importa-l pe PC-ul de la Adunare
