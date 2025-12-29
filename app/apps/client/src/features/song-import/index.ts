@@ -1,9 +1,11 @@
 export {
+  type DuplicateAction,
+  DuplicateSongDialog,
+  FileDropZoneProvider,
   ImportConfirmationModal,
   ImportProgressModal,
-  PptxDropZoneProvider,
   PptxImportDialog,
-  usePptxDropZone,
+  useFileDropZone,
 } from './components'
 export {
   useBatchImportSongs,

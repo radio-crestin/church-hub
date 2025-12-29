@@ -21,27 +21,73 @@ import {
 } from '~/features/schedules/service/schedules'
 import { useUpsertSong } from '~/features/songs/hooks'
 import { getSongById, searchSongs, upsertSong } from '~/features/songs/service'
-import type { SlideInput } from '~/features/songs/types'
-import { parseOpenSongXml } from '../utils/parseOpenSong'
+import type { SlideInput, SongSearchResult } from '~/features/songs/types'
+import {
+  type DuplicateAction,
+  DuplicateSongDialog,
+} from './DuplicateSongDialog'
+import { type ParsedOpenSong, parseOpenSongXml } from '../utils/parseOpenSong'
 import { type ParsedPptx, parsePptxFile } from '../utils/parsePptx'
 
-interface PptxDropZoneContextValue {
+interface PendingImport {
+  type: 'pptx' | 'opensong'
+  title: string
+  existingId: number
+  pptxData?: { parsed: ParsedPptx; sourceFilename: string | null }
+  opensongData?: { parsed: ParsedOpenSong; filePath: string }
+}
+
+interface FileDropZoneContextValue {
   isDragging: boolean
 }
 
-const PptxDropZoneContext = createContext<PptxDropZoneContextValue>({
+const FileDropZoneContext = createContext<FileDropZoneContextValue>({
   isDragging: false,
 })
 
-export function usePptxDropZone() {
-  return useContext(PptxDropZoneContext)
+export function useFileDropZone() {
+  return useContext(FileDropZoneContext)
 }
 
 interface Props {
   children: ReactNode
 }
 
-export function PptxDropZoneProvider({ children }: Props) {
+/**
+ * Generates a unique title by appending a number suffix
+ * e.g., "Song Title" -> "Song Title (2)", "Song Title (3)", etc.
+ */
+async function generateUniqueTitle(
+  baseTitle: string,
+  existingSongs: SongSearchResult[],
+): Promise<string> {
+  const lowerBase = baseTitle.toLowerCase()
+
+  // Find all songs that start with the base title
+  const matchingTitles = existingSongs
+    .map((s) => s.title.toLowerCase())
+    .filter((t) => t === lowerBase || t.startsWith(`${lowerBase} (`))
+
+  if (matchingTitles.length === 0) {
+    return baseTitle
+  }
+
+  // Find the highest number suffix
+  let maxNumber = 1
+  const suffixRegex = /\((\d+)\)$/
+
+  for (const title of matchingTitles) {
+    const match = title.match(suffixRegex)
+    if (match) {
+      const num = Number.parseInt(match[1], 10)
+      maxNumber = Math.max(maxNumber, num)
+    }
+  }
+
+  return `${baseTitle} (${maxNumber + 1})`
+}
+
+export function FileDropZoneProvider({ children }: Props) {
   const { t } = useTranslation('songs')
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -49,9 +95,32 @@ export function PptxDropZoneProvider({ children }: Props) {
   const dragCounterRef = useRef(0)
   const upsertMutation = useUpsertSong()
 
+  // State for duplicate dialog
+  const [pendingImport, setPendingImport] = useState<PendingImport | null>(null)
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false)
+
   // Direct import function
   const importPptxAsSong = useCallback(
     async (parsed: ParsedPptx, sourceFilename: string | null) => {
+      // Search for existing song by title
+      const searchResults = await searchSongs(parsed.title)
+      const exactMatch = searchResults.find(
+        (s) => s.title.toLowerCase() === parsed.title.toLowerCase(),
+      )
+
+      // If duplicate found, show dialog to let user decide
+      if (exactMatch) {
+        setPendingImport({
+          type: 'pptx',
+          title: parsed.title,
+          existingId: exactMatch.id,
+          pptxData: { parsed, sourceFilename },
+        })
+        setShowDuplicateDialog(true)
+        return
+      }
+
+      // No duplicate, create new song
       const result = await upsertMutation.mutateAsync({
         title: parsed.title,
         sourceFilename,
@@ -89,7 +158,25 @@ export function PptxDropZoneProvider({ children }: Props) {
         }
       }
 
-      // Import as new song
+      // Search for existing song by title
+      const searchResults = await searchSongs(parsed.title)
+      const exactMatch = searchResults.find(
+        (s) => s.title.toLowerCase() === parsed.title.toLowerCase(),
+      )
+
+      // If duplicate found, show dialog to let user decide
+      if (exactMatch) {
+        setPendingImport({
+          type: 'opensong',
+          title: parsed.title,
+          existingId: exactMatch.id,
+          opensongData: { parsed, filePath },
+        })
+        setShowDuplicateDialog(true)
+        return
+      }
+
+      // No duplicate, create new song
       const result = await upsertMutation.mutateAsync({
         title: parsed.title,
         sourceFilename: filePath,
@@ -410,8 +497,142 @@ export function PptxDropZoneProvider({ children }: Props) {
     }
   }, [importPptxAsSong, handleOpenSongFile, handleChurchProgramFile])
 
+  // Handle duplicate dialog action
+  const handleDuplicateAction = useCallback(
+    async (action: DuplicateAction) => {
+      setShowDuplicateDialog(false)
+
+      if (!pendingImport || action === 'cancel') {
+        setPendingImport(null)
+        return
+      }
+
+      if (pendingImport.type === 'pptx' && pendingImport.pptxData) {
+        const { parsed, sourceFilename } = pendingImport.pptxData
+
+        if (action === 'overwrite') {
+          // Update existing song
+          const result = await upsertMutation.mutateAsync({
+            id: pendingImport.existingId,
+            title: parsed.title,
+            sourceFilename,
+            slides: parsed.slides.map((slide, idx) => ({
+              content: slide.htmlContent,
+              sortOrder: idx,
+            })),
+          })
+
+          if (result.success && result.data) {
+            navigate({
+              to: '/songs/$songId',
+              params: { songId: String(result.data.id) },
+            })
+          }
+        } else if (action === 'createNew') {
+          // Create new song with unique title
+          const searchResults = await searchSongs(parsed.title)
+          const uniqueTitle = await generateUniqueTitle(
+            parsed.title,
+            searchResults,
+          )
+
+          const result = await upsertMutation.mutateAsync({
+            title: uniqueTitle,
+            sourceFilename,
+            slides: parsed.slides.map((slide, idx) => ({
+              content: slide.htmlContent,
+              sortOrder: idx,
+            })),
+          })
+
+          if (result.success && result.data) {
+            navigate({
+              to: '/songs/$songId',
+              params: { songId: String(result.data.id) },
+            })
+          }
+        }
+      } else if (
+        pendingImport.type === 'opensong' &&
+        pendingImport.opensongData
+      ) {
+        const { parsed, filePath } = pendingImport.opensongData
+
+        if (action === 'overwrite') {
+          // Update existing song
+          const result = await upsertMutation.mutateAsync({
+            id: pendingImport.existingId,
+            title: parsed.title,
+            sourceFilename: filePath,
+            author: parsed.metadata?.author,
+            copyright: parsed.metadata?.copyright,
+            ccli: parsed.metadata?.ccli,
+            key: parsed.metadata?.key,
+            tempo: parsed.metadata?.tempo,
+            timeSignature: parsed.metadata?.timeSignature,
+            theme: parsed.metadata?.theme,
+            altTheme: parsed.metadata?.altTheme,
+            hymnNumber: parsed.metadata?.hymnNumber,
+            keyLine: parsed.metadata?.keyLine,
+            presentationOrder: parsed.metadata?.presentationOrder,
+            slides: parsed.slides.map((slide, idx) => ({
+              content: slide.htmlContent,
+              sortOrder: idx,
+              label: slide.label,
+            })),
+          })
+
+          if (result.success && result.data) {
+            navigate({
+              to: '/songs/$songId',
+              params: { songId: String(result.data.id) },
+            })
+          }
+        } else if (action === 'createNew') {
+          // Create new song with unique title
+          const searchResults = await searchSongs(parsed.title)
+          const uniqueTitle = await generateUniqueTitle(
+            parsed.title,
+            searchResults,
+          )
+
+          const result = await upsertMutation.mutateAsync({
+            title: uniqueTitle,
+            sourceFilename: filePath,
+            author: parsed.metadata?.author,
+            copyright: parsed.metadata?.copyright,
+            ccli: parsed.metadata?.ccli,
+            key: parsed.metadata?.key,
+            tempo: parsed.metadata?.tempo,
+            timeSignature: parsed.metadata?.timeSignature,
+            theme: parsed.metadata?.theme,
+            altTheme: parsed.metadata?.altTheme,
+            hymnNumber: parsed.metadata?.hymnNumber,
+            keyLine: parsed.metadata?.keyLine,
+            presentationOrder: parsed.metadata?.presentationOrder,
+            slides: parsed.slides.map((slide, idx) => ({
+              content: slide.htmlContent,
+              sortOrder: idx,
+              label: slide.label,
+            })),
+          })
+
+          if (result.success && result.data) {
+            navigate({
+              to: '/songs/$songId',
+              params: { songId: String(result.data.id) },
+            })
+          }
+        }
+      }
+
+      setPendingImport(null)
+    },
+    [pendingImport, navigate, upsertMutation],
+  )
+
   return (
-    <PptxDropZoneContext.Provider value={{ isDragging }}>
+    <FileDropZoneContext.Provider value={{ isDragging }}>
       {children}
 
       {/* Drag overlay */}
@@ -424,6 +645,13 @@ export function PptxDropZoneProvider({ children }: Props) {
           </div>
         </div>
       )}
-    </PptxDropZoneContext.Provider>
+
+      {/* Duplicate song dialog */}
+      <DuplicateSongDialog
+        isOpen={showDuplicateDialog}
+        songTitle={pendingImport?.title ?? ''}
+        onAction={handleDuplicateAction}
+      />
+    </FileDropZoneContext.Provider>
   )
 }
