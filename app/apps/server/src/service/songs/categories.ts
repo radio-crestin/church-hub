@@ -206,7 +206,12 @@ export function deleteUncategorizedSongs(): OperationResult & {
     return { success: true, deletedCount: deletedSongs.length, deletedIds }
   } catch (error) {
     log('error', `Failed to delete uncategorized songs: ${error}`)
-    return { success: false, error: String(error), deletedCount: 0, deletedIds: [] }
+    return {
+      success: false,
+      error: String(error),
+      deletedCount: 0,
+      deletedIds: [],
+    }
   }
 }
 

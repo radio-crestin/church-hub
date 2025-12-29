@@ -8,6 +8,7 @@ import { getStoredUserToken } from '~/service/api-url'
 import { ScreenContent } from './ScreenContent'
 import type { ContentData, NextSlideData } from './types'
 import { calculateNextSlideData, getBackgroundCSS } from './utils'
+import { calculateMaxExitAnimationDuration } from './utils/styleUtils'
 import { getNextVerse } from '../../../bible/service/bible'
 import type { BibleVerse } from '../../../bible/types'
 import { useKioskSettings } from '../../../kiosk'
@@ -26,6 +27,9 @@ import { isTauri } from '../../utils/openDisplayWindow'
 
 // Use Tauri fetch on mobile (iOS WKWebView blocks HTTP fetch)
 const fetchFn = isTauri() && isMobile() ? tauriFetch : window.fetch.bind(window)
+
+// Extra buffer time after animation completes before transitioning to empty state (ms)
+const EXIT_ANIMATION_BUFFER = 100
 
 // Get headers with auth token for mobile
 function getHeaders(): Record<string, string> {
@@ -66,6 +70,15 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
   const [nextSlideData, setNextSlideData] = useState<
     NextSlideData | undefined
   >()
+  const [isExitAnimating, setIsExitAnimating] = useState(false)
+  const exitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const prevHiddenRef = useRef(presentationState?.isHidden)
+  const currentContentTypeRef = useRef<ContentType>(contentType)
+
+  // Keep track of current content type for exit animation calculation
+  if (contentType !== 'empty') {
+    currentContentTypeRef.current = contentType
+  }
 
   // Fullscreen state and toolbar visibility
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -466,6 +479,53 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
     return () => clearInterval(interval)
   }, [])
 
+  // Handle exit animation timing - delay empty state transition
+  useEffect(() => {
+    const wasHidden = prevHiddenRef.current
+    const isHidden = presentationState?.isHidden
+
+    // Detect transition from visible to hidden
+    if (!wasHidden && isHidden) {
+      // Clear any existing timeout
+      if (exitTimeoutRef.current) {
+        clearTimeout(exitTimeoutRef.current)
+      }
+
+      // Start exit animation
+      setIsExitAnimating(true)
+
+      // Calculate the max exit animation duration from the current content type's config
+      const currentConfig = screen?.contentConfigs[currentContentTypeRef.current]
+      const animationDuration = calculateMaxExitAnimationDuration(currentConfig)
+      const totalDelay = animationDuration + EXIT_ANIMATION_BUFFER
+
+      // After animation duration + buffer, transition to empty state
+      exitTimeoutRef.current = setTimeout(() => {
+        setContentData(null)
+        setContentType('empty')
+        setNextSlideData(undefined)
+        setIsExitAnimating(false)
+      }, totalDelay)
+    }
+
+    // If becoming visible, cancel any pending exit transition
+    if (wasHidden && !isHidden) {
+      if (exitTimeoutRef.current) {
+        clearTimeout(exitTimeoutRef.current)
+        exitTimeoutRef.current = null
+      }
+      setIsExitAnimating(false)
+    }
+
+    prevHiddenRef.current = isHidden
+
+    return () => {
+      if (exitTimeoutRef.current) {
+        clearTimeout(exitTimeoutRef.current)
+      }
+    }
+  }, [presentationState?.isHidden, screen])
+
   // Fetch content based on presentation state
   useEffect(() => {
     const fetchContent = async () => {
@@ -475,9 +535,9 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
         return
       }
 
-      if (presentationState.isHidden) {
-        setContentData(null)
-        setContentType('empty')
+      // When hidden or exit animating, don't fetch new content
+      // The exit animation effect will handle transitioning to empty state
+      if (presentationState.isHidden || isExitAnimating) {
         return
       }
 
@@ -716,6 +776,7 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
     presentationState?.isHidden,
     presentationState?.updatedAt,
     screen?.type,
+    isExitAnimating,
   ])
 
   if (isError) {
@@ -737,7 +798,11 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
   }
 
   const hasContent = contentData !== null
-  const isVisible = hasContent && !presentationState?.isHidden
+
+  // Visibility is false when hidden or during exit animation (triggers exit animation in ScreenContent)
+  // During exit animation, content is still rendered but animating out
+  // After animation completes, contentData becomes null
+  const isVisible = hasContent && !presentationState?.isHidden && !isExitAnimating
 
   // Get background from screen config for fullscreen display
   const config = screen.contentConfigs[contentType]
