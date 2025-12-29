@@ -1,6 +1,11 @@
 import type { SlideTemplate } from '../schedules/types'
 
 /**
+ * Schedule export format types
+ */
+export type ScheduleExportFormat = 'churchprogram' | 'pptx'
+
+/**
  * Song data embedded in a church program export
  */
 export interface ExportedSong {
