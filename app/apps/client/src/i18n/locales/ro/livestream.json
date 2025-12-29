@@ -77,6 +77,7 @@
     "notStreaming": "Nu transmite",
     "starting": "Se porneste...",
     "stopping": "Se opreste...",
+    "connectRequired": "Conecteaza YouTube sau OBS pentru a incepe",
     "progress": {
       "creating_broadcast": "Se creeaza transmisia",
       "waiting_for_ready": "Se asteapta YouTube",
@@ -84,6 +85,12 @@
       "starting_obs": "Se porneste OBS",
       "completed": "Stream pornit",
       "error": "Eroare la pornirea stream-ului"
+    },
+    "cancelConfirm": {
+      "title": "Anulezi pornirea stream-ului?",
+      "message": "Stream-ul este in curs de pornire. Esti sigur ca vrei sa anulezi si sa opresti stream-ul?",
+      "confirm": "Opreste stream-ul",
+      "cancel": "Continua"
     }
   },
   "broadcast": {
