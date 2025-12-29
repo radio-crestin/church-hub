@@ -11,6 +11,7 @@ import type {
 import { TextContent } from '../rendering/TextContent'
 import {
   calculatePixelBounds,
+  clampBoundsToScreen,
   getBackgroundCSS,
   getTextStyleCSS,
 } from '../rendering/utils/styleUtils'
@@ -723,8 +724,15 @@ export function ScreenEditorCanvas({
 
     // Clock - per-content-type enable with shared global config for position/style
     const clockConfig = screen.globalSettings.clockConfig
+    // Support both new structure (clockEnabled: boolean) and old structure (clock: { enabled: boolean })
     const isClockEnabled =
-      'clockEnabled' in config && config.clockEnabled && clockConfig
+      clockConfig &&
+      (('clockEnabled' in config && config.clockEnabled) ||
+        ('clock' in config &&
+          config.clock &&
+          typeof config.clock === 'object' &&
+          'enabled' in config.clock &&
+          config.clock.enabled))
     if (isClockEnabled) {
       // Default size for backwards compatibility with configs that don't have size
       const clockSize = clockConfig.size ?? {
@@ -733,12 +741,14 @@ export function ScreenEditorCanvas({
         height: 5,
         heightUnit: '%' as const,
       }
-      const bounds = calculatePixelBounds(
+      // Calculate bounds and clamp to screen boundaries
+      const rawBounds = calculatePixelBounds(
         clockConfig.constraints,
         clockSize,
         canvasWidth,
         canvasHeight,
       )
+      const bounds = clampBoundsToScreen(rawBounds, canvasWidth, canvasHeight)
 
       els.push(
         <DraggableElement
