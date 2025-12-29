@@ -8,6 +8,8 @@ import {
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import { Tooltip } from '~/ui/tooltip/Tooltip'
+
 interface ScheduleCardProps {
   schedule: {
     id: number
@@ -90,22 +92,23 @@ export function ScheduleCard({
       </div>
       <div className="flex items-center gap-1 flex-shrink-0 ml-2">
         {onSaveClick && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              onSaveClick(schedule.id)
-            }}
-            disabled={isSaving}
-            className="p-1.5 text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded transition-colors disabled:opacity-50"
-            title={t('actions.saveToFile')}
-          >
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Download className="w-4 h-4" />
-            )}
-          </button>
+          <Tooltip content={t('actions.saveToFile')} position="left">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                onSaveClick(schedule.id)
+              }}
+              disabled={isSaving}
+              className="p-1.5 text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded transition-colors disabled:opacity-50"
+            >
+              {isSaving ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
+            </button>
+          </Tooltip>
         )}
         <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-indigo-500 transition-colors" />
       </div>
