@@ -131,5 +131,20 @@
     "presentationCount": "Număr prezentări",
     "lastManualEdit": "Ultima editare manuală",
     "neverEdited": "Needitat"
+  },
+  "export": {
+    "formatTitle": "Format de export",
+    "formatDescription": "Alege formatul în care vrei să exporți această cântare.",
+    "confirmButton": "Exportă",
+    "formats": {
+      "opensong": {
+        "name": "OpenSong",
+        "description": "Format XML compatibil cu OpenSong și alte programe de închinare. Ideal pentru portabilitatea datelor."
+      },
+      "pptx": {
+        "name": "PowerPoint",
+        "description": "Prezentare PPTX cu fundal negru și text alb centrat. Gata pentru proiecție."
+      }
+    }
   }
 }
