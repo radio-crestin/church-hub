@@ -575,6 +575,33 @@
         "saveError": "Failed to save screen",
         "createError": "Failed to create screen"
       }
+    },
+    "developer": {
+      "title": "Developer Tools",
+      "description": "Advanced settings for developers and debugging"
+    },
+    "factoryReset": {
+      "title": "Factory Reset",
+      "description": "Reset application configuration to default settings",
+      "card": {
+        "title": "Reset to Defaults",
+        "description": "Clears screens and settings, then restores factory defaults. Songs and Bible translations are preserved."
+      },
+      "button": {
+        "reset": "Factory Reset",
+        "resetting": "Resetting..."
+      },
+      "confirm": {
+        "title": "Factory Reset",
+        "message": "This will reset all screens and application settings to their default values. Your songs, categories, and Bible translations will be preserved.",
+        "warning": "This action cannot be undone.",
+        "cancel": "Cancel",
+        "confirm": "Reset to Defaults"
+      },
+      "toast": {
+        "success": "Factory reset completed. Settings have been restored to defaults.",
+        "failed": "Factory reset failed: {{error}}"
+      }
     }
   }
 }

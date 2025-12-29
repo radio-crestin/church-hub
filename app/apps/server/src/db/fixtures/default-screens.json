@@ -13,7 +13,54 @@
         "color": "#000000",
         "opacity": 1
       },
-      "clockEnabled": false
+      "clockConfig": {
+        "enabled": false,
+        "constraints": {
+          "top": {
+            "enabled": true,
+            "value": 2,
+            "unit": "%"
+          },
+          "bottom": {
+            "enabled": false,
+            "value": 0,
+            "unit": "%"
+          },
+          "left": {
+            "enabled": true,
+            "value": 83.59154929577464,
+            "unit": "%"
+          },
+          "right": {
+            "enabled": false,
+            "value": 0,
+            "unit": "%"
+          }
+        },
+        "size": {
+          "width": 14.665492957746476,
+          "widthUnit": "%",
+          "height": 13.60719874804382,
+          "heightUnit": "%"
+        },
+        "style": {
+          "fontFamily": "system-ui",
+          "maxFontSize": 80,
+          "autoScale": false,
+          "color": "#ffffff",
+          "bold": true,
+          "italic": false,
+          "underline": false,
+          "alignment": "right",
+          "verticalAlignment": "middle",
+          "lineHeight": 1.3,
+          "shadow": false
+        },
+        "format": "24h",
+        "showSeconds": false,
+        "hidden": false
+      },
+      "clockEnabled": true
     },
     "sortOrder": 0,
     "contentConfigs": {
@@ -74,7 +121,7 @@
           },
           "animationOut": {
             "type": "fade",
-            "duration": 200,
+            "duration": 300,
             "delay": 0,
             "easing": "ease-in"
           }
@@ -84,7 +131,7 @@
           "constraints": {
             "top": {
               "enabled": true,
-              "value": 2,
+              "value": 3.2519561815336466,
               "unit": "%"
             },
             "bottom": {
@@ -94,7 +141,7 @@
             },
             "left": {
               "enabled": true,
-              "value": 85,
+              "value": 76.10915492957747,
               "unit": "%"
             },
             "right": {
@@ -104,14 +151,14 @@
             }
           },
           "size": {
-            "width": 10,
+            "width": 12.464788732394364,
             "widthUnit": "%",
-            "height": 5,
+            "height": 13.450704225352112,
             "heightUnit": "%"
           },
           "style": {
             "fontFamily": "system-ui",
-            "maxFontSize": 32,
+            "maxFontSize": 80,
             "autoScale": false,
             "color": "#ffffff",
             "bold": false,
@@ -124,7 +171,8 @@
           },
           "format": "24h",
           "showSeconds": false
-        }
+        },
+        "clockEnabled": false
       },
       "bible": {
         "background": {
@@ -136,7 +184,7 @@
           "constraints": {
             "top": {
               "enabled": true,
-              "value": 2,
+              "value": 2.0000000000000004,
               "unit": "%"
             },
             "bottom": {
@@ -173,6 +221,18 @@
             "verticalAlignment": "middle",
             "lineHeight": 1.3,
             "shadow": false
+          },
+          "animationIn": {
+            "type": "none",
+            "duration": 400,
+            "delay": 0,
+            "easing": "ease-out"
+          },
+          "slideTransition": {
+            "type": "none",
+            "duration": 250,
+            "delay": 0,
+            "easing": "ease-out"
           }
         },
         "contentText": {
@@ -219,7 +279,7 @@
           },
           "padding": 20,
           "animationIn": {
-            "type": "fade",
+            "type": "none",
             "duration": 300,
             "delay": 0,
             "easing": "ease-out"
@@ -229,6 +289,12 @@
             "duration": 200,
             "delay": 0,
             "easing": "ease-in"
+          },
+          "slideTransition": {
+            "type": "none",
+            "duration": 250,
+            "delay": 0,
+            "easing": "ease-out"
           }
         },
         "clock": {
@@ -245,25 +311,25 @@
               "unit": "%"
             },
             "left": {
-              "enabled": true,
+              "enabled": false,
               "value": 85,
               "unit": "%"
             },
             "right": {
-              "enabled": false,
+              "enabled": true,
               "value": 0,
               "unit": "%"
             }
           },
           "size": {
-            "width": 10,
+            "width": 11.056338028169014,
             "widthUnit": "%",
-            "height": 5,
+            "height": 8.286384976525822,
             "heightUnit": "%"
           },
           "style": {
             "fontFamily": "system-ui",
-            "maxFontSize": 32,
+            "maxFontSize": 80,
             "autoScale": false,
             "color": "#ffffff",
             "bold": false,
@@ -276,7 +342,8 @@
           },
           "format": "24h",
           "showSeconds": false
-        }
+        },
+        "clockEnabled": true
       },
       "bible_passage": {
         "background": {
@@ -428,7 +495,9 @@
           },
           "format": "24h",
           "showSeconds": false
-        }
+        },
+        "includeReferenceInContent": false,
+        "clockEnabled": true
       },
       "announcement": {
         "background": {
@@ -732,7 +801,8 @@
           },
           "format": "24h",
           "showSeconds": false
-        }
+        },
+        "clockEnabled": true
       },
       "empty": {
         "background": {
@@ -745,7 +815,7 @@
           "constraints": {
             "top": {
               "enabled": true,
-              "value": 3.904538341158059,
+              "value": 2,
               "unit": "%"
             },
             "bottom": {
@@ -754,25 +824,25 @@
               "unit": "%"
             },
             "left": {
-              "enabled": false,
-              "value": 80,
+              "enabled": true,
+              "value": 82.62323943661973,
               "unit": "%"
             },
             "right": {
-              "enabled": true,
-              "value": 2.37676056338028,
+              "enabled": false,
+              "value": 0,
               "unit": "%"
             }
           },
           "size": {
-            "width": 288,
-            "widthUnit": "px",
-            "height": 86.4,
-            "heightUnit": "px"
+            "width": 15.369718309859154,
+            "widthUnit": "%",
+            "height": 13.92018779342723,
+            "heightUnit": "%"
           },
           "style": {
             "fontFamily": "system-ui",
-            "maxFontSize": 48,
+            "maxFontSize": 80,
             "autoScale": false,
             "color": "#ffffff",
             "bold": true,
@@ -785,7 +855,71 @@
           },
           "format": "24h",
           "showSeconds": false
+        },
+        "clockEnabled": true
+      }
+    },
+    "nextSlideConfig": {
+      "enabled": false,
+      "constraints": {
+        "top": {
+          "enabled": true,
+          "value": 78,
+          "unit": "%"
+        },
+        "right": {
+          "enabled": true,
+          "value": 0,
+          "unit": "%"
+        },
+        "bottom": {
+          "enabled": true,
+          "value": 0,
+          "unit": "%"
+        },
+        "left": {
+          "enabled": true,
+          "value": 0,
+          "unit": "%"
         }
+      },
+      "size": {
+        "width": 100,
+        "widthUnit": "%",
+        "height": 22,
+        "heightUnit": "%"
+      },
+      "labelText": "Urmeaza:",
+      "labelStyle": {
+        "fontFamily": "system-ui",
+        "maxFontSize": 24,
+        "autoScale": false,
+        "color": "#cccccc",
+        "bold": true,
+        "italic": false,
+        "underline": false,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "lineHeight": 1.3,
+        "shadow": false
+      },
+      "contentStyle": {
+        "fontFamily": "system-ui",
+        "maxFontSize": 32,
+        "autoScale": true,
+        "color": "#ffffff",
+        "bold": false,
+        "italic": false,
+        "underline": false,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "lineHeight": 1.3,
+        "shadow": false
+      },
+      "background": {
+        "type": "color",
+        "color": "#1a1a1a",
+        "opacity": 0.8
       }
     }
   },
@@ -803,7 +937,53 @@
         "color": "#000000",
         "opacity": 1
       },
-      "clockEnabled": false
+      "clockConfig": {
+        "enabled": false,
+        "constraints": {
+          "top": {
+            "enabled": true,
+            "value": 1.3740219092331771,
+            "unit": "%"
+          },
+          "bottom": {
+            "enabled": false,
+            "value": 0,
+            "unit": "%"
+          },
+          "left": {
+            "enabled": true,
+            "value": 79.17253521126761,
+            "unit": "%"
+          },
+          "right": {
+            "enabled": false,
+            "value": 0,
+            "unit": "%"
+          }
+        },
+        "size": {
+          "width": 18.450704225352112,
+          "widthUnit": "%",
+          "height": 12.668231611893585,
+          "heightUnit": "%"
+        },
+        "style": {
+          "fontFamily": "system-ui",
+          "maxFontSize": 80,
+          "autoScale": false,
+          "color": "#ffffff",
+          "bold": true,
+          "italic": false,
+          "underline": false,
+          "alignment": "right",
+          "verticalAlignment": "middle",
+          "lineHeight": 1.3,
+          "shadow": false
+        },
+        "format": "24h",
+        "showSeconds": false
+      },
+      "clockEnabled": true
     },
     "sortOrder": 0,
     "contentConfigs": {
@@ -914,7 +1094,8 @@
           },
           "format": "24h",
           "showSeconds": false
-        }
+        },
+        "clockEnabled": false
       },
       "bible": {
         "background": {
@@ -1066,7 +1247,8 @@
           },
           "format": "24h",
           "showSeconds": false
-        }
+        },
+        "clockEnabled": true
       },
       "bible_passage": {
         "background": {
@@ -1218,7 +1400,8 @@
           },
           "format": "24h",
           "showSeconds": false
-        }
+        },
+        "clockEnabled": true
       },
       "announcement": {
         "background": {
@@ -1327,7 +1510,8 @@
           },
           "format": "24h",
           "showSeconds": false
-        }
+        },
+        "clockEnabled": true
       },
       "versete_tineri": {
         "background": {
@@ -1522,7 +1706,8 @@
           },
           "format": "24h",
           "showSeconds": false
-        }
+        },
+        "clockEnabled": true
       },
       "empty": {
         "background": {
@@ -2501,14 +2686,60 @@
     "type": "kiosk",
     "isActive": false,
     "openMode": "browser",
-    "isFullscreen": false,
-    "width": 1920,
-    "height": 1080,
+    "isFullscreen": true,
+    "width": 1080,
+    "height": 1920,
     "globalSettings": {
       "defaultBackground": {
         "type": "color",
         "color": "#000000",
         "opacity": 1
+      },
+      "clockConfig": {
+        "enabled": false,
+        "constraints": {
+          "top": {
+            "enabled": true,
+            "value": 2.250312891113892,
+            "unit": "%"
+          },
+          "bottom": {
+            "enabled": false,
+            "value": 0,
+            "unit": "%"
+          },
+          "left": {
+            "enabled": true,
+            "value": 71.75497149214297,
+            "unit": "%"
+          },
+          "right": {
+            "enabled": false,
+            "value": 0,
+            "unit": "%"
+          }
+        },
+        "size": {
+          "width": 24.68502294534835,
+          "widthUnit": "%",
+          "height": 6.877346683354194,
+          "heightUnit": "%"
+        },
+        "style": {
+          "fontFamily": "system-ui",
+          "maxFontSize": 80,
+          "autoScale": false,
+          "color": "#ffffff",
+          "bold": true,
+          "italic": false,
+          "underline": false,
+          "alignment": "right",
+          "verticalAlignment": "middle",
+          "lineHeight": 1.3,
+          "shadow": false
+        },
+        "format": "24h",
+        "showSeconds": false
       },
       "clockEnabled": false
     },
@@ -2524,7 +2755,7 @@
           "constraints": {
             "top": {
               "enabled": true,
-              "value": 5.461658841940533,
+              "value": 3.59249996343586,
               "unit": "%"
             },
             "bottom": {
@@ -2534,7 +2765,7 @@
             },
             "left": {
               "enabled": true,
-              "value": 3.591549295774644,
+              "value": 3.394411445307352,
               "unit": "%"
             },
             "right": {
@@ -2554,11 +2785,11 @@
             "maxFontSize": 120,
             "autoScale": true,
             "color": "#ffffff",
-            "bold": false,
+            "bold": true,
             "italic": false,
             "underline": false,
-            "alignment": "center",
-            "verticalAlignment": "middle",
+            "alignment": "left",
+            "verticalAlignment": "top",
             "lineHeight": 1.3,
             "shadow": false,
             "compressLines": false,
@@ -2656,14 +2887,14 @@
             }
           },
           "size": {
-            "width": 80,
+            "width": 71.09998609372828,
             "widthUnit": "%",
-            "height": 8,
+            "height": 7.749687108886107,
             "heightUnit": "%"
           },
           "style": {
             "fontFamily": "system-ui",
-            "maxFontSize": 36,
+            "maxFontSize": 80,
             "autoScale": false,
             "color": "#ffffff",
             "bold": true,
@@ -2679,7 +2910,7 @@
           "constraints": {
             "top": {
               "enabled": true,
-              "value": 11.217527386541471,
+              "value": 10.04930308747605,
               "unit": "%"
             },
             "bottom": {
@@ -2689,7 +2920,7 @@
             },
             "left": {
               "enabled": true,
-              "value": 4.471830985915489,
+              "value": 3.018040747078524,
               "unit": "%"
             },
             "right": {
@@ -2699,9 +2930,9 @@
             }
           },
           "size": {
-            "width": 90,
+            "width": 92.49221183800623,
             "widthUnit": "%",
-            "height": 47.47574334898279,
+            "height": 50.39630409664635,
             "heightUnit": "%"
           },
           "style": {
@@ -2709,11 +2940,11 @@
             "maxFontSize": 100,
             "autoScale": true,
             "color": "#ffffff",
-            "bold": false,
+            "bold": true,
             "italic": false,
             "underline": false,
             "alignment": "left",
-            "verticalAlignment": "middle",
+            "verticalAlignment": "top",
             "lineHeight": 1.3,
             "shadow": false
           },
@@ -2776,7 +3007,8 @@
           },
           "format": "24h",
           "showSeconds": false
-        }
+        },
+        "clockEnabled": true
       },
       "bible_passage": {
         "background": {
@@ -2808,14 +3040,14 @@
             }
           },
           "size": {
-            "width": 80,
+            "width": 67.31748018356278,
             "widthUnit": "%",
-            "height": 8,
+            "height": 7.8748435544430535,
             "heightUnit": "%"
           },
           "style": {
             "fontFamily": "system-ui",
-            "maxFontSize": 36,
+            "maxFontSize": 80,
             "autoScale": false,
             "color": "#ffffff",
             "bold": true,
@@ -2831,7 +3063,7 @@
           "constraints": {
             "top": {
               "enabled": true,
-              "value": 10.435054773082943,
+              "value": 10.201409913269858,
               "unit": "%"
             },
             "bottom": {
@@ -2841,7 +3073,7 @@
             },
             "left": {
               "enabled": true,
-              "value": 4.471830985915494,
+              "value": 3.2257250669123763,
               "unit": "%"
             },
             "right": {
@@ -2853,7 +3085,7 @@
           "size": {
             "width": 90,
             "widthUnit": "%",
-            "height": 51.07511737089202,
+            "height": 49.55642578210698,
             "heightUnit": "%"
           },
           "style": {
@@ -2861,11 +3093,11 @@
             "maxFontSize": 100,
             "autoScale": true,
             "color": "#ffffff",
-            "bold": false,
+            "bold": true,
             "italic": false,
             "underline": false,
             "alignment": "left",
-            "verticalAlignment": "middle",
+            "verticalAlignment": "top",
             "lineHeight": 1.3,
             "shadow": false
           },
@@ -2928,7 +3160,8 @@
           },
           "format": "24h",
           "showSeconds": false
-        }
+        },
+        "clockEnabled": true
       },
       "announcement": {
         "background": {
@@ -2962,7 +3195,7 @@
           "size": {
             "width": 90,
             "widthUnit": "%",
-            "height": 49.945226917057894,
+            "height": 47.94272378814675,
             "heightUnit": "%"
           },
           "style": {
@@ -2970,7 +3203,7 @@
             "maxFontSize": 100,
             "autoScale": true,
             "color": "#ffffff",
-            "bold": false,
+            "bold": true,
             "italic": false,
             "underline": false,
             "alignment": "left",
@@ -3037,7 +3270,8 @@
           },
           "format": "24h",
           "showSeconds": false
-        }
+        },
+        "clockEnabled": true
       },
       "versete_tineri": {
         "background": {
@@ -3069,17 +3303,17 @@
             }
           },
           "size": {
-            "width": 40,
+            "width": 82.78296988577361,
             "widthUnit": "%",
             "height": 5,
             "heightUnit": "%"
           },
           "style": {
             "fontFamily": "system-ui",
-            "maxFontSize": 28,
+            "maxFontSize": 80,
             "autoScale": false,
             "color": "#ffffff",
-            "bold": false,
+            "bold": true,
             "italic": true,
             "underline": false,
             "alignment": "left",
@@ -3102,7 +3336,7 @@
             },
             "left": {
               "enabled": true,
-              "value": 5,
+              "value": 4.376947040498442,
               "unit": "%"
             },
             "right": {
@@ -3119,7 +3353,7 @@
           },
           "style": {
             "fontFamily": "system-ui",
-            "maxFontSize": 32,
+            "maxFontSize": 80,
             "autoScale": false,
             "color": "#ffffff",
             "bold": true,
@@ -3135,7 +3369,7 @@
           "constraints": {
             "top": {
               "enabled": true,
-              "value": 15.965571205007823,
+              "value": 16.082393634914364,
               "unit": "%"
             },
             "bottom": {
@@ -3145,7 +3379,7 @@
             },
             "left": {
               "enabled": true,
-              "value": 4.735915492957747,
+              "value": 3.6974938937884816,
               "unit": "%"
             },
             "right": {
@@ -3157,7 +3391,7 @@
           "size": {
             "width": 90,
             "widthUnit": "%",
-            "height": 47.1095461658842,
+            "height": 40.80113495093094,
             "heightUnit": "%"
           },
           "style": {
@@ -3165,7 +3399,7 @@
             "maxFontSize": 90,
             "autoScale": true,
             "color": "#ffffff",
-            "bold": false,
+            "bold": true,
             "italic": false,
             "underline": false,
             "alignment": "left",
@@ -3232,7 +3466,8 @@
           },
           "format": "24h",
           "showSeconds": false
-        }
+        },
+        "clockEnabled": true
       },
       "empty": {
         "background": {
@@ -3245,7 +3480,7 @@
           "constraints": {
             "top": {
               "enabled": true,
-              "value": 62.8317757009346,
+              "value": 18.96346644010195,
               "unit": "px"
             },
             "bottom": {
@@ -3255,27 +3490,27 @@
             },
             "left": {
               "enabled": false,
-              "value": 72.69983217059367,
+              "value": 59.2056074766355,
               "unit": "%"
             },
             "right": {
               "enabled": true,
-              "value": 44.158878504672884,
+              "value": 17.676386911099996,
               "unit": "px"
             }
           },
           "size": {
-            "width": 29.99841631565091,
-            "widthUnit": "%",
-            "height": 11.271028037383179,
-            "heightUnit": "%"
+            "width": 454.37425134921665,
+            "widthUnit": "px",
+            "height": 216.40373831775702,
+            "heightUnit": "px"
           },
           "style": {
             "fontFamily": "system-ui",
             "maxFontSize": 100,
             "autoScale": false,
             "color": "#ffffff",
-            "bold": false,
+            "bold": true,
             "italic": false,
             "underline": false,
             "alignment": "left",
@@ -3293,22 +3528,22 @@
       "constraints": {
         "top": {
           "enabled": true,
-          "value": 60.94209702660407,
+          "value": 62.46078861538912,
           "unit": "%"
         },
         "right": {
           "enabled": true,
-          "value": 0,
+          "value": 1.2461059190031132,
           "unit": "%"
         },
         "bottom": {
           "enabled": true,
-          "value": 0,
+          "value": 0.4672897196261812,
           "unit": "%"
         },
         "left": {
           "enabled": true,
-          "value": 0,
+          "value": 0.4153686396677051,
           "unit": "%"
         }
       },
@@ -3321,7 +3556,7 @@
       "labelText": "Urmeaza:",
       "labelStyle": {
         "fontFamily": "system-ui",
-        "maxFontSize": 24,
+        "maxFontSize": 43,
         "autoScale": false,
         "color": "#cccccc",
         "bold": true,
@@ -3337,7 +3572,7 @@
       },
       "contentStyle": {
         "fontFamily": "system-ui",
-        "maxFontSize": 66,
+        "maxFontSize": 59,
         "autoScale": true,
         "color": "#ffffff",
         "bold": false,
@@ -3347,9 +3582,9 @@
         "verticalAlignment": "top",
         "lineHeight": 1.3,
         "shadow": false,
-        "compressLines": true,
+        "compressLines": false,
         "lineSeparator": "dash",
-        "fitLineToWidth": true
+        "fitLineToWidth": false
       },
       "background": {
         "type": "color",

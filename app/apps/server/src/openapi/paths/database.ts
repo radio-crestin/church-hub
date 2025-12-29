@@ -1,4 +1,4 @@
-export const databasePaths = {
+export const databasePaths: Record<string, Record<string, unknown>> = {
   '/api/database/info': {
     get: {
       tags: ['Database'],
@@ -209,6 +209,61 @@ export const databasePaths = {
         },
         '500': {
           description: 'Import failed',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  error: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+  '/api/database/factory-reset': {
+    post: {
+      tags: ['Database'],
+      summary: 'Factory reset application settings',
+      description:
+        'Resets application configuration to defaults by clearing screens and app settings, then re-seeding from fixture files. Preserves user content like songs, categories, and Bible translations. Only accessible from localhost.',
+      responses: {
+        '200': {
+          description: 'Factory reset completed successfully',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean' },
+                      message: { type: 'string' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        '403': {
+          description: 'Only accessible from localhost',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  error: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+        '500': {
+          description: 'Factory reset failed',
           content: {
             'application/json': {
               schema: {

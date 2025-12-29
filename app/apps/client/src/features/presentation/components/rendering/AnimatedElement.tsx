@@ -7,7 +7,8 @@ interface AnimatedElementProps {
   children: ReactNode
   animationIn?: AnimationConfig
   animationOut?: AnimationConfig
-  slideTransition?: AnimationConfig // Animation used when transitioning between slides
+  slideTransitionIn?: AnimationConfig // Animation for new content entering during slide change
+  slideTransitionOut?: AnimationConfig // Animation for old content leaving during slide change
   isVisible: boolean
   contentKey?: string // Used to detect content changes for this specific element
   className?: string
@@ -38,7 +39,8 @@ export function AnimatedElement({
   children,
   animationIn,
   animationOut,
-  slideTransition,
+  slideTransitionIn,
+  slideTransitionOut,
   isVisible,
   contentKey,
   className = '',
@@ -50,24 +52,67 @@ export function AnimatedElement({
     isExitPhase,
     exitFrame,
     isSlideTransition,
+    isSlideTransitionExitPhase,
+    slideTransitionExitFrame,
   } = useAnimationContext()
   const [shouldRender, setShouldRender] = useState(isVisible)
   const [phase, setPhase] = useState<AnimationPhase>(
     isVisible ? 'idle' : 'idle',
   )
+  // Track if we're in a slide transition exit (showing old content while fading out)
+  const [isInSlideTransitionExit, setIsInSlideTransitionExit] = useState(false)
   const prevContentKeyRef = useRef(contentKey)
   const prevAnimationFrameRef = useRef(animationFrame)
   const prevExitFrameRef = useRef(exitFrame)
+  const prevSlideTransitionExitFrameRef = useRef(slideTransitionExitFrame)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   // Cache children when visible so we can animate them out even if parent stops providing them
   const cachedChildrenRef = useRef<ReactNode>(children)
 
   // Update cached children when visible and children are provided
-  if (isVisible && children) {
+  // But DON'T update during slide transition exit (we want to show old content while fading out)
+  // Check both local state and context to handle timing correctly
+  // CRITICAL: Also check that contentKey hasn't changed - when contentKey changes,
+  // React renders with NEW children before the context effect runs. By checking
+  // contentKey === prevContentKeyRef.current, we ensure we keep the OLD cached children
+  // during that first render, so the exit animation shows OLD content fading out.
+  if (
+    isVisible &&
+    children &&
+    !isInSlideTransitionExit &&
+    !isSlideTransitionExitPhase &&
+    (contentKey === undefined || contentKey === prevContentKeyRef.current)
+  ) {
     cachedChildrenRef.current = children
   }
 
-  // Handle synchronized exit animations via context
+  // Handle slide transition exit animations (fade out old content before new content appears)
+  // NOTE: We do NOT use a timeout here. The element stays in 'exiting' phase (showing old content)
+  // until the AnimationContext signals to start entering (via animationFrame change).
+  // This eliminates the gap between exit and enter that was causing flickering.
+  useEffect(() => {
+    const slideTransitionExitFrameChanged =
+      prevSlideTransitionExitFrameRef.current !== slideTransitionExitFrame
+
+    if (isSlideTransitionExitPhase && slideTransitionExitFrameChanged) {
+      // Start slide transition exit - fade out old content using slideTransitionOut config
+      setIsInSlideTransitionExit(true)
+      setPhase('exiting')
+      // Element stays in 'exiting' phase until context triggers enter via animationFrame
+    }
+
+    // When exit phase ends (context is ready for enter), clean up
+    if (
+      !isSlideTransitionExitPhase &&
+      prevSlideTransitionExitFrameRef.current !== 0
+    ) {
+      setIsInSlideTransitionExit(false)
+    }
+
+    prevSlideTransitionExitFrameRef.current = slideTransitionExitFrame
+  }, [isSlideTransitionExitPhase, slideTransitionExitFrame])
+
+  // Handle synchronized exit animations via context (for when content becomes hidden)
   useEffect(() => {
     const exitFrameChanged = prevExitFrameRef.current !== exitFrame
 
@@ -97,10 +142,15 @@ export function AnimatedElement({
   useEffect(() => {
     const animationFrameChanged =
       prevAnimationFrameRef.current !== animationFrame
-    const contentChanged =
-      contentKey !== undefined && prevContentKeyRef.current !== contentKey
 
-    if (isVisible && (animationFrameChanged || contentChanged)) {
+    // Enter animation is ONLY triggered by animationFrameChanged.
+    // The context controls when animationFrame increments:
+    // - For initial visibility: immediately when isVisible becomes true
+    // - For slide transitions: AFTER exit animation + delay completes
+    // This ensures proper sequencing: fade out → delay → fade in
+    const shouldTriggerEnter = isVisible && animationFrameChanged
+
+    if (shouldTriggerEnter) {
       // New animation cycle started - ensure we're rendering
       setShouldRender(true)
 
@@ -140,21 +190,27 @@ export function AnimatedElement({
   const getAnimationStyles = (): React.CSSProperties => {
     // Determine which animation config to use
     const isEntering = phase === 'entering-start' || phase === 'entering'
-    // Use slideTransition for content changes (navigating between slides)
+    const isExiting = phase === 'exiting'
+    // Use separate slideTransitionIn/Out for content changes (navigating between slides)
     // Use animationIn for initial visibility, animationOut for exit
     let currentAnimation: AnimationConfig | undefined
     if (isEntering) {
+      // Use slideTransitionIn for enter when it's a slide transition
       currentAnimation =
-        isSlideTransition && slideTransition ? slideTransition : animationIn
+        isSlideTransition && slideTransitionIn ? slideTransitionIn : animationIn
+    } else if (isExiting && isInSlideTransitionExit) {
+      // Use slideTransitionOut for exit during slide transitions (not animationOut)
+      currentAnimation = slideTransitionOut
     } else {
+      // Use animationOut for normal exit (when content becomes hidden)
       currentAnimation = animationOut
     }
     // Default to 'fade' animation if not configured (ensures all elements animate together)
     const animationType = currentAnimation?.type ?? 'fade'
 
-    // Only skip animation if explicitly set to 'none'
+    // If animation is 'none', keep element fully visible (no opacity changes)
     if (animationType === 'none') {
-      return { opacity: phase === 'exiting' ? 0 : 1 }
+      return { opacity: 1 }
     }
 
     // Use consistent default durations for synchronization
@@ -230,9 +286,19 @@ export function AnimatedElement({
     }
   }
 
-  // Use cached children during exit animation, otherwise use current children
+  // Detect if content just changed (before effects have run to start exit animation)
+  // This happens on the first render after contentKey changes - phase is still 'idle'
+  // but we need to show OLD content while the exit animation sets up
+  const contentJustChanged =
+    contentKey !== undefined && contentKey !== prevContentKeyRef.current
+
+  // Use cached children during exit animation, OR when content just changed
+  // (before effects have run to start the exit animation).
+  // This prevents a flash of new content before the old content fades out.
   const displayChildren =
-    phase === 'exiting' ? cachedChildrenRef.current : children
+    phase === 'exiting' || (contentJustChanged && phase === 'idle')
+      ? (cachedChildrenRef.current ?? children)
+      : children
 
   return (
     <div

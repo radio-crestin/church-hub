@@ -143,7 +143,14 @@ const DEFAULT_ANIMATION_OUT: AnimationConfig = {
   easing: 'ease-in',
 }
 
-const DEFAULT_SLIDE_TRANSITION: AnimationConfig = {
+const DEFAULT_SLIDE_TRANSITION_OUT: AnimationConfig = {
+  type: 'fade',
+  duration: 250,
+  delay: 0,
+  easing: 'ease-in',
+}
+
+const DEFAULT_SLIDE_TRANSITION_IN: AnimationConfig = {
   type: 'fade',
   duration: 250,
   delay: 0,
@@ -215,8 +222,10 @@ export function ScreenEditorSidebar({
             ...refConfig,
             animationIn: refConfig.animationIn ?? DEFAULT_ANIMATION_IN,
             animationOut: refConfig.animationOut ?? DEFAULT_ANIMATION_OUT,
-            slideTransition:
-              refConfig.slideTransition ?? DEFAULT_SLIDE_TRANSITION,
+            slideTransitionOut:
+              refConfig.slideTransitionOut ?? DEFAULT_SLIDE_TRANSITION_OUT,
+            slideTransitionIn:
+              refConfig.slideTransitionIn ?? DEFAULT_SLIDE_TRANSITION_IN,
           },
         }
       case 'personLabel':
@@ -229,14 +238,20 @@ export function ScreenEditorSidebar({
             ...personConfig,
             animationIn: personConfig.animationIn ?? DEFAULT_ANIMATION_IN,
             animationOut: personConfig.animationOut ?? DEFAULT_ANIMATION_OUT,
-            slideTransition:
-              personConfig.slideTransition ?? DEFAULT_SLIDE_TRANSITION,
+            slideTransitionOut:
+              personConfig.slideTransitionOut ?? DEFAULT_SLIDE_TRANSITION_OUT,
+            slideTransitionIn:
+              personConfig.slideTransitionIn ?? DEFAULT_SLIDE_TRANSITION_IN,
           },
         }
       case 'clock':
         // Clock uses global settings, not content config
         return screen.globalSettings.clockConfig
-          ? { path: [], config: screen.globalSettings.clockConfig, isClock: true }
+          ? {
+              path: [],
+              config: screen.globalSettings.clockConfig,
+              isClock: true,
+            }
           : null
       case 'nextSlide':
         return screen.nextSlideConfig
@@ -1459,32 +1474,32 @@ export function ScreenEditorSidebar({
                 </div>
                 <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
                   <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">
-                    {t('screens.animation.slideTransition')}
+                    {t('screens.animation.slideTransitionOut')}
                   </Label>
                   <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">
-                    {t('screens.animation.slideTransitionDescription')}
+                    {t('screens.animation.slideTransitionOutDescription')}
                   </p>
                   <Combobox
                     value={
                       (
                         selectedConfig.config as {
-                          slideTransition?: AnimationConfig
+                          slideTransitionOut?: AnimationConfig
                         }
-                      ).slideTransition?.type ?? 'fade'
+                      ).slideTransitionOut?.type ?? 'fade'
                     }
                     onChange={(value) => {
                       const currentTransition =
                         (
                           selectedConfig.config as {
-                            slideTransition?: AnimationConfig
+                            slideTransitionOut?: AnimationConfig
                           }
-                        ).slideTransition ?? DEFAULT_SLIDE_TRANSITION
+                        ).slideTransitionOut ?? DEFAULT_SLIDE_TRANSITION_OUT
                       const newAnim = {
                         ...currentTransition,
                         type: value,
                       }
                       updateConfig(
-                        [...selectedConfig.path, 'slideTransition'],
+                        [...selectedConfig.path, 'slideTransitionOut'],
                         newAnim,
                       )
                     }}
@@ -1500,23 +1515,93 @@ export function ScreenEditorSidebar({
                         value={[
                           (
                             selectedConfig.config as {
-                              slideTransition?: AnimationConfig
+                              slideTransitionOut?: AnimationConfig
                             }
-                          ).slideTransition?.duration ?? 250,
+                          ).slideTransitionOut?.duration ?? 250,
                         ]}
                         onValueChange={([value]) => {
                           const currentTransition =
                             (
                               selectedConfig.config as {
-                                slideTransition?: AnimationConfig
+                                slideTransitionOut?: AnimationConfig
                               }
-                            ).slideTransition ?? DEFAULT_SLIDE_TRANSITION
+                            ).slideTransitionOut ?? DEFAULT_SLIDE_TRANSITION_OUT
                           const newAnim = {
                             ...currentTransition,
                             duration: value,
                           }
                           updateConfig(
-                            [...selectedConfig.path, 'slideTransition'],
+                            [...selectedConfig.path, 'slideTransitionOut'],
+                            newAnim,
+                          )
+                        }}
+                        min={0}
+                        max={1000}
+                        step={50}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+                  <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">
+                    {t('screens.animation.slideTransitionIn')}
+                  </Label>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">
+                    {t('screens.animation.slideTransitionInDescription')}
+                  </p>
+                  <Combobox
+                    value={
+                      (
+                        selectedConfig.config as {
+                          slideTransitionIn?: AnimationConfig
+                        }
+                      ).slideTransitionIn?.type ?? 'fade'
+                    }
+                    onChange={(value) => {
+                      const currentTransition =
+                        (
+                          selectedConfig.config as {
+                            slideTransitionIn?: AnimationConfig
+                          }
+                        ).slideTransitionIn ?? DEFAULT_SLIDE_TRANSITION_IN
+                      const newAnim = {
+                        ...currentTransition,
+                        type: value,
+                      }
+                      updateConfig(
+                        [...selectedConfig.path, 'slideTransitionIn'],
+                        newAnim,
+                      )
+                    }}
+                    options={ANIMATION_TYPES}
+                    className="w-full mb-2"
+                  />
+                  <div className="space-y-2">
+                    <div>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400">
+                        Duration (ms)
+                      </Label>
+                      <Slider
+                        value={[
+                          (
+                            selectedConfig.config as {
+                              slideTransitionIn?: AnimationConfig
+                            }
+                          ).slideTransitionIn?.duration ?? 250,
+                        ]}
+                        onValueChange={([value]) => {
+                          const currentTransition =
+                            (
+                              selectedConfig.config as {
+                                slideTransitionIn?: AnimationConfig
+                              }
+                            ).slideTransitionIn ?? DEFAULT_SLIDE_TRANSITION_IN
+                          const newAnim = {
+                            ...currentTransition,
+                            duration: value,
+                          }
+                          updateConfig(
+                            [...selectedConfig.path, 'slideTransitionIn'],
                             newAnim,
                           )
                         }}

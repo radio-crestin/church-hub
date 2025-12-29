@@ -387,3 +387,75 @@ export function calculateMaxExitAnimationDuration(
   // Return the maximum duration, or 0 if none found
   return durations.length > 0 ? Math.max(...durations) : 0
 }
+
+/**
+ * Calculate the maximum slide transition OUT duration from a content type config.
+ * This finds the longest (duration + delay) across all animated elements' slideTransitionOut configs.
+ * Returns default of 250ms if no slide transitions are configured.
+ */
+export function calculateMaxSlideTransitionOutDuration(
+  config: ContentTypeConfig | undefined,
+): number {
+  if (!config) return 250 // Default slide transition duration
+
+  const durations: number[] = []
+
+  // Helper to get total duration from an animation config
+  const getTotalDuration = (anim: AnimationConfig | undefined): number => {
+    if (!anim || anim.type === 'none') return 0
+    return (anim.duration ?? 250) + (anim.delay ?? 0)
+  }
+
+  // Check all possible animated elements for slideTransitionOut
+  if ('mainText' in config && config.mainText?.slideTransitionOut) {
+    durations.push(getTotalDuration(config.mainText.slideTransitionOut))
+  }
+  if ('contentText' in config && config.contentText?.slideTransitionOut) {
+    durations.push(getTotalDuration(config.contentText.slideTransitionOut))
+  }
+  if ('referenceText' in config && config.referenceText?.slideTransitionOut) {
+    durations.push(getTotalDuration(config.referenceText.slideTransitionOut))
+  }
+  if ('personLabel' in config && config.personLabel?.slideTransitionOut) {
+    durations.push(getTotalDuration(config.personLabel.slideTransitionOut))
+  }
+
+  // Return the maximum duration, or default of 250ms if none found
+  return durations.length > 0 ? Math.max(...durations) : 250
+}
+
+/**
+ * Calculate the maximum slide transition IN duration from a content type config.
+ * This finds the longest (duration + delay) across all animated elements' slideTransitionIn configs.
+ * Returns default of 250ms if no slide transitions are configured.
+ */
+export function calculateMaxSlideTransitionInDuration(
+  config: ContentTypeConfig | undefined,
+): number {
+  if (!config) return 250 // Default slide transition duration
+
+  const durations: number[] = []
+
+  // Helper to get total duration from an animation config
+  const getTotalDuration = (anim: AnimationConfig | undefined): number => {
+    if (!anim || anim.type === 'none') return 0
+    return (anim.duration ?? 250) + (anim.delay ?? 0)
+  }
+
+  // Check all possible animated elements for slideTransitionIn
+  if ('mainText' in config && config.mainText?.slideTransitionIn) {
+    durations.push(getTotalDuration(config.mainText.slideTransitionIn))
+  }
+  if ('contentText' in config && config.contentText?.slideTransitionIn) {
+    durations.push(getTotalDuration(config.contentText.slideTransitionIn))
+  }
+  if ('referenceText' in config && config.referenceText?.slideTransitionIn) {
+    durations.push(getTotalDuration(config.referenceText.slideTransitionIn))
+  }
+  if ('personLabel' in config && config.personLabel?.slideTransitionIn) {
+    durations.push(getTotalDuration(config.personLabel.slideTransitionIn))
+  }
+
+  // Return the maximum duration, or default of 250ms if none found
+  return durations.length > 0 ? Math.max(...durations) : 250
+}

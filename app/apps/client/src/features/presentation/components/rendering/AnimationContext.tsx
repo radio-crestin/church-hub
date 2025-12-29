@@ -19,6 +19,14 @@ interface AnimationContextValue {
   exitFrame: number
   // Whether this is a slide transition (content change while visible) vs initial visibility
   isSlideTransition: boolean
+  // Whether we're in the exit phase of a slide transition (old content fading out)
+  isSlideTransitionExitPhase: boolean
+  // Slide transition exit frame ID - increments when old content should start exiting
+  slideTransitionExitFrame: number
+  // Duration for slide transition OUT (old content leaving)
+  slideTransitionOutDuration: number
+  // Duration for slide transition IN (new content entering)
+  slideTransitionInDuration: number
 }
 
 const AnimationContext = createContext<AnimationContextValue>({
@@ -27,6 +35,10 @@ const AnimationContext = createContext<AnimationContextValue>({
   isExitPhase: false,
   exitFrame: 0,
   isSlideTransition: false,
+  isSlideTransitionExitPhase: false,
+  slideTransitionExitFrame: 0,
+  slideTransitionOutDuration: 250,
+  slideTransitionInDuration: 250,
 })
 
 interface AnimationProviderProps {
@@ -35,26 +47,44 @@ interface AnimationProviderProps {
   contentKey: string
   // Whether content is visible
   isVisible: boolean
+  // Duration for slide transition OUT animation (old content leaving)
+  slideTransitionOutDuration?: number
+  // Duration for slide transition IN animation (new content entering)
+  slideTransitionInDuration?: number
 }
 
 /**
  * Provides synchronized animation timing to all child AnimatedElements.
  * When contentKey changes, all elements start their animation in the same frame.
  * When isVisible becomes false, all elements start their exit animation together.
+ *
+ * For slide transitions (content changes while visible), implements a two-phase animation:
+ * 1. Exit phase: Old content animates out using slideTransitionOut config
+ * 2. Wait for exit to fully complete
+ * 3. Enter phase: New content animates in using slideTransitionIn config
  */
 export function AnimationProvider({
   children,
   contentKey,
   isVisible,
+  slideTransitionOutDuration = 250,
+  slideTransitionInDuration = 250,
 }: AnimationProviderProps) {
   const [animationFrame, setAnimationFrame] = useState(0)
   const [isStartPhase, setIsStartPhase] = useState(false)
   const [isExitPhase, setIsExitPhase] = useState(false)
   const [exitFrame, setExitFrame] = useState(0)
   const [isSlideTransition, setIsSlideTransition] = useState(false)
+  const [isSlideTransitionExitPhase, setIsSlideTransitionExitPhase] =
+    useState(false)
+  const [slideTransitionExitFrame, setSlideTransitionExitFrame] = useState(0)
+
   const prevContentKeyRef = useRef(contentKey)
   const prevVisibleRef = useRef(isVisible)
   const rafRef = useRef<number | null>(null)
+  const slideTransitionTimeoutRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null)
 
   useEffect(() => {
     const contentChanged = prevContentKeyRef.current !== contentKey
@@ -70,26 +100,55 @@ export function AnimationProvider({
       rafRef.current = null
     }
 
-    if (becomingVisible || (isVisible && contentChanged)) {
-      // Start the synchronized enter animation sequence
-      // Phase 1: Set start phase (all elements go to initial hidden state)
+    // Clear any pending slide transition timeout
+    if (slideTransitionTimeoutRef.current) {
+      clearTimeout(slideTransitionTimeoutRef.current)
+      slideTransitionTimeoutRef.current = null
+    }
+
+    if (becomingVisible) {
+      // Simple enter animation (no exit needed - content wasn't visible before)
       setIsExitPhase(false)
+      setIsSlideTransitionExitPhase(false)
       setIsStartPhase(true)
-      setIsSlideTransition(slideTransition)
+      setIsSlideTransition(false)
       setAnimationFrame((f) => f + 1)
 
-      // Phase 2: After one frame, trigger the animation
-      // Using double RAF ensures browser paints the start state first
+      // After one frame, trigger the animation
       rafRef.current = requestAnimationFrame(() => {
         rafRef.current = requestAnimationFrame(() => {
           setIsStartPhase(false)
         })
       })
+    } else if (slideTransition) {
+      // Two-phase slide transition: first exit old content, then enter new content
+      // Phase 1: Start exit animation for old content (using slideTransitionOut)
+      setIsSlideTransition(true)
+      setIsSlideTransitionExitPhase(true)
+      setSlideTransitionExitFrame((f) => f + 1)
+
+      // Wait for exit animation to FULLY complete before showing new content
+      // Add a small buffer (50ms) to ensure smooth transition
+      const totalWaitTime = slideTransitionOutDuration + 50
+      slideTransitionTimeoutRef.current = setTimeout(() => {
+        // Phase 2: Start enter animation for new content (using slideTransitionIn)
+        setIsSlideTransitionExitPhase(false)
+        setIsStartPhase(true)
+        setAnimationFrame((f) => f + 1)
+
+        // Trigger the enter animation after one frame
+        rafRef.current = requestAnimationFrame(() => {
+          rafRef.current = requestAnimationFrame(() => {
+            setIsStartPhase(false)
+          })
+        })
+      }, totalWaitTime)
     } else if (becomingHidden) {
       // Start the synchronized exit animation sequence
       // All elements should start exiting at the same time
       setIsExitPhase(true)
       setIsSlideTransition(false)
+      setIsSlideTransitionExitPhase(false)
       setExitFrame((f) => f + 1)
     }
 
@@ -100,8 +159,11 @@ export function AnimationProvider({
       if (rafRef.current) {
         cancelAnimationFrame(rafRef.current)
       }
+      if (slideTransitionTimeoutRef.current) {
+        clearTimeout(slideTransitionTimeoutRef.current)
+      }
     }
-  }, [contentKey, isVisible])
+  }, [contentKey, isVisible, slideTransitionOutDuration])
 
   const value = useMemo(
     () => ({
@@ -110,8 +172,22 @@ export function AnimationProvider({
       isExitPhase,
       exitFrame,
       isSlideTransition,
+      isSlideTransitionExitPhase,
+      slideTransitionExitFrame,
+      slideTransitionOutDuration,
+      slideTransitionInDuration,
     }),
-    [animationFrame, isStartPhase, isExitPhase, exitFrame, isSlideTransition],
+    [
+      animationFrame,
+      isStartPhase,
+      isExitPhase,
+      exitFrame,
+      isSlideTransition,
+      isSlideTransitionExitPhase,
+      slideTransitionExitFrame,
+      slideTransitionOutDuration,
+      slideTransitionInDuration,
+    ],
   )
 
   return (
