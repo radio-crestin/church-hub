@@ -193,7 +193,58 @@ export async function reorderScenes(sceneIds: number[]): Promise<OBSScene[]> {
 }
 
 export async function switchScene(sceneName: string): Promise<void> {
-  await obsConnection.switchScene(sceneName)
+  if (obsConnection.isConnected()) {
+    await obsConnection.switchScene(sceneName)
+  } else {
+    // When OBS is not connected, just update the internal state
+    // This allows mixer triggers and other automations to work
+    obsConnection.setCurrentScene(sceneName)
+  }
+}
+
+export async function createScene(sceneName: string): Promise<OBSScene> {
+  const db = getDatabase()
+
+  // Check if scene already exists
+  const existing = await db
+    .select()
+    .from(obsScenes)
+    .where(eq(obsScenes.obsSceneName, sceneName))
+
+  if (existing.length > 0) {
+    throw new Error('Scene with this name already exists')
+  }
+
+  // Get the max sort order
+  const allScenes = await db.select().from(obsScenes)
+  const maxSortOrder = Math.max(...allScenes.map((s) => s.sortOrder), -1)
+
+  const [newScene] = await db
+    .insert(obsScenes)
+    .values({
+      obsSceneName: sceneName,
+      displayName: sceneName,
+      isVisible: true,
+      sortOrder: maxSortOrder + 1,
+    })
+    .returning()
+
+  return {
+    id: newScene.id,
+    obsSceneName: newScene.obsSceneName,
+    displayName: newScene.displayName,
+    isVisible: newScene.isVisible,
+    sortOrder: newScene.sortOrder,
+    shortcuts: [],
+    contentTypes: [],
+    mixerChannelActions: { mute: [], unmute: [] },
+    isCurrent: false,
+  }
+}
+
+export async function deleteScene(id: number): Promise<void> {
+  const db = getDatabase()
+  await db.delete(obsScenes).where(eq(obsScenes.id, id))
 }
 
 export interface SceneShortcut {

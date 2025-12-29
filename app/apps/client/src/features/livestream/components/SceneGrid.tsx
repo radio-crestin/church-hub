@@ -4,12 +4,20 @@ import { useTranslation } from 'react-i18next'
 
 import { SceneCard } from './SceneCard'
 import { SceneSettingsModal } from './SceneSettingsModal'
-import { useOBSScenes } from '../hooks'
+import { useOBSConnection, useOBSScenes } from '../hooks'
 
 export function SceneGrid() {
   const { t } = useTranslation('livestream')
-  const { scenes, isLoading, switchScene, reorderScenes, updateScene } =
-    useOBSScenes()
+  const {
+    scenes,
+    isLoading,
+    switchScene,
+    reorderScenes,
+    updateScene,
+    createSceneAsync,
+    isCreating,
+  } = useOBSScenes()
+  const { isConnected } = useOBSConnection()
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
   const visibleScenes = scenes.filter((s) => s.isVisible)
@@ -67,7 +75,12 @@ export function SceneGrid() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {visibleScenes.map((scene) => (
-            <SceneCard key={scene.id} scene={scene} onSwitch={switchScene} />
+            <SceneCard
+              key={scene.id}
+              scene={scene}
+              onSwitch={switchScene}
+              isOBSConnected={isConnected}
+            />
           ))}
         </div>
       </div>
@@ -78,6 +91,8 @@ export function SceneGrid() {
           onClose={() => setIsSettingsOpen(false)}
           onReorder={handleReorder}
           onUpdateScene={handleUpdateScene}
+          onCreateScene={createSceneAsync}
+          isCreating={isCreating}
         />
       )}
     </>

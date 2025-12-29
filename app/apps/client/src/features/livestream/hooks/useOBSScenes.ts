@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import type { ContentType } from '../constants/content-types'
 import {
+  createOBSScene,
+  deleteOBSScene,
   getOBSScenes,
   reorderOBSScenes,
   switchOBSScene,
@@ -95,6 +97,24 @@ export function useOBSScenes(visibleOnly = false) {
     },
   })
 
+  const createMutation = useMutation({
+    mutationFn: (sceneName: string) => createOBSScene(sceneName),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['livestream', 'obs', 'scenes'],
+      })
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => deleteOBSScene(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['livestream', 'obs', 'scenes'],
+      })
+    },
+  })
+
   const currentScene = query.data?.find((scene) => scene.isCurrent)
 
   return {
@@ -108,5 +128,11 @@ export function useOBSScenes(visibleOnly = false) {
     switchScene: switchMutation.mutate,
     switchSceneAsync: switchMutation.mutateAsync,
     isSwitching: switchMutation.isPending,
+    createScene: createMutation.mutate,
+    createSceneAsync: createMutation.mutateAsync,
+    isCreating: createMutation.isPending,
+    deleteScene: deleteMutation.mutate,
+    deleteSceneAsync: deleteMutation.mutateAsync,
+    isDeleting: deleteMutation.isPending,
   }
 }

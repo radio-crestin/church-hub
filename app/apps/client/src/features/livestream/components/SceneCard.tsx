@@ -5,10 +5,18 @@ import type { OBSScene } from '../types'
 interface SceneCardProps {
   scene: OBSScene
   onSwitch: (sceneName: string) => void
+  isOBSConnected?: boolean
 }
 
-export function SceneCard({ scene, onSwitch }: SceneCardProps) {
+export function SceneCard({
+  scene,
+  onSwitch,
+  isOBSConnected = true,
+}: SceneCardProps) {
   const { t } = useTranslation('livestream')
+
+  // When OBS is disconnected, the current scene is not confirmed by OBS
+  const isUnconfirmedCurrent = scene.isCurrent && !isOBSConnected
 
   return (
     <div
@@ -23,7 +31,11 @@ export function SceneCard({ scene, onSwitch }: SceneCardProps) {
       onClick={() => onSwitch(scene.obsSceneName)}
     >
       {scene.isCurrent && (
-        <div className="absolute -top-2 -right-2 px-2 py-0.5 text-xs font-bold text-white bg-indigo-500 rounded-full">
+        <div
+          className={`absolute -top-2 -right-2 px-2 py-0.5 text-xs font-bold text-white rounded-full ${
+            isUnconfirmedCurrent ? 'bg-indigo-400/60' : 'bg-indigo-500'
+          }`}
+        >
           {t('scenes.current')}
         </div>
       )}

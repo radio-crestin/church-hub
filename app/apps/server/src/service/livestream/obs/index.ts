@@ -18,6 +18,8 @@ export {
   setSceneAutomationEnabled,
 } from './scene-automation'
 export {
+  createScene,
+  deleteScene,
   getAllSceneShortcuts,
   getScenes,
   getVisibleScenes,
