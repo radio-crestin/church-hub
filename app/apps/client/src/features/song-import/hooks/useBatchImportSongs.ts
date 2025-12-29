@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { getApiUrl } from '~/config'
 import type { BatchImportInput, BatchImportResult } from '../types'
 
-const BATCH_SIZE = 200
+const BATCH_SIZE = 500 // Increased from 200 for better performance (fewer HTTP requests)
 
 interface BatchImportOptions {
   overwriteDuplicates?: boolean

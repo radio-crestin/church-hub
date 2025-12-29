@@ -15,7 +15,7 @@ import { getDatabase, getRawDatabase } from '../../db'
 import { songSlides, songs } from '../../db/schema'
 
 const DEBUG = process.env.DEBUG === 'true'
-const SLIDE_BULK_INSERT_CHUNK_SIZE = 500
+const SLIDE_BULK_INSERT_CHUNK_SIZE = 1000 // Increased from 500 for better performance
 
 function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
   if (level === 'debug' && !DEBUG) return
@@ -440,13 +440,25 @@ export function batchImportSongs(
       slides: SlideInput[]
     }> = []
 
-    // Prepare statement to check for manually edited songs (used when skipManuallyEdited is enabled)
-    const checkManualEditStmt =
-      skipManuallyEdited && overwriteDuplicates
-        ? rawDb.query(
-            'SELECT id, last_manual_edit FROM songs WHERE LOWER(title) = LOWER(?)',
-          )
-        : null
+    // OPTIMIZATION: Batch load all manually edited songs at once instead of checking one by one
+    // This reduces N queries to 1 query for the manual edit check
+    let manuallyEditedTitles: Set<string> | null = null
+    if (skipManuallyEdited && overwriteDuplicates) {
+      const manualEditStart = performance.now()
+      const manuallyEditedSongs = rawDb
+        .query(
+          'SELECT LOWER(title) as lower_title FROM songs WHERE last_manual_edit IS NOT NULL',
+        )
+        .all() as { lower_title: string }[]
+      manuallyEditedTitles = new Set(
+        manuallyEditedSongs.map((s) => s.lower_title),
+      )
+      const manualEditTime = performance.now() - manualEditStart
+      log(
+        'info',
+        `[PERF] Preloaded ${manuallyEditedTitles.size} manually edited songs in ${manualEditTime.toFixed(2)}ms`,
+      )
+    }
 
     // Phase 1: Insert/Update all songs and collect IDs
     const phase1Start = performance.now()
@@ -458,17 +470,11 @@ export function batchImportSongs(
         // Use the title as-is from the client (client already determines the final title)
         const title = input.title?.trim() || 'Untitled Song'
 
-        // Check if song was manually edited and should be skipped
-        if (checkManualEditStmt) {
-          const existing = checkManualEditStmt.get(title) as {
-            id: number
-            last_manual_edit: number | null
-          } | null
-          if (existing?.last_manual_edit) {
-            skippedCount++
-            errors.push(`Song "${input.title}": manually edited (skipped)`)
-            continue
-          }
+        // Check if song was manually edited and should be skipped (O(1) lookup)
+        if (manuallyEditedTitles?.has(title.toLowerCase())) {
+          skippedCount++
+          errors.push(`Song "${input.title}": manually edited (skipped)`)
+          continue
         }
 
         const result = upsertSongStmt.get(
