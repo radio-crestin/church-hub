@@ -1,5 +1,7 @@
 import { fetcher } from '~/utils/fetcher'
 
+const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+
 interface FeedbackRequest {
   message: string
   osVersion: string

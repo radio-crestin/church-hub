@@ -4,6 +4,13 @@ main = "src/index.ts"
 compatibility_date = "2024-12-01"
 minify = true
 
+# Enable observability for logs in Cloudflare dashboard
+[observability]
+[observability.logs]
+enabled = true
+head_sampling_rate = 1
+invocation_logs = true
+
 # Custom domain route
 routes = [
   { pattern = "churchub-backend.radiocrestin.ro", custom_domain = true }
