@@ -23,8 +23,8 @@
   },
   "controls": {
     "title": "Previzualizare",
-    "prev": "Ant.",
-    "next": "Urm.",
+    "prev": "Anterior",
+    "next": "Următor",
     "prevVerse": "Versetul anterior",
     "nextVerse": "Versetul urmator",
     "show": "Afiseaza",

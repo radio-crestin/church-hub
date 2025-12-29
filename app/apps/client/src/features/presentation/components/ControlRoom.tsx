@@ -337,10 +337,10 @@ export function ControlRoom() {
                 type="button"
                 onClick={handlePrev}
                 disabled={!canNavigate || isNavigating}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
+                className="flex items-center gap-2 px-5 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors text-base"
                 title={t('presentation:controls.prev')}
               >
-                <ChevronLeft size={20} />
+                <ChevronLeft size={22} />
                 <span>{t('presentation:controls.prev')}</span>
               </button>
 
@@ -349,11 +349,11 @@ export function ControlRoom() {
                 type="button"
                 onClick={handleNext}
                 disabled={!canNavigate || isNavigating}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
+                className="flex items-center gap-2 px-5 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors text-base"
                 title={t('presentation:controls.next')}
               >
                 <span>{t('presentation:controls.next')}</span>
-                <ChevronRight size={20} />
+                <ChevronRight size={22} />
               </button>
             </div>
           </div>

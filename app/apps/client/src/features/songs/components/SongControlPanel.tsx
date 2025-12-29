@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp, Eye, EyeOff, Loader2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import {
@@ -126,7 +126,7 @@ export function SongControlPanel({
           <LivePreview />
         </div>
 
-        <div className="flex items-center justify-center gap-2 pt-2 lg:pt-3 flex-shrink-0">
+        <div className="flex items-center justify-center gap-3 pt-2 lg:pt-3 flex-shrink-0">
           <button
             type="button"
             onClick={handlePrev}
@@ -135,11 +135,11 @@ export function SongControlPanel({
               navigateTemporary.isPending ||
               clearTemporary.isPending
             }
-            className="flex items-center gap-1.5 px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
+            className="flex items-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
             title={t('bible:controls.prev')}
           >
-            <ChevronUp size={18} />
-            <span className="text-sm">{t('bible:controls.prev')}</span>
+            <ChevronLeft size={20} />
+            <span className="text-base">{t('bible:controls.prev')}</span>
           </button>
 
           <button
@@ -150,11 +150,11 @@ export function SongControlPanel({
               navigateTemporary.isPending ||
               clearTemporary.isPending
             }
-            className="flex items-center gap-1.5 px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
+            className="flex items-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
             title={t('bible:controls.next')}
           >
-            <span className="text-sm">{t('bible:controls.next')}</span>
-            <ChevronDown size={18} />
+            <span className="text-base">{t('bible:controls.next')}</span>
+            <ChevronRight size={20} />
           </button>
         </div>
       </div>
