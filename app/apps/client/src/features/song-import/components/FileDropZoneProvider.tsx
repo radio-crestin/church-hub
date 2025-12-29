@@ -55,6 +55,46 @@ interface Props {
 }
 
 /**
+ * Normalizes HTML content for comparison by removing whitespace differences
+ */
+function normalizeContent(content: string): string {
+  return content.replace(/\s+/g, ' ').replace(/>\s+</g, '><').trim()
+}
+
+/**
+ * Compares imported slides with existing song slides
+ * Returns true if the content is identical
+ */
+function areSlidesIdentical(
+  importedSlides: Array<{ content: string; label?: string | null }>,
+  existingSlides: Array<{ content: string; label: string | null }>,
+): boolean {
+  if (importedSlides.length !== existingSlides.length) {
+    return false
+  }
+
+  for (let i = 0; i < importedSlides.length; i++) {
+    const imported = importedSlides[i]
+    const existing = existingSlides[i]
+
+    // Compare normalized content
+    if (
+      normalizeContent(imported.content) !== normalizeContent(existing.content)
+    ) {
+      return false
+    }
+
+    // Compare labels if present
+    const importedLabel = imported.label ?? null
+    if (importedLabel !== existing.label) {
+      return false
+    }
+  }
+
+  return true
+}
+
+/**
  * Generates a unique title by appending a number suffix
  * e.g., "Song Title" -> "Song Title (2)", "Song Title (3)", etc.
  */
@@ -88,6 +128,54 @@ async function generateUniqueTitle(
   return `${baseTitle} (${maxNumber + 1})`
 }
 
+type DuplicateCheckResult =
+  | { status: 'identical'; songId: number }
+  | { status: 'different'; songId: number }
+  | { status: 'none' }
+
+/**
+ * Checks if a song with the given title exists and compares content
+ * Returns the duplicate status and existing song ID if found
+ */
+async function checkForDuplicate(
+  title: string,
+  importedSlides: Array<{ content: string; label?: string | null }>,
+  existingIdHint?: number,
+): Promise<DuplicateCheckResult> {
+  // If we have an ID hint (e.g., from churchHubId), check that first
+  if (existingIdHint) {
+    const existingSong = await getSongById(existingIdHint)
+    if (existingSong && existingSong.title === title) {
+      if (areSlidesIdentical(importedSlides, existingSong.slides)) {
+        return { status: 'identical', songId: existingSong.id }
+      }
+      return { status: 'different', songId: existingSong.id }
+    }
+  }
+
+  // Search for existing song by title
+  const searchResults = await searchSongs(title)
+  const exactMatch = searchResults.find(
+    (s) => s.title.toLowerCase() === title.toLowerCase(),
+  )
+
+  if (!exactMatch) {
+    return { status: 'none' }
+  }
+
+  // Fetch full song to compare slides
+  const existingSong = await getSongById(exactMatch.id)
+  if (!existingSong) {
+    return { status: 'none' }
+  }
+
+  if (areSlidesIdentical(importedSlides, existingSong.slides)) {
+    return { status: 'identical', songId: existingSong.id }
+  }
+
+  return { status: 'different', songId: existingSong.id }
+}
+
 export function FileDropZoneProvider({ children }: Props) {
   const { t } = useTranslation('songs')
   const navigate = useNavigate()
@@ -100,21 +188,39 @@ export function FileDropZoneProvider({ children }: Props) {
   const [pendingImport, setPendingImport] = useState<PendingImport | null>(null)
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false)
 
+  // Navigate to song helper
+  const navigateToSong = useCallback(
+    (songId: number) => {
+      navigate({
+        to: '/songs/$songId',
+        params: { songId: String(songId) },
+      })
+    },
+    [navigate],
+  )
+
   // Direct import function
   const importPptxAsSong = useCallback(
     async (parsed: ParsedPptx, sourceFilename: string | null) => {
-      // Search for existing song by title
-      const searchResults = await searchSongs(parsed.title)
-      const exactMatch = searchResults.find(
-        (s) => s.title.toLowerCase() === parsed.title.toLowerCase(),
+      const importedSlides = parsed.slides.map((slide) => ({
+        content: slide.htmlContent,
+      }))
+
+      const duplicateResult = await checkForDuplicate(
+        parsed.title,
+        importedSlides,
       )
 
-      // If duplicate found, show dialog to let user decide
-      if (exactMatch) {
+      if (duplicateResult.status === 'identical') {
+        navigateToSong(duplicateResult.songId)
+        return
+      }
+
+      if (duplicateResult.status === 'different') {
         setPendingImport({
           type: 'pptx',
           title: parsed.title,
-          existingId: exactMatch.id,
+          existingId: duplicateResult.songId,
           pptxData: { parsed, sourceFilename },
         })
         setShowDuplicateDialog(true)
@@ -132,13 +238,10 @@ export function FileDropZoneProvider({ children }: Props) {
       })
 
       if (result.success && result.data) {
-        navigate({
-          to: '/songs/$songId',
-          params: { songId: String(result.data.id) },
-        })
+        navigateToSong(result.data.id)
       }
     },
-    [navigate, upsertMutation],
+    [navigateToSong, upsertMutation],
   )
 
   // Handle OpenSong file import
@@ -146,31 +249,27 @@ export function FileDropZoneProvider({ children }: Props) {
     async (content: string, filePath: string) => {
       const parsed = parseOpenSongXml(content, filePath)
 
-      // Check if we have a church_hub_id to match
-      if (parsed.metadata?.churchHubId) {
-        const existingSong = await getSongById(parsed.metadata.churchHubId)
-        if (existingSong && existingSong.title === parsed.title) {
-          // Navigate to existing song
-          navigate({
-            to: '/songs/$songId',
-            params: { songId: String(existingSong.id) },
-          })
-          return
-        }
-      }
+      const importedSlides = parsed.slides.map((slide) => ({
+        content: slide.htmlContent,
+        label: slide.label,
+      }))
 
-      // Search for existing song by title
-      const searchResults = await searchSongs(parsed.title)
-      const exactMatch = searchResults.find(
-        (s) => s.title.toLowerCase() === parsed.title.toLowerCase(),
+      const duplicateResult = await checkForDuplicate(
+        parsed.title,
+        importedSlides,
+        parsed.metadata?.churchHubId,
       )
 
-      // If duplicate found, show dialog to let user decide
-      if (exactMatch) {
+      if (duplicateResult.status === 'identical') {
+        navigateToSong(duplicateResult.songId)
+        return
+      }
+
+      if (duplicateResult.status === 'different') {
         setPendingImport({
           type: 'opensong',
           title: parsed.title,
-          existingId: exactMatch.id,
+          existingId: duplicateResult.songId,
           opensongData: { parsed, filePath },
         })
         setShowDuplicateDialog(true)
@@ -200,13 +299,10 @@ export function FileDropZoneProvider({ children }: Props) {
       })
 
       if (result.success && result.data) {
-        navigate({
-          to: '/songs/$songId',
-          params: { songId: String(result.data.id) },
-        })
+        navigateToSong(result.data.id)
       }
     },
-    [navigate, upsertMutation],
+    [navigateToSong, upsertMutation],
   )
 
   // Handle Church Program file import
