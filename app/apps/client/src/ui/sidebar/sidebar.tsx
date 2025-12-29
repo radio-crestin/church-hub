@@ -283,6 +283,10 @@ export function Sidebar() {
       <ContactModal
         isOpen={isContactModalOpen}
         onClose={() => setIsContactModalOpen(false)}
+        onBack={() => {
+          setIsContactModalOpen(false)
+          setIsFeedbackModalOpen(true)
+        }}
       />
     </>
   )

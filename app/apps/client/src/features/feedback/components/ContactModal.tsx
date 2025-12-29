@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 interface ContactModalProps {
   isOpen: boolean
   onClose: () => void
+  onBack?: () => void
 }
 
 function WhatsAppIcon({ size = 20 }: { size?: number }) {
@@ -21,7 +22,7 @@ function WhatsAppIcon({ size = 20 }: { size?: number }) {
   )
 }
 
-export function ContactModal({ isOpen, onClose }: ContactModalProps) {
+export function ContactModal({ isOpen, onClose, onBack }: ContactModalProps) {
   const { t, i18n } = useTranslation()
   const dialogRef = useRef<HTMLDialogElement>(null)
 
@@ -110,8 +111,8 @@ export function ContactModal({ isOpen, onClose }: ContactModalProps) {
         <div className="mt-6 flex justify-end">
           <button
             type="button"
-            onClick={onClose}
-            className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            onClick={onBack ?? onClose}
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
           >
             {t('common:buttons.ok')}
           </button>
