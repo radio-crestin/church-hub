@@ -8,7 +8,8 @@
     "present": "Control Room",
     "livestream": "Live Stream",
     "kiosk": "Kiosk",
-    "settings": "Settings"
+    "settings": "Settings",
+    "feedback": "Feedback"
   },
   "actions": {
     "collapse": "Collapse",

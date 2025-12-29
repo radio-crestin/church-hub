@@ -22,5 +22,19 @@
     "lightMode": "Mod luminos",
     "darkMode": "Mod întunecat",
     "toggleTheme": "Schimbă tema"
+  },
+  "feedback": {
+    "title": "Trimite Feedback",
+    "placeholder": "Descrie problema sau sugestia ta aici...",
+    "notice": "Feedback-ul tău va fi postat public pe",
+    "githubIssues": "GitHub issues",
+    "send": "Trimite",
+    "success": "Mulțumim pentru feedback!",
+    "error": "Trimiterea feedback-ului a eșuat. Te rugăm să încerci din nou."
+  },
+  "contact": {
+    "title": "Contactează-ne",
+    "email": "Email",
+    "whatsapp": "WhatsApp"
   }
 }
