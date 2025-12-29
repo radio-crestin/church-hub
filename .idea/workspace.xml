@@ -7,22 +7,10 @@
     <list default="true" id="66517e3f-2e4e-43cc-880d-deb242368f0c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TODO.md" beforeDir="false" afterPath="$PROJECT_DIR$/TODO.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/BibleNavigationPanel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/bible/components/BibleNavigationPanel.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/SceneGrid.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/SceneGrid.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/SceneSettingsModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/SceneSettingsModal.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/SceneSettingsPopup.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/livestream/components/SceneSettingsPopup.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/livestream/hooks/useOBSScenes.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/livestream/hooks/useOBSScenes.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/livestream/service/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/livestream/service/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/livestream/service/obs.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/livestream/service/obs.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/songs/components/SongEditor.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/songs/components/SongEditor.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/livestream.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/livestream.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/songs.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/songs.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/livestream.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/livestream.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/songs.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/songs.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/routes/bible/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/routes/bible/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/routes/songs/$songId/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/routes/songs/$songId/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/ui/tooltip/Tooltip.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/ui/tooltip/Tooltip.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/routes/livestream.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/routes/livestream.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/LivePreview.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/LivePreview.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/ScreenRenderer.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/presentation/components/rendering/ScreenRenderer.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/routes/songs/$songId/edit.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/routes/songs/$songId/edit.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/songs/sanitizeTitle.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/songs/sanitizeTitle.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

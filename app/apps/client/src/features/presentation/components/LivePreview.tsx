@@ -8,6 +8,7 @@ import { usePresentationState, useWebSocket } from '../hooks'
 import { useScreen } from '../hooks/useScreen'
 import { useScreens } from '../hooks/useScreens'
 import type { ContentType } from '../types'
+import { addAminToLastSlide } from '../utils/addAminToLastSlide'
 
 // Check if we're running in Tauri context
 const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
@@ -117,8 +118,12 @@ export function LivePreview() {
         if (temp.type === 'song') {
           const currentSlide = temp.data.slides[temp.data.currentSlideIndex]
           if (currentSlide) {
+            const isLastSlide =
+              temp.data.currentSlideIndex === temp.data.slides.length - 1
             setContentType('song')
-            setContentData({ mainText: currentSlide.content })
+            setContentData({
+              mainText: addAminToLastSlide(currentSlide.content, isLastSlide),
+            })
             return
           }
         }
@@ -143,14 +148,16 @@ export function LivePreview() {
         // Find current content - song slide
         if (presentationState.currentSongSlideId) {
           for (const item of queueItems) {
-            const slide = item.slides?.find(
+            const slideIndex = item.slides?.findIndex(
               (s: SongSlideData) =>
                 s.id === presentationState.currentSongSlideId,
             )
-            if (slide) {
+            if (slideIndex !== undefined && slideIndex !== -1 && item.slides) {
+              const slide = item.slides[slideIndex]
+              const isLastSlide = slideIndex === item.slides.length - 1
               setContentType('song')
               setContentData({
-                mainText: slide.content,
+                mainText: addAminToLastSlide(slide.content, isLastSlide),
               })
               return
             }
