@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 
 import { Button } from '../../../ui/button/Button'
 import { Tooltip } from '../../../ui/tooltip'
-import { useBroadcastMessage, useOBSConnection, useStreaming } from '../hooks'
+import { useBroadcastMessage, useStreaming } from '../hooks'
 import type { StreamStartProgress } from '../types'
 import { openExternalUrl } from '../utils/openInBrowser'
 
@@ -111,8 +111,8 @@ export function BroadcastInfo() {
     isLoadingBroadcast,
     isStopping,
     streamStartProgress,
+    isLive,
   } = useStreaming()
-  const { isStreaming } = useOBSConnection()
   const { message, fetchMessage, copyMessage, copied, isLoading } =
     useBroadcastMessage()
 
@@ -138,7 +138,7 @@ export function BroadcastInfo() {
     )
   }
 
-  if (!activeBroadcast || !isStreaming || isStopping) {
+  if (!activeBroadcast || !isLive || isStopping) {
     return null
   }
 
