@@ -20,6 +20,7 @@ import { useTranslation } from 'react-i18next'
 
 import { SongEditorModal, SongPickerModal } from '~/features/songs/components'
 import { useToast } from '~/ui/toast'
+import { EditVerseteTineriModal } from './EditVerseteTineriModal'
 import { InsertSlideModal } from './InsertSlideModal'
 import { ScheduleItemBiblePassage } from './ScheduleItemBiblePassage'
 import { ScheduleItemSlide } from './ScheduleItemSlide'
@@ -37,6 +38,7 @@ interface SortableScheduleItemProps {
   item: ScheduleItem
   onEditSong: (songId: number) => void
   onEditSlide: (item: ScheduleItem) => void
+  onEditVerseteTineri: (item: ScheduleItem) => void
   onInsertSongAfter: (itemId: number) => void
   onInsertSlideAfter: (itemId: number, template: SlideTemplate) => void
   onRemoveItem?: (itemId: number) => void
@@ -47,6 +49,7 @@ function SortableScheduleItem({
   item,
   onEditSong,
   onEditSlide,
+  onEditVerseteTineri,
   onInsertSongAfter,
   onInsertSlideAfter,
   onRemoveItem,
@@ -101,7 +104,7 @@ function SortableScheduleItem({
         <ScheduleItemVerseteTineri
           item={item}
           onRemove={handleRemove}
-          onEditSlide={() => onEditSlide(item)}
+          onEditSlide={() => onEditVerseteTineri(item)}
           onInsertSongAfter={() => onInsertSongAfter(item.id)}
           onInsertSlideAfter={(template) =>
             onInsertSlideAfter(item.id, template)
@@ -168,6 +171,8 @@ export function ScheduleItemList({
   const [editingSlideItem, setEditingSlideItem] = useState<ScheduleItem | null>(
     null,
   )
+  const [editingVerseteTineriItem, setEditingVerseteTineriItem] =
+    useState<ScheduleItem | null>(null)
   const [insertAfterItemId, setInsertAfterItemId] = useState<number | null>(
     null,
   )
@@ -266,6 +271,7 @@ export function ScheduleItemList({
                 item={item}
                 onEditSong={setEditingSongId}
                 onEditSlide={setEditingSlideItem}
+                onEditVerseteTineri={setEditingVerseteTineriItem}
                 onInsertSongAfter={setInsertSongAfterItemId}
                 onInsertSlideAfter={(itemId, template) => {
                   setInsertAfterItemId(itemId)
@@ -312,7 +318,7 @@ export function ScheduleItemList({
         hideAddToQueue
       />
 
-      {/* Edit Slide Modal */}
+      {/* Edit Slide Modal - for announcement slides */}
       {editingSlideItem !== null && (
         <InsertSlideModal
           isOpen={editingSlideItem !== null}
@@ -320,10 +326,23 @@ export function ScheduleItemList({
             id: editingSlideItem.id,
             slideType: editingSlideItem.slideType,
             slideContent: editingSlideItem.slideContent,
-            verseteTineriEntries: editingSlideItem.verseteTineriEntries,
           }}
           scheduleId={scheduleId}
           onClose={() => setEditingSlideItem(null)}
+          onSaved={() => {
+            // Schedule will be invalidated automatically
+          }}
+        />
+      )}
+
+      {/* Edit Versete Tineri Modal */}
+      {editingVerseteTineriItem !== null && (
+        <EditVerseteTineriModal
+          isOpen={editingVerseteTineriItem !== null}
+          scheduleId={scheduleId}
+          itemId={editingVerseteTineriItem.id}
+          entries={editingVerseteTineriItem.verseteTineriEntries}
+          onClose={() => setEditingVerseteTineriItem(null)}
           onSaved={() => {
             // Schedule will be invalidated automatically
           }}
