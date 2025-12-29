@@ -72,9 +72,10 @@ export function AddMenuModal({
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className="p-2 text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-lg transition-colors"
+          className="flex items-center gap-2 p-2 sm:px-3 sm:py-1.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-lg transition-colors"
         >
-          <Plus size={20} />
+          <Plus size={16} />
+          <span className="hidden sm:inline">{t('addToQueue.button')}</span>
         </button>
       </Tooltip>
 
