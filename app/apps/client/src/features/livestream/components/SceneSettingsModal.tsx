@@ -13,7 +13,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
-import { Plus, X } from 'lucide-react'
+import { Plus, RefreshCw, X } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -39,6 +39,11 @@ interface SceneSettingsModalProps {
   ) => void
   onCreateScene: (sceneName: string) => Promise<void>
   isCreating?: boolean
+  onDeleteScene: (id: number) => Promise<void>
+  isDeleting?: boolean
+  onSyncScenes: () => Promise<void>
+  isSyncing?: boolean
+  isOBSConnected?: boolean
 }
 
 export function SceneSettingsModal({
@@ -48,6 +53,11 @@ export function SceneSettingsModal({
   onUpdateScene,
   onCreateScene,
   isCreating,
+  onDeleteScene,
+  isDeleting,
+  onSyncScenes,
+  isSyncing,
+  isOBSConnected,
 }: SceneSettingsModalProps) {
   const { t } = useTranslation('livestream')
   const [selectedScene, setSelectedScene] = useState<OBSScene | null>(null)
@@ -108,6 +118,13 @@ export function SceneSettingsModal({
     setShowAddForm(false)
   }, [newSceneName, onCreateScene])
 
+  const handleDeleteScene = useCallback(async () => {
+    if (selectedScene?.id) {
+      await onDeleteScene(selectedScene.id)
+      setSelectedScene(null)
+    }
+  }, [selectedScene, onDeleteScene])
+
   return (
     <>
       <div
@@ -119,13 +136,28 @@ export function SceneSettingsModal({
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
               {t('scenes.settings')}
             </h2>
-            <button
-              type="button"
-              onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            >
-              <X size={20} />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => onSyncScenes()}
+                disabled={isSyncing || !isOBSConnected}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed rounded-lg transition-colors"
+                title={!isOBSConnected ? t('obs.disconnected') : undefined}
+              >
+                <RefreshCw
+                  size={16}
+                  className={isSyncing ? 'animate-spin' : ''}
+                />
+                {t('scenes.syncFromOBS')}
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4">
@@ -211,6 +243,8 @@ export function SceneSettingsModal({
           onUpdateYouTubeConfig={updateYouTubeConfig}
           onClose={handleClosePopup}
           onSave={handleSaveSettings}
+          onDelete={handleDeleteScene}
+          isDeleting={isDeleting}
         />
       )}
     </>

@@ -4,7 +4,7 @@ import {
   CalendarPlus,
   ChevronDown,
   ChevronUp,
-  FileUp,
+  FileText,
   Loader2,
   Play,
   Save,
@@ -18,7 +18,7 @@ import { usePresentTemporarySong } from '~/features/presentation'
 import { AddSongToScheduleModal } from '~/features/schedules'
 import { useToast } from '~/ui/toast'
 import { CategoryPicker } from './CategoryPicker'
-import { ImportTextModal } from './ImportTextModal'
+import { EditSlidesAsTextModal } from './EditSlidesAsTextModal'
 import { type LocalSlide, SongSlideList } from './SongSlideList'
 
 type PendingAction = 'present' | 'addToSchedule' | null
@@ -107,7 +107,7 @@ export function SongEditor({
   const { t } = useTranslation(['songs', 'queue'])
   const navigate = useNavigate()
   const { showToast } = useToast()
-  const [showImportModal, setShowImportModal] = useState(false)
+  const [showEditAsTextModal, setShowEditAsTextModal] = useState(false)
   const [showDetails, setShowDetails] = useState(false)
   const [showAddToScheduleModal, setShowAddToScheduleModal] = useState(false)
   const [showUnsavedChangesModal, setShowUnsavedChangesModal] = useState(false)
@@ -197,15 +197,6 @@ export function SongEditor({
     })
   }
 
-  const handleImport = (slideContents: string[]) => {
-    const newSlides: LocalSlide[] = slideContents.map((content, idx) => ({
-      id: `temp-${Date.now()}-${idx}`,
-      content: `<p>${content.replace(/\n/g, '<br>')}</p>`,
-      sortOrder: slides.length + idx,
-    }))
-    onSlidesChange([...slides, ...newSlides])
-  }
-
   const handleMetadataFieldChange = (
     field: keyof SongMetadata,
     value: string,
@@ -221,16 +212,16 @@ export function SongEditor({
   return (
     <div className="space-y-6 [scrollbar-gutter:stable] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4 min-w-0 flex-1">
           <button
             type="button"
             onClick={onBack}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 shrink-0"
           >
             <ArrowLeft size={20} className="text-gray-600 dark:text-gray-400" />
           </button>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white truncate">
             {isLoading ? (
               <span className="inline-block w-48 h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
             ) : isNew ? (
@@ -240,14 +231,14 @@ export function SongEditor({
             )}
           </h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 justify-end shrink-0">
           {!isNew && songId && (
             <>
               <button
                 type="button"
                 onClick={handleAddToScheduleClick}
                 disabled={isLoading}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors"
+                className="p-2 sm:px-4 sm:py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors inline-flex items-center gap-2"
                 title={t('songs:actions.addToSchedule')}
               >
                 <CalendarPlus size={20} />
@@ -259,7 +250,7 @@ export function SongEditor({
                 type="button"
                 onClick={handlePresentNow}
                 disabled={isLoading || presentTemporarySong.isPending}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+                className="p-2 sm:px-4 sm:py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors inline-flex items-center gap-2"
                 title={t('queue:actions.presentNow')}
               >
                 <Play size={20} />
@@ -288,14 +279,15 @@ export function SongEditor({
             type="button"
             onClick={onSave}
             disabled={isSaving || isLoading || !title.trim() || !isDirty}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+            className="p-2 sm:px-4 sm:py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors inline-flex items-center gap-2"
+            title={t('songs:actions.save')}
           >
             {isSaving ? (
               <Loader2 size={20} className="animate-spin" />
             ) : (
               <Save size={20} />
             )}
-            {t('songs:actions.save')}
+            <span className="hidden sm:inline">{t('songs:actions.save')}</span>
           </button>
         </div>
       </div>
@@ -652,12 +644,12 @@ export function SongEditor({
           </h2>
           <button
             type="button"
-            onClick={() => setShowImportModal(true)}
+            onClick={() => setShowEditAsTextModal(true)}
             disabled={isLoading}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-amber-900 bg-amber-400 hover:bg-amber-500 dark:text-amber-100 dark:bg-amber-700 dark:hover:bg-amber-600 rounded-lg transition-colors disabled:opacity-50"
           >
-            <FileUp className="w-5 h-5" />
-            {t('actions.importFromText')}
+            <FileText className="w-5 h-5" />
+            {t('actions.editAsText')}
           </button>
         </div>
         <div className="p-6 bg-gray-100 dark:bg-gray-900/30">
@@ -672,10 +664,11 @@ export function SongEditor({
         </div>
       </div>
 
-      <ImportTextModal
-        isOpen={showImportModal}
-        onClose={() => setShowImportModal(false)}
-        onImport={handleImport}
+      <EditSlidesAsTextModal
+        isOpen={showEditAsTextModal}
+        onClose={() => setShowEditAsTextModal(false)}
+        slides={slides}
+        onSlidesChange={onSlidesChange}
       />
 
       {songId && (

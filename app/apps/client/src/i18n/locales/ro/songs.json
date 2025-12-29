@@ -7,6 +7,7 @@
     "back": "Înapoi la cântări",
     "import": "Importă",
     "importFromText": "Importă din text",
+    "editAsText": "Editează ca text",
     "addSlide": "Adaugă slide",
     "cloneSlide": "Clonează slide",
     "addToSchedule": "Adaugă în program",
@@ -36,6 +37,17 @@
     "placeholder": "Introdu versurile aici...",
     "preview": "Previzualizare: {{count}} slide-uri",
     "confirm": "Importă",
+    "cancel": "Anulează"
+  },
+  "editAsText": {
+    "title": "Editează slide-urile ca text",
+    "description": "Editează toate slide-urile ca text. Liniile goale sau --- separă slide-urile.",
+    "placeholder": "Versurile primului slide\nA doua linie din primul slide\n\n---\n\nAl doilea slide începe aici\nAltă linie",
+    "formatHelp": "Folosește **bold**, *italic*, __subliniat__. Liniile goale sau --- separă slide-urile.",
+    "preview": "{{count}} slide-uri",
+    "preview_one": "{{count}} slide",
+    "preview_other": "{{count}} slide-uri",
+    "save": "Aplică modificările",
     "cancel": "Anulează"
   },
   "category": {

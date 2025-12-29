@@ -48,6 +48,8 @@ function BiblePage() {
   const containerRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
   const hasNavigatedOnOpen = useRef(false)
+  // Track when user is browsing away from presented verse (disables sync)
+  const isBrowsingRef = useRef(false)
 
   // Track screen size for responsive layout
   useEffect(() => {
@@ -144,6 +146,9 @@ function BiblePage() {
   useEffect(() => {
     // Only sync after initial navigation has happened
     if (!hasNavigatedOnOpen.current) return
+
+    // Skip sync when user is browsing (allows navigating away from presented verse)
+    if (isBrowsingRef.current) return
 
     if (
       tempContentType === 'bible' &&
@@ -254,6 +259,8 @@ function BiblePage() {
   // Handle verse selection - immediately present it
   const handleSelectVerse = useCallback(
     async (verse: BibleVerse, index: number) => {
+      // Clear browse mode when selecting a verse (re-enables sync)
+      isBrowsingRef.current = false
       // Mark as navigated so sync effect works for subsequent chapter changes
       hasNavigatedOnOpen.current = true
       navigation.presentVerse(index)
@@ -265,6 +272,8 @@ function BiblePage() {
   // Handle search result selection
   const handleSelectSearchResult = useCallback(
     async (result: BibleSearchResult) => {
+      // Clear browse mode when selecting a verse (re-enables sync)
+      isBrowsingRef.current = false
       // Mark as navigated so sync effect works for subsequent chapter changes
       hasNavigatedOnOpen.current = true
 
@@ -344,11 +353,20 @@ function BiblePage() {
     }
   }, [navigation, verses, presentVerseToScreen])
 
+  // Handle go back - sets browse mode when there's a verse being presented
+  const handleGoBack = useCallback(() => {
+    // If there's a verse being presented, enable browse mode to prevent sync from snapping back
+    if (tempContentType === 'bible') {
+      isBrowsingRef.current = true
+    }
+    navigation.goBack()
+  }, [navigation, tempContentType])
+
   // Enable keyboard shortcuts
   useBibleKeyboardShortcuts({
     onNextVerse: handleNextVerse,
     onPreviousVerse: handlePreviousVerse,
-    onGoBack: navigation.goBack,
+    onGoBack: handleGoBack,
     onHidePresentation: handleHidePresentation,
     onPresentSearched: handlePresentSearched,
     enabled: navigation.state.level === 'verses',
@@ -412,13 +430,15 @@ function BiblePage() {
         ) : selectedTranslations.length > 0 ? (
           <div
             ref={containerRef}
-            className="flex flex-col lg:flex-row lg:flex-1 lg:min-h-0 gap-3 lg:gap-0"
+            className="flex flex-col lg:flex-row lg:flex-1 lg:min-h-0 gap-3"
           >
             {/* Left Panel - Navigation (shows last on mobile) */}
             <div
               className="order-3 lg:order-1 lg:min-h-0 lg:h-full lg:flex-initial overflow-hidden"
               style={
-                isLargeScreen ? { width: `${dividerPosition}%` } : undefined
+                isLargeScreen
+                  ? { width: `calc(${dividerPosition}% - 8px)` }
+                  : undefined
               }
             >
               <BibleNavigationPanel
@@ -426,12 +446,13 @@ function BiblePage() {
                 onSelectVerse={handleSelectVerse}
                 onSelectSearchResult={handleSelectSearchResult}
                 onPresentSearched={handlePresentSearched}
+                onGoBack={handleGoBack}
               />
             </div>
 
             {/* Draggable Divider */}
             <div
-              className="hidden lg:flex items-center justify-center w-2 cursor-col-resize hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors group"
+              className="hidden lg:flex items-center justify-center w-4 cursor-col-resize hover:bg-indigo-100 dark:hover:bg-indigo-900/30 rounded transition-colors group"
               onMouseDown={handleDividerMouseDown}
             >
               <GripVertical
@@ -445,7 +466,7 @@ function BiblePage() {
               className="order-1 lg:order-2 lg:min-h-0 lg:flex-1 overflow-hidden"
               style={
                 isLargeScreen
-                  ? { width: `${100 - dividerPosition}%` }
+                  ? { width: `calc(${100 - dividerPosition}% - 8px)` }
                   : undefined
               }
             >

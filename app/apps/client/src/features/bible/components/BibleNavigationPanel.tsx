@@ -21,6 +21,7 @@ interface BibleNavigationPanelProps {
   onSelectVerse: (verse: BibleVerse, index: number) => void
   onSelectSearchResult: (result: BibleSearchResult) => void
   onPresentSearched?: () => void
+  onGoBack?: () => void
 }
 
 export function BibleNavigationPanel({
@@ -28,6 +29,7 @@ export function BibleNavigationPanel({
   onSelectVerse,
   onSelectSearchResult,
   onPresentSearched,
+  onGoBack,
 }: BibleNavigationPanelProps) {
   const { t } = useTranslation('bible')
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -39,6 +41,9 @@ export function BibleNavigationPanel({
     setSearchQuery,
     clearSearch,
   } = navigation
+
+  // Use provided onGoBack or fallback to navigation's goBack
+  const handleGoBack = onGoBack ?? goBack
 
   // Auto-focus search input on mount
   useEffect(() => {
@@ -141,7 +146,7 @@ export function BibleNavigationPanel({
             chapters={chapters}
             isLoading={isLoadingChapters}
             onSelectChapter={selectChapter}
-            onGoBack={goBack}
+            onGoBack={handleGoBack}
           />
         ) : (
           <VersesList
@@ -154,7 +159,7 @@ export function BibleNavigationPanel({
             isLoading={isLoadingVerses}
             selectedTranslations={selectedTranslations}
             onSelectVerse={handleSelectVerse}
-            onGoBack={goBack}
+            onGoBack={handleGoBack}
           />
         )}
       </div>

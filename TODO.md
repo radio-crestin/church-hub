@@ -74,15 +74,18 @@
 ~~- fa configurabil dacă sa fie always on top~~
 ~~- (optional) exportă ca și pptx întreg programul său fiecare cantare~~
 ~~- cand faci export la cantari, lăsa utilizatorul să aleagă dacă vrea un zip sau un folder~~
-- importul din resurse creștine nu trebuie să facă override la cântările modificate
-- dezactivează tunelul cloudflare pt portul 3000
-- când se editează o cantare, modifica importa din text ca să se numească editează ca și text
-- deasemenea, fă pagina mobile responsive
+~~- importul din resurse creștine nu trebuie să facă override la cântările modificate~~
+~~- dezactivează tunelul cloudflare pt portul 3000~~
+~~- imbunatateste viteza de import pentru cantarile de pe resurse crestine~~
+~~- când se editează o cantare, modifica importa din text ca să se numească editează ca și text~~
+~~- deasemenea, fă pagina mobile responsive~~
 - adauga Amin la fiecare cantare
-- fix openapi endpoints and fix authentication layer
-- creaza optiunea de a adauga live-urile create intr-un playlist pe YouTube
 - adauga posibilitatea de a face highlight pentru sesiunea curenta
 - adauga o iconita pentru fisierele atasate Church Hub
 - fix drag and drop pentru fisiere si apoi implementeaza export/import din pptx
 - adauga optiunea de a deschide fisiere pptx direct in ChurchHub
+- create un README cu screenshots si o descriere a functionalitatilor
+- asigura-te ca animatiile functioneaza la afisare/ascundere, deasemenea cand se schimba urmatorul slide
+- fix openapi endpoints and fix authentication layer
+- creaza optiunea de a adauga live-urile create intr-un playlist pe YouTube
 - exportul ca si pptx ar trebui sa aiba textul ceva mai mare

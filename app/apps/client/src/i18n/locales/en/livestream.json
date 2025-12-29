@@ -146,7 +146,11 @@
     "addCustomScene": "Add custom scene",
     "newScenePlaceholder": "Scene name",
     "add": "Add",
-    "adding": "Adding..."
+    "adding": "Adding...",
+    "sync": "Sync",
+    "syncFromOBS": "Sync scenes from OBS",
+    "delete": "Delete",
+    "deleting": "Deleting..."
   },
   "mixer": {
     "title": "Mixer",

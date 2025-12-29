@@ -11,6 +11,7 @@ export {
   startStream,
   stopStream,
   switchOBSScene,
+  syncOBSScenes,
   updateOBSConfig,
   updateOBSScene,
 } from './obs'
