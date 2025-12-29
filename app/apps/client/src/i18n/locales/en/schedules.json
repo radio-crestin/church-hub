@@ -52,6 +52,21 @@
     "cancel": "Cancel",
     "createNew": "Create new schedule"
   },
+  "export": {
+    "formatTitle": "Export Format",
+    "formatDescription": "Choose the format you want to export this schedule to.",
+    "confirmButton": "Export",
+    "formats": {
+      "churchprogram": {
+        "name": "Church Program",
+        "description": "JSON format for importing into Church Hub. Preserves all schedule data and song slides."
+      },
+      "pptx": {
+        "name": "PowerPoint Archive",
+        "description": "ZIP file containing PPTX presentations for each song and a text file with the schedule overview."
+      }
+    }
+  },
   "noSchedules": "No schedules yet",
   "noSchedulesDescription": "Create your first schedule to plan your presentations",
   "itemCount_one": "{{count}} item",

@@ -52,6 +52,21 @@
     "cancel": "Anuleaza",
     "createNew": "Creeaza program nou"
   },
+  "export": {
+    "formatTitle": "Format de Export",
+    "formatDescription": "Alege formatul in care vrei sa exporti acest program.",
+    "confirmButton": "Exporta",
+    "formats": {
+      "churchprogram": {
+        "name": "Program Biserica",
+        "description": "Format JSON pentru importul in Church Hub. Pastreaza toate datele programului si slide-urile cantarilor."
+      },
+      "pptx": {
+        "name": "Arhiva PowerPoint",
+        "description": "Fisier ZIP care contine prezentari PPTX pentru fiecare cantare si un fisier text cu programul."
+      }
+    }
+  },
   "noSchedules": "Niciun program inca",
   "noSchedulesDescription": "Creeaza primul tau program pentru a planifica prezentarile",
   "itemCount_one": "{{count}} element",
