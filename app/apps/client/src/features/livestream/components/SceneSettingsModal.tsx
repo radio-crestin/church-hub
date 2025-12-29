@@ -13,7 +13,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
-import { X } from 'lucide-react'
+import { Plus, X } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -37,6 +37,8 @@ interface SceneSettingsModalProps {
       mixerChannelActions?: MixerChannelActions
     },
   ) => void
+  onCreateScene: (sceneName: string) => Promise<void>
+  isCreating?: boolean
 }
 
 export function SceneSettingsModal({
@@ -44,9 +46,13 @@ export function SceneSettingsModal({
   onClose,
   onReorder,
   onUpdateScene,
+  onCreateScene,
+  isCreating,
 }: SceneSettingsModalProps) {
   const { t } = useTranslation('livestream')
   const [selectedScene, setSelectedScene] = useState<OBSScene | null>(null)
+  const [newSceneName, setNewSceneName] = useState('')
+  const [showAddForm, setShowAddForm] = useState(false)
   const { config: youtubeConfig, update: updateYouTubeConfig } =
     useYouTubeConfig()
 
@@ -95,6 +101,13 @@ export function SceneSettingsModal({
     [selectedScene, onUpdateScene],
   )
 
+  const handleAddScene = useCallback(async () => {
+    if (!newSceneName.trim()) return
+    await onCreateScene(newSceneName.trim())
+    setNewSceneName('')
+    setShowAddForm(false)
+  }, [newSceneName, onCreateScene])
+
   return (
     <>
       <div
@@ -136,6 +149,56 @@ export function SceneSettingsModal({
                 </div>
               </SortableContext>
             </DndContext>
+
+            {/* Add custom scene */}
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              {showAddForm ? (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newSceneName}
+                    onChange={(e) => setNewSceneName(e.target.value)}
+                    placeholder={t('scenes.newScenePlaceholder')}
+                    className="flex-1 px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleAddScene()
+                      if (e.key === 'Escape') {
+                        setShowAddForm(false)
+                        setNewSceneName('')
+                      }
+                    }}
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddScene}
+                    disabled={!newSceneName.trim() || isCreating}
+                    className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
+                  >
+                    {isCreating ? t('scenes.adding') : t('scenes.add')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAddForm(false)
+                      setNewSceneName('')
+                    }}
+                    className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowAddForm(true)}
+                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                >
+                  <Plus size={18} />
+                  {t('scenes.addCustomScene')}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

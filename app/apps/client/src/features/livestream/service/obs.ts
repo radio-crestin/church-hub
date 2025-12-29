@@ -82,6 +82,25 @@ export async function reorderOBSScenes(
   return response.data
 }
 
+export async function createOBSScene(sceneName: string): Promise<OBSScene> {
+  const response = await fetcher<{ data: OBSScene }>(
+    '/api/livestream/obs/scenes',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sceneName }),
+    },
+  )
+  return response.data
+}
+
+export async function deleteOBSScene(id: number): Promise<void> {
+  await fetcher<{ data: { success: boolean } }>(
+    `/api/livestream/obs/scenes/${id}`,
+    { method: 'DELETE' },
+  )
+}
+
 export async function switchOBSScene(
   sceneName: string,
 ): Promise<{ success: boolean; sceneName: string }> {

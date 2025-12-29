@@ -142,7 +142,11 @@
     "mute": "Opreste",
     "selectChannels": "Selecteaza canale...",
     "selectContentTypes": "Selecteaza tipuri de continut...",
-    "addMore": "Adauga..."
+    "addMore": "Adauga...",
+    "addCustomScene": "Adauga scena personalizata",
+    "newScenePlaceholder": "Nume scena",
+    "add": "Adauga",
+    "adding": "Se adauga..."
   },
   "mixer": {
     "title": "Mixer",

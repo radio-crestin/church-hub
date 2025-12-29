@@ -142,7 +142,11 @@
     "mute": "Mute",
     "selectChannels": "Select channels...",
     "selectContentTypes": "Select content types...",
-    "addMore": "Add more..."
+    "addMore": "Add more...",
+    "addCustomScene": "Add custom scene",
+    "newScenePlaceholder": "Scene name",
+    "add": "Add",
+    "adding": "Adding..."
   },
   "mixer": {
     "title": "Mixer",

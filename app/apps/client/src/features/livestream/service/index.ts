@@ -1,6 +1,8 @@
 export { generateBroadcastMessage } from './message'
 export {
   connectToOBS,
+  createOBSScene,
+  deleteOBSScene,
   disconnectFromOBS,
   getOBSConfig,
   getOBSScenes,

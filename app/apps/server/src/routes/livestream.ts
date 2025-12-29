@@ -18,6 +18,8 @@ import {
   updateMixerConfig,
 } from '../service/livestream/mixer'
 import {
+  createScene,
+  deleteScene,
   getAllSceneShortcuts,
   getOBSConfig,
   getSceneAutomationState,
@@ -705,6 +707,67 @@ export async function handleLivestreamRoutes(
         headers: { 'Content-Type': 'application/json' },
       }),
     )
+  }
+
+  // POST /api/livestream/obs/scenes - Create custom scene
+  if (req.method === 'POST' && url.pathname === '/api/livestream/obs/scenes') {
+    try {
+      const body = (await req.json()) as { sceneName: string }
+      if (!body.sceneName || typeof body.sceneName !== 'string') {
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ error: 'Missing sceneName' }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+      const scene = await createScene(body.sceneName.trim())
+      return handleCors(
+        req,
+        new Response(JSON.stringify({ data: scene }), {
+          status: 201,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to create scene'
+      return handleCors(
+        req,
+        new Response(JSON.stringify({ error: message }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+    }
+  }
+
+  // DELETE /api/livestream/obs/scenes/:id
+  const deleteSceneMatch = url.pathname.match(
+    /^\/api\/livestream\/obs\/scenes\/(\d+)$/,
+  )
+  if (req.method === 'DELETE' && deleteSceneMatch?.[1]) {
+    try {
+      const id = parseInt(deleteSceneMatch[1], 10)
+      await deleteScene(id)
+      return handleCors(
+        req,
+        new Response(JSON.stringify({ data: { success: true } }), {
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to delete scene'
+      return handleCors(
+        req,
+        new Response(JSON.stringify({ error: message }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+    }
   }
 
   // GET /api/livestream/obs/shortcuts
