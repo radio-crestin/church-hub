@@ -4,24 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="66517e3f-2e4e-43cc-880d-deb242368f0c" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TODO.md" beforeDir="false" afterPath="$PROJECT_DIR$/TODO.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/hooks/useScrollIntoViewWithNeighbors.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/hooks/useScrollIntoViewWithNeighbors.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/schedules/components/BiblePassagePickerModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/schedules/components/BiblePassagePickerModal.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/schedules/components/InsertSlideModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/schedules/components/InsertSlideModal.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/schedules/components/ScheduleItemList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/schedules/components/ScheduleItemList.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/schedules/components/ScheduleItemSong.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/schedules/components/ScheduleItemSong.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/schedules/components/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/schedules/components/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/schedules/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/schedules/types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/songs/components/SongEditorModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/songs/components/SongEditorModal.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/drizzle/migrations/meta/_journal.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/drizzle/migrations/meta/_journal.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/db/schema/schedules.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/db/schema/schedules.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/schedules/addItemToSchedule.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/schedules/addItemToSchedule.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/schedules/getSchedules.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/schedules/getSchedules.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/schedules/importToQueue.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/schedules/importToQueue.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/schedules/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/schedules/types.ts" afterDir="false" />
-    </list>
+    <list default="true" id="66517e3f-2e4e-43cc-880d-deb242368f0c" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -192,7 +175,7 @@
       <workItem from="1764529520395" duration="23258000" />
       <workItem from="1765113262440" duration="193467000" />
       <workItem from="1766606925029" duration="959000" />
-      <workItem from="1766918516260" duration="28567000" />
+      <workItem from="1766918516260" duration="28916000" />
     </task>
     <servers />
   </component>

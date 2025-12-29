@@ -304,9 +304,8 @@ export function InsertSlideModal({
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {/* Template Selector - hide when editing versete_tineri */}
-          {(isEditMode || !initialTemplate) &&
-            !(isEditMode && editingItem?.slideType === 'versete_tineri') && (
+          {/* Template Selector - only show when inserting new slide without initial template */}
+          {!isEditMode && !initialTemplate && (
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 {t('insertSlide.selectTemplate')}
