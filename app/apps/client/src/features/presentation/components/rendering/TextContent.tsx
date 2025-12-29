@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useLayoutEffect, useMemo, useRef } from 'react'
 
 import {
   findOptimalFontSize,
@@ -249,6 +249,21 @@ function renderSegments(segments: TextSegment[]): React.ReactNode {
   })
 }
 
+// Cache for font calculations to avoid recalculating on every render
+interface FontCache {
+  content: string
+  width: number
+  height: number
+  maxFontSize: number
+  minFontSize: number
+  autoScale: boolean
+  compressLines: boolean
+  lineSeparator: string
+  fitLineToWidth: boolean
+  lineHeight: number
+  result: { fontSize: number; processedSegments: TextSegment[] }
+}
+
 export function TextContent({
   content,
   style,
@@ -257,10 +272,8 @@ export function TextContent({
   isHtml = false,
 }: TextContentProps) {
   const textRef = useRef<HTMLDivElement>(null)
-  const [calculatedFontSize, setCalculatedFontSize] = useState<number | null>(
-    null,
-  )
-  const prevContentRef = useRef<string>(content)
+  // Cache the last calculation to avoid recalculating when nothing changed
+  const cacheRef = useRef<FontCache | null>(null)
 
   // Convert HTML to plain text for font size calculation
   const baseContent = useMemo(() => {
@@ -272,103 +285,120 @@ export function TextContent({
     return isHtml ? parseHtmlToSegments(content) : [{ text: content }]
   }, [content, isHtml])
 
-  // Track if content changed THIS render cycle (for immediate hiding)
-  const contentChangedThisRender = prevContentRef.current !== content
+  // Extract style config for cache comparison
+  const maxFontSize = style.maxFontSize
+  const minFontSize = style.minFontSize ?? 12
+  const autoScale = style.autoScale
+  const shouldCompressLines = style.compressLines ?? false
+  const lineSeparator = style.lineSeparator ?? 'space'
+  const fitLineToWidth = style.fitLineToWidth ?? false
+  const lineHeight = style.lineHeight ?? 1.3
 
-  // Reset font size calculation when content changes to prevent flash
-  if (contentChangedThisRender) {
-    prevContentRef.current = content
-    if (calculatedFontSize !== null && style.autoScale) {
-      setCalculatedFontSize(null)
-    }
-  }
+  // Check if we can use cached result
+  const cache = cacheRef.current
+  const canUseCache =
+    cache !== null &&
+    cache.content === baseContent &&
+    cache.width === containerWidth &&
+    cache.height === containerHeight &&
+    cache.maxFontSize === maxFontSize &&
+    cache.minFontSize === minFontSize &&
+    cache.autoScale === autoScale &&
+    cache.compressLines === shouldCompressLines &&
+    cache.lineSeparator === lineSeparator &&
+    cache.fitLineToWidth === fitLineToWidth &&
+    cache.lineHeight === lineHeight
 
-  // Compute processed content - compression happens here based on current settings
-  const [processedSegments, setProcessedSegments] =
-    useState<TextSegment[]>(baseSegments)
+  // Get cached or default values for initial render
+  let calculatedFontSize = canUseCache ? cache.result.fontSize : maxFontSize
+  let processedSegments = canUseCache
+    ? cache.result.processedSegments
+    : baseSegments
 
-  // Auto-scale text using binary search for accurate font fitting
-  // Also handles line compression with fit checking
+  // Use layout effect to calculate font size synchronously before paint
+  // This runs BEFORE the browser paints, ensuring no flash
   useLayoutEffect(() => {
-    if (!textRef.current) {
-      return
-    }
+    if (!textRef.current) return
+
+    // Skip if cache is valid
+    if (canUseCache) return
 
     const textElement = textRef.current
     const maxWidth = containerWidth
     const maxHeight = containerHeight
 
-    if (maxWidth <= 0 || maxHeight <= 0) {
-      return
-    }
+    if (maxWidth <= 0 || maxHeight <= 0) return
 
     // Handle line compression - always combine pairs when enabled
     let finalContent = baseContent
     let finalSegments = baseSegments
-    if (style.compressLines) {
-      finalContent = compressLines(baseContent, style.lineSeparator ?? 'space')
-      finalSegments = compressSegments(
-        baseSegments,
-        style.lineSeparator ?? 'space',
-      )
+    if (shouldCompressLines) {
+      finalContent = compressLines(baseContent, lineSeparator as 'space')
+      finalSegments = compressSegments(baseSegments, lineSeparator as 'space')
     }
 
-    // Always update processed segments to reflect current state
-    setProcessedSegments(finalSegments)
-
-    if (!style.autoScale) {
-      setCalculatedFontSize(style.maxFontSize)
-      return
+    let fontSize = maxFontSize
+    if (autoScale) {
+      // Use binary search for accurate font fitting
+      const result = fitLineToWidth
+        ? findOptimalFontSizePerLine({
+            measureElement: textElement,
+            text: finalContent,
+            maxWidth,
+            maxHeight,
+            minFontSize,
+            maxFontSize,
+            lineHeight,
+          })
+        : findOptimalFontSize({
+            measureElement: textElement,
+            text: finalContent,
+            maxWidth,
+            maxHeight,
+            minFontSize,
+            maxFontSize,
+            lineHeight,
+          })
+      fontSize = result.fontSize
     }
 
-    const minFontSize = style.minFontSize ?? 12
-    const lineHeight = style.lineHeight ?? 1.3
+    // Update cache
+    cacheRef.current = {
+      content: baseContent,
+      width: containerWidth,
+      height: containerHeight,
+      maxFontSize,
+      minFontSize,
+      autoScale,
+      compressLines: shouldCompressLines,
+      lineSeparator,
+      fitLineToWidth,
+      lineHeight,
+      result: { fontSize, processedSegments: finalSegments },
+    }
 
-    // Use binary search for accurate font fitting
-    const result = style.fitLineToWidth
-      ? findOptimalFontSizePerLine({
-          measureElement: textElement,
-          text: finalContent,
-          maxWidth,
-          maxHeight,
-          minFontSize,
-          maxFontSize: style.maxFontSize,
-          lineHeight,
-        })
-      : findOptimalFontSize({
-          measureElement: textElement,
-          text: finalContent,
-          maxWidth,
-          maxHeight,
-          minFontSize,
-          maxFontSize: style.maxFontSize,
-          lineHeight,
-        })
-
-    setCalculatedFontSize(result.fontSize)
+    // Apply calculated values directly to DOM (no state update = no re-render)
+    if (textRef.current) {
+      textRef.current.style.fontSize = `${fontSize}px`
+    }
   }, [
     baseContent,
     baseSegments,
-    style.autoScale,
-    style.maxFontSize,
-    style.minFontSize,
-    style.compressLines,
-    style.lineSeparator,
-    style.fitLineToWidth,
-    style.lineHeight,
     containerWidth,
     containerHeight,
+    maxFontSize,
+    minFontSize,
+    autoScale,
+    shouldCompressLines,
+    lineSeparator,
+    fitLineToWidth,
+    lineHeight,
+    canUseCache,
   ])
-
-  // Determine if ready to show
-  const isReady =
-    !contentChangedThisRender &&
-    (calculatedFontSize !== null || !style.autoScale)
-  const fontSize = calculatedFontSize ?? style.maxFontSize
 
   const textStyles: React.CSSProperties = {
     ...getTextStyleCSS(style),
-    fontSize: `${fontSize}px`,
+    fontSize: `${calculatedFontSize}px`,
     width: '100%',
     height: '100%',
     display: 'flex',
@@ -387,7 +417,6 @@ export function TextContent({
     overflow: 'hidden',
     wordWrap: style.fitLineToWidth ? 'normal' : 'break-word',
     whiteSpace: style.fitLineToWidth ? 'pre' : 'pre-wrap',
-    visibility: isReady ? 'visible' : 'hidden',
   }
 
   return (

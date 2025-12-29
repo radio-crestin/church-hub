@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useLayoutEffect, useMemo, useRef } from 'react'
 
 import { AnimatedElement } from './AnimatedElement'
 import { calculatePixelBounds, getTextStyleCSS } from './utils/styleUtils'
@@ -46,6 +46,71 @@ function convertHtmlToText(html: string): string {
   )
 }
 
+/**
+ * Calculate optimal font size synchronously using a measurement element.
+ * Returns the font size and processed content.
+ */
+function calculateFontSize(
+  measureElement: HTMLDivElement,
+  content: string,
+  maxWidth: number,
+  maxHeight: number,
+  maxFontSize: number,
+  minFontSize: number,
+  autoScale: boolean,
+  compressLines: boolean,
+  lineSeparator: 'space' | 'dash' | 'pipe',
+): { fontSize: number; processedContent: string } {
+  const spanElement = measureElement.querySelector('span')
+  if (!spanElement || maxWidth <= 0 || maxHeight <= 0) {
+    return { fontSize: maxFontSize, processedContent: content }
+  }
+
+  // Set to max size for measurement
+  measureElement.style.fontSize = `${maxFontSize}px`
+  measureElement.style.overflow = 'visible'
+  measureElement.style.width = 'auto'
+  measureElement.style.height = 'auto'
+  measureElement.style.whiteSpace = 'pre-wrap'
+
+  // Handle line compression with fit checking
+  let finalContent = content
+  if (compressLines) {
+    const measureWidth = (text: string) => {
+      spanElement.textContent = text
+      return spanElement.offsetWidth
+    }
+    finalContent = compressTextLinesWithFit(
+      content,
+      lineSeparator,
+      measureWidth,
+      maxWidth,
+      0.7, // 70% threshold
+    )
+  }
+
+  // Update the span with final content and measure
+  spanElement.textContent = finalContent
+
+  if (!autoScale) {
+    return { fontSize: maxFontSize, processedContent: finalContent }
+  }
+
+  // Force reflow and measure
+  const contentWidth = spanElement.offsetWidth
+  const contentHeight = spanElement.offsetHeight
+
+  // Calculate scale ratio
+  const widthRatio = maxWidth / contentWidth
+  const heightRatio = maxHeight / contentHeight
+  const ratio = Math.min(widthRatio, heightRatio, 1) // Don't scale up beyond max
+
+  // Calculate final font size
+  const finalSize = Math.max(Math.floor(maxFontSize * ratio), minFontSize)
+
+  return { fontSize: finalSize, processedContent: finalContent }
+}
+
 interface TextElementProps {
   config: TextConfig
   content: string
@@ -54,6 +119,20 @@ interface TextElementProps {
   scale: number
   isVisible?: boolean
   isHtml?: boolean
+  contentKey?: string // Key to identify content for caching
+}
+
+// Cache for font calculations to avoid recalculating on every render
+interface FontCache {
+  content: string
+  width: number
+  height: number
+  maxFontSize: number
+  minFontSize: number
+  autoScale: boolean
+  compressLines: boolean
+  lineSeparator: string
+  result: { fontSize: number; processedContent: string }
 }
 
 export function TextElement({
@@ -64,45 +143,26 @@ export function TextElement({
   scale,
   isVisible = true,
   isHtml = false,
+  contentKey,
 }: TextElementProps) {
   const textRef = useRef<HTMLDivElement>(null)
-  // Use null to indicate "not yet calculated" - text will be hidden until ready
-  const [calculatedFontSize, setCalculatedFontSize] = useState<number | null>(
-    null,
-  )
-  // Track previous content to detect changes
-  const prevContentRef = useRef<string>(content)
+  const measureRef = useRef<HTMLDivElement>(null)
+  // Cache the last calculation to avoid recalculating when nothing changed
+  const cacheRef = useRef<FontCache | null>(null)
 
-  // Convert HTML to plain text (compression happens in useLayoutEffect where we can measure)
+  // Convert HTML to plain text
   const baseContent = useMemo(() => {
     return isHtml ? convertHtmlToText(content) : content
   }, [content, isHtml])
-
-  // Final processed content (after compression decision)
-  const [processedContent, setProcessedContent] = useState(baseContent)
-
-  // Update processedContent when baseContent changes
-  useLayoutEffect(() => {
-    if (!config.style.compressLines) {
-      setProcessedContent(baseContent)
-    }
-  }, [baseContent, config.style.compressLines])
-
-  // Track if content changed THIS render cycle (for immediate hiding)
-  const contentChangedThisRender = prevContentRef.current !== content
-
-  // Reset font size calculation when content changes to prevent flash
-  if (contentChangedThisRender) {
-    prevContentRef.current = content
-    if (calculatedFontSize !== null && config.style.autoScale) {
-      setCalculatedFontSize(null)
-    }
-  }
 
   // Get optional properties with defaults
   const animationIn = 'animationIn' in config ? config.animationIn : undefined
   const animationOut =
     'animationOut' in config ? config.animationOut : undefined
+  const slideTransitionIn =
+    'slideTransitionIn' in config ? config.slideTransitionIn : undefined
+  const slideTransitionOut =
+    'slideTransitionOut' in config ? config.slideTransitionOut : undefined
 
   // Calculate pixel bounds in native screen coordinates
   const bounds = calculatePixelBounds(
@@ -123,106 +183,89 @@ export function TextElement({
   // Use native dimensions for auto-scale calculations
   const size = { width: bounds.width, height: bounds.height }
 
-  // Auto-scale text using single-pass ratio calculation
-  // Also handles line compression with fit checking
+  // Extract style config for cache comparison
+  const maxFontSize = config.style.maxFontSize
+  const minFontSize = config.style.minFontSize ?? 12
+  const autoScale = config.style.autoScale
+  const compressLines = config.style.compressLines ?? false
+  const lineSeparator = config.style.lineSeparator ?? 'space'
+
+  // Check if we can use cached result
+  const cache = cacheRef.current
+  const canUseCache =
+    cache !== null &&
+    cache.content === baseContent &&
+    cache.width === size.width &&
+    cache.height === size.height &&
+    cache.maxFontSize === maxFontSize &&
+    cache.minFontSize === minFontSize &&
+    cache.autoScale === autoScale &&
+    cache.compressLines === compressLines &&
+    cache.lineSeparator === lineSeparator
+
+  // Get cached or default values for initial render
+  let calculatedFontSize = canUseCache ? cache.result.fontSize : maxFontSize
+  let processedContent = canUseCache
+    ? cache.result.processedContent
+    : baseContent
+
+  // Use layout effect to calculate font size synchronously before paint
+  // This runs BEFORE the browser paints, ensuring no flash
   useLayoutEffect(() => {
-    if (!textRef.current) {
-      return
-    }
+    if (!measureRef.current) return
 
-    const textElement = textRef.current
-    const spanElement = textElement.querySelector('span')
-    if (!spanElement) {
-      if (!config.style.autoScale) {
-        setCalculatedFontSize(config.style.maxFontSize)
-      }
-      return
-    }
+    // Skip if cache is valid
+    if (canUseCache) return
 
-    const maxWidth = size.width
-    const maxHeight = size.height
-
-    if (maxWidth <= 0 || maxHeight <= 0) {
-      return
-    }
-
-    // Set to max size for measurement (element is hidden, so user won't see this)
-    textElement.style.fontSize = `${config.style.maxFontSize}px`
-    textElement.style.overflow = 'visible'
-    textElement.style.width = 'auto'
-    textElement.style.height = 'auto'
-    textElement.style.whiteSpace = 'pre-wrap'
-
-    // Handle line compression with fit checking
-    let finalContent = baseContent
-    if (config.style.compressLines) {
-      const measureWidth = (text: string) => {
-        spanElement.textContent = text
-        return spanElement.offsetWidth
-      }
-      finalContent = compressTextLinesWithFit(
-        baseContent,
-        config.style.lineSeparator ?? 'space',
-        measureWidth,
-        maxWidth,
-        0.7, // 70% threshold
-      )
-    }
-
-    // Update the span with final content and measure
-    spanElement.textContent = finalContent
-    setProcessedContent(finalContent)
-
-    if (!config.style.autoScale) {
-      setCalculatedFontSize(config.style.maxFontSize)
-      // Restore styles
-      textElement.style.overflow = 'hidden'
-      textElement.style.width = '100%'
-      textElement.style.height = '100%'
-      return
-    }
-
-    // Force reflow and measure
-    const contentWidth = spanElement.offsetWidth
-    const contentHeight = spanElement.offsetHeight
-
-    // Calculate scale ratio
-    const widthRatio = maxWidth / contentWidth
-    const heightRatio = maxHeight / contentHeight
-    const ratio = Math.min(widthRatio, heightRatio, 1) // Don't scale up beyond max
-
-    // Calculate final font size using minFontSize from config (default 12px)
-    const minFontSize = config.style.minFontSize ?? 12
-    const finalSize = Math.max(
-      Math.floor(config.style.maxFontSize * ratio),
+    const result = calculateFontSize(
+      measureRef.current,
+      baseContent,
+      size.width,
+      size.height,
+      maxFontSize,
       minFontSize,
+      autoScale,
+      compressLines,
+      lineSeparator,
     )
 
-    // Restore styles
-    textElement.style.overflow = 'hidden'
-    textElement.style.width = '100%'
-    textElement.style.height = '100%'
+    // Update cache
+    cacheRef.current = {
+      content: baseContent,
+      width: size.width,
+      height: size.height,
+      maxFontSize,
+      minFontSize,
+      autoScale,
+      compressLines,
+      lineSeparator,
+      result,
+    }
 
-    setCalculatedFontSize(finalSize)
+    // Apply calculated values directly to DOM (no state update = no re-render)
+    if (textRef.current) {
+      const scaledFontSize = result.fontSize * scale
+      textRef.current.style.fontSize = `${scaledFontSize}px`
+      const spanElement = textRef.current.querySelector('span')
+      if (spanElement) {
+        spanElement.textContent = result.processedContent
+      }
+    }
   }, [
     baseContent,
-    config.style.autoScale,
-    config.style.maxFontSize,
-    config.style.minFontSize,
-    config.style.compressLines,
-    config.style.lineSeparator,
     size.width,
     size.height,
+    maxFontSize,
+    minFontSize,
+    autoScale,
+    compressLines,
+    lineSeparator,
+    scale,
+    canUseCache,
   ])
 
-  // Determine if ready to show - hide if content changed this render (old font size)
-  const isReady =
-    !contentChangedThisRender &&
-    (calculatedFontSize !== null || !config.style.autoScale)
-
   // Apply scale to font size for display
-  const baseFontSize = calculatedFontSize ?? config.style.maxFontSize
-  const scaledFontSize = baseFontSize * scale
+  const scaledFontSize = calculatedFontSize * scale
 
   const textStyles: React.CSSProperties = {
     ...getTextStyleCSS(config.style),
@@ -245,7 +288,18 @@ export function TextElement({
     overflow: 'hidden',
     wordWrap: 'break-word',
     whiteSpace: 'pre-wrap',
-    visibility: isReady ? 'visible' : 'hidden', // Hide until calculated
+  }
+
+  // Hidden measurement element styles - same font properties but invisible
+  const measureStyles: React.CSSProperties = {
+    ...getTextStyleCSS(config.style),
+    position: 'absolute',
+    visibility: 'hidden',
+    pointerEvents: 'none',
+    // Don't constrain size during measurement
+    width: 'auto',
+    height: 'auto',
+    whiteSpace: 'pre-wrap',
   }
 
   // Use pixel positioning with scaled values
@@ -261,9 +315,17 @@ export function TextElement({
     <AnimatedElement
       animationIn={animationIn}
       animationOut={animationOut}
+      slideTransitionIn={slideTransitionIn}
+      slideTransitionOut={slideTransitionOut}
       isVisible={isVisible}
+      contentKey={contentKey}
       style={containerStyles}
     >
+      {/* Hidden measurement element */}
+      <div ref={measureRef} style={measureStyles} aria-hidden="true">
+        <span>{baseContent}</span>
+      </div>
+      {/* Visible text element */}
       <div ref={textRef} style={textStyles}>
         <span className="w-full">{processedContent}</span>
       </div>

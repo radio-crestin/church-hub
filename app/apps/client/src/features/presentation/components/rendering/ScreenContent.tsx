@@ -1,12 +1,9 @@
 import { useMemo, useRef } from 'react'
 
-import { AnimatedElement } from './AnimatedElement'
-import { AnimationProvider } from './AnimationContext'
+import { AnimatedText } from './AnimatedText'
 import { TextContent } from './TextContent'
 import type { ContentData, NextSlideData } from './types'
 import {
-  calculateMaxSlideTransitionInDuration,
-  calculateMaxSlideTransitionOutDuration,
   calculatePixelBounds,
   clampBoundsToScreen,
   getBackgroundCSS,
@@ -40,7 +37,6 @@ export function ScreenContent({
   const currentConfig = screen.contentConfigs[contentType]
 
   // Cache the previous config when visible so we can use it for exit animations
-  // When contentType changes to 'empty', we still need the old config to animate out
   const cachedConfigRef = useRef<{
     config: ContentTypeConfig | undefined
     contentType: ContentType
@@ -55,7 +51,6 @@ export function ScreenContent({
   const config = isVisible ? currentConfig : cachedConfigRef.current.config
 
   // Generate a content key that changes when the actual content changes
-  // This triggers re-animation when navigating between slides
   const contentKey = useMemo(() => {
     if (!contentData) return 'empty'
     const parts: string[] = [contentType]
@@ -66,19 +61,17 @@ export function ScreenContent({
     if (contentData.personLabel) parts.push(contentData.personLabel)
     return parts.join('|')
   }, [contentType, contentData])
-  // Always use screen dimensions for bounds calculations
-  // Constraints are defined relative to the screen's native resolution
+
+  // Screen dimensions
   const canvasWidth = screen.width
   const canvasHeight = screen.height
 
-  // Calculate separate X and Y scales to stretch-fill the container
-  // This ensures content fills the entire viewport regardless of aspect ratio
+  // Calculate scales
   const scaleX = containerWidth / canvasWidth
   const scaleY = containerHeight / canvasHeight
-  // Use minimum scale for fonts to avoid excessive distortion
   const fontScale = Math.min(scaleX, scaleY)
 
-  // Helper to scale bounds with separate X/Y scaling
+  // Helper to scale bounds
   const scaleBounds = (bounds: {
     x: number
     y: number
@@ -97,6 +90,7 @@ export function ScreenContent({
 
     const mt = config.mainText
     if (mt.hidden) return null
+
     const bounds = calculatePixelBounds(
       mt.constraints,
       mt.size,
@@ -104,13 +98,23 @@ export function ScreenContent({
       canvasHeight,
     )
     const scaledBounds = scaleBounds(bounds)
-
-    // Only show if visible AND has content
     const elementVisible = isVisible && !!contentData?.mainText
 
     return (
-      <AnimatedElement
+      <AnimatedText
         key="mainText"
+        content={contentData?.mainText ?? ''}
+        contentKey={`mainText-${contentKey}`}
+        isVisible={elementVisible}
+        style={{
+          ...mt.style,
+          maxFontSize: mt.style.maxFontSize * fontScale,
+        }}
+        width={scaledBounds.width}
+        height={scaledBounds.height}
+        left={scaledBounds.x}
+        top={scaledBounds.y}
+        isHtml={true}
         animationIn={'animationIn' in mt ? mt.animationIn : undefined}
         animationOut={'animationOut' in mt ? mt.animationOut : undefined}
         slideTransitionIn={
@@ -119,27 +123,7 @@ export function ScreenContent({
         slideTransitionOut={
           'slideTransitionOut' in mt ? mt.slideTransitionOut : undefined
         }
-        isVisible={elementVisible}
-        contentKey={`mainText-${contentKey}`}
-        style={{
-          position: 'absolute',
-          left: scaledBounds.x,
-          top: scaledBounds.y,
-          width: scaledBounds.width,
-          height: scaledBounds.height,
-        }}
-      >
-        <TextContent
-          content={contentData?.mainText ?? ''}
-          style={{
-            ...mt.style,
-            maxFontSize: mt.style.maxFontSize * fontScale,
-          }}
-          containerWidth={scaledBounds.width}
-          containerHeight={scaledBounds.height}
-          isHtml={true}
-        />
-      </AnimatedElement>
+      />
     )
   }
 
@@ -149,6 +133,7 @@ export function ScreenContent({
 
     const ct = config.contentText
     if (ct.hidden) return null
+
     const bounds = calculatePixelBounds(
       ct.constraints,
       ct.size,
@@ -165,12 +150,23 @@ export function ScreenContent({
       ? `${contentData?.referenceText} ${contentData?.contentText ?? ''}`
       : (contentData?.contentText ?? '')
 
-    // Only show if visible AND has content
     const elementVisible = isVisible && !!contentData?.contentText
 
     return (
-      <AnimatedElement
+      <AnimatedText
         key="contentText"
+        content={displayContent}
+        contentKey={`contentText-${contentKey}`}
+        isVisible={elementVisible}
+        style={{
+          ...ct.style,
+          maxFontSize: ct.style.maxFontSize * fontScale,
+        }}
+        width={scaledBounds.width}
+        height={scaledBounds.height}
+        left={scaledBounds.x}
+        top={scaledBounds.y}
+        isHtml={false}
         animationIn={'animationIn' in ct ? ct.animationIn : undefined}
         animationOut={'animationOut' in ct ? ct.animationOut : undefined}
         slideTransitionIn={
@@ -179,27 +175,7 @@ export function ScreenContent({
         slideTransitionOut={
           'slideTransitionOut' in ct ? ct.slideTransitionOut : undefined
         }
-        isVisible={elementVisible}
-        contentKey={`contentText-${contentKey}`}
-        style={{
-          position: 'absolute',
-          left: scaledBounds.x,
-          top: scaledBounds.y,
-          width: scaledBounds.width,
-          height: scaledBounds.height,
-        }}
-      >
-        <TextContent
-          content={displayContent}
-          style={{
-            ...ct.style,
-            maxFontSize: ct.style.maxFontSize * fontScale,
-          }}
-          containerWidth={scaledBounds.width}
-          containerHeight={scaledBounds.height}
-          isHtml={false}
-        />
-      </AnimatedElement>
+      />
     )
   }
 
@@ -221,13 +197,23 @@ export function ScreenContent({
       canvasHeight,
     )
     const scaledBounds = scaleBounds(bounds)
-
-    // Only show if visible AND has content
     const elementVisible = isVisible && !!contentData?.referenceText
 
     return (
-      <AnimatedElement
+      <AnimatedText
         key="referenceText"
+        content={contentData?.referenceText ?? ''}
+        contentKey={`referenceText-${contentKey}`}
+        isVisible={elementVisible}
+        style={{
+          ...rt.style,
+          maxFontSize: rt.style.maxFontSize * fontScale,
+        }}
+        width={scaledBounds.width}
+        height={scaledBounds.height}
+        left={scaledBounds.x}
+        top={scaledBounds.y}
+        isHtml={false}
         animationIn={'animationIn' in rt ? rt.animationIn : undefined}
         animationOut={'animationOut' in rt ? rt.animationOut : undefined}
         slideTransitionIn={
@@ -236,27 +222,7 @@ export function ScreenContent({
         slideTransitionOut={
           'slideTransitionOut' in rt ? rt.slideTransitionOut : undefined
         }
-        isVisible={elementVisible}
-        contentKey={`referenceText-${contentKey}`}
-        style={{
-          position: 'absolute',
-          left: scaledBounds.x,
-          top: scaledBounds.y,
-          width: scaledBounds.width,
-          height: scaledBounds.height,
-        }}
-      >
-        <TextContent
-          content={contentData?.referenceText ?? ''}
-          style={{
-            ...rt.style,
-            maxFontSize: rt.style.maxFontSize * fontScale,
-          }}
-          containerWidth={scaledBounds.width}
-          containerHeight={scaledBounds.height}
-          isHtml={false}
-        />
-      </AnimatedElement>
+      />
     )
   }
 
@@ -266,6 +232,7 @@ export function ScreenContent({
 
     const pl = config.personLabel
     if (pl.hidden) return null
+
     const bounds = calculatePixelBounds(
       pl.constraints,
       pl.size,
@@ -273,13 +240,23 @@ export function ScreenContent({
       canvasHeight,
     )
     const scaledBounds = scaleBounds(bounds)
-
-    // Only show if visible AND has content
     const elementVisible = isVisible && !!contentData?.personLabel
 
     return (
-      <AnimatedElement
+      <AnimatedText
         key="personLabel"
+        content={contentData?.personLabel ?? ''}
+        contentKey={`personLabel-${contentKey}`}
+        isVisible={elementVisible}
+        style={{
+          ...pl.style,
+          maxFontSize: pl.style.maxFontSize * fontScale,
+        }}
+        width={scaledBounds.width}
+        height={scaledBounds.height}
+        left={scaledBounds.x}
+        top={scaledBounds.y}
+        isHtml={false}
         animationIn={'animationIn' in pl ? pl.animationIn : undefined}
         animationOut={'animationOut' in pl ? pl.animationOut : undefined}
         slideTransitionIn={
@@ -288,39 +265,17 @@ export function ScreenContent({
         slideTransitionOut={
           'slideTransitionOut' in pl ? pl.slideTransitionOut : undefined
         }
-        isVisible={elementVisible}
-        contentKey={`personLabel-${contentKey}`}
-        style={{
-          position: 'absolute',
-          left: scaledBounds.x,
-          top: scaledBounds.y,
-          width: scaledBounds.width,
-          height: scaledBounds.height,
-        }}
-      >
-        <TextContent
-          content={contentData?.personLabel ?? ''}
-          style={{
-            ...pl.style,
-            maxFontSize: pl.style.maxFontSize * fontScale,
-          }}
-          containerWidth={scaledBounds.width}
-          containerHeight={scaledBounds.height}
-          isHtml={false}
-        />
-      </AnimatedElement>
+      />
     )
   }
 
-  // Render clock
+  // Render clock (not animated)
   const renderClock = () => {
-    // Check per-content-type clockEnabled, use global config for position/style
     const clockConfig = screen.globalSettings.clockConfig
     if (!clockConfig) return null
     if (clockConfig.hidden) return null
 
     // Check if clock is enabled for current content type
-    // Support both new structure (clockEnabled: boolean) and old structure (clock: { enabled: boolean })
     const isClockEnabledForType =
       currentConfig &&
       (('clockEnabled' in currentConfig && currentConfig.clockEnabled) ||
@@ -331,7 +286,6 @@ export function ScreenContent({
           currentConfig.clock.enabled))
     if (!isClockEnabledForType) return null
 
-    // Default size for backwards compatibility (must match ScreenEditorCanvas.tsx)
     const clockSize = clockConfig.size ?? {
       width: 10,
       widthUnit: '%' as const,
@@ -339,7 +293,6 @@ export function ScreenContent({
       heightUnit: '%' as const,
     }
 
-    // Calculate pixel bounds and clamp to screen boundaries
     const rawBounds = calculatePixelBounds(
       clockConfig.constraints,
       clockSize,
@@ -348,39 +301,30 @@ export function ScreenContent({
     )
     const bounds = clampBoundsToScreen(rawBounds, canvasWidth, canvasHeight)
 
-    // For clock, use uniform scaling (fontScale) to maintain aspect ratio
-    // This prevents distortion when scaleX !== scaleY
     const scaledWidth = bounds.width * fontScale
     const scaledHeight = bounds.height * fontScale
 
-    // Calculate position based on constraints with proper scaling
     const constraints = clockConfig.constraints
     let scaledX: number
     let scaledY: number
 
-    // Horizontal positioning
     if (constraints.right.enabled && !constraints.left.enabled) {
-      // Right-aligned: position from right edge
       const rightPx =
         constraints.right.unit === '%'
           ? (constraints.right.value / 100) * containerWidth
           : constraints.right.value * scaleX
       scaledX = containerWidth - rightPx - scaledWidth
     } else {
-      // Left-aligned or both: use standard scaling
       scaledX = bounds.x * scaleX
     }
 
-    // Vertical positioning
     if (constraints.bottom.enabled && !constraints.top.enabled) {
-      // Bottom-aligned: position from bottom edge
       const bottomPx =
         constraints.bottom.unit === '%'
           ? (constraints.bottom.value / 100) * containerHeight
           : constraints.bottom.value * scaleY
       scaledY = containerHeight - bottomPx - scaledHeight
     } else {
-      // Top-aligned or both: use standard scaling
       scaledY = bounds.y * scaleY
     }
 
@@ -394,30 +338,30 @@ export function ScreenContent({
         })
 
     return (
-      <div
+      <AnimatedText
         key="clock"
-        className="absolute overflow-hidden"
+        content={timeString}
+        contentKey="clock" // Static key - clock updates shouldn't trigger animations
+        isVisible={true}
         style={{
-          left: scaledX,
-          top: scaledY,
-          width: scaledWidth,
-          height: scaledHeight,
+          ...clockConfig.style,
+          maxFontSize: clockConfig.style.maxFontSize * fontScale,
         }}
-      >
-        <TextContent
-          content={timeString}
-          style={{
-            ...clockConfig.style,
-            maxFontSize: clockConfig.style.maxFontSize * fontScale,
-          }}
-          containerWidth={scaledWidth}
-          containerHeight={scaledHeight}
-        />
-      </div>
+        width={scaledWidth}
+        height={scaledHeight}
+        left={scaledX}
+        top={scaledY}
+        isHtml={false}
+        // No animations for clock - it updates every second
+        animationIn={{ type: 'none' }}
+        animationOut={{ type: 'none' }}
+        slideTransitionIn={{ type: 'none' }}
+        slideTransitionOut={{ type: 'none' }}
+      />
     )
   }
 
-  // Render next slide section (configurable per screen)
+  // Render next slide section (not animated)
   const renderNextSlideSection = () => {
     if (!screen.nextSlideConfig?.enabled) return null
     const ns = screen.nextSlideConfig
@@ -433,15 +377,12 @@ export function ScreenContent({
     const padding = 16 * fontScale
     const gap = 8 * fontScale
 
-    // Calculate heights for label and content
-    // Label takes a portion based on its style, content gets the rest
     const labelHeight = Math.min(
       scaledBounds.height * 0.3,
       ns.labelStyle.maxFontSize * fontScale * 1.5,
     )
     const contentHeight = scaledBounds.height - padding * 2 - labelHeight - gap
 
-    // Get content text
     const getContentText = () => {
       if (nextSlideData?.verseteTineriSummary) {
         const { entries, hasMore } = nextSlideData.verseteTineriSummary
@@ -500,34 +441,20 @@ export function ScreenContent({
     )
   }
 
-  // Calculate the max slide transition durations for timing the two-phase animation
-  const slideTransitionOutDuration =
-    calculateMaxSlideTransitionOutDuration(config)
-  const slideTransitionInDuration =
-    calculateMaxSlideTransitionInDuration(config)
-
   return (
-    <AnimationProvider
-      contentKey={contentKey}
-      isVisible={isVisible}
-      slideTransitionOutDuration={slideTransitionOutDuration}
-      slideTransitionInDuration={slideTransitionInDuration}
+    <div
+      className="relative"
+      style={{
+        width: containerWidth,
+        height: containerHeight,
+      }}
     >
-      <div
-        className="relative"
-        style={{
-          width: containerWidth,
-          height: containerHeight,
-        }}
-      >
-        {/* Content elements handle their own visibility/animation */}
-        {renderMainText()}
-        {renderContentText()}
-        {renderReferenceText()}
-        {renderPersonLabel()}
-        {renderClock()}
-        {renderNextSlideSection()}
-      </div>
-    </AnimationProvider>
+      {renderMainText()}
+      {renderContentText()}
+      {renderReferenceText()}
+      {renderPersonLabel()}
+      {renderClock()}
+      {renderNextSlideSection()}
+    </div>
   )
 }
