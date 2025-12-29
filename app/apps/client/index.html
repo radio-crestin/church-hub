@@ -17,9 +17,15 @@
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
     <title>Church Hub</title>
     <script>
-      // Set theme immediately to avoid flash
-      const theme = localStorage.getItem('church-hub-theme') || 'dark';
-      document.documentElement.classList.add(theme);
+      // For screen routes, set pure black background immediately to avoid any flash
+      if (window.location.pathname.startsWith('/screen/')) {
+        document.documentElement.style.backgroundColor = '#000000';
+        document.body && (document.body.style.backgroundColor = '#000000');
+      } else {
+        // Set theme immediately to avoid flash (only for non-screen routes)
+        const theme = localStorage.getItem('church-hub-theme') || 'dark';
+        document.documentElement.classList.add(theme);
+      }
     </script>
   </head>
   <body>
@@ -35,7 +41,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: #030712;
+      background: #000000;
       color: #f9fafb;
       font-family: system-ui, -apple-system, sans-serif;
       z-index: 9999;
@@ -77,12 +83,14 @@
       </style>
     </div>
     <script>
-      // For screen routes, show only black/transparent background - no loading content
+      // For screen routes, show only pure black background - no loading content
       if (window.location.pathname.startsWith('/screen/')) {
         var loadingContent = document.getElementById('loading-content');
         var loadingScreen = document.getElementById('loading-screen');
         if (loadingContent) loadingContent.style.display = 'none';
-        if (loadingScreen) loadingScreen.style.background = 'black';
+        if (loadingScreen) loadingScreen.style.background = '#000000';
+        // Also ensure body is black
+        document.body.style.backgroundColor = '#000000';
       }
     </script>
     <div id="app"></div>

@@ -784,7 +784,7 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
     return (
       <div
         className="w-screen h-screen"
-        style={{ backgroundColor: 'black', background: 'transparent' }}
+        style={{ backgroundColor: '#000000' }}
       />
     )
   }
@@ -793,7 +793,7 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
     return (
       <div
         className="w-screen h-screen"
-        style={{ backgroundColor: 'black', background: 'transparent' }}
+        style={{ backgroundColor: '#000000' }}
       />
     )
   }
