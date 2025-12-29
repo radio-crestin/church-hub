@@ -6,6 +6,7 @@ import { ConfirmModal } from '~/ui/modal'
 import { useToast } from '~/ui/toast'
 import { CategoryCard } from './CategoryCard'
 import { CategoryForm } from './CategoryForm'
+import { UncategorizedSongsCard } from './UncategorizedSongsCard'
 import {
   useCategories,
   useDeleteCategory,
@@ -102,6 +103,9 @@ export function CategoryManager() {
           {t('sections.categories.addCategory')}
         </button>
       </div>
+
+      {/* Uncategorized Songs */}
+      <UncategorizedSongsCard />
 
       {categories && categories.length > 0 ? (
         <div className="space-y-2">
