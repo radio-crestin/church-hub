@@ -148,6 +148,7 @@ export function VersesList({
               <button
                 ref={isHighlighted ? highlightedRef : null}
                 type="button"
+                tabIndex={-1}
                 onClick={() => onSelectVerse(index)}
                 className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${getButtonClass()}`}
               >

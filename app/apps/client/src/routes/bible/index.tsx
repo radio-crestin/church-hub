@@ -150,6 +150,9 @@ function BiblePage() {
     // Skip sync when user is browsing (allows navigating away from presented verse)
     if (isBrowsingRef.current) return
 
+    // Skip sync when user is actively searching (prevents fighting with useSmartSearch)
+    if (navigation.state.searchQuery) return
+
     if (
       tempContentType === 'bible' &&
       serverChapter !== undefined &&
@@ -297,45 +300,65 @@ function BiblePage() {
     [currentTranslation?.abbreviation, presentTemporaryBible],
   )
 
-  // Handle next/previous verse navigation - server-driven to avoid double animations
+  // Handle next/previous verse navigation
   const handleNextVerse = useCallback(async () => {
-    const currentIndex =
-      navigation.state.presentedIndex ?? navigation.state.searchedIndex ?? -1
+    const { presentedIndex, searchedIndex } = navigation.state
+    const currentIndex = presentedIndex ?? searchedIndex ?? -1
     const nextIndex = currentIndex + 1
 
-    // If there are more verses in current chapter, present it
-    if (nextIndex < verses.length) {
+    // Bounds check
+    if (nextIndex >= verses.length) {
+      // If presenting, navigate to next chapter
+      if (presentedIndex !== null) {
+        await navigateTemporary.mutateAsync({ direction: 'next' })
+      }
+      return
+    }
+
+    // If currently presenting, present next verse
+    if (presentedIndex !== null) {
       const verse = verses[nextIndex]
       if (verse) {
+        navigation.presentVerse(nextIndex)
         await presentVerseToScreen(verse, nextIndex)
       }
-      return
+    } else {
+      // Just move selection (not presenting)
+      navigation.setSearchedIndex(nextIndex)
     }
-
-    // End of chapter - use server-side navigation to move to next chapter
-    await navigateTemporary.mutateAsync({ direction: 'next' })
-  }, [navigation.state, verses, presentVerseToScreen, navigateTemporary])
+  }, [navigation, verses, presentVerseToScreen, navigateTemporary])
 
   const handlePreviousVerse = useCallback(async () => {
-    const currentIndex =
-      navigation.state.presentedIndex ?? navigation.state.searchedIndex ?? 0
+    const { presentedIndex, searchedIndex } = navigation.state
+    const currentIndex = presentedIndex ?? searchedIndex ?? 0
     const prevIndex = currentIndex - 1
 
-    // If there are previous verses in current chapter, present it
-    if (prevIndex >= 0) {
-      const verse = verses[prevIndex]
-      if (verse) {
-        await presentVerseToScreen(verse, prevIndex)
+    // Bounds check
+    if (prevIndex < 0) {
+      // If presenting, navigate to previous chapter
+      if (presentedIndex !== null) {
+        await navigateTemporary.mutateAsync({ direction: 'prev' })
       }
       return
     }
 
-    // Start of chapter - use server-side navigation to move to previous chapter
-    await navigateTemporary.mutateAsync({ direction: 'prev' })
-  }, [navigation.state, verses, presentVerseToScreen, navigateTemporary])
+    // If currently presenting, present previous verse
+    if (presentedIndex !== null) {
+      const verse = verses[prevIndex]
+      if (verse) {
+        navigation.presentVerse(prevIndex)
+        await presentVerseToScreen(verse, prevIndex)
+      }
+    } else {
+      // Just move selection (not presenting)
+      navigation.setSearchedIndex(prevIndex)
+    }
+  }, [navigation, verses, presentVerseToScreen, navigateTemporary])
 
   // Handle hide presentation (Escape) - clears slide but keeps selection
   const handleHidePresentation = useCallback(async () => {
+    // Disable sync until user selects a new verse (prevents race with clearSlide API)
+    isBrowsingRef.current = true
     navigation.clearPresentation()
     await clearSlide.mutateAsync()
   }, [navigation, clearSlide])
@@ -446,6 +469,8 @@ function BiblePage() {
                 onSelectVerse={handleSelectVerse}
                 onSelectSearchResult={handleSelectSearchResult}
                 onPresentSearched={handlePresentSearched}
+                onNextVerse={handleNextVerse}
+                onPreviousVerse={handlePreviousVerse}
                 onGoBack={handleGoBack}
               />
             </div>
