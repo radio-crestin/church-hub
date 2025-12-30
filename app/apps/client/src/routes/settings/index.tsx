@@ -4,7 +4,11 @@ import { useTranslation } from 'react-i18next'
 
 import { isLocalhost, isMobile } from '~/config'
 import { ApiUrlSettings } from '~/features/api-url-config'
-import { DatabaseManager, FactoryReset } from '~/features/database-management'
+import {
+  DatabaseManager,
+  FactoryReset,
+  SearchIndexRebuild,
+} from '~/features/database-management'
 import {
   MIDIProvider,
   ShortcutsSettingsSection,
@@ -227,6 +231,9 @@ function RouteComponent() {
 
             {/* System Token (localhost only) */}
             {isLocalhost() && <SystemTokenManager />}
+
+            {/* Search Index Rebuild (localhost only) */}
+            {isLocalhost() && <SearchIndexRebuild />}
 
             {/* Database Management (localhost only) */}
             {isLocalhost() && <DatabaseManager />}

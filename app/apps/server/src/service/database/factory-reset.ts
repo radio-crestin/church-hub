@@ -4,6 +4,7 @@ import { seedDefaultScreens } from '../../db/migrations/seed-screens'
 import { seedAppSettings } from '../../db/migrations/seed-settings'
 import { seedSongCategories } from '../../db/migrations/seed-song-categories'
 import { seedSongs } from '../../db/migrations/seed-songs'
+import { rebuildSearchIndex } from '../songs/search'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -106,6 +107,13 @@ export function performFactoryReset(
 
     // Commit transaction
     db.run('COMMIT')
+
+    // Rebuild FTS search index if songs were reset
+    // This must be done after the transaction commits
+    if (includeSongs) {
+      log('info', 'Rebuilding search index after song reset...')
+      rebuildSearchIndex()
+    }
 
     log('info', 'Factory reset completed successfully')
 

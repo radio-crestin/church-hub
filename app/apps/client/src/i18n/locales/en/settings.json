@@ -604,6 +604,22 @@
         "success": "Factory reset completed. Settings have been restored to defaults.",
         "failed": "Factory reset failed: {{error}}"
       }
+    },
+    "searchIndex": {
+      "title": "Search Index",
+      "description": "Rebuild the full-text search index if songs are not appearing in search results",
+      "card": {
+        "title": "Rebuild Search Index",
+        "description": "Rebuilds the FTS index for all songs. Use this if search results seem incorrect."
+      },
+      "button": {
+        "rebuild": "Rebuild Index",
+        "rebuilding": "Rebuilding..."
+      },
+      "toast": {
+        "success": "Search index rebuilt successfully ({{duration}}ms)",
+        "failed": "Failed to rebuild search index: {{error}}"
+      }
     }
   }
 }
