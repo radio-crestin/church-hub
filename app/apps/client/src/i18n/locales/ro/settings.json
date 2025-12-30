@@ -222,7 +222,8 @@
       "categoryNamePlaceholder": "ex., Închinare, Imnuri, Crăciun",
       "priority": "Prioritate",
       "value": "Prioritate",
-      "songCount": "{{count}} cântare",
+      "songCount_one": "{{count}} cântare",
+      "songCount_few": "{{count}} cântări",
       "songCount_other": "{{count}} cântări",
       "actions": {
         "edit": "Editează",
