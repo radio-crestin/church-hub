@@ -59,3 +59,24 @@ export async function searchSongs(
   )
   return response.data ?? []
 }
+
+export async function rebuildSearchIndex(): Promise<{
+  success: boolean
+  duration?: number
+  error?: string
+}> {
+  const response = await fetcher<
+    ApiResponse<{ success: boolean; duration: number }>
+  >('/api/songs/search/rebuild', {
+    method: 'POST',
+  })
+
+  if (response.error) {
+    return { success: false, error: response.error }
+  }
+
+  return {
+    success: response.data?.success ?? false,
+    duration: response.data?.duration,
+  }
+}

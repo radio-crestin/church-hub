@@ -35,6 +35,56 @@ export const songsPaths = {
       },
     },
   },
+  '/api/songs/search/rebuild': {
+    post: {
+      tags: ['Songs'],
+      summary: 'Rebuild FTS search index',
+      description:
+        'Rebuilds the full-text search index for all songs. Useful after batch imports or when search results seem incorrect.',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      responses: {
+        '200': {
+          description: 'Search index rebuilt successfully',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'object',
+                    properties: {
+                      success: {
+                        type: 'boolean',
+                        description: 'Whether the rebuild succeeded',
+                      },
+                      duration: {
+                        type: 'integer',
+                        description: 'Time taken in milliseconds',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+        '500': {
+          description: 'Rebuild failed',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  error: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
   '/api/songs': {
     get: {
       tags: ['Songs'],

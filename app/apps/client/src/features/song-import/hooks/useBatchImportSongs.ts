@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
 import { getApiUrl } from '~/config'
+import { rebuildSearchIndex } from '~/features/songs/service'
 import type { BatchImportInput, BatchImportResult } from '../types'
 
 const BATCH_SIZE = 500 // Increased from 200 for better performance (fewer HTTP requests)
@@ -106,6 +107,16 @@ export function useBatchImportSongs() {
       // biome-ignore lint/suspicious/noConsole: performance logging
       console.log(
         `[PERF] Total import: ${totalTime.toFixed(0)}ms for ${input.songs.length} songs (${(totalTime / input.songs.length).toFixed(2)}ms/song avg)`,
+      )
+
+      // Rebuild FTS search index to ensure all imported songs are searchable
+      // This is done as a single batch operation after all songs are imported
+      const rebuildStart = performance.now()
+      const rebuildResult = await rebuildSearchIndex()
+      const rebuildTime = performance.now() - rebuildStart
+      // biome-ignore lint/suspicious/noConsole: performance logging
+      console.log(
+        `[PERF] FTS rebuild: ${rebuildTime.toFixed(0)}ms (server: ${rebuildResult.duration ?? 'N/A'}ms) - ${rebuildResult.success ? 'success' : 'failed'}`,
       )
 
       queryClient.invalidateQueries({ queryKey: ['songs'] })

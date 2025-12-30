@@ -2302,6 +2302,47 @@ async function main() {
         )
       }
 
+      // POST /api/songs/search/rebuild - Rebuild FTS search index
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/songs/search/rebuild'
+      ) {
+        const permError = checkPermission('songs.create')
+        if (permError) return permError
+
+        try {
+          const startTime = performance.now()
+          rebuildSearchIndex()
+          const duration = performance.now() - startTime
+
+          // biome-ignore lint/suspicious/noConsole: performance logging
+          console.log(
+            `[INFO] [search-rebuild] FTS index rebuilt in ${duration.toFixed(2)}ms`,
+          )
+
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({
+                data: { success: true, duration: Math.round(duration) },
+              }),
+              {
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        } catch (error) {
+          const msg = error instanceof Error ? error.message : String(error)
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: `Rebuild failed: ${msg}` }), {
+              status: 500,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
       // GET /api/songs/export - Get all songs with slides for export
       if (req.method === 'GET' && url.pathname === '/api/songs/export') {
         const permError = checkPermission('songs.view')
