@@ -1,7 +1,6 @@
 import { asc, eq, inArray } from 'drizzle-orm'
 
 import { getCategoryById } from './categories'
-import { sanitizeSongTitle } from './sanitizeTitle'
 import { getSlidesBySongId } from './song-slides'
 import type {
   BatchImportResult,
@@ -208,7 +207,9 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
   try {
     const db = getDatabase()
     const now = new Date()
-    const sanitizedTitle = sanitizeSongTitle(input.title)
+    // Title sanitization is handled by the client - preserve the title as-is
+    // to support numbered filenames like "050 - Song Title"
+    const title = input.title.trim() || 'Untitled Song'
 
     let songId: number
 
@@ -217,7 +218,7 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
 
       // Build update object
       const updateData: Record<string, any> = {
-        title: sanitizedTitle,
+        title,
         categoryId: input.categoryId ?? null,
         sourceFilename: input.sourceFilename ?? null,
         author: input.author ?? null,
@@ -244,7 +245,7 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
 
       log('info', `Song updated: ${input.id}`)
     } else {
-      log('debug', `Creating song: ${sanitizedTitle}`)
+      log('debug', `Creating song: ${title}`)
 
       // Set last_manual_edit only when isManualEdit is true (UI edit)
       const lastManualEdit = input.isManualEdit ? now : null
@@ -252,7 +253,7 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
       const result = db
         .insert(songs)
         .values({
-          title: sanitizedTitle,
+          title,
           categoryId: input.categoryId ?? null,
           sourceFilename: input.sourceFilename ?? null,
           author: input.author ?? null,
@@ -493,8 +494,9 @@ export function batchImportSongs(
 
       try {
         const categoryId = input.categoryId ?? defaultCategoryId ?? null
-        // Sanitize the title to remove special characters like /: from the beginning
-        const title = sanitizeSongTitle(input.title || '')
+        // Title sanitization is handled by the client - preserve the title as-is
+        // to support numbered filenames like "050 - Song Title"
+        const title = (input.title || '').trim() || 'Untitled Song'
 
         // Check if song was manually edited and should be skipped (O(1) lookup)
         if (manuallyEditedTitles?.has(title.toLowerCase())) {
