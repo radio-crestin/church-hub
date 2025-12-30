@@ -7,6 +7,7 @@ export {
   importDatabase,
 } from './database'
 export {
+  type FactoryResetOptions,
   type FactoryResetResult,
   performFactoryReset,
 } from './factory-reset'
