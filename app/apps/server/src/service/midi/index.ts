@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs'
+
 import {
   DEFAULT_MIDI_CONFIG,
   LED_VELOCITY_OFF,
@@ -7,16 +9,234 @@ import {
   type MIDIInputMessage,
 } from './types'
 import { midiLogger } from '../../utils/fileLogger'
+import { getMidiNativeModulePath } from '../../utils/paths'
 
 // Lazy-loaded easymidi module (may not be available in production builds)
 let easymidi: typeof import('easymidi') | null = null
 let midiAvailable = true
 let midiLoadAttempted = false
 
+/**
+ * Attempts to load the MIDI native module from the bundled resources path.
+ * This is needed because Bun's compiled binaries don't include native modules.
+ */
+function tryLoadBundledMidi(): typeof import('easymidi') | null {
+  const bundledPath = getMidiNativeModulePath()
+  if (!bundledPath) return null
+
+  if (!existsSync(bundledPath)) {
+    midiLogger.debug(`Bundled MIDI native module not found at ${bundledPath}`)
+    return null
+  }
+
+  try {
+    // Load the native module directly
+    const nativeMidi = require(bundledPath)
+    midiLogger.info(
+      `Loaded MIDI native module from bundled path: ${bundledPath}`,
+    )
+
+    // Create a minimal easymidi-compatible wrapper
+    return createEasymidiWrapper(nativeMidi)
+  } catch (error) {
+    midiLogger.warn(
+      `Failed to load bundled MIDI module: ${error instanceof Error ? error.message : error}`,
+    )
+    return null
+  }
+}
+
+/**
+ * Creates an easymidi-compatible wrapper around the raw @julusian/midi native module
+ */
+function createEasymidiWrapper(nativeMidi: {
+  Input: new (
+    callback: (deltaTime: number, message: Uint8Array) => void,
+  ) => {
+    getPortCount: () => number
+    getPortName: (port: number) => string
+    openPort: (port: number) => void
+    closePort: () => void
+    destroy: () => void
+    isPortOpen: () => boolean
+  }
+  Output: new () => {
+    getPortCount: () => number
+    getPortName: (port: number) => string
+    openPort: (port: number) => void
+    closePort: () => void
+    destroy: () => void
+    isPortOpen: () => boolean
+    sendMessage: (message: Buffer) => void
+  }
+}): typeof import('easymidi') {
+  // Get list of input device names
+  function getInputs(): string[] {
+    const tempInput = new nativeMidi.Input(() => {})
+    const count = tempInput.getPortCount()
+    const names: string[] = []
+    for (let i = 0; i < count; i++) {
+      names.push(tempInput.getPortName(i))
+    }
+    tempInput.destroy()
+    return names
+  }
+
+  // Get list of output device names
+  function getOutputs(): string[] {
+    const tempOutput = new nativeMidi.Output()
+    const count = tempOutput.getPortCount()
+    const names: string[] = []
+    for (let i = 0; i < count; i++) {
+      names.push(tempOutput.getPortName(i))
+    }
+    tempOutput.destroy()
+    return names
+  }
+
+  class Input {
+    private input: ReturnType<typeof nativeMidi.Input.prototype.constructor>
+    private listeners: Map<
+      string,
+      Set<(msg: Record<string, unknown>) => void>
+    > = new Map()
+
+    constructor(name: string) {
+      this.input = new nativeMidi.Input(
+        (deltaTime: number, message: Uint8Array) => {
+          const msg = this.parseMessage(Array.from(message))
+          if (msg) {
+            const eventListeners = this.listeners.get(msg._type as string)
+            if (eventListeners) {
+              for (const listener of eventListeners) {
+                listener(msg)
+              }
+            }
+          }
+        },
+      )
+
+      // Find and open the port by name
+      const count = this.input.getPortCount()
+      for (let i = 0; i < count; i++) {
+        if (this.input.getPortName(i) === name) {
+          this.input.openPort(i)
+          break
+        }
+      }
+    }
+
+    private parseMessage(bytes: number[]): Record<string, unknown> | null {
+      if (bytes.length < 1) return null
+
+      const status = bytes[0]
+      const type = status & 0xf0
+      const channel = status & 0x0f
+
+      if (type === 0x90 && bytes[2] > 0) {
+        return { _type: 'noteon', channel, note: bytes[1], velocity: bytes[2] }
+      }
+      if (type === 0x80 || (type === 0x90 && bytes[2] === 0)) {
+        return { _type: 'noteoff', channel, note: bytes[1], velocity: bytes[2] }
+      }
+      if (type === 0xb0) {
+        return { _type: 'cc', channel, controller: bytes[1], value: bytes[2] }
+      }
+      return null
+    }
+
+    on(event: string, callback: (msg: Record<string, unknown>) => void): this {
+      if (!this.listeners.has(event)) {
+        this.listeners.set(event, new Set())
+      }
+      this.listeners.get(event)?.add(callback)
+      return this
+    }
+
+    close(): void {
+      this.input.closePort()
+      this.input.destroy()
+    }
+
+    isPortOpen(): boolean {
+      return this.input.isPortOpen()
+    }
+  }
+
+  class Output {
+    private output: ReturnType<typeof nativeMidi.Output.prototype.constructor>
+
+    constructor(name: string) {
+      this.output = new nativeMidi.Output()
+
+      // Find and open the port by name
+      const count = this.output.getPortCount()
+      for (let i = 0; i < count; i++) {
+        if (this.output.getPortName(i) === name) {
+          this.output.openPort(i)
+          break
+        }
+      }
+    }
+
+    send(type: string, params: Record<string, number>): void {
+      let message: number[] = []
+
+      if (type === 'noteon') {
+        message = [
+          0x90 | (params.channel || 0),
+          params.note || 0,
+          params.velocity || 127,
+        ]
+      } else if (type === 'noteoff') {
+        message = [
+          0x80 | (params.channel || 0),
+          params.note || 0,
+          params.velocity || 0,
+        ]
+      } else if (type === 'cc') {
+        message = [
+          0xb0 | (params.channel || 0),
+          params.controller || 0,
+          params.value || 0,
+        ]
+      }
+
+      if (message.length > 0) {
+        this.output.sendMessage(Buffer.from(message))
+      }
+    }
+
+    close(): void {
+      this.output.closePort()
+      this.output.destroy()
+    }
+
+    isPortOpen(): boolean {
+      return this.output.isPortOpen()
+    }
+  }
+
+  return {
+    getInputs,
+    getOutputs,
+    Input: Input as unknown as typeof import('easymidi').Input,
+    Output: Output as unknown as typeof import('easymidi').Output,
+  } as typeof import('easymidi')
+}
+
 function loadMidi(): boolean {
   if (midiLoadAttempted) return midiAvailable
   midiLoadAttempted = true
 
+  // First try to load from bundled resources (production builds)
+  easymidi = tryLoadBundledMidi()
+  if (easymidi) {
+    midiAvailable = true
+    return true
+  }
+
+  // Fall back to standard require (development)
   try {
     // Dynamic require to avoid crash at import time
     easymidi = require('easymidi')

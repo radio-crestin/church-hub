@@ -34,3 +34,42 @@ export function getLogsDir(): string {
 export function getDatabasePath(): string {
   return process.env.DATABASE_PATH || join(getDataDir(), 'app.db')
 }
+
+/**
+ * Gets the resources directory
+ * In production (Tauri mode), returns the path to bundled resources
+ * In development, returns null (use node_modules instead)
+ */
+export function getResourcesDir(): string | null {
+  if (process.env.TAURI_MODE === 'true') {
+    const execPath = process.execPath
+    const platform = process.platform
+
+    if (platform === 'darwin') {
+      // macOS: The sidecar binary is at Contents/MacOS/church-hub-sidecar
+      // Resources are at Contents/Resources/
+      const contentsDir = join(execPath, '..', '..')
+      return join(contentsDir, 'Resources')
+    }
+    if (platform === 'win32') {
+      // Windows: Resources are in the same directory as the executable
+      return join(execPath, '..')
+    }
+    // Linux: Resources are in the same directory as the executable
+    return join(execPath, '..')
+  }
+  return null
+}
+
+/**
+ * Gets the path to the MIDI native module
+ * In production, looks in the bundled resources
+ * In development, returns null (use standard node_modules resolution)
+ */
+export function getMidiNativeModulePath(): string | null {
+  const resourcesDir = getResourcesDir()
+  if (resourcesDir) {
+    return join(resourcesDir, 'midi-native', 'midi.node')
+  }
+  return null
+}
