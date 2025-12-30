@@ -121,6 +121,7 @@ export function ImportConfirmationModal({
             value={categoryId}
             onChange={setCategoryId}
             disabled={isPending}
+            portalContainer={dialogRef.current}
           />
         </div>
 

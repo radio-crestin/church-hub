@@ -8,12 +8,14 @@ interface CategoryPickerProps {
   value: number | null
   onChange: (value: number | null) => void
   disabled?: boolean
+  portalContainer?: HTMLElement | null
 }
 
 export function CategoryPicker({
   value,
   onChange,
   disabled,
+  portalContainer,
 }: CategoryPickerProps) {
   const { t } = useTranslation('songs')
   const { data: categories } = useCategories()
@@ -50,6 +52,7 @@ export function CategoryPicker({
       placeholder={t('editor.categoryPlaceholder')}
       createNewLabel={t('category.create')}
       disabled={disabled}
+      portalContainer={portalContainer}
     />
   )
 }
