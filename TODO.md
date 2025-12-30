@@ -92,7 +92,8 @@
 ~~- importa toate cantarile existente si apoi creaza un backup ca si sqlite si importa-l pe PC-ul de la Adunare~~
 ~~- deasemenea, pentru versetele tinerilor lasa posibilitatea sa nu adaugi ":"~~
 ~~- rezolva problema cu combinarea versurilor pentru livestream~~ 
-- cand utilizatorul este focusat pe search-ul din Biblie, nu functioneaza sa dea bottom/up
+~~- cand utilizatorul este focusat pe search-ul din Biblie, nu functioneaza sa dea bottom/up~~
+- implementeaza search in Bible
 - allow the user to easily download Bibles from https://github.com/seven1m/open-bibles repository and also fix the Bible import format
 - the button to open the database folder is not working
 - fix also midi missing library in the release version

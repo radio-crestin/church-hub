@@ -38,6 +38,8 @@ export interface UseBibleNavigationReturn {
   selectChapter: (chapter: number) => void
   /** Sets the presented index (verse displayed on screen) */
   presentVerse: (index: number) => void
+  /** Sets the searched index (verse highlighted but not presented) */
+  setSearchedIndex: (index: number | null) => void
   /** Moves to next verse and presents it */
   nextVerse: () => void
   /** Moves to previous verse and presents it */
@@ -109,6 +111,16 @@ export function useBibleNavigation(
     setState((prev) => ({
       ...prev,
       presentedIndex: index,
+      // Clear searchedIndex so selection matches presented verse
+      searchedIndex: null,
+    }))
+  }, [])
+
+  /** Sets the searched index (verse highlighted but not presented) */
+  const setSearchedIndex = useCallback((index: number | null) => {
+    setState((prev) => ({
+      ...prev,
+      searchedIndex: index,
     }))
   }, [])
 
@@ -136,7 +148,7 @@ export function useBibleNavigation(
   const clearPresentation = useCallback(() => {
     setState((prev) => ({
       ...prev,
-      // Preserve last presented verse in searchedIndex for visual reference
+      // Keep verse selected (indigo) so user can navigate with arrows and re-present with Enter
       searchedIndex: prev.presentedIndex,
       presentedIndex: null,
     }))
@@ -225,6 +237,7 @@ export function useBibleNavigation(
     selectBook,
     selectChapter,
     presentVerse,
+    setSearchedIndex,
     nextVerse,
     previousVerse,
     clearPresentation,

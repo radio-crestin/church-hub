@@ -21,6 +21,8 @@ interface BibleNavigationPanelProps {
   onSelectVerse: (verse: BibleVerse, index: number) => void
   onSelectSearchResult: (result: BibleSearchResult) => void
   onPresentSearched?: () => void
+  onNextVerse?: () => void
+  onPreviousVerse?: () => void
   onGoBack?: () => void
 }
 
@@ -29,6 +31,8 @@ export function BibleNavigationPanel({
   onSelectVerse,
   onSelectSearchResult,
   onPresentSearched,
+  onNextVerse,
+  onPreviousVerse,
   onGoBack,
 }: BibleNavigationPanelProps) {
   const { t } = useTranslation('bible')
@@ -91,6 +95,18 @@ export function BibleNavigationPanel({
     if (e.key === 'Enter' && onPresentSearched) {
       e.preventDefault()
       onPresentSearched()
+      return
+    }
+
+    // Handle arrow keys for verse navigation when in verses view
+    if (state.level !== 'verses' || verses.length === 0) return
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      onNextVerse?.()
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      onPreviousVerse?.()
     }
   }
 
