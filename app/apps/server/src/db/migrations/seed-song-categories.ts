@@ -1,7 +1,5 @@
-import { existsSync } from 'node:fs'
-import { join } from 'node:path'
-
 import type { Database } from 'bun:sqlite'
+import defaultSongCategories from '../fixtures/default-song-categories.json'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -16,11 +14,6 @@ interface SongCategoryFixture {
   priority: number
 }
 
-const FIXTURE_PATH = join(
-  import.meta.dir,
-  '../fixtures/default-song-categories.json',
-)
-
 /**
  * Seeds default song categories from fixture file.
  * Uses INSERT OR IGNORE to avoid duplicates on subsequent runs.
@@ -30,22 +23,17 @@ const FIXTURE_PATH = join(
  * 2. Run: bun run fixtures
  */
 export function seedSongCategories(db: Database): void {
-  log('debug', 'Checking if song categories fixture exists...')
-
-  if (!existsSync(FIXTURE_PATH)) {
-    log('debug', 'No song categories fixture found, skipping seed')
-    return
-  }
-
-  // Dynamic import to handle missing file gracefully
-  const categories = require(FIXTURE_PATH) as SongCategoryFixture[]
+  const categories = defaultSongCategories as SongCategoryFixture[]
 
   if (!Array.isArray(categories) || categories.length === 0) {
-    log('debug', 'Song categories fixture is empty, skipping seed')
+    log('info', 'No song categories fixtures available, skipping seed')
     return
   }
 
-  log('info', 'Seeding song categories from fixtures...')
+  log(
+    'info',
+    `Seeding ${categories.length} song category(ies) from fixtures...`,
+  )
 
   for (const category of categories) {
     db.run(

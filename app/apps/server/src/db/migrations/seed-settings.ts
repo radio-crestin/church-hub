@@ -1,7 +1,5 @@
-import { existsSync } from 'node:fs'
-import { join } from 'node:path'
-
 import type { Database } from 'bun:sqlite'
+import defaultSettings from '../fixtures/default-settings.json'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -15,8 +13,6 @@ interface AppSettingFixture {
   key: string
   value: string
 }
-
-const FIXTURE_PATH = join(import.meta.dir, '../fixtures/default-settings.json')
 
 /**
  * Seeds default app settings from fixture file.
@@ -35,21 +31,14 @@ const FIXTURE_PATH = join(import.meta.dir, '../fixtures/default-settings.json')
  * 2. Run: bun run fixtures
  */
 export function seedAppSettings(db: Database): void {
-  log('debug', 'Checking if settings fixture exists...')
-
-  if (!existsSync(FIXTURE_PATH)) {
-    log('debug', 'No settings fixture found, skipping seed')
-    return
-  }
-
-  const settings = require(FIXTURE_PATH) as AppSettingFixture[]
+  const settings = defaultSettings as AppSettingFixture[]
 
   if (!Array.isArray(settings) || settings.length === 0) {
-    log('debug', 'Settings fixture is empty, skipping seed')
+    log('info', 'No settings fixtures available, skipping seed')
     return
   }
 
-  log('info', 'Seeding app settings from fixtures...')
+  log('info', `Seeding ${settings.length} app setting(s) from fixtures...`)
 
   let seededCount = 0
 
