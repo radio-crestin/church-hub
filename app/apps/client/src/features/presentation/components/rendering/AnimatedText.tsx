@@ -1,6 +1,7 @@
 import { useLayoutEffect, useMemo, useRef } from 'react'
 
 import { type AnimationConfig, useSlideAnimation } from './useSlideAnimation'
+import { compressLines } from './utils/textProcessing'
 import type {
   TextStyle,
   AnimationConfig as TypesAnimationConfig,
@@ -172,11 +173,17 @@ export function AnimatedText({
   const textRef = useRef<HTMLDivElement>(null)
   const measureRef = useRef<HTMLDivElement>(null)
 
-  // Normalize text content
-  const normalizedText = useMemo(
-    () => normalizeText(content, isHtml),
-    [content, isHtml],
-  )
+  // Normalize text content and apply line compression if enabled
+  const normalizedText = useMemo(() => {
+    let text = normalizeText(content, isHtml)
+
+    // Apply line compression if enabled in style
+    if (style.compressLines) {
+      text = compressLines(text, style.lineSeparator ?? 'space')
+    }
+
+    return text
+  }, [content, isHtml, style.compressLines, style.lineSeparator])
 
   // Use the slide animation hook
   const {

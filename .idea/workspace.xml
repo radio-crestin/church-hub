@@ -6,19 +6,9 @@
   <component name="ChangeListManager">
     <list default="true" id="66517e3f-2e4e-43cc-880d-deb242368f0c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/database-management/components/DatabaseManager.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/database-management/components/DatabaseManager.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/settings.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/en/settings.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/settings.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/i18n/locales/ro/settings.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/service/database/database.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/service/database/database.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/server/src/utils/paths.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/server/src/utils/paths.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/bun.lock" beforeDir="false" afterPath="$PROJECT_DIR$/app/bun.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/tauri/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/Cargo.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/tauri/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/tauri/src/commands.rs" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/src/commands.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/tauri/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/tauri/src/server.rs" beforeDir="false" afterPath="$PROJECT_DIR$/app/tauri/src/server.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TODO.md" beforeDir="false" afterPath="$PROJECT_DIR$/TODO.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/VerseteTineriEntryRow.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/queue/components/VerseteTineriEntryRow.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/schedules/components/ScheduleEditor.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/schedules/components/ScheduleEditor.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -191,7 +181,7 @@
       <workItem from="1765113262440" duration="193467000" />
       <workItem from="1766606925029" duration="959000" />
       <workItem from="1766918516260" duration="28916000" />
-      <workItem from="1767117172739" duration="1565000" />
+      <workItem from="1767117172739" duration="3442000" />
     </task>
     <servers />
   </component>
