@@ -2,6 +2,7 @@
 - API docs are available at http://localhost:3000/api/docs
 - do not launch the client/server as it's already running
 - make sure that any api is integrated into openapi and in scalar docs
+- the app must be cross platform (windows, macos and linux)
 
 ## Worktrees
 

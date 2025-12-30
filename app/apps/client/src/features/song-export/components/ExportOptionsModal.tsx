@@ -134,6 +134,7 @@ export function ExportOptionsModal({
                 value={categoryId}
                 onChange={setCategoryId}
                 placeholder={t('sections.importExport.export.selectCategory')}
+                portalContainer={dialogRef.current}
               />
             </div>
           )}

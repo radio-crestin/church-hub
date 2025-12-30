@@ -138,7 +138,7 @@
     "theme": "Theme",
     "altTheme": "Alternative Theme",
     "keyLine": "Key Line",
-    "keyLinePlaceholder": "Enter a memorable line from the song...",
+    "keyLinePlaceholder": "Do Major",
     "presentationOrder": "Presentation Order",
     "sourceFilename": "Source File",
     "presentationCount": "Times Presented",
@@ -163,6 +163,8 @@
   "duplicateDialog": {
     "title": "Duplicate Song Found",
     "description": "A song with the title \"{{title}}\" already exists. What would you like to do?",
+    "openExisting": "Open Existing Song",
+    "openExistingDescription": "View the song that already exists in the library",
     "overwrite": "Update Existing Song",
     "overwriteDescription": "Replace the existing song's slides with the new content",
     "createNew": "Create New Song",

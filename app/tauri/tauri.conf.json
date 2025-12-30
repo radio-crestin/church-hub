@@ -5,7 +5,7 @@
   "identifier": "com.church-hub",
   "build": {
     "devUrl": "http://localhost:3000",
-    "beforeDevCommand": "PORT=3000 VITE_DEV_PORT=8086 npm run dev:apps",
+    "beforeDevCommand": "cross-env PORT=3000 VITE_DEV_PORT=8086 npm run dev:apps",
     "beforeBuildCommand": "npm run build:apps",
     "frontendDist": "../apps/client/dist"
   },

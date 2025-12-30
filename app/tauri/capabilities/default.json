@@ -15,6 +15,17 @@
     },
     "fs:default",
     "fs:allow-read",
+    "fs:allow-home-read-recursive",
+    "fs:allow-home-write-recursive",
+    "fs:allow-document-write-recursive",
+    {
+      "identifier": "fs:scope",
+      "allow": ["$HOME/**", "$DOCUMENT/**"]
+    },
+    "fs:allow-write",
+    "fs:allow-write-file",
+    "fs:allow-write-text-file",
+    "fs:allow-mkdir",
     "fs:allow-download-write",
     "fs:allow-download-write-recursive",
     "dialog:default",

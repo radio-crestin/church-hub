@@ -1,5 +1,6 @@
 import { open, save } from '@tauri-apps/plugin-dialog'
-import { writeFile } from '@tauri-apps/plugin-fs'
+import { mkdir, writeFile } from '@tauri-apps/plugin-fs'
+import { join } from '@tauri-apps/api/path'
 import { useCallback, useState } from 'react'
 
 import type { SongWithSlides } from '~/features/songs/types'
@@ -132,8 +133,11 @@ export function useExportSongs() {
           songs,
           async (song) => {
             const content = await generateFileContent(song, fileFormat)
+            const categoryFolder = song.category
+              ? sanitizeFilename(song.category.name)
+              : 'Uncategorized'
             return {
-              filename: `${sanitizeFilename(song.title)}.${extension}`,
+              filename: `${categoryFolder}/${sanitizeFilename(song.title)}.${extension}`,
               content,
             }
           },
@@ -240,16 +244,43 @@ export function useExportSongs() {
           }
         }
 
+        // Create category folders first
+        const categoryNames = new Set<string>()
+        for (const song of songs) {
+          const categoryFolder = song.category
+            ? sanitizeFilename(song.category.name)
+            : 'Uncategorized'
+          categoryNames.add(categoryFolder)
+        }
+
+        for (const categoryName of categoryNames) {
+          const categoryPath = await join(selectedFolder, categoryName)
+          try {
+            await mkdir(categoryPath, { recursive: true })
+          } catch (mkdirError) {
+            console.error('Failed to create directory:', categoryPath, mkdirError)
+            throw mkdirError
+          }
+        }
+
         // Generate and write files in parallel batches
         setProgress({ phase: 'writing', current: 0, total: songs.length })
 
         await processSongsInBatches(
           songs,
           async (song) => {
+            const categoryFolder = song.category
+              ? sanitizeFilename(song.category.name)
+              : 'Uncategorized'
             const safeFilename = sanitizeFilename(song.title)
-            const filePath = `${selectedFolder}/${safeFilename}.${extension}`
+            const filePath = await join(selectedFolder, categoryFolder, `${safeFilename}.${extension}`)
             const content = await generateFileContent(song, fileFormat)
-            await writeFile(filePath, content)
+            try {
+              await writeFile(filePath, content)
+            } catch (writeError) {
+              console.error('Failed to write file:', filePath, writeError)
+              throw writeError
+            }
             return filePath
           },
           (current, total, currentSong) => {

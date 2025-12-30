@@ -26,7 +26,6 @@ use std::path::PathBuf;
 #[cfg(desktop)]
 use std::sync::Arc;
 use std::time::Instant;
-#[cfg(target_os = "macos")]
 use tauri::Emitter;
 use tauri::RunEvent;
 #[cfg(desktop)]
@@ -96,6 +95,45 @@ pub fn run() {
                 .build(),
         );
         println!("[startup] plugin_window_state: {:?}", t.elapsed());
+        b
+    };
+
+    // Single-instance plugin - ensures only one instance runs, passes files to existing instance
+    #[cfg(desktop)]
+    let builder = {
+        let t = Instant::now();
+        let b = builder.plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+            println!("[single-instance] Second instance launched with args: {args:?}");
+
+            // Check if any argument is a file we handle
+            for arg in args.iter().skip(1) {
+                // Skip first arg (exe path)
+                let path = PathBuf::from(arg);
+                if path.extension().is_some_and(|ext| {
+                    ext.eq_ignore_ascii_case("pptx")
+                        || ext.eq_ignore_ascii_case("opensong")
+                        || ext.eq_ignore_ascii_case("churchprogram")
+                }) {
+                    println!("[single-instance] File detected: {path:?}");
+
+                    // Emit event to frontend so it can import the file
+                    if let Err(e) = app.emit("file-opened", path.to_string_lossy().to_string()) {
+                        println!("[single-instance] Failed to emit file-opened: {e}");
+                    }
+
+                    // Focus the main window
+                    if let Some(window) = app.get_webview_window("main") {
+                        // Unminimize if minimized
+                        let _ = window.unminimize();
+                        // Bring to front and focus
+                        let _ = window.set_focus();
+                    }
+
+                    break; // Only handle first file
+                }
+            }
+        }));
+        println!("[startup] plugin_single_instance: {:?}", t.elapsed());
         b
     };
 
@@ -357,6 +395,8 @@ pub fn run() {
     println!("[startup] tauri_build: {:?}", build_start.elapsed());
 
     app.run(|app_handle, event| {
+        // Suppress unused variable warning (used conditionally per platform)
+        let _ = &app_handle;
         match event {
             // Handle file association when app is already running (macOS Apple Events only)
             #[cfg(target_os = "macos")]
