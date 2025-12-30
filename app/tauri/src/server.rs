@@ -128,3 +128,30 @@ pub fn shutdown_server(app_handle: &AppHandle) -> Result<(), String> {
     }
     Ok(())
 }
+
+/// Restarts the sidecar server
+pub fn restart_server(app_handle: &AppHandle) -> Result<(), String> {
+    println!("[sidecar] Restarting server...");
+
+    // Get the server port from app state
+    let server_port = if let Some(app_state) = app_handle.try_state::<AppState>() {
+        app_state.server_port
+    } else {
+        3000 // fallback
+    };
+
+    // Shutdown the server
+    shutdown_server(app_handle)?;
+
+    // Wait a bit for cleanup
+    std::thread::sleep(Duration::from_millis(500));
+
+    // Start the server again
+    start_server(app_handle, server_port)?;
+
+    // Wait for server to be ready
+    wait_for_server_ready(server_port, 30)?;
+
+    println!("[sidecar] Server restarted successfully.");
+    Ok(())
+}

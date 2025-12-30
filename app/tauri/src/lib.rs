@@ -11,7 +11,7 @@ use commands::{clear_pending_import, get_pending_import, get_server_config};
 #[cfg(desktop)]
 use commands::PendingImport;
 #[cfg(desktop)]
-use commands::{reset_zoom, toggle_devtools, zoom_in, zoom_out, ZoomState};
+use commands::{reset_zoom, restart_server, toggle_devtools, zoom_in, zoom_out, ZoomState};
 #[cfg(desktop)]
 use webview::{
     close_child_webview, create_child_webview, hide_child_webview, show_child_webview,
@@ -66,7 +66,8 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_websocket::init())
         .plugin(tauri_plugin_keep_screen_on::init())
-        .plugin(tauri_plugin_screen_brightness::init());
+        .plugin(tauri_plugin_screen_brightness::init())
+        .plugin(tauri_plugin_process::init());
     println!("[startup] plugins_core: {:?}", t.elapsed());
 
     // Global shortcut plugin is desktop-only
@@ -374,7 +375,8 @@ pub fn run() {
         toggle_devtools,
         zoom_in,
         zoom_out,
-        reset_zoom
+        reset_zoom,
+        restart_server
     ]);
 
     // Mobile: only basic commands (no webview management)

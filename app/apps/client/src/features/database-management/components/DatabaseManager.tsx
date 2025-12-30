@@ -1,5 +1,12 @@
 import { invoke } from '@tauri-apps/api/core'
-import { AlertTriangle, Copy, Download, FolderOpen, Upload } from 'lucide-react'
+import {
+  AlertTriangle,
+  Copy,
+  Download,
+  FolderOpen,
+  RefreshCw,
+  Upload,
+} from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -33,6 +40,8 @@ export function DatabaseManager() {
   const [databaseInfo, setDatabaseInfo] = useState<DatabaseInfo | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [showImportConfirm, setShowImportConfirm] = useState(false)
+  const [showRestartModal, setShowRestartModal] = useState(false)
+  const [isRestarting, setIsRestarting] = useState(false)
   const [pendingImportPath, setPendingImportPath] = useState<string | null>(
     null,
   )
@@ -118,7 +127,17 @@ export function DatabaseManager() {
     setPendingImportPath(null)
 
     if (result.success) {
-      showToast(t('sections.database.toast.importSuccess'), 'success')
+      if (result.requiresRestart) {
+        // Server couldn't reinitialize - show restart modal
+        setShowRestartModal(true)
+      } else {
+        // Database was reinitialized in-process - just reload the page
+        showToast(t('sections.database.toast.importSuccess'), 'success')
+        // Small delay to show the toast before reloading
+        setTimeout(() => {
+          window.location.reload()
+        }, 1000)
+      }
     } else {
       showToast(
         t('sections.database.toast.importFailed', { error: result.error }),
@@ -126,6 +145,24 @@ export function DatabaseManager() {
       )
     }
   }, [pendingImportPath, importDatabase, showToast, t])
+
+  const handleRestartConfirm = useCallback(async () => {
+    setIsRestarting(true)
+    try {
+      await invoke('restart_server')
+      // Reload the page to reinitialize the app with the new database
+      window.location.reload()
+    } catch (error) {
+      showToast(
+        t('sections.database.toast.restartFailed', {
+          error: error instanceof Error ? error.message : String(error),
+        }),
+        'error',
+      )
+      setIsRestarting(false)
+      setShowRestartModal(false)
+    }
+  }, [showToast, t])
 
   const handleImportCancel = useCallback(() => {
     setShowImportConfirm(false)
@@ -282,6 +319,43 @@ export function DatabaseManager() {
                 className="px-4 py-2 text-sm bg-amber-600 text-white hover:bg-amber-700 rounded-md"
               >
                 {t('sections.database.import.confirm.confirm')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Restart Required Modal */}
+      {showRestartModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" />
+          <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+            <div className="flex items-start gap-4">
+              <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-full">
+                <RefreshCw className="w-6 h-6 text-green-600 dark:text-green-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {t('sections.database.restart.title')}
+                </h3>
+                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                  {t('sections.database.restart.message')}
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end">
+              <button
+                type="button"
+                onClick={handleRestartConfirm}
+                disabled={isRestarting}
+                className="px-4 py-2 text-sm bg-green-600 text-white hover:bg-green-700 rounded-md disabled:opacity-50 flex items-center gap-2"
+              >
+                {isRestarting && (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                )}
+                {isRestarting
+                  ? t('sections.database.restart.restarting')
+                  : t('sections.database.restart.confirm')}
               </button>
             </div>
           </div>

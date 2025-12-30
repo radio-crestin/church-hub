@@ -525,13 +525,20 @@
           "cancel": "Cancel"
         }
       },
+      "restart": {
+        "title": "Import Successful",
+        "message": "The database was imported successfully. Click the button below to restart the server and apply changes.",
+        "confirm": "Restart Now",
+        "restarting": "Restarting..."
+      },
       "toast": {
         "pathCopied": "Database path copied to clipboard",
         "exportSuccess": "Database exported successfully to {{path}}",
         "exportFailed": "Failed to export database: {{error}}",
         "openFolderFailed": "Failed to open file explorer",
-        "importSuccess": "Database imported successfully. Please restart the application.",
-        "importFailed": "Failed to import database: {{error}}"
+        "importSuccess": "Database imported successfully. Reloading...",
+        "importFailed": "Failed to import database: {{error}}",
+        "restartFailed": "Failed to restart server: {{error}}"
       }
     },
     "debug": {
