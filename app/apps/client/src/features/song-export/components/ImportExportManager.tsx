@@ -180,10 +180,9 @@ export function ImportExportManager() {
             const firstLine = firstSlide.text.split('\n')[0]?.trim()
             title = sanitizeSongTitle(firstLine || s.parsed.title)
           } else if (s.sourceFilename) {
-            // Use filename without extension as title (with sanitization)
-            title = sanitizeSongTitle(
-              s.sourceFilename.replace(/\.[^.]+$/, '') || s.parsed.title,
-            )
+            // Use filename without extension as title (NO sanitization to preserve numbers like "124 - Song")
+            title =
+              s.sourceFilename.replace(/\.[^.]+$/, '').trim() || s.parsed.title
           } else {
             title = s.parsed.title
           }
