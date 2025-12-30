@@ -7,10 +7,8 @@
     <list default="true" id="66517e3f-2e4e-43cc-880d-deb242368f0c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TODO.md" beforeDir="false" afterPath="$PROJECT_DIR$/TODO.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/song-export/components/ImportExportManager.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/song-export/components/ImportExportManager.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/song-import/components/ImportConfirmationModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/song-import/components/ImportConfirmationModal.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/song-import/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/song-import/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/apps/client/src/features/song-import/utils/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/apps/client/src/features/song-import/utils/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/convert-ppt-to-pptx.sh" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/convert-ppt-to-pptx.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/revert-pptx-names.sh" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

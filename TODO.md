@@ -100,6 +100,9 @@
 - creaza un quickstart guide pentru utilizatori
 - adauga optiune de a cauta cantari folosind AI
 - adauga posibilitatea de a face highlight pentru sesiunea curenta
+- imbunatateste UX-ul pentru cautarea in cantari astfel incat sa poti sa il folosesti doar din tastatura (sa pui sa dai down, apoi enter, apoi enter din nou si prezinti cantarea)
+- adauga full text search si pentru Biblie
 - exportul ca si pptx ar trebui sa aiba textul ceva mai mare
 - creaza optiunea de a adauga live-urile create intr-un playlist pe YouTube
 - adauga optiunea de a afisa pe un ecran separat continutul in anumita limba (o versiune a Bibliei diferita, traduceri cu AI ale cantarilor.. si eventual traduceri in timp real)
+- adauga filtru pentru categoria de cantari si deasemenea, fa loading la cantari cand se face scrolling (infinite scroll)
