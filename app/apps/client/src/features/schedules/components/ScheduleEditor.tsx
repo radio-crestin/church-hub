@@ -5,6 +5,7 @@ import {
   FileText,
   ListPlus,
   Loader2,
+  Save,
   Trash2,
   X,
 } from 'lucide-react'
@@ -89,6 +90,8 @@ export function ScheduleEditor({
 
   // Track last saved values to detect actual changes
   const lastSavedRef = useRef({ title: '', description: '' })
+  // Track if there are unsaved changes
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
 
   // Load schedule data
   useEffect(() => {
@@ -101,12 +104,14 @@ export function ScheduleEditor({
         title: schedule.title,
         description: schedule.description ?? '',
       }
+      setHasUnsavedChanges(false)
     } else if (scheduleId === null) {
       // New schedule
       setTitle('')
       setDescription('')
       setLocalItems([])
       lastSavedRef.current = { title: '', description: '' }
+      setHasUnsavedChanges(false)
       titleInputRef.current?.focus()
     }
   }, [schedule, scheduleId])
@@ -122,10 +127,12 @@ export function ScheduleEditor({
 
   const handleTitleChange = (value: string) => {
     setTitle(value)
+    setHasUnsavedChanges(true)
   }
 
   const handleDescriptionChange = (value: string) => {
     setDescription(value)
+    setHasUnsavedChanges(true)
   }
 
   const handleSave = useCallback(
@@ -151,6 +158,7 @@ export function ScheduleEditor({
           title: currentTitle.trim(),
           description: currentDescription.trim(),
         }
+        setHasUnsavedChanges(false)
 
         // If this was a new schedule, track the ID
         if (scheduleId === null && savedScheduleId) {
@@ -164,24 +172,15 @@ export function ScheduleEditor({
     [effectiveScheduleId, scheduleId, upsertSchedule, onScheduleCreated],
   )
 
-  // Auto-save title/description with debounce
-  useEffect(() => {
-    // Skip auto-save if no title yet
-    if (!title.trim()) return
-
-    // Check if values actually changed from last saved state
-    const hasChanges =
-      title.trim() !== lastSavedRef.current.title ||
-      description.trim() !== lastSavedRef.current.description
-
-    if (!hasChanges) return
-
-    const timeoutId = setTimeout(() => {
-      handleSave(title, description)
-    }, 500)
-
-    return () => clearTimeout(timeoutId)
-  }, [title, description, handleSave])
+  // Manual save handler for the save button
+  const handleManualSave = async () => {
+    if (!title.trim()) {
+      showToast(t('messages.titleRequired', 'Title is required'), 'error')
+      return
+    }
+    await handleSave(title, description)
+    showToast(t('messages.saved', 'Saved'), 'success')
+  }
 
   const handleDelete = async () => {
     if (!effectiveScheduleId) return
@@ -325,6 +324,26 @@ export function ScheduleEditor({
         </Tooltip>
 
         <div className="flex items-center gap-2">
+          {/* Save button - always visible when there are unsaved changes or creating new */}
+          {(hasUnsavedChanges || scheduleId === null) && (
+            <Tooltip content={t('actions.save', 'Save')} position="bottom">
+              <button
+                type="button"
+                onClick={handleManualSave}
+                disabled={upsertSchedule.isPending || !title.trim()}
+                className="flex items-center gap-2 p-2 sm:px-3 sm:py-1.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-lg transition-colors disabled:opacity-50"
+              >
+                {upsertSchedule.isPending ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Save size={16} />
+                )}
+                <span className="hidden sm:inline">
+                  {t('actions.save', 'Save')}
+                </span>
+              </button>
+            </Tooltip>
+          )}
           {effectiveScheduleId !== null && (
             <>
               <Tooltip content={t('actions.saveToFile')} position="bottom">
@@ -376,32 +395,50 @@ export function ScheduleEditor({
       </div>
 
       {/* Title & Description */}
-      <div className="space-y-3 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-        <input
-          ref={titleInputRef}
-          type="text"
-          value={title}
-          onChange={(e) => handleTitleChange(e.target.value)}
-          placeholder={t('editor.titlePlaceholder')}
-          className="w-full px-0 py-1 text-xl font-semibold bg-transparent border-0 border-b-2 border-transparent focus:border-indigo-500 focus:ring-0 text-gray-900 dark:text-white placeholder-gray-400 transition-colors"
-        />
-        <textarea
-          value={description}
-          onChange={(e) => handleDescriptionChange(e.target.value)}
-          placeholder={t('editor.descriptionPlaceholder')}
-          rows={2}
-          className="w-full px-0 py-1 bg-transparent border-0 resize-none focus:ring-0 text-gray-600 dark:text-gray-400 placeholder-gray-400"
-        />
+      <div className="space-y-4 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+        <div className="space-y-1.5">
+          <label
+            htmlFor="schedule-title"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            {t('editor.title', 'Title')}
+          </label>
+          <input
+            id="schedule-title"
+            ref={titleInputRef}
+            type="text"
+            value={title}
+            onChange={(e) => handleTitleChange(e.target.value)}
+            placeholder={t('editor.titlePlaceholder')}
+            className="w-full px-3 py-2 text-base font-semibold bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-gray-900 dark:text-white placeholder-gray-400 transition-colors"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <label
+            htmlFor="schedule-description"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            {t('editor.description', 'Description')}
+          </label>
+          <textarea
+            id="schedule-description"
+            value={description}
+            onChange={(e) => handleDescriptionChange(e.target.value)}
+            placeholder={t('editor.descriptionPlaceholder')}
+            rows={3}
+            className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg resize-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-gray-600 dark:text-gray-300 placeholder-gray-400 transition-colors"
+          />
+        </div>
       </div>
 
-      {/* Items Section */}
-      <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            {t('editor.items')}
-          </h3>
-          <div className="flex items-center gap-2">
-            {effectiveScheduleId !== null && (
+      {/* Items Section - only show for existing schedules */}
+      {effectiveScheduleId !== null && (
+        <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {t('editor.items')}
+            </h3>
+            <div className="flex items-center gap-2">
               <Tooltip content={t('actions.editAsText')} position="bottom">
                 <button
                   type="button"
@@ -414,16 +451,14 @@ export function ScheduleEditor({
                   </span>
                 </button>
               </Tooltip>
-            )}
-            <AddToScheduleMenu
-              onAddSong={handleAddSong}
-              onAddBiblePassage={handleAddBiblePassage}
-              onAddSlide={handleAddSlide}
-            />
+              <AddToScheduleMenu
+                onAddSong={handleAddSong}
+                onAddBiblePassage={handleAddBiblePassage}
+                onAddSlide={handleAddSlide}
+              />
+            </div>
           </div>
-        </div>
 
-        {effectiveScheduleId !== null ? (
           <ScheduleItemList
             scheduleId={effectiveScheduleId}
             items={localItems}
@@ -431,17 +466,8 @@ export function ScheduleEditor({
             onReorder={handleReorderItems}
             onRemoveItem={handleRemoveItem}
           />
-        ) : (
-          <div className="text-center py-8 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-            <p className="text-gray-500 dark:text-gray-400">
-              {t('editor.noItems')}
-            </p>
-            <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
-              {t('editor.addFirstItem')}
-            </p>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Song Picker Modal */}
       <SongPickerModal

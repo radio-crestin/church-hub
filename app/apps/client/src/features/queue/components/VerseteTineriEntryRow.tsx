@@ -68,8 +68,12 @@ export function VerseteTineriEntryRow({
 
       if (books.length === 0) return
 
+      // Normalize input: allow "Ioan 3 16" to be parsed as "Ioan 3:16"
+      // Replace space between consecutive numbers with a colon
+      const normalizedInput = localReference.replace(/(\d+)\s+(\d+)/g, '$1:$2')
+
       const result = parsePassageRange({
-        input: localReference,
+        input: normalizedInput,
         books,
       })
       onReferenceChange(localReference, result)
