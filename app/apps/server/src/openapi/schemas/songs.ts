@@ -8,6 +8,10 @@ export const songSchemas = {
         type: 'integer',
         description: 'Priority for search ranking (higher = more important)',
       },
+      songCount: {
+        type: 'integer',
+        description: 'Number of songs in this category',
+      },
       createdAt: { type: 'integer', description: 'Unix timestamp' },
       updatedAt: { type: 'integer', description: 'Unix timestamp' },
     },

@@ -222,6 +222,8 @@
       "categoryNamePlaceholder": "e.g., Worship, Hymns, Christmas",
       "priority": "Priority",
       "value": "Value",
+      "songCount": "{{count}} song",
+      "songCount_other": "{{count}} songs",
       "actions": {
         "edit": "Edit",
         "delete": "Delete"

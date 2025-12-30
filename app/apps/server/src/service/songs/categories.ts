@@ -20,11 +20,15 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
 /**
  * Converts database category record to API format
  */
-function toCategory(record: typeof songCategories.$inferSelect): SongCategory {
+function toCategory(
+  record: typeof songCategories.$inferSelect,
+  songCount = 0,
+): SongCategory {
   return {
     id: record.id,
     name: record.name,
     priority: record.priority,
+    songCount,
     createdAt:
       record.createdAt instanceof Date
         ? Math.floor(record.createdAt.getTime() / 1000)
@@ -45,12 +49,17 @@ export function getAllCategories(): SongCategory[] {
 
     const db = getDatabase()
     const records = db
-      .select()
+      .select({
+        category: songCategories,
+        songCount: sql<number>`COUNT(${songs.id})`.as('song_count'),
+      })
       .from(songCategories)
+      .leftJoin(songs, eq(songs.categoryId, songCategories.id))
+      .groupBy(songCategories.id)
       .orderBy(desc(songCategories.priority), songCategories.name)
       .all()
 
-    return records.map(toCategory)
+    return records.map((r) => toCategory(r.category, r.songCount))
   } catch (error) {
     log('error', `Failed to get all categories: ${error}`)
     return []
@@ -66,9 +75,14 @@ export function getCategoryById(id: number): SongCategory | null {
 
     const db = getDatabase()
     const record = db
-      .select()
+      .select({
+        category: songCategories,
+        songCount: sql<number>`COUNT(${songs.id})`.as('song_count'),
+      })
       .from(songCategories)
+      .leftJoin(songs, eq(songs.categoryId, songCategories.id))
       .where(eq(songCategories.id, id))
+      .groupBy(songCategories.id)
       .get()
 
     if (!record) {
@@ -76,7 +90,7 @@ export function getCategoryById(id: number): SongCategory | null {
       return null
     }
 
-    return toCategory(record)
+    return toCategory(record.category, record.songCount)
   } catch (error) {
     log('error', `Failed to get category: ${error}`)
     return null

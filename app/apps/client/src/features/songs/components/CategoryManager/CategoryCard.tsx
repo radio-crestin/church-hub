@@ -23,7 +23,7 @@ export function CategoryCard({
           {category.name}
         </span>
         <span className="text-xs text-gray-500 dark:text-gray-400">
-          {t('sections.categories.value')}: {category.priority}
+          {t('sections.categories.songCount', { count: category.songCount })}
         </span>
       </div>
 
