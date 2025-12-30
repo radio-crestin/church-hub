@@ -15,6 +15,7 @@ export {
   deleteSong,
   getAllSongs,
   getSongById,
+  rebuildSearchIndex,
   searchSongs,
   upsertSong,
 } from './songs'
