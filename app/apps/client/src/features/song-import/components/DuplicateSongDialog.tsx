@@ -2,7 +2,7 @@ import { AlertTriangle } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
-export type DuplicateAction = 'overwrite' | 'createNew' | 'cancel'
+export type DuplicateAction = 'openExisting' | 'overwrite' | 'createNew' | 'cancel'
 
 interface DuplicateSongDialogProps {
   isOpen: boolean
@@ -59,11 +59,21 @@ export function DuplicateSongDialog({
         <div className="flex flex-col gap-3">
           <button
             type="button"
-            onClick={() => onAction('overwrite')}
+            onClick={() => onAction('openExisting')}
             className="w-full px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors text-left"
           >
-            <div className="font-medium">{t('duplicateDialog.overwrite')}</div>
+            <div className="font-medium">{t('duplicateDialog.openExisting')}</div>
             <div className="text-sm text-indigo-200">
+              {t('duplicateDialog.openExistingDescription')}
+            </div>
+          </button>
+          <button
+            type="button"
+            onClick={() => onAction('overwrite')}
+            className="w-full px-4 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg font-medium transition-colors text-left"
+          >
+            <div className="font-medium">{t('duplicateDialog.overwrite')}</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">
               {t('duplicateDialog.overwriteDescription')}
             </div>
           </button>

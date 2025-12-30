@@ -687,6 +687,12 @@ export function FileDropZoneProvider({ children }: Props) {
         return
       }
 
+      if (action === 'openExisting') {
+        navigateToSong(pendingImport.existingId)
+        setPendingImport(null)
+        return
+      }
+
       if (pendingImport.type === 'pptx' && pendingImport.pptxData) {
         const { parsed, sourceFilename } = pendingImport.pptxData
 
@@ -808,7 +814,7 @@ export function FileDropZoneProvider({ children }: Props) {
 
       setPendingImport(null)
     },
-    [pendingImport, navigate, upsertMutation],
+    [pendingImport, navigate, navigateToSong, upsertMutation],
   )
 
   return (

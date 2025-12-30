@@ -35,3 +35,4 @@ tauri-utils = "2"
 ureq = "2"
 tauri-plugin-keep-screen-on = "0.1.2"
 tauri-plugin-screen-brightness = { path = "../tauri-plugins/tauri-plugin-screen-brightness" }
+tauri-plugin-single-instance = "2"

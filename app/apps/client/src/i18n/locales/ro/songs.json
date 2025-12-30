@@ -138,7 +138,7 @@
     "theme": "Temă",
     "altTheme": "Temă alternativă",
     "keyLine": "Gama melodie",
-    "keyLinePlaceholder": "Introdu un vers memorabil din cântare...",
+    "keyLinePlaceholder": "Do Major",
     "presentationOrder": "Ordinea prezentării",
     "sourceFilename": "Fișier sursă",
     "presentationCount": "Număr prezentări",
@@ -163,6 +163,8 @@
   "duplicateDialog": {
     "title": "Cântare duplicată găsită",
     "description": "O cântare cu titlul \"{{title}}\" există deja. Ce vrei să faci?",
+    "openExisting": "Deschide cântarea existentă",
+    "openExistingDescription": "Vezi cântarea care există deja în bibliotecă",
     "overwrite": "Actualizează cântarea existentă",
     "overwriteDescription": "Înlocuiește slide-urile cântării existente cu conținutul nou",
     "createNew": "Creează cântare nouă",

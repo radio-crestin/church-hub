@@ -457,26 +457,6 @@ export function SongEditor({
                   />
                 </div>
 
-                {/* Musical Key */}
-                <div>
-                  <label
-                    htmlFor="key"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                  >
-                    {t('metadata.key')}
-                  </label>
-                  <input
-                    id="key"
-                    type="text"
-                    value={metadata.key || ''}
-                    onChange={(e) =>
-                      handleMetadataFieldChange('key', e.target.value)
-                    }
-                    className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-white text-sm"
-                    placeholder={t('metadata.keyPlaceholder')}
-                  />
-                </div>
-
                 {/* Tempo */}
                 <div>
                   <label
