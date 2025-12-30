@@ -17,6 +17,7 @@ export interface ComboboxProps {
   disabled?: boolean
   allowClear?: boolean
   className?: string
+  portalContainer?: HTMLElement | null
 }
 
 export function Combobox({
@@ -29,6 +30,7 @@ export function Combobox({
   disabled = false,
   allowClear = true,
   className = '',
+  portalContainer,
 }: ComboboxProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState('')
@@ -235,7 +237,7 @@ export function Combobox({
               )}
             </div>
           </div>,
-          document.body,
+          portalContainer ?? document.body,
         )}
     </div>
   )
