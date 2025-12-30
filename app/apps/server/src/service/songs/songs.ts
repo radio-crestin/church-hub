@@ -1,6 +1,7 @@
 import { asc, eq, inArray } from 'drizzle-orm'
 
 import { getCategoryById } from './categories'
+import { sanitizeSongTitle } from './sanitizeTitle'
 import { getSlidesBySongId } from './song-slides'
 import type {
   BatchImportResult,
@@ -207,9 +208,8 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
   try {
     const db = getDatabase()
     const now = new Date()
-    // Title sanitization is handled by the client - preserve the title as-is
-    // to support numbered filenames like "050 - Song Title"
-    const title = input.title.trim() || 'Untitled Song'
+    // Sanitize title - removes special chars but preserves numbers and hyphens
+    const title = sanitizeSongTitle(input.title)
 
     let songId: number
 
@@ -494,9 +494,8 @@ export function batchImportSongs(
 
       try {
         const categoryId = input.categoryId ?? defaultCategoryId ?? null
-        // Title sanitization is handled by the client - preserve the title as-is
-        // to support numbered filenames like "050 - Song Title"
-        const title = (input.title || '').trim() || 'Untitled Song'
+        // Sanitize title - removes special chars but preserves numbers and hyphens
+        const title = sanitizeSongTitle(input.title || '')
 
         // Check if song was manually edited and should be skipped (O(1) lookup)
         if (manuallyEditedTitles?.has(title.toLowerCase())) {
