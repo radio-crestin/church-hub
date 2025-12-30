@@ -37,7 +37,8 @@
       "bin/church-hub-sidecar"
     ],
     "resources": {
-      "../apps/client/dist": "client-dist"
+      "../apps/client/dist": "client-dist",
+      "resources/midi-native": "midi-native"
     },
     "icon": [
       "icons/32x32.png",
