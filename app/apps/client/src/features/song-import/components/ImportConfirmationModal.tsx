@@ -3,12 +3,18 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { CategoryPicker } from '~/features/songs/components'
-import type { ImportOptions } from '../types'
+import type { ImportOptions, ParsedSong } from '../types'
 import type { ParsedPptx } from '../utils/parsePptx'
+import { sanitizeSongTitle } from '../utils/sanitizeTitle'
+
+interface SongWithFilename {
+  parsed: ParsedPptx | ParsedSong
+  sourceFilename: string | null
+}
 
 interface ImportConfirmationModalProps {
   isOpen: boolean
-  songs: ParsedPptx[]
+  songs: SongWithFilename[]
   onConfirm: (categoryId: number | null, options: ImportOptions) => void
   onCancel: () => void
   isPending: boolean
@@ -172,14 +178,41 @@ export function ImportConfirmationModal({
           </label>
           <div className="max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
             <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-              {songs.map((song, index) => (
-                <li
-                  key={`${song.title}-${index}`}
-                  className="px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
-                >
-                  {index + 1}. {song.title}
-                </li>
-              ))}
+              {songs.map((song, index) => {
+                // Get both possible titles for comparison
+                let verseTitle: string
+                let filenameTitle: string
+
+                // Extract first verse title (sanitized)
+                const firstSlide = song.parsed.slides[0]
+                if (firstSlide) {
+                  const firstLine = firstSlide.text.split('\n')[0]?.trim()
+                  verseTitle = sanitizeSongTitle(firstLine || song.parsed.title)
+                } else {
+                  verseTitle = song.parsed.title
+                }
+
+                // Extract filename title - NO sanitization, just remove extension
+                if (song.sourceFilename) {
+                  filenameTitle = song.sourceFilename.replace(/\.[^.]+$/, '')
+                } else {
+                  filenameTitle = song.parsed.title
+                }
+
+                // Choose based on setting
+                const displayTitle = useFirstVerseAsTitle
+                  ? verseTitle
+                  : filenameTitle
+
+                return (
+                  <li
+                    key={`${index}-${useFirstVerseAsTitle}`}
+                    className="px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+                  >
+                    {index + 1}. {displayTitle}
+                  </li>
+                )
+              })}
             </ul>
           </div>
         </div>
