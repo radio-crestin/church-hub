@@ -39,6 +39,7 @@ export {
   parseOpenSongXml,
   parsePptxFile,
   processImportFiles,
+  processImportFilesWeb,
   processZipFromBuffer,
   sanitizeSongTitle,
 } from './utils'

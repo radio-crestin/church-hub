@@ -88,7 +88,13 @@
 ~~- asigura-te ca animatiile functioneaza la afisare/ascundere, deasemenea cand se schimba urmatorul slide~~
 ~~- afiseaza ceasul pe toate slide-urile~~
 ~~- adauga buton de feedback care va crea un github issue~~
+~~- search-ul pentru cantari nu functioneaza..~~
 - importa toate cantarile existente si apoi creaza un backup ca si sqlite si importa-l pe PC-ul de la Adunare
+- deasemenea, pentru versetele tinerilor lasa posibilitatea sa nu adaugi ":"
+- cand utilizatorul este focusat pe search-ul din Biblie, nu functioneaza sa dea bottom/up
+- allow the user to easily download Bibles from https://github.com/seven1m/open-bibles repository and also fix the Bible import format
+- the button to open the database folder is not working
+- fix also midi missing library in the release version
 - fix openapi endpoints and fix authentication layer
 --- Later ---
 - creaza un quickstart guide pentru utilizatori

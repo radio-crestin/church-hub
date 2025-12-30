@@ -1,6 +1,6 @@
 import { open } from '@tauri-apps/plugin-dialog'
 import { Download, FileUp, Globe } from 'lucide-react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import {
@@ -11,6 +11,7 @@ import {
   ImportProgressModal,
   type ProcessedImport,
   processImportFiles,
+  processImportFilesWeb,
   processZipFromBuffer,
   sanitizeSongTitle,
   useBatchImportSongs,
@@ -65,34 +66,93 @@ export function ImportExportManager() {
     skipManuallyEdited: false,
   })
 
+  // File input ref for web fallback
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Check if we're running in Tauri
+  const isTauri =
+    typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+
   const handleImport = async () => {
-    try {
-      const selected = await open({
-        multiple: true,
-      })
-
-      if (selected && selected.length > 0) {
-        setModalState({ type: 'importProgress' })
-        setImportProgress(null)
-
-        const result = await processImportFiles(selected, (progress) => {
-          setImportProgress(progress)
+    if (isTauri) {
+      // Use Tauri dialog for desktop app
+      try {
+        const selected = await open({
+          multiple: true,
         })
 
-        setImportProgress(null)
+        if (selected && selected.length > 0) {
+          setModalState({ type: 'importProgress' })
+          setImportProgress(null)
 
-        if (result.songs.length > 0) {
-          setSongsToImport(result.songs)
-          setDefaultImportCategoryId(null)
-          setDefaultImportOptions({
-            useFirstVerseAsTitle: true,
-            overwriteDuplicates: false,
-            skipManuallyEdited: false,
+          const result = await processImportFiles(selected, (progress) => {
+            setImportProgress(progress)
           })
-          setModalState({ type: 'importConfirm' })
-        } else {
-          setModalState({ type: 'noSongs' })
+
+          setImportProgress(null)
+
+          if (result.songs.length > 0) {
+            setSongsToImport(result.songs)
+            setDefaultImportCategoryId(null)
+            setDefaultImportOptions({
+              useFirstVerseAsTitle: true,
+              overwriteDuplicates: false,
+              skipManuallyEdited: false,
+            })
+            setModalState({ type: 'importConfirm' })
+          } else {
+            setModalState({ type: 'noSongs' })
+          }
         }
+      } catch (error) {
+        setModalState({ type: 'none' })
+        setImportProgress(null)
+        showToast(
+          t('sections.importExport.toast.importFailed', {
+            error: String(error),
+          }),
+          'error',
+        )
+      }
+    } else {
+      // Use native file input for web browser
+      fileInputRef.current?.click()
+    }
+  }
+
+  const handleFileInputChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const fileList = e.target.files
+    if (!fileList || fileList.length === 0) return
+
+    // Convert FileList to Array BEFORE resetting the input
+    const files = Array.from(fileList)
+
+    // Reset the input so the same files can be selected again
+    e.target.value = ''
+
+    try {
+      setModalState({ type: 'importProgress' })
+      setImportProgress(null)
+
+      const result = await processImportFilesWeb(files, (progress) => {
+        setImportProgress(progress)
+      })
+
+      setImportProgress(null)
+
+      if (result.songs.length > 0) {
+        setSongsToImport(result.songs)
+        setDefaultImportCategoryId(null)
+        setDefaultImportOptions({
+          useFirstVerseAsTitle: true,
+          overwriteDuplicates: false,
+          skipManuallyEdited: false,
+        })
+        setModalState({ type: 'importConfirm' })
+      } else {
+        setModalState({ type: 'noSongs' })
       }
     } catch (error) {
       setModalState({ type: 'none' })
@@ -320,6 +380,15 @@ export function ImportExportManager() {
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
             {t('sections.importExport.import.supportedFormats')}
           </p>
+          {/* Hidden file input for web browser fallback */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept=".pptx,.ppt,.zip,.xml,.opensong,*"
+            onChange={handleFileInputChange}
+            className="hidden"
+          />
         </div>
 
         {/* Resurse Crestine Import Section */}
@@ -377,7 +446,7 @@ export function ImportExportManager() {
 
       <ImportConfirmationModal
         isOpen={modalState.type === 'importConfirm'}
-        songs={songsToImport.map((s) => s.parsed)}
+        songs={songsToImport}
         onConfirm={handleConfirmImport}
         onCancel={handleCancelImport}
         isPending={isImporting}
