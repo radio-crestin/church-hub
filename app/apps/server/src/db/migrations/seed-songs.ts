@@ -1,7 +1,5 @@
-import { existsSync } from 'node:fs'
-import { join } from 'node:path'
-
 import type { Database } from 'bun:sqlite'
+import defaultSongs from '../fixtures/default-songs.json'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -36,8 +34,6 @@ interface SongFixture {
   slides: SongSlideFixture[]
 }
 
-const FIXTURE_PATH = join(import.meta.dir, '../fixtures/default-songs.json')
-
 /**
  * Seeds default songs from fixture file.
  * Uses title uniqueness to avoid duplicates on subsequent runs.
@@ -47,33 +43,23 @@ const FIXTURE_PATH = join(import.meta.dir, '../fixtures/default-songs.json')
  * 2. Run: bun run fixtures
  */
 export function seedSongs(db: Database): void {
-  // Check if songs already exist in database BEFORE loading large fixture file
+  // Check if songs already exist in database
   const existingCount = db
     .query<{ count: number }, []>('SELECT COUNT(*) as count FROM songs')
     .get()?.count
   if (existingCount && existingCount > 0) {
-    log(
-      'info',
-      `Songs already seeded (${existingCount} songs), skipping fixture load`,
-    )
+    log('info', `Songs already seeded (${existingCount} songs), skipping`)
     return
   }
 
-  log('debug', 'Checking if songs fixture exists...')
-
-  if (!existsSync(FIXTURE_PATH)) {
-    log('debug', 'No songs fixture found, skipping seed')
-    return
-  }
-
-  const songs = require(FIXTURE_PATH) as SongFixture[]
+  const songs = defaultSongs as SongFixture[]
 
   if (!Array.isArray(songs) || songs.length === 0) {
-    log('debug', 'Songs fixture is empty, skipping seed')
+    log('info', 'No songs fixtures available, skipping seed')
     return
   }
 
-  log('info', 'Seeding songs from fixtures...')
+  log('info', `Seeding ${songs.length} song(s) from fixtures...`)
 
   // Build category name to ID mapping
   const categories = db

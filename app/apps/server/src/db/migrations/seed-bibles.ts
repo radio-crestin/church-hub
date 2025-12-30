@@ -1,7 +1,5 @@
-import { existsSync } from 'node:fs'
-import { join } from 'node:path'
-
 import type { Database } from 'bun:sqlite'
+import defaultBibles from '../fixtures/default-bibles.json'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -33,8 +31,6 @@ interface BibleTranslationFixture {
   books: BibleBookFixture[]
 }
 
-const FIXTURE_PATH = join(import.meta.dir, '../fixtures/default-bibles.json')
-
 /**
  * Seeds default bible translations with books and verses from fixture file.
  * Uses abbreviation uniqueness to avoid duplicates on subsequent runs.
@@ -44,7 +40,7 @@ const FIXTURE_PATH = join(import.meta.dir, '../fixtures/default-bibles.json')
  * 2. Run: bun run fixtures
  */
 export function seedBibleTranslations(db: Database): void {
-  // Check if translations already exist in database BEFORE loading large fixture file
+  // Check if translations already exist in database
   const existingCount = db
     .query<{ count: number }, []>(
       'SELECT COUNT(*) as count FROM bible_translations',
@@ -53,26 +49,22 @@ export function seedBibleTranslations(db: Database): void {
   if (existingCount && existingCount > 0) {
     log(
       'info',
-      `Bible translations already seeded (${existingCount} translations), skipping fixture load`,
+      `Bible translations already seeded (${existingCount} translations), skipping`,
     )
     return
   }
 
-  log('debug', 'Checking if bibles fixture exists...')
-
-  if (!existsSync(FIXTURE_PATH)) {
-    log('debug', 'No bibles fixture found, skipping seed')
-    return
-  }
-
-  const translations = require(FIXTURE_PATH) as BibleTranslationFixture[]
+  const translations = defaultBibles as BibleTranslationFixture[]
 
   if (!Array.isArray(translations) || translations.length === 0) {
-    log('debug', 'Bibles fixture is empty, skipping seed')
+    log('info', 'No Bible fixtures available, skipping seed')
     return
   }
 
-  log('info', 'Seeding bible translations from fixtures...')
+  log(
+    'info',
+    `Seeding ${translations.length} Bible translation(s) from fixtures...`,
+  )
 
   let seededCount = 0
 

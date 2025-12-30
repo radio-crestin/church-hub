@@ -214,9 +214,9 @@ async function main() {
   stopPresentation()
   logTiming('clear_queue_and_presentation', t)
 
-  // Seed RCCV Bible translation if no translations exist
+  // Seed RCCV Bible translation if no translations exist (fallback if fixtures weren't loaded)
   t = performance.now()
-  ensureRCCVExists()
+  await ensureRCCVExists()
   logTiming('ensure_rccv_exists', t)
 
   // Initialize system API token
@@ -737,7 +737,21 @@ async function main() {
           )
         }
 
-        const result = performFactoryReset()
+        // Parse optional options from request body
+        let options: { includeBibles?: boolean; includeSongs?: boolean } = {}
+        try {
+          const body = await req.json()
+          if (typeof body.includeBibles === 'boolean') {
+            options.includeBibles = body.includeBibles
+          }
+          if (typeof body.includeSongs === 'boolean') {
+            options.includeSongs = body.includeSongs
+          }
+        } catch {
+          // No body or invalid JSON - use defaults
+        }
+
+        const result = performFactoryReset(options)
         if (!result.success) {
           return handleCors(
             req,
