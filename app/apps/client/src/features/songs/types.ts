@@ -2,6 +2,7 @@ export interface SongCategory {
   id: number
   name: string
   priority: number
+  songCount: number
   createdAt: number
   updatedAt: number
 }
