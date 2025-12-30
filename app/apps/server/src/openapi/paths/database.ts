@@ -228,7 +228,31 @@ export const databasePaths: Record<string, Record<string, unknown>> = {
       tags: ['Database'],
       summary: 'Factory reset application settings',
       description:
-        'Resets application configuration to defaults by clearing screens and app settings, then re-seeding from fixture files. Preserves user content like songs, categories, and Bible translations. Only accessible from localhost.',
+        'Resets application configuration to defaults by clearing screens and app settings, then re-seeding from fixture files. Optionally reset Bible translations and songs. Only accessible from localhost.',
+      requestBody: {
+        required: false,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                includeBibles: {
+                  type: 'boolean',
+                  default: false,
+                  description:
+                    'Also reset Bible translations to default fixtures',
+                },
+                includeSongs: {
+                  type: 'boolean',
+                  default: false,
+                  description:
+                    'Also reset songs and categories to default fixtures',
+                },
+              },
+            },
+          },
+        },
+      },
       responses: {
         '200': {
           description: 'Factory reset completed successfully',
