@@ -34,7 +34,14 @@ function SongsPage() {
   // Auto-navigate to presented song only on initial page open
   useEffect(() => {
     if (hasNavigatedOnOpen.current) return
-    if (fromSong) return // Skip auto-navigation when coming back from a song
+
+    // Skip auto-navigation when coming back from a song
+    // Set flag to prevent re-evaluation when search query changes
+    if (fromSong) {
+      hasNavigatedOnOpen.current = true
+      return
+    }
+
     if (!presentationState) return
 
     let presentedSongId: number | null = null
