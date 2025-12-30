@@ -526,13 +526,20 @@
           "cancel": "Anulează"
         }
       },
+      "restart": {
+        "title": "Import Reușit",
+        "message": "Baza de date a fost importată cu succes. Apasă butonul de mai jos pentru a reporni serverul și a aplica modificările.",
+        "confirm": "Repornește Acum",
+        "restarting": "Se repornește..."
+      },
       "toast": {
         "pathCopied": "Calea bazei de date copiată în clipboard",
         "exportSuccess": "Baza de date exportată cu succes în {{path}}",
         "exportFailed": "Exportul a eșuat: {{error}}",
         "openFolderFailed": "Nu s-a putut deschide exploratorul de fișiere",
-        "importSuccess": "Baza de date importată cu succes. Te rugăm să repornești aplicația.",
-        "importFailed": "Importul a eșuat: {{error}}"
+        "importSuccess": "Baza de date importată cu succes. Se reîncarcă...",
+        "importFailed": "Importul a eșuat: {{error}}",
+        "restartFailed": "Repornirea serverului a eșuat: {{error}}"
       }
     },
     "debug": {

@@ -1,6 +1,11 @@
-import { copyFile, stat, unlink } from 'node:fs/promises'
+import { stat, unlink, writeFile } from 'node:fs/promises'
+import { Database } from 'bun:sqlite'
 
-import { closeDatabase, getRawDatabase } from '../../db/connection'
+import {
+  closeDatabase,
+  getRawDatabase,
+  initializeDatabase,
+} from '../../db/connection'
 import { getDatabasePath, getDataDir } from '../../utils/paths'
 
 export interface DatabaseInfo {
@@ -45,21 +50,24 @@ export async function getDatabaseInfo(): Promise<DatabaseInfo> {
 }
 
 /**
- * Checkpoints the WAL and exports the database to the specified path
- * WAL checkpoint ensures all pending writes are flushed to the main db file
+ * Exports the database to the specified path using SQLite's serialize API
+ * This properly handles WAL mode by capturing the complete database state
  */
 export async function checkpointAndExport(
   destinationPath: string,
 ): Promise<ExportResult> {
-  const sourcePath = getDatabasePath()
-
   try {
-    // Run WAL checkpoint to flush all pending writes to main database file
     const sqlite = getRawDatabase()
+
+    // Checkpoint WAL first to ensure all writes are in main file
     sqlite.run('PRAGMA wal_checkpoint(TRUNCATE)')
 
-    // Copy the database file to destination
-    await copyFile(sourcePath, destinationPath)
+    // Use serialize() to get the complete database state as bytes
+    // This properly handles WAL mode and captures all data
+    const serialized = sqlite.serialize()
+
+    // Write the serialized database to the destination
+    await writeFile(destinationPath, serialized)
 
     return {
       success: true,
@@ -93,7 +101,7 @@ async function validateSqliteDatabase(filePath: string): Promise<boolean> {
 /**
  * Imports a database from the specified path, replacing the current database
  * Creates a backup of the current database before replacing
- * Requires app restart after successful import
+ * Properly handles WAL mode by serializing the source database
  */
 export async function importDatabase(
   sourcePath: string,
@@ -125,22 +133,38 @@ export async function importDatabase(
       }
     }
 
-    // 3. Checkpoint current WAL to flush pending writes
-    const sqlite = getRawDatabase()
-    sqlite.run('PRAGMA wal_checkpoint(TRUNCATE)')
-
-    // 4. Close current database connection
-    closeDatabase()
-
-    // 5. Backup current database
+    // 3. Open source database and serialize it to capture all data including WAL
+    // This handles cases where the source database has uncommitted WAL data
+    let sourceData: Uint8Array
     try {
-      await copyFile(destPath, backupPath)
+      const sourceDb = new Database(sourcePath, { readonly: true })
+      // Serialize captures the complete database state including WAL
+      sourceData = sourceDb.serialize()
+      sourceDb.close()
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Failed to read source database',
+        requiresRestart: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      }
+    }
+
+    // 4. Backup current database before replacing
+    const currentSqlite = getRawDatabase()
+    try {
+      currentSqlite.run('PRAGMA wal_checkpoint(TRUNCATE)')
+      const backupData = currentSqlite.serialize()
+      await writeFile(backupPath, backupData)
     } catch {
-      // If backup fails, it might be because the file doesn't exist yet
+      // If backup fails, it might be because the database is new/empty
       // Continue anyway
     }
 
-    // 6. Remove WAL and SHM files if they exist
+    // 5. Close current database connection
+    closeDatabase()
+
+    // 6. Remove old WAL and SHM files if they exist
     try {
       await unlink(`${destPath}-wal`)
     } catch {
@@ -152,14 +176,37 @@ export async function importDatabase(
       // File might not exist
     }
 
-    // 7. Copy source file to database path
-    await copyFile(sourcePath, destPath)
+    // 7. Write the serialized source database to destination
+    await writeFile(destPath, sourceData)
+
+    // 8. Reinitialize the database connection with the new database
+    try {
+      await initializeDatabase()
+    } catch (error) {
+      // If reinitialization fails, try to restore from backup
+      console.error('[database] Failed to reinitialize, restoring backup:', error)
+      try {
+        const backupFile = Bun.file(backupPath)
+        if (await backupFile.exists()) {
+          const backupData = new Uint8Array(await backupFile.arrayBuffer())
+          await writeFile(destPath, backupData)
+          await initializeDatabase()
+        }
+      } catch (restoreError) {
+        console.error('[database] Failed to restore backup:', restoreError)
+      }
+      return {
+        success: false,
+        message: 'Failed to initialize imported database',
+        requiresRestart: true,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      }
+    }
 
     return {
       success: true,
-      message:
-        'Database imported successfully. Please restart the application.',
-      requiresRestart: true,
+      message: 'Database imported successfully.',
+      requiresRestart: false, // No restart needed - we reinitialized in-process
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'

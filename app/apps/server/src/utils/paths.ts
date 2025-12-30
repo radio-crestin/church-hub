@@ -3,14 +3,28 @@ import { join } from 'node:path'
 
 /**
  * Gets the application data directory
- * In production (Tauri mode), uses ~/Library/Application Support/church-hub
+ * In production (Tauri mode):
+ *   - macOS: ~/Library/Application Support/church-hub
+ *   - Windows: %APPDATA%/church-hub (e.g., C:\Users\<user>\AppData\Roaming\church-hub)
+ *   - Linux: ~/.config/church-hub
  * In development, uses ./data relative to cwd
  */
 export function getDataDir(): string {
   if (process.env.TAURI_MODE === 'true') {
-    // Production Tauri app - use Application Support
     const home = homedir()
-    return join(home, 'Library', 'Application Support', 'church-hub')
+    const platform = process.platform
+
+    if (platform === 'darwin') {
+      // macOS: ~/Library/Application Support/church-hub
+      return join(home, 'Library', 'Application Support', 'church-hub')
+    }
+    if (platform === 'win32') {
+      // Windows: %APPDATA%/church-hub
+      const appData = process.env.APPDATA || join(home, 'AppData', 'Roaming')
+      return join(appData, 'church-hub')
+    }
+    // Linux: ~/.config/church-hub
+    return join(home, '.config', 'church-hub')
   }
   // Development - use relative path
   return join(process.cwd(), 'data')
@@ -18,7 +32,7 @@ export function getDataDir(): string {
 
 /**
  * Gets the logs directory
- * In production (Tauri mode), uses ~/Library/Application Support/church-hub/logs
+ * In production (Tauri mode), uses <app-data-dir>/logs
  * In development, uses ./logs relative to cwd
  */
 export function getLogsDir(): string {
