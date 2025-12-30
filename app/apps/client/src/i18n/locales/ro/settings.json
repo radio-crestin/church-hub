@@ -605,6 +605,22 @@
         "success": "Resetare completă. Setările au fost restaurate la valorile implicite.",
         "failed": "Resetarea a eșuat: {{error}}"
       }
+    },
+    "searchIndex": {
+      "title": "Index de Căutare",
+      "description": "Reconstruiește indexul de căutare dacă cântările nu apar în rezultate",
+      "card": {
+        "title": "Reconstruiește Indexul",
+        "description": "Reconstruiește indexul FTS pentru toate cântările. Folosiți dacă rezultatele căutării par incorecte."
+      },
+      "button": {
+        "rebuild": "Reconstruiește",
+        "rebuilding": "Se reconstruiește..."
+      },
+      "toast": {
+        "success": "Indexul de căutare a fost reconstruit ({{duration}}ms)",
+        "failed": "Reconstruirea indexului a eșuat: {{error}}"
+      }
     }
   }
 }
