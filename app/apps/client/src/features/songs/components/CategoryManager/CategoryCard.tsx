@@ -24,6 +24,8 @@ export function CategoryCard({
         </span>
         <span className="text-xs text-gray-500 dark:text-gray-400">
           {t('sections.categories.songCount', { count: category.songCount })}
+          {' · '}
+          {t('sections.categories.value')}: {category.priority}
         </span>
       </div>
 
