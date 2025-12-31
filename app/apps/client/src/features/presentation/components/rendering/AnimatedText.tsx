@@ -34,7 +34,8 @@ function normalizeText(html: string, isHtml: boolean): string {
 }
 
 /**
- * Calculate font size to fit text in container
+ * Calculate font size to fit text in container using binary search.
+ * Sets the element to target width and finds the largest font that fits in height.
  */
 function calculateFontSize(
   element: HTMLElement,
@@ -56,28 +57,39 @@ function calculateFontSize(
     overflow: element.style.overflow,
     whiteSpace: element.style.whiteSpace,
     visibility: element.style.visibility,
+    wordWrap: element.style.wordWrap,
   }
 
-  // Set up for measurement
-  element.style.fontSize = `${maxFontSize}px`
-  element.style.width = 'auto'
+  // Set up for measurement - use target width so text wraps correctly
+  element.style.width = `${maxWidth}px`
   element.style.height = 'auto'
   element.style.overflow = 'visible'
   element.style.whiteSpace = 'pre-wrap'
+  element.style.wordWrap = 'break-word'
   element.style.visibility = 'hidden'
   element.textContent = text
 
-  // Measure at max font size
-  const contentWidth = element.scrollWidth
-  const contentHeight = element.scrollHeight
+  // Binary search for the largest font size that fits
+  let low = minFontSize
+  let high = maxFontSize
+  let bestFit = minFontSize
 
-  // Calculate scale ratio
-  const widthRatio = maxWidth / contentWidth
-  const heightRatio = maxHeight / contentHeight
-  const ratio = Math.min(widthRatio, heightRatio, 1)
+  while (low <= high) {
+    const mid = Math.floor((low + high) / 2)
+    element.style.fontSize = `${mid}px`
 
-  // Calculate final font size
-  const fontSize = Math.max(Math.floor(maxFontSize * ratio), minFontSize)
+    // Measure height at this font size
+    const contentHeight = element.scrollHeight
+
+    if (contentHeight <= maxHeight) {
+      // This font size fits, try larger
+      bestFit = mid
+      low = mid + 1
+    } else {
+      // Too big, try smaller
+      high = mid - 1
+    }
+  }
 
   // Restore original styles
   element.style.fontSize = originalStyles.fontSize
@@ -85,9 +97,10 @@ function calculateFontSize(
   element.style.height = originalStyles.height
   element.style.overflow = originalStyles.overflow
   element.style.whiteSpace = originalStyles.whiteSpace
+  element.style.wordWrap = originalStyles.wordWrap
   element.style.visibility = originalStyles.visibility
 
-  return fontSize
+  return bestFit
 }
 
 /**
@@ -262,7 +275,7 @@ export function AnimatedText({
     wordWrap: 'break-word',
   }
 
-  // Hidden element for measurement (same font properties)
+  // Hidden element for measurement (same font properties as display)
   const measureStyle: React.CSSProperties = {
     ...getTextStyles(style),
     position: 'absolute',
@@ -271,6 +284,7 @@ export function AnimatedText({
     width: 'auto',
     height: 'auto',
     whiteSpace: 'pre-wrap',
+    wordWrap: 'break-word',
   }
 
   return (
