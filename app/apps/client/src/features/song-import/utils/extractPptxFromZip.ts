@@ -6,6 +6,7 @@ import type {
   ExtractedPptxFile,
   ExtractResult,
 } from '../types'
+import { yieldToMain } from '~/utils/async-utils'
 
 const PARALLEL_CHUNK_SIZE = 10
 
@@ -39,7 +40,8 @@ function isOpenSongContent(content: string): boolean {
 }
 
 /**
- * Processes chunks in parallel with a concurrency limit
+ * Processes chunks in parallel with a concurrency limit.
+ * Yields to main thread between chunks to prevent UI freezes.
  */
 async function processInChunks<T, R>(
   items: T[],
@@ -52,6 +54,9 @@ async function processInChunks<T, R>(
     const chunk = items.slice(i, i + chunkSize)
     const chunkResults = await Promise.all(chunk.map(processor))
     results.push(...chunkResults)
+
+    // Yield to main thread between chunks to keep UI responsive
+    await yieldToMain()
   }
 
   return results
@@ -233,6 +238,9 @@ export async function extractFilesFromZip(
     // Process nested ZIPs recursively (one at a time to avoid memory issues)
     for (const entry of nestedZipEntries) {
       try {
+        // Yield before processing each nested ZIP to keep UI responsive
+        await yieldToMain()
+
         const nestedZipData = await entry.file.async('arraybuffer')
         const nestedResult = await extractFilesFromZip(
           nestedZipData,

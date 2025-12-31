@@ -1,4 +1,4 @@
-import { Check, ChevronDown, Plus, X } from 'lucide-react'
+import { Check, ChevronDown, Plus, Trash2, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
@@ -12,10 +12,12 @@ export interface ComboboxProps {
   value: number | string | null
   onChange: (value: number | string | null) => void
   onCreateNew?: (name: string) => Promise<ComboboxOption | null>
+  onDelete?: (value: number | string) => void
   placeholder?: string
   createNewLabel?: string
   disabled?: boolean
   allowClear?: boolean
+  allowDelete?: boolean
   className?: string
   portalContainer?: HTMLElement | null
 }
@@ -25,10 +27,12 @@ export function Combobox({
   value,
   onChange,
   onCreateNew,
+  onDelete,
   placeholder = 'Select...',
   createNewLabel = 'Create',
   disabled = false,
   allowClear = true,
+  allowDelete = false,
   className = '',
   portalContainer,
 }: ComboboxProps) {
@@ -139,6 +143,13 @@ export function Combobox({
     }
   }
 
+  const handleDelete = (e: React.MouseEvent, optionValue: number | string) => {
+    e.stopPropagation()
+    if (onDelete) {
+      onDelete(optionValue)
+    }
+  }
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
       setIsOpen(false)
@@ -220,19 +231,35 @@ export function Combobox({
                 </div>
               ) : (
                 filteredOptions.map((option) => (
-                  <button
+                  <div
                     key={option.value}
-                    type="button"
-                    onClick={() => handleSelect(option)}
-                    className={`w-full flex items-center justify-between px-3 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                    className={`w-full flex items-center justify-between px-3 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 group ${
                       option.value === value
                         ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400'
                         : 'text-gray-900 dark:text-white'
                     }`}
                   >
-                    {option.label}
-                    {option.value === value && <Check className="w-4 h-4" />}
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSelect(option)}
+                      className="flex-1 text-left"
+                    >
+                      {option.label}
+                    </button>
+                    <div className="flex items-center gap-1">
+                      {option.value === value && <Check className="w-4 h-4" />}
+                      {allowDelete && onDelete && (
+                        <button
+                          type="button"
+                          onClick={(e) => handleDelete(e, option.value)}
+                          className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-red-100 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-opacity"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 ))
               )}
             </div>

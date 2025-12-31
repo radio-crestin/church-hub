@@ -35,6 +35,7 @@ function ConnectionLostPage() {
 
 function NoPermissionPage() {
   const { t } = useTranslation('common')
+  const { refresh } = usePermissions()
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center">
@@ -45,9 +46,15 @@ function NoPermissionPage() {
       <p className="text-gray-600 dark:text-gray-400 mb-4 max-w-md">
         {t('errors.noPermission')}
       </p>
-      <p className="text-sm text-gray-500 dark:text-gray-500">
+      <p className="text-sm text-gray-500 dark:text-gray-500 mb-4">
         {t('errors.contactAdmin')}
       </p>
+      <button
+        onClick={() => refresh()}
+        className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+      >
+        {t('buttons.retry')}
+      </button>
     </div>
   )
 }

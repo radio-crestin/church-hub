@@ -14,79 +14,224 @@ export interface AvailableBible {
   languageCode: string // Detected language code (e.g., 'af', 'en', 'ro')
 }
 
-// Map language names (from filenames) to ISO language codes
-const LANGUAGE_NAME_TO_CODE: Record<string, string> = {
-  afrikaans: 'af',
-  albanian: 'sq',
-  arabic: 'ar',
-  armenian: 'hy',
-  basque: 'eu',
-  bavarian: 'bar',
-  bulgarian: 'bg',
-  chinese: 'zh',
-  croatian: 'hr',
-  czech: 'cs',
-  danish: 'da',
-  dutch: 'nl',
-  english: 'en',
-  esperanto: 'eo',
-  finnish: 'fi',
-  french: 'fr',
-  german: 'de',
-  hungarian: 'hu',
-  indonesian: 'id',
-  italian: 'it',
-  jivaro: 'jiv',
-  kabyle: 'kab',
-  korean: 'ko',
-  latin: 'la',
-  latvian: 'lv',
-  lithuanian: 'lt',
-  maori: 'mi',
-  norwegian: 'no',
-  polish: 'pl',
-  portuguese: 'pt',
-  romanian: 'ro',
-  russian: 'ru',
-  spanish: 'es',
-  swahili: 'sw',
-  swedish: 'sv',
-  tagalog: 'tl',
-  thai: 'th',
-  turkish: 'tr',
-  ukrainian: 'uk',
-  vietnamese: 'vi',
-  // Add more as needed
+// Map language names to display names (for normalization)
+const LANGUAGE_DISPLAY_NAMES: Record<string, string> = {
+  // Common language name variations -> proper display name
+  afrikaans: 'Afrikaans',
+  albanian: 'Albanian',
+  amharic: 'Amharic',
+  arabic: 'Arabic',
+  armenian: 'Armenian',
+  assamese: 'Assamese',
+  azerbaijani: 'Azerbaijani',
+  basque: 'Basque',
+  bavarian: 'Bavarian',
+  belarusian: 'Belarusian',
+  bengali: 'Bengali',
+  bosnian: 'Bosnian',
+  breton: 'Breton',
+  bulgarian: 'Bulgarian',
+  burmese: 'Burmese',
+  catalan: 'Catalan',
+  cebuano: 'Cebuano',
+  chinese: 'Chinese',
+  coptic: 'Coptic',
+  croatian: 'Croatian',
+  czech: 'Czech',
+  danish: 'Danish',
+  dutch: 'Dutch',
+  english: 'English',
+  esperanto: 'Esperanto',
+  estonian: 'Estonian',
+  finnish: 'Finnish',
+  french: 'French',
+  galician: 'Galician',
+  georgian: 'Georgian',
+  german: 'German',
+  gothic: 'Gothic',
+  greek: 'Greek',
+  gujarati: 'Gujarati',
+  haitian: 'Haitian',
+  hausa: 'Hausa',
+  hebrew: 'Hebrew',
+  hindi: 'Hindi',
+  hungarian: 'Hungarian',
+  icelandic: 'Icelandic',
+  igbo: 'Igbo',
+  ilokano: 'Ilokano',
+  indonesian: 'Indonesian',
+  irish: 'Irish',
+  italian: 'Italian',
+  japanese: 'Japanese',
+  javanese: 'Javanese',
+  kannada: 'Kannada',
+  kazakh: 'Kazakh',
+  khmer: 'Khmer',
+  korean: 'Korean',
+  kurdish: 'Kurdish',
+  lao: 'Lao',
+  latin: 'Latin',
+  latvian: 'Latvian',
+  lithuanian: 'Lithuanian',
+  luganda: 'Luganda',
+  macedonian: 'Macedonian',
+  malagasy: 'Malagasy',
+  malay: 'Malay',
+  malayalam: 'Malayalam',
+  maltese: 'Maltese',
+  maori: 'Maori',
+  marathi: 'Marathi',
+  mongolian: 'Mongolian',
+  nepali: 'Nepali',
+  norwegian: 'Norwegian',
+  oriya: 'Oriya',
+  pashto: 'Pashto',
+  persian: 'Persian',
+  polish: 'Polish',
+  portuguese: 'Portuguese',
+  punjabi: 'Punjabi',
+  quechua: 'Quechua',
+  romanian: 'Romanian',
+  russian: 'Russian',
+  samoan: 'Samoan',
+  serbian: 'Serbian',
+  shona: 'Shona',
+  sindhi: 'Sindhi',
+  sinhala: 'Sinhala',
+  slovak: 'Slovak',
+  slovenian: 'Slovenian',
+  somali: 'Somali',
+  spanish: 'Spanish',
+  sundanese: 'Sundanese',
+  swahili: 'Swahili',
+  swedish: 'Swedish',
+  syriac: 'Syriac',
+  tagalog: 'Tagalog',
+  tajik: 'Tajik',
+  tamil: 'Tamil',
+  telugu: 'Telugu',
+  thai: 'Thai',
+  tibetan: 'Tibetan',
+  tigrinya: 'Tigrinya',
+  tonga: 'Tonga',
+  turkish: 'Turkish',
+  twi: 'Twi',
+  ukrainian: 'Ukrainian',
+  urdu: 'Urdu',
+  uzbek: 'Uzbek',
+  vietnamese: 'Vietnamese',
+  welsh: 'Welsh',
+  wolof: 'Wolof',
+  xhosa: 'Xhosa',
+  yiddish: 'Yiddish',
+  yoruba: 'Yoruba',
+  zulu: 'Zulu',
+  // Regional/ethnic language names
+  aceh: 'Aceh',
+  batak: 'Batak',
+  bikol: 'Bikol',
+  bisaya: 'Bisaya',
+  cakchiquel: 'Cakchiquel',
+  chamorro: 'Chamorro',
+  chuukese: 'Chuukese',
+  fijian: 'Fijian',
+  guarani: 'Guarani',
+  hiligaynon: 'Hiligaynon',
+  hmong: 'Hmong',
+  jivaro: 'Jivaro',
+  kabyle: 'Kabyle',
+  karen: 'Karen',
+  kekchi: 'Kekchi',
+  kikuyu: 'Kikuyu',
+  kinyarwanda: 'Kinyarwanda',
+  kirundi: 'Kirundi',
+  krio: 'Krio',
+  lingala: 'Lingala',
+  lozi: 'Lozi',
+  luba: 'Luba',
+  mam: 'Mam',
+  marshallese: 'Marshallese',
+  mizo: 'Mizo',
+  naga: 'Naga',
+  ndebele: 'Ndebele',
+  nyanja: 'Nyanja',
+  oromo: 'Oromo',
+  palauan: 'Palauan',
+  pangasinan: 'Pangasinan',
+  papiamento: 'Papiamento',
+  pohnpeian: 'Pohnpeian',
+  quiche: 'Quiche',
+  rundi: 'Rundi',
+  sango: 'Sango',
+  sepedi: 'Sepedi',
+  setswana: 'Setswana',
+  tachelhit: 'Tachelhit',
+  tahitian: 'Tahitian',
+  tok: 'Tok Pisin',
+  tongan: 'Tongan',
+  tshiluba: 'Tshiluba',
+  tswana: 'Tswana',
+  tzotzil: 'Tzotzil',
+  waray: 'Waray',
+  yapese: 'Yapese',
+  zapotec: 'Zapotec',
 }
 
 /**
- * Extract language code from Bible filename or name
+ * Extract language from Bible name
  * Examples:
- * - "Afrikaans-1983_Bybel-AF83.xml" -> "af"
- * - "English-KJV.xml" -> "en"
- * - "Romanian-Cornilescu.xml" -> "ro"
+ * - "Aceh Language (Alkitab HABA GET)" -> "Aceh"
+ * - "Afrikaans 1983" -> "Afrikaans"
+ * - "Bengali 2017 (বাঙালি বাইবেল)" -> "Bengali"
+ * - "English-KJV" -> "English"
  */
-function detectLanguageCode(filename: string, name: string): string {
-  // Try to extract language from filename (usually the first part before - or _)
+function detectLanguage(filename: string, name: string): string {
+  // First, try to extract language from the name field
+  // Common patterns:
+  // - "Language Name Year" (e.g., "Afrikaans 1983")
+  // - "Language Name (native script)" (e.g., "Bengali 2017 (বাঙালি বাইবেল)")
+  // - "Language Language (details)" (e.g., "Aceh Language (Alkitab HABA GET)")
+
+  // Extract text before year, parentheses, or hyphen
+  const nameMatch = name.match(/^([A-Za-z]+(?:\s+[A-Za-z]+)?)/i)
+  if (nameMatch) {
+    let langWords = nameMatch[1].trim()
+    // Remove trailing "Language" if present (e.g., "Aceh Language" -> "Aceh")
+    langWords = langWords.replace(/\s+language$/i, '')
+    const langKey = langWords.toLowerCase()
+
+    // Check if we have a display name for this language
+    if (LANGUAGE_DISPLAY_NAMES[langKey]) {
+      return LANGUAGE_DISPLAY_NAMES[langKey]
+    }
+
+    // Check first word only
+    const firstWord = langWords.split(/\s+/)[0].toLowerCase()
+    if (LANGUAGE_DISPLAY_NAMES[firstWord]) {
+      return LANGUAGE_DISPLAY_NAMES[firstWord]
+    }
+
+    // Return the capitalized first word if it looks like a language name
+    if (firstWord.length > 2 && /^[a-z]+$/i.test(firstWord)) {
+      return firstWord.charAt(0).toUpperCase() + firstWord.slice(1).toLowerCase()
+    }
+  }
+
+  // Try filename as fallback
   const filenameMatch = filename.match(/^([A-Za-z]+)/i)
   if (filenameMatch) {
     const langName = filenameMatch[1].toLowerCase()
-    if (LANGUAGE_NAME_TO_CODE[langName]) {
-      return LANGUAGE_NAME_TO_CODE[langName]
+    if (LANGUAGE_DISPLAY_NAMES[langName]) {
+      return LANGUAGE_DISPLAY_NAMES[langName]
+    }
+    // Return capitalized version
+    if (langName.length > 2) {
+      return langName.charAt(0).toUpperCase() + langName.slice(1).toLowerCase()
     }
   }
 
-  // Try to extract from name (first word)
-  const nameMatch = name.match(/^([A-Za-z]+)/i)
-  if (nameMatch) {
-    const langName = nameMatch[1].toLowerCase()
-    if (LANGUAGE_NAME_TO_CODE[langName]) {
-      return LANGUAGE_NAME_TO_CODE[langName]
-    }
-  }
-
-  // Default to 'en' if we can't detect
-  return 'en'
+  // Return "Unknown" only as last resort
+  return 'Unknown'
 }
 
 export interface BiblesMetadata {
@@ -128,7 +273,7 @@ function parseXmlToBibles(xmlContent: string): AvailableBiblesData {
         downloadUrl,
         copyright: el.querySelector('copyright')?.textContent?.trim() || null,
         sourceLink: el.querySelector('source_link')?.textContent?.trim() || null,
-        languageCode: detectLanguageCode(filename, name),
+        languageCode: detectLanguage(filename, name),
       })
     }
   }
