@@ -547,11 +547,16 @@ export function presentTemporaryBible(
         reference: input.reference,
         text: input.text,
         translationAbbreviation: input.translationAbbreviation,
+        bookName: input.bookName,
         translationId: input.translationId,
         bookId: input.bookId,
         bookCode: input.bookCode,
         chapter: input.chapter,
         currentVerseIndex: input.currentVerseIndex,
+        // Secondary version (optional)
+        secondaryText: input.secondaryText,
+        secondaryBookName: input.secondaryBookName,
+        secondaryTranslationAbbreviation: input.secondaryTranslationAbbreviation,
       },
     }
 

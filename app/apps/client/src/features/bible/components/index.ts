@@ -1,5 +1,6 @@
 export { AddTranslationModal } from './AddTranslationModal'
 export { BibleControlPanel } from './BibleControlPanel'
+export { BibleDownloadSection } from './BibleDownloadSection'
 export { BibleNavigationPanel } from './BibleNavigationPanel'
 export { BiblePassagePickerModal } from './BiblePassagePickerModal'
 export { BibleSettingsModal } from './BibleSettingsModal'

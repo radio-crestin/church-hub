@@ -460,6 +460,43 @@ export function broadcastStreamStartProgress(
   }
 }
 
+// Settings message types
+export type SettingsUpdatedMessage = {
+  type: 'settings_updated'
+  payload: {
+    table: string
+    key: string
+    updatedAt: number
+  }
+}
+
+/**
+ * Broadcasts settings update to all connected clients
+ */
+export function broadcastSettingsUpdated(table: string, key: string) {
+  const message = JSON.stringify({
+    type: 'settings_updated',
+    payload: {
+      table,
+      key,
+      updatedAt: Date.now(),
+    },
+  } satisfies SettingsUpdatedMessage)
+
+  wsLogger.debug(
+    `Broadcasting settings update (${table}/${key}) to ${clients.size} clients`,
+  )
+
+  for (const [clientId, ws] of clients) {
+    try {
+      ws.send(message)
+    } catch (error) {
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
+      clients.delete(clientId)
+    }
+  }
+}
+
 // MIDI message types
 export type MIDIMessageEvent = {
   type: 'midi_message'

@@ -1,91 +1,71 @@
-import {
-  closestCenter,
-  DndContext,
-  type DragEndEvent,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core'
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable'
-import { Book, Loader2, Plus } from 'lucide-react'
-import { useState } from 'react'
+import { Book, Loader2 } from 'lucide-react'
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { Combobox } from '~/ui/combobox'
 import { useToast } from '~/ui/toast'
-import { AddTranslationModal } from './AddTranslationModal'
-import { TranslationItemCard } from './TranslationItemCard'
-import {
-  MAX_TRANSLATIONS,
-  useSelectedBibleTranslations,
-} from '../hooks/useSelectedBibleTranslations'
+import { useSelectedBibleTranslations } from '../hooks/useSelectedBibleTranslations'
 
-export function BibleTranslationsManager() {
+interface BibleTranslationsManagerProps {
+  portalContainer?: HTMLElement | null
+}
+
+export function BibleTranslationsManager({ portalContainer }: BibleTranslationsManagerProps) {
   const { t } = useTranslation('settings')
   const { showToast } = useToast()
 
   const {
-    selectedTranslations,
-    selectedIds,
-    availableTranslations,
-    addTranslation,
-    removeTranslation,
-    reorderTranslations,
+    translations,
+    primaryTranslation,
+    secondaryTranslation,
+    setPrimaryTranslation,
+    setSecondaryTranslation,
     isLoading,
-    canAddMore,
   } = useSelectedBibleTranslations()
 
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
-
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
+  // Convert translations to Combobox options
+  const primaryOptions = useMemo(
+    () =>
+      translations.map((translation) => ({
+        value: translation.id,
+        label: `${translation.name} (${translation.abbreviation})`,
+      })),
+    [translations]
   )
 
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event
+  // Get available translations for secondary (exclude primary)
+  const secondaryOptions = useMemo(
+    () =>
+      translations
+        .filter((t) => t.id !== primaryTranslation?.id)
+        .map((translation) => ({
+          value: translation.id,
+          label: `${translation.name} (${translation.abbreviation})`,
+        })),
+    [translations, primaryTranslation?.id]
+  )
 
-    if (!over || active.id === over.id) {
-      return
-    }
-
-    const oldIndex = selectedIds.findIndex((id) => id === active.id)
-    const newIndex = selectedIds.findIndex((id) => id === over.id)
-
-    if (oldIndex === -1 || newIndex === -1) {
-      return
-    }
-
-    const newOrder = arrayMove(selectedIds, oldIndex, newIndex)
-
+  const handlePrimaryChange = async (value: number | string | null) => {
     try {
-      await reorderTranslations(newOrder)
+      if (value === null) {
+        await setPrimaryTranslation(null)
+      } else {
+        await setPrimaryTranslation(Number(value))
+      }
       showToast(t('sections.bible.toast.saved'), 'success')
     } catch {
       showToast(t('sections.bible.toast.error'), 'error')
     }
   }
 
-  const handleAddTranslation = async (translationId: number) => {
+  const handleSecondaryChange = async (value: number | string | null) => {
     try {
-      await addTranslation(translationId)
-      showToast(t('sections.bible.toast.added'), 'success')
-    } catch {
-      showToast(t('sections.bible.toast.error'), 'error')
-    }
-  }
-
-  const handleRemoveTranslation = async (translationId: number) => {
-    try {
-      await removeTranslation(translationId)
-      showToast(t('sections.bible.toast.removed'), 'success')
+      if (value === null) {
+        await setSecondaryTranslation(null)
+      } else {
+        await setSecondaryTranslation(Number(value))
+      }
+      showToast(t('sections.bible.toast.saved'), 'success')
     } catch {
       showToast(t('sections.bible.toast.error'), 'error')
     }
@@ -102,30 +82,17 @@ export function BibleTranslationsManager() {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            <Book className="w-5 h-5" />
-            {t('sections.bible.title')}
-          </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            {t('sections.bible.description')}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setIsAddModalOpen(true)}
-          disabled={!canAddMore}
-          className="flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
-          title={!canAddMore ? t('sections.bible.maxReached') : undefined}
-        >
-          <Plus size={16} />
-          {t('sections.bible.addTranslation')}
-        </button>
+      <div className="mb-4">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+          <Book className="w-5 h-5" />
+          {t('sections.bible.title')}
+        </h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          {t('sections.bible.description')}
+        </p>
       </div>
 
-      {/* Translation List */}
-      {selectedTranslations.length === 0 ? (
+      {translations.length === 0 ? (
         <div className="text-center py-8 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-dashed border-gray-300 dark:border-gray-600">
           <Book className="w-12 h-12 mx-auto text-gray-400 mb-3" />
           <p className="text-gray-600 dark:text-gray-400 font-medium">
@@ -136,46 +103,57 @@ export function BibleTranslationsManager() {
           </p>
         </div>
       ) : (
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={selectedIds}
-            strategy={verticalListSortingStrategy}
-          >
-            <div className="space-y-2">
-              {selectedTranslations.map((translation, index) => (
-                <TranslationItemCard
-                  key={translation.id}
-                  translation={translation}
-                  index={index}
-                  onRemove={() => handleRemoveTranslation(translation.id)}
-                />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
-      )}
+        <div className="space-y-4">
+          {/* Primary Version Selector */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {t('sections.bible.primaryVersion', {
+                defaultValue: 'Primary Version',
+              })}
+            </label>
+            <Combobox
+              options={primaryOptions}
+              value={primaryTranslation?.id ?? null}
+              onChange={handlePrimaryChange}
+              placeholder={t('sections.bible.selectPrimary', {
+                defaultValue: 'Select primary version...',
+              })}
+              allowClear
+              portalContainer={portalContainer}
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              {t('sections.bible.primaryDescription', {
+                defaultValue: 'Main Bible version shown in the app',
+              })}
+            </p>
+          </div>
 
-      {/* Max translations info */}
-      {selectedTranslations.length > 0 && (
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
-          {selectedTranslations.length} / {MAX_TRANSLATIONS}{' '}
-          {t('sections.bible.translationsSelected', {
-            defaultValue: 'translations selected',
-          })}
-        </p>
+          {/* Secondary Version Selector */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {t('sections.bible.secondaryVersion', {
+                defaultValue: 'Secondary Version',
+              })}
+            </label>
+            <Combobox
+              options={secondaryOptions}
+              value={secondaryTranslation?.id ?? null}
+              onChange={handleSecondaryChange}
+              placeholder={t('sections.bible.selectSecondary', {
+                defaultValue: 'None (optional)',
+              })}
+              disabled={!primaryTranslation}
+              allowClear
+              portalContainer={portalContainer}
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              {t('sections.bible.secondaryDescription', {
+                defaultValue: 'Shown alongside primary in presentation',
+              })}
+            </p>
+          </div>
+        </div>
       )}
-
-      {/* Add Translation Modal */}
-      <AddTranslationModal
-        isOpen={isAddModalOpen}
-        availableTranslations={availableTranslations}
-        onSubmit={handleAddTranslation}
-        onClose={() => setIsAddModalOpen(false)}
-      />
     </div>
   )
 }

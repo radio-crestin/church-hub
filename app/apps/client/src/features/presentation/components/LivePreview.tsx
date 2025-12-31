@@ -63,6 +63,7 @@ interface ContentData {
   referenceText?: string
   contentText?: string
   personLabel?: string
+  secondaryContentText?: string
 }
 
 export function LivePreview() {
@@ -164,12 +165,33 @@ export function LivePreview() {
         const temp = presentationState.temporaryContent
 
         if (temp.type === 'bible') {
-          // Remove translation abbreviation from reference if present
-          const reference = temp.data.reference.replace(/\s*-\s*[A-Z]+\s*$/, '')
+          const data = temp.data
+          const hasSecondary = Boolean(data.secondaryText && data.secondaryBookName)
+
+          // Build reference: "Genesis (Geneza) 1:1" when secondary exists, otherwise "Genesis 1:1"
+          // First extract chapter:verse from the existing reference
+          const chapterVerseMatch = data.reference.match(/(\d+:\d+)/)
+          const chapterVerse = chapterVerseMatch?.[1] || ''
+
+          let referenceText: string
+          if (hasSecondary && data.secondaryBookName) {
+            referenceText = `${data.bookName} (${data.secondaryBookName}) ${chapterVerse}`
+          } else {
+            // Use bookName + chapter:verse
+            referenceText = `${data.bookName} ${chapterVerse}`
+          }
+
+          // Combine primary + secondary text with empty line
+          let contentText = data.text
+          if (hasSecondary && data.secondaryText) {
+            contentText = `${data.text}\n\n${data.secondaryText}`
+          }
+
           setContentType('bible')
           setContentData({
-            referenceText: reference,
-            contentText: temp.data.text,
+            referenceText,
+            contentText,
+            secondaryContentText: data.secondaryText,
           })
           return
         }

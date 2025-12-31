@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { AlertModal } from '~/ui/modal'
+import { BibleDownloadSection } from './BibleDownloadSection'
 import { BibleTranslationsManager } from './BibleTranslationsManager'
 import { useImportTranslation } from '../hooks'
 
@@ -19,6 +20,13 @@ export function BibleSettingsModal({
   const dialogRef = useRef<HTMLDialogElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [importError, setImportError] = useState<string | null>(null)
+  const [dialogElement, setDialogElement] = useState<HTMLDialogElement | null>(null)
+
+  // Callback ref to capture dialog element for portal container
+  const setDialogRefCallback = (element: HTMLDialogElement | null) => {
+    dialogRef.current = element
+    setDialogElement(element)
+  }
   const { mutateAsync: importTranslation, isPending: isImporting } =
     useImportTranslation()
 
@@ -79,7 +87,7 @@ export function BibleSettingsModal({
   return (
     <>
       <dialog
-        ref={dialogRef}
+        ref={setDialogRefCallback}
         className="fixed inset-0 m-auto w-full max-w-4xl p-0 bg-white dark:bg-gray-800 rounded-xl shadow-xl backdrop:bg-black/50"
         onClick={handleBackdropClick}
       >
@@ -102,7 +110,12 @@ export function BibleSettingsModal({
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {/* Bible Translations Section */}
             <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-              <BibleTranslationsManager />
+              <BibleTranslationsManager portalContainer={dialogElement} />
+            </div>
+
+            {/* Download Section */}
+            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+              <BibleDownloadSection portalContainer={dialogElement} />
             </div>
 
             {/* Import Section */}
@@ -139,44 +152,28 @@ export function BibleSettingsModal({
                 />
               </div>
 
-              {/* Format Instructions */}
+              {/* Simplified Format Instructions */}
               <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                 <div className="flex items-start gap-3">
                   <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                   <div className="text-sm">
                     <p className="font-medium text-blue-900 dark:text-blue-100 mb-2">
-                      {t('settings.import.formatTitle')}
+                      {t('settings.import.formatTitle', { defaultValue: 'Supported Formats' })}
                     </p>
-                    <p className="text-blue-800 dark:text-blue-200 mb-3">
-                      {t('settings.import.formatDescription')}
+                    <p className="text-blue-800 dark:text-blue-200 mb-2">
+                      {t('settings.import.formatSimple', { defaultValue: 'Upload Bible files in USFX, OSIS, or Zefania XML format. The format is automatically detected.' })}
                     </p>
-
-                    <p className="font-medium text-blue-900 dark:text-blue-100 mb-2">
-                      {t('settings.import.structureTitle')}
+                    <p className="text-blue-800 dark:text-blue-200">
+                      {t('settings.import.formatExamples', { defaultValue: 'For format examples, see:' })}{' '}
+                      <a
+                        href="https://github.com/radio-crestin/open-bibles"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline hover:text-blue-900 dark:hover:text-blue-100"
+                      >
+                        github.com/radio-crestin/open-bibles
+                      </a>
                     </p>
-                    <pre className="bg-blue-100 dark:bg-blue-900/40 p-3 rounded text-xs text-blue-900 dark:text-blue-100 overflow-x-auto whitespace-pre">
-                      {`<?xml version="1.0" encoding="UTF-8"?>
-<usfx>
-  <book id="GEN">
-    <id>GEN</id>
-    <h>Genesis</h>
-    <c id="1">
-      <v id="1">In the beginning God created...</v>
-      <v id="2">And the earth was without form...</v>
-    </c>
-    <c id="2">
-      <v id="1">Thus the heavens and the earth...</v>
-    </c>
-  </book>
-</usfx>`}
-                    </pre>
-
-                    <ul className="mt-3 space-y-1 text-blue-800 dark:text-blue-200">
-                      <li>• {t('settings.import.hints.rootElement')}</li>
-                      <li>• {t('settings.import.hints.bookElement')}</li>
-                      <li>• {t('settings.import.hints.chapterElement')}</li>
-                      <li>• {t('settings.import.hints.verseElement')}</li>
-                    </ul>
                   </div>
                 </div>
               </div>
