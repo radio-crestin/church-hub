@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 export type BibleNavigationLevel = 'books' | 'chapters' | 'verses'
 
@@ -72,6 +72,30 @@ export function useBibleNavigation(
     ...initialState,
     translationId: initialTranslationId,
   })
+
+  // Track the translation ID that was used to initialize/reset the navigation
+  const activeTranslationIdRef = useRef<number | undefined>(undefined)
+
+  // Reset navigation when the primary translation changes
+  // This ensures the navigation always shows content for the selected translation
+  useEffect(() => {
+    // Skip if no translation ID yet (query still loading)
+    if (initialTranslationId === undefined) {
+      return
+    }
+
+    // Skip if we're already using this translation
+    if (activeTranslationIdRef.current === initialTranslationId) {
+      return
+    }
+
+    // Translation changed (or first time we have a valid ID) - reset to books view
+    activeTranslationIdRef.current = initialTranslationId
+    setState({
+      ...initialState,
+      translationId: initialTranslationId,
+    })
+  }, [initialTranslationId])
 
   const selectTranslation = useCallback((id: number) => {
     setState(() => ({

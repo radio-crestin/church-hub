@@ -12,7 +12,7 @@ export const SELECTED_BIBLE_TRANSLATIONS_QUERY_KEY = [
   'selected_bible_translations',
 ]
 
-export const MAX_TRANSLATIONS = 3
+export const MAX_TRANSLATIONS = 2
 
 export function useSelectedBibleTranslations() {
   const queryClient = useQueryClient()
@@ -22,7 +22,7 @@ export function useSelectedBibleTranslations() {
   const { data: selectedIds = [], isLoading: isSettingLoading } = useQuery({
     queryKey: SELECTED_BIBLE_TRANSLATIONS_QUERY_KEY,
     queryFn: getSelectedBibleTranslationIds,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 0, // Always fetch fresh data - translation changes need to be immediate
   })
 
   const saveTranslations = useMutation({
@@ -48,9 +48,47 @@ export function useSelectedBibleTranslations() {
   const primaryTranslation: BibleTranslation | null =
     selectedTranslations[0] ?? null
 
+  // Secondary translation is the second one (if exists)
+  const secondaryTranslation: BibleTranslation | null =
+    selectedTranslations[1] ?? null
+
   const isLoading = isTranslationsLoading || isSettingLoading
   const canAddMore = selectedIds.length < MAX_TRANSLATIONS
 
+  // Set primary translation (replaces first slot)
+  const setPrimaryTranslation = async (translationId: number | null) => {
+    if (translationId === null) {
+      // Remove primary, keep secondary as new primary
+      if (selectedIds.length > 1) {
+        await saveTranslations.mutateAsync([selectedIds[1]])
+      } else {
+        await saveTranslations.mutateAsync([])
+      }
+    } else {
+      // Set new primary, keep secondary if exists
+      const newIds = selectedIds.length > 1
+        ? [translationId, selectedIds[1]]
+        : [translationId]
+      // Filter out duplicates
+      await saveTranslations.mutateAsync([...new Set(newIds)])
+    }
+  }
+
+  // Set secondary translation (replaces second slot)
+  const setSecondaryTranslation = async (translationId: number | null) => {
+    if (!selectedIds[0]) return // Need a primary first
+
+    if (translationId === null) {
+      // Remove secondary
+      await saveTranslations.mutateAsync([selectedIds[0]])
+    } else {
+      // Set secondary
+      if (translationId === selectedIds[0]) return // Can't be same as primary
+      await saveTranslations.mutateAsync([selectedIds[0], translationId])
+    }
+  }
+
+  // Legacy methods for backwards compatibility
   const addTranslation = async (translationId: number) => {
     if (!canAddMore) return
     const newIds = [...selectedIds, translationId]
@@ -72,6 +110,9 @@ export function useSelectedBibleTranslations() {
     availableTranslations,
     translations,
     primaryTranslation,
+    secondaryTranslation,
+    setPrimaryTranslation,
+    setSecondaryTranslation,
     addTranslation,
     removeTranslation,
     reorderTranslations,

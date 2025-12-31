@@ -172,4 +172,111 @@ export const presentationPaths = {
       },
     },
   },
+  '/api/presentation/temporary-bible': {
+    post: {
+      tags: ['Presentation'],
+      summary: 'Present Bible verse temporarily',
+      description:
+        'Present a Bible verse directly (bypasses queue). Supports dual-version display with optional secondary translation.',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              $ref: '#/components/schemas/PresentTemporaryBibleInput',
+            },
+          },
+        },
+      },
+      responses: {
+        '200': {
+          description: 'Bible verse presented',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: { $ref: '#/components/schemas/PresentationState' },
+                },
+              },
+            },
+          },
+        },
+        '400': { $ref: '#/components/responses/BadRequest' },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+      },
+    },
+  },
+  '/api/presentation/temporary-song': {
+    post: {
+      tags: ['Presentation'],
+      summary: 'Present song temporarily',
+      description: 'Present a song directly (bypasses queue)',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              $ref: '#/components/schemas/PresentTemporarySongInput',
+            },
+          },
+        },
+      },
+      responses: {
+        '200': {
+          description: 'Song presented',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: { $ref: '#/components/schemas/PresentationState' },
+                },
+              },
+            },
+          },
+        },
+        '400': { $ref: '#/components/responses/BadRequest' },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+      },
+    },
+  },
+  '/api/presentation/navigate-temporary': {
+    post: {
+      tags: ['Presentation'],
+      summary: 'Navigate within temporary content',
+      description:
+        'Navigate to next or previous item within temporary content (verse or song slide)',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              $ref: '#/components/schemas/NavigateTemporaryInput',
+            },
+          },
+        },
+      },
+      responses: {
+        '200': {
+          description: 'Navigation result',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: { $ref: '#/components/schemas/PresentationState' },
+                },
+              },
+            },
+          },
+        },
+        '400': { $ref: '#/components/responses/BadRequest' },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+      },
+    },
+  },
 }

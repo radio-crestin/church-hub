@@ -59,11 +59,21 @@ interface HighlightColorsUpdatedMessage {
   }
 }
 
+interface SettingsUpdatedMessage {
+  type: 'settings_updated'
+  payload: {
+    table: string
+    key: string
+    updatedAt: number
+  }
+}
+
 type MessageData =
   | PresentationMessage
   | ScreenConfigUpdatedMessage
   | ScreenConfigPreviewMessage
   | HighlightColorsUpdatedMessage
+  | SettingsUpdatedMessage
   | { type: 'pong' }
 
 // Check if we should use Tauri WebSocket plugin (on mobile)
@@ -153,6 +163,20 @@ export function useWebSocket() {
             screenQueryKey(data.payload.screenId),
             data.payload.config,
           )
+        }
+
+        if (data.type === 'settings_updated') {
+          // Force immediate refetch when settings are updated
+          if (data.payload.key === 'selected_bible_translations') {
+            // Use refetchQueries to force immediate refetch, not just invalidate
+            queryClient.refetchQueries({
+              queryKey: ['settings', 'selected_bible_translations'],
+            })
+            // Also refetch Bible books/verses queries so they use the new translation
+            queryClient.refetchQueries({
+              queryKey: ['bible'],
+            })
+          }
         }
       } catch {
         // Failed to parse message

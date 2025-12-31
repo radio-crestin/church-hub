@@ -46,6 +46,7 @@ export {
   getTranslationById,
   getTranslations,
   getVerseById,
+  getVerseByReference,
   getVerses,
   importTranslation,
   searchBible,

@@ -44,12 +44,17 @@ export interface TemporaryBibleContent {
   reference: string
   text: string
   translationAbbreviation: string
+  bookName: string
   // Navigation context
   translationId: number
   bookId: number
   bookCode: string
   chapter: number
   currentVerseIndex: number // 0-based index in chapter
+  // Secondary version (optional)
+  secondaryText?: string
+  secondaryBookName?: string
+  secondaryTranslationAbbreviation?: string
 }
 
 /**
@@ -86,11 +91,16 @@ export interface PresentTemporaryBibleInput {
   reference: string
   text: string
   translationAbbreviation: string
+  bookName: string
   translationId: number
   bookId: number
   bookCode: string
   chapter: number
   currentVerseIndex: number
+  // Secondary version (optional)
+  secondaryText?: string
+  secondaryBookName?: string
+  secondaryTranslationAbbreviation?: string
 }
 
 /**

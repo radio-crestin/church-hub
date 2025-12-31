@@ -49,7 +49,7 @@ import {
   getVerse,
   getVerseById,
   getVersesByChapter,
-  importUsfxTranslation,
+  importBibleTranslation,
   type SearchVersesInput,
   searchBible,
 } from './service/bible'
@@ -183,6 +183,7 @@ import {
   broadcastMIDIMessage,
   broadcastPresentationState,
   broadcastScreenConfigUpdated,
+  broadcastSettingsUpdated,
   handleWebSocketClose,
   handleWebSocketMessage,
   handleWebSocketOpen,
@@ -461,6 +462,9 @@ async function main() {
               }),
             )
           }
+
+          // Broadcast settings update via WebSocket
+          broadcastSettingsUpdated(table, body.key)
 
           return handleCors(
             req,
@@ -3055,7 +3059,7 @@ async function main() {
             )
           }
 
-          const result = importUsfxTranslation(body)
+          const result = importBibleTranslation(body)
 
           if (!result.success) {
             return handleCors(

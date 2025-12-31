@@ -54,10 +54,13 @@ export function BibleNavigationPanel({
     searchInputRef.current?.focus()
   }, [])
 
-  const { selectedTranslations } = useSelectedBibleTranslations()
+  const { primaryTranslation, selectedTranslations } = useSelectedBibleTranslations()
+
+  // Always use the primary translation for all data fetching
+  const translationId = primaryTranslation?.id
 
   const { data: books = [], isLoading: isLoadingBooks } = useBooks(
-    state.translationId,
+    translationId,
   )
   const { data: chapters = [], isLoading: isLoadingChapters } = useChapters(
     state.bookId,
@@ -79,7 +82,7 @@ export function BibleNavigationPanel({
 
   const { data: searchResults, isLoading: isSearching } = useSearchBible(
     state.searchQuery,
-    state.translationId,
+    translationId,
     50,
     !isReferenceSearch, // Only run text search when it's not a reference search
   )

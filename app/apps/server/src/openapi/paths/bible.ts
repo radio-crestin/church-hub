@@ -28,7 +28,7 @@ export const biblePaths = {
     post: {
       tags: ['Bible'],
       summary: 'Import Bible translation',
-      description: 'Import a Bible translation from USFX XML format',
+      description: 'Import a Bible translation from XML. Supports USFX, OSIS, and Zefania formats with auto-detection.',
       security: [{ bearerAuth: [] }, { cookieAuth: [] }],
       requestBody: {
         required: true,
