@@ -67,6 +67,7 @@ export function BibleDownloadSection({ portalContainer }: BibleDownloadSectionPr
   const isLoading = isPending || isDownloading
 
   // Convert available Bibles to Combobox options
+  // The name from the XML already includes language info (e.g., "Romani from Romanian (E Romaii Biblia 2020)")
   const bibleOptions = useMemo(() => {
     if (!biblesData) return []
     return biblesData.bibles.map((bible) => ({

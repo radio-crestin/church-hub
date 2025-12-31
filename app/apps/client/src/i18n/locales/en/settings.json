@@ -20,12 +20,18 @@
           "title": "Add Translation",
           "selectLabel": "Select a translation",
           "submit": "Add"
+        },
+        "delete": {
+          "title": "Delete Translation",
+          "message": "Are you sure you want to delete \"{{name}}\"? All verses will be permanently removed.",
+          "confirm": "Delete"
         }
       },
       "toast": {
         "saved": "Translations saved",
         "removed": "Translation removed",
         "added": "Translation added",
+        "deleted": "Translation deleted",
         "error": "An error occurred"
       }
     },

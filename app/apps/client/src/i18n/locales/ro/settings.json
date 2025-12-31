@@ -20,12 +20,18 @@
           "title": "Adaugă Traducere",
           "selectLabel": "Selectează o traducere",
           "submit": "Adaugă"
+        },
+        "delete": {
+          "title": "Șterge Traducere",
+          "message": "Ești sigur că vrei să ștergi \"{{name}}\"? Toate versetele vor fi șterse permanent.",
+          "confirm": "Șterge"
         }
       },
       "toast": {
         "saved": "Traduceri salvate",
         "removed": "Traducere eliminată",
         "added": "Traducere adăugată",
+        "deleted": "Traducere ștearsă",
         "error": "A apărut o eroare"
       }
     },

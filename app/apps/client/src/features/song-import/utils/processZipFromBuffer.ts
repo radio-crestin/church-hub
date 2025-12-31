@@ -11,10 +11,13 @@ import type {
   ProcessImportResult,
 } from '../types'
 
+import { yieldToMain } from '~/utils/async-utils'
+
 const PARALLEL_CHUNK_SIZE = 5
 
 /**
- * Processes chunks in parallel with a concurrency limit
+ * Processes chunks in parallel with a concurrency limit.
+ * Yields to main thread between chunks to prevent UI freezes.
  */
 async function processInChunks<T, R>(
   items: T[],
@@ -32,6 +35,9 @@ async function processInChunks<T, R>(
     )
     results.push(...chunkResults)
     onChunkComplete?.(Math.min(i + chunkSize, total), total)
+
+    // Yield to main thread between chunks to keep UI responsive
+    await yieldToMain()
   }
 
   return results

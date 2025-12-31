@@ -1,4 +1,3 @@
-import { invoke } from '@tauri-apps/api/core'
 import {
   AlertTriangle,
   Copy,
@@ -10,6 +9,7 @@ import {
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { isTauri } from '~/features/presentation/utils/openDisplayWindow'
 import { useToast } from '~/ui/toast'
 import { fetcher } from '~/utils/fetcher'
 import { useDatabaseExport } from '../hooks/useDatabaseExport'
@@ -80,13 +80,39 @@ export function DatabaseManager() {
   }, [databaseInfo?.path, showToast, t])
 
   const openInFileExplorer = useCallback(async () => {
-    if (!databaseInfo?.path) return
+    // biome-ignore lint/suspicious/noConsole: Debug logging for file explorer
+    console.log('[DatabaseManager] openInFileExplorer called')
+    // biome-ignore lint/suspicious/noConsole: Debug logging for file explorer
+    console.log('[DatabaseManager] databaseInfo?.path:', databaseInfo?.path)
+    // biome-ignore lint/suspicious/noConsole: Debug logging for file explorer
+    console.log('[DatabaseManager] isTauri():', isTauri())
+
+    if (!databaseInfo?.path) {
+      // biome-ignore lint/suspicious/noConsole: Debug logging for file explorer
+      console.log('[DatabaseManager] No database path, returning')
+      return
+    }
+
+    if (!isTauri()) {
+      // biome-ignore lint/suspicious/noConsole: Debug logging for file explorer
+      console.log('[DatabaseManager] Not in Tauri, returning')
+      return
+    }
 
     try {
-      await invoke('plugin:opener|reveal_item_in_dir', {
-        path: databaseInfo.path,
-      })
-    } catch {
+      // biome-ignore lint/suspicious/noConsole: Debug logging for file explorer
+      console.log('[DatabaseManager] Importing @tauri-apps/plugin-opener')
+      const { revealItemInDir } = await import('@tauri-apps/plugin-opener')
+      // biome-ignore lint/suspicious/noConsole: Debug logging for file explorer
+      console.log('[DatabaseManager] revealItemInDir imported:', revealItemInDir)
+      // biome-ignore lint/suspicious/noConsole: Debug logging for file explorer
+      console.log('[DatabaseManager] Calling revealItemInDir with path:', databaseInfo.path)
+      await revealItemInDir(databaseInfo.path)
+      // biome-ignore lint/suspicious/noConsole: Debug logging for file explorer
+      console.log('[DatabaseManager] revealItemInDir completed successfully')
+    } catch (error) {
+      // biome-ignore lint/suspicious/noConsole: Debug logging for file explorer
+      console.error('[DatabaseManager] revealItemInDir failed:', error)
       showToast(t('sections.database.toast.openFolderFailed'), 'error')
     }
   }, [databaseInfo?.path, showToast, t])
@@ -149,6 +175,7 @@ export function DatabaseManager() {
   const handleRestartConfirm = useCallback(async () => {
     setIsRestarting(true)
     try {
+      const { invoke } = await import('@tauri-apps/api/core')
       await invoke('restart_server')
       // Reload the page to reinitialize the app with the new database
       window.location.reload()
@@ -195,15 +222,17 @@ export function DatabaseManager() {
               >
                 <Copy className="w-4 h-4" />
               </button>
-              <button
-                type="button"
-                onClick={openInFileExplorer}
-                disabled={isLoading || !databaseInfo?.path}
-                className="p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 disabled:opacity-50"
-                title={t('sections.database.openFolder')}
-              >
-                <FolderOpen className="w-4 h-4" />
-              </button>
+              {isTauri() && (
+                <button
+                  type="button"
+                  onClick={openInFileExplorer}
+                  disabled={isLoading || !databaseInfo?.path}
+                  className="p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 disabled:opacity-50"
+                  title={t('sections.database.openFolder')}
+                >
+                  <FolderOpen className="w-4 h-4" />
+                </button>
+              )}
             </div>
           </div>
           <code className="block text-sm font-mono bg-gray-100 dark:bg-gray-900 p-2 rounded break-all">
