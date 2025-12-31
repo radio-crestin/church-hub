@@ -8,21 +8,14 @@ export {
   getChaptersForBook,
   getNextBook,
 } from './books'
-// Import operations (unified with auto-detection)
+// Import operations (OSIS format only)
 export {
   detectBibleFormat,
   importBibleTranslation,
   parseBibleXml,
 } from './import'
-// Legacy USFX import (for backwards compatibility)
-export {
-  importUsfxTranslation,
-  parseUsfxXml,
-} from './import-usfx'
-// OSIS import
+// OSIS parser
 export { parseOsisXml } from './import-osis'
-// Zefania import
-export { parseZefaniaXml } from './import-zefania'
 // Search operations
 export {
   looksLikeReference,

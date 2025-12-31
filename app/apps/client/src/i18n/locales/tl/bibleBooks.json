@@ -1,0 +1,266 @@
+{
+  "GEN": {
+    "name": "Genesis",
+    "short": "Gen"
+  },
+  "EXO": {
+    "name": "Exodus",
+    "short": "Exo"
+  },
+  "LEV": {
+    "name": "Leviticus",
+    "short": "Lev"
+  },
+  "NUM": {
+    "name": "Numbers",
+    "short": "Num"
+  },
+  "DEU": {
+    "name": "Deuteronomy",
+    "short": "Deu"
+  },
+  "JOS": {
+    "name": "Joshua",
+    "short": "Jos"
+  },
+  "JDG": {
+    "name": "Judges",
+    "short": "Jud"
+  },
+  "RUT": {
+    "name": "Ruth",
+    "short": "Rut"
+  },
+  "1SA": {
+    "name": "1 Samuel",
+    "short": "1Sam"
+  },
+  "2SA": {
+    "name": "2 Samuel",
+    "short": "2Sam"
+  },
+  "1KI": {
+    "name": "1 Kings",
+    "short": "1Kin"
+  },
+  "2KI": {
+    "name": "2 Kings",
+    "short": "2Kin"
+  },
+  "1CH": {
+    "name": "1 Chronicles",
+    "short": "1Chr"
+  },
+  "2CH": {
+    "name": "2 Chronicles",
+    "short": "2Chr"
+  },
+  "EZR": {
+    "name": "Ezra",
+    "short": "Ezr"
+  },
+  "NEH": {
+    "name": "Nehemiah",
+    "short": "Neh"
+  },
+  "EST": {
+    "name": "Esther",
+    "short": "Est"
+  },
+  "JOB": {
+    "name": "Job",
+    "short": "Job"
+  },
+  "PSA": {
+    "name": "Psalm",
+    "short": "Psa"
+  },
+  "PRO": {
+    "name": "Proverbs",
+    "short": "Pro"
+  },
+  "ECC": {
+    "name": "Ecclesiastes",
+    "short": "Ecc"
+  },
+  "SNG": {
+    "name": "Song of Solomon",
+    "short": "Son"
+  },
+  "ISA": {
+    "name": "Isaiah",
+    "short": "Isa"
+  },
+  "JER": {
+    "name": "Jeremiah",
+    "short": "Jer"
+  },
+  "LAM": {
+    "name": "Lamentations",
+    "short": "Lam"
+  },
+  "EZK": {
+    "name": "Ezekiel",
+    "short": "Eze"
+  },
+  "DAN": {
+    "name": "Daniel",
+    "short": "Dan"
+  },
+  "HOS": {
+    "name": "Hosea",
+    "short": "Hos"
+  },
+  "JOL": {
+    "name": "Joel",
+    "short": "Joe"
+  },
+  "AMO": {
+    "name": "Amos",
+    "short": "Amo"
+  },
+  "OBA": {
+    "name": "Obadiah",
+    "short": "Oba"
+  },
+  "JON": {
+    "name": "Jonah",
+    "short": "Jon"
+  },
+  "MIC": {
+    "name": "Micah",
+    "short": "Mic"
+  },
+  "NAM": {
+    "name": "Nahum",
+    "short": "Nah"
+  },
+  "HAB": {
+    "name": "Habakkuk",
+    "short": "Hab"
+  },
+  "ZEP": {
+    "name": "Zephaniah",
+    "short": "Zep"
+  },
+  "HAG": {
+    "name": "Haggai",
+    "short": "Hag"
+  },
+  "ZEC": {
+    "name": "Zechariah",
+    "short": "Zec"
+  },
+  "MAL": {
+    "name": "Malachi",
+    "short": "Mal"
+  },
+  "MAT": {
+    "name": "Mateo",
+    "short": "Mat"
+  },
+  "MRK": {
+    "name": "Marcos",
+    "short": "Mar"
+  },
+  "LUK": {
+    "name": "Lucas",
+    "short": "Luc"
+  },
+  "JHN": {
+    "name": "Juan",
+    "short": "Jua"
+  },
+  "ACT": {
+    "name": "Mga Gawa",
+    "short": "Mga"
+  },
+  "ROM": {
+    "name": "Mga Taga-Roma",
+    "short": "Mga"
+  },
+  "1CO": {
+    "name": "1 Mga Taga-Corinto",
+    "short": "1Mga"
+  },
+  "2CO": {
+    "name": "2 Mga Taga-Corinto",
+    "short": "2Mga"
+  },
+  "GAL": {
+    "name": "Mga Taga-Galacia",
+    "short": "Mga"
+  },
+  "EPH": {
+    "name": "Mga Taga-Efeso",
+    "short": "Mga"
+  },
+  "PHP": {
+    "name": "Mga Taga-Filipos",
+    "short": "Mga"
+  },
+  "COL": {
+    "name": "Mga Taga-Colosas",
+    "short": "Mga"
+  },
+  "1TH": {
+    "name": "1 Mga Taga-Tesalonica",
+    "short": "1Mga"
+  },
+  "2TH": {
+    "name": "2 Mga Taga-Tesalonica",
+    "short": "2Mga"
+  },
+  "1TI": {
+    "name": "1 Kay Timoteo",
+    "short": "1Kay"
+  },
+  "2TI": {
+    "name": "2 Kay Timoteo",
+    "short": "2Kay"
+  },
+  "TIT": {
+    "name": "Kay Tito",
+    "short": "Kay"
+  },
+  "PHM": {
+    "name": "Kay Filemon",
+    "short": "Kay"
+  },
+  "HEB": {
+    "name": "Hebreo",
+    "short": "Heb"
+  },
+  "JAS": {
+    "name": "Santiago",
+    "short": "San"
+  },
+  "1PE": {
+    "name": "1 Pedro",
+    "short": "1Ped"
+  },
+  "2PE": {
+    "name": "2 Pedro",
+    "short": "2Ped"
+  },
+  "1JN": {
+    "name": "1 Juan",
+    "short": "1Jua"
+  },
+  "2JN": {
+    "name": "2 Juan",
+    "short": "2Jua"
+  },
+  "3JN": {
+    "name": "3 Juan",
+    "short": "3Jua"
+  },
+  "JUD": {
+    "name": "Judas",
+    "short": "Jud"
+  },
+  "REV": {
+    "name": "Pahayag",
+    "short": "Pah"
+  }
+}

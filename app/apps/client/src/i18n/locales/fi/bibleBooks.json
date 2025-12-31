@@ -1,0 +1,266 @@
+{
+  "GEN": {
+    "name": "ENSIMMÄINEN MOOSEKSEN",
+    "short": "ENS"
+  },
+  "EXO": {
+    "name": "TOINEN MOOSEKSEN",
+    "short": "TOI"
+  },
+  "LEV": {
+    "name": "KOLMAS MOOSEKSEN",
+    "short": "KOL"
+  },
+  "NUM": {
+    "name": "NELJÄS MOOSEKSEN",
+    "short": "NEL"
+  },
+  "DEU": {
+    "name": "VIIDES MOOSEKSEN",
+    "short": "VII"
+  },
+  "JOS": {
+    "name": "JOOSUA",
+    "short": "JOO"
+  },
+  "JDG": {
+    "name": "TUOMARIEN KIRJA",
+    "short": "TUO"
+  },
+  "RUT": {
+    "name": "RUUT",
+    "short": "RUU"
+  },
+  "1SA": {
+    "name": "ENSIMMÄINEN SAMUELIN KIRJA",
+    "short": "ENS"
+  },
+  "2SA": {
+    "name": "TOINEN SAMUELIN KIRJA",
+    "short": "TOI"
+  },
+  "1KI": {
+    "name": "ENSIMMÄINEN KUNINGASTEN KIRJA",
+    "short": "ENS"
+  },
+  "2KI": {
+    "name": "TOINEN KUNINGASTEN KIRJA",
+    "short": "TOI"
+  },
+  "1CH": {
+    "name": "ENSIMMÄINEN AIKAKIRJA",
+    "short": "ENS"
+  },
+  "2CH": {
+    "name": "TOINEN AIKAKIRJA",
+    "short": "TOI"
+  },
+  "EZR": {
+    "name": "ESRA",
+    "short": "ESR"
+  },
+  "NEH": {
+    "name": "NEHEMIA",
+    "short": "NEH"
+  },
+  "EST": {
+    "name": "ESTER",
+    "short": "EST"
+  },
+  "JOB": {
+    "name": "JOB",
+    "short": "JOB"
+  },
+  "PSA": {
+    "name": "PSALMIT",
+    "short": "PSA"
+  },
+  "PRO": {
+    "name": "SANANLASKUT",
+    "short": "SAN"
+  },
+  "ECC": {
+    "name": "SAARNAAJA",
+    "short": "SAA"
+  },
+  "SNG": {
+    "name": "KORKEA VEISU",
+    "short": "KOR"
+  },
+  "ISA": {
+    "name": "JESAJA",
+    "short": "JES"
+  },
+  "JER": {
+    "name": "JEREMIA",
+    "short": "JER"
+  },
+  "LAM": {
+    "name": "VALITUSVIRRET",
+    "short": "VAL"
+  },
+  "EZK": {
+    "name": "HESEKIEL",
+    "short": "HES"
+  },
+  "DAN": {
+    "name": "DANIEL",
+    "short": "DAN"
+  },
+  "HOS": {
+    "name": "HOOSEA",
+    "short": "HOO"
+  },
+  "JOL": {
+    "name": "JOOEL",
+    "short": "JOO"
+  },
+  "AMO": {
+    "name": "AAMOS",
+    "short": "AAM"
+  },
+  "OBA": {
+    "name": "OBADJA",
+    "short": "OBA"
+  },
+  "JON": {
+    "name": "JOONA",
+    "short": "JOO"
+  },
+  "MIC": {
+    "name": "MIIKA",
+    "short": "MII"
+  },
+  "NAM": {
+    "name": "NAAHUM",
+    "short": "NAA"
+  },
+  "HAB": {
+    "name": "HABAKUK",
+    "short": "HAB"
+  },
+  "ZEP": {
+    "name": "SEFANJA",
+    "short": "SEF"
+  },
+  "HAG": {
+    "name": "HAGGAI",
+    "short": "HAG"
+  },
+  "ZEC": {
+    "name": "SAKARJA",
+    "short": "SAK"
+  },
+  "MAL": {
+    "name": "MALAKIA",
+    "short": "MAL"
+  },
+  "MAT": {
+    "name": "Evankeliumi Matteuksen mukaan",
+    "short": "Eva"
+  },
+  "MRK": {
+    "name": "Evankeliumi Markuksen mukaan",
+    "short": "Eva"
+  },
+  "LUK": {
+    "name": "Evankeliumi Luukkaan mukaan",
+    "short": "Eva"
+  },
+  "JHN": {
+    "name": "Evankeliumi Johanneksen mukaan",
+    "short": "Eva"
+  },
+  "ACT": {
+    "name": "Apostolien teot",
+    "short": "Apo"
+  },
+  "ROM": {
+    "name": "Kirje roomalaisille",
+    "short": "Kir"
+  },
+  "1CO": {
+    "name": "Ensimmäinen kirje korinttilaisille",
+    "short": "Ens"
+  },
+  "2CO": {
+    "name": "Toinen kirje korinttilaisille",
+    "short": "Toi"
+  },
+  "GAL": {
+    "name": "Kirje galatalaisille",
+    "short": "Kir"
+  },
+  "EPH": {
+    "name": "Kirje efesolaisille",
+    "short": "Kir"
+  },
+  "PHP": {
+    "name": "Kirje filippiläisille",
+    "short": "Kir"
+  },
+  "COL": {
+    "name": "Kirje kolossalaisille",
+    "short": "Kir"
+  },
+  "1TH": {
+    "name": "Ensimmäinen kirje tessalonikalaisille",
+    "short": "Ens"
+  },
+  "2TH": {
+    "name": "Toinen kirje tessalonikalaisille",
+    "short": "Toi"
+  },
+  "1TI": {
+    "name": "Ensimmäinen kirje Timoteukselle",
+    "short": "Ens"
+  },
+  "2TI": {
+    "name": "Toinen kirje Timoteukselle",
+    "short": "Toi"
+  },
+  "TIT": {
+    "name": "Kirje Titukselle",
+    "short": "Kir"
+  },
+  "PHM": {
+    "name": "Kirje Filemonille",
+    "short": "Kir"
+  },
+  "HEB": {
+    "name": "Kirje heprealaisille",
+    "short": "Kir"
+  },
+  "JAS": {
+    "name": "Ensimmäinen Pietarin kirje",
+    "short": "Ens"
+  },
+  "1PE": {
+    "name": "Toinen Pietarin kirje",
+    "short": "Toi"
+  },
+  "2PE": {
+    "name": "Ensimmäinen Johanneksen kirje",
+    "short": "Ens"
+  },
+  "1JN": {
+    "name": "Toinen Johanneksen kirje",
+    "short": "Toi"
+  },
+  "2JN": {
+    "name": "Kolmas Johanneksen kirje",
+    "short": "Kol"
+  },
+  "3JN": {
+    "name": "Jaakobin kirje",
+    "short": "Jaa"
+  },
+  "JUD": {
+    "name": "Juudaksen kirje",
+    "short": "Juu"
+  },
+  "REV": {
+    "name": "Johanneksen ilmestys",
+    "short": "Joh"
+  }
+}

@@ -1,0 +1,266 @@
+{
+  "GEN": {
+    "name": "KEJADIAN",
+    "short": "KEJ"
+  },
+  "EXO": {
+    "name": "KELUARAN",
+    "short": "KEL"
+  },
+  "LEV": {
+    "name": "IMAMAT",
+    "short": "IMA"
+  },
+  "NUM": {
+    "name": "BILANGAN",
+    "short": "BIL"
+  },
+  "DEU": {
+    "name": "ULANGAN",
+    "short": "ULA"
+  },
+  "JOS": {
+    "name": "YOSUA",
+    "short": "YOS"
+  },
+  "JDG": {
+    "name": "HAKIM-HAKIM",
+    "short": "HAK"
+  },
+  "RUT": {
+    "name": "RUT",
+    "short": "RUT"
+  },
+  "1SA": {
+    "name": "1 SAMUEL",
+    "short": "1SAM"
+  },
+  "2SA": {
+    "name": "2 SAMUEL",
+    "short": "2SAM"
+  },
+  "1KI": {
+    "name": "1 RAJA-RAJA",
+    "short": "1RAJ"
+  },
+  "2KI": {
+    "name": "2 RAJA-RAJA",
+    "short": "2RAJ"
+  },
+  "1CH": {
+    "name": "1 TAWARIKH",
+    "short": "1TAW"
+  },
+  "2CH": {
+    "name": "2 TAWARIKH",
+    "short": "2TAW"
+  },
+  "EZR": {
+    "name": "EZRA",
+    "short": "EZR"
+  },
+  "NEH": {
+    "name": "NEHEMIA",
+    "short": "NEH"
+  },
+  "EST": {
+    "name": "ESTER",
+    "short": "EST"
+  },
+  "JOB": {
+    "name": "AYUB",
+    "short": "AYU"
+  },
+  "PSA": {
+    "name": "MAZMUR",
+    "short": "MAZ"
+  },
+  "PRO": {
+    "name": "AMSAL",
+    "short": "AMS"
+  },
+  "ECC": {
+    "name": "PENGKHOTBAH",
+    "short": "PEN"
+  },
+  "SNG": {
+    "name": "KIDUNG AGUNG",
+    "short": "KID"
+  },
+  "ISA": {
+    "name": "YESAYA",
+    "short": "YES"
+  },
+  "JER": {
+    "name": "YEREMIA",
+    "short": "YER"
+  },
+  "LAM": {
+    "name": "RATAPAN",
+    "short": "RAT"
+  },
+  "EZK": {
+    "name": "YEHEZKIEL",
+    "short": "YEH"
+  },
+  "DAN": {
+    "name": "DANIEL",
+    "short": "DAN"
+  },
+  "HOS": {
+    "name": "HOSEA",
+    "short": "HOS"
+  },
+  "JOL": {
+    "name": "YOEL",
+    "short": "YOE"
+  },
+  "AMO": {
+    "name": "AMOS",
+    "short": "AMO"
+  },
+  "OBA": {
+    "name": "OBAJA",
+    "short": "OBA"
+  },
+  "JON": {
+    "name": "YUNUS",
+    "short": "YUN"
+  },
+  "MIC": {
+    "name": "MIKHA",
+    "short": "MIK"
+  },
+  "NAM": {
+    "name": "NAHUM",
+    "short": "NAH"
+  },
+  "HAB": {
+    "name": "HABAKUK",
+    "short": "HAB"
+  },
+  "ZEP": {
+    "name": "ZEFANYA",
+    "short": "ZEF"
+  },
+  "HAG": {
+    "name": "HAGAI",
+    "short": "HAG"
+  },
+  "ZEC": {
+    "name": "ZAKHARIA",
+    "short": "ZAK"
+  },
+  "MAL": {
+    "name": "MALEAKHI",
+    "short": "MAL"
+  },
+  "MAT": {
+    "name": "MATIUS",
+    "short": "MAT"
+  },
+  "MRK": {
+    "name": "MARKUS",
+    "short": "MAR"
+  },
+  "LUK": {
+    "name": "LUKAS",
+    "short": "LUK"
+  },
+  "JHN": {
+    "name": "YOHANES",
+    "short": "YOH"
+  },
+  "ACT": {
+    "name": "KISAH PARA RASUL",
+    "short": "KIS"
+  },
+  "ROM": {
+    "name": "ROMA",
+    "short": "ROM"
+  },
+  "1CO": {
+    "name": "1 KOR",
+    "short": "1KOR"
+  },
+  "2CO": {
+    "name": "2 KOR",
+    "short": "2KOR"
+  },
+  "GAL": {
+    "name": "GALATIA",
+    "short": "GAL"
+  },
+  "EPH": {
+    "name": "EFESUS",
+    "short": "EFE"
+  },
+  "PHP": {
+    "name": "FILIPI",
+    "short": "FIL"
+  },
+  "COL": {
+    "name": "KOLOSE",
+    "short": "KOL"
+  },
+  "1TH": {
+    "name": "1 TES",
+    "short": "1TES"
+  },
+  "2TH": {
+    "name": "2 TES",
+    "short": "2TES"
+  },
+  "1TI": {
+    "name": "1 TIM",
+    "short": "1TIM"
+  },
+  "2TI": {
+    "name": "2 TIM",
+    "short": "2TIM"
+  },
+  "TIT": {
+    "name": "TITUS",
+    "short": "TIT"
+  },
+  "PHM": {
+    "name": "FILEMON",
+    "short": "FIL"
+  },
+  "HEB": {
+    "name": "IBRANI",
+    "short": "IBR"
+  },
+  "JAS": {
+    "name": "YAKOBUS",
+    "short": "YAK"
+  },
+  "1PE": {
+    "name": "1 PET",
+    "short": "1PET"
+  },
+  "2PE": {
+    "name": "2 PET",
+    "short": "2PET"
+  },
+  "1JN": {
+    "name": "1 YOH",
+    "short": "1YOH"
+  },
+  "2JN": {
+    "name": "2 YOH",
+    "short": "2YOH"
+  },
+  "3JN": {
+    "name": "3 YOH",
+    "short": "3YOH"
+  },
+  "JUD": {
+    "name": "YUDAS",
+    "short": "YUD"
+  },
+  "REV": {
+    "name": "WAHYU",
+    "short": "WAH"
+  }
+}

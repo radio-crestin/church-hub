@@ -1,0 +1,266 @@
+{
+  "GEN": {
+    "name": "Genesis",
+    "short": "Gen"
+  },
+  "EXO": {
+    "name": "Exodus",
+    "short": "Exo"
+  },
+  "LEV": {
+    "name": "Leviticus",
+    "short": "Lev"
+  },
+  "NUM": {
+    "name": "Numbers",
+    "short": "Num"
+  },
+  "DEU": {
+    "name": "Deuteronomy",
+    "short": "Deu"
+  },
+  "JOS": {
+    "name": "Joshua",
+    "short": "Jos"
+  },
+  "JDG": {
+    "name": "Judges",
+    "short": "Jud"
+  },
+  "RUT": {
+    "name": "Ruth",
+    "short": "Rut"
+  },
+  "1SA": {
+    "name": "1 Samuel",
+    "short": "1Sam"
+  },
+  "2SA": {
+    "name": "2 Samuel",
+    "short": "2Sam"
+  },
+  "1KI": {
+    "name": "1 Kings",
+    "short": "1Kin"
+  },
+  "2KI": {
+    "name": "2 Kings",
+    "short": "2Kin"
+  },
+  "1CH": {
+    "name": "1 Chronicles",
+    "short": "1Chr"
+  },
+  "2CH": {
+    "name": "2 Chronicles",
+    "short": "2Chr"
+  },
+  "EZR": {
+    "name": "Ezra",
+    "short": "Ezr"
+  },
+  "NEH": {
+    "name": "Nehemiah",
+    "short": "Neh"
+  },
+  "EST": {
+    "name": "Esther",
+    "short": "Est"
+  },
+  "JOB": {
+    "name": "Job",
+    "short": "Job"
+  },
+  "PSA": {
+    "name": "Psalm",
+    "short": "Psa"
+  },
+  "PRO": {
+    "name": "Proverbs",
+    "short": "Pro"
+  },
+  "ECC": {
+    "name": "Ecclesiastes",
+    "short": "Ecc"
+  },
+  "SNG": {
+    "name": "Song of Solomon",
+    "short": "Son"
+  },
+  "ISA": {
+    "name": "Isaiah",
+    "short": "Isa"
+  },
+  "JER": {
+    "name": "Jeremiah",
+    "short": "Jer"
+  },
+  "LAM": {
+    "name": "Lamentations",
+    "short": "Lam"
+  },
+  "EZK": {
+    "name": "Ezekiel",
+    "short": "Eze"
+  },
+  "DAN": {
+    "name": "Daniel",
+    "short": "Dan"
+  },
+  "HOS": {
+    "name": "Hosea",
+    "short": "Hos"
+  },
+  "JOL": {
+    "name": "Joel",
+    "short": "Joe"
+  },
+  "AMO": {
+    "name": "Amos",
+    "short": "Amo"
+  },
+  "OBA": {
+    "name": "Obadiah",
+    "short": "Oba"
+  },
+  "JON": {
+    "name": "Jonah",
+    "short": "Jon"
+  },
+  "MIC": {
+    "name": "Micah",
+    "short": "Mic"
+  },
+  "NAM": {
+    "name": "Nahum",
+    "short": "Nah"
+  },
+  "HAB": {
+    "name": "Habakkuk",
+    "short": "Hab"
+  },
+  "ZEP": {
+    "name": "Zephaniah",
+    "short": "Zep"
+  },
+  "HAG": {
+    "name": "Haggai",
+    "short": "Hag"
+  },
+  "ZEC": {
+    "name": "Zechariah",
+    "short": "Zec"
+  },
+  "MAL": {
+    "name": "Malachi",
+    "short": "Mal"
+  },
+  "MAT": {
+    "name": "Matthew",
+    "short": "Mat"
+  },
+  "MRK": {
+    "name": "Mark",
+    "short": "Mar"
+  },
+  "LUK": {
+    "name": "Luke",
+    "short": "Luk"
+  },
+  "JHN": {
+    "name": "John",
+    "short": "Joh"
+  },
+  "ACT": {
+    "name": "Acts",
+    "short": "Act"
+  },
+  "ROM": {
+    "name": "Romans",
+    "short": "Rom"
+  },
+  "1CO": {
+    "name": "1 Corinthians",
+    "short": "1Cor"
+  },
+  "2CO": {
+    "name": "2 Corinthians",
+    "short": "2Cor"
+  },
+  "GAL": {
+    "name": "Galatians",
+    "short": "Gal"
+  },
+  "EPH": {
+    "name": "Ephesians",
+    "short": "Eph"
+  },
+  "PHP": {
+    "name": "Philippians",
+    "short": "Phi"
+  },
+  "COL": {
+    "name": "Colossians",
+    "short": "Col"
+  },
+  "1TH": {
+    "name": "1 Thessalonians",
+    "short": "1The"
+  },
+  "2TH": {
+    "name": "2 Thessalonians",
+    "short": "2The"
+  },
+  "1TI": {
+    "name": "1 Timothy",
+    "short": "1Tim"
+  },
+  "2TI": {
+    "name": "2 Timothy",
+    "short": "2Tim"
+  },
+  "TIT": {
+    "name": "Titus",
+    "short": "Tit"
+  },
+  "PHM": {
+    "name": "Philemon",
+    "short": "Phi"
+  },
+  "HEB": {
+    "name": "Hebrews",
+    "short": "Heb"
+  },
+  "JAS": {
+    "name": "James",
+    "short": "Jam"
+  },
+  "1PE": {
+    "name": "1 Peter",
+    "short": "1Pet"
+  },
+  "2PE": {
+    "name": "2 Peter",
+    "short": "2Pet"
+  },
+  "1JN": {
+    "name": "1 John",
+    "short": "1Joh"
+  },
+  "2JN": {
+    "name": "2 John",
+    "short": "2Joh"
+  },
+  "3JN": {
+    "name": "3 John",
+    "short": "3Joh"
+  },
+  "JUD": {
+    "name": "Jude",
+    "short": "Jud"
+  },
+  "REV": {
+    "name": "Revelation",
+    "short": "Rev"
+  }
+}

@@ -1,0 +1,266 @@
+{
+  "GEN": {
+    "name": "Genesis",
+    "short": "Gen"
+  },
+  "EXO": {
+    "name": "Exodus",
+    "short": "Exo"
+  },
+  "LEV": {
+    "name": "Leviticus",
+    "short": "Lev"
+  },
+  "NUM": {
+    "name": "Numeri",
+    "short": "Num"
+  },
+  "DEU": {
+    "name": "Deuteronomium",
+    "short": "Deu"
+  },
+  "JOS": {
+    "name": "Iosue",
+    "short": "Ios"
+  },
+  "JDG": {
+    "name": "Iudicum",
+    "short": "Iud"
+  },
+  "RUT": {
+    "name": "Ruth",
+    "short": "Rut"
+  },
+  "1SA": {
+    "name": "I Samuelis",
+    "short": "I S"
+  },
+  "2SA": {
+    "name": "II Samuelis",
+    "short": "II "
+  },
+  "1KI": {
+    "name": "I Regum",
+    "short": "I R"
+  },
+  "2KI": {
+    "name": "II Regum",
+    "short": "II "
+  },
+  "1CH": {
+    "name": "I Paralipomenon",
+    "short": "I P"
+  },
+  "2CH": {
+    "name": "II Paralipomenon",
+    "short": "II "
+  },
+  "EZR": {
+    "name": "Esdrae",
+    "short": "Esd"
+  },
+  "NEH": {
+    "name": "Nehemiae",
+    "short": "Neh"
+  },
+  "EST": {
+    "name": "Esther",
+    "short": "Est"
+  },
+  "JOB": {
+    "name": "Iob",
+    "short": "Iob"
+  },
+  "PSA": {
+    "name": "Psalmi",
+    "short": "Psa"
+  },
+  "PRO": {
+    "name": "Proverbia",
+    "short": "Pro"
+  },
+  "ECC": {
+    "name": "Ecclesiastes",
+    "short": "Ecc"
+  },
+  "SNG": {
+    "name": "Canticum Canticorum",
+    "short": "Can"
+  },
+  "ISA": {
+    "name": "Isaias",
+    "short": "Isa"
+  },
+  "JER": {
+    "name": "Ieremias",
+    "short": "Ier"
+  },
+  "LAM": {
+    "name": "Lamentationes",
+    "short": "Lam"
+  },
+  "EZK": {
+    "name": "Ezechiel",
+    "short": "Eze"
+  },
+  "DAN": {
+    "name": "Daniel",
+    "short": "Dan"
+  },
+  "HOS": {
+    "name": "Osee",
+    "short": "Ose"
+  },
+  "JOL": {
+    "name": "Ioel",
+    "short": "Ioe"
+  },
+  "AMO": {
+    "name": "Amos",
+    "short": "Amo"
+  },
+  "OBA": {
+    "name": "Abdias",
+    "short": "Abd"
+  },
+  "JON": {
+    "name": "Ionas",
+    "short": "Ion"
+  },
+  "MIC": {
+    "name": "Michaeas",
+    "short": "Mic"
+  },
+  "NAM": {
+    "name": "Nahum",
+    "short": "Nah"
+  },
+  "HAB": {
+    "name": "Habacuc",
+    "short": "Hab"
+  },
+  "ZEP": {
+    "name": "Sophonias",
+    "short": "Sop"
+  },
+  "HAG": {
+    "name": "Aggaeus",
+    "short": "Agg"
+  },
+  "ZEC": {
+    "name": "Zacharias",
+    "short": "Zac"
+  },
+  "MAL": {
+    "name": "Malachias",
+    "short": "Mal"
+  },
+  "MAT": {
+    "name": "Matthaeus",
+    "short": "Mat"
+  },
+  "MRK": {
+    "name": "Marcus",
+    "short": "Mar"
+  },
+  "LUK": {
+    "name": "Lucas",
+    "short": "Luc"
+  },
+  "JHN": {
+    "name": "Ioannes",
+    "short": "Ioa"
+  },
+  "ACT": {
+    "name": "Actus Apostolorum",
+    "short": "Act"
+  },
+  "ROM": {
+    "name": "Romanos",
+    "short": "Rom"
+  },
+  "1CO": {
+    "name": "I Corinthios",
+    "short": "I C"
+  },
+  "2CO": {
+    "name": "II Corinthios",
+    "short": "II "
+  },
+  "GAL": {
+    "name": "Galatas",
+    "short": "Gal"
+  },
+  "EPH": {
+    "name": "Ephesios",
+    "short": "Eph"
+  },
+  "PHP": {
+    "name": "Philippenses",
+    "short": "Phi"
+  },
+  "COL": {
+    "name": "Colossenses",
+    "short": "Col"
+  },
+  "1TH": {
+    "name": "I Thessalonicenses",
+    "short": "I T"
+  },
+  "2TH": {
+    "name": "II Thessalonicenses",
+    "short": "II "
+  },
+  "1TI": {
+    "name": "I Timotheum",
+    "short": "I T"
+  },
+  "2TI": {
+    "name": "II Timotheum",
+    "short": "II "
+  },
+  "TIT": {
+    "name": "Titum",
+    "short": "Tit"
+  },
+  "PHM": {
+    "name": "Philemonem",
+    "short": "Phi"
+  },
+  "HEB": {
+    "name": "Hebraeos",
+    "short": "Heb"
+  },
+  "JAS": {
+    "name": "Iacobi",
+    "short": "Iac"
+  },
+  "1PE": {
+    "name": "I Petri",
+    "short": "I P"
+  },
+  "2PE": {
+    "name": "II Petri",
+    "short": "II "
+  },
+  "1JN": {
+    "name": "I Ioannis",
+    "short": "I I"
+  },
+  "2JN": {
+    "name": "II Ioannis",
+    "short": "II "
+  },
+  "3JN": {
+    "name": "III Ioannis",
+    "short": "III"
+  },
+  "JUD": {
+    "name": "Iudae",
+    "short": "Iud"
+  },
+  "REV": {
+    "name": "Apocalypsis",
+    "short": "Apo"
+  }
+}

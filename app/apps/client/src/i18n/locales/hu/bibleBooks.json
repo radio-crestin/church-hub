@@ -1,0 +1,266 @@
+{
+  "GEN": {
+    "name": "1 Mózes",
+    "short": "1Móz"
+  },
+  "EXO": {
+    "name": "2 Mózes",
+    "short": "2Móz"
+  },
+  "LEV": {
+    "name": "3 Mózes",
+    "short": "3Móz"
+  },
+  "NUM": {
+    "name": "4 Mózes",
+    "short": "4Móz"
+  },
+  "DEU": {
+    "name": "5 Mózes",
+    "short": "5Móz"
+  },
+  "JOS": {
+    "name": "Józsué",
+    "short": "Józ"
+  },
+  "JDG": {
+    "name": "Birák",
+    "short": "Bir"
+  },
+  "RUT": {
+    "name": "Ruth",
+    "short": "Rut"
+  },
+  "1SA": {
+    "name": "1 Sámuel",
+    "short": "1Sám"
+  },
+  "2SA": {
+    "name": "2 Sámuel",
+    "short": "2Sám"
+  },
+  "1KI": {
+    "name": "1 Királyok",
+    "short": "1Kir"
+  },
+  "2KI": {
+    "name": "2 Királyok",
+    "short": "2Kir"
+  },
+  "1CH": {
+    "name": "1 Krónika",
+    "short": "1Kró"
+  },
+  "2CH": {
+    "name": "2 Krónika",
+    "short": "2Kró"
+  },
+  "EZR": {
+    "name": "Ezsdrás",
+    "short": "Ezs"
+  },
+  "NEH": {
+    "name": "Nehemiás",
+    "short": "Neh"
+  },
+  "EST": {
+    "name": "Eszter",
+    "short": "Esz"
+  },
+  "JOB": {
+    "name": "Jób",
+    "short": "Jób"
+  },
+  "PSA": {
+    "name": "Zsoltárok",
+    "short": "Zso"
+  },
+  "PRO": {
+    "name": "Példabeszédek",
+    "short": "Pél"
+  },
+  "ECC": {
+    "name": "Prédikátor",
+    "short": "Pré"
+  },
+  "SNG": {
+    "name": "Énekek Éneke",
+    "short": "Éne"
+  },
+  "ISA": {
+    "name": "Ézsaiás",
+    "short": "Ézs"
+  },
+  "JER": {
+    "name": "Jeremiás",
+    "short": "Jer"
+  },
+  "LAM": {
+    "name": "Jeremiás sir",
+    "short": "Jer"
+  },
+  "EZK": {
+    "name": "Ezékiel",
+    "short": "Ezé"
+  },
+  "DAN": {
+    "name": "Dániel",
+    "short": "Dán"
+  },
+  "HOS": {
+    "name": "Hóseás",
+    "short": "Hós"
+  },
+  "JOL": {
+    "name": "Jóel",
+    "short": "Jóe"
+  },
+  "AMO": {
+    "name": "Ámos",
+    "short": "Ámo"
+  },
+  "OBA": {
+    "name": "Abdiás",
+    "short": "Abd"
+  },
+  "JON": {
+    "name": "Jónás",
+    "short": "Jón"
+  },
+  "MIC": {
+    "name": "Mikeás",
+    "short": "Mik"
+  },
+  "NAM": {
+    "name": "Náhum",
+    "short": "Náh"
+  },
+  "HAB": {
+    "name": "Habakuk",
+    "short": "Hab"
+  },
+  "ZEP": {
+    "name": "Sofoniás",
+    "short": "Sof"
+  },
+  "HAG": {
+    "name": "Aggeus",
+    "short": "Agg"
+  },
+  "ZEC": {
+    "name": "Zakariás",
+    "short": "Zak"
+  },
+  "MAL": {
+    "name": "Malakiás",
+    "short": "Mal"
+  },
+  "MAT": {
+    "name": "Máté",
+    "short": "Mát"
+  },
+  "MRK": {
+    "name": "Márk",
+    "short": "Már"
+  },
+  "LUK": {
+    "name": "Lukács",
+    "short": "Luk"
+  },
+  "JHN": {
+    "name": "János",
+    "short": "Ján"
+  },
+  "ACT": {
+    "name": "Apostolok",
+    "short": "Apo"
+  },
+  "ROM": {
+    "name": "Rómaiakhoz",
+    "short": "Róm"
+  },
+  "1CO": {
+    "name": "1 Korintusi",
+    "short": "1Kor"
+  },
+  "2CO": {
+    "name": "2 Korintusi",
+    "short": "2Kor"
+  },
+  "GAL": {
+    "name": "Galatákhoz",
+    "short": "Gal"
+  },
+  "EPH": {
+    "name": "Efézusiakhoz",
+    "short": "Efé"
+  },
+  "PHP": {
+    "name": "Filippiekhez",
+    "short": "Fil"
+  },
+  "COL": {
+    "name": "Kolosséiakhoz",
+    "short": "Kol"
+  },
+  "1TH": {
+    "name": "1 Tesszalonika",
+    "short": "1Tes"
+  },
+  "2TH": {
+    "name": "2 Tesszalonika",
+    "short": "2Tes"
+  },
+  "1TI": {
+    "name": "1 Timóteushoz",
+    "short": "1Tim"
+  },
+  "2TI": {
+    "name": "2 Timóteushoz",
+    "short": "2Tim"
+  },
+  "TIT": {
+    "name": "Titushoz",
+    "short": "Tit"
+  },
+  "PHM": {
+    "name": "Filemonhoz",
+    "short": "Fil"
+  },
+  "HEB": {
+    "name": "Zsidókhoz",
+    "short": "Zsi"
+  },
+  "JAS": {
+    "name": "Jakab",
+    "short": "Jak"
+  },
+  "1PE": {
+    "name": "1 Péter",
+    "short": "1Pét"
+  },
+  "2PE": {
+    "name": "2 Péter",
+    "short": "2Pét"
+  },
+  "1JN": {
+    "name": "1 János",
+    "short": "1Ján"
+  },
+  "2JN": {
+    "name": "2 János",
+    "short": "2Ján"
+  },
+  "3JN": {
+    "name": "3 János",
+    "short": "3Ján"
+  },
+  "JUD": {
+    "name": "Júdás",
+    "short": "Júd"
+  },
+  "REV": {
+    "name": "Jelenések",
+    "short": "Jel"
+  }
+}

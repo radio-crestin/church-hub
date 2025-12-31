@@ -1,0 +1,266 @@
+{
+  "GEN": {
+    "name": "創 世 記",
+    "short": "創 世"
+  },
+  "EXO": {
+    "name": "出 埃 及 記",
+    "short": "出 埃"
+  },
+  "LEV": {
+    "name": "利 未 記",
+    "short": "利 未"
+  },
+  "NUM": {
+    "name": "民 數 記",
+    "short": "民 數"
+  },
+  "DEU": {
+    "name": "申 命 記",
+    "short": "申 命"
+  },
+  "JOS": {
+    "name": "約 書 亞 記",
+    "short": "約 書"
+  },
+  "JDG": {
+    "name": "士 師 記",
+    "short": "士 師"
+  },
+  "RUT": {
+    "name": "路 得 記",
+    "short": "路 得"
+  },
+  "1SA": {
+    "name": "撒 母 耳 記 上",
+    "short": "撒 母"
+  },
+  "2SA": {
+    "name": "撒 母 耳 記 下",
+    "short": "撒 母"
+  },
+  "1KI": {
+    "name": "列 王 紀 上",
+    "short": "列 王"
+  },
+  "2KI": {
+    "name": "列 王 紀 下",
+    "short": "列 王"
+  },
+  "1CH": {
+    "name": "歷 代 志 上",
+    "short": "歷 代"
+  },
+  "2CH": {
+    "name": "歷 代 志 下",
+    "short": "歷 代"
+  },
+  "EZR": {
+    "name": "以 斯 拉 記",
+    "short": "以 斯"
+  },
+  "NEH": {
+    "name": "尼 希 米 記",
+    "short": "尼 希"
+  },
+  "EST": {
+    "name": "以 斯 帖 記",
+    "short": "以 斯"
+  },
+  "JOB": {
+    "name": "約 伯 記",
+    "short": "約 伯"
+  },
+  "PSA": {
+    "name": "詩 篇",
+    "short": "詩 篇"
+  },
+  "PRO": {
+    "name": "箴 言",
+    "short": "箴 言"
+  },
+  "ECC": {
+    "name": "傳 道 書",
+    "short": "傳 道"
+  },
+  "SNG": {
+    "name": "雅 歌",
+    "short": "雅 歌"
+  },
+  "ISA": {
+    "name": "以 賽 亞 書",
+    "short": "以 賽"
+  },
+  "JER": {
+    "name": "耶 利 米 書",
+    "short": "耶 利"
+  },
+  "LAM": {
+    "name": "耶 利 米 哀 歌",
+    "short": "耶 利"
+  },
+  "EZK": {
+    "name": "以 西 結 書",
+    "short": "以 西"
+  },
+  "DAN": {
+    "name": "但 以 理 書",
+    "short": "但 以"
+  },
+  "HOS": {
+    "name": "何 西 阿 書",
+    "short": "何 西"
+  },
+  "JOL": {
+    "name": "約 珥 書",
+    "short": "約 珥"
+  },
+  "AMO": {
+    "name": "阿 摩 司 書",
+    "short": "阿 摩"
+  },
+  "OBA": {
+    "name": "俄 巴 底 亞 書",
+    "short": "俄 巴"
+  },
+  "JON": {
+    "name": "約 拿 書",
+    "short": "約 拿"
+  },
+  "MIC": {
+    "name": "彌 迦 書",
+    "short": "彌 迦"
+  },
+  "NAM": {
+    "name": "那 鴻 書",
+    "short": "那 鴻"
+  },
+  "HAB": {
+    "name": "哈 巴 谷 書",
+    "short": "哈 巴"
+  },
+  "ZEP": {
+    "name": "西 番 雅 書",
+    "short": "西 番"
+  },
+  "HAG": {
+    "name": "哈 該 書",
+    "short": "哈 該"
+  },
+  "ZEC": {
+    "name": "撒 迦 利 亞",
+    "short": "撒 迦"
+  },
+  "MAL": {
+    "name": "瑪 拉 基 書",
+    "short": "瑪 拉"
+  },
+  "MAT": {
+    "name": "馬 太 福 音",
+    "short": "馬 太"
+  },
+  "MRK": {
+    "name": "馬 可 福 音",
+    "short": "馬 可"
+  },
+  "LUK": {
+    "name": "路 加 福 音",
+    "short": "路 加"
+  },
+  "JHN": {
+    "name": "約 翰 福 音",
+    "short": "約 翰"
+  },
+  "ACT": {
+    "name": "使 徒 行 傳",
+    "short": "使 徒"
+  },
+  "ROM": {
+    "name": "羅 馬 書",
+    "short": "羅 馬"
+  },
+  "1CO": {
+    "name": "歌 林 多 前 書",
+    "short": "歌 林"
+  },
+  "2CO": {
+    "name": "歌 林 多 後 書",
+    "short": "歌 林"
+  },
+  "GAL": {
+    "name": "加 拉 太 書",
+    "short": "加 拉"
+  },
+  "EPH": {
+    "name": "以 弗 所 書",
+    "short": "以 弗"
+  },
+  "PHP": {
+    "name": "腓 立 比 書",
+    "short": "腓 立"
+  },
+  "COL": {
+    "name": "歌 羅 西 書",
+    "short": "歌 羅"
+  },
+  "1TH": {
+    "name": "帖 撒 羅 尼 迦 前 書",
+    "short": "帖 撒"
+  },
+  "2TH": {
+    "name": "帖 撒 羅 尼 迦 後 書",
+    "short": "帖 撒"
+  },
+  "1TI": {
+    "name": "提 摩 太 前 書",
+    "short": "提 摩"
+  },
+  "2TI": {
+    "name": "提 摩 太 後 書",
+    "short": "提 摩"
+  },
+  "TIT": {
+    "name": "提 多 書",
+    "short": "提 多"
+  },
+  "PHM": {
+    "name": "腓 利 門 書",
+    "short": "腓 利"
+  },
+  "HEB": {
+    "name": "希 伯 來 書",
+    "short": "希 伯"
+  },
+  "JAS": {
+    "name": "雅 各 書",
+    "short": "雅 各"
+  },
+  "1PE": {
+    "name": "彼 得 前 書",
+    "short": "彼 得"
+  },
+  "2PE": {
+    "name": "彼 得 後 書",
+    "short": "彼 得"
+  },
+  "1JN": {
+    "name": "約 翰 一 書",
+    "short": "約 翰"
+  },
+  "2JN": {
+    "name": "約 翰 二 書",
+    "short": "約 翰"
+  },
+  "3JN": {
+    "name": "約 翰 三 書",
+    "short": "約 翰"
+  },
+  "JUD": {
+    "name": "猶 大 書",
+    "short": "猶 大"
+  },
+  "REV": {
+    "name": "启 示 录",
+    "short": "启 示"
+  }
+}

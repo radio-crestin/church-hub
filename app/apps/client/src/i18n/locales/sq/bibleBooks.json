@@ -1,0 +1,266 @@
+{
+  "GEN": {
+    "name": "Zanafilla",
+    "short": "Zan"
+  },
+  "EXO": {
+    "name": "Eksodi",
+    "short": "Eks"
+  },
+  "LEV": {
+    "name": "Levitiku",
+    "short": "Lev"
+  },
+  "NUM": {
+    "name": "Numrat",
+    "short": "Num"
+  },
+  "DEU": {
+    "name": "Ligji i Përtërirë",
+    "short": "Lig"
+  },
+  "JOS": {
+    "name": "Jozueu",
+    "short": "Joz"
+  },
+  "JDG": {
+    "name": "Gjyqtarët",
+    "short": "Gjy"
+  },
+  "RUT": {
+    "name": "Ruthi",
+    "short": "Rut"
+  },
+  "1SA": {
+    "name": "1 i Samuelit",
+    "short": "1i S"
+  },
+  "2SA": {
+    "name": "2 i Samuelit",
+    "short": "2i S"
+  },
+  "1KI": {
+    "name": "1 i Mbretërve",
+    "short": "1i M"
+  },
+  "2KI": {
+    "name": "2 i Mbretërve",
+    "short": "2i M"
+  },
+  "1CH": {
+    "name": "1 i Kronikave",
+    "short": "1i K"
+  },
+  "2CH": {
+    "name": "2 i Kronikave",
+    "short": "2i K"
+  },
+  "EZR": {
+    "name": "Esdra",
+    "short": "Esd"
+  },
+  "NEH": {
+    "name": "Nehemia",
+    "short": "Neh"
+  },
+  "EST": {
+    "name": "Ester",
+    "short": "Est"
+  },
+  "JOB": {
+    "name": "Jobi",
+    "short": "Job"
+  },
+  "PSA": {
+    "name": "Psalmet",
+    "short": "Psa"
+  },
+  "PRO": {
+    "name": "Fjalët e urta",
+    "short": "Fja"
+  },
+  "ECC": {
+    "name": "Predikuesi",
+    "short": "Pre"
+  },
+  "SNG": {
+    "name": "Kantiku i Kantikëve",
+    "short": "Kan"
+  },
+  "ISA": {
+    "name": "Isaia",
+    "short": "Isa"
+  },
+  "JER": {
+    "name": "Jeremia",
+    "short": "Jer"
+  },
+  "LAM": {
+    "name": "Vajtimet",
+    "short": "Vaj"
+  },
+  "EZK": {
+    "name": "Ezekieli",
+    "short": "Eze"
+  },
+  "DAN": {
+    "name": "Danieli",
+    "short": "Dan"
+  },
+  "HOS": {
+    "name": "Osea",
+    "short": "Ose"
+  },
+  "JOL": {
+    "name": "Joeli",
+    "short": "Joe"
+  },
+  "AMO": {
+    "name": "Amosi",
+    "short": "Amo"
+  },
+  "OBA": {
+    "name": "Abdia",
+    "short": "Abd"
+  },
+  "JON": {
+    "name": "Jona",
+    "short": "Jon"
+  },
+  "MIC": {
+    "name": "Mikea",
+    "short": "Mik"
+  },
+  "NAM": {
+    "name": "Nahumi",
+    "short": "Nah"
+  },
+  "HAB": {
+    "name": "Habakuku",
+    "short": "Hab"
+  },
+  "ZEP": {
+    "name": "Sofonia",
+    "short": "Sof"
+  },
+  "HAG": {
+    "name": "Hagai",
+    "short": "Hag"
+  },
+  "ZEC": {
+    "name": "Zakaria",
+    "short": "Zak"
+  },
+  "MAL": {
+    "name": "Malakia",
+    "short": "Mal"
+  },
+  "MAT": {
+    "name": "Mateu",
+    "short": "Mat"
+  },
+  "MRK": {
+    "name": "Marku",
+    "short": "Mar"
+  },
+  "LUK": {
+    "name": "Luka",
+    "short": "Luk"
+  },
+  "JHN": {
+    "name": "Gjoni",
+    "short": "Gjo"
+  },
+  "ACT": {
+    "name": "Veprat e Apostujve",
+    "short": "Vep"
+  },
+  "ROM": {
+    "name": "Romakëve",
+    "short": "Rom"
+  },
+  "1CO": {
+    "name": "1 e Korintasve",
+    "short": "1e K"
+  },
+  "2CO": {
+    "name": "2 e Koristasve",
+    "short": "2e K"
+  },
+  "GAL": {
+    "name": "Galatasve",
+    "short": "Gal"
+  },
+  "EPH": {
+    "name": "Efesianëve",
+    "short": "Efe"
+  },
+  "PHP": {
+    "name": "Filipianëve",
+    "short": "Fil"
+  },
+  "COL": {
+    "name": "Kolosianëve",
+    "short": "Kol"
+  },
+  "1TH": {
+    "name": "1 Thesalonikasve",
+    "short": "1The"
+  },
+  "2TH": {
+    "name": "2 Thesalonikasve",
+    "short": "2The"
+  },
+  "1TI": {
+    "name": "1 Timoteut",
+    "short": "1Tim"
+  },
+  "2TI": {
+    "name": "2 Timoteut",
+    "short": "2Tim"
+  },
+  "TIT": {
+    "name": "Titi",
+    "short": "Tit"
+  },
+  "PHM": {
+    "name": "Filemonit",
+    "short": "Fil"
+  },
+  "HEB": {
+    "name": "Hebrenjve",
+    "short": "Heb"
+  },
+  "JAS": {
+    "name": "Jakobit",
+    "short": "Jak"
+  },
+  "1PE": {
+    "name": "1 Pjetrit",
+    "short": "1Pje"
+  },
+  "2PE": {
+    "name": "2 Pjetrit",
+    "short": "2Pje"
+  },
+  "1JN": {
+    "name": "1 Gjonit",
+    "short": "1Gjo"
+  },
+  "2JN": {
+    "name": "2 Gjonit",
+    "short": "2Gjo"
+  },
+  "3JN": {
+    "name": "3 Gjonit",
+    "short": "3Gjo"
+  },
+  "JUD": {
+    "name": "Juda",
+    "short": "Jud"
+  },
+  "REV": {
+    "name": "Zbulesa",
+    "short": "Zbu"
+  }
+}

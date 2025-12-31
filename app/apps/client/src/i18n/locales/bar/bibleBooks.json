@@ -1,0 +1,266 @@
+{
+  "GEN": {
+    "name": "De Bschaffung",
+    "short": "De "
+  },
+  "EXO": {
+    "name": "Dyr Auszug",
+    "short": "Dyr"
+  },
+  "LEV": {
+    "name": "S Brendertuem",
+    "short": "S B"
+  },
+  "NUM": {
+    "name": "De Zalrach",
+    "short": "De "
+  },
+  "DEU": {
+    "name": "De Ander Ee",
+    "short": "De "
+  },
+  "JOS": {
+    "name": "Dyr Josen",
+    "short": "Dyr"
+  },
+  "JDG": {
+    "name": "D Richter",
+    "short": "D R"
+  },
+  "RUT": {
+    "name": "D Rut",
+    "short": "D R"
+  },
+  "1SA": {
+    "name": "Dyr Sämyheel A",
+    "short": "Dyr"
+  },
+  "2SA": {
+    "name": "Dyr Sämyheel B",
+    "short": "Dyr"
+  },
+  "1KI": {
+    "name": "De Künig A",
+    "short": "De "
+  },
+  "2KI": {
+    "name": "De Künig B",
+    "short": "De "
+  },
+  "1CH": {
+    "name": "Dyr Lauft A",
+    "short": "Dyr"
+  },
+  "2CH": {
+    "name": "Dyr Lauft B",
+    "short": "Dyr"
+  },
+  "EZR": {
+    "name": "Dyr Esren",
+    "short": "Dyr"
+  },
+  "NEH": {
+    "name": "Dyr Nehymies",
+    "short": "Dyr"
+  },
+  "EST": {
+    "name": "D Öster",
+    "short": "D Ö"
+  },
+  "JOB": {
+    "name": "Dyr Hieb",
+    "short": "Dyr"
+  },
+  "PSA": {
+    "name": "D Sälm",
+    "short": "D S"
+  },
+  "PRO": {
+    "name": "D Sprüch",
+    "short": "D S"
+  },
+  "ECC": {
+    "name": "Dyr Prödiger",
+    "short": "Dyr"
+  },
+  "SNG": {
+    "name": "Dyr Minnensang",
+    "short": "Dyr"
+  },
+  "ISA": {
+    "name": "Dyr Ieseien",
+    "short": "Dyr"
+  },
+  "JER": {
+    "name": "Dyr Ierymies",
+    "short": "Dyr"
+  },
+  "LAM": {
+    "name": "De Klaglieder",
+    "short": "De "
+  },
+  "EZK": {
+    "name": "Dyr Heskiheel",
+    "short": "Dyr"
+  },
+  "DAN": {
+    "name": "Dyr Däniheel",
+    "short": "Dyr"
+  },
+  "HOS": {
+    "name": "Dyr Hosen",
+    "short": "Dyr"
+  },
+  "JOL": {
+    "name": "Dyr Joheel",
+    "short": "Dyr"
+  },
+  "AMO": {
+    "name": "Dyr Ämos",
+    "short": "Dyr"
+  },
+  "OBA": {
+    "name": "Dyr Obydies",
+    "short": "Dyr"
+  },
+  "JON": {
+    "name": "Dyr Jonen",
+    "short": "Dyr"
+  },
+  "MIC": {
+    "name": "Dyr Michen",
+    "short": "Dyr"
+  },
+  "NAM": {
+    "name": "Dyr Nähum",
+    "short": "Dyr"
+  },
+  "HAB": {
+    "name": "Dyr Häbykuck",
+    "short": "Dyr"
+  },
+  "ZEP": {
+    "name": "Dyr Zefynies",
+    "short": "Dyr"
+  },
+  "HAG": {
+    "name": "Dyr Häggäus",
+    "short": "Dyr"
+  },
+  "ZEC": {
+    "name": "Dyr Zächeries",
+    "short": "Dyr"
+  },
+  "MAL": {
+    "name": "Dyr Mälychies",
+    "short": "Dyr"
+  },
+  "MAT": {
+    "name": "Dyr Mathäus",
+    "short": "Dyr"
+  },
+  "MRK": {
+    "name": "Dyr Marx",
+    "short": "Dyr"
+  },
+  "LUK": {
+    "name": "Dyr Laux",
+    "short": "Dyr"
+  },
+  "JHN": {
+    "name": "Dyr Johanns",
+    "short": "Dyr"
+  },
+  "ACT": {
+    "name": "De Zwölfbotngetaat",
+    "short": "De "
+  },
+  "ROM": {
+    "name": "D Roemer",
+    "short": "D R"
+  },
+  "1CO": {
+    "name": "De Krenter A",
+    "short": "De "
+  },
+  "2CO": {
+    "name": "De Krenter B",
+    "short": "De "
+  },
+  "GAL": {
+    "name": "De Gäletn",
+    "short": "De "
+  },
+  "EPH": {
+    "name": "D Effhauser",
+    "short": "D E"
+  },
+  "PHP": {
+    "name": "D Filipper",
+    "short": "D F"
+  },
+  "COL": {
+    "name": "De Klosser",
+    "short": "De "
+  },
+  "1TH": {
+    "name": "De Tessyloninger A",
+    "short": "De "
+  },
+  "2TH": {
+    "name": "De Tessyloninger B",
+    "short": "De "
+  },
+  "1TI": {
+    "name": "Dyr Timyteus A",
+    "short": "Dyr"
+  },
+  "2TI": {
+    "name": "Dyr Timyteus B",
+    "short": "Dyr"
+  },
+  "TIT": {
+    "name": "Dyr Titz",
+    "short": "Dyr"
+  },
+  "PHM": {
+    "name": "Dyr Pfilymon",
+    "short": "Dyr"
+  },
+  "HEB": {
+    "name": "D Hebern",
+    "short": "D H"
+  },
+  "JAS": {
+    "name": "Dyr Jaaggen",
+    "short": "Dyr"
+  },
+  "1PE": {
+    "name": "Dyr Peeters A",
+    "short": "Dyr"
+  },
+  "2PE": {
+    "name": "Dyr Peeters B",
+    "short": "Dyr"
+  },
+  "1JN": {
+    "name": "Dyr Johanns A",
+    "short": "Dyr"
+  },
+  "2JN": {
+    "name": "Dyr Johanns B",
+    "short": "Dyr"
+  },
+  "3JN": {
+    "name": "Dyr Johanns C",
+    "short": "Dyr"
+  },
+  "JUD": {
+    "name": "Dyr Jauz",
+    "short": "Dyr"
+  },
+  "REV": {
+    "name": "D Offnbarung",
+    "short": "D O"
+  }
+}

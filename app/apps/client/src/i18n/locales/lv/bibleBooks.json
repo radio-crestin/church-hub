@@ -1,0 +1,110 @@
+{
+  "MAT": {
+    "name": "Sv. Matejs",
+    "short": "Sv."
+  },
+  "MRK": {
+    "name": "Sv. Marks",
+    "short": "Sv."
+  },
+  "LUK": {
+    "name": "Sv. Lūkass",
+    "short": "Sv."
+  },
+  "JHN": {
+    "name": "Sv. Jānis",
+    "short": "Sv."
+  },
+  "ACT": {
+    "name": "Apustuļu darbi",
+    "short": "Apu"
+  },
+  "ROM": {
+    "name": "Romiešiem",
+    "short": "Rom"
+  },
+  "1CO": {
+    "name": "Korintiešiem 1",
+    "short": "Kor"
+  },
+  "2CO": {
+    "name": "Korintiešiem 2",
+    "short": "Kor"
+  },
+  "GAL": {
+    "name": "Galatiešiem",
+    "short": "Gal"
+  },
+  "EPH": {
+    "name": "Efeziešiem",
+    "short": "Efe"
+  },
+  "PHP": {
+    "name": "Filipiešiem",
+    "short": "Fil"
+  },
+  "COL": {
+    "name": "Kolosiešiem",
+    "short": "Kol"
+  },
+  "1TH": {
+    "name": "Tesaloniķiešiem 1",
+    "short": "Tes"
+  },
+  "2TH": {
+    "name": "Tesaloniķiešiem 2",
+    "short": "Tes"
+  },
+  "1TI": {
+    "name": "Timotejam 1",
+    "short": "Tim"
+  },
+  "2TI": {
+    "name": "Timotejam 2",
+    "short": "Tim"
+  },
+  "TIT": {
+    "name": "Titam",
+    "short": "Tit"
+  },
+  "PHM": {
+    "name": "Filemonam",
+    "short": "Fil"
+  },
+  "HEB": {
+    "name": "Ebrejiem",
+    "short": "Ebr"
+  },
+  "JAS": {
+    "name": "Jēkaba vēstule",
+    "short": "Jēk"
+  },
+  "1PE": {
+    "name": "Pētera 1 vēstule",
+    "short": "Pēt"
+  },
+  "2PE": {
+    "name": "Pētera 2 vēstule",
+    "short": "Pēt"
+  },
+  "1JN": {
+    "name": "Jāņa 1 vēstule",
+    "short": "Jāņ"
+  },
+  "2JN": {
+    "name": "Jāņa 2 vēstule",
+    "short": "Jāņ"
+  },
+  "3JN": {
+    "name": "Jāņa 3 vēstule",
+    "short": "Jāņ"
+  },
+  "JUD": {
+    "name": "Jūdas vēstule",
+    "short": "Jūd"
+  },
+  "REV": {
+    "name": "Atklāsmes grāmata",
+    "short": "Atk"
+  }
+}

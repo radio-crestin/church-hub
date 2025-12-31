@@ -1,0 +1,266 @@
+{
+  "GEN": {
+    "name": "Génesis",
+    "short": "Gén"
+  },
+  "EXO": {
+    "name": "Éxodo",
+    "short": "Éxo"
+  },
+  "LEV": {
+    "name": "Levítico",
+    "short": "Lev"
+  },
+  "NUM": {
+    "name": "Números",
+    "short": "Núm"
+  },
+  "DEU": {
+    "name": "Deuteronomio",
+    "short": "Deu"
+  },
+  "JOS": {
+    "name": "Josué",
+    "short": "Jos"
+  },
+  "JDG": {
+    "name": "Jueces",
+    "short": "Jue"
+  },
+  "RUT": {
+    "name": "Rut",
+    "short": "Rut"
+  },
+  "1SA": {
+    "name": "1 Samuel",
+    "short": "1Sam"
+  },
+  "2SA": {
+    "name": "2 Samuel",
+    "short": "2Sam"
+  },
+  "1KI": {
+    "name": "1 Reyes",
+    "short": "1Rey"
+  },
+  "2KI": {
+    "name": "2 Reyes",
+    "short": "2Rey"
+  },
+  "1CH": {
+    "name": "1 Crónicas",
+    "short": "1Cró"
+  },
+  "2CH": {
+    "name": "2 Crónicas",
+    "short": "2Cró"
+  },
+  "EZR": {
+    "name": "Esdras",
+    "short": "Esd"
+  },
+  "NEH": {
+    "name": "Nehemías",
+    "short": "Neh"
+  },
+  "EST": {
+    "name": "Ester",
+    "short": "Est"
+  },
+  "JOB": {
+    "name": "Job",
+    "short": "Job"
+  },
+  "PSA": {
+    "name": "Salmos",
+    "short": "Sal"
+  },
+  "PRO": {
+    "name": "Proverbios",
+    "short": "Pro"
+  },
+  "ECC": {
+    "name": "Eclesiastés",
+    "short": "Ecl"
+  },
+  "SNG": {
+    "name": "Cantares",
+    "short": "Can"
+  },
+  "ISA": {
+    "name": "Isaías",
+    "short": "Isa"
+  },
+  "JER": {
+    "name": "Jeremías",
+    "short": "Jer"
+  },
+  "LAM": {
+    "name": "Lamentaciones",
+    "short": "Lam"
+  },
+  "EZK": {
+    "name": "Ezequiel",
+    "short": "Eze"
+  },
+  "DAN": {
+    "name": "Daniel",
+    "short": "Dan"
+  },
+  "HOS": {
+    "name": "Oseas",
+    "short": "Ose"
+  },
+  "JOL": {
+    "name": "Joel",
+    "short": "Joe"
+  },
+  "AMO": {
+    "name": "Amós",
+    "short": "Amó"
+  },
+  "OBA": {
+    "name": "Abdías",
+    "short": "Abd"
+  },
+  "JON": {
+    "name": "Jonás",
+    "short": "Jon"
+  },
+  "MIC": {
+    "name": "Miqueas",
+    "short": "Miq"
+  },
+  "NAM": {
+    "name": "Nahúm",
+    "short": "Nah"
+  },
+  "HAB": {
+    "name": "Habacuc",
+    "short": "Hab"
+  },
+  "ZEP": {
+    "name": "Sofonías",
+    "short": "Sof"
+  },
+  "HAG": {
+    "name": "Hageo",
+    "short": "Hag"
+  },
+  "ZEC": {
+    "name": "Zacarías",
+    "short": "Zac"
+  },
+  "MAL": {
+    "name": "Malaquías",
+    "short": "Mal"
+  },
+  "MAT": {
+    "name": "Mateo",
+    "short": "Mat"
+  },
+  "MRK": {
+    "name": "Marcos",
+    "short": "Mar"
+  },
+  "LUK": {
+    "name": "Lucas",
+    "short": "Luc"
+  },
+  "JHN": {
+    "name": "Juan",
+    "short": "Jua"
+  },
+  "ACT": {
+    "name": "Hechos",
+    "short": "Hec"
+  },
+  "ROM": {
+    "name": "Romanos",
+    "short": "Rom"
+  },
+  "1CO": {
+    "name": "1 Corintios",
+    "short": "1Cor"
+  },
+  "2CO": {
+    "name": "2 Corintios",
+    "short": "2Cor"
+  },
+  "GAL": {
+    "name": "Gálatas",
+    "short": "Gál"
+  },
+  "EPH": {
+    "name": "Efesios",
+    "short": "Efe"
+  },
+  "PHP": {
+    "name": "Filipenses",
+    "short": "Fil"
+  },
+  "COL": {
+    "name": "Colosenses",
+    "short": "Col"
+  },
+  "1TH": {
+    "name": "1 Tesalonicenses",
+    "short": "1Tes"
+  },
+  "2TH": {
+    "name": "2 Tesalonicenses",
+    "short": "2Tes"
+  },
+  "1TI": {
+    "name": "1 Timoteo",
+    "short": "1Tim"
+  },
+  "2TI": {
+    "name": "2 Timoteo",
+    "short": "2Tim"
+  },
+  "TIT": {
+    "name": "Tito",
+    "short": "Tit"
+  },
+  "PHM": {
+    "name": "Filemón",
+    "short": "Fil"
+  },
+  "HEB": {
+    "name": "Hebreos",
+    "short": "Heb"
+  },
+  "JAS": {
+    "name": "Santiago",
+    "short": "San"
+  },
+  "1PE": {
+    "name": "1 Pedro",
+    "short": "1Ped"
+  },
+  "2PE": {
+    "name": "2 Pedro",
+    "short": "2Ped"
+  },
+  "1JN": {
+    "name": "1 Juan",
+    "short": "1Jua"
+  },
+  "2JN": {
+    "name": "2 Juan",
+    "short": "2Jua"
+  },
+  "3JN": {
+    "name": "3 Juan",
+    "short": "3Jua"
+  },
+  "JUD": {
+    "name": "Judas",
+    "short": "Jud"
+  },
+  "REV": {
+    "name": "Apocalipsis",
+    "short": "Apo"
+  }
+}

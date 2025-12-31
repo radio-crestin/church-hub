@@ -1,0 +1,110 @@
+{
+  "MAT": {
+    "name": "Matayo",
+    "short": "Mat"
+  },
+  "MRK": {
+    "name": "Marko",
+    "short": "Mar"
+  },
+  "LUK": {
+    "name": "Luka",
+    "short": "Luk"
+  },
+  "JHN": {
+    "name": "Yohana",
+    "short": "Yoh"
+  },
+  "ACT": {
+    "name": "Matendo Ya Mitume",
+    "short": "Mat"
+  },
+  "ROM": {
+    "name": "Warumi",
+    "short": "War"
+  },
+  "1CO": {
+    "name": "1 Wakorintho",
+    "short": "1Wak"
+  },
+  "2CO": {
+    "name": "2 Wakorintho",
+    "short": "2Wak"
+  },
+  "GAL": {
+    "name": "Wagalatia",
+    "short": "Wag"
+  },
+  "EPH": {
+    "name": "Waefeso",
+    "short": "Wae"
+  },
+  "PHP": {
+    "name": "Wafilipi",
+    "short": "Waf"
+  },
+  "COL": {
+    "name": "Wakolosai",
+    "short": "Wak"
+  },
+  "1TH": {
+    "name": "1 Wathesalonike",
+    "short": "1Wat"
+  },
+  "2TH": {
+    "name": "2 Wathesalonike",
+    "short": "2Wat"
+  },
+  "1TI": {
+    "name": "1 Timotheo",
+    "short": "1Tim"
+  },
+  "2TI": {
+    "name": "2 Timotheo",
+    "short": "2Tim"
+  },
+  "TIT": {
+    "name": "Tito",
+    "short": "Tit"
+  },
+  "PHM": {
+    "name": "Filemoni",
+    "short": "Fil"
+  },
+  "HEB": {
+    "name": "Waebrania",
+    "short": "Wae"
+  },
+  "JAS": {
+    "name": "Yakobo",
+    "short": "Yak"
+  },
+  "1PE": {
+    "name": "1 Petro",
+    "short": "1Pet"
+  },
+  "2PE": {
+    "name": "2 Petro",
+    "short": "2Pet"
+  },
+  "1JN": {
+    "name": "1 Yohana",
+    "short": "1Yoh"
+  },
+  "2JN": {
+    "name": "2 Yohana",
+    "short": "2Yoh"
+  },
+  "3JN": {
+    "name": "3 Yohana",
+    "short": "3Yoh"
+  },
+  "JUD": {
+    "name": "Yuda",
+    "short": "Yud"
+  },
+  "REV": {
+    "name": "Ufunua was Yohana",
+    "short": "Ufu"
+  }
+}
