@@ -1,0 +1,110 @@
+{
+  "MAT": {
+    "name": "Matthew",
+    "short": "Mat"
+  },
+  "MRK": {
+    "name": "Mark",
+    "short": "Mar"
+  },
+  "LUK": {
+    "name": "Luke",
+    "short": "Luk"
+  },
+  "JHN": {
+    "name": "John",
+    "short": "Joh"
+  },
+  "ACT": {
+    "name": "Acts",
+    "short": "Act"
+  },
+  "ROM": {
+    "name": "Romans",
+    "short": "Rom"
+  },
+  "1CO": {
+    "name": "1 Corinthians",
+    "short": "1Cor"
+  },
+  "2CO": {
+    "name": "2 Corinthians",
+    "short": "2Cor"
+  },
+  "GAL": {
+    "name": "Galatians",
+    "short": "Gal"
+  },
+  "EPH": {
+    "name": "Ephesians",
+    "short": "Eph"
+  },
+  "PHP": {
+    "name": "Philippians",
+    "short": "Phi"
+  },
+  "COL": {
+    "name": "Colossians",
+    "short": "Col"
+  },
+  "1TH": {
+    "name": "1 Thessalonians",
+    "short": "1The"
+  },
+  "2TH": {
+    "name": "2 Thessalonians",
+    "short": "2The"
+  },
+  "1TI": {
+    "name": "1 Timothy",
+    "short": "1Tim"
+  },
+  "2TI": {
+    "name": "2 Timothy",
+    "short": "2Tim"
+  },
+  "TIT": {
+    "name": "Titus",
+    "short": "Tit"
+  },
+  "PHM": {
+    "name": "Philemon",
+    "short": "Phi"
+  },
+  "HEB": {
+    "name": "Hebrews",
+    "short": "Heb"
+  },
+  "JAS": {
+    "name": "James",
+    "short": "Jam"
+  },
+  "1PE": {
+    "name": "1 Peter",
+    "short": "1Pet"
+  },
+  "2PE": {
+    "name": "2 Peter",
+    "short": "2Pet"
+  },
+  "1JN": {
+    "name": "1 John",
+    "short": "1Joh"
+  },
+  "2JN": {
+    "name": "2 John",
+    "short": "2Joh"
+  },
+  "3JN": {
+    "name": "3 John",
+    "short": "3Joh"
+  },
+  "JUD": {
+    "name": "Jude",
+    "short": "Jud"
+  },
+  "REV": {
+    "name": "Revelation",
+    "short": "Rev"
+  }
+}

@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { MultiTranslationVerse } from './MultiTranslationVerse'
+import { useLocalizedBookNames } from '../hooks'
 import { useMultiTranslationVerse } from '../hooks/useMultiTranslationVerse'
 import type { BibleTranslation, BibleVerse } from '../types'
 
@@ -36,6 +37,10 @@ export function VersesList({
   const { t } = useTranslation('bible')
   const highlightedRef = useRef<HTMLButtonElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const { getBookName } = useLocalizedBookNames()
+
+  // Use localized book name if available, otherwise fall back to the passed bookName
+  const localizedBookName = getBookName(bookCode) || bookName
 
   // Get the presented verse number for multi-translation lookup
   const presentedVerseNumber =
@@ -100,7 +105,7 @@ export function VersesList({
           {t('navigation.back')}
         </button>
         <span className="text-sm font-medium text-gray-900 dark:text-white">
-          {bookName} {chapter}
+          {localizedBookName} {chapter}
         </span>
       </div>
 

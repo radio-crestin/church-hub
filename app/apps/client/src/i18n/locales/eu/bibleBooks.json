@@ -1,0 +1,110 @@
+{
+  "MAT": {
+    "name": "Euangelioa S. Mattheuen araura.",
+    "short": "Eua"
+  },
+  "MRK": {
+    "name": "Euangelioa S. Marc-en araura.",
+    "short": "Eua"
+  },
+  "LUK": {
+    "name": "Euangelioa S. Luc-en araura.",
+    "short": "Eua"
+  },
+  "JHN": {
+    "name": "Euangelioa S. Ioannen araura.",
+    "short": "Eua"
+  },
+  "ACT": {
+    "name": "Apostoluén Acteac.",
+    "short": "Apo"
+  },
+  "ROM": {
+    "name": "Romanoetara.",
+    "short": "Rom"
+  },
+  "1CO": {
+    "name": "1 Corinthianoetara.",
+    "short": "1Cor"
+  },
+  "2CO": {
+    "name": "2 Corinthianoetara.",
+    "short": "2Cor"
+  },
+  "GAL": {
+    "name": "Galatianoetara.",
+    "short": "Gal"
+  },
+  "EPH": {
+    "name": "Ephesianoetara.",
+    "short": "Eph"
+  },
+  "PHP": {
+    "name": "Philippianoetara.",
+    "short": "Phi"
+  },
+  "COL": {
+    "name": "Colossianoetara.",
+    "short": "Col"
+  },
+  "1TH": {
+    "name": "1 Thessaloniceanoetara.",
+    "short": "1The"
+  },
+  "2TH": {
+    "name": "2 Thessaloniceanoetara.",
+    "short": "2The"
+  },
+  "1TI": {
+    "name": "1 Timotheogana.",
+    "short": "1Tim"
+  },
+  "2TI": {
+    "name": "2 Timotheogana.",
+    "short": "2Tim"
+  },
+  "TIT": {
+    "name": "Titegana.",
+    "short": "Tit"
+  },
+  "PHM": {
+    "name": "Philemongana.",
+    "short": "Phi"
+  },
+  "HEB": {
+    "name": "Hebraicoetara.",
+    "short": "Heb"
+  },
+  "JAS": {
+    "name": "S. Iacquesec.",
+    "short": "S. "
+  },
+  "1PE": {
+    "name": "1 S. Pierrisec.",
+    "short": "1S. "
+  },
+  "2PE": {
+    "name": "2 S. Pierrisec.",
+    "short": "2S. "
+  },
+  "1JN": {
+    "name": "1 S. Ioannec.",
+    "short": "1S. "
+  },
+  "2JN": {
+    "name": "2 S. Ioannec.",
+    "short": "2S. "
+  },
+  "3JN": {
+    "name": "3 S. Ioannec.",
+    "short": "3S. "
+  },
+  "JUD": {
+    "name": "S. Iudac.",
+    "short": "S. "
+  },
+  "REV": {
+    "name": "Apocacalypsea.",
+    "short": "Apo"
+  }
+}

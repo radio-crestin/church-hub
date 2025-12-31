@@ -1,0 +1,110 @@
+{
+  "MAT": {
+    "name": "Ǝlinjil wa n Matta",
+    "short": "Ǝli"
+  },
+  "MRK": {
+    "name": "Ǝlinjil wa n Markus",
+    "short": "Ǝli"
+  },
+  "LUK": {
+    "name": "Ǝlinjil wa n Luqa",
+    "short": "Ǝli"
+  },
+  "JHN": {
+    "name": "Ǝlinjil wa n Yaxya",
+    "short": "Ǝli"
+  },
+  "ACT": {
+    "name": "Igitan ǝn Nǝmmuzal",
+    "short": "Igi"
+  },
+  "ROM": {
+    "name": "Širawt ta iktab Bulǝs i Kǝl-Ǝrrum",
+    "short": "Šir"
+  },
+  "1CO": {
+    "name": "Širawt ta tazzarat iktab Bulǝs i Kǝl-Korent",
+    "short": "Šir"
+  },
+  "2CO": {
+    "name": "Širawt ta n sanatat iktab Bulǝs i Kǝl-Korent",
+    "short": "Šir"
+  },
+  "GAL": {
+    "name": "Širawt ta iktab Bulǝs i Kǝl-Galatǝya",
+    "short": "Šir"
+  },
+  "EPH": {
+    "name": "Širawt ta iktab Bulǝs i Kǝl-Efez",
+    "short": "Šir"
+  },
+  "PHP": {
+    "name": "Širawt ta iktab Bulǝs i Kǝl-Filib",
+    "short": "Šir"
+  },
+  "COL": {
+    "name": "Širawt ta iktab Bulǝs i Kǝl-Kolosǝya",
+    "short": "Šir"
+  },
+  "1TH": {
+    "name": "Širawt ta tazzarat iktab Bulǝs i Kǝl-Tesalonik",
+    "short": "Šir"
+  },
+  "2TH": {
+    "name": "Širawt ta n sanatat iktab Bulǝs i Kǝl-Tesalonik",
+    "short": "Šir"
+  },
+  "1TI": {
+    "name": "Širawt ta tazzarat iktab Bulǝs i Timotay",
+    "short": "Šir"
+  },
+  "2TI": {
+    "name": "Širawt ta n sanatat ta iktab Bulǝs i Timotay",
+    "short": "Šir"
+  },
+  "TIT": {
+    "name": "Širawt ta iktab Bulǝs i Titǝs",
+    "short": "Šir"
+  },
+  "PHM": {
+    "name": "Širawt ta iktab Bulǝs i Filemona",
+    "short": "Šir"
+  },
+  "HEB": {
+    "name": "Širawt ta tǝtawaktab i Kǝl-Ɣibri",
+    "short": "Šir"
+  },
+  "JAS": {
+    "name": "Širawt ta iktab Yaqub",
+    "short": "Šir"
+  },
+  "1PE": {
+    "name": "Širawt ta tazzarat iktab Butros",
+    "short": "Šir"
+  },
+  "2PE": {
+    "name": "Širawt ta n sanatat iktab Butros",
+    "short": "Šir"
+  },
+  "1JN": {
+    "name": "Širawt ta tazzarat iktab Yaxya",
+    "short": "Šir"
+  },
+  "2JN": {
+    "name": "Širawt ta n sanatat iktab Yaxya",
+    "short": "Šir"
+  },
+  "3JN": {
+    "name": "Širawt ta n karadat iktab Yaxya",
+    "short": "Šir"
+  },
+  "JUD": {
+    "name": "Širawt ta iktab Yuday",
+    "short": "Šir"
+  },
+  "REV": {
+    "name": "Ǝlkǝttab wa n Ǝnǝfilal",
+    "short": "Ǝlk"
+  }
+}

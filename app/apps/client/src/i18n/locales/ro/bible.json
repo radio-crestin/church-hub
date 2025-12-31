@@ -61,16 +61,16 @@
     "title": "Setari Biblie",
     "import": {
       "title": "Importa Traducere",
-      "description": "Importa o traducere a Bibliei dintr-un fisier USFX XML.",
+      "description": "Importa o traducere a Bibliei dintr-un fisier OSIS XML.",
       "button": "Selecteaza Fisier",
-      "formatTitle": "Format Necesar: USFX XML",
-      "formatDescription": "Traducerea Bibliei trebuie sa fie in format USFX (Unified Standard Format XML). Acesta este un format standardizat folosit pentru codificarea Scripturii.",
+      "formatTitle": "Format Necesar: OSIS XML",
+      "formatDescription": "Traducerea Bibliei trebuie sa fie in format OSIS (Open Scripture Information Standard) XML.",
       "structureTitle": "Exemplu Structura Fisier:",
       "hints": {
-        "rootElement": "Elementul radacina trebuie sa fie <usfx>",
-        "bookElement": "Fiecare carte foloseste <book id=\"XXX\"> cu abrevieri standard (GEN, EXO, etc.)",
-        "chapterElement": "Capitolele folosesc <c id=\"N\"> unde N este numarul capitolului",
-        "verseElement": "Versetele folosesc <v id=\"N\">text</v> unde N este numarul versetului"
+        "rootElement": "Elementul radacina trebuie sa fie <osis>",
+        "bookElement": "Fiecare carte foloseste <div type=\"book\" osisID=\"Gen\">",
+        "chapterElement": "Capitolele folosesc <chapter osisID=\"Gen.1\">",
+        "verseElement": "Versetele folosesc <verse osisID=\"Gen.1.1\">text</verse>"
       }
     }
   },

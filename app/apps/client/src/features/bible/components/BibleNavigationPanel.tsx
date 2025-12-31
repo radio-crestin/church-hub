@@ -8,6 +8,7 @@ import { VersesList } from './VersesList'
 import {
   useBooks,
   useChapters,
+  useLocalizedBookNames,
   useSearchBible,
   useSelectedBibleTranslations,
   useSmartSearch,
@@ -37,6 +38,7 @@ export function BibleNavigationPanel({
 }: BibleNavigationPanelProps) {
   const { t } = useTranslation('bible')
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const { getBookName } = useLocalizedBookNames()
   const {
     state,
     selectBook,
@@ -152,6 +154,7 @@ export function BibleNavigationPanel({
             type={searchResults?.type || 'text'}
             isLoading={isSearching}
             onSelectResult={onSelectSearchResult}
+            getBookName={getBookName}
           />
         ) : state.level === 'books' ? (
           <BooksList
@@ -191,6 +194,7 @@ interface SearchResultsProps {
   type: 'reference' | 'text'
   isLoading: boolean
   onSelectResult: (result: BibleSearchResult) => void
+  getBookName: (bookCode: string) => string | undefined
 }
 
 function SearchResults({
@@ -198,6 +202,7 @@ function SearchResults({
   type,
   isLoading,
   onSelectResult,
+  getBookName,
 }: SearchResultsProps) {
   const { t } = useTranslation('bible')
 
@@ -224,6 +229,15 @@ function SearchResults({
         const searchResult = result as BibleSearchResult
         const verse = result as BibleVerse
 
+        // Get localized book name, fall back to original book name
+        const bookCode = isSearchResult ? searchResult.bookCode : verse.bookCode
+        const localizedBookName = getBookName(bookCode) || (isSearchResult ? searchResult.bookName : verse.bookName)
+
+        // Format reference with localized book name
+        const reference = isSearchResult
+          ? `${localizedBookName} ${searchResult.chapter}:${searchResult.verse}`
+          : `${localizedBookName} ${verse.chapter}:${verse.verse}`
+
         return (
           <button
             key={result.id}
@@ -232,9 +246,7 @@ function SearchResults({
             className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
           >
             <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400 mb-0.5">
-              {isSearchResult
-                ? searchResult.reference
-                : `${verse.bookName} ${verse.chapter}:${verse.verse}`}
+              {reference}
             </div>
             <div
               className="text-sm text-gray-700 dark:text-gray-200 line-clamp-2"

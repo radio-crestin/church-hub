@@ -1,0 +1,266 @@
+{
+  "GEN": {
+    "name": "Genesi",
+    "short": "Gen"
+  },
+  "EXO": {
+    "name": "Esodo",
+    "short": "Eso"
+  },
+  "LEV": {
+    "name": "Levitico",
+    "short": "Lev"
+  },
+  "NUM": {
+    "name": "Numeri",
+    "short": "Num"
+  },
+  "DEU": {
+    "name": "Deuteronomio",
+    "short": "Deu"
+  },
+  "JOS": {
+    "name": "Giosué",
+    "short": "Gio"
+  },
+  "JDG": {
+    "name": "Giudici",
+    "short": "Giu"
+  },
+  "RUT": {
+    "name": "Rut",
+    "short": "Rut"
+  },
+  "1SA": {
+    "name": "1 Samuele",
+    "short": "1Sam"
+  },
+  "2SA": {
+    "name": "2 Samuele",
+    "short": "2Sam"
+  },
+  "1KI": {
+    "name": "1 Re",
+    "short": "1Re"
+  },
+  "2KI": {
+    "name": "2 Re",
+    "short": "2Re"
+  },
+  "1CH": {
+    "name": "1 Cronache",
+    "short": "1Cro"
+  },
+  "2CH": {
+    "name": "2 Cronache",
+    "short": "2Cro"
+  },
+  "EZR": {
+    "name": "Esdra",
+    "short": "Esd"
+  },
+  "NEH": {
+    "name": "Neemia",
+    "short": "Nee"
+  },
+  "EST": {
+    "name": "Ester",
+    "short": "Est"
+  },
+  "JOB": {
+    "name": "Giobbe",
+    "short": "Gio"
+  },
+  "PSA": {
+    "name": "Salmi",
+    "short": "Sal"
+  },
+  "PRO": {
+    "name": "Proverbi",
+    "short": "Pro"
+  },
+  "ECC": {
+    "name": "Ecclesiaste",
+    "short": "Ecc"
+  },
+  "SNG": {
+    "name": "Cantico dei Cantici",
+    "short": "Can"
+  },
+  "ISA": {
+    "name": "Isaia",
+    "short": "Isa"
+  },
+  "JER": {
+    "name": "Geremia",
+    "short": "Ger"
+  },
+  "LAM": {
+    "name": "Lamentazioni",
+    "short": "Lam"
+  },
+  "EZK": {
+    "name": "Ezechiele",
+    "short": "Eze"
+  },
+  "DAN": {
+    "name": "Daniele",
+    "short": "Dan"
+  },
+  "HOS": {
+    "name": "Osea",
+    "short": "Ose"
+  },
+  "JOL": {
+    "name": "Gioele",
+    "short": "Gio"
+  },
+  "AMO": {
+    "name": "Amos",
+    "short": "Amo"
+  },
+  "OBA": {
+    "name": "Abdia",
+    "short": "Abd"
+  },
+  "JON": {
+    "name": "Giona",
+    "short": "Gio"
+  },
+  "MIC": {
+    "name": "Michea",
+    "short": "Mic"
+  },
+  "NAM": {
+    "name": "Nahum",
+    "short": "Nah"
+  },
+  "HAB": {
+    "name": "Abacuc",
+    "short": "Aba"
+  },
+  "ZEP": {
+    "name": "Sofonia",
+    "short": "Sof"
+  },
+  "HAG": {
+    "name": "Aggeo",
+    "short": "Agg"
+  },
+  "ZEC": {
+    "name": "Zaccaria",
+    "short": "Zac"
+  },
+  "MAL": {
+    "name": "Malachia",
+    "short": "Mal"
+  },
+  "MAT": {
+    "name": "Matteo",
+    "short": "Mat"
+  },
+  "MRK": {
+    "name": "Marco",
+    "short": "Mar"
+  },
+  "LUK": {
+    "name": "Luca",
+    "short": "Luc"
+  },
+  "JHN": {
+    "name": "Giovanni",
+    "short": "Gio"
+  },
+  "ACT": {
+    "name": "Atti",
+    "short": "Att"
+  },
+  "ROM": {
+    "name": "Romani",
+    "short": "Rom"
+  },
+  "1CO": {
+    "name": "1 Corinzi",
+    "short": "1Cor"
+  },
+  "2CO": {
+    "name": "2 Corinzi",
+    "short": "2Cor"
+  },
+  "GAL": {
+    "name": "Galati",
+    "short": "Gal"
+  },
+  "EPH": {
+    "name": "Efesini",
+    "short": "Efe"
+  },
+  "PHP": {
+    "name": "Filippesi",
+    "short": "Fil"
+  },
+  "COL": {
+    "name": "Colossesi",
+    "short": "Col"
+  },
+  "1TH": {
+    "name": "1 Tessalonicesi",
+    "short": "1Tes"
+  },
+  "2TH": {
+    "name": "2 Tessalonicesi",
+    "short": "2Tes"
+  },
+  "1TI": {
+    "name": "1 Timoteo",
+    "short": "1Tim"
+  },
+  "2TI": {
+    "name": "2 Timoteo",
+    "short": "2Tim"
+  },
+  "TIT": {
+    "name": "Tito",
+    "short": "Tit"
+  },
+  "PHM": {
+    "name": "Filemone",
+    "short": "Fil"
+  },
+  "HEB": {
+    "name": "Ebrei",
+    "short": "Ebr"
+  },
+  "JAS": {
+    "name": "Giacomo",
+    "short": "Gia"
+  },
+  "1PE": {
+    "name": "1 Pietro",
+    "short": "1Pie"
+  },
+  "2PE": {
+    "name": "2 Pietro",
+    "short": "2Pie"
+  },
+  "1JN": {
+    "name": "1 Giovanni",
+    "short": "1Gio"
+  },
+  "2JN": {
+    "name": "2 Giovanni",
+    "short": "2Gio"
+  },
+  "3JN": {
+    "name": "3 Giovanni",
+    "short": "3Gio"
+  },
+  "JUD": {
+    "name": "Giuda",
+    "short": "Giu"
+  },
+  "REV": {
+    "name": "Apocalisse",
+    "short": "Apo"
+  }
+}

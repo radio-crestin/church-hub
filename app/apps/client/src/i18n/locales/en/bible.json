@@ -61,16 +61,16 @@
     "title": "Bible Settings",
     "import": {
       "title": "Import Translation",
-      "description": "Import a Bible translation from an USFX XML file.",
+      "description": "Import a Bible translation from an OSIS XML file.",
       "button": "Select File",
-      "formatTitle": "Required Format: USFX XML",
-      "formatDescription": "The Bible translation must be in USFX (Unified Standard Format XML) format. This is a standardized format used for Scripture encoding.",
+      "formatTitle": "Required Format: OSIS XML",
+      "formatDescription": "The Bible translation must be in OSIS (Open Scripture Information Standard) XML format.",
       "structureTitle": "File Structure Example:",
       "hints": {
-        "rootElement": "Root element must be <usfx>",
-        "bookElement": "Each book uses <book id=\"XXX\"> with standard abbreviations (GEN, EXO, etc.)",
-        "chapterElement": "Chapters use <c id=\"N\"> where N is the chapter number",
-        "verseElement": "Verses use <v id=\"N\">text</v> where N is the verse number"
+        "rootElement": "Root element must be <osis>",
+        "bookElement": "Each book uses <div type=\"book\" osisID=\"Gen\">",
+        "chapterElement": "Chapters use <chapter osisID=\"Gen.1\">",
+        "verseElement": "Verses use <verse osisID=\"Gen.1.1\">text</verse>"
       }
     }
   },

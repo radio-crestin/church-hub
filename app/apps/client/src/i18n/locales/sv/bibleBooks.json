@@ -1,0 +1,266 @@
+{
+  "GEN": {
+    "name": "1 Mosebok",
+    "short": "1Mos"
+  },
+  "EXO": {
+    "name": "2 Mosebok",
+    "short": "2Mos"
+  },
+  "LEV": {
+    "name": "3 Mosebok",
+    "short": "3Mos"
+  },
+  "NUM": {
+    "name": "4 Mosebok",
+    "short": "4Mos"
+  },
+  "DEU": {
+    "name": "5 Mosebok",
+    "short": "5Mos"
+  },
+  "JOS": {
+    "name": "Josuaé",
+    "short": "Jos"
+  },
+  "JDG": {
+    "name": "Domarboken",
+    "short": "Dom"
+  },
+  "RUT": {
+    "name": "Rut",
+    "short": "Rut"
+  },
+  "1SA": {
+    "name": "1 Samuelsboken",
+    "short": "1Sam"
+  },
+  "2SA": {
+    "name": "2 Samuelsbokem",
+    "short": "2Sam"
+  },
+  "1KI": {
+    "name": "1 Kungaboken",
+    "short": "1Kun"
+  },
+  "2KI": {
+    "name": "2 Kungaboken",
+    "short": "2Kun"
+  },
+  "1CH": {
+    "name": "Krönikeboken",
+    "short": "Krö"
+  },
+  "2CH": {
+    "name": "Krönikeboken",
+    "short": "Krö"
+  },
+  "EZR": {
+    "name": "Esra",
+    "short": "Esr"
+  },
+  "NEH": {
+    "name": "Nehemja",
+    "short": "Neh"
+  },
+  "EST": {
+    "name": "Ester",
+    "short": "Est"
+  },
+  "JOB": {
+    "name": "Job",
+    "short": "Job"
+  },
+  "PSA": {
+    "name": "Psaltaren",
+    "short": "Psa"
+  },
+  "PRO": {
+    "name": "Ordspråksboken",
+    "short": "Ord"
+  },
+  "ECC": {
+    "name": "Predikaren",
+    "short": "Pre"
+  },
+  "SNG": {
+    "name": "Hga Visan",
+    "short": "Hga"
+  },
+  "ISA": {
+    "name": "Jesaja",
+    "short": "Jes"
+  },
+  "JER": {
+    "name": "Jeremia",
+    "short": "Jer"
+  },
+  "LAM": {
+    "name": "Klagovisorna",
+    "short": "Kla"
+  },
+  "EZK": {
+    "name": "Hesekiel",
+    "short": "Hes"
+  },
+  "DAN": {
+    "name": "Daniel",
+    "short": "Dan"
+  },
+  "HOS": {
+    "name": "Hosea",
+    "short": "Hos"
+  },
+  "JOL": {
+    "name": "Joel",
+    "short": "Joe"
+  },
+  "AMO": {
+    "name": "Amos",
+    "short": "Amo"
+  },
+  "OBA": {
+    "name": "Obadja",
+    "short": "Oba"
+  },
+  "JON": {
+    "name": "Jona",
+    "short": "Jon"
+  },
+  "MIC": {
+    "name": "Mika",
+    "short": "Mik"
+  },
+  "NAM": {
+    "name": "Nahum",
+    "short": "Nah"
+  },
+  "HAB": {
+    "name": "Habackuk",
+    "short": "Hab"
+  },
+  "ZEP": {
+    "name": "Sefanja",
+    "short": "Sef"
+  },
+  "HAG": {
+    "name": "Haggai",
+    "short": "Hag"
+  },
+  "ZEC": {
+    "name": "Sakaria",
+    "short": "Sak"
+  },
+  "MAL": {
+    "name": "Malaki",
+    "short": "Mal"
+  },
+  "MAT": {
+    "name": "Matteus",
+    "short": "Mat"
+  },
+  "MRK": {
+    "name": "Markus",
+    "short": "Mar"
+  },
+  "LUK": {
+    "name": "Lukas",
+    "short": "Luk"
+  },
+  "JHN": {
+    "name": "Johannes",
+    "short": "Joh"
+  },
+  "ACT": {
+    "name": "Apostagärningarna",
+    "short": "Apo"
+  },
+  "ROM": {
+    "name": "Romabrevet",
+    "short": "Rom"
+  },
+  "1CO": {
+    "name": "1 Korinthierbrevet",
+    "short": "1Kor"
+  },
+  "2CO": {
+    "name": "2 Korinthierbrevet",
+    "short": "2Kor"
+  },
+  "GAL": {
+    "name": "Galaterbrevet",
+    "short": "Gal"
+  },
+  "EPH": {
+    "name": "Efesierbrevet",
+    "short": "Efe"
+  },
+  "PHP": {
+    "name": "Filipperbrevet",
+    "short": "Fil"
+  },
+  "COL": {
+    "name": "Kolosserbrevet",
+    "short": "Kol"
+  },
+  "1TH": {
+    "name": "1 Thessalonikerbreve",
+    "short": "1The"
+  },
+  "2TH": {
+    "name": "2 Thessalonikerbreve",
+    "short": "2The"
+  },
+  "1TI": {
+    "name": "1 Timotheosbrevet",
+    "short": "1Tim"
+  },
+  "2TI": {
+    "name": "2 Timotheosbrevet",
+    "short": "2Tim"
+  },
+  "TIT": {
+    "name": "Titusbrevet",
+    "short": "Tit"
+  },
+  "PHM": {
+    "name": "Filemonbrevet",
+    "short": "Fil"
+  },
+  "HEB": {
+    "name": "Hebreerbrevet",
+    "short": "Heb"
+  },
+  "JAS": {
+    "name": "Jakobsbrevet",
+    "short": "Jak"
+  },
+  "1PE": {
+    "name": "1 Petrusbrevet",
+    "short": "1Pet"
+  },
+  "2PE": {
+    "name": "2 Petrusbrevet",
+    "short": "2Pet"
+  },
+  "1JN": {
+    "name": "1 Johannesbrevet",
+    "short": "1Joh"
+  },
+  "2JN": {
+    "name": "2 Johannesbrevet",
+    "short": "2Joh"
+  },
+  "3JN": {
+    "name": "3 Johannesbrevet",
+    "short": "3Joh"
+  },
+  "JUD": {
+    "name": "Judasbrevet",
+    "short": "Jud"
+  },
+  "REV": {
+    "name": "Uppenbarelseboken",
+    "short": "Upp"
+  }
+}

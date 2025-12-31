@@ -1,0 +1,266 @@
+{
+  "GEN": {
+    "name": "Yaratılış",
+    "short": "Yar"
+  },
+  "EXO": {
+    "name": "Mısır'dan Çıkış",
+    "short": "Mıs"
+  },
+  "LEV": {
+    "name": "Levililer",
+    "short": "Lev"
+  },
+  "NUM": {
+    "name": "Çölde Sayım",
+    "short": "Çöl"
+  },
+  "DEU": {
+    "name": "Yasa'nın Tekrarı",
+    "short": "Yas"
+  },
+  "JOS": {
+    "name": "Yeşu",
+    "short": "Yeş"
+  },
+  "JDG": {
+    "name": "Hakimler",
+    "short": "Hak"
+  },
+  "RUT": {
+    "name": "Rut",
+    "short": "Rut"
+  },
+  "1SA": {
+    "name": "1 Samuel",
+    "short": "1Sam"
+  },
+  "2SA": {
+    "name": "2 Samuel",
+    "short": "2Sam"
+  },
+  "1KI": {
+    "name": "1 Krallar",
+    "short": "1Kra"
+  },
+  "2KI": {
+    "name": "2 Krallar",
+    "short": "2Kra"
+  },
+  "1CH": {
+    "name": "1 Tarihler",
+    "short": "1Tar"
+  },
+  "2CH": {
+    "name": "2 Tarihler",
+    "short": "2Tar"
+  },
+  "EZR": {
+    "name": "Ezra",
+    "short": "Ezr"
+  },
+  "NEH": {
+    "name": "Nehemya",
+    "short": "Neh"
+  },
+  "EST": {
+    "name": "Ester",
+    "short": "Est"
+  },
+  "JOB": {
+    "name": "Eyüp",
+    "short": "Eyü"
+  },
+  "PSA": {
+    "name": "Mezmurlar",
+    "short": "Mez"
+  },
+  "PRO": {
+    "name": "Süleyman'ın Özdeyişleri",
+    "short": "Sül"
+  },
+  "ECC": {
+    "name": "Vaiz",
+    "short": "Vai"
+  },
+  "SNG": {
+    "name": "Ezgiler Ezgisi",
+    "short": "Ezg"
+  },
+  "ISA": {
+    "name": "Yeşaya",
+    "short": "Yeş"
+  },
+  "JER": {
+    "name": "Yeremya",
+    "short": "Yer"
+  },
+  "LAM": {
+    "name": "Ağıtlar",
+    "short": "Ağı"
+  },
+  "EZK": {
+    "name": "Hezekiel",
+    "short": "Hez"
+  },
+  "DAN": {
+    "name": "Daniel",
+    "short": "Dan"
+  },
+  "HOS": {
+    "name": "Hoşea",
+    "short": "Hoş"
+  },
+  "JOL": {
+    "name": "Yoel",
+    "short": "Yoe"
+  },
+  "AMO": {
+    "name": "Amos",
+    "short": "Amo"
+  },
+  "OBA": {
+    "name": "Ovadya",
+    "short": "Ova"
+  },
+  "JON": {
+    "name": "Yunus",
+    "short": "Yun"
+  },
+  "MIC": {
+    "name": "Mika",
+    "short": "Mik"
+  },
+  "NAM": {
+    "name": "Nahum",
+    "short": "Nah"
+  },
+  "HAB": {
+    "name": "Habakkuk",
+    "short": "Hab"
+  },
+  "ZEP": {
+    "name": "Sefanya",
+    "short": "Sef"
+  },
+  "HAG": {
+    "name": "Hagay",
+    "short": "Hag"
+  },
+  "ZEC": {
+    "name": "Zekeriya",
+    "short": "Zek"
+  },
+  "MAL": {
+    "name": "Malaki",
+    "short": "Mal"
+  },
+  "MAT": {
+    "name": "Matta",
+    "short": "Mat"
+  },
+  "MRK": {
+    "name": "Markos",
+    "short": "Mar"
+  },
+  "LUK": {
+    "name": "Luka",
+    "short": "Luk"
+  },
+  "JHN": {
+    "name": "Yuhanna",
+    "short": "Yuh"
+  },
+  "ACT": {
+    "name": "Elçilerin İşleri",
+    "short": "Elç"
+  },
+  "ROM": {
+    "name": "Romalılar",
+    "short": "Rom"
+  },
+  "1CO": {
+    "name": "1 Korintliler",
+    "short": "1Kor"
+  },
+  "2CO": {
+    "name": "2 Korintliler",
+    "short": "2Kor"
+  },
+  "GAL": {
+    "name": "Galatyalılar",
+    "short": "Gal"
+  },
+  "EPH": {
+    "name": "Efesliler",
+    "short": "Efe"
+  },
+  "PHP": {
+    "name": "Filipililer",
+    "short": "Fil"
+  },
+  "COL": {
+    "name": "Koloseliler",
+    "short": "Kol"
+  },
+  "1TH": {
+    "name": "1 Selanikiler",
+    "short": "1Sel"
+  },
+  "2TH": {
+    "name": "2 Selanikiler",
+    "short": "2Sel"
+  },
+  "1TI": {
+    "name": "1 Timoteos",
+    "short": "1Tim"
+  },
+  "2TI": {
+    "name": "2 Timoteos",
+    "short": "2Tim"
+  },
+  "TIT": {
+    "name": "Titus",
+    "short": "Tit"
+  },
+  "PHM": {
+    "name": "Filimon",
+    "short": "Fil"
+  },
+  "HEB": {
+    "name": "İbraniler",
+    "short": "İbr"
+  },
+  "JAS": {
+    "name": "Yakup",
+    "short": "Yak"
+  },
+  "1PE": {
+    "name": "1 Petrus",
+    "short": "1Pet"
+  },
+  "2PE": {
+    "name": "2 Petrus",
+    "short": "2Pet"
+  },
+  "1JN": {
+    "name": "1 Yuhanna",
+    "short": "1Yuh"
+  },
+  "2JN": {
+    "name": "2 Yuhanna",
+    "short": "2Yuh"
+  },
+  "3JN": {
+    "name": "3 Yuhanna",
+    "short": "3Yuh"
+  },
+  "JUD": {
+    "name": "Yahuda",
+    "short": "Yah"
+  },
+  "REV": {
+    "name": "Vahiy",
+    "short": "Vah"
+  }
+}

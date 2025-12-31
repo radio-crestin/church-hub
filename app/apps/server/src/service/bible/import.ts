@@ -3,9 +3,8 @@ import type {
   ImportResult,
   ParsedBible,
 } from './types'
-import { importUsfxTranslation, parseUsfxXml } from './import-usfx'
 import { parseOsisXml } from './import-osis'
-import { parseZefaniaXml } from './import-zefania'
+import { parseHolyBibleXml } from './import-holy-bible-xml'
 import { getRawDatabase } from '../../db'
 
 const DEBUG = process.env.DEBUG === 'true'
@@ -17,54 +16,48 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
 }
 
 /**
- * Detects the XML format of the Bible content
- * Returns: 'usfx' | 'osis' | 'zefania' | 'unknown'
+ * Detects the Bible XML format
+ * Returns: 'osis' | 'holy-bible-xml' | 'unknown'
  */
-export function detectBibleFormat(xmlContent: string): 'usfx' | 'osis' | 'zefania' | 'unknown' {
+export function detectBibleFormat(xmlContent: string): 'osis' | 'holy-bible-xml' | 'unknown' {
   // Check first 2000 characters for root element detection
   const sample = xmlContent.substring(0, 2000).toLowerCase()
-
-  // USFX: <usfx> root element
-  if (sample.includes('<usfx')) {
-    return 'usfx'
-  }
-
-  // Zefania: <XMLBIBLE> root element (case-insensitive check)
-  if (sample.includes('<xmlbible')) {
-    return 'zefania'
-  }
 
   // OSIS: <osis> or <osistext> elements
   if (sample.includes('<osis') || sample.includes('osisidwork') || sample.includes('osisrefwork')) {
     return 'osis'
   }
 
+  // Holy-Bible-XML-Format: <bible translation="..."> with <testament>, <book>, <chapter>, <verse> structure
+  if (sample.includes('<bible') && (sample.includes('translation=') || sample.includes('<testament'))) {
+    return 'holy-bible-xml'
+  }
+
   return 'unknown'
 }
 
 /**
- * Parses Bible XML content using the appropriate parser based on format detection
+ * Parses Bible XML content (supports OSIS and Holy-Bible-XML-Format)
  */
 export function parseBibleXml(xmlContent: string): { format: string; parsed: ParsedBible } | { error: string } {
   const format = detectBibleFormat(xmlContent)
 
   log('info', `Detected Bible format: ${format}`)
 
-  switch (format) {
-    case 'usfx':
-      return { format: 'USFX', parsed: parseUsfxXml(xmlContent) }
-    case 'osis':
-      return { format: 'OSIS', parsed: parseOsisXml(xmlContent) }
-    case 'zefania':
-      return { format: 'Zefania', parsed: parseZefaniaXml(xmlContent) }
-    default:
-      return { error: 'Unable to detect Bible format. Supported formats: USFX, OSIS, Zefania XML' }
+  if (format === 'osis') {
+    return { format: 'OSIS', parsed: parseOsisXml(xmlContent) }
   }
+
+  if (format === 'holy-bible-xml') {
+    return { format: 'Holy-Bible-XML', parsed: parseHolyBibleXml(xmlContent) }
+  }
+
+  return { error: 'Unable to detect Bible format. Supported formats: OSIS XML, Holy-Bible-XML-Format' }
 }
 
 /**
- * Imports a Bible translation into the database with auto-format detection
- * Supports USFX, OSIS, and Zefania XML formats
+ * Imports a Bible translation into the database
+ * Supports OSIS XML and Holy-Bible-XML-Format
  */
 export function importBibleTranslation(input: CreateTranslationInput): ImportResult {
   const db = getRawDatabase()

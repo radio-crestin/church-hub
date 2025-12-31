@@ -1,0 +1,266 @@
+{
+  "GEN": {
+    "name": "Genesis",
+    "short": "Gen"
+  },
+  "EXO": {
+    "name": "Eksodus",
+    "short": "Eks"
+  },
+  "LEV": {
+    "name": "Levitikus",
+    "short": "Lev"
+  },
+  "NUM": {
+    "name": "Numeri",
+    "short": "Num"
+  },
+  "DEU": {
+    "name": "Deuteronomium",
+    "short": "Deu"
+  },
+  "JOS": {
+    "name": "Josua",
+    "short": "Jos"
+  },
+  "JDG": {
+    "name": "Rigters",
+    "short": "Rig"
+  },
+  "RUT": {
+    "name": "Rut",
+    "short": "Rut"
+  },
+  "1SA": {
+    "name": "1 Samuel",
+    "short": "1Sam"
+  },
+  "2SA": {
+    "name": "2 Samuel",
+    "short": "2Sam"
+  },
+  "1KI": {
+    "name": "1 Konings",
+    "short": "1Kon"
+  },
+  "2KI": {
+    "name": "2 Konings",
+    "short": "2Kon"
+  },
+  "1CH": {
+    "name": "1 Kronieke",
+    "short": "1Kro"
+  },
+  "2CH": {
+    "name": "2 Kronieke",
+    "short": "2Kro"
+  },
+  "EZR": {
+    "name": "Esra",
+    "short": "Esr"
+  },
+  "NEH": {
+    "name": "Nehemia",
+    "short": "Neh"
+  },
+  "EST": {
+    "name": "Ester",
+    "short": "Est"
+  },
+  "JOB": {
+    "name": "Job",
+    "short": "Job"
+  },
+  "PSA": {
+    "name": "Psalms",
+    "short": "Psa"
+  },
+  "PRO": {
+    "name": "Spreuke",
+    "short": "Spr"
+  },
+  "ECC": {
+    "name": "Prediker",
+    "short": "Pre"
+  },
+  "SNG": {
+    "name": "Hooglied",
+    "short": "Hoo"
+  },
+  "ISA": {
+    "name": "Jesaja",
+    "short": "Jes"
+  },
+  "JER": {
+    "name": "Jeremia",
+    "short": "Jer"
+  },
+  "LAM": {
+    "name": "Klaagliedere",
+    "short": "Kla"
+  },
+  "EZK": {
+    "name": "Esegiël",
+    "short": "Ese"
+  },
+  "DAN": {
+    "name": "Daniël",
+    "short": "Dan"
+  },
+  "HOS": {
+    "name": "Hosea",
+    "short": "Hos"
+  },
+  "JOL": {
+    "name": "Joël",
+    "short": "Joë"
+  },
+  "AMO": {
+    "name": "Amos",
+    "short": "Amo"
+  },
+  "OBA": {
+    "name": "Obadja",
+    "short": "Oba"
+  },
+  "JON": {
+    "name": "Jona",
+    "short": "Jon"
+  },
+  "MIC": {
+    "name": "Miga",
+    "short": "Mig"
+  },
+  "NAM": {
+    "name": "Nahum",
+    "short": "Nah"
+  },
+  "HAB": {
+    "name": "Habakuk",
+    "short": "Hab"
+  },
+  "ZEP": {
+    "name": "Sefanja",
+    "short": "Sef"
+  },
+  "HAG": {
+    "name": "Haggai",
+    "short": "Hag"
+  },
+  "ZEC": {
+    "name": "Sagaria",
+    "short": "Sag"
+  },
+  "MAL": {
+    "name": "Maleagi",
+    "short": "Mal"
+  },
+  "MAT": {
+    "name": "Mattheus",
+    "short": "Mat"
+  },
+  "MRK": {
+    "name": "Markus",
+    "short": "Mar"
+  },
+  "LUK": {
+    "name": "Lukas",
+    "short": "Luk"
+  },
+  "JHN": {
+    "name": "Johannes",
+    "short": "Joh"
+  },
+  "ACT": {
+    "name": "Handelinge",
+    "short": "Han"
+  },
+  "ROM": {
+    "name": "Romeine",
+    "short": "Rom"
+  },
+  "1CO": {
+    "name": "1 Korinthiërs",
+    "short": "1Kor"
+  },
+  "2CO": {
+    "name": "2 Korinthiërs",
+    "short": "2Kor"
+  },
+  "GAL": {
+    "name": "Galasiërs",
+    "short": "Gal"
+  },
+  "EPH": {
+    "name": "Efesiërs",
+    "short": "Efe"
+  },
+  "PHP": {
+    "name": "Filippense",
+    "short": "Fil"
+  },
+  "COL": {
+    "name": "Kolossense",
+    "short": "Kol"
+  },
+  "1TH": {
+    "name": "1 Thessalonisense",
+    "short": "1The"
+  },
+  "2TH": {
+    "name": "2 Thessalonisense",
+    "short": "2The"
+  },
+  "1TI": {
+    "name": "1 Timotheus",
+    "short": "1Tim"
+  },
+  "2TI": {
+    "name": "2 Timotheus",
+    "short": "2Tim"
+  },
+  "TIT": {
+    "name": "Titus",
+    "short": "Tit"
+  },
+  "PHM": {
+    "name": "Filemon",
+    "short": "Fil"
+  },
+  "HEB": {
+    "name": "Hebreërs",
+    "short": "Heb"
+  },
+  "JAS": {
+    "name": "Jakobus",
+    "short": "Jak"
+  },
+  "1PE": {
+    "name": "1 Petrus",
+    "short": "1Pet"
+  },
+  "2PE": {
+    "name": "2 Petrus",
+    "short": "2Pet"
+  },
+  "1JN": {
+    "name": "1 Johannes",
+    "short": "1Joh"
+  },
+  "2JN": {
+    "name": "2 Johannes",
+    "short": "2Joh"
+  },
+  "3JN": {
+    "name": "3 Johannes",
+    "short": "3Joh"
+  },
+  "JUD": {
+    "name": "Judas",
+    "short": "Jud"
+  },
+  "REV": {
+    "name": "Openbaring",
+    "short": "Ope"
+  }
+}

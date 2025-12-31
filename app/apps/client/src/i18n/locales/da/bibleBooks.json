@@ -1,0 +1,266 @@
+{
+  "GEN": {
+    "name": "1 Mosebog",
+    "short": "1Mos"
+  },
+  "EXO": {
+    "name": "2 Mosebog",
+    "short": "2Mos"
+  },
+  "LEV": {
+    "name": "3 Mosebog",
+    "short": "3Mos"
+  },
+  "NUM": {
+    "name": "4 Mosebog",
+    "short": "4Mos"
+  },
+  "DEU": {
+    "name": "5 Mosebog",
+    "short": "5Mos"
+  },
+  "JOS": {
+    "name": "Josua",
+    "short": "Jos"
+  },
+  "JDG": {
+    "name": "Dommer",
+    "short": "Dom"
+  },
+  "RUT": {
+    "name": "Rut",
+    "short": "Rut"
+  },
+  "1SA": {
+    "name": "1 Samuel",
+    "short": "1Sam"
+  },
+  "2SA": {
+    "name": "2 Samuel",
+    "short": "2Sam"
+  },
+  "1KI": {
+    "name": "Første Kongebog",
+    "short": "Før"
+  },
+  "2KI": {
+    "name": "Anden Kongebog",
+    "short": "And"
+  },
+  "1CH": {
+    "name": "Første Krønikebog",
+    "short": "Før"
+  },
+  "2CH": {
+    "name": "Anden Krønikebog",
+    "short": "And"
+  },
+  "EZR": {
+    "name": "Ezra",
+    "short": "Ezr"
+  },
+  "NEH": {
+    "name": "Nehemias",
+    "short": "Neh"
+  },
+  "EST": {
+    "name": "Ester",
+    "short": "Est"
+  },
+  "JOB": {
+    "name": "Job",
+    "short": "Job"
+  },
+  "PSA": {
+    "name": "Salme",
+    "short": "Sal"
+  },
+  "PRO": {
+    "name": "Ordsprogene",
+    "short": "Ord"
+  },
+  "ECC": {
+    "name": "Prædikeren",
+    "short": "Præ"
+  },
+  "SNG": {
+    "name": "Højsangen",
+    "short": "Høj"
+  },
+  "ISA": {
+    "name": "Esajas",
+    "short": "Esa"
+  },
+  "JER": {
+    "name": "Jeremias",
+    "short": "Jer"
+  },
+  "LAM": {
+    "name": "Klagesangene",
+    "short": "Kla"
+  },
+  "EZK": {
+    "name": "Ezekiel",
+    "short": "Eze"
+  },
+  "DAN": {
+    "name": "Daniel",
+    "short": "Dan"
+  },
+  "HOS": {
+    "name": "Hoseas",
+    "short": "Hos"
+  },
+  "JOL": {
+    "name": "Joel",
+    "short": "Joe"
+  },
+  "AMO": {
+    "name": "Amos",
+    "short": "Amo"
+  },
+  "OBA": {
+    "name": "Obadias",
+    "short": "Oba"
+  },
+  "JON": {
+    "name": "Jonas",
+    "short": "Jon"
+  },
+  "MIC": {
+    "name": "Mikas",
+    "short": "Mik"
+  },
+  "NAM": {
+    "name": "Nahum",
+    "short": "Nah"
+  },
+  "HAB": {
+    "name": "Habakkuk",
+    "short": "Hab"
+  },
+  "ZEP": {
+    "name": "Zefanias",
+    "short": "Zef"
+  },
+  "HAG": {
+    "name": "Haggaj",
+    "short": "Hag"
+  },
+  "ZEC": {
+    "name": "Zakarias",
+    "short": "Zak"
+  },
+  "MAL": {
+    "name": "Malakias",
+    "short": "Mal"
+  },
+  "MAT": {
+    "name": "Matthæus",
+    "short": "Mat"
+  },
+  "MRK": {
+    "name": "Markus",
+    "short": "Mar"
+  },
+  "LUK": {
+    "name": "Lukas",
+    "short": "Luk"
+  },
+  "JHN": {
+    "name": "Johannes",
+    "short": "Joh"
+  },
+  "ACT": {
+    "name": "Apostelenes gerninger",
+    "short": "Apo"
+  },
+  "ROM": {
+    "name": "Romerne",
+    "short": "Rom"
+  },
+  "1CO": {
+    "name": "1 Korinterne",
+    "short": "1Kor"
+  },
+  "2CO": {
+    "name": "2 Korinterne",
+    "short": "2Kor"
+  },
+  "GAL": {
+    "name": "Galaterne",
+    "short": "Gal"
+  },
+  "EPH": {
+    "name": "Efeserne",
+    "short": "Efe"
+  },
+  "PHP": {
+    "name": "Filipperne",
+    "short": "Fil"
+  },
+  "COL": {
+    "name": "Kolossensern",
+    "short": "Kol"
+  },
+  "1TH": {
+    "name": "1 Tessalonikerne",
+    "short": "1Tes"
+  },
+  "2TH": {
+    "name": "2 Tessalonikerne",
+    "short": "2Tes"
+  },
+  "1TI": {
+    "name": "1 Timoteus",
+    "short": "1Tim"
+  },
+  "2TI": {
+    "name": "2 Timoteus",
+    "short": "2Tim"
+  },
+  "TIT": {
+    "name": "Titus",
+    "short": "Tit"
+  },
+  "PHM": {
+    "name": "Filemon",
+    "short": "Fil"
+  },
+  "HEB": {
+    "name": "Hebræerne",
+    "short": "Heb"
+  },
+  "JAS": {
+    "name": "Jakob",
+    "short": "Jak"
+  },
+  "1PE": {
+    "name": "1 Peter",
+    "short": "1Pet"
+  },
+  "2PE": {
+    "name": "2 Peter",
+    "short": "2Pet"
+  },
+  "1JN": {
+    "name": "1 Johannes",
+    "short": "1Joh"
+  },
+  "2JN": {
+    "name": "2 Johannes",
+    "short": "2Joh"
+  },
+  "3JN": {
+    "name": "3 Johannes",
+    "short": "3Joh"
+  },
+  "JUD": {
+    "name": "Judas",
+    "short": "Jud"
+  },
+  "REV": {
+    "name": "Aabenbaringen",
+    "short": "Aab"
+  }
+}

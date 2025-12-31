@@ -28,7 +28,7 @@ export const biblePaths = {
     post: {
       tags: ['Bible'],
       summary: 'Import Bible translation',
-      description: 'Import a Bible translation from XML. Supports USFX, OSIS, and Zefania formats with auto-detection.',
+      description: 'Import a Bible translation. Supports OSIS XML and Holy-Bible-XML-Format.',
       security: [{ bearerAuth: [] }, { cookieAuth: [] }],
       requestBody: {
         required: true,
@@ -346,6 +346,105 @@ export const biblePaths = {
           },
         },
         '401': { $ref: '#/components/responses/Unauthorized' },
+      },
+    },
+  },
+  '/api/bible/available': {
+    get: {
+      tags: ['Bible'],
+      summary: 'Get available Bible translations for download',
+      description: 'Proxy endpoint that fetches available Bible translations from Holy-Bible-XML-Format repository. Returns XML list of 1045+ translations.',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      responses: {
+        '200': {
+          description: 'XML list of available Bible translations',
+          content: {
+            'application/xml': {
+              schema: { type: 'string' },
+            },
+          },
+        },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+        '502': {
+          description: 'Failed to fetch from upstream repository',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  error: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+  '/api/bible/download': {
+    get: {
+      tags: ['Bible'],
+      summary: 'Download a Bible XML file',
+      description: 'Proxy endpoint that downloads a Bible XML file from Holy-Bible-XML-Format repository. Only URLs from the Holy-Bible-XML-Format repository are allowed.',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      parameters: [
+        {
+          name: 'url',
+          in: 'query',
+          required: true,
+          schema: { type: 'string', format: 'uri' },
+          description: 'The URL of the Bible XML file to download (must be from Holy-Bible-XML-Format repository)',
+        },
+      ],
+      responses: {
+        '200': {
+          description: 'Bible XML content',
+          content: {
+            'application/xml': {
+              schema: { type: 'string' },
+            },
+          },
+        },
+        '400': {
+          description: 'Missing url parameter',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  error: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+        '403': {
+          description: 'URL not allowed',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  error: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+        '502': {
+          description: 'Failed to download from upstream',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  error: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
       },
     },
   },

@@ -1,6 +1,7 @@
 import { fetch as tauriFetch } from '@tauri-apps/plugin-http'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
+import { useLocalizedBookNames } from '~/features/bible/hooks'
 import { getApiUrl, isMobile } from '~/config'
 import { getStoredUserToken } from '~/service/api-url'
 import { calculateMaxExitAnimationDuration } from './rendering/utils/styleUtils'
@@ -72,6 +73,7 @@ export function LivePreview() {
 
   const { data: presentationState } = usePresentationState()
   const { data: screens } = useScreens()
+  const { getBookName } = useLocalizedBookNames()
 
   // Find first primary screen (regardless of window open state)
   const primaryScreen = useMemo(() => {
@@ -168,17 +170,20 @@ export function LivePreview() {
           const data = temp.data
           const hasSecondary = Boolean(data.secondaryText && data.secondaryBookName)
 
-          // Build reference: "Genesis (Geneza) 1:1" when secondary exists, otherwise "Genesis 1:1"
+          // Build reference using localized book name
           // First extract chapter:verse from the existing reference
           const chapterVerseMatch = data.reference.match(/(\d+:\d+)/)
           const chapterVerse = chapterVerseMatch?.[1] || ''
 
+          // Use localized book name if available
+          const localizedBookName = getBookName(data.bookCode) || data.bookName
+
           let referenceText: string
           if (hasSecondary && data.secondaryBookName) {
-            referenceText = `${data.bookName} (${data.secondaryBookName}) ${chapterVerse}`
+            referenceText = `${localizedBookName} ${chapterVerse}`
           } else {
-            // Use bookName + chapter:verse
-            referenceText = `${data.bookName} ${chapterVerse}`
+            // Use localized bookName + chapter:verse
+            referenceText = `${localizedBookName} ${chapterVerse}`
           }
 
           // Combine primary + secondary text with empty line

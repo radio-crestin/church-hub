@@ -1,0 +1,266 @@
+{
+  "GEN": {
+    "name": "Pradþios knyga",
+    "short": "Pra"
+  },
+  "EXO": {
+    "name": "Iðëjimo knyga",
+    "short": "Iðë"
+  },
+  "LEV": {
+    "name": "Kunigø knyga",
+    "short": "Kun"
+  },
+  "NUM": {
+    "name": "Skaièiø knyga",
+    "short": "Ska"
+  },
+  "DEU": {
+    "name": "Pakartotino Ástatymo knyga",
+    "short": "Pak"
+  },
+  "JOS": {
+    "name": "Jozuës knyga",
+    "short": "Joz"
+  },
+  "JDG": {
+    "name": "Teisëjø knyga",
+    "short": "Tei"
+  },
+  "RUT": {
+    "name": "Rutos knyga",
+    "short": "Rut"
+  },
+  "1SA": {
+    "name": "Pirmoji Samuelio knyga",
+    "short": "Pir"
+  },
+  "2SA": {
+    "name": "Antroji Samuelio knyga",
+    "short": "Ant"
+  },
+  "1KI": {
+    "name": "Pirmoji Karaliø knyga",
+    "short": "Pir"
+  },
+  "2KI": {
+    "name": "Antroji Karaliø knyga",
+    "short": "Ant"
+  },
+  "1CH": {
+    "name": "Pirmoji Kronikø knyga",
+    "short": "Pir"
+  },
+  "2CH": {
+    "name": "Antroji Kronikø knyga",
+    "short": "Ant"
+  },
+  "EZR": {
+    "name": "Ezdro knyga",
+    "short": "Ezd"
+  },
+  "NEH": {
+    "name": "Nehemijo knyga",
+    "short": "Neh"
+  },
+  "EST": {
+    "name": "Esteros knyga",
+    "short": "Est"
+  },
+  "JOB": {
+    "name": "Jobo knyga",
+    "short": "Job"
+  },
+  "PSA": {
+    "name": "Psalmynas",
+    "short": "Psa"
+  },
+  "PRO": {
+    "name": "Patarliø knyga",
+    "short": "Pat"
+  },
+  "ECC": {
+    "name": "Koheleto knyga",
+    "short": "Koh"
+  },
+  "SNG": {
+    "name": "Giesmiø giesmës knyga",
+    "short": "Gie"
+  },
+  "ISA": {
+    "name": "Izaijo knyga",
+    "short": "Iza"
+  },
+  "JER": {
+    "name": "Jeremijo knyga",
+    "short": "Jer"
+  },
+  "LAM": {
+    "name": "Raudø knyga",
+    "short": "Rau"
+  },
+  "EZK": {
+    "name": "Ezechielio knyga",
+    "short": "Eze"
+  },
+  "DAN": {
+    "name": "Danieliaus knyga",
+    "short": "Dan"
+  },
+  "HOS": {
+    "name": "Ozëjo knyga",
+    "short": "Ozë"
+  },
+  "JOL": {
+    "name": "Joelio knyga",
+    "short": "Joe"
+  },
+  "AMO": {
+    "name": "Amoso knyga",
+    "short": "Amo"
+  },
+  "OBA": {
+    "name": "Abdijo knyga",
+    "short": "Abd"
+  },
+  "JON": {
+    "name": "Jonos knyga",
+    "short": "Jon"
+  },
+  "MIC": {
+    "name": "Michëjo knyga",
+    "short": "Mic"
+  },
+  "NAM": {
+    "name": "Nahumo knyga",
+    "short": "Nah"
+  },
+  "HAB": {
+    "name": "Habakuko knyga",
+    "short": "Hab"
+  },
+  "ZEP": {
+    "name": "Sofonijo knyga",
+    "short": "Sof"
+  },
+  "HAG": {
+    "name": "Agëjo knyga",
+    "short": "Agë"
+  },
+  "ZEC": {
+    "name": "Zacharijo knyga",
+    "short": "Zac"
+  },
+  "MAL": {
+    "name": "Malachijo knyga",
+    "short": "Mal"
+  },
+  "MAT": {
+    "name": "Evangelija pagal Matà",
+    "short": "Eva"
+  },
+  "MRK": {
+    "name": "Evangelija pagal Morkø",
+    "short": "Eva"
+  },
+  "LUK": {
+    "name": "Evangelija pagal Lukà",
+    "short": "Eva"
+  },
+  "JHN": {
+    "name": "Evangelija pagal Jonà",
+    "short": "Eva"
+  },
+  "ACT": {
+    "name": "Apaðtalø darbø knyga",
+    "short": "Apa"
+  },
+  "ROM": {
+    "name": "Laiðkas romieèiams",
+    "short": "Lai"
+  },
+  "1CO": {
+    "name": "Pirmasis laiðkas korintieèiams",
+    "short": "Pir"
+  },
+  "2CO": {
+    "name": "Antrasis laiðkas korintieèiams",
+    "short": "Ant"
+  },
+  "GAL": {
+    "name": "Laiðkas galatams",
+    "short": "Lai"
+  },
+  "EPH": {
+    "name": "Laiðkas efezieèiams",
+    "short": "Lai"
+  },
+  "PHP": {
+    "name": "Laiðkas filipieèiams",
+    "short": "Lai"
+  },
+  "COL": {
+    "name": "Laiðkas kolosieèiams",
+    "short": "Lai"
+  },
+  "1TH": {
+    "name": "Pirmasis laiðkas tesalonikieèiams",
+    "short": "Pir"
+  },
+  "2TH": {
+    "name": "Antrasis laiðkas tesalonikieèiams",
+    "short": "Ant"
+  },
+  "1TI": {
+    "name": "Pirmasis laiðkas Timotiejui",
+    "short": "Pir"
+  },
+  "2TI": {
+    "name": "Antrasis laiðkas Timotiejui",
+    "short": "Ant"
+  },
+  "TIT": {
+    "name": "Laiðkas Titui",
+    "short": "Lai"
+  },
+  "PHM": {
+    "name": "Laiðkas Filemonui",
+    "short": "Lai"
+  },
+  "HEB": {
+    "name": "Laiðkas þydams",
+    "short": "Lai"
+  },
+  "JAS": {
+    "name": "Jokûbo laiðkas",
+    "short": "Jok"
+  },
+  "1PE": {
+    "name": "Pirmasis Petro laiðkas",
+    "short": "Pir"
+  },
+  "2PE": {
+    "name": "Antrasis Petro laiðkas",
+    "short": "Ant"
+  },
+  "1JN": {
+    "name": "Pirmasis Jono laiðkas",
+    "short": "Pir"
+  },
+  "2JN": {
+    "name": "Antrasis Jono laiðkas",
+    "short": "Ant"
+  },
+  "3JN": {
+    "name": "Treèiasis Jono laiðkas",
+    "short": "Tre"
+  },
+  "JUD": {
+    "name": "Judo laiðkas",
+    "short": "Jud"
+  },
+  "REV": {
+    "name": "Apreiðkimo Jonui knyga",
+    "short": "Apr"
+  }
+}

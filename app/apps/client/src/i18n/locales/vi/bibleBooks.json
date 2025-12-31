@@ -1,0 +1,266 @@
+{
+  "GEN": {
+    "name": "Saùng-theá Kyù",
+    "short": "Saù"
+  },
+  "EXO": {
+    "name": "Xuaát EÂ-díp-toâ Kyù",
+    "short": "Xua"
+  },
+  "LEV": {
+    "name": "Leâ-vi Kyù",
+    "short": "Leâ"
+  },
+  "NUM": {
+    "name": "Daân-soá Kyù",
+    "short": "Daâ"
+  },
+  "DEU": {
+    "name": "Phuïc-truyeàn Luaät-leä Kyù",
+    "short": "Phu"
+  },
+  "JOS": {
+    "name": "Gioâ-sueâ",
+    "short": "Gio"
+  },
+  "JDG": {
+    "name": "Caùc Quan Xeùt",
+    "short": "Caù"
+  },
+  "RUT": {
+    "name": "Ru-tô",
+    "short": "Ru-"
+  },
+  "1SA": {
+    "name": "1 Sa-mu-eân",
+    "short": "1Sa-"
+  },
+  "2SA": {
+    "name": "2 Sa-mu-eân",
+    "short": "2Sa-"
+  },
+  "1KI": {
+    "name": "1 Caùc Vua",
+    "short": "1Caù"
+  },
+  "2KI": {
+    "name": "2 Caùc Vua",
+    "short": "2Caù"
+  },
+  "1CH": {
+    "name": "1 Söû-kyù",
+    "short": "1Söû"
+  },
+  "2CH": {
+    "name": "2 Söû-kyù",
+    "short": "2Söû"
+  },
+  "EZR": {
+    "name": "EÂ-xô-ra",
+    "short": "EÂ-"
+  },
+  "NEH": {
+    "name": "Neâ-heâ-mi",
+    "short": "Neâ"
+  },
+  "EST": {
+    "name": "EÂ-xô-teâ",
+    "short": "EÂ-"
+  },
+  "JOB": {
+    "name": "Gioùp",
+    "short": "Gio"
+  },
+  "PSA": {
+    "name": "Thi-thieân",
+    "short": "Thi"
+  },
+  "PRO": {
+    "name": "Chaâm-ngoân",
+    "short": "Cha"
+  },
+  "ECC": {
+    "name": "Truyeàân Ñaïo",
+    "short": "Tru"
+  },
+  "SNG": {
+    "name": "Nhaõ Ca",
+    "short": "Nha"
+  },
+  "ISA": {
+    "name": "EÂ-sai",
+    "short": "EÂ-"
+  },
+  "JER": {
+    "name": "Gieâ-reâ-mi",
+    "short": "Gie"
+  },
+  "LAM": {
+    "name": "Ca-thöông",
+    "short": "Ca-"
+  },
+  "EZK": {
+    "name": "EÂ-xeâ-chi-eân",
+    "short": "EÂ-"
+  },
+  "DAN": {
+    "name": "Ña-ni-eân",
+    "short": "Ña-"
+  },
+  "HOS": {
+    "name": "OÂ-seâ",
+    "short": "OÂ-"
+  },
+  "JOL": {
+    "name": "Gioâ-eân",
+    "short": "Gio"
+  },
+  "AMO": {
+    "name": "A-moát",
+    "short": "A-m"
+  },
+  "OBA": {
+    "name": "AÙp-ñia",
+    "short": "AÙp"
+  },
+  "JON": {
+    "name": "Gioâ-na",
+    "short": "Gio"
+  },
+  "MIC": {
+    "name": "Mi-cheâ",
+    "short": "Mi-"
+  },
+  "NAM": {
+    "name": "Na-hum",
+    "short": "Na-"
+  },
+  "HAB": {
+    "name": "Ha-ba-cuùc",
+    "short": "Ha-"
+  },
+  "ZEP": {
+    "name": "Soâ-phoâ-ni",
+    "short": "Soâ"
+  },
+  "HAG": {
+    "name": "A-gheâ",
+    "short": "A-g"
+  },
+  "ZEC": {
+    "name": "Xa-cha-ri",
+    "short": "Xa-"
+  },
+  "MAL": {
+    "name": "Ma-la-chi",
+    "short": "Ma-"
+  },
+  "MAT": {
+    "name": "Ma-thi-ô",
+    "short": "Ma-"
+  },
+  "MRK": {
+    "name": "Maùc",
+    "short": "Maù"
+  },
+  "LUK": {
+    "name": "Lu-ca",
+    "short": "Lu-"
+  },
+  "JHN": {
+    "name": "Giaêng",
+    "short": "Gia"
+  },
+  "ACT": {
+    "name": "Coâng-vuï caùc Söù-ñoà",
+    "short": "Coâ"
+  },
+  "ROM": {
+    "name": "Roâ-ma",
+    "short": "Roâ"
+  },
+  "1CO": {
+    "name": "1 Coâ-rinh-toâ",
+    "short": "1Coâ"
+  },
+  "2CO": {
+    "name": "2 Coâ-rinh-toâ",
+    "short": "2Coâ"
+  },
+  "GAL": {
+    "name": "Ga-la-ti",
+    "short": "Ga-"
+  },
+  "EPH": {
+    "name": "EÂ-pheâ-soâ",
+    "short": "EÂ-"
+  },
+  "PHP": {
+    "name": "Phi-líp",
+    "short": "Phi"
+  },
+  "COL": {
+    "name": "Coâ-loâ-se",
+    "short": "Coâ"
+  },
+  "1TH": {
+    "name": "1 Teâ-sa-loâ-ni-ca",
+    "short": "1Teâ"
+  },
+  "2TH": {
+    "name": "2 Teâ-sa-loâ-ni-ca",
+    "short": "2Teâ"
+  },
+  "1TI": {
+    "name": "1 Ti-moâ-theâ",
+    "short": "1Ti-"
+  },
+  "2TI": {
+    "name": "2 Ti-moâ-theâ",
+    "short": "2Ti-"
+  },
+  "TIT": {
+    "name": "Tít",
+    "short": "Tít"
+  },
+  "PHM": {
+    "name": "Phi-leâ-moân",
+    "short": "Phi"
+  },
+  "HEB": {
+    "name": "Heâ-bô-rô",
+    "short": "Heâ"
+  },
+  "JAS": {
+    "name": "Gia-cô",
+    "short": "Gia"
+  },
+  "1PE": {
+    "name": "1 Phi-e-rô",
+    "short": "1Phi"
+  },
+  "2PE": {
+    "name": "2 Phi-e-rô",
+    "short": "2Phi"
+  },
+  "1JN": {
+    "name": "1 Giaêng",
+    "short": "1Gia"
+  },
+  "2JN": {
+    "name": "2 Giaêng",
+    "short": "2Gia"
+  },
+  "3JN": {
+    "name": "3 Giaêng",
+    "short": "3Gia"
+  },
+  "JUD": {
+    "name": "Giu-ñe",
+    "short": "Giu"
+  },
+  "REV": {
+    "name": "Khaûi-huyeàn",
+    "short": "Kha"
+  }
+}

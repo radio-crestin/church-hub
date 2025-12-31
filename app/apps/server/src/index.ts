@@ -2987,6 +2987,107 @@ async function main() {
       // Bible API Endpoints
       // ============================================================
 
+      // GET /api/bible/available - Proxy for Holy-Bible-XML-Format bibles.xml (avoids CORS)
+      if (req.method === 'GET' && url.pathname === '/api/bible/available') {
+        const permError = checkPermission('bible.view')
+        if (permError) return permError
+
+        try {
+          const biblesXmlUrl = 'https://github.com/radio-crestin/Holy-Bible-XML-Format/releases/latest/download/bibles.xml'
+          const response = await fetch(biblesXmlUrl)
+
+          if (!response.ok) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Failed to fetch available Bibles' }), {
+                status: 502,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const xmlContent = await response.text()
+          return handleCors(
+            req,
+            new Response(xmlContent, {
+              headers: { 'Content-Type': 'application/xml' },
+            }),
+          )
+        } catch (error) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Failed to fetch available Bibles' }), {
+              status: 502,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // GET /api/bible/download - Proxy for downloading Bible XML files (avoids CORS)
+      if (req.method === 'GET' && url.pathname === '/api/bible/download') {
+        const permError = checkPermission('bible.import')
+        if (permError) return permError
+
+        const downloadUrl = url.searchParams.get('url')
+        if (!downloadUrl) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Missing url parameter' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        // Validate URL is from Holy-Bible-XML-Format repository
+        const allowedHosts = [
+          'github.com/radio-crestin/Holy-Bible-XML-Format',
+          'raw.githubusercontent.com/radio-crestin/Holy-Bible-XML-Format',
+        ]
+        const isAllowedUrl = allowedHosts.some((host) => downloadUrl.includes(host))
+
+        if (!isAllowedUrl) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'URL not allowed. Only Holy-Bible-XML-Format repository URLs are permitted.' }), {
+              status: 403,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        try {
+          const response = await fetch(downloadUrl)
+
+          if (!response.ok) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: `Failed to download Bible: ${response.statusText}` }), {
+                status: 502,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const xmlContent = await response.text()
+          return handleCors(
+            req,
+            new Response(xmlContent, {
+              headers: { 'Content-Type': 'application/xml' },
+            }),
+          )
+        } catch (error) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Failed to download Bible file' }), {
+              status: 502,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
       // GET /api/bible/translations - List all translations
       if (req.method === 'GET' && url.pathname === '/api/bible/translations') {
         const permError = checkPermission('bible.view')

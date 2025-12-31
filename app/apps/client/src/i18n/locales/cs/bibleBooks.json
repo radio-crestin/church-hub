@@ -1,0 +1,266 @@
+{
+  "GEN": {
+    "name": "Genesis",
+    "short": "Gen"
+  },
+  "EXO": {
+    "name": "Exodus",
+    "short": "Exo"
+  },
+  "LEV": {
+    "name": "Leviticus",
+    "short": "Lev"
+  },
+  "NUM": {
+    "name": "Numeri",
+    "short": "Num"
+  },
+  "DEU": {
+    "name": "Deuteronomium",
+    "short": "Deu"
+  },
+  "JOS": {
+    "name": "Jozue",
+    "short": "Joz"
+  },
+  "JDG": {
+    "name": "Soudců",
+    "short": "Sou"
+  },
+  "RUT": {
+    "name": "Rut",
+    "short": "Rut"
+  },
+  "1SA": {
+    "name": "První Samuelova",
+    "short": "Prv"
+  },
+  "2SA": {
+    "name": "Druhá Samuelova",
+    "short": "Dru"
+  },
+  "1KI": {
+    "name": "První Královská",
+    "short": "Prv"
+  },
+  "2KI": {
+    "name": "Druhá Královská",
+    "short": "Dru"
+  },
+  "1CH": {
+    "name": "První Paralipomenon",
+    "short": "Prv"
+  },
+  "2CH": {
+    "name": "Druhá Paralipomenon",
+    "short": "Dru"
+  },
+  "EZR": {
+    "name": "Ezdrášova",
+    "short": "Ezd"
+  },
+  "NEH": {
+    "name": "Kinha Nehemiášova",
+    "short": "Kin"
+  },
+  "EST": {
+    "name": "Ester",
+    "short": "Est"
+  },
+  "JOB": {
+    "name": "Jobova",
+    "short": "Job"
+  },
+  "PSA": {
+    "name": "Žalmů",
+    "short": "Žal"
+  },
+  "PRO": {
+    "name": "Přísloví",
+    "short": "Pří"
+  },
+  "ECC": {
+    "name": "Kazatel",
+    "short": "Kaz"
+  },
+  "SNG": {
+    "name": "Píseň Šalomounova",
+    "short": "Pís"
+  },
+  "ISA": {
+    "name": "Izaiáše",
+    "short": "Iza"
+  },
+  "JER": {
+    "name": "Jermiáše",
+    "short": "Jer"
+  },
+  "LAM": {
+    "name": "Pláč Jeremiášův",
+    "short": "Plá"
+  },
+  "EZK": {
+    "name": "Ezechiele",
+    "short": "Eze"
+  },
+  "DAN": {
+    "name": "Daniele",
+    "short": "Dan"
+  },
+  "HOS": {
+    "name": "Ozeáše",
+    "short": "Oze"
+  },
+  "JOL": {
+    "name": "Joele",
+    "short": "Joe"
+  },
+  "AMO": {
+    "name": "Amosa",
+    "short": "Amo"
+  },
+  "OBA": {
+    "name": "Abdiáše",
+    "short": "Abd"
+  },
+  "JON": {
+    "name": "Jonáše",
+    "short": "Jon"
+  },
+  "MIC": {
+    "name": "Micheáše",
+    "short": "Mic"
+  },
+  "NAM": {
+    "name": "Nahuma",
+    "short": "Nah"
+  },
+  "HAB": {
+    "name": "Abakuka",
+    "short": "Aba"
+  },
+  "ZEP": {
+    "name": "Sofoniáše",
+    "short": "Sof"
+  },
+  "HAG": {
+    "name": "Aggea",
+    "short": "Agg"
+  },
+  "ZEC": {
+    "name": "Zachariáše",
+    "short": "Zac"
+  },
+  "MAL": {
+    "name": "Malachiáše",
+    "short": "Mal"
+  },
+  "MAT": {
+    "name": "Matouš",
+    "short": "Mat"
+  },
+  "MRK": {
+    "name": "Marek",
+    "short": "Mar"
+  },
+  "LUK": {
+    "name": "Lukáš",
+    "short": "Luk"
+  },
+  "JHN": {
+    "name": "Jan",
+    "short": "Jan"
+  },
+  "ACT": {
+    "name": "Skutky apoštolské",
+    "short": "Sku"
+  },
+  "ROM": {
+    "name": "Římanům",
+    "short": "Řím"
+  },
+  "1CO": {
+    "name": "První Korintským",
+    "short": "Prv"
+  },
+  "2CO": {
+    "name": "Druhá Korintským",
+    "short": "Dru"
+  },
+  "GAL": {
+    "name": "Galatským",
+    "short": "Gal"
+  },
+  "EPH": {
+    "name": "Efezským",
+    "short": "Efe"
+  },
+  "PHP": {
+    "name": "Filipským",
+    "short": "Fil"
+  },
+  "COL": {
+    "name": "Koloským",
+    "short": "Kol"
+  },
+  "1TH": {
+    "name": "První Tesalonickým",
+    "short": "Prv"
+  },
+  "2TH": {
+    "name": "Druhá Tesalonickým",
+    "short": "Dru"
+  },
+  "1TI": {
+    "name": "První Timoteovi",
+    "short": "Prv"
+  },
+  "2TI": {
+    "name": "Druhá Timoteovi",
+    "short": "Dru"
+  },
+  "TIT": {
+    "name": "Titovi",
+    "short": "Tit"
+  },
+  "PHM": {
+    "name": "Filemonovi",
+    "short": "Fil"
+  },
+  "HEB": {
+    "name": "Židům",
+    "short": "Žid"
+  },
+  "JAS": {
+    "name": "List Jakubův",
+    "short": "Lis"
+  },
+  "1PE": {
+    "name": "První Petrův",
+    "short": "Prv"
+  },
+  "2PE": {
+    "name": "Druhá Petrův",
+    "short": "Dru"
+  },
+  "1JN": {
+    "name": "První Janův",
+    "short": "Prv"
+  },
+  "2JN": {
+    "name": "Druhá Janův",
+    "short": "Dru"
+  },
+  "3JN": {
+    "name": "Třetí Janův",
+    "short": "Tře"
+  },
+  "JUD": {
+    "name": "List Judův",
+    "short": "Lis"
+  },
+  "REV": {
+    "name": "Zjevení Janovo",
+    "short": "Zje"
+  }
+}

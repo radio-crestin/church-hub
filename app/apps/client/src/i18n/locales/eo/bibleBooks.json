@@ -1,0 +1,266 @@
+{
+  "GEN": {
+    "name": "Moseo 1: Genezo",
+    "short": "Mos"
+  },
+  "EXO": {
+    "name": "Moseo 2: Eliro",
+    "short": "Mos"
+  },
+  "LEV": {
+    "name": "Moseo 3: Levidoj",
+    "short": "Mos"
+  },
+  "NUM": {
+    "name": "Moseo 4: Nombroj",
+    "short": "Mos"
+  },
+  "DEU": {
+    "name": "Moseo 5: Readmono",
+    "short": "Mos"
+  },
+  "JOS": {
+    "name": "Josuo",
+    "short": "Jos"
+  },
+  "JDG": {
+    "name": "Juĝistoj",
+    "short": "Juĝ"
+  },
+  "RUT": {
+    "name": "Rut",
+    "short": "Rut"
+  },
+  "1SA": {
+    "name": "Samuel 1",
+    "short": "Sam"
+  },
+  "2SA": {
+    "name": "Samuel 2",
+    "short": "Sam"
+  },
+  "1KI": {
+    "name": "Reĝoj 1",
+    "short": "Reĝ"
+  },
+  "2KI": {
+    "name": "Reĝoj 2",
+    "short": "Reĝ"
+  },
+  "1CH": {
+    "name": "Kroniko 1",
+    "short": "Kro"
+  },
+  "2CH": {
+    "name": "Kroniko 2",
+    "short": "Kro"
+  },
+  "EZR": {
+    "name": "Ezra",
+    "short": "Ezr"
+  },
+  "NEH": {
+    "name": "Neĥemja",
+    "short": "Neĥ"
+  },
+  "EST": {
+    "name": "Ester",
+    "short": "Est"
+  },
+  "JOB": {
+    "name": "Ijob",
+    "short": "Ijo"
+  },
+  "PSA": {
+    "name": "La psalmaro",
+    "short": "La "
+  },
+  "PRO": {
+    "name": "La sentencoj de Salomono",
+    "short": "La "
+  },
+  "ECC": {
+    "name": "La predikanto",
+    "short": "La "
+  },
+  "SNG": {
+    "name": "Alta kanto de Salomono",
+    "short": "Alt"
+  },
+  "ISA": {
+    "name": "Jesaja",
+    "short": "Jes"
+  },
+  "JER": {
+    "name": "Jeremia",
+    "short": "Jer"
+  },
+  "LAM": {
+    "name": "Plorkanto de Jeremia",
+    "short": "Plo"
+  },
+  "EZK": {
+    "name": "Jeĥezkel",
+    "short": "Jeĥ"
+  },
+  "DAN": {
+    "name": "Daniel",
+    "short": "Dan"
+  },
+  "HOS": {
+    "name": "Hoŝea",
+    "short": "Hoŝ"
+  },
+  "JOL": {
+    "name": "Joel",
+    "short": "Joe"
+  },
+  "AMO": {
+    "name": "Amos",
+    "short": "Amo"
+  },
+  "OBA": {
+    "name": "Obadja",
+    "short": "Oba"
+  },
+  "JON": {
+    "name": "Jona",
+    "short": "Jon"
+  },
+  "MIC": {
+    "name": "Miĥa",
+    "short": "Miĥ"
+  },
+  "NAM": {
+    "name": "Naĥum",
+    "short": "Naĥ"
+  },
+  "HAB": {
+    "name": "Ĥabakuk",
+    "short": "Ĥab"
+  },
+  "ZEP": {
+    "name": "Cefanja",
+    "short": "Cef"
+  },
+  "HAG": {
+    "name": "Ĥagaj",
+    "short": "Ĥag"
+  },
+  "ZEC": {
+    "name": "Zeĥarja",
+    "short": "Zeĥ"
+  },
+  "MAL": {
+    "name": "Malaĥi",
+    "short": "Mal"
+  },
+  "MAT": {
+    "name": "La evangelio laŭ Mateo",
+    "short": "La "
+  },
+  "MRK": {
+    "name": "La evangelio laŭ Marko",
+    "short": "La "
+  },
+  "LUK": {
+    "name": "La evangelio laŭ Luko",
+    "short": "La "
+  },
+  "JHN": {
+    "name": "La evangelio laŭ Johano",
+    "short": "La "
+  },
+  "ACT": {
+    "name": "La agoj de la apostoloj",
+    "short": "La "
+  },
+  "ROM": {
+    "name": "Al la romanoj",
+    "short": "Al "
+  },
+  "1CO": {
+    "name": "Al la korintanoj 1",
+    "short": "Al "
+  },
+  "2CO": {
+    "name": "Al la korintanoj 2",
+    "short": "Al "
+  },
+  "GAL": {
+    "name": "Al la galatoj",
+    "short": "Al "
+  },
+  "EPH": {
+    "name": "Al la efesanoj",
+    "short": "Al "
+  },
+  "PHP": {
+    "name": "Al la filipianoj",
+    "short": "Al "
+  },
+  "COL": {
+    "name": "Al la koloseanoj",
+    "short": "Al "
+  },
+  "1TH": {
+    "name": "Al la tesalonikanoj 1",
+    "short": "Al "
+  },
+  "2TH": {
+    "name": "Al la tesalonikanoj 2",
+    "short": "Al "
+  },
+  "1TI": {
+    "name": "Al Timoteo 1",
+    "short": "Al "
+  },
+  "2TI": {
+    "name": "Al Timoteo 2",
+    "short": "Al "
+  },
+  "TIT": {
+    "name": "Al Tito",
+    "short": "Al "
+  },
+  "PHM": {
+    "name": "Al Filemon",
+    "short": "Al "
+  },
+  "HEB": {
+    "name": "Al la hebreoj",
+    "short": "Al "
+  },
+  "JAS": {
+    "name": "De Jakobo",
+    "short": "De "
+  },
+  "1PE": {
+    "name": "De Petro 1",
+    "short": "De "
+  },
+  "2PE": {
+    "name": "De Petro 2",
+    "short": "De "
+  },
+  "1JN": {
+    "name": "De Johano 1",
+    "short": "De "
+  },
+  "2JN": {
+    "name": "De Johano 2",
+    "short": "De "
+  },
+  "3JN": {
+    "name": "De Johano 3",
+    "short": "De "
+  },
+  "JUD": {
+    "name": "De Judas",
+    "short": "De "
+  },
+  "REV": {
+    "name": "Apokalipso de sankta Johano",
+    "short": "Apo"
+  }
+}
