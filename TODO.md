@@ -99,6 +99,8 @@
 ~~- fix also midi missing library in the release version~~
 ~~- fix opensong file opening, as it opens another instance and still is not opening it.. (at least on windows)~~
 - make sure that the obs page is reloading with transparent background while the Church Hub software is off
+- shortcut-urile nu functioneaza pentru OBS scenes
+- deasemenea, cantarile de pe resurse crestine pptx nu repeta refrenul
 - fix openapi endpoints and fix authentication layer
 --- Later ---
 - creaza un quickstart guide pentru utilizatori
