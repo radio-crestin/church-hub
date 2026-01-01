@@ -1,4 +1,5 @@
 import type { SongWithSlides } from '~/features/songs/types'
+import { generateExpandedPresentationOrder } from '~/features/songs/utils/expandSongSlides'
 
 /**
  * Escapes XML special characters
@@ -100,7 +101,12 @@ export function generateOpenSongXml(song: SongWithSlides): string {
   parts.push(xmlElement('alttheme', song.altTheme))
   parts.push(xmlElement('hymn_number', song.hymnNumber))
   parts.push(xmlElement('key_line', song.keyLine))
-  parts.push(xmlElement('presentation', song.presentationOrder))
+
+  // Generate presentation order with chorus insertions (C1 V1 C1 V2 C1 V3 C2...)
+  const presentationOrder = generateExpandedPresentationOrder(song.slides)
+  parts.push(
+    xmlElement('presentation', presentationOrder || song.presentationOrder),
+  )
 
   // Generate lyrics section
   const lyrics = generateLyrics(song.slides)

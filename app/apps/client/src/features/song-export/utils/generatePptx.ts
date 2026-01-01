@@ -1,6 +1,7 @@
 import PptxGenJS from 'pptxgenjs'
 
 import type { SongWithSlides } from '~/features/songs/types'
+import { expandSongSlidesWithChoruses } from '~/features/songs/utils/expandSongSlides'
 
 /**
  * Default slide configuration matching the rendering engine
@@ -70,8 +71,11 @@ export function generatePptx(song: SongWithSlides): Blob {
   })
   pptx.layout = 'CUSTOM_16x9'
 
-  // Create a slide for each song slide
-  for (const songSlide of song.slides) {
+  // Expand slides with dynamic chorus insertion (C1 V1 C1 V2 C1 V3 C2...)
+  const expandedSlides = expandSongSlidesWithChoruses(song.slides)
+
+  // Create a slide for each expanded slide
+  for (const songSlide of expandedSlides) {
     const slide = pptx.addSlide()
 
     // Set black background
@@ -124,8 +128,11 @@ export async function generatePptxBase64(
   })
   pptx.layout = 'CUSTOM_16x9'
 
-  // Create a slide for each song slide
-  for (const songSlide of song.slides) {
+  // Expand slides with dynamic chorus insertion (C1 V1 C1 V2 C1 V3 C2...)
+  const expandedSlides = expandSongSlidesWithChoruses(song.slides)
+
+  // Create a slide for each expanded slide
+  for (const songSlide of expandedSlides) {
     const slide = pptx.addSlide()
 
     // Set black background
