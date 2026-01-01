@@ -17,6 +17,7 @@ import { Plus, RefreshCw, X } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { MIDISettingsProvider } from '~/features/keyboard-shortcuts'
 import { SceneSettingsItem } from './SceneSettingsItem'
 import { SceneSettingsPopup } from './SceneSettingsPopup'
 import type { ContentType } from '../constants/content-types'
@@ -236,16 +237,18 @@ export function SceneSettingsModal({
       </div>
 
       {selectedScene && (
-        <SceneSettingsPopup
-          scene={selectedScene}
-          allScenes={scenes}
-          youtubeConfig={youtubeConfig}
-          onUpdateYouTubeConfig={updateYouTubeConfig}
-          onClose={handleClosePopup}
-          onSave={handleSaveSettings}
-          onDelete={handleDeleteScene}
-          isDeleting={isDeleting}
-        />
+        <MIDISettingsProvider>
+          <SceneSettingsPopup
+            scene={selectedScene}
+            allScenes={scenes}
+            youtubeConfig={youtubeConfig}
+            onUpdateYouTubeConfig={updateYouTubeConfig}
+            onClose={handleClosePopup}
+            onSave={handleSaveSettings}
+            onDelete={handleDeleteScene}
+            isDeleting={isDeleting}
+          />
+        </MIDISettingsProvider>
       )}
     </>
   )

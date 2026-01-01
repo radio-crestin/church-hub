@@ -10,7 +10,7 @@ import {
   SearchIndexRebuild,
 } from '~/features/database-management'
 import {
-  MIDIProvider,
+  MIDISettingsProvider,
   ShortcutsSettingsSection,
 } from '~/features/keyboard-shortcuts'
 import { KioskSettingsSection } from '~/features/kiosk'
@@ -153,9 +153,9 @@ function RouteComponent() {
 
         {/* Keyboard Shortcuts Section */}
         <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
-          <MIDIProvider>
+          <MIDISettingsProvider>
             <ShortcutsSettingsSection />
-          </MIDIProvider>
+          </MIDISettingsProvider>
         </div>
 
         {/* Developer Tools Section */}
