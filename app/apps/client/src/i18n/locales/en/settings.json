@@ -468,9 +468,14 @@
       "saved": "Server URL saved successfully",
       "connectionSuccess": "Connection successful",
       "authTokenDetected": "Authentication token detected",
+      "reconnect": "Reconnect",
       "setup": {
         "title": "Connect to Server",
         "description": "Scan the QR code or paste the authentication URL from your Church Hub"
+      },
+      "modal": {
+        "title": "Reconnect to Server",
+        "description": "Update the server URL to restore connection"
       },
       "errors": {
         "emptyUrl": "Please enter a server URL",

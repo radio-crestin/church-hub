@@ -36,5 +36,9 @@
     "title": "Contactează-ne",
     "email": "Email",
     "whatsapp": "WhatsApp"
+  },
+  "connection": {
+    "connectionLost": "Conexiune pierdută",
+    "tapToReconnect": "Apasă pentru reconectare"
   }
 }

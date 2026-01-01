@@ -469,9 +469,14 @@
       "saved": "URL-ul serverului salvat cu succes",
       "connectionSuccess": "Conexiune reușită",
       "authTokenDetected": "Token de autentificare detectat",
+      "reconnect": "Reconectează",
       "setup": {
         "title": "Conectare la Server",
         "description": "Scanează codul QR sau lipește URL-ul de autentificare din Church Hub"
+      },
+      "modal": {
+        "title": "Reconectare la Server",
+        "description": "Actualizează URL-ul serverului pentru a restabili conexiunea"
       },
       "errors": {
         "emptyUrl": "Te rugăm să introduci un URL de server",
