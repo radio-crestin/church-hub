@@ -6,6 +6,10 @@ import type { GlobalShortcutActionId, GlobalShortcutsConfig } from '../types'
 
 const logger = createLogger('keyboard-shortcuts:global')
 
+// Check if we're running in Tauri mode
+const isTauri =
+  typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+
 interface SceneShortcut {
   shortcut: string
   sceneName: string
@@ -74,6 +78,12 @@ export function useGlobalAppShortcuts({
   const sceneShortcutsJson = JSON.stringify(sceneShortcuts)
 
   useEffect(() => {
+    // Skip if not running in Tauri (global shortcuts require Tauri)
+    if (!isTauri) {
+      logger.debug('Skipping global shortcuts - not running in Tauri')
+      return
+    }
+
     let isCancelled = false
 
     const registerAllShortcuts = async () => {
@@ -178,9 +188,13 @@ export function useGlobalAppShortcuts({
 
     return () => {
       isCancelled = true
-      unregisterAll().catch((error) => {
-        logger.error('Failed to cleanup shortcuts on unmount:', error)
-      })
+      // Only attempt cleanup if Tauri is still available
+      if (isTauri) {
+        unregisterAll().catch((error) => {
+          // Ignore errors during cleanup (common during HMR)
+          logger.debug('Cleanup shortcuts skipped:', error)
+        })
+      }
     }
   }, [shortcutsJson, sceneShortcutsJson])
 }
