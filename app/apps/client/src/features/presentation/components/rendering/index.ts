@@ -1,5 +1,6 @@
 export * from './AnimatedText'
 export * from './ClockElement'
+export * from './ClockText'
 export * from './ContentRenderer'
 export * from './LivePreviewRenderer'
 export * from './NextSlideSection'

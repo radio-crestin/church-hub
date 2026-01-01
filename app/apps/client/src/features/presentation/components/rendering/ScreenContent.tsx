@@ -1,6 +1,7 @@
 import { useMemo, useRef } from 'react'
 
 import { AnimatedText } from './AnimatedText'
+import { ClockText } from './ClockText'
 import { TextContent } from './TextContent'
 import type { ContentData, NextSlideData } from './types'
 import {
@@ -269,7 +270,7 @@ export function ScreenContent({
     )
   }
 
-  // Render clock (not animated)
+  // Render clock with its own timer state for reliable updates
   const renderClock = () => {
     const clockConfig = screen.globalSettings.clockConfig
     if (!clockConfig) return null
@@ -328,21 +329,10 @@ export function ScreenContent({
       scaledY = bounds.y * scaleY
     }
 
-    const now = new Date()
-    const timeString = clockConfig.showSeconds
-      ? now.toLocaleTimeString('ro-RO', { hour12: false })
-      : now.toLocaleTimeString('ro-RO', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false,
-        })
-
     return (
-      <AnimatedText
+      <ClockText
         key="clock"
-        content={timeString}
-        contentKey="clock" // Static key - clock updates shouldn't trigger animations
-        isVisible={true}
+        showSeconds={clockConfig.showSeconds}
         style={{
           ...clockConfig.style,
           maxFontSize: clockConfig.style.maxFontSize * fontScale,
@@ -351,12 +341,6 @@ export function ScreenContent({
         height={scaledHeight}
         left={scaledX}
         top={scaledY}
-        isHtml={false}
-        // No animations for clock - it updates every second
-        animationIn={{ type: 'none' }}
-        animationOut={{ type: 'none' }}
-        slideTransitionIn={{ type: 'none' }}
-        slideTransitionOut={{ type: 'none' }}
       />
     )
   }
