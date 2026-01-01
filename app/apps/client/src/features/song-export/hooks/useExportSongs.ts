@@ -1,6 +1,6 @@
+import { join } from '@tauri-apps/api/path'
 import { open, save } from '@tauri-apps/plugin-dialog'
 import { mkdir, writeFile } from '@tauri-apps/plugin-fs'
-import { join } from '@tauri-apps/api/path'
 import { useCallback, useState } from 'react'
 
 import type { SongWithSlides } from '~/features/songs/types'
@@ -258,7 +258,6 @@ export function useExportSongs() {
           try {
             await mkdir(categoryPath, { recursive: true })
           } catch (mkdirError) {
-            console.error('Failed to create directory:', categoryPath, mkdirError)
             throw mkdirError
           }
         }
@@ -273,12 +272,15 @@ export function useExportSongs() {
               ? sanitizeFilename(song.category.name)
               : 'Uncategorized'
             const safeFilename = sanitizeFilename(song.title)
-            const filePath = await join(selectedFolder, categoryFolder, `${safeFilename}.${extension}`)
+            const filePath = await join(
+              selectedFolder,
+              categoryFolder,
+              `${safeFilename}.${extension}`,
+            )
             const content = await generateFileContent(song, fileFormat)
             try {
               await writeFile(filePath, content)
             } catch (writeError) {
-              console.error('Failed to write file:', filePath, writeError)
               throw writeError
             }
             return filePath

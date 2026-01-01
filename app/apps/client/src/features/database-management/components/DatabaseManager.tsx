@@ -104,9 +104,15 @@ export function DatabaseManager() {
       console.log('[DatabaseManager] Importing @tauri-apps/plugin-opener')
       const { revealItemInDir } = await import('@tauri-apps/plugin-opener')
       // biome-ignore lint/suspicious/noConsole: Debug logging for file explorer
-      console.log('[DatabaseManager] revealItemInDir imported:', revealItemInDir)
+      console.log(
+        '[DatabaseManager] revealItemInDir imported:',
+        revealItemInDir,
+      )
       // biome-ignore lint/suspicious/noConsole: Debug logging for file explorer
-      console.log('[DatabaseManager] Calling revealItemInDir with path:', databaseInfo.path)
+      console.log(
+        '[DatabaseManager] Calling revealItemInDir with path:',
+        databaseInfo.path,
+      )
       await revealItemInDir(databaseInfo.path)
       // biome-ignore lint/suspicious/noConsole: Debug logging for file explorer
       console.log('[DatabaseManager] revealItemInDir completed successfully')
@@ -379,9 +385,7 @@ export function DatabaseManager() {
                 disabled={isRestarting}
                 className="px-4 py-2 text-sm bg-green-600 text-white hover:bg-green-700 rounded-md disabled:opacity-50 flex items-center gap-2"
               >
-                {isRestarting && (
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                )}
+                {isRestarting && <RefreshCw className="w-4 h-4 animate-spin" />}
                 {isRestarting
                   ? t('sections.database.restart.restarting')
                   : t('sections.database.restart.confirm')}

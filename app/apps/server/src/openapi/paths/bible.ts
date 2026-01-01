@@ -28,7 +28,8 @@ export const biblePaths = {
     post: {
       tags: ['Bible'],
       summary: 'Import Bible translation',
-      description: 'Import a Bible translation. Supports OSIS XML and Holy-Bible-XML-Format.',
+      description:
+        'Import a Bible translation. Supports OSIS XML and Holy-Bible-XML-Format.',
       security: [{ bearerAuth: [] }, { cookieAuth: [] }],
       requestBody: {
         required: true,
@@ -353,7 +354,8 @@ export const biblePaths = {
     get: {
       tags: ['Bible'],
       summary: 'Get available Bible translations for download',
-      description: 'Proxy endpoint that fetches available Bible translations from Holy-Bible-XML-Format repository. Returns XML list of 1045+ translations.',
+      description:
+        'Proxy endpoint that fetches available Bible translations from Holy-Bible-XML-Format repository. Returns XML list of 1045+ translations.',
       security: [{ bearerAuth: [] }, { cookieAuth: [] }],
       responses: {
         '200': {
@@ -385,7 +387,8 @@ export const biblePaths = {
     get: {
       tags: ['Bible'],
       summary: 'Download a Bible XML file',
-      description: 'Proxy endpoint that downloads a Bible XML file from Holy-Bible-XML-Format repository. Only URLs from the Holy-Bible-XML-Format repository are allowed.',
+      description:
+        'Proxy endpoint that downloads a Bible XML file from Holy-Bible-XML-Format repository. Only URLs from the Holy-Bible-XML-Format repository are allowed.',
       security: [{ bearerAuth: [] }, { cookieAuth: [] }],
       parameters: [
         {
@@ -393,7 +396,8 @@ export const biblePaths = {
           in: 'query',
           required: true,
           schema: { type: 'string', format: 'uri' },
-          description: 'The URL of the Bible XML file to download (must be from Holy-Bible-XML-Format repository)',
+          description:
+            'The URL of the Bible XML file to download (must be from Holy-Bible-XML-Format repository)',
         },
       ],
       responses: {

@@ -1,8 +1,6 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { useSelectedBibleTranslations } from './useSelectedBibleTranslations'
-
 // Import all bibleBooks.json files statically for bundling
 import bibleBooksAf from '~/i18n/locales/af/bibleBooks.json'
 import bibleBooksAr from '~/i18n/locales/ar/bibleBooks.json'
@@ -46,6 +44,7 @@ import bibleBooksUk from '~/i18n/locales/uk/bibleBooks.json'
 import bibleBooksVi from '~/i18n/locales/vi/bibleBooks.json'
 import bibleBooksZh from '~/i18n/locales/zh/bibleBooks.json'
 import bibleBooksZhCN from '~/i18n/locales/zh-CN/bibleBooks.json'
+import { useSelectedBibleTranslations } from './useSelectedBibleTranslations'
 
 type BookNameEntry = { name: string; short: string }
 type BibleBooksMap = Record<string, BookNameEntry>

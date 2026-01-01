@@ -54,7 +54,9 @@ function BiblePage() {
   const isBrowsingRef = useRef(false)
   // Track previous translations to detect changes for re-presentation
   const prevPrimaryTranslationIdRef = useRef<number | undefined>(undefined)
-  const prevSecondaryTranslationIdRef = useRef<number | null | undefined>(undefined)
+  const prevSecondaryTranslationIdRef = useRef<number | null | undefined>(
+    undefined,
+  )
 
   // Track screen size for responsive layout
   useEffect(() => {
@@ -95,7 +97,6 @@ function BiblePage() {
       ? presentationState.temporaryContent.data.translationId
       : undefined
   const { data: temporaryBooks = [] } = useBooks(temporaryBibleTranslationId)
-
 
   // Sync navigation with current Bible verse only on initial page open
   // Only sync if the presentation content matches the primary translation
@@ -143,7 +144,13 @@ function BiblePage() {
         verseIndex: currentVerse.verse - 1, // verse number is 1-based, index is 0-based
       })
     }
-  }, [presentationState, currentVerse, temporaryBooks, navigation, primaryTranslation])
+  }, [
+    presentationState,
+    currentVerse,
+    temporaryBooks,
+    navigation,
+    primaryTranslation,
+  ])
 
   // Extract primitive values from temporary content to avoid object reference comparisons
   const tempContentType = presentationState?.temporaryContent?.type
@@ -171,7 +178,10 @@ function BiblePage() {
     if (!primaryTranslation) return
 
     // Skip sync if the presentation content is from a different translation
-    if (tempContentData && tempContentData.translationId !== primaryTranslation.id) {
+    if (
+      tempContentData &&
+      tempContentData.translationId !== primaryTranslation.id
+    ) {
       return
     }
 
@@ -226,16 +236,6 @@ function BiblePage() {
     const prevSecondaryId = prevSecondaryTranslationIdRef.current
     const currentSecondaryId = secondaryTranslation?.id ?? null
 
-    console.log('[Bible] Re-present effect running:', {
-      prevPrimaryId,
-      currentPrimaryId,
-      prevSecondaryId,
-      currentSecondaryId,
-      hasPrimaryTranslation: !!primaryTranslation,
-      tempContentType: presentationState?.temporaryContent?.type,
-      isHidden: presentationState?.isHidden,
-    })
-
     // Skip if no primary translation yet
     if (!primaryTranslation) return
 
@@ -245,39 +245,26 @@ function BiblePage() {
 
     // Skip if this is the first time we have a translation (initial load)
     if (prevPrimaryId === undefined) {
-      console.log('[Bible] Re-present skipped: first load (prevPrimaryId undefined)')
       return
     }
 
     // Check if either translation changed
     const primaryChanged = prevPrimaryId !== currentPrimaryId
-    const secondaryChanged = prevSecondaryId !== undefined && prevSecondaryId !== currentSecondaryId
+    const secondaryChanged =
+      prevSecondaryId !== undefined && prevSecondaryId !== currentSecondaryId
 
     // Skip if neither translation changed
     if (!primaryChanged && !secondaryChanged) return
 
     // Check if there's a Bible verse currently being presented
     if (presentationState?.temporaryContent?.type !== 'bible') {
-      console.log('[Bible] Re-present skipped: no Bible content presented')
       return
     }
     if (presentationState?.isHidden) {
-      console.log('[Bible] Re-present skipped: presentation is hidden')
       return
     }
 
     const tempData = presentationState.temporaryContent.data
-    console.log('[Bible] Translation changed, re-presenting verse:', {
-      primaryChanged,
-      secondaryChanged,
-      prevPrimaryId,
-      currentPrimaryId,
-      prevSecondaryId,
-      currentSecondaryId,
-      bookCode: tempData.bookCode,
-      chapter: tempData.chapter,
-      verseIndex: tempData.currentVerseIndex,
-    })
 
     // Re-present the current verse in the new translation(s)
     const rePresentVerse = async () => {
@@ -302,14 +289,8 @@ function BiblePage() {
           )
 
           if (!newVerse) {
-            console.log('[Bible] Re-present failed: verse not found in new translation')
             return
           }
-
-          console.log('[Bible] Found verse in new translation:', {
-            id: newVerse.id,
-            text: newVerse.text.substring(0, 50) + '...',
-          })
 
           verseId = newVerse.id
           verseText = newVerse.text
@@ -320,8 +301,6 @@ function BiblePage() {
           chapter = newVerse.chapter
           verse = newVerse.verse
         } else {
-          // Reuse existing primary verse data from presentation state
-          console.log('[Bible] Reusing existing primary verse, only updating secondary')
           verseId = tempData.verseId
           verseText = tempData.text
           bookName = tempData.bookName
@@ -355,13 +334,8 @@ function BiblePage() {
             secondaryText = secondaryVerse.text
             secondaryBookName = secondaryVerse.bookName
             secondaryTranslationAbbreviation = secondaryTranslation.abbreviation
-            console.log('[Bible] Found secondary verse:', {
-              id: secondaryVerse.id,
-              text: secondaryVerse.text.substring(0, 50) + '...',
-            })
           }
         } else {
-          console.log('[Bible] No secondary translation selected')
         }
 
         // Present the verse with updated translation(s)
@@ -380,11 +354,7 @@ function BiblePage() {
           secondaryBookName,
           secondaryTranslationAbbreviation,
         })
-
-        console.log('[Bible] Re-present completed successfully')
-      } catch (error) {
-        console.error('[Bible] Re-present failed:', error)
-      }
+      } catch (_error) {}
     }
 
     rePresentVerse()
@@ -453,7 +423,11 @@ function BiblePage() {
         secondaryTranslationAbbreviation,
       })
     },
-    [currentTranslation?.abbreviation, secondaryTranslation, presentTemporaryBible],
+    [
+      currentTranslation?.abbreviation,
+      secondaryTranslation,
+      presentTemporaryBible,
+    ],
   )
 
   // Auto-present verse when navigating to a new chapter (for chapter/book transitions)
@@ -545,7 +519,11 @@ function BiblePage() {
         secondaryTranslationAbbreviation,
       })
     },
-    [currentTranslation?.abbreviation, secondaryTranslation, presentTemporaryBible],
+    [
+      currentTranslation?.abbreviation,
+      secondaryTranslation,
+      presentTemporaryBible,
+    ],
   )
 
   // Handle next/previous verse navigation

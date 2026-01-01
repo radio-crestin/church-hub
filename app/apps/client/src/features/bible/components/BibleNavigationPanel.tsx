@@ -56,14 +56,14 @@ export function BibleNavigationPanel({
     searchInputRef.current?.focus()
   }, [])
 
-  const { primaryTranslation, selectedTranslations } = useSelectedBibleTranslations()
+  const { primaryTranslation, selectedTranslations } =
+    useSelectedBibleTranslations()
 
   // Always use the primary translation for all data fetching
   const translationId = primaryTranslation?.id
 
-  const { data: books = [], isLoading: isLoadingBooks } = useBooks(
-    translationId,
-  )
+  const { data: books = [], isLoading: isLoadingBooks } =
+    useBooks(translationId)
   const { data: chapters = [], isLoading: isLoadingChapters } = useChapters(
     state.bookId,
   )
@@ -231,7 +231,9 @@ function SearchResults({
 
         // Get localized book name, fall back to original book name
         const bookCode = isSearchResult ? searchResult.bookCode : verse.bookCode
-        const localizedBookName = getBookName(bookCode) || (isSearchResult ? searchResult.bookName : verse.bookName)
+        const localizedBookName =
+          getBookName(bookCode) ||
+          (isSearchResult ? searchResult.bookName : verse.bookName)
 
         // Format reference with localized book name
         const reference = isSearchResult

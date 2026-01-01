@@ -1,8 +1,8 @@
 import { fetch as tauriFetch } from '@tauri-apps/plugin-http'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-import { useLocalizedBookNames } from '~/features/bible/hooks'
 import { getApiUrl, isMobile } from '~/config'
+import { useLocalizedBookNames } from '~/features/bible/hooks'
 import { getStoredUserToken } from '~/service/api-url'
 import { calculateMaxExitAnimationDuration } from './rendering/utils/styleUtils'
 import { ScreenPreview } from './ScreenPreview'
@@ -168,7 +168,9 @@ export function LivePreview() {
 
         if (temp.type === 'bible') {
           const data = temp.data
-          const hasSecondary = Boolean(data.secondaryText && data.secondaryBookName)
+          const hasSecondary = Boolean(
+            data.secondaryText && data.secondaryBookName,
+          )
 
           // Build reference using localized book name
           // First extract chapter:verse from the existing reference

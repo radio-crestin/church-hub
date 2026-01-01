@@ -1,5 +1,12 @@
-export type { AvailableBible, AvailableBiblesData, BiblesMetadata } from './useAvailableBibles'
-export { AVAILABLE_BIBLES_QUERY_KEY, useAvailableBibles } from './useAvailableBibles'
+export type {
+  AvailableBible,
+  AvailableBiblesData,
+  BiblesMetadata,
+} from './useAvailableBibles'
+export {
+  AVAILABLE_BIBLES_QUERY_KEY,
+  useAvailableBibles,
+} from './useAvailableBibles'
 export { useBibleKeyboardShortcuts } from './useBibleKeyboardShortcuts'
 export type {
   BibleNavigationLevel,
@@ -11,7 +18,6 @@ export type {
 export { useBibleNavigation } from './useBibleNavigation'
 export { useBooks } from './useBooks'
 export { useChapters } from './useChapters'
-export { useLocalizedBookNames } from './useLocalizedBookNames'
 export {
   DEFAULT_BIBLE_TRANSLATION_QUERY_KEY,
   useDefaultBibleTranslation,
@@ -20,6 +26,7 @@ export {
   useDeleteTranslation,
   useImportTranslation,
 } from './useImportTranslation'
+export { useLocalizedBookNames } from './useLocalizedBookNames'
 export type { MultiTranslationVerseResult } from './useMultiTranslationVerse'
 export { useMultiTranslationVerse } from './useMultiTranslationVerse'
 export { useSearchBible } from './useSearchBible'

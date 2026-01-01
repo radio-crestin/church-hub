@@ -1,4 +1,9 @@
-import type { ParsedBible, ParsedBook, ParsedChapter, ParsedVerse } from './types'
+import type {
+  ParsedBible,
+  ParsedBook,
+  ParsedChapter,
+  ParsedVerse,
+} from './types'
 import { BOOK_ORDER } from './types'
 
 const DEBUG = process.env.DEBUG === 'true'
@@ -129,12 +134,15 @@ function cleanVerseText(text: string): string {
  * Finds all book div positions using efficient string scanning
  * Returns array of { bookId, startPos, endPos }
  */
-function findBookDivs(xmlContent: string): Array<{ bookId: string; startPos: number; endPos: number }> {
+function findBookDivs(
+  xmlContent: string,
+): Array<{ bookId: string; startPos: number; endPos: number }> {
   const books: Array<{ bookId: string; startPos: number; endPos: number }> = []
 
   // Find all potential book div starts
   const bookDivPattern = /<div\s+[^>]*type\s*=\s*['"]book['"][^>]*>/gi
-  const bookDivPattern2 = /<div\s+[^>]*osisID\s*=\s*['"][^'"]+['"][^>]*type\s*=\s*['"]book['"][^>]*>/gi
+  const bookDivPattern2 =
+    /<div\s+[^>]*osisID\s*=\s*['"][^'"]+['"][^>]*type\s*=\s*['"]book['"][^>]*>/gi
 
   let match: RegExpExecArray | null
 
@@ -232,7 +240,10 @@ export function parseOsisXml(xmlContent: string): ParsedBible {
   let processedCount = 0
   for (const { bookId, startPos, endPos } of bookDivs) {
     const bookContent = xmlContent.substring(startPos, endPos)
-    log('info', `Processing book ${bookId} (${processedCount + 1}/${bookDivs.length}, size: ${bookContent.length} chars)`)
+    log(
+      'info',
+      `Processing book ${bookId} (${processedCount + 1}/${bookDivs.length}, size: ${bookContent.length} chars)`,
+    )
     processBook(bookId, bookContent, books)
     processedCount++
   }
@@ -246,12 +257,19 @@ export function parseOsisXml(xmlContent: string): ParsedBible {
   return { books }
 }
 
-function processBook(osisBookId: string, bookContent: string, books: ParsedBook[]) {
+function processBook(
+  osisBookId: string,
+  bookContent: string,
+  books: ParsedBook[],
+) {
   const bookCode = normalizeBookCode(osisBookId)
   const bookOrder = BOOK_ORDER[bookCode] || 0
 
   if (bookOrder === 0) {
-    log('warning', `Unknown OSIS book code: ${osisBookId} -> ${bookCode}, skipping`)
+    log(
+      'warning',
+      `Unknown OSIS book code: ${osisBookId} -> ${bookCode}, skipping`,
+    )
     return
   }
 
@@ -307,9 +325,15 @@ function parseContainerVerses(bookContent: string, chapters: ParsedChapter[]) {
     // Check if there are any verse tags at all
     const anyVerseMatch = bookContent.match(/<verse[^>]*>/i)
     if (anyVerseMatch) {
-      log('info', `No container verses. Sample verse tag: ${anyVerseMatch[0].substring(0, 200)}`)
+      log(
+        'info',
+        `No container verses. Sample verse tag: ${anyVerseMatch[0].substring(0, 200)}`,
+      )
     } else {
-      log('info', `No verse tags found in book content (first 500 chars): ${bookContent.substring(0, 500)}`)
+      log(
+        'info',
+        `No verse tags found in book content (first 500 chars): ${bookContent.substring(0, 500)}`,
+      )
     }
   }
 

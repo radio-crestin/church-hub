@@ -213,7 +213,9 @@ function detectLanguage(filename: string, name: string): string {
 
     // Return the capitalized first word if it looks like a language name
     if (firstWord.length > 2 && /^[a-z]+$/i.test(firstWord)) {
-      return firstWord.charAt(0).toUpperCase() + firstWord.slice(1).toLowerCase()
+      return (
+        firstWord.charAt(0).toUpperCase() + firstWord.slice(1).toLowerCase()
+      )
     }
   }
 
@@ -252,7 +254,10 @@ function parseXmlToBibles(xmlContent: string): AvailableBiblesData {
   // Parse metadata
   const metadataEl = doc.querySelector('metadata')
   const metadata: BiblesMetadata = {
-    totalTranslations: Number.parseInt(metadataEl?.querySelector('total_translations')?.textContent || '0', 10),
+    totalTranslations: Number.parseInt(
+      metadataEl?.querySelector('total_translations')?.textContent || '0',
+      10,
+    ),
     repository: metadataEl?.querySelector('repository')?.textContent || '',
     tag: metadataEl?.querySelector('tag')?.textContent || '',
   }
@@ -272,7 +277,8 @@ function parseXmlToBibles(xmlContent: string): AvailableBiblesData {
         filename,
         downloadUrl,
         copyright: el.querySelector('copyright')?.textContent?.trim() || null,
-        sourceLink: el.querySelector('source_link')?.textContent?.trim() || null,
+        sourceLink:
+          el.querySelector('source_link')?.textContent?.trim() || null,
         languageCode: detectLanguage(filename, name),
       })
     }
