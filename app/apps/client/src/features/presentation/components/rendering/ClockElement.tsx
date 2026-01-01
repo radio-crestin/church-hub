@@ -14,14 +14,33 @@ export function ClockElement({
   screenWidth,
   screenHeight,
 }: ClockElementProps) {
-  const [time, setTime] = useState(new Date())
+  const [time, setTime] = useState(() => new Date())
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setTime(new Date())
-    }, 1000)
+    let timeoutId: ReturnType<typeof setTimeout>
+    let isActive = true
 
-    return () => clearInterval(interval)
+    const tick = () => {
+      if (!isActive) return
+
+      const now = new Date()
+      setTime(now)
+
+      // Calculate ms until the next second boundary to prevent drift
+      const msUntilNextSecond = 1000 - now.getMilliseconds()
+      timeoutId = setTimeout(tick, msUntilNextSecond)
+    }
+
+    // Start with immediate update, then sync to second boundary
+    const now = new Date()
+    setTime(now)
+    const msUntilNextSecond = 1000 - now.getMilliseconds()
+    timeoutId = setTimeout(tick, msUntilNextSecond)
+
+    return () => {
+      isActive = false
+      clearTimeout(timeoutId)
+    }
   }, [])
 
   // Default size for backwards compatibility
