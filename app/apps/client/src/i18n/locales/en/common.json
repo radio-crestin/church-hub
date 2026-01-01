@@ -36,5 +36,9 @@
     "title": "Contact Us",
     "email": "Email",
     "whatsapp": "WhatsApp"
+  },
+  "connection": {
+    "connectionLost": "Connection lost",
+    "tapToReconnect": "Tap to reconnect"
   }
 }
