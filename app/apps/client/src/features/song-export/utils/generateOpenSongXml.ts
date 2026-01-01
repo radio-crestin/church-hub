@@ -58,14 +58,23 @@ function generateLyrics(slides: SongWithSlides['slides']): string {
 
   const lines: string[] = []
 
-  for (const slide of slides) {
+  for (let i = 0; i < slides.length; i++) {
+    const slide = slides[i]
+    const isLastSlide = i === slides.length - 1
+
     // Add verse label if present
     if (slide.label) {
       lines.push(`[${slide.label}]`)
     }
 
     // Convert HTML content to plain text and add leading space
-    const plainText = htmlToPlainText(slide.content)
+    let plainText = htmlToPlainText(slide.content)
+
+    // Add "Amin!" to the last slide
+    if (isLastSlide && plainText && !/amin/i.test(plainText)) {
+      plainText = `${plainText}\n\nAmin!`
+    }
+
     const lyricLines = plainText.split('\n').filter((line) => line.trim())
 
     for (const line of lyricLines) {

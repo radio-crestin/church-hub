@@ -48,6 +48,14 @@ function htmlToPlainText(html: string): string {
 }
 
 /**
+ * Adds "Amin!" to text if it doesn't already contain it
+ */
+function addAmin(text: string): string {
+  if (/amin/i.test(text)) return text
+  return `${text}\n\nAmin!`
+}
+
+/**
  * Generates a PPTX presentation from a song
  * Matches the rendering engine configuration with:
  * - Black background
@@ -75,14 +83,21 @@ export function generatePptx(song: SongWithSlides): Blob {
   const expandedSlides = expandSongSlidesWithChoruses(song.slides)
 
   // Create a slide for each expanded slide
-  for (const songSlide of expandedSlides) {
+  for (let i = 0; i < expandedSlides.length; i++) {
+    const songSlide = expandedSlides[i]
+    const isLastSlide = i === expandedSlides.length - 1
     const slide = pptx.addSlide()
 
     // Set black background
     slide.background = { color: SLIDE_CONFIG.background.replace('#', '') }
 
     // Convert HTML content to plain text
-    const text = htmlToPlainText(songSlide.content)
+    let text = htmlToPlainText(songSlide.content)
+
+    // Add "Amin!" to the last slide
+    if (isLastSlide && text) {
+      text = addAmin(text)
+    }
 
     if (text) {
       // Add centered text with styling matching rendering engine
@@ -132,14 +147,21 @@ export async function generatePptxBase64(
   const expandedSlides = expandSongSlidesWithChoruses(song.slides)
 
   // Create a slide for each expanded slide
-  for (const songSlide of expandedSlides) {
+  for (let i = 0; i < expandedSlides.length; i++) {
+    const songSlide = expandedSlides[i]
+    const isLastSlide = i === expandedSlides.length - 1
     const slide = pptx.addSlide()
 
     // Set black background
     slide.background = { color: SLIDE_CONFIG.background.replace('#', '') }
 
     // Convert HTML content to plain text
-    const text = htmlToPlainText(songSlide.content)
+    let text = htmlToPlainText(songSlide.content)
+
+    // Add "Amin!" to the last slide
+    if (isLastSlide && text) {
+      text = addAmin(text)
+    }
 
     if (text) {
       // Add centered text with styling matching rendering engine
