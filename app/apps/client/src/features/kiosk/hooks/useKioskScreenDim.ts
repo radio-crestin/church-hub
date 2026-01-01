@@ -8,11 +8,15 @@ const logger = createLogger('kiosk:screen-dim')
 /** Delay before dimming screen after WebSocket disconnect (in milliseconds) */
 const DIM_DELAY_MS = 60 * 1000 // 1 minute
 
+/** Number of disconnects after which to immediately blank the screen */
+const MAX_DISCONNECTS_BEFORE_BLANK = 5
+
 type WebSocketStatus = 'connecting' | 'connected' | 'disconnected' | 'error'
 
 interface UseKioskScreenDimOptions {
   kioskEnabled: boolean
   wsStatus: WebSocketStatus
+  disconnectCount: number
 }
 
 interface UseKioskScreenDimResult {
@@ -23,12 +27,13 @@ interface UseKioskScreenDimResult {
 /**
  * Hook to manage screen dim overlay for kiosk mode
  * Shows black overlay and dims screen brightness when WebSocket disconnects
- * Waits 1 minute after disconnect before dimming
+ * Waits 1 minute after disconnect before dimming, or immediately after 5 disconnects
  * Restores brightness on reconnection or user touch
  */
 export function useKioskScreenDim({
   kioskEnabled,
   wsStatus,
+  disconnectCount,
 }: UseKioskScreenDimOptions): UseKioskScreenDimResult {
   const [isOverlayVisible, setIsOverlayVisible] = useState(false)
   const [dismissedByTouch, setDismissedByTouch] = useState(false)
@@ -74,20 +79,30 @@ export function useKioskScreenDim({
     }
   }, [wsStatus, clearDimTimer])
 
-  // Handle disconnection - start dim timer
+  // Handle disconnection - start dim timer or immediately dim after 5 disconnects
   useEffect(() => {
-    // Only start timer if:
-    // 1. Kiosk mode is enabled
-    // 2. WebSocket is disconnected or error
-    // 3. User hasn't dismissed via touch
-    // 4. Overlay is not already visible
-    // 5. Timer is not already running
-    const shouldStartTimer =
-      kioskEnabled &&
-      (wsStatus === 'disconnected' || wsStatus === 'error') &&
-      !dismissedByTouch &&
-      !isOverlayVisible &&
-      !dimTimerRef.current
+    const isDisconnected = wsStatus === 'disconnected' || wsStatus === 'error'
+
+    // Skip if not in kiosk mode, not disconnected, or already visible
+    if (!kioskEnabled || !isDisconnected || isOverlayVisible) {
+      return
+    }
+
+    // After 5 disconnects, immediately blank the screen (regardless of touch dismissal)
+    if (disconnectCount >= MAX_DISCONNECTS_BEFORE_BLANK) {
+      logger.debug(
+        `${disconnectCount} disconnects reached, immediately dimming screen`,
+      )
+      clearDimTimer()
+      setIsOverlayVisible(true)
+      dimScreen().then((success) => {
+        logger.debug(`Screen dim: ${success ? 'success' : 'failed'}`)
+      })
+      return
+    }
+
+    // Otherwise, start timer if not already running and not dismissed by touch
+    const shouldStartTimer = !dismissedByTouch && !dimTimerRef.current
 
     if (shouldStartTimer) {
       logger.debug(
@@ -104,7 +119,14 @@ export function useKioskScreenDim({
         dimTimerRef.current = null
       }, DIM_DELAY_MS)
     }
-  }, [kioskEnabled, wsStatus, dismissedByTouch, isOverlayVisible])
+  }, [
+    kioskEnabled,
+    wsStatus,
+    dismissedByTouch,
+    isOverlayVisible,
+    disconnectCount,
+    clearDimTimer,
+  ])
 
   // Cleanup timer on unmount
   useEffect(() => {
