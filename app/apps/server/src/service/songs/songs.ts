@@ -13,6 +13,10 @@ import type {
 } from './types'
 import { getDatabase, getRawDatabase } from '../../db'
 import { songSlides, songs } from '../../db/schema'
+import {
+  addAminToLastSlide,
+  generateExpandedPresentationOrder,
+} from '../presentation/expand-song-slides'
 
 const DEBUG = process.env.DEBUG === 'true'
 const SLIDE_BULK_INSERT_CHUNK_SIZE = 1000 // Increased from 500 for better performance
@@ -141,6 +145,9 @@ export function getSongById(id: number): Song | null {
 
 /**
  * Gets a song by ID with all its slides and category
+ * Applies presentation transformations:
+ * - Adds "Amin!" to the last slide
+ * - Generates expanded presentation order with chorus insertions
  */
 export function getSongWithSlides(id: number): SongWithSlides | null {
   try {
@@ -154,9 +161,19 @@ export function getSongWithSlides(id: number): SongWithSlides | null {
     const slides = getSlidesBySongId(id)
     const category = song.categoryId ? getCategoryById(song.categoryId) : null
 
+    // Transform slides: add "Amin!" to the last slide
+    const transformedSlides = slides.map((slide, index) => ({
+      ...slide,
+      content: addAminToLastSlide(slide.content, index === slides.length - 1),
+    }))
+
+    // Generate expanded presentation order (C1 V1 C1 V2 C1 V3 C2...)
+    const expandedPresentationOrder = generateExpandedPresentationOrder(slides)
+
     return {
       ...song,
-      slides,
+      presentationOrder: expandedPresentationOrder || song.presentationOrder,
+      slides: transformedSlides,
       category,
     }
   } catch (error) {
@@ -168,6 +185,9 @@ export function getSongWithSlides(id: number): SongWithSlides | null {
 /**
  * Gets all songs with their slides and categories
  * Optionally filters by category ID
+ * Applies presentation transformations:
+ * - Adds "Amin!" to the last slide
+ * - Generates expanded presentation order with chorus insertions
  */
 export function getAllSongsWithSlides(
   categoryId?: number | null,
@@ -193,7 +213,23 @@ export function getAllSongsWithSlides(
       const song = toSong(record)
       const slides = getSlidesBySongId(song.id)
       const category = song.categoryId ? getCategoryById(song.categoryId) : null
-      return { ...song, slides, category }
+
+      // Transform slides: add "Amin!" to the last slide
+      const transformedSlides = slides.map((slide, index) => ({
+        ...slide,
+        content: addAminToLastSlide(slide.content, index === slides.length - 1),
+      }))
+
+      // Generate expanded presentation order (C1 V1 C1 V2 C1 V3 C2...)
+      const expandedPresentationOrder =
+        generateExpandedPresentationOrder(slides)
+
+      return {
+        ...song,
+        presentationOrder: expandedPresentationOrder || song.presentationOrder,
+        slides: transformedSlides,
+        category,
+      }
     })
   } catch (error) {
     log('error', `Failed to get all songs with slides: ${error}`)

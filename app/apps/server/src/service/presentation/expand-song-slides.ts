@@ -118,3 +118,96 @@ export function getOriginalSlideIndex(
   }
   return expandedSlides[expandedIndex].originalIndex
 }
+
+/**
+ * Generates the presentation order string with choruses inserted after verses
+ *
+ * @param slides - The original slides sorted by sortOrder
+ * @returns Presentation order string (e.g., "C1 V1 C1 V2 C1 V3 C2")
+ */
+export function generateExpandedPresentationOrder(
+  slides: SlideWithLabel[],
+): string {
+  if (slides.length === 0) {
+    return ''
+  }
+
+  // Check if any slides have labels
+  const hasLabels = slides.some((s) => s.label)
+  if (!hasLabels) {
+    return ''
+  }
+
+  // Check if there are any choruses
+  const hasChorus = slides.some((s) => s.label?.startsWith('C'))
+  if (!hasChorus) {
+    // Return original order labels
+    return slides
+      .filter((s) => s.label)
+      .map((s) => s.label)
+      .join(' ')
+  }
+
+  // Check if there are any verses
+  const hasVerses = slides.some((s) => s.label?.startsWith('V'))
+  if (!hasVerses) {
+    return slides
+      .filter((s) => s.label)
+      .map((s) => s.label)
+      .join(' ')
+  }
+
+  // Build presentation order with chorus insertions
+  const orderParts: string[] = []
+  let currentChorusLabel: string | null = null
+
+  for (let i = 0; i < slides.length; i++) {
+    const slide = slides[i]
+    const isVerse = slide.label?.startsWith('V')
+    const isChorus = slide.label?.startsWith('C')
+
+    // Add the current slide's label
+    if (slide.label) {
+      orderParts.push(slide.label)
+    }
+
+    // If this is a chorus, update the current chorus reference
+    if (isChorus && slide.label) {
+      currentChorusLabel = slide.label
+    }
+
+    // If this is a verse and we have a chorus, insert it after
+    // But don't insert if the next slide is a chorus (it replaces the current one)
+    if (isVerse && currentChorusLabel) {
+      const nextSlide = slides[i + 1]
+      const nextIsChorus = nextSlide?.label?.startsWith('C')
+
+      if (!nextIsChorus) {
+        orderParts.push(currentChorusLabel)
+      }
+    }
+  }
+
+  return orderParts.join(' ')
+}
+
+/**
+ * Adds "Amin!" to the last slide content if not already present
+ *
+ * @param content - The slide content (HTML string)
+ * @param isLastSlide - Whether this is the last slide
+ * @returns The content with "Amin!" appended if applicable
+ */
+export function addAminToLastSlide(
+  content: string,
+  isLastSlide: boolean,
+): string {
+  if (!isLastSlide) return content
+  if (/amin/i.test(content)) return content
+
+  // Remove trailing empty paragraphs and whitespace
+  const trimmedContent = content.replace(/(<p><br><\/p>|\s)+$/gi, '')
+
+  // Add Amin! with one empty line before it
+  return `${trimmedContent}<br><p>Amin!</p>`
+}
