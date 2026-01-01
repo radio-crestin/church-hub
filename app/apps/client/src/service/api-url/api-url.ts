@@ -15,7 +15,8 @@ const isTauri =
   ('__TAURI_INTERNALS__' in window || '__TAURI__' in window)
 
 // Pattern to match auth URL: /api/auth/user/{token}
-const AUTH_URL_PATTERN = /\/api\/auth\/user\/(usr_[A-Za-z0-9_]+)$/
+// Token uses base64url encoding which includes A-Za-z0-9_- characters
+const AUTH_URL_PATTERN = /\/api\/auth\/user\/(usr_[A-Za-z0-9_-]+)$/
 
 /**
  * Parses an auth URL to extract base URL and user token
