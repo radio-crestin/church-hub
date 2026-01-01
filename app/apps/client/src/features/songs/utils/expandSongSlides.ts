@@ -105,3 +105,77 @@ export function expandSongSlidesWithChoruses(
 
   return expandedSlides
 }
+
+/**
+ * Generates the presentation order string with choruses inserted after verses
+ * Used for OpenSong export format
+ *
+ * @param slides - The original slides
+ * @returns Presentation order string (e.g., "C1 V1 C1 V2 C1 V3 C2")
+ */
+export function generateExpandedPresentationOrder(slides: SongSlide[]): string {
+  if (slides.length === 0) {
+    return ''
+  }
+
+  // Sort by sortOrder first
+  const sortedSlides = [...slides].sort((a, b) => a.sortOrder - b.sortOrder)
+
+  // Check if any slides have labels
+  const hasLabels = sortedSlides.some((s) => s.label)
+  if (!hasLabels) {
+    return ''
+  }
+
+  // Check if there are any choruses
+  const hasChorus = sortedSlides.some((s) => s.label?.startsWith('C'))
+  if (!hasChorus) {
+    // Return original order labels
+    return sortedSlides
+      .filter((s) => s.label)
+      .map((s) => s.label)
+      .join(' ')
+  }
+
+  // Check if there are any verses
+  const hasVerses = sortedSlides.some((s) => s.label?.startsWith('V'))
+  if (!hasVerses) {
+    return sortedSlides
+      .filter((s) => s.label)
+      .map((s) => s.label)
+      .join(' ')
+  }
+
+  // Build presentation order with chorus insertions
+  const orderParts: string[] = []
+  let currentChorusLabel: string | null = null
+
+  for (let i = 0; i < sortedSlides.length; i++) {
+    const slide = sortedSlides[i]
+    const isVerse = slide.label?.startsWith('V')
+    const isChorus = slide.label?.startsWith('C')
+
+    // Add the current slide's label
+    if (slide.label) {
+      orderParts.push(slide.label)
+    }
+
+    // If this is a chorus, update the current chorus reference
+    if (isChorus && slide.label) {
+      currentChorusLabel = slide.label
+    }
+
+    // If this is a verse and we have a chorus, insert it after
+    // But don't insert if the next slide is a chorus (it replaces the current one)
+    if (isVerse && currentChorusLabel) {
+      const nextSlide = sortedSlides[i + 1]
+      const nextIsChorus = nextSlide?.label?.startsWith('C')
+
+      if (!nextIsChorus) {
+        orderParts.push(currentChorusLabel)
+      }
+    }
+  }
+
+  return orderParts.join(' ')
+}
