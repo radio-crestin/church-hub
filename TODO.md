@@ -103,7 +103,7 @@
 ~~- deasemenea, cantarile de pe resurse crestine pptx nu repeta refrenul~~
 ~~- fix openapi endpoints and fix authentication layer~~
 ~~- instaleaza aplicatia pe windows si pe tableta IOS~~
-- testeaza sa vedem daca suntem pregatiti pentru lansare
+~~- testeaza sa vedem daca suntem pregatiti pentru lansare~~
 - testeaza midi settings configuration si butoanele nu stau aprinse dupa ce am apasat
 - implementeaza transcription folosind AI
 - 
@@ -119,3 +119,4 @@
 - creaza optiunea de a adauga live-urile create intr-un playlist pe YouTube
 - adauga optiunea de a afisa pe un ecran separat continutul in anumita limba (o versiune a Bibliei diferita, traduceri cu AI ale cantarilor.. si eventual traduceri in timp real)
 - adauga filtru pentru categoria de cantari si deasemenea, fa loading la cantari cand se face scrolling (infinite scroll)
+- we can add custom background for next based on the slide type (so that it's easier to identify what type of slide is next)
