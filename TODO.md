@@ -101,6 +101,9 @@
 - shortcut-urile nu functioneaza pentru OBS scenes
 - deasemenea, cantarile de pe resurse crestine pptx nu repeta refrenul
 - fix openapi endpoints and fix authentication layer
+- instaleaza aplicatia pe windows si pe tableta IOS
+- testeaza sa vedem daca suntem pregatiti pentru lansare
+- implementeaza transcription folosind AI
 --- Later ---
 - creaza un quickstart guide pentru utilizatori
 - adauga optiune de a cauta cantari folosind AI
