@@ -1,10 +1,23 @@
 import { openApiSpec } from './spec'
 
 /**
- * Returns the OpenAPI specification as JSON
+ * Returns the OpenAPI specification as JSON with dynamic server URL
+ * @param host - The host from the request (e.g., "192.168.88.12:3000" or "localhost:3000")
  */
-export function getOpenApiSpec(): Response {
-  return new Response(JSON.stringify(openApiSpec, null, 2), {
+export function getOpenApiSpec(host?: string): Response {
+  const spec = { ...openApiSpec }
+
+  if (host) {
+    const protocol = host.includes('localhost') ? 'http' : 'http'
+    spec.servers = [
+      {
+        url: `${protocol}://${host}`,
+        description: 'Current server',
+      },
+    ]
+  }
+
+  return new Response(JSON.stringify(spec, null, 2), {
     headers: {
       'Content-Type': 'application/json',
     },

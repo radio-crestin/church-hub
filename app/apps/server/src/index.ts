@@ -372,7 +372,8 @@ async function main() {
         return handleCors(req, getScalarDocs())
       }
       if (url.pathname === '/api/openapi.json') {
-        return handleCors(req, getOpenApiSpec())
+        const host = req.headers.get('host') ?? undefined
+        return handleCors(req, getOpenApiSpec(host))
       }
 
       // All /api/* routes require authentication (localhost = admin)
