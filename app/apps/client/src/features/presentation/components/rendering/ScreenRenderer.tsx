@@ -783,20 +783,12 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
     isExitAnimating,
   ])
 
-  if (isError) {
+  // Keep transparent background while loading or on error
+  if (isError || isLoading || !screen) {
     return (
       <div
         className="w-screen h-screen"
-        style={{ backgroundColor: '#000000' }}
-      />
-    )
-  }
-
-  if (isLoading || !screen) {
-    return (
-      <div
-        className="w-screen h-screen"
-        style={{ backgroundColor: '#000000' }}
+        style={{ backgroundColor: 'transparent' }}
       />
     )
   }
