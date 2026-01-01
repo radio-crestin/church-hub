@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 
 import { createLogger } from '~/utils/logger'
 import type { GlobalShortcutActionId, GlobalShortcutsConfig } from '../../types'
@@ -23,6 +23,7 @@ interface UseMIDILEDFeedbackOptions {
  * Hook to sync MIDI LED states with application state
  * - LEDs on for startLive/stopLive shortcuts when stream is live
  * - LEDs on for scene shortcuts matching current scene
+ * - Automatically refreshes LEDs after MIDI events to override hardware toggle behavior
  */
 export function useMIDILEDFeedback({
   shortcuts,
@@ -32,6 +33,7 @@ export function useMIDILEDFeedback({
 }: UseMIDILEDFeedbackOptions) {
   const midi = useMIDIOptional()
   const previousLEDStatesRef = useRef<Map<number, boolean>>(new Map())
+  const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     if (!midi || !midi.isEnabled || !midi.selectedOutputId) {
@@ -111,6 +113,42 @@ export function useMIDILEDFeedback({
     // Update previous state
     previousLEDStatesRef.current = newLEDStates
   }, [midi, shortcuts, sceneShortcuts, isLive, currentSceneName])
+
+  // Force refresh all LEDs - re-sends current states to override hardware toggle
+  const refreshLEDs = useCallback(() => {
+    if (!midi || !midi.isEnabled || !midi.selectedOutputId) return
+
+    // Re-send all current LED states to override hardware toggle
+    previousLEDStatesRef.current.forEach((on, note) => {
+      midi.setLED(note, on)
+    })
+    logger.debug('Refreshed all LED states after MIDI event')
+  }, [midi])
+
+  // Subscribe to all MIDI events and refresh LEDs after any event
+  // This ensures our LED state overrides any hardware toggle behavior
+  useEffect(() => {
+    if (!midi || !midi.isEnabled) return
+
+    const unsubscribe = midi.subscribe(() => {
+      // Clear any pending refresh
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current)
+      }
+
+      // Delay slightly to allow state to update, then force LED refresh
+      refreshTimeoutRef.current = setTimeout(() => {
+        refreshLEDs()
+      }, 50) // 50ms delay allows state updates to propagate
+    })
+
+    return () => {
+      unsubscribe()
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current)
+      }
+    }
+  }, [midi, refreshLEDs])
 
   // Cleanup: turn off all LEDs when unmounting
   useEffect(() => {
