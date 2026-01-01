@@ -24,6 +24,7 @@ export interface WebSocketDebugInfo {
   lastSlideIndex: number | null
   staleMessagesBlocked: number
   missedPongs: number
+  disconnectCount: number
 }
 
 interface PresentationMessage {
@@ -95,6 +96,8 @@ export function useWebSocket() {
   const pingIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const pongTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const missedPongsRef = useRef(0)
+  const disconnectCountRef = useRef(0)
+  const hasCountedDisconnectRef = useRef(false) // Prevents double-counting disconnects
   const [status, setStatus] = useState<WebSocketStatus>('disconnected')
   const isConnectingRef = useRef(false)
 
@@ -109,6 +112,7 @@ export function useWebSocket() {
     lastSlideIndex: null,
     staleMessagesBlocked: 0,
     missedPongs: 0,
+    disconnectCount: 0,
   })
 
   const handleMessage = useCallback(
@@ -215,12 +219,15 @@ export function useWebSocket() {
 
       ws.onopen = () => {
         setStatus('connected')
+        missedPongsRef.current = 0
+        disconnectCountRef.current = 0
+        hasCountedDisconnectRef.current = false
         setDebugInfo((prev) => ({
           ...prev,
           status: 'connected',
           missedPongs: 0,
+          disconnectCount: 0,
         }))
-        missedPongsRef.current = 0
 
         // Invalidate presentation state to refetch current state on reconnection
         queryClient.invalidateQueries({ queryKey: presentationStateQueryKey })
@@ -243,6 +250,14 @@ export function useWebSocket() {
 
               if (missedPongsRef.current >= MAX_MISSED_PONGS) {
                 logger.debug('Connection lost - 3 pongs missed')
+                if (!hasCountedDisconnectRef.current) {
+                  hasCountedDisconnectRef.current = true
+                  disconnectCountRef.current++
+                  setDebugInfo((prev) => ({
+                    ...prev,
+                    disconnectCount: disconnectCountRef.current,
+                  }))
+                }
                 setStatus('disconnected')
 
                 if (pingIntervalRef.current) {
@@ -262,13 +277,18 @@ export function useWebSocket() {
       }
 
       ws.onerror = () => {
-        setStatus('error')
         // Increment missed pongs on connection error (treat as failed ping)
         missedPongsRef.current++
+        if (!hasCountedDisconnectRef.current) {
+          hasCountedDisconnectRef.current = true
+          disconnectCountRef.current++
+        }
+        setStatus('error')
         setDebugInfo((prev) => ({
           ...prev,
           status: 'error',
           missedPongs: missedPongsRef.current,
+          disconnectCount: disconnectCountRef.current,
         }))
 
         if (!reconnectTimeoutRef.current) {
@@ -279,8 +299,16 @@ export function useWebSocket() {
       }
 
       ws.onclose = () => {
+        if (!hasCountedDisconnectRef.current) {
+          hasCountedDisconnectRef.current = true
+          disconnectCountRef.current++
+        }
         setStatus('disconnected')
-        setDebugInfo((prev) => ({ ...prev, status: 'disconnected' }))
+        setDebugInfo((prev) => ({
+          ...prev,
+          status: 'disconnected',
+          disconnectCount: disconnectCountRef.current,
+        }))
 
         if (pingIntervalRef.current) {
           clearInterval(pingIntervalRef.current)
@@ -302,13 +330,18 @@ export function useWebSocket() {
         }, 3000)
       }
     } catch {
-      setStatus('error')
       // Increment missed pongs on connection failure (treat as failed ping)
       missedPongsRef.current++
+      if (!hasCountedDisconnectRef.current) {
+        hasCountedDisconnectRef.current = true
+        disconnectCountRef.current++
+      }
+      setStatus('error')
       setDebugInfo((prev) => ({
         ...prev,
         status: 'error',
         missedPongs: missedPongsRef.current,
+        disconnectCount: disconnectCountRef.current,
       }))
 
       reconnectTimeoutRef.current = setTimeout(() => {
@@ -356,8 +389,15 @@ export function useWebSocket() {
       isConnectingRef.current = false
 
       setStatus('connected')
-      setDebugInfo((prev) => ({ ...prev, status: 'connected', missedPongs: 0 }))
       missedPongsRef.current = 0
+      disconnectCountRef.current = 0
+      hasCountedDisconnectRef.current = false
+      setDebugInfo((prev) => ({
+        ...prev,
+        status: 'connected',
+        missedPongs: 0,
+        disconnectCount: 0,
+      }))
 
       // Invalidate presentation state to refetch current state on reconnection
       queryClient.invalidateQueries({ queryKey: presentationStateQueryKey })
@@ -367,8 +407,16 @@ export function useWebSocket() {
         // Handle close event from Tauri WebSocket
         if (message.type === 'Close') {
           logger.debug('Tauri WebSocket closed')
+          if (!hasCountedDisconnectRef.current) {
+            hasCountedDisconnectRef.current = true
+            disconnectCountRef.current++
+          }
           setStatus('disconnected')
-          setDebugInfo((prev) => ({ ...prev, status: 'disconnected' }))
+          setDebugInfo((prev) => ({
+            ...prev,
+            status: 'disconnected',
+            disconnectCount: disconnectCountRef.current,
+          }))
           tauriWsRef.current = null
 
           if (pingIntervalRef.current) {
@@ -400,8 +448,16 @@ export function useWebSocket() {
       // Helper function to handle connection loss
       const handleConnectionLost = async () => {
         logger.debug('Connection lost - 3 pongs missed')
+        if (!hasCountedDisconnectRef.current) {
+          hasCountedDisconnectRef.current = true
+          disconnectCountRef.current++
+        }
         setStatus('disconnected')
-        setDebugInfo((prev) => ({ ...prev, status: 'disconnected' }))
+        setDebugInfo((prev) => ({
+          ...prev,
+          status: 'disconnected',
+          disconnectCount: disconnectCountRef.current,
+        }))
 
         if (pingIntervalRef.current) {
           clearInterval(pingIntervalRef.current)
@@ -468,13 +524,18 @@ export function useWebSocket() {
       }, PING_INTERVAL_MS)
     } catch {
       isConnectingRef.current = false
-      setStatus('error')
       // Increment missed pongs on connection failure (treat as failed ping)
       missedPongsRef.current++
+      if (!hasCountedDisconnectRef.current) {
+        hasCountedDisconnectRef.current = true
+        disconnectCountRef.current++
+      }
+      setStatus('error')
       setDebugInfo((prev) => ({
         ...prev,
         status: 'error',
         missedPongs: missedPongsRef.current,
+        disconnectCount: disconnectCountRef.current,
       }))
 
       // Retry connection

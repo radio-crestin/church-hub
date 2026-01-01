@@ -15,7 +15,7 @@ import { useKioskSettings } from '../hooks/useKioskSettings'
  */
 export function KioskScreenDimManager() {
   const { data: kioskSettings } = useKioskSettings()
-  const { status: wsStatus } = useWebSocket()
+  const { status: wsStatus, debugInfo } = useWebSocket()
   const [isConnectionModalOpen, setIsConnectionModalOpen] = useState(false)
 
   const kioskEnabled = kioskSettings?.enabled ?? false
@@ -24,6 +24,7 @@ export function KioskScreenDimManager() {
   const { isOverlayVisible, dismissOverlay } = useKioskScreenDim({
     kioskEnabled,
     wsStatus,
+    disconnectCount: debugInfo.disconnectCount,
   })
 
   // Show disconnection message immediately when disconnected in kiosk mode
