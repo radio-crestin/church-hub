@@ -2,7 +2,11 @@ import { AlertTriangle } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
-export type DuplicateAction = 'openExisting' | 'overwrite' | 'createNew' | 'cancel'
+export type DuplicateAction =
+  | 'openExisting'
+  | 'overwrite'
+  | 'createNew'
+  | 'cancel'
 
 interface DuplicateSongDialogProps {
   isOpen: boolean
@@ -62,7 +66,9 @@ export function DuplicateSongDialog({
             onClick={() => onAction('openExisting')}
             className="w-full px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors text-left"
           >
-            <div className="font-medium">{t('duplicateDialog.openExisting')}</div>
+            <div className="font-medium">
+              {t('duplicateDialog.openExisting')}
+            </div>
             <div className="text-sm text-indigo-200">
               {t('duplicateDialog.openExistingDescription')}
             </div>

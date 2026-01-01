@@ -2993,16 +2993,20 @@ async function main() {
         if (permError) return permError
 
         try {
-          const biblesXmlUrl = 'https://github.com/radio-crestin/Holy-Bible-XML-Format/releases/latest/download/bibles.xml'
+          const biblesXmlUrl =
+            'https://github.com/radio-crestin/Holy-Bible-XML-Format/releases/latest/download/bibles.xml'
           const response = await fetch(biblesXmlUrl)
 
           if (!response.ok) {
             return handleCors(
               req,
-              new Response(JSON.stringify({ error: 'Failed to fetch available Bibles' }), {
-                status: 502,
-                headers: { 'Content-Type': 'application/json' },
-              }),
+              new Response(
+                JSON.stringify({ error: 'Failed to fetch available Bibles' }),
+                {
+                  status: 502,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
             )
           }
 
@@ -3013,13 +3017,16 @@ async function main() {
               headers: { 'Content-Type': 'application/xml' },
             }),
           )
-        } catch (error) {
+        } catch (_error) {
           return handleCors(
             req,
-            new Response(JSON.stringify({ error: 'Failed to fetch available Bibles' }), {
-              status: 502,
-              headers: { 'Content-Type': 'application/json' },
-            }),
+            new Response(
+              JSON.stringify({ error: 'Failed to fetch available Bibles' }),
+              {
+                status: 502,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
           )
         }
       }
@@ -3045,15 +3052,23 @@ async function main() {
           'github.com/radio-crestin/Holy-Bible-XML-Format',
           'raw.githubusercontent.com/radio-crestin/Holy-Bible-XML-Format',
         ]
-        const isAllowedUrl = allowedHosts.some((host) => downloadUrl.includes(host))
+        const isAllowedUrl = allowedHosts.some((host) =>
+          downloadUrl.includes(host),
+        )
 
         if (!isAllowedUrl) {
           return handleCors(
             req,
-            new Response(JSON.stringify({ error: 'URL not allowed. Only Holy-Bible-XML-Format repository URLs are permitted.' }), {
-              status: 403,
-              headers: { 'Content-Type': 'application/json' },
-            }),
+            new Response(
+              JSON.stringify({
+                error:
+                  'URL not allowed. Only Holy-Bible-XML-Format repository URLs are permitted.',
+              }),
+              {
+                status: 403,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
           )
         }
 
@@ -3063,10 +3078,15 @@ async function main() {
           if (!response.ok) {
             return handleCors(
               req,
-              new Response(JSON.stringify({ error: `Failed to download Bible: ${response.statusText}` }), {
-                status: 502,
-                headers: { 'Content-Type': 'application/json' },
-              }),
+              new Response(
+                JSON.stringify({
+                  error: `Failed to download Bible: ${response.statusText}`,
+                }),
+                {
+                  status: 502,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
             )
           }
 
@@ -3077,13 +3097,16 @@ async function main() {
               headers: { 'Content-Type': 'application/xml' },
             }),
           )
-        } catch (error) {
+        } catch (_error) {
           return handleCors(
             req,
-            new Response(JSON.stringify({ error: 'Failed to download Bible file' }), {
-              status: 502,
-              headers: { 'Content-Type': 'application/json' },
-            }),
+            new Response(
+              JSON.stringify({ error: 'Failed to download Bible file' }),
+              {
+                status: 502,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
           )
         }
       }

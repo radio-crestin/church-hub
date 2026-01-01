@@ -20,7 +20,9 @@ export function BibleSettingsModal({
   const dialogRef = useRef<HTMLDialogElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [importError, setImportError] = useState<string | null>(null)
-  const [dialogElement, setDialogElement] = useState<HTMLDialogElement | null>(null)
+  const [dialogElement, setDialogElement] = useState<HTMLDialogElement | null>(
+    null,
+  )
 
   // Callback ref to capture dialog element for portal container
   const setDialogRefCallback = (element: HTMLDialogElement | null) => {
@@ -158,13 +160,20 @@ export function BibleSettingsModal({
                   <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                   <div className="text-sm">
                     <p className="font-medium text-blue-900 dark:text-blue-100 mb-2">
-                      {t('settings.import.formatTitle', { defaultValue: 'Supported Formats' })}
+                      {t('settings.import.formatTitle', {
+                        defaultValue: 'Supported Formats',
+                      })}
                     </p>
                     <p className="text-blue-800 dark:text-blue-200 mb-2">
-                      {t('settings.import.formatSimple', { defaultValue: 'Upload Bible files in USFX, OSIS, or Zefania XML format. The format is automatically detected.' })}
+                      {t('settings.import.formatSimple', {
+                        defaultValue:
+                          'Upload Bible files in USFX, OSIS, or Zefania XML format. The format is automatically detected.',
+                      })}
                     </p>
                     <p className="text-blue-800 dark:text-blue-200">
-                      {t('settings.import.formatExamples', { defaultValue: 'For format examples, see:' })}{' '}
+                      {t('settings.import.formatExamples', {
+                        defaultValue: 'For format examples, see:',
+                      })}{' '}
                       <a
                         href="https://github.com/radio-crestin/open-bibles"
                         target="_blank"

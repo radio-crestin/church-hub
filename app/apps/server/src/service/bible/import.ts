@@ -1,10 +1,6 @@
-import type {
-  CreateTranslationInput,
-  ImportResult,
-  ParsedBible,
-} from './types'
-import { parseOsisXml } from './import-osis'
 import { parseHolyBibleXml } from './import-holy-bible-xml'
+import { parseOsisXml } from './import-osis'
+import type { CreateTranslationInput, ImportResult, ParsedBible } from './types'
 import { getRawDatabase } from '../../db'
 
 const DEBUG = process.env.DEBUG === 'true'
@@ -19,17 +15,26 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
  * Detects the Bible XML format
  * Returns: 'osis' | 'holy-bible-xml' | 'unknown'
  */
-export function detectBibleFormat(xmlContent: string): 'osis' | 'holy-bible-xml' | 'unknown' {
+export function detectBibleFormat(
+  xmlContent: string,
+): 'osis' | 'holy-bible-xml' | 'unknown' {
   // Check first 2000 characters for root element detection
   const sample = xmlContent.substring(0, 2000).toLowerCase()
 
   // OSIS: <osis> or <osistext> elements
-  if (sample.includes('<osis') || sample.includes('osisidwork') || sample.includes('osisrefwork')) {
+  if (
+    sample.includes('<osis') ||
+    sample.includes('osisidwork') ||
+    sample.includes('osisrefwork')
+  ) {
     return 'osis'
   }
 
   // Holy-Bible-XML-Format: <bible translation="..."> with <testament>, <book>, <chapter>, <verse> structure
-  if (sample.includes('<bible') && (sample.includes('translation=') || sample.includes('<testament'))) {
+  if (
+    sample.includes('<bible') &&
+    (sample.includes('translation=') || sample.includes('<testament'))
+  ) {
     return 'holy-bible-xml'
   }
 
@@ -39,7 +44,9 @@ export function detectBibleFormat(xmlContent: string): 'osis' | 'holy-bible-xml'
 /**
  * Parses Bible XML content (supports OSIS and Holy-Bible-XML-Format)
  */
-export function parseBibleXml(xmlContent: string): { format: string; parsed: ParsedBible } | { error: string } {
+export function parseBibleXml(
+  xmlContent: string,
+): { format: string; parsed: ParsedBible } | { error: string } {
   const format = detectBibleFormat(xmlContent)
 
   log('info', `Detected Bible format: ${format}`)
@@ -52,19 +59,27 @@ export function parseBibleXml(xmlContent: string): { format: string; parsed: Par
     return { format: 'Holy-Bible-XML', parsed: parseHolyBibleXml(xmlContent) }
   }
 
-  return { error: 'Unable to detect Bible format. Supported formats: OSIS XML, Holy-Bible-XML-Format' }
+  return {
+    error:
+      'Unable to detect Bible format. Supported formats: OSIS XML, Holy-Bible-XML-Format',
+  }
 }
 
 /**
  * Imports a Bible translation into the database
  * Supports OSIS XML and Holy-Bible-XML-Format
  */
-export function importBibleTranslation(input: CreateTranslationInput): ImportResult {
+export function importBibleTranslation(
+  input: CreateTranslationInput,
+): ImportResult {
   const db = getRawDatabase()
   const now = Math.floor(Date.now() / 1000)
 
   try {
-    log('info', `Importing Bible translation: ${input.name} (${input.abbreviation})`)
+    log(
+      'info',
+      `Importing Bible translation: ${input.name} (${input.abbreviation})`,
+    )
 
     // Detect and parse the XML content
     const parseResult = parseBibleXml(input.xmlContent)
@@ -136,7 +151,9 @@ export function importBibleTranslation(input: CreateTranslationInput): ImportRes
 
         // Insert verses in batches for performance
         const BATCH_SIZE = 500
-        const versesToInsert: Array<[number, number, number, number, string, number]> = []
+        const versesToInsert: Array<
+          [number, number, number, number, string, number]
+        > = []
 
         for (const chapter of book.chapters) {
           for (const verse of chapter.verses) {
@@ -176,7 +193,10 @@ export function importBibleTranslation(input: CreateTranslationInput): ImportRes
       // Commit transaction
       db.exec('COMMIT')
 
-      log('info', `Successfully imported ${parsed.books.length} books with ${totalVerses} verses (${format} format)`)
+      log(
+        'info',
+        `Successfully imported ${parsed.books.length} books with ${totalVerses} verses (${format} format)`,
+      )
 
       // Get the translation with counts
       const translation = db
@@ -224,7 +244,8 @@ export function importBibleTranslation(input: CreateTranslationInput): ImportRes
     log('error', `Failed to import translation: ${error}`)
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error during import',
+      error:
+        error instanceof Error ? error.message : 'Unknown error during import',
     }
   }
 }

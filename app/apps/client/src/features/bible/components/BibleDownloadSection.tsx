@@ -1,4 +1,4 @@
-import { Download, Loader2, Globe, AlertCircle } from 'lucide-react'
+import { AlertCircle, Download, Globe, Loader2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -11,11 +11,17 @@ interface BibleDownloadSectionProps {
   portalContainer?: HTMLElement | null
 }
 
-export function BibleDownloadSection({ portalContainer }: BibleDownloadSectionProps) {
+export function BibleDownloadSection({
+  portalContainer,
+}: BibleDownloadSectionProps) {
   const { t } = useTranslation('bible')
   const { showToast } = useToast()
   const { mutateAsync: importTranslation, isPending } = useImportTranslation()
-  const { data: biblesData, isLoading: isLoadingBibles, error: biblesError } = useAvailableBibles()
+  const {
+    data: biblesData,
+    isLoading: isLoadingBibles,
+    error: biblesError,
+  } = useAvailableBibles()
 
   const [selectedBible, setSelectedBible] = useState<string>('')
   const [isDownloading, setIsDownloading] = useState(false)
@@ -33,13 +39,18 @@ export function BibleDownloadSection({ portalContainer }: BibleDownloadSectionPr
       const response = await fetch(proxyUrl, { credentials: 'include' })
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.error || `Failed to download: ${response.statusText}`)
+        throw new Error(
+          errorData.error || `Failed to download: ${response.statusText}`,
+        )
       }
 
       const xmlContent = await response.text()
 
       // Extract abbreviation from filename (e.g., "EnglishKJV.xml" -> "ENGLISHKJV")
-      const abbreviation = bible.filename.replace(/\.xml$/i, '').substring(0, 15).toUpperCase()
+      const abbreviation = bible.filename
+        .replace(/\.xml$/i, '')
+        .substring(0, 15)
+        .toUpperCase()
 
       // Import the translation with the detected language code
       await importTranslation({
@@ -50,14 +61,20 @@ export function BibleDownloadSection({ portalContainer }: BibleDownloadSectionPr
       })
 
       showToast(
-        t('settings.download.success', { defaultValue: 'Bible downloaded and imported successfully!' }),
-        'success'
+        t('settings.download.success', {
+          defaultValue: 'Bible downloaded and imported successfully!',
+        }),
+        'success',
       )
       setSelectedBible('')
     } catch (error) {
       showToast(
-        error instanceof Error ? error.message : t('settings.download.error', { defaultValue: 'Failed to download Bible' }),
-        'error'
+        error instanceof Error
+          ? error.message
+          : t('settings.download.error', {
+              defaultValue: 'Failed to download Bible',
+            }),
+        'error',
       )
     } finally {
       setIsDownloading(false)
@@ -80,7 +97,9 @@ export function BibleDownloadSection({ portalContainer }: BibleDownloadSectionPr
     setSelectedBible(typeof value === 'string' ? value : '')
   }
 
-  const selectedBibleInfo = biblesData?.bibles.find((b) => b.filename === selectedBible)
+  const selectedBibleInfo = biblesData?.bibles.find(
+    (b) => b.filename === selectedBible,
+  )
 
   return (
     <div>
@@ -91,10 +110,17 @@ export function BibleDownloadSection({ portalContainer }: BibleDownloadSectionPr
             {t('settings.download.title', { defaultValue: 'Download Bible' })}
           </h3>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            {t('settings.download.description', { defaultValue: 'Download Bibles from the Holy Bible XML Format repository' })}
+            {t('settings.download.description', {
+              defaultValue:
+                'Download Bibles from the Holy Bible XML Format repository',
+            })}
             {biblesData && (
               <span className="ml-1 text-indigo-600 dark:text-indigo-400">
-                ({biblesData.metadata.totalTranslations} {t('settings.download.translationsAvailable', { defaultValue: 'translations available' })})
+                ({biblesData.metadata.totalTranslations}{' '}
+                {t('settings.download.translationsAvailable', {
+                  defaultValue: 'translations available',
+                })}
+                )
               </span>
             )}
           </p>
@@ -105,7 +131,10 @@ export function BibleDownloadSection({ portalContainer }: BibleDownloadSectionPr
         <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300">
           <AlertCircle className="w-5 h-5 flex-shrink-0" />
           <p className="text-sm">
-            {t('settings.download.fetchError', { defaultValue: 'Failed to load available Bibles. Please try again later.' })}
+            {t('settings.download.fetchError', {
+              defaultValue:
+                'Failed to load available Bibles. Please try again later.',
+            })}
           </p>
         </div>
       ) : (
@@ -118,8 +147,12 @@ export function BibleDownloadSection({ portalContainer }: BibleDownloadSectionPr
                 onChange={handleBibleSelect}
                 placeholder={
                   isLoadingBibles
-                    ? t('settings.download.loading', { defaultValue: 'Loading available Bibles...' })
-                    : t('settings.download.selectBible', { defaultValue: 'Select a Bible to download...' })
+                    ? t('settings.download.loading', {
+                        defaultValue: 'Loading available Bibles...',
+                      })
+                    : t('settings.download.selectBible', {
+                        defaultValue: 'Select a Bible to download...',
+                      })
                 }
                 disabled={isLoading || isLoadingBibles}
                 allowClear
@@ -145,9 +178,15 @@ export function BibleDownloadSection({ portalContainer }: BibleDownloadSectionPr
           {selectedBibleInfo && (
             <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 space-y-1">
               <p>
-                {t('settings.download.willImport', { defaultValue: 'Will import as:' })}{' '}
-                {selectedBibleInfo.filename.replace(/\.xml$/i, '').substring(0, 15).toUpperCase()}
-                {selectedBibleInfo.languageCode && ` (${t('settings.download.language', { defaultValue: 'Language' })}: ${selectedBibleInfo.languageCode.toUpperCase()})`}
+                {t('settings.download.willImport', {
+                  defaultValue: 'Will import as:',
+                })}{' '}
+                {selectedBibleInfo.filename
+                  .replace(/\.xml$/i, '')
+                  .substring(0, 15)
+                  .toUpperCase()}
+                {selectedBibleInfo.languageCode &&
+                  ` (${t('settings.download.language', { defaultValue: 'Language' })}: ${selectedBibleInfo.languageCode.toUpperCase()})`}
               </p>
               {selectedBibleInfo.copyright && (
                 <p className="italic">{selectedBibleInfo.copyright}</p>

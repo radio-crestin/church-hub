@@ -3,7 +3,6 @@ import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite'
 import { migrate } from 'drizzle-orm/bun-sqlite/migrator'
 
 import { EMBEDDED_MIGRATIONS } from './embedded'
-import { migratePresentationOrder } from './migrate-presentation-order'
 import { seedSystemRoles } from './seed'
 import { seedBibleTranslations } from './seed-bibles'
 import { seedDefaultScreens } from './seed-screens'
@@ -148,12 +147,6 @@ export function runMigrations(
   t = performance.now()
   seedSongs(rawDb)
   logTiming('seed_songs', t)
-
-  // Migrate presentation order for existing songs
-  log('info', 'Migrating presentation order...')
-  t = performance.now()
-  migratePresentationOrder(rawDb)
-  logTiming('migrate_presentation_order', t)
 
   // Seed bible translations metadata
   log('info', 'Seeding bible translations...')

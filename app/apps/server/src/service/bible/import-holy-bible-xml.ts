@@ -1,4 +1,9 @@
-import type { ParsedBible, ParsedBook, ParsedChapter, ParsedVerse } from './types'
+import type {
+  ParsedBible,
+  ParsedBook,
+  ParsedChapter,
+  ParsedVerse,
+} from './types'
 import { BOOK_ORDER } from './types'
 
 const DEBUG = process.env.DEBUG === 'true'
@@ -6,7 +11,9 @@ const DEBUG = process.env.DEBUG === 'true'
 function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
   if (level === 'debug' && !DEBUG) return
   // biome-ignore lint/suspicious/noConsole: logging utility
-  console.log(`[${level.toUpperCase()}] [bible:import-holy-bible-xml] ${message}`)
+  console.log(
+    `[${level.toUpperCase()}] [bible:import-holy-bible-xml] ${message}`,
+  )
 }
 
 /**
@@ -196,7 +203,8 @@ export function parseHolyBibleXml(xmlContent: string): ParsedBible {
   log('info', 'Parsing Holy-Bible-XML-Format...')
 
   // Find all book elements using regex (efficient for this simple structure)
-  const bookRegex = /<book\s+number\s*=\s*["'](\d+)["'](?:\s+name\s*=\s*["']([^"']+)["'])?[^>]*>([\s\S]*?)<\/book>/gi
+  const bookRegex =
+    /<book\s+number\s*=\s*["'](\d+)["'](?:\s+name\s*=\s*["']([^"']+)["'])?[^>]*>([\s\S]*?)<\/book>/gi
 
   let bookMatch: RegExpExecArray | null
   let bookCount = 0
@@ -213,7 +221,8 @@ export function parseHolyBibleXml(xmlContent: string): ParsedBible {
     }
 
     const bookOrder = BOOK_ORDER[bookCode]
-    const bookName = bookNameFromXml || DEFAULT_BOOK_NAMES[bookCode] || `Book ${bookNumber}`
+    const bookName =
+      bookNameFromXml || DEFAULT_BOOK_NAMES[bookCode] || `Book ${bookNumber}`
 
     log('debug', `Processing book ${bookNumber}: ${bookName} (${bookCode})`)
 
@@ -243,7 +252,8 @@ export function parseHolyBibleXml(xmlContent: string): ParsedBible {
 function parseChapters(bookContent: string): ParsedChapter[] {
   const chapters: ParsedChapter[] = []
 
-  const chapterRegex = /<chapter\s+number\s*=\s*["'](\d+)["'][^>]*>([\s\S]*?)<\/chapter>/gi
+  const chapterRegex =
+    /<chapter\s+number\s*=\s*["'](\d+)["'][^>]*>([\s\S]*?)<\/chapter>/gi
 
   let chapterMatch: RegExpExecArray | null
 
@@ -273,7 +283,8 @@ function parseChapters(bookContent: string): ParsedChapter[] {
 function parseVerses(chapterContent: string): ParsedVerse[] {
   const verses: ParsedVerse[] = []
 
-  const verseRegex = /<verse\s+number\s*=\s*["'](\d+)["'][^>]*>([\s\S]*?)<\/verse>/gi
+  const verseRegex =
+    /<verse\s+number\s*=\s*["'](\d+)["'][^>]*>([\s\S]*?)<\/verse>/gi
 
   let verseMatch: RegExpExecArray | null
 

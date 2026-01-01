@@ -1,12 +1,12 @@
 import JSZip from 'jszip'
 
+import { yieldToMain } from '~/utils/async-utils'
 import type {
   ExtractedOpenSongFile,
   ExtractedPptFile,
   ExtractedPptxFile,
   ExtractResult,
 } from '../types'
-import { yieldToMain } from '~/utils/async-utils'
 
 const PARALLEL_CHUNK_SIZE = 10
 

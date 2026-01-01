@@ -1,6 +1,6 @@
 import { stat, unlink, writeFile } from 'node:fs/promises'
-import { Database } from 'bun:sqlite'
 
+import { Database } from 'bun:sqlite'
 import {
   closeDatabase,
   getRawDatabase,
@@ -183,8 +183,6 @@ export async function importDatabase(
     try {
       await initializeDatabase()
     } catch (error) {
-      // If reinitialization fails, try to restore from backup
-      console.error('[database] Failed to reinitialize, restoring backup:', error)
       try {
         const backupFile = Bun.file(backupPath)
         if (await backupFile.exists()) {
@@ -192,9 +190,7 @@ export async function importDatabase(
           await writeFile(destPath, backupData)
           await initializeDatabase()
         }
-      } catch (restoreError) {
-        console.error('[database] Failed to restore backup:', restoreError)
-      }
+      } catch (_restoreError) {}
       return {
         success: false,
         message: 'Failed to initialize imported database',

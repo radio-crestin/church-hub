@@ -1,3 +1,4 @@
+import { yieldToMain } from '~/utils/async-utils'
 import {
   convertPptToPptx,
   LibreOfficeNotInstalledError,
@@ -10,8 +11,6 @@ import type {
   ProcessedImport,
   ProcessImportResult,
 } from '../types'
-
-import { yieldToMain } from '~/utils/async-utils'
 
 const PARALLEL_CHUNK_SIZE = 5
 

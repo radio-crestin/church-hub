@@ -12,7 +12,9 @@ interface BibleTranslationsManagerProps {
   portalContainer?: HTMLElement | null
 }
 
-export function BibleTranslationsManager({ portalContainer }: BibleTranslationsManagerProps) {
+export function BibleTranslationsManager({
+  portalContainer,
+}: BibleTranslationsManagerProps) {
   const { t } = useTranslation('settings')
   const { showToast } = useToast()
   const [deleteConfirm, setDeleteConfirm] = useState<{
@@ -39,7 +41,7 @@ export function BibleTranslationsManager({ portalContainer }: BibleTranslationsM
         value: translation.id,
         label: `${translation.name} (${translation.language.toUpperCase()})`,
       })),
-    [translations]
+    [translations],
   )
 
   // Get available translations for secondary (exclude primary)
@@ -51,7 +53,7 @@ export function BibleTranslationsManager({ portalContainer }: BibleTranslationsM
           value: translation.id,
           label: `${translation.name} (${translation.language.toUpperCase()})`,
         })),
-    [translations, primaryTranslation?.id]
+    [translations, primaryTranslation?.id],
   )
 
   const handlePrimaryChange = async (value: number | string | null) => {
@@ -108,12 +110,20 @@ export function BibleTranslationsManager({ portalContainer }: BibleTranslationsM
     } catch {
       showToast(t('sections.bible.toast.error'), 'error')
     } finally {
-      setDeleteConfirm({ isOpen: false, translationId: null, translationName: '' })
+      setDeleteConfirm({
+        isOpen: false,
+        translationId: null,
+        translationName: '',
+      })
     }
   }
 
   const handleDeleteCancel = () => {
-    setDeleteConfirm({ isOpen: false, translationId: null, translationName: '' })
+    setDeleteConfirm({
+      isOpen: false,
+      translationId: null,
+      translationName: '',
+    })
   }
 
   if (isLoading) {
@@ -210,7 +220,8 @@ export function BibleTranslationsManager({ portalContainer }: BibleTranslationsM
           defaultValue: 'Delete Translation',
         })}
         message={t('sections.bible.modals.delete.message', {
-          defaultValue: 'Are you sure you want to delete "{{name}}"? All verses will be permanently removed.',
+          defaultValue:
+            'Are you sure you want to delete "{{name}}"? All verses will be permanently removed.',
           name: deleteConfirm.translationName,
         })}
         confirmLabel={t('sections.bible.modals.delete.confirm', {

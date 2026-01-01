@@ -96,7 +96,9 @@ export function LivePreviewRenderer() {
 
         if (temp.type === 'bible') {
           const data = temp.data
-          const hasSecondary = Boolean(data.secondaryText && data.secondaryBookName)
+          const hasSecondary = Boolean(
+            data.secondaryText && data.secondaryBookName,
+          )
 
           // Build reference: "Genesis (Geneza) 1:1" when secondary exists, otherwise "Genesis 1:1"
           const chapterVerseMatch = data.reference.match(/(\d+:\d+)/)

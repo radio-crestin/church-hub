@@ -66,9 +66,10 @@ export function useSelectedBibleTranslations() {
       }
     } else {
       // Set new primary, keep secondary if exists
-      const newIds = selectedIds.length > 1
-        ? [translationId, selectedIds[1]]
-        : [translationId]
+      const newIds =
+        selectedIds.length > 1
+          ? [translationId, selectedIds[1]]
+          : [translationId]
       // Filter out duplicates
       await saveTranslations.mutateAsync([...new Set(newIds)])
     }

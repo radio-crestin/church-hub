@@ -4,6 +4,10 @@
     "value": "false"
   },
   {
+    "key": "global_keyboard_shortcuts",
+    "value": "{\"actions\":{\"startLive\":{\"shortcuts\":[\"midi:note_on:29\"],\"enabled\":true},\"stopLive\":{\"shortcuts\":[],\"enabled\":true},\"searchSong\":{\"shortcuts\":[],\"enabled\":true},\"searchBible\":{\"shortcuts\":[],\"enabled\":true}},\"version\":1}"
+  },
+  {
     "key": "kiosk_mode_enabled",
     "value": "true"
   },
