@@ -101,7 +101,7 @@
 ~~- make sure that the obs page is reloading with transparent background while the Church Hub software is off~~
 ~~- shortcut-urile nu functioneaza pentru OBS scenes~~
 ~~- deasemenea, cantarile de pe resurse crestine pptx nu repeta refrenul~~
-- fix openapi endpoints and fix authentication layer
+~~- fix openapi endpoints and fix authentication layer~~
 - instaleaza aplicatia pe windows si pe tableta IOS
 - testeaza sa vedem daca suntem pregatiti pentru lansare
 - implementeaza transcription folosind AI
