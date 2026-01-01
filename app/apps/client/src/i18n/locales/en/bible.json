@@ -63,8 +63,10 @@
       "title": "Import Translation",
       "description": "Import a Bible translation from an OSIS XML file.",
       "button": "Select File",
-      "formatTitle": "Required Format: OSIS XML",
+      "formatTitle": "Supported Formats",
       "formatDescription": "The Bible translation must be in OSIS (Open Scripture Information Standard) XML format.",
+      "formatSimple": "Upload Bible files in USFX, OSIS, or Zefania XML format. The format is automatically detected.",
+      "formatExamples": "For format examples, see:",
       "structureTitle": "File Structure Example:",
       "hints": {
         "rootElement": "Root element must be <osis>",
@@ -72,6 +74,15 @@
         "chapterElement": "Chapters use <chapter osisID=\"Gen.1\">",
         "verseElement": "Verses use <verse osisID=\"Gen.1.1\">text</verse>"
       }
+    },
+    "download": {
+      "title": "Download Bible",
+      "description": "Download Bibles from the Holy Bible XML Format repository",
+      "translationsAvailable": "translations available",
+      "fetchError": "Failed to load available Bibles. Please try again later.",
+      "loading": "Loading available Bibles...",
+      "selectBible": "Select a Bible to download...",
+      "button": "Download"
     }
   },
   "translation": {

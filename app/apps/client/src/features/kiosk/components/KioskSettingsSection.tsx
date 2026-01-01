@@ -140,7 +140,7 @@ export function KioskSettingsSection() {
         <div className="flex items-center gap-2 mb-3">
           <Bug className="w-4 h-4 text-yellow-600" />
           <span className="text-sm font-medium text-yellow-600">
-            Debug Tools
+            {t('sections.kiosk.debug.title')}
           </span>
         </div>
 
@@ -152,18 +152,20 @@ export function KioskSettingsSection() {
               size="sm"
               onClick={() => setShowDebugOverlay(true)}
             >
-              Test Screen Dim Overlay
+              {t('sections.kiosk.debug.testOverlay')}
             </Button>
             <p className="text-gray-500 text-xs mt-1">
-              Tap anywhere on the overlay to dismiss it
+              {t('sections.kiosk.debug.tapToDismiss')}
             </p>
           </div>
 
           {/* Brightness Controls */}
           <div className="space-y-2">
             <p className="text-gray-500 text-xs">
-              Brightness Control (iOS only):{' '}
-              {isBrightnessControlSupported() ? 'Supported' : 'Not supported'}
+              {t('sections.kiosk.debug.brightnessControl')}{' '}
+              {isBrightnessControlSupported()
+                ? t('sections.kiosk.debug.supported')
+                : t('sections.kiosk.debug.notSupported')}
             </p>
             <div className="flex flex-wrap gap-2">
               <Button
