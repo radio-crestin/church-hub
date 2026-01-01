@@ -23,6 +23,7 @@ export interface WebSocketDebugInfo {
   lastPresentationUpdatedAt: number | null
   lastSlideIndex: number | null
   staleMessagesBlocked: number
+  missedPongs: number
 }
 
 interface PresentationMessage {
@@ -107,6 +108,7 @@ export function useWebSocket() {
     lastPresentationUpdatedAt: null,
     lastSlideIndex: null,
     staleMessagesBlocked: 0,
+    missedPongs: 0,
   })
 
   const handleMessage = useCallback(
@@ -117,6 +119,7 @@ export function useWebSocket() {
         if (data.type === 'pong') {
           // Reset missed pongs counter on successful pong
           missedPongsRef.current = 0
+          setDebugInfo((prev) => ({ ...prev, missedPongs: 0 }))
           // Clear pong timeout
           if (pongTimeoutRef.current) {
             clearTimeout(pongTimeoutRef.current)
@@ -212,7 +215,11 @@ export function useWebSocket() {
 
       ws.onopen = () => {
         setStatus('connected')
-        setDebugInfo((prev) => ({ ...prev, status: 'connected' }))
+        setDebugInfo((prev) => ({
+          ...prev,
+          status: 'connected',
+          missedPongs: 0,
+        }))
         missedPongsRef.current = 0
 
         // Invalidate presentation state to refetch current state on reconnection
@@ -226,6 +233,10 @@ export function useWebSocket() {
             // Start timeout to wait for pong
             pongTimeoutRef.current = setTimeout(() => {
               missedPongsRef.current++
+              setDebugInfo((prev) => ({
+                ...prev,
+                missedPongs: missedPongsRef.current,
+              }))
               logger.debug(
                 `Missed pong ${missedPongsRef.current}/${MAX_MISSED_PONGS}`,
               )
@@ -333,7 +344,7 @@ export function useWebSocket() {
       isConnectingRef.current = false
 
       setStatus('connected')
-      setDebugInfo((prev) => ({ ...prev, status: 'connected' }))
+      setDebugInfo((prev) => ({ ...prev, status: 'connected', missedPongs: 0 }))
       missedPongsRef.current = 0
 
       // Invalidate presentation state to refetch current state on reconnection
@@ -414,6 +425,10 @@ export function useWebSocket() {
             // Start timeout to wait for pong
             pongTimeoutRef.current = setTimeout(() => {
               missedPongsRef.current++
+              setDebugInfo((prev) => ({
+                ...prev,
+                missedPongs: missedPongsRef.current,
+              }))
               logger.debug(
                 `Missed pong ${missedPongsRef.current}/${MAX_MISSED_PONGS}`,
               )
@@ -425,6 +440,10 @@ export function useWebSocket() {
           } catch {
             // Ping send failed - count as missed pong
             missedPongsRef.current++
+            setDebugInfo((prev) => ({
+              ...prev,
+              missedPongs: missedPongsRef.current,
+            }))
             logger.debug(
               `Ping send failed ${missedPongsRef.current}/${MAX_MISSED_PONGS}`,
             )
