@@ -88,12 +88,12 @@ export function expandSongSlidesWithChoruses(
     }
 
     // If this is a verse and we have a chorus, insert it after
-    // But don't insert if the next slide is already the same chorus
+    // But don't insert if the next slide is a chorus (it replaces the current one)
     if (isVerse && currentChorus) {
       const nextSlide = sortedSlides[i + 1]
-      const nextIsThisChorus = nextSlide && nextSlide.id === currentChorus.id
+      const nextIsChorus = nextSlide?.label?.startsWith('C')
 
-      if (!nextIsThisChorus) {
+      if (!nextIsChorus) {
         expandedSlides.push({
           ...currentChorus,
           originalIndex: originalIndexMap.get(currentChorus.id) ?? 0,
