@@ -104,7 +104,7 @@
 ~~- fix openapi endpoints and fix authentication layer~~
 ~~- instaleaza aplicatia pe windows si pe tableta IOS~~
 ~~- testeaza sa vedem daca suntem pregatiti pentru lansare~~
-- testeaza midi settings configuration si butoanele nu stau aprinse dupa ce am apasat
+~~- testeaza midi settings configuration si butoanele nu stau aprinse dupa ce am apasat~~
 - implementeaza transcription folosind AI
 - 
 --- Later ---
