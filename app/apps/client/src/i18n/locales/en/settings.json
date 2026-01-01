@@ -76,6 +76,14 @@
         "searchBible": {
           "label": "Search Bible",
           "description": "Navigate to Bible and focus the search input"
+        },
+        "nextSlide": {
+          "label": "Next Slide",
+          "description": "Navigate to the next slide in the presentation"
+        },
+        "prevSlide": {
+          "label": "Previous Slide",
+          "description": "Navigate to the previous slide in the presentation"
         }
       },
       "addShortcut": "Add Shortcut",
@@ -505,6 +513,14 @@
       },
       "screenPrefix": "Screen",
       "noKioskScreens": "No kiosk screens configured. Create a screen with type 'Kiosk' in the Screens section above to use as a startup display.",
+      "debug": {
+        "title": "Debug Tools",
+        "testOverlay": "Test Screen Dim Overlay",
+        "tapToDismiss": "Tap anywhere on the overlay to dismiss it",
+        "brightnessControl": "Brightness Control (iOS only):",
+        "supported": "Supported",
+        "notSupported": "Not supported"
+      },
       "toast": {
         "saved": "Kiosk settings saved",
         "error": "Failed to save kiosk settings"

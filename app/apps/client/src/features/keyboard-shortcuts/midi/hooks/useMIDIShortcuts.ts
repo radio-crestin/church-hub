@@ -22,6 +22,8 @@ interface UseMIDIShortcutsOptions {
   onStopLive?: () => void
   onSearchSong?: () => void
   onSearchBible?: () => void
+  onNextSlide?: () => void
+  onPrevSlide?: () => void
   onSceneSwitch?: (sceneName: string) => void
   /** Ref to check if a ShortcutRecorder is currently recording */
   isRecordingRef?: React.RefObject<boolean>
@@ -37,6 +39,8 @@ export function useMIDIShortcuts({
   onStopLive,
   onSearchSong,
   onSearchBible,
+  onNextSlide,
+  onPrevSlide,
   onSceneSwitch,
   isRecordingRef,
 }: UseMIDIShortcutsOptions) {
@@ -48,6 +52,8 @@ export function useMIDIShortcuts({
     onStopLive,
     onSearchSong,
     onSearchBible,
+    onNextSlide,
+    onPrevSlide,
     onSceneSwitch,
   })
 
@@ -57,9 +63,19 @@ export function useMIDIShortcuts({
       onStopLive,
       onSearchSong,
       onSearchBible,
+      onNextSlide,
+      onPrevSlide,
       onSceneSwitch,
     }
-  }, [onStartLive, onStopLive, onSearchSong, onSearchBible, onSceneSwitch])
+  }, [
+    onStartLive,
+    onStopLive,
+    onSearchSong,
+    onSearchBible,
+    onNextSlide,
+    onPrevSlide,
+    onSceneSwitch,
+  ])
 
   // Build a map of MIDI shortcuts to actions (supports multiple actions per shortcut)
   const shortcutMapRef = useRef<
@@ -163,6 +179,12 @@ export function useMIDIShortcuts({
               break
             case 'searchBible':
               handlersRef.current.onSearchBible?.()
+              break
+            case 'nextSlide':
+              handlersRef.current.onNextSlide?.()
+              break
+            case 'prevSlide':
+              handlersRef.current.onPrevSlide?.()
               break
           }
         } else if (mapping.type === 'scene') {

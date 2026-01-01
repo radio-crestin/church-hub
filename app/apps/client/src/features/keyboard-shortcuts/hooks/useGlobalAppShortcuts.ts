@@ -18,6 +18,8 @@ interface UseGlobalAppShortcutsOptions {
   onStopLive: () => void
   onSearchSong: () => void
   onSearchBible: () => void
+  onNextSlide: () => void
+  onPrevSlide: () => void
   onSceneSwitch: (sceneName: string) => void
   /** Ref to check if a ShortcutRecorder is currently recording */
   isRecordingRef?: React.RefObject<boolean>
@@ -30,6 +32,8 @@ export function useGlobalAppShortcuts({
   onStopLive,
   onSearchSong,
   onSearchBible,
+  onNextSlide,
+  onPrevSlide,
   onSceneSwitch,
   isRecordingRef,
 }: UseGlobalAppShortcutsOptions) {
@@ -39,6 +43,8 @@ export function useGlobalAppShortcuts({
     onStopLive,
     onSearchSong,
     onSearchBible,
+    onNextSlide,
+    onPrevSlide,
     onSceneSwitch,
   })
 
@@ -49,9 +55,19 @@ export function useGlobalAppShortcuts({
       onStopLive,
       onSearchSong,
       onSearchBible,
+      onNextSlide,
+      onPrevSlide,
       onSceneSwitch,
     }
-  }, [onStartLive, onStopLive, onSearchSong, onSearchBible, onSceneSwitch])
+  }, [
+    onStartLive,
+    onStopLive,
+    onSearchSong,
+    onSearchBible,
+    onNextSlide,
+    onPrevSlide,
+    onSceneSwitch,
+  ])
 
   // Use JSON stringified config as dependency to avoid object reference issues
   const shortcutsJson = JSON.stringify(shortcuts)
@@ -77,6 +93,8 @@ export function useGlobalAppShortcuts({
           stopLive: () => handlersRef.current.onStopLive(),
           searchSong: () => handlersRef.current.onSearchSong(),
           searchBible: () => handlersRef.current.onSearchBible(),
+          nextSlide: () => handlersRef.current.onNextSlide(),
+          prevSlide: () => handlersRef.current.onPrevSlide(),
         }
 
         if (config.actions) {
