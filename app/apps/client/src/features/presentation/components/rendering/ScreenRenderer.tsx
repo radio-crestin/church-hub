@@ -31,6 +31,9 @@ const fetchFn = isTauri() && isMobile() ? tauriFetch : window.fetch.bind(window)
 // Extra buffer time after animation completes before transitioning to empty state (ms)
 const EXIT_ANIMATION_BUFFER = 100
 
+// Number of missed pings before hiding content on disconnection
+const DISCONNECT_HIDE_THRESHOLD = 5
+
 // Get headers with auth token for mobile
 function getHeaders(): Record<string, string> {
   const headers: Record<string, string> = {
@@ -50,7 +53,7 @@ interface ScreenRendererProps {
 }
 
 export function ScreenRenderer({ screenId }: ScreenRendererProps) {
-  useWebSocket()
+  const { debugInfo: wsDebugInfo } = useWebSocket()
   const navigate = useNavigate()
 
   const { data: presentationState } = usePresentationState()
@@ -800,14 +803,23 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
 
   const hasContent = contentData !== null
 
-  // Visibility is false when hidden or during exit animation (triggers exit animation in ScreenContent)
+  // Check if we should hide content due to disconnection (5+ missed pings)
+  const isDisconnectedAndHidden =
+    wsDebugInfo.missedPongs >= DISCONNECT_HIDE_THRESHOLD
+
+  // Visibility is false when hidden, during exit animation, or disconnected with too many missed pings
   // During exit animation, content is still rendered but animating out
   // After animation completes, contentData becomes null
   const isVisible =
-    hasContent && !presentationState?.isHidden && !isExitAnimating
+    hasContent &&
+    !presentationState?.isHidden &&
+    !isExitAnimating &&
+    !isDisconnectedAndHidden
 
   // Get background from screen config for fullscreen display
-  const config = screen.contentConfigs[contentType]
+  // When disconnected and hidden, use empty state background
+  const effectiveContentType = isDisconnectedAndHidden ? 'empty' : contentType
+  const config = screen.contentConfigs[effectiveContentType]
   const bg = config?.background || screen.contentConfigs.empty?.background
 
   // On mobile, use safe area wrapper to avoid content going behind status bar
