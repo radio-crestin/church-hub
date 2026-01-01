@@ -9,6 +9,11 @@ export {
   reorderCategories,
   upsertCategory,
 } from './categories'
+// Presentation Order
+export {
+  generatePresentationOrderFromLabels,
+  processSlidesPresentationOrder,
+} from './presentation-order'
 // Search
 export {
   batchUpdateSearchIndex,
