@@ -76,6 +76,14 @@
         "searchBible": {
           "label": "Caută în Biblie",
           "description": "Navighează la Biblie și focusează câmpul de căutare"
+        },
+        "nextSlide": {
+          "label": "Slide Următor",
+          "description": "Navighează la slide-ul următor din prezentare"
+        },
+        "prevSlide": {
+          "label": "Slide Anterior",
+          "description": "Navighează la slide-ul anterior din prezentare"
         }
       },
       "addShortcut": "Adaugă Scurtătură",
@@ -506,6 +514,14 @@
       },
       "screenPrefix": "Ecran",
       "noKioskScreens": "Niciun ecran kiosk configurat. Creează un ecran de tip 'Kiosk' în secțiunea Ecrane de mai sus pentru a-l folosi ca afișaj de pornire.",
+      "debug": {
+        "title": "Instrumente de Depanare",
+        "testOverlay": "Testează Suprapunerea de Estompare",
+        "tapToDismiss": "Atinge oriunde pe suprapunere pentru a o închide",
+        "brightnessControl": "Control Luminozitate (doar iOS):",
+        "supported": "Suportat",
+        "notSupported": "Nesuportat"
+      },
       "toast": {
         "saved": "Setările kiosk au fost salvate",
         "error": "Nu s-au putut salva setările kiosk"

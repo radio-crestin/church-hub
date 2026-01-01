@@ -2,6 +2,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 
 import { useOBSScenes, useStreaming } from '~/features/livestream/hooks'
+import { useNavigateQueueSlide } from '~/features/presentation/hooks'
 import { createLogger } from '~/utils/logger'
 import { useShortcutRecording } from '../context'
 import { useAppShortcuts, useGlobalAppShortcuts } from '../hooks'
@@ -16,6 +17,7 @@ export function GlobalAppShortcutManager() {
     useStreaming()
   const { scenes, switchScene, currentScene } = useOBSScenes()
   const { isRecordingRef } = useShortcutRecording()
+  const navigateQueueSlide = useNavigateQueueSlide()
 
   // Synchronous guards to prevent multiple rapid triggers (React state can be stale)
   const isStartOperationRef = useRef(false)
@@ -108,6 +110,16 @@ export function GlobalAppShortcutManager() {
     navigate({ to: '/bible/' })
   }, [navigate])
 
+  const handleNextSlide = useCallback(() => {
+    logger.debug('Navigating to next slide via shortcut')
+    navigateQueueSlide.mutate('next')
+  }, [navigateQueueSlide])
+
+  const handlePrevSlide = useCallback(() => {
+    logger.debug('Navigating to previous slide via shortcut')
+    navigateQueueSlide.mutate('prev')
+  }, [navigateQueueSlide])
+
   const handleSceneSwitch = useCallback(
     (sceneName: string) => {
       logger.debug(`Switching to scene: ${sceneName}`)
@@ -124,6 +136,8 @@ export function GlobalAppShortcutManager() {
     onStopLive: handleStopLive,
     onSearchSong: handleSearchSong,
     onSearchBible: handleSearchBible,
+    onNextSlide: handleNextSlide,
+    onPrevSlide: handlePrevSlide,
     onSceneSwitch: handleSceneSwitch,
     isRecordingRef,
   })
@@ -136,6 +150,8 @@ export function GlobalAppShortcutManager() {
     onStopLive: handleStopLive,
     onSearchSong: handleSearchSong,
     onSearchBible: handleSearchBible,
+    onNextSlide: handleNextSlide,
+    onPrevSlide: handlePrevSlide,
     onSceneSwitch: handleSceneSwitch,
     isRecordingRef,
   })

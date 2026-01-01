@@ -1,4 +1,12 @@
-import { BookOpen, Keyboard, Music, Play, Square } from 'lucide-react'
+import {
+  BookOpen,
+  ChevronLeft,
+  ChevronRight,
+  Keyboard,
+  Music,
+  Play,
+  Square,
+} from 'lucide-react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -37,6 +45,18 @@ const SHORTCUT_ACTIONS: ShortcutActionMeta[] = [
     labelKey: 'sections.shortcuts.actions.searchBible.label',
     descriptionKey: 'sections.shortcuts.actions.searchBible.description',
     icon: BookOpen,
+  },
+  {
+    id: 'nextSlide',
+    labelKey: 'sections.shortcuts.actions.nextSlide.label',
+    descriptionKey: 'sections.shortcuts.actions.nextSlide.description',
+    icon: ChevronRight,
+  },
+  {
+    id: 'prevSlide',
+    labelKey: 'sections.shortcuts.actions.prevSlide.label',
+    descriptionKey: 'sections.shortcuts.actions.prevSlide.description',
+    icon: ChevronLeft,
   },
 ]
 

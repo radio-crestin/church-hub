@@ -7,6 +7,8 @@ export type GlobalShortcutActionId =
   | 'stopLive'
   | 'searchSong'
   | 'searchBible'
+  | 'nextSlide'
+  | 'prevSlide'
 
 export interface ShortcutActionConfig {
   shortcuts: string[]
@@ -38,6 +40,8 @@ export const DEFAULT_SHORTCUTS_CONFIG: GlobalShortcutsConfig = {
     stopLive: { shortcuts: [], enabled: true },
     searchSong: { shortcuts: [], enabled: true },
     searchBible: { shortcuts: [], enabled: true },
+    nextSlide: { shortcuts: [], enabled: true },
+    prevSlide: { shortcuts: [], enabled: true },
   },
   version: 1,
 }
