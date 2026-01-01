@@ -107,20 +107,14 @@ export function BibleDownloadSection({
         <div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
             <Globe className="w-5 h-5" />
-            {t('settings.download.title', { defaultValue: 'Download Bible' })}
+            {t('settings.download.title')}
           </h3>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            {t('settings.download.description', {
-              defaultValue:
-                'Download Bibles from the Holy Bible XML Format repository',
-            })}
+            {t('settings.download.description')}
             {biblesData && (
               <span className="ml-1 text-indigo-600 dark:text-indigo-400">
                 ({biblesData.metadata.totalTranslations}{' '}
-                {t('settings.download.translationsAvailable', {
-                  defaultValue: 'translations available',
-                })}
-                )
+                {t('settings.download.translationsAvailable')})
               </span>
             )}
           </p>
@@ -130,12 +124,7 @@ export function BibleDownloadSection({
       {biblesError ? (
         <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300">
           <AlertCircle className="w-5 h-5 flex-shrink-0" />
-          <p className="text-sm">
-            {t('settings.download.fetchError', {
-              defaultValue:
-                'Failed to load available Bibles. Please try again later.',
-            })}
-          </p>
+          <p className="text-sm">{t('settings.download.fetchError')}</p>
         </div>
       ) : (
         <>
@@ -147,12 +136,8 @@ export function BibleDownloadSection({
                 onChange={handleBibleSelect}
                 placeholder={
                   isLoadingBibles
-                    ? t('settings.download.loading', {
-                        defaultValue: 'Loading available Bibles...',
-                      })
-                    : t('settings.download.selectBible', {
-                        defaultValue: 'Select a Bible to download...',
-                      })
+                    ? t('settings.download.loading')
+                    : t('settings.download.selectBible')
                 }
                 disabled={isLoading || isLoadingBibles}
                 allowClear
@@ -171,7 +156,7 @@ export function BibleDownloadSection({
               ) : (
                 <Download className="w-4 h-4" />
               )}
-              {t('settings.download.button', { defaultValue: 'Download' })}
+              {t('settings.download.button')}
             </button>
           </div>
 

@@ -63,8 +63,10 @@
       "title": "Importa Traducere",
       "description": "Importa o traducere a Bibliei dintr-un fisier OSIS XML.",
       "button": "Selecteaza Fisier",
-      "formatTitle": "Format Necesar: OSIS XML",
+      "formatTitle": "Formate Acceptate",
       "formatDescription": "Traducerea Bibliei trebuie sa fie in format OSIS (Open Scripture Information Standard) XML.",
+      "formatSimple": "Încarcă fișiere Biblie în format USFX, OSIS sau Zefania XML. Formatul este detectat automat.",
+      "formatExamples": "Pentru exemple de format, vezi:",
       "structureTitle": "Exemplu Structura Fisier:",
       "hints": {
         "rootElement": "Elementul radacina trebuie sa fie <osis>",
@@ -72,6 +74,15 @@
         "chapterElement": "Capitolele folosesc <chapter osisID=\"Gen.1\">",
         "verseElement": "Versetele folosesc <verse osisID=\"Gen.1.1\">text</verse>"
       }
+    },
+    "download": {
+      "title": "Descarcă Biblie",
+      "description": "Descarcă Biblii din depozitul Holy Bible XML Format",
+      "translationsAvailable": "traduceri disponibile",
+      "fetchError": "Nu s-au putut încărca Bibliile disponibile. Încearcă din nou mai târziu.",
+      "loading": "Se încarcă Bibliile disponibile...",
+      "selectBible": "Selectează o Biblie pentru descărcare...",
+      "button": "Descarcă"
     }
   },
   "translation": {
