@@ -1,7 +1,8 @@
 import { Loader2 } from 'lucide-react'
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 
 import type { SongSlide, SongWithSlides } from '../types'
+import { expandSongSlidesWithChoruses } from '../utils/expandSongSlides'
 
 interface SongSlidesPanelProps {
   song: SongWithSlides
@@ -72,8 +73,10 @@ export function SongSlidesPanel({
     )
   }
 
-  const sortedSlides = [...song.slides].sort(
-    (a, b) => a.sortOrder - b.sortOrder,
+  // Expand slides with dynamic chorus insertion (V1 C1 V2 C1 V3 C2...)
+  const expandedSlides = useMemo(
+    () => expandSongSlidesWithChoruses(song.slides),
+    [song.slides],
   )
 
   return (
@@ -82,7 +85,7 @@ export function SongSlidesPanel({
         ref={containerRef}
         className="flex-1 min-h-0 space-y-1 overflow-hidden lg:overflow-y-auto px-0.5 py-0.5"
       >
-        {sortedSlides.map((slide, index) => {
+        {expandedSlides.map((slide, index) => {
           const isPresented = index === presentedSlideIndex
           const slideNumber = index + 1
 

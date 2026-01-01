@@ -1,5 +1,6 @@
 import { eq, sql } from 'drizzle-orm'
 
+import { expandSongSlidesWithChoruses } from './expand-song-slides'
 import type {
   PresentationState,
   PresentTemporaryBibleInput,
@@ -556,7 +557,8 @@ export function presentTemporaryBible(
         // Secondary version (optional)
         secondaryText: input.secondaryText,
         secondaryBookName: input.secondaryBookName,
-        secondaryTranslationAbbreviation: input.secondaryTranslationAbbreviation,
+        secondaryTranslationAbbreviation:
+          input.secondaryTranslationAbbreviation,
       },
     }
 
@@ -602,12 +604,13 @@ export function presentTemporarySong(
       return getPresentationState()
     }
 
-    // Fetch song slides
+    // Fetch song slides with labels for dynamic chorus insertion
     const slides = db
       .select({
         id: songSlides.id,
         content: songSlides.content,
         sortOrder: songSlides.sortOrder,
+        label: songSlides.label,
       })
       .from(songSlides)
       .where(eq(songSlides.songId, input.songId))
@@ -619,10 +622,13 @@ export function presentTemporarySong(
       return getPresentationState()
     }
 
+    // Expand slides with dynamic chorus insertion (V1 C1 V2 C1 V3 C2...)
+    const expandedSlides = expandSongSlidesWithChoruses(slides)
+
     // Determine starting slide index (clamp to valid range)
     const startIndex =
       input.slideIndex !== undefined
-        ? Math.max(0, Math.min(input.slideIndex, slides.length - 1))
+        ? Math.max(0, Math.min(input.slideIndex, expandedSlides.length - 1))
         : 0
 
     const temporaryContent: TemporaryContent = {
@@ -630,10 +636,10 @@ export function presentTemporarySong(
       data: {
         songId: song.id,
         title: song.title,
-        slides: slides.map((s) => ({
+        slides: expandedSlides.map((s, idx) => ({
           id: s.id,
           content: s.content,
-          sortOrder: s.sortOrder,
+          sortOrder: idx, // Use expanded index as sortOrder
         })),
         currentSlideIndex: startIndex,
       },

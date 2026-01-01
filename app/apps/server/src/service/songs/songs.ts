@@ -1,7 +1,6 @@
 import { asc, eq, inArray } from 'drizzle-orm'
 
 import { getCategoryById } from './categories'
-import { processSlidesPresentationOrder } from './presentation-order'
 import { sanitizeSongTitle } from './sanitizeTitle'
 import { getSlidesBySongId } from './song-slides'
 import type {
@@ -505,11 +504,6 @@ export function batchImportSongs(
           continue
         }
 
-        // Process slides to assign labels and generate presentation order if missing
-        const slidesInput = input.slides || []
-        const { slides: processedSlides, presentationOrder } =
-          processSlidesPresentationOrder(slidesInput, input.presentationOrder)
-
         const result = upsertSongStmt.get(
           title,
           categoryId,
@@ -524,14 +518,14 @@ export function batchImportSongs(
           input.altTheme ?? null,
           input.hymnNumber ?? null,
           input.keyLine ?? null,
-          presentationOrder,
+          input.presentationOrder ?? null,
           now,
           now,
         ) as { id: number } | null
 
         if (result) {
           songIds.push(result.id)
-          songsWithIds.push({ songId: result.id, slides: processedSlides })
+          songsWithIds.push({ songId: result.id, slides: input.slides || [] })
           successCount++
         } else {
           // DO NOTHING was triggered (duplicate without overwrite)
