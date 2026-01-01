@@ -263,7 +263,13 @@ export function useWebSocket() {
 
       ws.onerror = () => {
         setStatus('error')
-        setDebugInfo((prev) => ({ ...prev, status: 'error' }))
+        // Increment missed pongs on connection error (treat as failed ping)
+        missedPongsRef.current++
+        setDebugInfo((prev) => ({
+          ...prev,
+          status: 'error',
+          missedPongs: missedPongsRef.current,
+        }))
 
         if (!reconnectTimeoutRef.current) {
           reconnectTimeoutRef.current = setTimeout(() => {
@@ -297,7 +303,13 @@ export function useWebSocket() {
       }
     } catch {
       setStatus('error')
-      setDebugInfo((prev) => ({ ...prev, status: 'error' }))
+      // Increment missed pongs on connection failure (treat as failed ping)
+      missedPongsRef.current++
+      setDebugInfo((prev) => ({
+        ...prev,
+        status: 'error',
+        missedPongs: missedPongsRef.current,
+      }))
 
       reconnectTimeoutRef.current = setTimeout(() => {
         connectNative()
@@ -457,7 +469,13 @@ export function useWebSocket() {
     } catch {
       isConnectingRef.current = false
       setStatus('error')
-      setDebugInfo((prev) => ({ ...prev, status: 'error' }))
+      // Increment missed pongs on connection failure (treat as failed ping)
+      missedPongsRef.current++
+      setDebugInfo((prev) => ({
+        ...prev,
+        status: 'error',
+        missedPongs: missedPongsRef.current,
+      }))
 
       // Retry connection
       reconnectTimeoutRef.current = setTimeout(() => {
