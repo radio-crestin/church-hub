@@ -19,7 +19,7 @@ export function KioskScreenDimManager() {
   const [isConnectionModalOpen, setIsConnectionModalOpen] = useState(false)
 
   const kioskEnabled = kioskSettings?.enabled ?? false
-  const isDisconnected = wsStatus === 'disconnected' || wsStatus === 'error'
+  const isNotConnected = wsStatus !== 'connected'
 
   const { isOverlayVisible, dismissOverlay } = useKioskScreenDim({
     kioskEnabled,
@@ -27,8 +27,8 @@ export function KioskScreenDimManager() {
     disconnectCount: debugInfo.disconnectCount,
   })
 
-  // Show disconnection message immediately when disconnected in kiosk mode
-  const showDisconnectionMessage = kioskEnabled && isDisconnected
+  // Show disconnection message while not connected (including during reconnection attempts)
+  const showDisconnectionMessage = kioskEnabled && isNotConnected
 
   const handleDisconnectionClick = () => {
     setIsConnectionModalOpen(true)
