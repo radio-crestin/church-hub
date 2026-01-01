@@ -40,7 +40,12 @@ export function ShortcutRecorder({
 
   // Subscribe to MIDI messages when recording
   useEffect(() => {
-    if (!isRecording || !midi || !midi.isEnabled) return
+    if (!isRecording || !midi) return
+
+    // Request MIDI access to ensure WebSocket is connected for recording
+    // This works even if MIDI is not globally enabled - we still want to capture shortcuts
+    midi.requestAccess()
+
     const unsubscribe = midi.subscribe((message) => {
       // Only capture note_on or control_change with value > 0
       if (message.type === 'note_off') return
