@@ -38,7 +38,6 @@ export function useKioskScreenDim({
   const [isOverlayVisible, setIsOverlayVisible] = useState(false)
   const [dismissedByTouch, setDismissedByTouch] = useState(false)
   const dimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const prevWsStatusRef = useRef<WebSocketStatus>(wsStatus)
 
   // Clear the dim timer
   const clearDimTimer = useCallback(() => {
@@ -50,34 +49,31 @@ export function useKioskScreenDim({
   }, [])
 
   // Handle reconnection - restore brightness and hide overlay
+  // When connected and overlay is visible (or timer is pending), restore screen
   useEffect(() => {
-    const wasDisconnected =
-      prevWsStatusRef.current === 'disconnected' ||
-      prevWsStatusRef.current === 'error'
-    const isNowConnected = wsStatus === 'connected'
+    if (wsStatus !== 'connected') {
+      return
+    }
 
-    // Update previous status
-    prevWsStatusRef.current = wsStatus
-
-    // On reconnection: always restore state (even after 5+ disconnects and screen blank)
-    if (wasDisconnected && isNowConnected) {
-      logger.info('WebSocket reconnected, restoring screen brightness and hiding overlay')
-
-      // Clear any pending timer
-      clearDimTimer()
-
-      // Always try to restore brightness on reconnection
+    // If overlay is visible, restore screen (same as tap to dismiss)
+    if (isOverlayVisible) {
+      logger.info(
+        'WebSocket reconnected while screen blanked, restoring brightness and hiding overlay',
+      )
       restoreBrightness().then((success) => {
         logger.info(`Brightness restore: ${success ? 'success' : 'skipped'}`)
       })
-
-      // Hide overlay
       setIsOverlayVisible(false)
-
-      // Reset touch dismissal for next disconnect cycle
       setDismissedByTouch(false)
     }
-  }, [wsStatus, clearDimTimer])
+
+    // If timer is pending, clear it
+    if (dimTimerRef.current) {
+      logger.info('WebSocket reconnected, clearing pending dim timer')
+      clearDimTimer()
+      setDismissedByTouch(false)
+    }
+  }, [wsStatus, isOverlayVisible, clearDimTimer])
 
   // Handle disconnection - start dim timer or immediately dim after 5 disconnects
   useEffect(() => {
