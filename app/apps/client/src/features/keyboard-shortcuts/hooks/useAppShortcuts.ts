@@ -37,7 +37,16 @@ export function useAppShortcuts() {
   const shortcuts = useMemo<GlobalShortcutsConfig>(() => {
     if (!setting?.value) return DEFAULT_SHORTCUTS_CONFIG
     try {
-      return JSON.parse(setting.value) as GlobalShortcutsConfig
+      const saved = JSON.parse(setting.value) as GlobalShortcutsConfig
+      // Merge with defaults to ensure new actions are always present
+      return {
+        ...DEFAULT_SHORTCUTS_CONFIG,
+        ...saved,
+        actions: {
+          ...DEFAULT_SHORTCUTS_CONFIG.actions,
+          ...saved.actions,
+        },
+      }
     } catch {
       return DEFAULT_SHORTCUTS_CONFIG
     }
