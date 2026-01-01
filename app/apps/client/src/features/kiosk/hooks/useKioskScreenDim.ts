@@ -59,16 +59,16 @@ export function useKioskScreenDim({
     // Update previous status
     prevWsStatusRef.current = wsStatus
 
-    // On reconnection: always restore state
+    // On reconnection: always restore state (even after 5+ disconnects and screen blank)
     if (wasDisconnected && isNowConnected) {
-      logger.debug('WebSocket reconnected, restoring state')
+      logger.info('WebSocket reconnected, restoring screen brightness and hiding overlay')
 
       // Clear any pending timer
       clearDimTimer()
 
       // Always try to restore brightness on reconnection
       restoreBrightness().then((success) => {
-        logger.debug(`Brightness restore: ${success ? 'success' : 'skipped'}`)
+        logger.info(`Brightness restore: ${success ? 'success' : 'skipped'}`)
       })
 
       // Hide overlay
@@ -89,14 +89,15 @@ export function useKioskScreenDim({
     }
 
     // After 5 disconnects, immediately blank the screen (regardless of touch dismissal)
+    // Reconnection will continue and restore screen when successful
     if (disconnectCount >= MAX_DISCONNECTS_BEFORE_BLANK) {
-      logger.debug(
-        `${disconnectCount} disconnects reached, immediately dimming screen`,
+      logger.info(
+        `${disconnectCount} disconnects reached, immediately blanking screen (will restore on reconnect)`,
       )
       clearDimTimer()
       setIsOverlayVisible(true)
       dimScreen().then((success) => {
-        logger.debug(`Screen dim: ${success ? 'success' : 'failed'}`)
+        logger.info(`Screen dim: ${success ? 'success' : 'failed'}`)
       })
       return
     }
