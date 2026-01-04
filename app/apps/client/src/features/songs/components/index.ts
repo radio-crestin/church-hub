@@ -1,5 +1,6 @@
 export { CategoryManager } from './CategoryManager'
 export { CategoryPicker } from './CategoryPicker'
+export { DuplicateSongModal } from './DuplicateSongModal'
 export { ImportTextModal } from './ImportTextModal'
 export { SongCard } from './SongCard'
 export { SongControlPanel } from './SongControlPanel'

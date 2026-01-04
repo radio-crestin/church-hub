@@ -144,6 +144,35 @@ export function getSongById(id: number): Song | null {
 }
 
 /**
+ * Gets a song by title (case-insensitive)
+ * Used for duplicate detection
+ */
+export function getSongByTitle(title: string): Song | null {
+  try {
+    const sanitizedTitle = sanitizeSongTitle(title)
+    log('debug', `Getting song by title: ${sanitizedTitle}`)
+
+    const db = getDatabase()
+    // SQLite title column uses COLLATE NOCASE for case-insensitive comparison
+    const record = db
+      .select()
+      .from(songs)
+      .where(eq(songs.title, sanitizedTitle))
+      .get()
+
+    if (!record) {
+      log('debug', `Song not found with title: ${sanitizedTitle}`)
+      return null
+    }
+
+    return toSong(record)
+  } catch (error) {
+    log('error', `Failed to get song by title: ${error}`)
+    return null
+  }
+}
+
+/**
  * Gets a song by ID with all its slides and category
  * Applies presentation transformations:
  * - Adds "Amin!" to the last slide

@@ -35,6 +35,7 @@ export {
   getAllSongs,
   getAllSongsWithSlides,
   getSongById,
+  getSongByTitle,
   getSongWithSlides,
   upsertSong,
 } from './songs'
