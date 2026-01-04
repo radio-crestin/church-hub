@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '../../../ui/button/Button'
-import { usePastBroadcasts } from '../hooks'
+import { usePastBroadcasts, useStreamKeys } from '../hooks'
 import type { PastBroadcast } from '../types'
 
 interface BroadcastTemplateSelectorProps {
@@ -40,6 +40,13 @@ export function BroadcastTemplateSelector({
   const { t } = useTranslation('livestream')
   const { broadcasts, isLoading, refetch, isRefetching } =
     usePastBroadcasts(enabled)
+  const { data: streamKeys } = useStreamKeys()
+
+  const getStreamKeyName = (streamKeyId?: string) => {
+    if (!streamKeyId || !streamKeys) return null
+    const key = streamKeys.find((k) => k.id === streamKeyId)
+    return key?.name || null
+  }
 
   if (isLoading) {
     return (
@@ -106,10 +113,17 @@ export function BroadcastTemplateSelector({
                       {broadcast.description}
                     </p>
                   )}
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                    {t('youtube.setup.completedAt')}{' '}
-                    {formatDate(broadcast.completedAt)}
-                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <p className="text-xs text-gray-400 dark:text-gray-500">
+                      {t('youtube.setup.completedAt')}{' '}
+                      {formatDate(broadcast.completedAt)}
+                    </p>
+                    {getStreamKeyName(broadcast.boundStreamId) && (
+                      <span className="text-xs px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                        {getStreamKeyName(broadcast.boundStreamId)}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <span
                   className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${getPrivacyBadgeClass(broadcast.privacyStatus)}`}

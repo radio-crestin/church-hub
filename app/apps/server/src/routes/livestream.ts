@@ -985,7 +985,7 @@ export async function handleLivestreamRoutes(
       const obsStatus = obsConnection.getConnectionStatus()
 
       // Step 1: Switch to start scene if configured (only if OBS is connected)
-      if (youtubeConfig.startSceneName && obsStatus.isConnected) {
+      if (youtubeConfig.startSceneName && obsStatus.connected) {
         await switchScene(youtubeConfig.startSceneName)
         broadcastOBSCurrentScene(youtubeConfig.startSceneName)
       }
@@ -1013,7 +1013,9 @@ export async function handleLivestreamRoutes(
       }
 
       // Step 4: Start OBS streaming (only if OBS is connected)
-      if (obsStatus.isConnected) {
+      // Re-fetch connection status to get the latest state
+      const currentObsStatus = obsConnection.getConnectionStatus()
+      if (currentObsStatus.connected) {
         broadcastStreamStartProgress({
           step: 'starting_obs',
           progress: 90,
@@ -1038,7 +1040,15 @@ export async function handleLivestreamRoutes(
           throw obsError
         }
       } else {
-        log('info', 'OBS not connected, skipping OBS streaming start')
+        // OBS not connected - broadcast error
+        broadcastStreamStartProgress({
+          step: 'error',
+          progress: 0,
+          message: 'OBS is not connected',
+          error: 'Please connect to OBS first',
+          updatedAt: Date.now(),
+        })
+        throw new Error('OBS not connected')
       }
 
       // Step 5: Complete
@@ -1110,7 +1120,7 @@ export async function handleLivestreamRoutes(
 
       // Only stop OBS streaming if OBS is connected
       const obsStatus = obsConnection.getConnectionStatus()
-      if (obsStatus.isConnected) {
+      if (obsStatus.connected) {
         await stopStreaming()
       }
 
@@ -1119,7 +1129,7 @@ export async function handleLivestreamRoutes(
       }
 
       const youtubeConfig = await getYouTubeConfig()
-      if (youtubeConfig.stopSceneName && obsStatus.isConnected) {
+      if (youtubeConfig.stopSceneName && obsStatus.connected) {
         await switchScene(youtubeConfig.stopSceneName)
         broadcastOBSCurrentScene(youtubeConfig.stopSceneName)
       }

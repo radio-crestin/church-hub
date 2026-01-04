@@ -97,6 +97,7 @@ export interface PastBroadcast {
   description: string
   privacyStatus: 'public' | 'unlisted' | 'private'
   completedAt: Date
+  boundStreamId?: string
 }
 
 export interface BroadcastInfo {

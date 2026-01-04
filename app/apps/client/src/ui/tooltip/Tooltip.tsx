@@ -4,6 +4,7 @@ interface TooltipProps {
   content: string
   children: ReactNode
   position?: 'top' | 'bottom' | 'left' | 'right'
+  className?: string
 }
 
 const positionStyles = {
@@ -22,12 +23,17 @@ const arrowStyles = {
     'right-full top-1/2 -translate-y-1/2 border-r-gray-900 dark:border-r-gray-700 border-y-transparent border-l-transparent',
 }
 
-export function Tooltip({ content, children, position = 'top' }: TooltipProps) {
+export function Tooltip({
+  content,
+  children,
+  position = 'top',
+  className,
+}: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false)
 
   return (
     <div
-      className="relative inline-flex"
+      className={`relative inline-flex ${className ?? ''}`}
       onMouseEnter={() => setIsVisible(true)}
       onMouseLeave={() => setIsVisible(false)}
     >

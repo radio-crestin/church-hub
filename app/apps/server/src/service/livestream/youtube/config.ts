@@ -4,6 +4,11 @@ import { getDatabase } from '../../../db'
 import { youtubeConfig } from '../../../db/schema'
 import type { YouTubeConfig } from '../types'
 
+function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
+  // biome-ignore lint/suspicious/noConsole: logging utility
+  console.log(`[${level.toUpperCase()}] [youtube-config] ${message}`)
+}
+
 export async function getYouTubeConfig(): Promise<YouTubeConfig> {
   const db = getDatabase()
   const configs = await db.select().from(youtubeConfig).limit(1)
@@ -56,6 +61,10 @@ export async function getYouTubeConfig(): Promise<YouTubeConfig> {
 export async function updateYouTubeConfig(
   data: Partial<Omit<YouTubeConfig, 'id'>>,
 ): Promise<YouTubeConfig> {
+  log('info', `Updating config: ${JSON.stringify(data)}`)
+  if (data.streamKeyId !== undefined) {
+    log('info', `Setting streamKeyId to: ${data.streamKeyId || 'null/empty'}`)
+  }
   const db = getDatabase()
   const current = await getYouTubeConfig()
 
@@ -87,6 +96,8 @@ export async function updateYouTubeConfig(
     })
     .where(eq(youtubeConfig.id, current.id!))
     .returning()
+
+  log('info', `Config updated. streamKeyId is now: ${updated.streamKeyId || 'NOT SET'}`)
 
   return {
     id: updated.id,

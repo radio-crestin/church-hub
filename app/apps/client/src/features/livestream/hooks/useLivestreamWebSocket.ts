@@ -171,12 +171,10 @@ export function useLivestreamWebSocket() {
             )
             setStreamStartProgress(data.payload)
 
-            if (
-              data.payload.step === 'completed' ||
-              data.payload.step === 'error'
-            ) {
+            if (data.payload.step === 'completed') {
               setTimeout(() => setStreamStartProgress(null), 3000)
             }
+            // Error state stays visible until manually cleared via clearStreamStartProgress
           }
         } catch (error) {
           log('error', `Failed to parse message: ${error}`)
@@ -229,6 +227,10 @@ export function useLivestreamWebSocket() {
     }
   }, [])
 
+  const clearStreamStartProgress = useCallback(() => {
+    setStreamStartProgress(null)
+  }, [])
+
   useEffect(() => {
     connect()
 
@@ -237,5 +239,12 @@ export function useLivestreamWebSocket() {
     }
   }, [connect, disconnect])
 
-  return { status, livestreamStatus, streamStartProgress, connect, disconnect }
+  return {
+    status,
+    livestreamStatus,
+    streamStartProgress,
+    clearStreamStartProgress,
+    connect,
+    disconnect,
+  }
 }

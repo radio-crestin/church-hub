@@ -59,17 +59,33 @@ function CheckIcon({ className }: { className?: string }) {
 function StreamStartProgressUI({
   progress,
   t,
+  onRetry,
+  onDismiss,
 }: {
   progress: StreamStartProgress
   t: (key: string) => string
+  onRetry?: () => void
+  onDismiss?: () => void
 }) {
   if (progress.step === 'error') {
     return (
       <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-2">
           <span className="text-sm text-red-600 dark:text-red-400">
             {progress.error || t('errors.startStreamFailed')}
           </span>
+          <div className="flex gap-2 shrink-0">
+            {onRetry && (
+              <Button variant="outline" size="sm" onClick={onRetry}>
+                {t('errors.retry')}
+              </Button>
+            )}
+            {onDismiss && (
+              <Button variant="ghost" size="sm" onClick={onDismiss}>
+                {t('errors.dismiss')}
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     )
@@ -111,6 +127,8 @@ export function BroadcastInfo() {
     isLoadingBroadcast,
     isStopping,
     streamStartProgress,
+    clearStreamStartProgress,
+    start,
     isLive,
   } = useStreaming()
   const { message, fetchMessage, copyMessage, copied, isLoading } =
@@ -123,9 +141,21 @@ export function BroadcastInfo() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeBroadcast?.url])
 
+  const handleRetry = () => {
+    clearStreamStartProgress()
+    start()
+  }
+
   // Show progress during stream start
   if (streamStartProgress && streamStartProgress.step !== 'completed') {
-    return <StreamStartProgressUI progress={streamStartProgress} t={t} />
+    return (
+      <StreamStartProgressUI
+        progress={streamStartProgress}
+        t={t}
+        onRetry={handleRetry}
+        onDismiss={clearStreamStartProgress}
+      />
+    )
   }
 
   if (isLoadingBroadcast) {
@@ -157,28 +187,35 @@ export function BroadcastInfo() {
   return (
     <div className="p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
       <div className="flex items-center gap-3">
-        <div className="relative flex-1 px-3 py-2 pr-10 text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg whitespace-pre-wrap break-words">
-          {displayMessage}
-          <Tooltip
-            content={
-              copied ? t('broadcast.copied') : t('broadcast.copyToClipboard')
-            }
-            position="left"
+        <Tooltip
+          content={
+            copied ? t('broadcast.copied') : t('broadcast.copyToClipboard')
+          }
+          position="top"
+          className="flex-1"
+        >
+          <div
+            className="relative w-full px-3 py-2 pr-10 text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg whitespace-pre-wrap break-words cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            onClick={() => copyMessage(activeBroadcast.url)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                copyMessage(activeBroadcast.url)
+              }
+            }}
           >
-            <button
-              type="button"
-              onClick={() => copyMessage(activeBroadcast.url)}
-              disabled={isLoading}
-              className="absolute right-2 top-2 p-1.5 rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
-            >
+            {displayMessage}
+            <span className="absolute right-2 top-2 p-1.5 text-gray-400">
               {copied ? (
                 <CheckIcon className="w-4 h-4 text-green-500" />
               ) : (
                 <CopyIcon className="w-4 h-4" />
               )}
-            </button>
-          </Tooltip>
-        </div>
+            </span>
+          </div>
+        </Tooltip>
         <div className="flex gap-2 shrink-0">
           <Tooltip content={t('broadcast.watchLive')} position="bottom">
             <Button

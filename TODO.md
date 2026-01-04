@@ -108,7 +108,7 @@
 - implementeaza transcription folosind AI
 - 
 --- Later ---
-- cheia de live nu functioneaza
+~~- cheia de live nu functioneaza~~
 - adauga background la live
 - ceasul si referinta mai mare
 - evidentiaza referinta inline
