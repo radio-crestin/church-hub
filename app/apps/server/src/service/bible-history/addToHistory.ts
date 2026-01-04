@@ -1,3 +1,5 @@
+import { and, eq, sql } from 'drizzle-orm'
+
 import type { AddToHistoryInput, BibleHistoryItem } from './types'
 import { getDatabase } from '../../db'
 import { bibleHistory } from '../../db/schema'
@@ -11,7 +13,7 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
 }
 
 /**
- * Adds a verse to the Bible history
+ * Adds a verse to the Bible history, or updates timestamp if already exists
  */
 export function addToHistory(
   input: AddToHistoryInput,
@@ -21,6 +23,47 @@ export function addToHistory(
 
     const db = getDatabase()
 
+    // Check if verse already exists in history (same verse and translation)
+    const existing = db
+      .select()
+      .from(bibleHistory)
+      .where(
+        and(
+          eq(bibleHistory.verseId, input.verseId),
+          eq(bibleHistory.translationId, input.translationId),
+        ),
+      )
+      .get()
+
+    if (existing) {
+      // Update timestamp to move it to the end of the list
+      const updated = db
+        .update(bibleHistory)
+        .set({ createdAt: sql`(unixepoch())` })
+        .where(eq(bibleHistory.id, existing.id))
+        .returning()
+        .get()
+
+      log('info', `Verse timestamp updated in history: ${updated.id}`)
+
+      return {
+        data: {
+          id: updated.id,
+          verseId: updated.verseId,
+          reference: updated.reference,
+          text: updated.text,
+          translationAbbreviation: updated.translationAbbreviation,
+          bookName: updated.bookName,
+          translationId: updated.translationId,
+          bookId: updated.bookId,
+          chapter: updated.chapter,
+          verse: updated.verse,
+          createdAt: updated.createdAt.getTime(),
+        },
+      }
+    }
+
+    // Insert new entry
     const inserted = db
       .insert(bibleHistory)
       .values({
