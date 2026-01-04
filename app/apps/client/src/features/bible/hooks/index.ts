@@ -7,6 +7,12 @@ export {
   AVAILABLE_BIBLES_QUERY_KEY,
   useAvailableBibles,
 } from './useAvailableBibles'
+export {
+  BIBLE_HISTORY_QUERY_KEY,
+  useAddToHistory,
+  useBibleHistory,
+  useClearHistory,
+} from './useBibleHistory'
 export { useBibleKeyboardShortcuts } from './useBibleKeyboardShortcuts'
 export type {
   BibleNavigationLevel,
