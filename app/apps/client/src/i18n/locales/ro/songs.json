@@ -164,9 +164,7 @@
     "title": "Cântare duplicată găsită",
     "foundMessage": "O cântare cu acest titlu există deja în bibliotecă:",
     "clickToPreview": "Apasă pe titlu pentru a previzualiza cântarea existentă într-o fereastră nouă.",
-    "overwriteExisting": "Înlocuiește cântarea existentă",
-    "overwriteExistingDescription": "Șterge editările curente și actualizează cântarea existentă cu acest conținut. Toate referințele din program vor fi păstrate.",
-    "deleteOther": "Șterge existenta și salvează curentă",
-    "deleteOtherDescription": "Elimină cântarea existentă din bibliotecă și salvează cântarea curentă în loc. Această acțiune nu poate fi anulată."
+    "replaceExisting": "Înlocuiește cântarea existentă",
+    "replaceExistingDescription": "Șterge cântarea existentă și salvează aceasta în loc. Toate referințele din program și coadă vor fi actualizate automat să folosească această cântare."
   }
 }

@@ -68,6 +68,8 @@ export interface UpsertSongInput {
   keyLine?: string | null
   presentationOrder?: string | null
   slides?: SlideInput[]
+  /** When set, replaces the existing song with this ID (updates references and deletes it) */
+  replaceExistingSongId?: number
 }
 
 export interface UpsertSlideInput {

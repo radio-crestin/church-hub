@@ -164,9 +164,7 @@
     "title": "Duplicate Song Found",
     "foundMessage": "A song with this title already exists in the library:",
     "clickToPreview": "Click the title above to preview the existing song in a new window.",
-    "overwriteExisting": "Replace Existing Song",
-    "overwriteExistingDescription": "Delete your current edits and update the existing song with this content. All schedule references will be preserved.",
-    "deleteOther": "Delete Existing & Save Current",
-    "deleteOtherDescription": "Remove the existing song from the library and save your current song instead. This cannot be undone."
+    "replaceExisting": "Replace Existing Song",
+    "replaceExistingDescription": "Delete the existing song and save this one instead. All schedule and queue references will be automatically updated to use this song."
   }
 }
