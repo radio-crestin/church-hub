@@ -108,6 +108,21 @@
 - implementeaza transcription folosind AI
 - 
 --- Later ---
+- cheia de live nu functioneaza
+- adauga background la live
+- ceasul si referinta mai mare
+- evidentiaza referinta inline
+- adauga justify alig
+- search-ul din Biblie nu functioneaza
+- ESC nu functioneaza cand e focusat pe search
+- muta camera tineri mai jos
+- adauga un buton pentru a deschide PPT-ul direct din cantare (ca si backup, optional)
+- adauga un mic istoric in pagina Bibliei
+- midi controller-ul e disabled
+- adauga muzica
+- scade volumul la intro
+- fa fontul maxim mai mic pe Livestream
+- când sunt doar două versuri, nu mai comprima liniile
 - cand se selecteaza primul verset se face un loop ciudat
 - si sunt foarte multi clienti conectati.. 
 - creaza un quickstart guide pentru utilizatori
