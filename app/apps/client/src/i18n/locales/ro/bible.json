@@ -88,5 +88,10 @@
   "translation": {
     "select": "Selecteaza traducerea",
     "loading": "Se incarca traducerile..."
+  },
+  "history": {
+    "title": "Istoric",
+    "empty": "Niciun verset afisat",
+    "clear": "Sterge"
   }
 }
