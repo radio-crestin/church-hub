@@ -57,32 +57,22 @@ export function VersesList({
       presentedVerseNumber,
     )
 
-  // Scroll to the highlighted verse (prioritize presented, then searched)
-  const scrollTargetIndex = presentedIndex ?? searchedIndex
+  // Scroll to the highlighted verse (prioritize searched for navigation, then presented)
+  const scrollTargetIndex = searchedIndex ?? presentedIndex
 
   // Use first verse ID as a stable key to detect when verse content changes
   const versesKey = verses[0]?.id
 
   useEffect(() => {
+    // Skip if no target to scroll to
+    if (scrollTargetIndex === null) return
+
     // Use requestAnimationFrame to ensure DOM is fully painted before scrolling
     const scrollToHighlighted = () => {
       if (highlightedRef.current && containerRef.current) {
-        const container = containerRef.current
-        const element = highlightedRef.current
-        const elementRect = element.getBoundingClientRect()
-        const containerRect = container.getBoundingClientRect()
-
-        // Calculate where the element is relative to the container
-        const elementTop =
-          elementRect.top - containerRect.top + container.scrollTop
-
-        // For first few verses, use natural position (don't scroll above content)
-        // For other verses, position at SCROLL_OFFSET_TOP from container top
-        const targetScrollTop = Math.max(0, elementTop - SCROLL_OFFSET_TOP)
-
-        container.scrollTo({
-          top: targetScrollTop,
+        highlightedRef.current.scrollIntoView({
           behavior: 'smooth',
+          block: 'center',
         })
       }
     }
