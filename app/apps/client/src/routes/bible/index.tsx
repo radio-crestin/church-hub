@@ -1,11 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import {
-  Book,
-  GripHorizontal,
-  GripVertical,
-  Loader2,
-  Settings,
-} from 'lucide-react'
+import { Book, GripVertical, Loader2, Settings } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -64,7 +58,11 @@ function BiblePage() {
   })
   const [rightDividerPosition, setRightDividerPosition] = useState(() => {
     const stored = localStorage.getItem('bible-right-divider')
-    return stored ? Number(stored) : 40
+    return stored ? Number(stored) : 60
+  })
+  const [isHistoryCollapsed, setIsHistoryCollapsed] = useState(() => {
+    const stored = localStorage.getItem('bible-history-collapsed')
+    return stored === 'true'
   })
   const [isLargeScreen, setIsLargeScreen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -660,7 +658,7 @@ function BiblePage() {
   const canNavigateVerses =
     navigation.state.level === 'verses' && verses.length > 0
 
-  // Persist divider positions to localStorage
+  // Persist divider positions and collapse state to localStorage
   useEffect(() => {
     localStorage.setItem('bible-left-divider', String(dividerPosition))
   }, [dividerPosition])
@@ -668,6 +666,14 @@ function BiblePage() {
   useEffect(() => {
     localStorage.setItem('bible-right-divider', String(rightDividerPosition))
   }, [rightDividerPosition])
+
+  useEffect(() => {
+    localStorage.setItem('bible-history-collapsed', String(isHistoryCollapsed))
+  }, [isHistoryCollapsed])
+
+  const handleToggleHistory = useCallback(() => {
+    setIsHistoryCollapsed((prev) => !prev)
+  }, [])
 
   // Left divider drag handlers (horizontal - between navigation and right panel)
   const handleDividerMouseDown = useCallback((e: React.MouseEvent) => {
@@ -697,20 +703,20 @@ function BiblePage() {
     document.addEventListener('mouseup', handleMouseUp)
   }, [])
 
-  // Right divider drag handlers (vertical - between history and control panel)
+  // Right divider drag handlers (horizontal - between control panel and history)
   const handleRightDividerMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
     isRightDragging.current = true
-    document.body.style.cursor = 'row-resize'
+    document.body.style.cursor = 'col-resize'
     document.body.style.userSelect = 'none'
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
       if (!isRightDragging.current || !rightPanelRef.current) return
       const panelRect = rightPanelRef.current.getBoundingClientRect()
       const newPosition =
-        ((moveEvent.clientY - panelRect.top) / panelRect.height) * 100
-      // Clamp between 15% and 85%
-      setRightDividerPosition(Math.min(85, Math.max(15, newPosition)))
+        ((moveEvent.clientX - panelRect.left) / panelRect.width) * 100
+      // Clamp between 30% and 85%
+      setRightDividerPosition(Math.min(85, Math.max(30, newPosition)))
     }
 
     const handleMouseUp = () => {
@@ -785,64 +791,70 @@ function BiblePage() {
               />
             </div>
 
-            {/* Right Panel - History + Control Panel (shows first on mobile) */}
+            {/* Right Panel - Control Panel + History (shows first on mobile) */}
             <div
               ref={rightPanelRef}
-              className="order-1 lg:order-3 lg:min-h-0 lg:flex-1 overflow-hidden shrink-0 flex flex-col"
+              className="order-1 lg:order-3 lg:min-h-0 lg:flex-1 overflow-hidden shrink-0 flex flex-col lg:flex-row"
               style={
                 isLargeScreen
                   ? { width: `calc(${100 - dividerPosition}% - 8px)` }
                   : undefined
               }
             >
-              {/* History Panel - Top section */}
+              {/* Control Panel - Left section */}
               <div
-                className="overflow-hidden"
+                className="overflow-hidden h-full"
                 style={
-                  isLargeScreen
-                    ? { height: `calc(${rightDividerPosition}% - 4px)` }
-                    : undefined
-                }
-              >
-                <BibleHistoryPanel
-                  onSelectVerse={(item: BibleHistoryItem) => {
-                    navigation.navigateToChapter({
-                      bookId: item.bookId,
-                      bookName: item.bookName,
-                      chapter: item.chapter,
-                      verseIndex: item.verse - 1,
-                      clearSearch: true,
-                    })
-                  }}
-                />
-              </div>
-
-              {/* Horizontal Divider */}
-              <div
-                className="hidden lg:flex items-center justify-center h-2 cursor-row-resize hover:bg-indigo-100 dark:hover:bg-indigo-900/30 rounded transition-colors group"
-                onMouseDown={handleRightDividerMouseDown}
-              >
-                <GripHorizontal
-                  size={16}
-                  className="text-gray-400 group-hover:text-indigo-500 transition-colors"
-                />
-              </div>
-
-              {/* Control Panel - Bottom section */}
-              <div
-                className="overflow-hidden"
-                style={
-                  isLargeScreen
-                    ? { height: `calc(${100 - rightDividerPosition}% - 4px)` }
-                    : { flex: 1, minHeight: 0 }
+                  isLargeScreen && !isHistoryCollapsed
+                    ? { width: `calc(${rightDividerPosition}% - 4px)` }
+                    : { flex: 1, minWidth: 0 }
                 }
               >
                 <BibleControlPanel
                   onPrevVerse={handlePreviousVerse}
                   onNextVerse={handleNextVerse}
                   canNavigate={canNavigateVerses}
+                  onToggleHistory={handleToggleHistory}
+                  isHistoryCollapsed={isHistoryCollapsed}
                 />
               </div>
+
+              {/* Vertical Divider - only show when history is visible */}
+              {!isHistoryCollapsed && (
+                <div
+                  className="hidden lg:flex items-center justify-center w-2 cursor-col-resize hover:bg-indigo-100 dark:hover:bg-indigo-900/30 rounded transition-colors group"
+                  onMouseDown={handleRightDividerMouseDown}
+                >
+                  <GripVertical
+                    size={16}
+                    className="text-gray-400 group-hover:text-indigo-500 transition-colors"
+                  />
+                </div>
+              )}
+
+              {/* History Panel - Right section */}
+              {!isHistoryCollapsed && (
+                <div
+                  className="overflow-hidden h-full hidden lg:block"
+                  style={
+                    isLargeScreen
+                      ? { width: `calc(${100 - rightDividerPosition}% - 4px)` }
+                      : undefined
+                  }
+                >
+                  <BibleHistoryPanel
+                    onSelectVerse={(item: BibleHistoryItem) => {
+                      navigation.navigateToChapter({
+                        bookId: item.bookId,
+                        bookName: item.bookName,
+                        chapter: item.chapter,
+                        verseIndex: item.verse - 1,
+                        clearSearch: true,
+                      })
+                    }}
+                  />
+                </div>
+              )}
             </div>
           </div>
         ) : translations.length > 0 ? (
