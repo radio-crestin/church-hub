@@ -15,6 +15,9 @@ export async function addToHistory(
     '/api/bible-history',
     {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify(input),
     },
   )

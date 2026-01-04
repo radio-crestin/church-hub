@@ -120,6 +120,13 @@
       "when": 1767400000000,
       "tag": "0016_add_always_on_top_to_screens",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1767500000000,
+      "tag": "0017_add_bible_history",
+      "breakpoints": true
     }
   ]
 }

@@ -134,6 +134,13 @@ export const EMBEDDED_JOURNAL = {
       tag: '0016_add_always_on_top_to_screens',
       breakpoints: true,
     },
+    {
+      idx: 17,
+      version: '6',
+      when: 1767500000000,
+      tag: '0017_add_bible_history',
+      breakpoints: true,
+    },
   ],
 } as const
 
@@ -222,5 +229,10 @@ export const EMBEDDED_MIGRATIONS: EmbeddedMigration[] = [
     tag: '0016_add_always_on_top_to_screens',
     sql: 'ALTER TABLE `screens` ADD COLUMN `always_on_top` integer NOT NULL DEFAULT 0;\r\n',
     when: 1767400000000,
+  },
+  {
+    tag: '0017_add_bible_history',
+    sql: 'CREATE TABLE `bible_history` (\r\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\r\n\t`verse_id` integer NOT NULL,\r\n\t`reference` text NOT NULL,\r\n\t`text` text NOT NULL,\r\n\t`translation_abbreviation` text NOT NULL,\r\n\t`book_name` text NOT NULL,\r\n\t`translation_id` integer NOT NULL,\r\n\t`book_id` integer NOT NULL,\r\n\t`chapter` integer NOT NULL,\r\n\t`verse` integer NOT NULL,\r\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL\r\n);\r\n--> statement-breakpoint\r\nCREATE INDEX `idx_bible_history_created_at` ON `bible_history` (`created_at`);\r\n',
+    when: 1767500000000,
   },
 ]
