@@ -17,12 +17,24 @@ export function useSongKeyboardShortcuts({
     if (!enabled) return
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Skip if user is typing in an input field
-      if (
+      const isInInputField =
         event.target instanceof HTMLInputElement ||
         event.target instanceof HTMLTextAreaElement ||
         event.target instanceof HTMLSelectElement
-      ) {
+
+      // Escape should always work, even in input fields (to hide presentation)
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        // Blur the input field first if focused
+        if (isInInputField && event.target instanceof HTMLElement) {
+          event.target.blur()
+        }
+        onHidePresentation()
+        return
+      }
+
+      // Skip other shortcuts if user is typing in an input field
+      if (isInInputField) {
         return
       }
 
@@ -37,11 +49,6 @@ export function useSongKeyboardShortcuts({
         case 'ArrowLeft':
           event.preventDefault()
           onPreviousSlide()
-          break
-
-        case 'Escape':
-          event.preventDefault()
-          onHidePresentation()
           break
       }
     }

@@ -158,7 +158,13 @@
     "bibleOptions": {
       "title": "Bible Options",
       "includeReferenceInContent": "Include reference in content",
-      "includeReferenceInContentDescription": "Prepends the Bible reference to the verse content and hides the separate reference element"
+      "includeReferenceInContentDescription": "Prepends the Bible reference to the verse content and hides the separate reference element",
+      "referenceWrapperStyle": "Reference wrapper",
+      "wrapperStyles": {
+        "none": "None",
+        "parentheses": "(ref)",
+        "brackets": "[ref]"
+      }
     },
     "clock": {
       "enableForSlideType": "Show clock on this slide type",

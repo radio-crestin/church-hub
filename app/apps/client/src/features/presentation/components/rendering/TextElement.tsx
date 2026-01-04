@@ -284,7 +284,7 @@ export function TextElement({
         ? 'center'
         : config.style.alignment === 'right'
           ? 'flex-end'
-          : 'flex-start',
+          : 'flex-start', // 'left' and 'justify' both use flex-start
     overflow: 'hidden',
     wordWrap: 'break-word',
     whiteSpace: 'pre-wrap',

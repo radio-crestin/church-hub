@@ -361,12 +361,35 @@ export function rebuildSearchIndex(): void {
 
   log('info', 'Rebuilding entire Bible FTS index')
 
-  // Clear and rebuild
-  rawDb.exec('DELETE FROM bible_verses_fts')
-  rawDb.exec(`
-    INSERT INTO bible_verses_fts (rowid, text)
-    SELECT id, text FROM bible_verses
-  `)
+  // For FTS5 tables with external content (content=bible_verses),
+  // use the 'rebuild' command which re-reads from the content table
+  try {
+    rawDb.exec("INSERT INTO bible_verses_fts(bible_verses_fts) VALUES('rebuild')")
+  } catch (error) {
+    // If rebuild fails (e.g., table doesn't exist or is corrupted), recreate it
+    log('warning', `FTS rebuild command failed, recreating table: ${error}`)
 
-  log('info', 'FTS index rebuilt')
+    // Drop and recreate the FTS table
+    rawDb.exec('DROP TABLE IF EXISTS bible_verses_fts')
+    rawDb.exec(`
+      CREATE VIRTUAL TABLE bible_verses_fts USING fts5(
+        text,
+        content=bible_verses,
+        content_rowid=id,
+        tokenize='unicode61 remove_diacritics 2'
+      )
+    `)
+
+    // Now rebuild
+    rawDb.exec("INSERT INTO bible_verses_fts(bible_verses_fts) VALUES('rebuild')")
+  }
+
+  // Count indexed verses
+  const count = rawDb
+    .query<{ count: number }, []>(
+      'SELECT COUNT(*) as count FROM bible_verses_fts',
+    )
+    .get()?.count
+
+  log('info', `FTS index rebuilt: ${count ?? 0} verses indexed`)
 }

@@ -11,6 +11,7 @@ import type {
   SongContentConfig,
   VerseteTineriContentConfig,
 } from '../../types'
+import { formatReferenceWithWrapper } from '../../utils/formatReferenceWithWrapper'
 
 interface ContentData {
   type: ContentType
@@ -193,9 +194,12 @@ function BibleRenderer({
   // Determine if reference should be included in content
   const showReferenceElement =
     !config.includeReferenceInContent && !config.referenceText.hidden
+  const formattedReference = reference
+    ? formatReferenceWithWrapper(reference, config.referenceWrapperStyle)
+    : ''
   const displayContent =
     config.includeReferenceInContent && reference
-      ? `${reference} ${content}`
+      ? `${formattedReference} ${content}`
       : content
 
   return (

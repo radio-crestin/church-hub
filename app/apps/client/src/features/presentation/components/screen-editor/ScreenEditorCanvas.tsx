@@ -8,6 +8,7 @@ import type {
   ScreenWithConfigs,
   SizeWithUnits,
 } from '../../types'
+import { formatReferenceWithWrapper } from '../../utils/formatReferenceWithWrapper'
 import { TextContent } from '../rendering/TextContent'
 import {
   calculatePixelBounds,
@@ -604,8 +605,14 @@ export function ScreenEditorCanvas({
       const bibleConfig = config as BibleContentConfig
       const shouldPrependReference =
         bibleConfig.includeReferenceInContent && sample?.reference
+      const formattedReference = sample?.reference
+        ? formatReferenceWithWrapper(
+            sample.reference,
+            bibleConfig.referenceWrapperStyle,
+          )
+        : ''
       const displayContent = shouldPrependReference
-        ? `${sample.reference} ${sample?.main ?? 'Content Text'}`
+        ? `${formattedReference} ${sample?.main ?? 'Content Text'}`
         : (sample?.main ?? 'Content Text')
 
       els.push(

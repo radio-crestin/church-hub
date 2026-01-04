@@ -97,7 +97,10 @@ export async function updateYouTubeConfig(
     .where(eq(youtubeConfig.id, current.id!))
     .returning()
 
-  log('info', `Config updated. streamKeyId is now: ${updated.streamKeyId || 'NOT SET'}`)
+  log(
+    'info',
+    `Config updated. streamKeyId is now: ${updated.streamKeyId || 'NOT SET'}`,
+  )
 
   return {
     id: updated.id,

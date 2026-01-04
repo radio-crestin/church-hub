@@ -34,6 +34,7 @@ import type {
   NextSlideSectionConfig,
   PersonLabelConfig,
   ReferenceTextConfig,
+  ReferenceWrapperStyle,
   ScreenBackgroundConfig,
   ScreenGlobalSettings,
   ScreenWithConfigs,
@@ -553,22 +554,24 @@ export function ScreenEditorSidebar({
                     Horizontal Alignment
                   </Label>
                   <div className="flex gap-2 mt-1">
-                    {(['left', 'center', 'right'] as const).map((align) => (
-                      <button
-                        key={align}
-                        className={`flex-1 py-1.5 text-xs font-medium rounded ${
-                          (selectedConfig.config as { style: TextStyle }).style
-                            .alignment === align
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-                        }`}
-                        onClick={() => {
-                          updateElementStyle({ alignment: align })
-                        }}
-                      >
-                        {align.charAt(0).toUpperCase() + align.slice(1)}
-                      </button>
-                    ))}
+                    {(['left', 'center', 'right', 'justify'] as const).map(
+                      (align) => (
+                        <button
+                          key={align}
+                          className={`flex-1 py-1.5 text-xs font-medium rounded ${
+                            (selectedConfig.config as { style: TextStyle })
+                              .style.alignment === align
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                          }`}
+                          onClick={() => {
+                            updateElementStyle({ alignment: align })
+                          }}
+                        >
+                          {align.charAt(0).toUpperCase() + align.slice(1)}
+                        </button>
+                      ),
+                    )}
                   </div>
                 </div>
                 <div>
@@ -874,27 +877,29 @@ export function ScreenEditorSidebar({
                       Horizontal Alignment
                     </Label>
                     <div className="flex gap-2 mt-1">
-                      {(['left', 'center', 'right'] as const).map((align) => (
-                        <button
-                          key={align}
-                          className={`flex-1 py-1.5 text-xs font-medium rounded ${
-                            (
-                              selectedConfig.config as {
-                                labelStyle: TextStyle
-                              }
-                            ).labelStyle.alignment === align
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-                          }`}
-                          onClick={() => {
-                            updateNextSlideStyle('labelStyle', {
-                              alignment: align,
-                            })
-                          }}
-                        >
-                          {align.charAt(0).toUpperCase() + align.slice(1)}
-                        </button>
-                      ))}
+                      {(['left', 'center', 'right', 'justify'] as const).map(
+                        (align) => (
+                          <button
+                            key={align}
+                            className={`flex-1 py-1.5 text-xs font-medium rounded ${
+                              (
+                                selectedConfig.config as {
+                                  labelStyle: TextStyle
+                                }
+                              ).labelStyle.alignment === align
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                            }`}
+                            onClick={() => {
+                              updateNextSlideStyle('labelStyle', {
+                                alignment: align,
+                              })
+                            }}
+                          >
+                            {align.charAt(0).toUpperCase() + align.slice(1)}
+                          </button>
+                        ),
+                      )}
                     </div>
                   </div>
                   <div>
@@ -1234,27 +1239,29 @@ export function ScreenEditorSidebar({
                       Horizontal Alignment
                     </Label>
                     <div className="flex gap-2 mt-1">
-                      {(['left', 'center', 'right'] as const).map((align) => (
-                        <button
-                          key={align}
-                          className={`flex-1 py-1.5 text-xs font-medium rounded ${
-                            (
-                              selectedConfig.config as {
-                                contentStyle: TextStyle
-                              }
-                            ).contentStyle.alignment === align
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-                          }`}
-                          onClick={() => {
-                            updateNextSlideStyle('contentStyle', {
-                              alignment: align,
-                            })
-                          }}
-                        >
-                          {align.charAt(0).toUpperCase() + align.slice(1)}
-                        </button>
-                      ))}
+                      {(['left', 'center', 'right', 'justify'] as const).map(
+                        (align) => (
+                          <button
+                            key={align}
+                            className={`flex-1 py-1.5 text-xs font-medium rounded ${
+                              (
+                                selectedConfig.config as {
+                                  contentStyle: TextStyle
+                                }
+                              ).contentStyle.alignment === align
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                            }`}
+                            onClick={() => {
+                              updateNextSlideStyle('contentStyle', {
+                                alignment: align,
+                              })
+                            }}
+                          >
+                            {align.charAt(0).toUpperCase() + align.slice(1)}
+                          </button>
+                        ),
+                      )}
                     </div>
                   </div>
                   <div>
@@ -1961,6 +1968,42 @@ export function ScreenEditorSidebar({
                     'screens.bibleOptions.includeReferenceInContentDescription',
                   )}
                 </p>
+
+                {/* Reference wrapper style - only show when includeReferenceInContent is enabled */}
+                {(config as BibleContentConfig).includeReferenceInContent && (
+                  <div className="ml-6 mt-2">
+                    <Label className="text-xs text-gray-500 dark:text-gray-400">
+                      {t('screens.bibleOptions.referenceWrapperStyle')}
+                    </Label>
+                    <div className="flex gap-2 mt-1">
+                      {(['none', 'parentheses', 'brackets'] as const).map(
+                        (style) => (
+                          <button
+                            key={style}
+                            className={`flex-1 py-1.5 text-xs font-medium rounded ${
+                              (
+                                (config as BibleContentConfig)
+                                  .referenceWrapperStyle ?? 'none'
+                              ) === style
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                            }`}
+                            onClick={() => {
+                              const bibleConfig = config as BibleContentConfig
+                              onUpdateContentConfig(contentType, {
+                                ...bibleConfig,
+                                referenceWrapperStyle:
+                                  style as ReferenceWrapperStyle,
+                              })
+                            }}
+                          >
+                            {t(`screens.bibleOptions.wrapperStyles.${style}`)}
+                          </button>
+                        ),
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </Section>
           )}

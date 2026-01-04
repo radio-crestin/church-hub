@@ -50,6 +50,7 @@ import {
   getVerseById,
   getVersesByChapter,
   importBibleTranslation,
+  rebuildSearchIndex as rebuildBibleSearchIndex,
   type SearchVersesInput,
   searchBible,
 } from './service/bible'
@@ -773,6 +774,100 @@ async function main() {
             headers: { 'Content-Type': 'application/json' },
           }),
         )
+      }
+
+      // POST /api/database/rebuild-search-indexes - Rebuild FTS search indexes (localhost only)
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/database/rebuild-search-indexes'
+      ) {
+        if (!isStrictLocalhost()) {
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({ error: 'Only accessible from localhost' }),
+              { status: 403, headers: { 'Content-Type': 'application/json' } },
+            ),
+          )
+        }
+
+        // Parse optional options from request body
+        let options: {
+          songs?: boolean
+          schedules?: boolean
+          bible?: boolean
+        } = {}
+        try {
+          const body = await req.json()
+          if (typeof body.songs === 'boolean') options.songs = body.songs
+          if (typeof body.schedules === 'boolean')
+            options.schedules = body.schedules
+          if (typeof body.bible === 'boolean') options.bible = body.bible
+        } catch {
+          // No body or invalid JSON - rebuild all by default
+        }
+
+        // If no specific options provided, rebuild all
+        const rebuildAll =
+          options.songs === undefined &&
+          options.schedules === undefined &&
+          options.bible === undefined
+        const rebuildSongs = rebuildAll || options.songs === true
+        const rebuildSchedules = rebuildAll || options.schedules === true
+        const rebuildBible = rebuildAll || options.bible === true
+
+        try {
+          const startTime = performance.now()
+          const rebuiltIndexes: string[] = []
+
+          if (rebuildSongs) {
+            rebuildSearchIndex()
+            rebuiltIndexes.push('songs')
+          }
+          if (rebuildSchedules) {
+            rebuildScheduleSearchIndex()
+            rebuiltIndexes.push('schedules')
+          }
+          if (rebuildBible) {
+            rebuildBibleSearchIndex()
+            rebuiltIndexes.push('bible')
+          }
+
+          const duration = performance.now() - startTime
+
+          // biome-ignore lint/suspicious/noConsole: performance logging
+          console.log(
+            `[INFO] [search-rebuild] FTS indexes rebuilt (${rebuiltIndexes.join(', ')}) in ${duration.toFixed(2)}ms`,
+          )
+
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({
+                data: {
+                  success: true,
+                  duration: Math.round(duration),
+                  indexes: rebuiltIndexes,
+                },
+              }),
+              {
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        } catch (error) {
+          const msg = error instanceof Error ? error.message : String(error)
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({ error: `Search index rebuild failed: ${msg}` }),
+              {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        }
       }
 
       // GET /api/users - List all users
@@ -4411,6 +4506,7 @@ async function main() {
       const rebuildStart = performance.now()
       rebuildSearchIndex()
       rebuildScheduleSearchIndex()
+      rebuildBibleSearchIndex()
       // biome-ignore lint/suspicious/noConsole: Startup timing logs
       console.log(
         `[startup] Background search index rebuild complete: ${(performance.now() - rebuildStart).toFixed(1)}ms`,

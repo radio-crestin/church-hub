@@ -302,4 +302,91 @@ export const databasePaths: Record<string, Record<string, unknown>> = {
       },
     },
   },
+  '/api/database/rebuild-search-indexes': {
+    post: {
+      tags: ['Database'],
+      summary: 'Rebuild search indexes',
+      description:
+        'Rebuilds FTS (Full-Text Search) indexes. By default rebuilds all indexes (songs, schedules, Bible). Use options to rebuild specific indexes only. Only accessible from localhost.',
+      requestBody: {
+        required: false,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                songs: {
+                  type: 'boolean',
+                  description: 'Rebuild songs search index',
+                },
+                schedules: {
+                  type: 'boolean',
+                  description: 'Rebuild schedules search index',
+                },
+                bible: {
+                  type: 'boolean',
+                  description: 'Rebuild Bible verses search index',
+                },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        '200': {
+          description: 'Search indexes rebuilt successfully',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean' },
+                      duration: {
+                        type: 'integer',
+                        description: 'Time taken in milliseconds',
+                      },
+                      indexes: {
+                        type: 'array',
+                        items: { type: 'string' },
+                        description: 'List of indexes that were rebuilt',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        '403': {
+          description: 'Only accessible from localhost',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  error: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+        '500': {
+          description: 'Rebuild failed',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  error: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
 }

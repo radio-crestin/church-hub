@@ -2,8 +2,8 @@ import { RefreshCw, Search } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { rebuildSearchIndex } from '~/features/songs/service'
 import { useToast } from '~/ui/toast'
+import { rebuildSearchIndexes } from '../service'
 
 export function SearchIndexRebuild() {
   const { t } = useTranslation('settings')
@@ -14,7 +14,8 @@ export function SearchIndexRebuild() {
     setIsPending(true)
 
     try {
-      const result = await rebuildSearchIndex()
+      // Rebuild all search indexes (songs, schedules, bible)
+      const result = await rebuildSearchIndexes()
 
       if (result.success) {
         showToast(
