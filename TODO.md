@@ -123,6 +123,7 @@
 - scade volumul la intro
 - fa fontul maxim mai mic pe Livestream
 - când sunt doar două versuri, nu mai comprima liniile
+- adauga timestamp cand se face export la db
 - cand se selecteaza primul verset se face un loop ciudat
 - si sunt foarte multi clienti conectati.. 
 - creaza un quickstart guide pentru utilizatori
