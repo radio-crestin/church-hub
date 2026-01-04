@@ -231,3 +231,24 @@ export const presentationState = sqliteTable('presentation_state', {
   // Store as milliseconds (not seconds) for precise ordering of rapid updates
   updatedAt: integer('updated_at').notNull().default(sql`(unixepoch() * 1000)`),
 })
+
+// Bible verse history - tracks all displayed verses, cleared on graceful app exit
+export const bibleHistory = sqliteTable(
+  'bible_history',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    verseId: integer('verse_id').notNull(),
+    reference: text('reference').notNull(),
+    text: text('text').notNull(),
+    translationAbbreviation: text('translation_abbreviation').notNull(),
+    bookName: text('book_name').notNull(),
+    translationId: integer('translation_id').notNull(),
+    bookId: integer('book_id').notNull(),
+    chapter: integer('chapter').notNull(),
+    verse: integer('verse').notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (table) => [index('idx_bible_history_created_at').on(table.createdAt)],
+)
