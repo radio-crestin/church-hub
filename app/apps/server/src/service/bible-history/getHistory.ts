@@ -1,4 +1,4 @@
-import { desc } from 'drizzle-orm'
+import { asc } from 'drizzle-orm'
 
 import type { BibleHistoryItem } from './types'
 import { getDatabase } from '../../db'
@@ -13,7 +13,7 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
 }
 
 /**
- * Gets all Bible history items, ordered by most recent first
+ * Gets all Bible history items, ordered by oldest first
  */
 export function getHistory(): BibleHistoryItem[] {
   try {
@@ -23,7 +23,7 @@ export function getHistory(): BibleHistoryItem[] {
     const records = db
       .select()
       .from(bibleHistory)
-      .orderBy(desc(bibleHistory.createdAt))
+      .orderBy(asc(bibleHistory.createdAt))
       .all()
 
     log('debug', `Found ${records.length} history items`)
