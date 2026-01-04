@@ -1,4 +1,4 @@
-import { ExternalLink, Replace, Trash2 } from 'lucide-react'
+import { ExternalLink, Replace } from 'lucide-react'
 import { useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -11,8 +11,7 @@ interface DuplicateSongModalProps {
   isOpen: boolean
   existingTitle: string
   existingSongId: number | null
-  onOverwriteExisting: () => void
-  onDeleteOther: () => void
+  onReplaceExisting: () => void
   onCancel: () => void
 }
 
@@ -20,8 +19,7 @@ export function DuplicateSongModal({
   isOpen,
   existingTitle,
   existingSongId,
-  onOverwriteExisting,
-  onDeleteOther,
+  onReplaceExisting,
   onCancel,
 }: DuplicateSongModalProps) {
   const { t } = useTranslation(['songs', 'common'])
@@ -107,7 +105,7 @@ export function DuplicateSongModal({
         <div className="space-y-3">
           <button
             type="button"
-            onClick={() => onOverwriteExisting()}
+            onClick={() => onReplaceExisting()}
             className="w-full text-left p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
             <div className="flex items-start gap-3">
@@ -117,31 +115,10 @@ export function DuplicateSongModal({
               />
               <div>
                 <div className="font-medium text-gray-900 dark:text-white">
-                  {t('songs:duplicateDialog.overwriteExisting')}
+                  {t('songs:duplicateDialog.replaceExisting')}
                 </div>
                 <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  {t('songs:duplicateDialog.overwriteExistingDescription')}
-                </div>
-              </div>
-            </div>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onDeleteOther()}
-            className="w-full text-left p-4 rounded-lg border border-red-200 dark:border-red-900 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-          >
-            <div className="flex items-start gap-3">
-              <Trash2
-                size={20}
-                className="text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0"
-              />
-              <div>
-                <div className="font-medium text-red-700 dark:text-red-400">
-                  {t('songs:duplicateDialog.deleteOther')}
-                </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  {t('songs:duplicateDialog.deleteOtherDescription')}
+                  {t('songs:duplicateDialog.replaceExistingDescription')}
                 </div>
               </div>
             </div>

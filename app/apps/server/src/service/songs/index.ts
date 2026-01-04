@@ -9,6 +9,10 @@ export {
   reorderCategories,
   upsertCategory,
 } from './categories'
+export {
+  type ReplaceSongReferencesResult,
+  replaceSongReferences,
+} from './replaceSongReferences'
 // Search
 export {
   batchUpdateSearchIndex,

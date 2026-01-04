@@ -136,19 +136,15 @@ function SongEditorPage() {
   )
 
   const handleSave = useCallback(
-    async (overrideId?: number): Promise<boolean> => {
+    async (options?: { replaceExistingSongId?: number }): Promise<boolean> => {
       if (!title.trim()) return false
 
       const result = await upsertMutation.mutateAsync({
-        id: overrideId ?? numericId ?? undefined,
+        id: numericId ?? undefined,
         title: title.trim(),
         categoryId,
         slides: slides.map((s, idx) => ({
-          id: overrideId
-            ? undefined
-            : typeof s.id === 'number'
-              ? s.id
-              : undefined,
+          id: typeof s.id === 'number' ? s.id : undefined,
           content: s.content,
           sortOrder: idx,
           label: s.label,
@@ -166,6 +162,8 @@ function SongEditorPage() {
         keyLine: metadata.keyLine,
         presentationOrder: metadata.presentationOrder,
         sourceFilename: metadata.sourceFilename,
+        // When replacing, the server will update references and delete the old song
+        replaceExistingSongId: options?.replaceExistingSongId,
       })
 
       // Handle duplicate title error
@@ -211,7 +209,7 @@ function SongEditorPage() {
           metadata: savedMetadata,
         })
 
-        if (isNew || overrideId) {
+        if (isNew || options?.replaceExistingSongId) {
           // Navigate to the edit page of the saved song
           navigate({
             to: '/songs/$songId/edit',
@@ -282,28 +280,14 @@ function SongEditorPage() {
     }
   }
 
-  // Duplicate modal handlers
-  const handleOverwriteExisting = useCallback(async () => {
+  // Duplicate modal handler - replaces existing song and updates all references
+  const handleReplaceExisting = useCallback(async () => {
     setShowDuplicateModal(false)
     if (existingSongId) {
-      // Save content to the existing song (this preserves schedule references)
-      await handleSave(existingSongId)
+      // Save as new song, server will update references and delete the old song
+      await handleSave({ replaceExistingSongId: existingSongId })
     }
   }, [existingSongId, handleSave])
-
-  const handleDeleteOther = useCallback(async () => {
-    setShowDuplicateModal(false)
-    if (existingSongId) {
-      // Delete the existing song first
-      const deleted = await deleteMutation.mutateAsync(existingSongId)
-      if (deleted) {
-        // Now save the current song (it will succeed since duplicate is gone)
-        await handleSave()
-      } else {
-        showToast(t('songs:messages.error'), 'error')
-      }
-    }
-  }, [existingSongId, deleteMutation, handleSave, showToast, t])
 
   const handleDuplicateCancel = useCallback(() => {
     setShowDuplicateModal(false)
@@ -367,8 +351,7 @@ function SongEditorPage() {
         isOpen={showDuplicateModal}
         existingTitle={existingSongTitle}
         existingSongId={existingSongId}
-        onOverwriteExisting={handleOverwriteExisting}
-        onDeleteOther={handleDeleteOther}
+        onReplaceExisting={handleReplaceExisting}
         onCancel={handleDuplicateCancel}
       />
     </>

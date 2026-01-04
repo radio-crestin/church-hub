@@ -170,6 +170,7 @@ import {
   removeFromSearchIndex,
   reorderCategories,
   reorderSongSlides,
+  replaceSongReferences,
   searchSongs,
   type UpsertCategoryInput,
   type UpsertSongInput,
@@ -2506,7 +2507,9 @@ async function main() {
       // POST /api/songs - Create/update song
       if (req.method === 'POST' && url.pathname === '/api/songs') {
         try {
-          const body = (await req.json()) as UpsertSongInput
+          const body = (await req.json()) as UpsertSongInput & {
+            replaceExistingSongId?: number
+          }
 
           // Check create or edit permission based on whether it's a new song
           const permError = checkPermission(
@@ -2524,25 +2527,27 @@ async function main() {
             )
           }
 
-          // Check for duplicate title
-          const existingSong = getSongByTitle(body.title)
-          // For new songs: any match is a duplicate
-          // For existing songs: match is a duplicate only if it's a different song
-          if (existingSong && (!body.id || existingSong.id !== body.id)) {
-            return handleCors(
-              req,
-              new Response(
-                JSON.stringify({
-                  error: 'DUPLICATE_TITLE',
-                  existingSongId: existingSong.id,
-                  existingSongTitle: existingSong.title,
-                }),
-                {
-                  status: 409,
-                  headers: { 'Content-Type': 'application/json' },
-                },
-              ),
-            )
+          // Check for duplicate title (skip if we're replacing an existing song)
+          if (!body.replaceExistingSongId) {
+            const existingSong = getSongByTitle(body.title)
+            // For new songs: any match is a duplicate
+            // For existing songs: match is a duplicate only if it's a different song
+            if (existingSong && (!body.id || existingSong.id !== body.id)) {
+              return handleCors(
+                req,
+                new Response(
+                  JSON.stringify({
+                    error: 'DUPLICATE_TITLE',
+                    existingSongId: existingSong.id,
+                    existingSongTitle: existingSong.title,
+                  }),
+                  {
+                    status: 409,
+                    headers: { 'Content-Type': 'application/json' },
+                  },
+                ),
+              )
+            }
           }
 
           const song = upsertSong({ ...body, isManualEdit: true })
@@ -2557,6 +2562,17 @@ async function main() {
             )
           }
 
+          // If replacing an existing song, update references and delete the old song
+          if (body.replaceExistingSongId) {
+            const replaceResult = replaceSongReferences(
+              body.replaceExistingSongId,
+              song.id,
+            )
+            if (replaceResult.success) {
+              removeFromSearchIndex(body.replaceExistingSongId)
+            }
+          }
+
           // Update search index
           updateSearchIndex(song.id)
 
@@ -2564,6 +2580,69 @@ async function main() {
             req,
             new Response(JSON.stringify({ data: song }), {
               status: body.id ? 200 : 201,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // POST /api/songs/replace-references - Replace song references and delete old song
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/songs/replace-references'
+      ) {
+        const permError = checkPermission('songs.edit')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as {
+            oldSongId: number
+            newSongId: number
+          }
+
+          if (!body.oldSongId || !body.newSongId) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({ error: 'Missing oldSongId or newSongId' }),
+                {
+                  status: 400,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          const result = replaceSongReferences(body.oldSongId, body.newSongId)
+
+          if (!result.success) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({ error: result.error || 'Failed to replace' }),
+                {
+                  status: 500,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          // Remove old song from search index
+          removeFromSearchIndex(body.oldSongId)
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: result }), {
+              status: 200,
               headers: { 'Content-Type': 'application/json' },
             }),
           )

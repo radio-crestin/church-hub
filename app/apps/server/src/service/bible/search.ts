@@ -364,7 +364,9 @@ export function rebuildSearchIndex(): void {
   // For FTS5 tables with external content (content=bible_verses),
   // use the 'rebuild' command which re-reads from the content table
   try {
-    rawDb.exec("INSERT INTO bible_verses_fts(bible_verses_fts) VALUES('rebuild')")
+    rawDb.exec(
+      "INSERT INTO bible_verses_fts(bible_verses_fts) VALUES('rebuild')",
+    )
   } catch (error) {
     // If rebuild fails (e.g., table doesn't exist or is corrupted), recreate it
     log('warning', `FTS rebuild command failed, recreating table: ${error}`)
@@ -381,7 +383,9 @@ export function rebuildSearchIndex(): void {
     `)
 
     // Now rebuild
-    rawDb.exec("INSERT INTO bible_verses_fts(bible_verses_fts) VALUES('rebuild')")
+    rawDb.exec(
+      "INSERT INTO bible_verses_fts(bible_verses_fts) VALUES('rebuild')",
+    )
   }
 
   // Count indexed verses
