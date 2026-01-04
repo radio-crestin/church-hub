@@ -3,8 +3,11 @@ import {
   ChevronRight,
   Eye,
   EyeOff,
+  History,
   Loader2,
   MonitorUp,
+  PanelRightClose,
+  PanelRightOpen,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
@@ -20,12 +23,16 @@ interface BibleControlPanelProps {
   onPrevVerse: () => void
   onNextVerse: () => void
   canNavigate: boolean
+  onToggleHistory?: () => void
+  isHistoryCollapsed?: boolean
 }
 
 export function BibleControlPanel({
   onPrevVerse,
   onNextVerse,
   canNavigate,
+  onToggleHistory,
+  isHistoryCollapsed,
 }: BibleControlPanelProps) {
   const { t } = useTranslation('bible')
 
@@ -64,6 +71,21 @@ export function BibleControlPanel({
           </h3>
         </div>
         <div className="flex items-center gap-2">
+          {onToggleHistory && (
+            <button
+              type="button"
+              onClick={onToggleHistory}
+              className="hidden lg:flex items-center gap-1.5 px-2 py-1.5 text-sm text-gray-600 dark:text-gray-400 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              title={t('history.title')}
+            >
+              {isHistoryCollapsed ? (
+                <PanelRightOpen size={16} />
+              ) : (
+                <PanelRightClose size={16} />
+              )}
+              <History size={14} />
+            </button>
+          )}
           <div
             className={`flex items-center gap-1.5 px-2 py-1 rounded-md ${
               !isHidden
