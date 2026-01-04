@@ -82,7 +82,10 @@ export async function createBroadcast(): Promise<BroadcastInfo> {
     broadcastId = broadcastResponse.data.id!
 
     if (config.streamKeyId) {
-      log('info', `Binding broadcast ${broadcastId} to stream key ${config.streamKeyId}`)
+      log(
+        'info',
+        `Binding broadcast ${broadcastId} to stream key ${config.streamKeyId}`,
+      )
       await youtube.liveBroadcasts.bind({
         id: broadcastId,
         part: ['id', 'contentDetails'],
@@ -90,7 +93,10 @@ export async function createBroadcast(): Promise<BroadcastInfo> {
       })
       log('info', 'Stream key binding successful')
     } else {
-      log('warning', 'No streamKeyId configured - broadcast will not have a stream key!')
+      log(
+        'warning',
+        'No streamKeyId configured - broadcast will not have a stream key!',
+      )
     }
 
     if (config.playlistId) {
@@ -140,7 +146,10 @@ export async function createBroadcast(): Promise<BroadcastInfo> {
     broadcastId = broadcastResponse.id
 
     if (config.streamKeyId) {
-      log('info', `Binding broadcast ${broadcastId} to stream key ${config.streamKeyId} (fallback API)`)
+      log(
+        'info',
+        `Binding broadcast ${broadcastId} to stream key ${config.streamKeyId} (fallback API)`,
+      )
       await youtubeApiFetch(
         'liveBroadcasts/bind',
         {
@@ -152,7 +161,10 @@ export async function createBroadcast(): Promise<BroadcastInfo> {
       )
       log('info', 'Stream key binding successful (fallback API)')
     } else {
-      log('warning', 'No streamKeyId configured - broadcast will not have a stream key! (fallback API)')
+      log(
+        'warning',
+        'No streamKeyId configured - broadcast will not have a stream key! (fallback API)',
+      )
     }
 
     if (config.playlistId) {

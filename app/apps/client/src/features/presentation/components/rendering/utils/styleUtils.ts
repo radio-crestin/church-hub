@@ -90,10 +90,11 @@ export function getTextStyleCSS(style: TextStyle): React.CSSProperties {
 }
 
 export function getJustifyContent(
-  alignment: 'left' | 'center' | 'right',
+  alignment: 'left' | 'center' | 'right' | 'justify',
 ): React.CSSProperties['justifyContent'] {
   switch (alignment) {
     case 'left':
+    case 'justify': // Justified text spans full width, use flex-start for container
       return 'flex-start'
     case 'center':
       return 'center'

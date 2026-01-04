@@ -7,8 +7,7 @@ import type { GlobalShortcutActionId, GlobalShortcutsConfig } from '../types'
 const logger = createLogger('keyboard-shortcuts:global')
 
 // Check if we're running in Tauri mode
-const isTauri =
-  typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 
 interface SceneShortcut {
   shortcut: string

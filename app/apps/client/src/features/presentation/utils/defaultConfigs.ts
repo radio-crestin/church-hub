@@ -200,6 +200,7 @@ export function getDefaultBibleConfig(): BibleContentConfig {
     },
     clockEnabled: false,
     includeReferenceInContent: false,
+    referenceWrapperStyle: 'none',
   }
 }
 

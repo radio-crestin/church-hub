@@ -158,7 +158,13 @@
     "bibleOptions": {
       "title": "Opțiuni Biblie",
       "includeReferenceInContent": "Include referința în conținut",
-      "includeReferenceInContentDescription": "Adaugă referința biblică la începutul versetului și ascunde elementul separat de referință"
+      "includeReferenceInContentDescription": "Adaugă referința biblică la începutul versetului și ascunde elementul separat de referință",
+      "referenceWrapperStyle": "Delimitator referință",
+      "wrapperStyles": {
+        "none": "Nimic",
+        "parentheses": "(ref)",
+        "brackets": "[ref]"
+      }
     },
     "clock": {
       "enableForSlideType": "Afișează ceasul pe acest tip de slide",

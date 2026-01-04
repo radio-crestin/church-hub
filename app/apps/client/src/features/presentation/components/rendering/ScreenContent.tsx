@@ -15,6 +15,7 @@ import type {
   ContentTypeConfig,
   ScreenWithConfigs,
 } from '../../types'
+import { formatReferenceWithWrapper } from '../../utils/formatReferenceWithWrapper'
 
 interface ScreenContentProps {
   screen: ScreenWithConfigs
@@ -147,8 +148,14 @@ export function ScreenContent({
     const bibleConfig = config as BibleContentConfig
     const shouldPrependReference =
       bibleConfig.includeReferenceInContent && contentData?.referenceText
+    const formattedReference = contentData?.referenceText
+      ? formatReferenceWithWrapper(
+          contentData.referenceText,
+          bibleConfig.referenceWrapperStyle,
+        )
+      : ''
     const displayContent = shouldPrependReference
-      ? `${contentData?.referenceText} ${contentData?.contentText ?? ''}`
+      ? `${formattedReference} ${contentData?.contentText ?? ''}`
       : (contentData?.contentText ?? '')
 
     const elementVisible = isVisible && !!contentData?.contentText

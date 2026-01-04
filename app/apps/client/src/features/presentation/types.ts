@@ -207,7 +207,7 @@ export interface TextStyle {
   bold: boolean
   italic: boolean
   underline: boolean
-  alignment: 'left' | 'center' | 'right'
+  alignment: 'left' | 'center' | 'right' | 'justify'
   verticalAlignment: 'top' | 'middle' | 'bottom'
   lineHeight: number
   shadow?: boolean
@@ -333,12 +333,15 @@ export interface SongContentConfig {
   clockEnabled?: boolean // Per-slide-type enable, uses global clockConfig for position/style
 }
 
+export type ReferenceWrapperStyle = 'none' | 'parentheses' | 'brackets'
+
 export interface BibleContentConfig {
   background: ScreenBackgroundConfig
   referenceText: ReferenceTextConfig
   contentText: TextElementConfig
   clockEnabled?: boolean // Per-slide-type enable, uses global clockConfig for position/style
   includeReferenceInContent?: boolean
+  referenceWrapperStyle?: ReferenceWrapperStyle
 }
 
 export interface AnnouncementContentConfig {

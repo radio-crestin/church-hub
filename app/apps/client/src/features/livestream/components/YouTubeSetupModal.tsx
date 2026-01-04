@@ -212,7 +212,11 @@ export function YouTubeSetupModal({ isOpen, onClose }: YouTubeSetupModalProps) {
         </div>
 
         <div className="flex justify-end gap-3 p-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <Button variant="primary" onClick={handleSaveAndClose} disabled={isUpdating}>
+          <Button
+            variant="primary"
+            onClick={handleSaveAndClose}
+            disabled={isUpdating}
+          >
             {t('youtube.setup.saveAndClose')}
           </Button>
         </div>

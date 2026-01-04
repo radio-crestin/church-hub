@@ -109,12 +109,12 @@
 - 
 --- Later ---
 ~~- cheia de live nu functioneaza~~
-- adauga background la live
-- ceasul si referinta mai mare
-- evidentiaza referinta inline
-- adauga justify alig
-- search-ul din Biblie nu functioneaza
-- ESC nu functioneaza cand e focusat pe search
+~~- adauga background la live~~
+~~- ceasul si referinta mai mare~~
+~~- evidentiaza referinta inline~~
+~~- adauga justify alig~~
+~~- search-ul din Biblie nu functioneaza~~
+~~- ESC nu functioneaza cand e focusat pe search~~
 - muta camera tineri mai jos
 - adauga un buton pentru a deschide PPT-ul direct din cantare (ca si backup, optional)
 - adauga un mic istoric in pagina Bibliei
