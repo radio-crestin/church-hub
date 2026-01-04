@@ -19,6 +19,7 @@
     "privacyPrivate": "Privat",
     "streamKey": "Cheie Stream",
     "selectStreamKey": "Selecteaza cheia stream",
+    "streamKeySelected": "Selectat",
     "playlist": "ID Playlist",
     "startScene": "Scena de start",
     "setup": {
@@ -33,7 +34,7 @@
       "firstTimeTitle": "Prima transmisie?",
       "firstTimeDescription": "Creeaza o transmisie live direct in YouTube Studio. Configureaza setarile, porneste live-ul din OBS, iar transmisia va fi salvata aici pentru utilizare viitoare.",
       "openYouTubeStudio": "Deschide YouTube Studio",
-      "close": "Inchide"
+      "saveAndClose": "Salvează și închide"
     }
   },
   "obs": {
@@ -188,6 +189,9 @@
     "broadcastFailed": "Crearea transmisiei a esuat",
     "sceneSwitchFailed": "Schimbarea scenei a esuat",
     "startStreamFailed": "Pornirea stream-ului a esuat",
-    "stopStreamFailed": "Oprirea stream-ului a esuat"
+    "stopStreamFailed": "Oprirea stream-ului a esuat",
+    "obsNotConnected": "OBS nu este conectat. Te rugam sa te conectezi la OBS mai intai.",
+    "retry": "Reincearca",
+    "dismiss": "Inchide"
   }
 }

@@ -104,6 +104,7 @@ export interface PastBroadcast {
   description: string
   privacyStatus: 'public' | 'unlisted' | 'private'
   completedAt: string
+  boundStreamId?: string
 }
 
 export interface StreamKey {

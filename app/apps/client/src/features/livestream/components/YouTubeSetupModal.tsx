@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 
 import { BroadcastTemplateSelector } from './BroadcastTemplateSelector'
 import { Button } from '../../../ui/button/Button'
-import { usePastBroadcasts, useYouTubeConfig } from '../hooks'
+import { usePastBroadcasts, useStreamKeys, useYouTubeConfig } from '../hooks'
 import type { PastBroadcast } from '../types'
 import { openExternalUrl } from '../utils'
 
@@ -17,29 +17,40 @@ export function YouTubeSetupModal({ isOpen, onClose }: YouTubeSetupModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const { config, update, isUpdating } = useYouTubeConfig()
   const { broadcasts } = usePastBroadcasts(isOpen)
+  const { data: streamKeys, isLoading: isLoadingStreamKeys } = useStreamKeys()
 
   const [selectedPastBroadcastId, setSelectedPastBroadcastId] = useState<
     string | null
   >(null)
   const [selectedPastBroadcast, setSelectedPastBroadcast] =
     useState<PastBroadcast | null>(null)
+  const [selectedStreamKeyId, setSelectedStreamKeyId] = useState<string>('')
   const [hasInitialized, setHasInitialized] = useState(false)
 
   // Initialize selection from saved config when broadcasts are loaded
   useEffect(() => {
-    if (hasInitialized || !config?.selectedBroadcastId || !broadcasts.length) {
-      return
+    if (hasInitialized) return
+
+    // Initialize stream key from config
+    if (config?.streamKeyId) {
+      setSelectedStreamKeyId(config.streamKeyId)
     }
 
-    const savedBroadcast = broadcasts.find(
-      (b) => b.broadcastId === config.selectedBroadcastId,
-    )
-    if (savedBroadcast) {
-      setSelectedPastBroadcastId(savedBroadcast.broadcastId)
-      setSelectedPastBroadcast(savedBroadcast)
+    // Initialize past broadcast selection
+    if (config?.selectedBroadcastId && broadcasts.length) {
+      const savedBroadcast = broadcasts.find(
+        (b) => b.broadcastId === config.selectedBroadcastId,
+      )
+      if (savedBroadcast) {
+        setSelectedPastBroadcastId(savedBroadcast.broadcastId)
+        setSelectedPastBroadcast(savedBroadcast)
+      }
     }
-    setHasInitialized(true)
-  }, [config?.selectedBroadcastId, broadcasts, hasInitialized])
+
+    if (config) {
+      setHasInitialized(true)
+    }
+  }, [config, broadcasts, hasInitialized])
 
   // Reset initialization when modal closes
   useEffect(() => {
@@ -51,16 +62,26 @@ export function YouTubeSetupModal({ isOpen, onClose }: YouTubeSetupModalProps) {
   const handleSelectPastBroadcast = (broadcast: PastBroadcast | null) => {
     setSelectedPastBroadcastId(broadcast?.broadcastId ?? null)
     setSelectedPastBroadcast(broadcast)
-
-    // Apply past broadcast settings to config when selected
-    if (broadcast) {
-      update({
-        titleTemplate: broadcast.title,
-        description: broadcast.description,
-        privacyStatus: broadcast.privacyStatus,
-        selectedBroadcastId: broadcast.broadcastId,
-      })
+    // Update stream key if the broadcast has one
+    if (broadcast?.boundStreamId) {
+      setSelectedStreamKeyId(broadcast.boundStreamId)
     }
+  }
+
+  const handleSaveAndClose = () => {
+    const updateData: Parameters<typeof update>[0] = {
+      streamKeyId: selectedStreamKeyId || undefined,
+    }
+
+    if (selectedPastBroadcast) {
+      updateData.titleTemplate = selectedPastBroadcast.title
+      updateData.description = selectedPastBroadcast.description
+      updateData.privacyStatus = selectedPastBroadcast.privacyStatus
+      updateData.selectedBroadcastId = selectedPastBroadcast.broadcastId
+    }
+
+    update(updateData)
+    onClose()
   }
 
   useEffect(() => {
@@ -143,6 +164,32 @@ export function YouTubeSetupModal({ isOpen, onClose }: YouTubeSetupModalProps) {
             </div>
           )}
 
+          {/* Stream Key Selector */}
+          <div>
+            <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+              {t('youtube.streamKey')}
+            </h3>
+            <select
+              value={selectedStreamKeyId}
+              onChange={(e) => setSelectedStreamKeyId(e.target.value)}
+              disabled={isLoadingStreamKeys}
+              className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
+            >
+              <option value="">{t('youtube.selectStreamKey')}</option>
+              {streamKeys?.map((key) => (
+                <option key={key.id} value={key.id}>
+                  {key.name}
+                </option>
+              ))}
+            </select>
+            {selectedStreamKeyId && (
+              <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                {t('youtube.streamKeySelected')}:{' '}
+                {streamKeys?.find((k) => k.id === selectedStreamKeyId)?.name}
+              </p>
+            )}
+          </div>
+
           {/* First Time Instructions */}
           <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
             <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
@@ -165,8 +212,8 @@ export function YouTubeSetupModal({ isOpen, onClose }: YouTubeSetupModalProps) {
         </div>
 
         <div className="flex justify-end gap-3 p-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <Button variant="ghost" onClick={onClose} disabled={isUpdating}>
-            {t('youtube.setup.close')}
+          <Button variant="primary" onClick={handleSaveAndClose} disabled={isUpdating}>
+            {t('youtube.setup.saveAndClose')}
           </Button>
         </div>
       </div>

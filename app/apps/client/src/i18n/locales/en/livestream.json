@@ -19,6 +19,7 @@
     "privacyPrivate": "Private",
     "streamKey": "Stream Key",
     "selectStreamKey": "Select stream key",
+    "streamKeySelected": "Selected",
     "playlist": "Playlist ID",
     "startScene": "Start Scene",
     "setup": {
@@ -33,7 +34,7 @@
       "firstTimeTitle": "First time streaming?",
       "firstTimeDescription": "Create a live stream directly in YouTube Studio. Configure your stream settings, go live from OBS, and your broadcast will be saved here for future use.",
       "openYouTubeStudio": "Open YouTube Studio",
-      "close": "Close"
+      "saveAndClose": "Save & Close"
     }
   },
   "obs": {
@@ -188,6 +189,9 @@
     "broadcastFailed": "Failed to create broadcast",
     "sceneSwitchFailed": "Failed to switch scene",
     "startStreamFailed": "Failed to start stream",
-    "stopStreamFailed": "Failed to stop stream"
+    "stopStreamFailed": "Failed to stop stream",
+    "obsNotConnected": "OBS is not connected. Please connect to OBS first.",
+    "retry": "Retry",
+    "dismiss": "Dismiss"
   }
 }

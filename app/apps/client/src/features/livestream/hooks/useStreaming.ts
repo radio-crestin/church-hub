@@ -5,7 +5,8 @@ import { getActiveBroadcast, startStream, stopStream } from '../service'
 
 export function useStreaming() {
   const queryClient = useQueryClient()
-  const { streamStartProgress, livestreamStatus } = useLivestreamWebSocket()
+  const { streamStartProgress, clearStreamStartProgress, livestreamStatus } =
+    useLivestreamWebSocket()
 
   const activeBroadcastQuery = useQuery({
     queryKey: ['livestream', 'broadcast', 'active'],
@@ -47,5 +48,6 @@ export function useStreaming() {
     isStopping: stopMutation.isPending,
     lastStartedBroadcast: startMutation.data?.broadcast,
     streamStartProgress,
+    clearStreamStartProgress,
   }
 }
