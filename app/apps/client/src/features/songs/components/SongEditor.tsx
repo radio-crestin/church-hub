@@ -277,7 +277,7 @@ export function SongEditor({
           )}
           <button
             type="button"
-            onClick={onSave}
+            onClick={() => onSave()}
             disabled={isSaving || isLoading || !title.trim() || !isDirty}
             className="p-2 sm:px-4 sm:py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors inline-flex items-center gap-2"
             title={t('songs:actions.save')}
