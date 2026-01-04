@@ -1,19 +1,27 @@
-import { useEffect, useRef } from 'react'
+import { ExternalLink, Replace, Trash2 } from 'lucide-react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+
+import {
+  getFrontendUrl,
+  isTauri,
+} from '~/features/presentation/utils/openDisplayWindow'
 
 interface DuplicateSongModalProps {
   isOpen: boolean
   existingTitle: string
-  onOpenExisting: () => void
-  onOverwrite: () => void
+  existingSongId: number | null
+  onOverwriteExisting: () => void
+  onDeleteOther: () => void
   onCancel: () => void
 }
 
 export function DuplicateSongModal({
   isOpen,
   existingTitle,
-  onOpenExisting,
-  onOverwrite,
+  existingSongId,
+  onOverwriteExisting,
+  onDeleteOther,
   onCancel,
 }: DuplicateSongModalProps) {
   const { t } = useTranslation(['songs', 'common'])
@@ -36,45 +44,106 @@ export function DuplicateSongModal({
     }
   }
 
+  const handleOpenInNewWindow = useCallback(async () => {
+    if (!existingSongId) return
+
+    const url = `${getFrontendUrl()}/songs/${existingSongId}/edit`
+
+    if (isTauri()) {
+      try {
+        const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow')
+        const windowLabel = `song-preview-${existingSongId}`
+
+        const existingWindow = await WebviewWindow.getByLabel(windowLabel)
+        if (existingWindow) {
+          await existingWindow.setFocus()
+          return
+        }
+
+        new WebviewWindow(windowLabel, {
+          url,
+          title: existingTitle,
+          width: 800,
+          height: 600,
+          center: true,
+          resizable: true,
+          focus: true,
+        })
+      } catch {
+        window.open(url, '_blank')
+      }
+    } else {
+      window.open(url, '_blank')
+    }
+  }, [existingSongId, existingTitle])
+
   return (
     <dialog
       ref={dialogRef}
-      className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800"
+      className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800 max-w-lg"
       onClose={onCancel}
       onClick={handleBackdropClick}
     >
-      <div className="p-6 min-w-[300px] max-w-md">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+      <div className="p-6">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           {t('songs:duplicateDialog.title')}
         </h2>
-        <p className="text-gray-600 dark:text-gray-400 mb-6">
-          {t('songs:duplicateDialog.description', { title: existingTitle })}
-        </p>
+
+        <div className="mb-6 text-gray-600 dark:text-gray-400">
+          <p className="mb-3">{t('songs:duplicateDialog.foundMessage')}</p>
+          <button
+            type="button"
+            onClick={handleOpenInNewWindow}
+            className="inline-flex items-center gap-2 text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
+          >
+            <span>"{existingTitle}"</span>
+            <ExternalLink size={16} />
+          </button>
+          <p className="mt-3 text-sm">
+            {t('songs:duplicateDialog.clickToPreview')}
+          </p>
+        </div>
 
         <div className="space-y-3">
           <button
             type="button"
-            onClick={onOpenExisting}
-            className="w-full text-left p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            onClick={() => onOverwriteExisting()}
+            className="w-full text-left p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
-            <div className="font-medium text-gray-900 dark:text-white">
-              {t('songs:duplicateDialog.openExisting')}
-            </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              {t('songs:duplicateDialog.openExistingDescription')}
+            <div className="flex items-start gap-3">
+              <Replace
+                size={20}
+                className="text-indigo-600 dark:text-indigo-400 mt-0.5 flex-shrink-0"
+              />
+              <div>
+                <div className="font-medium text-gray-900 dark:text-white">
+                  {t('songs:duplicateDialog.overwriteExisting')}
+                </div>
+                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  {t('songs:duplicateDialog.overwriteExistingDescription')}
+                </div>
+              </div>
             </div>
           </button>
 
           <button
             type="button"
-            onClick={onOverwrite}
-            className="w-full text-left p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            onClick={() => onDeleteOther()}
+            className="w-full text-left p-4 rounded-lg border border-red-200 dark:border-red-900 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
           >
-            <div className="font-medium text-gray-900 dark:text-white">
-              {t('songs:duplicateDialog.overwrite')}
-            </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              {t('songs:duplicateDialog.overwriteDescription')}
+            <div className="flex items-start gap-3">
+              <Trash2
+                size={20}
+                className="text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0"
+              />
+              <div>
+                <div className="font-medium text-red-700 dark:text-red-400">
+                  {t('songs:duplicateDialog.deleteOther')}
+                </div>
+                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  {t('songs:duplicateDialog.deleteOtherDescription')}
+                </div>
+              </div>
             </div>
           </button>
         </div>

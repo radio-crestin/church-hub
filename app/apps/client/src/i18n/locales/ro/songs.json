@@ -162,12 +162,11 @@
   },
   "duplicateDialog": {
     "title": "Cântare duplicată găsită",
-    "description": "O cântare cu titlul \"{{title}}\" există deja. Ce vrei să faci?",
-    "openExisting": "Deschide cântarea existentă",
-    "openExistingDescription": "Vezi cântarea care există deja în bibliotecă",
-    "overwrite": "Actualizează cântarea existentă",
-    "overwriteDescription": "Înlocuiește slide-urile cântării existente cu conținutul nou",
-    "createNew": "Creează cântare nouă",
-    "createNewDescription": "Păstrează ambele cântări cu un sufix numerotat"
+    "foundMessage": "O cântare cu acest titlu există deja în bibliotecă:",
+    "clickToPreview": "Apasă pe titlu pentru a previzualiza cântarea existentă într-o fereastră nouă.",
+    "overwriteExisting": "Înlocuiește cântarea existentă",
+    "overwriteExistingDescription": "Șterge editările curente și actualizează cântarea existentă cu acest conținut. Toate referințele din program vor fi păstrate.",
+    "deleteOther": "Șterge existenta și salvează curentă",
+    "deleteOtherDescription": "Elimină cântarea existentă din bibliotecă și salvează cântarea curentă în loc. Această acțiune nu poate fi anulată."
   }
 }
