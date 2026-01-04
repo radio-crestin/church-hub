@@ -88,5 +88,10 @@
   "translation": {
     "select": "Select translation",
     "loading": "Loading translations..."
+  },
+  "history": {
+    "title": "History",
+    "empty": "No verses displayed yet",
+    "clear": "Clear"
   }
 }
