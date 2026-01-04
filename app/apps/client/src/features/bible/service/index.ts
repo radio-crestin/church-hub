@@ -10,3 +10,4 @@ export {
   importTranslation,
   searchBible,
 } from './bible'
+export { addToHistory, clearHistory, getHistory } from './history'

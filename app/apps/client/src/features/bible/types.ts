@@ -60,6 +60,32 @@ export interface CreateTranslationInput {
   xmlContent: string
 }
 
+export interface BibleHistoryItem {
+  id: number
+  verseId: number
+  reference: string
+  text: string
+  translationAbbreviation: string
+  bookName: string
+  translationId: number
+  bookId: number
+  chapter: number
+  verse: number
+  createdAt: number
+}
+
+export interface AddToHistoryInput {
+  verseId: number
+  reference: string
+  text: string
+  translationAbbreviation: string
+  bookName: string
+  translationId: number
+  bookId: number
+  chapter: number
+  verse: number
+}
+
 // Utility function to format verse reference
 export function formatVerseReference(
   bookName: string,

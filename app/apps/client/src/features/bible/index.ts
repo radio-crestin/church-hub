@@ -1,6 +1,8 @@
 // Components
 export {
   BibleControlPanel,
+  BibleHistoryItem,
+  BibleHistoryPanel,
   BibleNavigationPanel,
   BiblePassagePickerModal,
   BibleSettingsModal,
@@ -21,13 +23,17 @@ export type {
 } from './hooks'
 // Hooks
 export {
+  BIBLE_HISTORY_QUERY_KEY,
   MAX_TRANSLATIONS,
   SELECTED_BIBLE_TRANSLATIONS_QUERY_KEY,
   TRANSLATIONS_QUERY_KEY,
+  useAddToHistory,
+  useBibleHistory,
   useBibleKeyboardShortcuts,
   useBibleNavigation,
   useBooks,
   useChapters,
+  useClearHistory,
   useDefaultBibleTranslation,
   useDeleteTranslation,
   useImportTranslation,
@@ -53,8 +59,10 @@ export {
 } from './service'
 // Types
 export type {
+  AddToHistoryInput,
   BibleBook,
   BibleChapter,
+  BibleHistoryItem,
   BibleSearchResult,
   BibleTranslation,
   BibleVerse,
