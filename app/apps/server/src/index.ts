@@ -55,6 +55,12 @@ import {
   searchBible,
 } from './service/bible'
 import {
+  type AddToHistoryInput,
+  addToHistory,
+  clearHistory,
+  getHistory,
+} from './service/bible-history'
+import {
   checkLibreOfficeInstalled,
   convertPptToPptx,
 } from './service/conversion'
@@ -4480,6 +4486,77 @@ async function main() {
       }
 
       // ============================================================
+      // Bible History API Endpoints
+      // ============================================================
+
+      // GET /api/bible-history - Get all history items
+      if (req.method === 'GET' && url.pathname === '/api/bible-history') {
+        const permError = checkPermission('bible.view')
+        if (permError) return permError
+
+        const items = getHistory()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: items }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/bible-history - Add verse to history
+      if (req.method === 'POST' && url.pathname === '/api/bible-history') {
+        const permError = checkPermission('bible.view')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as AddToHistoryInput
+          const result = addToHistory(body)
+
+          if ('error' in result) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: result.error }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: result.data }), {
+              status: 201,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // DELETE /api/bible-history - Clear all history
+      if (req.method === 'DELETE' && url.pathname === '/api/bible-history') {
+        const permError = checkPermission('bible.view')
+        if (permError) return permError
+
+        const result = clearHistory()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ success: result.success }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // ============================================================
       // Feedback API Endpoint (proxies to Cloudflare worker)
       // ============================================================
 
@@ -4640,12 +4717,14 @@ async function main() {
 
   // Graceful shutdown
   process.on('SIGINT', () => {
+    clearHistory()
     shutdownMIDI()
     closeDatabase()
     process.exit(0)
   })
 
   process.on('SIGTERM', () => {
+    clearHistory()
     shutdownMIDI()
     closeDatabase()
     process.exit(0)
