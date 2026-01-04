@@ -2524,25 +2524,25 @@ async function main() {
             )
           }
 
-          // Check for duplicate title when creating a new song
-          if (!body.id) {
-            const existingSong = getSongByTitle(body.title)
-            if (existingSong) {
-              return handleCors(
-                req,
-                new Response(
-                  JSON.stringify({
-                    error: 'DUPLICATE_TITLE',
-                    existingSongId: existingSong.id,
-                    existingSongTitle: existingSong.title,
-                  }),
-                  {
-                    status: 409,
-                    headers: { 'Content-Type': 'application/json' },
-                  },
-                ),
-              )
-            }
+          // Check for duplicate title
+          const existingSong = getSongByTitle(body.title)
+          // For new songs: any match is a duplicate
+          // For existing songs: match is a duplicate only if it's a different song
+          if (existingSong && (!body.id || existingSong.id !== body.id)) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({
+                  error: 'DUPLICATE_TITLE',
+                  existingSongId: existingSong.id,
+                  existingSongTitle: existingSong.title,
+                }),
+                {
+                  status: 409,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
           }
 
           const song = upsertSong({ ...body, isManualEdit: true })
