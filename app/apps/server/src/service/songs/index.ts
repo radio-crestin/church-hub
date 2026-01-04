@@ -10,6 +10,8 @@ export {
   upsertCategory,
 } from './categories'
 export {
+  completeSongReplacement,
+  prepareForSongReplacement,
   type ReplaceSongReferencesResult,
   replaceSongReferences,
 } from './replaceSongReferences'
