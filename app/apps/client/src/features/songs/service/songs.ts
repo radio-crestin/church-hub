@@ -23,20 +23,48 @@ export async function getSongById(id: number): Promise<SongWithSlides | null> {
   return response.data ?? null
 }
 
+interface DuplicateErrorResponse {
+  error: 'DUPLICATE_TITLE'
+  existingSongId: number
+  existingSongTitle: string
+}
+
+export interface UpsertSongResult {
+  success: boolean
+  data?: SongWithSlides
+  error?: string
+  isDuplicate?: boolean
+  existingSongId?: number
+  existingSongTitle?: string
+}
+
 export async function upsertSong(
   input: UpsertSongInput,
-): Promise<{ success: boolean; data?: SongWithSlides; error?: string }> {
-  const response = await fetcher<ApiResponse<SongWithSlides>>('/api/songs', {
+): Promise<UpsertSongResult> {
+  const response = await fetcher<
+    ApiResponse<SongWithSlides> | DuplicateErrorResponse
+  >('/api/songs', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   })
 
+  // Check for duplicate title error
+  if ('existingSongId' in response && response.error === 'DUPLICATE_TITLE') {
+    return {
+      success: false,
+      error: 'DUPLICATE_TITLE',
+      isDuplicate: true,
+      existingSongId: response.existingSongId,
+      existingSongTitle: response.existingSongTitle,
+    }
+  }
+
   if (response.error) {
     return { success: false, error: response.error }
   }
 
-  return { success: true, data: response.data }
+  return { success: true, data: (response as ApiResponse<SongWithSlides>).data }
 }
 
 export async function deleteSong(id: number): Promise<boolean> {

@@ -162,6 +162,7 @@ import {
   getAllCategories,
   getAllSongs,
   getAllSongsWithSlides,
+  getSongByTitle,
   getSongWithSlides,
   type ReorderCategoriesInput,
   type ReorderSongSlidesInput,
@@ -2521,6 +2522,27 @@ async function main() {
                 headers: { 'Content-Type': 'application/json' },
               }),
             )
+          }
+
+          // Check for duplicate title when creating a new song
+          if (!body.id) {
+            const existingSong = getSongByTitle(body.title)
+            if (existingSong) {
+              return handleCors(
+                req,
+                new Response(
+                  JSON.stringify({
+                    error: 'DUPLICATE_TITLE',
+                    existingSongId: existingSong.id,
+                    existingSongTitle: existingSong.title,
+                  }),
+                  {
+                    status: 409,
+                    headers: { 'Content-Type': 'application/json' },
+                  },
+                ),
+              )
+            }
           }
 
           const song = upsertSong({ ...body, isManualEdit: true })

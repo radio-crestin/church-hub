@@ -9,11 +9,9 @@ export function useUpsertSong() {
   return useMutation({
     mutationFn: (input: UpsertSongInput) => upsertSong(input),
     onSuccess: (result) => {
-      if (result.success) {
+      if (result.success && result.data) {
         queryClient.invalidateQueries({ queryKey: ['songs'] })
-        if (result.id) {
-          queryClient.invalidateQueries({ queryKey: ['song', result.id] })
-        }
+        queryClient.invalidateQueries({ queryKey: ['song', result.data.id] })
       }
     },
   })

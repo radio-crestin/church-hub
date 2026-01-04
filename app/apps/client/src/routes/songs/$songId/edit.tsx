@@ -2,7 +2,11 @@ import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { SongEditor, UnsavedChangesModal } from '~/features/songs/components'
+import {
+  DuplicateSongModal,
+  SongEditor,
+  UnsavedChangesModal,
+} from '~/features/songs/components'
 import { type LocalSlide } from '~/features/songs/components/SongSlideList'
 import {
   useDeleteSong,
@@ -76,6 +80,11 @@ function SongEditorPage() {
   const [metadata, setMetadata] = useState<SongMetadata>(defaultMetadata)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
 
+  // Duplicate song modal state
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false)
+  const [existingSongId, setExistingSongId] = useState<number | null>(null)
+  const [existingSongTitle, setExistingSongTitle] = useState('')
+
   // Track dirty state for save button and navigation blocking
   const { setSavedState, isDirty } = useDirtyState()
   const hasUnsavedChanges = isDirty({ title, categoryId, slides, metadata })
@@ -126,94 +135,113 @@ function SongEditorPage() {
     [],
   )
 
-  const handleSave = useCallback(async (): Promise<boolean> => {
-    if (!title.trim()) return false
+  const handleSave = useCallback(
+    async (overrideId?: number): Promise<boolean> => {
+      if (!title.trim()) return false
 
-    const result = await upsertMutation.mutateAsync({
-      id: numericId ?? undefined,
-      title: title.trim(),
-      categoryId,
-      slides: slides.map((s, idx) => ({
-        id: typeof s.id === 'number' ? s.id : undefined,
-        content: s.content,
-        sortOrder: idx,
-        label: s.label,
-      })),
-      // Include metadata fields
-      author: metadata.author,
-      copyright: metadata.copyright,
-      ccli: metadata.ccli,
-      key: metadata.key,
-      tempo: metadata.tempo,
-      timeSignature: metadata.timeSignature,
-      theme: metadata.theme,
-      altTheme: metadata.altTheme,
-      hymnNumber: metadata.hymnNumber,
-      keyLine: metadata.keyLine,
-      presentationOrder: metadata.presentationOrder,
-      sourceFilename: metadata.sourceFilename,
-    })
-
-    if (result.success && result.data) {
-      showToast(t('songs:messages.saved'), 'success')
-
-      // Update saved state after successful save
-      const savedSlides = result.data.slides.map((s) => ({
-        id: s.id,
-        content: s.content,
-        sortOrder: s.sortOrder,
-        label: s.label,
-      }))
-      const savedMetadata: SongMetadata = {
-        author: result.data.author,
-        copyright: result.data.copyright,
-        ccli: result.data.ccli,
-        key: result.data.key,
-        tempo: result.data.tempo,
-        timeSignature: result.data.timeSignature,
-        theme: result.data.theme,
-        altTheme: result.data.altTheme,
-        hymnNumber: result.data.hymnNumber,
-        keyLine: result.data.keyLine,
-        presentationOrder: result.data.presentationOrder,
-        sourceFilename: result.data.sourceFilename,
-      }
-      setSavedState({
-        title: result.data.title,
-        categoryId: result.data.categoryId,
-        slides: savedSlides,
-        metadata: savedMetadata,
+      const result = await upsertMutation.mutateAsync({
+        id: overrideId ?? numericId ?? undefined,
+        title: title.trim(),
+        categoryId,
+        slides: slides.map((s, idx) => ({
+          id: overrideId
+            ? undefined
+            : typeof s.id === 'number'
+              ? s.id
+              : undefined,
+          content: s.content,
+          sortOrder: idx,
+          label: s.label,
+        })),
+        // Include metadata fields
+        author: metadata.author,
+        copyright: metadata.copyright,
+        ccli: metadata.ccli,
+        key: metadata.key,
+        tempo: metadata.tempo,
+        timeSignature: metadata.timeSignature,
+        theme: metadata.theme,
+        altTheme: metadata.altTheme,
+        hymnNumber: metadata.hymnNumber,
+        keyLine: metadata.keyLine,
+        presentationOrder: metadata.presentationOrder,
+        sourceFilename: metadata.sourceFilename,
       })
 
-      if (isNew) {
-        // Navigate to the preview page after creating a new song
-        navigate({
-          to: '/songs/$songId',
-          params: { songId: String(result.data.id) },
-        })
-      } else {
-        // Update local state with saved data
-        setSlides(savedSlides)
-        setMetadata(savedMetadata)
+      // Handle duplicate title error
+      if (
+        result.isDuplicate &&
+        result.existingSongId &&
+        result.existingSongTitle
+      ) {
+        setExistingSongId(result.existingSongId)
+        setExistingSongTitle(result.existingSongTitle)
+        setShowDuplicateModal(true)
+        return false
       }
-      return true
-    } else {
-      showToast(t('songs:messages.error'), 'error')
-      return false
-    }
-  }, [
-    title,
-    categoryId,
-    slides,
-    metadata,
-    numericId,
-    isNew,
-    upsertMutation,
-    showToast,
-    t,
-    navigate,
-    setSavedState,
-  ])
+
+      if (result.success && result.data) {
+        showToast(t('songs:messages.saved'), 'success')
+
+        // Update saved state after successful save
+        const savedSlides = result.data.slides.map((s) => ({
+          id: s.id,
+          content: s.content,
+          sortOrder: s.sortOrder,
+          label: s.label,
+        }))
+        const savedMetadata: SongMetadata = {
+          author: result.data.author,
+          copyright: result.data.copyright,
+          ccli: result.data.ccli,
+          key: result.data.key,
+          tempo: result.data.tempo,
+          timeSignature: result.data.timeSignature,
+          theme: result.data.theme,
+          altTheme: result.data.altTheme,
+          hymnNumber: result.data.hymnNumber,
+          keyLine: result.data.keyLine,
+          presentationOrder: result.data.presentationOrder,
+          sourceFilename: result.data.sourceFilename,
+        }
+        setSavedState({
+          title: result.data.title,
+          categoryId: result.data.categoryId,
+          slides: savedSlides,
+          metadata: savedMetadata,
+        })
+
+        if (isNew || overrideId) {
+          // Navigate to the edit page of the saved song
+          navigate({
+            to: '/songs/$songId/edit',
+            params: { songId: String(result.data.id) },
+          })
+        } else {
+          // Update local state with saved data
+          setSlides(savedSlides)
+          setMetadata(savedMetadata)
+        }
+        return true
+      } else {
+        showToast(t('songs:messages.error'), 'error')
+        return false
+      }
+    },
+    [
+      title,
+      categoryId,
+      slides,
+      metadata,
+      numericId,
+      isNew,
+      upsertMutation,
+      showToast,
+      t,
+      navigate,
+      setSavedState,
+    ],
+  )
 
   // CMD+S / Ctrl+S keyboard shortcut to save
   useEffect(() => {
@@ -253,6 +281,30 @@ function SongEditorPage() {
       showToast(t('songs:messages.error'), 'error')
     }
   }
+
+  // Duplicate modal handlers
+  const handleDuplicateOpenExisting = useCallback(() => {
+    setShowDuplicateModal(false)
+    if (existingSongId) {
+      navigate({
+        to: '/songs/$songId/edit',
+        params: { songId: String(existingSongId) },
+      })
+    }
+  }, [existingSongId, navigate])
+
+  const handleDuplicateOverwrite = useCallback(async () => {
+    setShowDuplicateModal(false)
+    if (existingSongId) {
+      await handleSave(existingSongId)
+    }
+  }, [existingSongId, handleSave])
+
+  const handleDuplicateCancel = useCallback(() => {
+    setShowDuplicateModal(false)
+    setExistingSongId(null)
+    setExistingSongTitle('')
+  }, [])
 
   // Navigation blocking for unsaved changes
   const {
@@ -304,6 +356,14 @@ function SongEditorPage() {
         isOpen={showUnsavedModal}
         onDiscard={handleUnsavedDiscard}
         onCancel={handleUnsavedCancel}
+      />
+
+      <DuplicateSongModal
+        isOpen={showDuplicateModal}
+        existingTitle={existingSongTitle}
+        onOpenExisting={handleDuplicateOpenExisting}
+        onOverwrite={handleDuplicateOverwrite}
+        onCancel={handleDuplicateCancel}
       />
     </>
   )
