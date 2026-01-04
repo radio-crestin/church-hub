@@ -283,22 +283,27 @@ function SongEditorPage() {
   }
 
   // Duplicate modal handlers
-  const handleDuplicateOpenExisting = useCallback(() => {
+  const handleOverwriteExisting = useCallback(async () => {
     setShowDuplicateModal(false)
     if (existingSongId) {
-      navigate({
-        to: '/songs/$songId/edit',
-        params: { songId: String(existingSongId) },
-      })
-    }
-  }, [existingSongId, navigate])
-
-  const handleDuplicateOverwrite = useCallback(async () => {
-    setShowDuplicateModal(false)
-    if (existingSongId) {
+      // Save content to the existing song (this preserves schedule references)
       await handleSave(existingSongId)
     }
   }, [existingSongId, handleSave])
+
+  const handleDeleteOther = useCallback(async () => {
+    setShowDuplicateModal(false)
+    if (existingSongId) {
+      // Delete the existing song first
+      const deleted = await deleteMutation.mutateAsync(existingSongId)
+      if (deleted) {
+        // Now save the current song (it will succeed since duplicate is gone)
+        await handleSave()
+      } else {
+        showToast(t('songs:messages.error'), 'error')
+      }
+    }
+  }, [existingSongId, deleteMutation, handleSave, showToast, t])
 
   const handleDuplicateCancel = useCallback(() => {
     setShowDuplicateModal(false)
@@ -361,8 +366,9 @@ function SongEditorPage() {
       <DuplicateSongModal
         isOpen={showDuplicateModal}
         existingTitle={existingSongTitle}
-        onOpenExisting={handleDuplicateOpenExisting}
-        onOverwrite={handleDuplicateOverwrite}
+        existingSongId={existingSongId}
+        onOverwriteExisting={handleOverwriteExisting}
+        onDeleteOther={handleDeleteOther}
         onCancel={handleDuplicateCancel}
       />
     </>

@@ -162,12 +162,11 @@
   },
   "duplicateDialog": {
     "title": "Duplicate Song Found",
-    "description": "A song with the title \"{{title}}\" already exists. What would you like to do?",
-    "openExisting": "Open Existing Song",
-    "openExistingDescription": "View the song that already exists in the library",
-    "overwrite": "Update Existing Song",
-    "overwriteDescription": "Replace the existing song's slides with the new content",
-    "createNew": "Create New Song",
-    "createNewDescription": "Keep both songs with a numbered suffix"
+    "foundMessage": "A song with this title already exists in the library:",
+    "clickToPreview": "Click the title above to preview the existing song in a new window.",
+    "overwriteExisting": "Replace Existing Song",
+    "overwriteExistingDescription": "Delete your current edits and update the existing song with this content. All schedule references will be preserved.",
+    "deleteOther": "Delete Existing & Save Current",
+    "deleteOtherDescription": "Remove the existing song from the library and save your current song instead. This cannot be undone."
   }
 }
