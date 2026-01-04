@@ -54,11 +54,11 @@ function BiblePage() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [dividerPosition, setDividerPosition] = useState(() => {
     const stored = localStorage.getItem('bible-left-divider')
-    return stored ? Number(stored) : 40
+    return stored ? Number(stored) : 30
   })
   const [rightDividerPosition, setRightDividerPosition] = useState(() => {
     const stored = localStorage.getItem('bible-right-divider')
-    return stored ? Number(stored) : 60
+    return stored ? Number(stored) : 70
   })
   const [isHistoryCollapsed, setIsHistoryCollapsed] = useState(() => {
     const stored = localStorage.getItem('bible-history-collapsed')
