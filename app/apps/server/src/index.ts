@@ -154,6 +154,7 @@ import {
   batchImportSongs,
   batchUpdateSearchIndex,
   cloneSongSlide,
+  completeSongReplacement,
   deleteCategory,
   deleteSong,
   deleteSongSlide,
@@ -164,13 +165,13 @@ import {
   getAllSongsWithSlides,
   getSongByTitle,
   getSongWithSlides,
+  prepareForSongReplacement,
   type ReorderCategoriesInput,
   type ReorderSongSlidesInput,
   rebuildSearchIndex,
   removeFromSearchIndex,
   reorderCategories,
   reorderSongSlides,
-  replaceSongReferences,
   searchSongs,
   type UpsertCategoryInput,
   type UpsertSongInput,
@@ -2550,6 +2551,28 @@ async function main() {
             }
           }
 
+          // If replacing an existing song, temporarily rename its title first
+          // This avoids the UNIQUE constraint error when creating the new song
+          if (body.replaceExistingSongId) {
+            const prepared = prepareForSongReplacement(
+              body.replaceExistingSongId,
+            )
+            if (!prepared) {
+              return handleCors(
+                req,
+                new Response(
+                  JSON.stringify({
+                    error: 'Failed to prepare song replacement',
+                  }),
+                  {
+                    status: 500,
+                    headers: { 'Content-Type': 'application/json' },
+                  },
+                ),
+              )
+            }
+          }
+
           const song = upsertSong({ ...body, isManualEdit: true })
 
           if (!song) {
@@ -2564,7 +2587,7 @@ async function main() {
 
           // If replacing an existing song, update references and delete the old song
           if (body.replaceExistingSongId) {
-            const replaceResult = replaceSongReferences(
+            const replaceResult = completeSongReplacement(
               body.replaceExistingSongId,
               song.id,
             )
@@ -2621,7 +2644,7 @@ async function main() {
             )
           }
 
-          const result = replaceSongReferences(body.oldSongId, body.newSongId)
+          const result = completeSongReplacement(body.oldSongId, body.newSongId)
 
           if (!result.success) {
             return handleCors(

@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
 
-import { getDatabase } from '../../db'
+import { getDatabase, getRawDatabase } from '../../db'
 import { presentationQueue } from '../../db/schema/presentation'
 import { scheduleItems } from '../../db/schema/schedules'
 import { songs } from '../../db/schema/songs'
@@ -21,58 +21,92 @@ export interface ReplaceSongReferencesResult {
 }
 
 /**
- * Replaces all references to oldSongId with newSongId in schedules and queue,
- * then deletes the old song.
- *
- * This is used when a user wants to save a song with a title that already exists:
- * - The existing song (oldSongId) will be deleted
- * - All schedule items and queue items referencing oldSongId will now reference newSongId
+ * Prepares for song replacement by temporarily renaming the old song's title.
+ * This allows a new song with the same title to be created.
+ * Call this BEFORE creating the new song.
  */
-export function replaceSongReferences(
+export function prepareForSongReplacement(oldSongId: number): boolean {
+  try {
+    log(
+      'info',
+      `Preparing for song replacement: temporarily renaming song ${oldSongId}`,
+    )
+
+    const db = getDatabase()
+
+    // Rename the old song's title to something unique to avoid UNIQUE constraint
+    const tempTitle = `__REPLACING__${oldSongId}__${Date.now()}`
+    db.update(songs)
+      .set({ title: tempTitle })
+      .where(eq(songs.id, oldSongId))
+      .run()
+
+    log('debug', `Temporarily renamed song ${oldSongId} to: ${tempTitle}`)
+    return true
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    log('error', `Failed to prepare for song replacement: ${message}`)
+    return false
+  }
+}
+
+/**
+ * Completes song replacement by updating all references from oldSongId to newSongId,
+ * then deleting the old song.
+ * Call this AFTER creating the new song.
+ */
+export function completeSongReplacement(
   oldSongId: number,
   newSongId: number,
 ): ReplaceSongReferencesResult {
   try {
-    log('info', `Replacing song references: ${oldSongId} -> ${newSongId}`)
+    log('info', `Completing song replacement: ${oldSongId} -> ${newSongId}`)
 
-    const db = getDatabase()
+    const rawDb = getRawDatabase()
 
-    // Update schedule items
-    const scheduleResult = db
-      .update(scheduleItems)
-      .set({ songId: newSongId })
-      .where(eq(scheduleItems.songId, oldSongId))
-      .run()
+    // Use a transaction to ensure atomicity
+    const result = rawDb.transaction(() => {
+      const db = getDatabase()
 
-    const scheduleItemsUpdated = scheduleResult.changes
+      // Update schedule items
+      const scheduleResult = db
+        .update(scheduleItems)
+        .set({ songId: newSongId })
+        .where(eq(scheduleItems.songId, oldSongId))
+        .run()
 
-    // Update queue items
-    const queueResult = db
-      .update(presentationQueue)
-      .set({ songId: newSongId })
-      .where(eq(presentationQueue.songId, oldSongId))
-      .run()
+      const scheduleItemsUpdated = scheduleResult.changes
 
-    const queueItemsUpdated = queueResult.changes
+      // Update queue items
+      const queueResult = db
+        .update(presentationQueue)
+        .set({ songId: newSongId })
+        .where(eq(presentationQueue.songId, oldSongId))
+        .run()
 
-    log(
-      'info',
-      `Updated ${scheduleItemsUpdated} schedule items and ${queueItemsUpdated} queue items`,
-    )
+      const queueItemsUpdated = queueResult.changes
 
-    // Delete the old song (slides will cascade delete)
-    db.delete(songs).where(eq(songs.id, oldSongId)).run()
+      log(
+        'info',
+        `Updated ${scheduleItemsUpdated} schedule items and ${queueItemsUpdated} queue items`,
+      )
 
-    log('info', `Deleted old song: ${oldSongId}`)
+      // Delete the old song (slides will cascade delete)
+      db.delete(songs).where(eq(songs.id, oldSongId)).run()
+
+      log('info', `Deleted old song: ${oldSongId}`)
+
+      return { scheduleItemsUpdated, queueItemsUpdated }
+    })()
 
     return {
       success: true,
-      scheduleItemsUpdated,
-      queueItemsUpdated,
+      scheduleItemsUpdated: result.scheduleItemsUpdated,
+      queueItemsUpdated: result.queueItemsUpdated,
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
-    log('error', `Failed to replace song references: ${message}`)
+    log('error', `Failed to complete song replacement: ${message}`)
     return {
       success: false,
       scheduleItemsUpdated: 0,
@@ -80,4 +114,14 @@ export function replaceSongReferences(
       error: message,
     }
   }
+}
+
+/**
+ * @deprecated Use prepareForSongReplacement + completeSongReplacement instead
+ */
+export function replaceSongReferences(
+  oldSongId: number,
+  newSongId: number,
+): ReplaceSongReferencesResult {
+  return completeSongReplacement(oldSongId, newSongId)
 }
