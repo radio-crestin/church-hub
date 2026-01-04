@@ -849,7 +849,7 @@ function BiblePage() {
                         bookName: item.bookName,
                         chapter: item.chapter,
                         verseIndex: item.verse - 1,
-                        clearSearch: true,
+                        clearSearch: false,
                       })
                     }}
                   />
