@@ -64,25 +64,35 @@ export function VersesList({
   const versesKey = verses[0]?.id
 
   useEffect(() => {
-    if (highlightedRef.current && containerRef.current) {
-      const container = containerRef.current
-      const element = highlightedRef.current
-      const elementRect = element.getBoundingClientRect()
-      const containerRect = container.getBoundingClientRect()
+    // Use requestAnimationFrame to ensure DOM is fully painted before scrolling
+    const scrollToHighlighted = () => {
+      if (highlightedRef.current && containerRef.current) {
+        const container = containerRef.current
+        const element = highlightedRef.current
+        const elementRect = element.getBoundingClientRect()
+        const containerRect = container.getBoundingClientRect()
 
-      // Calculate where the element is relative to the container
-      const elementTop =
-        elementRect.top - containerRect.top + container.scrollTop
+        // Calculate where the element is relative to the container
+        const elementTop =
+          elementRect.top - containerRect.top + container.scrollTop
 
-      // For first few verses, use natural position (don't scroll above content)
-      // For other verses, position at SCROLL_OFFSET_TOP from container top
-      const targetScrollTop = Math.max(0, elementTop - SCROLL_OFFSET_TOP)
+        // For first few verses, use natural position (don't scroll above content)
+        // For other verses, position at SCROLL_OFFSET_TOP from container top
+        const targetScrollTop = Math.max(0, elementTop - SCROLL_OFFSET_TOP)
 
-      container.scrollTo({
-        top: targetScrollTop,
-        behavior: 'smooth',
-      })
+        container.scrollTo({
+          top: targetScrollTop,
+          behavior: 'smooth',
+        })
+      }
     }
+
+    // Double RAF ensures the scroll happens after React has committed DOM changes
+    const rafId = requestAnimationFrame(() => {
+      requestAnimationFrame(scrollToHighlighted)
+    })
+
+    return () => cancelAnimationFrame(rafId)
   }, [scrollTargetIndex, versesKey])
 
   if (isLoading) {
