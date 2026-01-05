@@ -94,6 +94,7 @@
       "invalid_format": "Format invalid. Incearca: Gen 1:1 sau Gen 1:1-5",
       "book_not_found": "Cartea nu a fost gasita",
       "invalid_chapter": "Numar de capitol invalid",
+      "invalid_verse": "Numarul versetului nu exista in acest capitol",
       "end_before_start": "Sfarsitul trebuie sa fie dupa inceput"
     }
   },
