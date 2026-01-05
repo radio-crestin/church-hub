@@ -266,12 +266,22 @@ function SongPreviewPage() {
           event.preventDefault()
           handlePresentSelectedSlide()
           break
+
+        case 'Escape':
+          event.preventDefault()
+          handleGoBack()
+          break
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [presentedSlideIndex, expandedSlidesCount, handlePresentSelectedSlide])
+  }, [
+    presentedSlideIndex,
+    expandedSlidesCount,
+    handlePresentSelectedSlide,
+    handleGoBack,
+  ])
 
   // Divider drag handlers
   const handleDividerMouseDown = useCallback((e: React.MouseEvent) => {
