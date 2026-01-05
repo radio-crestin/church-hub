@@ -245,36 +245,6 @@ export function SchedulePresenter({
   const canNavigateNext =
     currentFlatIndex >= 0 && currentFlatIndex < flatItems.length - 1
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't handle if focus is on an input
-      if (
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement
-      ) {
-        return
-      }
-
-      if (e.key === 'ArrowLeft' && canNavigatePrev) {
-        handlePrevSlide()
-      } else if (e.key === 'ArrowRight' && canNavigateNext) {
-        handleNextSlide()
-      } else if (e.key === 'Escape') {
-        clearTemporary.mutate()
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [
-    canNavigatePrev,
-    canNavigateNext,
-    clearTemporary,
-    handlePrevSlide,
-    handleNextSlide,
-  ])
-
   // Title editing handlers
   const handleStartEditTitle = useCallback(() => {
     setEditedTitle(schedule?.title ?? '')
@@ -440,6 +410,36 @@ export function SchedulePresenter({
     presentTemporarySong,
     navigateTemporary,
     presentationState?.temporaryContent,
+  ])
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't handle if focus is on an input
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
+        return
+      }
+
+      if (e.key === 'ArrowLeft' && canNavigatePrev) {
+        handlePrevSlide()
+      } else if (e.key === 'ArrowRight' && canNavigateNext) {
+        handleNextSlide()
+      } else if (e.key === 'Escape') {
+        clearTemporary.mutate()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [
+    canNavigatePrev,
+    canNavigateNext,
+    clearTemporary,
+    handlePrevSlide,
+    handleNextSlide,
   ])
 
   // Edit handlers
