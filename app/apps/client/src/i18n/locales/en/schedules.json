@@ -94,6 +94,7 @@
       "invalid_format": "Invalid format. Try: Gen 1:1 or Gen 1:1-5",
       "book_not_found": "Book not found",
       "invalid_chapter": "Invalid chapter number",
+      "invalid_verse": "Verse number does not exist in this chapter",
       "end_before_start": "End must be after start"
     }
   },
