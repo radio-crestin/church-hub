@@ -84,6 +84,12 @@ export function SchedulePresenter({
       onBack()
     }
   }, [isLoading, schedule, isError, showToast, t, onBack])
+
+  // Handle back button - clear last visited so user stays on list
+  const handleBack = useCallback(() => {
+    clearSectionLastVisited('schedules')
+    onBack()
+  }, [onBack])
   const { data: presentationState } = usePresentationState()
   const presentTemporarySong = usePresentTemporarySong()
   const navigateTemporary = useNavigateTemporary()
@@ -611,7 +617,7 @@ export function SchedulePresenter({
         <div className="flex items-center gap-3 min-w-0 flex-1">
           <button
             type="button"
-            onClick={onBack}
+            onClick={handleBack}
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 shrink-0"
           >
             <ArrowLeft size={20} className="text-gray-600 dark:text-gray-400" />
