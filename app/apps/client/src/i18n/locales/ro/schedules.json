@@ -11,7 +11,9 @@
     "loadFromFile": "Incarca din Fisier",
     "importFromFile": "Importa",
     "editAsText": "Editeaza ca Text",
-    "cancel": "Anuleaza"
+    "cancel": "Anuleaza",
+    "expandAll": "Extinde tot",
+    "collapseAll": "Restrange tot"
   },
   "editor": {
     "title": "Titlu",
@@ -25,6 +27,7 @@
   },
   "presenter": {
     "edit": "Editeaza",
+    "editSong": "Editeaza cantarea",
     "announcement": "Anunt",
     "verseteTineri": "Versete Tineri",
     "items": "{{count}} elemente",

@@ -1,6 +1,8 @@
+import { useNavigate } from '@tanstack/react-router'
 import {
   ArrowLeft,
   Check,
+  ChevronsRightLeft,
   Download,
   FileText,
   GripVertical,
@@ -28,7 +30,7 @@ import {
   useLoadScheduleFromFile,
   useSaveScheduleToFile,
 } from '~/features/schedule-export'
-import { SongPickerModal } from '~/features/songs/components'
+import { SongEditorModal, SongPickerModal } from '~/features/songs/components'
 import { expandSongSlidesWithChoruses } from '~/features/songs/utils/expandSongSlides'
 import { useToast } from '~/ui/toast'
 import { AddToScheduleMenu } from './AddToScheduleMenu'
@@ -37,7 +39,12 @@ import { EditAsTextModal } from './EditAsTextModal'
 import { InsertSlideModal } from './InsertSlideModal'
 import { ScheduleItemsPanel } from './ScheduleItemsPanel'
 import { SchedulePreviewPanel } from './SchedulePreviewPanel'
-import { useDeleteSchedule, useSchedule, useUpsertSchedule } from '../hooks'
+import {
+  useDeleteSchedule,
+  useReorderScheduleItems,
+  useSchedule,
+  useUpsertSchedule,
+} from '../hooks'
 import type { ScheduleItem, SlideTemplate } from '../types'
 
 interface SchedulePresenterProps {
@@ -55,6 +62,7 @@ export function SchedulePresenter({
 }: SchedulePresenterProps) {
   const { t } = useTranslation('schedules')
   const { showToast } = useToast()
+  const navigate = useNavigate()
 
   // Connect to WebSocket for real-time updates
   useWebSocket()
@@ -69,6 +77,7 @@ export function SchedulePresenter({
   const { importItems, isPending: isImporting } = useImportScheduleItems()
   const upsertSchedule = useUpsertSchedule()
   const deleteSchedule = useDeleteSchedule()
+  const reorderItems = useReorderScheduleItems()
 
   // Layout state
   const [dividerPosition, setDividerPosition] = useState(() => {
@@ -95,6 +104,11 @@ export function SchedulePresenter({
     useState<SlideTemplate>('announcement')
   const [showEditAsText, setShowEditAsText] = useState(false)
   const [showBiblePassagePicker, setShowBiblePassagePicker] = useState(false)
+  const [editingSongId, setEditingSongId] = useState<number | null>(null)
+
+  // Expand/collapse all triggers
+  const [expandAllTrigger, _setExpandAllTrigger] = useState(0)
+  const [collapseAllTrigger, setCollapseAllTrigger] = useState(0)
 
   const deleteDialogRef = useRef<HTMLDialogElement>(null)
   const importDialogRef = useRef<HTMLDialogElement>(null)
@@ -388,6 +402,37 @@ export function SchedulePresenter({
     setShowBiblePassagePicker(true)
   }, [])
 
+  // Reorder handler
+  const handleReorder = useCallback(
+    async (oldIndex: number, newIndex: number) => {
+      const newItems = [...items]
+      const [removed] = newItems.splice(oldIndex, 1)
+      newItems.splice(newIndex, 0, removed)
+
+      await reorderItems.mutateAsync({
+        scheduleId,
+        input: { itemIds: newItems.map((item) => item.id) },
+      })
+    },
+    [items, scheduleId, reorderItems],
+  )
+
+  // Edit song handler (double-click)
+  const handleEditSong = useCallback((songId: number) => {
+    setEditingSongId(songId)
+  }, [])
+
+  // Navigate to song page handler (middle-click)
+  const handleNavigateToSong = useCallback(
+    (songId: number) => {
+      navigate({
+        to: '/songs/$songId',
+        params: { songId: String(songId) },
+      })
+    },
+    [navigate],
+  )
+
   const handleSongSelected = useCallback(
     async (songId: number) => {
       // Add song via API - the schedule will be refetched automatically
@@ -529,7 +574,7 @@ export function SchedulePresenter({
           >
             <ArrowLeft size={20} className="text-gray-600 dark:text-gray-400" />
           </button>
-          <div className="flex-1 min-w-0 group">
+          <div className="flex-1 min-w-0 mr-4 overflow-hidden group">
             {isEditingTitle ? (
               <div className="flex items-center gap-2">
                 <input
@@ -634,16 +679,21 @@ export function SchedulePresenter({
         >
           {/* Left Panel Header */}
           <div className="flex items-center justify-between p-3 lg:p-4 pb-2 border-b border-gray-200 dark:border-gray-700">
-            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-              {t('presenter.items', { count: items.length })}
-            </span>
+            <button
+              type="button"
+              onClick={() => setCollapseAllTrigger((prev) => prev + 1)}
+              className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition-colors"
+              title={t('actions.collapseAll')}
+            >
+              <ChevronsRightLeft size={16} />
+            </button>
             <div className="flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => setShowEditAsText(true)}
-                className="flex items-center gap-1.5 px-2 py-1 text-sm text-amber-700 bg-amber-100 hover:bg-amber-200 dark:text-amber-300 dark:bg-amber-900/30 dark:hover:bg-amber-900/50 rounded-lg transition-colors"
+                className="flex items-center gap-2 p-2 sm:px-3 sm:py-1.5 text-sm text-gray-900 bg-amber-400 hover:bg-amber-500 dark:bg-amber-400 dark:hover:bg-amber-500 rounded-lg transition-colors"
               >
-                <FileText size={14} />
+                <FileText size={16} />
                 <span className="hidden sm:inline">
                   {t('actions.editAsText')}
                 </span>
@@ -664,6 +714,11 @@ export function SchedulePresenter({
               onVerseClick={handleVerseClick}
               onEntryClick={handleEntryClick}
               onAnnouncementClick={handleAnnouncementClick}
+              onReorder={handleReorder}
+              onEditSong={handleEditSong}
+              onNavigateToSong={handleNavigateToSong}
+              expandAllTrigger={expandAllTrigger}
+              collapseAllTrigger={collapseAllTrigger}
             />
           </div>
         </div>
@@ -843,6 +898,18 @@ export function SchedulePresenter({
           </div>
         </div>
       </dialog>
+
+      {/* Song Editor Modal */}
+      {editingSongId !== null && (
+        <SongEditorModal
+          isOpen={editingSongId !== null}
+          songId={editingSongId}
+          onClose={() => setEditingSongId(null)}
+          onSaved={() => {
+            refetch()
+          }}
+        />
+      )}
     </div>
   )
 }

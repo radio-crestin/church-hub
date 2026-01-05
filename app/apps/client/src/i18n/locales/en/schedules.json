@@ -11,7 +11,9 @@
     "loadFromFile": "Load from File",
     "importFromFile": "Import",
     "editAsText": "Edit as Text",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "expandAll": "Expand all",
+    "collapseAll": "Collapse all"
   },
   "editor": {
     "title": "Title",
@@ -25,6 +27,7 @@
   },
   "presenter": {
     "edit": "Edit",
+    "editSong": "Edit song",
     "announcement": "Announcement",
     "verseteTineri": "Youth Verses",
     "items": "{{count}} items",
