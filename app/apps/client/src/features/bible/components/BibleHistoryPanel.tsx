@@ -59,11 +59,10 @@ export function BibleHistoryPanel({ onSelectVerse }: BibleHistoryPanelProps) {
           </div>
         ) : (
           <div className="p-2 flex flex-col gap-1.5">
-            {historyItems.map((item, idx) => (
+            {historyItems.map((item) => (
               <BibleHistoryItem
                 key={item.id}
                 item={item}
-                index={idx}
                 onClick={() => onSelectVerse(item)}
               />
             ))}
