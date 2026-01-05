@@ -80,6 +80,7 @@ import {
   initializeMIDI,
   setAllLEDs,
   setConnectionStatusCallback,
+  setDevicesChangedCallback,
   setLED,
   setMessageCallback,
   shutdownMIDI,
@@ -191,6 +192,8 @@ import {
 } from './service/songs'
 import { proxyToVite, serveStaticFile } from './utils/static-server'
 import {
+  broadcastMIDIConnectionStatus,
+  broadcastMIDIDevices,
   broadcastMIDIMessage,
   broadcastPresentationState,
   broadcastScreenConfigUpdated,
@@ -4685,6 +4688,12 @@ async function main() {
   // Wire up MIDI connection status callback to WebSocket broadcast
   setConnectionStatusCallback((status) => {
     broadcastMIDIConnectionStatus(status)
+  })
+
+  // Wire up MIDI devices changed callback to WebSocket broadcast
+  // This is called when devices reconnect so clients can update their device lists
+  setDevicesChangedCallback((devices) => {
+    broadcastMIDIDevices(devices)
   })
 
   // Wire up MIDI WebSocket message handler for LED control

@@ -283,6 +283,12 @@ type ConnectionStatusCallback = (
 ) => void
 let connectionStatusCallback: ConnectionStatusCallback | null = null
 
+// Callback for device list changes (used to notify clients when devices reconnect)
+type DevicesChangedCallback = (
+  devices: ReturnType<typeof getAllDevices>,
+) => void
+let devicesChangedCallback: DevicesChangedCallback | null = null
+
 /**
  * Get list of available MIDI input devices
  */
@@ -693,12 +699,31 @@ export function setConnectionStatusCallback(
 }
 
 /**
+ * Set callback for device list changes
+ */
+export function setDevicesChangedCallback(
+  callback: DevicesChangedCallback | null,
+) {
+  devicesChangedCallback = callback
+}
+
+/**
  * Broadcast connection status to clients
  */
 function broadcastConnectionStatus() {
   if (connectionStatusCallback) {
     const status = getConnectionStatus()
     connectionStatusCallback({ ...status, isReconnecting })
+  }
+}
+
+/**
+ * Broadcast device list to clients
+ */
+function broadcastDevices() {
+  if (devicesChangedCallback) {
+    const devices = getAllDevices()
+    devicesChangedCallback(devices)
   }
 }
 
@@ -887,6 +912,9 @@ function stopReconnecting() {
     reconnectIntervalId = null
   }
 
+  // Broadcast updated device list and connection status to all clients
+  // Device IDs may have changed after reconnection
+  broadcastDevices()
   broadcastConnectionStatus()
 }
 
