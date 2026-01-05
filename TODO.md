@@ -121,10 +121,9 @@
 ~~- fa fontul maxim mai mic pe Livestream~~
 ~~- adauga timestamp cand se face export la db~~
 ~~- fa reconect la midi controller la disconnect~~
-- cand este adaugat un program, nu pot cauta si alte cantari
-- converteste prezentarea unui program la fel ca celelalte
-- adauga posibilitatea de a face highlight pentru sesiunea curenta
-- dupa ce ai cautat o cantare si apoi ai deschis-o, intoarcete la aceleasi rezultate
+~~- cand este adaugat un program, nu pot cauta si alte cantari~~
+~~- converteste prezentarea unui program la fel ca celelalte~~
+~~- dupa ce ai cautat o cantare si apoi ai deschis-o, intoarcete la aceleasi rezultate~~
 - imbunatateste UX-ul pentru cautarea in cantari astfel incat sa poti sa il folosesti doar din tastatura (sa pui sa dai down, apoi enter, apoi enter din nou si prezinti cantarea)
 - cand nu se gaseste un verset afiseaza un warning si creaza entry-ul- adauga full text search si pentru Biblie
 - elimina din titlul extras numerele (gen 1.)- exportul ca si pptx ar trebui sa aiba textul ceva mai mare
@@ -141,3 +140,4 @@
 - creaza un quickstart guide pentru utilizatori
 - auto switch-ul nu functioneaza
 - adauga optiune de a cauta cantari folosind AI
+- adauga posibilitatea de a face highlight pentru sesiunea curenta

@@ -1,10 +1,15 @@
 import { Music, Search } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useDebouncedValue } from '~/hooks/useDebouncedValue'
 import { SongCard } from './SongCard'
-import { useCategories, useSearchSongs, useSongs } from '../hooks'
+import {
+  useCategories,
+  useSearchKeyboardNavigation,
+  useSearchSongs,
+  useSongs,
+} from '../hooks'
 import type { Song, SongSearchResult } from '../types'
 
 const MAX_DISPLAY_SONGS = 50
@@ -92,6 +97,26 @@ export function SongList({
     }
   }, [hasSearchQuery, searchResults, songs, categories])
 
+  // Keyboard navigation for search results
+  const handleSelectSong = useCallback(
+    (index: number) => {
+      const song = displaySongs[index]
+      if (song) {
+        onSongClick(song.id)
+      }
+    },
+    [displaySongs, onSongClick],
+  )
+
+  const {
+    selectedIndex,
+    handleKeyDown: handleNavigationKeyDown,
+    itemRefs,
+  } = useSearchKeyboardNavigation({
+    itemCount: displaySongs.length,
+    onSelect: handleSelectSong,
+  })
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
     setLocalQuery(value)
@@ -99,7 +124,11 @@ export function SongList({
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    // First handle navigation keys (Arrow Up/Down, Enter when item selected)
+    handleNavigationKeyDown(e)
+
+    // If navigation didn't handle Enter (no selection), trigger immediate search
+    if (e.key === 'Enter' && selectedIndex < 0) {
       e.preventDefault()
       triggerImmediately()
     }
@@ -163,11 +192,19 @@ export function SongList({
                   total: totalCount,
                 })}
           </p>
-          {displaySongs.map((song) => (
+          {displaySongs.map((song, index) => (
             <SongCard
               key={song.id}
+              ref={(el) => {
+                if (el) {
+                  itemRefs.current.set(index, el)
+                } else {
+                  itemRefs.current.delete(index)
+                }
+              }}
               song={song}
               onClick={() => onSongClick(song.id)}
+              isSelected={selectedIndex === index}
             />
           ))}
           {hasMore && (
