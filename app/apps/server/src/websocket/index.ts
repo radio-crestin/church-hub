@@ -1,5 +1,6 @@
 import type { ServerWebSocket } from 'bun'
 
+import type { PresentationState } from '../service/presentation/types'
 import { wsLogger } from '../utils/fileLogger'
 
 export interface WebSocketData {
@@ -9,12 +10,7 @@ export interface WebSocketData {
 
 export type PresentationMessage = {
   type: 'presentation_state'
-  payload: {
-    programId: number | null
-    currentSlideId: number | null
-    isPresenting: boolean
-    updatedAt: number
-  }
+  payload: PresentationState
 }
 
 export type ScreenConfigUpdatedMessage = {

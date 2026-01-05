@@ -3,8 +3,11 @@ import { eq, sql } from 'drizzle-orm'
 import { expandSongSlidesWithChoruses } from './expand-song-slides'
 import type {
   PresentationState,
+  PresentTemporaryAnnouncementInput,
   PresentTemporaryBibleInput,
+  PresentTemporaryBiblePassageInput,
   PresentTemporarySongInput,
+  PresentTemporaryVerseteTineriInput,
   TemporaryContent,
   UpdatePresentationStateInput,
 } from './types'
@@ -87,11 +90,8 @@ function toPresentationState(
   record: typeof presentationState.$inferSelect,
 ): PresentationState {
   return {
-    currentQueueItemId: record.currentQueueItemId,
     currentSongSlideId: record.currentSongSlideId,
     lastSongSlideId: record.lastSongSlideId,
-    currentBiblePassageVerseId: record.currentBiblePassageVerseId,
-    currentVerseteTineriEntryId: record.currentVerseteTineriEntryId,
     isPresenting: record.isPresenting,
     isHidden: record.isHidden,
     temporaryContent: parseTemporaryContent(record.temporaryContent),
@@ -117,11 +117,8 @@ export function getPresentationState(): PresentationState {
     if (!record) {
       // Return default state if not found
       return {
-        currentQueueItemId: null,
         currentSongSlideId: null,
         lastSongSlideId: null,
-        currentBiblePassageVerseId: null,
-        currentVerseteTineriEntryId: null,
         isPresenting: false,
         isHidden: false,
         temporaryContent: null,
@@ -133,11 +130,8 @@ export function getPresentationState(): PresentationState {
   } catch (error) {
     log('error', `Failed to get presentation state: ${error}`)
     return {
-      currentQueueItemId: null,
       currentSongSlideId: null,
       lastSongSlideId: null,
-      currentBiblePassageVerseId: null,
-      currentVerseteTineriEntryId: null,
       isPresenting: false,
       isHidden: false,
       temporaryContent: null,
@@ -159,10 +153,6 @@ export function updatePresentationState(
     const now = getUniqueUpdatedAt()
     const current = getPresentationState()
 
-    const currentQueueItemId =
-      input.currentQueueItemId !== undefined
-        ? input.currentQueueItemId
-        : current.currentQueueItemId
     const currentSongSlideId =
       input.currentSongSlideId !== undefined
         ? input.currentSongSlideId
@@ -171,14 +161,6 @@ export function updatePresentationState(
       input.lastSongSlideId !== undefined
         ? input.lastSongSlideId
         : current.lastSongSlideId
-    const currentBiblePassageVerseId =
-      input.currentBiblePassageVerseId !== undefined
-        ? input.currentBiblePassageVerseId
-        : current.currentBiblePassageVerseId
-    const currentVerseteTineriEntryId =
-      input.currentVerseteTineriEntryId !== undefined
-        ? input.currentVerseteTineriEntryId
-        : current.currentVerseteTineriEntryId
     const isPresenting =
       input.isPresenting !== undefined
         ? input.isPresenting
@@ -187,19 +169,10 @@ export function updatePresentationState(
       input.isHidden !== undefined ? input.isHidden : current.isHidden
 
     // Handle temporary content
-    // Clear temporary content when selecting a queue item
-    let temporaryContent: TemporaryContent | null
-    if (input.temporaryContent !== undefined) {
-      temporaryContent = input.temporaryContent
-    } else if (
-      input.currentQueueItemId !== undefined &&
-      input.currentQueueItemId !== null
-    ) {
-      // Auto-clear temporary content when switching to queue item
-      temporaryContent = null
-    } else {
-      temporaryContent = current.temporaryContent
-    }
+    const temporaryContent: TemporaryContent | null =
+      input.temporaryContent !== undefined
+        ? input.temporaryContent
+        : current.temporaryContent
 
     const temporaryContentJson = temporaryContent
       ? JSON.stringify(temporaryContent)
@@ -208,11 +181,8 @@ export function updatePresentationState(
     db.insert(presentationState)
       .values({
         id: 1,
-        currentQueueItemId,
         currentSongSlideId,
         lastSongSlideId,
-        currentBiblePassageVerseId,
-        currentVerseteTineriEntryId,
         isPresenting,
         isHidden,
         temporaryContent: temporaryContentJson,
@@ -221,11 +191,8 @@ export function updatePresentationState(
       .onConflictDoUpdate({
         target: presentationState.id,
         set: {
-          currentQueueItemId,
           currentSongSlideId,
           lastSongSlideId,
-          currentBiblePassageVerseId,
-          currentVerseteTineriEntryId,
           isPresenting,
           isHidden,
           temporaryContent: temporaryContentJson,
@@ -260,7 +227,6 @@ export function stopPresentation(): PresentationState {
 
     return updatePresentationState({
       isPresenting: false,
-      currentQueueItemId: null,
       currentSongSlideId: null,
       temporaryContent: null,
     })
@@ -310,227 +276,12 @@ export function showSlide(): PresentationState {
   }
 }
 
-/**
- * Gets all slides in queue order (both song slides and standalone slides)
- * Returns a flat list for navigation
- * Uses raw SQL for complex LEFT JOIN with conditional logic
- */
-function getQueueSlides(): {
-  queueItemId: number
-  slideId: number | null
-  biblePassageVerseId: number | null
-  verseteTineriEntryId: number | null
-  isStandaloneSlide: boolean
-  isBiblePassageVerse: boolean
-  isVerseteTineriEntry: boolean
-}[] {
-  const rawDb = getRawDatabase()
-
-  // Get all queue items with their slides, bible passage verses, and versete tineri entries
-  // For song items: join song_slides
-  // For bible_passage items: join bible_passage_verses
-  // For versete_tineri slides: join versete_tineri_entries
-  // For other slide/bible items: use queue item id as "slide" (slideId = null)
-  const results = rawDb
-    .query(`
-    SELECT
-      pq.id as queue_item_id,
-      pq.item_type,
-      pq.slide_type,
-      ss.id as slide_id,
-      bpv.id as bible_passage_verse_id,
-      vte.id as versete_tineri_entry_id,
-      COALESCE(ss.sort_order, bpv.sort_order, vte.sort_order, 0) as inner_sort_order
-    FROM presentation_queue pq
-    LEFT JOIN song_slides ss ON pq.item_type = 'song' AND ss.song_id = pq.song_id
-    LEFT JOIN bible_passage_verses bpv ON pq.item_type = 'bible_passage' AND bpv.queue_item_id = pq.id
-    LEFT JOIN versete_tineri_entries vte ON pq.item_type = 'slide' AND pq.slide_type = 'versete_tineri' AND vte.queue_item_id = pq.id
-    ORDER BY pq.sort_order ASC, inner_sort_order ASC
-  `)
-    .all() as {
-    queue_item_id: number
-    item_type: string
-    slide_type: string | null
-    slide_id: number | null
-    bible_passage_verse_id: number | null
-    versete_tineri_entry_id: number | null
-    inner_sort_order: number
-  }[]
-
-  // Build flat list - standalone slides and bible verses appear once, songs and passages appear for each slide/verse
-  const slides: {
-    queueItemId: number
-    slideId: number | null
-    biblePassageVerseId: number | null
-    verseteTineriEntryId: number | null
-    isStandaloneSlide: boolean
-    isBiblePassageVerse: boolean
-    isVerseteTineriEntry: boolean
-  }[] = []
-
-  for (const r of results) {
-    if (r.item_type === 'slide' && r.slide_type === 'versete_tineri') {
-      // Versete tineri entry - add each entry as a navigable item
-      if (r.versete_tineri_entry_id) {
-        slides.push({
-          queueItemId: r.queue_item_id,
-          slideId: null,
-          biblePassageVerseId: null,
-          verseteTineriEntryId: r.versete_tineri_entry_id,
-          isStandaloneSlide: false,
-          isBiblePassageVerse: false,
-          isVerseteTineriEntry: true,
-        })
-      }
-    } else if (r.item_type === 'slide' || r.item_type === 'bible') {
-      // Standalone slide or single Bible verse - only add once (LEFT JOIN may produce multiple rows)
-      if (
-        !slides.some(
-          (s) => s.queueItemId === r.queue_item_id && s.isStandaloneSlide,
-        )
-      ) {
-        slides.push({
-          queueItemId: r.queue_item_id,
-          slideId: null,
-          biblePassageVerseId: null,
-          verseteTineriEntryId: null,
-          isStandaloneSlide: true,
-          isBiblePassageVerse: false,
-          isVerseteTineriEntry: false,
-        })
-      }
-    } else if (r.item_type === 'bible_passage' && r.bible_passage_verse_id) {
-      // Bible passage verse - add each verse as a navigable entry
-      slides.push({
-        queueItemId: r.queue_item_id,
-        slideId: null,
-        biblePassageVerseId: r.bible_passage_verse_id,
-        verseteTineriEntryId: null,
-        isStandaloneSlide: false,
-        isBiblePassageVerse: true,
-        isVerseteTineriEntry: false,
-      })
-    } else if (r.slide_id) {
-      // Song slide
-      slides.push({
-        queueItemId: r.queue_item_id,
-        slideId: r.slide_id,
-        biblePassageVerseId: null,
-        verseteTineriEntryId: null,
-        isStandaloneSlide: false,
-        isBiblePassageVerse: false,
-        isVerseteTineriEntry: false,
-      })
-    }
-  }
-
-  return slides
-}
-
-/**
- * Navigate to next or previous slide in the queue
- * Moves through all slides (song slides, standalone slides, and bible passage verses) across all queue items
- */
-export function navigateQueueSlide(
-  direction: 'next' | 'prev',
-): PresentationState {
-  try {
-    log('debug', `Navigating queue slide: ${direction}`)
-
-    const current = getPresentationState()
-
-    // If there's temporary content, use temporary navigation instead
-    if (current.temporaryContent) {
-      log('debug', 'Delegating to temporary navigation')
-      return navigateTemporary(direction, Date.now())
-    }
-
-    const slides = getQueueSlides()
-
-    if (slides.length === 0) {
-      log('warning', 'Cannot navigate: no slides in queue')
-      return current
-    }
-
-    // Find current position
-    // For song slides: match by slideId
-    // For bible passage verses: match by biblePassageVerseId
-    // For versete tineri entries: match by verseteTineriEntryId
-    // For standalone slides: match by queueItemId with null slideId
-    let currentIndex = -1
-    if (current.currentSongSlideId) {
-      // Currently on a song slide
-      currentIndex = slides.findIndex(
-        (s) =>
-          s.slideId === current.currentSongSlideId &&
-          s.queueItemId === current.currentQueueItemId,
-      )
-    } else if (current.currentBiblePassageVerseId) {
-      // Currently on a bible passage verse
-      currentIndex = slides.findIndex(
-        (s) =>
-          s.biblePassageVerseId === current.currentBiblePassageVerseId &&
-          s.queueItemId === current.currentQueueItemId,
-      )
-    } else if (current.currentVerseteTineriEntryId) {
-      // Currently on a versete tineri entry
-      currentIndex = slides.findIndex(
-        (s) =>
-          s.verseteTineriEntryId === current.currentVerseteTineriEntryId &&
-          s.queueItemId === current.currentQueueItemId,
-      )
-    } else if (current.currentQueueItemId) {
-      // Currently on a standalone slide (no song slide ID, bible passage verse ID, or versete tineri entry ID)
-      currentIndex = slides.findIndex(
-        (s) =>
-          s.isStandaloneSlide && s.queueItemId === current.currentQueueItemId,
-      )
-    }
-
-    let newIndex: number
-
-    if (direction === 'next') {
-      newIndex = currentIndex + 1
-      if (newIndex >= slides.length) {
-        // At the end of the queue - hide and deselect
-        log('info', 'Reached end of queue, hiding presentation')
-        return updatePresentationState({
-          currentQueueItemId: null,
-          currentSongSlideId: null,
-          currentBiblePassageVerseId: null,
-          currentVerseteTineriEntryId: null,
-          isHidden: true,
-        })
-      }
-    } else {
-      // prev
-      newIndex = currentIndex - 1
-      if (newIndex < 0) {
-        newIndex = 0 // Stay on first slide
-      }
-    }
-
-    const newSlide = slides[newIndex]
-    return updatePresentationState({
-      currentQueueItemId: newSlide.queueItemId,
-      currentSongSlideId: newSlide.slideId,
-      currentBiblePassageVerseId: newSlide.biblePassageVerseId,
-      currentVerseteTineriEntryId: newSlide.verseteTineriEntryId,
-      isHidden: false,
-    })
-  } catch (error) {
-    log('error', `Failed to navigate queue slide: ${error}`)
-    return getPresentationState()
-  }
-}
-
 // ============================================================================
 // TEMPORARY CONTENT FUNCTIONS (bypass queue for instant display)
 // ============================================================================
 
 /**
- * Presents a Bible verse temporarily (bypasses queue)
- * Sets temporary content and clears queue item selection
+ * Presents a Bible verse temporarily
  */
 export function presentTemporaryBible(
   input: PresentTemporaryBibleInput,
@@ -564,10 +315,7 @@ export function presentTemporaryBible(
 
     return updatePresentationState({
       temporaryContent,
-      currentQueueItemId: null,
       currentSongSlideId: null,
-      currentBiblePassageVerseId: null,
-      currentVerseteTineriEntryId: null,
       isHidden: false,
       isPresenting: true,
     })
@@ -578,7 +326,7 @@ export function presentTemporaryBible(
 }
 
 /**
- * Presents a song temporarily (bypasses queue)
+ * Presents a song temporarily
  * Fetches song and slides from database
  */
 export function presentTemporarySong(
@@ -655,10 +403,7 @@ export function presentTemporarySong(
 
     return updatePresentationState({
       temporaryContent,
-      currentQueueItemId: null,
       currentSongSlideId: null,
-      currentBiblePassageVerseId: null,
-      currentVerseteTineriEntryId: null,
       isHidden: false,
       isPresenting: true,
     })
@@ -707,6 +452,26 @@ export function navigateTemporary(
 
     if (current.temporaryContent.type === 'song') {
       return navigateTemporarySong(current.temporaryContent.data, direction)
+    }
+
+    if (current.temporaryContent.type === 'bible_passage') {
+      return navigateTemporaryBiblePassage(
+        current.temporaryContent.data,
+        direction,
+      )
+    }
+
+    if (current.temporaryContent.type === 'versete_tineri') {
+      return navigateTemporaryVerseteTineri(
+        current.temporaryContent.data,
+        direction,
+      )
+    }
+
+    // Announcement has no navigation (single slide)
+    if (current.temporaryContent.type === 'announcement') {
+      log('debug', 'Announcement has no navigation')
+      return current
     }
 
     return current
@@ -923,6 +688,84 @@ function navigateTemporarySong(
 }
 
 /**
+ * Navigates within temporary Bible passage content
+ */
+function navigateTemporaryBiblePassage(
+  data: TemporaryContent extends { type: 'bible_passage'; data: infer D }
+    ? D
+    : never,
+  direction: 'next' | 'prev',
+): PresentationState {
+  const newIndex =
+    direction === 'next'
+      ? data.currentVerseIndex + 1
+      : data.currentVerseIndex - 1
+
+  // If at end of passage, hide presentation
+  if (newIndex >= data.verses.length) {
+    log('info', 'Reached end of Bible passage, hiding temporary presentation')
+    return updatePresentationState({
+      temporaryContent: null,
+      isHidden: true,
+    })
+  }
+
+  // If at start, stay on first verse
+  if (newIndex < 0) {
+    return getPresentationState()
+  }
+
+  const temporaryContent: TemporaryContent = {
+    type: 'bible_passage',
+    data: {
+      ...data,
+      currentVerseIndex: newIndex,
+    },
+  }
+
+  return updatePresentationState({ temporaryContent })
+}
+
+/**
+ * Navigates within temporary versete tineri content
+ */
+function navigateTemporaryVerseteTineri(
+  data: TemporaryContent extends { type: 'versete_tineri'; data: infer D }
+    ? D
+    : never,
+  direction: 'next' | 'prev',
+): PresentationState {
+  const newIndex =
+    direction === 'next'
+      ? data.currentEntryIndex + 1
+      : data.currentEntryIndex - 1
+
+  // If at end of entries, hide presentation
+  if (newIndex >= data.entries.length) {
+    log('info', 'Reached end of versete tineri, hiding temporary presentation')
+    return updatePresentationState({
+      temporaryContent: null,
+      isHidden: true,
+    })
+  }
+
+  // If at start, stay on first entry
+  if (newIndex < 0) {
+    return getPresentationState()
+  }
+
+  const temporaryContent: TemporaryContent = {
+    type: 'versete_tineri',
+    data: {
+      ...data,
+      currentEntryIndex: newIndex,
+    },
+  }
+
+  return updatePresentationState({ temporaryContent })
+}
+
+/**
  * Clears temporary content
  */
 export function clearTemporaryContent(): PresentationState {
@@ -934,6 +777,144 @@ export function clearTemporaryContent(): PresentationState {
     })
   } catch (error) {
     log('error', `Failed to clear temporary content: ${error}`)
+    return getPresentationState()
+  }
+}
+
+/**
+ * Presents an announcement temporarily
+ */
+export function presentTemporaryAnnouncement(
+  input: PresentTemporaryAnnouncementInput,
+): PresentationState {
+  try {
+    log('debug', 'Presenting temporary announcement')
+
+    // Reset navigation timestamp when presenting new content
+    lastNavigationTimestamp = 0
+
+    const temporaryContent: TemporaryContent = {
+      type: 'announcement',
+      data: {
+        content: input.content,
+      },
+    }
+
+    return updatePresentationState({
+      temporaryContent,
+      currentSongSlideId: null,
+      isHidden: false,
+      isPresenting: true,
+    })
+  } catch (error) {
+    log('error', `Failed to present temporary announcement: ${error}`)
+    return getPresentationState()
+  }
+}
+
+/**
+ * Presents a Bible passage temporarily (multi-verse)
+ */
+export function presentTemporaryBiblePassage(
+  input: PresentTemporaryBiblePassageInput,
+): PresentationState {
+  try {
+    log(
+      'debug',
+      `Presenting temporary Bible passage: ${input.bookCode} ${input.startChapter}:${input.startVerse}-${input.endChapter}:${input.endVerse}`,
+    )
+
+    // Reset navigation timestamp when presenting new content
+    lastNavigationTimestamp = 0
+
+    // Determine starting verse index (clamp to valid range)
+    const startIndex =
+      input.currentVerseIndex !== undefined
+        ? Math.max(
+            0,
+            Math.min(input.currentVerseIndex, input.verses.length - 1),
+          )
+        : 0
+
+    const temporaryContent: TemporaryContent = {
+      type: 'bible_passage',
+      data: {
+        translationId: input.translationId,
+        translationAbbreviation: input.translationAbbreviation,
+        bookCode: input.bookCode,
+        bookName: input.bookName,
+        startChapter: input.startChapter,
+        startVerse: input.startVerse,
+        endChapter: input.endChapter,
+        endVerse: input.endVerse,
+        verses: input.verses,
+        currentVerseIndex: startIndex,
+        // Secondary version (optional)
+        secondaryTranslationId: input.secondaryTranslationId,
+        secondaryTranslationAbbreviation:
+          input.secondaryTranslationAbbreviation,
+        secondaryBookName: input.secondaryBookName,
+        secondaryVerses: input.secondaryVerses,
+      },
+    }
+
+    return updatePresentationState({
+      temporaryContent,
+      currentSongSlideId: null,
+      isHidden: false,
+      isPresenting: true,
+    })
+  } catch (error) {
+    log('error', `Failed to present temporary Bible passage: ${error}`)
+    return getPresentationState()
+  }
+}
+
+/**
+ * Presents versete tineri temporarily
+ */
+export function presentTemporaryVerseteTineri(
+  input: PresentTemporaryVerseteTineriInput,
+): PresentationState {
+  try {
+    log(
+      'debug',
+      `Presenting temporary versete tineri: ${input.entries.length} entries`,
+    )
+
+    // Reset navigation timestamp when presenting new content
+    lastNavigationTimestamp = 0
+
+    if (input.entries.length === 0) {
+      log('warning', 'Cannot present versete tineri: no entries')
+      return getPresentationState()
+    }
+
+    // Determine starting entry index (clamp to valid range)
+    const startIndex =
+      input.currentEntryIndex !== undefined
+        ? Math.max(
+            0,
+            Math.min(input.currentEntryIndex, input.entries.length - 1),
+          )
+        : 0
+
+    const temporaryContent: TemporaryContent = {
+      type: 'versete_tineri',
+      data: {
+        entries: input.entries,
+        currentEntryIndex: startIndex,
+      },
+    }
+
+    return updatePresentationState({
+      temporaryContent,
+      currentSongSlideId: null,
+      isHidden: false,
+      isPresenting: true,
+    })
+  } catch (error) {
+    log('error', `Failed to present temporary versete tineri: ${error}`)
     return getPresentationState()
   }
 }
