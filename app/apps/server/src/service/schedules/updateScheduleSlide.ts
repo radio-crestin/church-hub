@@ -7,6 +7,7 @@ import {
   scheduleBiblePassageVerses,
   scheduleItems,
   schedules,
+  scheduleVerseteTineriEntries,
 } from '../../db/schema'
 import { getVerseRange, getVersesAcrossChapters } from '../bible'
 
@@ -155,7 +156,103 @@ export function updateScheduleSlide(
       return null
     }
 
-    // Update the slide
+    // Handle Versete Tineri update
+    if (
+      input.slideType === 'versete_tineri' &&
+      input.verseteTineriEntries &&
+      input.verseteTineriEntries.length > 0
+    ) {
+      // Update the slide type
+      db.update(scheduleItems)
+        .set({
+          slideType: 'versete_tineri',
+          slideContent: null,
+          updatedAt: now,
+        })
+        .where(eq(scheduleItems.id, input.id))
+        .run()
+
+      // Delete existing entries
+      db.delete(scheduleVerseteTineriEntries)
+        .where(eq(scheduleVerseteTineriEntries.scheduleItemId, input.id))
+        .run()
+
+      // Insert new entries
+      const entries = input.verseteTineriEntries
+      for (let i = 0; i < entries.length; i++) {
+        const entry = entries[i]
+
+        // Fetch verses for this entry
+        const verses =
+          entry.startChapter === entry.endChapter
+            ? getVerseRange(
+                entry.translationId,
+                entry.bookCode,
+                entry.startChapter,
+                entry.startVerse,
+                entry.endVerse,
+              )
+            : getVersesAcrossChapters(
+                entry.translationId,
+                entry.bookCode,
+                entry.startChapter,
+                entry.startVerse,
+                entry.endChapter,
+                entry.endVerse,
+              )
+
+        if (verses.length === 0) {
+          log(
+            'warning',
+            `No verses found for entry ${i}: ${entry.bookName} ${entry.startChapter}:${entry.startVerse}`,
+          )
+          continue
+        }
+
+        // Combine verse text
+        const combinedText = verses.map((v) => v.text).join(' ')
+
+        // Format reference
+        const reference = formatPassageReference(
+          entry.bookName,
+          entry.startChapter,
+          entry.startVerse,
+          entry.endChapter,
+          entry.endVerse,
+        )
+
+        db.insert(scheduleVerseteTineriEntries)
+          .values({
+            scheduleItemId: input.id,
+            personName: entry.personName,
+            translationId: entry.translationId,
+            bookCode: entry.bookCode,
+            bookName: entry.bookName,
+            reference,
+            text: combinedText,
+            startChapter: entry.startChapter,
+            startVerse: entry.startVerse,
+            endChapter: entry.endChapter,
+            endVerse: entry.endVerse,
+            sortOrder: i,
+          })
+          .run()
+      }
+
+      // Update schedule's updated_at
+      db.update(schedules)
+        .set({ updatedAt: now })
+        .where(eq(schedules.id, existingItem.scheduleId))
+        .run()
+
+      log(
+        'info',
+        `Versete Tineri updated with ${entries.length} entries: ${input.id}`,
+      )
+      return getScheduleItemById(input.id)
+    }
+
+    // Update regular slide (announcement)
     db.update(scheduleItems)
       .set({
         slideType: input.slideType,
