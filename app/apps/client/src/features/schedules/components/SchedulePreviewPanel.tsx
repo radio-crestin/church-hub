@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next'
 import {
   LivePreview,
   useClearTemporaryContent,
-  useNavigateTemporary,
   usePresentationState,
   useWebSocket,
 } from '~/features/presentation'
@@ -29,7 +28,6 @@ export function SchedulePreviewPanel({
 
   const { data: state } = usePresentationState()
   const clearTemporary = useClearTemporaryContent()
-  const navigateTemporary = useNavigateTemporary()
 
   // Check if we have active temporary content
   const hasTemporaryContent = !!state?.temporaryContent
@@ -40,20 +38,14 @@ export function SchedulePreviewPanel({
     await clearTemporary.mutateAsync()
   }
 
-  const handlePrev = async () => {
-    if (hasTemporaryContent) {
-      await navigateTemporary.mutateAsync({ direction: 'prev' })
-    } else {
-      onPrevSlide()
-    }
+  // Always use schedule-aware navigation (onPrevSlide/onNextSlide)
+  // instead of navigateTemporary which only knows about the current song
+  const handlePrev = () => {
+    onPrevSlide()
   }
 
-  const handleNext = async () => {
-    if (hasTemporaryContent) {
-      await navigateTemporary.mutateAsync({ direction: 'next' })
-    } else {
-      onNextSlide()
-    }
+  const handleNext = () => {
+    onNextSlide()
   }
 
   return (
@@ -132,11 +124,7 @@ export function SchedulePreviewPanel({
           <button
             type="button"
             onClick={handlePrev}
-            disabled={
-              !canNavigatePrev ||
-              navigateTemporary.isPending ||
-              clearTemporary.isPending
-            }
+            disabled={!canNavigatePrev || clearTemporary.isPending}
             className="flex items-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
             title={t('bible:controls.prev')}
           >
@@ -147,11 +135,7 @@ export function SchedulePreviewPanel({
           <button
             type="button"
             onClick={handleNext}
-            disabled={
-              !canNavigateNext ||
-              navigateTemporary.isPending ||
-              clearTemporary.isPending
-            }
+            disabled={!canNavigateNext || clearTemporary.isPending}
             className="flex items-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
             title={t('bible:controls.next')}
           >
