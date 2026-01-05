@@ -71,11 +71,76 @@ export interface TemporarySongContent {
 }
 
 /**
+ * Temporary announcement content for instant display
+ */
+export interface TemporaryAnnouncementContent {
+  content: string // HTML content
+}
+
+/**
+ * Verse entry for Bible passage
+ */
+export interface BiblePassageVerse {
+  verseId: number
+  verse: number
+  text: string
+}
+
+/**
+ * Temporary Bible passage content for instant display
+ */
+export interface TemporaryBiblePassageContent {
+  translationId: number
+  translationAbbreviation: string
+  bookCode: string
+  bookName: string
+  startChapter: number
+  startVerse: number
+  endChapter: number
+  endVerse: number
+  verses: BiblePassageVerse[]
+  currentVerseIndex: number // 0-based index in verses array
+  // Secondary version (optional)
+  secondaryTranslationId?: number
+  secondaryTranslationAbbreviation?: string
+  secondaryBookName?: string
+  secondaryVerses?: BiblePassageVerse[]
+}
+
+/**
+ * Versete tineri entry
+ */
+export interface VerseteTineriEntry {
+  id: number
+  personName: string
+  reference: string
+  bookCode: string
+  bookName: string
+  startChapter: number
+  startVerse: number
+  endChapter: number
+  endVerse: number
+  text: string
+  sortOrder: number
+}
+
+/**
+ * Temporary versete tineri content for instant display
+ */
+export interface TemporaryVerseteTineriContent {
+  entries: VerseteTineriEntry[]
+  currentEntryIndex: number // 0-based index in entries array
+}
+
+/**
  * Union type for temporary content
  */
 export type TemporaryContent =
   | { type: 'bible'; data: TemporaryBibleContent }
   | { type: 'song'; data: TemporarySongContent }
+  | { type: 'announcement'; data: TemporaryAnnouncementContent }
+  | { type: 'bible_passage'; data: TemporaryBiblePassageContent }
+  | { type: 'versete_tineri'; data: TemporaryVerseteTineriContent }
 
 /**
  * Input for presenting a temporary Bible verse
@@ -110,6 +175,42 @@ export interface PresentTemporarySongInput {
  */
 export interface NavigateTemporaryInput {
   direction: 'next' | 'prev'
+}
+
+/**
+ * Input for presenting an announcement
+ */
+export interface PresentTemporaryAnnouncementInput {
+  content: string // HTML content
+}
+
+/**
+ * Input for presenting a Bible passage
+ */
+export interface PresentTemporaryBiblePassageInput {
+  translationId: number
+  translationAbbreviation: string
+  bookCode: string
+  bookName: string
+  startChapter: number
+  startVerse: number
+  endChapter: number
+  endVerse: number
+  verses: BiblePassageVerse[]
+  currentVerseIndex?: number // Optional: start from specific verse (0-based)
+  // Secondary version (optional)
+  secondaryTranslationId?: number
+  secondaryTranslationAbbreviation?: string
+  secondaryBookName?: string
+  secondaryVerses?: BiblePassageVerse[]
+}
+
+/**
+ * Input for presenting versete tineri
+ */
+export interface PresentTemporaryVerseteTineriInput {
+  entries: VerseteTineriEntry[]
+  currentEntryIndex?: number // Optional: start from specific entry (0-based)
 }
 
 // ============================================================================

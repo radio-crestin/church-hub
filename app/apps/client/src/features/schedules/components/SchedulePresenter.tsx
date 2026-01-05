@@ -19,7 +19,10 @@ import { clearSectionLastVisited } from '~/features/navigation'
 import {
   useClearTemporaryContent,
   usePresentationState,
+  usePresentTemporaryAnnouncement,
+  usePresentTemporaryBiblePassage,
   usePresentTemporarySong,
+  usePresentTemporaryVerseteTineri,
   useWebSocket,
 } from '~/features/presentation'
 import {
@@ -91,6 +94,9 @@ export function SchedulePresenter({
   }, [onBack])
   const { data: presentationState } = usePresentationState()
   const presentTemporarySong = usePresentTemporarySong()
+  const presentTemporaryBiblePassage = usePresentTemporaryBiblePassage()
+  const presentTemporaryVerseteTineri = usePresentTemporaryVerseteTineri()
+  const presentTemporaryAnnouncement = usePresentTemporaryAnnouncement()
   const clearTemporary = useClearTemporaryContent()
   const { saveSchedule, isPending: isSaving } = useSaveScheduleToFile()
   const { loadSchedule, isPending: isLoadingFile } = useLoadScheduleFromFile()
@@ -221,6 +227,27 @@ export function SchedulePresenter({
       }
     }
 
+    if (temp.type === 'bible_passage') {
+      return {
+        type: 'bible_passage' as const,
+        bookName: temp.data.bookName,
+        currentVerseIndex: temp.data.currentVerseIndex,
+      }
+    }
+
+    if (temp.type === 'versete_tineri') {
+      return {
+        type: 'versete_tineri' as const,
+        currentEntryIndex: temp.data.currentEntryIndex,
+      }
+    }
+
+    if (temp.type === 'announcement') {
+      return {
+        type: 'announcement' as const,
+      }
+    }
+
     return null
   }, [presentationState?.temporaryContent])
 
@@ -229,12 +256,40 @@ export function SchedulePresenter({
     if (!presentedInfo) return -1
 
     return flatItems.findIndex((fi) => {
+      // Song matching
       if (fi.item.itemType === 'song' && presentedInfo.type === 'song') {
         return (
           fi.item.songId === presentedInfo.songId &&
           fi.index === presentedInfo.slideIndex
         )
       }
+
+      // Bible passage matching
+      if (
+        fi.item.itemType === 'bible_passage' &&
+        presentedInfo.type === 'bible_passage'
+      ) {
+        return fi.index === presentedInfo.currentVerseIndex
+      }
+
+      // Versete tineri matching
+      if (
+        fi.item.itemType === 'slide' &&
+        fi.item.slideType === 'versete_tineri' &&
+        presentedInfo.type === 'versete_tineri'
+      ) {
+        return fi.index === presentedInfo.currentEntryIndex
+      }
+
+      // Announcement matching
+      if (
+        fi.item.itemType === 'slide' &&
+        fi.item.slideType === 'announcement' &&
+        presentedInfo.type === 'announcement'
+      ) {
+        return true
+      }
+
       return false
     })
   }, [flatItems, presentedInfo])
@@ -309,56 +364,159 @@ export function SchedulePresenter({
 
   // Handle verse click (bible passage)
   const handleVerseClick = useCallback(
-    async (_item: ScheduleItem, _verseIndex: number) => {
-      showToast('Bible passage presentation coming soon', 'info')
+    async (item: ScheduleItem, verseIndex: number) => {
+      if (
+        item.itemType !== 'bible_passage' ||
+        !item.biblePassageVerses.length
+      ) {
+        return
+      }
+
+      // Parse reference to extract chapter and verse info
+      // Reference format: "BookName Chapter:Verse" e.g. "Genesis 1:1" or "Matei 5:3"
+      const parseReference = (ref: string) => {
+        const match = ref.match(/(.+?)\s+(\d+):(\d+)/)
+        if (match) {
+          return {
+            bookName: match[1],
+            chapter: Number.parseInt(match[2], 10),
+            verse: Number.parseInt(match[3], 10),
+          }
+        }
+        return { bookName: '', chapter: 1, verse: 1 }
+      }
+
+      const firstVerse = item.biblePassageVerses[0]
+      const lastVerse =
+        item.biblePassageVerses[item.biblePassageVerses.length - 1]
+      const parsedFirst = parseReference(firstVerse.reference)
+      const parsedLast = parseReference(lastVerse.reference)
+
+      // Transform verses to presentation format
+      const verses = item.biblePassageVerses.map((v) => {
+        const parsed = parseReference(v.reference)
+        return {
+          verseId: v.verseId,
+          verse: parsed.verse,
+          text: v.text,
+        }
+      })
+
+      await presentTemporaryBiblePassage.mutateAsync({
+        translationId: 0, // Not stored in schedule, use 0
+        translationAbbreviation: item.biblePassageTranslation || '',
+        bookCode: '', // Not stored in schedule
+        bookName: parsedFirst.bookName,
+        startChapter: parsedFirst.chapter,
+        startVerse: parsedFirst.verse,
+        endChapter: parsedLast.chapter,
+        endVerse: parsedLast.verse,
+        verses,
+        currentVerseIndex: verseIndex,
+      })
     },
-    [showToast],
+    [presentTemporaryBiblePassage],
   )
 
   // Handle entry click (versete tineri)
   const handleEntryClick = useCallback(
-    async (_item: ScheduleItem, _entryIndex: number) => {
-      showToast('Versete Tineri presentation coming soon', 'info')
+    async (item: ScheduleItem, entryIndex: number) => {
+      if (
+        item.itemType !== 'slide' ||
+        item.slideType !== 'versete_tineri' ||
+        !item.verseteTineriEntries.length
+      ) {
+        return
+      }
+
+      // Transform entries to presentation format
+      const entries = item.verseteTineriEntries.map((e) => ({
+        id: e.id,
+        personName: e.personName,
+        reference: e.reference,
+        bookCode: e.bookCode,
+        bookName: e.bookName,
+        startChapter: e.startChapter,
+        startVerse: e.startVerse,
+        endChapter: e.endChapter,
+        endVerse: e.endVerse,
+        text: e.text,
+        sortOrder: e.sortOrder,
+      }))
+
+      await presentTemporaryVerseteTineri.mutateAsync({
+        entries,
+        currentEntryIndex: entryIndex,
+      })
     },
-    [showToast],
+    [presentTemporaryVerseteTineri],
   )
 
   // Handle announcement click
   const handleAnnouncementClick = useCallback(
-    async (_item: ScheduleItem) => {
-      showToast('Announcement presentation coming soon', 'info')
+    async (item: ScheduleItem) => {
+      if (
+        item.itemType !== 'slide' ||
+        item.slideType !== 'announcement' ||
+        !item.slideContent
+      ) {
+        return
+      }
+
+      await presentTemporaryAnnouncement.mutateAsync({
+        content: item.slideContent,
+      })
     },
-    [showToast],
+    [presentTemporaryAnnouncement],
   )
 
-  // Navigation handlers - always use presentTemporarySong for reliable navigation
+  // Helper to navigate to a specific flat item
+  const navigateToFlatItem = useCallback(
+    async (flatItem: (typeof flatItems)[0]) => {
+      const { item, index } = flatItem
+
+      if (item.itemType === 'song' && item.songId) {
+        await presentTemporarySong.mutateAsync({
+          songId: item.songId,
+          slideIndex: index,
+        })
+      } else if (item.itemType === 'bible_passage') {
+        await handleVerseClick(item, index)
+      } else if (
+        item.itemType === 'slide' &&
+        item.slideType === 'versete_tineri'
+      ) {
+        await handleEntryClick(item, index)
+      } else if (
+        item.itemType === 'slide' &&
+        item.slideType === 'announcement'
+      ) {
+        await handleAnnouncementClick(item)
+      }
+    },
+    [
+      presentTemporarySong,
+      handleVerseClick,
+      handleEntryClick,
+      handleAnnouncementClick,
+    ],
+  )
+
+  // Navigation handlers - support all slide types
   const handlePrevSlide = useCallback(async () => {
     if (currentFlatIndex <= 0) {
       return
     }
 
     const prevItem = flatItems[currentFlatIndex - 1]
-
-    // Always use presentTemporarySong for reliable slide navigation
-    if (prevItem.item.itemType === 'song' && prevItem.item.songId) {
-      await presentTemporarySong.mutateAsync({
-        songId: prevItem.item.songId,
-        slideIndex: prevItem.index,
-      })
-    }
-  }, [currentFlatIndex, flatItems, presentTemporarySong])
+    await navigateToFlatItem(prevItem)
+  }, [currentFlatIndex, flatItems, navigateToFlatItem])
 
   const handleNextSlide = useCallback(async () => {
     // If nothing is presented, start with first item
     if (currentFlatIndex < 0) {
       if (flatItems.length > 0) {
-        const firstItem = flatItems[0]
-        if (firstItem.item.itemType === 'song' && firstItem.item.songId) {
-          await presentTemporarySong.mutateAsync({
-            songId: firstItem.item.songId,
-            slideIndex: firstItem.index,
-          })
-        }
+        await navigateToFlatItem(flatItems[0])
       }
       return
     }
@@ -368,15 +526,8 @@ export function SchedulePresenter({
     }
 
     const nextItem = flatItems[currentFlatIndex + 1]
-
-    // Always use presentTemporarySong for reliable slide navigation
-    if (nextItem.item.itemType === 'song' && nextItem.item.songId) {
-      await presentTemporarySong.mutateAsync({
-        songId: nextItem.item.songId,
-        slideIndex: nextItem.index,
-      })
-    }
-  }, [currentFlatIndex, flatItems, presentTemporarySong])
+    await navigateToFlatItem(nextItem)
+  }, [currentFlatIndex, flatItems, navigateToFlatItem])
 
   // Keyboard shortcuts for schedule navigation
   // We stopPropagation to prevent the global useKeyboardShortcuts from also firing
