@@ -62,6 +62,7 @@ export function InsertSlideModal({
   const { t } = useTranslation('schedules')
   const { showToast } = useToast()
   const dialogRef = useRef<HTMLDialogElement>(null)
+  const wasOpenRef = useRef(false)
   const addItemMutation = useAddItemToSchedule()
   const updateMutation = useUpdateScheduleSlide()
 
@@ -105,10 +106,13 @@ export function InsertSlideModal({
     },
   })
 
-  // Dialog open/close handling
+  // Dialog open/close handling - only initialize when modal opens (not on every editingItem reference change)
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !wasOpenRef.current) {
+      // Modal just opened - initialize state
+      wasOpenRef.current = true
       dialogRef.current?.showModal()
+
       // Load editing item data or reset state
       if (editingItem) {
         setSelectedTemplate(editingItem.slideType ?? 'announcement')
@@ -146,7 +150,9 @@ export function InsertSlideModal({
         editor?.commands.setContent('')
         setVerseteTineriEntries([])
       }
-    } else {
+    } else if (!isOpen && wasOpenRef.current) {
+      // Modal just closed
+      wasOpenRef.current = false
       dialogRef.current?.close()
     }
   }, [isOpen, editor, editingItem, initialTemplate])
