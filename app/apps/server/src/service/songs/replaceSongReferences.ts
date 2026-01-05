@@ -1,7 +1,6 @@
 import { eq } from 'drizzle-orm'
 
 import { getDatabase, getRawDatabase } from '../../db'
-import { presentationQueue } from '../../db/schema/presentation'
 import { scheduleItems } from '../../db/schema/schedules'
 import { songs } from '../../db/schema/songs'
 
@@ -16,7 +15,6 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
 export interface ReplaceSongReferencesResult {
   success: boolean
   scheduleItemsUpdated: number
-  queueItemsUpdated: number
   error?: string
 }
 
@@ -77,32 +75,19 @@ export function completeSongReplacement(
 
       const scheduleItemsUpdated = scheduleResult.changes
 
-      // Update queue items
-      const queueResult = db
-        .update(presentationQueue)
-        .set({ songId: newSongId })
-        .where(eq(presentationQueue.songId, oldSongId))
-        .run()
-
-      const queueItemsUpdated = queueResult.changes
-
-      log(
-        'info',
-        `Updated ${scheduleItemsUpdated} schedule items and ${queueItemsUpdated} queue items`,
-      )
+      log('info', `Updated ${scheduleItemsUpdated} schedule items`)
 
       // Delete the old song (slides will cascade delete)
       db.delete(songs).where(eq(songs.id, oldSongId)).run()
 
       log('info', `Deleted old song: ${oldSongId}`)
 
-      return { scheduleItemsUpdated, queueItemsUpdated }
+      return { scheduleItemsUpdated }
     })()
 
     return {
       success: true,
       scheduleItemsUpdated: result.scheduleItemsUpdated,
-      queueItemsUpdated: result.queueItemsUpdated,
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
@@ -110,7 +95,6 @@ export function completeSongReplacement(
     return {
       success: false,
       scheduleItemsUpdated: 0,
-      queueItemsUpdated: 0,
       error: message,
     }
   }
