@@ -164,7 +164,6 @@ export function MissingSongResolver({
       <SongPickerModal
         isOpen={searchingFor !== null}
         onClose={() => setSearchingFor(null)}
-        hideAddToQueue
         onSongSelect={(songId) => {
           if (searchingFor) {
             handleSearchSelect(searchingFor, songId)

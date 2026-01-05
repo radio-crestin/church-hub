@@ -9,7 +9,8 @@
     "importToQueue": "Adauga in prezentare",
     "saveToFile": "Salveaza in Fisier",
     "importFromFile": "Importa",
-    "editAsText": "Editeaza ca Text"
+    "editAsText": "Editeaza ca Text",
+    "cancel": "Anuleaza"
   },
   "editor": {
     "titlePlaceholder": "Introdu titlul programului...",
@@ -39,7 +40,49 @@
     "importedWithSongs_one": "Program importat cu {{count}} cantare noua creata",
     "importedWithSongs_other": "Program importat cu {{count}} cantari noi create",
     "importError": "Importul programului a esuat",
-    "error": "A aparut o eroare"
+    "error": "A aparut o eroare",
+    "slideInserted": "Slide inserat",
+    "slideUpdated": "Slide actualizat",
+    "biblePassageInserted": "Pasaj biblic adaugat"
+  },
+  "slideTemplates": {
+    "announcement": "Anunt",
+    "versete_tineri": "Versete tineri"
+  },
+  "insertSlide": {
+    "title": "Insereaza Slide",
+    "editTitle": "Editeaza Slide",
+    "selectTemplate": "Selecteaza template",
+    "content": "Continut",
+    "insert": "Insereaza",
+    "save": "Salveaza",
+    "errorEmpty": "Adauga continut la slide"
+  },
+  "biblePassage": {
+    "title": "Adauga Pasaj Biblic",
+    "reference": "Referinta",
+    "referencePlaceholder": "ex: Gen 1:1-5 sau Ioan 3:16",
+    "referenceHint": "Introdu cartea, capitolul si versetele",
+    "valid": "Valid",
+    "add": "Adauga",
+    "errors": {
+      "empty": "Introdu o referinta",
+      "invalid_format": "Format invalid. Incearca: Gen 1:1 sau Gen 1:1-5",
+      "book_not_found": "Cartea nu a fost gasita",
+      "invalid_chapter": "Numar de capitol invalid",
+      "end_before_start": "Sfarsitul trebuie sa fie dupa inceput"
+    }
+  },
+  "verseteTineri": {
+    "title": "Versete Tineri",
+    "addEntry": "Adauga Intrare",
+    "noEntries": "Nicio intrare inca",
+    "entriesCount_one": "{{count}} intrare",
+    "entriesCount_other": "{{count}} intrari",
+    "personNamePlaceholder": "Nume persoana",
+    "removeEntry": "Sterge intrare",
+    "errorNoValidEntries": "Adauga cel putin o intrare valida",
+    "errorNoTranslation": "Nicio traducere biblica selectata"
   },
   "modal": {
     "deleteTitle": "Sterge Programul",

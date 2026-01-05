@@ -8,7 +8,6 @@ import bibleBooksEN from './locales/en/bibleBooks.json'
 import commonEN from './locales/en/common.json'
 import livestreamEN from './locales/en/livestream.json'
 import presentationEN from './locales/en/presentation.json'
-import queueEN from './locales/en/queue.json'
 import schedulesEN from './locales/en/schedules.json'
 import settingsEN from './locales/en/settings.json'
 import sidebarEN from './locales/en/sidebar.json'
@@ -18,7 +17,6 @@ import bibleBooksRO from './locales/ro/bibleBooks.json'
 import commonRO from './locales/ro/common.json'
 import livestreamRO from './locales/ro/livestream.json'
 import presentationRO from './locales/ro/presentation.json'
-import queueRO from './locales/ro/queue.json'
 import schedulesRO from './locales/ro/schedules.json'
 import settingsRO from './locales/ro/settings.json'
 import sidebarRO from './locales/ro/sidebar.json'
@@ -32,7 +30,6 @@ export const resources = {
     common: commonEN,
     livestream: livestreamEN,
     presentation: presentationEN,
-    queue: queueEN,
     schedules: schedulesEN,
     sidebar: sidebarEN,
     settings: settingsEN,
@@ -44,7 +41,6 @@ export const resources = {
     common: commonRO,
     livestream: livestreamRO,
     presentation: presentationRO,
-    queue: queueRO,
     schedules: schedulesRO,
     sidebar: sidebarRO,
     settings: settingsRO,
@@ -66,7 +62,6 @@ i18n
       'common',
       'livestream',
       'presentation',
-      'queue',
       'schedules',
       'sidebar',
       'settings',

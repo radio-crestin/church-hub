@@ -32,7 +32,7 @@ export function VerseteTineriEditor({
   entries,
   onEntriesChange,
 }: VerseteTineriEditorProps) {
-  const { t } = useTranslation('queue')
+  const { t } = useTranslation('schedules')
 
   const sensors = useSensors(
     useSensor(PointerSensor),

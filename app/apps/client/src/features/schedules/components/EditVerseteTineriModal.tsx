@@ -3,11 +3,11 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useDefaultBibleTranslation } from '~/features/bible'
+import { useToast } from '~/ui/toast'
 import {
   type LocalVerseteTineriEntry,
   VerseteTineriEditor,
-} from '~/features/queue/components/VerseteTineriEditor'
-import { useToast } from '~/ui/toast'
+} from './VerseteTineriEditor'
 import { useUpdateScheduleSlide } from '../hooks'
 import type { ScheduleVerseteTineriEntry } from '../types'
 
@@ -28,7 +28,7 @@ export function EditVerseteTineriModal({
   entries,
   onSaved,
 }: EditVerseteTineriModalProps) {
-  const { t } = useTranslation('queue')
+  const { t } = useTranslation('schedules')
   const { showToast } = useToast()
   const dialogRef = useRef<HTMLDialogElement>(null)
   const updateMutation = useUpdateScheduleSlide()

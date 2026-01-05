@@ -36,7 +36,7 @@ export function VerseteTineriEntryRow({
   onReferenceChange,
   onDelete,
 }: VerseteTineriEntryRowProps) {
-  const { t } = useTranslation('queue')
+  const { t } = useTranslation('schedules')
   const {
     attributes,
     listeners,

@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { usePresentationState } from '~/features/presentation'
-import { useQueue } from '~/features/queue'
 import { SongList, SongsSettingsModal } from '~/features/songs/components'
 import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
 
@@ -28,7 +27,6 @@ function SongsPage() {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
 
   const { data: presentationState } = usePresentationState()
-  const { data: queue } = useQueue()
   const hasNavigatedOnOpen = useRef(false)
 
   // Auto-navigate to presented song only on initial page open
@@ -44,23 +42,9 @@ function SongsPage() {
 
     if (!presentationState) return
 
-    let presentedSongId: number | null = null
-
-    // Check temporary content first (priority)
+    // Check if a song is being presented via temporary content
     if (presentationState.temporaryContent?.type === 'song') {
-      presentedSongId = presentationState.temporaryContent.data.songId
-    }
-    // Check queue-based presentation
-    else if (presentationState.currentQueueItemId && queue) {
-      const currentItem = queue.find(
-        (item) => item.id === presentationState.currentQueueItemId,
-      )
-      if (currentItem?.itemType === 'song' && currentItem.songId) {
-        presentedSongId = currentItem.songId
-      }
-    }
-
-    if (presentedSongId) {
+      const presentedSongId = presentationState.temporaryContent.data.songId
       hasNavigatedOnOpen.current = true
       navigate({
         to: '/songs/$songId',
@@ -68,7 +52,7 @@ function SongsPage() {
         search: { q: searchQuery || undefined },
       })
     }
-  }, [presentationState, queue, navigate, searchQuery, fromSong])
+  }, [presentationState, navigate, searchQuery, fromSong])
 
   const handleSongClick = (songId: number) => {
     navigate({
