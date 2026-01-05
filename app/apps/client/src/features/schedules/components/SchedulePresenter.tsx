@@ -691,17 +691,28 @@ export function SchedulePresenter({
   const handleSongSelected = useCallback(
     async (songId: number) => {
       if (changingSongItem) {
-        // Replace the song in the schedule
+        // Replace the song in the schedule at the same position
         const { removeItemFromSchedule, addItemToSchedule } = await import(
           '../service/schedules'
         )
-        // Remove old song and add new one
+
+        // Find the item that comes before the one being replaced
+        const currentIndex = items.findIndex(
+          (item) => item.id === changingSongItem.id,
+        )
+        const previousItem = currentIndex > 0 ? items[currentIndex - 1] : null
+
+        // Remove old song first
         const removeSuccess = await removeItemFromSchedule(
           scheduleId,
           changingSongItem.id,
         )
         if (removeSuccess) {
-          const result = await addItemToSchedule(scheduleId, { songId })
+          // Add new song at the same position (after the previous item, or at start if first)
+          const result = await addItemToSchedule(scheduleId, {
+            songId,
+            afterItemId: previousItem?.id,
+          })
           if (result.success) {
             showToast(t('messages.songReplaced'), 'success')
             refetch()
@@ -718,7 +729,7 @@ export function SchedulePresenter({
         }
       }
     },
-    [scheduleId, showToast, t, refetch, changingSongItem],
+    [scheduleId, showToast, t, refetch, changingSongItem, items],
   )
 
   // Delete handler
