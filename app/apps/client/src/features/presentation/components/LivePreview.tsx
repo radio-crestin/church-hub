@@ -215,6 +215,41 @@ export function LivePreview() {
             return
           }
         }
+
+        if (temp.type === 'announcement') {
+          setContentType('announcement')
+          setContentData({
+            mainText: temp.data.content,
+          })
+          return
+        }
+
+        if (temp.type === 'bible_passage') {
+          const currentVerse = temp.data.verses[temp.data.currentVerseIndex]
+          if (currentVerse) {
+            // Build reference: "BookName Chapter:Verse"
+            const reference = `${temp.data.bookName} ${temp.data.startChapter}:${currentVerse.verse}`
+            setContentType('bible_passage')
+            setContentData({
+              referenceText: reference,
+              contentText: currentVerse.text,
+            })
+            return
+          }
+        }
+
+        if (temp.type === 'versete_tineri') {
+          const currentEntry = temp.data.entries[temp.data.currentEntryIndex]
+          if (currentEntry) {
+            setContentType('versete_tineri')
+            setContentData({
+              personLabel: currentEntry.personName,
+              referenceText: currentEntry.reference,
+              contentText: currentEntry.text,
+            })
+            return
+          }
+        }
       }
 
       try {
