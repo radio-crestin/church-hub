@@ -18,7 +18,6 @@ import { useTranslation } from 'react-i18next'
 import { clearSectionLastVisited } from '~/features/navigation'
 import {
   useClearTemporaryContent,
-  useNavigateTemporary,
   usePresentationState,
   usePresentTemporarySong,
   useWebSocket,
@@ -92,7 +91,6 @@ export function SchedulePresenter({
   }, [onBack])
   const { data: presentationState } = usePresentationState()
   const presentTemporarySong = usePresentTemporarySong()
-  const navigateTemporary = useNavigateTemporary()
   const clearTemporary = useClearTemporaryContent()
   const { saveSchedule, isPending: isSaving } = useSaveScheduleToFile()
   const { loadSchedule, isPending: isLoadingFile } = useLoadScheduleFromFile()
@@ -333,38 +331,22 @@ export function SchedulePresenter({
     [showToast],
   )
 
-  // Navigation handlers with auto-advance between schedule items
+  // Navigation handlers - always use presentTemporarySong for reliable navigation
   const handlePrevSlide = useCallback(async () => {
-    if (currentFlatIndex <= 0) return
-
-    const currentItem = flatItems[currentFlatIndex]
-    const prevItem = flatItems[currentFlatIndex - 1]
-
-    // Check if we're at the first slide of the current item
-    const isAtFirstSlideOfCurrentItem = prevItem.item.id !== currentItem.item.id
-
-    // If at first slide, go directly to previous item (last slide of prev song)
-    if (isAtFirstSlideOfCurrentItem) {
-      if (prevItem.item.itemType === 'song' && prevItem.item.songId) {
-        await presentTemporarySong.mutateAsync({
-          songId: prevItem.item.songId,
-          slideIndex: prevItem.index,
-        })
-      }
+    if (currentFlatIndex <= 0) {
       return
     }
 
-    // Otherwise, navigate within current content
-    if (presentationState?.temporaryContent) {
-      await navigateTemporary.mutateAsync({ direction: 'prev' })
+    const prevItem = flatItems[currentFlatIndex - 1]
+
+    // Always use presentTemporarySong for reliable slide navigation
+    if (prevItem.item.itemType === 'song' && prevItem.item.songId) {
+      await presentTemporarySong.mutateAsync({
+        songId: prevItem.item.songId,
+        slideIndex: prevItem.index,
+      })
     }
-  }, [
-    currentFlatIndex,
-    flatItems,
-    presentTemporarySong,
-    navigateTemporary,
-    presentationState?.temporaryContent,
-  ])
+  }, [currentFlatIndex, flatItems, presentTemporarySong])
 
   const handleNextSlide = useCallback(async () => {
     // If nothing is presented, start with first item
@@ -381,38 +363,24 @@ export function SchedulePresenter({
       return
     }
 
-    if (currentFlatIndex >= flatItems.length - 1) return
-
-    const currentItem = flatItems[currentFlatIndex]
-    const nextItem = flatItems[currentFlatIndex + 1]
-
-    // Check if we're at the last slide of the current item
-    const isAtLastSlideOfCurrentItem = nextItem.item.id !== currentItem.item.id
-
-    // If at last slide, go directly to next item (first slide of next song)
-    if (isAtLastSlideOfCurrentItem) {
-      if (nextItem.item.itemType === 'song' && nextItem.item.songId) {
-        await presentTemporarySong.mutateAsync({
-          songId: nextItem.item.songId,
-          slideIndex: nextItem.index,
-        })
-      }
+    if (currentFlatIndex >= flatItems.length - 1) {
       return
     }
 
-    // Otherwise, navigate within current content
-    if (presentationState?.temporaryContent) {
-      await navigateTemporary.mutateAsync({ direction: 'next' })
-    }
-  }, [
-    currentFlatIndex,
-    flatItems,
-    presentTemporarySong,
-    navigateTemporary,
-    presentationState?.temporaryContent,
-  ])
+    const nextItem = flatItems[currentFlatIndex + 1]
 
-  // Keyboard shortcuts
+    // Always use presentTemporarySong for reliable slide navigation
+    if (nextItem.item.itemType === 'song' && nextItem.item.songId) {
+      await presentTemporarySong.mutateAsync({
+        songId: nextItem.item.songId,
+        slideIndex: nextItem.index,
+      })
+    }
+  }, [currentFlatIndex, flatItems, presentTemporarySong])
+
+  // Keyboard shortcuts for schedule navigation
+  // We stopPropagation to prevent the global useKeyboardShortcuts from also firing
+  // which uses navigateTemporary (only knows about current song, not schedule context)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't handle if focus is on an input
@@ -423,17 +391,34 @@ export function SchedulePresenter({
         return
       }
 
-      if (e.key === 'ArrowLeft' && canNavigatePrev) {
-        handlePrevSlide()
-      } else if (e.key === 'ArrowRight' && canNavigateNext) {
-        handleNextSlide()
+      // Handle navigation keys - stop propagation to prevent global handler
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') {
+        e.stopPropagation()
+        e.preventDefault()
+        if (canNavigatePrev) {
+          handlePrevSlide()
+        }
+      } else if (
+        e.key === 'ArrowRight' ||
+        e.key === 'ArrowDown' ||
+        e.key === ' ' ||
+        e.key === 'PageDown'
+      ) {
+        e.stopPropagation()
+        e.preventDefault()
+        if (canNavigateNext) {
+          handleNextSlide()
+        }
       } else if (e.key === 'Escape') {
+        e.stopPropagation()
+        e.preventDefault()
         clearTemporary.mutate()
       }
     }
 
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
+    // Use capture phase to handle events before they reach the global handler
+    window.addEventListener('keydown', handleKeyDown, true)
+    return () => window.removeEventListener('keydown', handleKeyDown, true)
   }, [
     canNavigatePrev,
     canNavigateNext,
