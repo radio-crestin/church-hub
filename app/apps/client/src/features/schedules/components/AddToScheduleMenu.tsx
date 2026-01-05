@@ -6,6 +6,10 @@ interface AddToScheduleMenuProps {
   onAddBibleVerse?: () => void
   onAddBiblePassage?: () => void
   onAddSlide: (template: SlideTemplate) => void
+  /** Controlled open state (optional) */
+  isOpen?: boolean
+  /** Callback when open state changes (for controlled mode) */
+  onOpenChange?: (open: boolean) => void
 }
 
 export function AddToScheduleMenu({
@@ -13,11 +17,15 @@ export function AddToScheduleMenu({
   onAddBibleVerse,
   onAddBiblePassage,
   onAddSlide,
+  isOpen,
+  onOpenChange,
 }: AddToScheduleMenuProps) {
   return (
     <AddMenuModal
       showBibleVerse={!!onAddBibleVerse}
       showBiblePassage={!!onAddBiblePassage}
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
       onAddSong={onAddSong}
       onAddBibleVerse={onAddBibleVerse}
       onAddBiblePassage={onAddBiblePassage}

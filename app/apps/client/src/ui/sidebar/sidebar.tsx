@@ -25,7 +25,7 @@ import type { Permission } from '../../features/users/types'
 import { usePermissions } from '../../provider/permissions-provider'
 
 export function Sidebar() {
-  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [isCollapsed, setIsCollapsed] = useState(true)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false)
   const [isContactModalOpen, setIsContactModalOpen] = useState(false)
