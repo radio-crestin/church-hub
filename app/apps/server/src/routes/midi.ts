@@ -87,7 +87,12 @@ export async function handleMIDIRoutes(
           disconnectInput()
         } else {
           midiLogger.info(`Connecting to input device ${body.inputDeviceId}`)
-          inputConnected = connectInput(body.inputDeviceId)
+          // Pass startReconnectOnFail=true to start monitoring if device not found
+          inputConnected = connectInput(
+            body.inputDeviceId,
+            undefined,
+            true, // Start reconnection if device not available
+          )
           midiLogger.info(`Input connection result: ${inputConnected}`)
         }
       }
@@ -98,7 +103,12 @@ export async function handleMIDIRoutes(
           disconnectOutput()
         } else {
           midiLogger.info(`Connecting to output device ${body.outputDeviceId}`)
-          outputConnected = connectOutput(body.outputDeviceId)
+          // Pass startReconnectOnFail=true to start monitoring if device not found
+          outputConnected = connectOutput(
+            body.outputDeviceId,
+            undefined,
+            true, // Start reconnection if device not available
+          )
           midiLogger.info(`Output connection result: ${outputConnected}`)
         }
       }
