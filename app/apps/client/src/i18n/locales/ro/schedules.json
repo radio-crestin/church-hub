@@ -14,8 +14,11 @@
     "cancel": "Anuleaza"
   },
   "editor": {
+    "title": "Titlu",
+    "description": "Descriere",
     "titlePlaceholder": "Introdu titlul programului...",
     "descriptionPlaceholder": "Adauga o descriere (optional)...",
+    "hint": "Apasa Ctrl+Enter pentru a salva",
     "items": "Elemente",
     "noItems": "Niciun element inca",
     "addFirstItem": "Adauga cantari sau slide-uri pentru a construi programul"
@@ -23,7 +26,10 @@
   "presenter": {
     "edit": "Editeaza",
     "announcement": "Anunt",
-    "verseteTineri": "Versete Tineri"
+    "verseteTineri": "Versete Tineri",
+    "items": "{{count}} elemente",
+    "items_one": "{{count}} element",
+    "items_other": "{{count}} elemente"
   },
   "search": {
     "placeholder": "Cauta programe...",
@@ -33,6 +39,7 @@
   "messages": {
     "saved": "Programul a fost salvat cu succes",
     "deleted": "Programul a fost sters cu succes",
+    "titleRequired": "Titlul este obligatoriu",
     "itemAdded": "Element adaugat la program",
     "itemRemoved": "Element eliminat din program",
     "importedToQueue": "Programul a fost importat in coada",
