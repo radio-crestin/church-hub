@@ -14,8 +14,11 @@
     "cancel": "Cancel"
   },
   "editor": {
+    "title": "Title",
+    "description": "Description",
     "titlePlaceholder": "Enter schedule title...",
     "descriptionPlaceholder": "Add a description (optional)...",
+    "hint": "Press Ctrl+Enter to save",
     "items": "Items",
     "noItems": "No items yet",
     "addFirstItem": "Add songs or slides to build your schedule"
@@ -23,7 +26,10 @@
   "presenter": {
     "edit": "Edit",
     "announcement": "Announcement",
-    "verseteTineri": "Youth Verses"
+    "verseteTineri": "Youth Verses",
+    "items": "{{count}} items",
+    "items_one": "{{count}} item",
+    "items_other": "{{count}} items"
   },
   "search": {
     "placeholder": "Search schedules...",
@@ -33,6 +39,7 @@
   "messages": {
     "saved": "Schedule saved successfully",
     "deleted": "Schedule deleted successfully",
+    "titleRequired": "Title is required",
     "itemAdded": "Item added to schedule",
     "itemRemoved": "Item removed from schedule",
     "importedToQueue": "Schedule imported to queue",
