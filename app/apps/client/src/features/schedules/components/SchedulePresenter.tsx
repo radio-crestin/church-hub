@@ -295,8 +295,13 @@ export function SchedulePresenter({
   }, [flatItems, presentedInfo])
 
   const canNavigatePrev = currentFlatIndex > 0
+  // Can navigate next if there are more slides, OR if we're on the last slide with content (to hide)
+  const isOnLastSlide =
+    currentFlatIndex >= 0 && currentFlatIndex === flatItems.length - 1
+  const hasContent = !!presentationState?.temporaryContent
   const canNavigateNext =
-    currentFlatIndex >= 0 && currentFlatIndex < flatItems.length - 1
+    (currentFlatIndex >= 0 && currentFlatIndex < flatItems.length - 1) ||
+    (isOnLastSlide && hasContent)
 
   // Title editing handlers
   const handleStartEditTitle = useCallback(() => {
@@ -521,13 +526,23 @@ export function SchedulePresenter({
       return
     }
 
+    // If on the last slide, hide the presentation
     if (currentFlatIndex >= flatItems.length - 1) {
+      if (presentationState?.temporaryContent) {
+        await clearTemporary.mutateAsync()
+      }
       return
     }
 
     const nextItem = flatItems[currentFlatIndex + 1]
     await navigateToFlatItem(nextItem)
-  }, [currentFlatIndex, flatItems, navigateToFlatItem])
+  }, [
+    currentFlatIndex,
+    flatItems,
+    navigateToFlatItem,
+    presentationState?.temporaryContent,
+    clearTemporary,
+  ])
 
   // Keyboard shortcuts for schedule navigation
   // We stopPropagation to prevent the global useKeyboardShortcuts from also firing
