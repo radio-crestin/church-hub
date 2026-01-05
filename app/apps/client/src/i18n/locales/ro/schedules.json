@@ -8,6 +8,7 @@
     "addItem": "Adauga",
     "importToQueue": "Adauga in prezentare",
     "saveToFile": "Salveaza in Fisier",
+    "loadFromFile": "Incarca din Fisier",
     "importFromFile": "Importa",
     "editAsText": "Editeaza ca Text",
     "cancel": "Anuleaza"
@@ -36,7 +37,15 @@
     "itemRemoved": "Element eliminat din program",
     "importedToQueue": "Programul a fost importat in coada",
     "savedToFile": "Programul a fost salvat in fisier",
-    "imported": "Programul a fost importat cu succes",
+    "imported": "{{count}} elemente importate",
+    "imported_one": "{{count}} element importat",
+    "imported_other": "{{count}} elemente importate",
+    "skippedSongs": "{{count}} cantari negasite si omise",
+    "skippedSongs_one": "{{count}} cantare negasita si omisa",
+    "skippedSongs_other": "{{count}} cantari negasite si omise",
+    "skippedBiblePassages": "{{count}} pasaje biblice omise",
+    "skippedBiblePassages_one": "{{count}} pasaj biblic omis",
+    "skippedBiblePassages_other": "{{count}} pasaje biblice omise",
     "importedWithSongs_one": "Program importat cu {{count}} cantare noua creata",
     "importedWithSongs_other": "Program importat cu {{count}} cantari noi create",
     "importError": "Importul programului a esuat",
@@ -114,6 +123,15 @@
         "description": "Fisier ZIP care contine prezentari PPTX pentru fiecare cantare si un fisier text cu programul."
       }
     }
+  },
+  "import": {
+    "title": "Importa Program",
+    "message": "Importa elementele din \"{{title}}\" in acest program?",
+    "warning": "Aceasta actiune va inlocui toate elementele existente din program.",
+    "itemCount": "{{count}} elemente vor fi importate",
+    "itemCount_one": "{{count}} element va fi importat",
+    "itemCount_other": "{{count}} elemente vor fi importate",
+    "confirm": "Importa"
   },
   "noSchedules": "Niciun program inca",
   "noSchedulesDescription": "Creeaza primul tau program pentru a planifica prezentarile",

@@ -8,6 +8,7 @@
     "addItem": "Add",
     "importToQueue": "Import to Queue",
     "saveToFile": "Save to File",
+    "loadFromFile": "Load from File",
     "importFromFile": "Import",
     "editAsText": "Edit as Text",
     "cancel": "Cancel"
@@ -36,7 +37,15 @@
     "itemRemoved": "Item removed from schedule",
     "importedToQueue": "Schedule imported to queue",
     "savedToFile": "Schedule saved to file",
-    "imported": "Schedule imported successfully",
+    "imported": "{{count}} items imported",
+    "imported_one": "{{count}} item imported",
+    "imported_other": "{{count}} items imported",
+    "skippedSongs": "{{count}} songs not found and skipped",
+    "skippedSongs_one": "{{count}} song not found and skipped",
+    "skippedSongs_other": "{{count}} songs not found and skipped",
+    "skippedBiblePassages": "{{count}} bible passages skipped",
+    "skippedBiblePassages_one": "{{count}} bible passage skipped",
+    "skippedBiblePassages_other": "{{count}} bible passages skipped",
     "importedWithSongs_one": "Schedule imported with {{count}} new song created",
     "importedWithSongs_other": "Schedule imported with {{count}} new songs created",
     "importError": "Failed to import schedule",
@@ -114,6 +123,15 @@
         "description": "ZIP file containing PPTX presentations for each song and a text file with the schedule overview."
       }
     }
+  },
+  "import": {
+    "title": "Import Schedule",
+    "message": "Import items from \"{{title}}\" into this schedule?",
+    "warning": "This will replace all existing items in the schedule.",
+    "itemCount": "{{count}} items will be imported",
+    "itemCount_one": "{{count}} item will be imported",
+    "itemCount_other": "{{count}} items will be imported",
+    "confirm": "Import"
   },
   "noSchedules": "No schedules yet",
   "noSchedulesDescription": "Create your first schedule to plan your presentations",
