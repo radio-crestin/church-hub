@@ -1,10 +1,14 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { AlertCircle, Check, GripVertical, Trash2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { useBooks, useDefaultBibleTranslation } from '~/features/bible/hooks'
+import {
+  useBooks,
+  useChapters,
+  useDefaultBibleTranslation,
+} from '~/features/bible/hooks'
 import {
   type ParsedPassageRange,
   parsePassageRange,
@@ -58,11 +62,24 @@ export function VerseteTineriEntryRow({
   // Local reference input for immediate feedback
   const [localReference, setLocalReference] = useState(entry.referenceInput)
 
-  // Debounced parsing
+  // Track the matched book for fetching chapters
+  const [matchedBookId, setMatchedBookId] = useState<number | undefined>(
+    undefined,
+  )
+
+  // Fetch chapters for the matched book (for verse validation)
+  const { data: chapters } = useChapters(matchedBookId)
+
+  // Use ref to avoid re-running effect when callback changes
+  const onReferenceChangeRef = useRef(onReferenceChange)
+  onReferenceChangeRef.current = onReferenceChange
+
+  // Debounced parsing with verse validation
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (!localReference.trim()) {
-        onReferenceChange(localReference, null)
+        onReferenceChangeRef.current(localReference, null)
+        setMatchedBookId(undefined)
         return
       }
 
@@ -72,15 +89,25 @@ export function VerseteTineriEntryRow({
       // Replace space between consecutive numbers with a colon
       const normalizedInput = localReference.replace(/(\d+)\s+(\d+)/g, '$1:$2')
 
+      // Parse with chapters for full validation (including verse numbers)
       const result = parsePassageRange({
         input: normalizedInput,
         books,
+        chapters: chapters && chapters.length > 0 ? chapters : undefined,
       })
-      onReferenceChange(localReference, result)
+
+      // Update matched book ID to trigger chapters fetch for next validation
+      if (result.matchedBook) {
+        setMatchedBookId(result.matchedBook.id)
+      } else {
+        setMatchedBookId(undefined)
+      }
+
+      onReferenceChangeRef.current(localReference, result)
     }, 300)
 
     return () => clearTimeout(timeout)
-  }, [localReference, books, onReferenceChange])
+  }, [localReference, books, chapters, entry.id])
 
   const isValid = entry.parsedResult?.status === 'valid'
   const hasError = entry.parsedResult && entry.parsedResult.status !== 'valid'
