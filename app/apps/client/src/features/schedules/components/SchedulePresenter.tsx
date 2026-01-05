@@ -627,6 +627,43 @@ export function SchedulePresenter({
     setEditingSongId(songId)
   }, [])
 
+  // Delete item handler
+  const handleDeleteItem = useCallback(
+    async (item: ScheduleItem) => {
+      const { removeItemFromSchedule } = await import('../service/schedules')
+      const success = await removeItemFromSchedule(scheduleId, item.id)
+      if (success) {
+        showToast(t('messages.itemRemoved'), 'success')
+        refetch()
+      } else {
+        showToast(t('messages.error'), 'error')
+      }
+    },
+    [scheduleId, showToast, t, refetch],
+  )
+
+  // Edit item handler (for non-song items)
+  const handleEditItem = useCallback((item: ScheduleItem) => {
+    if (item.itemType === 'song' && item.songId) {
+      setEditingSongId(item.songId)
+    } else if (item.itemType === 'bible_passage') {
+      // Open bible passage picker for editing
+      // For now, we'll use the edit as text modal for simplicity
+      setShowEditAsText(true)
+    } else if (item.itemType === 'slide') {
+      // Open slide modal for editing
+      // For now, we'll use the edit as text modal for simplicity
+      setShowEditAsText(true)
+    }
+  }, [])
+
+  // Search song replacement handler
+  const handleSearchSongReplacement = useCallback((title: string) => {
+    // Open song picker with prefilled search
+    setShowSongPicker(true)
+    // Note: The SongPickerModal would need to support initial search query
+  }, [])
+
   // Navigate to song page handler (middle-click)
   const handleNavigateToSong = useCallback(
     (songId: number) => {
@@ -922,6 +959,9 @@ export function SchedulePresenter({
               onReorder={handleReorder}
               onEditSong={handleEditSong}
               onNavigateToSong={handleNavigateToSong}
+              onDeleteItem={handleDeleteItem}
+              onEditItem={handleEditItem}
+              onSearchSongReplacement={handleSearchSongReplacement}
               expandAllTrigger={expandAllTrigger}
               collapseAllTrigger={collapseAllTrigger}
             />
