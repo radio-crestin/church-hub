@@ -113,7 +113,9 @@
         "permissionError": "MIDI access denied: {{error}}",
         "fullyConnected": "Input and output connected",
         "inputOnly": "Input connected (no LED feedback)",
-        "outputOnly": "Output connected (no triggers)"
+        "outputOnly": "Output connected (no triggers)",
+        "reconnecting": "Reconnecting to {{device}}...",
+        "device": "device"
       }
     },
     "users": {
