@@ -168,6 +168,22 @@ export function ScheduleItemsPanel({
     return null
   }, [presentationState?.temporaryContent])
 
+  // Auto-expand the item when a slide from it is presented
+  useEffect(() => {
+    if (presentedInfo?.type === 'song' && presentedInfo.songId) {
+      const presentedItem = items.find(
+        (item) =>
+          item.itemType === 'song' && item.songId === presentedInfo.songId,
+      )
+      if (presentedItem && !expanded[`${presentedItem.id}`]) {
+        setExpanded((prev) => ({
+          ...prev,
+          [`${presentedItem.id}`]: true,
+        }))
+      }
+    }
+  }, [presentedInfo, items, expanded])
+
   // Auto-scroll to the presented slide
   useEffect(() => {
     if (highlightedRef.current && containerRef.current) {
