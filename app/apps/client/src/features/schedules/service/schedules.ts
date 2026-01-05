@@ -134,18 +134,6 @@ export async function reorderScheduleItems(
   return response.data?.success ?? false
 }
 
-export async function importScheduleToQueue(
-  scheduleId: number,
-): Promise<boolean> {
-  const response = await fetcher<ApiResponse<{ success: boolean }>>(
-    `/api/schedules/${scheduleId}/import-to-queue`,
-    {
-      method: 'POST',
-    },
-  )
-  return response.data?.success ?? false
-}
-
 export async function replaceScheduleItems(
   scheduleId: number,
   input: ReplaceScheduleItemsInput,

@@ -144,7 +144,6 @@ import {
   deleteSchedule,
   getScheduleById,
   getSchedules,
-  importScheduleToQueue,
   type ReorderScheduleItemsInput,
   type ReplaceScheduleItemsInput,
   rebuildScheduleSearchIndex,
@@ -1680,38 +1679,6 @@ async function main() {
             }),
           )
         }
-      }
-
-      // POST /api/schedules/:id/import-to-queue - Import schedule to queue
-      const importScheduleMatch = url.pathname.match(
-        /^\/api\/schedules\/(\d+)\/import-to-queue$/,
-      )
-      if (req.method === 'POST' && importScheduleMatch?.[1]) {
-        const permError = checkPermission('programs.import_to_queue')
-        if (permError) return permError
-
-        const scheduleId = parseInt(importScheduleMatch[1], 10)
-        const result = importScheduleToQueue(scheduleId)
-
-        if (!result) {
-          return handleCors(
-            req,
-            new Response(
-              JSON.stringify({ error: 'Failed to import schedule' }),
-              {
-                status: 500,
-                headers: { 'Content-Type': 'application/json' },
-              },
-            ),
-          )
-        }
-
-        return handleCors(
-          req,
-          new Response(JSON.stringify({ data: { success: true } }), {
-            headers: { 'Content-Type': 'application/json' },
-          }),
-        )
       }
 
       // ============================================================
