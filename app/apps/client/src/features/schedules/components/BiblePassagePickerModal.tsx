@@ -6,6 +6,7 @@ import {
   type ParsedPassageRange,
   parsePassageRange,
   useBooks,
+  useChapters,
   useDefaultBibleTranslation,
 } from '~/features/bible'
 import { useToast } from '~/ui/toast'
@@ -38,6 +39,7 @@ export function BiblePassagePickerModal({
   const { showToast } = useToast()
   const dialogRef = useRef<HTMLDialogElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const wasOpenRef = useRef(false)
   const addItemMutation = useAddItemToSchedule()
   const updateMutation = useUpdateScheduleSlide()
 
@@ -53,40 +55,66 @@ export function BiblePassagePickerModal({
   const { translation: selectedTranslation } = useDefaultBibleTranslation()
   const { data: books = [] } = useBooks(selectedTranslation?.id ?? 0)
 
-  // Debounced parsing
+  // Track matched book for fetching chapters
+  const [matchedBookId, setMatchedBookId] = useState<number | undefined>(
+    undefined,
+  )
+
+  // Fetch chapters for verse validation
+  const { data: chapters } = useChapters(matchedBookId)
+
+  // Debounced parsing with verse validation
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (!referenceInput.trim()) {
         setParsedResult(null)
+        setMatchedBookId(undefined)
         return
       }
 
       if (books.length === 0) return
 
+      // Parse with chapters for full validation (including verse numbers)
       const result = parsePassageRange({
         input: referenceInput,
         books,
+        chapters: chapters && chapters.length > 0 ? chapters : undefined,
       })
+
+      // Update matched book ID to trigger chapters fetch
+      if (result.matchedBook) {
+        setMatchedBookId(result.matchedBook.id)
+      }
+
       setParsedResult(result)
     }, 300)
 
     return () => clearTimeout(timeout)
-  }, [referenceInput, books])
+  }, [referenceInput, books, chapters])
 
-  // Dialog open/close handling
+  // Dialog open/close handling - only initialize when modal opens (not on every editingItem reference change)
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !wasOpenRef.current) {
+      // Modal just opened - initialize state
+      wasOpenRef.current = true
       dialogRef.current?.showModal()
+
       // Load editing item data or reset state
       if (editingItem?.biblePassageReference) {
-        setReferenceInput(editingItem.biblePassageReference)
+        // Strip translation suffix (e.g., "Ioan 4:5-83 - VDCC" -> "Ioan 4:5-83")
+        const referenceWithoutSuffix =
+          editingItem.biblePassageReference.replace(/\s+-\s+[A-Za-z0-9]+$/, '')
+        setReferenceInput(referenceWithoutSuffix)
       } else {
         setReferenceInput('')
       }
       setParsedResult(null)
+      setMatchedBookId(undefined)
       // Focus input after modal opens
       setTimeout(() => inputRef.current?.focus(), 100)
-    } else {
+    } else if (!isOpen && wasOpenRef.current) {
+      // Modal just closed
+      wasOpenRef.current = false
       dialogRef.current?.close()
     }
   }, [isOpen, editingItem])
