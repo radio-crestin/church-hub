@@ -134,12 +134,16 @@ function SongPreviewPage() {
     // Clear last visited so user stays on list when going back
     clearSectionLastVisited('songs')
     // Always pass fromSong: true to prevent auto-redirect to presented song
-    // Preserve search query so user returns to their search results
+    // Preserve search query and current song ID so user returns to their position
     navigate({
       to: '/songs/',
-      search: { fromSong: true, q: searchQuery || undefined },
+      search: {
+        fromSong: true,
+        q: searchQuery || undefined,
+        selectedSongId: numericId,
+      },
     })
-  }, [navigate, searchQuery])
+  }, [navigate, searchQuery, numericId])
 
   const handlePrevSlide = useCallback(async () => {
     if (presentedSlideIndex !== null && presentedSlideIndex > 0) {

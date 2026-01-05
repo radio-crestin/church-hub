@@ -11,6 +11,7 @@ import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
 interface SongsSearchParams {
   q?: string
   fromSong?: boolean
+  selectedSongId?: number
 }
 
 export const Route = createFileRoute('/songs/')({
@@ -18,13 +19,25 @@ export const Route = createFileRoute('/songs/')({
   validateSearch: (search: Record<string, unknown>): SongsSearchParams => ({
     q: typeof search.q === 'string' ? search.q : undefined,
     fromSong: search.fromSong === true || search.fromSong === 'true',
+    selectedSongId:
+      typeof search.selectedSongId === 'number'
+        ? search.selectedSongId
+        : typeof search.selectedSongId === 'string'
+          ? parseInt(search.selectedSongId, 10) || undefined
+          : undefined,
   }),
 })
 
 function SongsPage() {
   const { t } = useTranslation('songs')
   const navigate = useNavigate()
-  const { q: searchQuery = '', fromSong } = useSearch({ from: '/songs/' })
+  const {
+    q: searchQuery = '',
+    fromSong,
+    selectedSongId,
+  } = useSearch({
+    from: '/songs/',
+  })
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
 
   const { data: presentationState } = usePresentationState()
@@ -118,6 +131,7 @@ function SongsPage() {
           onSongClick={handleSongClick}
           searchQuery={searchQuery}
           onSearchChange={handleSearchChange}
+          initialSelectedSongId={selectedSongId}
         />
 
         <SongsSettingsModal
