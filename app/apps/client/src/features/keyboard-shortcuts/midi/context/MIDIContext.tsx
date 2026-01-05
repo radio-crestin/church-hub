@@ -27,6 +27,8 @@ interface MIDIContextValue {
   isEnabled: boolean
   hasPermission: boolean
   permissionError: string | null
+  isReconnecting: boolean
+  reconnectingDeviceName: string | null
 
   // Devices
   inputDevices: MIDIDevice[]
@@ -46,6 +48,7 @@ interface MIDIContextValue {
 
   // Event subscription
   subscribe: (callback: MIDIMessageCallback) => () => void
+  subscribeToReconnection: (callback: () => void) => () => void
 
   // Config
   config: MIDIConfig
@@ -68,6 +71,10 @@ export function MIDIProvider({
   // State
   const [hasPermission, setHasPermission] = useState(false)
   const [permissionError, setPermissionError] = useState<string | null>(null)
+  const [isReconnecting, setIsReconnecting] = useState(false)
+  const [reconnectingDeviceName, setReconnectingDeviceName] = useState<
+    string | null
+  >(null)
 
   // Device lists
   const [inputDevices, setInputDevices] = useState<MIDIDevice[]>([])
@@ -82,6 +89,9 @@ export function MIDIProvider({
 
   // Subscribers for MIDI messages
   const subscribersRef = useRef<Set<MIDIMessageCallback>>(new Set())
+
+  // Subscribers for reconnection events (to refresh LEDs)
+  const reconnectionSubscribersRef = useRef<Set<() => void>>(new Set())
 
   // Server-side MIDI is always supported
   const isSupported = true
@@ -162,7 +172,33 @@ export function MIDIProvider({
 
           if (data.type === 'midi_connection_status') {
             logger.debug('MIDI connection status', data.payload)
-            // Update local state if needed
+            const wasReconnecting = isReconnecting
+            const newIsReconnecting = data.payload.isReconnecting
+
+            setIsReconnecting(newIsReconnecting)
+
+            // Set the reconnecting device name for display
+            const deviceName =
+              data.payload.reconnectingInputDevice ||
+              data.payload.reconnectingOutputDevice
+            setReconnectingDeviceName(deviceName)
+
+            // If we just finished reconnecting, notify subscribers to refresh LEDs
+            if (wasReconnecting && !newIsReconnecting) {
+              logger.info(
+                'MIDI device reconnected, notifying subscribers to refresh state',
+              )
+              // Small delay to let the connection stabilize
+              setTimeout(() => {
+                reconnectionSubscribersRef.current.forEach((callback) => {
+                  try {
+                    callback()
+                  } catch (error) {
+                    logger.error('Error in reconnection subscriber', { error })
+                  }
+                })
+              }, 100)
+            }
           }
 
           if (data.type === 'midi_devices') {
@@ -420,6 +456,18 @@ export function MIDIProvider({
     [],
   )
 
+  // Subscribe to reconnection events (for refreshing LEDs after reconnection)
+  const subscribeToReconnection = useCallback(
+    (callback: () => void): (() => void) => {
+      reconnectionSubscribersRef.current.add(callback)
+
+      return () => {
+        reconnectionSubscribersRef.current.delete(callback)
+      }
+    },
+    [],
+  )
+
   // Auto-connect if enabled
   useEffect(() => {
     if (config.enabled) {
@@ -447,6 +495,8 @@ export function MIDIProvider({
       isEnabled: config.enabled,
       hasPermission,
       permissionError,
+      isReconnecting,
+      reconnectingDeviceName,
       inputDevices,
       outputDevices,
       selectedInputId: config.inputDeviceId,
@@ -458,6 +508,7 @@ export function MIDIProvider({
       setLED,
       setAllLEDs,
       subscribe,
+      subscribeToReconnection,
       config,
       updateConfig,
     }),
@@ -466,6 +517,8 @@ export function MIDIProvider({
       config,
       hasPermission,
       permissionError,
+      isReconnecting,
+      reconnectingDeviceName,
       inputDevices,
       outputDevices,
       requestAccess,
@@ -475,6 +528,7 @@ export function MIDIProvider({
       setLED,
       setAllLEDs,
       subscribe,
+      subscribeToReconnection,
       updateConfig,
     ],
   )
