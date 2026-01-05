@@ -131,6 +131,14 @@ export function SchedulePresenter({
   const [showEditAsText, setShowEditAsText] = useState(false)
   const [showBiblePassagePicker, setShowBiblePassagePicker] = useState(false)
   const [editingSongId, setEditingSongId] = useState<number | null>(null)
+  const [editingSlideItem, setEditingSlideItem] = useState<ScheduleItem | null>(
+    null,
+  )
+  const [editingBiblePassageItem, setEditingBiblePassageItem] =
+    useState<ScheduleItem | null>(null)
+  const [changingSongItem, setChangingSongItem] = useState<ScheduleItem | null>(
+    null,
+  )
 
   // Expand/collapse all triggers
   const [expandAllTrigger, _setExpandAllTrigger] = useState(0)
@@ -648,20 +656,18 @@ export function SchedulePresenter({
       setEditingSongId(item.songId)
     } else if (item.itemType === 'bible_passage') {
       // Open bible passage picker for editing
-      // For now, we'll use the edit as text modal for simplicity
-      setShowEditAsText(true)
+      setEditingBiblePassageItem(item)
     } else if (item.itemType === 'slide') {
-      // Open slide modal for editing
-      // For now, we'll use the edit as text modal for simplicity
-      setShowEditAsText(true)
+      // Open slide modal for editing (announcements and versete tineri)
+      setEditingSlideItem(item)
     }
   }, [])
 
-  // Search song replacement handler
-  const handleSearchSongReplacement = useCallback((title: string) => {
-    // Open song picker with prefilled search
-    setShowSongPicker(true)
-    // Note: The SongPickerModal would need to support initial search query
+  // Change song handler - replace song in schedule with another
+  const handleChangeSong = useCallback((item: ScheduleItem) => {
+    if (item.itemType === 'song') {
+      setChangingSongItem(item)
+    }
   }, [])
 
   // Navigate to song page handler (middle-click)
@@ -677,15 +683,35 @@ export function SchedulePresenter({
 
   const handleSongSelected = useCallback(
     async (songId: number) => {
-      // Add song via API - the schedule will be refetched automatically
-      const { addItemToSchedule } = await import('../service/schedules')
-      const result = await addItemToSchedule(scheduleId, { songId })
-      if (result.success) {
-        showToast(t('messages.itemAdded'), 'success')
-        refetch()
+      if (changingSongItem) {
+        // Replace the song in the schedule
+        const { removeItemFromSchedule, addItemToSchedule } = await import(
+          '../service/schedules'
+        )
+        // Remove old song and add new one
+        const removeSuccess = await removeItemFromSchedule(
+          scheduleId,
+          changingSongItem.id,
+        )
+        if (removeSuccess) {
+          const result = await addItemToSchedule(scheduleId, { songId })
+          if (result.success) {
+            showToast(t('messages.songReplaced'), 'success')
+            refetch()
+          }
+        }
+        setChangingSongItem(null)
+      } else {
+        // Add song via API - the schedule will be refetched automatically
+        const { addItemToSchedule } = await import('../service/schedules')
+        const result = await addItemToSchedule(scheduleId, { songId })
+        if (result.success) {
+          showToast(t('messages.itemAdded'), 'success')
+          refetch()
+        }
       }
     },
-    [scheduleId, showToast, t, refetch],
+    [scheduleId, showToast, t, refetch, changingSongItem],
   )
 
   // Delete handler
@@ -961,7 +987,7 @@ export function SchedulePresenter({
               onNavigateToSong={handleNavigateToSong}
               onDeleteItem={handleDeleteItem}
               onEditItem={handleEditItem}
-              onSearchSongReplacement={handleSearchSongReplacement}
+              onChangeSong={handleChangeSong}
               expandAllTrigger={expandAllTrigger}
               collapseAllTrigger={collapseAllTrigger}
             />
@@ -999,17 +1025,33 @@ export function SchedulePresenter({
 
       {/* Song Picker Modal */}
       <SongPickerModal
-        isOpen={showSongPicker}
-        onClose={() => setShowSongPicker(false)}
+        isOpen={showSongPicker || !!changingSongItem}
+        onClose={() => {
+          setShowSongPicker(false)
+          setChangingSongItem(null)
+        }}
         onSongSelect={handleSongSelected}
       />
 
       {/* Insert Slide Modal */}
       <InsertSlideModal
-        isOpen={showSlideModal}
-        onClose={() => setShowSlideModal(false)}
+        isOpen={showSlideModal || !!editingSlideItem}
+        onClose={() => {
+          setShowSlideModal(false)
+          setEditingSlideItem(null)
+        }}
         scheduleId={scheduleId}
         initialTemplate={slideTemplate}
+        editingItem={
+          editingSlideItem
+            ? {
+                id: editingSlideItem.id,
+                slideType: editingSlideItem.slideType,
+                slideContent: editingSlideItem.slideContent,
+                verseteTineriEntries: editingSlideItem.verseteTineriEntries,
+              }
+            : undefined
+        }
         onSaved={() => refetch()}
       />
 
@@ -1024,9 +1066,21 @@ export function SchedulePresenter({
 
       {/* Bible Passage Picker Modal */}
       <BiblePassagePickerModal
-        isOpen={showBiblePassagePicker}
-        onClose={() => setShowBiblePassagePicker(false)}
+        isOpen={showBiblePassagePicker || !!editingBiblePassageItem}
+        onClose={() => {
+          setShowBiblePassagePicker(false)
+          setEditingBiblePassageItem(null)
+        }}
         scheduleId={scheduleId}
+        editingItem={
+          editingBiblePassageItem
+            ? {
+                id: editingBiblePassageItem.id,
+                biblePassageReference:
+                  editingBiblePassageItem.biblePassageReference,
+              }
+            : undefined
+        }
         onSaved={() => refetch()}
       />
 

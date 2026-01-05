@@ -1,4 +1,4 @@
-import { AlertCircle, Book, Check, Loader2, X } from 'lucide-react'
+import { AlertCircle, Book, Check, Loader2, Save, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -9,13 +9,20 @@ import {
   useDefaultBibleTranslation,
 } from '~/features/bible'
 import { useToast } from '~/ui/toast'
-import { useAddItemToSchedule } from '../hooks'
+import { useAddItemToSchedule, useUpdateScheduleSlide } from '../hooks'
+
+interface EditingBiblePassage {
+  id: number
+  biblePassageReference: string | null
+}
 
 interface BiblePassagePickerModalProps {
   isOpen: boolean
   onClose: () => void
   scheduleId: number
   afterItemId?: number
+  /** For edit mode: the item being edited */
+  editingItem?: EditingBiblePassage | null
   onSaved?: () => void
 }
 
@@ -24,6 +31,7 @@ export function BiblePassagePickerModal({
   onClose,
   scheduleId,
   afterItemId,
+  editingItem,
   onSaved,
 }: BiblePassagePickerModalProps) {
   const { t } = useTranslation('schedules')
@@ -31,6 +39,9 @@ export function BiblePassagePickerModal({
   const dialogRef = useRef<HTMLDialogElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const addItemMutation = useAddItemToSchedule()
+  const updateMutation = useUpdateScheduleSlide()
+
+  const isEditMode = !!editingItem
 
   // Selection state
   const [referenceInput, setReferenceInput] = useState('')
@@ -66,17 +77,24 @@ export function BiblePassagePickerModal({
   useEffect(() => {
     if (isOpen) {
       dialogRef.current?.showModal()
-      setReferenceInput('')
+      // Load editing item data or reset state
+      if (editingItem?.biblePassageReference) {
+        setReferenceInput(editingItem.biblePassageReference)
+      } else {
+        setReferenceInput('')
+      }
       setParsedResult(null)
       // Focus input after modal opens
       setTimeout(() => inputRef.current?.focus(), 100)
     } else {
       dialogRef.current?.close()
     }
-  }, [isOpen])
+  }, [isOpen, editingItem])
+
+  const isPending = addItemMutation.isPending || updateMutation.isPending
 
   const handleClose = () => {
-    if (!addItemMutation.isPending) {
+    if (!isPending) {
       onClose()
     }
   }
@@ -97,30 +115,51 @@ export function BiblePassagePickerModal({
       return
     }
 
-    // Add Bible passage as a proper bible_passage item
-    const result = await addItemMutation.mutateAsync({
-      scheduleId,
-      input: {
-        biblePassage: {
-          translationId: selectedTranslation.id,
-          translationAbbreviation: selectedTranslation.abbreviation,
-          bookCode: parsedResult.bookCode!,
-          bookName: parsedResult.bookName!,
-          startChapter: parsedResult.startChapter!,
-          startVerse: parsedResult.startVerse!,
-          endChapter: parsedResult.endChapter!,
-          endVerse: parsedResult.endVerse!,
-        },
-        afterItemId,
-      },
-    })
+    const biblePassageData = {
+      translationId: selectedTranslation.id,
+      translationAbbreviation: selectedTranslation.abbreviation,
+      bookCode: parsedResult.bookCode!,
+      bookName: parsedResult.bookName!,
+      startChapter: parsedResult.startChapter!,
+      startVerse: parsedResult.startVerse!,
+      endChapter: parsedResult.endChapter!,
+      endVerse: parsedResult.endVerse!,
+    }
 
-    if (result.success) {
-      showToast(t('messages.biblePassageInserted'), 'success')
-      onSaved?.()
-      onClose()
+    if (isEditMode && editingItem) {
+      // Update existing Bible passage
+      const result = await updateMutation.mutateAsync({
+        scheduleId,
+        itemId: editingItem.id,
+        input: {
+          biblePassage: biblePassageData,
+        },
+      })
+
+      if (result.success) {
+        showToast(t('messages.biblePassageUpdated'), 'success')
+        onSaved?.()
+        onClose()
+      } else {
+        showToast(t('messages.error'), 'error')
+      }
     } else {
-      showToast(t('messages.error'), 'error')
+      // Add new Bible passage
+      const result = await addItemMutation.mutateAsync({
+        scheduleId,
+        input: {
+          biblePassage: biblePassageData,
+          afterItemId,
+        },
+      })
+
+      if (result.success) {
+        showToast(t('messages.biblePassageInserted'), 'success')
+        onSaved?.()
+        onClose()
+      } else {
+        showToast(t('messages.error'), 'error')
+      }
     }
   }
 
@@ -145,13 +184,15 @@ export function BiblePassagePickerModal({
           <div className="flex items-center gap-2">
             <Book size={20} className="text-teal-600" />
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {t('biblePassage.title')}
+              {isEditMode
+                ? t('biblePassage.editTitle')
+                : t('biblePassage.title')}
             </h2>
           </div>
           <button
             type="button"
             onClick={handleClose}
-            disabled={addItemMutation.isPending}
+            disabled={isPending}
             className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
           >
             <X size={20} className="text-gray-500" />
@@ -213,7 +254,7 @@ export function BiblePassagePickerModal({
           <button
             type="button"
             onClick={handleClose}
-            disabled={addItemMutation.isPending}
+            disabled={isPending}
             className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg disabled:opacity-50"
           >
             {t('actions.cancel')}
@@ -221,13 +262,15 @@ export function BiblePassagePickerModal({
           <button
             type="button"
             onClick={handleSave}
-            disabled={addItemMutation.isPending || !isValid}
+            disabled={isPending || !isValid}
             className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50"
           >
-            {addItemMutation.isPending && (
+            {isPending ? (
               <Loader2 size={18} className="animate-spin" />
-            )}
-            {t('biblePassage.add')}
+            ) : isEditMode ? (
+              <Save size={18} />
+            ) : null}
+            {isEditMode ? t('biblePassage.save') : t('biblePassage.add')}
           </button>
         </div>
       </div>

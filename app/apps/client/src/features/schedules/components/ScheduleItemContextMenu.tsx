@@ -1,4 +1,4 @@
-import { AlertTriangle, Edit, Search, Trash2 } from 'lucide-react'
+import { AlertTriangle, Edit, RefreshCw, Trash2 } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -15,7 +15,7 @@ interface ScheduleItemContextMenuProps {
   onClose: () => void
   onEdit: (item: ScheduleItem) => void
   onDelete: (item: ScheduleItem) => void
-  onSearchSong?: (title: string) => void
+  onChangeSong?: (item: ScheduleItem) => void
 }
 
 export function ScheduleItemContextMenu({
@@ -24,7 +24,7 @@ export function ScheduleItemContextMenu({
   onClose,
   onEdit,
   onDelete,
-  onSearchSong,
+  onChangeSong,
 }: ScheduleItemContextMenuProps) {
   const { t } = useTranslation('schedules')
   const menuRef = useRef<HTMLDivElement>(null)
@@ -87,9 +87,9 @@ export function ScheduleItemContextMenu({
     onClose()
   }
 
-  const handleSearchSong = () => {
-    if (item.itemType === 'song' && item.song?.title && onSearchSong) {
-      onSearchSong(item.song.title)
+  const handleChangeSong = () => {
+    if (item.itemType === 'song' && onChangeSong) {
+      onChangeSong(item)
       onClose()
     }
   }
@@ -122,20 +122,17 @@ export function ScheduleItemContextMenu({
         {t('contextMenu.edit')}
       </button>
 
-      {/* Search replacement song - only for songs with missing content */}
-      {item.itemType === 'song' &&
-        item.slides.length === 0 &&
-        item.song?.title &&
-        onSearchSong && (
-          <button
-            type="button"
-            onClick={handleSearchSong}
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          >
-            <Search size={14} />
-            {t('contextMenu.searchSong')}
-          </button>
-        )}
+      {/* Change song option - available for all songs */}
+      {item.itemType === 'song' && onChangeSong && (
+        <button
+          type="button"
+          onClick={handleChangeSong}
+          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        >
+          <RefreshCw size={14} />
+          {t('contextMenu.changeSong')}
+        </button>
+      )}
 
       {/* Delete option */}
       <button
