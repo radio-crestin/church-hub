@@ -335,20 +335,41 @@ export function SchedulePresenter({
     [showToast],
   )
 
-  // Navigation handlers with auto-advance
+  // Navigation handlers with auto-advance between schedule items
   const handlePrevSlide = useCallback(async () => {
     if (currentFlatIndex <= 0) return
 
+    const currentItem = flatItems[currentFlatIndex]
     const prevItem = flatItems[currentFlatIndex - 1]
-    if (prevItem.item.itemType === 'song' && prevItem.item.songId) {
-      await presentTemporarySong.mutateAsync({
-        songId: prevItem.item.songId,
-        slideIndex: prevItem.index,
-      })
+
+    // Check if we're at the first slide of the current item
+    const isAtFirstSlideOfCurrentItem = prevItem.item.id !== currentItem.item.id
+
+    // If at first slide, go directly to previous item (last slide of prev song)
+    if (isAtFirstSlideOfCurrentItem) {
+      if (prevItem.item.itemType === 'song' && prevItem.item.songId) {
+        await presentTemporarySong.mutateAsync({
+          songId: prevItem.item.songId,
+          slideIndex: prevItem.index,
+        })
+      }
+      return
     }
-  }, [currentFlatIndex, flatItems, presentTemporarySong])
+
+    // Otherwise, navigate within current content
+    if (presentationState?.temporaryContent) {
+      await navigateTemporary.mutateAsync({ direction: 'prev' })
+    }
+  }, [
+    currentFlatIndex,
+    flatItems,
+    presentTemporarySong,
+    navigateTemporary,
+    presentationState?.temporaryContent,
+  ])
 
   const handleNextSlide = useCallback(async () => {
+    // If nothing is presented, start with first item
     if (currentFlatIndex < 0) {
       if (flatItems.length > 0) {
         const firstItem = flatItems[0]
@@ -362,23 +383,28 @@ export function SchedulePresenter({
       return
     }
 
-    if (presentationState?.temporaryContent) {
-      try {
-        await navigateTemporary.mutateAsync({ direction: 'next' })
-        return
-      } catch {
-        // Navigation failed, move to next item
-      }
-    }
-
     if (currentFlatIndex >= flatItems.length - 1) return
 
+    const currentItem = flatItems[currentFlatIndex]
     const nextItem = flatItems[currentFlatIndex + 1]
-    if (nextItem.item.itemType === 'song' && nextItem.item.songId) {
-      await presentTemporarySong.mutateAsync({
-        songId: nextItem.item.songId,
-        slideIndex: nextItem.index,
-      })
+
+    // Check if we're at the last slide of the current item
+    const isAtLastSlideOfCurrentItem = nextItem.item.id !== currentItem.item.id
+
+    // If at last slide, go directly to next item (first slide of next song)
+    if (isAtLastSlideOfCurrentItem) {
+      if (nextItem.item.itemType === 'song' && nextItem.item.songId) {
+        await presentTemporarySong.mutateAsync({
+          songId: nextItem.item.songId,
+          slideIndex: nextItem.index,
+        })
+      }
+      return
+    }
+
+    // Otherwise, navigate within current content
+    if (presentationState?.temporaryContent) {
+      await navigateTemporary.mutateAsync({ direction: 'next' })
     }
   }, [
     currentFlatIndex,
