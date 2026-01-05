@@ -12,7 +12,7 @@ import {
   Loader2,
   Pencil,
 } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import {
@@ -34,6 +34,7 @@ import {
 import { SongControlPanel, SongSlidesPanel } from '~/features/songs/components'
 import { useSong, useSongKeyboardShortcuts } from '~/features/songs/hooks'
 import type { SongSlide } from '~/features/songs/types'
+import { expandSongSlidesWithChoruses } from '~/features/songs/utils/expandSongSlides'
 import { useToast } from '~/ui/toast'
 
 interface SongSearchParams {
@@ -72,8 +73,15 @@ function SongPreviewPage() {
   const [showAddToScheduleModal, setShowAddToScheduleModal] = useState(false)
   const [showExportFormatModal, setShowExportFormatModal] = useState(false)
   const [isLargeScreen, setIsLargeScreen] = useState(false)
+  const [selectedSlideIndex, setSelectedSlideIndex] = useState(0)
   const containerRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
+
+  // Get expanded slides count for navigation bounds
+  const expandedSlidesCount = useMemo(
+    () => (song ? expandSongSlidesWithChoruses(song.slides).length : 0),
+    [song],
+  )
 
   // Handle song not found - redirect to search with toast
   useEffect(() => {
@@ -183,13 +191,87 @@ function SongPreviewPage() {
     [song, saveSong, showToast, t],
   )
 
-  // Keyboard shortcuts
+  // Present the selected slide
+  const handlePresentSelectedSlide = useCallback(async () => {
+    if (
+      song &&
+      selectedSlideIndex >= 0 &&
+      selectedSlideIndex < expandedSlidesCount
+    ) {
+      await presentTemporarySong.mutateAsync({
+        songId: numericId,
+        slideIndex: selectedSlideIndex,
+      })
+    }
+  }, [
+    song,
+    selectedSlideIndex,
+    expandedSlidesCount,
+    presentTemporarySong,
+    numericId,
+  ])
+
+  // Keyboard shortcuts for when a slide is presented
   useSongKeyboardShortcuts({
     onNextSlide: handleNextSlide,
     onPreviousSlide: handlePrevSlide,
     onHidePresentation: handleHidePresentation,
     enabled: presentedSlideIndex !== null,
   })
+
+  // Keyboard navigation for slide selection when nothing is presented
+  useEffect(() => {
+    if (presentedSlideIndex !== null || expandedSlidesCount === 0) return
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Don't trigger if user is typing in an input or editor
+      if (
+        event.target instanceof HTMLInputElement ||
+        event.target instanceof HTMLTextAreaElement ||
+        event.target instanceof HTMLSelectElement
+      ) {
+        return
+      }
+
+      // Don't trigger if user is in a contenteditable element
+      if (
+        event.target instanceof HTMLElement &&
+        event.target.isContentEditable
+      ) {
+        return
+      }
+
+      // Don't trigger if any dialog/modal is open
+      const openDialog = document.querySelector('dialog[open]')
+      if (openDialog) {
+        return
+      }
+
+      switch (event.key) {
+        case 'ArrowDown':
+        case 'ArrowRight':
+          event.preventDefault()
+          setSelectedSlideIndex((prev) =>
+            prev < expandedSlidesCount - 1 ? prev + 1 : prev,
+          )
+          break
+
+        case 'ArrowUp':
+        case 'ArrowLeft':
+          event.preventDefault()
+          setSelectedSlideIndex((prev) => (prev > 0 ? prev - 1 : prev))
+          break
+
+        case 'Enter':
+          event.preventDefault()
+          handlePresentSelectedSlide()
+          break
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [presentedSlideIndex, expandedSlidesCount, handlePresentSelectedSlide])
 
   // Divider drag handlers
   const handleDividerMouseDown = useCallback((e: React.MouseEvent) => {
@@ -298,6 +380,7 @@ function SongPreviewPage() {
           <SongSlidesPanel
             song={song}
             presentedSlideIndex={presentedSlideIndex}
+            selectedSlideIndex={selectedSlideIndex}
             isLoading={isLoading}
             onSlideClick={handleSlideClick}
           />
