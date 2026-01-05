@@ -26,9 +26,11 @@ export function useDatabaseExport() {
     cancelled?: boolean
     error?: string
   }> => {
-    // Generate default filename with date
-    const date = new Date().toISOString().split('T')[0]
-    const defaultFilename = `church-hub-backup-${date}.db`
+    // Generate default filename with date and time
+    const now = new Date()
+    const date = now.toISOString().split('T')[0]
+    const time = now.toTimeString().split(' ')[0].replace(/:/g, '-')
+    const defaultFilename = `church-hub-backup-${date}_${time}.db`
 
     // Show save dialog first so user can choose location
     const savePath = await save({
