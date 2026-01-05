@@ -113,7 +113,9 @@
         "permissionError": "Acces MIDI refuzat: {{error}}",
         "fullyConnected": "Intrare și ieșire conectate",
         "inputOnly": "Intrare conectată (fără feedback LED)",
-        "outputOnly": "Ieșire conectată (fără declanșatoare)"
+        "outputOnly": "Ieșire conectată (fără declanșatoare)",
+        "reconnecting": "Se reconectează la {{device}}...",
+        "device": "dispozitiv"
       }
     },
     "users": {
