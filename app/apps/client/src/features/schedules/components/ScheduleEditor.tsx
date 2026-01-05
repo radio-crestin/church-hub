@@ -5,14 +5,18 @@ import {
   Loader2,
   Save,
   Trash2,
+  Upload,
   X,
 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import {
+  type ChurchProgramData,
   type ScheduleExportFormat,
   ScheduleExportFormatModal,
+  useImportScheduleItems,
+  useLoadScheduleFromFile,
   useSaveScheduleToFile,
 } from '~/features/schedule-export'
 import { SongPickerModal } from '~/features/songs/components'
@@ -60,6 +64,8 @@ export function ScheduleEditor({
   const reorderItems = useReorderScheduleItems()
   const removeItem = useRemoveItemFromSchedule()
   const { saveSchedule, isPending: isSaving } = useSaveScheduleToFile()
+  const { loadSchedule, isPending: isLoadingFile } = useLoadScheduleFromFile()
+  const { importItems, isPending: isImporting } = useImportScheduleItems()
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -72,6 +78,8 @@ export function ScheduleEditor({
   const [showEditAsText, setShowEditAsText] = useState(false)
   const [showBiblePassagePicker, setShowBiblePassagePicker] = useState(false)
   const [showExportFormatModal, setShowExportFormatModal] = useState(false)
+  const [showImportConfirmModal, setShowImportConfirmModal] = useState(false)
+  const [importData, setImportData] = useState<ChurchProgramData | null>(null)
   // Track created schedule ID for auto-save flow
   const [createdScheduleId, setCreatedScheduleId] = useState<number | null>(
     null,
@@ -81,6 +89,7 @@ export function ScheduleEditor({
   const effectiveScheduleId = scheduleId ?? createdScheduleId
 
   const deleteDialogRef = useRef<HTMLDialogElement>(null)
+  const importDialogRef = useRef<HTMLDialogElement>(null)
   const titleInputRef = useRef<HTMLInputElement>(null)
 
   // Track last saved values to detect actual changes
@@ -119,6 +128,15 @@ export function ScheduleEditor({
       deleteDialogRef.current?.close()
     }
   }, [showDeleteConfirm])
+
+  // Import dialog handling
+  useEffect(() => {
+    if (showImportConfirmModal) {
+      importDialogRef.current?.showModal()
+    } else {
+      importDialogRef.current?.close()
+    }
+  }, [showImportConfirmModal])
 
   const handleTitleChange = (value: string) => {
     setTitle(value)
@@ -283,6 +301,53 @@ export function ScheduleEditor({
     [schedule, saveSchedule, showToast, t],
   )
 
+  const handleLoadFromFile = useCallback(async () => {
+    const result = await loadSchedule()
+    if (result.cancelled) return
+
+    if (!result.success || !result.data) {
+      showToast(result.error ?? t('messages.error'), 'error')
+      return
+    }
+
+    setImportData(result.data)
+    setShowImportConfirmModal(true)
+  }, [loadSchedule, showToast, t])
+
+  const handleImportConfirm = useCallback(async () => {
+    if (!effectiveScheduleId || !importData) return
+
+    const result = await importItems(effectiveScheduleId, importData)
+
+    setShowImportConfirmModal(false)
+    setImportData(null)
+
+    if (result.success) {
+      const messages: string[] = [
+        t('messages.imported', { count: result.itemCount }),
+      ]
+      if (result.skippedSongs && result.skippedSongs.length > 0) {
+        messages.push(
+          t('messages.skippedSongs', { count: result.skippedSongs.length }),
+        )
+      }
+      if (
+        result.skippedBiblePassages &&
+        result.skippedBiblePassages.length > 0
+      ) {
+        messages.push(
+          t('messages.skippedBiblePassages', {
+            count: result.skippedBiblePassages.length,
+          }),
+        )
+      }
+      showToast(messages.join('. '), 'success')
+      refetch()
+    } else {
+      showToast(result.error ?? t('messages.error'), 'error')
+    }
+  }, [effectiveScheduleId, importData, importItems, showToast, t, refetch])
+
   if (isLoading && scheduleId !== null) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -329,6 +394,23 @@ export function ScheduleEditor({
           )}
           {effectiveScheduleId !== null && (
             <>
+              <Tooltip content={t('actions.loadFromFile')} position="bottom">
+                <button
+                  type="button"
+                  onClick={handleLoadFromFile}
+                  disabled={isLoadingFile || isImporting}
+                  className="flex items-center gap-2 p-2 sm:px-3 sm:py-1.5 text-sm text-white bg-gray-600 hover:bg-gray-700 dark:bg-gray-500 dark:hover:bg-gray-600 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {isLoadingFile || isImporting ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <Upload size={16} />
+                  )}
+                  <span className="hidden sm:inline">
+                    {t('actions.loadFromFile')}
+                  </span>
+                </button>
+              </Tooltip>
               <Tooltip content={t('actions.saveToFile')} position="bottom">
                 <button
                   type="button"
@@ -523,6 +605,71 @@ export function ScheduleEditor({
         onConfirm={handleExportFormatConfirm}
         onCancel={() => setShowExportFormatModal(false)}
       />
+
+      {/* Import Confirmation Dialog */}
+      <dialog
+        ref={importDialogRef}
+        onCancel={() => {
+          setShowImportConfirmModal(false)
+          setImportData(null)
+        }}
+        onClick={(e) => {
+          if (e.target === importDialogRef.current) {
+            setShowImportConfirmModal(false)
+            setImportData(null)
+          }
+        }}
+        className="fixed inset-0 m-auto w-full max-w-md p-0 bg-white dark:bg-gray-800 rounded-xl shadow-xl backdrop:bg-black/50"
+      >
+        <div className="p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+            {t('import.title')}
+          </h3>
+          {importData && (
+            <div className="space-y-4">
+              <p className="text-gray-600 dark:text-gray-400">
+                {t('import.message', { title: importData.schedule.title })}
+              </p>
+              <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg">
+                <p className="text-sm text-amber-800 dark:text-amber-200">
+                  {t('import.warning')}
+                </p>
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                <p>
+                  {t('import.itemCount', { count: importData.items.length })}
+                </p>
+              </div>
+            </div>
+          )}
+          <div className="flex justify-end gap-3 mt-6">
+            <button
+              type="button"
+              onClick={() => {
+                setShowImportConfirmModal(false)
+                setImportData(null)
+              }}
+              className="flex items-center gap-2 px-4 py-2 text-white bg-gray-600 hover:bg-gray-700 dark:bg-gray-500 dark:hover:bg-gray-600 rounded-lg transition-colors"
+            >
+              <X size={16} />
+              {t('actions.cancel', { ns: 'common' })}
+            </button>
+            <button
+              type="button"
+              onClick={handleImportConfirm}
+              disabled={isImporting}
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+            >
+              {isImporting ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <Upload size={16} />
+              )}
+              {t('import.confirm')}
+            </button>
+          </div>
+        </div>
+      </dialog>
     </div>
   )
 }
