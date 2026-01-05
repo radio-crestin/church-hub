@@ -107,6 +107,8 @@ function SongPreviewPage() {
   )
 
   const handleGoBack = useCallback(() => {
+    // Clear last visited so user stays on list when going back
+    clearSectionLastVisited('songs')
     // Pass fromSong: true when something is presented to prevent auto-redirect back
     navigate({
       to: '/songs/',
