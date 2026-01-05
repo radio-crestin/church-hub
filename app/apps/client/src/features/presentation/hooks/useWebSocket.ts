@@ -184,6 +184,13 @@ export function useWebSocket() {
               queryKey: ['bible'],
             })
           }
+
+          // Refetch keyboard shortcuts when updated from another client or server
+          if (data.payload.key === 'global_keyboard_shortcuts') {
+            queryClient.invalidateQueries({
+              queryKey: ['app_settings', 'global_keyboard_shortcuts'],
+            })
+          }
         }
       } catch {
         // Failed to parse message

@@ -22,11 +22,16 @@ export function useAppShortcuts() {
   })
 
   const mutation = useMutation({
-    mutationFn: (config: GlobalShortcutsConfig) =>
-      upsertSetting('app_settings', {
+    mutationFn: async (config: GlobalShortcutsConfig) => {
+      const success = await upsertSetting('app_settings', {
         key: SETTINGS_KEY,
         value: JSON.stringify(config),
-      }),
+      })
+      if (!success) {
+        throw new Error('Failed to save shortcuts')
+      }
+      return success
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['app_settings', SETTINGS_KEY],
