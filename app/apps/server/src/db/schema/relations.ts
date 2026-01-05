@@ -2,7 +2,7 @@ import { relations } from 'drizzle-orm'
 
 import { rolePermissions, roles, userPermissions, users } from './auth'
 import { bibleBooks, bibleTranslations, bibleVerses } from './bible'
-import { presentationQueue, presentationState } from './presentation'
+import { presentationState } from './presentation'
 import { scheduleItems, schedules } from './schedules'
 import { songCategories, songSlides, songs } from './songs'
 
@@ -51,7 +51,6 @@ export const songsRelations = relations(songs, ({ one, many }) => ({
     references: [songCategories.id],
   }),
   slides: many(songSlides),
-  queueItems: many(presentationQueue),
   scheduleItems: many(scheduleItems),
 }))
 
@@ -73,23 +72,9 @@ export const scheduleItemsRelations = relations(scheduleItems, ({ one }) => ({
 }))
 
 // Presentation relations
-export const presentationQueueRelations = relations(
-  presentationQueue,
-  ({ one }) => ({
-    song: one(songs, {
-      fields: [presentationQueue.songId],
-      references: [songs.id],
-    }),
-  }),
-)
-
 export const presentationStateRelations = relations(
   presentationState,
   ({ one }) => ({
-    currentQueueItem: one(presentationQueue, {
-      fields: [presentationState.currentQueueItemId],
-      references: [presentationQueue.id],
-    }),
     currentSongSlide: one(songSlides, {
       fields: [presentationState.currentSongSlideId],
       references: [songSlides.id],

@@ -101,10 +101,16 @@ import {
   type NavigateTemporaryInput,
   type NextSlideSectionConfig,
   navigateTemporary,
+  type PresentTemporaryAnnouncementInput,
   type PresentTemporaryBibleInput,
+  type PresentTemporaryBiblePassageInput,
   type PresentTemporarySongInput,
+  type PresentTemporaryVerseteTineriInput,
+  presentTemporaryAnnouncement,
   presentTemporaryBible,
+  presentTemporaryBiblePassage,
   presentTemporarySong,
+  presentTemporaryVerseteTineri,
   type ScreenGlobalSettings,
   showSlide,
   stopPresentation,
@@ -2295,6 +2301,99 @@ async function main() {
             headers: { 'Content-Type': 'application/json' },
           }),
         )
+      }
+
+      // POST /api/presentation/temporary-announcement - Present an announcement
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/presentation/temporary-announcement'
+      ) {
+        const permError = checkPermission('control_room.control')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as PresentTemporaryAnnouncementInput
+          const state = presentTemporaryAnnouncement(body)
+          broadcastPresentationState(state)
+          triggerSceneAutomation(state)
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: state }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // POST /api/presentation/temporary-bible-passage - Present a Bible passage
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/presentation/temporary-bible-passage'
+      ) {
+        const permError = checkPermission('control_room.control')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as PresentTemporaryBiblePassageInput
+          const state = presentTemporaryBiblePassage(body)
+          broadcastPresentationState(state)
+          triggerSceneAutomation(state)
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: state }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // POST /api/presentation/temporary-versete-tineri - Present versete tineri
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/presentation/temporary-versete-tineri'
+      ) {
+        const permError = checkPermission('control_room.control')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as PresentTemporaryVerseteTineriInput
+          const state = presentTemporaryVerseteTineri(body)
+          broadcastPresentationState(state)
+          triggerSceneAutomation(state)
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: state }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
       }
 
       // ============================================================

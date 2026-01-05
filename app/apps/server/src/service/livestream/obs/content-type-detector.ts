@@ -33,10 +33,17 @@ export function detectContentType(state: PresentationState): ContentType {
       return 'bible'
     }
 
-    // Future content types can be added here:
-    // - 'announcement'
-    // - 'bible_passage'
-    // - 'versete_tineri'
+    if (contentType === 'bible_passage') {
+      return 'bible_passage'
+    }
+
+    if (contentType === 'announcement') {
+      return 'announcement'
+    }
+
+    if (contentType === 'versete_tineri') {
+      return 'versete_tineri'
+    }
   }
 
   // Check for song slide (legacy/fallback)
