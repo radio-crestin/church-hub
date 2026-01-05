@@ -11,6 +11,10 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import {
+  clearSectionLastVisited,
+  setSongsLastVisited,
+} from '~/features/navigation'
+import {
   useClearTemporaryContent,
   useNavigateTemporary,
   usePresentationState,
@@ -61,10 +65,19 @@ function SongPreviewPage() {
   // Handle song not found - redirect to search with toast
   useEffect(() => {
     if (!isLoading && (!song || isError)) {
+      // Clear last visited to prevent navigation loop
+      clearSectionLastVisited('songs')
       showToast(t('messages.notFound'), 'error')
-      navigate({ to: '/songs/' })
+      navigate({ to: '/songs/', search: { fromSong: true } })
     }
   }, [isLoading, song, isError, showToast, t, navigate])
+
+  // Save last visited song to localStorage
+  useEffect(() => {
+    if (song && !isLoading) {
+      setSongsLastVisited({ songId: numericId })
+    }
+  }, [song, isLoading, numericId])
 
   // Track screen size for responsive layout
   useEffect(() => {
