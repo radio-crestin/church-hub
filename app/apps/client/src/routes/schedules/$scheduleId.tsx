@@ -1,5 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useEffect } from 'react'
 
+import { setSchedulesLastVisited } from '~/features/navigation'
 import {
   ScheduleEditor,
   SchedulePresenter,
@@ -15,6 +17,13 @@ function ScheduleEditorPage() {
 
   const isNew = scheduleId === 'new'
   const numericId = isNew ? null : parseInt(scheduleId, 10)
+
+  // Save last visited schedule to localStorage
+  useEffect(() => {
+    if (!isNew && numericId) {
+      setSchedulesLastVisited({ scheduleId: numericId })
+    }
+  }, [isNew, numericId])
 
   const handleBack = () => {
     navigate({ to: '/schedules' })

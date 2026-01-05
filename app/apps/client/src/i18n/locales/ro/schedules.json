@@ -60,6 +60,7 @@
     "importedWithSongs_other": "Program importat cu {{count}} cantari noi create",
     "importError": "Importul programului a esuat",
     "error": "A aparut o eroare",
+    "notFound": "Programul nu a fost gasit",
     "slideInserted": "Slide inserat",
     "slideUpdated": "Slide actualizat",
     "biblePassageInserted": "Pasaj biblic adaugat"

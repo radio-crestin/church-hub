@@ -45,7 +45,7 @@ export function AddMenuModal({
   onAddVerseteTineri,
   onImportSchedule,
 }: AddMenuModalProps) {
-  const { t } = useTranslation('queue')
+  const { t } = useTranslation('common')
   const [isOpen, setIsOpen] = useState(false)
   const dialogRef = useRef<HTMLDialogElement>(null)
 
@@ -68,14 +68,14 @@ export function AddMenuModal({
 
   return (
     <>
-      <Tooltip content={t('addToQueue.button')} position="bottom">
+      <Tooltip content={t('addMenu.button')} position="bottom">
         <button
           type="button"
           onClick={() => setIsOpen(true)}
           className="flex items-center gap-2 p-2 sm:px-3 sm:py-1.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-lg transition-colors"
         >
           <Plus size={16} />
-          <span className="hidden sm:inline">{t('addToQueue.button')}</span>
+          <span className="hidden sm:inline">{t('addMenu.button')}</span>
         </button>
       </Tooltip>
 
@@ -91,7 +91,7 @@ export function AddMenuModal({
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {t('addToQueue.title')}
+              {t('addMenu.title')}
             </h2>
             <button
               type="button"
@@ -117,9 +117,9 @@ export function AddMenuModal({
                 />
               </div>
               <div>
-                <div className="font-medium">{t('addToQueue.searchSong')}</div>
+                <div className="font-medium">{t('addMenu.searchSong')}</div>
                 <div className="text-sm text-gray-500 dark:text-gray-400">
-                  {t('addToQueue.searchSongDescription')}
+                  {t('addMenu.searchSongDescription')}
                 </div>
               </div>
             </button>
@@ -138,11 +138,9 @@ export function AddMenuModal({
                   />
                 </div>
                 <div>
-                  <div className="font-medium">
-                    {t('addToQueue.bibleVerse')}
-                  </div>
+                  <div className="font-medium">{t('addMenu.bibleVerse')}</div>
                   <div className="text-sm text-gray-500 dark:text-gray-400">
-                    {t('addToQueue.bibleVerseDescription')}
+                    {t('addMenu.bibleVerseDescription')}
                   </div>
                 </div>
               </button>
@@ -162,11 +160,9 @@ export function AddMenuModal({
                   />
                 </div>
                 <div>
-                  <div className="font-medium">
-                    {t('addToQueue.biblePassage')}
-                  </div>
+                  <div className="font-medium">{t('addMenu.biblePassage')}</div>
                   <div className="text-sm text-gray-500 dark:text-gray-400">
-                    {t('addToQueue.biblePassageDescription')}
+                    {t('addMenu.biblePassageDescription')}
                   </div>
                 </div>
               </button>
@@ -185,11 +181,9 @@ export function AddMenuModal({
                 />
               </div>
               <div>
-                <div className="font-medium">
-                  {t('addToQueue.announcement')}
-                </div>
+                <div className="font-medium">{t('addMenu.announcement')}</div>
                 <div className="text-sm text-gray-500 dark:text-gray-400">
-                  {t('addToQueue.announcementDescription')}
+                  {t('addMenu.announcementDescription')}
                 </div>
               </div>
             </button>
@@ -207,11 +201,9 @@ export function AddMenuModal({
                 />
               </div>
               <div>
-                <div className="font-medium">
-                  {t('addToQueue.verseteTineri')}
-                </div>
+                <div className="font-medium">{t('addMenu.verseteTineri')}</div>
                 <div className="text-sm text-gray-500 dark:text-gray-400">
-                  {t('addToQueue.verseteTineriDescription')}
+                  {t('addMenu.verseteTineriDescription')}
                 </div>
               </div>
             </button>
@@ -230,9 +222,11 @@ export function AddMenuModal({
                   />
                 </div>
                 <div>
-                  <div className="font-medium">{t('importSchedule.title')}</div>
+                  <div className="font-medium">
+                    {t('addMenu.importSchedule.title')}
+                  </div>
                   <div className="text-sm text-gray-500 dark:text-gray-400">
-                    {t('importSchedule.description')}
+                    {t('addMenu.importSchedule.description')}
                   </div>
                 </div>
               </button>

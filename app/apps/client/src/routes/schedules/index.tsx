@@ -1,8 +1,9 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { Loader2, Plus, Upload } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { getSchedulesLastVisited } from '~/features/navigation'
 import { useSaveScheduleToFile } from '~/features/schedule-export'
 import { useImportScheduleFromFile } from '~/features/schedule-import'
 import { ScheduleList } from '~/features/schedules/components'
@@ -22,6 +23,21 @@ function SchedulesPage() {
   const { importSchedule, isPending: isImporting } = useImportScheduleFromFile()
   const { saveSchedule } = useSaveScheduleToFile()
   const [savingScheduleId, setSavingScheduleId] = useState<number | null>(null)
+  const hasNavigatedOnOpen = useRef(false)
+
+  // Auto-navigate to last visited schedule on initial page open
+  useEffect(() => {
+    if (hasNavigatedOnOpen.current) return
+
+    const lastVisited = getSchedulesLastVisited()
+    if (lastVisited?.scheduleId) {
+      hasNavigatedOnOpen.current = true
+      navigate({
+        to: '/schedules/$scheduleId',
+        params: { scheduleId: String(lastVisited.scheduleId) },
+      })
+    }
+  }, [navigate])
 
   const handleScheduleClick = (scheduleId: number) => {
     navigate({

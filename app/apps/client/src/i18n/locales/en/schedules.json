@@ -60,6 +60,7 @@
     "importedWithSongs_other": "Schedule imported with {{count}} new songs created",
     "importError": "Failed to import schedule",
     "error": "An error occurred",
+    "notFound": "Schedule not found",
     "slideInserted": "Slide inserted",
     "slideUpdated": "Slide updated",
     "biblePassageInserted": "Bible passage added"

@@ -1,4 +1,22 @@
 {
+  "addMenu": {
+    "button": "Adaugă",
+    "title": "Adaugă Element",
+    "searchSong": "Caută Cântare",
+    "searchSongDescription": "Găsește și adaugă o cântare din bibliotecă",
+    "bibleVerse": "Verset Biblic",
+    "bibleVerseDescription": "Adaugă un singur verset biblic",
+    "biblePassage": "Pasaj Biblic",
+    "biblePassageDescription": "Adaugă un pasaj biblic cu mai multe versete",
+    "announcement": "Anunț",
+    "announcementDescription": "Adaugă un slide de anunț",
+    "verseteTineri": "Versete Tineri",
+    "verseteTineriDescription": "Adaugă versete tineri cu nume",
+    "importSchedule": {
+      "title": "Importă Program",
+      "description": "Importă dintr-un program existent"
+    }
+  },
   "buttons": {
     "goBack": "Înapoi",
     "startOver": "Începe din nou",
