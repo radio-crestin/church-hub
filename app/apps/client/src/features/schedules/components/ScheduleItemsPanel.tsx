@@ -1,14 +1,32 @@
 import {
+  closestCenter,
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import {
   Book,
   ChevronDown,
   ChevronRight,
+  Eye,
   FileText,
+  GripVertical,
   Loader2,
   Megaphone,
   Music,
   User,
 } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { usePresentationState } from '~/features/presentation'
@@ -22,6 +40,11 @@ interface ScheduleItemsPanelProps {
   onVerseClick: (item: ScheduleItem, verseIndex: number) => void
   onEntryClick: (item: ScheduleItem, entryIndex: number) => void
   onAnnouncementClick: (item: ScheduleItem) => void
+  onReorder?: (oldIndex: number, newIndex: number) => void
+  onEditSong?: (songId: number) => void
+  onNavigateToSong?: (songId: number) => void
+  expandAllTrigger?: number
+  collapseAllTrigger?: number
 }
 
 const SCROLL_OFFSET_TOP = 100
@@ -59,6 +82,11 @@ export function ScheduleItemsPanel({
   onVerseClick,
   onEntryClick,
   onAnnouncementClick,
+  onReorder,
+  onEditSong,
+  onNavigateToSong,
+  expandAllTrigger,
+  collapseAllTrigger,
 }: ScheduleItemsPanelProps) {
   const { t } = useTranslation('schedules')
   const { data: presentationState } = usePresentationState()
@@ -75,6 +103,18 @@ export function ScheduleItemsPanel({
     return initial
   })
 
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  )
+
   // Update expanded state when items change
   useEffect(() => {
     setExpanded((prev) => {
@@ -85,6 +125,32 @@ export function ScheduleItemsPanel({
       return next
     })
   }, [items])
+
+  // Expand all items when trigger changes
+  useEffect(() => {
+    if (expandAllTrigger !== undefined && expandAllTrigger > 0) {
+      setExpanded(() => {
+        const next: ExpandedState = {}
+        items.forEach((item) => {
+          next[`${item.id}`] = true
+        })
+        return next
+      })
+    }
+  }, [expandAllTrigger, items])
+
+  // Collapse all items when trigger changes
+  useEffect(() => {
+    if (collapseAllTrigger !== undefined && collapseAllTrigger > 0) {
+      setExpanded(() => {
+        const next: ExpandedState = {}
+        items.forEach((item) => {
+          next[`${item.id}`] = false
+        })
+        return next
+      })
+    }
+  }, [collapseAllTrigger, items])
 
   // Determine what's currently presented
   const presentedInfo = useMemo(() => {
@@ -99,8 +165,6 @@ export function ScheduleItemsPanel({
       }
     }
 
-    // For other types, we'll need to track via scheduleItemId
-    // TODO: Add support for bible_passage, versete_tineri, announcement
     return null
   }, [presentationState?.temporaryContent])
 
@@ -124,12 +188,65 @@ export function ScheduleItemsPanel({
     }
   }, [presentedInfo?.slideIndex, presentedInfo?.songId])
 
-  const toggleExpanded = (itemId: number) => {
+  const toggleExpanded = useCallback((itemId: number) => {
     setExpanded((prev) => ({
       ...prev,
       [`${itemId}`]: !prev[`${itemId}`],
     }))
-  }
+  }, [])
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event
+
+      if (over && active.id !== over.id && onReorder) {
+        const oldIndex = items.findIndex((item) => item.id === active.id)
+        const newIndex = items.findIndex((item) => item.id === over.id)
+
+        if (oldIndex !== -1 && newIndex !== -1) {
+          onReorder(oldIndex, newIndex)
+        }
+      }
+    },
+    [items, onReorder],
+  )
+
+  // Handle header click - edit song on regular click
+  const handleHeaderClick = useCallback(
+    (e: React.MouseEvent, item: ScheduleItem) => {
+      // Check for middle click (button === 1)
+      if (e.button === 1 && item.itemType === 'song' && item.songId) {
+        e.preventDefault()
+        onNavigateToSong?.(item.songId)
+        return
+      }
+
+      // Regular click - toggle expand
+      toggleExpanded(item.id)
+    },
+    [toggleExpanded, onNavigateToSong],
+  )
+
+  // Handle auxclick (middle click)
+  const handleAuxClick = useCallback(
+    (e: React.MouseEvent, item: ScheduleItem) => {
+      if (e.button === 1 && item.itemType === 'song' && item.songId) {
+        e.preventDefault()
+        onNavigateToSong?.(item.songId)
+      }
+    },
+    [onNavigateToSong],
+  )
+
+  // Handle double click to edit
+  const handleDoubleClick = useCallback(
+    (item: ScheduleItem) => {
+      if (item.itemType === 'song' && item.songId) {
+        onEditSong?.(item.songId)
+      }
+    },
+    [onEditSong],
+  )
 
   if (isLoading) {
     return (
@@ -150,130 +267,258 @@ export function ScheduleItemsPanel({
 
   return (
     <div className="flex flex-col h-full">
-      <div
-        ref={containerRef}
-        className="flex-1 min-h-0 space-y-2 overflow-hidden lg:overflow-y-auto px-0.5 py-0.5"
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
       >
-        {items.map((item) => {
-          const isExpanded = expanded[`${item.id}`] ?? true
+        <SortableContext
+          items={items.map((item) => item.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div
+            ref={containerRef}
+            className="flex-1 min-h-0 space-y-2 overflow-hidden lg:overflow-y-auto px-0.5 py-0.5"
+          >
+            {items.map((item) => {
+              const isExpanded = expanded[`${item.id}`] ?? true
 
-          return (
-            <div
-              key={item.id}
-              className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden"
-            >
-              {/* Item Header */}
-              <button
-                type="button"
-                onClick={() => toggleExpanded(item.id)}
-                className="w-full flex items-center gap-2 p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-              >
-                {/* Expand/Collapse Icon */}
-                <div className="flex-shrink-0">
-                  {isExpanded ? (
-                    <ChevronDown
-                      size={16}
-                      className="text-gray-400 dark:text-gray-500"
-                    />
-                  ) : (
-                    <ChevronRight
-                      size={16}
-                      className="text-gray-400 dark:text-gray-500"
-                    />
-                  )}
-                </div>
+              return (
+                <SortableItemWrapper
+                  key={item.id}
+                  item={item}
+                  isExpanded={isExpanded}
+                  presentedInfo={presentedInfo}
+                  highlightedRef={highlightedRef}
+                  onHeaderClick={handleHeaderClick}
+                  onAuxClick={handleAuxClick}
+                  onDoubleClick={handleDoubleClick}
+                  onSlideClick={onSlideClick}
+                  onVerseClick={onVerseClick}
+                  onEntryClick={onEntryClick}
+                  onAnnouncementClick={onAnnouncementClick}
+                  onEditSong={onEditSong}
+                  onNavigateToSong={onNavigateToSong}
+                  t={t}
+                />
+              )
+            })}
+          </div>
+        </SortableContext>
+      </DndContext>
+    </div>
+  )
+}
 
-                {/* Item Icon */}
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 flex items-center justify-center">
-                  {item.itemType === 'song' && <Music size={16} />}
-                  {item.itemType === 'slide' &&
-                    item.slideType === 'announcement' && (
-                      <Megaphone size={16} />
-                    )}
-                  {item.itemType === 'slide' &&
-                    item.slideType === 'versete_tineri' && <User size={16} />}
-                  {item.itemType === 'bible_passage' && <Book size={16} />}
-                </div>
+// Sortable item wrapper with drag handle
+interface SortableItemWrapperProps {
+  item: ScheduleItem
+  isExpanded: boolean
+  presentedInfo: {
+    type: 'song'
+    songId: number
+    slideIndex: number
+  } | null
+  highlightedRef: React.RefObject<HTMLButtonElement | null>
+  onHeaderClick: (e: React.MouseEvent, item: ScheduleItem) => void
+  onAuxClick: (e: React.MouseEvent, item: ScheduleItem) => void
+  onDoubleClick: (item: ScheduleItem) => void
+  onSlideClick: (item: ScheduleItem, slideIndex: number) => void
+  onVerseClick: (item: ScheduleItem, verseIndex: number) => void
+  onEntryClick: (item: ScheduleItem, entryIndex: number) => void
+  onAnnouncementClick: (item: ScheduleItem) => void
+  onEditSong?: (songId: number) => void
+  onNavigateToSong?: (songId: number) => void
+  t: (key: string) => string
+}
 
-                {/* Item Title & Info */}
-                <div className="flex-1 min-w-0 text-left">
-                  <div className="font-medium text-sm truncate text-gray-900 dark:text-white">
-                    {item.itemType === 'song' && item.song?.title}
-                    {item.itemType === 'slide' &&
-                      item.slideType === 'announcement' &&
-                      t('presenter.announcement')}
-                    {item.itemType === 'slide' &&
-                      item.slideType === 'versete_tineri' &&
-                      t('presenter.verseteTineri')}
-                    {item.itemType === 'bible_passage' &&
-                      item.biblePassageReference}
-                  </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    {item.itemType === 'song' && (
-                      <>
-                        {item.slides.length} slides
-                        {item.song?.categoryName &&
-                          ` • ${item.song.categoryName}`}
-                      </>
-                    )}
-                    {item.itemType === 'bible_passage' && (
-                      <>
-                        {item.biblePassageVerses.length} verses •{' '}
-                        {item.biblePassageTranslation}
-                      </>
-                    )}
-                    {item.itemType === 'slide' &&
-                      item.slideType === 'versete_tineri' && (
-                        <>{item.verseteTineriEntries.length} entries</>
-                      )}
-                  </div>
-                </div>
-              </button>
+function SortableItemWrapper({
+  item,
+  isExpanded,
+  presentedInfo,
+  highlightedRef,
+  onHeaderClick,
+  onAuxClick,
+  onDoubleClick,
+  onSlideClick,
+  onVerseClick,
+  onEntryClick,
+  onAnnouncementClick,
+  onEditSong,
+  onNavigateToSong,
+  t,
+}: SortableItemWrapperProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id })
 
-              {/* Expanded Content */}
-              {isExpanded && (
-                <div className="px-3 pb-3 space-y-1">
-                  {/* Song Slides */}
-                  {item.itemType === 'song' && (
-                    <SongSlides
-                      item={item}
-                      presentedInfo={presentedInfo}
-                      highlightedRef={highlightedRef}
-                      onSlideClick={onSlideClick}
-                    />
-                  )}
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
 
-                  {/* Bible Passage Verses */}
-                  {item.itemType === 'bible_passage' && (
-                    <BiblePassageVerses
-                      item={item}
-                      onVerseClick={onVerseClick}
-                    />
-                  )}
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden ${
+        isDragging ? 'opacity-50 shadow-lg' : ''
+      }`}
+    >
+      {/* Item Header */}
+      <div
+        className="w-full flex items-center gap-2 p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
+        onClick={(e) => onHeaderClick(e, item)}
+        onAuxClick={(e) => onAuxClick(e, item)}
+        onDoubleClick={() => onDoubleClick(item)}
+      >
+        {/* Drag Handle */}
+        <div
+          className="flex-shrink-0 cursor-grab active:cursor-grabbing touch-none"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical
+            size={16}
+            className="text-gray-400 dark:text-gray-500"
+          />
+        </div>
 
-                  {/* Versete Tineri Entries */}
-                  {item.itemType === 'slide' &&
-                    item.slideType === 'versete_tineri' && (
-                      <VerseteTineriEntries
-                        item={item}
-                        onEntryClick={onEntryClick}
-                      />
-                    )}
+        {/* Expand/Collapse Icon */}
+        <div className="flex-shrink-0">
+          {isExpanded ? (
+            <ChevronDown
+              size={16}
+              className="text-gray-400 dark:text-gray-500"
+            />
+          ) : (
+            <ChevronRight
+              size={16}
+              className="text-gray-400 dark:text-gray-500"
+            />
+          )}
+        </div>
 
-                  {/* Announcement Slide */}
-                  {item.itemType === 'slide' &&
-                    item.slideType === 'announcement' && (
-                      <AnnouncementSlide
-                        item={item}
-                        onAnnouncementClick={onAnnouncementClick}
-                      />
-                    )}
-                </div>
+        {/* Item Icon */}
+        {item.itemType === 'song' && (
+          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+            <Music size={16} className="text-indigo-600 dark:text-indigo-400" />
+          </div>
+        )}
+        {item.itemType === 'slide' && item.slideType === 'announcement' && (
+          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+            <Megaphone
+              size={16}
+              className="text-orange-600 dark:text-orange-400"
+            />
+          </div>
+        )}
+        {item.itemType === 'slide' && item.slideType === 'versete_tineri' && (
+          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+            <User size={16} className="text-green-600 dark:text-green-400" />
+          </div>
+        )}
+        {item.itemType === 'bible_passage' && (
+          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center">
+            <Book size={16} className="text-teal-600 dark:text-teal-400" />
+          </div>
+        )}
+
+        {/* Item Title & Info */}
+        <div className="flex-1 min-w-0 text-left">
+          <div className="font-medium text-sm truncate text-gray-900 dark:text-white">
+            {item.itemType === 'song' && item.song?.title}
+            {item.itemType === 'slide' &&
+              item.slideType === 'announcement' &&
+              t('presenter.announcement')}
+            {item.itemType === 'slide' &&
+              item.slideType === 'versete_tineri' &&
+              t('presenter.verseteTineri')}
+            {item.itemType === 'bible_passage' && item.biblePassageReference}
+          </div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            {item.itemType === 'song' && (
+              <>
+                {item.slides.length} slides
+                {item.song?.categoryName && ` • ${item.song.categoryName}`}
+              </>
+            )}
+            {item.itemType === 'bible_passage' && (
+              <>
+                {item.biblePassageVerses.length} verses •{' '}
+                {item.biblePassageTranslation}
+              </>
+            )}
+            {item.itemType === 'slide' &&
+              item.slideType === 'versete_tineri' && (
+                <>{item.verseteTineriEntries.length} entries</>
               )}
-            </div>
-          )
-        })}
+          </div>
+        </div>
+
+        {/* Edit Button for Songs */}
+        {item.itemType === 'song' && item.songId && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              onEditSong?.(item.songId!)
+            }}
+            onAuxClick={(e) => {
+              if (e.button === 1) {
+                e.preventDefault()
+                e.stopPropagation()
+                onNavigateToSong?.(item.songId!)
+              }
+            }}
+            className="flex-shrink-0 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            title={t('presenter.editSong')}
+          >
+            <Eye
+              size={16}
+              className="text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400"
+            />
+          </button>
+        )}
       </div>
+
+      {/* Expanded Content */}
+      {isExpanded && (
+        <div className="px-3 pb-3 space-y-1">
+          {/* Song Slides */}
+          {item.itemType === 'song' && (
+            <SongSlides
+              item={item}
+              presentedInfo={presentedInfo}
+              highlightedRef={highlightedRef}
+              onSlideClick={onSlideClick}
+            />
+          )}
+
+          {/* Bible Passage Verses */}
+          {item.itemType === 'bible_passage' && (
+            <BiblePassageVerses item={item} onVerseClick={onVerseClick} />
+          )}
+
+          {/* Versete Tineri Entries */}
+          {item.itemType === 'slide' && item.slideType === 'versete_tineri' && (
+            <VerseteTineriEntries item={item} onEntryClick={onEntryClick} />
+          )}
+
+          {/* Announcement Slide */}
+          {item.itemType === 'slide' && item.slideType === 'announcement' && (
+            <AnnouncementSlide
+              item={item}
+              onAnnouncementClick={onAnnouncementClick}
+            />
+          )}
+        </div>
+      )}
     </div>
   )
 }
