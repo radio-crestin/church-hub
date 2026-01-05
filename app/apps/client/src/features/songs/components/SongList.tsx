@@ -19,12 +19,14 @@ interface SongListProps {
   onSongClick: (songId: number) => void
   searchQuery?: string
   onSearchChange?: (query: string) => void
+  initialSelectedSongId?: number
 }
 
 export function SongList({
   onSongClick,
   searchQuery = '',
   onSearchChange,
+  initialSelectedSongId,
 }: SongListProps) {
   const { t } = useTranslation('songs')
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -110,12 +112,25 @@ export function SongList({
 
   const {
     selectedIndex,
+    setSelectedIndex,
     handleKeyDown: handleNavigationKeyDown,
     itemRefs,
   } = useSearchKeyboardNavigation({
     itemCount: displaySongs.length,
     onSelect: handleSelectSong,
   })
+
+  // Set initial selection based on initialSelectedSongId
+  useEffect(() => {
+    if (initialSelectedSongId && displaySongs.length > 0) {
+      const index = displaySongs.findIndex(
+        (song) => song.id === initialSelectedSongId,
+      )
+      if (index >= 0) {
+        setSelectedIndex(index)
+      }
+    }
+  }, [initialSelectedSongId, displaySongs, setSelectedIndex])
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
