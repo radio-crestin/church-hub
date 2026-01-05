@@ -79,6 +79,7 @@ import {
 import {
   initializeMIDI,
   setAllLEDs,
+  setConnectionStatusCallback,
   setLED,
   setMessageCallback,
   shutdownMIDI,
@@ -4679,6 +4680,11 @@ async function main() {
   // Wire up MIDI message callback to WebSocket broadcast
   setMessageCallback((message) => {
     broadcastMIDIMessage(message)
+  })
+
+  // Wire up MIDI connection status callback to WebSocket broadcast
+  setConnectionStatusCallback((status) => {
+    broadcastMIDIConnectionStatus(status)
   })
 
   // Wire up MIDI WebSocket message handler for LED control

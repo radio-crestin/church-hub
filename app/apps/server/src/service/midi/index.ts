@@ -258,9 +258,30 @@ let config: MIDIConfig = { ...DEFAULT_MIDI_CONFIG }
 let currentInput: import('easymidi').Input | null = null
 let currentOutput: import('easymidi').Output | null = null
 
+// Store device names for reconnection (IDs can change when devices reconnect)
+let connectedInputName: string | null = null
+let connectedOutputName: string | null = null
+
+// Track requested device IDs for reconnection when we don't have device names
+let requestedInputDeviceId: number | null = null
+let requestedOutputDeviceId: number | null = null
+
+// Reconnection state
+let isReconnecting = false
+let reconnectIntervalId: ReturnType<typeof setInterval> | null = null
+const RECONNECT_INTERVAL_MS = 3000 // Check every 3 seconds
+const DEVICE_CHECK_INTERVAL_MS = 2000 // Check device status every 2 seconds
+let deviceCheckIntervalId: ReturnType<typeof setInterval> | null = null
+
 // Callback for MIDI messages to be sent via WebSocket
 type MIDIMessageCallback = (message: MIDIInputMessage) => void
 let messageCallback: MIDIMessageCallback | null = null
+
+// Callback for connection status changes
+type ConnectionStatusCallback = (
+  status: ReturnType<typeof getConnectionStatus> & { isReconnecting: boolean },
+) => void
+let connectionStatusCallback: ConnectionStatusCallback | null = null
 
 /**
  * Get list of available MIDI input devices
@@ -392,29 +413,73 @@ function handleControlChange(msg: {
 }
 
 /**
- * Connect to a MIDI input device by index
+ * Connect to a MIDI input device by index or name
+ * @param deviceId - Device index to connect to
+ * @param byName - If provided, connect by device name instead of index (used for reconnection)
+ * @param startReconnectOnFail - If true and connection fails, start reconnection process
  */
-export function connectInput(deviceId: number): boolean {
+export function connectInput(
+  deviceId: number,
+  byName?: string,
+  startReconnectOnFail = false,
+): boolean {
   if (!loadMidi() || !easymidi) {
     midiLogger.warn('Cannot connect to input: MIDI not available')
     return false
   }
 
-  midiLogger.info(`Attempting to connect to input device ${deviceId}...`)
+  midiLogger.info(
+    `Attempting to connect to input device ${byName || deviceId}...`,
+  )
 
-  // Disconnect existing input first
+  // Disconnect existing input first (but preserve name if reconnecting)
+  const preserveName = connectedInputName
   disconnectInput()
+  if (byName) {
+    connectedInputName = preserveName
+  }
 
   try {
     const inputs = easymidi.getInputs()
     midiLogger.debug(`Available inputs: ${JSON.stringify(inputs)}`)
 
-    if (deviceId < 0 || deviceId >= inputs.length) {
-      midiLogger.error(`Invalid input device ID: ${deviceId}`)
-      return false
+    let targetDeviceId = deviceId
+    let deviceName: string
+
+    // If reconnecting by name, find the device ID
+    if (byName) {
+      targetDeviceId = inputs.findIndex((name) => name === byName)
+      if (targetDeviceId === -1) {
+        midiLogger.debug(`Device "${byName}" not found in available inputs`)
+        // Keep the name for reconnection attempts
+        connectedInputName = byName
+        if (startReconnectOnFail) {
+          startReconnecting()
+          startDeviceMonitoring()
+        }
+        return false
+      }
+      deviceName = byName
+    } else {
+      if (deviceId < 0 || deviceId >= inputs.length) {
+        // Device ID is out of range - device might be disconnected
+        midiLogger.warn(
+          `Input device ID ${deviceId} not found (only ${inputs.length} devices available)`,
+        )
+        if (startReconnectOnFail) {
+          // Store the requested device ID for reconnection attempts
+          requestedInputDeviceId = deviceId
+          midiLogger.info(
+            `Stored requested input device ID ${deviceId} for reconnection`,
+          )
+          startReconnecting()
+          startDeviceMonitoring()
+        }
+        return false
+      }
+      deviceName = inputs[deviceId]
     }
 
-    const deviceName = inputs[deviceId]
     midiLogger.info(`Connecting to: ${deviceName}`)
 
     currentInput = new easymidi.Input(deviceName)
@@ -424,21 +489,32 @@ export function connectInput(deviceId: number): boolean {
     currentInput.on('noteoff', handleNoteOff)
     currentInput.on('cc', handleControlChange)
 
-    config.inputDeviceId = deviceId
+    config.inputDeviceId = targetDeviceId
+    connectedInputName = deviceName
+    requestedInputDeviceId = null // Clear the requested ID since we're now connected
     midiLogger.info(`✓ Connected to MIDI input: ${deviceName}`)
     midiLogger.info(`Listening for MIDI events...`)
+
+    // Start device monitoring if not already running
+    startDeviceMonitoring()
+
     return true
   } catch (error) {
     midiLogger.error(`Failed to connect to input device ${deviceId}: ${error}`)
     currentInput = null
+    if (startReconnectOnFail) {
+      startReconnecting()
+      startDeviceMonitoring()
+    }
     return false
   }
 }
 
 /**
  * Disconnect from current MIDI input device
+ * @param clearName - Whether to clear the stored device name (false when reconnecting)
  */
-export function disconnectInput() {
+export function disconnectInput(clearName = true) {
   if (currentInput) {
     try {
       currentInput.removeAllListeners()
@@ -450,44 +526,101 @@ export function disconnectInput() {
     currentInput = null
   }
   config.inputDeviceId = null
+  if (clearName) {
+    connectedInputName = null
+    requestedInputDeviceId = null
+  }
 }
 
 /**
- * Connect to a MIDI output device by index
+ * Connect to a MIDI output device by index or name
+ * @param deviceId - Device index to connect to
+ * @param byName - If provided, connect by device name instead of index (used for reconnection)
+ * @param startReconnectOnFail - If true and connection fails, start reconnection process
  */
-export function connectOutput(deviceId: number): boolean {
+export function connectOutput(
+  deviceId: number,
+  byName?: string,
+  startReconnectOnFail = false,
+): boolean {
   if (!loadMidi() || !easymidi) {
     midiLogger.warn('Cannot connect to output: MIDI not available')
     return false
   }
 
-  // Disconnect existing output first
+  // Disconnect existing output first (but preserve name if reconnecting)
+  const preserveName = connectedOutputName
   disconnectOutput()
+  if (byName) {
+    connectedOutputName = preserveName
+  }
 
   try {
     const outputs = easymidi.getOutputs()
-    if (deviceId < 0 || deviceId >= outputs.length) {
-      midiLogger.error(`Invalid output device ID: ${deviceId}`)
-      return false
+
+    let targetDeviceId = deviceId
+    let deviceName: string
+
+    // If reconnecting by name, find the device ID
+    if (byName) {
+      targetDeviceId = outputs.findIndex((name) => name === byName)
+      if (targetDeviceId === -1) {
+        midiLogger.debug(`Device "${byName}" not found in available outputs`)
+        // Keep the name for reconnection attempts
+        connectedOutputName = byName
+        if (startReconnectOnFail) {
+          startReconnecting()
+          startDeviceMonitoring()
+        }
+        return false
+      }
+      deviceName = byName
+    } else {
+      if (deviceId < 0 || deviceId >= outputs.length) {
+        midiLogger.warn(
+          `Output device ID ${deviceId} not found (only ${outputs.length} devices available)`,
+        )
+        if (startReconnectOnFail) {
+          // Store the requested device ID for reconnection attempts
+          requestedOutputDeviceId = deviceId
+          midiLogger.info(
+            `Stored requested output device ID ${deviceId} for reconnection`,
+          )
+          startReconnecting()
+          startDeviceMonitoring()
+        }
+        return false
+      }
+      deviceName = outputs[deviceId]
     }
 
-    const deviceName = outputs[deviceId]
     currentOutput = new easymidi.Output(deviceName)
 
-    config.outputDeviceId = deviceId
+    config.outputDeviceId = targetDeviceId
+    connectedOutputName = deviceName
+    requestedOutputDeviceId = null // Clear the requested ID since we're now connected
     midiLogger.info(`Connected to MIDI output: ${deviceName}`)
+
+    // Start device monitoring if not already running
+    startDeviceMonitoring()
+
     return true
   } catch (error) {
     midiLogger.error(`Failed to connect to output device ${deviceId}: ${error}`)
     currentOutput = null
+    if (startReconnectOnFail) {
+      startReconnecting()
+      startDeviceMonitoring()
+    }
     return false
   }
 }
 
 /**
  * Disconnect from current MIDI output device
+ * @param clearName - Whether to clear the stored device name (false when reconnecting)
  */
-export function disconnectOutput() {
+export function disconnectOutput(clearName = true) {
   if (currentOutput) {
     try {
       currentOutput.close()
@@ -498,6 +631,10 @@ export function disconnectOutput() {
     currentOutput = null
   }
   config.outputDeviceId = null
+  if (clearName) {
+    connectedOutputName = null
+    requestedOutputDeviceId = null
+  }
 }
 
 /**
@@ -547,6 +684,243 @@ export function setMessageCallback(callback: MIDIMessageCallback | null) {
 }
 
 /**
+ * Set callback for connection status changes
+ */
+export function setConnectionStatusCallback(
+  callback: ConnectionStatusCallback | null,
+) {
+  connectionStatusCallback = callback
+}
+
+/**
+ * Broadcast connection status to clients
+ */
+function broadcastConnectionStatus() {
+  if (connectionStatusCallback) {
+    const status = getConnectionStatus()
+    connectionStatusCallback({ ...status, isReconnecting })
+  }
+}
+
+/**
+ * Check if devices are still available and handle disconnection
+ */
+function checkDeviceStatus() {
+  if (!loadMidi() || !easymidi) return
+
+  const inputs = easymidi.getInputs()
+  const outputs = easymidi.getOutputs()
+
+  let needsReconnect = false
+
+  // Check if input device is still available
+  if (connectedInputName && currentInput) {
+    const inputStillExists = inputs.includes(connectedInputName)
+    if (!inputStillExists) {
+      midiLogger.warn(`MIDI input device "${connectedInputName}" disconnected`)
+      disconnectInput(false) // Keep the name for reconnection
+      needsReconnect = true
+    }
+  }
+
+  // Check if output device is still available
+  if (connectedOutputName && currentOutput) {
+    const outputStillExists = outputs.includes(connectedOutputName)
+    if (!outputStillExists) {
+      midiLogger.warn(
+        `MIDI output device "${connectedOutputName}" disconnected`,
+      )
+      disconnectOutput(false) // Keep the name for reconnection
+      needsReconnect = true
+    }
+  }
+
+  if (needsReconnect && !isReconnecting) {
+    startReconnecting()
+  }
+}
+
+/**
+ * Start the reconnection process
+ */
+function startReconnecting() {
+  if (isReconnecting) return
+
+  isReconnecting = true
+  midiLogger.info('Starting MIDI device reconnection process...')
+  broadcastConnectionStatus()
+
+  // Clear existing reconnect interval if any
+  if (reconnectIntervalId) {
+    clearInterval(reconnectIntervalId)
+  }
+
+  reconnectIntervalId = setInterval(() => {
+    attemptReconnection()
+  }, RECONNECT_INTERVAL_MS)
+
+  // Try immediately
+  attemptReconnection()
+}
+
+/**
+ * Attempt to reconnect to previously connected devices
+ */
+function attemptReconnection() {
+  if (!loadMidi() || !easymidi) return
+
+  midiLogger.debug('Attempting to reconnect MIDI devices...')
+
+  const inputs = easymidi.getInputs()
+  const outputs = easymidi.getOutputs()
+
+  // Determine what we need to reconnect
+  const needInputReconnect =
+    currentInput === null &&
+    (connectedInputName !== null || requestedInputDeviceId !== null)
+  const needOutputReconnect =
+    currentOutput === null &&
+    (connectedOutputName !== null || requestedOutputDeviceId !== null)
+
+  let inputReconnected = !needInputReconnect
+  let outputReconnected = !needOutputReconnect
+
+  // Try to reconnect input device
+  if (needInputReconnect) {
+    // First try by name if we have one
+    if (connectedInputName && inputs.includes(connectedInputName)) {
+      midiLogger.info(
+        `Found input device "${connectedInputName}", reconnecting...`,
+      )
+      if (connectInput(0, connectedInputName)) {
+        inputReconnected = true
+        midiLogger.info(`✓ Reconnected to input device: ${connectedInputName}`)
+      }
+    }
+    // Otherwise try by requested device ID if devices are now available
+    else if (
+      requestedInputDeviceId !== null &&
+      inputs.length > 0 &&
+      requestedInputDeviceId < inputs.length
+    ) {
+      midiLogger.info(
+        `Input devices available, reconnecting to device ID ${requestedInputDeviceId}...`,
+      )
+      if (connectInput(requestedInputDeviceId)) {
+        inputReconnected = true
+        midiLogger.info(
+          `✓ Reconnected to input device ID: ${requestedInputDeviceId}`,
+        )
+      }
+    }
+    // If we have a requested ID but it's out of range, try connecting to first available device
+    else if (requestedInputDeviceId !== null && inputs.length > 0) {
+      midiLogger.info(
+        `Requested input device ID ${requestedInputDeviceId} out of range, connecting to first available device...`,
+      )
+      if (connectInput(0)) {
+        inputReconnected = true
+        midiLogger.info(`✓ Connected to first available input device`)
+      }
+    }
+  }
+
+  // Try to reconnect output device
+  if (needOutputReconnect) {
+    // First try by name if we have one
+    if (connectedOutputName && outputs.includes(connectedOutputName)) {
+      midiLogger.info(
+        `Found output device "${connectedOutputName}", reconnecting...`,
+      )
+      if (connectOutput(0, connectedOutputName)) {
+        outputReconnected = true
+        midiLogger.info(
+          `✓ Reconnected to output device: ${connectedOutputName}`,
+        )
+      }
+    }
+    // Otherwise try by requested device ID if devices are now available
+    else if (
+      requestedOutputDeviceId !== null &&
+      outputs.length > 0 &&
+      requestedOutputDeviceId < outputs.length
+    ) {
+      midiLogger.info(
+        `Output devices available, reconnecting to device ID ${requestedOutputDeviceId}...`,
+      )
+      if (connectOutput(requestedOutputDeviceId)) {
+        outputReconnected = true
+        midiLogger.info(
+          `✓ Reconnected to output device ID: ${requestedOutputDeviceId}`,
+        )
+      }
+    }
+    // If we have a requested ID but it's out of range, try connecting to first available device
+    else if (requestedOutputDeviceId !== null && outputs.length > 0) {
+      midiLogger.info(
+        `Requested output device ID ${requestedOutputDeviceId} out of range, connecting to first available device...`,
+      )
+      if (connectOutput(0)) {
+        outputReconnected = true
+        midiLogger.info(`✓ Connected to first available output device`)
+      }
+    }
+  }
+
+  // If all devices reconnected, stop the reconnection process
+  if (inputReconnected && outputReconnected) {
+    stopReconnecting()
+  }
+}
+
+/**
+ * Stop the reconnection process
+ */
+function stopReconnecting() {
+  if (!isReconnecting) return
+
+  isReconnecting = false
+  midiLogger.info('MIDI device reconnection complete')
+
+  if (reconnectIntervalId) {
+    clearInterval(reconnectIntervalId)
+    reconnectIntervalId = null
+  }
+
+  broadcastConnectionStatus()
+}
+
+/**
+ * Start device monitoring (checks if devices are still connected)
+ */
+function startDeviceMonitoring() {
+  if (deviceCheckIntervalId) return // Already monitoring
+
+  midiLogger.debug('Starting MIDI device monitoring')
+  deviceCheckIntervalId = setInterval(() => {
+    checkDeviceStatus()
+  }, DEVICE_CHECK_INTERVAL_MS)
+}
+
+/**
+ * Stop device monitoring
+ */
+function stopDeviceMonitoring() {
+  if (deviceCheckIntervalId) {
+    clearInterval(deviceCheckIntervalId)
+    deviceCheckIntervalId = null
+    midiLogger.debug('Stopped MIDI device monitoring')
+  }
+
+  if (reconnectIntervalId) {
+    clearInterval(reconnectIntervalId)
+    reconnectIntervalId = null
+  }
+
+  isReconnecting = false
+}
+
+/**
  * Check if MIDI native module is available
  */
 export function isMidiAvailable(): boolean {
@@ -568,13 +942,22 @@ export function getConnectionStatus() {
     inputDevice:
       config.inputDeviceId !== null
         ? inputs[config.inputDeviceId]?.name || null
-        : null,
+        : connectedInputName, // Use stored name when reconnecting
     outputDevice:
       config.outputDeviceId !== null
         ? outputs[config.outputDeviceId]?.name || null
-        : null,
+        : connectedOutputName, // Use stored name when reconnecting
     inputDeviceId: config.inputDeviceId,
     outputDeviceId: config.outputDeviceId,
+    isReconnecting,
+    reconnectingInputDevice:
+      isReconnecting && connectedInputName && currentInput === null
+        ? connectedInputName
+        : null,
+    reconnectingOutputDevice:
+      isReconnecting && connectedOutputName && currentOutput === null
+        ? connectedOutputName
+        : null,
   }
 }
 
@@ -599,6 +982,7 @@ export function setEnabled(enabled: boolean) {
   config.enabled = enabled
 
   if (!enabled) {
+    stopDeviceMonitoring()
     disconnectInput()
     disconnectOutput()
   }
@@ -636,6 +1020,7 @@ export function initializeMIDI() {
  */
 export function shutdownMIDI() {
   midiLogger.info('Shutting down MIDI service')
+  stopDeviceMonitoring()
   disconnectInput()
   disconnectOutput()
 }

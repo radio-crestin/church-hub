@@ -150,6 +150,18 @@ export function useMIDILEDFeedback({
     }
   }, [midi, refreshLEDs])
 
+  // Subscribe to reconnection events to refresh LEDs after device reconnects
+  useEffect(() => {
+    if (!midi || !midi.isEnabled) return
+
+    const unsubscribe = midi.subscribeToReconnection(() => {
+      logger.info('MIDI device reconnected, refreshing all LED states')
+      refreshLEDs()
+    })
+
+    return unsubscribe
+  }, [midi, refreshLEDs])
+
   // Cleanup: turn off all LEDs when unmounting
   useEffect(() => {
     return () => {
