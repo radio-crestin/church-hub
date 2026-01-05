@@ -24,8 +24,13 @@ import {
 import type { Permission } from '../../features/users/types'
 import { usePermissions } from '../../provider/permissions-provider'
 
+const SIDEBAR_COLLAPSED_KEY = 'sidebar-collapsed'
+
 export function Sidebar() {
-  const [isCollapsed, setIsCollapsed] = useState(true)
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    const saved = localStorage.getItem(SIDEBAR_COLLAPSED_KEY)
+    return saved !== null ? saved === 'true' : true // Default to collapsed
+  })
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false)
   const [isContactModalOpen, setIsContactModalOpen] = useState(false)
@@ -101,6 +106,11 @@ export function Sidebar() {
       document.body.style.overflow = ''
     }
   }, [isMobileMenuOpen])
+
+  // Persist sidebar collapsed state to localStorage
+  useEffect(() => {
+    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(isCollapsed))
+  }, [isCollapsed])
 
   // Update webview bounds when sidebar collapses/expands
   useEffect(() => {
