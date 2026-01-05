@@ -1486,6 +1486,7 @@ async function main() {
             id: itemId,
             slideType: body.slideType,
             slideContent: body.slideContent,
+            biblePassage: body.biblePassage,
           }
 
           const item = updateScheduleSlide(input)
