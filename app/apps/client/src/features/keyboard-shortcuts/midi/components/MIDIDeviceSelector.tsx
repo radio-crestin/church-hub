@@ -1,4 +1,4 @@
-import { Music2, Power, RefreshCw, Usb } from 'lucide-react'
+import { Loader2, Music2, Power, RefreshCw, Usb } from 'lucide-react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -189,28 +189,48 @@ export function MIDIDeviceSelector() {
           </div>
 
           {/* Connection status */}
-          {(midi.selectedInputId || midi.selectedOutputId) && (
+          {(midi.selectedInputId ||
+            midi.selectedOutputId ||
+            midi.isReconnecting) && (
             <div className="flex items-center gap-2 pt-2">
-              <div
-                className={`w-2 h-2 rounded-full ${
-                  midi.selectedInputId && midi.selectedOutputId
-                    ? 'bg-green-500'
-                    : 'bg-yellow-500'
-                }`}
-              />
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                {midi.selectedInputId && midi.selectedOutputId
-                  ? t('sections.shortcuts.midi.fullyConnected', {
-                      defaultValue: 'Input and output connected',
-                    })
-                  : midi.selectedInputId
-                    ? t('sections.shortcuts.midi.inputOnly', {
-                        defaultValue: 'Input connected (no LED feedback)',
-                      })
-                    : t('sections.shortcuts.midi.outputOnly', {
-                        defaultValue: 'Output connected (no triggers)',
-                      })}
-              </span>
+              {midi.isReconnecting ? (
+                <>
+                  <Loader2 className="w-3 h-3 text-amber-500 animate-spin" />
+                  <span className="text-xs text-amber-600 dark:text-amber-400">
+                    {t('sections.shortcuts.midi.reconnecting', {
+                      defaultValue: 'Reconnecting to {{device}}...',
+                      device:
+                        midi.reconnectingDeviceName ||
+                        t('sections.shortcuts.midi.device', {
+                          defaultValue: 'device',
+                        }),
+                    })}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <div
+                    className={`w-2 h-2 rounded-full ${
+                      midi.selectedInputId && midi.selectedOutputId
+                        ? 'bg-green-500'
+                        : 'bg-yellow-500'
+                    }`}
+                  />
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {midi.selectedInputId && midi.selectedOutputId
+                      ? t('sections.shortcuts.midi.fullyConnected', {
+                          defaultValue: 'Input and output connected',
+                        })
+                      : midi.selectedInputId
+                        ? t('sections.shortcuts.midi.inputOnly', {
+                            defaultValue: 'Input connected (no LED feedback)',
+                          })
+                        : t('sections.shortcuts.midi.outputOnly', {
+                            defaultValue: 'Output connected (no triggers)',
+                          })}
+                  </span>
+                </>
+              )}
             </div>
           )}
         </div>
