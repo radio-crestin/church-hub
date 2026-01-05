@@ -4,8 +4,11 @@ import { getApiUrl, isMobile } from '~/config'
 import { getStoredUserToken } from '~/service/api-url'
 import type {
   PresentationState,
+  PresentTemporaryAnnouncementInput,
   PresentTemporaryBibleInput,
+  PresentTemporaryBiblePassageInput,
   PresentTemporarySongInput,
+  PresentTemporaryVerseteTineriInput,
   UpdatePresentationStateInput,
 } from '../types'
 
@@ -243,6 +246,78 @@ export async function clearTemporaryContent(): Promise<PresentationState> {
 
   if (!response.ok) {
     throw new Error('Failed to clear temporary content')
+  }
+
+  const result = await response.json()
+  return result.data
+}
+
+/**
+ * Present an announcement temporarily (bypasses queue)
+ */
+export async function presentTemporaryAnnouncement(
+  input: PresentTemporaryAnnouncementInput,
+): Promise<PresentationState> {
+  const response = await fetchFn(
+    `${getApiUrl()}/api/presentation/temporary-announcement`,
+    {
+      method: 'POST',
+      headers: getHeaders('application/json'),
+      body: JSON.stringify(input),
+      credentials: 'include',
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error('Failed to present temporary announcement')
+  }
+
+  const result = await response.json()
+  return result.data
+}
+
+/**
+ * Present a Bible passage temporarily (bypasses queue)
+ */
+export async function presentTemporaryBiblePassage(
+  input: PresentTemporaryBiblePassageInput,
+): Promise<PresentationState> {
+  const response = await fetchFn(
+    `${getApiUrl()}/api/presentation/temporary-bible-passage`,
+    {
+      method: 'POST',
+      headers: getHeaders('application/json'),
+      body: JSON.stringify(input),
+      credentials: 'include',
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error('Failed to present temporary Bible passage')
+  }
+
+  const result = await response.json()
+  return result.data
+}
+
+/**
+ * Present versete tineri temporarily (bypasses queue)
+ */
+export async function presentTemporaryVerseteTineri(
+  input: PresentTemporaryVerseteTineriInput,
+): Promise<PresentationState> {
+  const response = await fetchFn(
+    `${getApiUrl()}/api/presentation/temporary-versete-tineri`,
+    {
+      method: 'POST',
+      headers: getHeaders('application/json'),
+      body: JSON.stringify(input),
+      credentials: 'include',
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error('Failed to present temporary versete tineri')
   }
 
   const result = await response.json()

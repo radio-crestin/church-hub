@@ -6,8 +6,11 @@ import {
   clearTemporaryContent,
   navigateQueueSlide,
   navigateTemporary,
+  presentTemporaryAnnouncement,
   presentTemporaryBible,
+  presentTemporaryBiblePassage,
   presentTemporarySong,
+  presentTemporaryVerseteTineri,
   showSlide,
   stopPresentation,
   updatePresentationState,
@@ -193,6 +196,45 @@ export function useClearTemporaryContent() {
   return useMutation({
     mutationFn: clearTemporaryContent,
     onSuccess: (data: PresentationState) => {
+      queryClient.setQueryData(presentationStateQueryKey, data)
+    },
+  })
+}
+
+export function usePresentTemporaryAnnouncement() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: presentTemporaryAnnouncement,
+    onSuccess: (data: PresentationState) => {
+      // Reset tracking when presenting new content
+      resetNavigationTracking()
+      queryClient.setQueryData(presentationStateQueryKey, data)
+    },
+  })
+}
+
+export function usePresentTemporaryBiblePassage() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: presentTemporaryBiblePassage,
+    onSuccess: (data: PresentationState) => {
+      // Reset tracking when presenting new content
+      resetNavigationTracking()
+      queryClient.setQueryData(presentationStateQueryKey, data)
+    },
+  })
+}
+
+export function usePresentTemporaryVerseteTineri() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: presentTemporaryVerseteTineri,
+    onSuccess: (data: PresentationState) => {
+      // Reset tracking when presenting new content
+      resetNavigationTracking()
       queryClient.setQueryData(presentationStateQueryKey, data)
     },
   })
