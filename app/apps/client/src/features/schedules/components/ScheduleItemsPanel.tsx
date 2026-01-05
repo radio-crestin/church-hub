@@ -47,8 +47,6 @@ interface ScheduleItemsPanelProps {
   collapseAllTrigger?: number
 }
 
-const SCROLL_OFFSET_TOP = 100
-
 /**
  * Decode HTML entities to their corresponding characters
  */
@@ -223,23 +221,17 @@ export function ScheduleItemsPanel({
 
   // Auto-scroll to the presented slide
   useEffect(() => {
-    if (highlightedRef.current && containerRef.current) {
-      const container = containerRef.current
-      const element = highlightedRef.current
-      const elementRect = element.getBoundingClientRect()
-      const containerRect = container.getBoundingClientRect()
-
-      const elementTop =
-        elementRect.top - containerRect.top + container.scrollTop
-
-      const targetScrollTop = Math.max(0, elementTop - SCROLL_OFFSET_TOP)
-
-      container.scrollTo({
-        top: targetScrollTop,
-        behavior: 'smooth',
-      })
+    if (highlightedRef.current) {
+      // Small delay to ensure DOM is ready after auto-expand
+      const timeoutId = setTimeout(() => {
+        highlightedRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+        })
+      }, 100)
+      return () => clearTimeout(timeoutId)
     }
-  }, [presentedInfo?.slideIndex, presentedInfo?.songId])
+  }, [presentedInfo])
 
   const toggleExpanded = useCallback((itemId: number) => {
     setExpanded((prev) => ({
