@@ -15,6 +15,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { clearSectionLastVisited } from '~/features/navigation'
 import {
   useClearTemporaryContent,
   useNavigateTemporary,
@@ -67,7 +68,22 @@ export function SchedulePresenter({
   // Connect to WebSocket for real-time updates
   useWebSocket()
 
-  const { data: schedule, isLoading, refetch } = useSchedule(scheduleId)
+  const {
+    data: schedule,
+    isLoading,
+    isError,
+    refetch,
+  } = useSchedule(scheduleId)
+
+  // Handle schedule not found - redirect to list with toast
+  useEffect(() => {
+    if (!isLoading && (!schedule || isError)) {
+      // Clear last visited to prevent navigation loop
+      clearSectionLastVisited('schedules')
+      showToast(t('messages.notFound'), 'error')
+      onBack()
+    }
+  }, [isLoading, schedule, isError, showToast, t, onBack])
   const { data: presentationState } = usePresentationState()
   const presentTemporarySong = usePresentTemporarySong()
   const navigateTemporary = useNavigateTemporary()

@@ -3,6 +3,7 @@ import { Plus, Settings } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { getSongsLastVisited } from '~/features/navigation'
 import { usePresentationState } from '~/features/presentation'
 import { SongList, SongsSettingsModal } from '~/features/songs/components'
 import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
@@ -29,7 +30,7 @@ function SongsPage() {
   const { data: presentationState } = usePresentationState()
   const hasNavigatedOnOpen = useRef(false)
 
-  // Auto-navigate to presented song only on initial page open
+  // Auto-navigate to presented song or last visited song on initial page open
   useEffect(() => {
     if (hasNavigatedOnOpen.current) return
 
@@ -40,15 +41,28 @@ function SongsPage() {
       return
     }
 
-    if (!presentationState) return
+    // Wait for presentation state to load before making navigation decisions
+    if (presentationState === undefined) return
 
-    // Check if a song is being presented via temporary content
-    if (presentationState.temporaryContent?.type === 'song') {
+    // Priority 1: Navigate to currently presented song
+    if (presentationState?.temporaryContent?.type === 'song') {
       const presentedSongId = presentationState.temporaryContent.data.songId
       hasNavigatedOnOpen.current = true
       navigate({
         to: '/songs/$songId',
         params: { songId: String(presentedSongId) },
+        search: { q: searchQuery || undefined },
+      })
+      return
+    }
+
+    // Priority 2: Navigate to last visited song (if no song is being presented)
+    const lastVisited = getSongsLastVisited()
+    if (lastVisited?.songId) {
+      hasNavigatedOnOpen.current = true
+      navigate({
+        to: '/songs/$songId',
+        params: { songId: String(lastVisited.songId) },
         search: { q: searchQuery || undefined },
       })
     }

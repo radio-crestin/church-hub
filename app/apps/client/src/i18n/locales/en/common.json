@@ -1,4 +1,22 @@
 {
+  "addMenu": {
+    "button": "Add",
+    "title": "Add Item",
+    "searchSong": "Search Song",
+    "searchSongDescription": "Find and add a song from the library",
+    "bibleVerse": "Bible Verse",
+    "bibleVerseDescription": "Add a single Bible verse",
+    "biblePassage": "Bible Passage",
+    "biblePassageDescription": "Add a Bible passage with multiple verses",
+    "announcement": "Announcement",
+    "announcementDescription": "Add an announcement slide",
+    "verseteTineri": "Youth Verses",
+    "verseteTineriDescription": "Add youth verses with names",
+    "importSchedule": {
+      "title": "Import Schedule",
+      "description": "Import from an existing schedule"
+    }
+  },
   "buttons": {
     "goBack": "Go back",
     "startOver": "Start Over",

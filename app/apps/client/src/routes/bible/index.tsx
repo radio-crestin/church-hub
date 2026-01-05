@@ -22,6 +22,7 @@ import {
   useSelectedBibleTranslations,
   useVerses,
 } from '~/features/bible'
+import { getBibleLastVisited, setBibleLastVisited } from '~/features/navigation'
 import {
   useClearSlide,
   useNavigateTemporary,
@@ -130,6 +131,23 @@ function BiblePage() {
         })
       }
       return
+    }
+
+    // Priority 2: Restore last visited Bible state (if no verse is being presented)
+    const lastVisited = getBibleLastVisited()
+    if (
+      lastVisited?.bookId &&
+      lastVisited?.chapter &&
+      lastVisited?.bookName &&
+      lastVisited?.translationId === primaryTranslation.id
+    ) {
+      hasNavigatedOnOpen.current = true
+      navigation.navigateToChapter({
+        bookId: lastVisited.bookId,
+        bookName: lastVisited.bookName,
+        chapter: lastVisited.chapter,
+        verseIndex: lastVisited.verseIndex,
+      })
     }
   }, [presentationState, temporaryBooks, navigation, primaryTranslation])
 
@@ -631,6 +649,27 @@ function BiblePage() {
   useEffect(() => {
     localStorage.setItem('bible-history-collapsed', String(isHistoryCollapsed))
   }, [isHistoryCollapsed])
+
+  // Save Bible navigation state to localStorage when at verses level
+  useEffect(() => {
+    const { translationId, bookId, bookName, chapter, presentedIndex, level } =
+      navigation.state
+    if (
+      level === 'verses' &&
+      translationId &&
+      bookId &&
+      bookName &&
+      chapter !== undefined
+    ) {
+      setBibleLastVisited({
+        translationId,
+        bookId,
+        bookName,
+        chapter,
+        verseIndex: presentedIndex ?? undefined,
+      })
+    }
+  }, [navigation.state])
 
   const handleToggleHistory = useCallback(() => {
     setIsHistoryCollapsed((prev) => !prev)
