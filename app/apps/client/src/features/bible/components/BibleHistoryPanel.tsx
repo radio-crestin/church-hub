@@ -58,7 +58,7 @@ export function BibleHistoryPanel({ onSelectVerse }: BibleHistoryPanelProps) {
             {t('history.empty')}
           </div>
         ) : (
-          <div className="p-2 space-y-1.5">
+          <div className="p-2 flex flex-col gap-1.5">
             {historyItems.map((item, idx) => (
               <BibleHistoryItem
                 key={item.id}
