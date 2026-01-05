@@ -18,6 +18,11 @@
     "noItems": "Niciun element inca",
     "addFirstItem": "Adauga cantari sau slide-uri pentru a construi programul"
   },
+  "presenter": {
+    "edit": "Editeaza",
+    "announcement": "Anunt",
+    "verseteTineri": "Versete Tineri"
+  },
   "search": {
     "placeholder": "Cauta programe...",
     "noResults": "Nu s-au gasit programe pentru \"{{query}}\"",
