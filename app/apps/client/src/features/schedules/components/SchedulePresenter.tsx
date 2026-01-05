@@ -267,7 +267,13 @@ export function SchedulePresenter({
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [canNavigatePrev, canNavigateNext, clearTemporary])
+  }, [
+    canNavigatePrev,
+    canNavigateNext,
+    clearTemporary,
+    handlePrevSlide,
+    handleNextSlide,
+  ])
 
   // Title editing handlers
   const handleStartEditTitle = useCallback(() => {
