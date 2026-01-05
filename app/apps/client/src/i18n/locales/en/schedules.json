@@ -149,6 +149,18 @@
   "itemCount_one": "{{count}} item",
   "itemCount_other": "{{count}} items",
   "createdAt": "Created {{date}}",
+  "warnings": {
+    "missingContent": "Missing content",
+    "noSlides": "This song has no slides. Edit the song to add slides.",
+    "noVerses": "No verses found for this passage. The reference may be invalid.",
+    "noEntries": "No entries found. Edit to add youth verse entries."
+  },
+  "contextMenu": {
+    "edit": "Edit",
+    "delete": "Delete",
+    "searchSong": "Search replacement",
+    "missingContent": "Content not found"
+  },
   "editAsText": {
     "title": "Edit Schedule as Text",
     "description": "Enter items using prefixes. Lines starting with # are comments.",

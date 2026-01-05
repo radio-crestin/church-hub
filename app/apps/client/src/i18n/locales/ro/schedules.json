@@ -149,6 +149,18 @@
   "itemCount_one": "{{count}} element",
   "itemCount_other": "{{count}} elemente",
   "createdAt": "Creat pe {{date}}",
+  "warnings": {
+    "missingContent": "Continut lipsa",
+    "noSlides": "Aceasta cantare nu are slide-uri. Editeaza cantarea pentru a adauga slide-uri.",
+    "noVerses": "Nu s-au gasit versete pentru acest pasaj. Referinta poate fi invalida.",
+    "noEntries": "Nu s-au gasit intrari. Editeaza pentru a adauga versete pentru tineri."
+  },
+  "contextMenu": {
+    "edit": "Editeaza",
+    "delete": "Sterge",
+    "searchSong": "Cauta inlocuitor",
+    "missingContent": "Continut negasit"
+  },
   "editAsText": {
     "title": "Editeaza Programul ca Text",
     "description": "Introdu elemente folosind prefixe. Liniile care incep cu # sunt comentarii.",

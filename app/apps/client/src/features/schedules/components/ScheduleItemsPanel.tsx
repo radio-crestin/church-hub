@@ -15,6 +15,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
+  AlertTriangle,
   Book,
   ChevronDown,
   ChevronRight,
@@ -31,6 +32,7 @@ import { useTranslation } from 'react-i18next'
 
 import { usePresentationState } from '~/features/presentation'
 import { expandSongSlidesWithChoruses } from '~/features/songs/utils/expandSongSlides'
+import { ScheduleItemContextMenu } from './ScheduleItemContextMenu'
 import type { ScheduleItem } from '../types'
 
 interface ScheduleItemsPanelProps {
@@ -43,8 +45,16 @@ interface ScheduleItemsPanelProps {
   onReorder?: (oldIndex: number, newIndex: number) => void
   onEditSong?: (songId: number) => void
   onNavigateToSong?: (songId: number) => void
+  onDeleteItem?: (item: ScheduleItem) => void
+  onEditItem?: (item: ScheduleItem) => void
+  onSearchSongReplacement?: (title: string) => void
   expandAllTrigger?: number
   collapseAllTrigger?: number
+}
+
+interface ContextMenuState {
+  item: ScheduleItem | null
+  position: { x: number; y: number }
 }
 
 /**
@@ -83,6 +93,9 @@ export function ScheduleItemsPanel({
   onReorder,
   onEditSong,
   onNavigateToSong,
+  onDeleteItem,
+  onEditItem,
+  onSearchSongReplacement,
   expandAllTrigger,
   collapseAllTrigger,
 }: ScheduleItemsPanelProps) {
@@ -90,6 +103,12 @@ export function ScheduleItemsPanel({
   const { data: presentationState } = usePresentationState()
   const highlightedRef = useRef<HTMLButtonElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+
+  // Context menu state
+  const [contextMenu, setContextMenu] = useState<ContextMenuState>({
+    item: null,
+    position: { x: 0, y: 0 },
+  })
 
   // Track which items are expanded
   const [expanded, setExpanded] = useState<ExpandedState>(() => {
@@ -293,6 +312,37 @@ export function ScheduleItemsPanel({
     [onEditSong],
   )
 
+  // Handle right-click context menu
+  const handleContextMenu = useCallback(
+    (e: React.MouseEvent, item: ScheduleItem) => {
+      e.preventDefault()
+      e.stopPropagation()
+      setContextMenu({
+        item,
+        position: { x: e.clientX, y: e.clientY },
+      })
+    },
+    [],
+  )
+
+  const handleCloseContextMenu = useCallback(() => {
+    setContextMenu({ item: null, position: { x: 0, y: 0 } })
+  }, [])
+
+  const handleEditFromContextMenu = useCallback(
+    (item: ScheduleItem) => {
+      onEditItem?.(item)
+    },
+    [onEditItem],
+  )
+
+  const handleDeleteFromContextMenu = useCallback(
+    (item: ScheduleItem) => {
+      onDeleteItem?.(item)
+    },
+    [onDeleteItem],
+  )
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -338,6 +388,7 @@ export function ScheduleItemsPanel({
                   onHeaderClick={handleHeaderClick}
                   onAuxClick={handleAuxClick}
                   onDoubleClick={handleDoubleClick}
+                  onContextMenu={handleContextMenu}
                   onSlideClick={onSlideClick}
                   onVerseClick={onVerseClick}
                   onEntryClick={onEntryClick}
@@ -351,6 +402,18 @@ export function ScheduleItemsPanel({
           </div>
         </SortableContext>
       </DndContext>
+
+      {/* Context Menu */}
+      {contextMenu.item && (
+        <ScheduleItemContextMenu
+          item={contextMenu.item}
+          position={contextMenu.position}
+          onClose={handleCloseContextMenu}
+          onEdit={handleEditFromContextMenu}
+          onDelete={handleDeleteFromContextMenu}
+          onSearchSong={onSearchSongReplacement}
+        />
+      )}
     </div>
   )
 }
@@ -372,6 +435,7 @@ interface SortableItemWrapperProps {
   onHeaderClick: (e: React.MouseEvent, item: ScheduleItem) => void
   onAuxClick: (e: React.MouseEvent, item: ScheduleItem) => void
   onDoubleClick: (item: ScheduleItem) => void
+  onContextMenu: (e: React.MouseEvent, item: ScheduleItem) => void
   onSlideClick: (item: ScheduleItem, slideIndex: number) => void
   onVerseClick: (item: ScheduleItem, verseIndex: number) => void
   onEntryClick: (item: ScheduleItem, entryIndex: number) => void
@@ -389,6 +453,7 @@ function SortableItemWrapper({
   onHeaderClick,
   onAuxClick,
   onDoubleClick,
+  onContextMenu,
   onSlideClick,
   onVerseClick,
   onEntryClick,
@@ -411,12 +476,25 @@ function SortableItemWrapper({
     transition,
   }
 
+  // Check if item has missing content
+  const hasMissingContent =
+    (item.itemType === 'song' && item.slides.length === 0) ||
+    (item.itemType === 'bible_passage' &&
+      item.biblePassageVerses.length === 0) ||
+    (item.itemType === 'slide' &&
+      item.slideType === 'versete_tineri' &&
+      item.verseteTineriEntries.length === 0)
+
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden ${
+      className={`rounded-lg border bg-white dark:bg-gray-800 overflow-hidden ${
         isDragging ? 'opacity-50 shadow-lg' : ''
+      } ${
+        hasMissingContent
+          ? 'border-amber-400 dark:border-amber-500'
+          : 'border-gray-200 dark:border-gray-700'
       }`}
     >
       {/* Item Header */}
@@ -425,6 +503,7 @@ function SortableItemWrapper({
         onClick={(e) => onHeaderClick(e, item)}
         onAuxClick={(e) => onAuxClick(e, item)}
         onDoubleClick={() => onDoubleClick(item)}
+        onContextMenu={(e) => onContextMenu(e, item)}
       >
         {/* Drag Handle */}
         <div
@@ -509,6 +588,19 @@ function SortableItemWrapper({
               )}
           </div>
         </div>
+
+        {/* Warning indicator for missing content */}
+        {hasMissingContent && (
+          <div
+            className="flex-shrink-0 p-2 rounded-lg bg-amber-100 dark:bg-amber-900/30"
+            title={t('warnings.missingContent')}
+          >
+            <AlertTriangle
+              size={16}
+              className="text-amber-600 dark:text-amber-400"
+            />
+          </div>
+        )}
 
         {/* Edit Button for Songs */}
         {item.itemType === 'song' && item.songId && (
@@ -598,11 +690,28 @@ function SongSlides({
   highlightedRef,
   onSlideClick,
 }: SongSlidesProps) {
+  const { t } = useTranslation('schedules')
+
   // Expand slides with dynamic chorus insertion
   const expandedSlides = useMemo(
     () => expandSongSlidesWithChoruses(item.slides),
     [item.slides],
   )
+
+  // Empty state for songs with no slides
+  if (expandedSlides.length === 0) {
+    return (
+      <div className="flex items-center gap-2 px-3 py-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700">
+        <AlertTriangle
+          size={16}
+          className="text-amber-600 dark:text-amber-400 flex-shrink-0"
+        />
+        <span className="text-sm text-amber-700 dark:text-amber-300">
+          {t('warnings.noSlides')}
+        </span>
+      </div>
+    )
+  }
 
   return (
     <>
@@ -672,6 +781,23 @@ function BiblePassageVerses({
   highlightedRef,
   onVerseClick,
 }: BiblePassageVersesProps) {
+  const { t } = useTranslation('schedules')
+
+  // Empty state for bible passages with no verses
+  if (item.biblePassageVerses.length === 0) {
+    return (
+      <div className="flex items-center gap-2 px-3 py-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700">
+        <AlertTriangle
+          size={16}
+          className="text-amber-600 dark:text-amber-400 flex-shrink-0"
+        />
+        <span className="text-sm text-amber-700 dark:text-amber-300">
+          {t('warnings.noVerses')}
+        </span>
+      </div>
+    )
+  }
+
   return (
     <>
       {item.biblePassageVerses.map((verse, index) => {
@@ -743,6 +869,23 @@ function VerseteTineriEntries({
   highlightedRef,
   onEntryClick,
 }: VerseteTineriEntriesProps) {
+  const { t } = useTranslation('schedules')
+
+  // Empty state for versete tineri with no entries
+  if (item.verseteTineriEntries.length === 0) {
+    return (
+      <div className="flex items-center gap-2 px-3 py-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700">
+        <AlertTriangle
+          size={16}
+          className="text-amber-600 dark:text-amber-400 flex-shrink-0"
+        />
+        <span className="text-sm text-amber-700 dark:text-amber-300">
+          {t('warnings.noEntries')}
+        </span>
+      </div>
+    )
+  }
+
   return (
     <>
       {item.verseteTineriEntries.map((entry, index) => {
