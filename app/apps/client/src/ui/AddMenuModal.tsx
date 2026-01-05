@@ -20,6 +20,10 @@ export interface AddMenuModalProps {
   showBiblePassage?: boolean
   /** Show Import Schedule option */
   showImportSchedule?: boolean
+  /** Controlled open state (optional - if not provided, uses internal state) */
+  isOpen?: boolean
+  /** Callback when open state changes (for controlled mode) */
+  onOpenChange?: (open: boolean) => void
   /** Callback when song is selected */
   onAddSong: () => void
   /** Callback when Bible verse is selected */
@@ -38,6 +42,8 @@ export function AddMenuModal({
   showBibleVerse = false,
   showBiblePassage = false,
   showImportSchedule = false,
+  isOpen: controlledIsOpen,
+  onOpenChange,
   onAddSong,
   onAddBibleVerse,
   onAddBiblePassage,
@@ -46,8 +52,20 @@ export function AddMenuModal({
   onImportSchedule,
 }: AddMenuModalProps) {
   const { t } = useTranslation('common')
-  const [isOpen, setIsOpen] = useState(false)
+  const [internalIsOpen, setInternalIsOpen] = useState(false)
   const dialogRef = useRef<HTMLDialogElement>(null)
+
+  // Use controlled or internal state
+  const isControlled = controlledIsOpen !== undefined
+  const isOpen = isControlled ? controlledIsOpen : internalIsOpen
+
+  const setIsOpen = (open: boolean) => {
+    if (isControlled) {
+      onOpenChange?.(open)
+    } else {
+      setInternalIsOpen(open)
+    }
+  }
 
   useEffect(() => {
     if (isOpen) {

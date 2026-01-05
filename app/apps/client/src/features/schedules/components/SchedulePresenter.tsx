@@ -139,6 +139,8 @@ export function SchedulePresenter({
   const [changingSongItem, setChangingSongItem] = useState<ScheduleItem | null>(
     null,
   )
+  // State to control Add Menu visibility (for reopening after closing sub-modals)
+  const [showAddMenu, setShowAddMenu] = useState(false)
 
   // Expand/collapse all triggers
   const [expandAllTrigger, _setExpandAllTrigger] = useState(0)
@@ -601,7 +603,7 @@ export function SchedulePresenter({
     handleNextSlide,
   ])
 
-  // Edit handlers
+  // Edit handlers - these are called from AddToScheduleMenu, which closes automatically
   const handleAddSong = useCallback(() => {
     setShowSongPicker(true)
   }, [])
@@ -613,6 +615,11 @@ export function SchedulePresenter({
 
   const handleAddBiblePassage = useCallback(() => {
     setShowBiblePassagePicker(true)
+  }, [])
+
+  // Callback to reopen add menu after closing sub-modals (only for non-edit mode)
+  const handleReopenAddMenu = useCallback(() => {
+    setShowAddMenu(true)
   }, [])
 
   // Reorder handler
@@ -967,6 +974,8 @@ export function SchedulePresenter({
                 </span>
               </button>
               <AddToScheduleMenu
+                isOpen={showAddMenu}
+                onOpenChange={setShowAddMenu}
                 onAddSong={handleAddSong}
                 onAddBiblePassage={handleAddBiblePassage}
                 onAddSlide={handleAddSlide}
@@ -1027,6 +1036,10 @@ export function SchedulePresenter({
       <SongPickerModal
         isOpen={showSongPicker || !!changingSongItem}
         onClose={() => {
+          // Reopen add menu if we were adding (not changing) a song
+          if (showSongPicker && !changingSongItem) {
+            handleReopenAddMenu()
+          }
           setShowSongPicker(false)
           setChangingSongItem(null)
         }}
@@ -1037,6 +1050,10 @@ export function SchedulePresenter({
       <InsertSlideModal
         isOpen={showSlideModal || !!editingSlideItem}
         onClose={() => {
+          // Reopen add menu if we were adding (not editing) a slide
+          if (showSlideModal && !editingSlideItem) {
+            handleReopenAddMenu()
+          }
           setShowSlideModal(false)
           setEditingSlideItem(null)
         }}
@@ -1068,6 +1085,10 @@ export function SchedulePresenter({
       <BiblePassagePickerModal
         isOpen={showBiblePassagePicker || !!editingBiblePassageItem}
         onClose={() => {
+          // Reopen add menu if we were adding (not editing) a Bible passage
+          if (showBiblePassagePicker && !editingBiblePassageItem) {
+            handleReopenAddMenu()
+          }
           setShowBiblePassagePicker(false)
           setEditingBiblePassageItem(null)
         }}
