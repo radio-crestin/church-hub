@@ -115,24 +115,24 @@
 ~~- adauga justify alig~~
 ~~- search-ul din Biblie nu functioneaza~~
 ~~- ESC nu functioneaza cand e focusat pe search~~
-- muta camera tineri mai jos
-- adauga un buton pentru a deschide PPT-ul direct din cantare (ca si backup, optional)
-- adauga un mic istoric in pagina Bibliei
-- midi controller-ul e disabled
-- adauga muzica
-- scade volumul la intro
-- fa fontul maxim mai mic pe Livestream
-- când sunt doar două versuri, nu mai comprima liniile
-- adauga timestamp cand se face export la db
-- cand se selecteaza primul verset se face un loop ciudat
-- si sunt foarte multi clienti conectati.. 
-- creaza un quickstart guide pentru utilizatori
-- adauga optiune de a cauta cantari folosind AI
-- adauga posibilitatea de a face highlight pentru sesiunea curenta
-- imbunatateste UX-ul pentru cautarea in cantari astfel incat sa poti sa il folosesti doar din tastatura (sa pui sa dai down, apoi enter, apoi enter din nou si prezinti cantarea)
-- adauga full text search si pentru Biblie
-- exportul ca si pptx ar trebui sa aiba textul ceva mai mare
+~~- muta camera tineri mai jos~~
+~~- adauga un mic istoric in pagina Bibliei~~
+~~- scade volumul la intro~~
+~~- fa fontul maxim mai mic pe Livestream~~
+~~- adauga timestamp cand se face export la db~~
+- fa reconect la midi controller la disconnect
+- cand se salveaza programul este o problema- cand se selecteaza primul verset se face un loop ciudat
+- afiseaza pagina cantarii cand dau click din pagina de progam- si sunt foarte multi clienti conectati.. 
+- auto switch-ul nu functioneaza- creaza un quickstart guide pentru utilizatori
+- cand este adaugat un program, nu pot cauta si alte cantari- adauga optiune de a cauta cantari folosind AI
+- converteste prezentarea unui program la fel ca celelalte- adauga posibilitatea de a face highlight pentru sesiunea curenta
+- dupa ce ai cautat o cantare si apoi ai deschis-o, intoarcete la aceleasi rezultate- imbunatateste UX-ul pentru cautarea in cantari astfel incat sa poti sa il folosesti doar din tastatura (sa pui sa dai down, apoi enter, apoi enter din nou si prezinti cantarea)
+- cand nu se gaseste un verset afiseaza un warning si creaza entry-ul- adauga full text search si pentru Biblie
+- elimina din titlul extras numerele (gen 1.)- exportul ca si pptx ar trebui sa aiba textul ceva mai mare
 - creaza optiunea de a adauga live-urile create intr-un playlist pe YouTube
 - adauga optiunea de a afisa pe un ecran separat continutul in anumita limba (o versiune a Bibliei diferita, traduceri cu AI ale cantarilor.. si eventual traduceri in timp real)
 - adauga filtru pentru categoria de cantari si deasemenea, fa loading la cantari cand se face scrolling (infinite scroll)
 - we can add custom background for next based on the slide type (so that it's easier to identify what type of slide is next)
+- midi controller-ul e disabled
+- adauga muzica
+- când sunt doar două versuri, nu mai comprima liniile
