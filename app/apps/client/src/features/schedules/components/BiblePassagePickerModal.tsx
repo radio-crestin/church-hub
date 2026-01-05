@@ -26,7 +26,7 @@ export function BiblePassagePickerModal({
   afterItemId,
   onSaved,
 }: BiblePassagePickerModalProps) {
-  const { t } = useTranslation('queue')
+  const { t } = useTranslation('schedules')
   const { showToast } = useToast()
   const dialogRef = useRef<HTMLDialogElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)

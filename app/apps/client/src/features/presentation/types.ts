@@ -7,10 +7,7 @@ export type DisplayOpenMode = 'browser' | 'native'
  * Presentation state
  */
 export interface PresentationState {
-  currentQueueItemId: number | null
   currentSongSlideId: number | null
-  currentBiblePassageVerseId: number | null
-  currentVerseteTineriEntryId: number | null
   lastSongSlideId: number | null
   isPresenting: boolean
   isHidden: boolean
@@ -22,10 +19,7 @@ export interface PresentationState {
  * Input for updating presentation state
  */
 export interface UpdatePresentationStateInput {
-  currentQueueItemId?: number | null
   currentSongSlideId?: number | null
-  currentBiblePassageVerseId?: number | null
-  currentVerseteTineriEntryId?: number | null
   lastSongSlideId?: number | null
   isPresenting?: boolean
   isHidden?: boolean
@@ -33,7 +27,7 @@ export interface UpdatePresentationStateInput {
 }
 
 // ============================================================================
-// TEMPORARY CONTENT TYPES (bypasses queue for instant display)
+// TEMPORARY CONTENT TYPES (for instant display)
 // ============================================================================
 
 /**

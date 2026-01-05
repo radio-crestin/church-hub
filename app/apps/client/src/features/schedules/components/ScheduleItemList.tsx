@@ -315,7 +315,6 @@ export function ScheduleItemList({
         isOpen={insertSongAfterItemId !== null}
         onClose={() => setInsertSongAfterItemId(null)}
         onSongSelect={handleSongSelected}
-        hideAddToQueue
       />
 
       {/* Edit Slide Modal - for announcement slides */}

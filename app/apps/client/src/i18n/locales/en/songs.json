@@ -31,6 +31,9 @@
     "showingCount": "Showing {{showing}} of {{total}} songs",
     "moreResults": "{{count}} more songs not shown. Use search to find specific songs."
   },
+  "picker": {
+    "selectSong": "Select Song"
+  },
   "import": {
     "title": "Import from Text",
     "description": "Paste your song text below. Each paragraph will become a separate slide.",

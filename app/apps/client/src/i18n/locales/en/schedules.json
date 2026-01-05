@@ -9,7 +9,8 @@
     "importToQueue": "Import to Queue",
     "saveToFile": "Save to File",
     "importFromFile": "Import",
-    "editAsText": "Edit as Text"
+    "editAsText": "Edit as Text",
+    "cancel": "Cancel"
   },
   "editor": {
     "titlePlaceholder": "Enter schedule title...",
@@ -39,7 +40,49 @@
     "importedWithSongs_one": "Schedule imported with {{count}} new song created",
     "importedWithSongs_other": "Schedule imported with {{count}} new songs created",
     "importError": "Failed to import schedule",
-    "error": "An error occurred"
+    "error": "An error occurred",
+    "slideInserted": "Slide inserted",
+    "slideUpdated": "Slide updated",
+    "biblePassageInserted": "Bible passage added"
+  },
+  "slideTemplates": {
+    "announcement": "Announcement",
+    "versete_tineri": "Versete tineri"
+  },
+  "insertSlide": {
+    "title": "Insert Slide",
+    "editTitle": "Edit Slide",
+    "selectTemplate": "Select template",
+    "content": "Content",
+    "insert": "Insert",
+    "save": "Save",
+    "errorEmpty": "Please add content to the slide"
+  },
+  "biblePassage": {
+    "title": "Add Bible Passage",
+    "reference": "Reference",
+    "referencePlaceholder": "e.g., Gen 1:1-5 or Ioan 3:16",
+    "referenceHint": "Enter book, chapter, and verse range",
+    "valid": "Valid",
+    "add": "Add",
+    "errors": {
+      "empty": "Please enter a reference",
+      "invalid_format": "Invalid format. Try: Gen 1:1 or Gen 1:1-5",
+      "book_not_found": "Book not found",
+      "invalid_chapter": "Invalid chapter number",
+      "end_before_start": "End must be after start"
+    }
+  },
+  "verseteTineri": {
+    "title": "Youth Verses",
+    "addEntry": "Add Entry",
+    "noEntries": "No entries yet",
+    "entriesCount_one": "{{count}} entry",
+    "entriesCount_other": "{{count}} entries",
+    "personNamePlaceholder": "Person name",
+    "removeEntry": "Remove entry",
+    "errorNoValidEntries": "Please add at least one valid entry",
+    "errorNoTranslation": "No Bible translation selected"
   },
   "modal": {
     "deleteTitle": "Delete Schedule",

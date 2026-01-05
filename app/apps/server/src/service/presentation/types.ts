@@ -8,11 +8,8 @@ export type DisplayOpenMode = 'browser' | 'native'
  */
 export interface PresentationStateRecord {
   id: number
-  current_queue_item_id: number | null
   current_song_slide_id: number | null
   last_song_slide_id: number | null
-  current_bible_passage_verse_id: number | null
-  current_versete_tineri_entry_id: number | null
   is_presenting: number
   is_hidden: number
   temporary_content: string | null
@@ -23,11 +20,8 @@ export interface PresentationStateRecord {
  * Presentation state API format
  */
 export interface PresentationState {
-  currentQueueItemId: number | null
   currentSongSlideId: number | null
   lastSongSlideId: number | null
-  currentBiblePassageVerseId: number | null
-  currentVerseteTineriEntryId: number | null
   isPresenting: boolean
   isHidden: boolean
   temporaryContent: TemporaryContent | null
@@ -38,18 +32,15 @@ export interface PresentationState {
  * Input for updating presentation state
  */
 export interface UpdatePresentationStateInput {
-  currentQueueItemId?: number | null
   currentSongSlideId?: number | null
   lastSongSlideId?: number | null
-  currentBiblePassageVerseId?: number | null
-  currentVerseteTineriEntryId?: number | null
   isPresenting?: boolean
   isHidden?: boolean
   temporaryContent?: TemporaryContent | null
 }
 
 // ============================================================================
-// TEMPORARY CONTENT TYPES (bypasses queue for instant display)
+// TEMPORARY CONTENT TYPES (for instant display)
 // ============================================================================
 
 /**

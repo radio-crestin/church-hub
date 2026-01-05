@@ -20,7 +20,6 @@ import {
   useBibleNavigation,
   useBooks,
   useSelectedBibleTranslations,
-  useVerse,
   useVerses,
 } from '~/features/bible'
 import {
@@ -29,7 +28,6 @@ import {
   usePresentationState,
   usePresentTemporaryBible,
 } from '~/features/presentation'
-import { useQueue } from '~/features/queue'
 import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
 
 export const Route = createFileRoute('/bible/')({
@@ -94,22 +92,8 @@ function BiblePage() {
   // Initialize navigation with primary translation
   const navigation = useBibleNavigation(primaryTranslation?.id)
 
-  // Get presentation state and queue to sync with current Bible item
+  // Get presentation state to sync with current Bible item
   const { data: presentationState } = usePresentationState()
-  const { data: queue } = useQueue()
-
-  // Find current Bible item in queue
-  const currentBibleItem = queue?.find(
-    (item) =>
-      item.id === presentationState?.currentQueueItemId &&
-      item.itemType === 'bible' &&
-      item.bibleVerseId,
-  )
-
-  // Fetch verse details for the current Bible item
-  const { data: currentVerse } = useVerse(
-    currentBibleItem?.bibleVerseId ?? undefined,
-  )
 
   // Fetch books for temporary content to get bookName
   const temporaryBibleTranslationId =
@@ -147,30 +131,7 @@ function BiblePage() {
       }
       return
     }
-
-    // Priority 2: Queue-based Bible verse (only if it matches primary translation)
-    if (currentVerse) {
-      // Only sync if the verse is from the primary translation
-      if (currentVerse.translationId !== primaryTranslation.id) {
-        hasNavigatedOnOpen.current = true
-        return
-      }
-      hasNavigatedOnOpen.current = true
-      navigation.navigateToVerse({
-        translationId: currentVerse.translationId,
-        bookId: currentVerse.bookId,
-        bookName: currentVerse.bookName,
-        chapter: currentVerse.chapter,
-        verseIndex: currentVerse.verse - 1, // verse number is 1-based, index is 0-based
-      })
-    }
-  }, [
-    presentationState,
-    currentVerse,
-    temporaryBooks,
-    navigation,
-    primaryTranslation,
-  ])
+  }, [presentationState, temporaryBooks, navigation, primaryTranslation])
 
   // Extract primitive values from temporary content to avoid object reference comparisons
   const tempContentType = presentationState?.temporaryContent?.type
@@ -426,7 +387,7 @@ function BiblePage() {
         }
       }
 
-      // Present temporarily (bypasses queue)
+      // Present temporarily
       await presentTemporaryBible.mutateAsync({
         verseId: verse.id,
         reference,

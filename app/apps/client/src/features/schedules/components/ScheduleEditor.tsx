@@ -440,7 +440,6 @@ export function ScheduleEditor({
         isOpen={showSongPicker}
         onClose={() => setShowSongPicker(false)}
         onSongSelect={handleSongSelected}
-        hideAddToQueue
       />
 
       {/* Insert Slide Modal */}

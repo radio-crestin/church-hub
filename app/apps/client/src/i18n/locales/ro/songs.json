@@ -31,6 +31,9 @@
     "showingCount": "Se afișează {{showing}} din {{total}} cântări",
     "moreResults": "{{count}} cântări în plus nu sunt afișate. Folosește căutarea pentru a găsi cântări specifice."
   },
+  "picker": {
+    "selectSong": "Selectează Cântare"
+  },
   "import": {
     "title": "Importă din text",
     "description": "Introdu textul cântecului mai jos. Fiecare paragraf va deveni un slide separat.",

@@ -2,38 +2,22 @@ import { Loader2, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { useAddToQueue } from '~/features/queue/hooks'
-import { useToast } from '~/ui/toast'
 import { SongList } from './SongList'
 
 interface SongPickerModalProps {
   isOpen: boolean
   onClose: () => void
-  /** Optional: Insert after this queue item ID. If not provided, append to end. */
-  afterItemId?: number
-  onSongAdded?: () => void
-  /** Optional: Custom handler for song selection. When provided, skips queue-adding. */
-  onSongSelect?: (songId: number) => void | Promise<void>
-  /** Hide the add to queue behavior (use with onSongSelect) */
-  hideAddToQueue?: boolean
+  onSongSelect: (songId: number) => void | Promise<void>
 }
 
 export function SongPickerModal({
   isOpen,
   onClose,
-  afterItemId,
-  onSongAdded,
   onSongSelect,
-  hideAddToQueue,
 }: SongPickerModalProps) {
-  const { t } = useTranslation(['queue', 'songs'])
-  const { showToast } = useToast()
+  const { t } = useTranslation('songs')
   const dialogRef = useRef<HTMLDialogElement>(null)
-  const addToQueue = useAddToQueue()
   const [isProcessing, setIsProcessing] = useState(false)
-
-  const useCustomHandler = Boolean(onSongSelect || hideAddToQueue)
-  const isPending = useCustomHandler ? isProcessing : addToQueue.isPending
 
   // Dialog open/close handling
   useEffect(() => {
@@ -51,45 +35,27 @@ export function SongPickerModal({
 
     const handleCancel = (e: Event) => {
       e.preventDefault()
-      if (!isPending) {
+      if (!isProcessing) {
         onClose()
       }
     }
 
     dialog.addEventListener('cancel', handleCancel)
     return () => dialog.removeEventListener('cancel', handleCancel)
-  }, [onClose, isPending])
+  }, [onClose, isProcessing])
 
   const handleSongSelect = async (songId: number) => {
-    // Use custom handler if provided
-    if (onSongSelect) {
-      setIsProcessing(true)
-      try {
-        await onSongSelect(songId)
-        onClose()
-      } finally {
-        setIsProcessing(false)
-      }
-      return
-    }
-
-    // Default: add to queue
-    const result = await addToQueue.mutateAsync({
-      songId,
-      afterItemId,
-    })
-
-    if (result.success) {
-      showToast(t('queue:messages.added'), 'success')
-      onSongAdded?.()
+    setIsProcessing(true)
+    try {
+      await onSongSelect(songId)
       onClose()
-    } else {
-      showToast(t('queue:messages.error'), 'error')
+    } finally {
+      setIsProcessing(false)
     }
   }
 
   const handleClose = () => {
-    if (!isPending) {
+    if (!isProcessing) {
       onClose()
     }
   }
@@ -109,12 +75,12 @@ export function SongPickerModal({
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {t('queue:addToQueue.searchSong')}
+            {t('picker.selectSong')}
           </h2>
           <button
             type="button"
             onClick={handleClose}
-            disabled={isPending}
+            disabled={isProcessing}
             className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
           >
             <X size={20} className="text-gray-500" />
@@ -123,7 +89,7 @@ export function SongPickerModal({
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4">
-          {isPending ? (
+          {isProcessing ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
             </div>
