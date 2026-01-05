@@ -606,6 +606,72 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
             return
           }
         }
+
+        if (temp.type === 'announcement') {
+          setContentType('announcement')
+          setContentData({
+            mainText: temp.data.content,
+          })
+          setNextSlideData(undefined)
+          return
+        }
+
+        if (temp.type === 'bible_passage') {
+          const currentVerse = temp.data.verses[temp.data.currentVerseIndex]
+          if (currentVerse) {
+            // Build reference: "BookName Chapter:Verse"
+            const reference = `${temp.data.bookName} ${temp.data.startChapter}:${currentVerse.verse}`
+            setContentType('bible_passage')
+            setContentData({
+              referenceText: reference,
+              contentText: currentVerse.text,
+            })
+            // Show next verse preview if enabled
+            if (screen?.nextSlideConfig?.enabled) {
+              const nextVerse =
+                temp.data.verses[temp.data.currentVerseIndex + 1]
+              if (nextVerse) {
+                setNextSlideData({
+                  contentType: 'bible_passage',
+                  preview: `${temp.data.bookName} ${temp.data.startChapter}:${nextVerse.verse}: ${nextVerse.text}`,
+                })
+              } else {
+                setNextSlideData(undefined)
+              }
+            } else {
+              setNextSlideData(undefined)
+            }
+            return
+          }
+        }
+
+        if (temp.type === 'versete_tineri') {
+          const currentEntry = temp.data.entries[temp.data.currentEntryIndex]
+          if (currentEntry) {
+            setContentType('versete_tineri')
+            setContentData({
+              personLabel: currentEntry.personName,
+              referenceText: currentEntry.reference,
+              contentText: currentEntry.text,
+            })
+            // Show next entry preview if enabled
+            if (screen?.nextSlideConfig?.enabled) {
+              const nextEntry =
+                temp.data.entries[temp.data.currentEntryIndex + 1]
+              if (nextEntry) {
+                setNextSlideData({
+                  contentType: 'versete_tineri',
+                  preview: `${nextEntry.personName}: ${nextEntry.reference}`,
+                })
+              } else {
+                setNextSlideData(undefined)
+              }
+            } else {
+              setNextSlideData(undefined)
+            }
+            return
+          }
+        }
       }
 
       try {
