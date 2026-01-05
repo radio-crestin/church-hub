@@ -1,4 +1,9 @@
-import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  redirect,
+  useNavigate,
+  useSearch,
+} from '@tanstack/react-router'
 import {
   ArrowLeft,
   CalendarPlus,
@@ -31,8 +36,15 @@ import { useSong, useSongKeyboardShortcuts } from '~/features/songs/hooks'
 import type { SongSlide } from '~/features/songs/types'
 import { useToast } from '~/ui/toast'
 
+interface SongSearchParams {
+  q?: string
+}
+
 export const Route = createFileRoute('/songs/$songId/')({
   component: SongPreviewPage,
+  validateSearch: (search: Record<string, unknown>): SongSearchParams => ({
+    q: typeof search.q === 'string' ? search.q : undefined,
+  }),
   beforeLoad: ({ params }) => {
     // Redirect "new" to the edit page
     if (params.songId === 'new') {
@@ -45,6 +57,7 @@ function SongPreviewPage() {
   const { t } = useTranslation('songs')
   const navigate = useNavigate()
   const { songId } = Route.useParams()
+  const { q: searchQuery } = useSearch({ from: '/songs/$songId/' })
   const numericId = parseInt(songId, 10)
 
   const { data: song, isLoading, isError } = useSong(numericId)
@@ -68,9 +81,12 @@ function SongPreviewPage() {
       // Clear last visited to prevent navigation loop
       clearSectionLastVisited('songs')
       showToast(t('messages.notFound'), 'error')
-      navigate({ to: '/songs/', search: { fromSong: true } })
+      navigate({
+        to: '/songs/',
+        search: { fromSong: true, q: searchQuery || undefined },
+      })
     }
-  }, [isLoading, song, isError, showToast, t, navigate])
+  }, [isLoading, song, isError, showToast, t, navigate, searchQuery])
 
   // Save last visited song to localStorage
   useEffect(() => {
@@ -110,11 +126,12 @@ function SongPreviewPage() {
     // Clear last visited so user stays on list when going back
     clearSectionLastVisited('songs')
     // Always pass fromSong: true to prevent auto-redirect to presented song
+    // Preserve search query so user returns to their search results
     navigate({
       to: '/songs/',
-      search: { fromSong: true },
+      search: { fromSong: true, q: searchQuery || undefined },
     })
-  }, [navigate])
+  }, [navigate, searchQuery])
 
   const handlePrevSlide = useCallback(async () => {
     if (presentedSlideIndex !== null && presentedSlideIndex > 0) {
