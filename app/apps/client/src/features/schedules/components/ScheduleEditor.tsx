@@ -1,9 +1,7 @@
-import { useNavigate } from '@tanstack/react-router'
 import {
   ArrowLeft,
   Download,
   FileText,
-  ListPlus,
   Loader2,
   Save,
   Trash2,
@@ -28,7 +26,6 @@ import { ScheduleItemList } from './ScheduleItemList'
 import {
   useAddItemToSchedule,
   useDeleteSchedule,
-  useImportScheduleToQueue,
   useRemoveItemFromSchedule,
   useReorderScheduleItems,
   useSchedule,
@@ -51,7 +48,6 @@ export function ScheduleEditor({
 }: ScheduleEditorProps) {
   const { t } = useTranslation('schedules')
   const { showToast } = useToast()
-  const navigate = useNavigate()
 
   const {
     data: schedule,
@@ -61,7 +57,6 @@ export function ScheduleEditor({
   const upsertSchedule = useUpsertSchedule()
   const deleteSchedule = useDeleteSchedule()
   const addItem = useAddItemToSchedule()
-  const importToQueue = useImportScheduleToQueue()
   const reorderItems = useReorderScheduleItems()
   const removeItem = useRemoveItemFromSchedule()
   const { saveSchedule, isPending: isSaving } = useSaveScheduleToFile()
@@ -269,18 +264,6 @@ export function ScheduleEditor({
     })
   }
 
-  const handleImportToQueue = async () => {
-    if (!effectiveScheduleId) return
-
-    const success = await importToQueue.mutateAsync(effectiveScheduleId)
-    if (success) {
-      showToast(t('messages.importedToQueue'), 'success')
-      navigate({ to: '/present' })
-    } else {
-      showToast(t('messages.error'), 'error')
-    }
-  }
-
   const handleOpenExportModal = useCallback(() => {
     setShowExportFormatModal(true)
   }, [])
@@ -360,23 +343,6 @@ export function ScheduleEditor({
                   )}
                   <span className="hidden sm:inline">
                     {t('actions.saveToFile')}
-                  </span>
-                </button>
-              </Tooltip>
-              <Tooltip content={t('actions.importToQueue')} position="bottom">
-                <button
-                  type="button"
-                  onClick={handleImportToQueue}
-                  disabled={importToQueue.isPending}
-                  className="flex items-center gap-2 p-2 sm:px-3 sm:py-1.5 text-sm text-white bg-green-700 hover:bg-green-800 dark:bg-green-700 dark:hover:bg-green-800 rounded-lg transition-colors disabled:opacity-50"
-                >
-                  {importToQueue.isPending ? (
-                    <Loader2 size={16} className="animate-spin" />
-                  ) : (
-                    <ListPlus size={16} />
-                  )}
-                  <span className="hidden sm:inline">
-                    {t('actions.importToQueue')}
                   </span>
                 </button>
               </Tooltip>
