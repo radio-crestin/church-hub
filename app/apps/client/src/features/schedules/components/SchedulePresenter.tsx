@@ -692,14 +692,17 @@ export function SchedulePresenter({
     async (songId: number) => {
       if (changingSongItem) {
         // Replace the song in the schedule at the same position
-        const { removeItemFromSchedule, addItemToSchedule } = await import(
-          '../service/schedules'
-        )
+        const {
+          removeItemFromSchedule,
+          addItemToSchedule,
+          reorderScheduleItems,
+        } = await import('../service/schedules')
 
-        // Find the item that comes before the one being replaced
+        // Find the position of the item being replaced
         const currentIndex = items.findIndex(
           (item) => item.id === changingSongItem.id,
         )
+        const isFirstItem = currentIndex === 0
         const previousItem = currentIndex > 0 ? items[currentIndex - 1] : null
 
         // Remove old song first
@@ -708,12 +711,23 @@ export function SchedulePresenter({
           changingSongItem.id,
         )
         if (removeSuccess) {
-          // Add new song at the same position (after the previous item, or at start if first)
+          // Add new song
           const result = await addItemToSchedule(scheduleId, {
             songId,
-            afterItemId: previousItem?.id,
+            // If not the first item, insert after the previous item
+            afterItemId: isFirstItem ? undefined : previousItem?.id,
           })
-          if (result.success) {
+
+          if (result.success && result.data) {
+            // If it was the first item, we need to reorder to move it to the front
+            if (isFirstItem) {
+              // Build new order: new item first, then all other items in their current order
+              const otherItems = items.filter(
+                (item) => item.id !== changingSongItem.id,
+              )
+              const newOrder = [result.data.id, ...otherItems.map((i) => i.id)]
+              await reorderScheduleItems(scheduleId, { itemIds: newOrder })
+            }
             showToast(t('messages.songReplaced'), 'success')
             refetch()
           }
