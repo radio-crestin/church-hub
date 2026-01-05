@@ -173,14 +173,31 @@ export interface AddToScheduleInput {
 }
 
 /**
- * Input for updating a slide in a schedule
+ * Bible passage input for updates
+ */
+export interface BiblePassageInput {
+  translationId: number
+  translationAbbreviation: string
+  bookCode: string
+  bookName: string
+  startChapter: number
+  startVerse: number
+  endChapter: number
+  endVerse: number
+}
+
+/**
+ * Input for updating a slide or bible passage in a schedule
  */
 export interface UpdateScheduleSlideInput {
   id: number
-  slideType: SlideTemplate
+  // For slide updates
+  slideType?: SlideTemplate
   slideContent?: string
   // Versete Tineri entries (for versete_tineri slides)
   verseteTineriEntries?: VerseteTineriEntryInput[]
+  // For bible passage updates
+  biblePassage?: BiblePassageInput
 }
 
 /**
