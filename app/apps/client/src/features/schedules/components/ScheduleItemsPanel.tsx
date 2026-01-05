@@ -47,7 +47,7 @@ interface ScheduleItemsPanelProps {
   onNavigateToSong?: (songId: number) => void
   onDeleteItem?: (item: ScheduleItem) => void
   onEditItem?: (item: ScheduleItem) => void
-  onSearchSongReplacement?: (title: string) => void
+  onChangeSong?: (item: ScheduleItem) => void
   expandAllTrigger?: number
   collapseAllTrigger?: number
 }
@@ -95,7 +95,7 @@ export function ScheduleItemsPanel({
   onNavigateToSong,
   onDeleteItem,
   onEditItem,
-  onSearchSongReplacement,
+  onChangeSong,
   expandAllTrigger,
   collapseAllTrigger,
 }: ScheduleItemsPanelProps) {
@@ -411,7 +411,7 @@ export function ScheduleItemsPanel({
           onClose={handleCloseContextMenu}
           onEdit={handleEditFromContextMenu}
           onDelete={handleDeleteFromContextMenu}
-          onSearchSong={onSearchSongReplacement}
+          onChangeSong={onChangeSong}
         />
       )}
     </div>

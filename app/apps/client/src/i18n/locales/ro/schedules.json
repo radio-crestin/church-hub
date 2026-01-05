@@ -63,7 +63,9 @@
     "notFound": "Programul nu a fost gasit",
     "slideInserted": "Slide inserat",
     "slideUpdated": "Slide actualizat",
-    "biblePassageInserted": "Pasaj biblic adaugat"
+    "biblePassageInserted": "Pasaj biblic adaugat",
+    "biblePassageUpdated": "Pasaj biblic actualizat",
+    "songReplaced": "Cantarea a fost inlocuita"
   },
   "slideTemplates": {
     "announcement": "Anunt",
@@ -80,11 +82,13 @@
   },
   "biblePassage": {
     "title": "Adauga Pasaj Biblic",
+    "editTitle": "Editeaza Pasaj Biblic",
     "reference": "Referinta",
     "referencePlaceholder": "ex: Gen 1:1-5 sau Ioan 3:16",
     "referenceHint": "Introdu cartea, capitolul si versetele",
     "valid": "Valid",
     "add": "Adauga",
+    "save": "Salveaza",
     "errors": {
       "empty": "Introdu o referinta",
       "invalid_format": "Format invalid. Incearca: Gen 1:1 sau Gen 1:1-5",
@@ -158,7 +162,7 @@
   "contextMenu": {
     "edit": "Editeaza",
     "delete": "Sterge",
-    "searchSong": "Cauta inlocuitor",
+    "changeSong": "Schimba cantarea",
     "missingContent": "Continut negasit"
   },
   "editAsText": {

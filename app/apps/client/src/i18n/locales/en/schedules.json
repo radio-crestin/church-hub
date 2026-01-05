@@ -63,7 +63,9 @@
     "notFound": "Schedule not found",
     "slideInserted": "Slide inserted",
     "slideUpdated": "Slide updated",
-    "biblePassageInserted": "Bible passage added"
+    "biblePassageInserted": "Bible passage added",
+    "biblePassageUpdated": "Bible passage updated",
+    "songReplaced": "Song replaced"
   },
   "slideTemplates": {
     "announcement": "Announcement",
@@ -80,11 +82,13 @@
   },
   "biblePassage": {
     "title": "Add Bible Passage",
+    "editTitle": "Edit Bible Passage",
     "reference": "Reference",
     "referencePlaceholder": "e.g., Gen 1:1-5 or Ioan 3:16",
     "referenceHint": "Enter book, chapter, and verse range",
     "valid": "Valid",
     "add": "Add",
+    "save": "Save",
     "errors": {
       "empty": "Please enter a reference",
       "invalid_format": "Invalid format. Try: Gen 1:1 or Gen 1:1-5",
@@ -158,7 +162,7 @@
   "contextMenu": {
     "edit": "Edit",
     "delete": "Delete",
-    "searchSong": "Search replacement",
+    "changeSong": "Change song",
     "missingContent": "Content not found"
   },
   "editAsText": {
