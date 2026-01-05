@@ -6,7 +6,13 @@ export type PassageParseStatus =
   | 'invalid_format'
   | 'book_not_found'
   | 'invalid_chapter'
+  | 'invalid_verse'
   | 'end_before_start'
+
+export interface ChapterInfo {
+  chapter: number
+  verseCount: number
+}
 
 export interface ParsedPassageRange {
   status: PassageParseStatus
@@ -24,6 +30,8 @@ export interface ParsedPassageRange {
 export interface ParsePassageRangeParams {
   input: string
   books: BibleBook[]
+  /** Optional chapter info with verse counts for verse validation */
+  chapters?: ChapterInfo[]
 }
 
 // Matches: "Gen 1:1", "Gen 1:1-5", "Gen 1:1-2:5", "1 Ioan 3:16"
@@ -34,7 +42,7 @@ const PASSAGE_PATTERN =
 export function parsePassageRange(
   params: ParsePassageRangeParams,
 ): ParsedPassageRange {
-  const { input, books } = params
+  const { input, books, chapters } = params
   const trimmed = input.trim()
 
   if (!trimmed) {
@@ -118,6 +126,30 @@ export function parsePassageRange(
     return {
       status: 'end_before_start',
       errorKey: 'biblePassage.errors.end_before_start',
+    }
+  }
+
+  // Validate verse numbers if chapters data is provided
+  if (chapters && chapters.length > 0) {
+    const startChapterInfo = chapters.find((c) => c.chapter === startChapter)
+    const endChapterInfo = chapters.find((c) => c.chapter === endChapter)
+
+    // Check if start verse exists in the start chapter
+    if (startChapterInfo && startVerse > startChapterInfo.verseCount) {
+      return {
+        status: 'invalid_verse',
+        errorKey: 'biblePassage.errors.invalid_verse',
+        matchedBook, // Include matchedBook so calling code can maintain book ID
+      }
+    }
+
+    // Check if end verse exists in the end chapter
+    if (endChapterInfo && endVerse > endChapterInfo.verseCount) {
+      return {
+        status: 'invalid_verse',
+        errorKey: 'biblePassage.errors.invalid_verse',
+        matchedBook, // Include matchedBook so calling code can maintain book ID
+      }
     }
   }
 
