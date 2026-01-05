@@ -20,8 +20,6 @@ interface VersesListProps {
   onGoBack: () => void
 }
 
-const SCROLL_OFFSET_TOP = 100 // Fixed position from top in pixels
-
 export function VersesList({
   bookName,
   bookCode,
