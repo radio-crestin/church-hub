@@ -7,6 +7,7 @@ import { expandSongSlidesWithChoruses } from '../utils/expandSongSlides'
 interface SongSlidesPanelProps {
   song: SongWithSlides
   presentedSlideIndex: number | null
+  selectedSlideIndex: number
   isLoading: boolean
   onSlideClick: (slide: SongSlide, index: number) => void
 }
@@ -39,10 +40,12 @@ function stripHtmlTags(html: string): string {
 export function SongSlidesPanel({
   song,
   presentedSlideIndex,
+  selectedSlideIndex,
   isLoading,
   onSlideClick,
 }: SongSlidesPanelProps) {
   const highlightedRef = useRef<HTMLButtonElement>(null)
+  const selectedRef = useRef<HTMLButtonElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
   // Auto-scroll to the presented slide
@@ -64,6 +67,20 @@ export function SongSlidesPanel({
       })
     }
   }, [presentedSlideIndex])
+
+  // Auto-scroll to the selected slide (when not presented)
+  useEffect(() => {
+    if (
+      presentedSlideIndex === null &&
+      selectedRef.current &&
+      containerRef.current
+    ) {
+      selectedRef.current.scrollIntoView({
+        block: 'nearest',
+        behavior: 'smooth',
+      })
+    }
+  }, [selectedSlideIndex, presentedSlideIndex])
 
   if (isLoading) {
     return (
@@ -87,11 +104,16 @@ export function SongSlidesPanel({
       >
         {expandedSlides.map((slide, index) => {
           const isPresented = index === presentedSlideIndex
+          const isSelected =
+            index === selectedSlideIndex && presentedSlideIndex === null
           const slideNumber = index + 1
 
           const getButtonClass = () => {
             if (isPresented) {
               return 'bg-green-100 dark:bg-green-900/50 ring-2 ring-green-500'
+            }
+            if (isSelected) {
+              return 'bg-indigo-100 dark:bg-indigo-900/50 ring-2 ring-indigo-500'
             }
             return 'hover:bg-gray-100 dark:hover:bg-gray-700'
           }
@@ -100,6 +122,9 @@ export function SongSlidesPanel({
             if (isPresented) {
               return 'text-green-700 dark:text-green-300'
             }
+            if (isSelected) {
+              return 'text-indigo-700 dark:text-indigo-300'
+            }
             return 'text-gray-500 dark:text-gray-400'
           }
 
@@ -107,7 +132,17 @@ export function SongSlidesPanel({
             if (isPresented) {
               return 'text-green-900 dark:text-green-100'
             }
+            if (isSelected) {
+              return 'text-indigo-900 dark:text-indigo-100'
+            }
             return 'text-gray-700 dark:text-gray-200'
+          }
+
+          // Determine which ref to use
+          const getRef = () => {
+            if (isPresented) return highlightedRef
+            if (isSelected) return selectedRef
+            return null
           }
 
           // Get full content for display (strip HTML tags and decode entities)
@@ -116,7 +151,7 @@ export function SongSlidesPanel({
           return (
             <button
               key={slide.id}
-              ref={isPresented ? highlightedRef : null}
+              ref={getRef()}
               type="button"
               onClick={() => !isPresented && onSlideClick(slide, index)}
               className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${getButtonClass()}`}
