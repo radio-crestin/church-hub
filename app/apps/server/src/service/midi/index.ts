@@ -153,6 +153,10 @@ function createEasymidiWrapper(nativeMidi: {
       return this
     }
 
+    removeAllListeners(): void {
+      this.listeners.clear()
+    }
+
     close(): void {
       this.input.closePort()
       this.input.destroy()
@@ -522,13 +526,21 @@ export function connectInput(
  */
 export function disconnectInput(clearName = true) {
   if (currentInput) {
+    // Remove listeners first (may not exist in all implementations)
     try {
       currentInput.removeAllListeners()
+    } catch (error) {
+      midiLogger.debug(`removeAllListeners not available: ${error}`)
+    }
+
+    // Always try to close, regardless of removeAllListeners result
+    try {
       currentInput.close()
       midiLogger.info('Disconnected from MIDI input')
     } catch (error) {
-      midiLogger.error(`Error disconnecting input: ${error}`)
+      midiLogger.error(`Error closing input: ${error}`)
     }
+
     currentInput = null
   }
   config.inputDeviceId = null
