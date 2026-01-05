@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next'
 import { useOBSScenes } from '~/features/livestream/hooks'
 import { ShortcutActionRow } from './ShortcutActionRow'
 import { useAppShortcuts } from '../hooks'
-import { MIDIDeviceSelector } from '../midi/components'
+import { MIDIDeviceSelector, MIDISettingsProvider } from '../midi/components'
 import type {
   GlobalShortcutActionId,
   ShortcutActionConfig,
@@ -120,7 +120,9 @@ export function ShortcutsSettingsSection() {
 
       {/* MIDI Controller Section */}
       <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-        <MIDIDeviceSelector />
+        <MIDISettingsProvider>
+          <MIDIDeviceSelector />
+        </MIDISettingsProvider>
       </div>
 
       {/* Keyboard Shortcuts */}
