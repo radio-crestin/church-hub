@@ -18,6 +18,11 @@
     "noItems": "No items yet",
     "addFirstItem": "Add songs or slides to build your schedule"
   },
+  "presenter": {
+    "edit": "Edit",
+    "announcement": "Announcement",
+    "verseteTineri": "Youth Verses"
+  },
   "search": {
     "placeholder": "Search schedules...",
     "noResults": "No schedules found for \"{{query}}\"",
