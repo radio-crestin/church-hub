@@ -70,5 +70,5 @@ export type {
 } from './types'
 export { formatVerseReference } from './types'
 // Utils
-export type { ParsedPassageRange } from './utils/parsePassageRange'
+export type { ChapterInfo, ParsedPassageRange } from './utils/parsePassageRange'
 export { parsePassageRange } from './utils/parsePassageRange'
