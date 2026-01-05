@@ -91,6 +91,30 @@ export function useMIDIShortcuts({
       Array<{ type: 'global' | 'scene'; action: string }>
     >()
 
+    // Helper to add a mapping, preventing duplicates
+    const addMapping = (
+      shortcut: string,
+      type: 'global' | 'scene',
+      action: string,
+    ) => {
+      const existing = map.get(shortcut) || []
+      // Check for duplicates - same type and action
+      const isDuplicate = existing.some(
+        (m) => m.type === type && m.action === action,
+      )
+      if (!isDuplicate) {
+        existing.push({ type, action })
+        map.set(shortcut, existing)
+        logger.debug(
+          `Mapped MIDI shortcut ${shortcut} to ${type} action ${action}`,
+        )
+      } else {
+        logger.debug(
+          `Skipping duplicate mapping: ${shortcut} -> ${type} ${action}`,
+        )
+      }
+    }
+
     // Add global action shortcuts
     if (shortcuts?.actions) {
       const actionIds = Object.keys(
@@ -101,12 +125,7 @@ export function useMIDIShortcuts({
         if (config?.enabled && config.shortcuts) {
           for (const shortcut of config.shortcuts) {
             if (isMIDIShortcut(shortcut)) {
-              const existing = map.get(shortcut) || []
-              existing.push({ type: 'global', action: actionId })
-              map.set(shortcut, existing)
-              logger.debug(
-                `Mapped MIDI shortcut ${shortcut} to global action ${actionId}`,
-              )
+              addMapping(shortcut, 'global', actionId)
             }
           }
         }
@@ -116,10 +135,7 @@ export function useMIDIShortcuts({
     // Add scene shortcuts
     for (const { shortcut, sceneName } of sceneShortcuts) {
       if (isMIDIShortcut(shortcut)) {
-        const existing = map.get(shortcut) || []
-        existing.push({ type: 'scene', action: sceneName })
-        map.set(shortcut, existing)
-        logger.debug(`Mapped MIDI shortcut ${shortcut} to scene ${sceneName}`)
+        addMapping(shortcut, 'scene', sceneName)
       }
     }
 
