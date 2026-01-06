@@ -5,26 +5,26 @@ import type { AISearchConfig, AISearchResult } from './types'
 import type { SongSearchResult } from '../songs/types'
 
 const ANALYSIS_PROMPT = `You are analyzing search results for a church song database.
-Given the user's search intent and a list of song candidates with their lyrics content,
+Given the user's search intent and matching lyrics from each song candidate,
 score each song's relevance from 0-100 based on how well it matches the search intent.
 
 SCORING CRITERIA:
-- 90-100: Song is DIRECTLY about this topic (central theme of the entire song)
-- 70-89: Song has a MAJOR section about this topic (verse or chorus dedicated to it)
-- 50-69: Song MENTIONS the topic meaningfully (relevant lines but not main theme)
-- 30-49: Song has TANGENTIAL connection (related concepts but not the topic itself)
-- 0-29: Song has MINIMAL or NO relevance (only superficial keyword match)
+- 90-100: Song is DIRECTLY about this topic (the matching lyrics show it's a central theme)
+- 70-89: Song has STRONG content on this topic (dedicated verse/chorus about it)
+- 50-69: Song MENTIONS the topic meaningfully (relevant lines in context)
+- 30-49: Song has WEAK connection (related concepts but not the searched topic)
+- 0-29: Song has MINIMAL relevance (keyword appears but song is about something else)
 
 IMPORTANT:
-- Read the actual lyrics content provided, not just the title
-- A song titled "Love" but with lyrics about something else should score low for "love" searches
-- Songs that express the searched concept through metaphor or different words can score high
-- Consider the overall message and theme, not just keyword presence
+- The "matchingLyrics" field shows ONLY the lines that matched the search query
+- Judge based on how these lyrics relate to what the user is searching for
+- Consider if the lyrics directly express the searched concept or just mention a word
+- A song with many matching lines about the topic should score higher
 
-For EACH song, you MUST provide a brief reason explaining your score.
+For EACH song, provide a brief reason (max 10 words) explaining your score.
 
 Return JSON array:
-[{"id": 1, "score": 85, "reason": "Entire chorus about God's love"}, {"id": 2, "score": 45, "reason": "Mentions hope once but mainly about praise"}, ...]
+[{"id": 1, "score": 85, "reason": "Chorus directly about God's love"}, {"id": 2, "score": 35, "reason": "Word appears but song about praise"}]
 
 Include ALL songs. Sort by score descending.`
 
@@ -32,6 +32,45 @@ interface ScoredResult {
   id: number
   score: number
   reason?: string
+}
+
+/**
+ * Extract only the lines from content that contain words from the original query
+ * This filters out noise from AI-generated terms and focuses on relevant matches
+ */
+function extractRelevantLines(content: string, originalQuery: string): string {
+  if (!content || !originalQuery) return ''
+
+  // Extract query words (normalize: lowercase, remove diacritics for matching)
+  const normalizeText = (text: string) =>
+    text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+
+  const queryWords = originalQuery
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((w) => w.length >= 2)
+    .map((w) => normalizeText(w))
+
+  if (queryWords.length === 0) return content.slice(0, 300)
+
+  // Split content into lines and filter to those containing query words
+  const lines = content.split(/\n|<br\s*\/?>/i).filter((line) => line.trim())
+
+  const relevantLines = lines.filter((line) => {
+    const normalizedLine = normalizeText(line)
+    return queryWords.some((word) => normalizedLine.includes(word))
+  })
+
+  // Return relevant lines, or first few lines if no matches
+  if (relevantLines.length > 0) {
+    return relevantLines.slice(0, 8).join('\n') // Max 8 relevant lines
+  }
+
+  // Fallback: return first 3 lines if no direct matches
+  return lines.slice(0, 3).join('\n')
 }
 
 /**
@@ -44,12 +83,12 @@ export async function analyzeAndScoreResults(
 ): Promise<AISearchResult[]> {
   if (candidates.length === 0) return []
 
-  // Prepare candidates summary for AI analysis - include more content for better scoring
+  // Prepare candidates summary - only include lyrics that match original query
   const candidatesSummary = candidates.map((c) => ({
     id: c.id,
     title: c.title,
     category: c.categoryName || 'Uncategorized',
-    lyrics: c.matchedContent?.slice(0, 800) || '',
+    matchingLyrics: extractRelevantLines(c.matchedContent || '', originalQuery),
   }))
 
   const openai = createOpenAI({
@@ -61,14 +100,13 @@ export async function analyzeAndScoreResults(
     const { text, reasoning } = await generateText({
       model: openai(config.model || 'gpt-5.2'),
       system: ANALYSIS_PROMPT,
-      prompt: `Search query: "${originalQuery}"
+      prompt: `User is searching for: "${originalQuery}"
 
-Analyze each song's lyrics content and determine how relevant it is to the search query.
-Focus on the ACTUAL CONTENT, not just the title.
+Score each song based on how well its matching lyrics relate to this search.
 
-Songs to analyze (${candidates.length} total):
+Songs (${candidates.length} total):
 ${JSON.stringify(candidatesSummary, null, 2)}`,
-      maxTokens: 6000,
+      maxTokens: 5000,
       providerOptions: {
         openai: {
           reasoningEffort: 'low',
