@@ -1,4 +1,5 @@
 import type { Database } from 'bun:sqlite'
+import { rebuildSearchIndex } from '../../service/songs/search'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -8,7 +9,7 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
   console.log(`[migrate-song-titles:${level}] ${message}`)
 }
 
-const MIGRATION_KEY = 'migrate_song_titles_ascii_v2'
+const MIGRATION_KEY = 'migrate_song_titles_ascii_v3'
 
 /**
  * Transliterate Romanian diacritics to ASCII equivalents
@@ -187,4 +188,10 @@ export function migrateSongTitles(db: Database): void {
     'info',
     `Migration complete: ${updatedCount} updated, ${skippedCount} skipped, ${replacedCount} replaced duplicates`,
   )
+
+  // Rebuild search index to reflect title changes
+  if (updatedCount > 0 || replacedCount > 0) {
+    log('info', 'Rebuilding search index after title migration...')
+    rebuildSearchIndex()
+  }
 }
