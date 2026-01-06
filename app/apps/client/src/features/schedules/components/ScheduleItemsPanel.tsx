@@ -239,14 +239,34 @@ export function ScheduleItemsPanel({
     }
   }, [presentedInfo, items, expanded])
 
-  // Auto-scroll to the presented slide
+  // Auto-scroll to position the presented slide as the second item from top
   useEffect(() => {
-    if (highlightedRef.current) {
+    if (highlightedRef.current && containerRef.current) {
       // Small delay to ensure DOM is ready after auto-expand
       const timeoutId = setTimeout(() => {
-        highlightedRef.current?.scrollIntoView({
+        const container = containerRef.current
+        const element = highlightedRef.current
+        if (!container || !element) return
+
+        // Get positions relative to the container
+        const containerRect = container.getBoundingClientRect()
+        const elementRect = element.getBoundingClientRect()
+
+        // Calculate the offset to position the element as the second item
+        // We want one item visible above, so offset by approximately one slide height (56px)
+        const offsetFromTop = 56
+
+        // Calculate target scroll position
+        const elementOffsetFromContainer = elementRect.top - containerRect.top
+        const targetScrollTop =
+          container.scrollTop + elementOffsetFromContainer - offsetFromTop
+
+        // Ensure we don't scroll to negative values
+        const finalScrollTop = Math.max(0, targetScrollTop)
+
+        container.scrollTo({
+          top: finalScrollTop,
           behavior: 'smooth',
-          block: 'nearest',
         })
       }, 100)
       return () => clearTimeout(timeoutId)
