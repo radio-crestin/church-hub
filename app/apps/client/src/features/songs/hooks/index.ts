@@ -1,3 +1,5 @@
+export { useAISearchSettings } from './useAISearchSettings'
+export { useAISearchSongs } from './useAISearchSongs'
 export { useCategories } from './useCategories'
 export { useCloneSlide } from './useCloneSlide'
 export { useDeleteCategory } from './useDeleteCategory'

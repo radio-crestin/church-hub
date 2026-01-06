@@ -1,4 +1,4 @@
-import { Loader2, Music, Search } from 'lucide-react'
+import { Loader2, Music, Search, Sparkles } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -6,6 +6,8 @@ import { useDebouncedValue } from '~/hooks/useDebouncedValue'
 import { Combobox } from '~/ui/combobox'
 import { SongCard } from './SongCard'
 import {
+  useAISearchSettings,
+  useAISearchSongs,
   useCategories,
   useSearchKeyboardNavigation,
   useSearchSongs,
@@ -67,6 +69,36 @@ export function SongList({
   } = useSearchSongs(debouncedQuery, categoryId)
 
   const { data: categories } = useCategories()
+
+  // AI Search
+  const { isEnabled: aiSearchAvailable } = useAISearchSettings()
+  const aiSearchMutation = useAISearchSongs()
+  const [aiSearchResults, setAiSearchResults] = useState<SongSearchResult[]>([])
+  const [isAISearchActive, setIsAISearchActive] = useState(false)
+
+  // Handle AI search button click
+  const handleAISearch = useCallback(async () => {
+    if (!localQuery.trim() || aiSearchMutation.isPending) return
+
+    setIsAISearchActive(true)
+    try {
+      const response = await aiSearchMutation.mutateAsync({
+        query: localQuery,
+        categoryId,
+      })
+      setAiSearchResults(response.results)
+    } catch {
+      setAiSearchResults([])
+    }
+  }, [localQuery, categoryId, aiSearchMutation])
+
+  // Clear AI results when query changes
+  useEffect(() => {
+    if (isAISearchActive) {
+      setIsAISearchActive(false)
+      setAiSearchResults([])
+    }
+  }, [localQuery])
 
   // Sync local state when URL search param changes (e.g., navigation)
   useEffect(() => {
@@ -130,6 +162,23 @@ export function SongList({
       presentationCount?: number
     }>
 
+    // AI search results take priority when active
+    if (isAISearchActive && aiSearchResults.length > 0) {
+      allSongs = aiSearchResults.map((result: SongSearchResult) => ({
+        id: result.id,
+        title: result.title,
+        categoryId: result.categoryId,
+        categoryName: result.categoryName,
+        highlightedTitle: result.highlightedTitle,
+        matchedContent: result.matchedContent,
+        presentationCount: result.presentationCount,
+      }))
+      return {
+        displaySongs: allSongs,
+        totalCount: allSongs.length,
+      }
+    }
+
     if (hasSearchQuery && searchResults) {
       // Search results are already filtered by category on the server
       allSongs = searchResults.map((result: SongSearchResult) => ({
@@ -165,7 +214,14 @@ export function SongList({
       displaySongs: allSongs,
       totalCount: total,
     }
-  }, [hasSearchQuery, searchResults, songsData, categories])
+  }, [
+    hasSearchQuery,
+    searchResults,
+    songsData,
+    categories,
+    isAISearchActive,
+    aiSearchResults,
+  ])
 
   // Keyboard navigation for search results
   const handleSelectSong = useCallback(
@@ -250,12 +306,36 @@ export function SongList({
             placeholder={t('search.placeholder')}
             className="w-full pl-10 pr-8 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
           />
-          {showPendingIndicator && (
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-              <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" />
+          {(showPendingIndicator || aiSearchMutation.isPending) && (
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
+              {aiSearchMutation.isPending ? (
+                <>
+                  <Sparkles className="w-4 h-4 text-indigo-500 animate-pulse" />
+                  <span className="text-xs text-indigo-500">
+                    {t('search.aiProcessing')}
+                  </span>
+                </>
+              ) : (
+                <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" />
+              )}
             </div>
           )}
         </div>
+        {aiSearchAvailable && (
+          <button
+            type="button"
+            onClick={handleAISearch}
+            disabled={!localQuery.trim() || aiSearchMutation.isPending}
+            className={`px-3 py-2 rounded-lg border transition-colors flex items-center gap-1.5 ${
+              isAISearchActive
+                ? 'bg-indigo-600 text-white border-indigo-600'
+                : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
+            title={t('search.aiSearchTooltip')}
+          >
+            <Sparkles className="w-4 h-4" />
+          </button>
+        )}
         <div style={{ width: categoryDropdownWidth }}>
           <Combobox
             options={[
