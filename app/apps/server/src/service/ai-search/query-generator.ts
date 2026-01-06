@@ -33,6 +33,11 @@ export async function generateSearchTerms(
     system: SYSTEM_PROMPT,
     prompt: `User is searching for: "${userQuery}"`,
     maxTokens: 300,
+    providerOptions: {
+      openai: {
+        reasoningEffort: 'low',
+      },
+    },
   })
 
   // Parse the JSON response
