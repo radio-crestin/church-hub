@@ -42,6 +42,101 @@ export const songsPaths = {
       },
     },
   },
+  '/api/songs/ai-search': {
+    post: {
+      tags: ['Songs'],
+      summary: 'AI-enhanced semantic search',
+      description:
+        'Search songs using AI to interpret intent and find semantically relevant results. Generates multiple search terms from the query and combines results.',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['query'],
+              properties: {
+                query: {
+                  type: 'string',
+                  description: 'Search query (natural language)',
+                },
+                categoryId: {
+                  type: 'integer',
+                  description: 'Optional category filter',
+                },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        '200': {
+          description: 'AI search results',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'object',
+                    properties: {
+                      results: {
+                        type: 'array',
+                        items: {
+                          $ref: '#/components/schemas/SongSearchResult',
+                        },
+                      },
+                      termsUsed: {
+                        type: 'array',
+                        items: { type: 'string' },
+                        description: 'AI-generated search terms used',
+                      },
+                      totalCandidates: {
+                        type: 'integer',
+                        description: 'Total candidates before limiting',
+                      },
+                      processingTimeMs: {
+                        type: 'integer',
+                        description: 'Processing time in milliseconds',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        '400': {
+          description: 'Invalid request',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  error: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+        '500': {
+          description: 'AI search failed',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  error: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
   '/api/songs/search/rebuild': {
     post: {
       tags: ['Songs'],
