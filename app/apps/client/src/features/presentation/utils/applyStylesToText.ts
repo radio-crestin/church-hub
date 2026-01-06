@@ -90,7 +90,7 @@ function getOpeningTags(range: TextStyleRange): string {
 
   if (range.highlight) {
     tags.push(
-      `<mark data-color="${range.highlight}" data-highlight-id="${range.id}" style="background-color: ${range.highlight}; padding: 0 2px;">`,
+      `<mark data-color="${range.highlight}" data-highlight-id="${range.id}" style="background-color: ${range.highlight};">`,
     )
   }
 
