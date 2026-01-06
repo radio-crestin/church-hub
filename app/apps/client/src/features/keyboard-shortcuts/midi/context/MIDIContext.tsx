@@ -503,10 +503,14 @@ export function MIDIProvider({
     [],
   )
 
+  // Use ref for requestAccess to avoid dependency array issues
+  const requestAccessRef = useRef(requestAccess)
+  requestAccessRef.current = requestAccess
+
   // Auto-connect if enabled
   useEffect(() => {
     if (config.enabled) {
-      requestAccess()
+      requestAccessRef.current()
     }
 
     return () => {
@@ -517,7 +521,7 @@ export function MIDIProvider({
         wsRef.current.close()
       }
     }
-  }, [config.enabled, requestAccess])
+  }, [config.enabled]) // Only re-run when enabled changes
 
   // Sync config from initialConfig prop changes
   useEffect(() => {
