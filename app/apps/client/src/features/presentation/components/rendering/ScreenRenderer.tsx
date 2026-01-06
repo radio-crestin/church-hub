@@ -914,6 +914,9 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
   const config = screen.contentConfigs[effectiveContentType]
   const bg = config?.background || screen.contentConfigs.empty?.background
 
+  // Extract styleRanges from presentation state for text highlighting
+  const styleRanges = presentationState?.slideHighlights ?? []
+
   // On mobile, use safe area wrapper to avoid content going behind status bar
   const isMobileDevice = isMobile()
 
@@ -997,6 +1000,7 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
               containerHeight={containerSize.height}
               isVisible={isVisible}
               nextSlideData={nextSlideData}
+              styleRanges={styleRanges}
             />
           )}
         </div>

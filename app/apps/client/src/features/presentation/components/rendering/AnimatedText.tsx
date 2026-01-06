@@ -321,11 +321,10 @@ export function AnimatedText({
       <div ref={measureRef} style={measureStyle} aria-hidden="true" />
       {/* Visible text - use dangerouslySetInnerHTML if we have styled content */}
       {finalDisplayContent ? (
-        <div
-          ref={textRef}
-          style={textStyles}
-          dangerouslySetInnerHTML={{ __html: finalDisplayContent }}
-        />
+        <div ref={textRef} style={textStyles}>
+          {/* Wrap in span to prevent flexbox from treating inline elements as flex items */}
+          <span dangerouslySetInnerHTML={{ __html: finalDisplayContent }} />
+        </div>
       ) : (
         <div ref={textRef} style={textStyles}>
           {displayContent}
