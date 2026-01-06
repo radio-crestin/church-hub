@@ -389,10 +389,9 @@ export function ScreenContent({
     const getContentText = () => {
       if (nextSlideData?.verseteTineriSummary) {
         const { entries, hasMore } = nextSlideData.verseteTineriSummary
-        const text = entries
-          .map((entry) => `${entry.personName} - ${entry.reference}`)
-          .join(' • ')
-        return hasMore ? `${text} ...` : text
+        // Show only person names separated by commas
+        const text = entries.map((entry) => entry.personName).join(', ')
+        return hasMore ? `${text}, ...` : text
       }
       return nextSlideData?.preview || ''
     }
@@ -521,8 +520,15 @@ export function ScreenContent({
             content={getContentText()}
             style={{
               ...ns.contentStyle,
-              maxFontSize: ns.contentStyle.maxFontSize * fontScale,
-              minFontSize: (ns.contentStyle.minFontSize ?? 12) * fontScale,
+              // Use 1.5x bigger font for versete_tineri
+              maxFontSize:
+                ns.contentStyle.maxFontSize *
+                fontScale *
+                (nextSlideData?.contentType === 'versete_tineri' ? 1.5 : 1),
+              minFontSize:
+                (ns.contentStyle.minFontSize ?? 12) *
+                fontScale *
+                (nextSlideData?.contentType === 'versete_tineri' ? 1.5 : 1),
               compressLines: shouldCompress,
               lineSeparator: ns.contentStyle.lineSeparator ?? 'space',
             }}
