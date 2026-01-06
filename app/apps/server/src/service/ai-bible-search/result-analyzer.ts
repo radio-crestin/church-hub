@@ -5,27 +5,25 @@ import type { AIBibleSearchConfig, AIBibleSearchResult } from './types'
 import type { BibleSearchResult } from '../bible/types'
 
 const ANALYSIS_PROMPT = `You are analyzing Bible verse search results.
-Given the user's search intent and a list of verse candidates with their full text,
-score each verse's relevance from 0-100 based on how well it matches the search intent.
+Given the user's search intent and verse text, score each verse's relevance from 0-100.
 
 SCORING CRITERIA:
-- 90-100: Verse is a KEY PASSAGE on this topic (famous/foundational verse on the subject)
-- 70-89: Verse DIRECTLY addresses the topic (clear teaching or statement about it)
-- 50-69: Verse is RELATED to the topic (discusses connected concepts)
-- 30-49: Verse has INDIRECT connection (metaphorical or contextual relevance)
-- 0-29: Verse has MINIMAL relevance (superficial keyword match only)
+- 90-100: KEY PASSAGE on this topic (famous/foundational verse directly about the subject)
+- 70-89: DIRECTLY addresses the topic (clear teaching or statement)
+- 50-69: RELATED to the topic (discusses connected concepts)
+- 30-49: INDIRECT connection (word appears but verse is about something else)
+- 0-29: MINIMAL relevance (superficial keyword match)
 
 IMPORTANT:
-- Read the actual verse text provided, not just the reference
-- Consider theological depth and how directly the verse teaches on the topic
-- Famous passages (John 3:16 for salvation, 1 Cor 13 for love, Psalm 23 for comfort) should score high when relevant
-- A verse mentioning a word doesn't mean it's about that topic
-- Consider the verse's context and primary message
+- Read the actual verse text, not just the reference
+- A verse mentioning a word doesn't mean it's ABOUT that topic
+- Famous passages should score high when relevant (John 3:16 for salvation, 1 Cor 13 for love)
+- Consider what the verse is primarily teaching
 
-For EACH verse, you MUST provide a brief reason explaining your score.
+For EACH verse, provide a brief reason (max 10 words) explaining your score.
 
 Return JSON array:
-[{"id": 1, "score": 95, "reason": "Key verse defining God's love for the world"}, {"id": 2, "score": 40, "reason": "Mentions faith but primarily about works"}, ...]
+[{"id": 1, "score": 95, "reason": "Key verse on God's love for world"}, {"id": 2, "score": 35, "reason": "Word appears but verse about works"}]
 
 Include ALL verses. Sort by score descending.`
 
@@ -45,12 +43,11 @@ export async function analyzeBibleResults(
 ): Promise<AIBibleSearchResult[]> {
   if (candidates.length === 0) return []
 
-  // Prepare candidates summary for AI analysis - include full verse text
+  // Prepare candidates - compact format with verse text
   const candidatesSummary = candidates.map((c) => ({
     id: c.id,
-    reference: c.reference,
-    book: c.bookName,
-    verseText: c.text, // Full verse text for proper analysis
+    ref: c.reference,
+    text: c.text,
   }))
 
   const openai = createOpenAI({
