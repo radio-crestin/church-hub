@@ -243,6 +243,10 @@ export function SongList({
             value={localQuery}
             onChange={handleSearchChange}
             onKeyDown={handleKeyDown}
+            onClick={(e) => {
+              e.currentTarget.select()
+              setSelectedIndex(-1)
+            }}
             placeholder={t('search.placeholder')}
             className="w-full pl-10 pr-8 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
           />

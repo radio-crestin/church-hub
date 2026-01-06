@@ -136,23 +136,21 @@
 ~~- si sunt foarte multi clienti conectati..~~
 ~~- implementeaza background reconnect pentru midi controller~~
 ~~- adauga optiunea de a importa doar cantari, Biblia, programe, configurare dintr-un fisier de backups~~
-- by default nu selecta prima cantare in search results
-
-- creaza optiunea de a adauga live-urile create intr-un playlist pe YouTube
-- adauga optiunea de a afisa pe un ecran separat continutul in anumita limba (o versiune a Bibliei diferita, traduceri cu AI ale cantarilor.. si eventual traduceri in timp real)
+~~- by default nu selecta prima cantare in search results~~
 ~~- midi controller-ul e disabled~~
 ~~- cand se salveaza programul este o problema~~
 ~~- afiseaza pagina cantarii cand dau click din pagina de progam~~
 - incarca o pagina statica in obs pentru a face refresh automat
-- cand apesi F5, fa focus pe search chiar daca esti pe pagina
-- search-ul din Biblie nu e bun
-- 
-- adauga muzica
-- când sunt doar două versuri, nu mai comprima liniile
+~~- cand apesi F5, fa focus pe search chiar daca esti pe pagina~~
+~~- search-ul din Biblie nu e bun~~
+~~- când sunt doar două versuri, nu mai comprima liniile~~
 - imbunatateste search-ul..
 - creaza un quickstart guide pentru utilizatori
 - adauga optiune de a cauta cantari folosind AI
 - adauga posibilitatea de a face highlight pentru sesiunea curenta
+- adauga muzica
 - test backing up the database in https://turso.tech/blog/turso-offline-sync-public-beta
 - exportul ca si pptx ar trebui sa aiba textul ceva mai mare
 - add update checker
+- creaza optiunea de a adauga live-urile create intr-un playlist pe YouTube
+- adauga optiunea de a afisa pe un ecran separat continutul in anumita limba (o versiune a Bibliei diferita, traduceri cu AI ale cantarilor.. si eventual traduceri in timp real)
