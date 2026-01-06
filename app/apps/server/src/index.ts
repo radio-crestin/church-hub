@@ -32,6 +32,7 @@ import {
   updateUserPermissions,
   upsertSetting,
 } from './service'
+import { aiSearchSongs } from './service/ai-search'
 import {
   getOrCreateSystemToken,
   getSystemToken,
@@ -2442,6 +2443,54 @@ async function main() {
             },
           }),
         )
+      }
+
+      // POST /api/songs/ai-search - AI-enhanced semantic search
+      if (req.method === 'POST' && url.pathname === '/api/songs/ai-search') {
+        const permError = checkPermission('songs.view')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as {
+            query: string
+            categoryId?: number
+          }
+
+          if (!body.query?.trim()) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Query is required' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const results = await aiSearchSongs({
+            query: body.query,
+            categoryId: body.categoryId,
+          })
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: results }), {
+              headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+              },
+            }),
+          )
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : 'AI search failed'
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: message }), {
+              status: 500,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
       }
 
       // POST /api/songs/search/rebuild - Rebuild FTS search index
