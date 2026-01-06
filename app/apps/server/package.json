@@ -11,6 +11,8 @@
     "compile": "node ../../scripts/run-bun.js ./scripts/compile.ts"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^1.0.0",
+    "ai": "^4.0.0",
     "debug": "^4.4.3",
     "drizzle-orm": "^0.45.1",
     "easymidi": "^3.1.0",
