@@ -125,10 +125,10 @@
 ~~- converteste prezentarea unui program la fel ca celelalte~~
 ~~- dupa ce ai cautat o cantare si apoi ai deschis-o, intoarcete la aceleasi rezultate~~
 ~~- imbunatateste UX-ul pentru cautarea in cantari astfel incat sa poti sa il folosesti doar din tastatura (sa pui sa dai down, apoi enter, apoi enter din nou si prezinti cantarea)~~
-- cand nu se gaseste un verset afiseaza un warning si creaza entry-ul
+~~- cand nu se gaseste un verset afiseaza un warning si creaza entry-ul~~
 ~~- adauga full text search si pentru Biblie~~
+- afiseaza urmeaza corect pentru urmatoarea cantare/element din program
 - elimina din titlul extras numerele (gen 1.)
-- exportul ca si pptx ar trebui sa aiba textul ceva mai mare
 - adauga filtru pentru categoria de cantari si deasemenea, fa loading la cantari cand se face scrolling (infinite scroll)
 - background diferit la sectiunea urmeaza, ca sa poata fi identificata usor
 - cand se selecteaza primul verset se face un loop ciudat
@@ -147,3 +147,5 @@
 - creaza un quickstart guide pentru utilizatori
 - adauga optiune de a cauta cantari folosind AI
 - adauga posibilitatea de a face highlight pentru sesiunea curenta
+- test backing up the database in https://turso.tech/blog/turso-offline-sync-public-beta
+- exportul ca si pptx ar trebui sa aiba textul ceva mai mare
