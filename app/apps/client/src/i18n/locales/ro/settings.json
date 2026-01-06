@@ -64,6 +64,10 @@
         "label": "Activează Căutarea AI",
         "description": "Adaugă un buton de căutare AI în bara de căutare cântece"
       },
+      "analyzeResults": {
+        "label": "Analizează Rezultatele cu AI",
+        "description": "Folosește AI pentru a evalua și ordona rezultatele după relevanță (mai lent dar mai precis)"
+      },
       "provider": {
         "label": "Furnizor AI",
         "description": "Selectează furnizorul serviciului AI"

@@ -18,6 +18,7 @@ const DEFAULT_CONFIG: AISearchConfig = {
   model: 'gpt-5.2',
   apiKey: '',
   baseUrl: '',
+  analyzeResults: false,
 }
 
 export function AISearchSettings() {
@@ -45,7 +46,8 @@ export function AISearchSettings() {
       localConfig.provider !== config.provider ||
       localConfig.model !== config.model ||
       localConfig.apiKey !== config.apiKey ||
-      localConfig.baseUrl !== config.baseUrl
+      localConfig.baseUrl !== config.baseUrl ||
+      localConfig.analyzeResults !== config.analyzeResults
     setHasChanges(changed)
   }, [localConfig, config])
 
@@ -110,6 +112,37 @@ export function AISearchSettings() {
             <span
               className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                 localConfig.enabled ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
+        </div>
+
+        {/* Analyze Results Toggle */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <label className="text-sm font-medium text-gray-900 dark:text-white">
+              {t('sections.aiSearch.analyzeResults.label')}
+            </label>
+            <p className="text-gray-600 dark:text-gray-400 text-xs mt-0.5">
+              {t('sections.aiSearch.analyzeResults.description')}
+            </p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={localConfig.analyzeResults ?? false}
+            onClick={() =>
+              updateField('analyzeResults', !localConfig.analyzeResults)
+            }
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              localConfig.analyzeResults
+                ? 'bg-indigo-600'
+                : 'bg-gray-200 dark:bg-gray-700'
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                localConfig.analyzeResults ? 'translate-x-6' : 'translate-x-1'
               }`}
             />
           </button>
