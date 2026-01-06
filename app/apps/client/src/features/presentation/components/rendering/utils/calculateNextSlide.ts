@@ -14,10 +14,16 @@ interface CalculateNextSlideParams {
 }
 
 /**
- * Strips HTML tags from content
+ * Strips HTML tags from content while preserving line breaks
  */
 function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, ' ').trim()
+  return html
+    .replace(/<br\s*\/?>/gi, '\n') // Replace <br> tags with newlines
+    .replace(/<\/p>\s*<p[^>]*>/gi, '\n') // Replace </p><p> with newline
+    .replace(/<\/(p|div|h[1-6])>/gi, '\n') // Closing block tags to newlines
+    .replace(/<[^>]*>/g, '') // Remove all remaining HTML tags
+    .replace(/\n{3,}/g, '\n\n') // Collapse multiple newlines
+    .trim()
 }
 
 /**
@@ -71,10 +77,10 @@ function createVerseteTineriSummary(entries: VerseteTineriEntry[]): {
 }
 
 /**
- * Formats a single versete tineri entry preview
+ * Formats a single versete tineri entry preview (includes verse text)
  */
 function formatVerseteTineriEntryPreview(entry: VerseteTineriEntry): string {
-  return `${entry.personName} - ${entry.reference}`
+  return `${entry.personName} - ${entry.reference}: ${entry.text}`
 }
 
 /**
