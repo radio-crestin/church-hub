@@ -1,4 +1,4 @@
-import { Music, Search } from 'lucide-react'
+import { Loader2, Music, Search } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -9,11 +9,10 @@ import {
   useCategories,
   useSearchKeyboardNavigation,
   useSearchSongs,
-  useSongs,
+  useSongsInfinite,
 } from '../hooks'
-import type { Song, SongSearchResult } from '../types'
+import type { SongSearchResult } from '../types'
 
-const MAX_DISPLAY_SONGS = 50
 const SEARCH_DEBOUNCE_MS = 1500
 
 interface SongListProps {
@@ -35,6 +34,8 @@ export function SongList({
 }: SongListProps) {
   const { t } = useTranslation('songs')
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const loadMoreRef = useRef<HTMLDivElement>(null)
+
   // Local state for immediate input feedback
   const [localQuery, setLocalQuery] = useState(searchQuery)
 
@@ -45,12 +46,22 @@ export function SongList({
     isPending,
   } = useDebouncedValue(localQuery, SEARCH_DEBOUNCE_MS)
 
-  const { data: songs, isLoading: songsLoading } = useSongs()
+  // Infinite query for browse mode (non-search)
+  const {
+    data: songsData,
+    isLoading: songsLoading,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useSongsInfinite(categoryId)
+
+  // Search query for search mode
   const {
     data: searchResults,
     isLoading: searchLoading,
     isFetching,
   } = useSearchSongs(debouncedQuery, categoryId)
+
   const { data: categories } = useCategories()
 
   // Sync local state when URL search param changes (e.g., navigation)
@@ -67,6 +78,35 @@ export function SongList({
   const hasSearchQuery = debouncedQuery.length > 0
   const isLoading = hasSearchQuery ? searchLoading || isFetching : songsLoading
   const showPendingIndicator = isPending && localQuery.length > 0
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    // Only use infinite scroll in browse mode (non-search)
+    if (hasSearchQuery || !hasNextPage || isFetchingNextPage) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // When the load more element is 200px away from viewport, trigger fetch
+        if (entries[0].isIntersecting) {
+          fetchNextPage()
+        }
+      },
+      {
+        rootMargin: '200px', // Preload before reaching the end
+      },
+    )
+
+    const currentRef = loadMoreRef.current
+    if (currentRef) {
+      observer.observe(currentRef)
+    }
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef)
+      }
+    }
+  }, [hasSearchQuery, hasNextPage, isFetchingNextPage, fetchNextPage])
 
   const { displaySongs, totalCount } = useMemo(() => {
     let allSongs: Array<{
@@ -88,28 +128,30 @@ export function SongList({
         highlightedTitle: result.highlightedTitle,
         matchedContent: result.matchedContent,
       }))
-    } else {
-      // Filter by category for non-search mode (client-side filtering)
-      let filteredSongs = songs ?? []
-      if (categoryId !== undefined) {
-        filteredSongs = filteredSongs.filter(
-          (song) => song.categoryId === categoryId,
-        )
+      return {
+        displaySongs: allSongs,
+        totalCount: allSongs.length,
       }
-      allSongs = filteredSongs.map((song: Song) => ({
-        id: song.id,
-        title: song.title,
-        categoryId: song.categoryId,
-        categoryName:
-          categories?.find((c) => c.id === song.categoryId)?.name ?? null,
-      }))
     }
 
+    // Browse mode: use infinite query data
+    const pages = songsData?.pages ?? []
+    const songs = pages.flatMap((page) => page.songs)
+    const total = pages[0]?.total ?? 0
+
+    allSongs = songs.map((song) => ({
+      id: song.id,
+      title: song.title,
+      categoryId: song.categoryId,
+      categoryName:
+        categories?.find((c) => c.id === song.categoryId)?.name ?? null,
+    }))
+
     return {
-      displaySongs: allSongs.slice(0, MAX_DISPLAY_SONGS),
-      totalCount: allSongs.length,
+      displaySongs: allSongs,
+      totalCount: total,
     }
-  }, [hasSearchQuery, searchResults, songs, categories, categoryId])
+  }, [hasSearchQuery, searchResults, songsData, categories])
 
   // Keyboard navigation for search results
   const handleSelectSong = useCallback(
@@ -161,12 +203,13 @@ export function SongList({
     }
   }
 
-  const hasMore = totalCount > MAX_DISPLAY_SONGS
-
   // Calculate fixed width for category dropdown based on longest option
   const categoryDropdownWidth = useMemo(() => {
     const allCategoriesLabel = t('search.allCategories')
-    const labels = [allCategoriesLabel, ...(categories?.map((c) => c.name) ?? [])]
+    const labels = [
+      allCategoriesLabel,
+      ...(categories?.map((c) => c.name) ?? []),
+    ]
     const longestLabel = labels.reduce(
       (longest, label) => (label.length > longest.length ? label : longest),
       '',
@@ -267,12 +310,14 @@ export function SongList({
               isSelected={selectedIndex === index}
             />
           ))}
-          {hasMore && (
-            <p className="text-center text-sm text-gray-400 dark:text-gray-500 py-2">
-              {t('search.moreResults', {
-                count: totalCount - MAX_DISPLAY_SONGS,
-              })}
-            </p>
+
+          {/* Infinite scroll trigger element */}
+          {!hasSearchQuery && hasNextPage && (
+            <div ref={loadMoreRef} className="py-4 flex justify-center">
+              {isFetchingNextPage && (
+                <Loader2 className="w-6 h-6 text-indigo-500 animate-spin" />
+              )}
+            </div>
           )}
         </div>
       )}

@@ -121,6 +121,62 @@ export function getAllSongs(): Song[] {
   }
 }
 
+export interface PaginatedSongsResult {
+  songs: Song[]
+  total: number
+  hasMore: boolean
+}
+
+/**
+ * Gets songs with pagination support
+ * @param limit - Number of songs to return
+ * @param offset - Number of songs to skip
+ * @param categoryId - Optional category filter
+ */
+export function getSongsPaginated(
+  limit: number,
+  offset: number,
+  categoryId?: number,
+): PaginatedSongsResult {
+  try {
+    log(
+      'debug',
+      `Getting songs paginated: limit=${limit}, offset=${offset}, categoryId=${categoryId}`,
+    )
+
+    const rawDb = getRawDatabase()
+
+    // Build query with optional category filter
+    const categoryFilter =
+      categoryId !== undefined ? 'WHERE category_id = ?' : ''
+    const params = categoryId !== undefined ? [categoryId] : []
+
+    // Get total count
+    const countResult = rawDb
+      .query(`SELECT COUNT(*) as total FROM songs ${categoryFilter}`)
+      .get(...params) as { total: number }
+    const total = countResult.total
+
+    // Get paginated songs
+    const records = rawDb
+      .query(
+        `SELECT * FROM songs ${categoryFilter} ORDER BY title ASC LIMIT ? OFFSET ?`,
+      )
+      .all(...params, limit, offset) as (typeof songs.$inferSelect)[]
+
+    const songsList = records.map(toSong)
+
+    return {
+      songs: songsList,
+      total,
+      hasMore: offset + songsList.length < total,
+    }
+  } catch (error) {
+    log('error', `Failed to get paginated songs: ${error}`)
+    return { songs: [], total: 0, hasMore: false }
+  }
+}
+
 /**
  * Gets a song by ID
  */
