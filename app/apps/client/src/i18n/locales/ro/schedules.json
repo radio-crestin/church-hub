@@ -192,6 +192,13 @@
       "applied": "Programul a fost actualizat din text",
       "error": "Nu s-a putut actualiza programul",
       "songCreated": "Cantarea \"{{title}}\" a fost creata"
+    },
+    "lineError": "Linia {{line}}: {{message}}",
+    "validationErrors": "Corectati urmatoarele probleme:",
+    "errors": {
+      "noBibleTranslation": "Nicio traducere biblica configurata",
+      "invalidBibleReference": "Referinta biblica invalida",
+      "invalidVtFormat": "Format invalid. Foloseste: Nume - Referinta"
     }
   }
 }

@@ -192,6 +192,13 @@
       "applied": "Schedule updated from text",
       "error": "Failed to update schedule",
       "songCreated": "Song \"{{title}}\" created"
+    },
+    "lineError": "Line {{line}}: {{message}}",
+    "validationErrors": "Please fix the following issues:",
+    "errors": {
+      "noBibleTranslation": "No Bible translation configured",
+      "invalidBibleReference": "Invalid Bible reference",
+      "invalidVtFormat": "Invalid format. Use: Name - Reference"
     }
   }
 }
