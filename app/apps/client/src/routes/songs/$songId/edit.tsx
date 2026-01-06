@@ -226,17 +226,11 @@ function SongEditorPage() {
           metadata: savedMetadata,
         })
 
-        if (isNew || options?.replaceExistingSongId) {
-          // Navigate to the edit page of the saved song
-          navigate({
-            to: '/songs/$songId/edit',
-            params: { songId: String(result.data.id) },
-          })
-        } else {
-          // Update local state with saved data
-          setSlides(savedSlides)
-          setMetadata(savedMetadata)
-        }
+        // Navigate to the song view page after save
+        navigate({
+          to: '/songs/$songId',
+          params: { songId: String(result.data.id) },
+        })
         return true
       } else {
         showToast(t('songs:messages.error'), 'error')
@@ -249,7 +243,6 @@ function SongEditorPage() {
       slides,
       metadata,
       numericId,
-      isNew,
       upsertMutation,
       showToast,
       t,
