@@ -20,6 +20,7 @@ import {
   useWebSocket,
 } from '../../hooks'
 import { useScreen } from '../../hooks/useScreen'
+import { useSlideHighlights } from '../../hooks/useSlideHighlights'
 import type { ContentType, PresentationState } from '../../types'
 import { addAminToLastSlide } from '../../utils/addAminToLastSlide'
 import { setWindowFullscreen } from '../../utils/fullscreen'
@@ -60,6 +61,7 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
   const { data: screen, isLoading, isError } = useScreen(screenId)
   const upsertScreen = useUpsertScreen()
   const { data: kioskSettings } = useKioskSettings()
+  const { data: slideHighlights } = useSlideHighlights()
 
   // Determine if current screen is being viewed in kiosk mode context
   const isKioskModeScreen =
@@ -914,8 +916,8 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
   const config = screen.contentConfigs[effectiveContentType]
   const bg = config?.background || screen.contentConfigs.empty?.background
 
-  // Extract styleRanges from presentation state for text highlighting
-  const styleRanges = presentationState?.slideHighlights ?? []
+  // Get styleRanges from useSlideHighlights hook for real-time WebSocket updates
+  const styleRanges = slideHighlights ?? []
 
   // On mobile, use safe area wrapper to avoid content going behind status bar
   const isMobileDevice = isMobile()
