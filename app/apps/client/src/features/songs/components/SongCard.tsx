@@ -12,18 +12,35 @@ interface SongCardProps {
     presentationCount?: number
   }
   onClick: () => void
+  onMiddleClick?: () => void
   isSelected?: boolean
 }
 
 export const SongCard = forwardRef<HTMLButtonElement, SongCardProps>(
-  function SongCard({ song, onClick, isSelected = false }, ref) {
+  function SongCard({ song, onClick, onMiddleClick, isSelected = false }, ref) {
     const hasHighlight = song.highlightedTitle?.includes('<mark>')
 
     return (
       <button
         ref={ref}
         type="button"
-        onClick={onClick}
+        onClick={(e) => {
+          // CMD+click (Mac) or Ctrl+click (Windows/Linux) opens in new window
+          if ((e.metaKey || e.ctrlKey) && onMiddleClick) {
+            e.preventDefault()
+            onMiddleClick()
+            return
+          }
+          onClick()
+        }}
+        onAuxClick={(e) => {
+          console.log('[SongCard] onAuxClick fired, button:', e.button)
+          if (e.button === 1 && onMiddleClick) {
+            console.log('[SongCard] Middle click detected, calling handler')
+            e.preventDefault()
+            onMiddleClick()
+          }
+        }}
         className={`w-full min-w-0 flex items-center justify-between p-4 border rounded-lg hover:border-indigo-300 dark:hover:border-indigo-600 hover:shadow-sm transition-all text-left group overflow-hidden ${
           isSelected
             ? 'border-indigo-500 dark:border-indigo-400 ring-2 ring-indigo-500/20 dark:ring-indigo-400/20 bg-indigo-50 dark:bg-indigo-900/20'
