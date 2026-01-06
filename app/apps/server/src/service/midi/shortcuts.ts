@@ -8,6 +8,7 @@ import type { MIDIInputMessage } from './types'
 import { getDatabase } from '../../db'
 import { obsScenes } from '../../db/schema'
 import { midiLogger } from '../../utils/fileLogger'
+import { broadcastPresentationState } from '../../websocket'
 import { switchScene } from '../livestream/obs/scenes'
 import { startStreaming, stopStreaming } from '../livestream/obs/streaming'
 import { navigateTemporary } from '../presentation/presentation-state'
@@ -135,7 +136,8 @@ async function executeAction(actionId: GlobalShortcutActionId): Promise<void> {
   switch (actionId) {
     case 'nextSlide':
       try {
-        navigateTemporary('next', Date.now())
+        const state = navigateTemporary('next', Date.now())
+        broadcastPresentationState(state)
       } catch (error) {
         midiLogger.error(`Failed to navigate next: ${error}`)
       }
@@ -143,7 +145,8 @@ async function executeAction(actionId: GlobalShortcutActionId): Promise<void> {
 
     case 'prevSlide':
       try {
-        navigateTemporary('prev', Date.now())
+        const state = navigateTemporary('prev', Date.now())
+        broadcastPresentationState(state)
       } catch (error) {
         midiLogger.error(`Failed to navigate prev: ${error}`)
       }
