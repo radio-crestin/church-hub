@@ -344,6 +344,11 @@ export function getAllDevices(): {
   }
 }
 
+// Debounce tracking for MIDI events to prevent hardware double-triggers
+const MIDI_DEBOUNCE_MS = 150
+const lastNoteOnTime = new Map<number, number>()
+const lastControlChangeTime = new Map<number, number>()
+
 /**
  * Handle incoming MIDI note on message
  */
@@ -352,6 +357,19 @@ function handleNoteOn(msg: {
   velocity: number
   channel: number
 }) {
+  // Only debounce note_on events (velocity > 0), not note_off
+  if (msg.velocity > 0) {
+    const now = Date.now()
+    const lastTime = lastNoteOnTime.get(msg.note) || 0
+    if (now - lastTime < MIDI_DEBOUNCE_MS) {
+      midiLogger.debug(
+        `Debouncing note_on: note=${msg.note} (${now - lastTime}ms since last)`,
+      )
+      return
+    }
+    lastNoteOnTime.set(msg.note, now)
+  }
+
   const message: MIDIInputMessage = {
     type: msg.velocity > 0 ? 'note_on' : 'note_off',
     channel: msg.channel,
@@ -405,6 +423,19 @@ function handleControlChange(msg: {
   value: number
   channel: number
 }) {
+  // Only debounce control_change events with value > 0 (button press, not release)
+  if (msg.value > 0) {
+    const now = Date.now()
+    const lastTime = lastControlChangeTime.get(msg.controller) || 0
+    if (now - lastTime < MIDI_DEBOUNCE_MS) {
+      midiLogger.debug(
+        `Debouncing control_change: cc=${msg.controller} (${now - lastTime}ms since last)`,
+      )
+      return
+    }
+    lastControlChangeTime.set(msg.controller, now)
+  }
+
   const message: MIDIInputMessage = {
     type: 'control_change',
     channel: msg.channel,
