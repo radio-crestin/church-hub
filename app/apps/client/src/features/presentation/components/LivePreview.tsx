@@ -7,7 +7,7 @@ import { getStoredUserToken } from '~/service/api-url'
 import { calculateMaxExitAnimationDuration } from './rendering/utils/styleUtils'
 import { ScreenPreview } from './ScreenPreview'
 import { TextStyleContextMenu } from './TextStyleContextMenu'
-import { usePresentationState, useWebSocket } from '../hooks'
+import { usePresentationState } from '../hooks'
 import { useScreen } from '../hooks/useScreen'
 import { useScreens } from '../hooks/useScreens'
 import {
@@ -81,8 +81,8 @@ const DEFAULT_HIGHLIGHT_COLOR = '#FFFF00'
 const EMPTY_STYLE_RANGES: TextStyleRange[] = []
 
 export function LivePreview() {
-  // Connect to WebSocket for real-time updates
-  useWebSocket()
+  // Note: WebSocket connection is established by parent ControlRoom component
+  // Don't call useWebSocket() here as it causes re-renders from debug info state updates
 
   const { data: presentationState } = usePresentationState()
   const { data: screens } = useScreens()
