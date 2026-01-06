@@ -424,6 +424,9 @@ export function ScreenContent({
               ...ns.labelStyle,
               maxFontSize: ns.labelStyle.maxFontSize * fontScale,
               minFontSize: (ns.labelStyle.minFontSize ?? 12) * fontScale,
+              // Always compress label since it may include title
+              compressLines: true,
+              lineSeparator: ns.labelStyle.lineSeparator ?? 'space',
             }}
             containerWidth={scaledBounds.width - padding * 2}
             containerHeight={labelHeight}
@@ -437,7 +440,7 @@ export function ScreenContent({
               maxFontSize: ns.contentStyle.maxFontSize * fontScale,
               minFontSize: (ns.contentStyle.minFontSize ?? 12) * fontScale,
               compressLines: shouldCompress,
-              lineSeparator: shouldCompress ? 'pipe' : undefined,
+              lineSeparator: ns.contentStyle.lineSeparator ?? 'space',
             }}
             containerWidth={scaledBounds.width - padding * 2}
             containerHeight={contentHeight}
