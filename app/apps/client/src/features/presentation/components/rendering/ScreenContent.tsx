@@ -374,6 +374,16 @@ export function ScreenContent({
     )
     const contentHeight = scaledBounds.height - padding * 2 - labelHeight - gap
 
+    // Build the label text: "Urmează:" + type-specific label + title
+    const getLabelText = () => {
+      if (!nextSlideData?.label) return ns.labelText
+      // Include title for songs
+      if (nextSlideData.title) {
+        return `${ns.labelText} ${nextSlideData.label} ${nextSlideData.title}`
+      }
+      return `${ns.labelText} ${nextSlideData.label}`
+    }
+
     const getContentText = () => {
       if (nextSlideData?.verseteTineriSummary) {
         const { entries, hasMore } = nextSlideData.verseteTineriSummary
@@ -384,6 +394,11 @@ export function ScreenContent({
       }
       return nextSlideData?.preview || ''
     }
+
+    // Determine if content should be compressed (for songs and announcements)
+    const shouldCompress =
+      nextSlideData?.contentType === 'song' ||
+      nextSlideData?.contentType === 'announcement'
 
     return (
       <div
@@ -403,7 +418,7 @@ export function ScreenContent({
       >
         <div style={{ height: labelHeight, flexShrink: 0 }}>
           <TextContent
-            content={ns.labelText}
+            content={getLabelText()}
             style={{
               ...ns.labelStyle,
               maxFontSize: ns.labelStyle.maxFontSize * fontScale,
@@ -420,6 +435,8 @@ export function ScreenContent({
               ...ns.contentStyle,
               maxFontSize: ns.contentStyle.maxFontSize * fontScale,
               minFontSize: (ns.contentStyle.minFontSize ?? 12) * fontScale,
+              compressLines: shouldCompress,
+              lineSeparator: shouldCompress ? 'pipe' : undefined,
             }}
             containerWidth={scaledBounds.width - padding * 2}
             containerHeight={contentHeight}
