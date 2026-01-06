@@ -358,6 +358,8 @@ export function ScreenContent({
     if (!screen.nextSlideConfig?.enabled) return null
     const ns = screen.nextSlideConfig
     if (ns.hidden) return null
+    // Hide section when there's no next slide data
+    if (!nextSlideData) return null
 
     const bounds = calculatePixelBounds(
       ns.constraints,
