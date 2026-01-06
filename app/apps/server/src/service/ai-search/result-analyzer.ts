@@ -5,22 +5,33 @@ import type { AISearchConfig, AISearchResult } from './types'
 import type { SongSearchResult } from '../songs/types'
 
 const ANALYSIS_PROMPT = `You are analyzing search results for a church song database.
-Given the user's search intent and a list of song candidates with their content snippets,
+Given the user's search intent and a list of song candidates with their lyrics content,
 score each song's relevance from 0-100 based on how well it matches the search intent.
 
-Consider:
-- How well the song title and content relate to the search topic
-- Thematic relevance (not just keyword matching)
-- Songs about the topic should score higher than songs that just mention keywords
+SCORING CRITERIA:
+- 90-100: Song is DIRECTLY about this topic (central theme of the entire song)
+- 70-89: Song has a MAJOR section about this topic (verse or chorus dedicated to it)
+- 50-69: Song MENTIONS the topic meaningfully (relevant lines but not main theme)
+- 30-49: Song has TANGENTIAL connection (related concepts but not the topic itself)
+- 0-29: Song has MINIMAL or NO relevance (only superficial keyword match)
 
-Return ONLY a JSON array with song IDs and scores:
-[{"id": 1, "score": 85}, {"id": 2, "score": 72}, ...]
+IMPORTANT:
+- Read the actual lyrics content provided, not just the title
+- A song titled "Love" but with lyrics about something else should score low for "love" searches
+- Songs that express the searched concept through metaphor or different words can score high
+- Consider the overall message and theme, not just keyword presence
 
-Include ALL songs in your response. Sort by score descending.`
+For EACH song, you MUST provide a brief reason explaining your score.
+
+Return JSON array:
+[{"id": 1, "score": 85, "reason": "Entire chorus about God's love"}, {"id": 2, "score": 45, "reason": "Mentions hope once but mainly about praise"}, ...]
+
+Include ALL songs. Sort by score descending.`
 
 interface ScoredResult {
   id: number
   score: number
+  reason?: string
 }
 
 /**
@@ -33,12 +44,12 @@ export async function analyzeAndScoreResults(
 ): Promise<AISearchResult[]> {
   if (candidates.length === 0) return []
 
-  // Prepare candidates summary for AI analysis
+  // Prepare candidates summary for AI analysis - include more content for better scoring
   const candidatesSummary = candidates.map((c) => ({
     id: c.id,
     title: c.title,
     category: c.categoryName || 'Uncategorized',
-    content: c.matchedContent?.slice(0, 300) || '',
+    lyrics: c.matchedContent?.slice(0, 800) || '',
   }))
 
   const openai = createOpenAI({
@@ -52,12 +63,15 @@ export async function analyzeAndScoreResults(
       system: ANALYSIS_PROMPT,
       prompt: `Search query: "${originalQuery}"
 
+Analyze each song's lyrics content and determine how relevant it is to the search query.
+Focus on the ACTUAL CONTENT, not just the title.
+
 Songs to analyze (${candidates.length} total):
 ${JSON.stringify(candidatesSummary, null, 2)}`,
-      maxTokens: 4000,
+      maxTokens: 6000,
       providerOptions: {
         openai: {
-          reasoningEffort: 'medium',
+          reasoningEffort: 'low',
         },
       },
     })

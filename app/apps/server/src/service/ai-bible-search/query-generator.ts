@@ -3,24 +3,30 @@ import { generateText } from 'ai'
 
 import type { AIBibleSearchConfig, AIGeneratedTerms } from './types'
 
-const SYSTEM_PROMPT = `You are a Bible verse search term generator. Given a user's search intent, generate 8-15 relevant search terms to find matching Bible verses.
+const SYSTEM_PROMPT = `You are a Bible verse search term generator. Given a user's search intent, generate 15-25 highly relevant search terms to find matching Bible verses.
+
+Think deeply about what the user is looking for and generate comprehensive terms:
+
+1. DIRECT TERMS: Words directly from the query
+2. SYNONYMS: Alternative words with same meaning in biblical context
+3. BIBLICAL VOCABULARY: Words used in Scripture (e.g., "love" → "charity", "lovingkindness", "compassion")
+4. THEOLOGICAL TERMS: Doctrinal concepts (e.g., "saved" → "salvation", "redemption", "justification", "sanctification")
+5. HEBREW/GREEK CONCEPTS: When relevant (e.g., "peace" → "shalom", "rest")
+6. CHARACTER NAMES: Biblical figures related to the topic (e.g., "faith" → "Abraham", "Moses", "David")
+7. BOOK-SPECIFIC TERMS: Words common in Psalms, Proverbs, Gospels, Epistles
+8. ROMANIAN DIACRITICS: Both with and without (e.g., "înălțare", "inaltare", "mântuire", "mantuire")
+9. ARCHAIC FORMS: Old Romanian or KJV-style terms still in translations
 
 Rules:
-- Generate terms in the same language as the input (Romanian or English)
-- Include key biblical concepts and themes (e.g., "love" → "charity", "grace", "mercy", "compassion")
-- Include synonyms and related words (e.g., "forgiveness" → "pardon", "remit", "sin", "transgression")
-- Include biblical terminology (e.g., "saved" → "salvation", "redeemed", "delivered", "eternal life")
-- Include character names when relevant (e.g., "shepherd" → "David", "Jesus", "pastor")
-- For Romanian: include diacritics variants (e.g., "înălțare", "inaltare", "învierea", "invierea")
-- For Romanian: include common biblical terms (har, mântuire, iertare, credință, speranță, dragoste)
-- Keep each term short (1-3 words max)
-- Focus on words that appear in Bible verses, not modern expressions
-- Think about the context: Old Testament prophecies, Psalms, Gospels, Epistles
+- Generate terms in the SAME LANGUAGE as the input
+- Each term should be 1-3 words max
+- Focus on words that actually appear in Bible translations
+- Consider Old Testament, Psalms, Wisdom literature, Prophets, Gospels, and Epistles
+- Include both literal and metaphorical expressions
 
 Examples:
-- "verses about hope" → ["hope", "trust", "faith", "promise", "wait", "confidence", "anchor", "expectation"]
-- "versete despre iertare" → ["iertare", "iartă", "păcat", "milă", "har", "răscumpărare", "izbăvire"]
-- "Jesus miracles" → ["miracle", "heal", "sight", "blind", "lame", "leprosy", "dead", "raised", "loaves", "fish"]
+- "verses about hope" → ["hope", "trust", "faith", "promise", "wait", "confidence", "anchor", "expectation", "assurance", "refuge", "strength", "salvation", "deliver", "sustain"]
+- "versete despre iertare" → ["iertare", "iartă", "iertat", "păcat", "milă", "har", "răscumpărare", "izbăvire", "curățit", "spălat", "vină", "greșeală", "pocăință"]
 
 Return JSON only: { "terms": ["term1", "term2", ...] }`
 
@@ -40,11 +46,17 @@ export async function generateBibleSearchTerms(
   const { text } = await generateText({
     model: openai(config.model || 'gpt-5.2'),
     system: SYSTEM_PROMPT,
-    prompt: `User is searching for Bible verses about: "${userQuery}"`,
-    maxTokens: 400,
+    prompt: `User is searching for Bible verses about: "${userQuery}"
+
+Think carefully about:
+- What biblical themes and concepts relate to this search?
+- What words would appear in Scripture about this topic?
+- What synonyms, theological terms, and character names should be included?
+- What books of the Bible commonly address this topic?`,
+    maxTokens: 600,
     providerOptions: {
       openai: {
-        reasoningEffort: 'low',
+        reasoningEffort: 'medium',
       },
     },
   })
