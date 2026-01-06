@@ -20,6 +20,8 @@ export function useSlideHighlights() {
     // WebSocket handles real-time updates, use longer polling as fallback
     refetchInterval: 10000,
     refetchOnWindowFocus: true,
+    // Consider data fresh for 5 seconds to reduce unnecessary refetches
+    staleTime: 5000,
   })
 }
 
