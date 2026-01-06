@@ -1,6 +1,7 @@
 import {
   ChevronLeft,
   ChevronRight,
+  Eraser,
   Eye,
   EyeOff,
   History,
@@ -18,6 +19,10 @@ import {
   useShowSlide,
   useWebSocket,
 } from '~/features/presentation'
+import {
+  useClearSlideHighlights,
+  useSlideHighlights,
+} from '~/features/presentation/hooks/useSlideHighlights'
 
 interface BibleControlPanelProps {
   onPrevVerse: () => void
@@ -41,6 +46,11 @@ export function BibleControlPanel({
   const { data: state } = usePresentationState()
   const clearSlide = useClearSlide()
   const showSlide = useShowSlide()
+
+  // Highlight management
+  const { data: highlights } = useSlideHighlights()
+  const clearHighlights = useClearSlideHighlights()
+  const hasHighlights = highlights && highlights.length > 0
 
   const isHidden = state?.isHidden ?? true
   const hasContent =
@@ -69,6 +79,21 @@ export function BibleControlPanel({
           <h3 className="font-medium text-gray-900 dark:text-white text-sm lg:text-base">
             {t('controls.title')}
           </h3>
+          {hasHighlights && (
+            <button
+              type="button"
+              onClick={() => clearHighlights.mutate()}
+              disabled={clearHighlights.isPending}
+              className="flex items-center gap-1.5 px-2 py-1.5 text-sm text-gray-600 dark:text-gray-400 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+              title={t('controls.clearHighlights')}
+            >
+              {clearHighlights.isPending ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <Eraser size={16} />
+              )}
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {onToggleHistory && (

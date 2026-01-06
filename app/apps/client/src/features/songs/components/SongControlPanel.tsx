@@ -1,4 +1,11 @@
-import { ChevronLeft, ChevronRight, Eye, EyeOff, Loader2 } from 'lucide-react'
+import {
+  ChevronLeft,
+  ChevronRight,
+  Eraser,
+  Eye,
+  EyeOff,
+  Loader2,
+} from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import {
@@ -8,6 +15,10 @@ import {
   usePresentationState,
   useWebSocket,
 } from '~/features/presentation'
+import {
+  useClearSlideHighlights,
+  useSlideHighlights,
+} from '~/features/presentation/hooks/useSlideHighlights'
 
 interface SongControlPanelProps {
   songId: number
@@ -31,6 +42,11 @@ export function SongControlPanel({
   const { data: state } = usePresentationState()
   const clearTemporary = useClearTemporaryContent()
   const navigateTemporary = useNavigateTemporary()
+
+  // Highlight management
+  const { data: highlights } = useSlideHighlights()
+  const clearHighlights = useClearSlideHighlights()
+  const hasHighlights = highlights && highlights.length > 0
 
   // Check if this song is currently being presented
   const isTemporarySongActive =
@@ -62,7 +78,26 @@ export function SongControlPanel({
 
   return (
     <div className="flex flex-col lg:h-full bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-      <div className="flex items-center justify-end p-2 lg:p-3 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex items-center justify-between p-2 lg:p-3 border-b border-gray-200 dark:border-gray-700">
+        {/* Left side - Clear highlights button */}
+        <div className="flex items-center gap-2">
+          {hasHighlights && (
+            <button
+              type="button"
+              onClick={() => clearHighlights.mutate()}
+              disabled={clearHighlights.isPending}
+              className="flex items-center gap-1.5 px-2 py-1.5 text-sm text-gray-600 dark:text-gray-400 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+              title={t('bible:controls.clearHighlights')}
+            >
+              {clearHighlights.isPending ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <Eraser size={16} />
+              )}
+            </button>
+          )}
+        </div>
+        {/* Right side - LIVE indicator and controls */}
         <div className="flex items-center gap-2">
           <div
             className={`flex items-center gap-1.5 px-2 py-1 rounded-md ${

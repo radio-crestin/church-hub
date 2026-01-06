@@ -30,7 +30,8 @@
     "prevVerse": "Versetul anterior",
     "nextVerse": "Versetul urmator",
     "show": "Afiseaza",
-    "hide": "Ascunde"
+    "hide": "Ascunde",
+    "clearHighlights": "Șterge Evidențierile"
   },
   "shortcuts": {
     "title": "Scurtaturi tastatura",
