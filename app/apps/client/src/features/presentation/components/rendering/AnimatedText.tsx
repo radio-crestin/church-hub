@@ -308,6 +308,19 @@ const AnimatedTextInner = memo(function AnimatedText({
     slideTransitionIn: toAnimationConfig(slideTransitionIn),
   })
 
+  // Get the final display content - use styled HTML if available
+  // Must be before any early returns to maintain hooks order
+  const finalDisplayContent = useMemo(() => {
+    if (hasStyledContent && styledContent) {
+      // Apply styles to the display content
+      return applyStylesToText(
+        typeof displayContent === 'string' ? displayContent : '',
+        styleRanges ?? [],
+      )
+    }
+    return null
+  }, [hasStyledContent, styledContent, displayContent, styleRanges])
+
   // Calculate font size synchronously before paint
   useLayoutEffect(() => {
     if (!measureRef.current || !textRef.current || !shouldRender) return
@@ -381,18 +394,6 @@ const AnimatedTextInner = memo(function AnimatedText({
     whiteSpace: 'pre-wrap',
     wordWrap: 'break-word',
   }
-
-  // Get the final display content - use styled HTML if available
-  const finalDisplayContent = useMemo(() => {
-    if (hasStyledContent && styledContent) {
-      // Apply styles to the display content
-      return applyStylesToText(
-        typeof displayContent === 'string' ? displayContent : '',
-        styleRanges ?? [],
-      )
-    }
-    return null
-  }, [hasStyledContent, styledContent, displayContent, styleRanges])
 
   return (
     <div style={containerStyle}>
