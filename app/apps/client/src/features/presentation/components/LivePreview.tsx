@@ -241,6 +241,12 @@ export function LivePreview() {
         if (temp.type === 'versete_tineri') {
           const currentEntry = temp.data.entries[temp.data.currentEntryIndex]
           if (currentEntry) {
+            // If entry has no text (e.g., invalid reference), show black screen
+            if (!currentEntry.text?.trim()) {
+              setContentData({})
+              setContentType('empty')
+              return
+            }
             setContentType('versete_tineri')
             setContentData({
               personLabel: currentEntry.personName,
