@@ -1,3 +1,4 @@
+export * from './useAutoClearHighlights'
 export * from './useAutoOpenScreens'
 export * from './useBatchUpdateScreenConfig'
 export * from './useDeleteScreen'

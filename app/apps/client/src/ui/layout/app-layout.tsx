@@ -1,6 +1,7 @@
 import { useLocation } from '@tanstack/react-router'
 
 import {
+  useAutoClearHighlights,
   useKeyboardShortcuts,
   useWebSocket,
   WebSocketDebugPanel,
@@ -20,6 +21,9 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   // Enable global keyboard shortcuts for presentation navigation
   useKeyboardShortcuts()
+
+  // Auto-clear highlights when slide changes (works globally)
+  useAutoClearHighlights()
 
   // Full-screen mode for screen/display windows
   if (location.pathname.startsWith('/screen/')) {
