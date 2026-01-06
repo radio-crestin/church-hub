@@ -4,8 +4,10 @@ import { type AnimationConfig, useSlideAnimation } from './useSlideAnimation'
 import { compressLines } from './utils/textProcessing'
 import type {
   TextStyle,
+  TextStyleRange,
   AnimationConfig as TypesAnimationConfig,
 } from '../../types'
+import { applyStylesToText } from '../../utils/applyStylesToText'
 
 /**
  * Decodes HTML entities and normalizes text
@@ -162,6 +164,8 @@ interface AnimatedTextProps {
   slideTransitionOut?: TypesAnimationConfig
   /** Animation for new content entering during slide transitions */
   slideTransitionIn?: TypesAnimationConfig
+  /** Text style ranges for inline highlighting/styling */
+  styleRanges?: TextStyleRange[]
 }
 
 /**
@@ -182,6 +186,7 @@ export function AnimatedText({
   animationOut,
   slideTransitionOut,
   slideTransitionIn,
+  styleRanges,
 }: AnimatedTextProps) {
   const textRef = useRef<HTMLDivElement>(null)
   const measureRef = useRef<HTMLDivElement>(null)
@@ -197,6 +202,17 @@ export function AnimatedText({
 
     return text
   }, [content, isHtml, style.compressLines, style.lineSeparator])
+
+  // Apply style ranges to the text if any
+  const styledContent = useMemo(() => {
+    if (!styleRanges || styleRanges.length === 0) {
+      return null // No styling needed, use plain text
+    }
+    return applyStylesToText(normalizedText, styleRanges)
+  }, [normalizedText, styleRanges])
+
+  // Check if we have any styled content (HTML) to render
+  const hasStyledContent = styledContent !== null
 
   // Use the slide animation hook
   const {
@@ -287,14 +303,34 @@ export function AnimatedText({
     wordWrap: 'break-word',
   }
 
+  // Get the final display content - use styled HTML if available
+  const finalDisplayContent = useMemo(() => {
+    if (hasStyledContent && styledContent) {
+      // Apply styles to the display content
+      return applyStylesToText(
+        typeof displayContent === 'string' ? displayContent : '',
+        styleRanges ?? [],
+      )
+    }
+    return null
+  }, [hasStyledContent, styledContent, displayContent, styleRanges])
+
   return (
     <div style={containerStyle}>
       {/* Hidden measurement element */}
       <div ref={measureRef} style={measureStyle} aria-hidden="true" />
-      {/* Visible text */}
-      <div ref={textRef} style={textStyles}>
-        {displayContent}
-      </div>
+      {/* Visible text - use dangerouslySetInnerHTML if we have styled content */}
+      {finalDisplayContent ? (
+        <div
+          ref={textRef}
+          style={textStyles}
+          dangerouslySetInnerHTML={{ __html: finalDisplayContent }}
+        />
+      ) : (
+        <div ref={textRef} style={textStyles}>
+          {displayContent}
+        </div>
+      )}
     </div>
   )
 }

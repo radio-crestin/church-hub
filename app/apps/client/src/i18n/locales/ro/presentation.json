@@ -273,5 +273,12 @@
     "preview": "Previzualizare",
     "openSong": "Deschide Cântec",
     "openBible": "Deschide Biblia"
+  },
+  "textStyle": {
+    "highlight": "Evidențiere",
+    "bold": "Bold",
+    "underline": "Subliniere",
+    "removeStyle": "Elimină Stil",
+    "highlightColor": "Culoare Evidențiere"
   }
 }

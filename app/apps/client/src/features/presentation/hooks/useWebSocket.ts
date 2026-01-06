@@ -8,6 +8,7 @@ import { createLogger } from '~/utils/logger'
 import { updateStateIfNewer } from './usePresentationControls'
 import { presentationStateQueryKey } from './usePresentationState'
 import { screenQueryKey } from './useScreen'
+import { slideHighlightsQueryKey } from './useSlideHighlights'
 import type { PresentationState } from '../types'
 
 const logger = createLogger('WebSocket')
@@ -61,6 +62,21 @@ interface HighlightColorsUpdatedMessage {
   }
 }
 
+interface SlideHighlightsUpdatedMessage {
+  type: 'slide_highlights_updated'
+  payload: {
+    highlights: Array<{
+      id: string
+      start: number
+      end: number
+      highlight?: string
+      bold?: boolean
+      underline?: boolean
+    }>
+    updatedAt: number
+  }
+}
+
 interface SettingsUpdatedMessage {
   type: 'settings_updated'
   payload: {
@@ -75,6 +91,7 @@ type MessageData =
   | ScreenConfigUpdatedMessage
   | ScreenConfigPreviewMessage
   | HighlightColorsUpdatedMessage
+  | SlideHighlightsUpdatedMessage
   | SettingsUpdatedMessage
   | { type: 'pong' }
 
@@ -191,6 +208,14 @@ export function useWebSocket() {
               queryKey: ['app_settings', 'global_keyboard_shortcuts'],
             })
           }
+        }
+
+        if (data.type === 'slide_highlights_updated') {
+          // Update slide highlights cache with new data from WebSocket
+          queryClient.setQueryData(
+            slideHighlightsQueryKey,
+            data.payload.highlights,
+          )
         }
       } catch {
         // Failed to parse message

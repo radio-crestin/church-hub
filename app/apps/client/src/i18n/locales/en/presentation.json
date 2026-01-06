@@ -273,5 +273,12 @@
     "preview": "Preview",
     "openSong": "Open Song",
     "openBible": "Open Bible"
+  },
+  "textStyle": {
+    "highlight": "Highlight",
+    "bold": "Bold",
+    "underline": "Underline",
+    "removeStyle": "Remove Style",
+    "highlightColor": "Highlight Color"
   }
 }

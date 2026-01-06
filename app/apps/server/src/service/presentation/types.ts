@@ -13,6 +13,7 @@ export interface PresentationStateRecord {
   is_presenting: number
   is_hidden: number
   temporary_content: string | null
+  slide_highlights: string | null
   updated_at: number
 }
 
@@ -25,6 +26,7 @@ export interface PresentationState {
   isPresenting: boolean
   isHidden: boolean
   temporaryContent: TemporaryContent | null
+  slideHighlights: TextStyleRange[]
   updatedAt: number
 }
 
@@ -37,6 +39,23 @@ export interface UpdatePresentationStateInput {
   isPresenting?: boolean
   isHidden?: boolean
   temporaryContent?: TemporaryContent | null
+  slideHighlights?: TextStyleRange[] | null
+}
+
+// ============================================================================
+// SLIDE HIGHLIGHT TYPES (for live text styling)
+// ============================================================================
+
+/**
+ * Text style range for inline highlighting
+ */
+export interface TextStyleRange {
+  id: string // UUID for removal
+  start: number // Character offset start
+  end: number // Character offset end
+  highlight?: string // Hex color (e.g., '#FFFF00')
+  bold?: boolean
+  underline?: boolean
 }
 
 // ============================================================================

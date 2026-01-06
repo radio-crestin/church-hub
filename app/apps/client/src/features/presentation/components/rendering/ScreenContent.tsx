@@ -15,6 +15,7 @@ import type {
   ContentType,
   ContentTypeConfig,
   ScreenWithConfigs,
+  TextStyleRange,
 } from '../../types'
 import { formatReferenceWithWrapper } from '../../utils/formatReferenceWithWrapper'
 
@@ -26,6 +27,7 @@ interface ScreenContentProps {
   containerHeight: number
   isVisible?: boolean
   nextSlideData?: NextSlideData
+  styleRanges?: TextStyleRange[]
 }
 
 export function ScreenContent({
@@ -36,6 +38,7 @@ export function ScreenContent({
   containerHeight,
   isVisible = true,
   nextSlideData,
+  styleRanges,
 }: ScreenContentProps) {
   const currentConfig = screen.contentConfigs[contentType]
 
@@ -126,6 +129,7 @@ export function ScreenContent({
         slideTransitionOut={
           'slideTransitionOut' in mt ? mt.slideTransitionOut : undefined
         }
+        styleRanges={styleRanges}
       />
     )
   }

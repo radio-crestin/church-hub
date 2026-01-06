@@ -116,6 +116,9 @@ export const presentationState = sqliteTable('presentation_state', {
   // Temporary content for instant display
   // JSON: { type: 'bible' | 'song' | 'announcement' | 'bible_passage' | 'versete_tineri', data: ... }
   temporaryContent: text('temporary_content'),
+  // Slide highlights for live text styling
+  // JSON: Array<{ id: string, start: number, end: number, highlight?: string, bold?: boolean, underline?: boolean }>
+  slideHighlights: text('slide_highlights'),
   // Store as milliseconds (not seconds) for precise ordering of rapid updates
   updatedAt: integer('updated_at').notNull().default(sql`(unixepoch() * 1000)`),
 })
