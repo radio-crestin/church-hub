@@ -602,6 +602,8 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
                 setNextSlideData({
                   contentType: temp.data.nextItemPreview.contentType,
                   preview: temp.data.nextItemPreview.preview,
+                  label: temp.data.nextItemPreview.label,
+                  title: temp.data.nextItemPreview.title,
                 })
               } else {
                 setNextSlideData(undefined)
@@ -623,6 +625,8 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
             setNextSlideData({
               contentType: temp.data.nextItemPreview.contentType,
               preview: temp.data.nextItemPreview.preview,
+              label: temp.data.nextItemPreview.label,
+              title: temp.data.nextItemPreview.title,
             })
           } else {
             setNextSlideData(undefined)
@@ -654,6 +658,8 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
                 setNextSlideData({
                   contentType: temp.data.nextItemPreview.contentType,
                   preview: temp.data.nextItemPreview.preview,
+                  label: temp.data.nextItemPreview.label,
+                  title: temp.data.nextItemPreview.title,
                 })
               } else {
                 setNextSlideData(undefined)
@@ -688,6 +694,8 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
                 setNextSlideData({
                   contentType: temp.data.nextItemPreview.contentType,
                   preview: temp.data.nextItemPreview.preview,
+                  label: temp.data.nextItemPreview.label,
+                  title: temp.data.nextItemPreview.title,
                 })
               } else {
                 setNextSlideData(undefined)
