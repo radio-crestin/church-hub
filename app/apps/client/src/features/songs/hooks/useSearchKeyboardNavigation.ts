@@ -51,7 +51,8 @@ export function useSearchKeyboardNavigation({
         case 'ArrowUp': {
           event.preventDefault()
           setSelectedIndex((prev) => {
-            const next = prev > 0 ? prev - 1 : prev
+            // Allow going back to -1 (search input) from first item
+            const next = prev > -1 ? prev - 1 : prev
             return next
           })
           break
