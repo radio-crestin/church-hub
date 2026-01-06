@@ -43,12 +43,19 @@ import { useToast } from '~/ui/toast'
 
 interface SongSearchParams {
   q?: string
+  reset?: number
 }
 
 export const Route = createFileRoute('/songs/$songId/')({
   component: SongPreviewPage,
   validateSearch: (search: Record<string, unknown>): SongSearchParams => ({
     q: typeof search.q === 'string' ? search.q : undefined,
+    reset:
+      typeof search.reset === 'number'
+        ? search.reset
+        : typeof search.reset === 'string'
+          ? parseInt(search.reset, 10) || undefined
+          : undefined,
   }),
   beforeLoad: ({ params }) => {
     // Redirect "new" to the edit page
@@ -62,7 +69,17 @@ function SongPreviewPage() {
   const { t } = useTranslation('songs')
   const navigate = useNavigate()
   const { songId } = Route.useParams()
-  const { q: searchQuery } = useSearch({ from: '/songs/$songId/' })
+  const { q: searchQuery, reset } = useSearch({ from: '/songs/$songId/' })
+
+  // Handle reset from keyboard shortcut - redirect to song list with reset
+  useEffect(() => {
+    if (reset) {
+      navigate({
+        to: '/songs/',
+        search: { reset },
+      })
+    }
+  }, [reset, navigate])
   const numericId = parseInt(songId, 10)
 
   const { data: song, isLoading, isError } = useSong(numericId)
