@@ -451,6 +451,7 @@ export function ScreenContent({
             color: config.iconColor,
             flexShrink: 0,
             marginRight: gap,
+            marginTop: gap * 0.5,
           }}
         >
           {config.icon}
