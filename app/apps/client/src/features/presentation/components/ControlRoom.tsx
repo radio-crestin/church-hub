@@ -1,11 +1,13 @@
 import {
   ChevronLeft,
   ChevronRight,
+  Eraser,
   Eye,
   EyeOff,
   Loader2,
   MonitorUp,
 } from 'lucide-react'
+import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { LivePreview } from './LivePreview'
@@ -17,6 +19,10 @@ import {
   useShowSlide,
   useWebSocket,
 } from '../hooks'
+import {
+  useClearSlideHighlights,
+  useSlideHighlights,
+} from '../hooks/useSlideHighlights'
 
 export function ControlRoom() {
   const { t } = useTranslation(['presentation', 'common'])
@@ -29,6 +35,68 @@ export function ControlRoom() {
   const showSlide = useShowSlide()
   const clearTemporary = useClearTemporaryContent()
   const navigateTemporary = useNavigateTemporary()
+
+  // Highlight management
+  const { data: highlights } = useSlideHighlights()
+  const clearHighlights = useClearSlideHighlights()
+  const hasHighlights = highlights && highlights.length > 0
+
+  // Track previous slide identifiers to detect slide changes
+  const prevSlideRef = useRef<{
+    songSlideId: number | null
+    queueItemId: number | null
+    temporaryIndex: number | null
+  }>({
+    songSlideId: null,
+    queueItemId: null,
+    temporaryIndex: null,
+  })
+
+  // Clear highlights when slide changes
+  useEffect(() => {
+    const currentSongSlideId = state?.currentSongSlideId ?? null
+    const currentQueueItemId = state?.currentQueueItemId ?? null
+    const temporaryIndex = state?.temporaryContent
+      ? ((
+          state.temporaryContent.data as {
+            currentSlideIndex?: number
+            currentVerseIndex?: number
+            currentEntryIndex?: number
+          }
+        )?.currentSlideIndex ??
+        (state.temporaryContent.data as { currentVerseIndex?: number })
+          ?.currentVerseIndex ??
+        (state.temporaryContent.data as { currentEntryIndex?: number })
+          ?.currentEntryIndex ??
+        null)
+      : null
+
+    const prev = prevSlideRef.current
+
+    // Check if slide changed (not on initial mount)
+    const slideChanged =
+      prev.songSlideId !== null &&
+      (prev.songSlideId !== currentSongSlideId ||
+        prev.queueItemId !== currentQueueItemId ||
+        prev.temporaryIndex !== temporaryIndex)
+
+    if (slideChanged && hasHighlights) {
+      clearHighlights.mutate()
+    }
+
+    // Update refs
+    prevSlideRef.current = {
+      songSlideId: currentSongSlideId,
+      queueItemId: currentQueueItemId,
+      temporaryIndex,
+    }
+  }, [
+    state?.currentSongSlideId,
+    state?.currentQueueItemId,
+    state?.temporaryContent,
+    hasHighlights,
+    clearHighlights,
+  ])
 
   // Check if we have temporary content
   const hasTemporaryContent = !!state?.temporaryContent
@@ -78,6 +146,22 @@ export function ControlRoom() {
             </h2>
           </div>
           <div className="flex items-center gap-2">
+            {/* Clear Highlights Button */}
+            {hasHighlights && (
+              <button
+                type="button"
+                onClick={() => clearHighlights.mutate()}
+                disabled={clearHighlights.isPending}
+                className="flex items-center gap-1.5 px-2 py-1.5 text-sm text-gray-600 dark:text-gray-400 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+                title={t('presentation:controls.clearHighlights')}
+              >
+                {clearHighlights.isPending ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Eraser size={16} />
+                )}
+              </button>
+            )}
             {/* LIVE Indicator */}
             <div
               className={`flex items-center gap-1.5 px-2 py-1 rounded-md ${

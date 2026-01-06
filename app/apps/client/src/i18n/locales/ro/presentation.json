@@ -257,7 +257,8 @@
     "show": "Afișează",
     "hide": "Ascunde",
     "screenHidden": "Ecranul este ascuns",
-    "screenDisplayed": "Ecranul este afișat"
+    "screenDisplayed": "Ecranul este afișat",
+    "clearHighlights": "Șterge Evidențierile"
   },
   "controlRoom": {
     "title": "Cameră de Control",
