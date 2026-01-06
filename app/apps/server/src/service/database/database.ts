@@ -1,4 +1,4 @@
-import { stat, unlink, writeFile } from 'node:fs/promises'
+import { copyFile, stat, unlink } from 'node:fs/promises'
 
 import { Database } from 'bun:sqlite'
 import {
@@ -50,24 +50,23 @@ export async function getDatabaseInfo(): Promise<DatabaseInfo> {
 }
 
 /**
- * Exports the database to the specified path using SQLite's serialize API
- * This properly handles WAL mode by capturing the complete database state
+ * Exports the database to the specified path using file copy
+ * This properly handles WAL mode by checkpointing first to ensure all data is in main file
+ * Uses streaming file copy to avoid loading entire database into memory
  */
 export async function checkpointAndExport(
   destinationPath: string,
 ): Promise<ExportResult> {
   try {
     const sqlite = getRawDatabase()
+    const sourcePath = getDatabasePath()
 
     // Checkpoint WAL first to ensure all writes are in main file
     sqlite.run('PRAGMA wal_checkpoint(TRUNCATE)')
 
-    // Use serialize() to get the complete database state as bytes
-    // This properly handles WAL mode and captures all data
-    const serialized = sqlite.serialize()
-
-    // Write the serialized database to the destination
-    await writeFile(destinationPath, serialized)
+    // Use file copy instead of serialize() to avoid loading entire database into memory
+    // This streams the file instead of loading it all at once
+    await copyFile(sourcePath, destinationPath)
 
     return {
       success: true,
@@ -133,13 +132,12 @@ export async function importDatabase(
       }
     }
 
-    // 3. Open source database and serialize it to capture all data including WAL
-    // This handles cases where the source database has uncommitted WAL data
-    let sourceData: Uint8Array
+    // 3. Checkpoint WAL on source database to ensure all data is in main file
+    // Then close it so we can copy the file
     try {
       const sourceDb = new Database(sourcePath, { readonly: true })
-      // Serialize captures the complete database state including WAL
-      sourceData = sourceDb.serialize()
+      // Checkpoint merges WAL data into main database file
+      sourceDb.run('PRAGMA wal_checkpoint(TRUNCATE)')
       sourceDb.close()
     } catch (error) {
       return {
@@ -150,21 +148,26 @@ export async function importDatabase(
       }
     }
 
-    // 4. Backup current database before replacing
+    // 4. Backup current database before replacing using file copy (no memory issues)
     const currentSqlite = getRawDatabase()
     try {
       currentSqlite.run('PRAGMA wal_checkpoint(TRUNCATE)')
-      const backupData = currentSqlite.serialize()
-      await writeFile(backupPath, backupData)
+    } catch {
+      // If checkpoint fails, continue anyway
+    }
+
+    // 5. Close current database connection before file operations
+    closeDatabase()
+
+    // 6. Create backup using streaming file copy (avoids loading into memory)
+    try {
+      await copyFile(destPath, backupPath)
     } catch {
       // If backup fails, it might be because the database is new/empty
       // Continue anyway
     }
 
-    // 5. Close current database connection
-    closeDatabase()
-
-    // 6. Remove old WAL and SHM files if they exist
+    // 7. Remove old WAL and SHM files if they exist
     try {
       await unlink(`${destPath}-wal`)
     } catch {
@@ -176,18 +179,19 @@ export async function importDatabase(
       // File might not exist
     }
 
-    // 7. Write the serialized source database to destination
-    await writeFile(destPath, sourceData)
+    // 8. Copy source database to destination using streaming file copy
+    // This avoids loading the entire database into memory
+    await copyFile(sourcePath, destPath)
 
-    // 8. Reinitialize the database connection with the new database
+    // 9. Reinitialize the database connection with the new database
     try {
       await initializeDatabase()
     } catch (error) {
+      // Restore from backup using file copy (no memory issues)
       try {
         const backupFile = Bun.file(backupPath)
         if (await backupFile.exists()) {
-          const backupData = new Uint8Array(await backupFile.arrayBuffer())
-          await writeFile(destPath, backupData)
+          await copyFile(backupPath, destPath)
           await initializeDatabase()
         }
       } catch (_restoreError) {}
