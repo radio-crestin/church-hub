@@ -134,13 +134,19 @@
 ~~- auto switch-ul nu functioneaza~~
 - cand se selecteaza primul verset se face un loop ciudat
 ~~- si sunt foarte multi clienti conectati..~~
+~~- implementeaza background reconnect pentru midi controller~~
 - adauga optiunea de a importa doar cantari, Biblia, programe, configurare dintr-un fisier de backups
+- by default nu selecta prima cantare in search results
 
 - creaza optiunea de a adauga live-urile create intr-un playlist pe YouTube
 - adauga optiunea de a afisa pe un ecran separat continutul in anumita limba (o versiune a Bibliei diferita, traduceri cu AI ale cantarilor.. si eventual traduceri in timp real)
 ~~- midi controller-ul e disabled~~
 ~~- cand se salveaza programul este o problema~~
 ~~- afiseaza pagina cantarii cand dau click din pagina de progam~~
+- incarca o pagina statica in obs pentru a face refresh automat
+- cand apesi F5, fa focus pe search chiar daca esti pe pagina
+- search-ul din Biblie nu e bun
+- 
 - adauga muzica
 - când sunt doar două versuri, nu mai comprima liniile
 - imbunatateste search-ul..
