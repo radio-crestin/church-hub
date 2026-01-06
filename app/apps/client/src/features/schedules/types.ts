@@ -193,3 +193,13 @@ export interface MissingSongItem {
   lineNumber: number
   resolved?: { type: 'existing'; songId: number } | { type: 'create' }
 }
+
+/**
+ * Skipped item info returned when verses are not found
+ */
+export interface SkippedItem {
+  index: number
+  type: 'bible_passage' | 'versete_tineri_entry'
+  reference: string
+  reason: string
+}

@@ -80,6 +80,16 @@ export interface ReplaceScheduleItemsInput {
 }
 
 /**
+ * Skipped item info returned when verses are not found
+ */
+export interface SkippedItem {
+  index: number
+  type: 'bible_passage' | 'versete_tineri_entry'
+  reference: string
+  reason: string
+}
+
+/**
  * Result of replace operation
  */
 export interface ReplaceScheduleItemsResult extends OperationResult {
@@ -88,6 +98,7 @@ export interface ReplaceScheduleItemsResult extends OperationResult {
     title: string
     itemCount: number
   }
+  skippedItems?: SkippedItem[]
 }
 
 /**
@@ -116,6 +127,9 @@ export function replaceScheduleItems(
       .run()
 
     log('debug', `Deleted existing items for schedule: ${input.scheduleId}`)
+
+    // Track skipped items for validation feedback
+    const skippedItems: SkippedItem[] = []
 
     // Collect all verses and entries for batch insert
     const allVerseInserts: {
@@ -189,6 +203,12 @@ export function replaceScheduleItems(
 
         if (verses.length === 0) {
           log('warning', `No verses found for passage: ${passageRef}`)
+          skippedItems.push({
+            index: i,
+            type: 'bible_passage',
+            reference: passageRef,
+            reason: 'verses_not_found',
+          })
           continue
         }
 
@@ -265,10 +285,20 @@ export function replaceScheduleItems(
                 )
 
           if (verses.length === 0) {
-            log(
-              'warning',
-              `No verses found for entry ${j}: ${entry.bookName} ${entry.startChapter}:${entry.startVerse}`,
+            const entryRef = formatPassageReference(
+              entry.bookName,
+              entry.startChapter,
+              entry.startVerse,
+              entry.endChapter,
+              entry.endVerse,
             )
+            log('warning', `No verses found for entry ${j}: ${entryRef}`)
+            skippedItems.push({
+              index: i,
+              type: 'versete_tineri_entry',
+              reference: `${entry.personName} - ${entryRef}`,
+              reason: 'verses_not_found',
+            })
             continue
           }
 
@@ -349,6 +379,7 @@ export function replaceScheduleItems(
         title: schedule.title,
         itemCount: input.items.length,
       },
+      skippedItems: skippedItems.length > 0 ? skippedItems : undefined,
     }
   } catch (error) {
     log('error', `Failed to replace schedule items: ${error}`)

@@ -191,14 +191,18 @@
     "messages": {
       "applied": "Schedule updated from text",
       "error": "Failed to update schedule",
-      "songCreated": "Song \"{{title}}\" created"
+      "songCreated": "Song \"{{title}}\" created",
+      "partialSuccess": "{{count}} items skipped due to missing verses",
+      "partialSuccess_one": "{{count}} item skipped due to missing verses",
+      "partialSuccess_other": "{{count}} items skipped due to missing verses"
     },
     "lineError": "Line {{line}}: {{message}}",
     "validationErrors": "Please fix the following issues:",
     "errors": {
       "noBibleTranslation": "No Bible translation configured",
       "invalidBibleReference": "Invalid Bible reference",
-      "invalidVtFormat": "Invalid format. Use: Name - Reference"
+      "invalidVtFormat": "Invalid format. Use: Name - Reference",
+      "versesNotFound": "Verses not found in database"
     }
   }
 }

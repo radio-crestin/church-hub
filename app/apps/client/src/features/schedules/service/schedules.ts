@@ -140,12 +140,24 @@ export async function replaceScheduleItems(
 ): Promise<{
   success: boolean
   schedule?: { id: number; title: string; itemCount: number }
+  skippedItems?: Array<{
+    index: number
+    type: 'bible_passage' | 'versete_tineri_entry'
+    reference: string
+    reason: string
+  }>
   error?: string
 }> {
   const response = await fetcher<
     ApiResponse<{
       success: boolean
       schedule?: { id: number; title: string; itemCount: number }
+      skippedItems?: Array<{
+        index: number
+        type: 'bible_passage' | 'versete_tineri_entry'
+        reference: string
+        reason: string
+      }>
     }>
   >(`/api/schedules/${scheduleId}/items/replace`, {
     method: 'PUT',
@@ -160,5 +172,6 @@ export async function replaceScheduleItems(
   return {
     success: response.data?.success ?? false,
     schedule: response.data?.schedule,
+    skippedItems: response.data?.skippedItems,
   }
 }

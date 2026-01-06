@@ -191,14 +191,18 @@
     "messages": {
       "applied": "Programul a fost actualizat din text",
       "error": "Nu s-a putut actualiza programul",
-      "songCreated": "Cantarea \"{{title}}\" a fost creata"
+      "songCreated": "Cantarea \"{{title}}\" a fost creata",
+      "partialSuccess": "{{count}} elemente omise din cauza versetelor lipsa",
+      "partialSuccess_one": "{{count}} element omis din cauza versetelor lipsa",
+      "partialSuccess_other": "{{count}} elemente omise din cauza versetelor lipsa"
     },
     "lineError": "Linia {{line}}: {{message}}",
     "validationErrors": "Corectati urmatoarele probleme:",
     "errors": {
       "noBibleTranslation": "Nicio traducere biblica configurata",
       "invalidBibleReference": "Referinta biblica invalida",
-      "invalidVtFormat": "Format invalid. Foloseste: Nume - Referinta"
+      "invalidVtFormat": "Format invalid. Foloseste: Nume - Referinta",
+      "versesNotFound": "Versetele nu au fost gasite in baza de date"
     }
   }
 }

@@ -411,10 +411,17 @@ export function EditAsTextModal({
         }
       }
 
-      // Filter out songs without IDs (skipped items)
-      const validItems = processedItems.filter(
-        (item) => item.type !== 'song' || item.songId !== undefined,
-      )
+      // Filter out songs without IDs (skipped items) and track line number mapping
+      const validItems: ProcessedItem[] = []
+      const indexToLineNumber: Map<number, number> = new Map()
+
+      for (let i = 0; i < processedItems.length; i++) {
+        const item = processedItems[i]
+        if (item.type !== 'song' || item.songId !== undefined) {
+          indexToLineNumber.set(validItems.length, items[i].lineNumber)
+          validItems.push(item)
+        }
+      }
 
       // Replace schedule items
       const result = await replaceScheduleItems(scheduleId, {
@@ -422,9 +429,32 @@ export function EditAsTextModal({
       })
 
       if (result.success) {
-        showToast(t('editAsText.messages.applied'), 'success')
-        onItemsUpdated()
-        handleClose()
+        // Check if any items were skipped due to missing verses
+        if (result.skippedItems && result.skippedItems.length > 0) {
+          const serverErrors: ValidationError[] = result.skippedItems.map(
+            (skipped) => ({
+              lineNumber: indexToLineNumber.get(skipped.index) ?? 0,
+              type:
+                skipped.type === 'bible_passage'
+                  ? 'bible_passage'
+                  : 'versete_tineri',
+              content: skipped.reference,
+              message: t('editAsText.errors.versesNotFound'),
+            }),
+          )
+          setValidationErrors(serverErrors)
+          showToast(
+            t('editAsText.messages.partialSuccess', {
+              count: result.skippedItems.length,
+            }),
+            'warning',
+          )
+          setModalState('editing')
+        } else {
+          showToast(t('editAsText.messages.applied'), 'success')
+          onItemsUpdated()
+          handleClose()
+        }
       } else {
         showToast(result.error || t('editAsText.messages.error'), 'error')
         setModalState('editing')
