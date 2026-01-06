@@ -390,6 +390,7 @@ export function presentTemporarySong(
           sortOrder: idx, // Use expanded index as sortOrder
         })),
         currentSlideIndex: startIndex,
+        nextItemPreview: input.nextItemPreview,
       },
     }
 
@@ -797,6 +798,7 @@ export function presentTemporaryAnnouncement(
       type: 'announcement',
       data: {
         content: input.content,
+        nextItemPreview: input.nextItemPreview,
       },
     }
 
@@ -855,6 +857,7 @@ export function presentTemporaryBiblePassage(
           input.secondaryTranslationAbbreviation,
         secondaryBookName: input.secondaryBookName,
         secondaryVerses: input.secondaryVerses,
+        nextItemPreview: input.nextItemPreview,
       },
     }
 
@@ -904,6 +907,7 @@ export function presentTemporaryVerseteTineri(
       data: {
         entries: input.entries,
         currentEntryIndex: startIndex,
+        nextItemPreview: input.nextItemPreview,
       },
     }
 
