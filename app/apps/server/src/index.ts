@@ -2418,7 +2418,10 @@ async function main() {
         return handleCors(
           req,
           new Response(JSON.stringify({ data: results }), {
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+            },
           }),
         )
       }
@@ -2503,7 +2506,10 @@ async function main() {
           return handleCors(
             req,
             new Response(JSON.stringify({ data: result }), {
-              headers: { 'Content-Type': 'application/json' },
+              headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+              },
             }),
           )
         }
@@ -2513,7 +2519,10 @@ async function main() {
         return handleCors(
           req,
           new Response(JSON.stringify({ data: songs }), {
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+            },
           }),
         )
       }

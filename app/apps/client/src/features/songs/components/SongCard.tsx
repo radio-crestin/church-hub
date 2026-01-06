@@ -1,4 +1,4 @@
-import { ChevronRight, Tag } from 'lucide-react'
+import { ChevronRight, Eye, Tag } from 'lucide-react'
 import { forwardRef } from 'react'
 
 interface SongCardProps {
@@ -9,6 +9,7 @@ interface SongCardProps {
     categoryName: string | null
     highlightedTitle?: string
     matchedContent?: string
+    presentationCount?: number
   }
   onClick: () => void
   isSelected?: boolean
@@ -40,14 +41,24 @@ export const SongCard = forwardRef<HTMLButtonElement, SongCardProps>(
               {song.title}
             </h3>
           )}
-          {song.categoryName && (
-            <div className="flex items-center gap-1 mt-1">
-              <Tag className="w-3 h-3 text-gray-400" />
-              <span className="text-sm text-gray-500 dark:text-gray-400">
-                {song.categoryName}
-              </span>
-            </div>
-          )}
+          <div className="flex items-center gap-3 mt-1">
+            {song.categoryName && (
+              <div className="flex items-center gap-1">
+                <Tag className="w-3 h-3 text-gray-400" />
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {song.categoryName}
+                </span>
+              </div>
+            )}
+            {song.presentationCount !== undefined && (
+              <div className="flex items-center gap-1">
+                <Eye className="w-3 h-3 text-gray-400" />
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {song.presentationCount}
+                </span>
+              </div>
+            )}
+          </div>
           {song.matchedContent && (
             <p
               className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2 [&_mark]:bg-yellow-300 [&_mark]:dark:bg-yellow-400/60 [&_mark]:rounded-sm [&_mark]:px-0.5"

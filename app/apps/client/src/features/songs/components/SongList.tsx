@@ -116,6 +116,7 @@ export function SongList({
       categoryName: string | null
       highlightedTitle?: string
       matchedContent?: string
+      presentationCount?: number
     }>
 
     if (hasSearchQuery && searchResults) {
@@ -127,6 +128,7 @@ export function SongList({
         categoryName: result.categoryName,
         highlightedTitle: result.highlightedTitle,
         matchedContent: result.matchedContent,
+        presentationCount: result.presentationCount,
       }))
       return {
         displaySongs: allSongs,
@@ -145,6 +147,7 @@ export function SongList({
       categoryId: song.categoryId,
       categoryName:
         categories?.find((c) => c.id === song.categoryId)?.name ?? null,
+      presentationCount: song.presentationCount,
     }))
 
     return {
