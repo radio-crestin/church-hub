@@ -1,0 +1,1 @@
+ALTER TABLE `presentation_state` ADD COLUMN `slide_highlights` text;
