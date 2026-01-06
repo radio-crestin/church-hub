@@ -13,7 +13,7 @@ import {
 } from '../hooks'
 import type { SongSearchResult } from '../types'
 
-const SEARCH_DEBOUNCE_MS = 1500
+const SEARCH_DEBOUNCE_MS = 600
 
 interface SongListProps {
   onSongClick: (songId: number) => void
