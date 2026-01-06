@@ -462,6 +462,16 @@ export function ScreenContent({
     const icon = getContentTypeIcon()
     const iconWidth = icon ? labelHeight * 1.4 : 0
 
+    // Get section background - use special background for versete_tineri to make it pop
+    const getSectionBackground = (): React.CSSProperties => {
+      if (nextSlideData?.contentType === 'versete_tineri') {
+        return {
+          backgroundColor: 'rgba(34, 197, 94, 0.15)', // green matching the icon
+        }
+      }
+      return getBackgroundCSS(ns.background)
+    }
+
     return (
       <div
         key="nextSlide"
@@ -475,7 +485,7 @@ export function ScreenContent({
           display: 'flex',
           flexDirection: 'column',
           gap,
-          ...getBackgroundCSS(ns.background),
+          ...getSectionBackground(),
         }}
       >
         <div
