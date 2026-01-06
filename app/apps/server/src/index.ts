@@ -2408,7 +2408,11 @@ async function main() {
         if (permError) return permError
 
         const query = url.searchParams.get('q') || ''
-        const results = searchSongs(query)
+        const categoryIdParam = url.searchParams.get('categoryId')
+        const categoryId = categoryIdParam
+          ? parseInt(categoryIdParam, 10)
+          : undefined
+        const results = searchSongs(query, categoryId)
 
         return handleCors(
           req,

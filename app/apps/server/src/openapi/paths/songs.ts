@@ -13,6 +13,13 @@ export const songsPaths = {
           schema: { type: 'string' },
           description: 'Search query',
         },
+        {
+          name: 'categoryId',
+          in: 'query',
+          required: false,
+          schema: { type: 'integer' },
+          description: 'Filter results by category ID',
+        },
       ],
       responses: {
         '200': {

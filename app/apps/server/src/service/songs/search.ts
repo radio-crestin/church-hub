@@ -853,8 +853,14 @@ function buildTrigramQuery(terms: string[]): string {
  * - Uses `rank` column instead of bm25() for faster sorting
  * - Simple query structure avoids combinatorial explosion
  * - Limits candidates, returns top 50 after re-ranking
+ *
+ * @param query - Search query string
+ * @param categoryId - Optional category ID to filter results
  */
-export function searchSongs(query: string): SongSearchResult[] {
+export function searchSongs(
+  query: string,
+  categoryId?: number,
+): SongSearchResult[] {
   try {
     log('debug', `Searching songs: ${query}`)
 
@@ -932,6 +938,11 @@ export function searchSongs(query: string): SongSearchResult[] {
     log('debug', `FTS query: ${ftsQuery}`)
 
     // Phase 1: Standard FTS5 search for exact/prefix matches
+    const categoryFilter =
+      categoryId !== undefined ? 'AND s.category_id = ?' : ''
+    const standardQueryParams =
+      categoryId !== undefined ? [ftsQuery, categoryId] : [ftsQuery]
+
     const standardResults = db
       .query(
         `
@@ -948,12 +959,12 @@ export function searchSongs(query: string): SongSearchResult[] {
       FROM songs_fts
       JOIN songs s ON s.id = songs_fts.song_id
       LEFT JOIN song_categories sc ON s.category_id = sc.id
-      WHERE songs_fts MATCH ?
+      WHERE songs_fts MATCH ? ${categoryFilter}
       ORDER BY rank
       LIMIT 500
     `,
       )
-      .all(ftsQuery) as Array<{
+      .all(...standardQueryParams) as Array<{
       id: number
       title: string
       category_id: number | null
@@ -981,6 +992,8 @@ export function searchSongs(query: string): SongSearchResult[] {
 
     if (trigramQuery) {
       try {
+        const trigramQueryParams =
+          categoryId !== undefined ? [trigramQuery, categoryId] : [trigramQuery]
         trigramResults = db
           .query(
             `
@@ -995,12 +1008,12 @@ export function searchSongs(query: string): SongSearchResult[] {
           FROM songs_fts_trigram
           JOIN songs s ON s.id = songs_fts_trigram.song_id
           LEFT JOIN song_categories sc ON s.category_id = sc.id
-          WHERE songs_fts_trigram MATCH ?
+          WHERE songs_fts_trigram MATCH ? ${categoryFilter}
           ORDER BY rank
           LIMIT 200
         `,
           )
-          .all(trigramQuery) as typeof trigramResults
+          .all(...trigramQueryParams) as typeof trigramResults
 
         log(
           'debug',
