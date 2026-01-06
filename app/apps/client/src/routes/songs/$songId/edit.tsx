@@ -78,7 +78,7 @@ function SongEditorPage() {
     if (reset) {
       navigate({
         to: '/songs/',
-        search: { reset },
+        search: { reset, fromSong: true },
       })
     }
   }, [reset, navigate])

@@ -76,7 +76,7 @@ function SongPreviewPage() {
     if (reset) {
       navigate({
         to: '/songs/',
-        search: { reset },
+        search: { reset, fromSong: true },
       })
     }
   }, [reset, navigate])
