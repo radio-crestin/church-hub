@@ -103,7 +103,8 @@ export function GlobalAppShortcutManager() {
   const handleSearchSong = useCallback(() => {
     logger.debug('Navigating to song search via shortcut')
     // Pass reset timestamp to clear search and focus, even if already on page
-    navigate({ to: '/songs/', search: { reset: Date.now() } })
+    // Include fromSong: true to prevent auto-navigation back to last visited song
+    navigate({ to: '/songs/', search: { reset: Date.now(), fromSong: true } })
   }, [navigate])
 
   const handleSearchBible = useCallback(() => {

@@ -135,7 +135,7 @@
 - cand se selecteaza primul verset se face un loop ciudat
 ~~- si sunt foarte multi clienti conectati..~~
 ~~- implementeaza background reconnect pentru midi controller~~
-- adauga optiunea de a importa doar cantari, Biblia, programe, configurare dintr-un fisier de backups
+~~- adauga optiunea de a importa doar cantari, Biblia, programe, configurare dintr-un fisier de backups~~
 - by default nu selecta prima cantare in search results
 
 - creaza optiunea de a adauga live-urile create intr-un playlist pe YouTube
