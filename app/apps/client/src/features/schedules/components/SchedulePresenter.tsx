@@ -227,7 +227,7 @@ export function SchedulePresenter({
         return {
           contentType: 'song',
           preview,
-          label: 'Cântare:',
+          label: 'Cântare',
           title: nextItem.songTitle || '',
         }
       }
@@ -247,7 +247,7 @@ export function SchedulePresenter({
         return {
           contentType: 'bible_passage',
           preview: reference,
-          label: 'Pasaj Biblic:',
+          label: 'Pasaj Biblic',
         }
       }
 
@@ -262,7 +262,7 @@ export function SchedulePresenter({
           return {
             contentType: 'versete_tineri',
             preview,
-            label: 'Versete Tineri:',
+            label: 'Versete Tineri',
           }
         }
         if (nextItem.slideType === 'announcement') {
@@ -277,7 +277,7 @@ export function SchedulePresenter({
           return {
             contentType: 'announcement',
             preview,
-            label: 'Anunț:',
+            label: 'Anunț',
           }
         }
       }
