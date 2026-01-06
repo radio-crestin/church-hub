@@ -38,14 +38,12 @@ export async function aiSearchSongs(
 
   // Step 3: Execute search using existing FTS infrastructure
   // This builds an efficient OR query and handles ranking
-  const ftsResults = searchSongs(combinedQuery, categoryId)
+  // Request 150 candidates for AI analysis
+  const ftsResults = searchSongs(combinedQuery, categoryId, 150)
 
-  // Step 4: Take top 150 candidates for AI analysis
-  const candidates = ftsResults.slice(0, 150)
-
-  // Step 5: Use AI to analyze content and score relevance
+  // Step 4: Use AI to analyze content and score relevance
   // This filters to top 100 results sorted by AI score
-  const scoredResults = await analyzeAndScoreResults(query, candidates, config)
+  const scoredResults = await analyzeAndScoreResults(query, ftsResults, config)
 
   const processingTimeMs = Math.round(performance.now() - startTime)
 

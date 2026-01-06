@@ -852,14 +852,16 @@ function buildTrigramQuery(terms: string[]): string {
  * Performance optimizations:
  * - Uses `rank` column instead of bm25() for faster sorting
  * - Simple query structure avoids combinatorial explosion
- * - Limits candidates, returns top 50 after re-ranking
+ * - Limits candidates, returns top results after re-ranking
  *
  * @param query - Search query string
  * @param categoryId - Optional category ID to filter results
+ * @param limit - Maximum number of results to return (default: 50)
  */
 export function searchSongs(
   query: string,
   categoryId?: number,
+  limit = 50,
 ): SongSearchResult[] {
   try {
     log('debug', `Searching songs: ${query}`)
@@ -1124,8 +1126,8 @@ export function searchSongs(
       return a.bm25_rank - b.bm25_rank
     })
 
-    // Return top 50 results
-    const topResults = scoredResults.slice(0, 50)
+    // Return top results based on limit
+    const topResults = scoredResults.slice(0, limit)
 
     log(
       'debug',
