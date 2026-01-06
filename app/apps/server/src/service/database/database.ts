@@ -132,20 +132,23 @@ export async function importDatabase(
       }
     }
 
-    // 3. Checkpoint WAL on source database to ensure all data is in main file
-    // Then close it so we can copy the file
+    // 3. If source has WAL file, try to checkpoint it (requires write access)
+    // Skip if readonly or no WAL - exported backups typically don't have WAL files
+    const sourceWalPath = `${sourcePath}-wal`
     try {
-      const sourceDb = new Database(sourcePath, { readonly: true })
-      // Checkpoint merges WAL data into main database file
-      sourceDb.run('PRAGMA wal_checkpoint(TRUNCATE)')
-      sourceDb.close()
-    } catch (error) {
-      return {
-        success: false,
-        message: 'Failed to read source database',
-        requiresRestart: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+      const walExists = await Bun.file(sourceWalPath).exists()
+      if (walExists) {
+        // Only attempt checkpoint if WAL exists and we can open with write access
+        try {
+          const sourceDb = new Database(sourcePath)
+          sourceDb.run('PRAGMA wal_checkpoint(TRUNCATE)')
+          sourceDb.close()
+        } catch {
+          // If checkpoint fails (readonly file), just copy the files as-is
+        }
       }
+    } catch {
+      // Ignore WAL check errors
     }
 
     // 4. Backup current database before replacing using file copy (no memory issues)
