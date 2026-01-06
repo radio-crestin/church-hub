@@ -390,14 +390,14 @@ export function LivePreview() {
   // Loading state
   if (!screen) {
     return (
-      <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow-lg bg-gray-800 flex items-center justify-center">
+      <div className="relative h-full max-w-full aspect-video rounded-lg overflow-hidden shadow-lg bg-gray-800 flex items-center justify-center">
         <div className="text-gray-400 text-sm">Loading...</div>
       </div>
     )
   }
 
   return (
-    <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow-lg">
+    <div className="relative h-full max-w-full aspect-video rounded-lg overflow-hidden shadow-lg">
       <ScreenPreview
         screen={screen}
         contentType={contentType}

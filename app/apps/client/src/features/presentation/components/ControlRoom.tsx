@@ -1,14 +1,10 @@
-import { Link } from '@tanstack/react-router'
 import {
-  Book,
-  Calendar,
   ChevronLeft,
   ChevronRight,
   Eye,
   EyeOff,
   Loader2,
   MonitorUp,
-  Music,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
@@ -73,8 +69,8 @@ export function ControlRoom() {
   return (
     <div className="flex flex-col h-full gap-4">
       {/* Preview Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 flex-1">
-        <div className="flex items-center justify-between mb-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 flex-1 flex flex-col min-h-0">
+        <div className="flex items-center justify-between mb-4 shrink-0">
           <div className="flex items-center gap-2">
             <MonitorUp size={20} className="text-indigo-600" />
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -144,7 +140,11 @@ export function ControlRoom() {
           </div>
         </div>
 
-        <LivePreview />
+        <div className="flex-1 flex items-center justify-center min-h-0 overflow-hidden">
+          <div className="w-full h-full flex items-center justify-center">
+            <LivePreview />
+          </div>
+        </div>
       </div>
 
       {/* Navigation Controls */}
@@ -171,38 +171,6 @@ export function ControlRoom() {
             <span>{t('presentation:controls.next')}</span>
             <ChevronRight size={22} />
           </button>
-        </div>
-      </div>
-
-      {/* Quick Links */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-          {t('presentation:controlRoom.quickLinks', 'Quick Links')}
-        </h3>
-        <div className="flex flex-wrap gap-2">
-          <Link
-            to="/songs"
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-900/50 transition-colors"
-          >
-            <Music size={18} />
-            <span>{t('presentation:controlRoom.goToSongs', 'Songs')}</span>
-          </Link>
-          <Link
-            to="/bible"
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-lg hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-colors"
-          >
-            <Book size={18} />
-            <span>{t('presentation:controlRoom.goToBible', 'Bible')}</span>
-          </Link>
-          <Link
-            to="/schedules"
-            className="flex items-center gap-2 px-4 py-2 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded-lg hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors"
-          >
-            <Calendar size={18} />
-            <span>
-              {t('presentation:controlRoom.goToSchedules', 'Schedules')}
-            </span>
-          </Link>
         </div>
       </div>
     </div>
