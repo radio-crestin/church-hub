@@ -140,17 +140,19 @@
 ~~- midi controller-ul e disabled~~
 ~~- cand se salveaza programul este o problema~~
 ~~- afiseaza pagina cantarii cand dau click din pagina de progam~~
-- incarca o pagina statica in obs pentru a face refresh automat
 ~~- cand apesi F5, fa focus pe search chiar daca esti pe pagina~~
 ~~- search-ul din Biblie nu e bun~~
 ~~- când sunt doar două versuri, nu mai comprima liniile~~
 ~~- imbunatateste search-ul..~~
 ~~- adauga optiune de a cauta cantari folosind AI~~
-- adauga posibilitatea de a face highlight pentru sesiunea curenta
+~~- adauga posibilitatea de a face highlight pentru sesiunea curenta~~
+- adauga etichete midi controller
+- incarca o pagina statica in obs pentru a face refresh automat
 - adauga muzica
+- add update checker
+- add shortcuts indicators
 - test backing up the database in https://turso.tech/blog/turso-offline-sync-public-beta
 - exportul ca si pptx ar trebui sa aiba textul ceva mai mare
-- add update checker
 - creaza optiunea de a adauga live-urile create intr-un playlist pe YouTube
 - adauga optiunea de a afisa pe un ecran separat continutul in anumita limba (o versiune a Bibliei diferita, traduceri cu AI ale cantarilor.. si eventual traduceri in timp real)
 - creaza un quickstart guide pentru utilizatori
