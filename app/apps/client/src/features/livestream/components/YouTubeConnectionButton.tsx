@@ -15,7 +15,7 @@ export function YouTubeConnectionButton() {
     isLoading,
     isAuthenticating,
   } = useYouTubeAuth()
-  const { config } = useYouTubeConfig()
+  const { config, isLoading: isConfigLoading } = useYouTubeConfig()
 
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isSetupModalOpen, setIsSetupModalOpen] = useState(false)
@@ -27,11 +27,19 @@ export function YouTubeConnectionButton() {
 
   // Auto-open setup modal after successful authentication (only if no broadcast selected)
   useEffect(() => {
+    // Wait for config to load before deciding to show modal
+    if (isConfigLoading) return
+
     if (!wasAuthenticated && isAuthenticated && !config?.selectedBroadcastId) {
       setIsSetupModalOpen(true)
     }
     setWasAuthenticated(isAuthenticated)
-  }, [isAuthenticated, wasAuthenticated, config?.selectedBroadcastId])
+  }, [
+    isAuthenticated,
+    wasAuthenticated,
+    config?.selectedBroadcastId,
+    isConfigLoading,
+  ])
 
   // Close menu when clicking outside
   useEffect(() => {
