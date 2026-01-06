@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 
 import { BroadcastTemplateSelector } from './BroadcastTemplateSelector'
 import { Button } from '../../../ui/button/Button'
+import { Combobox } from '../../../ui/combobox/Combobox'
 import { usePastBroadcasts, useStreamKeys, useYouTubeConfig } from '../hooks'
 import type { PastBroadcast } from '../types'
 import { openExternalUrl } from '../utils'
@@ -169,25 +170,22 @@ export function YouTubeSetupModal({ isOpen, onClose }: YouTubeSetupModalProps) {
             <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
               {t('youtube.streamKey')}
             </h3>
-            <select
-              value={selectedStreamKeyId}
-              onChange={(e) => setSelectedStreamKeyId(e.target.value)}
+            <Combobox
+              options={
+                streamKeys?.map((key) => ({
+                  value: key.id,
+                  label: key.name,
+                })) ?? []
+              }
+              value={selectedStreamKeyId || null}
+              onChange={(value) =>
+                setSelectedStreamKeyId(value?.toString() ?? '')
+              }
+              placeholder={t('youtube.selectStreamKey')}
               disabled={isLoadingStreamKeys}
-              className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
-            >
-              <option value="">{t('youtube.selectStreamKey')}</option>
-              {streamKeys?.map((key) => (
-                <option key={key.id} value={key.id}>
-                  {key.name}
-                </option>
-              ))}
-            </select>
-            {selectedStreamKeyId && (
-              <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                {t('youtube.streamKeySelected')}:{' '}
-                {streamKeys?.find((k) => k.id === selectedStreamKeyId)?.name}
-              </p>
-            )}
+              allowClear={false}
+              portalContainer={dialogRef.current}
+            />
           </div>
 
           {/* First Time Instructions */}
