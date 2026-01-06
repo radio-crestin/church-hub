@@ -30,8 +30,9 @@ export function compressLines(
 ): string {
   const lines = text.split('\n').filter((line) => line.trim() !== '')
 
-  if (lines.length <= 1) {
-    return text.trim()
+  // Don't compress if 2 or fewer lines - keep them as separate lines
+  if (lines.length <= 2) {
+    return lines.map((line) => line.trim()).join('\n')
   }
 
   const separatorStr = getSeparatorString(separator)
@@ -79,8 +80,9 @@ export function compressTextLinesWithFit(
 ): string {
   const lines = text.split('\n').filter((line) => line.trim() !== '')
 
-  if (lines.length <= 1) {
-    return text.trim()
+  // Don't compress if 2 or fewer lines - keep them as separate lines
+  if (lines.length <= 2) {
+    return lines.map((line) => line.trim()).join('\n')
   }
 
   const separatorStr = getSeparatorString(separator)
