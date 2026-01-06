@@ -10,7 +10,12 @@ export async function openSongWindow(
   songId: number,
   songTitle?: string,
 ): Promise<void> {
-  console.log('[openSongWindow] Called with songId:', songId, 'title:', songTitle)
+  console.log(
+    '[openSongWindow] Called with songId:',
+    songId,
+    'title:',
+    songTitle,
+  )
   const url = `${getFrontendUrl()}/songs/${songId}`
   console.log('[openSongWindow] URL:', url, 'isTauri:', isTauri())
 
