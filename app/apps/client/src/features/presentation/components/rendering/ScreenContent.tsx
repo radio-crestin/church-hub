@@ -402,27 +402,63 @@ export function ScreenContent({
       nextSlideData?.contentType === 'song' ||
       nextSlideData?.contentType === 'announcement'
 
-    // Get icon for content type
+    // Get icon with background for content type
     const getContentTypeIcon = () => {
-      const iconSize = Math.min(labelHeight * 0.6, 24 * fontScale)
-      const iconStyle = { flexShrink: 0 }
+      const containerSize = labelHeight * 1.2
+      const iconSize = containerSize * 0.5
 
-      switch (nextSlideData?.contentType) {
-        case 'song':
-          return <Music size={iconSize} style={iconStyle} />
-        case 'announcement':
-          return <Megaphone size={iconSize} style={iconStyle} />
-        case 'versete_tineri':
-          return <User size={iconSize} style={iconStyle} />
-        case 'bible_passage':
-          return <Book size={iconSize} style={iconStyle} />
-        default:
-          return null
+      const iconConfigs: Record<
+        string,
+        { icon: React.ReactNode; bgColor: string; iconColor: string }
+      > = {
+        song: {
+          icon: <Music size={iconSize} />,
+          bgColor: 'rgba(99, 102, 241, 0.2)', // indigo
+          iconColor: 'rgb(99, 102, 241)',
+        },
+        announcement: {
+          icon: <Megaphone size={iconSize} />,
+          bgColor: 'rgba(249, 115, 22, 0.2)', // orange
+          iconColor: 'rgb(249, 115, 22)',
+        },
+        versete_tineri: {
+          icon: <User size={iconSize} />,
+          bgColor: 'rgba(34, 197, 94, 0.2)', // green
+          iconColor: 'rgb(34, 197, 94)',
+        },
+        bible_passage: {
+          icon: <Book size={iconSize} />,
+          bgColor: 'rgba(20, 184, 166, 0.2)', // teal
+          iconColor: 'rgb(20, 184, 166)',
+        },
       }
+
+      const config = nextSlideData?.contentType
+        ? iconConfigs[nextSlideData.contentType]
+        : null
+      if (!config) return null
+
+      return (
+        <div
+          style={{
+            width: containerSize,
+            height: containerSize,
+            borderRadius: '50%',
+            backgroundColor: config.bgColor,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: config.iconColor,
+            flexShrink: 0,
+          }}
+        >
+          {config.icon}
+        </div>
+      )
     }
 
     const icon = getContentTypeIcon()
-    const iconWidth = icon ? labelHeight * 0.8 : 0
+    const iconWidth = icon ? labelHeight * 1.4 : 0
 
     return (
       <div
@@ -466,18 +502,7 @@ export function ScreenContent({
               containerHeight={labelHeight}
             />
           </div>
-          {icon && (
-            <div
-              style={{
-                color: ns.labelStyle.color,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              {icon}
-            </div>
-          )}
+          {icon}
         </div>
         <div style={{ flex: 1, minHeight: 0 }}>
           <TextContent
