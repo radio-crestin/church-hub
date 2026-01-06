@@ -150,6 +150,7 @@ export function KeyboardNavigationProvider({
           const handled = handler.handler(event)
           if (handled === true) {
             logger.debug(`Event handled by: ${handler.id}`)
+            event.stopPropagation()
             return
           }
         } catch (error) {
