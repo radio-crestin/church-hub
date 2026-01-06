@@ -25,6 +25,7 @@ interface BibleNavigationPanelProps {
   onNextVerse?: () => void
   onPreviousVerse?: () => void
   onGoBack?: () => void
+  focusTrigger?: number
 }
 
 export function BibleNavigationPanel({
@@ -35,6 +36,7 @@ export function BibleNavigationPanel({
   onNextVerse,
   onPreviousVerse,
   onGoBack,
+  focusTrigger,
 }: BibleNavigationPanelProps) {
   const { t } = useTranslation('bible')
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -55,6 +57,13 @@ export function BibleNavigationPanel({
   useEffect(() => {
     searchInputRef.current?.focus()
   }, [])
+
+  // Focus search input when focusTrigger changes (from keyboard shortcut)
+  useEffect(() => {
+    if (focusTrigger && focusTrigger > 0) {
+      searchInputRef.current?.focus()
+    }
+  }, [focusTrigger])
 
   const { primaryTranslation, selectedTranslations } =
     useSelectedBibleTranslations()

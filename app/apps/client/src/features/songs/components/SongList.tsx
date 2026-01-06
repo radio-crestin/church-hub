@@ -23,6 +23,7 @@ interface SongListProps {
   initialSelectedSongId?: number
   categoryId?: number
   onCategoryChange?: (categoryId: number | undefined) => void
+  focusTrigger?: number
 }
 
 export function SongList({
@@ -33,6 +34,7 @@ export function SongList({
   initialSelectedSongId,
   categoryId,
   onCategoryChange,
+  focusTrigger,
 }: SongListProps) {
   const { t } = useTranslation('songs')
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -75,6 +77,13 @@ export function SongList({
   useEffect(() => {
     searchInputRef.current?.focus()
   }, [])
+
+  // Focus search input when focusTrigger changes (from keyboard shortcut)
+  useEffect(() => {
+    if (focusTrigger && focusTrigger > 0) {
+      searchInputRef.current?.focus()
+    }
+  }, [focusTrigger])
 
   const isSearching = localQuery.length > 0
   const hasSearchQuery = debouncedQuery.length > 0
