@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next'
 
 import { clearSectionLastVisited } from '~/features/navigation'
 import {
+  type ContentType,
   useClearTemporaryContent,
   usePresentationState,
   usePresentTemporaryAnnouncement,
@@ -191,6 +192,69 @@ export function SchedulePresenter({
 
   // Get all schedule items
   const items = useMemo(() => schedule?.items ?? [], [schedule?.items])
+
+  // Helper to calculate next item preview for a given schedule item
+  const getNextItemPreview = useCallback(
+    (
+      currentItem: ScheduleItem,
+    ): { contentType: ContentType; preview: string } | undefined => {
+      const currentIndex = items.findIndex((i) => i.id === currentItem.id)
+      if (currentIndex === -1 || currentIndex >= items.length - 1) {
+        return undefined
+      }
+
+      const nextItem = items[currentIndex + 1]
+
+      if (nextItem.itemType === 'song') {
+        const expandedSlides = expandSongSlidesWithChoruses(nextItem.slides)
+        const firstSlide = expandedSlides[0]
+        if (!firstSlide) return undefined
+        // Strip HTML tags and preserve line breaks
+        const preview = firstSlide.content
+          .replace(/<br\s*\/?>/gi, '\n')
+          .replace(/<\/p>\s*<p[^>]*>/gi, '\n')
+          .replace(/<\/(p|div|h[1-6])>/gi, '\n')
+          .replace(/<[^>]*>/g, '')
+          .replace(/\n{3,}/g, '\n\n')
+          .trim()
+        return { contentType: 'song', preview }
+      }
+
+      if (nextItem.itemType === 'bible_passage') {
+        const firstVerse = nextItem.biblePassageVerses[0]
+        if (!firstVerse) return undefined
+        return {
+          contentType: 'bible_passage',
+          preview: `${firstVerse.reference}: ${firstVerse.text}`,
+        }
+      }
+
+      if (nextItem.itemType === 'slide') {
+        if (nextItem.slideType === 'versete_tineri') {
+          const firstEntry = nextItem.verseteTineriEntries[0]
+          if (!firstEntry) return undefined
+          return {
+            contentType: 'versete_tineri',
+            preview: `${firstEntry.personName} - ${firstEntry.reference}: ${firstEntry.text}`,
+          }
+        }
+        if (nextItem.slideType === 'announcement') {
+          // Strip HTML tags for announcement preview
+          const preview = (nextItem.slideContent || '')
+            .replace(/<br\s*\/?>/gi, '\n')
+            .replace(/<\/p>\s*<p[^>]*>/gi, '\n')
+            .replace(/<\/(p|div|h[1-6])>/gi, '\n')
+            .replace(/<[^>]*>/g, '')
+            .replace(/\n{3,}/g, '\n\n')
+            .trim()
+          return { contentType: 'announcement', preview }
+        }
+      }
+
+      return undefined
+    },
+    [items],
+  )
 
   // Calculate flattened list of presentable items for navigation
   const flatItems = useMemo(() => {
@@ -368,13 +432,17 @@ export function SchedulePresenter({
   const handleSlideClick = useCallback(
     async (item: ScheduleItem, slideIndex: number) => {
       if (item.itemType === 'song' && item.songId) {
+        // Calculate next item preview (for displaying when at last slide)
+        const nextItemPreview = getNextItemPreview(item)
+
         await presentTemporarySong.mutateAsync({
           songId: item.songId,
           slideIndex,
+          nextItemPreview,
         })
       }
     },
-    [presentTemporarySong],
+    [presentTemporarySong, getNextItemPreview],
   )
 
   // Handle verse click (bible passage)
@@ -417,6 +485,9 @@ export function SchedulePresenter({
         }
       })
 
+      // Calculate next item preview (for displaying when at last verse)
+      const nextItemPreview = getNextItemPreview(item)
+
       await presentTemporaryBiblePassage.mutateAsync({
         translationId: 0, // Not stored in schedule, use 0
         translationAbbreviation: item.biblePassageTranslation || '',
@@ -428,9 +499,10 @@ export function SchedulePresenter({
         endVerse: parsedLast.verse,
         verses,
         currentVerseIndex: verseIndex,
+        nextItemPreview,
       })
     },
-    [presentTemporaryBiblePassage],
+    [presentTemporaryBiblePassage, getNextItemPreview],
   )
 
   // Handle entry click (versete tineri)
@@ -459,12 +531,16 @@ export function SchedulePresenter({
         sortOrder: e.sortOrder,
       }))
 
+      // Calculate next item preview (for displaying when at last entry)
+      const nextItemPreview = getNextItemPreview(item)
+
       await presentTemporaryVerseteTineri.mutateAsync({
         entries,
         currentEntryIndex: entryIndex,
+        nextItemPreview,
       })
     },
-    [presentTemporaryVerseteTineri],
+    [presentTemporaryVerseteTineri, getNextItemPreview],
   )
 
   // Handle announcement click
@@ -478,11 +554,15 @@ export function SchedulePresenter({
         return
       }
 
+      // Calculate next item preview
+      const nextItemPreview = getNextItemPreview(item)
+
       await presentTemporaryAnnouncement.mutateAsync({
         content: item.slideContent,
+        nextItemPreview,
       })
     },
-    [presentTemporaryAnnouncement],
+    [presentTemporaryAnnouncement, getNextItemPreview],
   )
 
   // Helper to navigate to a specific flat item
@@ -491,9 +571,13 @@ export function SchedulePresenter({
       const { item, index } = flatItem
 
       if (item.itemType === 'song' && item.songId) {
+        // Calculate next item preview (for displaying when at last slide)
+        const nextItemPreview = getNextItemPreview(item)
+
         await presentTemporarySong.mutateAsync({
           songId: item.songId,
           slideIndex: index,
+          nextItemPreview,
         })
       } else if (item.itemType === 'bible_passage') {
         await handleVerseClick(item, index)
@@ -511,6 +595,7 @@ export function SchedulePresenter({
     },
     [
       presentTemporarySong,
+      getNextItemPreview,
       handleVerseClick,
       handleEntryClick,
       handleAnnouncementClick,
