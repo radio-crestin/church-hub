@@ -65,14 +65,21 @@ export async function aiBibleSearch(
 
   const ftsResults = Array.from(allResults.values())
 
-  // Step 3: Use AI to analyze content and score relevance
-  // This filters to top 100 results sorted by AI score
-  const scoredResults = await analyzeBibleResults(query, ftsResults, config)
+  // Step 3: Optionally use AI to analyze content and score relevance
+  // Skip if analyzeResults is false (default) - only query expansion is used
+  let finalResults: typeof ftsResults
+  if (config.analyzeResults) {
+    // Use AI to score results - filters to top 100 sorted by AI score
+    finalResults = await analyzeBibleResults(query, ftsResults, config)
+  } else {
+    // Skip AI analysis - return FTS results directly (faster)
+    finalResults = ftsResults.slice(0, 100)
+  }
 
   const processingTimeMs = Math.round(performance.now() - startTime)
 
   return {
-    results: scoredResults,
+    results: finalResults,
     termsUsed: terms,
     totalCandidates: ftsResults.length,
     processingTimeMs,

@@ -6,6 +6,8 @@ export interface AIBibleSearchConfig {
   model: string
   apiKey: string
   baseUrl?: string
+  /** Enable AI analysis of results for semantic scoring (slower but more accurate) */
+  analyzeResults?: boolean
 }
 
 export interface AIBibleSearchInput {

@@ -64,6 +64,10 @@
         "label": "Enable AI Search",
         "description": "Add an AI search button to the songs search bar"
       },
+      "analyzeResults": {
+        "label": "Analyze Results with AI",
+        "description": "Use AI to score and rank results by relevance (slower but more accurate)"
+      },
       "provider": {
         "label": "AI Provider",
         "description": "Select your AI service provider"
