@@ -144,25 +144,30 @@ export function getSongsPaginated(
       `Getting songs paginated: limit=${limit}, offset=${offset}, categoryId=${categoryId}`,
     )
 
-    const rawDb = getRawDatabase()
+    const db = getDatabase()
 
-    // Build query with optional category filter
+    // Build base query with optional category filter
+    let query = db.select().from(songs)
+    if (categoryId !== undefined) {
+      query = query.where(eq(songs.categoryId, categoryId)) as typeof query
+    }
+
+    // Get total count using raw SQL for efficiency
+    const rawDb = getRawDatabase()
     const categoryFilter =
       categoryId !== undefined ? 'WHERE category_id = ?' : ''
-    const params = categoryId !== undefined ? [categoryId] : []
-
-    // Get total count
+    const countParams = categoryId !== undefined ? [categoryId] : []
     const countResult = rawDb
       .query(`SELECT COUNT(*) as total FROM songs ${categoryFilter}`)
-      .get(...params) as { total: number }
+      .get(...countParams) as { total: number }
     const total = countResult.total
 
     // Get paginated songs
-    const records = rawDb
-      .query(
-        `SELECT * FROM songs ${categoryFilter} ORDER BY title ASC LIMIT ? OFFSET ?`,
-      )
-      .all(...params, limit, offset) as (typeof songs.$inferSelect)[]
+    const records = query
+      .orderBy(asc(songs.title))
+      .limit(limit)
+      .offset(offset)
+      .all()
 
     const songsList = records.map(toSong)
 
