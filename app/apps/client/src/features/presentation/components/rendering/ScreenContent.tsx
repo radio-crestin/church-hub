@@ -450,6 +450,7 @@ export function ScreenContent({
             justifyContent: 'center',
             color: config.iconColor,
             flexShrink: 0,
+            marginRight: gap,
           }}
         >
           {config.icon}
