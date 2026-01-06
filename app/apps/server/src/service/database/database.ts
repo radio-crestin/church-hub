@@ -242,6 +242,7 @@ export async function importDatabase(
 
 /**
  * Table groups for selective import
+ * Note: configurations is handled dynamically - all tables not in other categories
  */
 const IMPORT_TABLES = {
   songs: ['song_categories', 'songs', 'song_slides'],
@@ -252,16 +253,68 @@ const IMPORT_TABLES = {
     'schedule_bible_passage_verses',
     'schedule_versete_tineri_entries',
   ],
-  configurations: [
-    'screens',
-    'screen_content_configs',
-    'screen_next_slide_configs',
-    'app_settings',
-    'user_preferences',
-    'cache_metadata',
-    'bible_history',
-  ],
 } as const
+
+/**
+ * Tables to exclude from configuration import (system/virtual tables)
+ */
+const EXCLUDED_TABLES = [
+  // SQLite internal tables
+  'sqlite_sequence',
+  // FTS virtual tables (will be rebuilt after import)
+  'songs_fts',
+  'songs_fts_trigram',
+  'songs_fts_data',
+  'songs_fts_idx',
+  'songs_fts_content',
+  'songs_fts_docsize',
+  'songs_fts_config',
+  'songs_fts_trigram_data',
+  'songs_fts_trigram_idx',
+  'songs_fts_trigram_content',
+  'songs_fts_trigram_docsize',
+  'songs_fts_trigram_config',
+  'schedules_fts',
+  'schedules_fts_data',
+  'schedules_fts_idx',
+  'schedules_fts_content',
+  'schedules_fts_docsize',
+  'schedules_fts_config',
+  'bible_verses_fts',
+  'bible_verses_fts_data',
+  'bible_verses_fts_idx',
+  'bible_verses_fts_content',
+  'bible_verses_fts_docsize',
+  'bible_verses_fts_config',
+  // Drizzle migrations table
+  '__drizzle_migrations',
+]
+
+/**
+ * Gets all configuration tables from source database
+ * (all tables not in songs, bible, schedules, or excluded)
+ */
+function getConfigurationTables(sourceDb: Database): string[] {
+  // Get all user tables from source database
+  const allTables = sourceDb
+    .query(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
+    )
+    .all() as Array<{ name: string }>
+
+  // Combine all known category tables
+  const knownTables = new Set([
+    ...IMPORT_TABLES.songs,
+    ...IMPORT_TABLES.bible,
+    ...IMPORT_TABLES.schedules,
+    ...EXCLUDED_TABLES,
+  ])
+
+  // Filter to get only configuration tables
+  return allTables
+    .map((t) => t.name)
+    .filter((name) => !knownTables.has(name) && !name.includes('_fts'))
+}
 
 /**
  * Imports selected data categories from a source database
@@ -342,8 +395,12 @@ export async function selectiveImportDatabase(
     if (options.songs) tablesToImport.push(...IMPORT_TABLES.songs)
     if (options.bible) tablesToImport.push(...IMPORT_TABLES.bible)
     if (options.schedules) tablesToImport.push(...IMPORT_TABLES.schedules)
-    if (options.configurations)
-      tablesToImport.push(...IMPORT_TABLES.configurations)
+    if (options.configurations) {
+      // Dynamically get all configuration tables (everything not in other categories)
+      const configTables = getConfigurationTables(sourceDb)
+      tablesToImport.push(...configTables)
+      log('debug', `Configuration tables found: ${configTables.join(', ')}`)
+    }
 
     log('info', `Importing tables: ${tablesToImport.join(', ')}`)
 
