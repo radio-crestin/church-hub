@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm'
 
 import type { ContentType } from './content-types'
 import { broadcastOBSCurrentScene } from './index'
+import { switchScene } from './scenes'
 import { obsConnection } from './websocket-client'
 import { getDatabase } from '../../../db'
 import { obsScenes, sceneAutomationState } from '../../../db/schema'
@@ -157,15 +158,14 @@ export async function handleContentTypeChange(
 
   // Skip if not presenting
   if (!isPresenting) {
-    log('debug', 'Not presenting, skipping scene automation')
-    // Clear auto scene state when presentation stops
-    if (state.currentAutoScene) {
-      updateAutomationState({
-        previousSceneName: null,
-        currentAutoScene: null,
-        lastContentType: null,
-      })
-    }
+    log('debug', 'Not presenting, clearing scene automation state')
+    // Always clear state when not presenting
+    // This ensures the next presentation triggers automation
+    updateAutomationState({
+      previousSceneName: null,
+      currentAutoScene: null,
+      lastContentType: null,
+    })
     return
   }
 
@@ -199,7 +199,7 @@ export async function handleContentTypeChange(
         `Auto-switching to scene: ${targetScene.displayName} (${targetScene.obsSceneName})`,
       )
       try {
-        await obsConnection.switchScene(targetScene.obsSceneName)
+        await switchScene(targetScene.obsSceneName)
         broadcastOBSCurrentScene(targetScene.obsSceneName)
         updateAutomationState({
           currentAutoScene: targetScene.obsSceneName,
@@ -224,7 +224,7 @@ export async function handleContentTypeChange(
         `No scene for ${contentType}, reverting to previous: ${state.previousSceneName}`,
       )
       try {
-        await obsConnection.switchScene(state.previousSceneName)
+        await switchScene(state.previousSceneName)
         broadcastOBSCurrentScene(state.previousSceneName)
         updateAutomationState({
           previousSceneName: null,

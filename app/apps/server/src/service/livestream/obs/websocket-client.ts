@@ -457,10 +457,31 @@ export class OBSWebSocketClient {
       const sceneResponse = (await this.call('GetCurrentProgramScene')) as {
         sceneName: string
       }
-      this.currentScene = sceneResponse.sceneName
-      log('info', `Current scene: ${this.currentScene}`)
-      if (this.currentSceneCallback) {
-        this.currentSceneCallback(this.currentScene)
+      const obsCurrentScene = sceneResponse.sceneName
+      log('info', `OBS current scene: ${obsCurrentScene}`)
+
+      // If Church Hub has a scene set, sync it TO OBS (Church Hub is source of truth)
+      if (this.currentScene && this.currentScene !== obsCurrentScene) {
+        log(
+          'info',
+          `Syncing Church Hub scene to OBS: ${this.currentScene} (OBS was on: ${obsCurrentScene})`,
+        )
+        await this.call('SetCurrentProgramScene', {
+          sceneName: this.currentScene,
+        })
+      } else if (!this.currentScene) {
+        // Only adopt OBS's scene if Church Hub doesn't have one set
+        this.currentScene = obsCurrentScene
+        log('info', `Adopting OBS scene: ${this.currentScene}`)
+        if (this.currentSceneCallback) {
+          this.currentSceneCallback(this.currentScene)
+        }
+      } else {
+        // Church Hub and OBS are already on the same scene
+        log(
+          'info',
+          `Church Hub and OBS already on same scene: ${this.currentScene}`,
+        )
       }
 
       log('info', 'Getting stream status...')
@@ -494,7 +515,8 @@ export class OBSWebSocketClient {
     this.connected = false
     this.connecting = false
     this.identified = false
-    this.currentScene = null
+    // Keep currentScene when OBS disconnects - Church Hub maintains its own scene state
+    // When OBS reconnects, fetchInitialState() will sync Church Hub's scene to OBS
     this.isStreaming = false
     this.isRecording = false
     this.ws = null
