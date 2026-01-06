@@ -77,6 +77,9 @@ interface ContentData {
 // Default highlight color
 const DEFAULT_HIGHLIGHT_COLOR = '#FFFF00'
 
+// Stable empty array to prevent unnecessary re-renders when no highlights exist
+const EMPTY_STYLE_RANGES: TextStyleRange[] = []
+
 export function LivePreview() {
   // Connect to WebSocket for real-time updates
   useWebSocket()
@@ -92,7 +95,7 @@ export function LivePreview() {
 
   // Ref for text selection tracking
   const previewContainerRef = useRef<HTMLDivElement>(null)
-  const { selectedRange, hasSelection, clearSelection } =
+  const { getSelectedRange, hasSelection, clearSelection } =
     useTextSelection(previewContainerRef)
 
   // Context menu state
@@ -426,7 +429,8 @@ export function LivePreview() {
       const highlightId = styledElement?.dataset?.highlightId
 
       // Show context menu if text is selected OR clicking on existing styled text
-      if (hasSelection || highlightId) {
+      // hasSelection() reads from ref - doesn't trigger re-renders
+      if (hasSelection() || highlightId) {
         e.preventDefault()
         setContextMenu({
           visible: true,
@@ -444,6 +448,7 @@ export function LivePreview() {
   }, [])
 
   const handleHighlight = useCallback(() => {
+    const selectedRange = getSelectedRange()
     if (!selectedRange) return
     addHighlight.mutate({
       start: selectedRange.start,
@@ -451,9 +456,10 @@ export function LivePreview() {
       highlight: DEFAULT_HIGHLIGHT_COLOR,
     })
     clearSelection()
-  }, [selectedRange, addHighlight, clearSelection])
+  }, [getSelectedRange, addHighlight, clearSelection])
 
   const handleBold = useCallback(() => {
+    const selectedRange = getSelectedRange()
     if (!selectedRange) return
     addHighlight.mutate({
       start: selectedRange.start,
@@ -461,9 +467,10 @@ export function LivePreview() {
       bold: true,
     })
     clearSelection()
-  }, [selectedRange, addHighlight, clearSelection])
+  }, [getSelectedRange, addHighlight, clearSelection])
 
   const handleUnderline = useCallback(() => {
+    const selectedRange = getSelectedRange()
     if (!selectedRange) return
     addHighlight.mutate({
       start: selectedRange.start,
@@ -471,7 +478,7 @@ export function LivePreview() {
       underline: true,
     })
     clearSelection()
-  }, [selectedRange, addHighlight, clearSelection])
+  }, [getSelectedRange, addHighlight, clearSelection])
 
   const handleRemoveStyle = useCallback(() => {
     if (contextMenu.clickedHighlightId) {
@@ -480,8 +487,15 @@ export function LivePreview() {
   }, [contextMenu.clickedHighlightId, removeHighlight])
 
   // Get highlights from either query or presentation state
-  const styleRanges: TextStyleRange[] =
-    slideHighlights ?? presentationState?.slideHighlights ?? []
+  // Memoized to prevent unnecessary reference changes that cause re-renders
+  // which could clear text selections during DOM reconciliation
+  const styleRanges = useMemo((): TextStyleRange[] => {
+    return (
+      slideHighlights ??
+      presentationState?.slideHighlights ??
+      EMPTY_STYLE_RANGES
+    )
+  }, [slideHighlights, presentationState?.slideHighlights])
 
   // Loading state
   if (!screen) {
