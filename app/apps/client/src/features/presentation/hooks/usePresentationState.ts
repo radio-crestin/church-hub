@@ -12,5 +12,7 @@ export function usePresentationState() {
     refetchInterval: 10000,
     // Keep data fresh on window focus
     refetchOnWindowFocus: true,
+    // Consider data fresh for 5 seconds to reduce unnecessary refetches
+    staleTime: 5000,
   })
 }

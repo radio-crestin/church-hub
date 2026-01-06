@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef } from 'react'
+import { memo, useLayoutEffect, useMemo, useRef } from 'react'
 
 import { type AnimationConfig, useSlideAnimation } from './useSlideAnimation'
 import { compressLines } from './utils/textProcessing'
@@ -169,10 +169,89 @@ interface AnimatedTextProps {
 }
 
 /**
+ * Compare two TextStyleRange arrays for equality
+ */
+function areStyleRangesEqual(
+  a: TextStyleRange[] | undefined,
+  b: TextStyleRange[] | undefined,
+): boolean {
+  if (a === b) return true
+  if (!a || !b) return a === b
+  if (a.length !== b.length) return false
+  return a.every(
+    (range, i) =>
+      range.id === b[i].id &&
+      range.start === b[i].start &&
+      range.end === b[i].end &&
+      range.highlight === b[i].highlight &&
+      range.bold === b[i].bold &&
+      range.underline === b[i].underline,
+  )
+}
+
+/**
+ * Custom comparison for AnimatedText props to prevent unnecessary re-renders.
+ * Uses deep comparison for styleRanges since it's an array.
+ */
+function arePropsEqual(
+  prevProps: AnimatedTextProps,
+  nextProps: AnimatedTextProps,
+): boolean {
+  // Check simple props
+  if (
+    prevProps.content !== nextProps.content ||
+    prevProps.contentKey !== nextProps.contentKey ||
+    prevProps.isVisible !== nextProps.isVisible ||
+    prevProps.width !== nextProps.width ||
+    prevProps.height !== nextProps.height ||
+    prevProps.left !== nextProps.left ||
+    prevProps.top !== nextProps.top ||
+    prevProps.isHtml !== nextProps.isHtml
+  ) {
+    return false
+  }
+
+  // Check style object (shallow comparison of relevant fields)
+  const s1 = prevProps.style
+  const s2 = nextProps.style
+  if (
+    s1.fontFamily !== s2.fontFamily ||
+    s1.color !== s2.color ||
+    s1.bold !== s2.bold ||
+    s1.italic !== s2.italic ||
+    s1.underline !== s2.underline ||
+    s1.alignment !== s2.alignment ||
+    s1.verticalAlignment !== s2.verticalAlignment ||
+    s1.lineHeight !== s2.lineHeight ||
+    s1.shadow !== s2.shadow ||
+    s1.maxFontSize !== s2.maxFontSize ||
+    s1.minFontSize !== s2.minFontSize ||
+    s1.compressLines !== s2.compressLines ||
+    s1.lineSeparator !== s2.lineSeparator
+  ) {
+    return false
+  }
+
+  // Check animation configs (by reference is fine, they're usually stable)
+  if (
+    prevProps.animationIn !== nextProps.animationIn ||
+    prevProps.animationOut !== nextProps.animationOut ||
+    prevProps.slideTransitionOut !== nextProps.slideTransitionOut ||
+    prevProps.slideTransitionIn !== nextProps.slideTransitionIn
+  ) {
+    return false
+  }
+
+  // Deep compare styleRanges
+  return areStyleRangesEqual(prevProps.styleRanges, nextProps.styleRanges)
+}
+
+/**
  * Simplified animated text component.
  * Handles text rendering with auto-scaling and slide transition animations.
+ * Memoized to prevent re-renders that would clear text selection.
  */
-export function AnimatedText({
+const AnimatedTextInner = memo(function AnimatedText({
   content,
   contentKey,
   isVisible,
@@ -332,4 +411,7 @@ export function AnimatedText({
       )}
     </div>
   )
-}
+}, arePropsEqual)
+
+// Export with the expected name
+export { AnimatedTextInner as AnimatedText }
