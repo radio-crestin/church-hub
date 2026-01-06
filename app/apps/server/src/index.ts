@@ -85,6 +85,7 @@ import {
   setMessageCallback,
   shutdownMIDI,
 } from './service/midi'
+import { handleMIDIShortcut, loadMIDIShortcuts } from './service/midi/shortcuts'
 import { getExternalInterfaces } from './service/network'
 import {
   batchUpdateScreenConfigs,
@@ -463,6 +464,14 @@ async function main() {
 
           // Broadcast settings update via WebSocket
           broadcastSettingsUpdated(table, body.key)
+
+          // Reload MIDI shortcuts if keyboard shortcuts were updated
+          if (
+            table === 'app_settings' &&
+            body.key === 'global_keyboard_shortcuts'
+          ) {
+            loadMIDIShortcuts()
+          }
 
           return handleCors(
             req,
@@ -4061,8 +4070,16 @@ async function main() {
   initializeMIDI()
   logTiming('init_midi', t)
 
-  // Wire up MIDI message callback to WebSocket broadcast
-  setMessageCallback((message) => {
+  // Load MIDI shortcuts configuration from database
+  t = performance.now()
+  loadMIDIShortcuts()
+  logTiming('load_midi_shortcuts', t)
+
+  // Wire up MIDI message callback - execute actions directly on server, then broadcast for LED feedback
+  setMessageCallback(async (message) => {
+    // Execute any mapped shortcut action directly on the server
+    await handleMIDIShortcut(message)
+    // Still broadcast for client LED feedback
     broadcastMIDIMessage(message)
   })
 

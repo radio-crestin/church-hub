@@ -6,7 +6,7 @@ import { useNavigateTemporary } from '~/features/presentation/hooks'
 import { createLogger } from '~/utils/logger'
 import { useShortcutRecording } from '../context'
 import { useAppShortcuts, useGlobalAppShortcuts } from '../hooks'
-import { useMIDILEDFeedback, useMIDIShortcuts } from '../midi/hooks'
+import { useMIDILEDFeedback } from '../midi/hooks'
 
 const logger = createLogger('keyboard-shortcuts:manager')
 
@@ -142,20 +142,8 @@ export function GlobalAppShortcutManager() {
     isRecordingRef,
   })
 
-  // Register MIDI shortcuts (same handlers as keyboard)
-  useMIDIShortcuts({
-    shortcuts: isLoading ? { actions: {} as never, version: 1 } : shortcuts,
-    sceneShortcuts,
-    onStartLive: handleStartLive,
-    onStopLive: handleStopLive,
-    onSearchSong: handleSearchSong,
-    onSearchBible: handleSearchBible,
-    onNextSlide: handleNextSlide,
-    onPrevSlide: handlePrevSlide,
-    onSceneSwitch: handleSceneSwitch,
-    isRecordingRef,
-  })
-
+  // MIDI shortcuts are handled server-side for reliability
+  // Only LED feedback is managed on the client
   // Sync MIDI LEDs with app state
   useMIDILEDFeedback({
     shortcuts: isLoading ? { actions: {} as never, version: 1 } : shortcuts,

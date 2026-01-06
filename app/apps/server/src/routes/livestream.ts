@@ -56,6 +56,7 @@ import {
   storeTokens,
   updateYouTubeConfig,
 } from '../service/livestream/youtube'
+import { loadMIDIShortcuts } from '../service/midi/shortcuts'
 import {
   broadcastLivestreamStatus,
   broadcastOBSConnectionStatus,
@@ -834,6 +835,12 @@ export async function handleLivestreamRoutes(
           }),
         )
       }
+
+      // Reload MIDI shortcuts if scene shortcuts were updated
+      if (body.shortcuts !== undefined) {
+        loadMIDIShortcuts()
+      }
+
       return handleCors(
         req,
         new Response(JSON.stringify({ data: scene }), {
