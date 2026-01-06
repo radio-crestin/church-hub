@@ -568,7 +568,18 @@ function SortableItemWrapper({
             {item.itemType === 'slide' &&
               item.slideType === 'versete_tineri' &&
               t('presenter.verseteTineri')}
-            {item.itemType === 'bible_passage' && item.biblePassageReference}
+            {item.itemType === 'bible_passage' && (
+              <span className="flex items-center gap-1">
+                {item.biblePassageReference}
+                {item.biblePassageVerses.length === 0 && (
+                  <AlertTriangle
+                    size={12}
+                    className="text-amber-500 flex-shrink-0"
+                    title={t('warnings.invalidReference')}
+                  />
+                )}
+              </span>
+            )}
           </div>
           <div className="text-xs text-gray-500 dark:text-gray-400">
             {item.itemType === 'song' && (
@@ -937,13 +948,20 @@ function VerseteTineriEntries({
                   </span>
                 </div>
                 <span
-                  className={`text-xs ${
+                  className={`text-xs flex items-center gap-1 ${
                     isPresented
                       ? 'text-green-700 dark:text-green-300'
                       : 'text-indigo-600 dark:text-indigo-400'
                   }`}
                 >
                   {entry.reference}
+                  {!entry.text && (
+                    <AlertTriangle
+                      size={10}
+                      className="text-amber-500 flex-shrink-0"
+                      title={t('warnings.invalidReference')}
+                    />
+                  )}
                 </span>
                 <span
                   className={`text-sm line-clamp-2 block ${
