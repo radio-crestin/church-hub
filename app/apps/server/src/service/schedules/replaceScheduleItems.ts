@@ -92,7 +92,7 @@ export interface ReplaceScheduleItemsResult extends OperationResult {
 
 /**
  * Replaces all items in a schedule with new items
- * Deletes existing items and inserts new ones in order
+ * Optimized with batch inserts for verses and entries
  */
 export function replaceScheduleItems(
   input: ReplaceScheduleItemsInput,
@@ -116,6 +116,30 @@ export function replaceScheduleItems(
       .run()
 
     log('debug', `Deleted existing items for schedule: ${input.scheduleId}`)
+
+    // Collect all verses and entries for batch insert
+    const allVerseInserts: {
+      scheduleItemId: number
+      verseId: number
+      reference: string
+      text: string
+      sortOrder: number
+    }[] = []
+
+    const allVtEntryInserts: {
+      scheduleItemId: number
+      personName: string
+      translationId: number
+      bookCode: string
+      bookName: string
+      reference: string
+      text: string
+      startChapter: number
+      startVerse: number
+      endChapter: number
+      endVerse: number
+      sortOrder: number
+    }[] = []
 
     // Insert new items with correct sort order
     for (let i = 0; i < input.items.length; i++) {
@@ -183,23 +207,19 @@ export function replaceScheduleItems(
           .get()
         const itemId = result.id
 
-        // Insert individual verses
+        // Collect verses for batch insert
         for (let j = 0; j < verses.length; j++) {
           const verse = verses[j]
-          const verseReference = `${verse.bookName} ${verse.chapter}:${verse.verse}`
-
-          db.insert(scheduleBiblePassageVerses)
-            .values({
-              scheduleItemId: itemId,
-              verseId: verse.id,
-              reference: verseReference,
-              text: verse.text,
-              sortOrder: j,
-            })
-            .run()
+          allVerseInserts.push({
+            scheduleItemId: itemId,
+            verseId: verse.id,
+            reference: `${verse.bookName} ${verse.chapter}:${verse.verse}`,
+            text: verse.text,
+            sortOrder: j,
+          })
         }
 
-        log('debug', `Bible passage added with ${verses.length} verses`)
+        log('debug', `Bible passage prepared with ${verses.length} verses`)
       } else if (
         item.slideType === 'versete_tineri' &&
         item.verseteTineriEntries
@@ -220,7 +240,7 @@ export function replaceScheduleItems(
           .get()
         const itemId = result.id
 
-        // Insert versete tineri entries
+        // Collect versete tineri entries for batch insert
         const entries = item.verseteTineriEntries
         for (let j = 0; j < entries.length; j++) {
           const entry = entries[j]
@@ -264,25 +284,23 @@ export function replaceScheduleItems(
             entry.endVerse,
           )
 
-          db.insert(scheduleVerseteTineriEntries)
-            .values({
-              scheduleItemId: itemId,
-              personName: entry.personName,
-              translationId: entry.translationId,
-              bookCode: entry.bookCode,
-              bookName: entry.bookName,
-              reference,
-              text: combinedText,
-              startChapter: entry.startChapter,
-              startVerse: entry.startVerse,
-              endChapter: entry.endChapter,
-              endVerse: entry.endVerse,
-              sortOrder: j,
-            })
-            .run()
+          allVtEntryInserts.push({
+            scheduleItemId: itemId,
+            personName: entry.personName,
+            translationId: entry.translationId,
+            bookCode: entry.bookCode,
+            bookName: entry.bookName,
+            reference,
+            text: combinedText,
+            startChapter: entry.startChapter,
+            startVerse: entry.startVerse,
+            endChapter: entry.endChapter,
+            endVerse: entry.endVerse,
+            sortOrder: j,
+          })
         }
 
-        log('debug', `Versete Tineri added with ${entries.length} entries`)
+        log('debug', `Versete Tineri prepared with ${entries.length} entries`)
       } else if (item.type === 'slide' && item.slideType && item.slideContent) {
         db.insert(scheduleItems)
           .values({
@@ -296,6 +314,18 @@ export function replaceScheduleItems(
           })
           .run()
       }
+    }
+
+    // Batch insert all verses at once
+    if (allVerseInserts.length > 0) {
+      db.insert(scheduleBiblePassageVerses).values(allVerseInserts).run()
+      log('debug', `Batch inserted ${allVerseInserts.length} verses`)
+    }
+
+    // Batch insert all versete tineri entries at once
+    if (allVtEntryInserts.length > 0) {
+      db.insert(scheduleVerseteTineriEntries).values(allVtEntryInserts).run()
+      log('debug', `Batch inserted ${allVtEntryInserts.length} VT entries`)
     }
 
     // Update schedule's updated_at
