@@ -1,4 +1,4 @@
-import { type RefObject, useCallback, useEffect, useState } from 'react'
+import { type RefObject, useCallback, useEffect, useRef, useState } from 'react'
 
 export interface TextSelectionRange {
   start: number
@@ -64,6 +64,9 @@ function getCharacterOffset(
  * Hook to track text selection within a container element
  * Returns the selected text and character offsets relative to the container
  */
+// Debounce delay in ms - prevents re-renders during active drag-selection
+const SELECTION_DEBOUNCE_MS = 150
+
 export function useTextSelection(
   containerRef: RefObject<HTMLElement | null>,
 ): UseTextSelectionResult {
@@ -71,6 +74,7 @@ export function useTextSelection(
     null,
   )
   const [selectedText, setSelectedText] = useState('')
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const updateSelection = useCallback(() => {
     const container = containerRef.current
@@ -132,11 +136,27 @@ export function useTextSelection(
   }, [])
 
   useEffect(() => {
-    // Listen for selection changes
-    document.addEventListener('selectionchange', updateSelection)
+    // Debounced handler to prevent re-renders during active drag-selection
+    // The selectionchange event fires continuously during dragging, which would
+    // trigger state updates and re-renders, causing the DOM to be replaced
+    // and the selection to be cleared mid-drag.
+    const handleSelectionChange = () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
+      }
+
+      debounceTimerRef.current = setTimeout(() => {
+        updateSelection()
+      }, SELECTION_DEBOUNCE_MS)
+    }
+
+    document.addEventListener('selectionchange', handleSelectionChange)
 
     return () => {
-      document.removeEventListener('selectionchange', updateSelection)
+      document.removeEventListener('selectionchange', handleSelectionChange)
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
+      }
     }
   }, [updateSelection])
 
