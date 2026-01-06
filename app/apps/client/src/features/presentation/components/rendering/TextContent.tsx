@@ -280,12 +280,7 @@ export function TextContent({
     return isHtml ? convertHtmlToText(content) : content
   }, [content, isHtml])
 
-  // Parse HTML to segments for rendering with highlights
-  const baseSegments = useMemo(() => {
-    return isHtml ? parseHtmlToSegments(content) : [{ text: content }]
-  }, [content, isHtml])
-
-  // Extract style config for cache comparison
+  // Extract style config
   const maxFontSize = style.maxFontSize
   const minFontSize = style.minFontSize ?? 12
   const autoScale = style.autoScale
@@ -294,11 +289,36 @@ export function TextContent({
   const fitLineToWidth = style.fitLineToWidth ?? false
   const lineHeight = style.lineHeight ?? 1.3
 
-  // Check if we can use cached result
+  // Parse HTML to segments and apply compression synchronously during render
+  // This ensures compressed content is displayed immediately, not after a layout effect
+  const { processedContent, processedSegments } = useMemo(() => {
+    const baseSegments = isHtml
+      ? parseHtmlToSegments(content)
+      : [{ text: content }]
+
+    if (shouldCompressLines) {
+      const compressedContent = compressLines(
+        baseContent,
+        lineSeparator as 'space',
+      )
+      const compressedSegments = compressSegments(
+        baseSegments,
+        lineSeparator as 'space',
+      )
+      return {
+        processedContent: compressedContent,
+        processedSegments: compressedSegments,
+      }
+    }
+
+    return { processedContent: baseContent, processedSegments: baseSegments }
+  }, [content, isHtml, baseContent, shouldCompressLines, lineSeparator])
+
+  // Check if we can use cached result for font size
   const cache = cacheRef.current
   const canUseCache =
     cache !== null &&
-    cache.content === baseContent &&
+    cache.content === processedContent &&
     cache.width === containerWidth &&
     cache.height === containerHeight &&
     cache.maxFontSize === maxFontSize &&
@@ -309,14 +329,12 @@ export function TextContent({
     cache.fitLineToWidth === fitLineToWidth &&
     cache.lineHeight === lineHeight
 
-  // Get cached or default values for initial render
-  let calculatedFontSize = canUseCache ? cache.result.fontSize : maxFontSize
-  let processedSegments = canUseCache
-    ? cache.result.processedSegments
-    : baseSegments
+  // Get cached or default font size for initial render
+  const calculatedFontSize = canUseCache ? cache.result.fontSize : maxFontSize
 
   // Use layout effect to calculate font size synchronously before paint
   // This runs BEFORE the browser paints, ensuring no flash
+  // Note: Line compression is done in useMemo above, so processedContent is already compressed
   useLayoutEffect(() => {
     if (!textRef.current) return
 
@@ -329,21 +347,13 @@ export function TextContent({
 
     if (maxWidth <= 0 || maxHeight <= 0) return
 
-    // Handle line compression - always combine pairs when enabled
-    let finalContent = baseContent
-    let finalSegments = baseSegments
-    if (shouldCompressLines) {
-      finalContent = compressLines(baseContent, lineSeparator as 'space')
-      finalSegments = compressSegments(baseSegments, lineSeparator as 'space')
-    }
-
     let fontSize = maxFontSize
     if (autoScale) {
       // Use binary search for accurate font fitting
       const result = fitLineToWidth
         ? findOptimalFontSizePerLine({
             measureElement: textElement,
-            text: finalContent,
+            text: processedContent,
             maxWidth,
             maxHeight,
             minFontSize,
@@ -352,7 +362,7 @@ export function TextContent({
           })
         : findOptimalFontSize({
             measureElement: textElement,
-            text: finalContent,
+            text: processedContent,
             maxWidth,
             maxHeight,
             minFontSize,
@@ -362,9 +372,9 @@ export function TextContent({
       fontSize = result.fontSize
     }
 
-    // Update cache
+    // Update cache (for font size only - segments are handled by useMemo)
     cacheRef.current = {
-      content: baseContent,
+      content: processedContent,
       width: containerWidth,
       height: containerHeight,
       maxFontSize,
@@ -374,7 +384,7 @@ export function TextContent({
       lineSeparator,
       fitLineToWidth,
       lineHeight,
-      result: { fontSize, processedSegments: finalSegments },
+      result: { fontSize, processedSegments },
     }
 
     // Apply calculated values directly to DOM (no state update = no re-render)
@@ -382,8 +392,8 @@ export function TextContent({
       textRef.current.style.fontSize = `${fontSize}px`
     }
   }, [
-    baseContent,
-    baseSegments,
+    processedContent,
+    processedSegments,
     containerWidth,
     containerHeight,
     maxFontSize,
