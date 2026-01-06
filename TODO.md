@@ -127,7 +127,7 @@
 ~~- imbunatateste UX-ul pentru cautarea in cantari astfel incat sa poti sa il folosesti doar din tastatura (sa pui sa dai down, apoi enter, apoi enter din nou si prezinti cantarea)~~
 ~~- cand nu se gaseste un verset afiseaza un warning si creaza entry-ul~~
 ~~- adauga full text search si pentru Biblie~~
-- afiseaza urmeaza corect pentru urmatoarea cantare/element din program
+~~- afiseaza urmeaza corect pentru urmatoarea cantare/element din program~~
 - elimina din titlul extras numerele (gen 1.)
 - adauga filtru pentru categoria de cantari si deasemenea, fa loading la cantari cand se face scrolling (infinite scroll)
 - background diferit la sectiunea urmeaza, ca sa poata fi identificata usor

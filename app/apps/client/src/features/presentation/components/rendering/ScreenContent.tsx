@@ -1,3 +1,4 @@
+import { Book, Megaphone, Music, User } from 'lucide-react'
 import { useMemo, useRef } from 'react'
 
 import { AnimatedText } from './AnimatedText'
@@ -401,6 +402,28 @@ export function ScreenContent({
       nextSlideData?.contentType === 'song' ||
       nextSlideData?.contentType === 'announcement'
 
+    // Get icon for content type
+    const getContentTypeIcon = () => {
+      const iconSize = Math.min(labelHeight * 0.6, 24 * fontScale)
+      const iconStyle = { flexShrink: 0 }
+
+      switch (nextSlideData?.contentType) {
+        case 'song':
+          return <Music size={iconSize} style={iconStyle} />
+        case 'announcement':
+          return <Megaphone size={iconSize} style={iconStyle} />
+        case 'versete_tineri':
+          return <User size={iconSize} style={iconStyle} />
+        case 'bible_passage':
+          return <Book size={iconSize} style={iconStyle} />
+        default:
+          return null
+      }
+    }
+
+    const icon = getContentTypeIcon()
+    const iconWidth = icon ? labelHeight * 0.8 : 0
+
     return (
       <div
         key="nextSlide"
@@ -417,20 +440,44 @@ export function ScreenContent({
           ...getBackgroundCSS(ns.background),
         }}
       >
-        <div style={{ height: labelHeight, flexShrink: 0 }}>
-          <TextContent
-            content={getLabelText()}
-            style={{
-              ...ns.labelStyle,
-              maxFontSize: ns.labelStyle.maxFontSize * fontScale,
-              minFontSize: (ns.labelStyle.minFontSize ?? 12) * fontScale,
-              // Always compress label since it may include title
-              compressLines: true,
-              lineSeparator: ns.labelStyle.lineSeparator ?? 'space',
-            }}
-            containerWidth={scaledBounds.width - padding * 2}
-            containerHeight={labelHeight}
-          />
+        <div
+          style={{
+            height: labelHeight,
+            flexShrink: 0,
+            display: 'flex',
+            alignItems: 'center',
+            gap: gap,
+          }}
+        >
+          <div style={{ flex: 1, minWidth: 0, height: '100%' }}>
+            <TextContent
+              content={getLabelText()}
+              style={{
+                ...ns.labelStyle,
+                maxFontSize: ns.labelStyle.maxFontSize * fontScale,
+                minFontSize: (ns.labelStyle.minFontSize ?? 12) * fontScale,
+                // Always compress label since it may include title
+                compressLines: true,
+                lineSeparator: ns.labelStyle.lineSeparator ?? 'space',
+              }}
+              containerWidth={
+                scaledBounds.width - padding * 2 - iconWidth - gap
+              }
+              containerHeight={labelHeight}
+            />
+          </div>
+          {icon && (
+            <div
+              style={{
+                color: ns.labelStyle.color,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {icon}
+            </div>
+          )}
         </div>
         <div style={{ flex: 1, minHeight: 0 }}>
           <TextContent
