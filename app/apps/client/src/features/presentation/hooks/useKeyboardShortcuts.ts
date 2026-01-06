@@ -1,4 +1,9 @@
-import { useEffect } from 'react'
+import { useCallback } from 'react'
+
+import {
+  KEYBOARD_PRIORITY,
+  useKeyboardNavigationHandler,
+} from '~/features/keyboard-shortcuts'
 
 import {
   useClearSlide,
@@ -7,6 +12,10 @@ import {
   useShowSlide,
 } from './index'
 
+/**
+ * Global keyboard shortcuts for presentation navigation
+ * Registered at PRESENTATION priority (lowest) so page-specific handlers take precedence
+ */
 export function useKeyboardShortcuts() {
   const { data: state } = usePresentationState()
   const navigateTemporary = useNavigateTemporary()
@@ -17,31 +26,8 @@ export function useKeyboardShortcuts() {
   const hasNavigableContent =
     !!state?.currentSongSlideId || !!state?.temporaryContent
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Don't trigger if user is typing in an input or editor
-      if (
-        event.target instanceof HTMLInputElement ||
-        event.target instanceof HTMLTextAreaElement ||
-        event.target instanceof HTMLSelectElement
-      ) {
-        return
-      }
-
-      // Don't trigger if user is in a contenteditable element (e.g., TipTap editor)
-      if (
-        event.target instanceof HTMLElement &&
-        event.target.isContentEditable
-      ) {
-        return
-      }
-
-      // Don't trigger if any dialog/modal is open
-      const openDialog = document.querySelector('dialog[open]')
-      if (openDialog) {
-        return
-      }
-
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent): boolean => {
       switch (event.key) {
         case 'ArrowRight':
         case 'ArrowDown':
@@ -51,7 +37,7 @@ export function useKeyboardShortcuts() {
           if (hasNavigableContent) {
             navigateTemporary.mutate({ direction: 'next' })
           }
-          break
+          return true
 
         case 'ArrowLeft':
         case 'ArrowUp':
@@ -60,13 +46,13 @@ export function useKeyboardShortcuts() {
           if (hasNavigableContent) {
             navigateTemporary.mutate({ direction: 'prev' })
           }
-          break
+          return true
 
         case 'Escape':
           // Hide presentation (show clock)
           event.preventDefault()
           clearSlide.mutate()
-          break
+          return true
 
         case 'F5':
         case 'F10':
@@ -74,11 +60,20 @@ export function useKeyboardShortcuts() {
           // Show presentation (unhide)
           event.preventDefault()
           showSlide.mutate()
-          break
-      }
-    }
+          return true
 
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [hasNavigableContent, navigateTemporary, clearSlide, showSlide])
+        default:
+          return false
+      }
+    },
+    [hasNavigableContent, navigateTemporary, clearSlide, showSlide]
+  )
+
+  // Register with PRESENTATION priority (lowest) - page-specific handlers take precedence
+  useKeyboardNavigationHandler(
+    'presentation-navigation',
+    KEYBOARD_PRIORITY.PRESENTATION,
+    handleKeyDown,
+    true
+  )
 }

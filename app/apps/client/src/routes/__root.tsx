@@ -4,6 +4,7 @@ import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { MobileConnectionGuard } from '~/features/api-url-config'
 import {
   GlobalAppShortcutManager,
+  KeyboardNavigationProvider,
   MIDISettingsProvider,
   ShortcutRecordingProvider,
 } from '~/features/keyboard-shortcuts'
@@ -70,17 +71,19 @@ function MainLayout() {
           <MobileConnectionGuard>
             <I18nProvider>
               <ToastProvider>
-                <MIDISettingsProvider>
-                  <ShortcutRecordingProvider>
-                    <FileDropZoneProvider>
-                      <AutoOpenScreens />
-                      <GlobalAppShortcutManager />
-                      <AppLayout>
-                        <Outlet />
-                      </AppLayout>
-                    </FileDropZoneProvider>
-                  </ShortcutRecordingProvider>
-                </MIDISettingsProvider>
+                <KeyboardNavigationProvider>
+                  <MIDISettingsProvider>
+                    <ShortcutRecordingProvider>
+                      <FileDropZoneProvider>
+                        <AutoOpenScreens />
+                        <GlobalAppShortcutManager />
+                        <AppLayout>
+                          <Outlet />
+                        </AppLayout>
+                      </FileDropZoneProvider>
+                    </ShortcutRecordingProvider>
+                  </MIDISettingsProvider>
+                </KeyboardNavigationProvider>
                 {isDev ? (
                   <TanStackRouterDevtools position="bottom-right" />
                 ) : null}
