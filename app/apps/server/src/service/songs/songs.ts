@@ -1,4 +1,4 @@
-import { asc, eq, inArray } from 'drizzle-orm'
+import { asc, desc, eq, inArray } from 'drizzle-orm'
 
 import { getCategoryById } from './categories'
 import { sanitizeSongTitle } from './sanitizeTitle'
@@ -162,9 +162,9 @@ export function getSongsPaginated(
       .get(...countParams) as { total: number }
     const total = countResult.total
 
-    // Get paginated songs
+    // Get paginated songs - sorted by presentation count (most presented first), then by title
     const records = query
-      .orderBy(asc(songs.title))
+      .orderBy(desc(songs.presentationCount), asc(songs.title))
       .limit(limit)
       .offset(offset)
       .all()
