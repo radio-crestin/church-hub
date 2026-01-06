@@ -30,7 +30,9 @@
     "resultsCount": "{{count}} cântări găsite",
     "showingCount": "Se afișează {{showing}} din {{total}} cântări",
     "moreResults": "{{count}} cântări în plus nu sunt afișate. Folosește căutarea pentru a găsi cântări specifice.",
-    "allCategories": "Toate categoriile"
+    "allCategories": "Toate categoriile",
+    "aiSearchTooltip": "Căutare AI - găsește cântece după temă",
+    "aiProcessing": "AI analizează..."
   },
   "picker": {
     "selectSong": "Selectează Cântare"

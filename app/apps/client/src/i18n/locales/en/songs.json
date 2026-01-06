@@ -30,7 +30,9 @@
     "resultsCount": "{{count}} songs found",
     "showingCount": "Showing {{showing}} of {{total}} songs",
     "moreResults": "{{count}} more songs not shown. Use search to find specific songs.",
-    "allCategories": "All Categories"
+    "allCategories": "All Categories",
+    "aiSearchTooltip": "AI Search - find songs by topic",
+    "aiProcessing": "AI analyzing..."
   },
   "picker": {
     "selectSong": "Select Song"
