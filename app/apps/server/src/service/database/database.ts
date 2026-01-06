@@ -383,9 +383,23 @@ export async function selectiveImportDatabase(
       // Ignore WAL check errors
     }
 
-    // 5. Open source database as readonly
+    // 5. Open source database (we only read from it)
     log('info', `Opening source database: ${sourcePath}`)
-    const sourceDb = new Database(sourcePath, { readonly: true })
+    let sourceDb: Database
+    try {
+      // Don't use readonly mode as it can cause issues on some platforms
+      sourceDb = new Database(sourcePath)
+    } catch (openError) {
+      const errorMsg =
+        openError instanceof Error ? openError.message : String(openError)
+      log('error', `Failed to open source database: ${errorMsg}`)
+      return {
+        success: false,
+        message: 'Failed to open source database',
+        requiresRestart: false,
+        error: `Cannot open database file: ${errorMsg}`,
+      }
+    }
 
     // 6. Get current database connection
     const destDb = getRawDatabase()
