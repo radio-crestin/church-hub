@@ -4,8 +4,13 @@ export {
   ShortcutRecorder,
   ShortcutsSettingsSection,
 } from './components'
+export type { KeyboardPriority } from './context'
 export {
+  KEYBOARD_PRIORITY,
+  KeyboardNavigationProvider,
   ShortcutRecordingProvider,
+  useKeyboardNavigation,
+  useKeyboardNavigationHandler,
   useShortcutRecording,
   useShortcutRecordingOptional,
 } from './context'
