@@ -1,7 +1,8 @@
 import { Search, X } from 'lucide-react'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useDebouncedValue } from '~/hooks/useDebouncedValue'
 import { BooksList } from './BooksList'
 import { ChaptersGrid } from './ChaptersGrid'
 import { VersesList } from './VersesList'
@@ -16,6 +17,8 @@ import {
 } from '../hooks'
 import type { UseBibleNavigationReturn } from '../hooks/useBibleNavigation'
 import type { BibleSearchResult, BibleVerse } from '../types'
+
+const SEARCH_DEBOUNCE_MS = 600
 
 interface BibleNavigationPanelProps {
   navigation: UseBibleNavigationReturn
@@ -49,6 +52,27 @@ export function BibleNavigationPanel({
     setSearchQuery,
     clearSearch,
   } = navigation
+
+  // Local state for immediate input feedback
+  const [localQuery, setLocalQuery] = useState(state.searchQuery)
+
+  // Debounced query for text search API calls
+  const { debouncedValue: debouncedQuery, isPending } = useDebouncedValue(
+    localQuery,
+    SEARCH_DEBOUNCE_MS,
+  )
+
+  // Sync local state when navigation searchQuery changes externally (e.g., clearSearch)
+  useEffect(() => {
+    setLocalQuery(state.searchQuery)
+  }, [state.searchQuery])
+
+  // Sync debounced query back to navigation state (for other consumers)
+  useEffect(() => {
+    if (debouncedQuery !== state.searchQuery) {
+      setSearchQuery(debouncedQuery)
+    }
+  }, [debouncedQuery, state.searchQuery, setSearchQuery])
 
   // Use provided onGoBack or fallback to navigation's goBack
   const handleGoBack = onGoBack ?? goBack
@@ -84,15 +108,17 @@ export function BibleNavigationPanel({
   // Get the book code for the current book
   const currentBook = books.find((b) => b.id === state.bookId)
   const bookCode = currentBook?.bookCode || ''
+  // Smart search uses local query for immediate reference detection (e.g., "John 3:16")
   const { isReferenceSearch } = useSmartSearch({
-    searchQuery: state.searchQuery,
+    searchQuery: localQuery,
     books,
     navigation,
-    enabled: state.searchQuery.length >= 2,
+    enabled: localQuery.length >= 2,
   })
 
+  // Text search uses debounced query for API calls
   const { data: searchResults, isLoading: isSearching } = useSearchBible(
-    state.searchQuery,
+    debouncedQuery,
     translationId,
     50,
     !isReferenceSearch, // Only run text search when it's not a reference search
@@ -125,7 +151,14 @@ export function BibleNavigationPanel({
   }
 
   // Show text search results only when there's an active text search (not reference search)
-  const isTextSearchActive = state.searchQuery.length >= 2 && !isReferenceSearch
+  // Use debouncedQuery to only show results after debounce completes
+  const isTextSearchActive = debouncedQuery.length >= 2 && !isReferenceSearch
+  const showPendingIndicator = isPending && localQuery.length >= 2
+
+  const handleClearSearch = () => {
+    setLocalQuery('')
+    clearSearch()
+  }
 
   return (
     <div className="flex flex-col lg:h-full bg-white dark:bg-gray-800 lg:rounded-lg lg:border lg:border-gray-200 lg:dark:border-gray-700">
@@ -138,16 +171,21 @@ export function BibleNavigationPanel({
           <input
             ref={searchInputRef}
             type="text"
-            value={state.searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={localQuery}
+            onChange={(e) => setLocalQuery(e.target.value)}
             onKeyDown={handleSearchKeyDown}
             placeholder={t('search.placeholder')}
             className="w-full pl-9 pr-9 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-white placeholder-gray-400"
           />
-          {state.searchQuery && (
+          {showPendingIndicator && (
+            <div className="absolute right-9 top-1/2 -translate-y-1/2">
+              <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" />
+            </div>
+          )}
+          {localQuery && (
             <button
               type="button"
-              onClick={clearSearch}
+              onClick={handleClearSearch}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             >
               <X size={16} />
