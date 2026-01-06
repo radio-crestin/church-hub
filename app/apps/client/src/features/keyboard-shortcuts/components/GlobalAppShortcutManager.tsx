@@ -2,7 +2,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 
 import { useOBSScenes, useStreaming } from '~/features/livestream/hooks'
-import { useNavigateQueueSlide } from '~/features/presentation/hooks'
+import { useNavigateTemporary } from '~/features/presentation/hooks'
 import { createLogger } from '~/utils/logger'
 import { useShortcutRecording } from '../context'
 import { useAppShortcuts, useGlobalAppShortcuts } from '../hooks'
@@ -17,7 +17,7 @@ export function GlobalAppShortcutManager() {
     useStreaming()
   const { scenes, switchScene, currentScene } = useOBSScenes()
   const { isRecordingRef } = useShortcutRecording()
-  const navigateQueueSlide = useNavigateQueueSlide()
+  const navigateTemporary = useNavigateTemporary()
 
   // Synchronous guards to prevent multiple rapid triggers (React state can be stale)
   const isStartOperationRef = useRef(false)
@@ -112,13 +112,13 @@ export function GlobalAppShortcutManager() {
 
   const handleNextSlide = useCallback(() => {
     logger.debug('Navigating to next slide via shortcut')
-    navigateQueueSlide.mutate('next')
-  }, [navigateQueueSlide])
+    navigateTemporary.mutate({ direction: 'next' })
+  }, [navigateTemporary])
 
   const handlePrevSlide = useCallback(() => {
     logger.debug('Navigating to previous slide via shortcut')
-    navigateQueueSlide.mutate('prev')
-  }, [navigateQueueSlide])
+    navigateTemporary.mutate({ direction: 'prev' })
+  }, [navigateTemporary])
 
   const handleSceneSwitch = useCallback(
     (sceneName: string) => {
