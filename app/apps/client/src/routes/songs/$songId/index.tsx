@@ -32,7 +32,11 @@ import {
   useSaveSongToFile,
 } from '~/features/song-export'
 import { SongControlPanel, SongSlidesPanel } from '~/features/songs/components'
-import { useSong, useSongKeyboardShortcuts } from '~/features/songs/hooks'
+import {
+  useSong,
+  useSongKeyboardShortcuts,
+  useSongSlideSelectionKeyboard,
+} from '~/features/songs/hooks'
 import type { SongSlide } from '~/features/songs/types'
 import { expandSongSlidesWithChoruses } from '~/features/songs/utils/expandSongSlides'
 import { useToast } from '~/ui/toast'
@@ -224,68 +228,14 @@ function SongPreviewPage() {
   })
 
   // Keyboard navigation for slide selection when nothing is presented
-  useEffect(() => {
-    if (presentedSlideIndex !== null || expandedSlidesCount === 0) return
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Don't trigger if user is typing in an input or editor
-      if (
-        event.target instanceof HTMLInputElement ||
-        event.target instanceof HTMLTextAreaElement ||
-        event.target instanceof HTMLSelectElement
-      ) {
-        return
-      }
-
-      // Don't trigger if user is in a contenteditable element
-      if (
-        event.target instanceof HTMLElement &&
-        event.target.isContentEditable
-      ) {
-        return
-      }
-
-      // Don't trigger if any dialog/modal is open
-      const openDialog = document.querySelector('dialog[open]')
-      if (openDialog) {
-        return
-      }
-
-      switch (event.key) {
-        case 'ArrowDown':
-        case 'ArrowRight':
-          event.preventDefault()
-          setSelectedSlideIndex((prev) =>
-            prev < expandedSlidesCount - 1 ? prev + 1 : prev,
-          )
-          break
-
-        case 'ArrowUp':
-        case 'ArrowLeft':
-          event.preventDefault()
-          setSelectedSlideIndex((prev) => (prev > 0 ? prev - 1 : prev))
-          break
-
-        case 'Enter':
-          event.preventDefault()
-          handlePresentSelectedSlide()
-          break
-
-        case 'Escape':
-          event.preventDefault()
-          handleGoBack()
-          break
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [
-    presentedSlideIndex,
-    expandedSlidesCount,
-    handlePresentSelectedSlide,
-    handleGoBack,
-  ])
+  useSongSlideSelectionKeyboard({
+    slidesCount: expandedSlidesCount,
+    selectedSlideIndex,
+    onSelectSlide: setSelectedSlideIndex,
+    onPresentSlide: handlePresentSelectedSlide,
+    onGoBack: handleGoBack,
+    enabled: presentedSlideIndex === null,
+  })
 
   // Divider drag handlers
   const handleDividerMouseDown = useCallback((e: React.MouseEvent) => {

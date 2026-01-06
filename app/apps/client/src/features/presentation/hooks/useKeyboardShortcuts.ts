@@ -4,7 +4,6 @@ import {
   KEYBOARD_PRIORITY,
   useKeyboardNavigationHandler,
 } from '~/features/keyboard-shortcuts'
-
 import {
   useClearSlide,
   useNavigateTemporary,
@@ -66,7 +65,7 @@ export function useKeyboardShortcuts() {
           return false
       }
     },
-    [hasNavigableContent, navigateTemporary, clearSlide, showSlide]
+    [hasNavigableContent, navigateTemporary, clearSlide, showSlide],
   )
 
   // Register with PRESENTATION priority (lowest) - page-specific handlers take precedence
@@ -74,6 +73,6 @@ export function useKeyboardShortcuts() {
     'presentation-navigation',
     KEYBOARD_PRIORITY.PRESENTATION,
     handleKeyDown,
-    true
+    true,
   )
 }
