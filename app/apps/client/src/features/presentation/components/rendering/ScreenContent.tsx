@@ -389,8 +389,10 @@ export function ScreenContent({
     const getContentText = () => {
       if (nextSlideData?.verseteTineriSummary) {
         const { entries, hasMore } = nextSlideData.verseteTineriSummary
-        // Show only person names separated by commas
-        const text = entries.map((entry) => entry.personName).join(', ')
+        // Show person names with reference in parentheses
+        const text = entries
+          .map((entry) => `${entry.personName} (${entry.reference})`)
+          .join(', ')
         return hasMore ? `${text}, ...` : text
       }
       return nextSlideData?.preview || ''
