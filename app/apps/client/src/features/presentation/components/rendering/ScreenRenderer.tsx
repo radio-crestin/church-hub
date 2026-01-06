@@ -597,6 +597,12 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
                   contentType: 'song',
                   preview: nextSlide.content,
                 })
+              } else if (temp.data.nextItemPreview) {
+                // At last slide - show next schedule item preview if available
+                setNextSlideData({
+                  contentType: temp.data.nextItemPreview.contentType,
+                  preview: temp.data.nextItemPreview.preview,
+                })
               } else {
                 setNextSlideData(undefined)
               }
@@ -612,7 +618,15 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
           setContentData({
             mainText: temp.data.content,
           })
-          setNextSlideData(undefined)
+          // Show next schedule item preview if available and enabled
+          if (screen?.nextSlideConfig?.enabled && temp.data.nextItemPreview) {
+            setNextSlideData({
+              contentType: temp.data.nextItemPreview.contentType,
+              preview: temp.data.nextItemPreview.preview,
+            })
+          } else {
+            setNextSlideData(undefined)
+          }
           return
         }
 
@@ -634,6 +648,12 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
                 setNextSlideData({
                   contentType: 'bible_passage',
                   preview: `${temp.data.bookName} ${temp.data.startChapter}:${nextVerse.verse}: ${nextVerse.text}`,
+                })
+              } else if (temp.data.nextItemPreview) {
+                // At last verse - show next schedule item preview if available
+                setNextSlideData({
+                  contentType: temp.data.nextItemPreview.contentType,
+                  preview: temp.data.nextItemPreview.preview,
                 })
               } else {
                 setNextSlideData(undefined)
@@ -661,7 +681,13 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
               if (nextEntry) {
                 setNextSlideData({
                   contentType: 'versete_tineri',
-                  preview: `${nextEntry.personName}: ${nextEntry.reference}`,
+                  preview: `${nextEntry.personName} - ${nextEntry.reference}: ${nextEntry.text}`,
+                })
+              } else if (temp.data.nextItemPreview) {
+                // At last entry - show next schedule item preview if available
+                setNextSlideData({
+                  contentType: temp.data.nextItemPreview.contentType,
+                  preview: temp.data.nextItemPreview.preview,
                 })
               } else {
                 setNextSlideData(undefined)
