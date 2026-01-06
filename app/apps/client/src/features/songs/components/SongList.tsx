@@ -163,6 +163,18 @@ export function SongList({
 
   const hasMore = totalCount > MAX_DISPLAY_SONGS
 
+  // Calculate fixed width for category dropdown based on longest option
+  const categoryDropdownWidth = useMemo(() => {
+    const allCategoriesLabel = t('search.allCategories')
+    const labels = [allCategoriesLabel, ...(categories?.map((c) => c.name) ?? [])]
+    const longestLabel = labels.reduce(
+      (longest, label) => (label.length > longest.length ? label : longest),
+      '',
+    )
+    // Approximate width: ~8px per character + 48px for padding/icons
+    return Math.max(140, longestLabel.length * 8 + 48)
+  }, [categories, t])
+
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
@@ -183,24 +195,25 @@ export function SongList({
             </div>
           )}
         </div>
-        <Combobox
-          options={[
-            { value: 'all', label: t('search.allCategories') },
-            ...(categories?.map((category) => ({
-              value: category.id,
-              label: category.name,
-            })) ?? []),
-          ]}
-          value={categoryId ?? 'all'}
-          onChange={(value) => {
-            onCategoryChange?.(
-              value !== null && value !== 'all' ? Number(value) : undefined,
-            )
-          }}
-          placeholder={t('search.allCategories')}
-          allowClear={false}
-          className="min-w-[140px]"
-        />
+        <div style={{ width: categoryDropdownWidth }}>
+          <Combobox
+            options={[
+              { value: 'all', label: t('search.allCategories') },
+              ...(categories?.map((category) => ({
+                value: category.id,
+                label: category.name,
+              })) ?? []),
+            ]}
+            value={categoryId ?? 'all'}
+            onChange={(value) => {
+              onCategoryChange?.(
+                value !== null && value !== 'all' ? Number(value) : undefined,
+              )
+            }}
+            placeholder={t('search.allCategories')}
+            allowClear={false}
+          />
+        </div>
       </div>
 
       {isLoading ? (
