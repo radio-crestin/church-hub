@@ -67,8 +67,10 @@ import {
 import {
   checkpointAndExport,
   getDatabaseInfo,
+  type ImportOptions,
   importDatabase,
   performFactoryReset,
+  selectiveImportDatabase,
 } from './service/database'
 import {
   detectContentType,
@@ -703,7 +705,10 @@ async function main() {
           )
         }
 
-        const body = (await req.json()) as { sourcePath: string }
+        const body = (await req.json()) as {
+          sourcePath: string
+          options?: ImportOptions
+        }
         if (!body.sourcePath) {
           return handleCors(
             req,
@@ -714,7 +719,11 @@ async function main() {
           )
         }
 
-        const result = await importDatabase(body.sourcePath)
+        // If options provided, use selective import; otherwise full import
+        const result = body.options
+          ? await selectiveImportDatabase(body.sourcePath, body.options)
+          : await importDatabase(body.sourcePath)
+
         if (!result.success) {
           return handleCors(
             req,

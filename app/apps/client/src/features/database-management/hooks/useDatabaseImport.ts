@@ -3,6 +3,13 @@ import { useCallback, useState } from 'react'
 
 import { fetcher } from '~/utils/fetcher'
 
+export interface ImportOptions {
+  songs: boolean
+  bible: boolean
+  schedules: boolean
+  configurations: boolean
+}
+
 interface ImportResult {
   success: boolean
   message: string
@@ -40,6 +47,7 @@ export function useDatabaseImport() {
   const importDatabase = useCallback(
     async (
       sourcePath: string,
+      options?: ImportOptions,
     ): Promise<{
       success: boolean
       requiresRestart?: boolean
@@ -53,7 +61,7 @@ export function useDatabaseImport() {
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sourcePath }),
+            body: JSON.stringify({ sourcePath, options }),
           },
         )
 

@@ -552,6 +552,17 @@
           "warning": "This action cannot be undone.",
           "confirm": "Import",
           "cancel": "Cancel"
+        },
+        "categories": {
+          "title": "Select data to import:",
+          "songs": "Songs",
+          "songsDescription": "Song categories, songs and slides",
+          "bible": "Bible",
+          "bibleDescription": "Bible translations and verses",
+          "schedules": "Schedules",
+          "schedulesDescription": "Programs and schedule items",
+          "configurations": "Configurations",
+          "configurationsDescription": "Screens, settings and preferences"
         }
       },
       "restart": {

@@ -3,6 +3,7 @@ import {
   Copy,
   Download,
   FolderOpen,
+  Loader2,
   RefreshCw,
   Upload,
 } from 'lucide-react'
@@ -13,7 +14,10 @@ import { isTauri } from '~/features/presentation/utils/openDisplayWindow'
 import { useToast } from '~/ui/toast'
 import { fetcher } from '~/utils/fetcher'
 import { useDatabaseExport } from '../hooks/useDatabaseExport'
-import { useDatabaseImport } from '../hooks/useDatabaseImport'
+import {
+  type ImportOptions,
+  useDatabaseImport,
+} from '../hooks/useDatabaseImport'
 
 interface DatabaseInfo {
   path: string
@@ -45,6 +49,12 @@ export function DatabaseManager() {
   const [pendingImportPath, setPendingImportPath] = useState<string | null>(
     null,
   )
+  const [importOptions, setImportOptions] = useState<ImportOptions>({
+    songs: true,
+    bible: true,
+    schedules: true,
+    configurations: true,
+  })
 
   const { exportDatabase, isPending: isExporting } = useDatabaseExport()
   const {
@@ -154,11 +164,11 @@ export function DatabaseManager() {
   const handleImportConfirm = useCallback(async () => {
     if (!pendingImportPath) return
 
-    setShowImportConfirm(false)
-    const result = await importDatabase(pendingImportPath)
-    setPendingImportPath(null)
+    const result = await importDatabase(pendingImportPath, importOptions)
 
     if (result.success) {
+      setShowImportConfirm(false)
+      setPendingImportPath(null)
       if (result.requiresRestart) {
         // Server couldn't reinitialize - show restart modal
         setShowRestartModal(true)
@@ -171,12 +181,24 @@ export function DatabaseManager() {
         }, 1000)
       }
     } else {
+      setShowImportConfirm(false)
+      setPendingImportPath(null)
       showToast(
         t('sections.database.toast.importFailed', { error: result.error }),
         'error',
       )
     }
-  }, [pendingImportPath, importDatabase, showToast, t])
+  }, [pendingImportPath, importDatabase, importOptions, showToast, t])
+
+  const toggleImportOption = useCallback((key: keyof ImportOptions) => {
+    setImportOptions((prev) => ({ ...prev, [key]: !prev[key] }))
+  }, [])
+
+  const hasAnyOptionSelected =
+    importOptions.songs ||
+    importOptions.bible ||
+    importOptions.schedules ||
+    importOptions.configurations
 
   const handleRestartConfirm = useCallback(async () => {
     setIsRestarting(true)
@@ -320,10 +342,24 @@ export function DatabaseManager() {
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
             className="absolute inset-0 bg-black/50"
-            onClick={handleImportCancel}
-            onKeyDown={(e) => e.key === 'Escape' && handleImportCancel()}
+            onClick={!isImporting ? handleImportCancel : undefined}
+            onKeyDown={(e) =>
+              e.key === 'Escape' && !isImporting && handleImportCancel()
+            }
           />
           <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+            {/* Loading overlay */}
+            {isImporting && (
+              <div className="absolute inset-0 bg-white/80 dark:bg-gray-800/80 rounded-lg flex items-center justify-center z-10">
+                <div className="flex flex-col items-center gap-3">
+                  <Loader2 className="w-8 h-8 animate-spin text-amber-600" />
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {t('sections.database.import.importing')}
+                  </span>
+                </div>
+              </div>
+            )}
+
             <div className="flex items-start gap-4">
               <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-full">
                 <AlertTriangle className="w-6 h-6 text-amber-600 dark:text-amber-400" />
@@ -333,26 +369,110 @@ export function DatabaseManager() {
                   {t('sections.database.import.confirm.title')}
                 </h3>
                 <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                  {t('sections.database.import.confirm.message')}
-                </p>
-                <p className="mt-2 text-sm font-medium text-amber-600 dark:text-amber-400">
-                  {t('sections.database.import.confirm.warning')}
+                  {t('sections.database.import.categories.title')}
                 </p>
               </div>
             </div>
+
+            {/* Import options checkboxes */}
+            <div className="mt-4 space-y-3">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={importOptions.songs}
+                  onChange={() => toggleImportOption('songs')}
+                  disabled={isImporting}
+                  className="mt-0.5 w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500 disabled:opacity-50"
+                />
+                <div>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    {t('sections.database.import.categories.songs')}
+                  </span>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {t('sections.database.import.categories.songsDescription')}
+                  </p>
+                </div>
+              </label>
+
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={importOptions.bible}
+                  onChange={() => toggleImportOption('bible')}
+                  disabled={isImporting}
+                  className="mt-0.5 w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500 disabled:opacity-50"
+                />
+                <div>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    {t('sections.database.import.categories.bible')}
+                  </span>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {t('sections.database.import.categories.bibleDescription')}
+                  </p>
+                </div>
+              </label>
+
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={importOptions.schedules}
+                  onChange={() => toggleImportOption('schedules')}
+                  disabled={isImporting}
+                  className="mt-0.5 w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500 disabled:opacity-50"
+                />
+                <div>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    {t('sections.database.import.categories.schedules')}
+                  </span>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {t(
+                      'sections.database.import.categories.schedulesDescription',
+                    )}
+                  </p>
+                </div>
+              </label>
+
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={importOptions.configurations}
+                  onChange={() => toggleImportOption('configurations')}
+                  disabled={isImporting}
+                  className="mt-0.5 w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500 disabled:opacity-50"
+                />
+                <div>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    {t('sections.database.import.categories.configurations')}
+                  </span>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {t(
+                      'sections.database.import.categories.configurationsDescription',
+                    )}
+                  </p>
+                </div>
+              </label>
+            </div>
+
+            <p className="mt-4 text-sm font-medium text-amber-600 dark:text-amber-400">
+              {t('sections.database.import.confirm.warning')}
+            </p>
+
             <div className="mt-6 flex justify-end gap-3">
               <button
                 type="button"
                 onClick={handleImportCancel}
-                className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
+                disabled={isImporting}
+                className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md disabled:opacity-50"
               >
                 {t('sections.database.import.confirm.cancel')}
               </button>
               <button
                 type="button"
                 onClick={handleImportConfirm}
-                className="px-4 py-2 text-sm bg-amber-600 text-white hover:bg-amber-700 rounded-md"
+                disabled={isImporting || !hasAnyOptionSelected}
+                className="px-4 py-2 text-sm bg-amber-600 text-white hover:bg-amber-700 rounded-md disabled:opacity-50 flex items-center gap-2"
               >
+                {isImporting && <Loader2 className="w-4 h-4 animate-spin" />}
                 {t('sections.database.import.confirm.confirm')}
               </button>
             </div>
