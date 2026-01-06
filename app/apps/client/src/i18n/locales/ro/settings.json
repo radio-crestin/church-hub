@@ -57,6 +57,34 @@
         "dark": "Întunecat"
       }
     },
+    "aiSearch": {
+      "title": "Căutare AI",
+      "description": "Configurează căutarea semantică cu AI pentru cântece. Folosește AI pentru a înțelege intenția căutării și a găsi cântece relevante după temă.",
+      "enable": {
+        "label": "Activează Căutarea AI",
+        "description": "Adaugă un buton de căutare AI în bara de căutare cântece"
+      },
+      "provider": {
+        "label": "Furnizor AI",
+        "description": "Selectează furnizorul serviciului AI"
+      },
+      "model": {
+        "label": "Model",
+        "description": "Modelul AI folosit pentru generarea termenilor de căutare"
+      },
+      "apiKey": {
+        "label": "Cheie API",
+        "description": "Cheia API pentru furnizorul selectat",
+        "placeholder": "sk-..."
+      },
+      "baseUrl": {
+        "label": "URL Personalizat",
+        "description": "Pentru endpoint-uri self-hosted sau compatibile OpenAI",
+        "placeholder": "https://api.example.com/v1"
+      },
+      "save": "Salvează Setările",
+      "saving": "Se salvează..."
+    },
     "shortcuts": {
       "title": "Scurtături de Tastatură",
       "description": "Configurează scurtături globale de tastatură pentru acțiuni rapide. Aceste scurtături funcționează de oriunde în aplicație.",
