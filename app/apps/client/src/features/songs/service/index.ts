@@ -15,6 +15,8 @@ export {
   deleteSong,
   getAllSongs,
   getSongById,
+  getSongsPaginated,
+  type PaginatedSongsResult,
   rebuildSearchIndex,
   searchSongs,
   upsertSong,

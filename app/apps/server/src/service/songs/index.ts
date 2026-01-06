@@ -42,7 +42,9 @@ export {
   getAllSongsWithSlides,
   getSongById,
   getSongByTitle,
+  getSongsPaginated,
   getSongWithSlides,
+  type PaginatedSongsResult,
   upsertSong,
 } from './songs'
 export type {

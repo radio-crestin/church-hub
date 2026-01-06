@@ -16,6 +16,31 @@ export async function getAllSongs(): Promise<Song[]> {
   return response.data ?? []
 }
 
+export interface PaginatedSongsResult {
+  songs: Song[]
+  total: number
+  hasMore: boolean
+}
+
+export async function getSongsPaginated(
+  limit: number,
+  offset: number,
+  categoryId?: number,
+  signal?: AbortSignal,
+): Promise<PaginatedSongsResult> {
+  const params = new URLSearchParams()
+  params.set('limit', String(limit))
+  params.set('offset', String(offset))
+  if (categoryId !== undefined) {
+    params.set('categoryId', String(categoryId))
+  }
+  const response = await fetcher<ApiResponse<PaginatedSongsResult>>(
+    `/api/songs?${params.toString()}`,
+    { signal },
+  )
+  return response.data ?? { songs: [], total: 0, hasMore: false }
+}
+
 export async function getSongById(id: number): Promise<SongWithSlides | null> {
   const response = await fetcher<ApiResponse<SongWithSlides>>(
     `/api/songs/${id}`,

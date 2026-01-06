@@ -155,6 +155,7 @@ import {
   getAllSongs,
   getAllSongsWithSlides,
   getSongByTitle,
+  getSongsPaginated,
   getSongWithSlides,
   prepareForSongReplacement,
   type ReorderCategoriesInput,
@@ -2481,11 +2482,33 @@ async function main() {
         )
       }
 
-      // GET /api/songs - List all songs
+      // GET /api/songs - List all songs (with pagination support)
       if (req.method === 'GET' && url.pathname === '/api/songs') {
         const permError = checkPermission('songs.view')
         if (permError) return permError
 
+        const limitParam = url.searchParams.get('limit')
+        const offsetParam = url.searchParams.get('offset')
+        const categoryIdParam = url.searchParams.get('categoryId')
+
+        // If pagination params provided, use paginated query
+        if (limitParam) {
+          const limit = parseInt(limitParam, 10) || 50
+          const offset = offsetParam ? parseInt(offsetParam, 10) || 0 : 0
+          const categoryId = categoryIdParam
+            ? parseInt(categoryIdParam, 10)
+            : undefined
+
+          const result = getSongsPaginated(limit, offset, categoryId)
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: result }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        // Legacy: return all songs without pagination
         const songs = getAllSongs()
         return handleCors(
           req,
