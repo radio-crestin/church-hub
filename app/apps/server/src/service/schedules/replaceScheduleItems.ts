@@ -14,7 +14,7 @@ import {
   schedules,
   scheduleVerseteTineriEntries,
 } from '../../db/schema'
-import { getVerseRange, getVersesAcrossChapters } from '../bible'
+import { getVerse, getVerseRange, getVersesAcrossChapters } from '../bible'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -182,6 +182,37 @@ export function replaceScheduleItems(
           passage.translationAbbreviation,
         )
 
+        // Validate that start and end verses exist
+        const startVerseExists = getVerse(
+          passage.translationId,
+          passage.bookCode,
+          passage.startChapter,
+          passage.startVerse,
+        )
+        const endVerseExists = getVerse(
+          passage.translationId,
+          passage.bookCode,
+          passage.endChapter,
+          passage.endVerse,
+        )
+
+        if (!startVerseExists || !endVerseExists) {
+          const missingPart = !startVerseExists
+            ? `${passage.startChapter}:${passage.startVerse}`
+            : `${passage.endChapter}:${passage.endVerse}`
+          log(
+            'warning',
+            `Invalid verse reference: ${passageRef} (${missingPart} does not exist)`,
+          )
+          skippedItems.push({
+            index: i,
+            type: 'bible_passage',
+            reference: passageRef,
+            reason: 'verses_not_found',
+          })
+          continue
+        }
+
         // Fetch verses in the range
         const verses =
           passage.startChapter === passage.endChapter
@@ -265,6 +296,45 @@ export function replaceScheduleItems(
         for (let j = 0; j < entries.length; j++) {
           const entry = entries[j]
 
+          const entryRef = formatPassageReference(
+            entry.bookName,
+            entry.startChapter,
+            entry.startVerse,
+            entry.endChapter,
+            entry.endVerse,
+          )
+
+          // Validate that start and end verses exist
+          const startVerseExists = getVerse(
+            entry.translationId,
+            entry.bookCode,
+            entry.startChapter,
+            entry.startVerse,
+          )
+          const endVerseExists = getVerse(
+            entry.translationId,
+            entry.bookCode,
+            entry.endChapter,
+            entry.endVerse,
+          )
+
+          if (!startVerseExists || !endVerseExists) {
+            const missingPart = !startVerseExists
+              ? `${entry.startChapter}:${entry.startVerse}`
+              : `${entry.endChapter}:${entry.endVerse}`
+            log(
+              'warning',
+              `Invalid verse in VT entry ${j}: ${entryRef} (${missingPart} does not exist)`,
+            )
+            skippedItems.push({
+              index: i,
+              type: 'versete_tineri_entry',
+              reference: `${entry.personName} - ${entryRef}`,
+              reason: 'verses_not_found',
+            })
+            continue
+          }
+
           // Fetch verses for this entry
           const verses =
             entry.startChapter === entry.endChapter
@@ -285,13 +355,6 @@ export function replaceScheduleItems(
                 )
 
           if (verses.length === 0) {
-            const entryRef = formatPassageReference(
-              entry.bookName,
-              entry.startChapter,
-              entry.startVerse,
-              entry.endChapter,
-              entry.endVerse,
-            )
             log('warning', `No verses found for entry ${j}: ${entryRef}`)
             skippedItems.push({
               index: i,
@@ -305,22 +368,13 @@ export function replaceScheduleItems(
           // Combine verse text
           const combinedText = verses.map((v) => v.text).join(' ')
 
-          // Format reference
-          const reference = formatPassageReference(
-            entry.bookName,
-            entry.startChapter,
-            entry.startVerse,
-            entry.endChapter,
-            entry.endVerse,
-          )
-
           allVtEntryInserts.push({
             scheduleItemId: itemId,
             personName: entry.personName,
             translationId: entry.translationId,
             bookCode: entry.bookCode,
             bookName: entry.bookName,
-            reference,
+            reference: entryRef,
             text: combinedText,
             startChapter: entry.startChapter,
             startVerse: entry.startVerse,
