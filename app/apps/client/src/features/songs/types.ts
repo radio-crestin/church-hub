@@ -95,3 +95,18 @@ export interface SongSearchResult {
   matchedContent: string
   presentationCount: number
 }
+
+export interface AISearchConfig {
+  enabled: boolean
+  provider: 'openai' | 'anthropic' | 'custom'
+  model: string
+  apiKey: string
+  baseUrl?: string
+}
+
+export interface AISearchResponse {
+  results: SongSearchResult[]
+  termsUsed: string[]
+  totalCandidates: number
+  processingTimeMs: number
+}

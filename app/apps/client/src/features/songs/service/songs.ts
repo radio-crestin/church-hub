@@ -1,5 +1,6 @@
 import { fetcher } from '~/utils/fetcher'
 import type {
+  AISearchResponse,
   Song,
   SongSearchResult,
   SongWithSlides,
@@ -138,4 +139,28 @@ export async function rebuildSearchIndex(): Promise<{
     success: response.data?.success ?? false,
     duration: response.data?.duration,
   }
+}
+
+export async function aiSearchSongs(
+  query: string,
+  categoryId?: number,
+  signal?: AbortSignal,
+): Promise<AISearchResponse> {
+  const response = await fetcher<ApiResponse<AISearchResponse>>(
+    '/api/songs/ai-search',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, categoryId }),
+      signal,
+    },
+  )
+  return (
+    response.data ?? {
+      results: [],
+      termsUsed: [],
+      totalCandidates: 0,
+      processingTimeMs: 0,
+    }
+  )
 }

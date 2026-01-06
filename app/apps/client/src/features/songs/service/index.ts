@@ -12,6 +12,7 @@ export {
   upsertSongSlide,
 } from './song-slides'
 export {
+  aiSearchSongs,
   deleteSong,
   getAllSongs,
   getSongById,
