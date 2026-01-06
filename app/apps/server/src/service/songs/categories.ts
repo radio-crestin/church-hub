@@ -99,35 +99,68 @@ export function getCategoryById(id: number): SongCategory | null {
 
 /**
  * Creates or updates a category
+ * Uses efficient single-query approach with RETURNING and subquery for song count
  */
 export function upsertCategory(
   input: UpsertCategoryInput,
 ): SongCategory | null {
   try {
     const db = getDatabase()
+    const rawDb = getRawDatabase()
 
     if (input.id) {
       log('debug', `Updating category: ${input.id}`)
 
-      // Build update object with only provided fields
-      const updateData: Partial<typeof songCategories.$inferInsert> = {
-        updatedAt: sql`(unixepoch())` as unknown as Date,
-      }
-
+      // Build SET clause dynamically
+      const setClauses: string[] = ['updated_at = unixepoch()']
       if (input.name !== undefined) {
-        updateData.name = input.name
+        setClauses.push(`name = '${input.name.replace(/'/g, "''")}'`)
       }
       if (input.priority !== undefined) {
-        updateData.priority = input.priority
+        setClauses.push(`priority = ${input.priority}`)
       }
 
-      db.update(songCategories)
-        .set(updateData)
-        .where(eq(songCategories.id, input.id))
-        .run()
+      // Single efficient query: UPDATE with RETURNING + subquery for song count
+      const result = rawDb
+        .prepare(
+          `
+        UPDATE song_categories
+        SET ${setClauses.join(', ')}
+        WHERE id = ?
+        RETURNING
+          id,
+          name,
+          priority,
+          created_at as createdAt,
+          updated_at as updatedAt,
+          (SELECT COUNT(*) FROM songs WHERE category_id = ?) as songCount
+      `,
+        )
+        .get(input.id, input.id) as
+        | {
+            id: number
+            name: string
+            priority: number
+            createdAt: number
+            updatedAt: number
+            songCount: number
+          }
+        | undefined
+
+      if (!result) {
+        log('warning', `Category not found for update: ${input.id}`)
+        return null
+      }
 
       log('info', `Category updated: ${input.id}`)
-      return getCategoryById(input.id)
+      return {
+        id: result.id,
+        name: result.name,
+        priority: result.priority,
+        songCount: result.songCount,
+        createdAt: result.createdAt,
+        updatedAt: result.updatedAt,
+      }
     }
 
     // For new categories, default priority is 1
@@ -138,17 +171,18 @@ export function upsertCategory(
       `Creating category: ${input.name} with priority: ${nextPriority}`,
     )
 
+    // Single efficient query: INSERT with RETURNING (new category has 0 songs)
     const inserted = db
       .insert(songCategories)
       .values({
         name: input.name,
         priority: nextPriority,
       })
-      .returning({ id: songCategories.id })
+      .returning()
       .get()
 
     log('info', `Category created: ${inserted.id}`)
-    return getCategoryById(inserted.id)
+    return toCategory(inserted, 0)
   } catch (error) {
     log('error', `Failed to upsert category: ${error}`)
     return null
