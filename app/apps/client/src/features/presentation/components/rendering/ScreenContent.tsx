@@ -188,6 +188,7 @@ export function ScreenContent({
         slideTransitionOut={
           'slideTransitionOut' in ct ? ct.slideTransitionOut : undefined
         }
+        styleRanges={styleRanges}
       />
     )
   }
