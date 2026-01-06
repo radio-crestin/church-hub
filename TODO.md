@@ -131,7 +131,7 @@
 ~~- elimina din titlul extras numerele (gen 1.)~~
 - adauga filtru pentru categoria de cantari si deasemenea, fa loading la cantari cand se face scrolling (infinite scroll)
 ~~- background diferit la sectiunea urmeaza, ca sa poata fi identificata usor~~
-- auto switch-ul nu functioneaza
+~~- auto switch-ul nu functioneaza~~
 - cand se selecteaza primul verset se face un loop ciudat
 - si sunt foarte multi clienti conectati..
 
