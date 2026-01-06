@@ -32,6 +32,7 @@ import {
   updateUserPermissions,
   upsertSetting,
 } from './service'
+import { aiBibleSearch } from './service/ai-bible-search'
 import { aiSearchSongs } from './service/ai-search'
 import {
   getOrCreateSystemToken,
@@ -3741,6 +3742,54 @@ async function main() {
             },
           ),
         )
+      }
+
+      // POST /api/bible/ai-search - AI-enhanced semantic search
+      if (req.method === 'POST' && url.pathname === '/api/bible/ai-search') {
+        const permError = checkPermission('bible.view')
+        if (permError) return permError
+
+        const body = (await req.json()) as {
+          query?: string
+          translationId?: number
+        }
+
+        if (!body.query || typeof body.query !== 'string') {
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({ error: 'Query parameter is required' }),
+              {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        }
+
+        try {
+          const result = await aiBibleSearch({
+            query: body.query,
+            translationId: body.translationId,
+          })
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: result }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : 'AI search failed'
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: message }), {
+              status: 500,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
       }
 
       // ============================================================

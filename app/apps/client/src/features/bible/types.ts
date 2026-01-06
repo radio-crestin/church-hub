@@ -53,6 +53,17 @@ export interface SearchBibleResponse {
   results: BibleVerse[] | BibleSearchResult[]
 }
 
+export interface AIBibleSearchResult extends BibleSearchResult {
+  aiRelevanceScore?: number
+}
+
+export interface AIBibleSearchResponse {
+  results: AIBibleSearchResult[]
+  termsUsed: string[]
+  totalCandidates: number
+  processingTimeMs: number
+}
+
 export interface CreateTranslationInput {
   name: string
   abbreviation: string

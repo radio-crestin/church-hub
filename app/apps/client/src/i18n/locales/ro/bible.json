@@ -7,7 +7,9 @@
     "searching": "Se cauta...",
     "directReference": "Referinta directa",
     "resultsCount": "{{count}} verset gasit",
-    "resultsCount_other": "{{count}} versete gasite"
+    "resultsCount_other": "{{count}} versete gasite",
+    "aiSearchTooltip": "Cautare inteligenta cu AI - gaseste versete relevante semantic",
+    "aiProcessing": "AI..."
   },
   "navigation": {
     "back": "Inapoi",

@@ -1,3 +1,4 @@
+export { useAIBibleSearch } from './useAIBibleSearch'
 export type {
   AvailableBible,
   AvailableBiblesData,

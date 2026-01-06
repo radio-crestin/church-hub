@@ -1,5 +1,6 @@
 import { fetcher } from '../../../utils/fetcher'
 import type {
+  AIBibleSearchResponse,
   BibleBook,
   BibleChapter,
   BibleTranslation,
@@ -121,6 +122,21 @@ export async function searchBible(
 
   const response = await fetcher<{ data: SearchBibleResponse }>(
     `/api/bible/search?${params.toString()}`,
+  )
+  return response.data
+}
+
+// AI-enhanced search
+export async function aiBibleSearch(
+  query: string,
+  translationId?: number,
+): Promise<AIBibleSearchResponse> {
+  const response = await fetcher<{ data: AIBibleSearchResponse }>(
+    '/api/bible/ai-search',
+    {
+      method: 'POST',
+      body: JSON.stringify({ query, translationId }),
+    },
   )
   return response.data
 }
