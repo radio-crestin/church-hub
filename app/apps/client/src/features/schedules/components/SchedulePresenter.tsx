@@ -47,6 +47,7 @@ import {
   useDeleteSchedule,
   useReorderScheduleItems,
   useSchedule,
+  useScheduleKeyboardShortcuts,
   useUpsertSchedule,
 } from '../hooks'
 import type { ScheduleItem, SlideTemplate } from '../types'
@@ -671,53 +672,16 @@ export function SchedulePresenter({
   ])
 
   // Keyboard shortcuts for schedule navigation
-  // We stopPropagation to prevent the global useKeyboardShortcuts from also firing
-  // which uses navigateTemporary (only knows about current song, not schedule context)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't handle if focus is on an input
-      if (
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement
-      ) {
-        return
-      }
-
-      // Handle navigation keys - stop propagation to prevent global handler
-      if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') {
-        e.stopPropagation()
-        e.preventDefault()
-        if (canNavigatePrev) {
-          handlePrevSlide()
-        }
-      } else if (
-        e.key === 'ArrowRight' ||
-        e.key === 'ArrowDown' ||
-        e.key === ' ' ||
-        e.key === 'PageDown'
-      ) {
-        e.stopPropagation()
-        e.preventDefault()
-        if (canNavigateNext) {
-          handleNextSlide()
-        }
-      } else if (e.key === 'Escape') {
-        e.stopPropagation()
-        e.preventDefault()
-        clearTemporary.mutate()
-      }
-    }
-
-    // Use capture phase to handle events before they reach the global handler
-    window.addEventListener('keydown', handleKeyDown, true)
-    return () => window.removeEventListener('keydown', handleKeyDown, true)
-  }, [
-    canNavigatePrev,
+  // Uses global keyboard context with PAGE priority to take precedence over
+  // the default presentation navigation (which only knows about current song)
+  useScheduleKeyboardShortcuts({
+    onNextSlide: handleNextSlide,
+    onPrevSlide: handlePrevSlide,
+    onHidePresentation: () => clearTemporary.mutate(),
     canNavigateNext,
-    clearTemporary,
-    handlePrevSlide,
-    handleNextSlide,
-  ])
+    canNavigatePrev,
+    enabled: true,
+  })
 
   // Edit handlers - these are called from AddToScheduleMenu, which closes automatically
   const handleAddSong = useCallback(() => {

@@ -1,4 +1,9 @@
-import { useEffect } from 'react'
+import { useCallback } from 'react'
+
+import {
+  KEYBOARD_PRIORITY,
+  useKeyboardNavigationHandler,
+} from '~/features/keyboard-shortcuts'
 
 interface UseBibleKeyboardShortcutsOptions {
   onNextVerse: () => void
@@ -9,6 +14,10 @@ interface UseBibleKeyboardShortcutsOptions {
   enabled?: boolean
 }
 
+/**
+ * Keyboard shortcuts for bible navigation
+ * Registered at PAGE priority (higher than global presentation shortcuts)
+ */
 export function useBibleKeyboardShortcuts({
   onNextVerse,
   onPreviousVerse,
@@ -17,29 +26,21 @@ export function useBibleKeyboardShortcuts({
   onPresentSearched,
   enabled = true,
 }: UseBibleKeyboardShortcutsOptions) {
-  useEffect(() => {
-    if (!enabled) return
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      const isInInputField =
-        event.target instanceof HTMLInputElement ||
-        event.target instanceof HTMLTextAreaElement ||
-        event.target instanceof HTMLSelectElement
-
-      // Escape should always work, even in input fields (to hide presentation)
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent): boolean => {
+      // Escape should always work (even in input fields - handled by context)
       if (event.key === 'Escape') {
         event.preventDefault()
         // Blur the input field first if focused
-        if (isInInputField && event.target instanceof HTMLElement) {
-          event.target.blur()
+        if (
+          event.target instanceof HTMLInputElement ||
+          event.target instanceof HTMLTextAreaElement ||
+          event.target instanceof HTMLSelectElement
+        ) {
+          ;(event.target as HTMLElement).blur()
         }
         onHidePresentation()
-        return
-      }
-
-      // Skip other shortcuts if user is typing in an input field
-      if (isInInputField) {
-        return
+        return true
       }
 
       switch (event.key) {
@@ -47,39 +48,45 @@ export function useBibleKeyboardShortcuts({
         case 'ArrowRight':
           event.preventDefault()
           onNextVerse()
-          break
+          return true
 
         case 'ArrowUp':
         case 'ArrowLeft':
           event.preventDefault()
           onPreviousVerse()
-          break
+          return true
 
         case 'Backspace':
           event.preventDefault()
           onGoBack()
-          break
+          return true
 
         case 'Enter':
           if (onPresentSearched) {
             event.preventDefault()
             onPresentSearched()
+            return true
           }
-          break
+          return false
+
+        default:
+          return false
       }
-    }
+    },
+    [
+      onNextVerse,
+      onPreviousVerse,
+      onGoBack,
+      onHidePresentation,
+      onPresentSearched,
+    ],
+  )
 
-    window.addEventListener('keydown', handleKeyDown)
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [
+  // Register with PAGE priority (higher than global presentation shortcuts)
+  useKeyboardNavigationHandler(
+    'bible-navigation',
+    KEYBOARD_PRIORITY.PAGE,
+    handleKeyDown,
     enabled,
-    onNextVerse,
-    onPreviousVerse,
-    onGoBack,
-    onHidePresentation,
-    onPresentSearched,
-  ])
+  )
 }
