@@ -553,6 +553,17 @@
           "warning": "Această acțiune nu poate fi anulată.",
           "confirm": "Importă",
           "cancel": "Anulează"
+        },
+        "categories": {
+          "title": "Selectează datele de importat:",
+          "songs": "Cântări",
+          "songsDescription": "Categorii de cântări, cântări și versuri",
+          "bible": "Biblie",
+          "bibleDescription": "Traduceri biblice și versete",
+          "schedules": "Programe",
+          "schedulesDescription": "Programe și elemente de program",
+          "configurations": "Configurări",
+          "configurationsDescription": "Ecrane, setări și preferințe"
         }
       },
       "restart": {

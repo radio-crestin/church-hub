@@ -142,7 +142,7 @@ export const databasePaths: Record<string, Record<string, unknown>> = {
       tags: ['Database'],
       summary: 'Import database from a file',
       description:
-        'Imports a database from the specified path, replacing the current database. Creates a backup before replacing. Requires app restart after successful import. Only accessible from localhost.',
+        'Imports data from the specified database file. When options are provided, performs selective import of chosen categories without replacing the entire database. Without options, replaces the entire database. Only accessible from localhost.',
       requestBody: {
         required: true,
         content: {
@@ -154,6 +154,32 @@ export const databasePaths: Record<string, Record<string, unknown>> = {
                 sourcePath: {
                   type: 'string',
                   description: 'Full path to the database file to import',
+                },
+                options: {
+                  type: 'object',
+                  description:
+                    'Import options for selective import. If not provided, entire database is replaced.',
+                  properties: {
+                    songs: {
+                      type: 'boolean',
+                      description:
+                        'Import songs (song_categories, songs, song_slides)',
+                    },
+                    bible: {
+                      type: 'boolean',
+                      description:
+                        'Import Bible data (bible_translations, bible_books, bible_verses)',
+                    },
+                    schedules: {
+                      type: 'boolean',
+                      description: 'Import schedules and related items',
+                    },
+                    configurations: {
+                      type: 'boolean',
+                      description:
+                        'Import configuration (screens, settings, preferences)',
+                    },
+                  },
                 },
               },
             },
