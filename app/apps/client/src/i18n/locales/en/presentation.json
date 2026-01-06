@@ -257,7 +257,8 @@
     "show": "Show",
     "hide": "Hide",
     "screenHidden": "Screen is hidden",
-    "screenDisplayed": "Screen is displayed"
+    "screenDisplayed": "Screen is displayed",
+    "clearHighlights": "Clear Highlights"
   },
   "controlRoom": {
     "title": "Control Room",
