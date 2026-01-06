@@ -20,6 +20,7 @@ import { useToast } from '~/ui/toast'
 
 interface SongSearchParams {
   q?: string
+  reset?: number
 }
 
 interface SongMetadata {
@@ -56,6 +57,12 @@ export const Route = createFileRoute('/songs/$songId/edit')({
   component: SongEditorPage,
   validateSearch: (search: Record<string, unknown>): SongSearchParams => ({
     q: typeof search.q === 'string' ? search.q : undefined,
+    reset:
+      typeof search.reset === 'number'
+        ? search.reset
+        : typeof search.reset === 'string'
+          ? parseInt(search.reset, 10) || undefined
+          : undefined,
   }),
 })
 
@@ -63,8 +70,18 @@ function SongEditorPage() {
   const { t } = useTranslation(['songs', 'common'])
   const navigate = useNavigate()
   const { songId } = Route.useParams()
-  const { q: searchQuery } = useSearch({ from: '/songs/$songId/edit' })
+  const { q: searchQuery, reset } = useSearch({ from: '/songs/$songId/edit' })
   const { showToast } = useToast()
+
+  // Handle reset from keyboard shortcut - redirect to song list with reset
+  useEffect(() => {
+    if (reset) {
+      navigate({
+        to: '/songs/',
+        search: { reset },
+      })
+    }
+  }, [reset, navigate])
 
   const isNew = songId === 'new'
   const numericId = isNew ? null : parseInt(songId, 10)
