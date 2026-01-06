@@ -158,7 +158,8 @@
     "missingContent": "Missing content",
     "noSlides": "This song has no slides. Edit the song to add slides.",
     "noVerses": "No verses found for this passage. The reference may be invalid.",
-    "noEntries": "No entries found. Edit to add youth verse entries."
+    "noEntries": "No entries found. Edit to add youth verse entries.",
+    "invalidReference": "Invalid reference - verses not found"
   },
   "contextMenu": {
     "edit": "Edit",
