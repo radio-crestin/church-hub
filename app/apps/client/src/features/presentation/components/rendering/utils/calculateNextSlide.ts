@@ -77,10 +77,10 @@ function createVerseteTineriSummary(entries: VerseteTineriEntry[]): {
 }
 
 /**
- * Formats a single versete tineri entry preview (includes verse text)
+ * Formats a single versete tineri entry preview (name with reference in parentheses)
  */
 function formatVerseteTineriEntryPreview(entry: VerseteTineriEntry): string {
-  return `${entry.personName} - ${entry.reference}: ${entry.text}`
+  return `${entry.personName} (${entry.reference})`
 }
 
 /**
