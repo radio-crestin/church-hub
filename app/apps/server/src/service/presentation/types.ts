@@ -74,6 +74,14 @@ export interface TemporarySongSlide {
 }
 
 /**
+ * Preview of next item in a schedule (used for next slide section)
+ */
+export interface NextItemPreview {
+  contentType: ContentType
+  preview: string
+}
+
+/**
  * Temporary song content for instant display
  */
 export interface TemporarySongContent {
@@ -81,6 +89,7 @@ export interface TemporarySongContent {
   title: string
   slides: TemporarySongSlide[]
   currentSlideIndex: number // 0-based index
+  nextItemPreview?: NextItemPreview // Preview of next schedule item (when at last slide)
 }
 
 /**
@@ -88,6 +97,7 @@ export interface TemporarySongContent {
  */
 export interface TemporaryAnnouncementContent {
   content: string // HTML content
+  nextItemPreview?: NextItemPreview // Preview of next schedule item
 }
 
 /**
@@ -118,6 +128,7 @@ export interface TemporaryBiblePassageContent {
   secondaryTranslationAbbreviation?: string
   secondaryBookName?: string
   secondaryVerses?: BiblePassageVerse[]
+  nextItemPreview?: NextItemPreview // Preview of next schedule item (when at last verse)
 }
 
 /**
@@ -143,6 +154,7 @@ export interface VerseteTineriEntry {
 export interface TemporaryVerseteTineriContent {
   entries: VerseteTineriEntry[]
   currentEntryIndex: number // 0-based index in entries array
+  nextItemPreview?: NextItemPreview // Preview of next schedule item (when at last entry)
 }
 
 /**
@@ -181,6 +193,7 @@ export interface PresentTemporaryBibleInput {
 export interface PresentTemporarySongInput {
   songId: number
   slideIndex?: number // Optional: start from specific slide (0-based)
+  nextItemPreview?: NextItemPreview // Preview of next schedule item (for schedule presentations)
 }
 
 /**
@@ -196,6 +209,7 @@ export interface NavigateTemporaryInput {
  */
 export interface PresentTemporaryAnnouncementInput {
   content: string // HTML content
+  nextItemPreview?: NextItemPreview // Preview of next schedule item (for schedule presentations)
 }
 
 /**
@@ -217,6 +231,7 @@ export interface PresentTemporaryBiblePassageInput {
   secondaryTranslationAbbreviation?: string
   secondaryBookName?: string
   secondaryVerses?: BiblePassageVerse[]
+  nextItemPreview?: NextItemPreview // Preview of next schedule item (for schedule presentations)
 }
 
 /**
@@ -225,6 +240,7 @@ export interface PresentTemporaryBiblePassageInput {
 export interface PresentTemporaryVerseteTineriInput {
   entries: VerseteTineriEntry[]
   currentEntryIndex?: number // Optional: start from specific entry (0-based)
+  nextItemPreview?: NextItemPreview // Preview of next schedule item (for schedule presentations)
 }
 
 /**
