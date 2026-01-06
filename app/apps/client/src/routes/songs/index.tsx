@@ -14,6 +14,7 @@ interface SongsSearchParams {
   fromSong?: boolean
   selectedSongId?: number
   categoryId?: number
+  reset?: number
 }
 
 export const Route = createFileRoute('/songs/')({
@@ -33,6 +34,12 @@ export const Route = createFileRoute('/songs/')({
         : typeof search.categoryId === 'string'
           ? parseInt(search.categoryId, 10) || undefined
           : undefined,
+    reset:
+      typeof search.reset === 'number'
+        ? search.reset
+        : typeof search.reset === 'string'
+          ? parseInt(search.reset, 10) || undefined
+          : undefined,
   }),
 })
 
@@ -44,10 +51,26 @@ function SongsPage() {
     fromSong,
     selectedSongId,
     categoryId,
+    reset,
   } = useSearch({
     from: '/songs/',
   })
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
+  const [focusTrigger, setFocusTrigger] = useState(0)
+
+  // Handle reset from keyboard shortcut - clear search and trigger focus
+  useEffect(() => {
+    if (reset) {
+      // Clear the reset param and search query from URL
+      navigate({
+        to: '/songs/',
+        search: { q: undefined, categoryId: undefined },
+        replace: true,
+      })
+      // Trigger focus in SongList
+      setFocusTrigger((prev) => prev + 1)
+    }
+  }, [reset, navigate])
 
   const { data: presentationState } = usePresentationState()
   const hasNavigatedOnOpen = useRef(false)
@@ -164,6 +187,7 @@ function SongsPage() {
           initialSelectedSongId={selectedSongId}
           categoryId={categoryId}
           onCategoryChange={handleCategoryChange}
+          focusTrigger={focusTrigger}
         />
 
         <SongsSettingsModal

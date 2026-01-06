@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router'
 import { Book, GripVertical, Loader2, Settings } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -31,12 +31,27 @@ import {
 } from '~/features/presentation'
 import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
 
+interface BibleSearchParams {
+  reset?: number
+}
+
 export const Route = createFileRoute('/bible/')({
   component: BiblePage,
+  validateSearch: (search: Record<string, unknown>): BibleSearchParams => ({
+    reset:
+      typeof search.reset === 'number'
+        ? search.reset
+        : typeof search.reset === 'string'
+          ? parseInt(search.reset, 10) || undefined
+          : undefined,
+  }),
 })
 
 function BiblePage() {
   const { t } = useTranslation('bible')
+  const navigate = useNavigate()
+  const { reset } = useSearch({ from: '/bible/' })
+  const [focusTrigger, setFocusTrigger] = useState(0)
 
   const {
     selectedTranslations,
@@ -92,6 +107,22 @@ function BiblePage() {
 
   // Initialize navigation with primary translation
   const navigation = useBibleNavigation(primaryTranslation?.id)
+
+  // Handle reset from keyboard shortcut - clear search and trigger focus
+  useEffect(() => {
+    if (reset) {
+      // Clear the reset param from URL
+      navigate({
+        to: '/bible/',
+        search: {},
+        replace: true,
+      })
+      // Clear Bible search
+      navigation.clearSearch()
+      // Trigger focus in BibleNavigationPanel
+      setFocusTrigger((prev) => prev + 1)
+    }
+  }, [reset, navigate, navigation])
 
   // Get presentation state to sync with current Bible item
   const { data: presentationState } = usePresentationState()
@@ -777,6 +808,7 @@ function BiblePage() {
                 onNextVerse={handleNextVerse}
                 onPreviousVerse={handlePreviousVerse}
                 onGoBack={handleGoBack}
+                focusTrigger={focusTrigger}
               />
             </div>
 

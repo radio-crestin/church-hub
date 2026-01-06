@@ -102,12 +102,14 @@ export function GlobalAppShortcutManager() {
 
   const handleSearchSong = useCallback(() => {
     logger.debug('Navigating to song search via shortcut')
-    navigate({ to: '/songs/' })
+    // Pass reset timestamp to clear search and focus, even if already on page
+    navigate({ to: '/songs/', search: { reset: Date.now() } })
   }, [navigate])
 
   const handleSearchBible = useCallback(() => {
     logger.debug('Navigating to Bible search via shortcut')
-    navigate({ to: '/bible/' })
+    // Pass reset timestamp to clear search and focus, even if already on page
+    navigate({ to: '/bible/', search: { reset: Date.now() } })
   }, [navigate])
 
   const handleNextSlide = useCallback(() => {
