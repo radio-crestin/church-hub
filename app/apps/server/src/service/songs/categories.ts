@@ -1,4 +1,4 @@
-import { desc, eq, isNull, max, sql } from 'drizzle-orm'
+import { desc, eq, isNull, sql } from 'drizzle-orm'
 
 import type {
   OperationResult,
@@ -130,13 +130,8 @@ export function upsertCategory(
       return getCategoryById(input.id)
     }
 
-    // For new categories, calculate next priority (max + 1)
-    const result = db
-      .select({ maxPriority: max(songCategories.priority) })
-      .from(songCategories)
-      .get()
-
-    const nextPriority = input.priority ?? (result?.maxPriority ?? 0) + 1
+    // For new categories, default priority is 1
+    const nextPriority = input.priority ?? 1
 
     log(
       'debug',
