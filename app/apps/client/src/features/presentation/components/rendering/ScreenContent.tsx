@@ -377,10 +377,11 @@ export function ScreenContent({
     // Build the label text: "Urmează:" + type-specific label + title
     const getLabelText = () => {
       if (!nextSlideData?.label) return ns.labelText
-      // Include title for songs
+      // Include title for items that have one (e.g., songs)
       if (nextSlideData.title) {
-        return `${ns.labelText} ${nextSlideData.label} ${nextSlideData.title}`
+        return `${ns.labelText} ${nextSlideData.label}: ${nextSlideData.title}`
       }
+      // No title - just show the label without trailing colon
       return `${ns.labelText} ${nextSlideData.label}`
     }
 
