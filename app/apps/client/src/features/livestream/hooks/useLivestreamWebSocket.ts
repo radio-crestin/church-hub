@@ -231,13 +231,19 @@ export function useLivestreamWebSocket() {
     setStreamStartProgress(null)
   }, [])
 
+  // Use refs for connect/disconnect to avoid dependency array issues
+  const connectRef = useRef(connect)
+  const disconnectRef = useRef(disconnect)
+  connectRef.current = connect
+  disconnectRef.current = disconnect
+
   useEffect(() => {
-    connect()
+    connectRef.current()
 
     return () => {
-      disconnect()
+      disconnectRef.current()
     }
-  }, [connect, disconnect])
+  }, []) // Empty dependency - only run on mount/unmount
 
   return {
     status,
