@@ -46,10 +46,12 @@ export function ControlRoom() {
     songSlideId: number | null
     queueItemId: number | null
     temporaryIndex: number | null
+    initialized: boolean
   }>({
     songSlideId: null,
     queueItemId: null,
     temporaryIndex: null,
+    initialized: false,
   })
 
   // Clear highlights when slide changes
@@ -68,14 +70,14 @@ export function ControlRoom() {
           ?.currentVerseIndex ??
         (state.temporaryContent.data as { currentEntryIndex?: number })
           ?.currentEntryIndex ??
-        null)
+        0)
       : null
 
     const prev = prevSlideRef.current
 
     // Check if slide changed (not on initial mount)
     const slideChanged =
-      prev.songSlideId !== null &&
+      prev.initialized &&
       (prev.songSlideId !== currentSongSlideId ||
         prev.queueItemId !== currentQueueItemId ||
         prev.temporaryIndex !== temporaryIndex)
@@ -89,6 +91,7 @@ export function ControlRoom() {
       songSlideId: currentSongSlideId,
       queueItemId: currentQueueItemId,
       temporaryIndex,
+      initialized: true,
     }
   }, [
     state?.currentSongSlideId,
@@ -146,22 +149,6 @@ export function ControlRoom() {
             </h2>
           </div>
           <div className="flex items-center gap-2">
-            {/* Clear Highlights Button */}
-            {hasHighlights && (
-              <button
-                type="button"
-                onClick={() => clearHighlights.mutate()}
-                disabled={clearHighlights.isPending}
-                className="flex items-center gap-1.5 px-2 py-1.5 text-sm text-gray-600 dark:text-gray-400 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
-                title={t('presentation:controls.clearHighlights')}
-              >
-                {clearHighlights.isPending ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  <Eraser size={16} />
-                )}
-              </button>
-            )}
             {/* LIVE Indicator */}
             <div
               className={`flex items-center gap-1.5 px-2 py-1 rounded-md ${
@@ -187,6 +174,22 @@ export function ControlRoom() {
                 LIVE
               </span>
             </div>
+            {/* Clear Highlights Button */}
+            {hasHighlights && (
+              <button
+                type="button"
+                onClick={() => clearHighlights.mutate()}
+                disabled={clearHighlights.isPending}
+                className="flex items-center gap-1.5 px-2 py-1.5 text-sm text-gray-600 dark:text-gray-400 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+                title={t('presentation:controls.clearHighlights')}
+              >
+                {clearHighlights.isPending ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Eraser size={16} />
+                )}
+              </button>
+            )}
             {/* Hide/Show Button */}
             {!isHidden ? (
               <button

@@ -30,7 +30,8 @@
     "prevVerse": "Previous verse",
     "nextVerse": "Next verse",
     "show": "Show",
-    "hide": "Hide"
+    "hide": "Hide",
+    "clearHighlights": "Clear Highlights"
   },
   "shortcuts": {
     "title": "Keyboard Shortcuts",
