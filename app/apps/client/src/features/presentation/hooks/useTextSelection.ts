@@ -13,8 +13,26 @@ export interface UseTextSelectionResult {
 }
 
 /**
+ * Check if a node is inside a hidden element (aria-hidden="true")
+ */
+function isNodeHidden(node: Node): boolean {
+  let current: Node | null = node
+  while (current && current.nodeType !== Node.DOCUMENT_NODE) {
+    if (current.nodeType === Node.ELEMENT_NODE) {
+      const element = current as HTMLElement
+      if (element.getAttribute('aria-hidden') === 'true') {
+        return true
+      }
+    }
+    current = current.parentNode
+  }
+  return false
+}
+
+/**
  * Calculate the character offset from the start of the container
- * to the given node/offset position
+ * to the given node/offset position.
+ * Only counts visible text nodes (skips aria-hidden elements).
  */
 function getCharacterOffset(
   container: HTMLElement,
@@ -26,6 +44,12 @@ function getCharacterOffset(
 
   let node: Node | null = walker.nextNode()
   while (node) {
+    // Skip text nodes inside hidden elements
+    if (isNodeHidden(node)) {
+      node = walker.nextNode()
+      continue
+    }
+
     if (node === targetNode) {
       return offset + targetOffset
     }
