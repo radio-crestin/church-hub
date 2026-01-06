@@ -144,8 +144,7 @@
 ~~- cand apesi F5, fa focus pe search chiar daca esti pe pagina~~
 ~~- search-ul din Biblie nu e bun~~
 ~~- când sunt doar două versuri, nu mai comprima liniile~~
-- imbunatateste search-ul..
-- creaza un quickstart guide pentru utilizatori
+~~- imbunatateste search-ul..~~
 - adauga optiune de a cauta cantari folosind AI
 - adauga posibilitatea de a face highlight pentru sesiunea curenta
 - adauga muzica
@@ -154,3 +153,4 @@
 - add update checker
 - creaza optiunea de a adauga live-urile create intr-un playlist pe YouTube
 - adauga optiunea de a afisa pe un ecran separat continutul in anumita limba (o versiune a Bibliei diferita, traduceri cu AI ale cantarilor.. si eventual traduceri in timp real)
+- creaza un quickstart guide pentru utilizatori

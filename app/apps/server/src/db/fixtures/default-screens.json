@@ -18,7 +18,7 @@
         "constraints": {
           "top": {
             "enabled": true,
-            "value": 2,
+            "value": 1.1534391534391542,
             "unit": "%"
           },
           "bottom": {
@@ -27,25 +27,25 @@
             "unit": "%"
           },
           "left": {
-            "enabled": true,
+            "enabled": false,
             "value": 83.59154929577464,
             "unit": "%"
           },
           "right": {
-            "enabled": false,
-            "value": 0,
+            "enabled": true,
+            "value": 1.4285714285714206,
             "unit": "%"
           }
         },
         "size": {
-          "width": 14.665492957746476,
-          "widthUnit": "%",
-          "height": 13.60719874804382,
-          "heightUnit": "%"
+          "width": 497.42956562906846,
+          "widthUnit": "px",
+          "height": 212.5711918570245,
+          "heightUnit": "px"
         },
         "style": {
           "fontFamily": "system-ui",
-          "maxFontSize": 80,
+          "maxFontSize": 140,
           "autoScale": false,
           "color": "#ffffff",
           "bold": true,
@@ -101,14 +101,14 @@
           },
           "style": {
             "fontFamily": "system-ui",
-            "maxFontSize": 120,
+            "maxFontSize": 140,
             "autoScale": true,
             "color": "#ffffff",
             "bold": true,
             "italic": false,
             "underline": false,
             "alignment": "left",
-            "verticalAlignment": "top",
+            "verticalAlignment": "bottom",
             "lineHeight": 1.3,
             "shadow": false
           },
@@ -121,7 +121,7 @@
           },
           "animationOut": {
             "type": "fade",
-            "duration": 700,
+            "duration": 500,
             "delay": 0,
             "easing": "ease-in"
           },
@@ -133,13 +133,13 @@
           },
           "slideTransitionOut": {
             "type": "fade",
-            "duration": 200,
+            "duration": 150,
             "delay": 0,
             "easing": "ease-in"
           },
           "slideTransitionIn": {
             "type": "fade",
-            "duration": 200,
+            "duration": 150,
             "delay": 0,
             "easing": "ease-out"
           }
@@ -203,7 +203,7 @@
           "constraints": {
             "top": {
               "enabled": true,
-              "value": 2.6259780907668238,
+              "value": 4.954020418809152,
               "unit": "%"
             },
             "bottom": {
@@ -213,7 +213,7 @@
             },
             "left": {
               "enabled": true,
-              "value": 4.9999999999999964,
+              "value": 4.285714285714282,
               "unit": "%"
             },
             "right": {
@@ -225,12 +225,12 @@
           "size": {
             "width": 80,
             "widthUnit": "%",
-            "height": 8,
+            "height": 11.174603174603176,
             "heightUnit": "%"
           },
           "style": {
             "fontFamily": "system-ui",
-            "maxFontSize": 70,
+            "maxFontSize": 80,
             "autoScale": false,
             "color": "#ffffff",
             "bold": true,
@@ -276,7 +276,7 @@
           "constraints": {
             "top": {
               "enabled": true,
-              "value": 12,
+              "value": 17.5026455026455,
               "unit": "%"
             },
             "bottom": {
@@ -286,7 +286,7 @@
             },
             "left": {
               "enabled": true,
-              "value": 5,
+              "value": 4.285714285714286,
               "unit": "%"
             },
             "right": {
@@ -298,32 +298,32 @@
           "size": {
             "width": 90,
             "widthUnit": "%",
-            "height": 80.84037558685445,
+            "height": 77.03085177733064,
             "heightUnit": "%"
           },
           "style": {
             "fontFamily": "system-ui",
-            "maxFontSize": 100,
+            "maxFontSize": 120,
             "autoScale": true,
             "color": "#ffffff",
             "bold": true,
             "italic": false,
             "underline": false,
             "alignment": "left",
-            "verticalAlignment": "top",
+            "verticalAlignment": "bottom",
             "lineHeight": 1.3,
             "shadow": false
           },
           "padding": 20,
           "animationIn": {
             "type": "fade",
-            "duration": 400,
+            "duration": 250,
             "delay": 0,
             "easing": "ease-out"
           },
           "animationOut": {
             "type": "fade",
-            "duration": 400,
+            "duration": 250,
             "delay": 0,
             "easing": "ease-in"
           },
@@ -335,13 +335,13 @@
           },
           "slideTransitionIn": {
             "type": "fade",
-            "duration": 250,
+            "duration": 200,
             "delay": 0,
             "easing": "ease-out"
           },
           "slideTransitionOut": {
             "type": "fade",
-            "duration": 250,
+            "duration": 200,
             "delay": 0,
             "easing": "ease-in"
           }
@@ -392,7 +392,9 @@
           "format": "24h",
           "showSeconds": false
         },
-        "clockEnabled": true
+        "clockEnabled": true,
+        "includeReferenceInContent": true,
+        "referenceWrapperStyle": "parentheses"
       },
       "bible_passage": {
         "background": {
@@ -404,7 +406,7 @@
           "constraints": {
             "top": {
               "enabled": true,
-              "value": 2,
+              "value": 5.386243386243387,
               "unit": "%"
             },
             "bottom": {
@@ -414,7 +416,7 @@
             },
             "left": {
               "enabled": true,
-              "value": 5,
+              "value": 4.761904761904763,
               "unit": "%"
             },
             "right": {
@@ -426,12 +428,12 @@
           "size": {
             "width": 80,
             "widthUnit": "%",
-            "height": 8,
+            "height": 11.174603174603176,
             "heightUnit": "%"
           },
           "style": {
             "fontFamily": "system-ui",
-            "maxFontSize": 70,
+            "maxFontSize": 80,
             "autoScale": false,
             "color": "#ffffff",
             "bold": true,
@@ -459,7 +461,7 @@
           "constraints": {
             "top": {
               "enabled": true,
-              "value": 12,
+              "value": 17.5026455026455,
               "unit": "%"
             },
             "bottom": {
@@ -469,7 +471,7 @@
             },
             "left": {
               "enabled": true,
-              "value": 5,
+              "value": 4.880952380952381,
               "unit": "%"
             },
             "right": {
@@ -481,12 +483,12 @@
           "size": {
             "width": 90,
             "widthUnit": "%",
-            "height": 77.86697965571204,
+            "height": 74.69237648110888,
             "heightUnit": "%"
           },
           "style": {
             "fontFamily": "system-ui",
-            "maxFontSize": 100,
+            "maxFontSize": 120,
             "autoScale": true,
             "color": "#ffffff",
             "bold": true,
@@ -557,8 +559,9 @@
           "format": "24h",
           "showSeconds": false
         },
-        "includeReferenceInContent": false,
-        "clockEnabled": true
+        "includeReferenceInContent": true,
+        "clockEnabled": true,
+        "referenceWrapperStyle": "parentheses"
       },
       "announcement": {
         "background": {
@@ -716,7 +719,8 @@
             "verticalAlignment": "middle",
             "lineHeight": 1.3,
             "shadow": false
-          }
+          },
+          "hidden": true
         },
         "referenceText": {
           "constraints": {
@@ -759,7 +763,8 @@
             "verticalAlignment": "middle",
             "lineHeight": 1.3,
             "shadow": false
-          }
+          },
+          "hidden": true
         },
         "contentText": {
           "constraints": {
@@ -815,7 +820,8 @@
             "duration": 200,
             "delay": 0,
             "easing": "ease-in"
-          }
+          },
+          "hidden": true
         },
         "clock": {
           "enabled": false,
@@ -1955,14 +1961,14 @@
     "contentConfigs": {
       "song": {
         "background": {
-          "type": "transparent",
+          "type": "color",
           "opacity": 1
         },
         "mainText": {
           "constraints": {
             "top": {
               "enabled": true,
-              "value": 3.4356136820925554,
+              "value": 4.660103478010931,
               "unit": "%"
             },
             "bottom": {
@@ -1972,7 +1978,7 @@
             },
             "left": {
               "enabled": true,
-              "value": 1.3908450704225364,
+              "value": 1.1527498323272987,
               "unit": "%"
             },
             "right": {
@@ -1989,7 +1995,7 @@
           },
           "style": {
             "fontFamily": "system-ui",
-            "maxFontSize": 120,
+            "maxFontSize": 80,
             "autoScale": true,
             "color": "#ffffff",
             "bold": true,
@@ -2015,6 +2021,18 @@
             "duration": 200,
             "delay": 0,
             "easing": "ease-in"
+          },
+          "slideTransitionOut": {
+            "type": "fade",
+            "duration": 150,
+            "delay": 0,
+            "easing": "ease-in"
+          },
+          "slideTransitionIn": {
+            "type": "fade",
+            "duration": 150,
+            "delay": 0,
+            "easing": "ease-out"
           }
         },
         "clock": {
@@ -2066,7 +2084,7 @@
       },
       "bible": {
         "background": {
-          "type": "transparent",
+          "type": "color",
           "opacity": 1
         },
         "referenceText": {
@@ -2100,8 +2118,8 @@
           },
           "style": {
             "fontFamily": "system-ui",
-            "maxFontSize": 50,
-            "autoScale": false,
+            "maxFontSize": 80,
+            "autoScale": true,
             "color": "#ffffff",
             "bold": true,
             "italic": false,
@@ -2116,7 +2134,7 @@
           "constraints": {
             "top": {
               "enabled": true,
-              "value": 18.33802816901408,
+              "value": 4.915736175293516,
               "unit": "%"
             },
             "bottom": {
@@ -2126,7 +2144,7 @@
             },
             "left": {
               "enabled": true,
-              "value": 2.095070422535212,
+              "value": 1.6371949646597532,
               "unit": "%"
             },
             "right": {
@@ -2138,19 +2156,19 @@
           "size": {
             "width": 95.98591549295777,
             "widthUnit": "%",
-            "height": 75.30382293762574,
+            "height": 89.43255135206844,
             "heightUnit": "%"
           },
           "style": {
             "fontFamily": "system-ui",
-            "maxFontSize": 31,
+            "maxFontSize": 60,
             "autoScale": true,
             "color": "#ffffff",
             "bold": true,
             "italic": false,
             "underline": false,
             "alignment": "left",
-            "verticalAlignment": "bottom",
+            "verticalAlignment": "middle",
             "lineHeight": 1.3,
             "shadow": true
           },
@@ -2215,7 +2233,8 @@
           "format": "24h",
           "showSeconds": false
         },
-        "includeReferenceInContent": true
+        "includeReferenceInContent": true,
+        "referenceWrapperStyle": "parentheses"
       },
       "bible_passage": {
         "background": {
@@ -2269,7 +2288,7 @@
           "constraints": {
             "top": {
               "enabled": true,
-              "value": 19.24346076458752,
+              "value": 4.1728171225153075,
               "unit": "%"
             },
             "bottom": {
@@ -2279,7 +2298,7 @@
             },
             "left": {
               "enabled": true,
-              "value": 2.183098591549297,
+              "value": 2.183098591549295,
               "unit": "%"
             },
             "right": {
@@ -2289,21 +2308,21 @@
             }
           },
           "size": {
-            "width": 94.40140845070424,
+            "width": 94.40140845070425,
             "widthUnit": "%",
-            "height": 74.17203219315894,
+            "height": 89.47815464213853,
             "heightUnit": "%"
           },
           "style": {
             "fontFamily": "system-ui",
-            "maxFontSize": 31,
+            "maxFontSize": 60,
             "autoScale": true,
             "color": "#ffffff",
             "bold": true,
             "italic": false,
             "underline": false,
             "alignment": "left",
-            "verticalAlignment": "bottom",
+            "verticalAlignment": "middle",
             "lineHeight": 1.3,
             "shadow": true
           },
@@ -2367,7 +2386,8 @@
           "format": "24h",
           "showSeconds": false
         },
-        "includeReferenceInContent": true
+        "includeReferenceInContent": true,
+        "referenceWrapperStyle": "parentheses"
       },
       "announcement": {
         "background": {
@@ -2405,14 +2425,14 @@
           },
           "style": {
             "fontFamily": "system-ui",
-            "maxFontSize": 60,
+            "maxFontSize": 80,
             "autoScale": true,
             "color": "#ffffff",
-            "bold": false,
+            "bold": true,
             "italic": false,
             "underline": false,
-            "alignment": "left",
-            "verticalAlignment": "top",
+            "alignment": "center",
+            "verticalAlignment": "middle",
             "lineHeight": 1.3,
             "shadow": true
           },
@@ -2479,7 +2499,7 @@
       },
       "versete_tineri": {
         "background": {
-          "type": "transparent",
+          "type": "color",
           "opacity": 1
         },
         "personLabel": {
@@ -2523,13 +2543,14 @@
             "verticalAlignment": "middle",
             "lineHeight": 1.3,
             "shadow": true
-          }
+          },
+          "hidden": true
         },
         "referenceText": {
           "constraints": {
             "top": {
               "enabled": true,
-              "value": 10.037223340040242,
+              "value": 3.2083379397262703,
               "unit": "%"
             },
             "bottom": {
@@ -2539,7 +2560,7 @@
             },
             "left": {
               "enabled": true,
-              "value": 4.911971830985917,
+              "value": 3.0804699994840847,
               "unit": "%"
             },
             "right": {
@@ -2551,12 +2572,12 @@
           "size": {
             "width": 80.88028169014085,
             "widthUnit": "%",
-            "height": 10.942655935613683,
+            "height": 14.474838039224355,
             "heightUnit": "%"
           },
           "style": {
             "fontFamily": "system-ui",
-            "maxFontSize": 32,
+            "maxFontSize": 60,
             "autoScale": false,
             "color": "#ffffff",
             "bold": true,
@@ -2572,7 +2593,7 @@
           "constraints": {
             "top": {
               "enabled": true,
-              "value": 23.432595573440643,
+              "value": 20.135892276737348,
               "unit": "%"
             },
             "bottom": {
@@ -2582,7 +2603,7 @@
             },
             "left": {
               "enabled": true,
-              "value": 4.559859154929578,
+              "value": 2.9115075065779306,
               "unit": "%"
             },
             "right": {
@@ -2594,12 +2615,12 @@
           "size": {
             "width": 90,
             "widthUnit": "%",
-            "height": 67.49295774647888,
+            "height": 75.97019479514451,
             "heightUnit": "%"
           },
           "style": {
             "fontFamily": "system-ui",
-            "maxFontSize": 90,
+            "maxFontSize": 60,
             "autoScale": true,
             "color": "#ffffff",
             "bold": true,
@@ -2809,7 +2830,7 @@
         "constraints": {
           "top": {
             "enabled": true,
-            "value": 16.772966207759694,
+            "value": 1039.110628545422,
             "unit": "px"
           },
           "bottom": {
@@ -2824,12 +2845,12 @@
           },
           "right": {
             "enabled": true,
-            "value": 14.418022528160236,
+            "value": 25.50027361041151,
             "unit": "px"
           }
         },
         "size": {
-          "width": 389.15143929912387,
+          "width": 350.3635605112451,
           "widthUnit": "px",
           "height": 132.0450563204005,
           "heightUnit": "px"
@@ -2908,15 +2929,27 @@
           "padding": 20,
           "animationIn": {
             "type": "fade",
-            "duration": 300,
+            "duration": 0,
             "delay": 0,
             "easing": "ease-out"
           },
           "animationOut": {
             "type": "fade",
-            "duration": 200,
+            "duration": 0,
             "delay": 0,
             "easing": "ease-in"
+          },
+          "slideTransitionOut": {
+            "type": "fade",
+            "duration": 0,
+            "delay": 0,
+            "easing": "ease-in"
+          },
+          "slideTransitionIn": {
+            "type": "fade",
+            "duration": 0,
+            "delay": 0,
+            "easing": "ease-out"
           }
         },
         "clock": {
@@ -2976,7 +3009,7 @@
           "constraints": {
             "top": {
               "enabled": true,
-              "value": 2,
+              "value": 1.134199134199134,
               "unit": "%"
             },
             "bottom": {
@@ -2986,7 +3019,7 @@
             },
             "left": {
               "enabled": true,
-              "value": 5,
+              "value": 3.2042648709315356,
               "unit": "%"
             },
             "right": {
@@ -2996,7 +3029,7 @@
             }
           },
           "size": {
-            "width": 71.09998609372828,
+            "width": 92.3922740526829,
             "widthUnit": "%",
             "height": 7.749687108886107,
             "heightUnit": "%"
@@ -3013,13 +3046,37 @@
             "verticalAlignment": "middle",
             "lineHeight": 1.3,
             "shadow": false
+          },
+          "animationIn": {
+            "type": "fade",
+            "duration": 0,
+            "delay": 0,
+            "easing": "ease-out"
+          },
+          "slideTransitionOut": {
+            "type": "fade",
+            "duration": 0,
+            "delay": 0,
+            "easing": "ease-in"
+          },
+          "slideTransitionIn": {
+            "type": "fade",
+            "duration": 0,
+            "delay": 0,
+            "easing": "ease-out"
+          },
+          "animationOut": {
+            "type": "fade",
+            "duration": 0,
+            "delay": 0,
+            "easing": "ease-in"
           }
         },
         "contentText": {
           "constraints": {
             "top": {
               "enabled": true,
-              "value": 10.04930308747605,
+              "value": 8.894901933074896,
               "unit": "%"
             },
             "bottom": {
@@ -3029,7 +3086,7 @@
             },
             "left": {
               "enabled": true,
-              "value": 3.018040747078524,
+              "value": 3.018040747078527,
               "unit": "%"
             },
             "right": {
@@ -3041,7 +3098,7 @@
           "size": {
             "width": 92.49221183800623,
             "widthUnit": "%",
-            "height": 50.39630409664635,
+            "height": 43.90279760313985,
             "heightUnit": "%"
           },
           "style": {
@@ -3060,15 +3117,27 @@
           "padding": 20,
           "animationIn": {
             "type": "fade",
-            "duration": 300,
+            "duration": 0,
             "delay": 0,
             "easing": "ease-out"
           },
           "animationOut": {
             "type": "fade",
-            "duration": 200,
+            "duration": 0,
             "delay": 0,
             "easing": "ease-in"
+          },
+          "slideTransitionOut": {
+            "type": "fade",
+            "duration": 0,
+            "delay": 0,
+            "easing": "ease-in"
+          },
+          "slideTransitionIn": {
+            "type": "fade",
+            "duration": 0,
+            "delay": 0,
+            "easing": "ease-out"
           }
         },
         "clock": {
@@ -3129,7 +3198,7 @@
           "constraints": {
             "top": {
               "enabled": true,
-              "value": 2,
+              "value": 0.8455988455988455,
               "unit": "%"
             },
             "bottom": {
@@ -3139,7 +3208,7 @@
             },
             "left": {
               "enabled": true,
-              "value": 5,
+              "value": 1.665063331729997,
               "unit": "%"
             },
             "right": {
@@ -3149,7 +3218,7 @@
             }
           },
           "size": {
-            "width": 67.31748018356278,
+            "width": 94.25350711958971,
             "widthUnit": "%",
             "height": 7.8748435544430535,
             "heightUnit": "%"
@@ -3166,13 +3235,37 @@
             "verticalAlignment": "middle",
             "lineHeight": 1.3,
             "shadow": false
+          },
+          "animationIn": {
+            "type": "fade",
+            "duration": 0,
+            "delay": 0,
+            "easing": "ease-out"
+          },
+          "slideTransitionOut": {
+            "type": "fade",
+            "duration": 0,
+            "delay": 0,
+            "easing": "ease-in"
+          },
+          "slideTransitionIn": {
+            "type": "fade",
+            "duration": 0,
+            "delay": 0,
+            "easing": "ease-out"
+          },
+          "animationOut": {
+            "type": "fade",
+            "duration": 0,
+            "delay": 0,
+            "easing": "ease-in"
           }
         },
         "contentText": {
           "constraints": {
             "top": {
               "enabled": true,
-              "value": 10.201409913269858,
+              "value": 8.758408470268417,
               "unit": "%"
             },
             "bottom": {
@@ -3182,7 +3275,7 @@
             },
             "left": {
               "enabled": true,
-              "value": 3.2257250669123763,
+              "value": 2.199590707444685,
               "unit": "%"
             },
             "right": {
@@ -3192,9 +3285,9 @@
             }
           },
           "size": {
-            "width": 90,
+            "width": 93.84800384800384,
             "widthUnit": "%",
-            "height": 49.55642578210698,
+            "height": 43.20721943290062,
             "heightUnit": "%"
           },
           "style": {
@@ -3213,13 +3306,25 @@
           "padding": 20,
           "animationIn": {
             "type": "fade",
-            "duration": 300,
+            "duration": 0,
             "delay": 0,
             "easing": "ease-out"
           },
           "animationOut": {
             "type": "fade",
-            "duration": 200,
+            "duration": 0,
+            "delay": 0,
+            "easing": "ease-in"
+          },
+          "slideTransitionIn": {
+            "type": "fade",
+            "duration": 0,
+            "delay": 0,
+            "easing": "ease-out"
+          },
+          "slideTransitionOut": {
+            "type": "fade",
+            "duration": 0,
             "delay": 0,
             "easing": "ease-in"
           }
@@ -3429,13 +3534,37 @@
             "verticalAlignment": "middle",
             "lineHeight": 1.3,
             "shadow": false
+          },
+          "animationIn": {
+            "type": "fade",
+            "duration": 0,
+            "delay": 0,
+            "easing": "ease-out"
+          },
+          "slideTransitionOut": {
+            "type": "fade",
+            "duration": 0,
+            "delay": 0,
+            "easing": "ease-in"
+          },
+          "slideTransitionIn": {
+            "type": "fade",
+            "duration": 0,
+            "delay": 0,
+            "easing": "ease-out"
+          },
+          "animationOut": {
+            "type": "fade",
+            "duration": 0,
+            "delay": 0,
+            "easing": "ease-in"
           }
         },
         "referenceText": {
           "constraints": {
             "top": {
               "enabled": true,
-              "value": 8,
+              "value": 7.855699855699856,
               "unit": "%"
             },
             "bottom": {
@@ -3445,7 +3574,7 @@
             },
             "left": {
               "enabled": true,
-              "value": 4.376947040498442,
+              "value": 4.376947040498444,
               "unit": "%"
             },
             "right": {
@@ -3472,6 +3601,30 @@
             "verticalAlignment": "middle",
             "lineHeight": 1.3,
             "shadow": false
+          },
+          "animationIn": {
+            "type": "fade",
+            "duration": 0,
+            "delay": 0,
+            "easing": "ease-out"
+          },
+          "slideTransitionOut": {
+            "type": "fade",
+            "duration": 0,
+            "delay": 0,
+            "easing": "ease-in"
+          },
+          "slideTransitionIn": {
+            "type": "fade",
+            "duration": 0,
+            "delay": 0,
+            "easing": "ease-out"
+          },
+          "animationOut": {
+            "type": "fade",
+            "duration": 0,
+            "delay": 0,
+            "easing": "ease-in"
           }
         },
         "contentText": {
@@ -3500,7 +3653,7 @@
           "size": {
             "width": 90,
             "widthUnit": "%",
-            "height": 40.80113495093094,
+            "height": 36.616430766226756,
             "heightUnit": "%"
           },
           "style": {
@@ -3519,15 +3672,27 @@
           "padding": 20,
           "animationIn": {
             "type": "fade",
-            "duration": 300,
+            "duration": 0,
             "delay": 0,
             "easing": "ease-out"
           },
           "animationOut": {
             "type": "fade",
-            "duration": 200,
+            "duration": 0,
             "delay": 0,
             "easing": "ease-in"
+          },
+          "slideTransitionOut": {
+            "type": "fade",
+            "duration": 0,
+            "delay": 0,
+            "easing": "ease-in"
+          },
+          "slideTransitionIn": {
+            "type": "fade",
+            "duration": 0,
+            "delay": 0,
+            "easing": "ease-out"
           }
         },
         "clock": {
@@ -3642,7 +3807,7 @@
         },
         "right": {
           "enabled": true,
-          "value": 1.2461059190031132,
+          "value": 0,
           "unit": "%"
         },
         "bottom": {

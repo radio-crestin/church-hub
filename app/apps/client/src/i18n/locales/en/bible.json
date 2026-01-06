@@ -7,7 +7,9 @@
     "searching": "Searching...",
     "directReference": "Direct reference",
     "resultsCount": "{{count}} verse found",
-    "resultsCount_other": "{{count}} verses found"
+    "resultsCount_other": "{{count}} verses found",
+    "aiSearchTooltip": "AI-enhanced search - finds semantically relevant verses",
+    "aiProcessing": "AI..."
   },
   "navigation": {
     "back": "Back",

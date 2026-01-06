@@ -1,18 +1,18 @@
 [
   {
+    "name": "BCEV Baicoi",
+    "priority": 1
+  },
+  {
     "name": "Laudele Domnului",
+    "priority": 1
+  },
+  {
+    "name": "Pe Drumul Credinței",
     "priority": 1
   },
   {
     "name": "Resurse Crestine",
     "priority": 1
-  },
-  {
-    "name": "BCEV Baicoi",
-    "priority": 2
-  },
-  {
-    "name": "Pe Drumul Credinței",
-    "priority": 3
   }
 ]
