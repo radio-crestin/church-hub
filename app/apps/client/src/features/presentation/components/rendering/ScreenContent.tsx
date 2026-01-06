@@ -379,7 +379,7 @@ export function ScreenContent({
       if (!nextSlideData?.label) return ns.labelText
       // Include title for items that have one (e.g., songs)
       if (nextSlideData.title) {
-        return `${ns.labelText} ${nextSlideData.label}: ${nextSlideData.title}`
+        return `${ns.labelText} ${nextSlideData.label} - ${nextSlideData.title}`
       }
       // No title - just show the label without trailing colon
       return `${ns.labelText} ${nextSlideData.label}`
