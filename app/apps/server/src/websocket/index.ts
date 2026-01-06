@@ -30,8 +30,50 @@ export type ScreenConfigPreviewMessage = {
   }
 }
 
-// Store connected clients
-const clients = new Map<string, ServerWebSocket<WebSocketData>>()
+// Store connected clients with last activity timestamp
+interface ClientConnection {
+  ws: ServerWebSocket<WebSocketData>
+  lastActivity: number
+}
+const clients = new Map<string, ClientConnection>()
+
+// Stale connection cleanup interval (60 seconds)
+const STALE_CHECK_INTERVAL_MS = 60_000
+// Consider connection stale after 90 seconds of no activity (3x ping interval of 30s)
+const STALE_TIMEOUT_MS = 90_000
+
+/**
+ * Clean up stale connections that haven't sent any activity
+ */
+function cleanupStaleConnections() {
+  const now = Date.now()
+  let cleanedCount = 0
+
+  for (const [clientId, client] of clients) {
+    const inactiveTime = now - client.lastActivity
+    if (inactiveTime > STALE_TIMEOUT_MS) {
+      wsLogger.info(
+        `Removing stale client ${clientId} (inactive for ${Math.round(inactiveTime / 1000)}s)`,
+      )
+      try {
+        client.ws.close(1000, 'Connection stale')
+      } catch {
+        // Ignore close errors on already dead connections
+      }
+      clients.delete(clientId)
+      cleanedCount++
+    }
+  }
+
+  if (cleanedCount > 0) {
+    wsLogger.info(
+      `Cleaned up ${cleanedCount} stale connections (remaining: ${clients.size})`,
+    )
+  }
+}
+
+// Start the stale connection cleanup interval
+setInterval(cleanupStaleConnections, STALE_CHECK_INTERVAL_MS)
 
 // Callback to get initial OBS status for new clients
 let getOBSStatusCallback:
@@ -68,7 +110,7 @@ function generateClientId(): string {
 export function handleWebSocketOpen(ws: ServerWebSocket<WebSocketData>) {
   const clientId = ws.data.clientId || generateClientId()
   ws.data.clientId = clientId
-  clients.set(clientId, ws)
+  clients.set(clientId, { ws, lastActivity: Date.now() })
 
   wsLogger.info(`Client connected: ${clientId} (total: ${clients.size})`)
 
@@ -124,7 +166,15 @@ export function handleWebSocketMessage(
 ) {
   try {
     const data = JSON.parse(message.toString())
-    wsLogger.debug(`Message from ${ws.data.clientId}: ${JSON.stringify(data)}`)
+    const clientId = ws.data.clientId
+
+    // Update last activity time for this client
+    const client = clients.get(clientId)
+    if (client) {
+      client.lastActivity = Date.now()
+    }
+
+    wsLogger.debug(`Message from ${clientId}: ${JSON.stringify(data)}`)
 
     // Handle ping/pong for keepalive
     if (data.type === 'ping') {
@@ -148,13 +198,13 @@ export function handleWebSocketMessage(
       )
 
       // Broadcast to all clients except the sender
-      for (const [clientId, client] of clients) {
-        if (clientId !== ws.data.clientId) {
+      for (const [id, conn] of clients) {
+        if (id !== ws.data.clientId) {
           try {
-            client.send(previewMessage)
+            conn.ws.send(previewMessage)
           } catch (error) {
-            wsLogger.error(`Failed to send preview to ${clientId}: ${error}`)
-            clients.delete(clientId)
+            wsLogger.error(`Failed to send preview to ${id}: ${error}`)
+            clients.delete(id)
           }
         }
       }
@@ -194,9 +244,9 @@ export function broadcastPresentationState(
 
   wsLogger.debug(`Broadcasting presentation_state to ${clients.size} clients`)
 
-  for (const [clientId, ws] of clients) {
+  for (const [clientId, conn] of clients) {
     try {
-      ws.send(message)
+      conn.ws.send(message)
     } catch (error) {
       wsLogger.error(`Failed to send to ${clientId}: ${error}`)
       clients.delete(clientId)
@@ -220,9 +270,9 @@ export function broadcastScreenConfigUpdated(screenId: number) {
     `Broadcasting screen config update for screen ${screenId} to ${clients.size} clients`,
   )
 
-  for (const [clientId, ws] of clients) {
+  for (const [clientId, conn] of clients) {
     try {
-      ws.send(message)
+      conn.ws.send(message)
     } catch (error) {
       wsLogger.error(`Failed to send to ${clientId}: ${error}`)
       clients.delete(clientId)
@@ -326,9 +376,9 @@ export function broadcastOBSConnectionStatus(
     `Broadcasting OBS connection status to ${clients.size} clients`,
   )
 
-  for (const [clientId, ws] of clients) {
+  for (const [clientId, conn] of clients) {
     try {
-      ws.send(message)
+      conn.ws.send(message)
     } catch (error) {
       wsLogger.error(`Failed to send to ${clientId}: ${error}`)
       clients.delete(clientId)
@@ -349,9 +399,9 @@ export function broadcastOBSStreamingStatus(
 
   wsLogger.debug(`Broadcasting OBS streaming status to ${clients.size} clients`)
 
-  for (const [clientId, ws] of clients) {
+  for (const [clientId, conn] of clients) {
     try {
-      ws.send(message)
+      conn.ws.send(message)
     } catch (error) {
       wsLogger.error(`Failed to send to ${clientId}: ${error}`)
       clients.delete(clientId)
@@ -373,9 +423,9 @@ export function broadcastOBSCurrentScene(sceneName: string) {
 
   wsLogger.debug(`Broadcasting OBS current scene to ${clients.size} clients`)
 
-  for (const [clientId, ws] of clients) {
+  for (const [clientId, conn] of clients) {
     try {
-      ws.send(message)
+      conn.ws.send(message)
     } catch (error) {
       wsLogger.error(`Failed to send to ${clientId}: ${error}`)
       clients.delete(clientId)
@@ -396,9 +446,9 @@ export function broadcastLivestreamStatus(
 
   wsLogger.debug(`Broadcasting livestream status to ${clients.size} clients`)
 
-  for (const [clientId, ws] of clients) {
+  for (const [clientId, conn] of clients) {
     try {
-      ws.send(message)
+      conn.ws.send(message)
     } catch (error) {
       wsLogger.error(`Failed to send to ${clientId}: ${error}`)
       clients.delete(clientId)
@@ -421,9 +471,9 @@ export function broadcastYouTubeAuthStatus(
     `Broadcasting YouTube auth status to ${clients.size} clients: isAuthenticated=${status.isAuthenticated}`,
   )
 
-  for (const [clientId, ws] of clients) {
+  for (const [clientId, conn] of clients) {
     try {
-      ws.send(message)
+      conn.ws.send(message)
     } catch (error) {
       wsLogger.error(`Failed to send to ${clientId}: ${error}`)
       clients.delete(clientId)
@@ -446,9 +496,9 @@ export function broadcastStreamStartProgress(
     `Broadcasting stream start progress (${status.step}) to ${clients.size} clients`,
   )
 
-  for (const [clientId, ws] of clients) {
+  for (const [clientId, conn] of clients) {
     try {
-      ws.send(message)
+      conn.ws.send(message)
     } catch (error) {
       wsLogger.error(`Failed to send to ${clientId}: ${error}`)
       clients.delete(clientId)
@@ -483,9 +533,9 @@ export function broadcastSettingsUpdated(table: string, key: string) {
     `Broadcasting settings update (${table}/${key}) to ${clients.size} clients`,
   )
 
-  for (const [clientId, ws] of clients) {
+  for (const [clientId, conn] of clients) {
     try {
-      ws.send(message)
+      conn.ws.send(message)
     } catch (error) {
       wsLogger.error(`Failed to send to ${clientId}: ${error}`)
       clients.delete(clientId)
@@ -541,9 +591,9 @@ export function broadcastMIDIMessage(message: MIDIMessageEvent['payload']) {
 
   wsLogger.info(`Broadcasting MIDI message to ${clients.size} clients`, message)
 
-  for (const [clientId, ws] of clients) {
+  for (const [clientId, conn] of clients) {
     try {
-      ws.send(wsMessage)
+      conn.ws.send(wsMessage)
       wsLogger.debug(`Sent MIDI message to client ${clientId}`)
     } catch (error) {
       wsLogger.error(`Failed to send to ${clientId}: ${error}`)
@@ -563,9 +613,9 @@ export function broadcastMIDIDevices(devices: MIDIDevicesEvent['payload']) {
 
   wsLogger.debug(`Broadcasting MIDI devices to ${clients.size} clients`)
 
-  for (const [clientId, ws] of clients) {
+  for (const [clientId, conn] of clients) {
     try {
-      ws.send(message)
+      conn.ws.send(message)
     } catch (error) {
       wsLogger.error(`Failed to send to ${clientId}: ${error}`)
       clients.delete(clientId)
@@ -588,9 +638,9 @@ export function broadcastMIDIConnectionStatus(
     `Broadcasting MIDI connection status to ${clients.size} clients`,
   )
 
-  for (const [clientId, ws] of clients) {
+  for (const [clientId, conn] of clients) {
     try {
-      ws.send(message)
+      conn.ws.send(message)
     } catch (error) {
       wsLogger.error(`Failed to send to ${clientId}: ${error}`)
       clients.delete(clientId)
