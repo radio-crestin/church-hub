@@ -19,6 +19,10 @@ const DEBUG = process.env.DEBUG === 'true'
 // Track last navigation timestamp to prevent race conditions
 let lastNavigationTimestamp = 0
 
+// Track the last song ID that was counted for presentation
+// This prevents counting multiple times when navigating between slides of the same song
+let lastCountedSongId: number | null = null
+
 /**
  * Generates a unique, monotonically increasing timestamp in milliseconds.
  * Ensures each update gets a strictly greater timestamp even within same millisecond.
@@ -42,29 +46,54 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
 }
 
 /**
- * Increments the presentation count for a song when one of its slides is displayed
+ * Gets the song ID for a given slide ID
  */
-function incrementSongPresentationCount(songSlideId: number): void {
+function getSongIdFromSlide(songSlideId: number): number | null {
   try {
     const db = getDatabase()
-    // Get song_id from song_slides, then increment presentation_count
     const slide = db
       .select({ songId: songSlides.songId })
       .from(songSlides)
       .where(eq(songSlides.id, songSlideId))
       .get()
+    return slide?.songId ?? null
+  } catch (error) {
+    log('error', `Failed to get song ID from slide: ${error}`)
+    return null
+  }
+}
 
-    if (slide) {
-      db.update(songs)
-        .set({
-          presentationCount: sql`${songs.presentationCount} + 1`,
-        })
-        .where(eq(songs.id, slide.songId))
-        .run()
+/**
+ * Increments the presentation count for a song
+ * Only increments if it's a different song than the last counted one,
+ * or if coming out of hidden state (resuming presentation)
+ */
+function incrementSongPresentationCount(
+  songId: number,
+  isResumingFromHidden: boolean,
+): void {
+  try {
+    // Skip if this song was already counted and we're not resuming from hidden
+    if (songId === lastCountedSongId && !isResumingFromHidden) {
+      log(
+        'debug',
+        `Skipping presentation count increment - same song ${songId}, not resuming`,
+      )
+      return
     }
+
+    const db = getDatabase()
+    db.update(songs)
+      .set({
+        presentationCount: sql`${songs.presentationCount} + 1`,
+      })
+      .where(eq(songs.id, songId))
+      .run()
+
+    lastCountedSongId = songId
     log(
       'debug',
-      `Incremented presentation count for song with slide ${songSlideId}`,
+      `Incremented presentation count for song ${songId} (resuming: ${isResumingFromHidden})`,
     )
   } catch (error) {
     log('error', `Failed to increment presentation count: ${error}`)
@@ -201,13 +230,18 @@ export function updatePresentationState(
       })
       .run()
 
-    // Track presentation count when a new song slide is displayed
-    if (
-      input.currentSongSlideId &&
-      input.currentSongSlideId !== current.currentSongSlideId &&
-      !isHidden
-    ) {
-      incrementSongPresentationCount(input.currentSongSlideId)
+    // Track presentation count for song slides
+    // Only count when:
+    // 1. A slide is being displayed (not hidden)
+    // 2. It's a different song than the last counted one, OR
+    // 3. We're resuming from hidden state (showing again after hide)
+    if (input.currentSongSlideId && !isHidden) {
+      const songId = getSongIdFromSlide(input.currentSongSlideId)
+      if (songId) {
+        // Check if we're resuming from hidden (was hidden, now showing)
+        const isResumingFromHidden = current.isHidden && !isHidden
+        incrementSongPresentationCount(songId, isResumingFromHidden)
+      }
     }
 
     log('info', 'Presentation state updated')
@@ -224,6 +258,9 @@ export function updatePresentationState(
 export function stopPresentation(): PresentationState {
   try {
     log('debug', 'Stopping presentation')
+
+    // Reset the last counted song ID so the next presentation counts as new
+    lastCountedSongId = null
 
     return updatePresentationState({
       isPresenting: false,
@@ -394,13 +431,20 @@ export function presentTemporarySong(
       },
     }
 
-    // Track presentation count for the song
-    db.update(songs)
-      .set({
-        presentationCount: sql`${songs.presentationCount} + 1`,
-      })
-      .where(eq(songs.id, input.songId))
-      .run()
+    // Track presentation count for the song (only if different song or not yet counted)
+    if (input.songId !== lastCountedSongId) {
+      db.update(songs)
+        .set({
+          presentationCount: sql`${songs.presentationCount} + 1`,
+        })
+        .where(eq(songs.id, input.songId))
+        .run()
+      lastCountedSongId = input.songId
+      log(
+        'debug',
+        `Incremented presentation count for temporary song ${input.songId}`,
+      )
+    }
 
     return updatePresentationState({
       temporaryContent,
@@ -772,6 +816,9 @@ function navigateTemporaryVerseteTineri(
 export function clearTemporaryContent(): PresentationState {
   try {
     log('debug', 'Clearing temporary content')
+
+    // Reset the last counted song ID so the next presentation counts as new
+    lastCountedSongId = null
 
     return updatePresentationState({
       temporaryContent: null,

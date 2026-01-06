@@ -36,7 +36,7 @@ export async function getSongsPaginated(
   }
   const response = await fetcher<ApiResponse<PaginatedSongsResult>>(
     `/api/songs?${params.toString()}`,
-    { signal },
+    { signal, cache: 'no-store' },
   )
   return response.data ?? { songs: [], total: 0, hasMore: false }
 }
@@ -114,7 +114,7 @@ export async function searchSongs(
   }
   const response = await fetcher<ApiResponse<SongSearchResult[]>>(
     `/api/songs/search?${params.toString()}`,
-    { signal },
+    { signal, cache: 'no-store' },
   )
   return response.data ?? []
 }

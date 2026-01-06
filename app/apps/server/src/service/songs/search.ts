@@ -952,6 +952,7 @@ export function searchSongs(
         s.category_id,
         sc.name as category_name,
         COALESCE(sc.priority, 1) as category_priority,
+        s.presentation_count,
         highlight(songs_fts, 1, '<mark>', '</mark>') as highlighted_title,
         snippet(songs_fts, 3, '<mark>', '</mark>', '...', 30) as matched_content,
         songs_fts.content as full_content,
@@ -970,6 +971,7 @@ export function searchSongs(
       category_id: number | null
       category_name: string | null
       category_priority: number
+      presentation_count: number
       highlighted_title: string
       matched_content: string
       full_content: string
@@ -986,6 +988,7 @@ export function searchSongs(
       category_id: number | null
       category_name: string | null
       category_priority: number
+      presentation_count: number
       full_content: string
       bm25_rank: number
     }> = []
@@ -1003,6 +1006,7 @@ export function searchSongs(
             s.category_id,
             sc.name as category_name,
             COALESCE(sc.priority, 1) as category_priority,
+            s.presentation_count,
             songs_fts_trigram.content as full_content,
             rank as bm25_rank
           FROM songs_fts_trigram
@@ -1034,6 +1038,7 @@ export function searchSongs(
         category_id: number | null
         category_name: string | null
         category_priority: number
+        presentation_count: number
         highlighted_title: string
         matched_content: string
         full_content: string
@@ -1143,6 +1148,7 @@ export function searchSongs(
         categoryName: r.category_name,
         highlightedTitle: r.highlighted_title,
         matchedContent,
+        presentationCount: r.presentation_count,
       }
     })
   } catch (error) {

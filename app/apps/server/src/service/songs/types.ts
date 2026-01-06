@@ -183,6 +183,7 @@ export interface SongSearchResult {
   categoryName: string | null
   highlightedTitle: string
   matchedContent: string
+  presentationCount: number
 }
 
 /**
