@@ -13,7 +13,7 @@ import {
   useSearchSongs,
   useSongsInfinite,
 } from '../hooks'
-import type { SongSearchResult } from '../types'
+import type { AISearchResult, SongSearchResult } from '../types'
 
 const SEARCH_DEBOUNCE_MS = 600
 
@@ -73,7 +73,7 @@ export function SongList({
   // AI Search
   const { isEnabled: aiSearchAvailable } = useAISearchSettings()
   const aiSearchMutation = useAISearchSongs()
-  const [aiSearchResults, setAiSearchResults] = useState<SongSearchResult[]>([])
+  const [aiSearchResults, setAiSearchResults] = useState<AISearchResult[]>([])
   const [isAISearchActive, setIsAISearchActive] = useState(false)
 
   // Handle AI search button click
@@ -160,11 +160,12 @@ export function SongList({
       highlightedTitle?: string
       matchedContent?: string
       presentationCount?: number
+      aiRelevanceScore?: number
     }>
 
     // AI search results take priority when active
     if (isAISearchActive && aiSearchResults.length > 0) {
-      allSongs = aiSearchResults.map((result: SongSearchResult) => ({
+      allSongs = aiSearchResults.map((result: AISearchResult) => ({
         id: result.id,
         title: result.title,
         categoryId: result.categoryId,
@@ -172,6 +173,7 @@ export function SongList({
         highlightedTitle: result.highlightedTitle,
         matchedContent: result.matchedContent,
         presentationCount: result.presentationCount,
+        aiRelevanceScore: result.aiRelevanceScore,
       }))
       return {
         displaySongs: allSongs,
@@ -321,21 +323,6 @@ export function SongList({
             </div>
           )}
         </div>
-        {aiSearchAvailable && (
-          <button
-            type="button"
-            onClick={handleAISearch}
-            disabled={!localQuery.trim() || aiSearchMutation.isPending}
-            className={`px-3 py-2 rounded-lg border transition-colors flex items-center gap-1.5 ${
-              isAISearchActive
-                ? 'bg-indigo-600 text-white border-indigo-600'
-                : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-            } disabled:opacity-50 disabled:cursor-not-allowed`}
-            title={t('search.aiSearchTooltip')}
-          >
-            <Sparkles className="w-4 h-4" />
-          </button>
-        )}
         <div style={{ width: categoryDropdownWidth }}>
           <Combobox
             options={[
@@ -355,6 +342,21 @@ export function SongList({
             allowClear={false}
           />
         </div>
+        {aiSearchAvailable && (
+          <button
+            type="button"
+            onClick={handleAISearch}
+            disabled={!localQuery.trim() || aiSearchMutation.isPending}
+            className={`px-3 py-2 rounded-lg border transition-colors flex items-center gap-1.5 ${
+              isAISearchActive
+                ? 'bg-indigo-600 text-white border-indigo-600'
+                : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
+            title={t('search.aiSearchTooltip')}
+          >
+            <Sparkles className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       {isLoading ? (

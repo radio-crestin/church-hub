@@ -1,4 +1,4 @@
-import { ChevronRight, Eye, Tag } from 'lucide-react'
+import { ChevronRight, Eye, Sparkles, Tag } from 'lucide-react'
 import { forwardRef } from 'react'
 
 interface SongCardProps {
@@ -10,6 +10,7 @@ interface SongCardProps {
     highlightedTitle?: string
     matchedContent?: string
     presentationCount?: number
+    aiRelevanceScore?: number
   }
   onClick: () => void
   onMiddleClick?: () => void
@@ -70,6 +71,14 @@ export const SongCard = forwardRef<HTMLButtonElement, SongCardProps>(
                 <Eye className="w-3 h-3 text-gray-400" />
                 <span className="text-sm text-gray-500 dark:text-gray-400">
                   {song.presentationCount}
+                </span>
+              </div>
+            )}
+            {song.aiRelevanceScore !== undefined && (
+              <div className="flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-indigo-500" />
+                <span className="text-sm font-medium text-indigo-600 dark:text-indigo-400">
+                  {song.aiRelevanceScore}%
                 </span>
               </div>
             )}

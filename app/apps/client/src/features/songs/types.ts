@@ -104,8 +104,12 @@ export interface AISearchConfig {
   baseUrl?: string
 }
 
+export interface AISearchResult extends SongSearchResult {
+  aiRelevanceScore?: number
+}
+
 export interface AISearchResponse {
-  results: SongSearchResult[]
+  results: AISearchResult[]
   termsUsed: string[]
   totalCandidates: number
   processingTimeMs: number
