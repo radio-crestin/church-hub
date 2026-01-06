@@ -1,4 +1,4 @@
-import { FileText, Loader2, X } from 'lucide-react'
+import { AlertCircle, FileText, Loader2, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -13,6 +13,13 @@ import type { MissingSongItem, ScheduleItem, SlideTemplate } from '../types'
 import { generateScheduleText } from '../utils/generateScheduleText'
 import type { ParsedScheduleItem } from '../utils/parseScheduleText'
 import { parseScheduleText } from '../utils/parseScheduleText'
+
+interface ValidationError {
+  lineNumber: number
+  type: 'bible_passage' | 'versete_tineri' | 'song'
+  content: string
+  message: string
+}
 
 interface EditAsTextModalProps {
   isOpen: boolean
@@ -71,6 +78,9 @@ export function EditAsTextModal({
   const [modalState, setModalState] = useState<ModalState>('editing')
   const [missingSongs, setMissingSongs] = useState<MissingSongItem[]>([])
   const [parsedItems, setParsedItems] = useState<ParsedScheduleItem[]>([])
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>(
+    [],
+  )
 
   // Initialize text from current items when modal opens
   useEffect(() => {
@@ -80,6 +90,7 @@ export function EditAsTextModal({
       setModalState('editing')
       setMissingSongs([])
       setParsedItems([])
+      setValidationErrors([])
     }
   }, [isOpen, currentItems])
 
@@ -106,6 +117,7 @@ export function EditAsTextModal({
     setText('')
     setModalState('editing')
     setMissingSongs([])
+    setValidationErrors([])
     onClose()
   }
 
@@ -122,18 +134,28 @@ export function EditAsTextModal({
     setParsedItems(parseResult.items)
 
     try {
-      // Find missing songs
+      // Find missing songs - parallel search
       const songItems = parseResult.items.filter((item) => item.type === 'song')
+
+      // Search all songs in parallel
+      const searchResults = await Promise.all(
+        songItems.map(async (item) => {
+          const results = await searchSongs(item.content)
+          const exactMatch = results.find(
+            (r) => r.title.toLowerCase() === item.content.toLowerCase(),
+          )
+          return { item, exactMatch }
+        }),
+      )
+
+      // Build missing songs list and cache found songs
       const missing: MissingSongItem[] = []
+      const songCache = new Map<string, number>()
 
-      for (const item of songItems) {
-        const results = await searchSongs(item.content)
-        // Check if exact match exists (case-insensitive)
-        const exactMatch = results.find(
-          (r) => r.title.toLowerCase() === item.content.toLowerCase(),
-        )
-
-        if (!exactMatch) {
+      for (const { item, exactMatch } of searchResults) {
+        if (exactMatch) {
+          songCache.set(item.content.toLowerCase(), exactMatch.id)
+        } else {
           missing.push({
             title: item.content,
             lineNumber: item.lineNumber,
@@ -145,8 +167,8 @@ export function EditAsTextModal({
         setMissingSongs(missing)
         setModalState('resolving')
       } else {
-        // No missing songs, proceed to apply
-        await applyChanges(parseResult.items, [])
+        // No missing songs, proceed to apply with cached results
+        await applyChanges(parseResult.items, [], songCache)
       }
     } catch (_error) {
       showToast(t('editAsText.messages.error'), 'error')
@@ -158,17 +180,26 @@ export function EditAsTextModal({
     resolvedSongs: MissingSongItem[],
   ) => {
     setModalState('processing')
-    await applyChanges(parsedItems, resolvedSongs)
+    // Build cache from resolved songs that selected existing songs
+    const songCache = new Map<string, number>()
+    for (const resolved of resolvedSongs) {
+      if (resolved.resolved?.type === 'existing') {
+        songCache.set(resolved.title.toLowerCase(), resolved.resolved.songId)
+      }
+    }
+    await applyChanges(parsedItems, resolvedSongs, songCache)
   }
 
   const applyChanges = async (
     items: ParsedScheduleItem[],
     resolvedSongs: MissingSongItem[],
+    songCache: Map<string, number> = new Map(),
   ) => {
     if (!scheduleId) return
 
     try {
       const processedItems: ProcessedItem[] = []
+      const errors: ValidationError[] = []
 
       // Get Bible translation info for verse fetching
       const translationIds = await getSelectedBibleTranslationIds()
@@ -177,13 +208,28 @@ export function EditAsTextModal({
       let translationAbbr = 'VDCC'
 
       if (primaryTranslationId) {
-        books = await getBooks(primaryTranslationId)
-        const translation = await getTranslationById(primaryTranslationId)
+        // Fetch books and translation in parallel
+        const [booksResult, translation] = await Promise.all([
+          getBooks(primaryTranslationId),
+          getTranslationById(primaryTranslationId),
+        ])
+        books = booksResult
         translationAbbr = translation.abbreviation || 'VDCC'
       }
 
-      for (const item of items) {
+      // Collect songs that need to be created
+      const songsToCreate: { content: string; index: number }[] = []
+
+      for (let idx = 0; idx < items.length; idx++) {
+        const item = items[idx]
         if (item.type === 'song') {
+          // Check cache first
+          const cachedId = songCache.get(item.content.toLowerCase())
+          if (cachedId) {
+            processedItems.push({ type: 'song', songId: cachedId })
+            continue
+          }
+
           // Check if it was resolved
           const resolved = resolvedSongs.find(
             (r) => r.title === item.content && r.resolved,
@@ -196,38 +242,13 @@ export function EditAsTextModal({
                 songId: resolved.resolved.songId,
               })
             } else if (resolved.resolved.type === 'create') {
-              // Create new song
-              const result = await upsertSong({
-                title: item.content,
-                slides: [],
-              })
-              if (result.success && result.data) {
-                showToast(
-                  t('editAsText.messages.songCreated', {
-                    title: item.content,
-                  }),
-                  'success',
-                )
-                processedItems.push({
-                  type: 'song',
-                  songId: result.data.id,
-                })
-              }
+              // Mark for batch creation
+              songsToCreate.push({ content: item.content, index: idx })
+              processedItems.push({ type: 'song' }) // Placeholder
             }
           } else {
-            // Search for exact match
-            const results = await searchSongs(item.content)
-            const exactMatch = results.find(
-              (r) => r.title.toLowerCase() === item.content.toLowerCase(),
-            )
-
-            if (exactMatch) {
-              processedItems.push({
-                type: 'song',
-                songId: exactMatch.id,
-              })
-            }
-            // If no match and not resolved, skip this item
+            // Song should be in cache, skip if not found
+            processedItems.push({ type: 'song' }) // Placeholder for skipped
           }
         } else if (item.type === 'announcement') {
           processedItems.push({
@@ -237,9 +258,84 @@ export function EditAsTextModal({
           })
         } else if (item.type === 'bible_passage') {
           // V: prefix - Bible passage (create proper bible_passage item)
-          if (primaryTranslationId && books.length > 0) {
+          if (!primaryTranslationId || books.length === 0) {
+            errors.push({
+              lineNumber: item.lineNumber,
+              type: 'bible_passage',
+              content: item.content,
+              message: t('editAsText.errors.noBibleTranslation'),
+            })
+            continue
+          }
+
+          const parsed = parsePassageRange({
+            input: item.content,
+            books,
+          })
+
+          if (
+            parsed.status === 'valid' &&
+            parsed.bookCode &&
+            parsed.bookName &&
+            parsed.startChapter &&
+            parsed.startVerse &&
+            parsed.endChapter &&
+            parsed.endVerse
+          ) {
+            // Create proper bible_passage item
+            processedItems.push({
+              type: 'slide', // Will be converted to bible_passage on server
+              biblePassage: {
+                translationId: primaryTranslationId,
+                translationAbbreviation: translationAbbr,
+                bookCode: parsed.bookCode,
+                bookName: parsed.bookName,
+                startChapter: parsed.startChapter,
+                startVerse: parsed.startVerse,
+                endChapter: parsed.endChapter,
+                endVerse: parsed.endVerse,
+              },
+            })
+          } else {
+            // Invalid reference - track error
+            errors.push({
+              lineNumber: item.lineNumber,
+              type: 'bible_passage',
+              content: item.content,
+              message: t('editAsText.errors.invalidBibleReference'),
+            })
+          }
+        } else if (item.type === 'versete_tineri') {
+          // VT: prefix - Versete Tineri (supports multiple entries: "Name1 - Ref1, Name2 - Ref2")
+          if (!primaryTranslationId || books.length === 0) {
+            errors.push({
+              lineNumber: item.lineNumber,
+              type: 'versete_tineri',
+              content: item.content,
+              message: t('editAsText.errors.noBibleTranslation'),
+            })
+            continue
+          }
+
+          // Split by comma to get multiple entries
+          const entries = item.content.split(',').map((e) => e.trim())
+          const vtEntries: VerseteTineriEntryInput[] = []
+          const invalidEntries: string[] = []
+
+          for (const entryText of entries) {
+            // Parse format: "PersonName - Reference"
+            const vtMatch = entryText.match(/^(.+?)\s*[-–—]\s*(.+)$/)
+
+            if (!vtMatch) {
+              invalidEntries.push(entryText)
+              continue
+            }
+
+            const personName = vtMatch[1].trim()
+            const reference = vtMatch[2].trim()
+
             const parsed = parsePassageRange({
-              input: item.content,
+              input: reference,
               books,
             })
 
@@ -252,99 +348,77 @@ export function EditAsTextModal({
               parsed.endChapter &&
               parsed.endVerse
             ) {
-              // Create proper bible_passage item
-              processedItems.push({
-                type: 'slide', // Will be converted to bible_passage on server
-                biblePassage: {
-                  translationId: primaryTranslationId,
-                  translationAbbreviation: translationAbbr,
-                  bookCode: parsed.bookCode,
-                  bookName: parsed.bookName,
-                  startChapter: parsed.startChapter,
-                  startVerse: parsed.startVerse,
-                  endChapter: parsed.endChapter,
-                  endVerse: parsed.endVerse,
-                },
+              vtEntries.push({
+                personName,
+                translationId: primaryTranslationId,
+                bookCode: parsed.bookCode,
+                bookName: parsed.bookName,
+                startChapter: parsed.startChapter,
+                startVerse: parsed.startVerse,
+                endChapter: parsed.endChapter,
+                endVerse: parsed.endVerse,
               })
             } else {
-              // Invalid reference, add as announcement with the raw text
-              processedItems.push({
-                type: 'slide',
-                slideType: 'announcement',
-                slideContent: `<p>${escapeHtml(item.content)}</p>`,
-              })
+              invalidEntries.push(entryText)
             }
-          } else {
-            // No Bible translation configured, add as announcement
-            processedItems.push({
-              type: 'slide',
-              slideType: 'announcement',
-              slideContent: `<p>${escapeHtml(item.content)}</p>`,
-            })
           }
-        } else if (item.type === 'versete_tineri') {
-          // VT: prefix - Versete Tineri (supports multiple entries: "Name1 - Ref1, Name2 - Ref2")
-          // Split by comma to get multiple entries
-          const entries = item.content.split(',').map((e) => e.trim())
-          const vtEntries: VerseteTineriEntryInput[] = []
 
-          for (const entryText of entries) {
-            // Parse format: "PersonName - Reference"
-            const vtMatch = entryText.match(/^(.+?)\s*[-–—]\s*(.+)$/)
-
-            if (vtMatch && primaryTranslationId && books.length > 0) {
-              const personName = vtMatch[1].trim()
-              const reference = vtMatch[2].trim()
-
-              const parsed = parsePassageRange({
-                input: reference,
-                books,
-              })
-
-              if (
-                parsed.status === 'valid' &&
-                parsed.bookCode &&
-                parsed.bookName &&
-                parsed.startChapter &&
-                parsed.startVerse &&
-                parsed.endChapter &&
-                parsed.endVerse
-              ) {
-                vtEntries.push({
-                  personName,
-                  translationId: primaryTranslationId,
-                  bookCode: parsed.bookCode,
-                  bookName: parsed.bookName,
-                  startChapter: parsed.startChapter,
-                  startVerse: parsed.startVerse,
-                  endChapter: parsed.endChapter,
-                  endVerse: parsed.endVerse,
-                })
-              }
-            }
+          if (invalidEntries.length > 0) {
+            errors.push({
+              lineNumber: item.lineNumber,
+              type: 'versete_tineri',
+              content: invalidEntries.join(', '),
+              message: t('editAsText.errors.invalidVtFormat'),
+            })
           }
 
           if (vtEntries.length > 0) {
-            // Create versete_tineri slide with structured entries
+            // Create versete_tineri slide with valid structured entries
             processedItems.push({
               type: 'slide',
               slideType: 'versete_tineri',
               verseteTineriEntries: vtEntries,
             })
-          } else {
-            // Fallback: Invalid format, add as versete_tineri with just the content
-            processedItems.push({
-              type: 'slide',
-              slideType: 'versete_tineri',
-              slideContent: `<p>${escapeHtml(item.content)}</p>`,
-            })
           }
         }
       }
 
+      // If there are validation errors, show them and return to editing
+      if (errors.length > 0) {
+        setValidationErrors(errors)
+        setModalState('editing')
+        return
+      }
+
+      // Create songs in parallel if needed
+      if (songsToCreate.length > 0) {
+        const createResults = await Promise.all(
+          songsToCreate.map(async ({ content, index }) => {
+            const result = await upsertSong({ title: content, slides: [] })
+            return { content, index, result }
+          }),
+        )
+
+        // Update placeholders with created song IDs
+        for (const { content, index, result } of createResults) {
+          if (result.success && result.data) {
+            processedItems[index] = { type: 'song', songId: result.data.id }
+            showToast(
+              t('editAsText.messages.songCreated', { title: content }),
+              'success',
+            )
+          }
+        }
+      }
+
+      // Filter out songs without IDs (skipped items)
+      const validItems = processedItems.filter(
+        (item) => item.type !== 'song' || item.songId !== undefined,
+      )
+
       // Replace schedule items
       const result = await replaceScheduleItems(scheduleId, {
-        items: processedItems,
+        items: validItems,
       })
 
       if (result.success) {
@@ -402,7 +476,13 @@ export function EditAsTextModal({
               <textarea
                 ref={textareaRef}
                 value={text}
-                onChange={(e) => setText(e.target.value)}
+                onChange={(e) => {
+                  setText(e.target.value)
+                  // Clear validation errors when user edits
+                  if (validationErrors.length > 0) {
+                    setValidationErrors([])
+                  }
+                }}
                 placeholder={t('editAsText.formatHelp')}
                 rows={15}
                 className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none font-mono text-sm"
@@ -429,9 +509,34 @@ export function EditAsTextModal({
                 <div className="text-sm text-red-600 dark:text-red-400 space-y-1">
                   {parseResult.errors.map((error) => (
                     <div key={error.line}>
-                      Line {error.line}: {error.message}
+                      {t('editAsText.lineError', {
+                        line: error.line,
+                        message: error.message,
+                      })}
                     </div>
                   ))}
+                </div>
+              )}
+
+              {validationErrors.length > 0 && (
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 space-y-2">
+                  <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-medium">
+                    <AlertCircle className="w-4 h-4" />
+                    <span>{t('editAsText.validationErrors')}</span>
+                  </div>
+                  <div className="text-sm text-amber-600 dark:text-amber-300 space-y-1">
+                    {validationErrors.map((error, idx) => (
+                      <div key={`${error.lineNumber}-${idx}`}>
+                        {t('editAsText.lineError', {
+                          line: error.lineNumber,
+                          message: error.message,
+                        })}{' '}
+                        <span className="font-mono text-amber-800 dark:text-amber-200">
+                          "{error.content}"
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </>
