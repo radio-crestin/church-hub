@@ -253,12 +253,12 @@ export function SchedulePresenter({
 
       if (nextItem.itemType === 'slide') {
         if (nextItem.slideType === 'versete_tineri') {
-          // Format: names and references only, no verse text
+          // Format: names with references in parentheses, separated by commas
           const entries = nextItem.verseteTineriEntries
           if (entries.length === 0) return undefined
           const preview = entries
-            .map((e) => `${e.personName} - ${e.reference}`)
-            .join(' • ')
+            .map((e) => `${e.personName} (${e.reference})`)
+            .join(', ')
           return {
             contentType: 'versete_tineri',
             preview,
