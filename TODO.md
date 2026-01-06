@@ -133,8 +133,8 @@
 ~~- background diferit la sectiunea urmeaza, ca sa poata fi identificata usor~~
 ~~- auto switch-ul nu functioneaza~~
 - cand se selecteaza primul verset se face un loop ciudat
-- si sunt foarte multi clienti conectati..
-
+~~- si sunt foarte multi clienti conectati..~~
+- adauga optiunea de a importa doar cantari, Biblia, programe, configurare dintr-un fisier de backups
 
 - creaza optiunea de a adauga live-urile create intr-un playlist pe YouTube
 - adauga optiunea de a afisa pe un ecran separat continutul in anumita limba (o versiune a Bibliei diferita, traduceri cu AI ale cantarilor.. si eventual traduceri in timp real)
@@ -149,3 +149,4 @@
 - adauga posibilitatea de a face highlight pentru sesiunea curenta
 - test backing up the database in https://turso.tech/blog/turso-offline-sync-public-beta
 - exportul ca si pptx ar trebui sa aiba textul ceva mai mare
+- add update checker
