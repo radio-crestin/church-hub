@@ -463,12 +463,21 @@ export function ScreenContent({
     const icon = getContentTypeIcon()
     const iconWidth = icon ? labelHeight * 1.4 : 0
 
-    // Get section background - use special background for versete_tineri to make it pop
+    // Get section background based on content type to make it pop
     const getSectionBackground = (): React.CSSProperties => {
-      if (nextSlideData?.contentType === 'versete_tineri') {
-        return {
-          backgroundColor: 'rgba(34, 197, 94, 0.15)', // green matching the icon
-        }
+      const backgroundColors: Record<string, string> = {
+        song: 'rgba(99, 102, 241, 0.15)', // indigo
+        announcement: 'rgba(249, 115, 22, 0.15)', // orange
+        versete_tineri: 'rgba(34, 197, 94, 0.15)', // green
+        bible_passage: 'rgba(20, 184, 166, 0.15)', // teal
+      }
+
+      const bgColor = nextSlideData?.contentType
+        ? backgroundColors[nextSlideData.contentType]
+        : null
+
+      if (bgColor) {
+        return { backgroundColor: bgColor }
       }
       return getBackgroundCSS(ns.background)
     }
