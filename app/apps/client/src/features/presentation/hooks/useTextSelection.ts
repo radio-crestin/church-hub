@@ -1,4 +1,4 @@
-import { type RefObject, useCallback, useEffect, useRef, useState } from 'react'
+import { type RefObject, useCallback, useEffect, useRef } from 'react'
 
 export interface TextSelectionRange {
   start: number
@@ -6,9 +6,13 @@ export interface TextSelectionRange {
 }
 
 export interface UseTextSelectionResult {
-  selectedRange: TextSelectionRange | null
-  selectedText: string
-  hasSelection: boolean
+  /** Get the current selected range (reads from ref, no re-render) */
+  getSelectedRange: () => TextSelectionRange | null
+  /** Get the current selected text (reads from ref, no re-render) */
+  getSelectedText: () => string
+  /** Check if there's an active selection (reads from ref, no re-render) */
+  hasSelection: () => boolean
+  /** Clear the selection */
   clearSelection: () => void
 }
 
@@ -61,43 +65,39 @@ function getCharacterOffset(
 }
 
 /**
- * Hook to track text selection within a container element
- * Returns the selected text and character offsets relative to the container
+ * Hook to track text selection within a container element.
+ * Returns getter functions instead of state to avoid triggering re-renders
+ * when selection changes. This prevents DOM replacement which would clear
+ * the native browser selection.
+ *
+ * Use getSelectedRange(), getSelectedText(), hasSelection() to read current values.
+ * These read from refs directly and don't cause re-renders.
  */
-// Debounce delay in ms - prevents re-renders during active drag-selection
-const SELECTION_DEBOUNCE_MS = 150
-
 export function useTextSelection(
   containerRef: RefObject<HTMLElement | null>,
 ): UseTextSelectionResult {
-  const [selectedRange, setSelectedRange] = useState<TextSelectionRange | null>(
-    null,
-  )
-  const [selectedText, setSelectedText] = useState('')
-  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Store selection in refs to avoid triggering re-renders
+  // Re-renders cause DOM replacement which clears the native selection
+  const capturedRangeRef = useRef<TextSelectionRange | null>(null)
+  const capturedTextRef = useRef<string>('')
 
-  const updateSelection = useCallback(() => {
+  // Capture the current selection and store in refs
+  const captureSelection = useCallback(() => {
     const container = containerRef.current
     if (!container) {
-      setSelectedRange(null)
-      setSelectedText('')
-      return
+      return null
     }
 
     const selection = window.getSelection()
     if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
-      setSelectedRange(null)
-      setSelectedText('')
-      return
+      return null
     }
 
     const range = selection.getRangeAt(0)
     const text = selection.toString().trim()
 
     if (!text) {
-      setSelectedRange(null)
-      setSelectedText('')
-      return
+      return null
     }
 
     // Check if selection is within our container
@@ -105,9 +105,7 @@ export function useTextSelection(
       !container.contains(range.startContainer) ||
       !container.contains(range.endContainer)
     ) {
-      setSelectedRange(null)
-      setSelectedText('')
-      return
+      return null
     }
 
     // Calculate character offsets
@@ -122,48 +120,59 @@ export function useTextSelection(
       range.endOffset,
     )
 
-    setSelectedRange({
-      start: Math.min(startOffset, endOffset),
-      end: Math.max(startOffset, endOffset),
-    })
-    setSelectedText(text)
+    return {
+      range: {
+        start: Math.min(startOffset, endOffset),
+        end: Math.max(startOffset, endOffset),
+      },
+      text,
+    }
   }, [containerRef])
+
+  // Getter functions - read from refs without triggering re-renders
+  const getSelectedRange = useCallback(() => capturedRangeRef.current, [])
+
+  const getSelectedText = useCallback(() => capturedTextRef.current, [])
+
+  const hasSelection = useCallback(
+    () =>
+      capturedRangeRef.current !== null && capturedTextRef.current.length > 0,
+    [],
+  )
 
   const clearSelection = useCallback(() => {
     window.getSelection()?.removeAllRanges()
-    setSelectedRange(null)
-    setSelectedText('')
+    capturedRangeRef.current = null
+    capturedTextRef.current = ''
   }, [])
 
   useEffect(() => {
-    // Debounced handler to prevent re-renders during active drag-selection
-    // The selectionchange event fires continuously during dragging, which would
-    // trigger state updates and re-renders, causing the DOM to be replaced
-    // and the selection to be cleared mid-drag.
+    // Capture selection immediately on change - no debounce needed
+    // since we're only updating refs (no re-renders)
     const handleSelectionChange = () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current)
-      }
+      const captured = captureSelection()
 
-      debounceTimerRef.current = setTimeout(() => {
-        updateSelection()
-      }, SELECTION_DEBOUNCE_MS)
+      if (captured) {
+        // Valid selection - store in refs
+        capturedRangeRef.current = captured.range
+        capturedTextRef.current = captured.text
+      }
+      // If captured is null but we have existing capture, KEEP IT
+      // This preserves selection when DOM changes clear the native selection
+      // Only clear on explicit clearSelection() call
     }
 
     document.addEventListener('selectionchange', handleSelectionChange)
 
     return () => {
       document.removeEventListener('selectionchange', handleSelectionChange)
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current)
-      }
     }
-  }, [updateSelection])
+  }, [captureSelection])
 
   return {
-    selectedRange,
-    selectedText,
-    hasSelection: selectedRange !== null && selectedText.length > 0,
+    getSelectedRange,
+    getSelectedText,
+    hasSelection,
     clearSelection,
   }
 }
