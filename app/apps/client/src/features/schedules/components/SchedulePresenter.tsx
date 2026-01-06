@@ -197,7 +197,14 @@ export function SchedulePresenter({
   const getNextItemPreview = useCallback(
     (
       currentItem: ScheduleItem,
-    ): { contentType: ContentType; preview: string } | undefined => {
+    ):
+      | {
+          contentType: ContentType
+          preview: string
+          label?: string
+          title?: string
+        }
+      | undefined => {
       const currentIndex = items.findIndex((i) => i.id === currentItem.id)
       if (currentIndex === -1 || currentIndex >= items.length - 1) {
         return undefined
@@ -217,25 +224,45 @@ export function SchedulePresenter({
           .replace(/<[^>]*>/g, '')
           .replace(/\n{3,}/g, '\n\n')
           .trim()
-        return { contentType: 'song', preview }
+        return {
+          contentType: 'song',
+          preview,
+          label: 'Cântare:',
+          title: nextItem.songTitle || '',
+        }
       }
 
       if (nextItem.itemType === 'bible_passage') {
         const firstVerse = nextItem.biblePassageVerses[0]
+        const lastVerse =
+          nextItem.biblePassageVerses[nextItem.biblePassageVerses.length - 1]
         if (!firstVerse) return undefined
+        // Build reference range (e.g., "Matei 5:1-12" or "Ioan 3:16")
+        const startRef = firstVerse.reference
+        const endRef = lastVerse?.reference
+        const reference =
+          startRef === endRef || !endRef
+            ? startRef
+            : `${startRef} - ${endRef.split(' ').pop()}`
         return {
           contentType: 'bible_passage',
-          preview: `${firstVerse.reference}: ${firstVerse.text}`,
+          preview: reference,
+          label: 'Pasaj Biblic:',
         }
       }
 
       if (nextItem.itemType === 'slide') {
         if (nextItem.slideType === 'versete_tineri') {
-          const firstEntry = nextItem.verseteTineriEntries[0]
-          if (!firstEntry) return undefined
+          // Format: names and references only, no verse text
+          const entries = nextItem.verseteTineriEntries
+          if (entries.length === 0) return undefined
+          const preview = entries
+            .map((e) => `${e.personName} - ${e.reference}`)
+            .join(' • ')
           return {
             contentType: 'versete_tineri',
-            preview: `${firstEntry.personName} - ${firstEntry.reference}: ${firstEntry.text}`,
+            preview,
+            label: 'Versete Tineri:',
           }
         }
         if (nextItem.slideType === 'announcement') {
@@ -247,7 +274,11 @@ export function SchedulePresenter({
             .replace(/<[^>]*>/g, '')
             .replace(/\n{3,}/g, '\n\n')
             .trim()
-          return { contentType: 'announcement', preview }
+          return {
+            contentType: 'announcement',
+            preview,
+            label: 'Anunț:',
+          }
         }
       }
 
