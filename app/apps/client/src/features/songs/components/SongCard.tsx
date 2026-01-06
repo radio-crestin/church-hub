@@ -34,9 +34,7 @@ export const SongCard = forwardRef<HTMLButtonElement, SongCardProps>(
           onClick()
         }}
         onAuxClick={(e) => {
-          console.log('[SongCard] onAuxClick fired, button:', e.button)
           if (e.button === 1 && onMiddleClick) {
-            console.log('[SongCard] Middle click detected, calling handler')
             e.preventDefault()
             onMiddleClick()
           }
