@@ -8,7 +8,7 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
   console.log(`[migrate-song-titles:${level}] ${message}`)
 }
 
-const MIGRATION_KEY = 'migrate_song_titles_ascii_v1'
+const MIGRATION_KEY = 'migrate_song_titles_ascii_v2'
 
 /**
  * Transliterate Romanian diacritics to ASCII equivalents
@@ -126,12 +126,7 @@ export function migrateSongTitles(db: Database): void {
 
   let updatedCount = 0
   let skippedCount = 0
-  const conflicts: Array<{
-    id: number
-    oldTitle: string
-    newTitle: string
-    existingId: number
-  }> = []
+  let replacedCount = 0
 
   for (const song of songs) {
     const newTitle = extractTitleFromContent(song.content)
@@ -156,17 +151,13 @@ export function migrateSongTitles(db: Database): void {
       .get(newTitle, song.id)
 
     if (existing) {
-      conflicts.push({
-        id: song.id,
-        oldTitle: song.title,
-        newTitle,
-        existingId: existing.id,
-      })
+      // Delete the conflicting song and replace with this one
+      db.run('DELETE FROM songs WHERE id = ?', [existing.id])
       log(
-        'warning',
-        `Title conflict: "${song.title}" -> "${newTitle}" (already exists as song ${existing.id})`,
+        'info',
+        `Deleted conflicting song ${existing.id} to replace with song ${song.id}`,
       )
-      continue
+      replacedCount++
     }
 
     // Update the title
@@ -187,23 +178,13 @@ export function migrateSongTitles(db: Database): void {
       JSON.stringify({
         updatedCount,
         skippedCount,
-        conflicts: conflicts.length,
+        replacedCount,
       }),
     ],
   )
 
   log(
     'info',
-    `Migration complete: ${updatedCount} updated, ${skippedCount} skipped, ${conflicts.length} conflicts`,
+    `Migration complete: ${updatedCount} updated, ${skippedCount} skipped, ${replacedCount} replaced duplicates`,
   )
-
-  if (conflicts.length > 0) {
-    log('warning', 'Conflicts that need manual resolution:')
-    for (const conflict of conflicts) {
-      log(
-        'warning',
-        `  Song ${conflict.id}: "${conflict.oldTitle}" -> "${conflict.newTitle}" (conflicts with song ${conflict.existingId})`,
-      )
-    }
-  }
 }
