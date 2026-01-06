@@ -239,7 +239,7 @@ export function ScheduleItemsPanel({
     }
   }, [presentedInfo, items, expanded])
 
-  // Auto-scroll to position the presented slide as the second item from top
+  // Auto-scroll to position the previous slide at the top of the container
   useEffect(() => {
     if (highlightedRef.current && containerRef.current) {
       // Small delay to ensure DOM is ready after auto-expand
@@ -248,26 +248,47 @@ export function ScheduleItemsPanel({
         const element = highlightedRef.current
         if (!container || !element) return
 
-        // Get positions relative to the container
+        // Find the previous element (slide before the highlighted one)
+        let previousElement =
+          element.previousElementSibling as HTMLElement | null
+
+        // If no previous sibling, find the item header
+        // Structure: <item-wrapper><header><expanded-content><slides...>
+        if (!previousElement) {
+          const expandedContent = element.parentElement
+          if (expandedContent) {
+            // The header is the previous sibling of expanded content
+            previousElement =
+              expandedContent.previousElementSibling as HTMLElement
+          }
+        }
+
         const containerRect = container.getBoundingClientRect()
-        const elementRect = element.getBoundingClientRect()
 
-        // Calculate the offset to position the element as the second item
-        // We want one item visible above, so offset by approximately one slide height (56px)
-        const offsetFromTop = 56
+        if (previousElement) {
+          // Scroll the previous element to the top
+          const prevElementRect = previousElement.getBoundingClientRect()
+          const elementOffsetFromContainer =
+            prevElementRect.top - containerRect.top
+          const targetScrollTop =
+            container.scrollTop + elementOffsetFromContainer
 
-        // Calculate target scroll position
-        const elementOffsetFromContainer = elementRect.top - containerRect.top
-        const targetScrollTop =
-          container.scrollTop + elementOffsetFromContainer - offsetFromTop
+          container.scrollTo({
+            top: Math.max(0, targetScrollTop),
+            behavior: 'smooth',
+          })
+        } else {
+          // No previous element (first slide), scroll current to top
+          const elementRect = element.getBoundingClientRect()
+          const elementOffsetFromContainer = elementRect.top - containerRect.top
+          const targetScrollTop =
+            container.scrollTop + elementOffsetFromContainer
 
-        // Ensure we don't scroll to negative values
-        const finalScrollTop = Math.max(0, targetScrollTop)
-
-        container.scrollTo({
-          top: finalScrollTop,
-          behavior: 'smooth',
-        })
+          container.scrollTo({
+            top: Math.max(0, targetScrollTop),
+            behavior: 'smooth',
+          })
+        }
       }, 100)
       return () => clearTimeout(timeoutId)
     }
