@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useDebouncedValue } from '~/hooks/useDebouncedValue'
+import { Combobox } from '~/ui/combobox'
 import { SongCard } from './SongCard'
 import {
   useCategories,
@@ -20,6 +21,8 @@ interface SongListProps {
   searchQuery?: string
   onSearchChange?: (query: string) => void
   initialSelectedSongId?: number
+  categoryId?: number
+  onCategoryChange?: (categoryId: number | undefined) => void
 }
 
 export function SongList({
@@ -27,6 +30,8 @@ export function SongList({
   searchQuery = '',
   onSearchChange,
   initialSelectedSongId,
+  categoryId,
+  onCategoryChange,
 }: SongListProps) {
   const { t } = useTranslation('songs')
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -45,7 +50,7 @@ export function SongList({
     data: searchResults,
     isLoading: searchLoading,
     isFetching,
-  } = useSearchSongs(debouncedQuery)
+  } = useSearchSongs(debouncedQuery, categoryId)
   const { data: categories } = useCategories()
 
   // Sync local state when URL search param changes (e.g., navigation)
@@ -74,6 +79,7 @@ export function SongList({
     }>
 
     if (hasSearchQuery && searchResults) {
+      // Search results are already filtered by category on the server
       allSongs = searchResults.map((result: SongSearchResult) => ({
         id: result.id,
         title: result.title,
@@ -83,21 +89,27 @@ export function SongList({
         matchedContent: result.matchedContent,
       }))
     } else {
-      allSongs =
-        songs?.map((song: Song) => ({
-          id: song.id,
-          title: song.title,
-          categoryId: song.categoryId,
-          categoryName:
-            categories?.find((c) => c.id === song.categoryId)?.name ?? null,
-        })) ?? []
+      // Filter by category for non-search mode (client-side filtering)
+      let filteredSongs = songs ?? []
+      if (categoryId !== undefined) {
+        filteredSongs = filteredSongs.filter(
+          (song) => song.categoryId === categoryId,
+        )
+      }
+      allSongs = filteredSongs.map((song: Song) => ({
+        id: song.id,
+        title: song.title,
+        categoryId: song.categoryId,
+        categoryName:
+          categories?.find((c) => c.id === song.categoryId)?.name ?? null,
+      }))
     }
 
     return {
       displaySongs: allSongs.slice(0, MAX_DISPLAY_SONGS),
       totalCount: allSongs.length,
     }
-  }, [hasSearchQuery, searchResults, songs, categories])
+  }, [hasSearchQuery, searchResults, songs, categories, categoryId])
 
   // Keyboard navigation for search results
   const handleSelectSong = useCallback(
@@ -153,22 +165,42 @@ export function SongList({
 
   return (
     <div className="space-y-4">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-        <input
-          ref={searchInputRef}
-          type="text"
-          value={localQuery}
-          onChange={handleSearchChange}
-          onKeyDown={handleKeyDown}
-          placeholder={t('search.placeholder')}
-          className="w-full pl-10 pr-8 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            ref={searchInputRef}
+            type="text"
+            value={localQuery}
+            onChange={handleSearchChange}
+            onKeyDown={handleKeyDown}
+            placeholder={t('search.placeholder')}
+            className="w-full pl-10 pr-8 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+          />
+          {showPendingIndicator && (
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" />
+            </div>
+          )}
+        </div>
+        <Combobox
+          options={[
+            { value: 'all', label: t('search.allCategories') },
+            ...(categories?.map((category) => ({
+              value: category.id,
+              label: category.name,
+            })) ?? []),
+          ]}
+          value={categoryId ?? 'all'}
+          onChange={(value) => {
+            onCategoryChange?.(
+              value !== null && value !== 'all' ? Number(value) : undefined,
+            )
+          }}
+          placeholder={t('search.allCategories')}
+          allowClear={false}
+          className="min-w-[140px]"
         />
-        {showPendingIndicator && (
-          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-            <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" />
-          </div>
-        )}
       </div>
 
       {isLoading ? (

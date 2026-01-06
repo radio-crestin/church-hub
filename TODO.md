@@ -128,9 +128,9 @@
 ~~- cand nu se gaseste un verset afiseaza un warning si creaza entry-ul~~
 ~~- adauga full text search si pentru Biblie~~
 ~~- afiseaza urmeaza corect pentru urmatoarea cantare/element din program~~
-- elimina din titlul extras numerele (gen 1.)
+~~- elimina din titlul extras numerele (gen 1.)~~
 - adauga filtru pentru categoria de cantari si deasemenea, fa loading la cantari cand se face scrolling (infinite scroll)
-- background diferit la sectiunea urmeaza, ca sa poata fi identificata usor
+~~- background diferit la sectiunea urmeaza, ca sa poata fi identificata usor~~
 - cand se selecteaza primul verset se face un loop ciudat
 - si sunt foarte multi clienti conectati..
 - auto switch-ul nu functioneaza

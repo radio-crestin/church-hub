@@ -12,6 +12,7 @@ interface SongsSearchParams {
   q?: string
   fromSong?: boolean
   selectedSongId?: number
+  categoryId?: number
 }
 
 export const Route = createFileRoute('/songs/')({
@@ -25,6 +26,12 @@ export const Route = createFileRoute('/songs/')({
         : typeof search.selectedSongId === 'string'
           ? parseInt(search.selectedSongId, 10) || undefined
           : undefined,
+    categoryId:
+      typeof search.categoryId === 'number'
+        ? search.categoryId
+        : typeof search.categoryId === 'string'
+          ? parseInt(search.categoryId, 10) || undefined
+          : undefined,
   }),
 })
 
@@ -35,6 +42,7 @@ function SongsPage() {
     q: searchQuery = '',
     fromSong,
     selectedSongId,
+    categoryId,
   } = useSearch({
     from: '/songs/',
   })
@@ -64,7 +72,10 @@ function SongsPage() {
       navigate({
         to: '/songs/$songId',
         params: { songId: String(presentedSongId) },
-        search: { q: searchQuery || undefined },
+        search: {
+          q: searchQuery || undefined,
+          categoryId: categoryId || undefined,
+        },
       })
       return
     }
@@ -76,23 +87,40 @@ function SongsPage() {
       navigate({
         to: '/songs/$songId',
         params: { songId: String(lastVisited.songId) },
-        search: { q: searchQuery || undefined },
+        search: {
+          q: searchQuery || undefined,
+          categoryId: categoryId || undefined,
+        },
       })
     }
-  }, [presentationState, navigate, searchQuery, fromSong])
+  }, [presentationState, navigate, searchQuery, fromSong, categoryId])
 
   const handleSongClick = (songId: number) => {
     navigate({
       to: '/songs/$songId',
       params: { songId: String(songId) },
-      search: { q: searchQuery || undefined },
+      search: {
+        q: searchQuery || undefined,
+        categoryId: categoryId || undefined,
+      },
     })
   }
 
   const handleSearchChange = (query: string) => {
     navigate({
       to: '/songs/',
-      search: { q: query || undefined },
+      search: { q: query || undefined, categoryId: categoryId || undefined },
+      replace: true,
+    })
+  }
+
+  const handleCategoryChange = (newCategoryId: number | undefined) => {
+    navigate({
+      to: '/songs/',
+      search: {
+        q: searchQuery || undefined,
+        categoryId: newCategoryId || undefined,
+      },
       replace: true,
     })
   }
@@ -132,6 +160,8 @@ function SongsPage() {
           searchQuery={searchQuery}
           onSearchChange={handleSearchChange}
           initialSelectedSongId={selectedSongId}
+          categoryId={categoryId}
+          onCategoryChange={handleCategoryChange}
         />
 
         <SongsSettingsModal

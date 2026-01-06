@@ -79,10 +79,16 @@ export async function deleteSong(id: number): Promise<boolean> {
 
 export async function searchSongs(
   query: string,
+  categoryId?: number,
   signal?: AbortSignal,
 ): Promise<SongSearchResult[]> {
+  const params = new URLSearchParams()
+  params.set('q', query)
+  if (categoryId !== undefined) {
+    params.set('categoryId', String(categoryId))
+  }
   const response = await fetcher<ApiResponse<SongSearchResult[]>>(
-    `/api/songs/search?q=${encodeURIComponent(query)}`,
+    `/api/songs/search?${params.toString()}`,
     { signal },
   )
   return response.data ?? []
