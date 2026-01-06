@@ -621,6 +621,11 @@ export function connectOutput(
     requestedOutputDeviceId = null // Clear the requested ID since we're now connected
     midiLogger.info(`Connected to MIDI output: ${deviceName}`)
 
+    // Reset all LEDs to off state on connection
+    // Windows doesn't reset MIDI port state when opening, unlike macOS
+    // This ensures a clean LED state regardless of platform
+    resetAllLEDs()
+
     // Start device monitoring if not already running
     startDeviceMonitoring()
 
@@ -694,6 +699,33 @@ export function turnOffAllLEDs(notes: number[]) {
   for (const note of notes) {
     setLED(note, false)
   }
+}
+
+/**
+ * Reset all LEDs to off state
+ * Used on device connection to ensure clean initial state across all platforms
+ * Windows doesn't reset MIDI port state on open unlike macOS CoreMIDI
+ */
+function resetAllLEDs() {
+  if (!currentOutput) return
+
+  midiLogger.debug('Resetting all LEDs to off state')
+
+  // Reset notes 0-63 which covers most MIDI controllers (pads, buttons)
+  // APC Mini uses 0-63 for buttons, Launchpad uses similar ranges
+  for (let note = 0; note < 64; note++) {
+    try {
+      currentOutput.send('noteon', {
+        note,
+        velocity: LED_VELOCITY_OFF,
+        channel: 0,
+      })
+    } catch {
+      // Ignore individual note errors, continue with reset
+    }
+  }
+
+  midiLogger.debug('All LEDs reset complete')
 }
 
 /**
