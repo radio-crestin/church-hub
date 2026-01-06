@@ -17,6 +17,7 @@ const SEARCH_DEBOUNCE_MS = 1500
 
 interface SongListProps {
   onSongClick: (songId: number) => void
+  onSongMiddleClick?: (songId: number, songTitle: string) => void
   searchQuery?: string
   onSearchChange?: (query: string) => void
   initialSelectedSongId?: number
@@ -26,6 +27,7 @@ interface SongListProps {
 
 export function SongList({
   onSongClick,
+  onSongMiddleClick,
   searchQuery = '',
   onSearchChange,
   initialSelectedSongId,
@@ -310,6 +312,11 @@ export function SongList({
               }}
               song={song}
               onClick={() => onSongClick(song.id)}
+              onMiddleClick={
+                onSongMiddleClick
+                  ? () => onSongMiddleClick(song.id, song.title)
+                  : undefined
+              }
               isSelected={selectedIndex === index}
             />
           ))}

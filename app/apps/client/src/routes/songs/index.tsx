@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { getSongsLastVisited } from '~/features/navigation'
 import { usePresentationState } from '~/features/presentation'
 import { SongList, SongsSettingsModal } from '~/features/songs/components'
+import { openSongWindow } from '~/features/songs/utils/openSongWindow'
 import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
 
 interface SongsSearchParams {
@@ -157,6 +158,7 @@ function SongsPage() {
 
         <SongList
           onSongClick={handleSongClick}
+          onSongMiddleClick={openSongWindow}
           searchQuery={searchQuery}
           onSearchChange={handleSearchChange}
           initialSelectedSongId={selectedSongId}
