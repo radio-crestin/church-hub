@@ -145,7 +145,7 @@
 ~~- search-ul din Biblie nu e bun~~
 ~~- când sunt doar două versuri, nu mai comprima liniile~~
 ~~- imbunatateste search-ul..~~
-- adauga optiune de a cauta cantari folosind AI
+~~- adauga optiune de a cauta cantari folosind AI~~
 - adauga posibilitatea de a face highlight pentru sesiunea curenta
 - adauga muzica
 - test backing up the database in https://turso.tech/blog/turso-offline-sync-public-beta

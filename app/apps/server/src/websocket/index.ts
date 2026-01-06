@@ -1,6 +1,9 @@
 import type { ServerWebSocket } from 'bun'
 
-import type { PresentationState } from '../service/presentation/types'
+import type {
+  PresentationState,
+  TextStyleRange,
+} from '../service/presentation/types'
 import { wsLogger } from '../utils/fileLogger'
 
 export interface WebSocketData {
@@ -26,6 +29,14 @@ export type ScreenConfigPreviewMessage = {
   payload: {
     screenId: number
     config: Record<string, unknown>
+    updatedAt: number
+  }
+}
+
+export type SlideHighlightsUpdatedMessage = {
+  type: 'slide_highlights_updated'
+  payload: {
+    highlights: TextStyleRange[]
     updatedAt: number
   }
 }
@@ -285,6 +296,32 @@ export function broadcastScreenConfigUpdated(screenId: number) {
  */
 export function getConnectedClients(): number {
   return clients.size
+}
+
+/**
+ * Broadcasts slide highlights to all connected clients
+ */
+export function broadcastSlideHighlights(highlights: TextStyleRange[]) {
+  const message = JSON.stringify({
+    type: 'slide_highlights_updated',
+    payload: {
+      highlights,
+      updatedAt: Date.now(),
+    },
+  } satisfies SlideHighlightsUpdatedMessage)
+
+  wsLogger.debug(
+    `Broadcasting slide highlights (${highlights.length}) to ${clients.size} clients`,
+  )
+
+  for (const [clientId, conn] of clients) {
+    try {
+      conn.ws.send(message)
+    } catch (error) {
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
+      clients.delete(clientId)
+    }
+  }
 }
 
 // OBS/Livestream message types

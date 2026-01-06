@@ -3,13 +3,14 @@ import { useEffect, useRef, useState } from 'react'
 import { ScreenContent } from './rendering/ScreenContent'
 import type { ContentData } from './rendering/types'
 import { getBackgroundCSS } from './rendering/utils/styleUtils'
-import type { ContentType, ScreenWithConfigs } from '../types'
+import type { ContentType, ScreenWithConfigs, TextStyleRange } from '../types'
 
 interface ScreenPreviewProps {
   screen: ScreenWithConfigs
   contentType: ContentType
   contentData: ContentData
   isVisible?: boolean
+  styleRanges?: TextStyleRange[]
 }
 
 export function ScreenPreview({
@@ -17,6 +18,7 @@ export function ScreenPreview({
   contentType,
   contentData,
   isVisible = true,
+  styleRanges,
 }: ScreenPreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [displaySize, setDisplaySize] = useState({ width: 400, height: 225 })
@@ -58,6 +60,7 @@ export function ScreenPreview({
         containerWidth={displaySize.width}
         containerHeight={displaySize.height}
         isVisible={isVisible}
+        styleRanges={styleRanges}
       />
     </div>
   )

@@ -92,9 +92,11 @@ import {
 import { handleMIDIShortcut, loadMIDIShortcuts } from './service/midi/shortcuts'
 import { getExternalInterfaces } from './service/network'
 import {
+  addSlideHighlight,
   batchUpdateScreenConfigs,
   type ContentType,
   clearSlide,
+  clearSlideHighlights,
   clearTemporaryContent,
   deleteScreen,
   getAllScreens,
@@ -103,6 +105,7 @@ import {
   getPresentationState,
   getScreenById,
   getScreenWithConfigs,
+  getSlideHighlights,
   type NavigateTemporaryInput,
   type NextSlideSectionConfig,
   navigateTemporary,
@@ -116,9 +119,11 @@ import {
   presentTemporaryBiblePassage,
   presentTemporarySong,
   presentTemporaryVerseteTineri,
+  removeSlideHighlight,
   type ScreenGlobalSettings,
   showSlide,
   stopPresentation,
+  type TextStyleRange,
   type UpdatePresentationStateInput,
   type UpsertScreenInput,
   updateContentConfig,
@@ -187,6 +192,7 @@ import {
   broadcastPresentationState,
   broadcastScreenConfigUpdated,
   broadcastSettingsUpdated,
+  broadcastSlideHighlights,
   handleWebSocketClose,
   handleWebSocketMessage,
   handleWebSocketOpen,
@@ -2321,6 +2327,105 @@ async function main() {
         return handleCors(
           req,
           new Response(JSON.stringify({ data: state }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // GET /api/presentation/highlights - Get current slide highlights
+      if (
+        req.method === 'GET' &&
+        url.pathname === '/api/presentation/highlights'
+      ) {
+        const permError = checkPermission('control_room.view')
+        if (permError) return permError
+
+        const highlights = getSlideHighlights()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: highlights }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/presentation/highlights - Add a slide highlight
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/presentation/highlights'
+      ) {
+        const permError = checkPermission('control_room.control')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as TextStyleRange
+          const highlights = addSlideHighlight(body)
+          broadcastSlideHighlights(highlights)
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: highlights }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // DELETE /api/presentation/highlights/:id - Remove a specific highlight
+      if (
+        req.method === 'DELETE' &&
+        url.pathname.startsWith('/api/presentation/highlights/')
+      ) {
+        const permError = checkPermission('control_room.control')
+        if (permError) return permError
+
+        const highlightId = url.pathname.replace(
+          '/api/presentation/highlights/',
+          '',
+        )
+        if (!highlightId) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Highlight ID required' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        const highlights = removeSlideHighlight(highlightId)
+        broadcastSlideHighlights(highlights)
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: highlights }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // DELETE /api/presentation/highlights - Clear all highlights
+      if (
+        req.method === 'DELETE' &&
+        url.pathname === '/api/presentation/highlights'
+      ) {
+        const permError = checkPermission('control_room.control')
+        if (permError) return permError
+
+        clearSlideHighlights()
+        broadcastSlideHighlights([])
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: [] }), {
             headers: { 'Content-Type': 'application/json' },
           }),
         )

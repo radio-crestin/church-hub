@@ -1,6 +1,7 @@
 import { eq, sql } from 'drizzle-orm'
 
 import { expandSongSlidesWithChoruses } from './expand-song-slides'
+import { clearSlideHighlights, parseSlideHighlights } from './highlights'
 import type {
   PresentationState,
   PresentTemporaryAnnouncementInput,
@@ -124,6 +125,7 @@ function toPresentationState(
     isPresenting: record.isPresenting,
     isHidden: record.isHidden,
     temporaryContent: parseTemporaryContent(record.temporaryContent),
+    slideHighlights: parseSlideHighlights(record.slideHighlights),
     // updatedAt is already stored as milliseconds (number)
     updatedAt: record.updatedAt,
   }
@@ -151,6 +153,7 @@ export function getPresentationState(): PresentationState {
         isPresenting: false,
         isHidden: false,
         temporaryContent: null,
+        slideHighlights: [],
         updatedAt: Date.now(),
       }
     }
@@ -164,6 +167,7 @@ export function getPresentationState(): PresentationState {
       isPresenting: false,
       isHidden: false,
       temporaryContent: null,
+      slideHighlights: [],
       updatedAt: Date.now(),
     }
   }
@@ -277,12 +281,16 @@ export function stopPresentation(): PresentationState {
  * Clears the current slide (shows blank/clock)
  * Saves currentSongSlideId to lastSongSlideId for restoration
  * Keeps currentQueueItemId so the slide can be restored with showSlide
+ * Also clears all slide highlights
  */
 export function clearSlide(): PresentationState {
   try {
     log('debug', 'Clearing current slide (hiding)')
 
     const current = getPresentationState()
+
+    // Clear all highlights when hiding
+    clearSlideHighlights()
 
     // Save current song slide ID for restoration, then set hidden state
     return updatePresentationState({
