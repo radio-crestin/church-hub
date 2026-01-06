@@ -1,23 +1,27 @@
 /**
  * Sanitizes a song title by removing special characters
- * Keeps: letters (including accented), numbers, spaces, hyphens, underscores, and quotes
- * Preserves leading numbers for numbered songs (e.g., "050 - Song Title")
+ * Keeps: letters (including accented), spaces, and hyphens only
  *
  * Examples:
- *   "050 - Veniti crestini" → "050 - Veniti crestini" (preserves number prefix)
+ *   "050 - Veniti crestini" → "Veniti crestini" (removes numbers)
  *   "/: Am căutat pe Domnul" → "Am căutat pe Domnul" (removes /: prefix)
  *   "Te-am ales să fii al Meu!" → "Te-am ales să fii al Meu" (removes !)
- *   '"O clipă" spune Isus' → '"O clipă" spune Isus' (preserves quotes)
+ *   '"O clipă" spune Isus' → 'O clipă spune Isus' (removes quotes)
  */
 export function sanitizeSongTitle(title: string): string {
   if (!title.trim()) return 'Untitled Song'
 
-  // Remove leading special characters like /:, but preserve numbers, letters, quotes, and hyphens
-  // This allows "050 - Song" to stay as-is while "/: Chorus" becomes "Chorus"
-  let cleaned = title.replace(/^[/:.*•►]+\s*/u, '')
+  // Remove leading special characters like /:, numbers, etc.
+  let cleaned = title.replace(/^[/:.*•►\d]+\s*/u, '')
 
-  // Keep: letters, numbers, spaces, hyphens (including en/em dash), underscores, and quotes
-  cleaned = cleaned.replace(/[^\p{L}\p{N}\s\-\u2013\u2014_"'""'']/gu, '').trim()
+  // Keep only: letters (including accented), spaces, and hyphens
+  cleaned = cleaned.replace(/[^\p{L}\s-]/gu, '').trim()
+
+  // Normalize multiple spaces/hyphens to single
+  cleaned = cleaned.replace(/\s+/g, ' ').replace(/-+/g, '-')
+
+  // Remove leading/trailing hyphens
+  cleaned = cleaned.replace(/^-+|-+$/g, '').trim()
 
   return cleaned || 'Untitled Song'
 }
