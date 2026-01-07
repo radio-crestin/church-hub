@@ -155,19 +155,24 @@ export function ScreenExportModal({
       onClose={onClose}
       onClick={handleBackdropClick}
     >
-      <div className="p-6">
+      <div className="p-6 relative">
+        {/* Close button */}
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="mb-4 pr-8">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
             {t('sections.screens.export.title')}
           </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <span className="inline-block mt-2 px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+            {t('sections.screens.export.options.staticFile.recommended')}
+          </span>
         </div>
 
         {/* Description */}
@@ -228,11 +233,6 @@ export function ScreenExportModal({
                   <FileCode className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                   <span className="font-medium text-gray-900 dark:text-white">
                     {t('sections.screens.export.options.staticFile.title')}
-                  </span>
-                  <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                    {t(
-                      'sections.screens.export.options.staticFile.recommended',
-                    )}
                   </span>
                 </div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
