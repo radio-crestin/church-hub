@@ -46,6 +46,7 @@ export function FolderCard({
 
   const menuRef = useRef<HTMLDivElement>(null)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
+  const prevSearchQueryRef = useRef(searchQuery)
 
   const syncFolder = useSyncFolder()
   const removeFolder = useRemoveFolder()
@@ -66,10 +67,16 @@ export function FolderCard({
       )
     : files
 
-  // Auto-expand when search query matches files in this folder
+  // Auto-expand when search query matches files, collapse only when search is cleared
   useEffect(() => {
+    const prevQuery = prevSearchQueryRef.current
+    prevSearchQueryRef.current = searchQuery
+
     if (searchQuery && filteredFiles.length > 0 && !isExpanded) {
       setIsExpanded(true)
+    } else if (!searchQuery && prevQuery) {
+      // Only collapse when search transitions from having value to empty
+      setIsExpanded(false)
     }
   }, [searchQuery, filteredFiles.length, isExpanded])
 
@@ -151,8 +158,8 @@ export function FolderCard({
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-      <div className="p-4">
-        <div className="flex items-center gap-2">
+      <div className="p-3 sm:p-4">
+        <div className="flex items-center gap-1 sm:gap-2">
           <button
             type="button"
             className="flex-1 flex items-center gap-2 min-w-0 text-left cursor-pointer"
@@ -252,8 +259,8 @@ export function FolderCard({
       </div>
 
       {isExpanded && (
-        <div className="px-4 pb-4 pt-0">
-          <div className="space-y-3">
+        <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-0">
+          <div className="space-y-2 sm:space-y-3">
             {isLoadingFiles ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin text-gray-500 dark:text-gray-400" />

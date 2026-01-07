@@ -1,6 +1,8 @@
 import { GripVertical, Music } from 'lucide-react'
+import { OverlayScrollbarsComponent } from 'overlayscrollbars-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import 'overlayscrollbars/overlayscrollbars.css'
 
 import { AddFolderButton } from './AddFolderButton'
 import { FolderBrowser } from './FolderBrowser'
@@ -73,33 +75,70 @@ export function MusicPage() {
   }, [])
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-      <div className="flex items-center justify-between mb-4 flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <Music className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+    <div className="flex-1 flex flex-col overflow-x-hidden lg:min-h-0 lg:overflow-hidden">
+      <div className="flex items-center justify-between mb-4 flex-shrink-0 gap-2">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <Music className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600 dark:text-indigo-400 shrink-0" />
+          <h1 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white truncate">
             {t('title')}
           </h1>
         </div>
         <AddFolderButton />
       </div>
 
-      <div ref={containerRef} className="flex-1 flex min-h-0 gap-1">
-        {/* Left Panel - Folder Browser */}
+      <div
+        ref={containerRef}
+        className="flex-1 flex flex-col lg:flex-row lg:min-h-0 gap-4 lg:gap-1"
+      >
+        {/* Mobile Player - Top on mobile, hidden on desktop */}
+        <div className="flex flex-col w-full lg:hidden flex-shrink-0">
+          <Player
+            state={player.state}
+            currentTrack={player.currentTrack}
+            onPlayPause={player.togglePlayPause}
+            onPrevious={player.previous}
+            onNext={player.next}
+            onSeek={player.seek}
+            onVolumeChange={player.setVolume}
+            onToggleMute={player.toggleMute}
+            onClearQueue={player.clearQueue}
+            onPlayAtIndex={player.playAtIndex}
+            onRemoveFromQueue={player.removeFromQueue}
+            onToggleShuffle={player.toggleShuffle}
+          />
+        </div>
+
+        {/* Mobile Folder Browser - Full width on mobile, scrolls with page */}
+        <div className="flex flex-col w-full lg:hidden">
+          <div className="mb-4 w-full">
+            <SearchInput value={searchQuery} onChange={setSearchQuery} />
+          </div>
+          <FolderBrowser
+            onPlayTrack={handlePlayTrack}
+            onAddToQueue={handleAddToQueue}
+            searchQuery={searchQuery}
+          />
+        </div>
+
+        {/* Desktop Folder Browser - Resizable width on desktop */}
         <div
-          className="flex flex-col min-w-0 overflow-hidden"
+          className="hidden lg:flex flex-col min-w-0 overflow-hidden"
           style={{ width: `calc(${dividerPosition}% - 8px)` }}
         >
           <div className="flex-shrink-0 mb-4">
             <SearchInput value={searchQuery} onChange={setSearchQuery} />
           </div>
-          <div className="flex-1 overflow-y-auto scrollbar-thin">
+          <OverlayScrollbarsComponent
+            className="flex-1"
+            options={{ scrollbars: { autoHide: 'scroll', autoHideDelay: 400 } }}
+            defer
+          >
             <FolderBrowser
               onPlayTrack={handlePlayTrack}
               onAddToQueue={handleAddToQueue}
               searchQuery={searchQuery}
             />
-          </div>
+          </OverlayScrollbarsComponent>
         </div>
 
         {/* Draggable Divider */}
@@ -113,7 +152,7 @@ export function MusicPage() {
           />
         </div>
 
-        {/* Right Panel - Player */}
+        {/* Desktop Player - Hidden on mobile, shown on desktop */}
         <div
           className="hidden lg:flex lg:flex-col overflow-hidden"
           style={{ width: `calc(${100 - dividerPosition}% - 8px)` }}

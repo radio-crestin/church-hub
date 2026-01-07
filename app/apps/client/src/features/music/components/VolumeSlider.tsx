@@ -24,11 +24,11 @@ export function VolumeSlider({
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1 sm:gap-2 shrink-0">
       <Button
         variant="ghost"
         size="icon"
-        className="h-8 w-8"
+        className="h-7 w-7 sm:h-8 sm:w-8 shrink-0"
         onClick={onToggleMute}
         title={isMuted ? t('player.unmute') : t('player.mute')}
       >
@@ -45,7 +45,7 @@ export function VolumeSlider({
         step={0.01}
         onValueChange={handleVolumeChange}
         showValue={false}
-        className="w-32"
+        className="w-24 sm:w-28 md:w-32"
       />
     </div>
   )

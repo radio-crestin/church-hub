@@ -37,13 +37,17 @@ export function AddFolderButton() {
   const isLoading = isSelecting || addFolder.isPending
 
   return (
-    <Button onClick={handleAddFolder} disabled={isLoading || !isTauri()}>
+    <Button
+      onClick={handleAddFolder}
+      disabled={isLoading || !isTauri()}
+      className="shrink-0"
+    >
       {isLoading ? (
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        <Loader2 className="h-4 w-4 animate-spin sm:mr-2" />
       ) : (
-        <FolderPlus className="mr-2 h-4 w-4" />
+        <FolderPlus className="h-4 w-4 sm:mr-2" />
       )}
-      {t('folders.add')}
+      <span className="hidden sm:inline">{t('folders.add')}</span>
     </Button>
   )
 }

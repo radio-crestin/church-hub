@@ -153,7 +153,7 @@
 ~~- add shortcuts indicators~~
 ~~- add update checker~~
 - rezolva problema cu acel profil pvc
-- adauga pagina cu muzica dintr-un folder local
+~~- adauga pagina cu muzica dintr-un folder local~~
 - creaza optiunea de a adauga live-urile create intr-un playlist pe YouTube
 - creaza un quickstart guide pentru utilizatori
 
