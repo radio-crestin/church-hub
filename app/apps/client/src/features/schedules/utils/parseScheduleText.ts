@@ -20,9 +20,9 @@ export interface ParseScheduleTextResult {
   errors: Array<{ line: number; message: string }>
 }
 
-// Matches: S:, SC:, A:, V:, VT: (case-insensitive) followed by content
-// SC must come before S, and VT must come before V in alternation to match first
-const PREFIX_REGEX = /^(SC|S|A|VT|V):\s*(.+)$/i
+// Matches: Content [PREFIX] format (case-insensitive)
+// Supports: [S], [SC], [A], [V], [VT]
+const SUFFIX_REGEX = /^(.+?)\s*\[(SC|S|A|VT|V)\]\s*$/i
 
 const TYPE_MAP: Record<string, ParsedItemType> = {
   SC: 'scene',
@@ -46,22 +46,22 @@ export function parseScheduleText(text: string): ParseScheduleTextResult {
       return
     }
 
-    const match = trimmed.match(PREFIX_REGEX)
+    const match = trimmed.match(SUFFIX_REGEX)
     if (!match) {
       errors.push({
         line: lineNumber,
-        message: 'Invalid format. Use S:, SC:, A:, V:, or VT: prefix',
+        message: 'Invalid format. Use [S], [SC], [A], [V], or [VT] suffix',
       })
       return
     }
 
-    const [, prefix, content] = match
-    const type = TYPE_MAP[prefix.toUpperCase()]
+    const [, content, suffix] = match
+    const type = TYPE_MAP[suffix.toUpperCase()]
 
     if (!type) {
       errors.push({
         line: lineNumber,
-        message: 'Unknown prefix',
+        message: 'Unknown suffix',
       })
       return
     }

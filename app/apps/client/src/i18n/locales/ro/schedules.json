@@ -175,8 +175,8 @@
   },
   "editAsText": {
     "title": "Editeaza Programul ca Text",
-    "description": "Introdu elemente folosind prefixe. Liniile care incep cu # sunt comentarii.",
-    "formatHelp": "# Exemple de format:\n# S: Titlu Cantare\n# A: Text anunt\n# V: Ioan 3:16 (Pasaj biblic)\n# VT: Nume Persoana - Ioan 3:16 (Verset tineri)",
+    "description": "Introdu elemente folosind sufixul [TIP]. Liniile care incep cu # sunt comentarii.",
+    "formatHelp": "# Exemple de format:\n# Titlu Cantare [S]\n# Text anunt [A]\n# Ioan 3:16 [V] (Pasaj biblic)\n# Nume Persoana - Ioan 3:16 [VT] (Verset tineri)",
     "preview": "{{count}} elemente detectate",
     "preview_one": "{{count}} element detectat",
     "preview_other": "{{count}} elemente detectate",

@@ -175,8 +175,8 @@
   },
   "editAsText": {
     "title": "Edit Schedule as Text",
-    "description": "Enter items using prefixes. Lines starting with # are comments.",
-    "formatHelp": "# Format examples:\n# S: Song Title\n# A: Announcement text\n# V: John 3:16 (Bible passage)\n# VT: Person Name - John 3:16 (Youth verse)",
+    "description": "Enter items using [TYPE] suffix. Lines starting with # are comments.",
+    "formatHelp": "# Format examples:\n# Song Title [S]\n# Announcement text [A]\n# John 3:16 [V] (Bible passage)\n# Person Name - John 3:16 [VT] (Youth verse)",
     "preview": "{{count}} items detected",
     "preview_one": "{{count}} item detected",
     "preview_other": "{{count}} items detected",
