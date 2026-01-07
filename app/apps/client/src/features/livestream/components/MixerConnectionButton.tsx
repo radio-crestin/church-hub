@@ -25,9 +25,6 @@ export function MixerConnectionButton() {
   const connectionCheckRef = useRef<NodeJS.Timeout | null>(null)
 
   const isEnabled = config?.isEnabled ?? false
-  // Don't consider background connection checks as "busy" when already connected
-  const isBusy =
-    isUpdating || isTesting || (isCheckingConnection && !isConnected)
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -142,7 +139,6 @@ export function MixerConnectionButton() {
   }, [isEnabled, config?.host, checkConnection])
 
   function handleButtonClick() {
-    if (isBusy) return
     setIsMenuOpen(!isMenuOpen)
   }
 
@@ -174,12 +170,7 @@ export function MixerConnectionButton() {
   }
 
   function getStatusText() {
-    // Show "Testing..." only for manual tests, not for background connection checks when connected
-    if (isTesting || (isCheckingConnection && !isConnected))
-      return t('mixer.testing')
-    if (isEnabled && isConnected)
-      return t('mixer.connected').replace('Mixer ', '')
-    if (isEnabled && !isConnected) return t('mixer.reconnecting')
+    if (isConnected) return t('mixer.connected').replace('Mixer ', '')
     return t('mixer.disconnected').replace('Mixer ', '')
   }
 
@@ -189,20 +180,14 @@ export function MixerConnectionButton() {
         ref={buttonRef}
         type="button"
         onClick={handleButtonClick}
-        disabled={isBusy}
         className={`
           inline-flex items-center gap-1.5 sm:gap-2 px-2 py-1 sm:px-3 sm:py-1.5 rounded-full text-sm font-medium
-          transition-all duration-200 ease-in-out
+          transition-all duration-200 ease-in-out cursor-pointer
           ${
             isConnected
               ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50'
-              : isEnabled && !isConnected
-                ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
-                : isTesting
-                  ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 cursor-wait'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+              : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
           }
-          ${isBusy ? 'opacity-75 cursor-wait' : 'cursor-pointer'}
         `}
       >
         <div className="relative flex items-center gap-1.5 sm:gap-2">
@@ -225,10 +210,6 @@ export function MixerConnectionButton() {
         <span className="text-xs opacity-75 hidden sm:inline">
           {getStatusText()}
         </span>
-
-        {(isTesting || (isEnabled && !isConnected)) && (
-          <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-        )}
       </button>
 
       {isMenuOpen && (
@@ -260,7 +241,7 @@ export function MixerConnectionButton() {
                 d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
               />
             </svg>
-            {t('mixer.setup.title')}
+            {t('mixer.openGuide')}
           </button>
 
           {config?.host && (

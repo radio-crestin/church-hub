@@ -172,6 +172,7 @@
     "enable": "Activeaza Mixer",
     "disable": "Dezactiveaza Mixer",
     "settings": "Setari Mixer",
+    "openGuide": "Setari",
     "setup": {
       "title": "Configurare Mixer",
       "connectionSettings": "Setari Conexiune",
