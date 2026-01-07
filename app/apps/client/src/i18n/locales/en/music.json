@@ -38,6 +38,8 @@
     "unmute": "Unmute",
     "noTrack": "No track playing",
     "queueEmpty": "Queue is empty",
+    "emptyQueue": "Queue is empty",
+    "removeFromQueue": "Remove from queue",
     "addSongsToQueue": "Add songs to the queue to start playing"
   },
   "playlist": {

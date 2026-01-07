@@ -725,6 +725,14 @@ export type MusicPlayerStateMessage = {
       album?: string
       duration?: number
     } | null
+    queue: Array<{
+      id: number
+      fileId: number
+      filename: string
+      title?: string
+      artist?: string
+      duration?: number
+    }>
     updatedAt: number
   }
 }

@@ -59,6 +59,8 @@ export function MusicPage() {
               onNext={player.next}
               onSeek={player.seek}
               onClearQueue={player.clearQueue}
+              onPlayAtIndex={player.playAtIndex}
+              onRemoveFromQueue={player.removeFromQueue}
             />
           </div>
         </div>

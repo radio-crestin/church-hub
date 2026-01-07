@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { NowPlaying } from './NowPlaying'
 import { PlayerControls } from './PlayerControls'
 import { ProgressBar } from './ProgressBar'
+import { QueueList } from './QueueList'
 import type { QueueItem, ServerPlayerState } from '../types'
 
 interface ServerMusicPlayerProps {
@@ -13,6 +14,8 @@ interface ServerMusicPlayerProps {
   onNext: () => void
   onSeek: (time: number) => void
   onClearQueue: () => void
+  onPlayAtIndex: (index: number) => void
+  onRemoveFromQueue: (itemId: number) => void
 }
 
 export function ServerMusicPlayer({
@@ -23,6 +26,8 @@ export function ServerMusicPlayer({
   onNext,
   onSeek,
   onClearQueue,
+  onPlayAtIndex,
+  onRemoveFromQueue,
 }: ServerMusicPlayerProps) {
   const { t } = useTranslation('music')
 
@@ -63,12 +68,12 @@ export function ServerMusicPlayer({
           />
         </div>
 
-        {state.queueLength > 0 && (
-          <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                {t('player.queueCount', { count: state.queueLength })}
-              </span>
+        <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {t('player.queue')}
+            </span>
+            {state.queueLength > 0 && (
               <button
                 type="button"
                 onClick={onClearQueue}
@@ -76,9 +81,15 @@ export function ServerMusicPlayer({
               >
                 {t('player.clearQueue')}
               </button>
-            </div>
+            )}
           </div>
-        )}
+          <QueueList
+            queue={state.queue}
+            currentIndex={state.currentIndex}
+            onPlayAtIndex={onPlayAtIndex}
+            onRemoveFromQueue={onRemoveFromQueue}
+          />
+        </div>
       </div>
     </div>
   )

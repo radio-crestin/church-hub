@@ -19,6 +19,7 @@ const defaultState: ServerPlayerState = {
   currentIndex: -1,
   queueLength: 0,
   currentTrack: null,
+  queue: [],
   updatedAt: 0,
 }
 

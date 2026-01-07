@@ -82,6 +82,15 @@ export interface QueueItem {
   duration?: number
 }
 
+export interface QueueItemSummary {
+  id: number
+  fileId: number
+  filename: string
+  title?: string
+  artist?: string
+  duration?: number
+}
+
 export interface ServerPlayerState {
   isPlaying: boolean
   currentTime: number
@@ -100,5 +109,6 @@ export interface ServerPlayerState {
     album?: string
     duration?: number
   } | null
+  queue: QueueItemSummary[]
   updatedAt: number
 }

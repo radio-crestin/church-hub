@@ -1,3 +1,12 @@
+export interface QueueItemSummary {
+  id: number
+  fileId: number
+  filename: string
+  title?: string
+  artist?: string
+  duration?: number
+}
+
 export interface MusicPlayerState {
   isPlaying: boolean
   currentTime: number
@@ -7,6 +16,7 @@ export interface MusicPlayerState {
   currentIndex: number
   queueLength: number
   currentTrack: CurrentTrack | null
+  queue: QueueItemSummary[]
   updatedAt: number
 }
 
