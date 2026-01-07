@@ -19,7 +19,6 @@ export function MixerConnectionButton() {
     'idle',
   )
   const [isConnected, setIsConnected] = useState(false)
-  const [isCheckingConnection, setIsCheckingConnection] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
   const connectionCheckRef = useRef<NodeJS.Timeout | null>(null)
@@ -73,10 +72,6 @@ export function MixerConnectionButton() {
     if (!config?.host || isCheckingRef.current) return
 
     isCheckingRef.current = true
-    // Only update checking state when not connected (to show loading UI)
-    if (!isConnectedRef.current) {
-      setIsCheckingConnection(true)
-    }
     try {
       // Call service directly instead of hook's testConnection to avoid isTesting state updates
       const result = await testMixerConnection()
@@ -91,9 +86,6 @@ export function MixerConnectionButton() {
       }
     } finally {
       isCheckingRef.current = false
-      if (!isConnectedRef.current) {
-        setIsCheckingConnection(false)
-      }
     }
   }, [config?.host])
 
