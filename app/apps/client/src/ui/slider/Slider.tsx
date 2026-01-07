@@ -8,6 +8,7 @@ interface SliderProps {
   step?: number
   disabled?: boolean
   className?: string
+  showValue?: boolean
 }
 
 export const Slider = forwardRef<HTMLInputElement, SliderProps>(
@@ -20,11 +21,14 @@ export const Slider = forwardRef<HTMLInputElement, SliderProps>(
       step = 1,
       disabled,
       className = '',
+      showValue = true,
     },
     ref,
   ) => {
     return (
-      <div className={`flex items-center gap-3 ${className}`}>
+      <div
+        className={`flex items-center ${showValue ? 'gap-3' : ''} ${className}`}
+      >
         <input
           ref={ref}
           type="range"
@@ -36,9 +40,11 @@ export const Slider = forwardRef<HTMLInputElement, SliderProps>(
           disabled={disabled}
           className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
         />
-        <span className="text-xs text-gray-500 dark:text-gray-400 w-12 text-right">
-          {value[0]}
-        </span>
+        {showValue && (
+          <span className="text-xs text-gray-500 dark:text-gray-400 w-12 text-right">
+            {value[0]}
+          </span>
+        )}
       </div>
     )
   },

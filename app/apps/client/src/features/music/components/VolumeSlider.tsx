@@ -44,7 +44,8 @@ export function VolumeSlider({
         max={1}
         step={0.01}
         onValueChange={handleVolumeChange}
-        className="w-24"
+        showValue={false}
+        className="w-32"
       />
     </div>
   )

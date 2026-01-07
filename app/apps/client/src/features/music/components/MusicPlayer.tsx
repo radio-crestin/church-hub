@@ -4,7 +4,6 @@ import { NowPlaying } from './NowPlaying'
 import { PlayerControls } from './PlayerControls'
 import { Playlist } from './Playlist'
 import { ProgressBar } from './ProgressBar'
-import { VolumeSlider } from './VolumeSlider'
 import type { PlayerState, QueueItem } from '../types'
 
 interface MusicPlayerProps {
@@ -15,8 +14,6 @@ interface MusicPlayerProps {
   onPrevious: () => void
   onNext: () => void
   onSeek: (time: number) => void
-  onVolumeChange: (volume: number) => void
-  onToggleMute: () => void
   onShuffle: () => void
   onReorderQueue: (items: QueueItem[]) => void
   onPlayQueueItem: (index: number) => void
@@ -32,8 +29,6 @@ export function MusicPlayer({
   onPrevious,
   onNext,
   onSeek,
-  onVolumeChange,
-  onToggleMute,
   onShuffle,
   onReorderQueue,
   onPlayQueueItem,
@@ -58,7 +53,7 @@ export function MusicPlayer({
           onSeek={onSeek}
         />
 
-        <div className="flex items-center justify-between">
+        <div className="flex justify-center">
           <PlayerControls
             isPlaying={state.isPlaying}
             isShuffled={state.isShuffled}
@@ -68,13 +63,6 @@ export function MusicPlayer({
             onPrevious={onPrevious}
             onNext={onNext}
             onShuffle={onShuffle}
-          />
-
-          <VolumeSlider
-            volume={state.volume}
-            isMuted={state.isMuted}
-            onVolumeChange={onVolumeChange}
-            onToggleMute={onToggleMute}
           />
         </div>
 
