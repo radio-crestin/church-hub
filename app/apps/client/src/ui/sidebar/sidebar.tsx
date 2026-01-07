@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next'
 
 import { SidebarHeader } from './sidebar-header'
 import { SidebarItem } from './sidebar-item'
-import { UpdateNotification, VersionDisplay } from '../../features/app-update'
+import { UpdateNotification } from '../../features/app-update'
 import { ContactModal, FeedbackModal } from '../../features/feedback'
 import { useAppShortcuts } from '../../features/keyboard-shortcuts'
 import { useKioskSettings } from '../../features/kiosk'
@@ -222,9 +222,6 @@ export function Sidebar() {
             />
           ))}
 
-          {/* Update notification - shown above bottom section when update available */}
-          <UpdateNotification isCollapsed={isCollapsed} />
-
           {/* Bottom section - fixed at the bottom, above the collapse button */}
           <div className="mt-auto space-y-1">
             {/* Kiosk - shown when kiosk mode is enabled */}
@@ -242,6 +239,9 @@ export function Sidebar() {
 
             {/* Divider */}
             <div className="my-2 border-t border-gray-200 dark:border-gray-700" />
+
+            {/* Update notification - shown above Feedback when update available */}
+            <UpdateNotification isCollapsed={isCollapsed} />
 
             {/* Feedback */}
             <button
@@ -278,10 +278,7 @@ export function Sidebar() {
           </div>
         </nav>
 
-        <div className="p-3 border-t border-gray-200 dark:border-gray-800 space-y-2">
-          {/* Version display */}
-          <VersionDisplay isCollapsed={isCollapsed} />
-
+        <div className="p-3 border-t border-gray-200 dark:border-gray-800">
           {/* Desktop-only collapse button */}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
