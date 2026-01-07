@@ -9,6 +9,7 @@ interface SliderProps {
   disabled?: boolean
   className?: string
   showValue?: boolean
+  formatValue?: (value: number) => string
 }
 
 export const Slider = forwardRef<HTMLInputElement, SliderProps>(
@@ -22,6 +23,7 @@ export const Slider = forwardRef<HTMLInputElement, SliderProps>(
       disabled,
       className = '',
       showValue = true,
+      formatValue,
     },
     ref,
   ) => {
@@ -42,7 +44,7 @@ export const Slider = forwardRef<HTMLInputElement, SliderProps>(
         />
         {showValue && (
           <span className="text-xs text-gray-500 dark:text-gray-400 w-12 text-right">
-            {value[0]}
+            {formatValue ? formatValue(value[0]) : Math.round(value[0])}
           </span>
         )}
       </div>
