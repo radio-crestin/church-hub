@@ -2,8 +2,7 @@ import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { FolderBrowser } from './FolderBrowser'
-import { ServerMusicPlayer } from './ServerMusicPlayer'
-import { VolumeSlider } from './VolumeSlider'
+import { Player } from './ServerMusicPlayer'
 import { useServerAudioPlayer } from '../hooks'
 import type { MusicFile } from '../types'
 
@@ -33,12 +32,6 @@ export function MusicPage() {
         <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">
           {t('title')}
         </h1>
-        <VolumeSlider
-          volume={player.state.volume / 100}
-          isMuted={player.state.isMuted}
-          onVolumeChange={player.setVolume}
-          onToggleMute={player.toggleMute}
-        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -51,13 +44,15 @@ export function MusicPage() {
 
         <div className="lg:col-span-1">
           <div className="lg:sticky lg:top-6">
-            <ServerMusicPlayer
+            <Player
               state={player.state}
               currentTrack={player.currentTrack}
               onPlayPause={player.togglePlayPause}
               onPrevious={player.previous}
               onNext={player.next}
               onSeek={player.seek}
+              onVolumeChange={player.setVolume}
+              onToggleMute={player.toggleMute}
               onClearQueue={player.clearQueue}
               onPlayAtIndex={player.playAtIndex}
               onRemoveFromQueue={player.removeFromQueue}

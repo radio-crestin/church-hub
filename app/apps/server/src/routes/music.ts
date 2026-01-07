@@ -21,6 +21,7 @@ import {
   syncFolder,
   upsertPlaylist,
 } from '../service/music'
+import { getMpvStatus } from '../service/music-player'
 
 type HandleCors = (req: Request, res: Response) => Response
 
@@ -29,6 +30,19 @@ export async function handleMusicRoutes(
   url: URL,
   handleCors: HandleCors,
 ): Promise<Response | null> {
+  // ========== PLAYER STATUS ==========
+
+  // GET /api/music/player/status - Get mpv player status
+  if (req.method === 'GET' && url.pathname === '/api/music/player/status') {
+    const status = getMpvStatus()
+    return handleCors(
+      req,
+      new Response(JSON.stringify({ data: status }), {
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
+  }
+
   // ========== FOLDERS ==========
 
   // GET /api/music/folders - List all folders
