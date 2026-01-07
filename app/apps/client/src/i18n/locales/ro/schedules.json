@@ -181,9 +181,12 @@
       "title": "Exemple de format:",
       "song": "Titlu Cantare [S]",
       "announcement": "Text anunt [A]",
-      "bible": "Ioan 3:16 [V] (Pasaj biblic)",
-      "youthVerses": "Nume Persoana - Ioan 3:16, Persoana 2 - Ioan 3:17 [VT] (Versete tineri)",
-      "scene": "Nume Scena [SC] (Schimbare scena OBS)"
+      "bibleComment": "Pasaj biblic:",
+      "bible": "Ioan 3:16 [V]",
+      "youthVersesComment": "Versete tineri:",
+      "youthVerses": "Nume Persoana - Ioan 3:16, Persoana 2 - Ioan 3:17 [VT]",
+      "sceneComment": "Schimbare scena OBS:",
+      "scene": "Nume Scena [SC]"
     },
     "preview": "{{count}} elemente detectate",
     "preview_one": "{{count}} element detectat",

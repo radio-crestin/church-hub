@@ -181,9 +181,12 @@
       "title": "Format examples:",
       "song": "Song Title [S]",
       "announcement": "Announcement text [A]",
-      "bible": "John 3:16 [V] (Bible passage)",
-      "youthVerses": "Person Name - John 3:16, Person 2 - John 3:17 [VT] (Youth verses)",
-      "scene": "Scene Name [SC] (OBS scene switch)"
+      "bibleComment": "Bible passage:",
+      "bible": "John 3:16 [V]",
+      "youthVersesComment": "Youth verses:",
+      "youthVerses": "Person Name - John 3:16, Person 2 - John 3:17 [VT]",
+      "sceneComment": "OBS scene switch:",
+      "scene": "Scene Name [SC]"
     },
     "preview": "{{count}} items detected",
     "preview_one": "{{count}} item detected",

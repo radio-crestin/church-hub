@@ -92,8 +92,11 @@ export function EditAsTextModal({
         t('editAsText.formatHelpLines.title'),
         t('editAsText.formatHelpLines.song'),
         t('editAsText.formatHelpLines.announcement'),
+        t('editAsText.formatHelpLines.bibleComment'),
         t('editAsText.formatHelpLines.bible'),
+        t('editAsText.formatHelpLines.youthVersesComment'),
         t('editAsText.formatHelpLines.youthVerses'),
+        t('editAsText.formatHelpLines.sceneComment'),
         t('editAsText.formatHelpLines.scene'),
       ]
       const generatedText = generateScheduleText(currentItems, {
