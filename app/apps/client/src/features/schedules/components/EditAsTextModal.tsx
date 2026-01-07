@@ -75,6 +75,7 @@ export function EditAsTextModal({
   const { showToast } = useToast()
   const dialogRef = useRef<HTMLDialogElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const mouseDownTargetRef = useRef<EventTarget | null>(null)
 
   const [text, setText] = useState('')
   const [modalState, setModalState] = useState<ModalState>('editing')
@@ -123,8 +124,17 @@ export function EditAsTextModal({
     onClose()
   }
 
+  const handleBackdropMouseDown = (e: React.MouseEvent<HTMLDialogElement>) => {
+    mouseDownTargetRef.current = e.target
+  }
+
   const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
-    if (e.target === dialogRef.current) {
+    // Only close if both mousedown and click happened on the backdrop
+    // This prevents closing when selecting text and dragging outside the dialog
+    if (
+      e.target === dialogRef.current &&
+      mouseDownTargetRef.current === dialogRef.current
+    ) {
       handleClose()
     }
   }
@@ -485,6 +495,7 @@ export function EditAsTextModal({
       ref={dialogRef}
       className="fixed inset-0 p-0 m-auto w-full max-w-2xl bg-transparent backdrop:bg-black/50"
       onClose={handleClose}
+      onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
     >
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-h-[90vh] flex flex-col">
