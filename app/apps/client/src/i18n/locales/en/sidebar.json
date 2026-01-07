@@ -17,5 +17,14 @@
     "collapseSidebar": "Collapse sidebar",
     "openMenu": "Open menu",
     "closeMenu": "Close menu"
+  },
+  "version": {
+    "current": "Current version",
+    "checkForUpdates": "Check for updates",
+    "updateAvailable": "v{{version}} available",
+    "clickToDownload": "Click to download the latest version",
+    "download": "Download Update",
+    "downloading": "Opening...",
+    "dismiss": "Dismiss"
   }
 }

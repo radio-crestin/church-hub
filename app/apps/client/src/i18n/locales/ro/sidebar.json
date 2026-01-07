@@ -4,7 +4,7 @@
     "dashboard": "Panou",
     "schedules": "Programe",
     "songs": "Cântări",
-    "bible": "Biblie",
+    "bible": "Biblia",
     "present": "Camera de control",
     "livestream": "Live Stream",
     "kiosk": "Kiosk",
@@ -17,5 +17,14 @@
     "collapseSidebar": "Restrânge bara laterală",
     "openMenu": "Deschide meniu",
     "closeMenu": "Închide meniu"
+  },
+  "version": {
+    "current": "Versiunea curentă",
+    "checkForUpdates": "Verifică actualizări",
+    "updateAvailable": "v{{version}} disponibilă",
+    "clickToDownload": "Apasă pentru a descărca ultima versiune",
+    "download": "Descarcă Actualizarea",
+    "downloading": "Se deschide...",
+    "dismiss": "Închide"
   }
 }
