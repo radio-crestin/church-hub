@@ -1,7 +1,9 @@
 import { Radio, Square } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useAppShortcuts } from '~/features/keyboard-shortcuts'
+import { KeyboardShortcutBadge } from '~/ui/kbd'
 import { ConfirmModal } from '../../../ui/modal'
 import { Tooltip } from '../../../ui/tooltip'
 import { useOBSConnection, useStreaming, useYouTubeAuth } from '../hooks'
@@ -13,6 +15,21 @@ export function StreamControls() {
   const { start, stop, isStarting, isStopping, streamStartProgress, isLive } =
     useStreaming()
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+
+  // Get stream shortcuts for display
+  const { shortcuts } = useAppShortcuts()
+  const startLiveShortcut = useMemo(() => {
+    const action = shortcuts.actions.startLive
+    return action?.enabled && action.shortcuts.length > 0
+      ? action.shortcuts[0]
+      : undefined
+  }, [shortcuts])
+  const stopLiveShortcut = useMemo(() => {
+    const action = shortcuts.actions.stopLive
+    return action?.enabled && action.shortcuts.length > 0
+      ? action.shortcuts[0]
+      : undefined
+  }, [shortcuts])
 
   const hasConnection = isAuthenticated || isConnected
   const canStart = hasConnection && !isLive
@@ -52,6 +69,12 @@ export function StreamControls() {
         {isStarting || isStartingStream
           ? t('stream.starting')
           : t('stream.startStream')}
+        {startLiveShortcut && !isStarting && !isStartingStream && (
+          <KeyboardShortcutBadge
+            shortcut={startLiveShortcut}
+            className="bg-red-800/50 text-red-100"
+          />
+        )}
       </span>
     </button>
   )
@@ -76,6 +99,12 @@ export function StreamControls() {
             <span className="flex items-center gap-2">
               <Square className="w-4 h-4 fill-current" />
               {isStopping ? t('stream.stopping') : t('stream.stopStream')}
+              {stopLiveShortcut && !isStopping && (
+                <KeyboardShortcutBadge
+                  shortcut={stopLiveShortcut}
+                  className="bg-red-800/50 text-red-100"
+                />
+              )}
               <span className="relative flex h-3 w-3">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-white" />

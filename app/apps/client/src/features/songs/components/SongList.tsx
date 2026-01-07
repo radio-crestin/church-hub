@@ -2,8 +2,10 @@ import { Loader2, Music, Search, Sparkles } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useAppShortcuts } from '~/features/keyboard-shortcuts'
 import { useDebouncedValue } from '~/hooks/useDebouncedValue'
 import { Combobox } from '~/ui/combobox'
+import { KeyboardShortcutBadge } from '~/ui/kbd'
 import { SongCard } from './SongCard'
 import {
   useAISearchSettings,
@@ -73,6 +75,15 @@ export function SongList({
   // AI Search
   const { isEnabled: aiSearchAvailable } = useAISearchSettings()
   const aiSearchMutation = useAISearchSongs()
+
+  // Get search shortcut for display
+  const { shortcuts } = useAppShortcuts()
+  const searchSongShortcut = useMemo(() => {
+    const action = shortcuts.actions.searchSong
+    return action?.enabled && action.shortcuts.length > 0
+      ? action.shortcuts[0]
+      : undefined
+  }, [shortcuts])
   const [aiSearchResults, setAiSearchResults] = useState<AISearchResult[]>([])
   const [isAISearchActive, setIsAISearchActive] = useState(false)
 
@@ -306,10 +317,16 @@ export function SongList({
               setSelectedIndex(-1)
             }}
             placeholder={t('search.placeholder')}
-            className="w-full pl-10 pr-8 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+            className={`w-full pl-10 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${
+              searchSongShortcut ? 'pr-20' : 'pr-8'
+            }`}
           />
           {(showPendingIndicator || aiSearchMutation.isPending) && (
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
+            <div
+              className={`absolute top-1/2 transform -translate-y-1/2 flex items-center gap-1 ${
+                searchSongShortcut ? 'right-14' : 'right-3'
+              }`}
+            >
               {aiSearchMutation.isPending ? (
                 <>
                   <Sparkles className="w-4 h-4 text-indigo-500 animate-pulse" />
@@ -320,6 +337,11 @@ export function SongList({
               ) : (
                 <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" />
               )}
+            </div>
+          )}
+          {searchSongShortcut && (
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <KeyboardShortcutBadge shortcut={searchSongShortcut} />
             </div>
           )}
         </div>

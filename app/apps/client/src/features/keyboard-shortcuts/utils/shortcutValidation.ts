@@ -18,6 +18,7 @@ export function formatShortcutForDisplay(shortcut: string): string {
     .replace('CommandOrControl', isMac ? 'Cmd' : 'Ctrl')
     .replace('Control', 'Ctrl')
     .replace('Meta', 'Cmd')
+    .replace('Escape', 'Esc')
     .replace('ArrowUp', '\u2191')
     .replace('ArrowDown', '\u2193')
     .replace('ArrowLeft', '\u2190')

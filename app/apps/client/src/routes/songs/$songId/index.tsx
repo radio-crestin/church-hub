@@ -39,6 +39,7 @@ import {
 } from '~/features/songs/hooks'
 import type { SongSlide } from '~/features/songs/types'
 import { expandSongSlidesWithChoruses } from '~/features/songs/utils/expandSongSlides'
+import { KeyboardShortcutBadge } from '~/ui/kbd'
 import { useToast } from '~/ui/toast'
 
 interface SongSearchParams {
@@ -302,9 +303,15 @@ function SongPreviewPage() {
           <button
             type="button"
             onClick={handleGoBack}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 shrink-0"
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 shrink-0 flex items-center gap-2"
+            title="Back (Esc)"
           >
             <ArrowLeft size={20} className="text-gray-600 dark:text-gray-400" />
+            <KeyboardShortcutBadge
+              shortcut="Escape"
+              variant="muted"
+              className="hidden sm:inline-block"
+            />
           </button>
           <h1 className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white truncate">
             {song.title}

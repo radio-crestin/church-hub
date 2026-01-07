@@ -1,6 +1,8 @@
 import { Link } from '@tanstack/react-router'
 import type { LucideIcon } from 'lucide-react'
 
+import { KeyboardShortcutBadge } from '~/ui/kbd'
+
 interface SidebarItemProps {
   icon: LucideIcon
   label: string
@@ -10,6 +12,7 @@ interface SidebarItemProps {
   className?: string
   disabled?: boolean
   onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void
+  shortcut?: string
 }
 
 export function SidebarItem({
@@ -21,6 +24,7 @@ export function SidebarItem({
   className = '',
   disabled = false,
   onClick,
+  shortcut,
 }: SidebarItemProps) {
   const baseClasses = `
     flex items-center gap-3 px-4 py-3 rounded-lg transition-all
@@ -41,7 +45,16 @@ export function SidebarItem({
       {/* Mobile: always show label, Desktop: respect isCollapsed */}
       <span className="text-sm font-medium md:hidden">{label}</span>
       {!isCollapsed && (
-        <span className="text-sm font-medium hidden md:inline">{label}</span>
+        <span className="text-sm font-medium hidden md:inline flex-1">
+          {label}
+        </span>
+      )}
+      {shortcut && !isCollapsed && (
+        <KeyboardShortcutBadge
+          shortcut={shortcut}
+          variant="muted"
+          className="hidden md:inline-block ml-auto"
+        />
       )}
     </>
   )

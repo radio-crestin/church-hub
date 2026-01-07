@@ -2,6 +2,7 @@ import { ArrowLeft, Loader2 } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { KeyboardShortcutBadge } from '~/ui/kbd'
 import { MultiTranslationVerse } from './MultiTranslationVerse'
 import { useLocalizedBookNames } from '../hooks'
 import { useMultiTranslationVerse } from '../hooks/useMultiTranslationVerse'
@@ -101,6 +102,7 @@ export function VersesList({
         >
           <ArrowLeft size={16} />
           {t('navigation.back')}
+          <KeyboardShortcutBadge shortcut="Escape" variant="muted" />
         </button>
         <span className="text-sm font-medium text-gray-900 dark:text-white">
           {localizedBookName} {chapter}

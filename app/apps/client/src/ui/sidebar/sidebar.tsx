@@ -8,12 +8,13 @@ import {
   Settings,
   X,
 } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { SidebarHeader } from './sidebar-header'
 import { SidebarItem } from './sidebar-item'
 import { ContactModal, FeedbackModal } from '../../features/feedback'
+import { useAppShortcuts } from '../../features/keyboard-shortcuts'
 import { useKioskSettings } from '../../features/kiosk'
 import {
   hideAllCustomPageWebviews,
@@ -42,6 +43,23 @@ export function Sidebar() {
   // Get sidebar configuration
   const { config } = useSidebarConfig()
   const resolvedItems = useResolvedSidebarItems(config?.items)
+
+  // Get keyboard shortcuts for sidebar items
+  const { shortcuts } = useAppShortcuts()
+
+  // Map route paths to their configured shortcuts
+  const routeShortcuts = useMemo(() => {
+    const getFirstShortcut = (actionId: keyof typeof shortcuts.actions) => {
+      const action = shortcuts.actions[actionId]
+      return action?.enabled && action.shortcuts.length > 0
+        ? action.shortcuts[0]
+        : undefined
+    }
+    return {
+      '/songs': getFirstShortcut('searchSong'),
+      '/bible': getFirstShortcut('searchBible'),
+    }
+  }, [shortcuts])
 
   // Get kiosk settings to determine if kiosk menu item should be visible
   const { data: kioskSettings } = useKioskSettings()
@@ -199,6 +217,7 @@ export function Sidebar() {
               }
               className="md:flex"
               onClick={(e) => handleSidebarItemClick(item.to, e)}
+              shortcut={routeShortcuts[item.to as keyof typeof routeShortcuts]}
             />
           ))}
 
