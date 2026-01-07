@@ -148,11 +148,13 @@
 ~~- adauga posibilitatea de a face highlight pentru sesiunea curenta~~
 - adauga etichete midi controller
 - incarca o pagina statica in obs pentru a face refresh automat
-- adauga muzica
-- add update checker
 - add shortcuts indicators
+- add update checker
+- adauga pagina cu muzica dintr-un folder local
+- creaza optiunea de a adauga live-urile create intr-un playlist pe YouTube
+- creaza un quickstart guide pentru utilizatori
+
+### Optionals
 - test backing up the database in https://turso.tech/blog/turso-offline-sync-public-beta
 - exportul ca si pptx ar trebui sa aiba textul ceva mai mare
-- creaza optiunea de a adauga live-urile create intr-un playlist pe YouTube
 - adauga optiunea de a afisa pe un ecran separat continutul in anumita limba (o versiune a Bibliei diferita, traduceri cu AI ale cantarilor.. si eventual traduceri in timp real)
-- creaza un quickstart guide pentru utilizatori
