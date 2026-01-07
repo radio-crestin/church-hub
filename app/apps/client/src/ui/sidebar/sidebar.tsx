@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next'
 
 import { SidebarHeader } from './sidebar-header'
 import { SidebarItem } from './sidebar-item'
+import { UpdateNotification, VersionDisplay } from '../../features/app-update'
 import { ContactModal, FeedbackModal } from '../../features/feedback'
 import { useAppShortcuts } from '../../features/keyboard-shortcuts'
 import { useKioskSettings } from '../../features/kiosk'
@@ -221,6 +222,9 @@ export function Sidebar() {
             />
           ))}
 
+          {/* Update notification - shown above bottom section when update available */}
+          <UpdateNotification isCollapsed={isCollapsed} />
+
           {/* Bottom section - fixed at the bottom, above the collapse button */}
           <div className="mt-auto space-y-1">
             {/* Kiosk - shown when kiosk mode is enabled */}
@@ -275,6 +279,9 @@ export function Sidebar() {
         </nav>
 
         <div className="p-3 border-t border-gray-200 dark:border-gray-800 space-y-2">
+          {/* Version display */}
+          <VersionDisplay isCollapsed={isCollapsed} />
+
           {/* Desktop-only collapse button */}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
