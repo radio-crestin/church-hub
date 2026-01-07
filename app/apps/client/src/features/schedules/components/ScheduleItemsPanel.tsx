@@ -239,6 +239,13 @@ export function ScheduleItemsPanel({
         (item) =>
           item.itemType === 'slide' && item.slideType === 'announcement',
       )
+    } else if (presentedInfo.type === 'scene') {
+      presentedItem = items.find(
+        (item) =>
+          item.itemType === 'slide' &&
+          item.slideType === 'scene' &&
+          item.obsSceneName === presentedInfo.obsSceneName,
+      )
     }
 
     if (presentedItem && !expanded[`${presentedItem.id}`]) {
