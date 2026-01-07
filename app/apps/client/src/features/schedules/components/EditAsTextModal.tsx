@@ -99,8 +99,10 @@ export function EditAsTextModal({
         t('editAsText.formatHelpLines.sceneComment'),
         t('editAsText.formatHelpLines.scene'),
       ]
+      const songSuffix = t('editAsText.formatHelpLines.songSuffix')
       const generatedText = generateScheduleText(currentItems, {
         formatHelpLines,
+        songSuffix,
       })
       setText(generatedText)
       setModalState('editing')

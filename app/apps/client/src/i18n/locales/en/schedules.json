@@ -179,6 +179,7 @@
     "formatHelp": "# Format examples:\n# Song Title [S]\n# Announcement text [A]\n# John 3:16 [V] (Bible passage)\n# Person Name - John 3:16 [VT] (Youth verse)",
     "formatHelpLines": {
       "title": "Format examples:",
+      "songSuffix": "S",
       "song": "Song Title [S]",
       "announcement": "Announcement text [A]",
       "bibleComment": "Bible passage:",

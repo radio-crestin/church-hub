@@ -21,12 +21,14 @@ export interface ParseScheduleTextResult {
 }
 
 // Matches: Content [PREFIX] format (case-insensitive)
-// Supports: [S], [SC], [A], [V], [VT]
-const SUFFIX_REGEX = /^(.+?)\s*\[(SC|S|A|VT|V)\]\s*$/i
+// Supports: [S], [C], [SC], [A], [V], [VT]
+// [C] is Romanian alias for [S] (Cantec = Song)
+const SUFFIX_REGEX = /^(.+?)\s*\[(SC|S|C|A|VT|V)\]\s*$/i
 
 const TYPE_MAP: Record<string, ParsedItemType> = {
   SC: 'scene',
   S: 'song',
+  C: 'song', // Romanian: Cantec
   A: 'announcement',
   V: 'bible_passage',
   VT: 'versete_tineri',
@@ -50,7 +52,7 @@ export function parseScheduleText(text: string): ParseScheduleTextResult {
     if (!match) {
       errors.push({
         line: lineNumber,
-        message: 'Invalid format. Use [S], [SC], [A], [V], or [VT] suffix',
+        message: 'Invalid format. Use [S], [C], [SC], [A], [V], or [VT] suffix',
       })
       return
     }
