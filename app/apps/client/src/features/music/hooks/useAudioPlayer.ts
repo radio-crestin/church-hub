@@ -1,7 +1,7 @@
 import { convertFileSrc } from '@tauri-apps/api/core'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import type { MusicFile, PlayerState, QueueItem } from '../types'
+import type { PlayerState, QueueItem } from '../types'
 import { shuffleArray } from '../utils'
 
 const VOLUME_STORAGE_KEY = 'music-player-volume'
@@ -18,16 +18,18 @@ function storeVolume(volume: number): void {
 export function useAudioPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [state, setState] = useState<PlayerState>({
-    currentTrack: null,
     isPlaying: false,
     currentTime: 0,
     duration: 0,
     volume: getStoredVolume(),
     isMuted: false,
     isShuffled: false,
+    currentIndex: -1,
   })
   const [queue, setQueue] = useState<QueueItem[]>([])
-  const [currentIndex, setCurrentIndex] = useState<number>(-1)
+
+  const currentTrack =
+    state.currentIndex >= 0 ? queue[state.currentIndex] : null
 
   useEffect(() => {
     const audio = new Audio()
@@ -44,7 +46,6 @@ export function useAudioPlayer() {
 
     const handleEnded = () => {
       setState((prev) => ({ ...prev, isPlaying: false }))
-      playNext()
     }
 
     const handlePlay = () => {
@@ -70,19 +71,19 @@ export function useAudioPlayer() {
       audio.pause()
       audio.src = ''
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const loadTrack = useCallback(async (file: MusicFile) => {
+  const loadAndPlayTrack = useCallback(async (item: QueueItem) => {
     if (!audioRef.current) return
 
     try {
-      const url = convertFileSrc(file.path)
+      const url = convertFileSrc(item.path)
       audioRef.current.src = url
       setState((prev) => ({
         ...prev,
-        currentTrack: file,
         currentTime: 0,
-        duration: file.duration ?? 0,
+        duration: item.duration ?? 0,
       }))
       await audioRef.current.play()
     } catch (error) {
@@ -92,14 +93,21 @@ export function useAudioPlayer() {
   }, [])
 
   const play = useCallback(() => {
-    audioRef.current?.play()
-  }, [])
+    if (audioRef.current && queue.length > 0) {
+      if (state.currentIndex === -1) {
+        setState((prev) => ({ ...prev, currentIndex: 0 }))
+        loadAndPlayTrack(queue[0])
+      } else {
+        audioRef.current.play()
+      }
+    }
+  }, [queue, state.currentIndex, loadAndPlayTrack])
 
   const pause = useCallback(() => {
     audioRef.current?.pause()
   }, [])
 
-  const togglePlay = useCallback(() => {
+  const togglePlayPause = useCallback(() => {
     if (state.isPlaying) {
       pause()
     } else {
@@ -131,37 +139,28 @@ export function useAudioPlayer() {
     }
   }, [state.isMuted])
 
-  const addToQueue = useCallback((file: MusicFile) => {
-    const item: QueueItem = {
-      id: `${file.id}-${Date.now()}`,
-      file,
-      addedAt: Date.now(),
-    }
+  const addToQueue = useCallback((item: QueueItem) => {
     setQueue((prev) => [...prev, item])
   }, [])
 
-  const addMultipleToQueue = useCallback((files: MusicFile[]) => {
-    const items: QueueItem[] = files.map((file) => ({
-      id: `${file.id}-${Date.now()}-${Math.random()}`,
-      file,
-      addedAt: Date.now(),
-    }))
-    setQueue((prev) => [...prev, ...items])
-  }, [])
-
-  const removeFromQueue = useCallback((itemId: string) => {
+  const removeFromQueue = useCallback((index: number) => {
     setQueue((prev) => {
-      const index = prev.findIndex((item) => item.id === itemId)
-      if (index === -1) return prev
+      if (index < 0 || index >= prev.length) return prev
 
-      const newQueue = prev.filter((item) => item.id !== itemId)
+      const newQueue = prev.filter((_, i) => i !== index)
 
-      setCurrentIndex((prevIndex) => {
-        if (index < prevIndex) return prevIndex - 1
-        if (index === prevIndex && prevIndex >= newQueue.length) {
-          return Math.max(0, newQueue.length - 1)
+      setState((prevState) => {
+        let newIndex = prevState.currentIndex
+        if (index < prevState.currentIndex) {
+          newIndex = prevState.currentIndex - 1
+        } else if (index === prevState.currentIndex) {
+          if (newQueue.length === 0) {
+            newIndex = -1
+          } else if (index >= newQueue.length) {
+            newIndex = newQueue.length - 1
+          }
         }
-        return prevIndex
+        return { ...prevState, currentIndex: newIndex }
       })
 
       return newQueue
@@ -170,8 +169,13 @@ export function useAudioPlayer() {
 
   const clearQueue = useCallback(() => {
     setQueue([])
-    setCurrentIndex(-1)
-    setState((prev) => ({ ...prev, currentTrack: null, isPlaying: false }))
+    setState((prev) => ({
+      ...prev,
+      currentIndex: -1,
+      isPlaying: false,
+      currentTime: 0,
+      duration: 0,
+    }))
     if (audioRef.current) {
       audioRef.current.pause()
       audioRef.current.src = ''
@@ -182,29 +186,29 @@ export function useAudioPlayer() {
     setQueue(newQueue)
   }, [])
 
-  const playFromQueue = useCallback(
+  const playAtIndex = useCallback(
     (index: number) => {
       if (index >= 0 && index < queue.length) {
-        setCurrentIndex(index)
-        loadTrack(queue[index].file)
+        setState((prev) => ({ ...prev, currentIndex: index }))
+        loadAndPlayTrack(queue[index])
       }
     },
-    [queue, loadTrack],
+    [queue, loadAndPlayTrack],
   )
 
-  const playNext = useCallback(() => {
+  const next = useCallback(() => {
     if (queue.length === 0) return
 
-    const nextIndex = currentIndex + 1
+    const nextIndex = state.currentIndex + 1
     if (nextIndex < queue.length) {
-      setCurrentIndex(nextIndex)
-      loadTrack(queue[nextIndex].file)
+      setState((prev) => ({ ...prev, currentIndex: nextIndex }))
+      loadAndPlayTrack(queue[nextIndex])
     } else {
       setState((prev) => ({ ...prev, isPlaying: false }))
     }
-  }, [queue, currentIndex, loadTrack])
+  }, [queue, state.currentIndex, loadAndPlayTrack])
 
-  const playPrevious = useCallback(() => {
+  const previous = useCallback(() => {
     if (queue.length === 0) return
 
     if (state.currentTime > 3) {
@@ -212,66 +216,49 @@ export function useAudioPlayer() {
       return
     }
 
-    const prevIndex = currentIndex - 1
+    const prevIndex = state.currentIndex - 1
     if (prevIndex >= 0) {
-      setCurrentIndex(prevIndex)
-      loadTrack(queue[prevIndex].file)
+      setState((prev) => ({ ...prev, currentIndex: prevIndex }))
+      loadAndPlayTrack(queue[prevIndex])
     } else {
       seek(0)
     }
-  }, [queue, currentIndex, state.currentTime, loadTrack, seek])
+  }, [queue, state.currentIndex, state.currentTime, loadAndPlayTrack, seek])
 
-  const shuffleQueue = useCallback(() => {
+  const shuffle = useCallback(() => {
     if (queue.length <= 1) return
 
-    const currentItem = currentIndex >= 0 ? queue[currentIndex] : null
-    const otherItems = queue.filter((_, i) => i !== currentIndex)
+    const currentItem =
+      state.currentIndex >= 0 ? queue[state.currentIndex] : null
+    const otherItems = queue.filter((_, i) => i !== state.currentIndex)
     const shuffled = shuffleArray(otherItems)
 
     if (currentItem) {
       setQueue([currentItem, ...shuffled])
-      setCurrentIndex(0)
+      setState((prev) => ({ ...prev, currentIndex: 0, isShuffled: true }))
     } else {
       setQueue(shuffleArray(queue))
+      setState((prev) => ({ ...prev, isShuffled: true }))
     }
-
-    setState((prev) => ({ ...prev, isShuffled: true }))
-  }, [queue, currentIndex])
-
-  const playFile = useCallback(
-    (file: MusicFile) => {
-      const item: QueueItem = {
-        id: `${file.id}-${Date.now()}`,
-        file,
-        addedAt: Date.now(),
-      }
-      setQueue([item])
-      setCurrentIndex(0)
-      loadTrack(file)
-    },
-    [loadTrack],
-  )
+  }, [queue, state.currentIndex])
 
   return {
-    ...state,
+    state,
     queue,
-    currentIndex,
+    currentTrack,
     play,
     pause,
-    togglePlay,
+    togglePlayPause,
     seek,
     setVolume,
     toggleMute,
-    loadTrack,
-    playFile,
     addToQueue,
-    addMultipleToQueue,
     removeFromQueue,
     clearQueue,
     reorderQueue,
-    playFromQueue,
-    playNext,
-    playPrevious,
-    shuffleQueue,
+    playAtIndex,
+    next,
+    previous,
+    shuffle,
   }
 }
