@@ -23,6 +23,7 @@
     "play": "Play"
   },
   "player": {
+    "title": "Player",
     "nowPlaying": "Now Playing",
     "queue": "Queue",
     "queueCount": "{{count}} tracks in queue",
@@ -62,5 +63,13 @@
     "removed": "{{count}} files removed",
     "updated": "{{count}} files updated",
     "errors": "{{count}} errors"
+  },
+  "mpv": {
+    "notInstalled": "Audio player not installed",
+    "installDescription": "mpv media player is required for audio playback. Please install it using one of the following commands:",
+    "macOS": "macOS",
+    "windows": "Windows",
+    "linux": "Linux",
+    "restartAfterInstall": "After installing, restart the application."
   }
 }

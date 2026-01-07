@@ -1,5 +1,7 @@
+export type { MpvStatus } from './mpv-player'
 export {
   executeCommand,
+  getMpvStatus,
   getPlayerState,
   initializeMusicPlayer,
   isPlayerAvailable,

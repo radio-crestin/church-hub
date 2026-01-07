@@ -466,6 +466,40 @@ export function isPlayerAvailable(): boolean {
   return mpvProcess !== null && !mpvProcess.killed
 }
 
+export interface MpvStatus {
+  available: boolean
+  installed: boolean
+  installInstructions?: {
+    mac: string
+    windows: string
+    linux: string
+  }
+}
+
+export function getMpvStatus(): MpvStatus {
+  const mpvPath = findMpvPath()
+  const installed = mpvPath !== null
+
+  if (installed) {
+    return {
+      available: isPlayerAvailable(),
+      installed: true,
+    }
+  }
+
+  return {
+    available: false,
+    installed: false,
+    installInstructions: {
+      mac: 'brew install mpv',
+      windows:
+        'Download from https://mpv.io/installation/ or use: winget install mpv',
+      linux:
+        'sudo apt install mpv (Ubuntu/Debian) or sudo dnf install mpv (Fedora)',
+    },
+  }
+}
+
 export function refreshQueueState(): void {
   const queue = getQueueSummary()
   updateState({ queueLength: queue.length, queue })
