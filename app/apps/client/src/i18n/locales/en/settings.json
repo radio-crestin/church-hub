@@ -671,6 +671,13 @@
           }
         },
         "note": "Static files work better with OBS - faster loading, no browser needed.",
+        "serverUrl": {
+          "label": "Server Connection",
+          "localhost": "Localhost",
+          "networkInterface": "Network Interface",
+          "custom": "Custom URL",
+          "result": "Server URL"
+        },
         "generating": "Generating file...",
         "success": "File saved successfully!",
         "filePath": "Saved to: {{path}}",
