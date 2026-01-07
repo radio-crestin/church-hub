@@ -655,6 +655,34 @@
         "deleteError": "Failed to delete screen",
         "saveError": "Failed to save screen",
         "createError": "Failed to create screen"
+      },
+      "export": {
+        "title": "Export Screen",
+        "description": "Choose how to access this screen",
+        "options": {
+          "url": {
+            "title": "Open in Browser",
+            "description": "Opens the screen in your default browser"
+          },
+          "staticFile": {
+            "title": "Generate Static File",
+            "description": "Creates a local HTML file for OBS Browser Source",
+            "recommended": "Recommended for OBS"
+          }
+        },
+        "note": "Static files work better with OBS - faster loading, no browser needed.",
+        "generating": "Generating file...",
+        "success": "File saved successfully!",
+        "filePath": "Saved to: {{path}}",
+        "openFolder": "Open Folder",
+        "retry": "Retry",
+        "cancel": "Cancel",
+        "export": "Export",
+        "errors": {
+          "generateFailed": "Failed to generate HTML file",
+          "saveFailed": "Failed to save file",
+          "cancelled": "Export cancelled"
+        }
       }
     },
     "developer": {

@@ -656,6 +656,34 @@
         "deleteError": "Nu s-a putut șterge ecranul",
         "saveError": "Nu s-a putut salva ecranul",
         "createError": "Nu s-a putut crea ecranul"
+      },
+      "export": {
+        "title": "Exportă Ecran",
+        "description": "Alege cum să accesezi acest ecran",
+        "options": {
+          "url": {
+            "title": "Deschide în Browser",
+            "description": "Deschide ecranul în browserul implicit"
+          },
+          "staticFile": {
+            "title": "Generează Fișier Static",
+            "description": "Creează un fișier HTML local pentru OBS Browser Source",
+            "recommended": "Recomandat pentru OBS"
+          }
+        },
+        "note": "Fișierele statice funcționează mai bine cu OBS - încărcare mai rapidă, fără browser necesar.",
+        "generating": "Se generează fișierul...",
+        "success": "Fișier salvat cu succes!",
+        "filePath": "Salvat în: {{path}}",
+        "openFolder": "Deschide Folder",
+        "retry": "Reîncearcă",
+        "cancel": "Anulează",
+        "export": "Exportă",
+        "errors": {
+          "generateFailed": "Nu s-a putut genera fișierul HTML",
+          "saveFailed": "Nu s-a putut salva fișierul",
+          "cancelled": "Export anulat"
+        }
       }
     },
     "developer": {

@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '~/ui/button/Button'
 import { Combobox } from '~/ui/combobox/Combobox'
 import { useToast } from '~/ui/toast/useToast'
+import { ScreenExportModal } from './ScreenExportModal'
 import {
   useBatchUpdateScreenConfig,
   useDeleteScreen,
@@ -28,7 +29,6 @@ import {
   closeDisplayWindow,
   getFrontendUrl,
   openDisplayWindow,
-  openInBrowser,
   setDisplayAlwaysOnTop,
 } from '../../utils/openDisplayWindow'
 import { ScreenEditor } from '../screen-editor'
@@ -61,6 +61,7 @@ export function ScreenManager() {
   const [newScreenType, setNewScreenType] = useState<ScreenType>('primary')
   const [editingScreenId, setEditingScreenId] = useState<number | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<Screen | null>(null)
+  const [exportScreen, setExportScreen] = useState<Screen | null>(null)
 
   // Fetch full screen config when editing
   const { data: editingScreen } = useScreen(editingScreenId)
@@ -167,11 +168,6 @@ export function ScreenManager() {
     } catch {
       showToast('Failed to copy URL', 'error')
     }
-  }
-
-  const handleOpenInNewTab = async (screen: Screen) => {
-    const url = `${getFrontendUrl()}/screen/${screen.id}`
-    await openInBrowser(url)
   }
 
   const handleToggleAlwaysOnTop = async (screen: Screen) => {
@@ -334,8 +330,8 @@ export function ScreenManager() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleOpenInNewTab(screen)}
-                    title={t('sections.screens.actions.openInNewTab')}
+                    onClick={() => setExportScreen(screen)}
+                    title={t('sections.screens.export.title')}
                   >
                     <ExternalLink size={16} />
                   </Button>
@@ -471,6 +467,15 @@ export function ScreenManager() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Screen Export Modal */}
+      {exportScreen && (
+        <ScreenExportModal
+          isOpen={!!exportScreen}
+          onClose={() => setExportScreen(null)}
+          screen={exportScreen}
+        />
       )}
     </div>
   )
