@@ -21,15 +21,15 @@ import type { ExportMode } from '../../service/obs-export'
 import type { Screen } from '../../types'
 import { getFrontendUrl, openInBrowser } from '../../utils/openDisplayWindow'
 
-type ServerUrlMode = 'localhost' | 'interface' | 'custom'
+const LOCALHOST_VALUE = '__localhost__'
+const CUSTOM_VALUE = '__custom__'
+const DEFAULT_PORT = '3000'
 
 interface ScreenExportModalProps {
   isOpen: boolean
   onClose: () => void
   screen: Screen
 }
-
-const DEFAULT_PORT = '3000'
 
 export function ScreenExportModal({
   isOpen,
@@ -41,27 +41,47 @@ export function ScreenExportModal({
   const [selectedMode, setSelectedMode] = useState<ExportMode>('staticFile')
 
   // Server URL selection state
-  const [serverUrlMode, setServerUrlMode] = useState<ServerUrlMode>('localhost')
   const [interfaces, setInterfaces] = useState<NetworkInterface[]>([])
-  const [selectedInterface, setSelectedInterface] =
-    useState<NetworkInterface | null>(null)
+  const [selectedUrlOption, setSelectedUrlOption] = useState<string>(LOCALHOST_VALUE)
   const [customUrl, setCustomUrl] = useState('')
+
+  // Build dropdown options: localhost + interfaces + custom
+  const urlOptions: ComboboxOption[] = useMemo(() => {
+    const options: ComboboxOption[] = [
+      {
+        value: LOCALHOST_VALUE,
+        label: `${t('sections.screens.export.serverUrl.localhost')} (localhost:${DEFAULT_PORT})`,
+      },
+    ]
+
+    // Add network interfaces
+    for (const iface of interfaces) {
+      options.push({
+        value: iface.address,
+        label: `${iface.name} - ${iface.address}:${DEFAULT_PORT}`,
+      })
+    }
+
+    // Add custom option
+    options.push({
+      value: CUSTOM_VALUE,
+      label: t('sections.screens.export.serverUrl.custom'),
+    })
+
+    return options
+  }, [interfaces, t])
 
   // Compute the actual server URL based on selection
   const serverUrl = useMemo(() => {
-    switch (serverUrlMode) {
-      case 'localhost':
-        return `http://localhost:${DEFAULT_PORT}`
-      case 'interface':
-        return selectedInterface
-          ? `http://${selectedInterface.address}:${DEFAULT_PORT}`
-          : `http://localhost:${DEFAULT_PORT}`
-      case 'custom':
-        return customUrl || `http://localhost:${DEFAULT_PORT}`
-      default:
-        return `http://localhost:${DEFAULT_PORT}`
+    if (selectedUrlOption === LOCALHOST_VALUE) {
+      return `http://localhost:${DEFAULT_PORT}`
     }
-  }, [serverUrlMode, selectedInterface, customUrl])
+    if (selectedUrlOption === CUSTOM_VALUE) {
+      return customUrl || `http://localhost:${DEFAULT_PORT}`
+    }
+    // It's a network interface IP
+    return `http://${selectedUrlOption}:${DEFAULT_PORT}`
+  }, [selectedUrlOption, customUrl])
 
   const { exportToFile, isExporting, progress, error, filePath, retry } =
     useOBSExport({
@@ -76,24 +96,12 @@ export function ScreenExportModal({
       getExternalInterfaces()
         .then((ifaces) => {
           setInterfaces(ifaces)
-          if (ifaces.length > 0 && !selectedInterface) {
-            setSelectedInterface(ifaces[0])
-          }
         })
         .catch(() => {
           setInterfaces([])
         })
     }
-  }, [isOpen, selectedInterface])
-
-  const interfaceOptions: ComboboxOption[] = useMemo(
-    () =>
-      interfaces.map((iface) => ({
-        value: iface.address,
-        label: `${iface.name} - ${iface.address}`,
-      })),
-    [interfaces],
-  )
+  }, [isOpen])
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -103,7 +111,7 @@ export function ScreenExportModal({
       dialog.showModal()
       // Reset state when opening
       setSelectedMode('staticFile')
-      setServerUrlMode('localhost')
+      setSelectedUrlOption(LOCALHOST_VALUE)
       setCustomUrl('')
     } else {
       dialog.close()
@@ -237,103 +245,38 @@ export function ScreenExportModal({
 
         {/* Server URL Selection - only show for static file mode */}
         {!isSuccess && selectedMode === 'staticFile' && (
-          <div className="mb-6 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                {t('sections.screens.export.serverUrl.label')}
-              </label>
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {t('sections.screens.export.serverUrl.label')}
+            </label>
 
-              {/* Server URL Mode Radio Buttons */}
-              <div className="space-y-2">
-                {/* Localhost option */}
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="serverUrlMode"
-                    value="localhost"
-                    checked={serverUrlMode === 'localhost'}
-                    onChange={() => setServerUrlMode('localhost')}
-                    className="accent-indigo-600"
-                  />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
-                    {t('sections.screens.export.serverUrl.localhost')} (
-                    <code className="text-xs bg-gray-100 dark:bg-gray-700 px-1 rounded">
-                      localhost:{DEFAULT_PORT}
-                    </code>
-                    )
-                  </span>
-                </label>
+            <Combobox
+              options={urlOptions}
+              value={selectedUrlOption}
+              onChange={(val) => setSelectedUrlOption(val as string)}
+              allowClear={false}
+            />
 
-                {/* Network interface option */}
-                {interfaces.length > 0 && (
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="serverUrlMode"
-                      value="interface"
-                      checked={serverUrlMode === 'interface'}
-                      onChange={() => setServerUrlMode('interface')}
-                      className="accent-indigo-600"
-                    />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">
-                      {t('sections.screens.export.serverUrl.networkInterface')}
-                    </span>
-                  </label>
-                )}
-
-                {/* Interface selector - show when interface mode selected */}
-                {serverUrlMode === 'interface' && interfaces.length > 0 && (
-                  <div className="ml-6">
-                    <Combobox
-                      options={interfaceOptions}
-                      value={selectedInterface?.address ?? null}
-                      onChange={(val) =>
-                        setSelectedInterface(
-                          interfaces.find((i) => i.address === val) ?? null,
-                        )
-                      }
-                      allowClear={false}
-                    />
-                  </div>
-                )}
-
-                {/* Custom URL option */}
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="serverUrlMode"
-                    value="custom"
-                    checked={serverUrlMode === 'custom'}
-                    onChange={() => setServerUrlMode('custom')}
-                    className="accent-indigo-600"
-                  />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
-                    {t('sections.screens.export.serverUrl.custom')}
-                  </span>
-                </label>
-
-                {/* Custom URL input - show when custom mode selected */}
-                {serverUrlMode === 'custom' && (
-                  <div className="ml-6">
-                    <Input
-                      type="text"
-                      value={customUrl}
-                      onChange={(e) => setCustomUrl(e.target.value)}
-                      placeholder="http://192.168.1.100:3000"
-                      className="text-sm"
-                    />
-                  </div>
-                )}
+            {/* Custom URL input - show when custom option selected */}
+            {selectedUrlOption === CUSTOM_VALUE && (
+              <div className="mt-2">
+                <Input
+                  type="text"
+                  value={customUrl}
+                  onChange={(e) => setCustomUrl(e.target.value)}
+                  placeholder="http://192.168.1.100:3000"
+                  className="text-sm"
+                />
               </div>
+            )}
 
-              {/* Show the resulting URL */}
-              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                {t('sections.screens.export.serverUrl.result')}:{' '}
-                <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">
-                  {serverUrl}
-                </code>
-              </p>
-            </div>
+            {/* Show the resulting URL */}
+            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+              {t('sections.screens.export.serverUrl.result')}:{' '}
+              <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">
+                {serverUrl}
+              </code>
+            </p>
           </div>
         )}
 
