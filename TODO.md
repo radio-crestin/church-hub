@@ -148,8 +148,9 @@
 ~~- adauga posibilitatea de a face highlight pentru sesiunea curenta~~
 ~~- adauga etichete midi controller~~
 ~~- incarca o pagina statica in obs pentru a face refresh automat~~
-- adauga in program schimbarea scenei
-- add shortcuts indicators
+~~- adauga in program schimbarea scenei~~
+~~- modificarea editarea programului sa aiba la final [ST]~~
+~~- add shortcuts indicators~~
 - add update checker
 - rezolva problema cu acel profil pvcq
 - adauga pagina cu muzica dintr-un folder local
