@@ -16,6 +16,7 @@ interface YouTubeSetupModalProps {
 export function YouTubeSetupModal({ isOpen, onClose }: YouTubeSetupModalProps) {
   const { t } = useTranslation('livestream')
   const dialogRef = useRef<HTMLDialogElement>(null)
+  const mouseDownTargetRef = useRef<EventTarget | null>(null)
   const { config, update, isUpdating } = useYouTubeConfig()
   const { broadcasts } = usePastBroadcasts(isOpen)
   const { data: streamKeys, isLoading: isLoadingStreamKeys } = useStreamKeys()
@@ -96,8 +97,15 @@ export function YouTubeSetupModal({ isOpen, onClose }: YouTubeSetupModalProps) {
     }
   }, [isOpen])
 
+  const handleBackdropMouseDown = (e: React.MouseEvent<HTMLDialogElement>) => {
+    mouseDownTargetRef.current = e.target
+  }
+
   const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
-    if (e.target === dialogRef.current) {
+    if (
+      e.target === dialogRef.current &&
+      mouseDownTargetRef.current === dialogRef.current
+    ) {
       onClose()
     }
   }
@@ -111,6 +119,7 @@ export function YouTubeSetupModal({ isOpen, onClose }: YouTubeSetupModalProps) {
       ref={dialogRef}
       className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800 max-w-lg w-full max-h-[90vh] overflow-hidden"
       onClose={onClose}
+      onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
     >
       <div className="flex flex-col max-h-[90vh]">

@@ -14,6 +14,7 @@ const CHANNEL_COUNT_OPTIONS = [8, 16, 24, 32]
 export function MixerSetupModal({ isOpen, onClose }: MixerSetupModalProps) {
   const { t } = useTranslation('livestream')
   const dialogRef = useRef<HTMLDialogElement>(null)
+  const mouseDownTargetRef = useRef<EventTarget | null>(null)
   const { config, update, isUpdating, testConnection, isTesting } =
     useMixerConfig()
   const {
@@ -57,8 +58,15 @@ export function MixerSetupModal({ isOpen, onClose }: MixerSetupModalProps) {
     }
   }, [isOpen])
 
+  const handleBackdropMouseDown = (e: React.MouseEvent<HTMLDialogElement>) => {
+    mouseDownTargetRef.current = e.target
+  }
+
   const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
-    if (e.target === dialogRef.current) {
+    if (
+      e.target === dialogRef.current &&
+      mouseDownTargetRef.current === dialogRef.current
+    ) {
       onClose()
     }
   }
@@ -107,6 +115,7 @@ export function MixerSetupModal({ isOpen, onClose }: MixerSetupModalProps) {
       ref={dialogRef}
       className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800 max-w-lg w-full"
       onClose={onClose}
+      onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
     >
       <div className="p-6">

@@ -21,6 +21,7 @@ export function DuplicateSongDialog({
 }: DuplicateSongDialogProps) {
   const { t } = useTranslation('songs')
   const dialogRef = useRef<HTMLDialogElement>(null)
+  const mouseDownTargetRef = useRef<EventTarget | null>(null)
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -33,8 +34,15 @@ export function DuplicateSongDialog({
     }
   }, [isOpen])
 
+  const handleBackdropMouseDown = (e: React.MouseEvent<HTMLDialogElement>) => {
+    mouseDownTargetRef.current = e.target
+  }
+
   const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
-    if (e.target === dialogRef.current) {
+    if (
+      e.target === dialogRef.current &&
+      mouseDownTargetRef.current === dialogRef.current
+    ) {
       onAction('cancel')
     }
   }
@@ -44,6 +52,7 @@ export function DuplicateSongDialog({
       ref={dialogRef}
       className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800"
       onClose={() => onAction('cancel')}
+      onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
     >
       <div className="p-6 min-w-[400px] max-w-lg">

@@ -21,6 +21,7 @@ function generateRandomPassword(): string {
 export function OBSSetupModal({ isOpen, onClose }: OBSSetupModalProps) {
   const { t } = useTranslation('livestream')
   const dialogRef = useRef<HTMLDialogElement>(null)
+  const mouseDownTargetRef = useRef<EventTarget | null>(null)
   const { config, update, isUpdating } = useOBSConfig()
   const [copied, setCopied] = useState(false)
 
@@ -39,8 +40,15 @@ export function OBSSetupModal({ isOpen, onClose }: OBSSetupModalProps) {
     }
   }, [isOpen])
 
+  const handleBackdropMouseDown = (e: React.MouseEvent<HTMLDialogElement>) => {
+    mouseDownTargetRef.current = e.target
+  }
+
   const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
-    if (e.target === dialogRef.current) {
+    if (
+      e.target === dialogRef.current &&
+      mouseDownTargetRef.current === dialogRef.current
+    ) {
       onClose()
     }
   }
@@ -68,6 +76,7 @@ export function OBSSetupModal({ isOpen, onClose }: OBSSetupModalProps) {
       ref={dialogRef}
       className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800 max-w-lg w-full"
       onClose={onClose}
+      onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
     >
       <div className="p-6">
