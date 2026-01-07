@@ -2,6 +2,7 @@ import type {
   AddFolderInput,
   AddToPlaylistInput,
   GetFilesInput,
+  RenameFolderInput,
   ReorderPlaylistItemsInput,
   UpsertPlaylistInput,
 } from '../service/music'
@@ -17,6 +18,7 @@ import {
   getPlaylists,
   removeFolder,
   removeFromPlaylist,
+  renameFolder,
   reorderPlaylistItems,
   syncFolder,
   upsertPlaylist,
@@ -117,6 +119,48 @@ export async function handleMusicRoutes(
         headers: { 'Content-Type': 'application/json' },
       }),
     )
+  }
+
+  // PUT /api/music/folders/:id - Rename a folder
+  const renameFolderMatch = url.pathname.match(/^\/api\/music\/folders\/(\d+)$/)
+  if (req.method === 'PUT' && renameFolderMatch?.[1]) {
+    try {
+      const id = parseInt(renameFolderMatch[1], 10)
+      const body = (await req.json()) as Omit<RenameFolderInput, 'id'>
+      if (!body.name) {
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ error: 'Missing name' }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+      const result = renameFolder({ id, name: body.name })
+      if (!result.success) {
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ error: result.error }), {
+            status: 404,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+      return handleCors(
+        req,
+        new Response(JSON.stringify({ data: result.data }), {
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+    } catch {
+      return handleCors(
+        req,
+        new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+    }
   }
 
   // POST /api/music/folders/:id/sync - Sync a folder

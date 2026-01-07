@@ -97,6 +97,7 @@ export interface ServerPlayerState {
   duration: number
   volume: number
   isMuted: boolean
+  isShuffled: boolean
   currentIndex: number
   queueLength: number
   currentTrack: {

@@ -16,6 +16,7 @@ const defaultState: ServerPlayerState = {
   duration: 0,
   volume: 0,
   isMuted: false,
+  isShuffled: false,
   currentIndex: -1,
   queueLength: 0,
   currentTrack: null,
@@ -130,6 +131,11 @@ export function useServerAudioPlayer() {
     [send],
   )
 
+  const toggleShuffle = useCallback(() => {
+    const newShuffled = !state?.isShuffled
+    send({ type: 'music_shuffle', payload: { enabled: newShuffled } })
+  }, [send, state?.isShuffled])
+
   const currentTrack = state?.currentTrack
     ? {
         queueId: String(state.currentTrack.id),
@@ -163,5 +169,6 @@ export function useServerAudioPlayer() {
     clearQueue,
     setQueue,
     reorderQueue,
+    toggleShuffle,
   }
 }

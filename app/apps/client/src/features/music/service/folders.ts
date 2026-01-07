@@ -42,3 +42,18 @@ export async function syncFolder(id: number): Promise<SyncResult | null> {
   )
   return response.data ?? null
 }
+
+export async function renameFolder(
+  id: number,
+  name: string,
+): Promise<MusicFolder | null> {
+  const response = await fetcher<ApiResponse<MusicFolder>>(
+    `/api/music/folders/${id}`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    },
+  )
+  return response.data ?? null
+}

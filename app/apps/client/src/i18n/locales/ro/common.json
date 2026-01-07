@@ -60,5 +60,6 @@
   "connection": {
     "connectionLost": "Conexiune pierdută",
     "tapToReconnect": "Apasă pentru reconectare"
-  }
+  },
+  "settings": "Setări"
 }

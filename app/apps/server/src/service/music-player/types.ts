@@ -13,6 +13,7 @@ export interface MusicPlayerState {
   duration: number
   volume: number
   isMuted: boolean
+  isShuffled: boolean
   currentIndex: number
   queueLength: number
   currentTrack: CurrentTrack | null
@@ -57,6 +58,7 @@ export type MusicPlayerCommand =
   | { type: 'next' }
   | { type: 'previous' }
   | { type: 'play_index'; index: number }
+  | { type: 'shuffle'; enabled: boolean }
 
 export interface MpvPropertyChange {
   name: string

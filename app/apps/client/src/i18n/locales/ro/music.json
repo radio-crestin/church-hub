@@ -12,7 +12,9 @@
     "empty": "Niciun folder adăugat",
     "emptyDescription": "Adaugă un folder pentru a începe să navighezi prin fișierele muzicale",
     "tracks": "{{count}} piese",
-    "lastSync": "Ultima sincronizare: {{date}}"
+    "lastSync": "Ultima sincronizare: {{date}}",
+    "rename": "Redenumește",
+    "name": "Nume Folder"
   },
   "files": {
     "title": "Fișiere",

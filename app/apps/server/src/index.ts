@@ -216,6 +216,7 @@ import {
   handleWebSocketOpen,
   setMIDIMessageHandler,
   setMusicCommandHandler,
+  setMusicStateProvider,
   type WebSocketData,
 } from './websocket'
 
@@ -4383,6 +4384,9 @@ async function main() {
     broadcastMusicState(state)
   })
 
+  // Register music state provider for new WebSocket clients
+  setMusicStateProvider(() => getPlayerState())
+
   // Wire up music player WebSocket command handler
   setMusicCommandHandler(async (type, payload) => {
     switch (type) {
@@ -4460,6 +4464,11 @@ async function main() {
         reorderNowPlaying(itemIds)
         refreshQueueState()
         broadcastMusicState(getPlayerState())
+        break
+      }
+      case 'music_shuffle': {
+        const { enabled } = payload as { enabled: boolean }
+        await executeCommand({ type: 'shuffle', enabled })
         break
       }
     }

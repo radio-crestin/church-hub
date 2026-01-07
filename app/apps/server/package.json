@@ -19,6 +19,7 @@
     "google-auth-library": "^10.5.0",
     "googleapis": "^169.0.0",
     "libreoffice-convert": "^1.7.0",
+    "music-metadata": "^11.10.5",
     "obs-websocket-js": "^5.0.7"
   },
   "devDependencies": {

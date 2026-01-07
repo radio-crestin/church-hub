@@ -2,6 +2,7 @@ import { readdir, stat } from 'node:fs/promises'
 import { basename, extname, join } from 'node:path'
 import { eq } from 'drizzle-orm'
 
+import { extractAudioMetadata } from './extractAudioMetadata'
 import type { AudioFormat, SyncResult } from './types'
 import { SUPPORTED_AUDIO_FORMATS } from './types'
 import { getDatabase } from '../../db'
@@ -98,14 +99,24 @@ export async function syncFolder(folderId: number): Promise<SyncResult> {
 
         if (!existingFile) {
           const filename = basename(audioFile.path)
-          const title = basename(audioFile.path, extname(audioFile.path))
+          const fallbackTitle = basename(
+            audioFile.path,
+            extname(audioFile.path),
+          )
+          const metadata = await extractAudioMetadata(audioFile.path)
 
           db.insert(musicFiles)
             .values({
               folderId,
               path: audioFile.path,
               filename,
-              title,
+              title: metadata.title ?? fallbackTitle,
+              artist: metadata.artist,
+              album: metadata.album,
+              genre: metadata.genre,
+              year: metadata.year,
+              trackNumber: metadata.trackNumber,
+              duration: metadata.duration,
               format: audioFile.format,
               fileSize: fileStat.size,
               lastModified: fileStat.mtime,
@@ -117,8 +128,21 @@ export async function syncFolder(folderId: number): Promise<SyncResult> {
         } else if (
           existingFile.lastModified?.getTime() !== fileStat.mtime.getTime()
         ) {
+          const fallbackTitle = basename(
+            audioFile.path,
+            extname(audioFile.path),
+          )
+          const metadata = await extractAudioMetadata(audioFile.path)
+
           db.update(musicFiles)
             .set({
+              title: metadata.title ?? fallbackTitle,
+              artist: metadata.artist,
+              album: metadata.album,
+              genre: metadata.genre,
+              year: metadata.year,
+              trackNumber: metadata.trackNumber,
+              duration: metadata.duration,
               fileSize: fileStat.size,
               lastModified: fileStat.mtime,
               updatedAt: now,

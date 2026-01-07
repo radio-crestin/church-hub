@@ -108,6 +108,20 @@ export function setOBSStatusProvider(
   getOBSStatusCallback = callback
 }
 
+// Callback to get initial music player state for new clients
+let getMusicStateCallback:
+  | (() => MusicPlayerStateMessage['payload'] | null)
+  | null = null
+
+/**
+ * Register a callback to provide music player state for new WebSocket clients
+ */
+export function setMusicStateProvider(
+  callback: () => MusicPlayerStateMessage['payload'] | null,
+) {
+  getMusicStateCallback = callback
+}
+
 /**
  * Generates a unique client ID
  */
@@ -163,6 +177,27 @@ export function handleWebSocketOpen(ws: ServerWebSocket<WebSocketData>) {
     } catch (error) {
       wsLogger.error(
         `Failed to send initial OBS status to ${clientId}: ${error}`,
+      )
+    }
+  }
+
+  // Send initial music player state to the new client
+  if (getMusicStateCallback) {
+    try {
+      const musicState = getMusicStateCallback()
+
+      if (musicState) {
+        ws.send(
+          JSON.stringify({
+            type: 'music_state',
+            payload: musicState,
+          } satisfies MusicPlayerStateMessage),
+        )
+        wsLogger.debug(`Sent initial music state to ${clientId}`)
+      }
+    } catch (error) {
+      wsLogger.error(
+        `Failed to send initial music state to ${clientId}: ${error}`,
       )
     }
   }
@@ -713,6 +748,7 @@ export type MusicPlayerStateMessage = {
     duration: number
     volume: number
     isMuted: boolean
+    isShuffled: boolean
     currentIndex: number
     queueLength: number
     currentTrack: {
