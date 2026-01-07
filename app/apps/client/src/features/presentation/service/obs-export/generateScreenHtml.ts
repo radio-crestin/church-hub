@@ -81,28 +81,11 @@ export function generateScreenHtml(config: ScreenExportConfig): string {
 
     .hidden { display: none !important; }
 
-    /* Connection status indicator */
-    .connection-status {
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      font-weight: 500;
-      z-index: 9999;
-      transition: opacity 0.3s;
-    }
-    .connection-status.connected { background: rgba(34, 197, 94, 0.8); color: white; }
-    .connection-status.connecting { background: rgba(234, 179, 8, 0.8); color: white; }
-    .connection-status.disconnected { background: rgba(239, 68, 68, 0.8); color: white; }
-    .connection-status.fade-out { opacity: 0; }
   </style>
 </head>
 <body>
   <div id="root">
     <div id="screen-container" class="screen-container"></div>
-    <div id="connection-status" class="connection-status connecting">Connecting...</div>
   </div>
 
   <script>
@@ -121,7 +104,6 @@ export function generateScreenHtml(config: ScreenExportConfig): string {
       let presentationState = null;
       let ws = null;
       let reconnectTimeout = null;
-      let statusHideTimeout = null;
       let missedPongs = 0;
       let pingInterval = null;
       let pongTimeout = null;
@@ -132,21 +114,6 @@ export function generateScreenHtml(config: ScreenExportConfig): string {
 
       // DOM elements
       const container = document.getElementById('screen-container');
-      const statusEl = document.getElementById('connection-status');
-
-      // Update connection status UI
-      function updateStatus(status, message) {
-        statusEl.className = 'connection-status ' + status;
-        statusEl.textContent = message;
-        statusEl.classList.remove('fade-out');
-
-        clearTimeout(statusHideTimeout);
-        if (status === 'connected') {
-          statusHideTimeout = setTimeout(() => {
-            statusEl.classList.add('fade-out');
-          }, 2000);
-        }
-      }
 
       // Fetch screen configuration
       async function fetchScreenConfig() {
@@ -166,13 +133,10 @@ export function generateScreenHtml(config: ScreenExportConfig): string {
       function connect() {
         if (ws && ws.readyState === WebSocket.OPEN) return;
 
-        updateStatus('connecting', 'Connecting...');
-
         try {
           ws = new WebSocket(CONFIG.wsUrl);
 
           ws.onopen = () => {
-            updateStatus('connected', 'Connected');
             missedPongs = 0;
 
             // Fetch latest presentation state
@@ -226,18 +190,18 @@ export function generateScreenHtml(config: ScreenExportConfig): string {
           };
 
           ws.onerror = () => {
-            updateStatus('disconnected', 'Connection error');
+            // Silent error handling - will reconnect
           };
 
           ws.onclose = () => {
-            updateStatus('disconnected', 'Disconnected');
             clearInterval(pingInterval);
             clearTimeout(pongTimeout);
 
+            // Silent reconnect in background
             reconnectTimeout = setTimeout(connect, 3000);
           };
         } catch (error) {
-          updateStatus('disconnected', 'Failed to connect');
+          // Silent reconnect in background
           reconnectTimeout = setTimeout(connect, 5000);
         }
       }
