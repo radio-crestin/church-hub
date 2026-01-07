@@ -1,7 +1,5 @@
 import { useTranslation } from 'react-i18next'
 
-import { Card, CardContent, CardHeader, CardTitle } from '~/ui/card'
-import { Separator } from '~/ui/separator'
 import { NowPlaying } from './NowPlaying'
 import { PlayerControls } from './PlayerControls'
 import { Playlist } from './Playlist'
@@ -45,11 +43,13 @@ export function MusicPlayer({
   const { t } = useTranslation('music')
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base">{t('player.nowPlaying')}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+        <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+          {t('player.nowPlaying')}
+        </h3>
+      </div>
+      <div className="p-4 space-y-4">
         <NowPlaying currentTrack={currentTrack} />
 
         <ProgressBar
@@ -78,17 +78,17 @@ export function MusicPlayer({
           />
         </div>
 
-        <Separator />
-
-        <Playlist
-          items={queue}
-          currentIndex={state.currentIndex}
-          onReorder={onReorderQueue}
-          onPlayItem={onPlayQueueItem}
-          onRemoveItem={onRemoveFromQueue}
-          onClear={onClearQueue}
-        />
-      </CardContent>
-    </Card>
+        <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+          <Playlist
+            items={queue}
+            currentIndex={state.currentIndex}
+            onReorder={onReorderQueue}
+            onPlayItem={onPlayQueueItem}
+            onRemoveItem={onRemoveFromQueue}
+            onClear={onClearQueue}
+          />
+        </div>
+      </div>
+    </div>
   )
 }

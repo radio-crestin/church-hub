@@ -20,14 +20,17 @@ export function TrackList({
 
   if (tracks.length === 0) {
     return (
-      <div className="flex items-center justify-center py-8 text-muted-foreground">
+      <div className="flex items-center justify-center py-8 text-gray-500 dark:text-gray-400">
         {t('files.empty')}
       </div>
     )
   }
 
   return (
-    <div className="w-full overflow-y-auto scrollbar-thin" style={{ maxHeight }}>
+    <div
+      className="w-full overflow-y-auto scrollbar-thin"
+      style={{ maxHeight }}
+    >
       <div className="space-y-1 pr-1">
         {tracks.map((track) => (
           <TrackCard

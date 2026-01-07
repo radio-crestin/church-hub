@@ -4,7 +4,6 @@ import { GripVertical, Play, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '~/ui/button'
-import { cn } from '~/ui/utils'
 import type { QueueItem } from '../types'
 import { formatDuration } from '../utils'
 
@@ -42,11 +41,7 @@ export function PlaylistItem({
     <div
       ref={setNodeRef}
       style={style}
-      className={cn(
-        'flex items-center gap-2 p-2 rounded-lg group',
-        isDragging && 'opacity-50',
-        isPlaying && 'bg-primary/10',
-      )}
+      className={`flex items-center gap-2 p-2 rounded-lg group ${isDragging ? 'opacity-50' : ''} ${isPlaying ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''}`}
     >
       <button
         type="button"
@@ -54,7 +49,7 @@ export function PlaylistItem({
         {...attributes}
         {...listeners}
       >
-        <GripVertical className="h-4 w-4 text-muted-foreground" />
+        <GripVertical className="h-4 w-4 text-gray-400 dark:text-gray-500" />
       </button>
 
       <Button
@@ -69,16 +64,13 @@ export function PlaylistItem({
 
       <div className="flex-1 min-w-0">
         <p
-          className={cn(
-            'text-sm truncate',
-            isPlaying && 'font-medium text-primary',
-          )}
+          className={`text-sm truncate ${isPlaying ? 'font-medium text-indigo-600 dark:text-indigo-400' : 'text-gray-900 dark:text-white'}`}
         >
           {displayTitle}
         </p>
       </div>
 
-      <span className="text-xs text-muted-foreground tabular-nums">
+      <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">
         {item.duration ? formatDuration(item.duration) : '--:--'}
       </span>
 
