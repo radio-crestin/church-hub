@@ -28,6 +28,7 @@ export function ProgressBar({
         step={1}
         onValueChange={handleSeek}
         className="flex-1"
+        showValue={false}
       />
       <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums w-10">
         {formatDuration(duration)}
