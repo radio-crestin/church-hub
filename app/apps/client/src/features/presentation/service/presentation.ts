@@ -7,6 +7,7 @@ import type {
   PresentTemporaryAnnouncementInput,
   PresentTemporaryBibleInput,
   PresentTemporaryBiblePassageInput,
+  PresentTemporarySceneInput,
   PresentTemporarySongInput,
   PresentTemporaryVerseteTineriInput,
   UpdatePresentationStateInput,
@@ -318,6 +319,30 @@ export async function presentTemporaryVerseteTineri(
 
   if (!response.ok) {
     throw new Error('Failed to present temporary versete tineri')
+  }
+
+  const result = await response.json()
+  return result.data
+}
+
+/**
+ * Present a scene temporarily (shows empty slide, used for OBS scene switching)
+ */
+export async function presentTemporaryScene(
+  input: PresentTemporarySceneInput,
+): Promise<PresentationState> {
+  const response = await fetchFn(
+    `${getApiUrl()}/api/presentation/temporary-scene`,
+    {
+      method: 'POST',
+      headers: getHeaders('application/json'),
+      body: JSON.stringify(input),
+      credentials: 'include',
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error('Failed to present temporary scene')
   }
 
   const result = await response.json()

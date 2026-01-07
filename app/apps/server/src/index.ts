@@ -112,11 +112,13 @@ import {
   type PresentTemporaryAnnouncementInput,
   type PresentTemporaryBibleInput,
   type PresentTemporaryBiblePassageInput,
+  type PresentTemporarySceneInput,
   type PresentTemporarySongInput,
   type PresentTemporaryVerseteTineriInput,
   presentTemporaryAnnouncement,
   presentTemporaryBible,
   presentTemporaryBiblePassage,
+  presentTemporaryScene,
   presentTemporarySong,
   presentTemporaryVerseteTineri,
   removeSlideHighlight,
@@ -2506,6 +2508,36 @@ async function main() {
           const state = presentTemporaryVerseteTineri(body)
           broadcastPresentationState(state)
           triggerSceneAutomation(state)
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: state }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // POST /api/presentation/temporary-scene - Present a scene (empty slide)
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/presentation/temporary-scene'
+      ) {
+        const permError = checkPermission('control_room.control')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as PresentTemporarySceneInput
+          const state = presentTemporaryScene(body)
+          broadcastPresentationState(state)
 
           return handleCors(
             req,

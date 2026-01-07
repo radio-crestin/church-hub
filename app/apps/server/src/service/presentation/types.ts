@@ -181,6 +181,14 @@ export interface TemporaryVerseteTineriContent {
 }
 
 /**
+ * Temporary scene content for instant display (shows empty slide)
+ */
+export interface TemporarySceneContent {
+  obsSceneName: string
+  nextItemPreview?: NextItemPreview // Preview of next schedule item
+}
+
+/**
  * Union type for temporary content
  */
 export type TemporaryContent =
@@ -189,6 +197,7 @@ export type TemporaryContent =
   | { type: 'announcement'; data: TemporaryAnnouncementContent }
   | { type: 'bible_passage'; data: TemporaryBiblePassageContent }
   | { type: 'versete_tineri'; data: TemporaryVerseteTineriContent }
+  | { type: 'scene'; data: TemporarySceneContent }
 
 /**
  * Input for presenting a temporary Bible verse
@@ -263,6 +272,14 @@ export interface PresentTemporaryBiblePassageInput {
 export interface PresentTemporaryVerseteTineriInput {
   entries: VerseteTineriEntry[]
   currentEntryIndex?: number // Optional: start from specific entry (0-based)
+  nextItemPreview?: NextItemPreview // Preview of next schedule item (for schedule presentations)
+}
+
+/**
+ * Input for presenting a scene (shows empty slide)
+ */
+export interface PresentTemporarySceneInput {
+  obsSceneName: string
   nextItemPreview?: NextItemPreview // Preview of next schedule item (for schedule presentations)
 }
 

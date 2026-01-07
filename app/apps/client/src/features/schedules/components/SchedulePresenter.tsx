@@ -15,6 +15,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useOBSScenes } from '~/features/livestream/hooks/useOBSScenes'
 import { clearSectionLastVisited } from '~/features/navigation'
 import {
   type ContentType,
@@ -22,6 +23,7 @@ import {
   usePresentationState,
   usePresentTemporaryAnnouncement,
   usePresentTemporaryBiblePassage,
+  usePresentTemporaryScene,
   usePresentTemporarySong,
   usePresentTemporaryVerseteTineri,
   useWebSocket,
@@ -37,6 +39,7 @@ import {
 import { SongEditorModal, SongPickerModal } from '~/features/songs/components'
 import { expandSongSlidesWithChoruses } from '~/features/songs/utils/expandSongSlides'
 import { useToast } from '~/ui/toast'
+import { createLogger } from '~/utils/logger'
 import { AddToScheduleMenu } from './AddToScheduleMenu'
 import { BiblePassagePickerModal } from './BiblePassagePickerModal'
 import { EditAsTextModal } from './EditAsTextModal'
@@ -53,6 +56,8 @@ import {
   useUpsertSchedule,
 } from '../hooks'
 import type { ScheduleItem, SlideTemplate } from '../types'
+
+const logger = createLogger('schedules:presenter')
 
 interface SchedulePresenterProps {
   scheduleId: number
@@ -101,7 +106,9 @@ export function SchedulePresenter({
   const presentTemporaryBiblePassage = usePresentTemporaryBiblePassage()
   const presentTemporaryVerseteTineri = usePresentTemporaryVerseteTineri()
   const presentTemporaryAnnouncement = usePresentTemporaryAnnouncement()
+  const presentTemporaryScene = usePresentTemporaryScene()
   const clearTemporary = useClearTemporaryContent()
+  const { switchSceneAsync } = useOBSScenes()
   const { saveSchedule, isPending: isSaving } = useSaveScheduleToFile()
   const { loadSchedule, isPending: isLoadingFile } = useLoadScheduleFromFile()
   const { importItems, isPending: isImporting } = useImportScheduleItems()
@@ -296,7 +303,7 @@ export function SchedulePresenter({
   const flatItems = useMemo(() => {
     const result: Array<{
       item: ScheduleItem
-      type: 'slide' | 'verse' | 'entry' | 'announcement'
+      type: 'slide' | 'verse' | 'entry' | 'announcement' | 'scene'
       index: number
     }> = []
 
@@ -315,6 +322,8 @@ export function SchedulePresenter({
           item.verseteTineriEntries.forEach((_, idx) => {
             result.push({ item, type: 'entry', index: idx })
           })
+        } else if (item.slideType === 'scene') {
+          result.push({ item, type: 'scene', index: 0 })
         } else {
           result.push({ item, type: 'announcement', index: 0 })
         }
@@ -358,6 +367,13 @@ export function SchedulePresenter({
       }
     }
 
+    if (temp.type === 'scene') {
+      return {
+        type: 'scene' as const,
+        obsSceneName: temp.data.obsSceneName,
+      }
+    }
+
     return null
   }, [presentationState?.temporaryContent])
 
@@ -398,6 +414,15 @@ export function SchedulePresenter({
         presentedInfo.type === 'announcement'
       ) {
         return true
+      }
+
+      // Scene matching
+      if (
+        fi.item.itemType === 'slide' &&
+        fi.item.slideType === 'scene' &&
+        presentedInfo.type === 'scene'
+      ) {
+        return fi.item.obsSceneName === presentedInfo.obsSceneName
       }
 
       return false
@@ -601,6 +626,37 @@ export function SchedulePresenter({
     [presentTemporaryAnnouncement, getNextItemPreview],
   )
 
+  // Handle scene click (OBS scene switch)
+  const handleSceneClick = useCallback(
+    async (item: ScheduleItem) => {
+      if (
+        item.itemType !== 'slide' ||
+        item.slideType !== 'scene' ||
+        !item.obsSceneName
+      ) {
+        return
+      }
+
+      // Calculate next item preview
+      const nextItemPreview = getNextItemPreview(item)
+
+      // Switch the OBS scene first
+      try {
+        await switchSceneAsync(item.obsSceneName)
+      } catch (error) {
+        // Scene switch may fail if OBS is not connected, but we still show the empty slide
+        logger.warn('Failed to switch OBS scene:', error)
+      }
+
+      // Present the scene (shows empty slide)
+      await presentTemporaryScene.mutateAsync({
+        obsSceneName: item.obsSceneName,
+        nextItemPreview,
+      })
+    },
+    [presentTemporaryScene, getNextItemPreview, switchSceneAsync],
+  )
+
   // Helper to navigate to a specific flat item
   const navigateToFlatItem = useCallback(
     async (flatItem: (typeof flatItems)[0]) => {
@@ -627,6 +683,8 @@ export function SchedulePresenter({
         item.slideType === 'announcement'
       ) {
         await handleAnnouncementClick(item)
+      } else if (item.itemType === 'slide' && item.slideType === 'scene') {
+        await handleSceneClick(item)
       }
     },
     [
@@ -635,6 +693,7 @@ export function SchedulePresenter({
       handleVerseClick,
       handleEntryClick,
       handleAnnouncementClick,
+      handleSceneClick,
     ],
   )
 
@@ -1129,6 +1188,7 @@ export function SchedulePresenter({
               onVerseClick={handleVerseClick}
               onEntryClick={handleEntryClick}
               onAnnouncementClick={handleAnnouncementClick}
+              onSceneClick={handleSceneClick}
               onReorder={handleReorder}
               onEditSong={handleEditSong}
               onNavigateToSong={handleNavigateToSong}
