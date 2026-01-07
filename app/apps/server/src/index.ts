@@ -4376,7 +4376,6 @@ async function main() {
   // Initialize Music Player service
   t = performance.now()
   await initializeMusicPlayer()
-  clearNowPlayingQueue()
   logTiming('init_music_player', t)
 
   // Wire up music player state callback to WebSocket broadcast
