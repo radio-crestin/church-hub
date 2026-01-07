@@ -33,6 +33,7 @@ let playerState: MusicPlayerState = {
   duration: 0,
   volume: 0,
   isMuted: false,
+  isShuffled: false,
   currentIndex: -1,
   queueLength: 0,
   currentTrack: null,
@@ -279,6 +280,7 @@ export function shutdownMusicPlayer(): void {
     duration: 0,
     volume: 0,
     isMuted: false,
+    isShuffled: false,
     currentIndex: -1,
     queueLength: 0,
     currentTrack: null,
@@ -329,6 +331,17 @@ async function loadAndPlayFile(filePath: string): Promise<void> {
 
 async function playNext(): Promise<void> {
   const queueLength = getQueueLength()
+
+  if (playerState.isShuffled && queueLength > 1) {
+    // Pick a random index that's different from current
+    let randomIndex: number
+    do {
+      randomIndex = Math.floor(Math.random() * queueLength)
+    } while (randomIndex === playerState.currentIndex && queueLength > 1)
+    await playAtIndex(randomIndex)
+    return
+  }
+
   const nextIndex = playerState.currentIndex + 1
 
   if (nextIndex < queueLength) {
@@ -433,6 +446,10 @@ export async function executeCommand(
 
     case 'play_index':
       await playAtIndex(command.index)
+      break
+
+    case 'shuffle':
+      updateState({ isShuffled: command.enabled })
       break
   }
 }

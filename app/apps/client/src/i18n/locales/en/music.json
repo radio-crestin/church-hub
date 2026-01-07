@@ -12,7 +12,9 @@
     "empty": "No folders added",
     "emptyDescription": "Add a folder to start browsing your music files",
     "tracks": "{{count}} tracks",
-    "lastSync": "Last sync: {{date}}"
+    "lastSync": "Last sync: {{date}}",
+    "rename": "Rename",
+    "name": "Folder Name"
   },
   "files": {
     "title": "Files",

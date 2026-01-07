@@ -60,5 +60,6 @@
   "connection": {
     "connectionLost": "Connection lost",
     "tapToReconnect": "Tap to reconnect"
-  }
+  },
+  "settings": "Settings"
 }

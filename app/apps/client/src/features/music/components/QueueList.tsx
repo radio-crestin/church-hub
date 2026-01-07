@@ -35,7 +35,7 @@ export function QueueList({
   }
 
   return (
-    <div className="space-y-1 max-h-64 overflow-y-auto">
+    <div className="space-y-1">
       {queue.map((item, index) => (
         <div
           key={item.id}
@@ -63,12 +63,12 @@ export function QueueList({
               index + 1
             )}
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+          <div className="flex-1 min-w-0 overflow-hidden">
+            <p className="text-sm font-medium text-gray-900 dark:text-white whitespace-nowrap overflow-x-auto scrollbar-none">
               {item.title || item.filename}
             </p>
             {item.artist && (
-              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+              <p className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap overflow-x-auto scrollbar-none">
                 {item.artist}
               </p>
             )}

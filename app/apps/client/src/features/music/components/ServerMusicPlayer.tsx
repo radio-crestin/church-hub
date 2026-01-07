@@ -22,6 +22,7 @@ interface PlayerProps {
   onClearQueue: () => void
   onPlayAtIndex: (index: number) => void
   onRemoveFromQueue: (itemId: number) => void
+  onToggleShuffle: () => void
 }
 
 export function Player({
@@ -36,6 +37,7 @@ export function Player({
   onClearQueue,
   onPlayAtIndex,
   onRemoveFromQueue,
+  onToggleShuffle,
 }: PlayerProps) {
   const { t } = useTranslation('music')
   const { data: mpvStatus } = useMpvStatus()
@@ -43,8 +45,8 @@ export function Player({
   const showInstallGuide = mpvStatus && !mpvStatus.installed
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+    <div className="flex-1 w-full min-w-0 flex flex-col min-h-0 overflow-hidden bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
         <div className="flex items-center justify-between">
           <h3 className="text-base font-semibold text-gray-900 dark:text-white">
             {t('player.title')}
@@ -58,13 +60,13 @@ export function Player({
         </div>
       </div>
       {showInstallGuide && (
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
           <MpvInstallGuide
             installInstructions={mpvStatus?.installInstructions}
           />
         </div>
       )}
-      <div className="p-4 space-y-4">
+      <div className="p-4 space-y-4 flex-shrink-0">
         <NowPlaying currentTrack={currentTrack} />
 
         <ProgressBar
@@ -76,33 +78,36 @@ export function Player({
         <div className="flex justify-center">
           <PlayerControls
             isPlaying={state.isPlaying}
-            isShuffled={false}
+            isShuffled={state.isShuffled}
             canPlayPrevious={state.currentIndex > 0}
-            canPlayNext={state.currentIndex < state.queueLength - 1}
+            canPlayNext={
+              state.isShuffled || state.currentIndex < state.queueLength - 1
+            }
             onPlayPause={onPlayPause}
             onPrevious={onPrevious}
             onNext={onNext}
-            onShuffle={() => {}}
-            hideShuffle
+            onShuffle={onToggleShuffle}
           />
         </div>
+      </div>
 
-        <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              {t('player.queue')}
-            </span>
-            {state.queueLength > 0 && (
-              <button
-                type="button"
-                onClick={onClearQueue}
-                className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
-                title={t('player.clearQueue')}
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            )}
-          </div>
+      <div className="flex-1 flex flex-col min-h-0 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between p-4 pb-2 flex-shrink-0">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            {t('player.queue')}
+          </span>
+          {state.queueLength > 0 && (
+            <button
+              type="button"
+              onClick={onClearQueue}
+              className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+              title={t('player.clearQueue')}
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+        <div className="flex-1 overflow-y-auto px-4 pb-4 scrollbar-thin">
           <QueueList
             queue={state.queue}
             currentIndex={state.currentIndex}
