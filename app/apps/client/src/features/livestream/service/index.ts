@@ -24,6 +24,7 @@ export {
   getUpcomingBroadcasts,
   getYouTubeAuthStatus,
   getYouTubeConfig,
+  getYoutubePlaylists,
   logoutYouTube,
   storePKCESession,
   storeYouTubeTokens,

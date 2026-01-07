@@ -13,4 +13,5 @@ export {
   useStreamKeys,
   useUpcomingBroadcasts,
   useYouTubeConfig,
+  useYoutubePlaylists,
 } from './useYouTubeConfig'

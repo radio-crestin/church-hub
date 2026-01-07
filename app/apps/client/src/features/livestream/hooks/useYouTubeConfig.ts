@@ -5,6 +5,7 @@ import {
   getStreamKeys,
   getUpcomingBroadcasts,
   getYouTubeConfig,
+  getYoutubePlaylists,
   updateYouTubeConfig,
 } from '../service'
 import type { YouTubeConfig } from '../types'
@@ -70,6 +71,23 @@ export function usePastBroadcasts(enabled = true) {
 
   return {
     broadcasts: query.data ?? [],
+    isLoading: query.isLoading,
+    refetch: query.refetch,
+    isRefetching: query.isRefetching,
+    error: query.error,
+  }
+}
+
+export function useYoutubePlaylists(enabled = true) {
+  const query = useQuery({
+    queryKey: ['livestream', 'youtube', 'playlists'],
+    queryFn: getYoutubePlaylists,
+    staleTime: 5 * 60 * 1000,
+    enabled,
+  })
+
+  return {
+    playlists: query.data ?? [],
     isLoading: query.isLoading,
     refetch: query.refetch,
     isRefetching: query.isRefetching,

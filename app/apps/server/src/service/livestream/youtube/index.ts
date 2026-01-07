@@ -18,3 +18,4 @@ export {
 } from './broadcast'
 export { getYouTubeConfig, updateYouTubeConfig } from './config'
 export { consumePKCESession, storePKCESession } from './pkce-session'
+export { getPlaylists } from './playlists'

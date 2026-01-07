@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { BroadcastTemplateSelector } from './BroadcastTemplateSelector'
 import { Button } from '../../../ui/button/Button'
 import { Combobox } from '../../../ui/combobox/Combobox'
-import { usePastBroadcasts, useStreamKeys, useYouTubeConfig } from '../hooks'
+import {
+  usePastBroadcasts,
+  useStreamKeys,
+  useYouTubeConfig,
+  useYoutubePlaylists,
+} from '../hooks'
 import type { PastBroadcast } from '../types'
 import { openExternalUrl } from '../utils'
 
@@ -20,6 +24,8 @@ export function YouTubeSetupModal({ isOpen, onClose }: YouTubeSetupModalProps) {
   const { config, update, isUpdating } = useYouTubeConfig()
   const { broadcasts } = usePastBroadcasts(isOpen)
   const { data: streamKeys, isLoading: isLoadingStreamKeys } = useStreamKeys()
+  const { playlists, isLoading: isLoadingPlaylists } =
+    useYoutubePlaylists(isOpen)
 
   const [selectedPastBroadcastId, setSelectedPastBroadcastId] = useState<
     string | null
@@ -27,6 +33,7 @@ export function YouTubeSetupModal({ isOpen, onClose }: YouTubeSetupModalProps) {
   const [selectedPastBroadcast, setSelectedPastBroadcast] =
     useState<PastBroadcast | null>(null)
   const [selectedStreamKeyId, setSelectedStreamKeyId] = useState<string>('')
+  const [selectedPlaylistId, setSelectedPlaylistId] = useState<string>('')
   const [hasInitialized, setHasInitialized] = useState(false)
 
   // Initialize selection from saved config when broadcasts are loaded
@@ -36,6 +43,11 @@ export function YouTubeSetupModal({ isOpen, onClose }: YouTubeSetupModalProps) {
     // Initialize stream key from config
     if (config?.streamKeyId) {
       setSelectedStreamKeyId(config.streamKeyId)
+    }
+
+    // Initialize playlist from config
+    if (config?.playlistId) {
+      setSelectedPlaylistId(config.playlistId)
     }
 
     // Initialize past broadcast selection
@@ -73,6 +85,7 @@ export function YouTubeSetupModal({ isOpen, onClose }: YouTubeSetupModalProps) {
   const handleSaveAndClose = () => {
     const updateData: Parameters<typeof update>[0] = {
       streamKeyId: selectedStreamKeyId || undefined,
+      playlistId: selectedPlaylistId || undefined,
     }
 
     if (selectedPastBroadcast) {
@@ -149,25 +162,44 @@ export function YouTubeSetupModal({ isOpen, onClose }: YouTubeSetupModalProps) {
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {/* Past Broadcast Selection */}
+          {/* Broadcast Template Selection */}
           <div>
             <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
               {t('youtube.setup.templateTitle')}
             </h3>
-            <BroadcastTemplateSelector
-              selectedBroadcastId={selectedPastBroadcastId}
-              onSelectBroadcast={handleSelectPastBroadcast}
-              enabled={isOpen}
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+              {t('youtube.setup.templateDescription')}
+            </p>
+            <Combobox
+              options={broadcasts.map((broadcast) => ({
+                value: broadcast.broadcastId,
+                label: broadcast.title,
+              }))}
+              value={selectedPastBroadcastId}
+              onChange={(value) => {
+                const broadcast = broadcasts.find(
+                  (b) => b.broadcastId === value,
+                )
+                handleSelectPastBroadcast(broadcast || null)
+              }}
+              placeholder={t('youtube.setup.selectTemplate')}
+              allowClear={true}
+              portalContainer={dialogRef.current}
             />
           </div>
 
-          {/* Selected Past Broadcast Info */}
+          {/* Selected Template Info */}
           {selectedPastBroadcast && (
             <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
               <p className="text-sm text-blue-800 dark:text-blue-200">
                 <strong>{t('youtube.setup.usingTemplate')}:</strong>{' '}
                 {selectedPastBroadcast.title}
               </p>
+              {selectedPastBroadcast.description && (
+                <p className="text-xs text-blue-700 dark:text-blue-300 mt-1 line-clamp-2">
+                  {selectedPastBroadcast.description}
+                </p>
+              )}
               <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
                 {t('youtube.setup.usingTemplateHint')}
               </p>
@@ -196,6 +228,43 @@ export function YouTubeSetupModal({ isOpen, onClose }: YouTubeSetupModalProps) {
               portalContainer={dialogRef.current}
             />
           </div>
+
+          {/* Playlist Selector */}
+          <div>
+            <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+              {t('youtube.setup.playlistTitle')}
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+              {t('youtube.setup.playlistDescription')}
+            </p>
+            <Combobox
+              options={playlists.map((playlist) => ({
+                value: playlist.id,
+                label: playlist.title,
+              }))}
+              value={selectedPlaylistId || null}
+              onChange={(value) =>
+                setSelectedPlaylistId(value?.toString() ?? '')
+              }
+              placeholder={t('youtube.setup.selectPlaylist')}
+              disabled={isLoadingPlaylists}
+              allowClear={true}
+              portalContainer={dialogRef.current}
+            />
+          </div>
+
+          {/* Selected Playlist Info */}
+          {selectedPlaylistId && (
+            <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 border border-green-200 dark:border-green-800">
+              <p className="text-sm text-green-800 dark:text-green-200">
+                <strong>{t('youtube.setup.usingPlaylist')}:</strong>{' '}
+                {playlists.find((p) => p.id === selectedPlaylistId)?.title}
+              </p>
+              <p className="text-xs text-green-700 dark:text-green-300 mt-1">
+                {t('youtube.setup.usingPlaylistHint')}
+              </p>
+            </div>
+          )}
 
           {/* First Time Instructions */}
           <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
