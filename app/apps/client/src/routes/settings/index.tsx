@@ -72,9 +72,6 @@ function RouteComponent() {
           </p>
         </div>
 
-        {/* About Section */}
-        <AboutSection />
-
         {/* Appearance Settings Section */}
         <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800 space-y-6">
           <div>
@@ -245,6 +242,9 @@ function RouteComponent() {
             {isLocalhost() && <FactoryReset />}
           </div>
         </div>
+
+        {/* About Section */}
+        <AboutSection />
       </div>
     </PagePermissionGuard>
   )
