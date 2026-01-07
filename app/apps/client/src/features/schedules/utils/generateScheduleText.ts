@@ -8,18 +8,18 @@ export function generateScheduleText(items: ScheduleItem[]): string {
 
   // Add format help as comments at the top
   lines.push('# Format examples:')
-  lines.push('# S: Song Title')
-  lines.push('# A: Announcement text')
-  lines.push('# V: Ioan 3:16 (Bible passage)')
+  lines.push('# Song Title [S]')
+  lines.push('# Announcement text [A]')
+  lines.push('# Ioan 3:16 [V] (Bible passage)')
   lines.push(
-    '# VT: Person Name - Ioan 3:16, Person 2 - Ioan 3:17 (Youth verses)',
+    '# Person Name - Ioan 3:16, Person 2 - Ioan 3:17 [VT] (Youth verses)',
   )
-  lines.push('# SC: Scene Name (OBS scene switch)')
+  lines.push('# Scene Name [SC] (OBS scene switch)')
   lines.push('')
 
   for (const item of items) {
     if (item.itemType === 'song' && item.song) {
-      lines.push(`S: ${item.song.title}`)
+      lines.push(`${item.song.title} [S]`)
     } else if (item.itemType === 'bible_passage') {
       // Bible passage item - use the reference directly
       if (item.biblePassageReference) {
@@ -27,14 +27,14 @@ export function generateScheduleText(items: ScheduleItem[]): string {
         const refWithoutTranslation = item.biblePassageReference
           .replace(/\s*-\s*[A-Z]+$/, '')
           .trim()
-        lines.push(`V: ${refWithoutTranslation}`)
+        lines.push(`${refWithoutTranslation} [V]`)
       }
     } else if (item.itemType === 'slide') {
       if (item.slideType === 'announcement') {
         // Strip HTML tags to get plain text
         const plainText = stripHtml(item.slideContent || '')
         if (plainText) {
-          lines.push(`A: ${plainText}`)
+          lines.push(`${plainText} [A]`)
         }
       } else if (item.slideType === 'versete_tineri') {
         // Check if we have structured entries
@@ -43,29 +43,29 @@ export function generateScheduleText(items: ScheduleItem[]): string {
           const entriesText = item.verseteTineriEntries
             .map((entry) => `${entry.personName} - ${entry.reference}`)
             .join(', ')
-          lines.push(`VT: ${entriesText}`)
+          lines.push(`${entriesText} [VT]`)
         } else {
           // Fallback: try to extract from HTML content (legacy format)
           const vtData = extractVerseteTineriData(item.slideContent || '')
           if (vtData) {
-            lines.push(`VT: ${vtData.personName} - ${vtData.reference}`)
+            lines.push(`${vtData.personName} - ${vtData.reference} [VT]`)
           } else {
             // Fallback: try to extract just Bible reference as V:
             const reference = extractBibleReference(item.slideContent || '')
             if (reference) {
-              lines.push(`V: ${reference}`)
+              lines.push(`${reference} [V]`)
             } else {
               // Last fallback: show as announcement
               const plainText = stripHtml(item.slideContent || '')
               if (plainText) {
-                lines.push(`A: ${plainText}`)
+                lines.push(`${plainText} [A]`)
               }
             }
           }
         }
       } else if (item.slideType === 'scene' && item.obsSceneName) {
         // Scene item - output the OBS scene name
-        lines.push(`SC: ${item.obsSceneName}`)
+        lines.push(`${item.obsSceneName} [SC]`)
       }
     }
   }
