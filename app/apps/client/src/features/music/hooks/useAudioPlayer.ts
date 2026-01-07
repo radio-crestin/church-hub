@@ -182,6 +182,15 @@ export function useAudioPlayer() {
     }
   }, [])
 
+  const playTrack = useCallback(
+    (item: QueueItem) => {
+      setQueue([item])
+      setState((prev) => ({ ...prev, currentIndex: 0 }))
+      loadAndPlayTrack(item)
+    },
+    [loadAndPlayTrack],
+  )
+
   const reorderQueue = useCallback((newQueue: QueueItem[]) => {
     setQueue(newQueue)
   }, [])
@@ -255,6 +264,7 @@ export function useAudioPlayer() {
     addToQueue,
     removeFromQueue,
     clearQueue,
+    playTrack,
     reorderQueue,
     playAtIndex,
     next,

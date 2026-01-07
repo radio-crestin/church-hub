@@ -91,6 +91,20 @@ import {
   shutdownMIDI,
 } from './service/midi'
 import { handleMIDIShortcut, loadMIDIShortcuts } from './service/midi/shortcuts'
+import { getFileById } from './service/music/getFiles'
+import {
+  addMultipleToNowPlaying,
+  clearNowPlayingQueue,
+  executeCommand,
+  getPlayerState,
+  initializeMusicPlayer,
+  refreshQueueState,
+  removeFromNowPlaying,
+  reorderNowPlaying,
+  setNowPlayingQueue,
+  setStateCallback,
+  shutdownMusicPlayer,
+} from './service/music-player'
 import { getExternalInterfaces } from './service/network'
 import {
   addSlideHighlight,
@@ -192,6 +206,7 @@ import {
   broadcastMIDIConnectionStatus,
   broadcastMIDIDevices,
   broadcastMIDIMessage,
+  broadcastMusicState,
   broadcastPresentationState,
   broadcastScreenConfigUpdated,
   broadcastSettingsUpdated,
@@ -200,6 +215,7 @@ import {
   handleWebSocketMessage,
   handleWebSocketOpen,
   setMIDIMessageHandler,
+  setMusicCommandHandler,
   type WebSocketData,
 } from './websocket'
 
@@ -4356,6 +4372,99 @@ async function main() {
     }
   })
 
+  // Initialize Music Player service
+  t = performance.now()
+  await initializeMusicPlayer()
+  clearNowPlayingQueue()
+  logTiming('init_music_player', t)
+
+  // Wire up music player state callback to WebSocket broadcast
+  setStateCallback((state) => {
+    broadcastMusicState(state)
+  })
+
+  // Wire up music player WebSocket command handler
+  setMusicCommandHandler(async (type, payload) => {
+    switch (type) {
+      case 'music_play':
+        await executeCommand({ type: 'play' })
+        break
+      case 'music_pause':
+        await executeCommand({ type: 'pause' })
+        break
+      case 'music_stop':
+        await executeCommand({ type: 'stop' })
+        break
+      case 'music_seek': {
+        const { time } = payload as { time: number }
+        await executeCommand({ type: 'seek', time })
+        break
+      }
+      case 'music_volume': {
+        const { level } = payload as { level: number }
+        await executeCommand({ type: 'volume', level })
+        break
+      }
+      case 'music_mute': {
+        const { muted } = payload as { muted: boolean }
+        await executeCommand({ type: 'mute', muted })
+        break
+      }
+      case 'music_next':
+        await executeCommand({ type: 'next' })
+        break
+      case 'music_previous':
+        await executeCommand({ type: 'previous' })
+        break
+      case 'music_play_index': {
+        const { index } = payload as { index: number }
+        await executeCommand({ type: 'play_index', index })
+        break
+      }
+      case 'music_play_file': {
+        const { fileId } = payload as { fileId: number }
+        const file = getFileById(fileId)
+        if (file) {
+          setNowPlayingQueue([fileId])
+          await executeCommand({ type: 'play_index', index: 0 })
+        }
+        break
+      }
+      case 'music_add_to_queue': {
+        const { fileIds } = payload as { fileIds: number[] }
+        addMultipleToNowPlaying(fileIds)
+        refreshQueueState()
+        broadcastMusicState(getPlayerState())
+        break
+      }
+      case 'music_remove_from_queue': {
+        const { itemId } = payload as { itemId: number }
+        removeFromNowPlaying(itemId)
+        refreshQueueState()
+        broadcastMusicState(getPlayerState())
+        break
+      }
+      case 'music_clear_queue':
+        clearNowPlayingQueue()
+        await executeCommand({ type: 'stop' })
+        break
+      case 'music_set_queue': {
+        const { fileIds } = payload as { fileIds: number[] }
+        setNowPlayingQueue(fileIds)
+        refreshQueueState()
+        broadcastMusicState(getPlayerState())
+        break
+      }
+      case 'music_reorder_queue': {
+        const { itemIds } = payload as { itemIds: number[] }
+        reorderNowPlaying(itemIds)
+        refreshQueueState()
+        broadcastMusicState(getPlayerState())
+        break
+      }
+    }
+  })
+
   // biome-ignore lint/suspicious/noConsole: Startup timing logs
   console.log(
     `[startup] === Server Ready (total: ${(performance.now() - startupStart).toFixed(1)}ms) ===`,
@@ -4380,6 +4489,7 @@ async function main() {
   // Graceful shutdown
   process.on('SIGINT', () => {
     clearHistory()
+    shutdownMusicPlayer()
     shutdownMIDI()
     closeDatabase()
     process.exit(0)
@@ -4387,6 +4497,7 @@ async function main() {
 
   process.on('SIGTERM', () => {
     clearHistory()
+    shutdownMusicPlayer()
     shutdownMIDI()
     closeDatabase()
     process.exit(0)

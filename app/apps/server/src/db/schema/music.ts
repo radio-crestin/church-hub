@@ -106,3 +106,21 @@ export const musicPlaylistItems = sqliteTable(
     index('idx_music_playlist_items_file_id').on(table.fileId),
   ],
 )
+
+export const musicNowPlaying = sqliteTable(
+  'music_now_playing',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    fileId: integer('file_id')
+      .notNull()
+      .references(() => musicFiles.id, { onDelete: 'cascade' }),
+    sortOrder: integer('sort_order').notNull().default(0),
+    createdAt: integer('created_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (table) => [
+    index('idx_music_now_playing_sort_order').on(table.sortOrder),
+    index('idx_music_now_playing_file_id').on(table.fileId),
+  ],
+)

@@ -86,6 +86,30 @@ interface SettingsUpdatedMessage {
   }
 }
 
+interface MusicStateMessage {
+  type: 'music_state'
+  payload: {
+    isPlaying: boolean
+    currentTime: number
+    duration: number
+    volume: number
+    isMuted: boolean
+    currentIndex: number
+    queueLength: number
+    currentTrack: {
+      id: number
+      fileId: number
+      path: string
+      filename: string
+      title?: string
+      artist?: string
+      album?: string
+      duration?: number
+    } | null
+    updatedAt: number
+  }
+}
+
 type MessageData =
   | PresentationMessage
   | ScreenConfigUpdatedMessage
@@ -93,6 +117,7 @@ type MessageData =
   | HighlightColorsUpdatedMessage
   | SlideHighlightsUpdatedMessage
   | SettingsUpdatedMessage
+  | MusicStateMessage
   | { type: 'pong' }
 
 // Check if we should use Tauri WebSocket plugin (on mobile)
@@ -216,6 +241,11 @@ export function useWebSocket() {
             slideHighlightsQueryKey,
             data.payload.highlights,
           )
+        }
+
+        if (data.type === 'music_state') {
+          // Update music player state cache
+          queryClient.setQueryData(['music', 'playerState'], data.payload)
         }
       } catch {
         // Failed to parse message

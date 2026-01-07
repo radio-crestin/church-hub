@@ -225,6 +225,11 @@ export function handleWebSocketMessage(
     if (data.type?.startsWith('midi_') && midiMessageHandler) {
       midiMessageHandler(data.type, data.payload || {})
     }
+
+    // Handle Music Player messages from clients
+    if (data.type?.startsWith('music_') && musicCommandHandler) {
+      musicCommandHandler(data.type, data.payload || {})
+    }
   } catch (error) {
     wsLogger.error(`Failed to parse message: ${error}`)
   }
@@ -697,4 +702,64 @@ export function setMIDIMessageHandler(
   handler: (type: string, payload: Record<string, unknown>) => void,
 ) {
   midiMessageHandler = handler
+}
+
+// Music Player message types
+export type MusicPlayerStateMessage = {
+  type: 'music_state'
+  payload: {
+    isPlaying: boolean
+    currentTime: number
+    duration: number
+    volume: number
+    isMuted: boolean
+    currentIndex: number
+    queueLength: number
+    currentTrack: {
+      id: number
+      fileId: number
+      path: string
+      filename: string
+      title?: string
+      artist?: string
+      album?: string
+      duration?: number
+    } | null
+    updatedAt: number
+  }
+}
+
+// Callback for handling Music Player WebSocket messages
+let musicCommandHandler:
+  | ((type: string, payload: Record<string, unknown>) => void)
+  | null = null
+
+/**
+ * Register a handler for Music Player WebSocket messages from clients
+ */
+export function setMusicCommandHandler(
+  handler: (type: string, payload: Record<string, unknown>) => void,
+) {
+  musicCommandHandler = handler
+}
+
+/**
+ * Broadcasts music player state to all connected clients
+ */
+export function broadcastMusicState(state: MusicPlayerStateMessage['payload']) {
+  const message = JSON.stringify({
+    type: 'music_state',
+    payload: state,
+  } satisfies MusicPlayerStateMessage)
+
+  wsLogger.debug(`Broadcasting music state to ${clients.size} clients`)
+
+  for (const [clientId, conn] of clients) {
+    try {
+      conn.ws.send(message)
+    } catch (error) {
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
+      clients.delete(clientId)
+    }
+  }
 }

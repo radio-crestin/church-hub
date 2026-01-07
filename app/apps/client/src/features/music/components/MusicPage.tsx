@@ -2,30 +2,18 @@ import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { FolderBrowser } from './FolderBrowser'
-import { MusicPlayer } from './MusicPlayer'
+import { ServerMusicPlayer } from './ServerMusicPlayer'
 import { VolumeSlider } from './VolumeSlider'
-import { useAudioPlayer } from '../hooks'
-import type { MusicFile, QueueItem } from '../types'
+import { useServerAudioPlayer } from '../hooks'
+import type { MusicFile } from '../types'
 
 export function MusicPage() {
   const { t } = useTranslation('music')
-  const player = useAudioPlayer()
+  const player = useServerAudioPlayer()
 
   const handlePlayTrack = useCallback(
     (track: MusicFile) => {
-      const queueItem: QueueItem = {
-        queueId: crypto.randomUUID(),
-        fileId: track.id,
-        path: track.path,
-        filename: track.filename,
-        title: track.title ?? undefined,
-        artist: track.artist ?? undefined,
-        album: track.album ?? undefined,
-        duration: track.duration ?? undefined,
-      }
-      player.clearQueue()
-      player.addToQueue(queueItem)
-      player.play()
+      player.playFile(track.id)
     },
     [player],
   )
@@ -33,17 +21,8 @@ export function MusicPage() {
   const handleAddToQueue = useCallback(
     (tracks: MusicFile | MusicFile[]) => {
       const trackArray = Array.isArray(tracks) ? tracks : [tracks]
-      const queueItems: QueueItem[] = trackArray.map((track) => ({
-        queueId: crypto.randomUUID(),
-        fileId: track.id,
-        path: track.path,
-        filename: track.filename,
-        title: track.title ?? undefined,
-        artist: track.artist ?? undefined,
-        album: track.album ?? undefined,
-        duration: track.duration ?? undefined,
-      }))
-      queueItems.forEach((item) => player.addToQueue(item))
+      const fileIds = trackArray.map((track) => track.id)
+      player.addToQueue(fileIds)
     },
     [player],
   )
@@ -55,7 +34,7 @@ export function MusicPage() {
           {t('title')}
         </h1>
         <VolumeSlider
-          volume={player.state.volume}
+          volume={player.state.volume / 100}
           isMuted={player.state.isMuted}
           onVolumeChange={player.setVolume}
           onToggleMute={player.toggleMute}
@@ -72,18 +51,13 @@ export function MusicPage() {
 
         <div className="lg:col-span-1">
           <div className="lg:sticky lg:top-6">
-            <MusicPlayer
+            <ServerMusicPlayer
               state={player.state}
-              queue={player.queue}
               currentTrack={player.currentTrack}
               onPlayPause={player.togglePlayPause}
               onPrevious={player.previous}
               onNext={player.next}
               onSeek={player.seek}
-              onShuffle={player.shuffle}
-              onReorderQueue={player.reorderQueue}
-              onPlayQueueItem={player.playAtIndex}
-              onRemoveFromQueue={player.removeFromQueue}
               onClearQueue={player.clearQueue}
             />
           </div>
