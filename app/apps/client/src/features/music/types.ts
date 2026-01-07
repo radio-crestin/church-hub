@@ -62,17 +62,22 @@ export interface SyncResult {
 }
 
 export interface PlayerState {
-  currentTrack: MusicFile | null
   isPlaying: boolean
   currentTime: number
   duration: number
   volume: number
   isMuted: boolean
   isShuffled: boolean
+  currentIndex: number
 }
 
 export interface QueueItem {
-  id: string
-  file: MusicFile
-  addedAt: number
+  queueId: string
+  fileId: number
+  path: string
+  filename: string
+  title?: string
+  artist?: string
+  album?: string
+  duration?: number
 }
