@@ -1,3 +1,4 @@
+export { AboutSection } from './components/AboutSection'
 export { UpdateNotification } from './components/UpdateNotification'
 export { VersionDisplay } from './components/VersionDisplay'
 export { useAppUpdate } from './hooks/useAppUpdate'
