@@ -2,7 +2,7 @@ import { Radio, Square } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { useAppShortcuts } from '~/features/keyboard-shortcuts'
+import { isMIDIShortcut, useAppShortcuts } from '~/features/keyboard-shortcuts'
 import { KeyboardShortcutBadge } from '~/ui/kbd'
 import { ConfirmModal } from '../../../ui/modal'
 import { Tooltip } from '../../../ui/tooltip'
@@ -16,19 +16,19 @@ export function StreamControls() {
     useStreaming()
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
 
-  // Get stream shortcuts for display
+  // Get stream shortcuts for display (keyboard shortcuts only, no MIDI)
   const { shortcuts } = useAppShortcuts()
   const startLiveShortcut = useMemo(() => {
     const action = shortcuts.actions.startLive
-    return action?.enabled && action.shortcuts.length > 0
-      ? action.shortcuts[0]
-      : undefined
+    if (!action?.enabled) return undefined
+    const keyboardShortcut = action.shortcuts.find((s) => !isMIDIShortcut(s))
+    return keyboardShortcut
   }, [shortcuts])
   const stopLiveShortcut = useMemo(() => {
     const action = shortcuts.actions.stopLive
-    return action?.enabled && action.shortcuts.length > 0
-      ? action.shortcuts[0]
-      : undefined
+    if (!action?.enabled) return undefined
+    const keyboardShortcut = action.shortcuts.find((s) => !isMIDIShortcut(s))
+    return keyboardShortcut
   }, [shortcuts])
 
   const hasConnection = isAuthenticated || isConnected
