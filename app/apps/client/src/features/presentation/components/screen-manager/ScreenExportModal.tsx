@@ -255,6 +255,7 @@ export function ScreenExportModal({
               value={selectedUrlOption}
               onChange={(val) => setSelectedUrlOption(val as string)}
               allowClear={false}
+              portalContainer={dialogRef.current}
             />
 
             {/* Custom URL input - show when custom option selected */}
