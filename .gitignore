@@ -96,3 +96,4 @@ app/apps/server/church-hub.db
 
 # Tauri generated files
 app/tauri/gen/
+app/apps/server/churchhub.db
