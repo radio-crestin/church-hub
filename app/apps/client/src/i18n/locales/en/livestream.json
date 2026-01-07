@@ -172,6 +172,7 @@
     "enable": "Enable Mixer",
     "disable": "Disable Mixer",
     "settings": "Mixer Settings",
+    "openGuide": "Settings",
     "setup": {
       "title": "Mixer Setup",
       "connectionSettings": "Connection Settings",
