@@ -88,14 +88,24 @@ export function EditAsTextModal({
   // Initialize text from current items when modal opens
   useEffect(() => {
     if (isOpen) {
-      const generatedText = generateScheduleText(currentItems)
+      const formatHelpLines = [
+        t('editAsText.formatHelpLines.title'),
+        t('editAsText.formatHelpLines.song'),
+        t('editAsText.formatHelpLines.announcement'),
+        t('editAsText.formatHelpLines.bible'),
+        t('editAsText.formatHelpLines.youthVerses'),
+        t('editAsText.formatHelpLines.scene'),
+      ]
+      const generatedText = generateScheduleText(currentItems, {
+        formatHelpLines,
+      })
       setText(generatedText)
       setModalState('editing')
       setMissingSongs([])
       setParsedItems([])
       setValidationErrors([])
     }
-  }, [isOpen, currentItems])
+  }, [isOpen, currentItems, t])
 
   // Handle dialog open/close
   useEffect(() => {

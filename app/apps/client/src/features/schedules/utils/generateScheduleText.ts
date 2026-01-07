@@ -1,21 +1,25 @@
 import type { ScheduleItem } from '../types'
 
+interface GenerateScheduleTextOptions {
+  formatHelpLines?: string[]
+}
+
 /**
  * Convert schedule items back to text format for editing
  */
-export function generateScheduleText(items: ScheduleItem[]): string {
+export function generateScheduleText(
+  items: ScheduleItem[],
+  options?: GenerateScheduleTextOptions,
+): string {
   const lines: string[] = []
 
-  // Add format help as comments at the top
-  lines.push('# Format examples:')
-  lines.push('# Song Title [S]')
-  lines.push('# Announcement text [A]')
-  lines.push('# Ioan 3:16 [V] (Bible passage)')
-  lines.push(
-    '# Person Name - Ioan 3:16, Person 2 - Ioan 3:17 [VT] (Youth verses)',
-  )
-  lines.push('# Scene Name [SC] (OBS scene switch)')
-  lines.push('')
+  // Add format help as comments at the top (from i18n)
+  if (options?.formatHelpLines) {
+    for (const line of options.formatHelpLines) {
+      lines.push(`# ${line}`)
+    }
+    lines.push('')
+  }
 
   for (const item of items) {
     if (item.itemType === 'song' && item.song) {
