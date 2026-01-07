@@ -41,9 +41,11 @@ import { AddToScheduleMenu } from './AddToScheduleMenu'
 import { BiblePassagePickerModal } from './BiblePassagePickerModal'
 import { EditAsTextModal } from './EditAsTextModal'
 import { InsertSlideModal } from './InsertSlideModal'
+import { ScenePickerModal } from './ScenePickerModal'
 import { ScheduleItemsPanel } from './ScheduleItemsPanel'
 import { SchedulePreviewPanel } from './SchedulePreviewPanel'
 import {
+  useAddItemToSchedule,
   useDeleteSchedule,
   useReorderScheduleItems,
   useSchedule,
@@ -106,6 +108,7 @@ export function SchedulePresenter({
   const upsertSchedule = useUpsertSchedule()
   const deleteSchedule = useDeleteSchedule()
   const reorderItems = useReorderScheduleItems()
+  const addItemMutation = useAddItemToSchedule()
 
   // Layout state
   const [dividerPosition, setDividerPosition] = useState(() => {
@@ -132,6 +135,7 @@ export function SchedulePresenter({
     useState<SlideTemplate>('announcement')
   const [showEditAsText, setShowEditAsText] = useState(false)
   const [showBiblePassagePicker, setShowBiblePassagePicker] = useState(false)
+  const [showScenePicker, setShowScenePicker] = useState(false)
   const [editingSongId, setEditingSongId] = useState<number | null>(null)
   const [editingSlideItem, setEditingSlideItem] = useState<ScheduleItem | null>(
     null,
@@ -697,6 +701,34 @@ export function SchedulePresenter({
     setShowBiblePassagePicker(true)
   }, [])
 
+  const handleAddScene = useCallback(() => {
+    setShowScenePicker(true)
+  }, [])
+
+  const handleSceneSelect = useCallback(
+    (obsSceneName: string) => {
+      addItemMutation.mutate(
+        {
+          scheduleId,
+          input: {
+            slideType: 'scene',
+            obsSceneName,
+          },
+        },
+        {
+          onSuccess: () => {
+            showToast(t('messages.itemAdded'), 'success')
+            refetch()
+          },
+          onError: () => {
+            showToast(t('messages.error'), 'error')
+          },
+        },
+      )
+    },
+    [addItemMutation, scheduleId, showToast, t, refetch],
+  )
+
   // Callback to reopen add menu after closing sub-modals (only for non-edit mode)
   const handleReopenAddMenu = useCallback(() => {
     setShowAddMenu(true)
@@ -1084,6 +1116,7 @@ export function SchedulePresenter({
                 onAddSong={handleAddSong}
                 onAddBiblePassage={handleAddBiblePassage}
                 onAddSlide={handleAddSlide}
+                onAddScene={handleAddScene}
               />
             </div>
           </div>
@@ -1208,6 +1241,19 @@ export function SchedulePresenter({
             : undefined
         }
         onSaved={() => refetch()}
+      />
+
+      {/* Scene Picker Modal */}
+      <ScenePickerModal
+        isOpen={showScenePicker}
+        onClose={() => {
+          handleReopenAddMenu()
+          setShowScenePicker(false)
+        }}
+        onSceneSelect={(obsSceneName) => {
+          handleSceneSelect(obsSceneName)
+          setShowScenePicker(false)
+        }}
       />
 
       {/* Export Format Modal */}
