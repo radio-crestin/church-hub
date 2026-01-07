@@ -1,9 +1,11 @@
 import { Search, Sparkles, X } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useAppShortcuts } from '~/features/keyboard-shortcuts'
 import { useAISearchSettings } from '~/features/songs/hooks'
 import { useDebouncedValue } from '~/hooks/useDebouncedValue'
+import { KeyboardShortcutBadge } from '~/ui/kbd'
 import { BooksList } from './BooksList'
 import { ChaptersGrid } from './ChaptersGrid'
 import { VersesList } from './VersesList'
@@ -133,6 +135,15 @@ export function BibleNavigationPanel({
   // AI Search
   const { isEnabled: aiSearchAvailable } = useAISearchSettings()
   const aiSearchMutation = useAIBibleSearch()
+
+  // Get search shortcut for display
+  const { shortcuts } = useAppShortcuts()
+  const searchBibleShortcut = useMemo(() => {
+    const action = shortcuts.actions.searchBible
+    return action?.enabled && action.shortcuts.length > 0
+      ? action.shortcuts[0]
+      : undefined
+  }, [shortcuts])
   const [aiSearchResults, setAiSearchResults] = useState<AIBibleSearchResult[]>(
     [],
   )
@@ -214,10 +225,16 @@ export function BibleNavigationPanel({
               onChange={(e) => setLocalQuery(e.target.value)}
               onKeyDown={handleSearchKeyDown}
               placeholder={t('search.placeholder')}
-              className="w-full pl-9 pr-9 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-white placeholder-gray-400"
+              className={`w-full pl-9 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-white placeholder-gray-400 ${
+                searchBibleShortcut ? 'pr-20' : 'pr-9'
+              }`}
             />
             {(showPendingIndicator || aiSearchMutation.isPending) && (
-              <div className="absolute right-9 top-1/2 -translate-y-1/2 flex items-center gap-1">
+              <div
+                className={`absolute top-1/2 -translate-y-1/2 flex items-center gap-1 ${
+                  searchBibleShortcut ? 'right-20' : 'right-9'
+                }`}
+              >
                 {aiSearchMutation.isPending ? (
                   <>
                     <Sparkles className="w-3 h-3 text-indigo-500 animate-pulse" />
@@ -230,15 +247,21 @@ export function BibleNavigationPanel({
                 )}
               </div>
             )}
-            {localQuery && (
+            {localQuery ? (
               <button
                 type="button"
                 onClick={handleClearSearch}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                className={`absolute top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 ${
+                  searchBibleShortcut ? 'right-14' : 'right-3'
+                }`}
               >
                 <X size={16} />
               </button>
-            )}
+            ) : searchBibleShortcut ? (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <KeyboardShortcutBadge shortcut={searchBibleShortcut} />
+              </div>
+            ) : null}
           </div>
           {aiSearchAvailable && (
             <button

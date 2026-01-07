@@ -23,6 +23,7 @@ import {
   useClearSlideHighlights,
   useSlideHighlights,
 } from '~/features/presentation/hooks/useSlideHighlights'
+import { KeyboardShortcutBadge } from '~/ui/kbd'
 
 interface BibleControlPanelProps {
   onPrevVerse: () => void
@@ -149,7 +150,11 @@ export function BibleControlPanel({
                 <EyeOff size={18} />
               )}
               <span className="hidden sm:inline">{t('controls.hide')}</span>
-              <span className="text-xs opacity-75 hidden sm:inline">(Esc)</span>
+              <KeyboardShortcutBadge
+                shortcut="Escape"
+                variant="muted"
+                className="hidden sm:inline-block"
+              />
             </button>
           ) : (
             <button
@@ -165,7 +170,11 @@ export function BibleControlPanel({
                 <Eye size={18} />
               )}
               <span className="hidden sm:inline">{t('controls.show')}</span>
-              <span className="text-xs opacity-75 hidden sm:inline">(F10)</span>
+              <KeyboardShortcutBadge
+                shortcut="F10"
+                variant="muted"
+                className="hidden sm:inline-block"
+              />
             </button>
           )}
         </div>

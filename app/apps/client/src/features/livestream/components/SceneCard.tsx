@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 
+import { formatShortcutForDisplay } from '~/features/keyboard-shortcuts'
 import type { OBSScene } from '../types'
 
 interface SceneCardProps {
@@ -45,6 +46,18 @@ export function SceneCard({
         <h3 className="font-medium text-gray-900 dark:text-gray-100">
           {scene.displayName}
         </h3>
+        {scene.shortcuts && scene.shortcuts.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-1">
+            {scene.shortcuts.map((shortcut) => (
+              <span
+                key={shortcut}
+                className="px-1.5 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded"
+              >
+                {formatShortcutForDisplay(shortcut)}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

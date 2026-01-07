@@ -18,6 +18,7 @@ import {
   useClearSlideHighlights,
   useSlideHighlights,
 } from '~/features/presentation/hooks/useSlideHighlights'
+import { KeyboardShortcutBadge } from '~/ui/kbd'
 
 interface SchedulePreviewPanelProps {
   canNavigatePrev: boolean
@@ -131,7 +132,11 @@ export function SchedulePreviewPanel({
               <span className="hidden sm:inline">
                 {t('bible:controls.hide')}
               </span>
-              <span className="text-xs opacity-75 hidden sm:inline">(Esc)</span>
+              <KeyboardShortcutBadge
+                shortcut="Escape"
+                variant="muted"
+                className="hidden sm:inline-block"
+              />
             </button>
           ) : (
             <button
