@@ -64,11 +64,11 @@ export function Playlist({
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-center">
-        <ListMusic className="h-10 w-10 text-muted-foreground mb-3" />
-        <p className="text-sm text-muted-foreground">
+        <ListMusic className="h-10 w-10 text-gray-400 dark:text-gray-500 mb-3" />
+        <p className="text-sm text-gray-500 dark:text-gray-400">
           {t('player.queueEmpty')}
         </p>
-        <p className="text-xs text-muted-foreground mt-1">
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
           {t('player.addSongsToQueue')}
         </p>
       </div>

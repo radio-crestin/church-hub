@@ -2,7 +2,6 @@ import { Pause, Play, Shuffle, SkipBack, SkipForward } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '~/ui/button'
-import { cn } from '~/ui/utils'
 
 interface PlayerControlsProps {
   isPlaying: boolean
@@ -32,7 +31,7 @@ export function PlayerControls({
       <Button
         variant="ghost"
         size="icon"
-        className={cn('h-8 w-8', isShuffled && 'text-primary')}
+        className={`h-8 w-8 ${isShuffled ? 'text-indigo-600 dark:text-indigo-400' : ''}`}
         onClick={onShuffle}
         title={t('player.shuffle')}
       >

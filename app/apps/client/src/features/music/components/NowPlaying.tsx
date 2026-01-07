@@ -13,11 +13,13 @@ export function NowPlaying({ currentTrack }: NowPlayingProps) {
   if (!currentTrack) {
     return (
       <div className="flex items-center gap-3">
-        <div className="h-12 w-12 rounded bg-muted flex items-center justify-center shrink-0">
-          <Music className="h-6 w-6 text-muted-foreground" />
+        <div className="h-12 w-12 rounded bg-gray-100 dark:bg-gray-700 flex items-center justify-center shrink-0">
+          <Music className="h-6 w-6 text-gray-400 dark:text-gray-500" />
         </div>
         <div>
-          <p className="text-sm text-muted-foreground">{t('player.noTrack')}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {t('player.noTrack')}
+          </p>
         </div>
       </div>
     )
@@ -27,13 +29,15 @@ export function NowPlaying({ currentTrack }: NowPlayingProps) {
 
   return (
     <div className="flex items-center gap-3">
-      <div className="h-12 w-12 rounded bg-muted flex items-center justify-center shrink-0">
-        <Music className="h-6 w-6 text-muted-foreground" />
+      <div className="h-12 w-12 rounded bg-gray-100 dark:bg-gray-700 flex items-center justify-center shrink-0">
+        <Music className="h-6 w-6 text-gray-400 dark:text-gray-500" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium truncate">{displayTitle}</p>
+        <p className="text-sm font-medium truncate text-gray-900 dark:text-white">
+          {displayTitle}
+        </p>
         {currentTrack.artist && (
-          <p className="text-xs text-muted-foreground truncate">
+          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
             {currentTrack.artist}
           </p>
         )}

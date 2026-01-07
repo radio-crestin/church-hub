@@ -1,7 +1,6 @@
 import { FolderOpen } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-import { Skeleton } from '~/ui/skeleton'
 import { AddFolderButton } from './AddFolderButton'
 import { FolderCard } from './FolderCard'
 import { useMusicFolders } from '../hooks'
@@ -23,12 +22,12 @@ export function FolderBrowser({
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <Skeleton className="h-6 w-24" />
-          <Skeleton className="h-9 w-32" />
+          <div className="h-6 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+          <div className="h-9 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
         </div>
         <div className="space-y-3">
-          <Skeleton className="h-20 w-full" />
-          <Skeleton className="h-20 w-full" />
+          <div className="h-20 w-full bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
+          <div className="h-20 w-full bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
         </div>
       </div>
     )
@@ -37,17 +36,19 @@ export function FolderBrowser({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">{t('folders.title')}</h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          {t('folders.title')}
+        </h2>
         <AddFolderButton />
       </div>
 
       {folders.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <FolderOpen className="h-12 w-12 text-muted-foreground mb-4" />
-          <p className="text-lg font-medium text-muted-foreground">
+          <FolderOpen className="h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" />
+          <p className="text-lg font-medium text-gray-500 dark:text-gray-400">
             {t('folders.empty')}
           </p>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
             {t('folders.emptyDescription')}
           </p>
         </div>

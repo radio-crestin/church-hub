@@ -10,19 +10,8 @@ import {
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '~/ui/alert-dialog'
 import { Button } from '~/ui/button'
-import { Card, CardContent, CardHeader } from '~/ui/card'
+import { ConfirmModal } from '~/ui/modal'
 import { SearchInput } from './SearchInput'
 import { TrackList } from './TrackList'
 import { useMusicFiles, useRemoveFolder, useSyncFolder } from '../hooks'
@@ -42,6 +31,7 @@ export function FolderCard({
   const { t } = useTranslation('music')
   const [isExpanded, setIsExpanded] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   const syncFolder = useSyncFolder()
   const removeFolder = useRemoveFolder()
@@ -64,6 +54,7 @@ export function FolderCard({
 
   const handleDelete = () => {
     removeFolder.mutate(folder.id)
+    setShowDeleteConfirm(false)
   }
 
   const handleAddAllToQueue = () => {
@@ -77,8 +68,8 @@ export function FolderCard({
     : null
 
   return (
-    <Card>
-      <CardHeader className="p-4">
+    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+      <div className="p-4">
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
@@ -93,11 +84,13 @@ export function FolderCard({
             )}
           </Button>
 
-          <Folder className="h-5 w-5 text-muted-foreground shrink-0" />
+          <Folder className="h-5 w-5 text-gray-500 dark:text-gray-400 shrink-0" />
 
           <div className="flex-1 min-w-0">
-            <p className="font-medium truncate">{folder.name}</p>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <p className="font-medium truncate text-gray-900 dark:text-white">
+              {folder.name}
+            </p>
+            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
               <span>{t('folders.tracks', { count: folder.fileCount })}</span>
               {formattedLastSync && (
                 <>
@@ -124,38 +117,21 @@ export function FolderCard({
               )}
             </Button>
 
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-destructive hover:text-destructive"
-                  title={t('folders.delete')}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>{t('folders.delete')}</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {t('folders.deleteConfirm')}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>{t('common:cancel')}</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete}>
-                    {t('common:delete')}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400"
+              onClick={() => setShowDeleteConfirm(true)}
+              title={t('folders.delete')}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
           </div>
         </div>
-      </CardHeader>
+      </div>
 
       {isExpanded && (
-        <CardContent className="pt-0 px-4 pb-4">
+        <div className="px-4 pb-4 pt-0">
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <div className="flex-1">
@@ -174,7 +150,7 @@ export function FolderCard({
 
             {isLoadingFiles ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <Loader2 className="h-6 w-6 animate-spin text-gray-500 dark:text-gray-400" />
               </div>
             ) : (
               <TrackList
@@ -184,8 +160,18 @@ export function FolderCard({
               />
             )}
           </div>
-        </CardContent>
+        </div>
       )}
-    </Card>
+
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        title={t('folders.delete')}
+        message={t('folders.deleteConfirm')}
+        confirmLabel={t('common:delete')}
+        onConfirm={handleDelete}
+        onCancel={() => setShowDeleteConfirm(false)}
+        variant="danger"
+      />
+    </div>
   )
 }

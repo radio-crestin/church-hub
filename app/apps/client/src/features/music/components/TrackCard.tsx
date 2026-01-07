@@ -17,7 +17,7 @@ export function TrackCard({ track, onPlay, onAddToQueue }: TrackCardProps) {
   const displayTitle = track.title || track.filename
 
   return (
-    <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 group">
+    <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100/50 dark:hover:bg-gray-700/50 group">
       <Button
         variant="ghost"
         size="icon"
@@ -29,15 +29,17 @@ export function TrackCard({ track, onPlay, onAddToQueue }: TrackCardProps) {
       </Button>
 
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">{displayTitle}</p>
+        <p className="text-sm font-medium truncate text-gray-900 dark:text-white">
+          {displayTitle}
+        </p>
         {track.artist && (
-          <p className="text-xs text-muted-foreground truncate">
+          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
             {track.artist}
           </p>
         )}
       </div>
 
-      <span className="text-xs text-muted-foreground tabular-nums">
+      <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">
         {track.duration ? formatDuration(track.duration) : '--:--'}
       </span>
 
