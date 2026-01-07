@@ -655,15 +655,18 @@ function BiblePage() {
     navigation.goBack()
   }, [navigation, tempContentType])
 
-  // Enable keyboard shortcuts
+  // Enable keyboard shortcuts (for chapters and verses levels)
+  const isVersesLevel = navigation.state.level === 'verses'
+  const isChaptersLevel = navigation.state.level === 'chapters'
   useBibleKeyboardShortcuts({
     onNextVerse: handleNextVerse,
     onPreviousVerse: handlePreviousVerse,
     onGoBack: handleGoBack,
     onHidePresentation: handleHidePresentation,
     onPresentSearched: handlePresentSearched,
-    enabled: navigation.state.level === 'verses',
+    enabled: isVersesLevel || isChaptersLevel,
     isPresenting: navigation.state.presentedIndex !== null,
+    isVersesLevel,
   })
 
   const canNavigateVerses =

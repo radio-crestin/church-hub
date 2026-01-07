@@ -14,6 +14,8 @@ interface UseBibleKeyboardShortcutsOptions {
   enabled?: boolean
   /** Whether a verse is currently being presented (determines ESC behavior) */
   isPresenting?: boolean
+  /** Whether at verses level (enables verse navigation with arrows) */
+  isVersesLevel?: boolean
 }
 
 /**
@@ -28,6 +30,7 @@ export function useBibleKeyboardShortcuts({
   onPresentSearched,
   enabled = true,
   isPresenting = false,
+  isVersesLevel = false,
 }: UseBibleKeyboardShortcutsOptions) {
   const handleKeyDown = useCallback(
     (event: KeyboardEvent): boolean => {
@@ -51,6 +54,18 @@ export function useBibleKeyboardShortcuts({
         return true
       }
 
+      // Backspace always works for navigation
+      if (event.key === 'Backspace') {
+        event.preventDefault()
+        onGoBack()
+        return true
+      }
+
+      // Verse-specific shortcuts only work at verses level
+      if (!isVersesLevel) {
+        return false
+      }
+
       switch (event.key) {
         case 'ArrowDown':
         case 'ArrowRight':
@@ -62,11 +77,6 @@ export function useBibleKeyboardShortcuts({
         case 'ArrowLeft':
           event.preventDefault()
           onPreviousVerse()
-          return true
-
-        case 'Backspace':
-          event.preventDefault()
-          onGoBack()
           return true
 
         case 'Enter':
@@ -88,6 +98,7 @@ export function useBibleKeyboardShortcuts({
       onHidePresentation,
       onPresentSearched,
       isPresenting,
+      isVersesLevel,
     ],
   )
 
