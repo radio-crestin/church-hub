@@ -302,8 +302,8 @@ export function SongList({
   }, [categories, t])
 
   return (
-    <div className="space-y-4">
-      <div className="flex gap-2">
+    <div className="flex flex-col h-full min-h-0">
+      <div className="flex-shrink-0 flex gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
@@ -382,7 +382,7 @@ export function SongList({
       </div>
 
       {isLoading ? (
-        <div className="grid gap-3">
+        <div className="flex-1 mt-4 grid gap-3 content-start">
           {[1, 2, 3].map((i) => (
             <div
               key={i}
@@ -391,7 +391,7 @@ export function SongList({
           ))}
         </div>
       ) : displaySongs.length === 0 ? (
-        <div className="text-center py-12 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+        <div className="flex-1 mt-4 text-center py-12 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
           <Music
             size={48}
             className="mx-auto text-gray-400 dark:text-gray-500 mb-3"
@@ -408,8 +408,8 @@ export function SongList({
           )}
         </div>
       ) : (
-        <div className="grid gap-3 min-w-0 overflow-hidden">
-          <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+        <div className="flex-1 flex flex-col min-h-0 mt-4">
+          <p className="flex-shrink-0 text-sm text-gray-500 dark:text-gray-400 truncate mb-3">
             {isSearching
               ? t('search.resultsCount', { count: totalCount })
               : t('search.showingCount', {
@@ -417,35 +417,39 @@ export function SongList({
                   total: totalCount,
                 })}
           </p>
-          {displaySongs.map((song, index) => (
-            <SongCard
-              key={song.id}
-              ref={(el) => {
-                if (el) {
-                  itemRefs.current.set(index, el)
-                } else {
-                  itemRefs.current.delete(index)
-                }
-              }}
-              song={song}
-              onClick={() => onSongClick(song.id)}
-              onMiddleClick={
-                onSongMiddleClick
-                  ? () => onSongMiddleClick(song.id, song.title)
-                  : undefined
-              }
-              isSelected={selectedIndex === index}
-            />
-          ))}
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            <div className="grid gap-3">
+              {displaySongs.map((song, index) => (
+                <SongCard
+                  key={song.id}
+                  ref={(el) => {
+                    if (el) {
+                      itemRefs.current.set(index, el)
+                    } else {
+                      itemRefs.current.delete(index)
+                    }
+                  }}
+                  song={song}
+                  onClick={() => onSongClick(song.id)}
+                  onMiddleClick={
+                    onSongMiddleClick
+                      ? () => onSongMiddleClick(song.id, song.title)
+                      : undefined
+                  }
+                  isSelected={selectedIndex === index}
+                />
+              ))}
 
-          {/* Infinite scroll trigger element */}
-          {!hasSearchQuery && hasNextPage && (
-            <div ref={loadMoreRef} className="py-4 flex justify-center">
-              {isFetchingNextPage && (
-                <Loader2 className="w-6 h-6 text-indigo-500 animate-spin" />
+              {/* Infinite scroll trigger element */}
+              {!hasSearchQuery && hasNextPage && (
+                <div ref={loadMoreRef} className="py-4 flex justify-center">
+                  {isFetchingNextPage && (
+                    <Loader2 className="w-6 h-6 text-indigo-500 animate-spin" />
+                  )}
+                </div>
               )}
             </div>
-          )}
+          </div>
         </div>
       )}
     </div>
