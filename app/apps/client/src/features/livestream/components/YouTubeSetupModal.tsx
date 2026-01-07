@@ -191,16 +191,57 @@ export function YouTubeSetupModal({ isOpen, onClose }: YouTubeSetupModalProps) {
           {/* Selected Template Info */}
           {selectedPastBroadcast && (
             <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
-              <p className="text-sm text-blue-800 dark:text-blue-200">
-                <strong>{t('youtube.setup.usingTemplate')}:</strong>{' '}
-                {selectedPastBroadcast.title}
-              </p>
-              {selectedPastBroadcast.description && (
-                <p className="text-xs text-blue-700 dark:text-blue-300 mt-1 line-clamp-2">
-                  {selectedPastBroadcast.description}
-                </p>
-              )}
-              <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                    {selectedPastBroadcast.title}
+                  </p>
+                  {selectedPastBroadcast.description && (
+                    <p className="text-xs text-blue-700 dark:text-blue-300 mt-1 line-clamp-2">
+                      {selectedPastBroadcast.description}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                    <span className="text-xs text-blue-600 dark:text-blue-400">
+                      {t('youtube.setup.completedAt')}{' '}
+                      {new Date(
+                        selectedPastBroadcast.completedAt,
+                      ).toLocaleDateString(undefined, {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </span>
+                    {selectedPastBroadcast.boundStreamId &&
+                      streamKeys?.find(
+                        (k) => k.id === selectedPastBroadcast.boundStreamId,
+                      ) && (
+                        <span className="text-xs px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                          {
+                            streamKeys.find(
+                              (k) =>
+                                k.id === selectedPastBroadcast.boundStreamId,
+                            )?.name
+                          }
+                        </span>
+                      )}
+                  </div>
+                </div>
+                <span
+                  className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${
+                    selectedPastBroadcast.privacyStatus === 'public'
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                      : selectedPastBroadcast.privacyStatus === 'unlisted'
+                        ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                        : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                  }`}
+                >
+                  {t(
+                    `youtube.privacy${selectedPastBroadcast.privacyStatus.charAt(0).toUpperCase() + selectedPastBroadcast.privacyStatus.slice(1)}`,
+                  )}
+                </span>
+              </div>
+              <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">
                 {t('youtube.setup.usingTemplateHint')}
               </p>
             </div>
