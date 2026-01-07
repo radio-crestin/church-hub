@@ -108,6 +108,7 @@
   },
   "scenes": {
     "title": "Scenes",
+    "noScenes": "No scenes available. Click the settings icon to add scenes.",
     "settings": "Scene Settings",
     "sceneSettings": "Scene Settings",
     "displayName": "Display Name",

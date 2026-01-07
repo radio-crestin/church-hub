@@ -108,6 +108,7 @@
   },
   "scenes": {
     "title": "Scene",
+    "noScenes": "Nicio scena disponibila. Apasa pe iconita de setari pentru a adauga scene.",
     "settings": "Setari scene",
     "sceneSettings": "Setari scena",
     "displayName": "Nume afisat",
