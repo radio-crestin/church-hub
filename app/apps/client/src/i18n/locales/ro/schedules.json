@@ -177,6 +177,14 @@
     "title": "Editeaza Programul ca Text",
     "description": "Introdu elemente folosind sufixul [TIP]. Liniile care incep cu # sunt comentarii.",
     "formatHelp": "# Exemple de format:\n# Titlu Cantare [S]\n# Text anunt [A]\n# Ioan 3:16 [V] (Pasaj biblic)\n# Nume Persoana - Ioan 3:16 [VT] (Verset tineri)",
+    "formatHelpLines": {
+      "title": "Exemple de format:",
+      "song": "Titlu Cantare [S]",
+      "announcement": "Text anunt [A]",
+      "bible": "Ioan 3:16 [V] (Pasaj biblic)",
+      "youthVerses": "Nume Persoana - Ioan 3:16, Persoana 2 - Ioan 3:17 [VT] (Versete tineri)",
+      "scene": "Nume Scena [SC] (Schimbare scena OBS)"
+    },
     "preview": "{{count}} elemente detectate",
     "preview_one": "{{count}} element detectat",
     "preview_other": "{{count}} elemente detectate",

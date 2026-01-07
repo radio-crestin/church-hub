@@ -177,6 +177,14 @@
     "title": "Edit Schedule as Text",
     "description": "Enter items using [TYPE] suffix. Lines starting with # are comments.",
     "formatHelp": "# Format examples:\n# Song Title [S]\n# Announcement text [A]\n# John 3:16 [V] (Bible passage)\n# Person Name - John 3:16 [VT] (Youth verse)",
+    "formatHelpLines": {
+      "title": "Format examples:",
+      "song": "Song Title [S]",
+      "announcement": "Announcement text [A]",
+      "bible": "John 3:16 [V] (Bible passage)",
+      "youthVerses": "Person Name - John 3:16, Person 2 - John 3:17 [VT] (Youth verses)",
+      "scene": "Scene Name [SC] (OBS scene switch)"
+    },
     "preview": "{{count}} items detected",
     "preview_one": "{{count}} item detected",
     "preview_other": "{{count}} items detected",
