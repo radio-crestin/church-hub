@@ -2,6 +2,12 @@ import { relations } from 'drizzle-orm'
 
 import { rolePermissions, roles, userPermissions, users } from './auth'
 import { bibleBooks, bibleTranslations, bibleVerses } from './bible'
+import {
+  musicFiles,
+  musicFolders,
+  musicPlaylistItems,
+  musicPlaylists,
+} from './music'
 import { presentationState } from './presentation'
 import { scheduleItems, schedules } from './schedules'
 import { songCategories, songSlides, songs } from './songs'
@@ -115,3 +121,37 @@ export const bibleVersesRelations = relations(bibleVerses, ({ one }) => ({
     references: [bibleBooks.id],
   }),
 }))
+
+// Music relations
+export const musicFoldersRelations = relations(musicFolders, ({ many }) => ({
+  files: many(musicFiles),
+}))
+
+export const musicFilesRelations = relations(musicFiles, ({ one, many }) => ({
+  folder: one(musicFolders, {
+    fields: [musicFiles.folderId],
+    references: [musicFolders.id],
+  }),
+  playlistItems: many(musicPlaylistItems),
+}))
+
+export const musicPlaylistsRelations = relations(
+  musicPlaylists,
+  ({ many }) => ({
+    items: many(musicPlaylistItems),
+  }),
+)
+
+export const musicPlaylistItemsRelations = relations(
+  musicPlaylistItems,
+  ({ one }) => ({
+    playlist: one(musicPlaylists, {
+      fields: [musicPlaylistItems.playlistId],
+      references: [musicPlaylists.id],
+    }),
+    file: one(musicFiles, {
+      fields: [musicPlaylistItems.fileId],
+      references: [musicFiles.id],
+    }),
+  }),
+)

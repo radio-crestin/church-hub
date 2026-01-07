@@ -11,6 +11,7 @@ import {
 import { getOpenApiSpec, getScalarDocs } from './openapi'
 import { handleLivestreamRoutes } from './routes/livestream'
 import { handleMIDIRoutes } from './routes/midi'
+import { handleMusicRoutes } from './routes/music'
 import {
   ALL_PERMISSIONS,
   type CreateUserInput,
@@ -4273,6 +4274,10 @@ async function main() {
       // MIDI routes
       const midiResponse = await handleMIDIRoutes(req, url, handleCors)
       if (midiResponse) return midiResponse
+
+      // Music routes (folders, files, playlists)
+      const musicResponse = await handleMusicRoutes(req, url, handleCors)
+      if (musicResponse) return musicResponse
 
       // Serve client app (static files in production, proxy to Vite in development)
       if (canServeStaticFiles && clientDistPath) {

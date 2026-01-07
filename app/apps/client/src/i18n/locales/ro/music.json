@@ -1,0 +1,62 @@
+{
+  "title": "Muzică",
+  "folders": {
+    "title": "Foldere",
+    "add": "Adaugă Folder",
+    "addDescription": "Selectează un folder pentru a scana fișierele audio",
+    "sync": "Sincronizează",
+    "syncing": "Se sincronizează...",
+    "syncComplete": "Sincronizare completă",
+    "delete": "Șterge Folder",
+    "deleteConfirm": "Ești sigur că vrei să ștergi acest folder?",
+    "empty": "Niciun folder adăugat",
+    "emptyDescription": "Adaugă un folder pentru a începe să navighezi prin fișierele muzicale",
+    "tracks": "{{count}} piese",
+    "lastSync": "Ultima sincronizare: {{date}}"
+  },
+  "files": {
+    "title": "Fișiere",
+    "empty": "Niciun fișier găsit",
+    "search": "Caută fișiere...",
+    "addToQueue": "Adaugă în Coadă",
+    "addFolderToQueue": "Adaugă Tot în Coadă",
+    "play": "Redă"
+  },
+  "player": {
+    "nowPlaying": "Acum se redă",
+    "queue": "Coadă",
+    "clearQueue": "Golește Coada",
+    "shuffle": "Amestecă",
+    "previous": "Anterior",
+    "next": "Următor",
+    "play": "Redă",
+    "pause": "Pauză",
+    "volume": "Volum",
+    "mute": "Dezactivează sunet",
+    "unmute": "Activează sunet",
+    "noTrack": "Nicio piesă în redare",
+    "queueEmpty": "Coada este goală",
+    "addSongsToQueue": "Adaugă piese în coadă pentru a începe redarea"
+  },
+  "playlist": {
+    "title": "Playlisturi",
+    "create": "Creează Playlist",
+    "edit": "Editează Playlist",
+    "delete": "Șterge Playlist",
+    "deleteConfirm": "Ești sigur că vrei să ștergi acest playlist?",
+    "name": "Nume Playlist",
+    "description": "Descriere",
+    "empty": "Niciun playlist",
+    "emptyDescription": "Creează un playlist pentru a-ți organiza muzica",
+    "addTo": "Adaugă la Playlist",
+    "removeFrom": "Șterge din Playlist",
+    "items": "{{count}} elemente",
+    "duration": "{{duration}} total"
+  },
+  "syncResult": {
+    "added": "{{count}} fișiere adăugate",
+    "removed": "{{count}} fișiere șterse",
+    "updated": "{{count}} fișiere actualizate",
+    "errors": "{{count}} erori"
+  }
+}

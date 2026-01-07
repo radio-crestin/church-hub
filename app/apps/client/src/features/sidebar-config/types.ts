@@ -11,6 +11,7 @@ export type BuiltInMenuItemId =
   | 'bible'
   | 'schedules'
   | 'livestream'
+  | 'music'
   | 'kiosk'
   | 'settings'
 

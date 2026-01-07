@@ -151,8 +151,8 @@
 ~~- adauga in program schimbarea scenei~~
 ~~- modificarea editarea programului sa aiba la final [ST]~~
 ~~- add shortcuts indicators~~
-- add update checker
-- rezolva problema cu acel profil pvcq
+~~- add update checker~~
+- rezolva problema cu acel profil pvc
 - adauga pagina cu muzica dintr-un folder local
 - creaza optiunea de a adauga live-urile create intr-un playlist pe YouTube
 - creaza un quickstart guide pentru utilizatori

@@ -1,0 +1,62 @@
+{
+  "title": "Music",
+  "folders": {
+    "title": "Folders",
+    "add": "Add Folder",
+    "addDescription": "Select a folder to scan for audio files",
+    "sync": "Sync",
+    "syncing": "Syncing...",
+    "syncComplete": "Sync complete",
+    "delete": "Remove Folder",
+    "deleteConfirm": "Are you sure you want to remove this folder?",
+    "empty": "No folders added",
+    "emptyDescription": "Add a folder to start browsing your music files",
+    "tracks": "{{count}} tracks",
+    "lastSync": "Last sync: {{date}}"
+  },
+  "files": {
+    "title": "Files",
+    "empty": "No files found",
+    "search": "Search files...",
+    "addToQueue": "Add to Queue",
+    "addFolderToQueue": "Add All to Queue",
+    "play": "Play"
+  },
+  "player": {
+    "nowPlaying": "Now Playing",
+    "queue": "Queue",
+    "clearQueue": "Clear Queue",
+    "shuffle": "Shuffle",
+    "previous": "Previous",
+    "next": "Next",
+    "play": "Play",
+    "pause": "Pause",
+    "volume": "Volume",
+    "mute": "Mute",
+    "unmute": "Unmute",
+    "noTrack": "No track playing",
+    "queueEmpty": "Queue is empty",
+    "addSongsToQueue": "Add songs to the queue to start playing"
+  },
+  "playlist": {
+    "title": "Playlists",
+    "create": "Create Playlist",
+    "edit": "Edit Playlist",
+    "delete": "Delete Playlist",
+    "deleteConfirm": "Are you sure you want to delete this playlist?",
+    "name": "Playlist Name",
+    "description": "Description",
+    "empty": "No playlists",
+    "emptyDescription": "Create a playlist to organize your music",
+    "addTo": "Add to Playlist",
+    "removeFrom": "Remove from Playlist",
+    "items": "{{count}} items",
+    "duration": "{{duration}} total"
+  },
+  "syncResult": {
+    "added": "{{count}} files added",
+    "removed": "{{count}} files removed",
+    "updated": "{{count}} files updated",
+    "errors": "{{count}} errors"
+  }
+}
