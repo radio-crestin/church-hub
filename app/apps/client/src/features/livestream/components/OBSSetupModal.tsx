@@ -24,10 +24,17 @@ export function OBSSetupModal({ isOpen, onClose }: OBSSetupModalProps) {
   const mouseDownTargetRef = useRef<EventTarget | null>(null)
   const { config, update, isUpdating } = useOBSConfig()
   const [copied, setCopied] = useState(false)
+  const [host, setHost] = useState(config?.host || 'localhost')
 
   const generatedPassword = useMemo(() => generateRandomPassword(), [])
 
   const password = config?.password || generatedPassword
+
+  useEffect(() => {
+    if (config?.host) {
+      setHost(config.host)
+    }
+  }, [config?.host])
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -60,11 +67,14 @@ export function OBSSetupModal({ isOpen, onClose }: OBSSetupModalProps) {
   }
 
   const handleSaveAndClose = () => {
-    if (!config?.password) {
+    const hostChanged = host !== config?.host
+    const passwordChanged = !config?.password
+
+    if (hostChanged || passwordChanged) {
       update({
-        host: config?.host || 'localhost',
+        host: host || 'localhost',
         port: config?.port || 4455,
-        password: generatedPassword,
+        password: passwordChanged ? generatedPassword : config?.password,
         autoConnect: config?.autoConnect ?? true,
       })
     }
@@ -156,6 +166,22 @@ export function OBSSetupModal({ isOpen, onClose }: OBSSetupModalProps) {
                 {copied ? t('obs.setup.copied') : t('obs.setup.copy')}
               </Button>
             </div>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+              {t('obs.setup.addressTitle')}
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+              {t('obs.setup.addressDescription')}
+            </p>
+            <input
+              type="text"
+              value={host}
+              onChange={(e) => setHost(e.target.value)}
+              placeholder={t('obs.setup.addressPlaceholder')}
+              className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded text-sm text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
           </div>
 
           <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">

@@ -72,6 +72,9 @@
       "step3Description": "Copiaza aceasta parola si paste-o in OBS WebSocket Server Settings:",
       "copy": "Copiaza",
       "copied": "Copiat!",
+      "addressTitle": "Adresa OBS",
+      "addressDescription": "Introdu adresa unde ruleaza OBS. Foloseste 'localhost' daca OBS este pe acest calculator, sau introdu o adresa IP pentru un OBS la distanta.",
+      "addressPlaceholder": "localhost",
       "noteTitle": "Nota:",
       "noteDescription": "Asigura-te ca folosesti aceeasi parola in OBS. Church Hub va folosi automat aceasta parola la conectare.",
       "saveAndClose": "Salveaza si Inchide"

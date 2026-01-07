@@ -72,6 +72,9 @@
       "step3Description": "Copy this password and paste it in OBS WebSocket Server Settings:",
       "copy": "Copy",
       "copied": "Copied!",
+      "addressTitle": "OBS Address",
+      "addressDescription": "Enter the address where OBS is running. Use 'localhost' if OBS is on this computer, or enter an IP address for a remote OBS instance.",
+      "addressPlaceholder": "localhost",
       "noteTitle": "Note:",
       "noteDescription": "Make sure to use the same password in OBS. Church Hub will automatically use this password when connecting.",
       "saveAndClose": "Save & Close"
