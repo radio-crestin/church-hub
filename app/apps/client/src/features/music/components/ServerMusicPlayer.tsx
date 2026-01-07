@@ -1,4 +1,4 @@
-import { Trash2 } from 'lucide-react'
+import { Shuffle, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { MpvInstallGuide } from './MpvInstallGuide'
@@ -45,10 +45,10 @@ export function Player({
   const showInstallGuide = mpvStatus && !mpvStatus.installed
 
   return (
-    <div className="flex-1 w-full min-w-0 flex flex-col min-h-0 overflow-hidden bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-        <div className="flex items-center justify-between">
-          <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+    <div className="w-full min-w-0 flex flex-col overflow-hidden lg:flex-1 lg:min-h-0 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+      <div className="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 overflow-hidden">
+        <div className="flex items-center gap-2 w-full">
+          <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white flex-1 min-w-0 truncate">
             {t('player.title')}
           </h3>
           <VolumeSlider
@@ -66,7 +66,7 @@ export function Player({
           />
         </div>
       )}
-      <div className="p-4 space-y-4 flex-shrink-0">
+      <div className="p-3 sm:p-4 space-y-4 flex-shrink-0">
         <NowPlaying currentTrack={currentTrack} />
 
         <ProgressBar
@@ -87,15 +87,30 @@ export function Player({
             onPrevious={onPrevious}
             onNext={onNext}
             onShuffle={onToggleShuffle}
+            hideShuffle
           />
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col min-h-0 border-t border-gray-200 dark:border-gray-700">
-        <div className="flex items-center justify-between p-4 pb-2 flex-shrink-0">
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            {t('player.queue')}
-          </span>
+      <div className="flex flex-col lg:flex-1 lg:min-h-0 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between p-3 sm:p-4 pb-2 flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {t('player.queue')}
+            </span>
+            <button
+              type="button"
+              onClick={onToggleShuffle}
+              className={`p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
+                state.isShuffled
+                  ? 'text-indigo-600 dark:text-indigo-400'
+                  : 'text-gray-500 dark:text-gray-400'
+              }`}
+              title={t('player.shuffle')}
+            >
+              <Shuffle className="h-4 w-4" />
+            </button>
+          </div>
           {state.queueLength > 0 && (
             <button
               type="button"
@@ -107,7 +122,7 @@ export function Player({
             </button>
           )}
         </div>
-        <div className="flex-1 overflow-y-auto px-4 pb-4 scrollbar-thin">
+        <div className="lg:flex-1 lg:overflow-y-auto px-3 sm:px-4 pb-4 scrollbar-thin">
           <QueueList
             queue={state.queue}
             currentIndex={state.currentIndex}

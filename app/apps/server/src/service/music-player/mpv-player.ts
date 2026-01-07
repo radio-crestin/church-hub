@@ -96,7 +96,10 @@ function handleMpvEvent(event: MpvEvent): void {
         }
         break
       case 'pause':
-        updateState({ isPlaying: data === false })
+        // Only update isPlaying if we have a file loaded
+        if (playerState.currentIndex >= 0) {
+          updateState({ isPlaying: data === false })
+        }
         break
       case 'volume':
         if (typeof data === 'number') {

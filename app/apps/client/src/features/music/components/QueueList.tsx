@@ -35,11 +35,11 @@ export function QueueList({
   }
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-1 overflow-hidden">
       {queue.map((item, index) => (
         <div
           key={item.id}
-          className={`flex items-center gap-2 p-2 rounded-md cursor-pointer group ${
+          className={`flex items-center gap-1 sm:gap-2 p-2 rounded-md cursor-pointer group overflow-hidden ${
             index === currentIndex
               ? 'bg-purple-100 dark:bg-purple-900/30'
               : 'hover:bg-gray-100 dark:hover:bg-gray-700/50'
@@ -54,7 +54,7 @@ export function QueueList({
           role="button"
           tabIndex={0}
         >
-          <div className="w-6 h-6 flex items-center justify-center text-xs font-medium text-gray-500 dark:text-gray-400">
+          <div className="w-5 h-5 shrink-0 flex items-center justify-center text-xs font-medium text-gray-500 dark:text-gray-400">
             {index === currentIndex ? (
               <span className="text-purple-600 dark:text-purple-400">
                 {'\u25B6'}
@@ -63,17 +63,17 @@ export function QueueList({
               index + 1
             )}
           </div>
-          <div className="flex-1 min-w-0 overflow-hidden">
-            <p className="text-sm font-medium text-gray-900 dark:text-white whitespace-nowrap overflow-x-auto scrollbar-none">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
               {item.title || item.filename}
             </p>
             {item.artist && (
-              <p className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap overflow-x-auto scrollbar-none">
+              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                 {item.artist}
               </p>
             )}
           </div>
-          <span className="text-xs text-gray-400 dark:text-gray-500">
+          <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">
             {formatDuration(item.duration)}
           </span>
           <button
@@ -82,7 +82,7 @@ export function QueueList({
               e.stopPropagation()
               onRemoveFromQueue(item.id)
             }}
-            className="p-1 opacity-0 group-hover:opacity-100 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-opacity"
+            className="p-1 shrink-0 opacity-0 group-hover:opacity-100 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-opacity"
             title={t('player.removeFromQueue')}
           >
             <X className="w-3 h-3 text-gray-500 dark:text-gray-400" />

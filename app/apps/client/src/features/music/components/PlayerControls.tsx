@@ -30,7 +30,17 @@ export function PlayerControls({
 
   return (
     <div className="flex items-center justify-center gap-2">
-      {!hideShuffle && <div className="h-8 w-8" />}
+      {!hideShuffle && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className={`h-8 w-8 ${isShuffled ? 'text-indigo-600 dark:text-indigo-400' : ''}`}
+          onClick={onShuffle}
+          title={t('player.shuffle')}
+        >
+          <Shuffle className="h-4 w-4" />
+        </Button>
+      )}
 
       <Button
         variant="ghost"
@@ -68,17 +78,7 @@ export function PlayerControls({
         <SkipForward className="h-4 w-4" />
       </Button>
 
-      {!hideShuffle && (
-        <Button
-          variant="ghost"
-          size="icon"
-          className={`h-8 w-8 ${isShuffled ? 'text-indigo-600 dark:text-indigo-400' : ''}`}
-          onClick={onShuffle}
-          title={t('player.shuffle')}
-        >
-          <Shuffle className="h-4 w-4" />
-        </Button>
-      )}
+      {!hideShuffle && <div className="h-8 w-8" />}
     </div>
   )
 }
