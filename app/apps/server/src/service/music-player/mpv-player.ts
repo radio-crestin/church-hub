@@ -6,6 +6,7 @@ import * as path from 'node:path'
 
 import {
   clearNowPlayingQueue,
+  getNowPlayingQueue,
   getQueueItemAtIndex,
   getQueueLength,
 } from './now-playing'
@@ -14,6 +15,7 @@ import type {
   MpvEvent,
   MusicPlayerCommand,
   MusicPlayerState,
+  QueueItemSummary,
 } from './types'
 
 const LOG_PREFIX = '[MusicPlayer]'
@@ -34,6 +36,7 @@ let playerState: MusicPlayerState = {
   currentIndex: -1,
   queueLength: 0,
   currentTrack: null,
+  queue: [],
   updatedAt: Date.now(),
 }
 
@@ -278,6 +281,7 @@ export function shutdownMusicPlayer(): void {
     currentIndex: -1,
     queueLength: 0,
     currentTrack: null,
+    queue: [],
     updatedAt: Date.now(),
   }
 
@@ -432,10 +436,23 @@ export async function executeCommand(
   }
 }
 
+function getQueueSummary(): QueueItemSummary[] {
+  return getNowPlayingQueue().map((item) => ({
+    id: item.id,
+    fileId: item.fileId,
+    filename: item.file.filename,
+    title: item.file.title ?? undefined,
+    artist: item.file.artist ?? undefined,
+    duration: item.file.duration ?? undefined,
+  }))
+}
+
 export function getPlayerState(): MusicPlayerState {
+  const queue = getQueueSummary()
   return {
     ...playerState,
-    queueLength: getQueueLength(),
+    queueLength: queue.length,
+    queue,
   }
 }
 
@@ -450,5 +467,6 @@ export function isPlayerAvailable(): boolean {
 }
 
 export function refreshQueueState(): void {
-  updateState({ queueLength: getQueueLength() })
+  const queue = getQueueSummary()
+  updateState({ queueLength: queue.length, queue })
 }

@@ -38,6 +38,8 @@
     "unmute": "Activează sunet",
     "noTrack": "Nicio piesă în redare",
     "queueEmpty": "Coada este goală",
+    "emptyQueue": "Coada este goală",
+    "removeFromQueue": "Șterge din coadă",
     "addSongsToQueue": "Adaugă piese în coadă pentru a începe redarea"
   },
   "playlist": {
