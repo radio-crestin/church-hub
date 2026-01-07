@@ -5,7 +5,6 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 
 import {
-  clearNowPlayingQueue,
   getNowPlayingQueue,
   getQueueItemAtIndex,
   getQueueLength,
@@ -238,6 +237,9 @@ export async function initializeMusicPlayer(): Promise<boolean> {
 
   await new Promise((resolve) => setTimeout(resolve, 500))
 
+  // Load persisted queue from database
+  refreshQueueState()
+
   // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
   console.log(LOG_PREFIX, 'Music player initialized')
   return true
@@ -275,7 +277,7 @@ export function shutdownMusicPlayer(): void {
     }
   }
 
-  clearNowPlayingQueue()
+  // Keep the queue in database for persistence across restarts
 
   playerState = {
     isPlaying: false,
