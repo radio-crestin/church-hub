@@ -1164,7 +1164,7 @@ function SceneSlide({
               : 'text-gray-600 dark:text-gray-400'
           }`}
         >
-          {t('slideTemplates.scene')}
+          {t('slideTemplates.scene')}: {item.slideContent || item.obsSceneName}
         </span>
       </div>
     </button>
