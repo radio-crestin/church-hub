@@ -30,6 +30,8 @@ export function PlayerControls({
 
   return (
     <div className="flex items-center justify-center gap-2">
+      {!hideShuffle && <div className="h-8 w-8" />}
+
       <Button
         variant="ghost"
         size="icon"
