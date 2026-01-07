@@ -53,14 +53,6 @@ export function SceneGrid() {
     )
   }
 
-  if (visibleScenes.length === 0) {
-    return (
-      <div className="p-8 text-center text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-lg">
-        <p>No scenes available. Connect to OBS to see scenes.</p>
-      </div>
-    )
-  }
-
   return (
     <>
       <div className="space-y-4">
@@ -77,16 +69,22 @@ export function SceneGrid() {
             <Settings size={20} />
           </button>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {visibleScenes.map((scene) => (
-            <SceneCard
-              key={scene.id}
-              scene={scene}
-              onSwitch={switchScene}
-              isOBSConnected={isConnected}
-            />
-          ))}
-        </div>
+        {visibleScenes.length === 0 ? (
+          <div className="p-8 text-center text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded-lg">
+            <p>{t('scenes.noScenes')}</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {visibleScenes.map((scene) => (
+              <SceneCard
+                key={scene.id}
+                scene={scene}
+                onSwitch={switchScene}
+                isOBSConnected={isConnected}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {isSettingsOpen && (

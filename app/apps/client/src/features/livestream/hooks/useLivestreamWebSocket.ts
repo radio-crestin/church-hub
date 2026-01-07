@@ -132,10 +132,30 @@ export function useLivestreamWebSocket() {
           }
 
           if (data.type === 'obs_current_scene') {
-            log(
-              'debug',
-              `Received OBS current scene: ${data.payload.sceneName}`,
-            )
+            const sceneName = data.payload.sceneName
+            log('debug', `Received OBS current scene: ${sceneName}`)
+
+            // Optimistic update - immediately mark this scene as current in cache
+            // This ensures LED feedback reacts instantly without waiting for query refetch
+            // Critical for Windows where MIDI timing differs from macOS
+            for (const visibleOnly of [false, true]) {
+              queryClient.setQueryData(
+                ['livestream', 'obs', 'scenes', visibleOnly],
+                (
+                  old:
+                    | Array<{ obsSceneName: string; isCurrent: boolean }>
+                    | undefined,
+                ) => {
+                  if (!old) return old
+                  return old.map((scene) => ({
+                    ...scene,
+                    isCurrent: scene.obsSceneName === sceneName,
+                  }))
+                },
+              )
+            }
+
+            // Still invalidate to ensure eventual consistency with server
             queryClient.invalidateQueries({
               queryKey: ['livestream', 'obs', 'scenes'],
             })
