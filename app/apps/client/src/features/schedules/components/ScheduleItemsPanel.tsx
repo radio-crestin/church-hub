@@ -17,6 +17,7 @@ import { CSS } from '@dnd-kit/utilities'
 import {
   AlertTriangle,
   Book,
+  Camera,
   ChevronDown,
   ChevronRight,
   Eye,
@@ -42,6 +43,7 @@ interface ScheduleItemsPanelProps {
   onVerseClick: (item: ScheduleItem, verseIndex: number) => void
   onEntryClick: (item: ScheduleItem, entryIndex: number) => void
   onAnnouncementClick: (item: ScheduleItem) => void
+  onSceneClick?: (item: ScheduleItem) => void
   onReorder?: (oldIndex: number, newIndex: number) => void
   onEditSong?: (songId: number) => void
   onNavigateToSong?: (songId: number) => void
@@ -90,6 +92,7 @@ export function ScheduleItemsPanel({
   onVerseClick,
   onEntryClick,
   onAnnouncementClick,
+  onSceneClick,
   onReorder,
   onEditSong,
   onNavigateToSong,
@@ -435,6 +438,7 @@ export function ScheduleItemsPanel({
                   onVerseClick={onVerseClick}
                   onEntryClick={onEntryClick}
                   onAnnouncementClick={onAnnouncementClick}
+                  onSceneClick={onSceneClick}
                   onEditSong={onEditSong}
                   onNavigateToSong={onNavigateToSong}
                   t={t}
@@ -466,6 +470,7 @@ type PresentedInfo =
   | { type: 'bible_passage'; currentVerseIndex: number }
   | { type: 'versete_tineri'; currentEntryIndex: number }
   | { type: 'announcement' }
+  | { type: 'scene' }
   | null
 
 // Sortable item wrapper with drag handle
@@ -482,6 +487,7 @@ interface SortableItemWrapperProps {
   onVerseClick: (item: ScheduleItem, verseIndex: number) => void
   onEntryClick: (item: ScheduleItem, entryIndex: number) => void
   onAnnouncementClick: (item: ScheduleItem) => void
+  onSceneClick?: (item: ScheduleItem) => void
   onEditSong?: (songId: number) => void
   onNavigateToSong?: (songId: number) => void
   t: (key: string) => string
@@ -500,6 +506,7 @@ function SortableItemWrapper({
   onVerseClick,
   onEntryClick,
   onAnnouncementClick,
+  onSceneClick,
   onEditSong,
   onNavigateToSong,
   t,
@@ -598,6 +605,14 @@ function SortableItemWrapper({
             <Book size={16} className="text-teal-600 dark:text-teal-400" />
           </div>
         )}
+        {item.itemType === 'slide' && item.slideType === 'scene' && (
+          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
+            <Camera
+              size={16}
+              className="text-violet-600 dark:text-violet-400"
+            />
+          </div>
+        )}
 
         {/* Item Title & Info */}
         <div className="flex-1 min-w-0 text-left">
@@ -609,6 +624,9 @@ function SortableItemWrapper({
             {item.itemType === 'slide' &&
               item.slideType === 'versete_tineri' &&
               t('presenter.verseteTineri')}
+            {item.itemType === 'slide' &&
+              item.slideType === 'scene' &&
+              (item.slideContent || item.obsSceneName)}
             {item.itemType === 'bible_passage' && (
               <span className="flex items-center gap-1">
                 {item.biblePassageReference}
@@ -638,6 +656,18 @@ function SortableItemWrapper({
             {item.itemType === 'slide' &&
               item.slideType === 'versete_tineri' && (
                 <>{item.verseteTineriEntries.length} entries</>
+              )}
+            {item.itemType === 'slide' &&
+              item.slideType === 'scene' &&
+              item.obsSceneName &&
+              item.slideContent !== item.obsSceneName && (
+                <>{item.obsSceneName}</>
+              )}
+            {item.itemType === 'slide' &&
+              item.slideType === 'scene' &&
+              (!item.obsSceneName ||
+                item.slideContent === item.obsSceneName) && (
+                <>{t('slideTemplates.scene')}</>
               )}
           </div>
         </div>
@@ -721,6 +751,16 @@ function SortableItemWrapper({
               presentedInfo={presentedInfo}
               highlightedRef={highlightedRef}
               onAnnouncementClick={onAnnouncementClick}
+            />
+          )}
+
+          {/* Scene Slide */}
+          {item.itemType === 'slide' && item.slideType === 'scene' && (
+            <SceneSlide
+              item={item}
+              presentedInfo={presentedInfo}
+              highlightedRef={highlightedRef}
+              onSceneClick={onSceneClick}
             />
           )}
         </div>
@@ -1065,6 +1105,57 @@ function AnnouncementSlide({
           }`}
         >
           {plainText}
+        </span>
+      </div>
+    </button>
+  )
+}
+
+// Scene Slide sub-component
+interface SceneSlideProps {
+  item: ScheduleItem
+  presentedInfo: PresentedInfo
+  highlightedRef: React.RefObject<HTMLButtonElement | null>
+  onSceneClick?: (item: ScheduleItem) => void
+}
+
+function SceneSlide({
+  item,
+  presentedInfo,
+  highlightedRef,
+  onSceneClick,
+}: SceneSlideProps) {
+  const { t } = useTranslation('schedules')
+  const isPresented = presentedInfo?.type === 'scene'
+
+  return (
+    <button
+      ref={isPresented ? highlightedRef : null}
+      type="button"
+      onClick={() => onSceneClick?.(item)}
+      className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
+        isPresented
+          ? 'bg-violet-100 dark:bg-violet-900/50 ring-2 ring-violet-500'
+          : 'hover:bg-gray-100 dark:hover:bg-gray-700 bg-gray-50 dark:bg-gray-900/50'
+      }`}
+    >
+      <div className="flex items-center gap-2">
+        <Camera
+          size={16}
+          className={`flex-shrink-0 ${
+            isPresented
+              ? 'text-violet-600 dark:text-violet-400'
+              : 'text-gray-400'
+          }`}
+        />
+        <span
+          className={`text-sm ${
+            isPresented
+              ? 'text-violet-900 dark:text-violet-100'
+              : 'text-gray-600 dark:text-gray-400'
+          }`}
+        >
+          {t('slideTemplates.scene')}
         </span>
       </div>
     </button>
