@@ -4,7 +4,7 @@ import { arch, type } from '@tauri-apps/plugin-os'
 const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 
 const GITHUB_REPO = 'radio-crestin/church-hub'
-const GITHUB_API_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`
+const GITHUB_RELEASES_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases`
 
 export interface GithubAsset {
   name: string
@@ -19,6 +19,8 @@ export interface GithubRelease {
   body: string
   html_url: string
   published_at: string
+  draft: boolean
+  prerelease: boolean
   assets: GithubAsset[]
 }
 
@@ -119,31 +121,49 @@ function isNewerVersion(current: string, latest: string): boolean {
  */
 export async function checkForUpdates(): Promise<UpdateInfo> {
   const currentVersion = await getCurrentVersion()
+  const releasesPageUrl = `https://github.com/${GITHUB_REPO}/releases`
 
   try {
-    const response = await fetch(GITHUB_API_URL, {
+    const response = await fetch(GITHUB_RELEASES_URL, {
       headers: {
         Accept: 'application/vnd.github.v3+json',
       },
     })
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch release: ${response.statusText}`)
+      throw new Error(`Failed to fetch releases: ${response.statusText}`)
     }
 
-    const release: GithubRelease = await response.json()
-    const latestVersion = release.tag_name.replace(/^v/, '')
+    const releases: GithubRelease[] = await response.json()
+
+    // Find the latest non-draft, non-prerelease release
+    const latestRelease = releases.find((r) => !r.draft && !r.prerelease)
+
+    if (!latestRelease) {
+      // No releases available yet
+      return {
+        currentVersion,
+        latestVersion: currentVersion,
+        hasUpdate: false,
+        releaseUrl: releasesPageUrl,
+        releaseNotes: '',
+        downloadUrl: null,
+        publishedAt: '',
+      }
+    }
+
+    const latestVersion = latestRelease.tag_name.replace(/^v/, '')
     const hasUpdate = isNewerVersion(currentVersion, latestVersion)
-    const downloadUrl = findDownloadUrl(release.assets)
+    const downloadUrl = findDownloadUrl(latestRelease.assets)
 
     return {
       currentVersion,
       latestVersion,
       hasUpdate,
-      releaseUrl: release.html_url,
-      releaseNotes: release.body,
+      releaseUrl: latestRelease.html_url,
+      releaseNotes: latestRelease.body,
       downloadUrl,
-      publishedAt: release.published_at,
+      publishedAt: latestRelease.published_at,
     }
   } catch (error) {
     // biome-ignore lint/suspicious/noConsole: Error logging for debugging update check failures
@@ -152,7 +172,7 @@ export async function checkForUpdates(): Promise<UpdateInfo> {
       currentVersion,
       latestVersion: currentVersion,
       hasUpdate: false,
-      releaseUrl: `https://github.com/${GITHUB_REPO}/releases`,
+      releaseUrl: releasesPageUrl,
       releaseNotes: '',
       downloadUrl: null,
       publishedAt: '',
