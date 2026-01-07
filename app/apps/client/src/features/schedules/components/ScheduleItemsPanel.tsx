@@ -206,6 +206,13 @@ export function ScheduleItemsPanel({
       }
     }
 
+    if (temp.type === 'scene') {
+      return {
+        type: 'scene' as const,
+        obsSceneName: temp.data.obsSceneName,
+      }
+    }
+
     return null
   }, [presentationState?.temporaryContent])
 
@@ -470,7 +477,7 @@ type PresentedInfo =
   | { type: 'bible_passage'; currentVerseIndex: number }
   | { type: 'versete_tineri'; currentEntryIndex: number }
   | { type: 'announcement' }
-  | { type: 'scene' }
+  | { type: 'scene'; obsSceneName: string }
   | null
 
 // Sortable item wrapper with drag handle
@@ -1126,7 +1133,9 @@ function SceneSlide({
   onSceneClick,
 }: SceneSlideProps) {
   const { t } = useTranslation('schedules')
-  const isPresented = presentedInfo?.type === 'scene'
+  const isPresented =
+    presentedInfo?.type === 'scene' &&
+    presentedInfo.obsSceneName === item.obsSceneName
 
   return (
     <button
