@@ -17,6 +17,7 @@ export function FeedbackModal({
 }: FeedbackModalProps) {
   const { t } = useTranslation()
   const dialogRef = useRef<HTMLDialogElement>(null)
+  const mouseDownTargetRef = useRef<EventTarget | null>(null)
   const [message, setMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -36,8 +37,15 @@ export function FeedbackModal({
     }
   }, [isOpen])
 
+  const handleBackdropMouseDown = (e: React.MouseEvent<HTMLDialogElement>) => {
+    mouseDownTargetRef.current = e.target
+  }
+
   const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
-    if (e.target === dialogRef.current) {
+    if (
+      e.target === dialogRef.current &&
+      mouseDownTargetRef.current === dialogRef.current
+    ) {
       onClose()
     }
   }
@@ -81,6 +89,7 @@ export function FeedbackModal({
       ref={dialogRef}
       className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800 max-w-lg w-full"
       onClose={onClose}
+      onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
     >
       <div className="p-6">

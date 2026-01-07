@@ -18,6 +18,7 @@ export function BibleSettingsModal({
 }: BibleSettingsModalProps) {
   const { t } = useTranslation('bible')
   const dialogRef = useRef<HTMLDialogElement>(null)
+  const mouseDownTargetRef = useRef<EventTarget | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [importError, setImportError] = useState<string | null>(null)
   const [dialogElement, setDialogElement] = useState<HTMLDialogElement | null>(
@@ -53,8 +54,15 @@ export function BibleSettingsModal({
     return () => dialog.removeEventListener('cancel', handleCancel)
   }, [onClose])
 
+  const handleBackdropMouseDown = (e: React.MouseEvent<HTMLDialogElement>) => {
+    mouseDownTargetRef.current = e.target
+  }
+
   const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
-    if (e.target === dialogRef.current) {
+    if (
+      e.target === dialogRef.current &&
+      mouseDownTargetRef.current === dialogRef.current
+    ) {
       onClose()
     }
   }
@@ -91,6 +99,7 @@ export function BibleSettingsModal({
       <dialog
         ref={setDialogRefCallback}
         className="fixed inset-0 m-auto w-full max-w-4xl p-0 bg-white dark:bg-gray-800 rounded-xl shadow-xl backdrop:bg-black/50"
+        onMouseDown={handleBackdropMouseDown}
         onClick={handleBackdropClick}
       >
         <div className="flex flex-col max-h-[90vh]">

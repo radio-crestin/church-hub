@@ -38,6 +38,7 @@ export function BiblePassagePickerModal({
   const { t } = useTranslation('schedules')
   const { showToast } = useToast()
   const dialogRef = useRef<HTMLDialogElement>(null)
+  const mouseDownTargetRef = useRef<EventTarget | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const wasOpenRef = useRef(false)
   const addItemMutation = useAddItemToSchedule()
@@ -127,8 +128,15 @@ export function BiblePassagePickerModal({
     }
   }
 
+  const handleBackdropMouseDown = (e: React.MouseEvent<HTMLDialogElement>) => {
+    mouseDownTargetRef.current = e.target
+  }
+
   const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
-    if (e.target === dialogRef.current) {
+    if (
+      e.target === dialogRef.current &&
+      mouseDownTargetRef.current === dialogRef.current
+    ) {
       handleClose()
     }
   }
@@ -203,6 +211,7 @@ export function BiblePassagePickerModal({
     <dialog
       ref={dialogRef}
       onCancel={handleClose}
+      onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
       className="fixed inset-0 m-auto w-full max-w-lg p-0 rounded-lg bg-white dark:bg-gray-800 backdrop:bg-black/50"
     >

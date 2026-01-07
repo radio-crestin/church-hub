@@ -17,6 +17,7 @@ export function ScheduleExportFormatModal({
 }: ScheduleExportFormatModalProps) {
   const { t } = useTranslation('schedules')
   const dialogRef = useRef<HTMLDialogElement>(null)
+  const mouseDownTargetRef = useRef<EventTarget | null>(null)
   const [selectedFormat, setSelectedFormat] =
     useState<ScheduleExportFormat>('churchprogram')
 
@@ -37,8 +38,15 @@ export function ScheduleExportFormatModal({
     }
   }, [isOpen])
 
+  const handleBackdropMouseDown = (e: React.MouseEvent<HTMLDialogElement>) => {
+    mouseDownTargetRef.current = e.target
+  }
+
   const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
-    if (e.target === dialogRef.current) {
+    if (
+      e.target === dialogRef.current &&
+      mouseDownTargetRef.current === dialogRef.current
+    ) {
       onCancel()
     }
   }
@@ -52,6 +60,7 @@ export function ScheduleExportFormatModal({
       ref={dialogRef}
       className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800"
       onClose={onCancel}
+      onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
     >
       <div className="p-6 min-w-[400px] max-w-lg">

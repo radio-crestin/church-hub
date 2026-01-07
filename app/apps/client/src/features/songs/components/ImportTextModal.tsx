@@ -16,6 +16,7 @@ export function ImportTextModal({
   const { t } = useTranslation('songs')
   const [text, setText] = useState('')
   const dialogRef = useRef<HTMLDialogElement>(null)
+  const mouseDownTargetRef = useRef<EventTarget | null>(null)
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -56,8 +57,15 @@ export function ImportTextModal({
     onClose()
   }
 
+  const handleBackdropMouseDown = (e: React.MouseEvent<HTMLDialogElement>) => {
+    mouseDownTargetRef.current = e.target
+  }
+
   const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
-    if (e.target === dialogRef.current) {
+    if (
+      e.target === dialogRef.current &&
+      mouseDownTargetRef.current === dialogRef.current
+    ) {
       handleClose()
     }
   }
@@ -67,6 +75,7 @@ export function ImportTextModal({
       ref={dialogRef}
       className="fixed inset-0 p-0 m-auto w-full max-w-lg bg-transparent backdrop:bg-black/50"
       onClose={handleClose}
+      onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
     >
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl">

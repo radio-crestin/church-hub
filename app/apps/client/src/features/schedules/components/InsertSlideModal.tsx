@@ -62,6 +62,7 @@ export function InsertSlideModal({
   const { t } = useTranslation('schedules')
   const { showToast } = useToast()
   const dialogRef = useRef<HTMLDialogElement>(null)
+  const mouseDownTargetRef = useRef<EventTarget | null>(null)
   const wasOpenRef = useRef(false)
   const addItemMutation = useAddItemToSchedule()
   const updateMutation = useUpdateScheduleSlide()
@@ -279,8 +280,15 @@ export function InsertSlideModal({
 
   const isPending = addItemMutation.isPending || updateMutation.isPending
 
+  const handleBackdropMouseDown = (e: React.MouseEvent<HTMLDialogElement>) => {
+    mouseDownTargetRef.current = e.target
+  }
+
   const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
-    if (e.target === dialogRef.current) {
+    if (
+      e.target === dialogRef.current &&
+      mouseDownTargetRef.current === dialogRef.current
+    ) {
       handleClose()
     }
   }
@@ -289,6 +297,7 @@ export function InsertSlideModal({
     <dialog
       ref={dialogRef}
       onCancel={handleClose}
+      onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
       className="fixed inset-0 m-auto w-full max-w-xl p-0 rounded-lg bg-white dark:bg-gray-800 backdrop:bg-black/50"
     >

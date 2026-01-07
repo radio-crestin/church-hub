@@ -28,6 +28,7 @@ export function ServerConnectionModal({
 }: ServerConnectionModalProps) {
   const { t } = useTranslation('settings')
   const dialogRef = useRef<HTMLDialogElement>(null)
+  const mouseDownTargetRef = useRef<EventTarget | null>(null)
 
   const [url, setUrlState] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -106,8 +107,15 @@ export function ServerConnectionModal({
     window.location.reload()
   }
 
+  const handleBackdropMouseDown = (e: React.MouseEvent<HTMLDialogElement>) => {
+    mouseDownTargetRef.current = e.target
+  }
+
   const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
-    if (e.target === dialogRef.current) {
+    if (
+      e.target === dialogRef.current &&
+      mouseDownTargetRef.current === dialogRef.current
+    ) {
       onClose()
     }
   }
@@ -117,6 +125,7 @@ export function ServerConnectionModal({
       ref={dialogRef}
       className="fixed inset-0 m-auto p-0 rounded-xl shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800 max-w-md w-[calc(100%-2rem)]"
       onClose={onClose}
+      onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
     >
       <div className="p-6 space-y-6">
