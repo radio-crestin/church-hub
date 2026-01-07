@@ -672,6 +672,13 @@
           }
         },
         "note": "Fișierele statice funcționează mai bine cu OBS - încărcare mai rapidă, fără browser necesar.",
+        "serverUrl": {
+          "label": "Conexiune Server",
+          "localhost": "Localhost",
+          "networkInterface": "Interfață de Rețea",
+          "custom": "URL Personalizat",
+          "result": "URL Server"
+        },
         "generating": "Se generează fișierul...",
         "success": "Fișier salvat cu succes!",
         "filePath": "Salvat în: {{path}}",

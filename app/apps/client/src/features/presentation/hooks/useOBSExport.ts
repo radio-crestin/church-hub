@@ -1,12 +1,12 @@
 import { useCallback, useState } from 'react'
 
-import { getApiUrl } from '~/config'
 import type { ExportProgress, ScreenExportConfig } from '../service/obs-export'
 import { exportScreenHtml } from '../service/obs-export'
 
 interface UseOBSExportOptions {
   screenId: number
   screenName: string
+  serverUrl: string
   onSuccess?: (filePath: string) => void
   onError?: (error: string) => void
 }
@@ -21,7 +21,7 @@ interface UseOBSExportResult {
 }
 
 export function useOBSExport(options: UseOBSExportOptions): UseOBSExportResult {
-  const { screenId, screenName, onSuccess, onError } = options
+  const { screenId, screenName, serverUrl, onSuccess, onError } = options
 
   const [progress, setProgress] = useState<ExportProgress>('idle')
   const [error, setError] = useState<string | null>(null)
@@ -31,8 +31,6 @@ export function useOBSExport(options: UseOBSExportOptions): UseOBSExportResult {
     setProgress('generating')
     setError(null)
     setFilePath(null)
-
-    const serverUrl = getApiUrl()
 
     const config: ScreenExportConfig = {
       screenId,
@@ -59,7 +57,7 @@ export function useOBSExport(options: UseOBSExportOptions): UseOBSExportResult {
       setError(errorMsg)
       onError?.(errorMsg)
     }
-  }, [screenId, screenName, onSuccess, onError])
+  }, [screenId, screenName, serverUrl, onSuccess, onError])
 
   const retry = useCallback(async () => {
     await exportToFile()
