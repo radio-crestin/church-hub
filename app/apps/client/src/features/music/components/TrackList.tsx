@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next'
 
-import { ScrollArea } from '~/ui/scroll-area'
 import { TrackCard } from './TrackCard'
 import type { MusicFile } from '../types'
 
@@ -28,8 +27,8 @@ export function TrackList({
   }
 
   return (
-    <ScrollArea className="w-full" style={{ maxHeight }}>
-      <div className="space-y-1 pr-4">
+    <div className="w-full overflow-y-auto scrollbar-thin" style={{ maxHeight }}>
+      <div className="space-y-1 pr-1">
         {tracks.map((track) => (
           <TrackCard
             key={track.id}
@@ -39,6 +38,6 @@ export function TrackList({
           />
         ))}
       </div>
-    </ScrollArea>
+    </div>
   )
 }
