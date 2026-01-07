@@ -417,7 +417,7 @@ export function SongList({
                   total: totalCount,
                 })}
           </p>
-          <div className="flex-1 min-h-0 overflow-y-auto">
+          <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin -mr-3 pr-3">
             <div className="grid gap-3">
               {displaySongs.map((song, index) => (
                 <SongCard
