@@ -112,6 +112,14 @@ export interface StreamKey {
   name: string
 }
 
+export interface YouTubePlaylist {
+  id: string
+  title: string
+  description: string
+  itemCount: number
+  thumbnailUrl?: string
+}
+
 export interface BroadcastInfo {
   broadcastId: string
   title: string

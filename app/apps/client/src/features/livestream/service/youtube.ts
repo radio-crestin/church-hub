@@ -6,6 +6,7 @@ import type {
   UpcomingBroadcast,
   YouTubeAuthStatus,
   YouTubeConfig,
+  YouTubePlaylist,
 } from '../types'
 
 interface StoreTokensInput {
@@ -126,6 +127,13 @@ export async function getUpcomingBroadcasts(): Promise<UpcomingBroadcast[]> {
 export async function getPastBroadcasts(): Promise<PastBroadcast[]> {
   const response = await fetcher<{ data: PastBroadcast[] }>(
     '/api/livestream/youtube/broadcasts/completed',
+  )
+  return response.data
+}
+
+export async function getYoutubePlaylists(): Promise<YouTubePlaylist[]> {
+  const response = await fetcher<{ data: YouTubePlaylist[] }>(
+    '/api/livestream/youtube/playlists',
   )
   return response.data
 }

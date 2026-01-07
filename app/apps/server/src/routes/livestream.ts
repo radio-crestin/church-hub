@@ -48,6 +48,7 @@ import {
   getActiveBroadcast,
   getAuthStatus,
   getPastBroadcasts,
+  getPlaylists,
   getStreamKeys,
   getUpcomingBroadcasts,
   getYouTubeConfig,
@@ -550,6 +551,35 @@ export async function handleLivestreamRoutes(
               error instanceof Error
                 ? error.message
                 : 'Failed to get past broadcasts',
+          }),
+          { status: 500, headers: { 'Content-Type': 'application/json' } },
+        ),
+      )
+    }
+  }
+
+  // GET /api/livestream/youtube/playlists
+  if (
+    req.method === 'GET' &&
+    url.pathname === '/api/livestream/youtube/playlists'
+  ) {
+    try {
+      const playlists = await getPlaylists()
+      return handleCors(
+        req,
+        new Response(JSON.stringify({ data: playlists }), {
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+    } catch (error) {
+      return handleCors(
+        req,
+        new Response(
+          JSON.stringify({
+            error:
+              error instanceof Error
+                ? error.message
+                : 'Failed to get playlists',
           }),
           { status: 500, headers: { 'Content-Type': 'application/json' } },
         ),
