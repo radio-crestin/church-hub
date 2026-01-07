@@ -1,6 +1,7 @@
 import {
   Book,
   CalendarDays,
+  Headphones,
   Monitor,
   Music,
   Radio,
@@ -51,6 +52,13 @@ export const BUILTIN_ITEMS: Record<BuiltInMenuItemId, BuiltInItemDefinition> = {
     icon: Radio,
     labelKey: 'sidebar:navigation.livestream',
     to: '/livestream',
+    permission: 'settings.view',
+  },
+  music: {
+    id: 'music',
+    icon: Headphones,
+    labelKey: 'sidebar:navigation.music',
+    to: '/music',
     permission: 'settings.view',
   },
   kiosk: {
@@ -108,6 +116,13 @@ export const DEFAULT_SIDEBAR_CONFIG: SidebarConfiguration = {
       type: 'builtin',
       builtinId: 'livestream',
       order: 4,
+      isVisible: true,
+    },
+    {
+      id: 'music',
+      type: 'builtin',
+      builtinId: 'music',
+      order: 5,
       isVisible: true,
     },
     // Note: Settings is not configurable - it's fixed at the bottom of the sidebar
