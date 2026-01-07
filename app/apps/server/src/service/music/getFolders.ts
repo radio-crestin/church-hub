@@ -1,3 +1,5 @@
+import { eq } from 'drizzle-orm'
+
 import type { MusicFolder } from './types'
 import { getDatabase } from '../../db'
 import { musicFolders } from '../../db/schema'
@@ -25,7 +27,7 @@ export function getFolderById(id: number): MusicFolder | null {
   const row = db
     .select()
     .from(musicFolders)
-    .where((t) => t.id.equals(id))
+    .where(eq(musicFolders.id, id))
     .get()
 
   if (!row) return null
