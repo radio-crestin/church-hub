@@ -33,11 +33,15 @@ export const scheduleItems = sqliteTable(
     songId: integer('song_id').references(() => songs.id, {
       onDelete: 'cascade',
     }),
-    slideType: text('slide_type', { enum: ['announcement', 'versete_tineri'] }),
+    slideType: text('slide_type', {
+      enum: ['announcement', 'versete_tineri', 'scene'],
+    }),
     slideContent: text('slide_content'),
     // Bible passage fields (when itemType === 'bible_passage')
     biblePassageReference: text('bible_passage_reference'),
     biblePassageTranslation: text('bible_passage_translation'),
+    // Scene fields (when slideType === 'scene')
+    obsSceneName: text('obs_scene_name'),
     sortOrder: integer('sort_order').notNull().default(0),
     createdAt: integer('created_at', { mode: 'timestamp' })
       .notNull()

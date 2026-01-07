@@ -69,7 +69,13 @@
   },
   "slideTemplates": {
     "announcement": "Announcement",
-    "versete_tineri": "Versete tineri"
+    "versete_tineri": "Versete tineri",
+    "scene": "OBS Scene"
+  },
+  "scenePicker": {
+    "title": "Select Scene",
+    "noScenes": "No OBS scenes available. Connect to OBS to see scenes.",
+    "current": "Current"
   },
   "insertSlide": {
     "title": "Insert Slide",

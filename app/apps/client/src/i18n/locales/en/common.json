@@ -12,6 +12,8 @@
     "announcementDescription": "Add an announcement slide",
     "verseteTineri": "Youth Verses",
     "verseteTineriDescription": "Add youth verses with names",
+    "scene": "OBS Scene",
+    "sceneDescription": "Switch to an OBS scene",
     "importSchedule": {
       "title": "Import Schedule",
       "description": "Import from an existing schedule"

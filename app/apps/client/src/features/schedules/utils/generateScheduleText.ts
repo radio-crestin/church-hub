@@ -14,6 +14,7 @@ export function generateScheduleText(items: ScheduleItem[]): string {
   lines.push(
     '# VT: Person Name - Ioan 3:16, Person 2 - Ioan 3:17 (Youth verses)',
   )
+  lines.push('# SC: Scene Name (OBS scene switch)')
   lines.push('')
 
   for (const item of items) {
@@ -62,6 +63,9 @@ export function generateScheduleText(items: ScheduleItem[]): string {
             }
           }
         }
+      } else if (item.slideType === 'scene' && item.obsSceneName) {
+        // Scene item - output the OBS scene name
+        lines.push(`SC: ${item.obsSceneName}`)
       }
     }
   }
