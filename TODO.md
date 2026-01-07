@@ -146,10 +146,12 @@
 ~~- imbunatateste search-ul..~~
 ~~- adauga optiune de a cauta cantari folosind AI~~
 ~~- adauga posibilitatea de a face highlight pentru sesiunea curenta~~
-- adauga etichete midi controller
-- incarca o pagina statica in obs pentru a face refresh automat
+~~- adauga etichete midi controller~~
+~~- incarca o pagina statica in obs pentru a face refresh automat~~
+- adauga in program schimbarea scenei
 - add shortcuts indicators
 - add update checker
+- rezolva problema cu acel profil pvcq
 - adauga pagina cu muzica dintr-un folder local
 - creaza optiunea de a adauga live-urile create intr-un playlist pe YouTube
 - creaza un quickstart guide pentru utilizatori

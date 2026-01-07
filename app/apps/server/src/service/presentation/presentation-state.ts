@@ -7,6 +7,7 @@ import type {
   PresentTemporaryAnnouncementInput,
   PresentTemporaryBibleInput,
   PresentTemporaryBiblePassageInput,
+  PresentTemporarySceneInput,
   PresentTemporarySongInput,
   PresentTemporaryVerseteTineriInput,
   TemporaryContent,
@@ -974,6 +975,39 @@ export function presentTemporaryVerseteTineri(
     })
   } catch (error) {
     log('error', `Failed to present temporary versete tineri: ${error}`)
+    return getPresentationState()
+  }
+}
+
+/**
+ * Presents a scene temporarily (shows empty slide, used for OBS scene switching)
+ * The client is responsible for switching the OBS scene via the OBS WebSocket.
+ */
+export function presentTemporaryScene(
+  input: PresentTemporarySceneInput,
+): PresentationState {
+  try {
+    log('debug', `Presenting temporary scene: ${input.obsSceneName}`)
+
+    // Reset navigation timestamp when presenting new content
+    lastNavigationTimestamp = 0
+
+    const temporaryContent: TemporaryContent = {
+      type: 'scene',
+      data: {
+        obsSceneName: input.obsSceneName,
+        nextItemPreview: input.nextItemPreview,
+      },
+    }
+
+    return updatePresentationState({
+      temporaryContent,
+      currentSongSlideId: null,
+      isHidden: false,
+      isPresenting: true,
+    })
+  } catch (error) {
+    log('error', `Failed to present temporary scene: ${error}`)
     return getPresentationState()
   }
 }

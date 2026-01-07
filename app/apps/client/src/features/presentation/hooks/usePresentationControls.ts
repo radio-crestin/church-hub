@@ -9,6 +9,7 @@ import {
   presentTemporaryAnnouncement,
   presentTemporaryBible,
   presentTemporaryBiblePassage,
+  presentTemporaryScene,
   presentTemporarySong,
   presentTemporaryVerseteTineri,
   showSlide,
@@ -232,6 +233,19 @@ export function usePresentTemporaryVerseteTineri() {
 
   return useMutation({
     mutationFn: presentTemporaryVerseteTineri,
+    onSuccess: (data: PresentationState) => {
+      // Reset tracking when presenting new content
+      resetNavigationTracking()
+      queryClient.setQueryData(presentationStateQueryKey, data)
+    },
+  })
+}
+
+export function usePresentTemporaryScene() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: presentTemporaryScene,
     onSuccess: (data: PresentationState) => {
       // Reset tracking when presenting new content
       resetNavigationTracking()
