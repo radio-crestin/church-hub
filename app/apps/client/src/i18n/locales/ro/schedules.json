@@ -179,7 +179,8 @@
     "formatHelp": "# Exemple de format:\n# Titlu Cantare [S]\n# Text anunt [A]\n# Ioan 3:16 [V] (Pasaj biblic)\n# Nume Persoana - Ioan 3:16 [VT] (Verset tineri)",
     "formatHelpLines": {
       "title": "Exemple de format:",
-      "song": "Titlu Cantare [S]",
+      "songSuffix": "C",
+      "song": "Titlu Cantare [C]",
       "announcement": "Text anunt [A]",
       "bibleComment": "Pasaj biblic:",
       "bible": "Ioan 3:16 [V]",

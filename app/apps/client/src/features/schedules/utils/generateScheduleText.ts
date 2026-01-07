@@ -2,6 +2,7 @@ import type { ScheduleItem } from '../types'
 
 interface GenerateScheduleTextOptions {
   formatHelpLines?: string[]
+  songSuffix?: string // e.g., 'S' for English, 'C' for Romanian (Cantec)
 }
 
 /**
@@ -21,9 +22,11 @@ export function generateScheduleText(
     lines.push('')
   }
 
+  const songSuffix = options?.songSuffix || 'S'
+
   for (const item of items) {
     if (item.itemType === 'song' && item.song) {
-      lines.push(`${item.song.title} [S]`)
+      lines.push(`${item.song.title} [${songSuffix}]`)
     } else if (item.itemType === 'bible_passage') {
       // Bible passage item - use the reference directly
       if (item.biblePassageReference) {
