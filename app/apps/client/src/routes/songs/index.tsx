@@ -151,8 +151,8 @@ function SongsPage() {
 
   return (
     <PagePermissionGuard permission="songs.view">
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="flex flex-col h-full min-h-0">
+        <div className="flex-shrink-0 flex items-center justify-between mb-4">
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">
             {t('title')}
           </h1>
@@ -179,16 +179,18 @@ function SongsPage() {
           </div>
         </div>
 
-        <SongList
-          onSongClick={handleSongClick}
-          onSongMiddleClick={openSongWindow}
-          searchQuery={searchQuery}
-          onSearchChange={handleSearchChange}
-          initialSelectedSongId={selectedSongId}
-          categoryId={categoryId}
-          onCategoryChange={handleCategoryChange}
-          focusTrigger={focusTrigger}
-        />
+        <div className="flex-1 min-h-0">
+          <SongList
+            onSongClick={handleSongClick}
+            onSongMiddleClick={openSongWindow}
+            searchQuery={searchQuery}
+            onSearchChange={handleSearchChange}
+            initialSelectedSongId={selectedSongId}
+            categoryId={categoryId}
+            onCategoryChange={handleCategoryChange}
+            focusTrigger={focusTrigger}
+          />
+        </div>
 
         <SongsSettingsModal
           isOpen={isSettingsModalOpen}
