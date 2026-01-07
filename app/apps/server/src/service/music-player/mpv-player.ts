@@ -31,7 +31,7 @@ let playerState: MusicPlayerState = {
   isPlaying: false,
   currentTime: 0,
   duration: 0,
-  volume: 80,
+  volume: 0,
   isMuted: false,
   currentIndex: -1,
   queueLength: 0,
@@ -192,6 +192,7 @@ export async function initializeMusicPlayer(): Promise<boolean> {
     `--input-ipc-server=${socketPath}`,
     '--audio-display=no',
     '--keep-open=no',
+    '--volume=0',
   ]
 
   mpvProcess = spawn(mpvPath, mpvArgs, {
@@ -276,7 +277,7 @@ export function shutdownMusicPlayer(): void {
     isPlaying: false,
     currentTime: 0,
     duration: 0,
-    volume: 80,
+    volume: 0,
     isMuted: false,
     currentIndex: -1,
     queueLength: 0,
