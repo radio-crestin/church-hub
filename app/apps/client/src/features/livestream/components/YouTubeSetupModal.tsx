@@ -2,7 +2,10 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '../../../ui/button/Button'
-import { Combobox } from '../../../ui/combobox/Combobox'
+import {
+  Combobox,
+  type ComboboxOptionDetail,
+} from '../../../ui/combobox/Combobox'
 import {
   usePastBroadcasts,
   useStreamKeys,
@@ -171,10 +174,47 @@ export function YouTubeSetupModal({ isOpen, onClose }: YouTubeSetupModalProps) {
               {t('youtube.setup.templateDescription')}
             </p>
             <Combobox
-              options={broadcasts.map((broadcast) => ({
-                value: broadcast.broadcastId,
-                label: broadcast.title,
-              }))}
+              options={broadcasts.map((broadcast) => {
+                const details: ComboboxOptionDetail[] = []
+
+                // Add privacy status
+                const privacyVariant =
+                  broadcast.privacyStatus === 'public'
+                    ? 'success'
+                    : broadcast.privacyStatus === 'unlisted'
+                      ? 'warning'
+                      : 'error'
+                details.push({
+                  label: t(
+                    `youtube.privacy${broadcast.privacyStatus.charAt(0).toUpperCase() + broadcast.privacyStatus.slice(1)}`,
+                  ),
+                  variant: privacyVariant,
+                })
+
+                // Add stream key if available
+                const streamKey = streamKeys?.find(
+                  (k) => k.id === broadcast.boundStreamId,
+                )
+                if (streamKey) {
+                  details.push({
+                    label: streamKey.name,
+                    variant: 'info',
+                  })
+                }
+
+                return {
+                  value: broadcast.broadcastId,
+                  label: broadcast.title,
+                  description: new Date(
+                    broadcast.completedAt,
+                  ).toLocaleDateString(undefined, {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  }),
+                  details,
+                }
+              })}
               value={selectedPastBroadcastId}
               onChange={(value) => {
                 const broadcast = broadcasts.find(

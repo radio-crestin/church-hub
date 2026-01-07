@@ -2,9 +2,16 @@ import { Check, ChevronDown, Plus, Trash2, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
+export interface ComboboxOptionDetail {
+  label: string
+  variant?: 'default' | 'success' | 'warning' | 'error' | 'info'
+}
+
 export interface ComboboxOption {
   value: number | string
   label: string
+  description?: string
+  details?: ComboboxOptionDetail[]
 }
 
 export interface ComboboxProps {
@@ -242,11 +249,38 @@ export function Combobox({
                     <button
                       type="button"
                       onClick={() => handleSelect(option)}
-                      className="flex-1 text-left"
+                      className="flex-1 text-left min-w-0"
                     >
-                      {option.label}
+                      <span className="block truncate">{option.label}</span>
+                      {(option.description || option.details) && (
+                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                          {option.description && (
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              {option.description}
+                            </span>
+                          )}
+                          {option.details?.map((detail, idx) => (
+                            <span
+                              key={idx}
+                              className={`text-xs px-1.5 py-0.5 rounded ${
+                                detail.variant === 'success'
+                                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                  : detail.variant === 'warning'
+                                    ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                    : detail.variant === 'error'
+                                      ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                      : detail.variant === 'info'
+                                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                                        : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                              }`}
+                            >
+                              {detail.label}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </button>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 flex-shrink-0">
                       {option.value === value && <Check className="w-4 h-4" />}
                       {allowDelete && onDelete && (
                         <button
