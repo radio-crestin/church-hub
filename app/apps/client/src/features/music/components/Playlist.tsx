@@ -21,7 +21,6 @@ import { ListMusic, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '~/ui/button'
-import { ScrollArea } from '~/ui/scroll-area'
 import { PlaylistItem } from './PlaylistItem'
 import type { QueueItem } from '../types'
 
@@ -93,7 +92,7 @@ export function Playlist({
         </Button>
       </div>
 
-      <ScrollArea className="h-[200px]">
+      <div className="h-[200px] overflow-y-auto scrollbar-thin">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -104,7 +103,7 @@ export function Playlist({
             items={items.map((item) => item.queueId)}
             strategy={verticalListSortingStrategy}
           >
-            <div className="space-y-1 pr-4">
+            <div className="space-y-1 pr-1">
               {items.map((item, index) => (
                 <PlaylistItem
                   key={item.queueId}
@@ -117,7 +116,7 @@ export function Playlist({
             </div>
           </SortableContext>
         </DndContext>
-      </ScrollArea>
+      </div>
     </div>
   )
 }
