@@ -107,10 +107,14 @@ export function generateScreenHtml(config: ScreenExportConfig): string {
       let missedPongs = 0;
       let pingInterval = null;
       let pongTimeout = null;
+      let healthCheckInterval = null;
+      let healthCheckFailures = 0;
 
       const PING_INTERVAL = 3000;
       const PONG_TIMEOUT = 2000;
       const MAX_MISSED_PONGS = 3;
+      const HEALTH_CHECK_INTERVAL = 5000;
+      const MAX_HEALTH_CHECK_FAILURES = 3;
 
       // DOM elements
       const container = document.getElementById('screen-container');
@@ -219,6 +223,59 @@ export function generateScreenHtml(config: ScreenExportConfig): string {
         } catch (error) {
           console.error('Failed to fetch presentation state:', error);
         }
+      }
+
+      // Health check - ping server every 5 seconds
+      async function healthCheck() {
+        try {
+          const response = await fetch(CONFIG.serverUrl + '/api/presentation/state', {
+            method: 'GET',
+            cache: 'no-store'
+          });
+          if (response.ok) {
+            // Server is reachable, reset failure counter
+            healthCheckFailures = 0;
+          } else {
+            throw new Error('Server returned non-OK status');
+          }
+        } catch (error) {
+          healthCheckFailures++;
+          console.log('Health check failed (' + healthCheckFailures + '/' + MAX_HEALTH_CHECK_FAILURES + ')');
+
+          if (healthCheckFailures >= MAX_HEALTH_CHECK_FAILURES) {
+            console.log('Server unreachable - clearing content and reloading');
+
+            // Clear content - show transparent background
+            container.innerHTML = '';
+            container.style.background = 'transparent';
+            screenConfig = null;
+            presentationState = null;
+
+            // Close WebSocket if open
+            if (ws) {
+              ws.close();
+              ws = null;
+            }
+            clearInterval(pingInterval);
+            clearTimeout(pongTimeout);
+            clearTimeout(reconnectTimeout);
+
+            // Reset failure counter and try to reload everything
+            healthCheckFailures = 0;
+
+            // Wait a moment then try to reconnect
+            setTimeout(() => {
+              fetchScreenConfig();
+              connect();
+            }, 2000);
+          }
+        }
+      }
+
+      // Start health check interval
+      function startHealthCheck() {
+        if (healthCheckInterval) clearInterval(healthCheckInterval);
+        healthCheckInterval = setInterval(healthCheck, HEALTH_CHECK_INTERVAL);
       }
 
       // Calculate pixel bounds from constraints
@@ -457,6 +514,7 @@ export function generateScreenHtml(config: ScreenExportConfig): string {
       // Initialize
       fetchScreenConfig();
       connect();
+      startHealthCheck();
     })();
   </script>
 </body>
