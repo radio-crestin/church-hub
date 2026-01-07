@@ -81,3 +81,24 @@ export interface QueueItem {
   album?: string
   duration?: number
 }
+
+export interface ServerPlayerState {
+  isPlaying: boolean
+  currentTime: number
+  duration: number
+  volume: number
+  isMuted: boolean
+  currentIndex: number
+  queueLength: number
+  currentTrack: {
+    id: number
+    fileId: number
+    path: string
+    filename: string
+    title?: string
+    artist?: string
+    album?: string
+    duration?: number
+  } | null
+  updatedAt: number
+}

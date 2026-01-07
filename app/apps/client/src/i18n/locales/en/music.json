@@ -25,6 +25,8 @@
   "player": {
     "nowPlaying": "Now Playing",
     "queue": "Queue",
+    "queueCount": "{{count}} tracks in queue",
+    "queueCount_one": "{{count}} track in queue",
     "clearQueue": "Clear Queue",
     "shuffle": "Shuffle",
     "previous": "Previous",

@@ -25,6 +25,8 @@
   "player": {
     "nowPlaying": "Acum se redă",
     "queue": "Coadă",
+    "queueCount": "{{count}} piese în coadă",
+    "queueCount_one": "{{count}} piesă în coadă",
     "clearQueue": "Golește Coada",
     "shuffle": "Amestecă",
     "previous": "Anterior",
