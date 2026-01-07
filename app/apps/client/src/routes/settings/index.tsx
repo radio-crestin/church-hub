@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 
 import { isLocalhost, isMobile } from '~/config'
 import { ApiUrlSettings } from '~/features/api-url-config'
+import { AboutSection } from '~/features/app-update'
 import {
   DatabaseManager,
   FactoryReset,
@@ -70,6 +71,9 @@ function RouteComponent() {
             {t('sections.application.description')}
           </p>
         </div>
+
+        {/* About Section */}
+        <AboutSection />
 
         {/* Appearance Settings Section */}
         <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800 space-y-6">
