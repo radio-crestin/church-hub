@@ -735,6 +735,18 @@
         "success": "Indexul de căutare a fost reconstruit ({{duration}}ms)",
         "failed": "Reconstruirea indexului a eșuat: {{error}}"
       }
+    },
+    "about": {
+      "title": "Despre",
+      "description": "Versiunea aplicației și informații despre actualizări",
+      "currentVersion": "Versiunea Curentă",
+      "checkForUpdates": "Verifică actualizări",
+      "updateAvailable": "Actualizare Disponibilă",
+      "updateDescription": "O nouă versiune este disponibilă. Descarcă și instalează pentru a obține cele mai noi funcționalități și corecții.",
+      "downloadUpdate": "Descarcă Actualizarea",
+      "downloading": "Se deschide...",
+      "upToDate": "Rulezi cea mai recentă versiune.",
+      "viewReleaseNotes": "Vezi notele versiunii pe GitHub"
     }
   }
 }

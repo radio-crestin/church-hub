@@ -734,6 +734,18 @@
         "success": "Search index rebuilt successfully ({{duration}}ms)",
         "failed": "Failed to rebuild search index: {{error}}"
       }
+    },
+    "about": {
+      "title": "About",
+      "description": "Application version and update information",
+      "currentVersion": "Current Version",
+      "checkForUpdates": "Check for updates",
+      "updateAvailable": "Update Available",
+      "updateDescription": "A new version is available. Download and install to get the latest features and fixes.",
+      "downloadUpdate": "Download Update",
+      "downloading": "Opening...",
+      "upToDate": "You are running the latest version.",
+      "viewReleaseNotes": "View release notes on GitHub"
     }
   }
 }
