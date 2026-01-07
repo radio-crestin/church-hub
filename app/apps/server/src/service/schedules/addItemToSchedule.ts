@@ -56,11 +56,14 @@ export function addItemToSchedule(
     const isVerseteTineri =
       input.slideType === 'versete_tineri' &&
       input.verseteTineriEntries !== undefined
+    const isScene =
+      input.slideType === 'scene' && input.obsSceneName !== undefined
 
     let itemTypeStr = 'slide'
     if (isSong) itemTypeStr = 'song'
     else if (isBiblePassage) itemTypeStr = 'bible_passage'
     else if (isVerseteTineri) itemTypeStr = 'versete_tineri'
+    else if (isScene) itemTypeStr = 'scene'
 
     log('debug', `Adding ${itemTypeStr} to schedule: ${input.scheduleId}`)
 
@@ -272,6 +275,25 @@ export function addItemToSchedule(
       }
 
       log('info', `Versete Tineri added with ${entries.length} entries`)
+    } else if (isScene) {
+      // Handle Scene slide (OBS scene switch)
+      const result = db
+        .insert(scheduleItems)
+        .values({
+          scheduleId: input.scheduleId,
+          itemType: 'slide',
+          slideType: 'scene',
+          slideContent: null,
+          obsSceneName: input.obsSceneName!,
+          sortOrder: targetOrder,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .returning({ id: scheduleItems.id })
+        .get()
+      itemId = result.id
+
+      log('info', `Scene added: ${input.obsSceneName}`)
     } else {
       // Regular slide (announcement)
       const result = db

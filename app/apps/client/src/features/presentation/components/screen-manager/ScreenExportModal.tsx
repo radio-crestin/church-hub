@@ -42,7 +42,8 @@ export function ScreenExportModal({
 
   // Server URL selection state
   const [interfaces, setInterfaces] = useState<NetworkInterface[]>([])
-  const [selectedUrlOption, setSelectedUrlOption] = useState<string>(LOCALHOST_VALUE)
+  const [selectedUrlOption, setSelectedUrlOption] =
+    useState<string>(LOCALHOST_VALUE)
   const [customUrl, setCustomUrl] = useState('')
 
   // Build dropdown options: localhost + interfaces + custom

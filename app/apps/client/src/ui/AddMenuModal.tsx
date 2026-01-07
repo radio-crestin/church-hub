@@ -2,6 +2,7 @@ import {
   Book,
   BookOpen,
   CalendarDays,
+  Camera,
   FileText,
   Megaphone,
   Music,
@@ -20,6 +21,8 @@ export interface AddMenuModalProps {
   showBiblePassage?: boolean
   /** Show Import Schedule option */
   showImportSchedule?: boolean
+  /** Show Scene option */
+  showScene?: boolean
   /** Controlled open state (optional - if not provided, uses internal state) */
   isOpen?: boolean
   /** Callback when open state changes (for controlled mode) */
@@ -36,12 +39,15 @@ export interface AddMenuModalProps {
   onAddVerseteTineri: () => void
   /** Callback when import schedule is selected */
   onImportSchedule?: () => void
+  /** Callback when scene is selected */
+  onAddScene?: () => void
 }
 
 export function AddMenuModal({
   showBibleVerse = false,
   showBiblePassage = false,
   showImportSchedule = false,
+  showScene = false,
   isOpen: controlledIsOpen,
   onOpenChange,
   onAddSong,
@@ -50,6 +56,7 @@ export function AddMenuModal({
   onAddAnnouncement,
   onAddVerseteTineri,
   onImportSchedule,
+  onAddScene,
 }: AddMenuModalProps) {
   const { t } = useTranslation('common')
   const [internalIsOpen, setInternalIsOpen] = useState(false)
@@ -225,6 +232,28 @@ export function AddMenuModal({
                 </div>
               </div>
             </button>
+
+            {/* Scene */}
+            {showScene && onAddScene && (
+              <button
+                type="button"
+                onClick={() => handleAction(onAddScene)}
+                className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
+                  <Camera
+                    size={20}
+                    className="text-violet-600 dark:text-violet-400"
+                  />
+                </div>
+                <div>
+                  <div className="font-medium">{t('addMenu.scene')}</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    {t('addMenu.sceneDescription')}
+                  </div>
+                </div>
+              </button>
+            )}
 
             {/* Import Schedule */}
             {showImportSchedule && onImportSchedule && (

@@ -12,6 +12,8 @@
     "announcementDescription": "Adaugă un slide de anunț",
     "verseteTineri": "Versete Tineri",
     "verseteTineriDescription": "Adaugă versete tineri cu nume",
+    "scene": "Scenă OBS",
+    "sceneDescription": "Comută la o scenă OBS",
     "importSchedule": {
       "title": "Importă Program",
       "description": "Importă dintr-un program existent"

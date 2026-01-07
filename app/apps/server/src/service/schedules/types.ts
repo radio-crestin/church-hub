@@ -8,7 +8,7 @@ export type ScheduleItemType = 'song' | 'slide' | 'bible_passage'
 /**
  * Slide template types for standalone slides (same as queue)
  */
-export type SlideTemplate = 'announcement' | 'versete_tineri'
+export type SlideTemplate = 'announcement' | 'versete_tineri' | 'scene'
 
 /**
  * Bible passage verse (nested within bible_passage schedule items)
@@ -75,6 +75,7 @@ export interface ScheduleItemRecord {
   slide_content: string | null
   bible_passage_reference: string | null
   bible_passage_translation: string | null
+  obs_scene_name: string | null
   sort_order: number
   created_at: number
   updated_at: number
@@ -112,6 +113,8 @@ export interface ScheduleItem {
   biblePassageVerses: ScheduleBiblePassageVerse[]
   // Versete Tineri fields (present when itemType === 'slide' && slideType === 'versete_tineri')
   verseteTineriEntries: ScheduleVerseteTineriEntry[]
+  // Scene fields (present when itemType === 'slide' && slideType === 'scene')
+  obsSceneName: string | null
   // Common fields
   sortOrder: number
   createdAt: number
@@ -170,6 +173,8 @@ export interface AddToScheduleInput {
   }
   // Versete Tineri entries
   verseteTineriEntries?: VerseteTineriEntryInput[]
+  // Scene fields
+  obsSceneName?: string
 }
 
 /**

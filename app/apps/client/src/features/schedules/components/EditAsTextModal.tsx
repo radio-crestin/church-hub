@@ -16,7 +16,7 @@ import { parseScheduleText } from '../utils/parseScheduleText'
 
 interface ValidationError {
   lineNumber: number
-  type: 'bible_passage' | 'versete_tineri' | 'song'
+  type: 'bible_passage' | 'versete_tineri' | 'song' | 'scene'
   content: string
   message: string
 }
@@ -60,6 +60,8 @@ interface ProcessedItem {
   }
   // Versete Tineri entries
   verseteTineriEntries?: VerseteTineriEntryInput[]
+  // Scene fields
+  obsSceneName?: string
 }
 
 export function EditAsTextModal({
@@ -380,6 +382,14 @@ export function EditAsTextModal({
               verseteTineriEntries: vtEntries,
             })
           }
+        } else if (item.type === 'scene') {
+          // SC: prefix - OBS Scene switch
+          // The content is the scene display name
+          processedItems.push({
+            type: 'slide',
+            slideType: 'scene',
+            obsSceneName: item.content,
+          })
         }
       }
 

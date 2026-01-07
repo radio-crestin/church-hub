@@ -69,6 +69,8 @@ export interface ReplaceItemInput {
   }
   // Versete Tineri entries
   verseteTineriEntries?: VerseteTineriEntryInput[]
+  // Scene fields
+  obsSceneName?: string
 }
 
 /**
@@ -385,6 +387,22 @@ export function replaceScheduleItems(
         }
 
         log('debug', `Versete Tineri prepared with ${entries.length} entries`)
+      } else if (item.slideType === 'scene' && item.obsSceneName) {
+        // Handle Scene slide (OBS scene switch)
+        db.insert(scheduleItems)
+          .values({
+            scheduleId: input.scheduleId,
+            itemType: 'slide',
+            slideType: 'scene',
+            slideContent: null,
+            obsSceneName: item.obsSceneName,
+            sortOrder: i,
+            createdAt: now,
+            updatedAt: now,
+          })
+          .run()
+
+        log('debug', `Scene item added: ${item.obsSceneName}`)
       } else if (item.type === 'slide' && item.slideType && item.slideContent) {
         db.insert(scheduleItems)
           .values({

@@ -7,6 +7,7 @@ export type ParsedItemType =
   | 'announcement'
   | 'bible_passage'
   | 'versete_tineri'
+  | 'scene'
 
 export interface ParsedScheduleItem {
   type: ParsedItemType
@@ -19,11 +20,12 @@ export interface ParseScheduleTextResult {
   errors: Array<{ line: number; message: string }>
 }
 
-// Matches: S:, A:, V:, VT: (case-insensitive) followed by content
-// VT must come before V in alternation to match first
-const PREFIX_REGEX = /^(S|A|VT|V):\s*(.+)$/i
+// Matches: S:, SC:, A:, V:, VT: (case-insensitive) followed by content
+// SC must come before S, and VT must come before V in alternation to match first
+const PREFIX_REGEX = /^(SC|S|A|VT|V):\s*(.+)$/i
 
 const TYPE_MAP: Record<string, ParsedItemType> = {
+  SC: 'scene',
   S: 'song',
   A: 'announcement',
   V: 'bible_passage',
@@ -48,7 +50,7 @@ export function parseScheduleText(text: string): ParseScheduleTextResult {
     if (!match) {
       errors.push({
         line: lineNumber,
-        message: 'Invalid format. Use S:, A:, V:, or VT: prefix',
+        message: 'Invalid format. Use S:, SC:, A:, V:, or VT: prefix',
       })
       return
     }
