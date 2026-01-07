@@ -663,6 +663,7 @@ function BiblePage() {
     onHidePresentation: handleHidePresentation,
     onPresentSearched: handlePresentSearched,
     enabled: navigation.state.level === 'verses',
+    isPresenting: navigation.state.presentedIndex !== null,
   })
 
   const canNavigateVerses =

@@ -12,6 +12,8 @@ interface UseBibleKeyboardShortcutsOptions {
   onHidePresentation: () => void
   onPresentSearched?: () => void
   enabled?: boolean
+  /** Whether a verse is currently being presented (determines ESC behavior) */
+  isPresenting?: boolean
 }
 
 /**
@@ -25,6 +27,7 @@ export function useBibleKeyboardShortcuts({
   onHidePresentation,
   onPresentSearched,
   enabled = true,
+  isPresenting = false,
 }: UseBibleKeyboardShortcutsOptions) {
   const handleKeyDown = useCallback(
     (event: KeyboardEvent): boolean => {
@@ -39,7 +42,12 @@ export function useBibleKeyboardShortcuts({
         ) {
           ;(event.target as HTMLElement).blur()
         }
-        onHidePresentation()
+        // If presenting, hide the slide; otherwise go back
+        if (isPresenting) {
+          onHidePresentation()
+        } else {
+          onGoBack()
+        }
         return true
       }
 
@@ -79,6 +87,7 @@ export function useBibleKeyboardShortcuts({
       onGoBack,
       onHidePresentation,
       onPresentSearched,
+      isPresenting,
     ],
   )
 
