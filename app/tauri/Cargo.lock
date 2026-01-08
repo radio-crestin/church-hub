@@ -479,7 +479,7 @@ dependencies = [
 
 [[package]]
 name = "church-hub"
-version = "0.1.4"
+version = "0.1.21"
 dependencies = [
  "parking_lot",
  "serde",
