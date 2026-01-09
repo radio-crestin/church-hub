@@ -11,8 +11,6 @@ import {
   SearchIndexRebuild,
 } from '~/features/database-management'
 import { ShortcutsSettingsSection } from '~/features/keyboard-shortcuts'
-import { KioskSettingsSection } from '~/features/kiosk'
-import { ScreenManager } from '~/features/presentation'
 import { SidebarConfigManager } from '~/features/sidebar-config'
 import { SystemTokenManager } from '~/features/system-token'
 import { UserList } from '~/features/users'
@@ -128,16 +126,6 @@ function RouteComponent() {
             <ApiUrlSettings />
           </div>
         )}
-
-        {/* Screens Section */}
-        <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
-          <ScreenManager />
-        </div>
-
-        {/* Kiosk Mode Section */}
-        <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
-          <KioskSettingsSection />
-        </div>
 
         {/* Sidebar Configuration Section */}
         <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">

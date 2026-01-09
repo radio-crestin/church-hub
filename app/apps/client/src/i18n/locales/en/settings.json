@@ -585,7 +585,9 @@
         "tapToDismiss": "Tap anywhere on the overlay to dismiss it",
         "brightnessControl": "Brightness Control (iOS only):",
         "supported": "Supported",
-        "notSupported": "Not supported"
+        "notSupported": "Not supported",
+        "dimScreen": "Dim Screen",
+        "restoreBrightness": "Restore Brightness"
       },
       "toast": {
         "saved": "Kiosk settings saved",

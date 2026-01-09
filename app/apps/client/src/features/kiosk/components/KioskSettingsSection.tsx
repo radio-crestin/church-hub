@@ -199,14 +199,14 @@ export function KioskSettingsSection() {
             </div>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={() => dimScreen()}>
-                Dim Screen
+                {t('sections.kiosk.debug.dimScreen')}
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => restoreBrightness()}
               >
-                Restore Brightness
+                {t('sections.kiosk.debug.restoreBrightness')}
               </Button>
             </div>
           </div>

@@ -10,7 +10,7 @@ import {
   Plus,
   Trash2,
 } from 'lucide-react'
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '~/ui/button/Button'
@@ -33,13 +33,6 @@ import {
 } from '../../utils/openDisplayWindow'
 import { ScreenEditor } from '../screen-editor'
 
-const SCREEN_TYPE_OPTIONS: { value: ScreenType; label: string }[] = [
-  { value: 'primary', label: 'Primary / Audience' },
-  { value: 'stage', label: 'Stage Monitor' },
-  { value: 'livestream', label: 'Live Stream' },
-  { value: 'kiosk', label: 'Kiosk' },
-]
-
 const SCREEN_TYPE_COLORS: Record<ScreenType, string> = {
   primary: 'bg-blue-600',
   stage: 'bg-purple-600',
@@ -48,8 +41,28 @@ const SCREEN_TYPE_COLORS: Record<ScreenType, string> = {
 }
 
 export function ScreenManager() {
-  const { t } = useTranslation('settings')
+  const { t } = useTranslation(['settings', 'presentation'])
   const { showToast } = useToast()
+
+  // Translated screen type options
+  const screenTypeOptions = useMemo(
+    () => [
+      {
+        value: 'primary' as ScreenType,
+        label: t('presentation:screens.screenTypes.primary'),
+      },
+      {
+        value: 'stage' as ScreenType,
+        label: t('presentation:screens.screenTypes.stage'),
+      },
+      {
+        value: 'livestream' as ScreenType,
+        label: t('presentation:screens.screenTypes.livestream'),
+      },
+      { value: 'kiosk' as ScreenType, label: 'Kiosk' },
+    ],
+    [t],
+  )
 
   const { data: screens, isLoading } = useScreens()
   const upsertScreen = useUpsertScreen()
@@ -84,9 +97,9 @@ export function ScreenManager() {
       if (screen) {
         setEditingScreenId(screen.id)
       }
-      showToast('Screen created successfully', 'success')
+      showToast(t('settings:sections.screens.toast.created'), 'success')
     } catch {
-      showToast('Failed to create screen', 'error')
+      showToast(t('settings:sections.screens.toast.createError'), 'error')
     }
   }
 
@@ -107,9 +120,9 @@ export function ScreenManager() {
           height: screen.height,
         })
 
-        showToast('Screen saved successfully', 'success')
+        showToast(t('settings:sections.screens.toast.saved'), 'success')
       } catch {
-        showToast('Failed to save screen', 'error')
+        showToast(t('settings:sections.screens.toast.saveError'), 'error')
       }
     },
     [batchUpdateConfig, showToast],
@@ -137,7 +150,12 @@ export function ScreenManager() {
           type: screen.type,
           isActive: false,
         })
-        showToast(`Window "${screen.name}" closed`, 'success')
+        showToast(
+          t('settings:sections.screens.toast.windowClosed', {
+            name: screen.name,
+          }),
+          'success',
+        )
       } else {
         // Update database first, then open the native window
         await upsertScreen.mutateAsync({
@@ -153,10 +171,15 @@ export function ScreenManager() {
           screen.name,
           screen.alwaysOnTop,
         )
-        showToast(`Window "${screen.name}" opened`, 'success')
+        showToast(
+          t('settings:sections.screens.toast.windowOpened', {
+            name: screen.name,
+          }),
+          'success',
+        )
       }
     } catch {
-      showToast('Failed to toggle window', 'error')
+      showToast(t('settings:sections.screens.toast.toggleError'), 'error')
     }
   }
 
@@ -164,9 +187,9 @@ export function ScreenManager() {
     const url = `${getFrontendUrl()}/screen/${screen.id}`
     try {
       await navigator.clipboard.writeText(url)
-      showToast('URL copied to clipboard', 'success')
+      showToast(t('settings:sections.screens.toast.urlCopied'), 'success')
     } catch {
-      showToast('Failed to copy URL', 'error')
+      showToast(t('settings:sections.screens.toast.copyError'), 'error')
     }
   }
 
@@ -207,9 +230,9 @@ export function ScreenManager() {
 
       await deleteScreen.mutateAsync(deleteConfirm.id)
       setDeleteConfirm(null)
-      showToast('Screen deleted successfully', 'success')
+      showToast(t('settings:sections.screens.toast.deleted'), 'success')
     } catch {
-      showToast('Failed to delete screen', 'error')
+      showToast(t('settings:sections.screens.toast.deleteError'), 'error')
     }
   }
 
@@ -241,19 +264,18 @@ export function ScreenManager() {
         <div className="flex items-center gap-3">
           <MonitorUp size={24} className="text-indigo-600" />
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Screens
+            {t('settings:sections.screens.title')}
           </h1>
         </div>
         <Button onClick={handleAddNew} variant="primary">
           <Plus size={20} className="mr-2" />
-          Add Screen
+          {t('settings:sections.screens.addScreen')}
         </Button>
       </div>
 
       {/* Description */}
       <p className="text-gray-600 dark:text-gray-400">
-        Configure screens for different display purposes. Each screen type has
-        its own layout and configuration options.
+        {t('settings:sections.screens.description')}
       </p>
 
       {/* Screens List */}
@@ -375,14 +397,14 @@ export function ScreenManager() {
             className="mx-auto text-gray-400 dark:text-gray-500 mb-4"
           />
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-            No screens configured
+            {t('settings:sections.screens.noScreens')}
           </h3>
           <p className="text-gray-500 dark:text-gray-400 mb-4">
-            Add your first screen to configure how content is displayed.
+            {t('presentation:screens.noScreensDescription')}
           </p>
           <Button onClick={handleAddNew} variant="primary">
             <Plus size={20} className="mr-2" />
-            Add First Screen
+            {t('presentation:screens.addFirstScreen')}
           </Button>
         </div>
       )}
@@ -392,37 +414,37 @@ export function ScreenManager() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4 p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Add New Screen
+              {t('settings:sections.screens.addScreen')}
             </h3>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Screen Name
+                  {t('presentation:screens.screenName')}
                 </label>
                 <input
                   type="text"
                   value={newScreenName}
                   onChange={(e) => setNewScreenName(e.target.value)}
-                  placeholder="e.g., Main Projector"
+                  placeholder={t('presentation:screens.screenNamePlaceholder')}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   autoFocus
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Screen Type
+                  {t('presentation:screens.screenType')}
                 </label>
                 <Combobox
                   value={newScreenType}
                   onChange={(value) => setNewScreenType(value as ScreenType)}
-                  options={SCREEN_TYPE_OPTIONS}
+                  options={screenTypeOptions}
                   className="w-full"
                 />
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-6">
               <Button variant="ghost" onClick={() => setIsAddModalOpen(false)}>
-                Cancel
+                {t('presentation:actions.cancel')}
               </Button>
               <Button
                 variant="primary"
@@ -432,7 +454,7 @@ export function ScreenManager() {
                 {upsertScreen.isPending && (
                   <Loader2 size={16} className="animate-spin mr-2" />
                 )}
-                Create & Configure
+                {t('presentation:screens.createAndConfigure')}
               </Button>
             </div>
           </div>
@@ -444,15 +466,16 @@ export function ScreenManager() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-sm mx-4 p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              Delete Screen?
+              {t('presentation:screens.deleteConfirmTitle')}
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
-              Are you sure you want to delete "{deleteConfirm.name}"? This
-              action cannot be undone.
+              {t('presentation:screens.deleteConfirmMessage', {
+                name: deleteConfirm.name,
+              })}
             </p>
             <div className="flex justify-end gap-3">
               <Button variant="ghost" onClick={() => setDeleteConfirm(null)}>
-                Cancel
+                {t('presentation:actions.cancel')}
               </Button>
               <Button
                 variant="danger"
@@ -462,7 +485,7 @@ export function ScreenManager() {
                 {deleteScreen.isPending && (
                   <Loader2 size={16} className="animate-spin mr-2" />
                 )}
-                Delete
+                {t('presentation:actions.delete')}
               </Button>
             </div>
           </div>

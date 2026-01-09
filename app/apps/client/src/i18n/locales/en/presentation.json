@@ -262,6 +262,10 @@
   },
   "controlRoom": {
     "title": "Control Room",
+    "settings": {
+      "title": "Control Room Settings",
+      "button": "Settings"
+    },
     "selectProgram": "Select a program",
     "presenting": "Presenting",
     "notPresenting": "Not presenting",

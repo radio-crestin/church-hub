@@ -1,5 +1,6 @@
 export * from './ClockOverlay'
 export * from './ControlRoom'
+export * from './ControlRoomSettingsModal'
 export * from './LivePreview'
 export * from './rendering'
 export * from './SlidePreview'
