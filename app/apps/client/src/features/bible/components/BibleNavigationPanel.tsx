@@ -37,6 +37,14 @@ interface BibleNavigationPanelProps {
   onPreviousVerse?: () => void
   onGoBack?: () => void
   focusTrigger?: number
+  // URL navigation callbacks
+  onNavigateToBook?: (bookId: number, bookName: string) => void
+  onNavigateToChapter?: (
+    bookId: number,
+    bookName: string,
+    chapter: number,
+  ) => void
+  onSearchQueryChange?: (query: string) => void
 }
 
 export function BibleNavigationPanel({
@@ -48,6 +56,9 @@ export function BibleNavigationPanel({
   onPreviousVerse,
   onGoBack,
   focusTrigger,
+  onNavigateToBook,
+  onNavigateToChapter,
+  onSearchQueryChange,
 }: BibleNavigationPanelProps) {
   const { t } = useTranslation('bible')
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -75,14 +86,23 @@ export function BibleNavigationPanel({
     setLocalQuery(state.searchQuery)
   }, [state.searchQuery])
 
-  // Sync debounced query back to navigation state (for other consumers)
+  // Sync debounced query to URL (for URL-based navigation)
   // Only sync when debounce completed for user input (localQuery matches debouncedQuery)
-  // This prevents restoring searchQuery when it was intentionally cleared by selectOnly
   useEffect(() => {
     if (debouncedQuery !== state.searchQuery && localQuery === debouncedQuery) {
-      setSearchQuery(debouncedQuery)
+      if (onSearchQueryChange) {
+        onSearchQueryChange(debouncedQuery)
+      } else {
+        setSearchQuery(debouncedQuery)
+      }
     }
-  }, [debouncedQuery, state.searchQuery, localQuery, setSearchQuery])
+  }, [
+    debouncedQuery,
+    state.searchQuery,
+    localQuery,
+    setSearchQuery,
+    onSearchQueryChange,
+  ])
 
   // Use provided onGoBack or fallback to navigation's goBack
   const handleGoBack = onGoBack ?? goBack
@@ -124,6 +144,15 @@ export function BibleNavigationPanel({
     books,
     navigation,
     enabled: localQuery.length >= 2,
+    onNavigateToBook,
+    onNavigateToChapter: onNavigateToChapter
+      ? (bookId, bookName, chapter, verse) => {
+          onNavigateToChapter(bookId, bookName, chapter)
+          if (verse !== undefined) {
+            navigation.setSearchedIndex(verse - 1)
+          }
+        }
+      : undefined,
   })
 
   // Text search uses debounced query for API calls
@@ -228,15 +257,11 @@ export function BibleNavigationPanel({
               onKeyDown={handleSearchKeyDown}
               placeholder={t('search.placeholder')}
               className={`w-full pl-9 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-white placeholder-gray-400 ${
-                searchBibleShortcut ? 'pr-20' : 'pr-9'
+                searchBibleShortcut && !localQuery ? 'pr-20' : 'pr-9'
               }`}
             />
             {(showPendingIndicator || aiSearchMutation.isPending) && (
-              <div
-                className={`absolute top-1/2 -translate-y-1/2 flex items-center gap-1 ${
-                  searchBibleShortcut ? 'right-20' : 'right-9'
-                }`}
-              >
+              <div className="absolute top-1/2 -translate-y-1/2 flex items-center gap-1 right-9">
                 {aiSearchMutation.isPending ? (
                   <>
                     <Sparkles className="w-3 h-3 text-indigo-500 animate-pulse" />
@@ -253,9 +278,7 @@ export function BibleNavigationPanel({
               <button
                 type="button"
                 onClick={handleClearSearch}
-                className={`absolute top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 ${
-                  searchBibleShortcut ? 'right-14' : 'right-3'
-                }`}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               >
                 <X size={16} />
               </button>
@@ -304,14 +327,26 @@ export function BibleNavigationPanel({
           <BooksList
             books={books}
             isLoading={isLoadingBooks}
-            onSelectBook={selectBook}
+            onSelectBook={(bookId, bookName) => {
+              if (onNavigateToBook) {
+                onNavigateToBook(bookId, bookName)
+              } else {
+                selectBook(bookId, bookName)
+              }
+            }}
           />
         ) : state.level === 'chapters' ? (
           <ChaptersGrid
             bookName={state.bookName || ''}
             chapters={chapters}
             isLoading={isLoadingChapters}
-            onSelectChapter={selectChapter}
+            onSelectChapter={(chapter) => {
+              if (onNavigateToChapter && state.bookId && state.bookName) {
+                onNavigateToChapter(state.bookId, state.bookName, chapter)
+              } else {
+                selectChapter(chapter)
+              }
+            }}
             onGoBack={handleGoBack}
           />
         ) : (

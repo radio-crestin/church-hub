@@ -33,6 +33,11 @@ import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
 
 interface BibleSearchParams {
   reset?: number
+  book?: number
+  bookName?: string
+  chapter?: number
+  verse?: number
+  q?: string
 }
 
 export const Route = createFileRoute('/bible/')({
@@ -44,13 +49,40 @@ export const Route = createFileRoute('/bible/')({
         : typeof search.reset === 'string'
           ? parseInt(search.reset, 10) || undefined
           : undefined,
+    book:
+      typeof search.book === 'number'
+        ? search.book
+        : typeof search.book === 'string'
+          ? parseInt(search.book, 10) || undefined
+          : undefined,
+    bookName: typeof search.bookName === 'string' ? search.bookName : undefined,
+    chapter:
+      typeof search.chapter === 'number'
+        ? search.chapter
+        : typeof search.chapter === 'string'
+          ? parseInt(search.chapter, 10) || undefined
+          : undefined,
+    verse:
+      typeof search.verse === 'number'
+        ? search.verse
+        : typeof search.verse === 'string'
+          ? parseInt(search.verse, 10) || undefined
+          : undefined,
+    q: typeof search.q === 'string' ? search.q : undefined,
   }),
 })
 
 function BiblePage() {
   const { t } = useTranslation('bible')
   const navigate = useNavigate()
-  const { reset } = useSearch({ from: '/bible/' })
+  const {
+    reset,
+    book: urlBookId,
+    bookName: urlBookName,
+    chapter: urlChapter,
+    verse: urlVerse,
+    q: urlSearchQuery,
+  } = useSearch({ from: '/bible/' })
   const [focusTrigger, setFocusTrigger] = useState(0)
 
   const {
@@ -107,6 +139,41 @@ function BiblePage() {
 
   // Initialize navigation with primary translation
   const navigation = useBibleNavigation(primaryTranslation?.id)
+
+  // Sync URL params to navigation state (enables browser back/forward)
+  useEffect(() => {
+    // Derive level from URL params
+    if (urlSearchQuery) {
+      // Search query in URL - show search results
+      if (navigation.state.searchQuery !== urlSearchQuery) {
+        navigation.setSearchQuery(urlSearchQuery)
+      }
+    } else if (urlBookId && urlBookName && urlChapter !== undefined) {
+      // Book + chapter in URL - verses level
+      if (
+        navigation.state.bookId !== urlBookId ||
+        navigation.state.chapter !== urlChapter
+      ) {
+        navigation.navigateToChapter({
+          bookId: urlBookId,
+          bookName: urlBookName,
+          chapter: urlChapter,
+          verseIndex: urlVerse !== undefined ? urlVerse - 1 : undefined,
+        })
+      }
+    } else if (urlBookId && urlBookName) {
+      // Only book in URL - chapters level
+      if (navigation.state.bookId !== urlBookId) {
+        navigation.selectBook(urlBookId, urlBookName)
+      }
+    } else if (
+      navigation.state.level !== 'books' &&
+      !navigation.state.searchQuery
+    ) {
+      // No URL params and not searching - reset to books level
+      navigation.reset()
+    }
+  }, [urlBookId, urlBookName, urlChapter, urlVerse, urlSearchQuery, navigation])
 
   // Handle reset from keyboard shortcut - clear search and trigger focus
   useEffect(() => {
@@ -515,7 +582,7 @@ function BiblePage() {
     [navigation, presentVerseToScreen],
   )
 
-  // Handle search result selection - navigate to verse and select it (without presenting)
+  // Handle search result selection - navigate to verse via URL and select it (without presenting)
   const handleSelectSearchResult = useCallback(
     (result: BibleSearchResult) => {
       // Clear browse mode when selecting a verse (re-enables sync)
@@ -523,17 +590,20 @@ function BiblePage() {
       // Mark as navigated so sync effect works for subsequent chapter changes
       hasNavigatedOnOpen.current = true
 
-      // Navigate to the chapter and select the verse (without presenting to screen)
-      // Use selectOnly: true to set searchedIndex (indigo highlight) and clear search in single update
-      navigation.navigateToChapter({
-        bookId: result.bookId,
-        bookName: result.bookName,
-        chapter: result.chapter,
-        verseIndex: result.verse - 1, // Convert 1-based verse to 0-based index
-        selectOnly: true,
+      // Navigate via URL - this will trigger the sync effect to update navigation state
+      navigate({
+        to: '/bible/',
+        search: {
+          book: result.bookId,
+          bookName: result.bookName,
+          chapter: result.chapter,
+          verse: result.verse,
+        },
       })
+      // Set searchedIndex locally for highlighting (URL sync will handle the rest)
+      navigation.setSearchedIndex(result.verse - 1)
     },
-    [navigation],
+    [navigate, navigation],
   )
 
   // Handle next/previous verse navigation
@@ -612,14 +682,15 @@ function BiblePage() {
     }
   }, [navigation, verses, presentVerseToScreen])
 
-  // Handle go back - sets browse mode when there's a verse being presented
+  // Handle go back - use browser history for natural back navigation
   const handleGoBack = useCallback(() => {
     // If there's a verse being presented, enable browse mode to prevent sync from snapping back
     if (tempContentType === 'bible') {
       isBrowsingRef.current = true
     }
-    navigation.goBack()
-  }, [navigation, tempContentType])
+    // Use browser's native back - URL change will trigger sync effect
+    window.history.back()
+  }, [tempContentType])
 
   // Enable keyboard shortcuts (for chapters and verses levels)
   const isVersesLevel = navigation.state.level === 'verses'
@@ -779,6 +850,25 @@ function BiblePage() {
                 onPreviousVerse={handlePreviousVerse}
                 onGoBack={handleGoBack}
                 focusTrigger={focusTrigger}
+                onNavigateToBook={(bookId, bookName) => {
+                  navigate({
+                    to: '/bible/',
+                    search: { book: bookId, bookName },
+                  })
+                }}
+                onNavigateToChapter={(bookId, bookName, chapter) => {
+                  navigate({
+                    to: '/bible/',
+                    search: { book: bookId, bookName, chapter },
+                  })
+                }}
+                onSearchQueryChange={(query) => {
+                  navigate({
+                    to: '/bible/',
+                    search: query ? { q: query } : {},
+                    replace: true,
+                  })
+                }}
               />
             </div>
 
@@ -846,13 +936,17 @@ function BiblePage() {
                 >
                   <BibleHistoryPanel
                     onSelectVerse={(item: BibleHistoryItem) => {
-                      navigation.navigateToChapter({
-                        bookId: item.bookId,
-                        bookName: item.bookName,
-                        chapter: item.chapter,
-                        verseIndex: item.verse - 1,
-                        clearSearch: false,
+                      // Navigate via URL
+                      navigate({
+                        to: '/bible/',
+                        search: {
+                          book: item.bookId,
+                          bookName: item.bookName,
+                          chapter: item.chapter,
+                          verse: item.verse,
+                        },
                       })
+                      navigation.setSearchedIndex(item.verse - 1)
                     }}
                   />
                 </div>
