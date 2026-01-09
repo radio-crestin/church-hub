@@ -141,39 +141,37 @@ function BiblePage() {
   const navigation = useBibleNavigation(primaryTranslation?.id)
 
   // Sync URL params to navigation state (enables browser back/forward)
+  // Only run when URL params change (not on navigation state changes)
+  const urlSyncRef = useRef<string | null>(null)
   useEffect(() => {
+    // Create a key from URL params to detect actual URL changes
+    const urlKey = `${urlSearchQuery ?? ''}-${urlBookId ?? ''}-${urlBookName ?? ''}-${urlChapter ?? ''}-${urlVerse ?? ''}`
+    if (urlSyncRef.current === urlKey) {
+      return // Skip if URL hasn't changed
+    }
+    urlSyncRef.current = urlKey
+
     // Derive level from URL params
     if (urlSearchQuery) {
       // Search query in URL - show search results
-      if (navigation.state.searchQuery !== urlSearchQuery) {
-        navigation.setSearchQuery(urlSearchQuery)
-      }
+      navigation.setSearchQuery(urlSearchQuery)
     } else if (urlBookId && urlBookName && urlChapter !== undefined) {
       // Book + chapter in URL - verses level
-      if (
-        navigation.state.bookId !== urlBookId ||
-        navigation.state.chapter !== urlChapter
-      ) {
-        navigation.navigateToChapter({
-          bookId: urlBookId,
-          bookName: urlBookName,
-          chapter: urlChapter,
-          verseIndex: urlVerse !== undefined ? urlVerse - 1 : undefined,
-        })
-      }
+      navigation.navigateToChapter({
+        bookId: urlBookId,
+        bookName: urlBookName,
+        chapter: urlChapter,
+        verseIndex: urlVerse !== undefined ? urlVerse - 1 : undefined,
+      })
     } else if (urlBookId && urlBookName) {
       // Only book in URL - chapters level
-      if (navigation.state.bookId !== urlBookId) {
-        navigation.selectBook(urlBookId, urlBookName)
-      }
-    } else if (
-      navigation.state.level !== 'books' &&
-      !navigation.state.searchQuery
-    ) {
-      // No URL params and not searching - reset to books level
+      navigation.selectBook(urlBookId, urlBookName)
+    } else {
+      // No URL params - reset to books level
       navigation.reset()
     }
-  }, [urlBookId, urlBookName, urlChapter, urlVerse, urlSearchQuery, navigation])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlBookId, urlBookName, urlChapter, urlVerse, urlSearchQuery])
 
   // Handle reset from keyboard shortcut - clear search and trigger focus
   useEffect(() => {
