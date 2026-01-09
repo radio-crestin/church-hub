@@ -74,6 +74,8 @@ export function BibleNavigationPanel({
 
   // Local state for immediate input feedback
   const [localQuery, setLocalQuery] = useState(state.searchQuery)
+  // Track whether the current localQuery came from user input (typing) vs external sync
+  const isUserTypingRef = useRef(false)
 
   // Debounced query for text search API calls
   const { debouncedValue: debouncedQuery, isPending } = useDebouncedValue(
@@ -81,15 +83,33 @@ export function BibleNavigationPanel({
     SEARCH_DEBOUNCE_MS,
   )
 
-  // Sync local state when navigation searchQuery changes externally (e.g., clearSearch)
+  // Sync local state when navigation searchQuery changes externally (e.g., from URL)
   useEffect(() => {
-    setLocalQuery(state.searchQuery)
-  }, [state.searchQuery])
+    // Only sync if state differs from local (external change)
+    if (state.searchQuery !== localQuery) {
+      isUserTypingRef.current = false // Mark as external sync, not user typing
+      setLocalQuery(state.searchQuery)
+    }
+  }, [state.searchQuery, localQuery])
+
+  // Handle user input - mark as user typing
+  const handleQueryChange = useCallback((value: string) => {
+    isUserTypingRef.current = true // Mark as user typing
+    setLocalQuery(value)
+  }, [])
 
   // Sync debounced query to URL (for URL-based navigation)
-  // Only sync when debounce completed for user input (localQuery matches debouncedQuery)
+  // Only sync when user typed something (not when state was set externally from URL)
   useEffect(() => {
-    if (debouncedQuery !== state.searchQuery && localQuery === debouncedQuery) {
+    // Only sync to URL when:
+    // 1. Debounce completed (localQuery === debouncedQuery)
+    // 2. This is from user typing (not external state sync)
+    // 3. The debounced value differs from current state
+    if (
+      localQuery === debouncedQuery &&
+      isUserTypingRef.current &&
+      debouncedQuery !== state.searchQuery
+    ) {
       if (onSearchQueryChange) {
         onSearchQueryChange(debouncedQuery)
       } else {
@@ -236,7 +256,7 @@ export function BibleNavigationPanel({
   const showPendingIndicator = isPending && localQuery.length >= 2
 
   const handleClearSearch = () => {
-    setLocalQuery('')
+    handleQueryChange('')
     clearSearch()
   }
 
@@ -253,7 +273,7 @@ export function BibleNavigationPanel({
               ref={searchInputRef}
               type="text"
               value={localQuery}
-              onChange={(e) => setLocalQuery(e.target.value)}
+              onChange={(e) => handleQueryChange(e.target.value)}
               onKeyDown={handleSearchKeyDown}
               placeholder={t('search.placeholder')}
               className={`w-full pl-9 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-white placeholder-gray-400 ${
