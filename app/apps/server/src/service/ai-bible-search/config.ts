@@ -1,15 +1,13 @@
 import type { AIBibleSearchConfig } from './types'
 import { getSetting } from '../settings/settings'
 
-// Reuse the same config key as songs AI search
-const AI_SEARCH_CONFIG_KEY = 'ai_search_config'
+const BIBLE_AI_SEARCH_CONFIG_KEY = 'bible_ai_search_config'
 
 /**
- * Load AI search configuration from app_settings
- * Reuses the same config as songs AI search
+ * Load AI search configuration from app_settings for Bible feature
  */
 export function getAIBibleSearchConfig(): AIBibleSearchConfig | null {
-  const setting = getSetting('app_settings', AI_SEARCH_CONFIG_KEY)
+  const setting = getSetting('app_settings', BIBLE_AI_SEARCH_CONFIG_KEY)
   if (!setting?.value) return null
 
   try {

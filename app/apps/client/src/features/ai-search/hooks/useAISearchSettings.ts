@@ -1,17 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { getSetting, upsertSetting } from '~/service/settings'
-import type { AISearchConfig } from '../types'
+import type { AISearchConfig, AISearchConfigKey } from '../types'
 
-const AI_SEARCH_CONFIG_KEY = 'ai_search_config'
-
-export function useAISearchSettings() {
+export function useAISearchSettings(configKey: AISearchConfigKey) {
   const queryClient = useQueryClient()
 
   const query = useQuery({
-    queryKey: ['settings', 'ai_search'],
+    queryKey: ['settings', configKey],
     queryFn: async () => {
-      const setting = await getSetting('app_settings', AI_SEARCH_CONFIG_KEY)
+      const setting = await getSetting('app_settings', configKey)
       if (!setting?.value) return null
       try {
         return JSON.parse(setting.value) as AISearchConfig
@@ -24,7 +22,7 @@ export function useAISearchSettings() {
   const mutation = useMutation({
     mutationFn: async (config: AISearchConfig) => {
       const success = await upsertSetting('app_settings', {
-        key: AI_SEARCH_CONFIG_KEY,
+        key: configKey,
         value: JSON.stringify(config),
       })
       if (!success) {
@@ -32,7 +30,7 @@ export function useAISearchSettings() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['settings', 'ai_search'] })
+      queryClient.invalidateQueries({ queryKey: ['settings', configKey] })
     },
   })
 

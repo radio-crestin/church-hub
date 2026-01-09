@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 
 import { Combobox } from '~/ui/combobox'
 import { useAISearchSettings } from '../hooks'
-import type { AISearchConfig } from '../types'
+import type { AISearchConfig, AISearchConfigKey } from '../types'
 
 const PROVIDERS = [
   { value: 'openai', label: 'OpenAI' },
@@ -21,12 +21,23 @@ const DEFAULT_CONFIG: AISearchConfig = {
   analyzeResults: false,
 }
 
-export function AISearchSettings() {
+interface AISearchSettingsProps {
+  configKey: AISearchConfigKey
+}
+
+export function AISearchSettings({ configKey }: AISearchSettingsProps) {
   const { t } = useTranslation('settings')
-  const { config, isLoading, updateConfig, isUpdating } = useAISearchSettings()
+  const { config, isLoading, updateConfig, isUpdating } =
+    useAISearchSettings(configKey)
   const [showApiKey, setShowApiKey] = useState(false)
   const [localConfig, setLocalConfig] = useState<AISearchConfig>(DEFAULT_CONFIG)
   const [hasChanges, setHasChanges] = useState(false)
+
+  // Determine i18n key prefix based on config key
+  const i18nPrefix =
+    configKey === 'bible_ai_search_config'
+      ? 'sections.bibleAiSearch'
+      : 'sections.aiSearch'
 
   // Sync local state with fetched config
   useEffect(() => {
@@ -81,21 +92,21 @@ export function AISearchSettings() {
         <div className="flex items-center gap-2 mb-4">
           <Sparkles className="w-5 h-5 text-indigo-500" />
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {t('sections.aiSearch.title')}
+            {t(`${i18nPrefix}.title`)}
           </h3>
         </div>
         <p className="text-gray-600 dark:text-gray-400 text-sm mb-6">
-          {t('sections.aiSearch.description')}
+          {t(`${i18nPrefix}.description`)}
         </p>
 
         {/* Enable Toggle */}
         <div className="flex items-center justify-between mb-6">
           <div>
             <label className="text-sm font-medium text-gray-900 dark:text-white">
-              {t('sections.aiSearch.enable.label')}
+              {t(`${i18nPrefix}.enable.label`)}
             </label>
             <p className="text-gray-600 dark:text-gray-400 text-xs mt-0.5">
-              {t('sections.aiSearch.enable.description')}
+              {t(`${i18nPrefix}.enable.description`)}
             </p>
           </div>
           <button
@@ -121,10 +132,10 @@ export function AISearchSettings() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <label className="text-sm font-medium text-gray-900 dark:text-white">
-              {t('sections.aiSearch.analyzeResults.label')}
+              {t(`${i18nPrefix}.analyzeResults.label`)}
             </label>
             <p className="text-gray-600 dark:text-gray-400 text-xs mt-0.5">
-              {t('sections.aiSearch.analyzeResults.description')}
+              {t(`${i18nPrefix}.analyzeResults.description`)}
             </p>
           </div>
           <button
@@ -151,7 +162,7 @@ export function AISearchSettings() {
         {/* Provider */}
         <div className="space-y-2 mb-4">
           <label className="text-sm font-medium text-gray-900 dark:text-white">
-            {t('sections.aiSearch.provider.label')}
+            {t(`${i18nPrefix}.provider.label`)}
           </label>
           <Combobox
             options={PROVIDERS}
@@ -162,14 +173,14 @@ export function AISearchSettings() {
             allowClear={false}
           />
           <p className="text-gray-600 dark:text-gray-400 text-xs">
-            {t('sections.aiSearch.provider.description')}
+            {t(`${i18nPrefix}.provider.description`)}
           </p>
         </div>
 
         {/* Model */}
         <div className="space-y-2 mb-4">
           <label className="text-sm font-medium text-gray-900 dark:text-white">
-            {t('sections.aiSearch.model.label')}
+            {t(`${i18nPrefix}.model.label`)}
           </label>
           <input
             type="text"
@@ -179,21 +190,21 @@ export function AISearchSettings() {
             className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
           />
           <p className="text-gray-600 dark:text-gray-400 text-xs">
-            {t('sections.aiSearch.model.description')}
+            {t(`${i18nPrefix}.model.description`)}
           </p>
         </div>
 
         {/* API Key */}
         <div className="space-y-2 mb-4">
           <label className="text-sm font-medium text-gray-900 dark:text-white">
-            {t('sections.aiSearch.apiKey.label')}
+            {t(`${i18nPrefix}.apiKey.label`)}
           </label>
           <div className="relative">
             <input
               type={showApiKey ? 'text' : 'password'}
               value={localConfig.apiKey}
               onChange={(e) => updateField('apiKey', e.target.value)}
-              placeholder={t('sections.aiSearch.apiKey.placeholder')}
+              placeholder={t(`${i18nPrefix}.apiKey.placeholder`)}
               className="w-full px-3 py-2 pr-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
             />
             <button
@@ -209,7 +220,7 @@ export function AISearchSettings() {
             </button>
           </div>
           <p className="text-gray-600 dark:text-gray-400 text-xs">
-            {t('sections.aiSearch.apiKey.description')}
+            {t(`${i18nPrefix}.apiKey.description`)}
           </p>
         </div>
 
@@ -217,17 +228,17 @@ export function AISearchSettings() {
         {localConfig.provider === 'custom' && (
           <div className="space-y-2 mb-4">
             <label className="text-sm font-medium text-gray-900 dark:text-white">
-              {t('sections.aiSearch.baseUrl.label')}
+              {t(`${i18nPrefix}.baseUrl.label`)}
             </label>
             <input
               type="url"
               value={localConfig.baseUrl || ''}
               onChange={(e) => updateField('baseUrl', e.target.value)}
-              placeholder={t('sections.aiSearch.baseUrl.placeholder')}
+              placeholder={t(`${i18nPrefix}.baseUrl.placeholder`)}
               className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
             />
             <p className="text-gray-600 dark:text-gray-400 text-xs">
-              {t('sections.aiSearch.baseUrl.description')}
+              {t(`${i18nPrefix}.baseUrl.description`)}
             </p>
           </div>
         )}
@@ -240,9 +251,7 @@ export function AISearchSettings() {
             disabled={isUpdating}
             className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isUpdating
-              ? t('sections.aiSearch.saving')
-              : t('sections.aiSearch.save')}
+            {isUpdating ? t(`${i18nPrefix}.saving`) : t(`${i18nPrefix}.save`)}
           </button>
         )}
       </div>

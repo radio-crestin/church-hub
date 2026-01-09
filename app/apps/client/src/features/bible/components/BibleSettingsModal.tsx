@@ -2,6 +2,7 @@ import { FileUp, Info, Loader2, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { AISearchSettings } from '~/features/ai-search'
 import { AlertModal } from '~/ui/modal'
 import { BibleDownloadSection } from './BibleDownloadSection'
 import { BibleTranslationsManager } from './BibleTranslationsManager'
@@ -189,6 +190,9 @@ export function BibleSettingsModal({
                 </div>
               </div>
             </div>
+
+            {/* AI Search Settings Section */}
+            <AISearchSettings configKey="bible_ai_search_config" />
           </div>
         </div>
       </dialog>

@@ -14,7 +14,6 @@ import { ShortcutsSettingsSection } from '~/features/keyboard-shortcuts'
 import { KioskSettingsSection } from '~/features/kiosk'
 import { ScreenManager } from '~/features/presentation'
 import { SidebarConfigManager } from '~/features/sidebar-config'
-import { AISearchSettings } from '~/features/songs/components/AISearchSettings'
 import { SystemTokenManager } from '~/features/system-token'
 import { UserList } from '~/features/users'
 import { useDebugMode } from '~/hooks/useDebugMode'
@@ -122,9 +121,6 @@ function RouteComponent() {
             </div>
           </div>
         </div>
-
-        {/* AI Search Settings Section */}
-        <AISearchSettings />
 
         {/* Server Connection Section (Mobile only) */}
         {isMobile() && (

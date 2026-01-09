@@ -58,11 +58,43 @@
       }
     },
     "aiSearch": {
-      "title": "Căutare AI",
+      "title": "Căutare AI Cântece",
       "description": "Configurează căutarea semantică cu AI pentru cântece. Folosește AI pentru a înțelege intenția căutării și a găsi cântece relevante după temă.",
       "enable": {
         "label": "Activează Căutarea AI",
         "description": "Adaugă un buton de căutare AI în bara de căutare cântece"
+      },
+      "analyzeResults": {
+        "label": "Analizează Rezultatele cu AI",
+        "description": "Folosește AI pentru a evalua și ordona rezultatele după relevanță (mai lent dar mai precis)"
+      },
+      "provider": {
+        "label": "Furnizor AI",
+        "description": "Selectează furnizorul serviciului AI"
+      },
+      "model": {
+        "label": "Model",
+        "description": "Modelul AI folosit pentru generarea termenilor de căutare"
+      },
+      "apiKey": {
+        "label": "Cheie API",
+        "description": "Cheia API pentru furnizorul selectat",
+        "placeholder": "sk-..."
+      },
+      "baseUrl": {
+        "label": "URL Personalizat",
+        "description": "Pentru endpoint-uri self-hosted sau compatibile OpenAI",
+        "placeholder": "https://api.example.com/v1"
+      },
+      "save": "Salvează Setările",
+      "saving": "Se salvează..."
+    },
+    "bibleAiSearch": {
+      "title": "Căutare AI Biblie",
+      "description": "Configurează căutarea semantică cu AI pentru versete biblice. Folosește AI pentru a înțelege intenția căutării și a găsi versete relevante după temă.",
+      "enable": {
+        "label": "Activează Căutarea AI",
+        "description": "Adaugă un buton de căutare AI în bara de căutare Biblie"
       },
       "analyzeResults": {
         "label": "Analizează Rezultatele cu AI",

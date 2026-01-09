@@ -8,6 +8,7 @@ export {
   AVAILABLE_BIBLES_QUERY_KEY,
   useAvailableBibles,
 } from './useAvailableBibles'
+export { useBibleAISearchSettings } from './useBibleAISearchSettings'
 export {
   BIBLE_HISTORY_QUERY_KEY,
   useAddToHistory,
