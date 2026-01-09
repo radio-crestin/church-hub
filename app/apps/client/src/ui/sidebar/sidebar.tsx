@@ -101,9 +101,15 @@ export function Sidebar() {
       }
 
       // Handle Bible navigation - go to currently displayed verse if available
+      // But only if not currently viewing search results (URL has ?q= param)
       if (destinationPath === '/bible') {
+        const hasSearchQuery = location.search.includes('q=')
         const tempContent = presentationState?.temporaryContent
-        if (tempContent?.type === 'bible' && !presentationState?.isHidden) {
+        if (
+          !hasSearchQuery &&
+          tempContent?.type === 'bible' &&
+          !presentationState?.isHidden
+        ) {
           e?.preventDefault()
           const { bookId, bookName, chapter, currentVerseIndex } =
             tempContent.data
