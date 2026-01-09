@@ -239,6 +239,7 @@ function BiblePage() {
     ) {
       hasNavigatedOnOpen.current = true
       // Navigate via URL to keep URL as source of truth
+      // Use select=true to only select the verse (indigo) not present it (green)
       navigate({
         to: '/bible/',
         search: {
@@ -249,6 +250,7 @@ function BiblePage() {
             lastVisited.verseIndex !== undefined
               ? lastVisited.verseIndex + 1
               : undefined,
+          select: lastVisited.verseIndex !== undefined ? true : undefined,
         },
         replace: true,
       })
@@ -732,8 +734,15 @@ function BiblePage() {
 
   // Save Bible navigation state to localStorage when at verses level
   useEffect(() => {
-    const { translationId, bookId, bookName, chapter, presentedIndex, level } =
-      navigation.state
+    const {
+      translationId,
+      bookId,
+      bookName,
+      chapter,
+      presentedIndex,
+      searchedIndex,
+      level,
+    } = navigation.state
     if (
       level === 'verses' &&
       translationId &&
@@ -746,7 +755,8 @@ function BiblePage() {
         bookId,
         bookName,
         chapter,
-        verseIndex: presentedIndex ?? undefined,
+        // Save whichever index is set (presented takes priority, then searched)
+        verseIndex: presentedIndex ?? searchedIndex ?? undefined,
       })
     }
   }, [navigation.state])

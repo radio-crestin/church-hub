@@ -74,6 +74,8 @@ export function BibleNavigationPanel({
 
   // Local state for immediate input feedback
   const [localQuery, setLocalQuery] = useState(state.searchQuery)
+  // Track the last synced value from state to detect external changes
+  const lastSyncedStateQueryRef = useRef(state.searchQuery)
   // Track whether the current localQuery came from user input (typing) vs external sync
   const isUserTypingRef = useRef(false)
 
@@ -84,13 +86,15 @@ export function BibleNavigationPanel({
   )
 
   // Sync local state when navigation searchQuery changes externally (e.g., from URL)
+  // Only run when state.searchQuery changes, NOT when localQuery changes
   useEffect(() => {
-    // Only sync if state differs from local (external change)
-    if (state.searchQuery !== localQuery) {
+    // Only sync if state changed from what we last synced (external change)
+    if (state.searchQuery !== lastSyncedStateQueryRef.current) {
+      lastSyncedStateQueryRef.current = state.searchQuery
       isUserTypingRef.current = false // Mark as external sync, not user typing
       setLocalQuery(state.searchQuery)
     }
-  }, [state.searchQuery, localQuery])
+  }, [state.searchQuery])
 
   // Handle user input - mark as user typing
   const handleQueryChange = useCallback((value: string) => {
@@ -110,6 +114,8 @@ export function BibleNavigationPanel({
       isUserTypingRef.current &&
       debouncedQuery !== state.searchQuery
     ) {
+      // Update the ref so the external sync effect doesn't revert this change
+      lastSyncedStateQueryRef.current = debouncedQuery
       if (onSearchQueryChange) {
         onSearchQueryChange(debouncedQuery)
       } else {
