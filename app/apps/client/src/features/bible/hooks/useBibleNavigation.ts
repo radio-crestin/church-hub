@@ -29,6 +29,8 @@ export interface NavigateToChapterParams {
   chapter: number
   verseIndex?: number
   clearSearch?: boolean
+  /** When true, sets searchedIndex instead of presentedIndex (selects verse without presenting) */
+  selectOnly?: boolean
 }
 
 export interface UseBibleNavigationReturn {
@@ -239,18 +241,22 @@ export function useBibleNavigation(
   /** Navigate to chapter (used by reference search and verse navigation) */
   const navigateToChapter = useCallback((params: NavigateToChapterParams) => {
     const isSearchNavigation = params.clearSearch === false
+    const selectOnly = params.selectOnly === true
     setState((prev) => ({
       ...prev,
       bookId: params.bookId,
       bookName: params.bookName,
       chapter: params.chapter,
-      // For search navigation, set searchedIndex (indigo highlight, not yet presented)
-      // For regular navigation, set presentedIndex (green highlight, presented on screen)
-      presentedIndex: isSearchNavigation
-        ? prev.presentedIndex
-        : (params.verseIndex ?? null),
-      searchedIndex: isSearchNavigation ? (params.verseIndex ?? null) : null,
-      searchQuery: isSearchNavigation ? prev.searchQuery : '',
+      // selectOnly: set searchedIndex (select without presenting), clear search
+      // isSearchNavigation: set searchedIndex, keep search query
+      // default: set presentedIndex (present), clear search
+      presentedIndex:
+        selectOnly || isSearchNavigation
+          ? prev.presentedIndex
+          : (params.verseIndex ?? null),
+      searchedIndex:
+        selectOnly || isSearchNavigation ? (params.verseIndex ?? null) : null,
+      searchQuery: selectOnly ? '' : isSearchNavigation ? prev.searchQuery : '',
       level: 'verses',
     }))
   }, [])
