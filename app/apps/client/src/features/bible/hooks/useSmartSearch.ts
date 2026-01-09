@@ -9,6 +9,14 @@ interface UseSmartSearchParams {
   books: BibleBook[]
   navigation: UseBibleNavigationReturn
   enabled: boolean
+  // URL navigation callbacks (optional)
+  onNavigateToBook?: (bookId: number, bookName: string) => void
+  onNavigateToChapter?: (
+    bookId: number,
+    bookName: string,
+    chapter: number,
+    verse?: number,
+  ) => void
 }
 
 export function useSmartSearch({
@@ -16,6 +24,8 @@ export function useSmartSearch({
   books,
   navigation,
   enabled,
+  onNavigateToBook,
+  onNavigateToChapter,
 }: UseSmartSearchParams) {
   const lastNavigatedRef = useRef<string | null>(null)
   const { selectBook, navigateToChapter, selectVerse } = navigation
@@ -45,31 +55,55 @@ export function useSmartSearch({
 
     switch (type) {
       case 'book':
-        selectBook(matchedBook.id, matchedBook.bookName, false)
+        if (onNavigateToBook) {
+          onNavigateToBook(matchedBook.id, matchedBook.bookName)
+        } else {
+          selectBook(matchedBook.id, matchedBook.bookName, false)
+        }
         break
       case 'chapter':
         if (chapter !== undefined) {
-          navigateToChapter({
-            bookId: matchedBook.id,
-            bookName: matchedBook.bookName,
-            chapter,
-            clearSearch: false,
-          })
+          if (onNavigateToChapter) {
+            onNavigateToChapter(matchedBook.id, matchedBook.bookName, chapter)
+          } else {
+            navigateToChapter({
+              bookId: matchedBook.id,
+              bookName: matchedBook.bookName,
+              chapter,
+              clearSearch: false,
+            })
+          }
         }
         break
       case 'verse':
         if (chapter !== undefined && verse !== undefined) {
-          navigateToChapter({
-            bookId: matchedBook.id,
-            bookName: matchedBook.bookName,
-            chapter,
-            verseIndex: verse - 1, // Convert to 0-based index
-            clearSearch: false,
-          })
+          if (onNavigateToChapter) {
+            onNavigateToChapter(
+              matchedBook.id,
+              matchedBook.bookName,
+              chapter,
+              verse,
+            )
+          } else {
+            navigateToChapter({
+              bookId: matchedBook.id,
+              bookName: matchedBook.bookName,
+              chapter,
+              verseIndex: verse - 1, // Convert to 0-based index
+              clearSearch: false,
+            })
+          }
         }
         break
     }
-  }, [parsedReference, selectBook, navigateToChapter, selectVerse])
+  }, [
+    parsedReference,
+    selectBook,
+    navigateToChapter,
+    selectVerse,
+    onNavigateToBook,
+    onNavigateToChapter,
+  ])
 
   return {
     parsedReference,
