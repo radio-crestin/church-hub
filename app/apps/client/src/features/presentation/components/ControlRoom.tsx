@@ -111,7 +111,7 @@ export function ControlRoom() {
               search: { itemIndex: scheduleItemIndex },
             })
           }
-          className={buttonClassName}
+          className="flex items-center gap-2 px-3 py-1.5 text-sm text-indigo-700 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-900/40 hover:bg-indigo-200 dark:hover:bg-indigo-900/60 rounded-lg truncate transition-colors"
         >
           <Calendar size={16} className="shrink-0" />
           <span className="truncate">{getContentLabel(temporaryContent)}</span>
