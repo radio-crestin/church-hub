@@ -38,6 +38,8 @@ interface BibleSearchParams {
   chapter?: number
   verse?: number
   q?: string
+  /** When true, only selects the verse without presenting it (from search result click) */
+  select?: boolean
 }
 
 export const Route = createFileRoute('/bible/')({
@@ -69,6 +71,8 @@ export const Route = createFileRoute('/bible/')({
           ? parseInt(search.verse, 10) || undefined
           : undefined,
     q: typeof search.q === 'string' ? search.q : undefined,
+    select:
+      search.select === true || search.select === 'true' ? true : undefined,
   }),
 })
 
@@ -82,6 +86,7 @@ function BiblePage() {
     chapter: urlChapter,
     verse: urlVerse,
     q: urlSearchQuery,
+    select: urlSelectOnly,
   } = useSearch({ from: '/bible/' })
   const [focusTrigger, setFocusTrigger] = useState(0)
 
@@ -145,7 +150,7 @@ function BiblePage() {
   const urlSyncRef = useRef<string | null>(null)
   useEffect(() => {
     // Create a key from URL params to detect actual URL changes
-    const urlKey = `${urlSearchQuery ?? ''}-${urlBookId ?? ''}-${urlBookName ?? ''}-${urlChapter ?? ''}-${urlVerse ?? ''}`
+    const urlKey = `${urlSearchQuery ?? ''}-${urlBookId ?? ''}-${urlBookName ?? ''}-${urlChapter ?? ''}-${urlVerse ?? ''}-${urlSelectOnly ?? ''}`
     if (urlSyncRef.current === urlKey) {
       return // Skip if URL hasn't changed
     }
@@ -157,11 +162,13 @@ function BiblePage() {
       navigation.setSearchQuery(urlSearchQuery)
     } else if (urlBookId && urlBookName && urlChapter !== undefined) {
       // Book + chapter in URL - verses level
+      // When select=true (from search result click), only select the verse without presenting
       navigation.navigateToChapter({
         bookId: urlBookId,
         bookName: urlBookName,
         chapter: urlChapter,
         verseIndex: urlVerse !== undefined ? urlVerse - 1 : undefined,
+        selectOnly: urlSelectOnly === true,
       })
     } else if (urlBookId && urlBookName) {
       // Only book in URL - chapters level
@@ -171,7 +178,14 @@ function BiblePage() {
       navigation.reset()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [urlBookId, urlBookName, urlChapter, urlVerse, urlSearchQuery])
+  }, [
+    urlBookId,
+    urlBookName,
+    urlChapter,
+    urlVerse,
+    urlSearchQuery,
+    urlSelectOnly,
+  ])
 
   // Handle reset from keyboard shortcut - clear search and trigger focus
   useEffect(() => {
@@ -205,6 +219,12 @@ function BiblePage() {
     if (hasNavigatedOnOpen.current) return
     // Wait for primary translation to be loaded before syncing
     if (!primaryTranslation) return
+
+    // Skip if URL has a search query - let the URL sync effect handle it
+    if (urlSearchQuery) {
+      hasNavigatedOnOpen.current = true
+      return
+    }
 
     // Priority 1: Temporary Bible content (only if it matches primary translation)
     if (presentationState?.temporaryContent?.type === 'bible') {
@@ -245,7 +265,13 @@ function BiblePage() {
         verseIndex: lastVisited.verseIndex,
       })
     }
-  }, [presentationState, temporaryBooks, navigation, primaryTranslation])
+  }, [
+    presentationState,
+    temporaryBooks,
+    navigation,
+    primaryTranslation,
+    urlSearchQuery,
+  ])
 
   // Extract primitive values from temporary content to avoid object reference comparisons
   const tempContentType = presentationState?.temporaryContent?.type
@@ -589,6 +615,7 @@ function BiblePage() {
       hasNavigatedOnOpen.current = true
 
       // Navigate via URL - this will trigger the sync effect to update navigation state
+      // Pass select=true to only select the verse without presenting it
       navigate({
         to: '/bible/',
         search: {
@@ -596,12 +623,11 @@ function BiblePage() {
           bookName: result.bookName,
           chapter: result.chapter,
           verse: result.verse,
+          select: true,
         },
       })
-      // Set searchedIndex locally for highlighting (URL sync will handle the rest)
-      navigation.setSearchedIndex(result.verse - 1)
     },
-    [navigate, navigation],
+    [navigate],
   )
 
   // Handle next/previous verse navigation
