@@ -17,9 +17,9 @@ export async function focusMainWindow(): Promise<void> {
     const { getCurrentWindow } = await import('@tauri-apps/api/window')
     const mainWindow = getCurrentWindow()
     await mainWindow.setFocus()
-    // Small delay to allow the OS to actually bring the window to the foreground
+    // Delay to allow the OS to actually bring the window to the foreground
     // before we try to focus any input elements
-    await new Promise((resolve) => setTimeout(resolve, 50))
+    await new Promise((resolve) => setTimeout(resolve, 100))
     logger.debug('Main window focused')
   } catch (error) {
     logger.error('Failed to focus main window:', error)

@@ -141,7 +141,11 @@ export function BibleNavigationPanel({
   // Focus search input when focusTrigger changes (from keyboard shortcut)
   useEffect(() => {
     if (focusTrigger && focusTrigger > 0) {
-      searchInputRef.current?.focus()
+      // Small delay to ensure window is fully focused and state updates have settled
+      const timeoutId = setTimeout(() => {
+        searchInputRef.current?.focus()
+      }, 50)
+      return () => clearTimeout(timeoutId)
     }
   }, [focusTrigger])
 
