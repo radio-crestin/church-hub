@@ -12,6 +12,8 @@ export interface BibleNavigationState {
   /** The verse found by search navigation (indigo highlight) */
   searchedIndex: number | null
   searchQuery: string
+  /** Stores the search query when navigating from search results (for going back) */
+  previousSearchQuery: string | null
   level: BibleNavigationLevel
 }
 
@@ -64,6 +66,7 @@ const initialState: BibleNavigationState = {
   presentedIndex: null,
   searchedIndex: null,
   searchQuery: '',
+  previousSearchQuery: null,
   level: 'books',
 }
 
@@ -182,6 +185,16 @@ export function useBibleNavigation(
 
   const goBack = useCallback(() => {
     setState((prev) => {
+      // If we came from search results, go back to search
+      if (prev.level === 'verses' && prev.previousSearchQuery) {
+        return {
+          ...prev,
+          searchQuery: prev.previousSearchQuery,
+          previousSearchQuery: null,
+          searchedIndex: null,
+          // Keep bookId, bookName, chapter for context (search results will render over them)
+        }
+      }
       if (prev.level === 'verses') {
         return {
           ...prev,
@@ -257,6 +270,8 @@ export function useBibleNavigation(
       searchedIndex:
         selectOnly || isSearchNavigation ? (params.verseIndex ?? null) : null,
       searchQuery: selectOnly ? '' : isSearchNavigation ? prev.searchQuery : '',
+      // Save previous search query when coming from search results (for going back)
+      previousSearchQuery: selectOnly ? prev.searchQuery : null,
       level: 'verses',
     }))
   }, [])

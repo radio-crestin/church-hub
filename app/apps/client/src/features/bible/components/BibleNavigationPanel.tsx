@@ -76,11 +76,13 @@ export function BibleNavigationPanel({
   }, [state.searchQuery])
 
   // Sync debounced query back to navigation state (for other consumers)
+  // Only sync when debounce completed for user input (localQuery matches debouncedQuery)
+  // This prevents restoring searchQuery when it was intentionally cleared by selectOnly
   useEffect(() => {
-    if (debouncedQuery !== state.searchQuery) {
+    if (debouncedQuery !== state.searchQuery && localQuery === debouncedQuery) {
       setSearchQuery(debouncedQuery)
     }
-  }, [debouncedQuery, state.searchQuery, setSearchQuery])
+  }, [debouncedQuery, state.searchQuery, localQuery, setSearchQuery])
 
   // Use provided onGoBack or fallback to navigation's goBack
   const handleGoBack = onGoBack ?? goBack
@@ -200,8 +202,8 @@ export function BibleNavigationPanel({
   }
 
   // Show text search results only when there's an active text search (not reference search)
-  // Use debouncedQuery to only show results after debounce completes
-  const isTextSearchActive = debouncedQuery.length >= 2 && !isReferenceSearch
+  // Use localQuery for immediate feedback (shows "Searching..." during typing and on restore)
+  const isTextSearchActive = localQuery.length >= 2 && !isReferenceSearch
   const showPendingIndicator = isPending && localQuery.length >= 2
 
   const handleClearSearch = () => {
