@@ -125,7 +125,8 @@ function SongsPage() {
       params: { songId: String(songId) },
       search: {
         q: searchQuery || undefined,
-        categoryId: categoryId || undefined,
+        // Mark as internal navigation so back button uses browser history
+        internal: true,
       },
     })
   }
