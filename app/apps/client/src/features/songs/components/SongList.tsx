@@ -345,6 +345,21 @@ export function SongList({
             </div>
           )}
         </div>
+        {aiSearchAvailable && (
+          <button
+            type="button"
+            onClick={handleAISearch}
+            disabled={!localQuery.trim() || aiSearchMutation.isPending}
+            className={`px-3 py-2 rounded-lg border transition-colors flex items-center gap-1.5 ${
+              isAISearchActive
+                ? 'bg-indigo-600 text-white border-indigo-600'
+                : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
+            title={t('search.aiSearchTooltip')}
+          >
+            <Sparkles className="w-4 h-4" />
+          </button>
+        )}
         <div style={{ width: categoryDropdownWidth }}>
           <Combobox
             options={[
@@ -364,21 +379,6 @@ export function SongList({
             allowClear={false}
           />
         </div>
-        {aiSearchAvailable && (
-          <button
-            type="button"
-            onClick={handleAISearch}
-            disabled={!localQuery.trim() || aiSearchMutation.isPending}
-            className={`px-3 py-2 rounded-lg border transition-colors flex items-center gap-1.5 ${
-              isAISearchActive
-                ? 'bg-indigo-600 text-white border-indigo-600'
-                : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-            } disabled:opacity-50 disabled:cursor-not-allowed`}
-            title={t('search.aiSearchTooltip')}
-          >
-            <Sparkles className="w-4 h-4" />
-          </button>
-        )}
       </div>
 
       {isLoading ? (
