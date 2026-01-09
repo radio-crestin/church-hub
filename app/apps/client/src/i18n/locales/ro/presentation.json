@@ -262,6 +262,10 @@
   },
   "controlRoom": {
     "title": "Cameră de Control",
+    "settings": {
+      "title": "Setări Cameră de Control",
+      "button": "Setări"
+    },
     "selectProgram": "Selectează un program",
     "presenting": "În prezentare",
     "notPresenting": "Nu prezintă",

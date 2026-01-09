@@ -586,7 +586,9 @@
         "tapToDismiss": "Atinge oriunde pe suprapunere pentru a o închide",
         "brightnessControl": "Control Luminozitate (doar iOS):",
         "supported": "Suportat",
-        "notSupported": "Nesuportat"
+        "notSupported": "Nesuportat",
+        "dimScreen": "Întunecă Ecranul",
+        "restoreBrightness": "Restaurează Luminozitatea"
       },
       "toast": {
         "saved": "Setările kiosk au fost salvate",

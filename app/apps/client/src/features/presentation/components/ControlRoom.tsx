@@ -6,9 +6,12 @@ import {
   EyeOff,
   Loader2,
   MonitorUp,
+  Settings,
 } from 'lucide-react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { ControlRoomSettingsModal } from './ControlRoomSettingsModal'
 import { LivePreview } from './LivePreview'
 import {
   useClearSlide,
@@ -76,17 +79,34 @@ export function ControlRoom() {
   const canNavigate = hasTemporaryContent
   const hasContent = hasTemporaryContent || !!state?.lastSongSlideId
 
+  // Settings modal state
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+
   return (
     <div className="flex flex-col h-full gap-4">
+      {/* Navigation Bar */}
+      <div className="flex items-center justify-between flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <MonitorUp className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+            {t('presentation:controlRoom.title')}
+          </h1>
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsSettingsOpen(true)}
+          className="flex items-center gap-2 px-2 py-1.5 lg:px-3 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors"
+        >
+          <Settings className="w-4 h-4" />
+          <span className="hidden sm:inline">
+            {t('presentation:controlRoom.settings.button')}
+          </span>
+        </button>
+      </div>
+
       {/* Preview Section */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 flex-1 flex flex-col min-h-0">
         <div className="flex items-center justify-between mb-4 shrink-0">
-          <div className="flex items-center gap-2">
-            <MonitorUp size={20} className="text-indigo-600" />
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {t('presentation:controlRoom.title')}
-            </h2>
-          </div>
           <div className="flex items-center gap-2">
             {/* LIVE Indicator */}
             <div
@@ -199,6 +219,12 @@ export function ControlRoom() {
           </button>
         </div>
       </div>
+
+      {/* Settings Modal */}
+      <ControlRoomSettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      />
     </div>
   )
 }

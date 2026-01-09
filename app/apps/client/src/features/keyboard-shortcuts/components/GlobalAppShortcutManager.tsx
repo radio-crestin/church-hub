@@ -7,6 +7,7 @@ import { createLogger } from '~/utils/logger'
 import { useShortcutRecording } from '../context'
 import { useAppShortcuts, useGlobalAppShortcuts } from '../hooks'
 import { useMIDILEDFeedback } from '../midi/hooks'
+import { focusMainWindow } from '../utils/focusMainWindow'
 
 const logger = createLogger('keyboard-shortcuts:manager')
 
@@ -100,15 +101,19 @@ export function GlobalAppShortcutManager() {
     stop()
   }, [stop, navigate, isLive, isStopping, isStartingStream])
 
-  const handleSearchSong = useCallback(() => {
+  const handleSearchSong = useCallback(async () => {
     logger.debug('Navigating to song search via shortcut')
+    // Focus the main window first so input.focus() works when triggered from background
+    await focusMainWindow()
     // Pass reset timestamp to clear search and focus, even if already on page
     // Include fromSong: true to prevent auto-navigation back to last visited song
     navigate({ to: '/songs/', search: { reset: Date.now(), fromSong: true } })
   }, [navigate])
 
-  const handleSearchBible = useCallback(() => {
+  const handleSearchBible = useCallback(async () => {
     logger.debug('Navigating to Bible search via shortcut')
+    // Focus the main window first so input.focus() works when triggered from background
+    await focusMainWindow()
     // Pass reset timestamp to clear search and focus, even if already on page
     navigate({ to: '/bible/', search: { reset: Date.now() } })
   }, [navigate])
