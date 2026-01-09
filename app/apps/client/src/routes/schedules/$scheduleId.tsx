@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router'
 import { useEffect } from 'react'
 
 import { setSchedulesLastVisited } from '~/features/navigation'
@@ -7,13 +7,32 @@ import {
   SchedulePresenter,
 } from '~/features/schedules/components'
 
+/**
+ * Search params for deep-linking to specific schedule items
+ */
+interface ScheduleSearchParams {
+  /** Flat item index to navigate to (0-based) */
+  itemIndex?: number
+}
+
 export const Route = createFileRoute('/schedules/$scheduleId')({
   component: ScheduleEditorPage,
+  validateSearch: (search: Record<string, unknown>): ScheduleSearchParams => ({
+    itemIndex:
+      typeof search.itemIndex === 'number'
+        ? search.itemIndex
+        : typeof search.itemIndex === 'string'
+          ? parseInt(search.itemIndex, 10) || undefined
+          : undefined,
+  }),
 })
 
 function ScheduleEditorPage() {
   const navigate = useNavigate()
   const { scheduleId } = Route.useParams()
+  const { itemIndex: urlItemIndex } = useSearch({
+    from: '/schedules/$scheduleId',
+  })
 
   const isNew = scheduleId === 'new'
   const numericId = isNew ? null : parseInt(scheduleId, 10)
@@ -55,6 +74,7 @@ function ScheduleEditorPage() {
       scheduleId={numericId!}
       onBack={handleBack}
       onDeleted={handleBack}
+      urlItemIndex={urlItemIndex}
     />
   )
 }

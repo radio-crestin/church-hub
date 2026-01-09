@@ -63,6 +63,8 @@ interface SchedulePresenterProps {
   scheduleId: number
   onBack: () => void
   onDeleted?: () => void
+  /** URL param for deep-linking to a specific item */
+  urlItemIndex?: number
 }
 
 const DIVIDER_STORAGE_KEY = 'schedule-presenter-divider'
@@ -71,6 +73,7 @@ export function SchedulePresenter({
   scheduleId,
   onBack,
   onDeleted,
+  urlItemIndex,
 }: SchedulePresenterProps) {
   const { t } = useTranslation('schedules')
   const { showToast } = useToast()
@@ -125,6 +128,10 @@ export function SchedulePresenter({
   const [isLargeScreen, setIsLargeScreen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
+
+  // URL sync tracking - prevents loops when URL changes
+  const lastUrlItemIndexRef = useRef<number | undefined>(undefined)
+  const isInternalNavigationRef = useRef(false)
 
   // Title editing state
   const [isEditingTitle, setIsEditingTitle] = useState(false)
@@ -438,6 +445,73 @@ export function SchedulePresenter({
     (currentFlatIndex >= 0 && currentFlatIndex < flatItems.length - 1) ||
     (isOnLastSlide && hasContent)
 
+  // Helper to find flat item index for a given item and its sub-index
+  const getFlatItemIndex = useCallback(
+    (item: ScheduleItem, subIndex: number): number => {
+      return flatItems.findIndex(
+        (fi) => fi.item.id === item.id && fi.index === subIndex,
+      )
+    },
+    [flatItems],
+  )
+
+  // URL sync effect - navigate to item when URL changes externally
+  useEffect(() => {
+    // Skip if URL hasn't changed or it's from internal navigation
+    if (
+      urlItemIndex === lastUrlItemIndexRef.current ||
+      isInternalNavigationRef.current
+    ) {
+      isInternalNavigationRef.current = false
+      return
+    }
+
+    lastUrlItemIndexRef.current = urlItemIndex
+
+    // If we have a valid URL item index, navigate to it
+    if (urlItemIndex !== undefined && flatItems.length > 0) {
+      const targetItem = flatItems[urlItemIndex]
+      if (targetItem) {
+        // Navigate to this item (the navigateToFlatItem will be defined below)
+        // We need to call the appropriate handler based on item type
+        const { item, index } = targetItem
+        if (item.itemType === 'song' && item.songId) {
+          const nextItemPreview = getNextItemPreview(item)
+          presentTemporarySong.mutate({
+            songId: item.songId,
+            slideIndex: index,
+            nextItemPreview,
+            scheduleId,
+            scheduleItemIndex: urlItemIndex,
+          })
+        } else if (item.itemType === 'bible_passage') {
+          // Bible passage navigation is handled differently, trigger a re-render
+          // by setting the item directly - this will be handled in handleVerseClick
+        } else if (
+          item.itemType === 'slide' &&
+          item.slideType === 'announcement'
+        ) {
+          const nextItemPreview = getNextItemPreview(item)
+          presentTemporaryAnnouncement.mutate({
+            content: item.slideContent || '',
+            nextItemPreview,
+            scheduleId,
+            scheduleItemIndex: urlItemIndex,
+          })
+        }
+        // Note: For bible_passage, versete_tineri, and scene, the existing
+        // handlers will be called through item click events
+      }
+    }
+  }, [
+    urlItemIndex,
+    flatItems,
+    scheduleId,
+    getNextItemPreview,
+    presentTemporarySong,
+    presentTemporaryAnnouncement,
+  ])
+
   // Title editing handlers
   const handleStartEditTitle = useCallback(() => {
     setEditedTitle(schedule?.title ?? '')
@@ -495,15 +569,36 @@ export function SchedulePresenter({
       if (item.itemType === 'song' && item.songId) {
         // Calculate next item preview (for displaying when at last slide)
         const nextItemPreview = getNextItemPreview(item)
+        const flatIndex = getFlatItemIndex(item, slideIndex)
+
+        // Mark as internal navigation to prevent URL sync loop
+        isInternalNavigationRef.current = true
+        lastUrlItemIndexRef.current = flatIndex
+
+        // Update URL with current item index
+        navigate({
+          to: '/schedules/$scheduleId',
+          params: { scheduleId: String(scheduleId) },
+          search: { itemIndex: flatIndex },
+          replace: true,
+        })
 
         await presentTemporarySong.mutateAsync({
           songId: item.songId,
           slideIndex,
           nextItemPreview,
+          scheduleId,
+          scheduleItemIndex: flatIndex,
         })
       }
     },
-    [presentTemporarySong, getNextItemPreview],
+    [
+      presentTemporarySong,
+      getNextItemPreview,
+      getFlatItemIndex,
+      scheduleId,
+      navigate,
+    ],
   )
 
   // Handle verse click (bible passage)
@@ -548,6 +643,19 @@ export function SchedulePresenter({
 
       // Calculate next item preview (for displaying when at last verse)
       const nextItemPreview = getNextItemPreview(item)
+      const flatIndex = getFlatItemIndex(item, verseIndex)
+
+      // Mark as internal navigation to prevent URL sync loop
+      isInternalNavigationRef.current = true
+      lastUrlItemIndexRef.current = flatIndex
+
+      // Update URL with current item index
+      navigate({
+        to: '/schedules/$scheduleId',
+        params: { scheduleId: String(scheduleId) },
+        search: { itemIndex: flatIndex },
+        replace: true,
+      })
 
       await presentTemporaryBiblePassage.mutateAsync({
         translationId: 0, // Not stored in schedule, use 0
@@ -561,9 +669,17 @@ export function SchedulePresenter({
         verses,
         currentVerseIndex: verseIndex,
         nextItemPreview,
+        scheduleId,
+        scheduleItemIndex: flatIndex,
       })
     },
-    [presentTemporaryBiblePassage, getNextItemPreview],
+    [
+      presentTemporaryBiblePassage,
+      getNextItemPreview,
+      getFlatItemIndex,
+      scheduleId,
+      navigate,
+    ],
   )
 
   // Handle entry click (versete tineri)
@@ -594,14 +710,35 @@ export function SchedulePresenter({
 
       // Calculate next item preview (for displaying when at last entry)
       const nextItemPreview = getNextItemPreview(item)
+      const flatIndex = getFlatItemIndex(item, entryIndex)
+
+      // Mark as internal navigation to prevent URL sync loop
+      isInternalNavigationRef.current = true
+      lastUrlItemIndexRef.current = flatIndex
+
+      // Update URL with current item index
+      navigate({
+        to: '/schedules/$scheduleId',
+        params: { scheduleId: String(scheduleId) },
+        search: { itemIndex: flatIndex },
+        replace: true,
+      })
 
       await presentTemporaryVerseteTineri.mutateAsync({
         entries,
         currentEntryIndex: entryIndex,
         nextItemPreview,
+        scheduleId,
+        scheduleItemIndex: flatIndex,
       })
     },
-    [presentTemporaryVerseteTineri, getNextItemPreview],
+    [
+      presentTemporaryVerseteTineri,
+      getNextItemPreview,
+      getFlatItemIndex,
+      scheduleId,
+      navigate,
+    ],
   )
 
   // Handle announcement click
@@ -617,13 +754,34 @@ export function SchedulePresenter({
 
       // Calculate next item preview
       const nextItemPreview = getNextItemPreview(item)
+      const flatIndex = getFlatItemIndex(item, 0)
+
+      // Mark as internal navigation to prevent URL sync loop
+      isInternalNavigationRef.current = true
+      lastUrlItemIndexRef.current = flatIndex
+
+      // Update URL with current item index
+      navigate({
+        to: '/schedules/$scheduleId',
+        params: { scheduleId: String(scheduleId) },
+        search: { itemIndex: flatIndex },
+        replace: true,
+      })
 
       await presentTemporaryAnnouncement.mutateAsync({
         content: item.slideContent,
         nextItemPreview,
+        scheduleId,
+        scheduleItemIndex: flatIndex,
       })
     },
-    [presentTemporaryAnnouncement, getNextItemPreview],
+    [
+      presentTemporaryAnnouncement,
+      getNextItemPreview,
+      getFlatItemIndex,
+      scheduleId,
+      navigate,
+    ],
   )
 
   // Handle scene click (OBS scene switch)
@@ -639,6 +797,19 @@ export function SchedulePresenter({
 
       // Calculate next item preview
       const nextItemPreview = getNextItemPreview(item)
+      const flatIndex = getFlatItemIndex(item, 0)
+
+      // Mark as internal navigation to prevent URL sync loop
+      isInternalNavigationRef.current = true
+      lastUrlItemIndexRef.current = flatIndex
+
+      // Update URL with current item index
+      navigate({
+        to: '/schedules/$scheduleId',
+        params: { scheduleId: String(scheduleId) },
+        search: { itemIndex: flatIndex },
+        replace: true,
+      })
 
       // Switch the OBS scene first
       try {
@@ -652,24 +823,47 @@ export function SchedulePresenter({
       await presentTemporaryScene.mutateAsync({
         obsSceneName: item.obsSceneName,
         nextItemPreview,
+        scheduleId,
+        scheduleItemIndex: flatIndex,
       })
     },
-    [presentTemporaryScene, getNextItemPreview, switchSceneAsync],
+    [
+      presentTemporaryScene,
+      getNextItemPreview,
+      getFlatItemIndex,
+      scheduleId,
+      navigate,
+      switchSceneAsync,
+    ],
   )
 
   // Helper to navigate to a specific flat item
   const navigateToFlatItem = useCallback(
-    async (flatItem: (typeof flatItems)[0]) => {
+    async (flatItem: (typeof flatItems)[0], flatIndex: number) => {
       const { item, index } = flatItem
 
       if (item.itemType === 'song' && item.songId) {
         // Calculate next item preview (for displaying when at last slide)
         const nextItemPreview = getNextItemPreview(item)
 
+        // Mark as internal navigation to prevent URL sync loop
+        isInternalNavigationRef.current = true
+        lastUrlItemIndexRef.current = flatIndex
+
+        // Update URL with current item index
+        navigate({
+          to: '/schedules/$scheduleId',
+          params: { scheduleId: String(scheduleId) },
+          search: { itemIndex: flatIndex },
+          replace: true,
+        })
+
         await presentTemporarySong.mutateAsync({
           songId: item.songId,
           slideIndex: index,
           nextItemPreview,
+          scheduleId,
+          scheduleItemIndex: flatIndex,
         })
       } else if (item.itemType === 'bible_passage') {
         await handleVerseClick(item, index)
@@ -690,6 +884,8 @@ export function SchedulePresenter({
     [
       presentTemporarySong,
       getNextItemPreview,
+      scheduleId,
+      navigate,
       handleVerseClick,
       handleEntryClick,
       handleAnnouncementClick,
@@ -703,15 +899,16 @@ export function SchedulePresenter({
       return
     }
 
-    const prevItem = flatItems[currentFlatIndex - 1]
-    await navigateToFlatItem(prevItem)
+    const prevIndex = currentFlatIndex - 1
+    const prevItem = flatItems[prevIndex]
+    await navigateToFlatItem(prevItem, prevIndex)
   }, [currentFlatIndex, flatItems, navigateToFlatItem])
 
   const handleNextSlide = useCallback(async () => {
     // If nothing is presented, start with first item
     if (currentFlatIndex < 0) {
       if (flatItems.length > 0) {
-        await navigateToFlatItem(flatItems[0])
+        await navigateToFlatItem(flatItems[0], 0)
       }
       return
     }
@@ -724,8 +921,9 @@ export function SchedulePresenter({
       return
     }
 
-    const nextItem = flatItems[currentFlatIndex + 1]
-    await navigateToFlatItem(nextItem)
+    const nextIndex = currentFlatIndex + 1
+    const nextItem = flatItems[nextIndex]
+    await navigateToFlatItem(nextItem, nextIndex)
   }, [
     currentFlatIndex,
     flatItems,

@@ -110,6 +110,9 @@ export interface TemporarySongContent {
   slides: TemporarySongSlide[]
   currentSlideIndex: number // 0-based index
   nextItemPreview?: NextItemPreview // Preview of next schedule item (when at last slide)
+  // Schedule context (for deep-linking back to schedule)
+  scheduleId?: number
+  scheduleItemIndex?: number // Index in flatItems for navigation
 }
 
 /**
@@ -118,6 +121,9 @@ export interface TemporarySongContent {
 export interface TemporaryAnnouncementContent {
   content: string // HTML content
   nextItemPreview?: NextItemPreview // Preview of next schedule item
+  // Schedule context (for deep-linking back to schedule)
+  scheduleId?: number
+  scheduleItemIndex?: number // Index in flatItems for navigation
 }
 
 /**
@@ -149,6 +155,9 @@ export interface TemporaryBiblePassageContent {
   secondaryBookName?: string
   secondaryVerses?: BiblePassageVerse[]
   nextItemPreview?: NextItemPreview // Preview of next schedule item (when at last verse)
+  // Schedule context (for deep-linking back to schedule)
+  scheduleId?: number
+  scheduleItemIndex?: number // Index in flatItems for navigation
 }
 
 /**
@@ -175,6 +184,9 @@ export interface TemporaryVerseteTineriContent {
   entries: VerseteTineriEntry[]
   currentEntryIndex: number // 0-based index in entries array
   nextItemPreview?: NextItemPreview // Preview of next schedule item (when at last entry)
+  // Schedule context (for deep-linking back to schedule)
+  scheduleId?: number
+  scheduleItemIndex?: number // Index in flatItems for navigation
 }
 
 /**
@@ -183,6 +195,9 @@ export interface TemporaryVerseteTineriContent {
 export interface TemporarySceneContent {
   obsSceneName: string
   nextItemPreview?: NextItemPreview // Preview of next schedule item
+  // Schedule context (for deep-linking back to schedule)
+  scheduleId?: number
+  scheduleItemIndex?: number // Index in flatItems for navigation
 }
 
 /**
@@ -223,6 +238,9 @@ export interface PresentTemporarySongInput {
   songId: number
   slideIndex?: number // Optional: start from specific slide (0-based)
   nextItemPreview?: NextItemPreview // Preview of next schedule item (for schedule presentations)
+  // Schedule context (for deep-linking back to schedule)
+  scheduleId?: number
+  scheduleItemIndex?: number // Index in flatItems for navigation
 }
 
 /**
@@ -238,6 +256,9 @@ export interface NavigateTemporaryInput {
 export interface PresentTemporaryAnnouncementInput {
   content: string // HTML content
   nextItemPreview?: NextItemPreview // Preview of next schedule item (for schedule presentations)
+  // Schedule context (for deep-linking back to schedule)
+  scheduleId?: number
+  scheduleItemIndex?: number // Index in flatItems for navigation
 }
 
 /**
@@ -260,6 +281,9 @@ export interface PresentTemporaryBiblePassageInput {
   secondaryBookName?: string
   secondaryVerses?: BiblePassageVerse[]
   nextItemPreview?: NextItemPreview // Preview of next schedule item (for schedule presentations)
+  // Schedule context (for deep-linking back to schedule)
+  scheduleId?: number
+  scheduleItemIndex?: number // Index in flatItems for navigation
 }
 
 /**
@@ -269,6 +293,9 @@ export interface PresentTemporaryVerseteTineriInput {
   entries: VerseteTineriEntry[]
   currentEntryIndex?: number // Optional: start from specific entry (0-based)
   nextItemPreview?: NextItemPreview // Preview of next schedule item (for schedule presentations)
+  // Schedule context (for deep-linking back to schedule)
+  scheduleId?: number
+  scheduleItemIndex?: number // Index in flatItems for navigation
 }
 
 /**
@@ -277,6 +304,9 @@ export interface PresentTemporaryVerseteTineriInput {
 export interface PresentTemporarySceneInput {
   obsSceneName: string
   nextItemPreview?: NextItemPreview // Preview of next schedule item (for schedule presentations)
+  // Schedule context (for deep-linking back to schedule)
+  scheduleId?: number
+  scheduleItemIndex?: number // Index in flatItems for navigation
 }
 
 // ============================================================================

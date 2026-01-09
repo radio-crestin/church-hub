@@ -1,11 +1,13 @@
+import { Link } from '@tanstack/react-router'
 import {
-  ChevronLeft,
-  ChevronRight,
+  BookOpen,
+  Calendar,
   Eraser,
   Eye,
   EyeOff,
   Loader2,
   MonitorUp,
+  Music,
   Settings,
 } from 'lucide-react'
 import { useState } from 'react'
@@ -16,7 +18,6 @@ import { LivePreview } from './LivePreview'
 import {
   useClearSlide,
   useClearTemporaryContent,
-  useNavigateTemporary,
   usePresentationState,
   useShowSlide,
   useWebSocket,
@@ -25,6 +26,7 @@ import {
   useClearSlideHighlights,
   useSlideHighlights,
 } from '../hooks/useSlideHighlights'
+import type { TemporaryContent } from '../types'
 
 export function ControlRoom() {
   const { t } = useTranslation(['presentation', 'common'])
@@ -36,7 +38,6 @@ export function ControlRoom() {
   const clearSlide = useClearSlide()
   const showSlide = useShowSlide()
   const clearTemporary = useClearTemporaryContent()
-  const navigateTemporary = useNavigateTemporary()
 
   // Highlight management (auto-clear is handled globally in AppLayout)
   const { data: highlights } = useSlideHighlights()
@@ -63,21 +64,106 @@ export function ControlRoom() {
     }
   }
 
-  // Navigation within temporary content
-  const handlePrev = async () => {
-    if (hasTemporaryContent) {
-      await navigateTemporary.mutateAsync({ direction: 'prev' })
-    }
-  }
-
-  const handleNext = async () => {
-    if (hasTemporaryContent) {
-      await navigateTemporary.mutateAsync({ direction: 'next' })
-    }
-  }
-
-  const canNavigate = hasTemporaryContent
   const hasContent = hasTemporaryContent || !!state?.lastSongSlideId
+
+  // Helper to get display label for content
+  const getContentLabel = (content: TemporaryContent): string => {
+    switch (content.type) {
+      case 'song':
+        return content.data.title
+      case 'bible':
+        return content.data.reference
+      case 'bible_passage':
+        return `${content.data.bookName} ${content.data.startChapter}:${content.data.startVerse}-${content.data.endChapter}:${content.data.endVerse}`
+      case 'announcement':
+        return t('presentation:contentTypes.announcement')
+      case 'versete_tineri':
+        return t('presentation:contentTypes.verseteTineri')
+      case 'scene':
+        return content.data.obsSceneName
+      default:
+        return ''
+    }
+  }
+
+  // Render content link based on what's being presented
+  const renderContentLink = () => {
+    const temporaryContent = state?.temporaryContent
+    if (!temporaryContent || isHidden) return null
+
+    // Check if item came from a schedule - if so, link to schedule
+    const scheduleId = temporaryContent.data.scheduleId
+    const scheduleItemIndex = temporaryContent.data.scheduleItemIndex
+
+    if (scheduleId !== undefined && scheduleItemIndex !== undefined) {
+      // Navigate to schedule with item selected
+      return (
+        <Link
+          to="/schedules/$scheduleId"
+          params={{ scheduleId: String(scheduleId) }}
+          search={{ itemIndex: scheduleItemIndex }}
+          className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 hover:underline truncate"
+        >
+          <Calendar size={16} className="shrink-0" />
+          <span className="truncate">{getContentLabel(temporaryContent)}</span>
+        </Link>
+      )
+    }
+
+    // Not from schedule - link to content source directly
+    switch (temporaryContent.type) {
+      case 'song': {
+        const { songId, title } = temporaryContent.data
+        return (
+          <Link
+            to="/songs/$songId"
+            params={{ songId: String(songId) }}
+            className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 hover:underline truncate"
+          >
+            <Music size={16} className="shrink-0" />
+            <span className="truncate">{title}</span>
+          </Link>
+        )
+      }
+
+      case 'bible': {
+        const { bookId, bookName, chapter, currentVerseIndex } =
+          temporaryContent.data
+        const verse = currentVerseIndex + 1
+        return (
+          <Link
+            to="/bible"
+            search={{ book: bookId, bookName, chapter, verse }}
+            className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 hover:underline truncate"
+          >
+            <BookOpen size={16} className="shrink-0" />
+            <span className="truncate">{temporaryContent.data.reference}</span>
+          </Link>
+        )
+      }
+
+      case 'bible_passage': {
+        const { bookName, startChapter, startVerse, endChapter, endVerse } =
+          temporaryContent.data
+        return (
+          <Link
+            to="/bible"
+            search={{ bookName, chapter: startChapter, verse: startVerse }}
+            className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 hover:underline truncate"
+          >
+            <BookOpen size={16} className="shrink-0" />
+            <span className="truncate">
+              {bookName} {startChapter}:{startVerse}-{endChapter}:{endVerse}
+            </span>
+          </Link>
+        )
+      }
+
+      // versete_tineri, announcement, scene - no dedicated pages to navigate to
+      default:
+        return null
+    }
+  }
 
   // Settings modal state
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
@@ -106,8 +192,14 @@ export function ControlRoom() {
 
       {/* Preview Section */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 flex-1 flex flex-col min-h-0">
-        <div className="flex items-center justify-between mb-4 shrink-0">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between mb-4 shrink-0 gap-4">
+          {/* LEFT: Content Link */}
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            {renderContentLink()}
+          </div>
+
+          {/* RIGHT: LIVE + Controls */}
+          <div className="flex items-center gap-2 shrink-0">
             {/* LIVE Indicator */}
             <div
               className={`flex items-center gap-1.5 px-2 py-1 rounded-md ${
@@ -190,33 +282,6 @@ export function ControlRoom() {
           <div className="w-full h-full flex items-center justify-center">
             <LivePreview />
           </div>
-        </div>
-      </div>
-
-      {/* Navigation Controls */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-        <div className="flex items-center justify-center gap-3 flex-wrap">
-          <button
-            type="button"
-            onClick={handlePrev}
-            disabled={!canNavigate || navigateTemporary.isPending}
-            className="flex items-center gap-2 px-5 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors text-base"
-            title={t('presentation:controls.prev')}
-          >
-            <ChevronLeft size={22} />
-            <span>{t('presentation:controls.prev')}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleNext}
-            disabled={!canNavigate || navigateTemporary.isPending}
-            className="flex items-center gap-2 px-5 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors text-base"
-            title={t('presentation:controls.next')}
-          >
-            <span>{t('presentation:controls.next')}</span>
-            <ChevronRight size={22} />
-          </button>
         </div>
       </div>
 
