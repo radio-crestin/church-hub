@@ -157,8 +157,13 @@ function BiblePage() {
     urlSyncRef.current = urlKey
 
     // Derive level from URL params
-    if (urlSearchQuery) {
-      // Search query in URL - show search results
+    if (urlSearchQuery && !urlBookId && urlChapter === undefined) {
+      // Search query only in URL (no book/chapter) - reset to books level and show search results
+      // This handles going back from verse view to search results
+      navigation.reset()
+      navigation.setSearchQuery(urlSearchQuery)
+    } else if (urlSearchQuery) {
+      // Search query with book/chapter - just update search query
       navigation.setSearchQuery(urlSearchQuery)
     } else if (urlBookId && urlBookName && urlChapter !== undefined) {
       // Book + chapter in URL - verses level

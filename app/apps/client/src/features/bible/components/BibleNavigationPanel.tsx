@@ -248,6 +248,18 @@ export function BibleNavigationPanel({
   // Use localQuery for immediate feedback (shows "Searching..." during typing and on restore)
   const isTextSearchActive = localQuery.length >= 2 && !isReferenceSearch
 
+  // Focus search input when returning to search results (e.g., after pressing Escape from verse view)
+  // This tracks when we transition back to showing search results
+  const wasShowingSearchResultsRef = useRef(false)
+  useEffect(() => {
+    const isShowingSearchResults = isTextSearchActive && state.level === 'books'
+    // Focus when transitioning TO search results view
+    if (isShowingSearchResults && !wasShowingSearchResultsRef.current) {
+      searchInputRef.current?.focus()
+    }
+    wasShowingSearchResultsRef.current = isShowingSearchResults
+  }, [isTextSearchActive, state.level])
+
   // Get the current search results for keyboard navigation
   const currentSearchResults = isAISearchActive
     ? aiSearchResults
