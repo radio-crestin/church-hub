@@ -95,11 +95,14 @@ export function useBibleNavigation(
     }
 
     // Translation changed (or first time we have a valid ID) - reset to books view
+    // Preserve search query so URL-based search isn't cleared
     activeTranslationIdRef.current = initialTranslationId
-    setState({
+    setState((prev) => ({
       ...initialState,
       translationId: initialTranslationId,
-    })
+      searchQuery: prev.searchQuery,
+      previousSearchQuery: prev.previousSearchQuery,
+    }))
   }, [initialTranslationId])
 
   const selectTranslation = useCallback((id: number) => {
