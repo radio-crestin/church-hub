@@ -437,6 +437,8 @@ export function presentTemporarySong(
         })),
         currentSlideIndex: startIndex,
         nextItemPreview: input.nextItemPreview,
+        scheduleId: input.scheduleId,
+        scheduleItemIndex: input.scheduleItemIndex,
       },
     }
 
@@ -855,6 +857,8 @@ export function presentTemporaryAnnouncement(
       data: {
         content: input.content,
         nextItemPreview: input.nextItemPreview,
+        scheduleId: input.scheduleId,
+        scheduleItemIndex: input.scheduleItemIndex,
       },
     }
 
@@ -914,6 +918,8 @@ export function presentTemporaryBiblePassage(
         secondaryBookName: input.secondaryBookName,
         secondaryVerses: input.secondaryVerses,
         nextItemPreview: input.nextItemPreview,
+        scheduleId: input.scheduleId,
+        scheduleItemIndex: input.scheduleItemIndex,
       },
     }
 
@@ -964,6 +970,8 @@ export function presentTemporaryVerseteTineri(
         entries: input.entries,
         currentEntryIndex: startIndex,
         nextItemPreview: input.nextItemPreview,
+        scheduleId: input.scheduleId,
+        scheduleItemIndex: input.scheduleItemIndex,
       },
     }
 
@@ -997,6 +1005,8 @@ export function presentTemporaryScene(
       data: {
         obsSceneName: input.obsSceneName,
         nextItemPreview: input.nextItemPreview,
+        scheduleId: input.scheduleId,
+        scheduleItemIndex: input.scheduleItemIndex,
       },
     }
 
