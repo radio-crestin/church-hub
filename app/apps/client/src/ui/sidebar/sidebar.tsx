@@ -17,6 +17,7 @@ import { UpdateNotification } from '../../features/app-update'
 import { ContactModal, FeedbackModal } from '../../features/feedback'
 import { useAppShortcuts } from '../../features/keyboard-shortcuts'
 import { useKioskSettings } from '../../features/kiosk'
+import { usePresentationState } from '../../features/presentation'
 import {
   hideAllCustomPageWebviews,
   updateCurrentWebviewBounds,
@@ -65,6 +66,9 @@ export function Sidebar() {
   // Get kiosk settings to determine if kiosk menu item should be visible
   const { data: kioskSettings } = useKioskSettings()
 
+  // Get presentation state to redirect Bible menu to current verse
+  const { data: presentationState } = usePresentationState()
+
   // Filter items by permission (excluding settings and kiosk - they're rendered separately)
   const menuItems = resolvedItems.filter((item) => {
     // Exclude settings and kiosk - they're rendered separately
@@ -88,11 +92,32 @@ export function Sidebar() {
 
   // Hide webview when clicking on non-custom-page items (keep running in background)
   // For kiosk item, navigate to the configured startup page
+  // For Bible item, navigate to currently displayed/selected verse if available
   const handleSidebarItemClick = useCallback(
     (destinationPath: string, e?: React.MouseEvent<HTMLAnchorElement>) => {
       // If navigating to a non-custom-page, hide ALL custom page webviews
       if (!destinationPath.startsWith('/custom-page/')) {
         void hideAllCustomPageWebviews()
+      }
+
+      // Handle Bible navigation - go to currently displayed verse if available
+      if (destinationPath === '/bible') {
+        const tempContent = presentationState?.temporaryContent
+        if (tempContent?.type === 'bible' && !presentationState?.isHidden) {
+          e?.preventDefault()
+          const { bookId, bookName, chapter, currentVerseIndex } =
+            tempContent.data
+          navigate({
+            to: '/bible/',
+            search: {
+              book: bookId,
+              bookName: bookName,
+              chapter: chapter,
+              verse: currentVerseIndex + 1, // Convert 0-based index to 1-based verse
+            },
+          })
+          return
+        }
       }
 
       // Handle kiosk navigation - go to configured startup page instead of /kiosk
@@ -106,7 +131,7 @@ export function Sidebar() {
         }
       }
     },
-    [kioskSettings, navigate],
+    [kioskSettings, navigate, presentationState],
   )
 
   // Close mobile menu on route change
