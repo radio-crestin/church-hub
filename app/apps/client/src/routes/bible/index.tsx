@@ -524,16 +524,14 @@ function BiblePage() {
       hasNavigatedOnOpen.current = true
 
       // Navigate to the chapter and select the verse (without presenting to screen)
-      // Use clearSearch: false to set searchedIndex (indigo highlight) instead of presentedIndex
+      // Use selectOnly: true to set searchedIndex (indigo highlight) and clear search in single update
       navigation.navigateToChapter({
         bookId: result.bookId,
         bookName: result.bookName,
         chapter: result.chapter,
         verseIndex: result.verse - 1, // Convert 1-based verse to 0-based index
-        clearSearch: false,
+        selectOnly: true,
       })
-      // Clear search query to show verses list instead of search results
-      navigation.clearSearch()
     },
     [navigation],
   )
