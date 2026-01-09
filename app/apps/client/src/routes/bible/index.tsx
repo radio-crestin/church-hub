@@ -515,59 +515,27 @@ function BiblePage() {
     [navigation, presentVerseToScreen],
   )
 
-  // Handle search result selection
+  // Handle search result selection - navigate to verse and select it (without presenting)
   const handleSelectSearchResult = useCallback(
-    async (result: BibleSearchResult) => {
+    (result: BibleSearchResult) => {
       // Clear browse mode when selecting a verse (re-enables sync)
       isBrowsingRef.current = false
       // Mark as navigated so sync effect works for subsequent chapter changes
       hasNavigatedOnOpen.current = true
 
-      const reference =
-        result.reference ||
-        `${result.bookName} ${result.chapter}:${result.verse}`
-
-      // Fetch secondary verse if secondary translation is selected
-      let secondaryText: string | undefined
-      let secondaryBookName: string | undefined
-      let secondaryTranslationAbbreviation: string | undefined
-
-      if (secondaryTranslation) {
-        const secondaryVerse = await getVerseByReference(
-          secondaryTranslation.id,
-          result.bookCode,
-          result.chapter,
-          result.verse,
-        )
-        if (secondaryVerse) {
-          secondaryText = secondaryVerse.text
-          secondaryBookName = secondaryVerse.bookName
-          secondaryTranslationAbbreviation = secondaryTranslation.abbreviation
-        }
-      }
-
-      // Present search result temporarily
-      await presentTemporaryBible.mutateAsync({
-        verseId: result.id,
-        reference,
-        text: result.text,
-        translationAbbreviation: currentTranslation?.abbreviation || '',
-        bookName: result.bookName,
-        translationId: result.translationId,
+      // Navigate to the chapter and select the verse (without presenting to screen)
+      // Use clearSearch: false to set searchedIndex (indigo highlight) instead of presentedIndex
+      navigation.navigateToChapter({
         bookId: result.bookId,
-        bookCode: result.bookCode,
+        bookName: result.bookName,
         chapter: result.chapter,
-        currentVerseIndex: result.verse - 1, // Convert 1-based verse to 0-based index
-        secondaryText,
-        secondaryBookName,
-        secondaryTranslationAbbreviation,
+        verseIndex: result.verse - 1, // Convert 1-based verse to 0-based index
+        clearSearch: false,
       })
+      // Clear search query to show verses list instead of search results
+      navigation.clearSearch()
     },
-    [
-      currentTranslation?.abbreviation,
-      secondaryTranslation,
-      presentTemporaryBible,
-    ],
+    [navigation],
   )
 
   // Handle next/previous verse navigation
