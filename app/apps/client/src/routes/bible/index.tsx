@@ -128,6 +128,12 @@ function BiblePage() {
   const prevSecondaryTranslationIdRef = useRef<number | null | undefined>(
     undefined,
   )
+  // Track whether the user navigated internally (from within Bible) or externally (direct URL, sidebar)
+  // When external, back should use hierarchical navigation (verses → chapters → books)
+  // When internal, back should use browser history to return to previous Bible state
+  const navigatedInternallyRef = useRef(false)
+  // Pending flag to detect internal navigation in URL sync effect
+  const pendingInternalNavRef = useRef(false)
 
   // Track screen size for responsive layout
   useEffect(() => {
@@ -155,6 +161,17 @@ function BiblePage() {
       return // Skip if URL hasn't changed
     }
     urlSyncRef.current = urlKey
+
+    // Detect if this URL change was from internal navigation (callback set pending flag)
+    // or external navigation (direct URL, browser back/forward, sidebar)
+    if (pendingInternalNavRef.current) {
+      // Internal navigation - use browser history for back
+      navigatedInternallyRef.current = true
+      pendingInternalNavRef.current = false
+    } else {
+      // External navigation - use hierarchical back (verses → chapters → books)
+      navigatedInternallyRef.current = false
+    }
 
     // Derive level from URL params
     if (urlSearchQuery && !urlBookId && urlChapter === undefined) {
@@ -604,6 +621,8 @@ function BiblePage() {
       isBrowsingRef.current = false
       // Mark as navigated so sync effect works for subsequent chapter changes
       hasNavigatedOnOpen.current = true
+      // Mark as internal navigation (from search results) so back uses browser history
+      pendingInternalNavRef.current = true
 
       // Navigate via URL - this will trigger the sync effect to update navigation state
       // Pass select=true to only select the verse without presenting it
@@ -697,15 +716,42 @@ function BiblePage() {
     }
   }, [navigation, verses, presentVerseToScreen])
 
-  // Handle go back - use browser history for natural back navigation
+  // Handle go back - use browser history when navigated internally, hierarchical when external
   const handleGoBack = useCallback(() => {
     // If there's a verse being presented, enable browse mode to prevent sync from snapping back
     if (tempContentType === 'bible') {
       isBrowsingRef.current = true
     }
-    // Use browser's native back - URL change will trigger sync effect
-    window.history.back()
-  }, [tempContentType])
+
+    // Check if user navigated internally (from within Bible - e.g., search results, chapter selection)
+    // or externally (direct URL, sidebar click from another page)
+    if (navigatedInternallyRef.current) {
+      // Internal navigation - use browser's native back to return to previous Bible state
+      window.history.back()
+    } else {
+      // External navigation - use hierarchical navigation (verses → chapters → books)
+      // and update URL to match the new state
+      const { level, bookId, bookName } = navigation.state
+      if (level === 'verses' && bookId && bookName) {
+        // Go back to chapters view
+        navigate({
+          to: '/bible/',
+          search: { book: bookId, bookName },
+          replace: true,
+        })
+      } else if (level === 'chapters') {
+        // Go back to books view
+        navigate({
+          to: '/bible/',
+          search: {},
+          replace: true,
+        })
+      } else {
+        // Already at books level, use browser back
+        window.history.back()
+      }
+    }
+  }, [tempContentType, navigation.state, navigate])
 
   // Enable keyboard shortcuts (for chapters and verses levels)
   const isVersesLevel = navigation.state.level === 'verses'
@@ -874,12 +920,16 @@ function BiblePage() {
                 onGoBack={handleGoBack}
                 focusTrigger={focusTrigger}
                 onNavigateToBook={(bookId, bookName) => {
+                  // Mark as internal navigation (from within Bible) so back uses browser history
+                  pendingInternalNavRef.current = true
                   navigate({
                     to: '/bible/',
                     search: { book: bookId, bookName },
                   })
                 }}
                 onNavigateToChapter={(bookId, bookName, chapter) => {
+                  // Mark as internal navigation (from within Bible) so back uses browser history
+                  pendingInternalNavRef.current = true
                   navigate({
                     to: '/bible/',
                     search: { book: bookId, bookName, chapter },
