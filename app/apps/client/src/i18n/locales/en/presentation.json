@@ -285,5 +285,9 @@
     "underline": "Underline",
     "removeStyle": "Remove Style",
     "highlightColor": "Highlight Color"
+  },
+  "contentTypes": {
+    "announcement": "Announcement",
+    "verseteTineri": "Versete Tineri"
   }
 }

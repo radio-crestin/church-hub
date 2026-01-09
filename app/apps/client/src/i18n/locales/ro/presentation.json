@@ -285,5 +285,9 @@
     "underline": "Subliniere",
     "removeStyle": "Elimină Stil",
     "highlightColor": "Culoare Evidențiere"
+  },
+  "contentTypes": {
+    "announcement": "Anunț",
+    "verseteTineri": "Versete Tineri"
   }
 }

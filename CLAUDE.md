@@ -54,3 +54,6 @@ The sample config (`tauri.worktree.conf.json.sample`) contains only the override
 - Window title: "Church Hub (Worktree)"
 
 Edit your local `tauri.worktree.conf.json` to use different ports if needed. This file is gitignored.
+
+## Conventions
+- When the user pastes a filename like `/abc/sample.py:XX:YY`, XX is the line number and YY is the number of lines to be selected
