@@ -220,10 +220,14 @@ function BiblePage() {
       })
       // Clear Bible search
       navigation.clearSearch()
-      // Trigger focus in BibleNavigationPanel
-      setFocusTrigger((prev) => prev + 1)
+      // Trigger focus in BibleNavigationPanel after a short delay
+      // to allow cascading state updates from clearSearch() to settle
+      setTimeout(() => {
+        setFocusTrigger((prev) => prev + 1)
+      }, 50)
     }
-  }, [reset, navigate, navigation])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reset, navigate])
 
   // Get presentation state to sync with current Bible item
   const { data: presentationState } = usePresentationState()
