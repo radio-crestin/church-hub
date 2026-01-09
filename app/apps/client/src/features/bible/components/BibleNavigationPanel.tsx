@@ -205,6 +205,8 @@ export function BibleNavigationPanel({
     [],
   )
   const [isAISearchActive, setIsAISearchActive] = useState(false)
+  // Track focused search result for keyboard navigation
+  const [focusedResultIndex, setFocusedResultIndex] = useState<number>(-1)
 
   // Handle AI search button click
   const handleAISearch = useCallback(async () => {
@@ -230,6 +232,11 @@ export function BibleNavigationPanel({
     }
   }, [localQuery])
 
+  // Reset focused index when search results change
+  useEffect(() => {
+    setFocusedResultIndex(-1)
+  }, [searchResults, aiSearchResults])
+
   const handleSelectVerse = (index: number) => {
     const verse = verses[index]
     if (verse) {
@@ -237,7 +244,47 @@ export function BibleNavigationPanel({
     }
   }
 
+  // Show text search results only when there's an active text search (not reference search)
+  // Use localQuery for immediate feedback (shows "Searching..." during typing and on restore)
+  const isTextSearchActive = localQuery.length >= 2 && !isReferenceSearch
+
+  // Get the current search results for keyboard navigation
+  const currentSearchResults = isAISearchActive
+    ? aiSearchResults
+    : searchResults?.results || []
+
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Handle search results navigation when results are visible
+    if (isTextSearchActive && currentSearchResults.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setFocusedResultIndex((prev) =>
+          prev < currentSearchResults.length - 1 ? prev + 1 : prev,
+        )
+        return
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setFocusedResultIndex((prev) => (prev > 0 ? prev - 1 : prev))
+        return
+      }
+      if (e.key === 'Enter') {
+        e.preventDefault()
+        // If a result is focused, select it
+        if (
+          focusedResultIndex >= 0 &&
+          focusedResultIndex < currentSearchResults.length
+        ) {
+          const result = currentSearchResults[
+            focusedResultIndex
+          ] as BibleSearchResult
+          onSelectSearchResult(result)
+        }
+        return
+      }
+    }
+
+    // Handle Enter to present when already at verse level (existing behavior)
     if (e.key === 'Enter' && onPresentSearched) {
       e.preventDefault()
       onPresentSearched()
@@ -256,9 +303,6 @@ export function BibleNavigationPanel({
     }
   }
 
-  // Show text search results only when there's an active text search (not reference search)
-  // Use localQuery for immediate feedback (shows "Searching..." during typing and on restore)
-  const isTextSearchActive = localQuery.length >= 2 && !isReferenceSearch
   const showPendingIndicator = isPending && localQuery.length >= 2
 
   const handleClearSearch = () => {
@@ -340,6 +384,7 @@ export function BibleNavigationPanel({
             isLoading={false}
             onSelectResult={onSelectSearchResult}
             getBookName={getBookName}
+            focusedIndex={focusedResultIndex}
           />
         ) : isTextSearchActive ? (
           <SearchResults
@@ -348,6 +393,7 @@ export function BibleNavigationPanel({
             isLoading={isSearching}
             onSelectResult={onSelectSearchResult}
             getBookName={getBookName}
+            focusedIndex={focusedResultIndex}
           />
         ) : state.level === 'books' ? (
           <BooksList
@@ -400,6 +446,7 @@ interface SearchResultsProps {
   isLoading: boolean
   onSelectResult: (result: BibleSearchResult) => void
   getBookName: (bookCode: string) => string | undefined
+  focusedIndex?: number
 }
 
 function SearchResults({
@@ -408,8 +455,20 @@ function SearchResults({
   isLoading,
   onSelectResult,
   getBookName,
+  focusedIndex = -1,
 }: SearchResultsProps) {
   const { t } = useTranslation('bible')
+  const focusedRef = useRef<HTMLButtonElement>(null)
+
+  // Scroll focused result into view
+  useEffect(() => {
+    if (focusedIndex >= 0 && focusedRef.current) {
+      focusedRef.current.scrollIntoView({
+        block: 'nearest',
+        behavior: 'smooth',
+      })
+    }
+  }, [focusedIndex])
 
   if (isLoading) {
     return (
@@ -429,11 +488,12 @@ function SearchResults({
 
   return (
     <div className="space-y-1">
-      {results.map((result) => {
+      {results.map((result, index) => {
         const isSearchResult = type === 'text' || type === 'ai'
         const searchResult = result as BibleSearchResult
         const aiResult = result as AIBibleSearchResult
         const verse = result as BibleVerse
+        const isFocused = index === focusedIndex
 
         // Get localized book name, fall back to original book name
         const bookCode = isSearchResult ? searchResult.bookCode : verse.bookCode
@@ -449,9 +509,14 @@ function SearchResults({
         return (
           <button
             key={result.id}
+            ref={isFocused ? focusedRef : undefined}
             type="button"
             onClick={() => onSelectResult(searchResult)}
-            className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
+              isFocused
+                ? 'bg-indigo-100 dark:bg-indigo-900/50 ring-2 ring-indigo-500'
+                : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+            }`}
           >
             <div className="flex items-center gap-2 mb-0.5">
               <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400">
