@@ -1,6 +1,6 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Eye, EyeOff, GripVertical, Pencil, Trash2 } from 'lucide-react'
+import { Eye, EyeOff, GripVertical, Settings, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { BUILTIN_ITEMS } from '../constants'
@@ -10,7 +10,7 @@ import type { SidebarMenuItem } from '../types'
 interface SidebarItemCardProps {
   item: SidebarMenuItem
   onToggleVisibility: () => void
-  onEdit?: () => void
+  onOpenSettings: () => void
   onDelete?: () => void
 }
 
@@ -20,7 +20,7 @@ interface SidebarItemCardProps {
 export function SidebarItemCard({
   item,
   onToggleVisibility,
-  onEdit,
+  onOpenSettings,
   onDelete,
 }: SidebarItemCardProps) {
   const { t } = useTranslation(['settings', 'sidebar'])
@@ -131,17 +131,15 @@ export function SidebarItemCard({
           {item.isVisible ? <Eye size={18} /> : <EyeOff size={18} />}
         </button>
 
-        {/* Edit Button (custom pages only) */}
-        {isCustom && onEdit && (
-          <button
-            type="button"
-            onClick={onEdit}
-            className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
-            title={t('common:buttons.edit', { defaultValue: 'Edit' })}
-          >
-            <Pencil size={18} />
-          </button>
-        )}
+        {/* Settings Button (all items) */}
+        <button
+          type="button"
+          onClick={onOpenSettings}
+          className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+          title={t('common:buttons.settings', { defaultValue: 'Settings' })}
+        >
+          <Settings size={18} />
+        </button>
 
         {/* Delete Button (custom pages only) */}
         {isCustom && onDelete && (

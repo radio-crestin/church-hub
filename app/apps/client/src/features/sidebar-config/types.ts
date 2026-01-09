@@ -16,12 +16,24 @@ export type BuiltInMenuItemId =
   | 'settings'
 
 /**
+ * Settings for a sidebar item (shortcuts, navigation behavior)
+ */
+export interface SidebarItemSettings {
+  /** Keyboard/MIDI shortcuts that navigate to this page */
+  shortcuts: string[]
+  /** Whether to focus the search input when navigating via shortcut */
+  focusSearchOnNavigate: boolean
+}
+
+/**
  * Base properties shared by all menu items
  */
 interface BaseMenuItem {
   id: string
   order: number
   isVisible: boolean
+  /** Optional settings for shortcuts and navigation behavior */
+  settings?: SidebarItemSettings
 }
 
 /**
@@ -51,9 +63,12 @@ export type SidebarMenuItem = BuiltInMenuItem | CustomPageMenuItem
 
 /**
  * Full sidebar configuration stored in settings
+ * Version history:
+ * - v1: Initial version with basic sidebar items
+ * - v2: Added settings (shortcuts, focusSearchOnNavigate) to items
  */
 export interface SidebarConfiguration {
-  version: 1
+  version: 1 | 2
   items: SidebarMenuItem[]
 }
 
