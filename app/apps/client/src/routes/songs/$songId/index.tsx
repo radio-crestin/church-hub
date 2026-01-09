@@ -45,6 +45,8 @@ import { useToast } from '~/ui/toast'
 interface SongSearchParams {
   q?: string
   reset?: number
+  /** When true, navigation was from within the songs list - use browser history for back */
+  internal?: boolean
 }
 
 export const Route = createFileRoute('/songs/$songId/')({
@@ -57,6 +59,7 @@ export const Route = createFileRoute('/songs/$songId/')({
         : typeof search.reset === 'string'
           ? parseInt(search.reset, 10) || undefined
           : undefined,
+    internal: search.internal === true || search.internal === 'true',
   }),
   beforeLoad: ({ params }) => {
     // Redirect "new" to the edit page
@@ -70,7 +73,11 @@ function SongPreviewPage() {
   const { t } = useTranslation('songs')
   const navigate = useNavigate()
   const { songId } = Route.useParams()
-  const { q: searchQuery, reset } = useSearch({ from: '/songs/$songId/' })
+  const {
+    q: searchQuery,
+    reset,
+    internal,
+  } = useSearch({ from: '/songs/$songId/' })
 
   // Handle reset from keyboard shortcut - redirect to song list with reset
   useEffect(() => {
@@ -155,7 +162,15 @@ function SongPreviewPage() {
   const handleGoBack = useCallback(() => {
     // Clear last visited so user stays on list when going back
     clearSectionLastVisited('songs')
-    // Always pass fromSong: true to prevent auto-redirect to presented song
+
+    // If user navigated internally (from songs list), use browser history
+    // This preserves the exact previous state (search query, scroll position, etc.)
+    if (internal) {
+      window.history.back()
+      return
+    }
+
+    // External navigation (direct URL, sidebar) - use programmatic navigation
     // Preserve search query and current song ID so user returns to their position
     navigate({
       to: '/songs/',
@@ -165,7 +180,7 @@ function SongPreviewPage() {
         selectedSongId: numericId,
       },
     })
-  }, [navigate, searchQuery, numericId])
+  }, [navigate, searchQuery, numericId, internal])
 
   const handlePrevSlide = useCallback(async () => {
     if (presentedSlideIndex !== null && presentedSlideIndex > 0) {
