@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import {
   BookOpen,
   Calendar,
@@ -30,6 +30,7 @@ import type { TemporaryContent } from '../types'
 
 export function ControlRoom() {
   const { t } = useTranslation(['presentation', 'common'])
+  const navigate = useNavigate()
 
   // Connect to WebSocket for real-time updates
   useWebSocket()
@@ -86,43 +87,56 @@ export function ControlRoom() {
     }
   }
 
-  // Render content link based on what's being presented
-  const renderContentLink = () => {
+  // Render content button based on what's being presented
+  const renderContentButton = () => {
     const temporaryContent = state?.temporaryContent
     if (!temporaryContent || isHidden) return null
 
-    // Check if item came from a schedule - if so, link to schedule
+    const buttonClassName =
+      'flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 hover:underline truncate transition-colors'
+
+    // Check if item came from a schedule - if so, navigate to schedule
     const scheduleId = temporaryContent.data.scheduleId
     const scheduleItemIndex = temporaryContent.data.scheduleItemIndex
 
     if (scheduleId !== undefined && scheduleItemIndex !== undefined) {
       // Navigate to schedule with item selected
       return (
-        <Link
-          to="/schedules/$scheduleId"
-          params={{ scheduleId: String(scheduleId) }}
-          search={{ itemIndex: scheduleItemIndex }}
-          className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 hover:underline truncate"
+        <button
+          type="button"
+          onClick={() =>
+            navigate({
+              to: '/schedules/$scheduleId',
+              params: { scheduleId: String(scheduleId) },
+              search: { itemIndex: scheduleItemIndex },
+            })
+          }
+          className={buttonClassName}
         >
           <Calendar size={16} className="shrink-0" />
           <span className="truncate">{getContentLabel(temporaryContent)}</span>
-        </Link>
+        </button>
       )
     }
 
-    // Not from schedule - link to content source directly
+    // Not from schedule - navigate to content source directly
     switch (temporaryContent.type) {
       case 'song': {
         const { songId, title } = temporaryContent.data
         return (
-          <Link
-            to="/songs/$songId"
-            params={{ songId: String(songId) }}
-            className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 hover:underline truncate"
+          <button
+            type="button"
+            onClick={() =>
+              navigate({
+                to: '/songs/$songId',
+                params: { songId: String(songId) },
+              })
+            }
+            className={buttonClassName}
           >
             <Music size={16} className="shrink-0" />
             <span className="truncate">{title}</span>
-          </Link>
+          </button>
         )
       }
 
@@ -131,14 +145,19 @@ export function ControlRoom() {
           temporaryContent.data
         const verse = currentVerseIndex + 1
         return (
-          <Link
-            to="/bible"
-            search={{ book: bookId, bookName, chapter, verse }}
-            className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 hover:underline truncate"
+          <button
+            type="button"
+            onClick={() =>
+              navigate({
+                to: '/bible',
+                search: { book: bookId, bookName, chapter, verse },
+              })
+            }
+            className={buttonClassName}
           >
             <BookOpen size={16} className="shrink-0" />
             <span className="truncate">{temporaryContent.data.reference}</span>
-          </Link>
+          </button>
         )
       }
 
@@ -146,16 +165,21 @@ export function ControlRoom() {
         const { bookName, startChapter, startVerse, endChapter, endVerse } =
           temporaryContent.data
         return (
-          <Link
-            to="/bible"
-            search={{ bookName, chapter: startChapter, verse: startVerse }}
-            className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 hover:underline truncate"
+          <button
+            type="button"
+            onClick={() =>
+              navigate({
+                to: '/bible',
+                search: { bookName, chapter: startChapter, verse: startVerse },
+              })
+            }
+            className={buttonClassName}
           >
             <BookOpen size={16} className="shrink-0" />
             <span className="truncate">
               {bookName} {startChapter}:{startVerse}-{endChapter}:{endVerse}
             </span>
-          </Link>
+          </button>
         )
       }
 
@@ -193,9 +217,9 @@ export function ControlRoom() {
       {/* Preview Section */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 flex-1 flex flex-col min-h-0">
         <div className="flex items-center justify-between mb-4 shrink-0 gap-4">
-          {/* LEFT: Content Link */}
+          {/* LEFT: Content Button */}
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            {renderContentLink()}
+            {renderContentButton()}
           </div>
 
           {/* RIGHT: LIVE + Controls */}
