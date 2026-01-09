@@ -23,7 +23,7 @@ export interface GlobalShortcutsConfig {
 
 export interface ShortcutConflict {
   shortcut: string
-  conflictSource: 'global' | 'scene'
+  conflictSource: 'global' | 'scene' | 'sidebar'
   conflictName: string
 }
 

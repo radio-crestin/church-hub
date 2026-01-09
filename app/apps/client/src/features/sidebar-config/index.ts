@@ -15,11 +15,13 @@ export {
   SIDEBAR_CONFIG_KEY,
 } from './constants'
 // Hooks
+export type { SidebarShortcut } from './hooks'
 export {
   getIconComponent,
   SIDEBAR_CONFIG_QUERY_KEY,
   useResolvedSidebarItems,
   useSidebarConfig,
+  useSidebarItemShortcuts,
 } from './hooks'
 // Service
 export {

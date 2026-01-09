@@ -1,7 +1,9 @@
 export {
   GlobalAppShortcutManager,
+  MIDISettingsSection,
   ShortcutActionRow,
   ShortcutRecorder,
+  /** @deprecated Use MIDISettingsSection instead. Shortcuts moved to per-feature settings. */
   ShortcutsSettingsSection,
 } from './components'
 export type { KeyboardPriority } from './context'
@@ -34,10 +36,11 @@ export type {
   ShortcutConflict,
 } from './types'
 export { DEFAULT_SHORTCUTS_CONFIG } from './types'
-export type { SceneShortcutSource } from './utils'
+export type { SceneShortcutSource, SidebarShortcutSource } from './utils'
 export {
   formatShortcutForDisplay,
   isModifierKey,
   validateGlobalShortcut,
   validateSceneShortcut,
+  validateSidebarShortcut,
 } from './utils'

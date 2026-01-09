@@ -34,6 +34,12 @@ export interface SceneShortcutSource {
   shortcuts: string[]
 }
 
+export interface SidebarShortcutSource {
+  itemId: string
+  displayName: string
+  shortcuts: string[]
+}
+
 // startLive and stopLive can share the same shortcut since they represent opposite states
 const ALLOWED_SHARED_SHORTCUTS: [
   GlobalShortcutActionId,
@@ -50,16 +56,29 @@ function canShareShortcut(
   )
 }
 
+/**
+ * Validates a global shortcut against other global shortcuts and scenes.
+ * Used for validating shortcuts in livestream settings, presentation settings, etc.
+ *
+ * @param shortcut - The shortcut to validate
+ * @param allGlobalShortcuts - All global shortcuts config
+ * @param currentActionId - Optional action ID to exclude from validation (for editing existing)
+ */
 export function validateGlobalShortcut(
   shortcut: string,
-  currentActionId: GlobalShortcutActionId,
   allGlobalShortcuts: GlobalShortcutsConfig,
-  scenes: SceneShortcutSource[],
+  currentActionId?: string,
 ): ShortcutConflict | null {
   for (const [actionId, config] of Object.entries(allGlobalShortcuts.actions)) {
     if (actionId === currentActionId) continue
     // Allow startLive/stopLive to share the same shortcut
-    if (canShareShortcut(currentActionId, actionId as GlobalShortcutActionId)) {
+    if (
+      currentActionId &&
+      canShareShortcut(
+        currentActionId as GlobalShortcutActionId,
+        actionId as GlobalShortcutActionId,
+      )
+    ) {
       continue
     }
     if (config.shortcuts.includes(shortcut)) {
@@ -71,12 +90,53 @@ export function validateGlobalShortcut(
     }
   }
 
-  for (const scene of scenes) {
-    if (scene.shortcuts?.includes(shortcut)) {
+  return null
+}
+
+/**
+ * Validates a sidebar item shortcut against all other shortcuts.
+ */
+export function validateSidebarShortcut(
+  shortcut: string,
+  currentItemId: string,
+  sidebarItems: SidebarShortcutSource[],
+  globalShortcuts?: GlobalShortcutsConfig,
+  scenes?: SceneShortcutSource[],
+): ShortcutConflict | null {
+  // Check against other sidebar items
+  for (const item of sidebarItems) {
+    if (item.itemId === currentItemId) continue
+    if (item.shortcuts?.includes(shortcut)) {
       return {
         shortcut,
-        conflictSource: 'scene',
-        conflictName: scene.displayName,
+        conflictSource: 'sidebar',
+        conflictName: item.displayName,
+      }
+    }
+  }
+
+  // Check against global shortcuts
+  if (globalShortcuts) {
+    for (const [actionId, config] of Object.entries(globalShortcuts.actions)) {
+      if (config.shortcuts.includes(shortcut)) {
+        return {
+          shortcut,
+          conflictSource: 'global',
+          conflictName: actionId,
+        }
+      }
+    }
+  }
+
+  // Check against scene shortcuts
+  if (scenes) {
+    for (const scene of scenes) {
+      if (scene.shortcuts?.includes(shortcut)) {
+        return {
+          shortcut,
+          conflictSource: 'scene',
+          conflictName: scene.displayName,
+        }
       }
     }
   }
