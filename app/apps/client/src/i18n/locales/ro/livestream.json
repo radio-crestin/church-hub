@@ -1,5 +1,19 @@
 {
   "title": "Live Stream",
+  "settings": {
+    "title": "Setări Transmisiune",
+    "button": "Setări",
+    "shortcuts": {
+      "title": "Scurtături Stream",
+      "description": "Configurează scurtături pentru a controla transmisiunea",
+      "start": "Pornește Stream",
+      "stop": "Oprește Stream",
+      "addShortcut": "Adaugă Scurtătură",
+      "conflict": "Folosită deja de scena \"{{scene}}\"",
+      "duplicate": "Scurtătura există deja",
+      "conflictOther": "Folosită deja de \"{{item}}\""
+    }
+  },
   "youtube": {
     "notConnected": "YouTube neconectat",
     "connected": "Conectat ca {{channelName}}",

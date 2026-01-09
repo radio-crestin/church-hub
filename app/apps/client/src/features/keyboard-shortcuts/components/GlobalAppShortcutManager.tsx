@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react'
 
 import { useOBSScenes, useStreaming } from '~/features/livestream/hooks'
 import { useNavigateTemporary } from '~/features/presentation/hooks'
+import { useSidebarItemShortcuts } from '~/features/sidebar-config'
 import { createLogger } from '~/utils/logger'
 import { useShortcutRecording } from '../context'
 import { useAppShortcuts, useGlobalAppShortcuts } from '../hooks'
@@ -19,6 +20,7 @@ export function GlobalAppShortcutManager() {
   const { scenes, switchScene, currentScene } = useOBSScenes()
   const { isRecordingRef } = useShortcutRecording()
   const navigateTemporary = useNavigateTemporary()
+  const sidebarShortcuts = useSidebarItemShortcuts()
 
   // Synchronous guards to prevent multiple rapid triggers (React state can be stale)
   const isStartOperationRef = useRef(false)
@@ -136,10 +138,30 @@ export function GlobalAppShortcutManager() {
     [switchScene],
   )
 
+  const handleSidebarNavigation = useCallback(
+    async (route: string, focusSearch: boolean) => {
+      logger.debug(
+        `Navigating to sidebar route: ${route}, focusSearch: ${focusSearch}`,
+      )
+      // Focus the main window first so input.focus() works when triggered from background
+      if (focusSearch) {
+        await focusMainWindow()
+      }
+      // Navigate with reset timestamp if focusing search
+      if (focusSearch) {
+        navigate({ to: route, search: { reset: Date.now() } })
+      } else {
+        navigate({ to: route })
+      }
+    },
+    [navigate],
+  )
+
   // Register keyboard shortcuts
   useGlobalAppShortcuts({
     shortcuts: isLoading ? { actions: {} as never, version: 1 } : shortcuts,
     sceneShortcuts,
+    sidebarShortcuts,
     onStartLive: handleStartLive,
     onStopLive: handleStopLive,
     onSearchSong: handleSearchSong,
@@ -147,6 +169,7 @@ export function GlobalAppShortcutManager() {
     onNextSlide: handleNextSlide,
     onPrevSlide: handlePrevSlide,
     onSceneSwitch: handleSceneSwitch,
+    onSidebarNavigation: handleSidebarNavigation,
     isRecordingRef,
   })
 

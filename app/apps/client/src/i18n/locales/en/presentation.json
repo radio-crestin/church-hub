@@ -264,7 +264,17 @@
     "title": "Control Room",
     "settings": {
       "title": "Control Room Settings",
-      "button": "Settings"
+      "button": "Settings",
+      "shortcuts": {
+        "title": "Slide Shortcuts",
+        "description": "Configure shortcuts to navigate slides",
+        "nextSlide": "Next Slide",
+        "prevSlide": "Previous Slide",
+        "addShortcut": "Add Shortcut",
+        "conflict": "Already used by scene \"{{scene}}\"",
+        "duplicate": "Shortcut already exists",
+        "conflictOther": "Already used by \"{{item}}\""
+      }
     },
     "selectProgram": "Select a program",
     "presenting": "Presenting",

@@ -121,6 +121,34 @@
       "save": "Save Settings",
       "saving": "Saving..."
     },
+    "midi": {
+      "title": "MIDI Controller",
+      "description": "Use hardware MIDI controllers for shortcuts with LED feedback"
+    },
+    "sidebarItem": {
+      "title": "{{itemName}} Settings",
+      "shortcuts": {
+        "title": "Keyboard Shortcuts",
+        "description": "Configure shortcuts to navigate to this page",
+        "duplicateError": "Shortcut already exists",
+        "conflictGlobal": "Already used by global action \"{{action}}\"",
+        "conflictScene": "Already used by scene \"{{scene}}\"",
+        "conflictSidebar": "Already used by \"{{item}}\""
+      },
+      "focusSearch": {
+        "label": "Focus Search on Navigate",
+        "description": "Automatically focus the search input when navigating via shortcut"
+      },
+      "visibility": {
+        "label": "Visible in Sidebar",
+        "description": "Show this item in the sidebar navigation"
+      },
+      "customPage": {
+        "title": "Page Settings",
+        "dangerZone": "Danger Zone",
+        "deleteDescription": "Permanently delete this custom page"
+      }
+    },
     "shortcuts": {
       "title": "Keyboard Shortcuts",
       "description": "Configure global keyboard shortcuts for quick actions. These shortcuts work from anywhere in the application.",
@@ -161,7 +189,8 @@
       "removeShortcut": "Remove",
       "conflicts": {
         "global": "Already used by \"{{action}}\"",
-        "scene": "Already used by scene \"{{scene}}\""
+        "scene": "Already used by scene \"{{scene}}\"",
+        "sidebar": "Already used by \"{{item}}\""
       },
       "midi": {
         "title": "MIDI Controller",

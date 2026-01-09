@@ -121,6 +121,34 @@
       "save": "Salvează Setările",
       "saving": "Se salvează..."
     },
+    "midi": {
+      "title": "Controller MIDI",
+      "description": "Folosește controllere MIDI hardware pentru scurtături cu feedback LED"
+    },
+    "sidebarItem": {
+      "title": "Setări {{itemName}}",
+      "shortcuts": {
+        "title": "Scurtături de Tastatură",
+        "description": "Configurează scurtături pentru a naviga la această pagină",
+        "duplicateError": "Scurtătura există deja",
+        "conflictGlobal": "Folosită deja de acțiunea globală \"{{action}}\"",
+        "conflictScene": "Folosită deja de scena \"{{scene}}\"",
+        "conflictSidebar": "Folosită deja de \"{{item}}\""
+      },
+      "focusSearch": {
+        "label": "Focusează Căutarea la Navigare",
+        "description": "Focusează automat câmpul de căutare când navighezi prin scurtătură"
+      },
+      "visibility": {
+        "label": "Vizibil în Bara Laterală",
+        "description": "Afișează acest element în navigarea din bara laterală"
+      },
+      "customPage": {
+        "title": "Setări Pagină",
+        "dangerZone": "Zonă Periculoasă",
+        "deleteDescription": "Șterge permanent această pagină personalizată"
+      }
+    },
     "shortcuts": {
       "title": "Scurtături de Tastatură",
       "description": "Configurează scurtături globale de tastatură pentru acțiuni rapide. Aceste scurtături funcționează de oriunde în aplicație.",
@@ -161,7 +189,8 @@
       "removeShortcut": "Șterge",
       "conflicts": {
         "global": "Folosită deja de \"{{action}}\"",
-        "scene": "Folosită deja de scena \"{{scene}}\""
+        "scene": "Folosită deja de scena \"{{scene}}\"",
+        "sidebar": "Folosită deja de \"{{item}}\""
       },
       "midi": {
         "title": "Controller MIDI",

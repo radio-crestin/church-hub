@@ -1,5 +1,19 @@
 {
   "title": "Live Stream",
+  "settings": {
+    "title": "Livestream Settings",
+    "button": "Settings",
+    "shortcuts": {
+      "title": "Stream Shortcuts",
+      "description": "Configure shortcuts to control the livestream",
+      "start": "Start Stream",
+      "stop": "Stop Stream",
+      "addShortcut": "Add Shortcut",
+      "conflict": "Already used by scene \"{{scene}}\"",
+      "duplicate": "Shortcut already exists",
+      "conflictOther": "Already used by \"{{item}}\""
+    }
+  },
   "youtube": {
     "notConnected": "YouTube not connected",
     "connected": "Connected as {{channelName}}",
