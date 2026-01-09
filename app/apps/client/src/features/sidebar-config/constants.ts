@@ -13,7 +13,50 @@ import type {
   BuiltInItemDefinition,
   BuiltInMenuItemId,
   SidebarConfiguration,
+  SidebarItemSettings,
 } from './types'
+
+/**
+ * Which built-in pages have search functionality
+ */
+export const PAGES_WITH_SEARCH: Record<BuiltInMenuItemId, boolean> = {
+  songs: true,
+  bible: true,
+  music: true,
+  schedules: true,
+  present: false,
+  livestream: false,
+  kiosk: false,
+  settings: false,
+}
+
+/**
+ * Default focus search behavior for pages with search
+ * - Songs, Bible, Music: enabled by default
+ * - Schedules: disabled by default (user can enable)
+ */
+export const DEFAULT_FOCUS_SEARCH: Record<BuiltInMenuItemId, boolean> = {
+  songs: true,
+  bible: true,
+  music: true,
+  schedules: false,
+  present: false,
+  livestream: false,
+  kiosk: false,
+  settings: false,
+}
+
+/**
+ * Get default settings for a sidebar item
+ */
+export function getDefaultSidebarItemSettings(
+  builtinId?: BuiltInMenuItemId,
+): SidebarItemSettings {
+  return {
+    shortcuts: [],
+    focusSearchOnNavigate: builtinId ? DEFAULT_FOCUS_SEARCH[builtinId] : false,
+  }
+}
 
 /**
  * Static definitions of built-in sidebar items
@@ -81,7 +124,7 @@ export const BUILTIN_ITEMS: Record<BuiltInMenuItemId, BuiltInItemDefinition> = {
  * Default sidebar configuration used when no configuration exists
  */
 export const DEFAULT_SIDEBAR_CONFIG: SidebarConfiguration = {
-  version: 1,
+  version: 2,
   items: [
     {
       id: 'present',
@@ -89,6 +132,7 @@ export const DEFAULT_SIDEBAR_CONFIG: SidebarConfiguration = {
       builtinId: 'present',
       order: 0,
       isVisible: true,
+      settings: getDefaultSidebarItemSettings('present'),
     },
     {
       id: 'songs',
@@ -96,6 +140,7 @@ export const DEFAULT_SIDEBAR_CONFIG: SidebarConfiguration = {
       builtinId: 'songs',
       order: 1,
       isVisible: true,
+      settings: getDefaultSidebarItemSettings('songs'),
     },
     {
       id: 'bible',
@@ -103,6 +148,7 @@ export const DEFAULT_SIDEBAR_CONFIG: SidebarConfiguration = {
       builtinId: 'bible',
       order: 2,
       isVisible: true,
+      settings: getDefaultSidebarItemSettings('bible'),
     },
     {
       id: 'schedules',
@@ -110,6 +156,7 @@ export const DEFAULT_SIDEBAR_CONFIG: SidebarConfiguration = {
       builtinId: 'schedules',
       order: 3,
       isVisible: true,
+      settings: getDefaultSidebarItemSettings('schedules'),
     },
     {
       id: 'livestream',
@@ -117,6 +164,7 @@ export const DEFAULT_SIDEBAR_CONFIG: SidebarConfiguration = {
       builtinId: 'livestream',
       order: 4,
       isVisible: true,
+      settings: getDefaultSidebarItemSettings('livestream'),
     },
     {
       id: 'music',
@@ -124,6 +172,7 @@ export const DEFAULT_SIDEBAR_CONFIG: SidebarConfiguration = {
       builtinId: 'music',
       order: 5,
       isVisible: true,
+      settings: getDefaultSidebarItemSettings('music'),
     },
     // Note: Settings is not configurable - it's fixed at the bottom of the sidebar
     // Note: Kiosk is not configurable - it's dynamically shown when kiosk mode is enabled

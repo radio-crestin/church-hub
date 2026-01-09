@@ -20,9 +20,18 @@ import { ConfirmModal } from '~/ui/modal'
 import { useToast } from '~/ui/toast'
 import { CustomPageFormModal } from './CustomPageFormModal'
 import { SidebarItemCard } from './SidebarItemCard'
+import {
+  SidebarItemSettingsModal,
+  type SidebarItemSettingsUpdate,
+} from './SidebarItemSettingsModal'
+import { getDefaultSidebarItemSettings } from '../constants'
 import { useSidebarConfig } from '../hooks/useSidebarConfig'
 import { generateCustomPageId } from '../service/sidebarConfig'
-import type { CustomPageInput, CustomPageMenuItem } from '../types'
+import type {
+  CustomPageInput,
+  CustomPageMenuItem,
+  SidebarMenuItem,
+} from '../types'
 
 /**
  * Main component for managing sidebar configuration in settings
@@ -34,9 +43,7 @@ export function SidebarConfigManager() {
   const { config, isLoading, updateConfig } = useSidebarConfig()
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-  const [editingPage, setEditingPage] = useState<CustomPageMenuItem | null>(
-    null,
-  )
+  const [settingsItem, setSettingsItem] = useState<SidebarMenuItem | null>(null)
   const [deletingPageId, setDeletingPageId] = useState<string | null>(null)
 
   const sensors = useSensors(
@@ -116,6 +123,7 @@ export function SidebarConfigManager() {
       useIframeEmbedding: input.useIframeEmbedding,
       order: config.items.length,
       isVisible: true,
+      settings: getDefaultSidebarItemSettings(),
     }
 
     const updatedItems = [...config.items, newPage]
@@ -134,28 +142,39 @@ export function SidebarConfigManager() {
     )
   }
 
-  const handleEditCustomPage = (input: CustomPageInput) => {
-    if (!config || !input.id) return
+  const handleSaveSettings = (updates: SidebarItemSettingsUpdate) => {
+    if (!config) return
 
     const updatedItems = config.items.map((item) => {
-      if (item.id === input.id && item.type === 'custom') {
-        return {
-          ...item,
-          title: input.title,
-          url: input.url,
-          iconName: input.iconName,
-          useIframeEmbedding: input.useIframeEmbedding,
-        }
+      if (item.id !== updates.itemId) return item
+
+      // Update base properties
+      const baseUpdate = {
+        ...item,
+        isVisible: updates.isVisible,
+        settings: updates.settings,
       }
-      return item
+
+      // For custom pages, also update custom fields
+      if (item.type === 'custom' && updates.customPageData) {
+        return {
+          ...baseUpdate,
+          title: updates.customPageData.title,
+          url: updates.customPageData.url,
+          iconName: updates.customPageData.iconName,
+          useIframeEmbedding: updates.customPageData.useIframeEmbedding,
+        } as CustomPageMenuItem
+      }
+
+      return baseUpdate
     })
 
     updateConfig.mutate(
       { ...config, items: updatedItems },
       {
         onSuccess: () => {
-          setEditingPage(null)
-          showToast(t('sections.sidebar.toast.customPageUpdated'), 'success')
+          setSettingsItem(null)
+          showToast(t('sections.sidebar.toast.saved'), 'success')
         },
         onError: () => {
           showToast(t('sections.sidebar.toast.error'), 'error')
@@ -245,11 +264,7 @@ export function SidebarConfigManager() {
                 key={item.id}
                 item={item}
                 onToggleVisibility={() => handleToggleVisibility(item.id)}
-                onEdit={
-                  item.type === 'custom'
-                    ? () => setEditingPage(item as CustomPageMenuItem)
-                    : undefined
-                }
+                onOpenSettings={() => setSettingsItem(item)}
                 onDelete={
                   item.type === 'custom'
                     ? () => setDeletingPageId(item.id)
@@ -268,12 +283,20 @@ export function SidebarConfigManager() {
         onClose={() => setIsCreateModalOpen(false)}
       />
 
-      {/* Edit Custom Page Modal */}
-      <CustomPageFormModal
-        isOpen={!!editingPage}
-        editingPage={editingPage}
-        onSubmit={handleEditCustomPage}
-        onClose={() => setEditingPage(null)}
+      {/* Sidebar Item Settings Modal */}
+      <SidebarItemSettingsModal
+        isOpen={!!settingsItem}
+        item={settingsItem}
+        onSave={handleSaveSettings}
+        onDelete={
+          settingsItem?.type === 'custom'
+            ? () => {
+                setDeletingPageId(settingsItem.id)
+                setSettingsItem(null)
+              }
+            : undefined
+        }
+        onClose={() => setSettingsItem(null)}
       />
 
       {/* Delete Confirmation Modal */}

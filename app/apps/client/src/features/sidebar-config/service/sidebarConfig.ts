@@ -3,6 +3,7 @@ import type { CustomPagePermission } from '../../users/types'
 import {
   BUILTIN_ITEMS,
   DEFAULT_SIDEBAR_CONFIG,
+  getDefaultSidebarItemSettings,
   SIDEBAR_CONFIG_KEY,
 } from '../constants'
 import type {
@@ -31,6 +32,7 @@ function mergeWithDefaults(stored: SidebarConfiguration): SidebarConfiguration {
       builtinId: id,
       order: stored.items.length + index,
       isVisible: true,
+      settings: getDefaultSidebarItemSettings(id),
     }))
 
   if (newItems.length === 0) {
@@ -52,7 +54,11 @@ function isValidConfiguration(obj: unknown): obj is SidebarConfiguration {
   }
 
   const config = obj as Record<string, unknown>
-  if (config.version !== 1 || !Array.isArray(config.items)) {
+  // Accept version 1 or 2
+  if (
+    (config.version !== 1 && config.version !== 2) ||
+    !Array.isArray(config.items)
+  ) {
     return false
   }
 
@@ -60,8 +66,36 @@ function isValidConfiguration(obj: unknown): obj is SidebarConfiguration {
 }
 
 /**
+ * Migrates configuration from v1 to v2
+ * Adds default settings to all items that don't have them
+ */
+function migrateToV2(config: SidebarConfiguration): SidebarConfiguration {
+  if (config.version === 2) {
+    return config
+  }
+
+  return {
+    version: 2,
+    items: config.items.map((item) => {
+      if (item.settings) {
+        return item
+      }
+
+      // Get the builtin ID for default settings lookup
+      const builtinId = item.type === 'builtin' ? item.builtinId : undefined
+
+      return {
+        ...item,
+        settings: getDefaultSidebarItemSettings(builtinId),
+      }
+    }),
+  }
+}
+
+/**
  * Gets the sidebar configuration from settings
  * Returns default configuration if none exists or if parsing fails
+ * Automatically migrates older versions to the current version
  */
 export async function getSidebarConfiguration(): Promise<SidebarConfiguration> {
   const setting = await getSetting('app_settings', SIDEBAR_CONFIG_KEY)
@@ -77,7 +111,11 @@ export async function getSidebarConfiguration(): Promise<SidebarConfiguration> {
       return DEFAULT_SIDEBAR_CONFIG
     }
 
-    return mergeWithDefaults(parsed)
+    // Migrate to latest version if needed
+    const migrated = migrateToV2(parsed)
+
+    // Merge with defaults to handle new built-in items
+    return mergeWithDefaults(migrated)
   } catch {
     return DEFAULT_SIDEBAR_CONFIG
   }
