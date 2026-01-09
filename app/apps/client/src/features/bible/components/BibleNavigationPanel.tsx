@@ -3,7 +3,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useAppShortcuts } from '~/features/keyboard-shortcuts'
-import { useAISearchSettings } from '~/features/songs/hooks'
 import { useDebouncedValue } from '~/hooks/useDebouncedValue'
 import { KeyboardShortcutBadge } from '~/ui/kbd'
 import { BooksList } from './BooksList'
@@ -11,6 +10,7 @@ import { ChaptersGrid } from './ChaptersGrid'
 import { VersesList } from './VersesList'
 import {
   useAIBibleSearch,
+  useBibleAISearchSettings,
   useBooks,
   useChapters,
   useLocalizedBookNames,
@@ -190,7 +190,7 @@ export function BibleNavigationPanel({
   )
 
   // AI Search
-  const { isEnabled: aiSearchAvailable } = useAISearchSettings()
+  const { isEnabled: aiSearchAvailable } = useBibleAISearchSettings()
   const aiSearchMutation = useAIBibleSearch()
 
   // Get search shortcut for display

@@ -186,23 +186,25 @@ function createEasymidiWrapper(nativeMidi: {
     send(type: string, params: Record<string, number>): void {
       let message: number[] = []
 
+      // Use nullish coalescing (??) instead of || to properly handle 0 values
+      // This is critical for LED control where velocity 0 means OFF
       if (type === 'noteon') {
         message = [
-          0x90 | (params.channel || 0),
-          params.note || 0,
-          params.velocity || 127,
+          0x90 | (params.channel ?? 0),
+          params.note ?? 0,
+          params.velocity ?? 127,
         ]
       } else if (type === 'noteoff') {
         message = [
-          0x80 | (params.channel || 0),
-          params.note || 0,
-          params.velocity || 0,
+          0x80 | (params.channel ?? 0),
+          params.note ?? 0,
+          params.velocity ?? 0,
         ]
       } else if (type === 'cc') {
         message = [
-          0xb0 | (params.channel || 0),
-          params.controller || 0,
-          params.value || 0,
+          0xb0 | (params.channel ?? 0),
+          params.controller ?? 0,
+          params.value ?? 0,
         ]
       }
 
@@ -702,26 +704,54 @@ export function turnOffAllLEDs(notes: number[]) {
 }
 
 /**
+ * Delay helper for async operations
+ */
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+/**
  * Reset all LEDs to off state
  * Used on device connection to ensure clean initial state across all platforms
  * Windows doesn't reset MIDI port state on open unlike macOS CoreMIDI
+ *
+ * IMPORTANT: Messages are sent with small delays to prevent overwhelming
+ * the MIDI controller's receive buffer. In release mode, the optimized code
+ * executes too fast and can cause buffer overflow, leaving LEDs in undefined states.
  */
-function resetAllLEDs() {
+async function resetAllLEDs() {
   if (!currentOutput) return
 
   midiLogger.debug('Resetting all LEDs to off state')
 
+  // Capture output reference to ensure it's still valid throughout the async operation
+  const output = currentOutput
+
   // Reset notes 0-63 which covers most MIDI controllers (pads, buttons)
   // APC Mini uses 0-63 for buttons, Launchpad uses similar ranges
-  for (let note = 0; note < 64; note++) {
-    try {
-      currentOutput.send('noteon', {
-        note,
-        velocity: LED_VELOCITY_OFF,
-        channel: 0,
-      })
-    } catch {
-      // Ignore individual note errors, continue with reset
+  // Send in batches with delays to prevent buffer overflow
+  const BATCH_SIZE = 8
+  const BATCH_DELAY_MS = 5 // 5ms delay between batches
+
+  for (let batch = 0; batch < 64 / BATCH_SIZE; batch++) {
+    const startNote = batch * BATCH_SIZE
+    const endNote = Math.min(startNote + BATCH_SIZE, 64)
+
+    for (let note = startNote; note < endNote; note++) {
+      try {
+        output.send('noteon', {
+          note,
+          velocity: LED_VELOCITY_OFF,
+          channel: 0,
+        })
+      } catch {
+        // Ignore individual note errors, continue with reset
+      }
+    }
+
+    // Add delay between batches (except after the last batch)
+    if (batch < 64 / BATCH_SIZE - 1) {
+      await delay(BATCH_DELAY_MS)
     }
   }
 

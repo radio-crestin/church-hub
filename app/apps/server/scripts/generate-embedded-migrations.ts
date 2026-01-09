@@ -46,20 +46,14 @@ function main() {
   }
 
   // Helper to format object with proper Biome style
-  function formatObject(obj: unknown, indent = 0): string {
+  function formatObject(obj: unknown, indent = 0, isSqlString = false): string {
     const spaces = ' '.repeat(indent)
     const nextSpaces = ' '.repeat(indent + 2)
 
     if (obj === null) return 'null'
     if (typeof obj === 'string') {
       let escaped: string
-      // Use double quotes for single-line strings with single quotes (SQL DEFAULT clauses)
-      // Use single quotes for multiline strings (to avoid double-escaping)
-      if (obj.includes("'") && !obj.includes('\n') && !obj.includes('\r')) {
-        escaped = obj.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
-        return `"${escaped}"`
-      }
-      // Default to single quotes for all other strings
+      // Always use single quotes - Biome prefers escaping single quotes over double quotes
       escaped = obj
         .replace(/\\/g, '\\\\')
         .replace(/'/g, "\\'")
@@ -73,7 +67,7 @@ function main() {
     if (Array.isArray(obj)) {
       if (obj.length === 0) return '[]'
       const items = obj.map(
-        (item) => `${nextSpaces}${formatObject(item, indent + 2)}`,
+        (item) => `${nextSpaces}${formatObject(item, indent + 2, isSqlString)}`,
       )
       return `[\n${items.join(',\n')},\n${spaces}]`
     }
@@ -83,7 +77,9 @@ function main() {
       if (keys.length === 0) return '{}'
       const items = keys.map((key) => {
         const value = (obj as Record<string, unknown>)[key]
-        return `${nextSpaces}${key}: ${formatObject(value, indent + 2)}`
+        // Mark sql property values as SQL strings - always use double quotes for SQL
+        const isSql = key === 'sql'
+        return `${nextSpaces}${key}: ${formatObject(value, indent + 2, isSql)}`
       })
       return `{\n${items.join(',\n')},\n${spaces}}`
     }

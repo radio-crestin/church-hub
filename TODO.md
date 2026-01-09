@@ -26,7 +26,7 @@
 ~~- adauga optiunea de a configura ce sceva sa se selecteze la start, stop~~
 ~~- creaza shortcuts pentru start/stop stream, cauta cantari, cauta Versete~~
 ~~- creaza un modul pentru a trigger shortcuts folosind midi devices~~
-~~- acest modul trebuie sa permita afisarea state-ului curent in diferite locatii pe acel midi device (de exemplu, scena curenta va aprinde bec-ul unui anumit buton)~~ - needs to be tested
+~~- acest modul trebuie sa permita afisarea state-ului curent in diferite locatii pe acel midi device (de exemplu, scena curenta va aprinde bec-ul unui anumit buton)~~ ~~- needs to be tested~~
 - ~~creaza mecanismul de schimbare scene in functie de tipul de slide afisat (de exemplu cand este un verset biblic tineri, sa se schimbe pe scena SOLO)~~
 ~~- creaza un modul de control al mixerului, astfel incat fiecare scena va da mute/unmute la anumite canale audio~~
 ~~- creaza o conexiune permanenta in youtube~~
@@ -105,8 +105,6 @@
 ~~- instaleaza aplicatia pe windows si pe tableta IOS~~
 ~~- testeaza sa vedem daca suntem pregatiti pentru lansare~~
 ~~- testeaza midi settings configuration si butoanele nu stau aprinse dupa ce am apasat~~
-- implementeaza transcription folosind AI
-- 
 --- Later ---
 ~~- cheia de live nu functioneaza~~
 ~~- adauga background la live~~
@@ -129,7 +127,7 @@
 ~~- adauga full text search si pentru Biblie~~
 ~~- afiseaza urmeaza corect pentru urmatoarea cantare/element din program~~
 ~~- elimina din titlul extras numerele (gen 1.)~~
-- adauga filtru pentru categoria de cantari si deasemenea, fa loading la cantari cand se face scrolling (infinite scroll)
+~~- adauga filtru pentru categoria de cantari si deasemenea, fa loading la cantari cand se face scrolling (infinite scroll)~~
 ~~- background diferit la sectiunea urmeaza, ca sa poata fi identificata usor~~
 ~~- auto switch-ul nu functioneaza~~
 - cand se selecteaza primul verset se face un loop ciudat
@@ -153,15 +151,20 @@
 ~~- add shortcuts indicators~~
 ~~- add update checker~~
 - rezolva problema cu acel profil pvc
+~~- cand dai click pe search, nu afisa~~
+~~- butonul X nu functioneaza~~
+~~- cand dai next, nu afisa~~
 ~~- adauga pagina cu muzica dintr-un folder local~~
 ~~- creaza optiunea de a adauga live-urile create intr-un playlist pe YouTube~~
 - muta setarile in paginile relevante
 - adauga shortcuts pentru programe, muzica, whatsapp, Live Stream, Camera de control
 - testeaza pe windows player-ul audio si intreaga aplicatie
 - butoanele din camera de control nu functioneaza.. (pare putin cam inutila aceasta pagina..)
+- in livestream adauga un preview cu feed-ul live
 - creaza un quickstart guide pentru utilizatori
 
 ### Optionals
+- implementeaza transcription folosind AI
 - test backing up the database in https://turso.tech/blog/turso-offline-sync-public-beta
 - exportul ca si pptx ar trebui sa aiba textul ceva mai mare
 - adauga optiunea de a afisa pe un ecran separat continutul in anumita limba (o versiune a Bibliei diferita, traduceri cu AI ale cantarilor.. si eventual traduceri in timp real)

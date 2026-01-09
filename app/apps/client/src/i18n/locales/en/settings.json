@@ -58,11 +58,43 @@
       }
     },
     "aiSearch": {
-      "title": "AI Search",
+      "title": "Songs AI Search",
       "description": "Configure AI-powered semantic search for songs. Uses AI to understand search intent and find relevant songs by topic.",
       "enable": {
         "label": "Enable AI Search",
         "description": "Add an AI search button to the songs search bar"
+      },
+      "analyzeResults": {
+        "label": "Analyze Results with AI",
+        "description": "Use AI to score and rank results by relevance (slower but more accurate)"
+      },
+      "provider": {
+        "label": "AI Provider",
+        "description": "Select your AI service provider"
+      },
+      "model": {
+        "label": "Model",
+        "description": "AI model to use for generating search terms"
+      },
+      "apiKey": {
+        "label": "API Key",
+        "description": "Your API key for the selected provider",
+        "placeholder": "sk-..."
+      },
+      "baseUrl": {
+        "label": "Custom Base URL",
+        "description": "For self-hosted or custom OpenAI-compatible endpoints",
+        "placeholder": "https://api.example.com/v1"
+      },
+      "save": "Save Settings",
+      "saving": "Saving..."
+    },
+    "bibleAiSearch": {
+      "title": "Bible AI Search",
+      "description": "Configure AI-powered semantic search for Bible verses. Uses AI to understand search intent and find relevant verses by topic.",
+      "enable": {
+        "label": "Enable AI Search",
+        "description": "Add an AI search button to the Bible search bar"
       },
       "analyzeResults": {
         "label": "Analyze Results with AI",

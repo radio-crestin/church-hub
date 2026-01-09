@@ -8,11 +8,11 @@ import { Combobox } from '~/ui/combobox'
 import { KeyboardShortcutBadge } from '~/ui/kbd'
 import { SongCard } from './SongCard'
 import {
-  useAISearchSettings,
   useAISearchSongs,
   useCategories,
   useSearchKeyboardNavigation,
   useSearchSongs,
+  useSongsAISearchSettings,
   useSongsInfinite,
 } from '../hooks'
 import type { AISearchResult, SongSearchResult } from '../types'
@@ -73,7 +73,7 @@ export function SongList({
   const { data: categories } = useCategories()
 
   // AI Search
-  const { isEnabled: aiSearchAvailable } = useAISearchSettings()
+  const { isEnabled: aiSearchAvailable } = useSongsAISearchSettings()
   const aiSearchMutation = useAISearchSongs()
 
   // Get search shortcut for display

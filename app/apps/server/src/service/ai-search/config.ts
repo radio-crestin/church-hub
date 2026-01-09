@@ -1,13 +1,13 @@
 import type { AISearchConfig } from './types'
 import { getSetting } from '../settings/settings'
 
-const AI_SEARCH_CONFIG_KEY = 'ai_search_config'
+const SONGS_AI_SEARCH_CONFIG_KEY = 'songs_ai_search_config'
 
 /**
  * Load AI search configuration from app_settings
  */
 export function getAISearchConfig(): AISearchConfig | null {
-  const setting = getSetting('app_settings', AI_SEARCH_CONFIG_KEY)
+  const setting = getSetting('app_settings', SONGS_AI_SEARCH_CONFIG_KEY)
   if (!setting?.value) return null
 
   try {

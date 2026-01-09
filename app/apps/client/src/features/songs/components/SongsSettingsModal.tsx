@@ -2,6 +2,7 @@ import { X } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { AISearchSettings } from '~/features/ai-search'
 import { SynonymManager } from '~/features/search'
 import { ImportExportManager } from '~/features/song-export'
 import { CategoryManager } from './CategoryManager'
@@ -91,6 +92,9 @@ export function SongsSettingsModal({
           <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
             <SynonymManager />
           </div>
+
+          {/* AI Search Settings Section */}
+          <AISearchSettings configKey="songs_ai_search_config" />
         </div>
       </div>
     </dialog>
