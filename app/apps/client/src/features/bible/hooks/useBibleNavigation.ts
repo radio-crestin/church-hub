@@ -120,6 +120,8 @@ export function useBibleNavigation(
         searchedIndex: null,
         level: 'chapters',
         searchQuery: clearSearch ? '' : prev.searchQuery,
+        // Save previous search query when coming from search (for going back)
+        previousSearchQuery: !clearSearch ? prev.searchQuery : null,
       }))
     },
     [],
@@ -185,14 +187,19 @@ export function useBibleNavigation(
 
   const goBack = useCallback(() => {
     setState((prev) => {
-      // If we came from search results, go back to search
-      if (prev.level === 'verses' && prev.previousSearchQuery) {
+      // If we came from search, go back to search (restore search query)
+      if (prev.previousSearchQuery) {
         return {
           ...prev,
           searchQuery: prev.previousSearchQuery,
           previousSearchQuery: null,
           searchedIndex: null,
-          // Keep bookId, bookName, chapter for context (search results will render over them)
+          presentedIndex: null,
+          // Clear navigation to show search results
+          bookId: undefined,
+          bookName: undefined,
+          chapter: undefined,
+          level: 'books',
         }
       }
       if (prev.level === 'verses') {
@@ -270,8 +277,9 @@ export function useBibleNavigation(
       searchedIndex:
         selectOnly || isSearchNavigation ? (params.verseIndex ?? null) : null,
       searchQuery: selectOnly ? '' : isSearchNavigation ? prev.searchQuery : '',
-      // Save previous search query when coming from search results (for going back)
-      previousSearchQuery: selectOnly ? prev.searchQuery : null,
+      // Save previous search query when coming from search (for going back)
+      previousSearchQuery:
+        selectOnly || isSearchNavigation ? prev.searchQuery : null,
       level: 'verses',
     }))
   }, [])
