@@ -214,42 +214,22 @@ function BiblePage() {
   const { data: temporaryBooks = [] } = useBooks(temporaryBibleTranslationId)
 
   // Sync navigation with current Bible verse only on initial page open
-  // Only sync if the presentation content matches the primary translation
+  // Only sync if the URL has no params (user clicked sidebar without specific verse)
+  // Skip if URL has any params - URL is the source of truth
   useEffect(() => {
     if (hasNavigatedOnOpen.current) return
     // Wait for primary translation to be loaded before syncing
     if (!primaryTranslation) return
 
-    // Skip if URL has a search query - let the URL sync effect handle it
-    if (urlSearchQuery) {
+    // Skip if URL has any params - let the URL sync effect handle it
+    // URL is the source of truth for navigation
+    if (urlSearchQuery || urlBookId || urlChapter !== undefined) {
       hasNavigatedOnOpen.current = true
       return
     }
 
-    // Priority 1: Temporary Bible content (only if it matches primary translation)
-    if (presentationState?.temporaryContent?.type === 'bible') {
-      const tempData = presentationState.temporaryContent.data
-      // Only sync if the presentation is using the primary translation
-      if (tempData.translationId !== primaryTranslation.id) {
-        // Mark as navigated so we don't keep trying to sync
-        hasNavigatedOnOpen.current = true
-        return
-      }
-      const book = temporaryBooks.find((b) => b.id === tempData.bookId)
-      if (book) {
-        hasNavigatedOnOpen.current = true
-        navigation.navigateToVerse({
-          translationId: tempData.translationId,
-          bookId: tempData.bookId,
-          bookName: book.bookName,
-          chapter: tempData.chapter,
-          verseIndex: tempData.currentVerseIndex,
-        })
-      }
-      return
-    }
-
-    // Priority 2: Restore last visited Bible state (if no verse is being presented)
+    // Only restore last visited when URL has no params at all
+    // (user clicked Bible sidebar without a displayed verse)
     const lastVisited = getBibleLastVisited()
     if (
       lastVisited?.bookId &&
@@ -258,20 +238,24 @@ function BiblePage() {
       lastVisited?.translationId === primaryTranslation.id
     ) {
       hasNavigatedOnOpen.current = true
-      navigation.navigateToChapter({
-        bookId: lastVisited.bookId,
-        bookName: lastVisited.bookName,
-        chapter: lastVisited.chapter,
-        verseIndex: lastVisited.verseIndex,
+      // Navigate via URL to keep URL as source of truth
+      navigate({
+        to: '/bible/',
+        search: {
+          book: lastVisited.bookId,
+          bookName: lastVisited.bookName,
+          chapter: lastVisited.chapter,
+          verse:
+            lastVisited.verseIndex !== undefined
+              ? lastVisited.verseIndex + 1
+              : undefined,
+        },
+        replace: true,
       })
+    } else {
+      hasNavigatedOnOpen.current = true
     }
-  }, [
-    presentationState,
-    temporaryBooks,
-    navigation,
-    primaryTranslation,
-    urlSearchQuery,
-  ])
+  }, [navigate, primaryTranslation, urlSearchQuery, urlBookId, urlChapter])
 
   // Extract primitive values from temporary content to avoid object reference comparisons
   const tempContentType = presentationState?.temporaryContent?.type
