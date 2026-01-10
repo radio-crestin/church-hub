@@ -568,6 +568,15 @@ export interface EmptyContentConfig {
 }
 
 /**
+ * Screen share content config (minimal - just background)
+ * The actual video stream is handled by WebRTC, this is just for styling
+ */
+export interface ScreenShareContentConfig {
+  background: ScreenBackgroundConfig
+  clockEnabled?: boolean // Per-slide-type enable, uses global clockConfig for position/style
+}
+
+/**
  * Union type for all content configs
  */
 export type ContentTypeConfig =
@@ -576,6 +585,7 @@ export type ContentTypeConfig =
   | AnnouncementContentConfig
   | VerseteTineriContentConfig
   | EmptyContentConfig
+  | ScreenShareContentConfig
 
 /**
  * Map content type to its config type
@@ -587,6 +597,7 @@ export interface ContentConfigMap {
   announcement: AnnouncementContentConfig
   versete_tineri: VerseteTineriContentConfig
   empty: EmptyContentConfig
+  screen_share: ScreenShareContentConfig
 }
 
 /**
