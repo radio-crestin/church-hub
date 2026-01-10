@@ -8,6 +8,7 @@ import type {
   PresentTemporaryBibleInput,
   PresentTemporaryBiblePassageInput,
   PresentTemporarySceneInput,
+  PresentTemporaryScreenShareInput,
   PresentTemporarySongInput,
   PresentTemporaryVerseteTineriInput,
   TemporaryContent,
@@ -1018,6 +1019,41 @@ export function presentTemporaryScene(
     })
   } catch (error) {
     log('error', `Failed to present temporary scene: ${error}`)
+    return getPresentationState()
+  }
+}
+
+/**
+ * Presents a screen share temporarily
+ * Sets the temporary content to screen_share type so displays show the stream
+ */
+export function presentTemporaryScreenShare(
+  input: PresentTemporaryScreenShareInput,
+): PresentationState {
+  try {
+    log(
+      'debug',
+      `Presenting temporary screen share from: ${input.broadcasterId}`,
+    )
+
+    const temporaryContent: TemporaryContent = {
+      type: 'screen_share',
+      data: {
+        broadcasterId: input.broadcasterId,
+        audioEnabled: input.audioEnabled,
+        scheduleId: input.scheduleId,
+        scheduleItemIndex: input.scheduleItemIndex,
+      },
+    }
+
+    return updatePresentationState({
+      temporaryContent,
+      currentSongSlideId: null,
+      isHidden: false,
+      isPresenting: true,
+    })
+  } catch (error) {
+    log('error', `Failed to present temporary screen share: ${error}`)
     return getPresentationState()
   }
 }

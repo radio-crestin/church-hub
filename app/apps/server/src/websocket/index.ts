@@ -1,5 +1,9 @@
 import type { ServerWebSocket } from 'bun'
 
+import {
+  clearTemporaryContent,
+  presentTemporaryScreenShare,
+} from '../service/presentation/presentation-state'
 import type {
   PresentationState,
   TextStyleRange,
@@ -417,6 +421,12 @@ export function handleWebSocketMessage(
         startedAt: Date.now(),
       }
 
+      // Update presentation state to show screen share on displays
+      const newState = presentTemporaryScreenShare({
+        broadcasterId: clientId,
+        audioEnabled: activeScreenShare.audioEnabled,
+      })
+
       const message = JSON.stringify({
         type: 'screen_share_started',
         payload: activeScreenShare,
@@ -426,6 +436,7 @@ export function handleWebSocketMessage(
         `Screen share started by ${clientId} (audio: ${activeScreenShare.audioEnabled})`,
       )
 
+      // Broadcast both the screen share message and the presentation state
       for (const [id, conn] of clients) {
         try {
           conn.ws.send(message)
@@ -434,6 +445,9 @@ export function handleWebSocketMessage(
           clients.delete(id)
         }
       }
+
+      // Broadcast updated presentation state
+      broadcastPresentationState(newState)
       return
     }
 
@@ -450,6 +464,9 @@ export function handleWebSocketMessage(
         activeScreenShare = null
         wsLogger.info(`Screen share stopped by ${clientId}`)
 
+        // Clear presentation state
+        const newState = clearTemporaryContent()
+
         for (const [id, conn] of clients) {
           try {
             conn.ws.send(message)
@@ -458,6 +475,9 @@ export function handleWebSocketMessage(
             clients.delete(id)
           }
         }
+
+        // Broadcast updated presentation state
+        broadcastPresentationState(newState)
       }
       return
     }
@@ -550,6 +570,9 @@ export function handleWebSocketClose(ws: ServerWebSocket<WebSocketData>) {
       activeScreenShare = null
       wsLogger.info(`Screen share stopped due to broadcaster disconnect`)
 
+      // Clear presentation state
+      const newState = clearTemporaryContent()
+
       for (const [id, conn] of clients) {
         try {
           conn.ws.send(message)
@@ -558,6 +581,9 @@ export function handleWebSocketClose(ws: ServerWebSocket<WebSocketData>) {
           clients.delete(id)
         }
       }
+
+      // Broadcast updated presentation state
+      broadcastPresentationState(newState)
     }
   }
 }

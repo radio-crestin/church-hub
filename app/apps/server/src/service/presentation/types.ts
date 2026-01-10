@@ -204,6 +204,17 @@ export interface TemporarySceneContent {
 }
 
 /**
+ * Temporary screen share content for WebRTC streaming
+ */
+export interface TemporaryScreenShareContent {
+  broadcasterId: string
+  audioEnabled: boolean
+  // Schedule context (for deep-linking back to schedule)
+  scheduleId?: number
+  scheduleItemIndex?: number // Index in flatItems for navigation
+}
+
+/**
  * Union type for temporary content
  */
 export type TemporaryContent =
@@ -213,6 +224,7 @@ export type TemporaryContent =
   | { type: 'bible_passage'; data: TemporaryBiblePassageContent }
   | { type: 'versete_tineri'; data: TemporaryVerseteTineriContent }
   | { type: 'scene'; data: TemporarySceneContent }
+  | { type: 'screen_share'; data: TemporaryScreenShareContent }
 
 /**
  * Input for presenting a temporary Bible verse
@@ -308,6 +320,17 @@ export interface PresentTemporaryVerseteTineriInput {
 export interface PresentTemporarySceneInput {
   obsSceneName: string
   nextItemPreview?: NextItemPreview // Preview of next schedule item (for schedule presentations)
+  // Schedule context (for deep-linking back to schedule)
+  scheduleId?: number
+  scheduleItemIndex?: number // Index in flatItems for navigation
+}
+
+/**
+ * Input for presenting a screen share
+ */
+export interface PresentTemporaryScreenShareInput {
+  broadcasterId: string
+  audioEnabled: boolean
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
   scheduleItemIndex?: number // Index in flatItems for navigation

@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { RotateCcw, Save, X, ZoomIn, ZoomOut } from 'lucide-react'
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { Button } from '~/ui/button/Button'
 import { Combobox } from '~/ui/combobox/Combobox'
@@ -29,6 +29,7 @@ const CONTENT_TYPE_OPTIONS: { value: ContentType; label: string }[] = [
   { value: 'announcement', label: 'Announcement' },
   { value: 'versete_tineri', label: 'Versete Tineri' },
   { value: 'empty', label: 'Empty / Clock' },
+  { value: 'screen_share', label: 'Screen Share' },
 ]
 
 export function ScreenEditor({
@@ -44,6 +45,10 @@ export function ScreenEditor({
   // Use a version counter to track save operations - more reliable than timeout
   const saveVersionRef = useRef<number>(0)
   const lastAppliedVersionRef = useRef<number>(0)
+  // Portal container for dropdowns - use state to trigger re-render when set
+  const [portalContainer, setPortalContainer] = useState<HTMLDivElement | null>(
+    null,
+  )
 
   // Initialize editor with screen data (only on mount)
   useEffect(() => {
@@ -270,6 +275,7 @@ export function ScreenEditor({
               }}
               options={CONTENT_TYPE_OPTIONS}
               className="w-48"
+              portalContainer={portalContainer}
             />
           </div>
 
@@ -345,8 +351,14 @@ export function ScreenEditor({
           onUpdateNextSlideConfig={actions.updateNextSlideConfig}
           onUpdateGlobalSettings={actions.updateGlobalSettings}
           onUpdateScreenDimensions={actions.updateScreenDimensions}
+          portalContainer={portalContainer}
         />
       </div>
+      {/* Portal container for dropdowns - rendered last to be on top */}
+      <div
+        ref={setPortalContainer}
+        className="fixed inset-0 z-[9999] pointer-events-none [&>*]:pointer-events-auto"
+      />
     </div>
   )
 }
