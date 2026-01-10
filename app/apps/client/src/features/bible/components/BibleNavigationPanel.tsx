@@ -73,11 +73,9 @@ export function BibleNavigationPanel({
     clearSearch,
   } = navigation
 
-  // Local state for immediate input feedback
+  // Local state for immediate input feedback (decoupled from URL state)
   const [localQuery, setLocalQuery] = useState(state.searchQuery)
-  // Track the last synced value from state to detect external changes
-  const lastSyncedStateQueryRef = useRef(state.searchQuery)
-  // Track whether the current localQuery came from user input (typing) vs external sync
+  // Track whether user is actively typing to prevent external sync from overwriting
   const isUserTypingRef = useRef(false)
 
   // Debounced query for text search API calls
@@ -123,15 +121,9 @@ export function BibleNavigationPanel({
   })
 
   // Sync local state when navigation searchQuery changes externally (e.g., from URL)
-  // Only sync when:
-  // 1. state.searchQuery changed from what we last synced (external change)
-  // 2. User is NOT currently typing (don't overwrite user input mid-typing)
+  // Only sync when user is NOT currently typing (don't overwrite user input mid-typing)
   useEffect(() => {
-    if (
-      state.searchQuery !== lastSyncedStateQueryRef.current &&
-      !isUserTypingRef.current
-    ) {
-      lastSyncedStateQueryRef.current = state.searchQuery
+    if (!isUserTypingRef.current && state.searchQuery !== localQuery) {
       setLocalQuery(state.searchQuery)
     }
   }, [state.searchQuery])
@@ -143,23 +135,15 @@ export function BibleNavigationPanel({
   }, [])
 
   // Sync debounced query to URL (for URL-based navigation)
-  // Only sync when user typed something (not when state was set externally from URL)
-  // Don't sync when smart search detected a reference (it handles navigation itself)
+  // Only sync when user typed (not external), debounce completed, and not a reference search
   useEffect(() => {
-    // Only sync to URL when:
-    // 1. Debounce completed (localQuery === debouncedQuery)
-    // 2. This is from user typing (not external state sync)
-    // 3. The debounced value differs from current state
-    // 4. It's NOT a reference search (smart search handles those navigations)
     if (
       localQuery === debouncedQuery &&
       isUserTypingRef.current &&
       debouncedQuery !== state.searchQuery &&
       !isReferenceSearch
     ) {
-      // Update the ref so the external sync effect doesn't revert this change
-      lastSyncedStateQueryRef.current = debouncedQuery
-      // Reset typing flag - debounce is complete, allow external syncs again
+      // Reset typing flag before sync - allows external syncs again
       isUserTypingRef.current = false
       if (onSearchQueryChange) {
         onSearchQueryChange(debouncedQuery)
