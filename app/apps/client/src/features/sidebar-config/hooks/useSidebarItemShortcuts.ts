@@ -41,7 +41,7 @@ export function useSidebarItemShortcuts(): SidebarShortcut[] {
         const definition = BUILTIN_ITEMS[builtinItem.builtinId]
         if (!definition) continue
 
-        route = definition.route
+        route = definition.to
         // We'll use the builtinId as display name for conflict messages
         // The actual translation happens in the UI
         displayName = builtinItem.builtinId
