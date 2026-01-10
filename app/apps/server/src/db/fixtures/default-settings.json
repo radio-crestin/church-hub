@@ -1,11 +1,19 @@
 [
   {
+    "key": "ai_search_config",
+    "value": "{\"enabled\":true,\"provider\":\"openai\",\"model\":\"gpt-5.2\",\"apiKey\":\"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\",\"baseUrl\":\"\"}"
+  },
+  {
+    "key": "bible_ai_search_config",
+    "value": "{\"enabled\":true,\"provider\":\"openai\",\"model\":\"gpt-5.2\",\"apiKey\":\"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\",\"baseUrl\":\"\",\"analyzeResults\":false}"
+  },
+  {
     "key": "debug_mode",
     "value": "false"
   },
   {
     "key": "global_keyboard_shortcuts",
-    "value": "{\"actions\":{\"startLive\":{\"shortcuts\":[\"midi:note_on:40\"],\"enabled\":true},\"stopLive\":{\"shortcuts\":[\"midi:note_on:40\"],\"enabled\":true},\"showSlide\":{\"shortcuts\":[],\"enabled\":true},\"nextSlide\":{\"shortcuts\":[],\"enabled\":true},\"prevSlide\":{\"shortcuts\":[],\"enabled\":true}},\"version\":1,\"midi\":{\"enabled\":true,\"inputDeviceId\":\"0\",\"outputDeviceId\":\"0\"}}"
+    "value": "{\"actions\":{\"startLive\":{\"shortcuts\":[\"midi:note_on:40\",\"F1\"],\"enabled\":true},\"stopLive\":{\"shortcuts\":[\"midi:note_on:40\"],\"enabled\":true},\"showSlide\":{\"shortcuts\":[],\"enabled\":true},\"nextSlide\":{\"shortcuts\":[],\"enabled\":true},\"prevSlide\":{\"shortcuts\":[],\"enabled\":true}},\"version\":1,\"midi\":{\"enabled\":true,\"inputDeviceId\":\"0\",\"outputDeviceId\":\"0\"}}"
   },
   {
     "key": "kiosk_mode_enabled",
@@ -18,6 +26,10 @@
   {
     "key": "language",
     "value": "ro"
+  },
+  {
+    "key": "migrate_shortcuts_cleanup_v1",
+    "value": "{\"cleaned\":true,\"removedCount\":2}"
   },
   {
     "key": "migrate_song_titles_ascii_v3",
@@ -33,7 +45,11 @@
   },
   {
     "key": "sidebar_configuration",
-    "value": "{\"version\":1,\"items\":[{\"id\":\"present\",\"type\":\"builtin\",\"builtinId\":\"present\",\"order\":0,\"isVisible\":true},{\"id\":\"songs\",\"type\":\"builtin\",\"builtinId\":\"songs\",\"order\":1,\"isVisible\":true},{\"id\":\"bible\",\"type\":\"builtin\",\"builtinId\":\"bible\",\"order\":2,\"isVisible\":true},{\"id\":\"schedules\",\"type\":\"builtin\",\"builtinId\":\"schedules\",\"order\":3,\"isVisible\":true},{\"id\":\"livestream\",\"type\":\"builtin\",\"builtinId\":\"livestream\",\"order\":4,\"isVisible\":true},{\"id\":\"custom_1767730144882_yd2xnu2\",\"type\":\"custom\",\"title\":\"WhatsApp\",\"url\":\"https://web.whatsapp.com/\",\"iconName\":\"MessageSquare\",\"useIframeEmbedding\":false,\"order\":5,\"isVisible\":true}]}"
+    "value": "{\"version\":2,\"items\":[{\"id\":\"present\",\"type\":\"builtin\",\"builtinId\":\"present\",\"order\":0,\"isVisible\":true,\"settings\":{\"shortcuts\":[\"F4\"],\"focusSearchOnNavigate\":false}},{\"id\":\"bible\",\"type\":\"builtin\",\"builtinId\":\"bible\",\"order\":1,\"isVisible\":true,\"settings\":{\"shortcuts\":[\"F5\"],\"focusSearchOnNavigate\":true}},{\"id\":\"songs\",\"type\":\"builtin\",\"builtinId\":\"songs\",\"order\":2,\"isVisible\":true,\"settings\":{\"shortcuts\":[\"F6\"],\"focusSearchOnNavigate\":true}},{\"id\":\"schedules\",\"type\":\"builtin\",\"builtinId\":\"schedules\",\"order\":3,\"isVisible\":true,\"settings\":{\"shortcuts\":[\"F7\"],\"focusSearchOnNavigate\":false}},{\"id\":\"music\",\"type\":\"builtin\",\"builtinId\":\"music\",\"order\":4,\"isVisible\":true,\"settings\":{\"shortcuts\":[\"F8\"],\"focusSearchOnNavigate\":true}},{\"id\":\"custom_1767730144882_yd2xnu2\",\"type\":\"custom\",\"title\":\"WhatsApp\",\"url\":\"https://web.whatsapp.com/\",\"iconName\":\"Mail\",\"useIframeEmbedding\":false,\"order\":5,\"isVisible\":true,\"settings\":{\"shortcuts\":[\"F9\"],\"focusSearchOnNavigate\":false}},{\"id\":\"livestream\",\"type\":\"builtin\",\"builtinId\":\"livestream\",\"order\":6,\"isVisible\":true,\"settings\":{\"shortcuts\":[\"F10\"],\"focusSearchOnNavigate\":false}}]}"
+  },
+  {
+    "key": "songs_ai_search_config",
+    "value": "{\"enabled\":true,\"provider\":\"openai\",\"model\":\"gpt-5.2\",\"apiKey\":\"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\",\"baseUrl\":\"\",\"analyzeResults\":false}"
   },
   {
     "key": "theme",
