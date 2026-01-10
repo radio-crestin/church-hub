@@ -271,9 +271,9 @@
         "nextSlide": "Next Slide",
         "prevSlide": "Previous Slide",
         "addShortcut": "Add Shortcut",
-        "conflict": "Already used by scene \"{{scene}}\"",
+        "conflict": "Already used by \"{{action}}\"",
         "duplicate": "Shortcut already exists",
-        "conflictOther": "Already used by \"{{item}}\""
+        "conflictOther": "Already used by \"{{action}}\""
       }
     },
     "selectProgram": "Select a program",

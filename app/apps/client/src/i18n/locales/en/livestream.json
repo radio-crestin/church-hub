@@ -9,9 +9,8 @@
       "start": "Start Stream",
       "stop": "Stop Stream",
       "addShortcut": "Add Shortcut",
-      "conflict": "Already used by scene \"{{scene}}\"",
-      "duplicate": "Shortcut already exists",
-      "conflictOther": "Already used by \"{{item}}\""
+      "conflict": "Already used by \"{{action}}\"",
+      "duplicate": "Shortcut already exists"
     }
   },
   "youtube": {

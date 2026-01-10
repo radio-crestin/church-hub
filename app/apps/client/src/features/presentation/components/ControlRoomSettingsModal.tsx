@@ -81,8 +81,8 @@ export function ControlRoomSettingsModal({
       const conflict = validateGlobalShortcut(shortcut, shortcuts, actionId)
       if (conflict) {
         return t('controlRoom.settings.shortcuts.conflict', {
-          name: conflict.conflictName,
-          defaultValue: 'Already used by "{{name}}"',
+          action: conflict.conflictName,
+          defaultValue: 'Already used by "{{action}}"',
         })
       }
 
@@ -98,12 +98,16 @@ export function ControlRoomSettingsModal({
         })
       }
 
-      // Check for conflicts between next and prev
+      // Check for conflicts between next and prev - these are mutually exclusive actions
       const otherList =
         actionId === 'nextSlide' ? prevSlideShortcuts : nextSlideShortcuts
       if (otherList.includes(shortcut)) {
         return t('controlRoom.settings.shortcuts.conflictOther', {
-          defaultValue: 'Already used by the other action',
+          action:
+            actionId === 'nextSlide'
+              ? t('controlRoom.settings.shortcuts.prevSlide')
+              : t('controlRoom.settings.shortcuts.nextSlide'),
+          defaultValue: 'Already used by "{{action}}"',
         })
       }
 

@@ -166,11 +166,12 @@ export function LivestreamSettingsModal({
   const validateShortcut = useCallback(
     (shortcut: string, actionId: string, index: number): string | undefined => {
       // Validate against global shortcuts (excluding current action)
+      // Note: validateGlobalShortcut already allows startLive/stopLive to share the same shortcut
       const conflict = validateGlobalShortcut(shortcut, shortcuts, actionId)
       if (conflict) {
         return t('settings.shortcuts.conflict', {
-          name: conflict.conflictName,
-          defaultValue: 'Already used by "{{name}}"',
+          action: conflict.conflictName,
+          defaultValue: 'Already used by "{{action}}"',
         })
       }
 
@@ -186,14 +187,7 @@ export function LivestreamSettingsModal({
         })
       }
 
-      // Check for conflicts between start and stop
-      const otherList =
-        actionId === 'startLive' ? stopShortcuts : startShortcuts
-      if (otherList.includes(shortcut)) {
-        return t('settings.shortcuts.conflictOther', {
-          defaultValue: 'Already used by the other action',
-        })
-      }
+      // startLive and stopLive can share the same shortcut since they represent opposite states
 
       return undefined
     },

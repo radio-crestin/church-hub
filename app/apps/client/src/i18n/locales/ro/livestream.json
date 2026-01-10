@@ -9,9 +9,8 @@
       "start": "Pornește Stream",
       "stop": "Oprește Stream",
       "addShortcut": "Adaugă Scurtătură",
-      "conflict": "Folosită deja de scena \"{{scene}}\"",
-      "duplicate": "Scurtătura există deja",
-      "conflictOther": "Folosită deja de \"{{item}}\""
+      "conflict": "Folosită deja de \"{{action}}\"",
+      "duplicate": "Scurtătura există deja"
     }
   },
   "youtube": {
