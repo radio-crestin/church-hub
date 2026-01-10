@@ -157,12 +157,13 @@
 ~~- adauga pagina cu muzica dintr-un folder local~~
 ~~- creaza optiunea de a adauga live-urile create intr-un playlist pe YouTube~~
 ~~- muta setarile in paginile relevante~~
-- rezolva problemele cu shortcuts bara 
-- adauga shortcuts pentru programe, muzica, whatsapp, Live Stream, Camera de control
+~~- rezolva problemele cu shortcuts bara~~ 
+~~- adauga shortcuts pentru programe, muzica, whatsapp, Live Stream, Camera de control~~
 - testeaza pe windows player-ul audio si intreaga aplicatie
-- butoanele din camera de control nu functioneaza.. (pare putin cam inutila aceasta pagina..)
+~~- butoanele din camera de control nu functioneaza.. (pare putin cam inutila aceasta pagina..)~~
 - in livestream adauga un preview cu feed-ul live
 - creaza un quickstart guide pentru utilizatori
+- adauga optiunea de a face screen share la o fereastra
 
 ### Optionals
 - implementeaza transcription folosind AI

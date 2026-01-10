@@ -1,6 +1,13 @@
-import { createRootRoute, Outlet, useLocation } from '@tanstack/react-router'
+import {
+  createRootRoute,
+  Outlet,
+  useLocation,
+  useNavigate,
+} from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
+import { useEffect } from 'react'
 
+import { isTauri } from '~/config'
 import { MobileConnectionGuard } from '~/features/api-url-config'
 import {
   GlobalAppShortcutManager,
@@ -41,6 +48,43 @@ function AutoOpenScreens() {
 }
 
 /**
+ * Component that listens for sidebar navigation events from MIDI shortcuts
+ * Only active in Tauri desktop window
+ */
+function SidebarNavigationListener() {
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    // Only listen in Tauri desktop context
+    if (!isTauri()) return
+
+    function handleSidebarNavigation(
+      event: CustomEvent<{ route: string; focusSearch: boolean }>,
+    ) {
+      const { route, focusSearch } = event.detail
+      navigate({
+        to: route,
+        search: focusSearch ? { focus: 'true' } : undefined,
+      })
+    }
+
+    window.addEventListener(
+      'sidebar-navigation',
+      handleSidebarNavigation as EventListener,
+    )
+
+    return () => {
+      window.removeEventListener(
+        'sidebar-navigation',
+        handleSidebarNavigation as EventListener,
+      )
+    }
+  }, [navigate])
+
+  return null
+}
+
+/**
  * Minimal layout for screen routes (display windows)
  * Only includes essential providers for rendering
  */
@@ -76,6 +120,7 @@ function MainLayout() {
                     <ShortcutRecordingProvider>
                       <FileDropZoneProvider>
                         <AutoOpenScreens />
+                        <SidebarNavigationListener />
                         <GlobalAppShortcutManager />
                         <AppLayout>
                           <Outlet />

@@ -194,12 +194,22 @@ export async function reorderScenes(sceneIds: number[]): Promise<OBSScene[]> {
 }
 
 export async function switchScene(sceneName: string): Promise<void> {
+  // Always update internal state first - this allows mixer triggers and other automations to work
+  // regardless of whether the scene exists in OBS
+  obsConnection.setCurrentScene(sceneName)
+
+  // If OBS is connected, try to switch the actual OBS scene
+  // This may fail for custom scenes that don't exist in OBS, which is OK
   if (obsConnection.isConnected()) {
-    await obsConnection.switchScene(sceneName)
-  } else {
-    // When OBS is not connected, just update the internal state
-    // This allows mixer triggers and other automations to work
-    obsConnection.setCurrentScene(sceneName)
+    try {
+      await obsConnection.switchScene(sceneName)
+    } catch {
+      // Scene may not exist in OBS (custom scene) - that's OK, internal state is already updated
+      // biome-ignore lint/suspicious/noConsole: logging
+      console.log(
+        `[obs] Scene "${sceneName}" not found in OBS (may be a custom scene)`,
+      )
+    }
   }
 }
 

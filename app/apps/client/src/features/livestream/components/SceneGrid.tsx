@@ -25,9 +25,9 @@ export function SceneGrid() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-        {t('scenes.title')}
-      </h2>
+      {/*<h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">*/}
+      {/*  {t('scenes.title')}*/}
+      {/*</h2>*/}
       {visibleScenes.length === 0 ? (
         <div className="p-8 text-center text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded-lg">
           <p>{t('scenes.noScenes')}</p>
