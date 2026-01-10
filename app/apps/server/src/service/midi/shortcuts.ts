@@ -10,7 +10,11 @@ import { obsScenes } from '../../db/schema'
 import { midiLogger } from '../../utils/fileLogger'
 import { broadcastPresentationState } from '../../websocket'
 import { switchScene } from '../livestream/obs/scenes'
-import { startStreaming, stopStreaming } from '../livestream/obs/streaming'
+import {
+  startStreaming,
+  stopStreaming,
+  toggleStreaming,
+} from '../livestream/obs/streaming'
 import {
   navigateTemporary,
   showSlide,
@@ -21,6 +25,7 @@ import { getSetting } from '../settings'
 type GlobalShortcutActionId =
   | 'startLive'
   | 'stopLive'
+  | 'toggleLive' // Internal action for shared start/stop shortcuts
   | 'showSlide'
   | 'nextSlide'
   | 'prevSlide'
@@ -84,15 +89,57 @@ export function loadMIDIShortcuts(): void {
     if (setting?.value) {
       const config = JSON.parse(setting.value) as GlobalShortcutsConfig
 
+      // First, collect all startLive and stopLive shortcuts to detect shared ones
+      const startLiveShortcuts = new Set<string>()
+      const stopLiveShortcuts = new Set<string>()
+
+      if (config.actions?.startLive?.enabled) {
+        for (const shortcut of config.actions.startLive.shortcuts || []) {
+          if (isMIDIShortcut(shortcut)) {
+            startLiveShortcuts.add(shortcut)
+          }
+        }
+      }
+
+      if (config.actions?.stopLive?.enabled) {
+        for (const shortcut of config.actions.stopLive.shortcuts || []) {
+          if (isMIDIShortcut(shortcut)) {
+            stopLiveShortcuts.add(shortcut)
+          }
+        }
+      }
+
       if (config.actions) {
         for (const [actionId, actionConfig] of Object.entries(config.actions)) {
           if (actionConfig.enabled && actionConfig.shortcuts) {
             for (const shortcut of actionConfig.shortcuts) {
               if (isMIDIShortcut(shortcut)) {
-                newMap.set(shortcut, { type: 'global', action: actionId })
-                midiLogger.debug(
-                  `Mapped MIDI shortcut ${shortcut} -> global:${actionId}`,
-                )
+                // For shared startLive/stopLive shortcuts, use toggle behavior
+                const isSharedStartStop =
+                  (actionId === 'startLive' || actionId === 'stopLive') &&
+                  startLiveShortcuts.has(shortcut) &&
+                  stopLiveShortcuts.has(shortcut)
+
+                if (isSharedStartStop) {
+                  // Only map once with toggleLive action
+                  if (!newMap.has(shortcut)) {
+                    newMap.set(shortcut, {
+                      type: 'global',
+                      action: 'toggleLive',
+                    })
+                    midiLogger.debug(
+                      `Mapped shared MIDI shortcut ${shortcut} -> global:toggleLive`,
+                    )
+                  }
+                } else {
+                  newMap.set(shortcut, {
+                    type: 'global',
+                    action: actionId,
+                  })
+                  midiLogger.debug(
+                    `Mapped MIDI shortcut ${shortcut} -> global:${actionId}`,
+                  )
+                }
               }
             }
           }
@@ -167,6 +214,14 @@ async function executeAction(actionId: GlobalShortcutActionId): Promise<void> {
         await stopStreaming()
       } catch (error) {
         midiLogger.error(`Failed to stop streaming: ${error}`)
+      }
+      break
+
+    case 'toggleLive':
+      try {
+        await toggleStreaming()
+      } catch (error) {
+        midiLogger.error(`Failed to toggle streaming: ${error}`)
       }
       break
 

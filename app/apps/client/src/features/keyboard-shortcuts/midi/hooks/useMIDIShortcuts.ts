@@ -175,14 +175,31 @@ export function useMIDIShortcuts({
 
       logger.info(`MIDI shortcut triggered: ${shortcutString}`, { mappings })
 
+      // Check if this shortcut has both startLive and stopLive - use toggle behavior
+      const hasStartLive = mappings.some(
+        (m) => m.type === 'global' && m.action === 'startLive',
+      )
+      const hasStopLive = mappings.some(
+        (m) => m.type === 'global' && m.action === 'stopLive',
+      )
+      const isSharedStartStop = hasStartLive && hasStopLive
+
       // Execute all mapped actions - handlers have state checks to determine which should run
       for (const mapping of mappings) {
         if (mapping.type === 'global') {
           switch (mapping.action as GlobalShortcutActionId) {
             case 'startLive':
+              // startLive handler has toggle logic built-in
               handlersRef.current.onStartLive?.()
               break
             case 'stopLive':
+              // Skip stopLive if shared with startLive - startLive handles toggle
+              if (isSharedStartStop) {
+                logger.debug(
+                  'Skipping stopLive - shared shortcut handled by startLive toggle',
+                )
+                continue
+              }
               handlersRef.current.onStopLive?.()
               break
             case 'showSlide':

@@ -117,6 +117,17 @@ export function useGlobalAppShortcuts({
           prevSlide: () => handlersRef.current.onPrevSlide(),
         }
 
+        // Track registered shortcuts to avoid duplicates
+        // When startLive and stopLive share the same shortcut, use startLive handler (has toggle logic)
+        const registeredShortcuts = new Set<string>()
+
+        // Get startLive shortcuts to detect shared shortcuts with stopLive
+        const startLiveShortcuts = new Set(
+          config.actions?.startLive?.enabled
+            ? config.actions.startLive.shortcuts
+            : [],
+        )
+
         if (config.actions) {
           for (const [actionId, actionConfig] of Object.entries(
             config.actions,
@@ -126,6 +137,27 @@ export function useGlobalAppShortcuts({
             for (const shortcut of actionConfig.shortcuts) {
               if (!shortcut) continue
               if (isCancelled) return
+
+              // Skip if already registered (handles shared startLive/stopLive shortcuts)
+              if (registeredShortcuts.has(shortcut)) {
+                // For stopLive shortcuts that are also in startLive, startLive handles toggle
+                if (
+                  actionId === 'stopLive' &&
+                  startLiveShortcuts.has(shortcut)
+                ) {
+                  logger.debug(
+                    `Shortcut ${shortcut} shared with startLive - using toggle behavior`,
+                  )
+                }
+                continue
+              }
+
+              // For stopLive-only shortcuts, still register them (for dedicated stop button)
+              // For startLive shortcuts (including shared ones), use the toggle handler
+              const effectiveHandler =
+                actionId === 'stopLive' && startLiveShortcuts.has(shortcut)
+                  ? actionHandlers.startLive // Use toggle handler for shared shortcuts
+                  : actionHandlers[actionId as GlobalShortcutActionId]
 
               try {
                 await register(shortcut, (event) => {
@@ -140,9 +172,10 @@ export function useGlobalAppShortcuts({
                     logger.info(
                       `App shortcut triggered: ${shortcut} -> ${actionId}`,
                     )
-                    actionHandlers[actionId as GlobalShortcutActionId]()
+                    effectiveHandler()
                   }
                 })
+                registeredShortcuts.add(shortcut)
                 logger.info(
                   `Registered app shortcut: ${shortcut} -> ${actionId}`,
                 )
