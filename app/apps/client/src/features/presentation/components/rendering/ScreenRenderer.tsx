@@ -22,7 +22,11 @@ import {
 } from '../../hooks'
 import { useScreen } from '../../hooks/useScreen'
 import { useSlideHighlights } from '../../hooks/useSlideHighlights'
-import type { ContentType, PresentationState } from '../../types'
+import type {
+  ContentType,
+  PresentationState,
+  ScreenShareContentConfig,
+} from '../../types'
 import { addAminToLastSlide } from '../../utils/addAminToLastSlide'
 import { setWindowFullscreen } from '../../utils/fullscreen'
 import { isTauri } from '../../utils/openDisplayWindow'
@@ -1013,6 +1017,12 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
                     screen.globalSettings.screenShareAudioEnabled ?? false
                   }
                   send={wsSend}
+                  videoElement={
+                    (
+                      screen.contentConfigs
+                        .screen_share as ScreenShareContentConfig
+                    )?.videoElement
+                  }
                 />
               ) : (
                 <ScreenContent

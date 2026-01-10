@@ -5,6 +5,7 @@ import type {
   BibleContentConfig,
   Constraints,
   ContentType,
+  ScreenShareContentConfig,
   ScreenWithConfigs,
   SizeWithUnits,
 } from '../../types'
@@ -55,6 +56,7 @@ const SAMPLE_CONTENT: Record<
     main: 'De altă parte, știm că toate lucrurile lucrează împreună spre binele celor ce iubesc pe Dumnezeu.',
   },
   empty: {},
+  screen_share: {},
 }
 
 interface DraggableElementProps {
@@ -551,8 +553,14 @@ export function ScreenEditorCanvas({
   const elements = useMemo(() => {
     const els: React.ReactElement[] = []
 
+    // Guard: if config is undefined and not screen_share, return empty array
+    // screen_share can work with default values even without config
+    if (!config && contentType !== 'screen_share') {
+      return els
+    }
+
     // Main text / Content text
-    if ('mainText' in config) {
+    if (config && 'mainText' in config) {
       const mt = config.mainText
       const bounds = calculatePixelBounds(
         mt.constraints,
@@ -592,7 +600,7 @@ export function ScreenEditorCanvas({
       )
     }
 
-    if ('contentText' in config) {
+    if (config && 'contentText' in config) {
       const ct = config.contentText
       const bounds = calculatePixelBounds(
         ct.constraints,
@@ -646,7 +654,7 @@ export function ScreenEditorCanvas({
     }
 
     // Reference text (bible, versete_tineri)
-    if ('referenceText' in config) {
+    if (config && 'referenceText' in config) {
       const rt = config.referenceText
       const bounds = calculatePixelBounds(
         rt.constraints,
@@ -690,7 +698,7 @@ export function ScreenEditorCanvas({
     }
 
     // Person label (versete_tineri)
-    if ('personLabel' in config) {
+    if (config && 'personLabel' in config) {
       const pl = config.personLabel
       const bounds = calculatePixelBounds(
         pl.constraints,
@@ -734,6 +742,7 @@ export function ScreenEditorCanvas({
     // Support both new structure (clockEnabled: boolean) and old structure (clock: { enabled: boolean })
     const isClockEnabled =
       clockConfig &&
+      config &&
       (('clockEnabled' in config && config.clockEnabled) ||
         ('clock' in config &&
           config.clock &&
@@ -846,9 +855,79 @@ export function ScreenEditorCanvas({
       )
     }
 
+    // Screen share video preview (for screen_share content type)
+    if (contentType === 'screen_share') {
+      const screenShareConfig = config as ScreenShareContentConfig
+      // Use videoElement from config or provide defaults
+      const ve = screenShareConfig?.videoElement ?? {
+        constraints: {
+          left: { enabled: true, value: 0, unit: '%' as const },
+          right: { enabled: true, value: 0, unit: '%' as const },
+          top: { enabled: true, value: 0, unit: '%' as const },
+          bottom: { enabled: true, value: 0, unit: '%' as const },
+        },
+        size: {
+          width: 100,
+          widthUnit: '%' as const,
+          height: 100,
+          heightUnit: '%' as const,
+        },
+        objectFit: 'contain' as const,
+      }
+
+      const bounds = calculatePixelBounds(
+        ve.constraints,
+        ve.size,
+        canvasWidth,
+        canvasHeight,
+      )
+
+      els.push(
+        <div
+          key="screenSharePreview"
+          className="absolute bg-gray-800 flex items-center justify-center overflow-hidden border-2 border-dashed border-blue-400/50"
+          style={{
+            left: bounds.x * scale,
+            top: bounds.y * scale,
+            width: bounds.width * scale,
+            height: bounds.height * scale,
+          }}
+        >
+          {/* Video placeholder with object-fit preview */}
+          <div
+            className="bg-gradient-to-br from-gray-700 to-gray-900 flex flex-col items-center justify-center gap-2"
+            style={{
+              width: '100%',
+              height: '100%',
+            }}
+          >
+            {/* Video icon */}
+            <svg
+              className="w-12 h-12 text-blue-400/70"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+              />
+            </svg>
+            <span className="text-blue-400/70 text-xs font-medium">
+              Screen Share Preview
+            </span>
+            <span className="text-gray-500 text-xs">{ve.objectFit}</span>
+          </div>
+        </div>,
+      )
+    }
+
     return els
   }, [
     screen,
+    contentType,
     config,
     sample,
     selectedElement,
@@ -863,7 +942,7 @@ export function ScreenEditorCanvas({
 
   // Background style
   const bg =
-    'background' in config
+    config && 'background' in config
       ? config.background
       : screen.globalSettings.defaultBackground
 

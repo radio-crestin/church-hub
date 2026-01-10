@@ -198,7 +198,7 @@ export function Combobox({
         createPortal(
           <div
             ref={dropdownRef}
-            className="fixed z-[99999] bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg overflow-hidden"
+            className="fixed z-[9999] bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg overflow-hidden"
             style={{
               ...(dropdownPosition.openUpward
                 ? { bottom: dropdownPosition.bottom }

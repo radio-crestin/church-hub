@@ -34,6 +34,7 @@ const createEmptyPreviewTexts = (): PreviewTextsMap => ({
   announcement: {},
   versete_tineri: {},
   empty: {},
+  screen_share: {},
 })
 
 interface EditorState {

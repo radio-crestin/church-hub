@@ -38,6 +38,7 @@ import type {
   ReferenceWrapperStyle,
   ScreenBackgroundConfig,
   ScreenGlobalSettings,
+  ScreenShareContentConfig,
   ScreenWithConfigs,
   SizeWithUnits,
   TextStyle,
@@ -129,6 +130,13 @@ const LINE_SEPARATORS = [
   { value: 'space', key: 'space' },
   { value: 'dash', key: 'dash' },
   { value: 'pipe', key: 'pipe' },
+]
+
+// Object fit options for video elements
+const OBJECT_FIT_OPTIONS = [
+  { value: 'contain', key: 'contain' },
+  { value: 'cover', key: 'cover' },
+  { value: 'fill', key: 'fill' },
 ]
 
 // Default animation config for elements that may be missing it (backwards compatibility)
@@ -2105,7 +2113,7 @@ export function ScreenEditorSidebar({
           <Section
             title={t('screens.screenShare.title')}
             icon={MonitorPlay}
-            defaultOpen={false}
+            defaultOpen={contentType === 'screen_share'}
           >
             <div className="space-y-3">
               <Checkbox
@@ -2121,6 +2129,103 @@ export function ScreenEditorSidebar({
               <p className="text-xs text-gray-500 dark:text-gray-400 ml-6">
                 {t('screens.screenShare.enableAudioDescription')}
               </p>
+
+              {/* Video Element Settings - only show when screen_share content type is selected */}
+              {contentType === 'screen_share' && (
+                <>
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
+                    <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">
+                      {t('screens.screenShare.videoSettings')}
+                    </Label>
+                  </div>
+
+                  {/* Video Position & Size */}
+                  <div>
+                    <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">
+                      {t('screens.screenShare.videoPosition')}
+                    </Label>
+                    <ConstraintControls
+                      constraints={
+                        (config as ScreenShareContentConfig).videoElement
+                          ?.constraints ?? {
+                          left: 0,
+                          leftUnit: '%',
+                          right: 0,
+                          rightUnit: '%',
+                          top: 0,
+                          topUnit: '%',
+                          bottom: 0,
+                          bottomUnit: '%',
+                        }
+                      }
+                      size={
+                        (config as ScreenShareContentConfig).videoElement
+                          ?.size ?? {
+                          width: 100,
+                          widthUnit: '%',
+                          height: 100,
+                          heightUnit: '%',
+                        }
+                      }
+                      screenWidth={screen.width}
+                      screenHeight={screen.height}
+                      onChange={(newConstraints, newSize) => {
+                        const screenShareConfig =
+                          config as ScreenShareContentConfig
+                        onUpdateContentConfig(contentType, {
+                          ...screenShareConfig,
+                          videoElement: {
+                            ...screenShareConfig.videoElement,
+                            constraints: newConstraints,
+                            size: newSize,
+                          },
+                        })
+                      }}
+                    />
+                  </div>
+
+                  {/* Object Fit */}
+                  <div>
+                    <Label className="text-xs text-gray-500 dark:text-gray-400">
+                      {t('screens.screenShare.objectFit')}
+                    </Label>
+                    <div className="flex gap-2 mt-1">
+                      {OBJECT_FIT_OPTIONS.map((option) => (
+                        <button
+                          key={option.value}
+                          className={`flex-1 py-1.5 text-xs font-medium rounded ${
+                            (config as ScreenShareContentConfig).videoElement
+                              ?.objectFit === option.value
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                          }`}
+                          onClick={() => {
+                            const screenShareConfig =
+                              config as ScreenShareContentConfig
+                            onUpdateContentConfig(contentType, {
+                              ...screenShareConfig,
+                              videoElement: {
+                                ...screenShareConfig.videoElement,
+                                objectFit: option.value as
+                                  | 'contain'
+                                  | 'cover'
+                                  | 'fill',
+                              },
+                            })
+                          }}
+                        >
+                          {t(
+                            `screens.screenShare.objectFitOptions.${option.key}`,
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      {t('screens.screenShare.objectFitDescription')}
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
           </Section>
 

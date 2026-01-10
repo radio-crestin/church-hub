@@ -4,13 +4,38 @@ import { createLogger } from '~/utils/logger'
 
 const logger = createLogger('ScreenShareViewer')
 
-// Low-latency WebRTC configuration with Google STUN servers
+// Optimized WebRTC configuration for local network / low latency reception
 const RTC_CONFIG: RTCConfiguration = {
   iceServers: [
+    // STUN servers only needed for NAT traversal, included as fallback
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
   ],
   iceCandidatePoolSize: 10,
+  sdpSemantics: 'unified-plan',
+  // Prefer UDP for lower latency
+  iceTransportPolicy: 'all',
+  // Bundle all media over single transport for efficiency
+  bundlePolicy: 'max-bundle',
+  // Use RTCP mux for lower overhead
+  rtcpMuxPolicy: 'require',
+}
+
+// Modify SDP for maximum quality reception on local network
+function modifySdpForHighQuality(sdp: string): string {
+  let modifiedSdp = sdp
+
+  // Remove any existing bandwidth restrictions - local network can handle high bandwidth
+  modifiedSdp = modifiedSdp.replace(/b=AS:\d+\r\n/g, '')
+  modifiedSdp = modifiedSdp.replace(/b=TIAS:\d+\r\n/g, '')
+
+  // Set very high bandwidth limit (100 Mbps) - matches broadcaster for perfect quality
+  const videoMLineRegex = /(m=video \d+ [A-Z/]+ [\d ]+\r\n)/
+  if (videoMLineRegex.test(modifiedSdp)) {
+    modifiedSdp = modifiedSdp.replace(videoMLineRegex, '$1b=AS:100000\r\n')
+  }
+
+  return modifiedSdp
 }
 
 export interface ScreenShareViewerState {
@@ -67,6 +92,28 @@ export function useScreenShareViewer({
         logger.debug('Received remote track:', event.track.kind)
         const [remoteStream] = event.streams
         if (remoteStream) {
+          // Log the received video resolution
+          const videoTrack = remoteStream.getVideoTracks()[0]
+          if (videoTrack) {
+            const settings = videoTrack.getSettings()
+            logger.info(
+              `Receiving stream at ${settings.width}x${settings.height} @ ${settings.frameRate}fps`,
+            )
+          }
+
+          // Configure jitterBufferTarget for minimal latency on local network
+          // 50ms is very low - appropriate for local/LAN connections
+          // This prioritizes low latency over buffering since local network is stable
+          if (event.receiver && 'jitterBufferTarget' in event.receiver) {
+            try {
+              // @ts-expect-error - jitterBufferTarget is valid but may not be in all TS types
+              event.receiver.jitterBufferTarget = 50
+              logger.debug('Set jitterBufferTarget to 50ms for low latency')
+            } catch (e) {
+              logger.warn('Could not set jitterBufferTarget:', e)
+            }
+          }
+
           setState((prev) => ({
             ...prev,
             remoteStream,
@@ -91,6 +138,16 @@ export function useScreenShareViewer({
       pc.onconnectionstatechange = () => {
         logger.debug(`Connection state with broadcaster: ${pc.connectionState}`)
         if (pc.connectionState === 'connected') {
+          // Log codec being used for debugging
+          pc.getReceivers().forEach((receiver) => {
+            if (receiver.track?.kind === 'video') {
+              const params = receiver.getParameters()
+              const codec = params.codecs?.[0]
+              if (codec) {
+                logger.info(`Video codec in use: ${codec.mimeType}`)
+              }
+            }
+          })
           setState((prev) => ({
             ...prev,
             isConnected: true,
@@ -140,17 +197,25 @@ export function useScreenShareViewer({
         iceCandidatesQueueRef.current = []
 
         const answer = await pc.createAnswer()
-        await pc.setLocalDescription(answer)
+
+        // Modify answer SDP to allow high bandwidth
+        const modifiedSdp = modifySdpForHighQuality(answer.sdp || '')
+        const modifiedAnswer = {
+          type: answer.type,
+          sdp: modifiedSdp,
+        } as RTCSessionDescriptionInit
+
+        await pc.setLocalDescription(modifiedAnswer)
 
         send({
           type: 'webrtc_answer',
           payload: {
             targetClientId: offerBroadcasterId,
-            sdp: answer.sdp,
+            sdp: modifiedSdp,
           },
         })
 
-        logger.debug('Sent answer to broadcaster')
+        logger.debug('Sent high-quality answer to broadcaster')
       } catch (error) {
         logger.error('Failed to handle offer:', error)
         cleanup()

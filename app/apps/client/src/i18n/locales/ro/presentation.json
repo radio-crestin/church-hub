@@ -150,7 +150,16 @@
     "screenShare": {
       "title": "Partajare Ecran",
       "enableAudio": "Activează redarea audio",
-      "enableAudioDescription": "Când primiți o partajare de ecran cu audio, redați audio pe acest ecran"
+      "enableAudioDescription": "Când primiți o partajare de ecran cu audio, redați audio pe acest ecran",
+      "videoSettings": "Setări Afișare Video",
+      "videoPosition": "Poziție și Dimensiune",
+      "objectFit": "Scalare Video",
+      "objectFitDescription": "Cum se încadrează videoul în container",
+      "objectFitOptions": {
+        "contain": "Încadrat",
+        "cover": "Acoperă",
+        "fill": "Umple"
+      }
     },
     "nextSlide": {
       "title": "Previzualizare Slide Următor",

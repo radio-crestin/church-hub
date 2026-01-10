@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 
 import { createLogger } from '~/utils/logger'
 
@@ -54,12 +62,25 @@ interface PeerConnection {
   iceCandidatesQueue: RTCIceCandidateInit[]
 }
 
-interface UseScreenShareProps {
-  send: (message: Record<string, unknown>) => Promise<boolean> | boolean
-  clientId: string | null
+interface ScreenShareContextValue {
+  state: ScreenShareState
+  startScreenShare: (options?: { audio?: boolean }) => Promise<void>
+  stopScreenShare: () => void
+  handleWebSocketMessage: (data: Record<string, unknown>) => void
+  getMediaStream: () => MediaStream | null
+  setClientId: (id: string) => void
+  setSend: (
+    sendFn: (message: Record<string, unknown>) => Promise<boolean> | boolean,
+  ) => void
 }
 
-export function useScreenShare({ send, clientId }: UseScreenShareProps) {
+const ScreenShareContext = createContext<ScreenShareContextValue | null>(null)
+
+export function ScreenShareProvider({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   const [state, setState] = useState<ScreenShareState>({
     isActive: false,
     isSharing: false,
@@ -68,9 +89,36 @@ export function useScreenShare({ send, clientId }: UseScreenShareProps) {
     error: null,
   })
 
+  // Store clientId and send function in refs so they can be updated
+  const clientIdRef = useRef<string | null>(null)
+  const sendRef = useRef<
+    ((message: Record<string, unknown>) => Promise<boolean> | boolean) | null
+  >(null)
+
   // Track peer connections (broadcaster has multiple, viewer has one)
   const peerConnectionsRef = useRef<Map<string, PeerConnection>>(new Map())
   const mediaStreamRef = useRef<MediaStream | null>(null)
+
+  const setClientId = useCallback((id: string) => {
+    clientIdRef.current = id
+  }, [])
+
+  const setSend = useCallback(
+    (
+      sendFn: (message: Record<string, unknown>) => Promise<boolean> | boolean,
+    ) => {
+      sendRef.current = sendFn
+    },
+    [],
+  )
+
+  // Helper to send messages
+  const send = useCallback((message: Record<string, unknown>) => {
+    if (sendRef.current) {
+      return sendRef.current(message)
+    }
+    return false
+  }, [])
 
   // Cleanup peer connection
   const cleanupPeerConnection = useCallback((targetClientId: string) => {
@@ -117,28 +165,20 @@ export function useScreenShare({ send, clientId }: UseScreenShareProps) {
           const params = transceiver.sender.getParameters()
           if (params.encodings && params.encodings.length > 0) {
             // Very high bitrate for perfect quality on local network (100 Mbps)
-            // Local network can easily handle this - ensures zero compression artifacts
             params.encodings[0].maxBitrate = 100000000
             params.encodings[0].maxFramerate = 60
-            // Maintain full resolution - never scale down
             params.encodings[0].scaleResolutionDownBy = 1.0
-            // Prioritize resolution over framerate for clarity (critical for screen sharing)
             // @ts-expect-error - degradationPreference is valid but not in TS types
             params.encodings[0].degradationPreference = 'maintain-resolution'
-            // Highest network priority for lowest latency
             params.encodings[0].priority = 'high'
             params.encodings[0].networkPriority = 'high'
             transceiver.sender.setParameters(params).catch(logger.error)
           }
 
-          // Prefer VP9 for screen sharing (optimized for static content with text)
-          // VP9 has better compression for screen content and maintains text clarity
-          // AV1 would be best but has high CPU usage; H.264 is motion-optimized, not ideal for screens
+          // Prefer VP9 for screen sharing
           const codecs = RTCRtpSender.getCapabilities?.('video')?.codecs
           if (codecs) {
-            // Clone codecs array to avoid browser caching issues
             const codecsCopy = [...codecs]
-            // Sort by screen sharing quality: VP9 first (best for text/static), then AV1, then H.264
             const vp9 = codecsCopy.filter((c) => c.mimeType === 'video/VP9')
             const av1 = codecsCopy.filter((c) => c.mimeType === 'video/AV1')
             const h264 = codecsCopy.filter((c) => c.mimeType === 'video/H264')
@@ -150,19 +190,16 @@ export function useScreenShare({ send, clientId }: UseScreenShareProps) {
                 c.mimeType !== 'video/H264' &&
                 c.mimeType !== 'video/VP8',
             )
-            // VP9 > AV1 > H.264 > VP8 > others
-            // VP8 last because it's lossy motion codec, worst for screen sharing
             const orderedCodecs = [...vp9, ...av1, ...h264, ...vp8, ...others]
             if (orderedCodecs.length > 0) {
               transceiver.setCodecPreferences?.(orderedCodecs)
             }
           }
         }
-        // Configure audio for high quality
         if (transceiver.sender.track?.kind === 'audio') {
           const params = transceiver.sender.getParameters()
           if (params.encodings && params.encodings.length > 0) {
-            params.encodings[0].maxBitrate = 256000 // 256 kbps for high quality audio
+            params.encodings[0].maxBitrate = 256000
             params.encodings[0].priority = 'high'
             params.encodings[0].networkPriority = 'high'
             transceiver.sender.setParameters(params).catch(logger.error)
@@ -185,7 +222,6 @@ export function useScreenShare({ send, clientId }: UseScreenShareProps) {
       pc.onconnectionstatechange = () => {
         logger.info(`Connection state for ${viewerId}: ${pc.connectionState}`)
         if (pc.connectionState === 'connected') {
-          // Log codec being used for debugging
           pc.getSenders().forEach((sender) => {
             if (sender.track?.kind === 'video') {
               const params = sender.getParameters()
@@ -216,7 +252,6 @@ export function useScreenShare({ send, clientId }: UseScreenShareProps) {
           logger.error(
             `ICE connection failed for ${viewerId} - attempting restart`,
           )
-          // Try to restart ICE
           pc.restartIce()
         }
       }
@@ -240,7 +275,6 @@ export function useScreenShare({ send, clientId }: UseScreenShareProps) {
           offerToReceiveVideo: false,
         })
 
-        // Modify SDP to remove bandwidth restrictions
         const modifiedSdp = modifySdpForHighQuality(offer.sdp || '')
         const modifiedOffer = {
           type: offer.type,
@@ -276,7 +310,6 @@ export function useScreenShare({ send, clientId }: UseScreenShareProps) {
     try {
       await peer.pc.setRemoteDescription({ type: 'answer', sdp })
 
-      // Process queued ICE candidates
       for (const candidate of peer.iceCandidatesQueue) {
         await peer.pc.addIceCandidate(new RTCIceCandidate(candidate))
       }
@@ -312,7 +345,6 @@ export function useScreenShare({ send, clientId }: UseScreenShareProps) {
 
   // Stop screen share (broadcaster)
   const stopScreenShare = useCallback(() => {
-    // Log the call stack to understand what triggered the stop
     const stack = new Error().stack
     logger.info(`Screen share stop triggered. Call stack:\n${stack}`)
 
@@ -342,16 +374,13 @@ export function useScreenShare({ send, clientId }: UseScreenShareProps) {
       try {
         const audioEnabled = options.audio ?? false
 
-        // Request screen capture with highest resolution and low latency settings
+        // Request screen capture with highest resolution
         const stream = await navigator.mediaDevices.getDisplayMedia({
           video: {
-            // Request highest available resolution
-            width: { ideal: 3840, max: 3840 }, // Up to 4K
+            width: { ideal: 3840, max: 3840 },
             height: { ideal: 2160, max: 2160 },
             frameRate: { ideal: 60, max: 60 },
-            // Prefer monitor/window capture for best quality
             displaySurface: 'monitor',
-            // Always show cursor
             cursor: 'always',
           },
           audio: audioEnabled
@@ -359,38 +388,30 @@ export function useScreenShare({ send, clientId }: UseScreenShareProps) {
                 echoCancellation: false,
                 noiseSuppression: false,
                 autoGainControl: false,
-                // Low latency audio settings
                 sampleRate: 48000,
                 channelCount: 2,
               }
             : false,
-          // Prefer current tab for lower latency when sharing browser content
           preferCurrentTab: false,
-          // Don't require exact constraints - use best available
           selfBrowserSurface: 'exclude',
         } as DisplayMediaStreamOptions)
 
         // Get the video track and configure for maximum quality
         const videoTrack = stream.getVideoTracks()[0]
         if (videoTrack) {
-          // Set content hint to 'text' for optimal screen sharing quality
-          // 'text' triggers special encoding modes in VP9/AV1 for sharp text rendering
-          // This tells the encoder to prioritize resolution and text clarity over motion
           if ('contentHint' in videoTrack) {
             videoTrack.contentHint = 'text'
           }
 
-          // Log the actual capture resolution
           const settings = videoTrack.getSettings()
           logger.info(
             `Screen capture started at ${settings.width}x${settings.height} @ ${settings.frameRate}fps`,
           )
 
-          // Apply constraints to ensure we get the highest quality
           try {
             await videoTrack.applyConstraints({
-              width: { ideal: settings.width }, // Use captured width
-              height: { ideal: settings.height }, // Use captured height
+              width: { ideal: settings.width },
+              height: { ideal: settings.height },
               frameRate: { ideal: 60, max: 60 },
             })
           } catch (constraintError) {
@@ -400,7 +421,7 @@ export function useScreenShare({ send, clientId }: UseScreenShareProps) {
 
         mediaStreamRef.current = stream
 
-        // Handle stream ending (user clicks "Stop sharing" or browser terminates capture)
+        // Handle stream ending
         const videoTrackForEvents = stream.getVideoTracks()[0]
         if (videoTrackForEvents) {
           videoTrackForEvents.onended = () => {
@@ -410,7 +431,6 @@ export function useScreenShare({ send, clientId }: UseScreenShareProps) {
             stopScreenShareRef.current()
           }
 
-          // Also monitor for mute events (can indicate issues)
           videoTrackForEvents.onmute = () => {
             logger.warn('Video track muted - this may indicate a capture issue')
           }
@@ -419,12 +439,14 @@ export function useScreenShare({ send, clientId }: UseScreenShareProps) {
           }
         }
 
+        const currentClientId = clientIdRef.current
+
         setState((prev) => ({
           ...prev,
           isSharing: true,
           isActive: true,
           audioEnabled,
-          broadcasterId: clientId,
+          broadcasterId: currentClientId,
           error: null,
         }))
 
@@ -444,10 +466,10 @@ export function useScreenShare({ send, clientId }: UseScreenShareProps) {
         setState((prev) => ({ ...prev, error: errorMessage }))
       }
     },
-    [send, clientId],
+    [send],
   )
 
-  // Handle WebSocket message (called from parent component)
+  // Handle WebSocket message
   const handleWebSocketMessage = useCallback(
     (data: Record<string, unknown>) => {
       const type = data.type as string
@@ -463,8 +485,6 @@ export function useScreenShare({ send, clientId }: UseScreenShareProps) {
             isActive: true,
             broadcasterId: payload.broadcasterId,
             audioEnabled: payload.audioEnabled,
-            // isSharing is managed locally via startScreenShare/stopScreenShare
-            // Don't override it from server messages
           }))
           break
         }
@@ -482,7 +502,6 @@ export function useScreenShare({ send, clientId }: UseScreenShareProps) {
 
         case 'screen_share_join_request': {
           const payload = data.payload as { viewerId: string }
-          // Broadcaster creates offer for new viewer
           if (state.isSharing && mediaStreamRef.current) {
             createPeerConnectionForViewer(payload.viewerId)
           }
@@ -506,7 +525,6 @@ export function useScreenShare({ send, clientId }: UseScreenShareProps) {
       }
     },
     [
-      clientId,
       state.isSharing,
       createPeerConnectionForViewer,
       handleAnswer,
@@ -520,7 +538,7 @@ export function useScreenShare({ send, clientId }: UseScreenShareProps) {
     return mediaStreamRef.current
   }, [])
 
-  // Cleanup on unmount
+  // Cleanup on unmount (app closing)
   useEffect(() => {
     return () => {
       stopMediaStream()
@@ -528,11 +546,40 @@ export function useScreenShare({ send, clientId }: UseScreenShareProps) {
     }
   }, [stopMediaStream, cleanupAllConnections])
 
-  return {
-    state,
-    startScreenShare,
-    stopScreenShare,
-    handleWebSocketMessage,
-    getMediaStream,
+  const value = useMemo(
+    () => ({
+      state,
+      startScreenShare,
+      stopScreenShare,
+      handleWebSocketMessage,
+      getMediaStream,
+      setClientId,
+      setSend,
+    }),
+    [
+      state,
+      startScreenShare,
+      stopScreenShare,
+      handleWebSocketMessage,
+      getMediaStream,
+      setClientId,
+      setSend,
+    ],
+  )
+
+  return (
+    <ScreenShareContext.Provider value={value}>
+      {children}
+    </ScreenShareContext.Provider>
+  )
+}
+
+export function useScreenShareContext() {
+  const context = useContext(ScreenShareContext)
+  if (!context) {
+    throw new Error(
+      'useScreenShareContext must be used within a ScreenShareProvider',
+    )
   }
+  return context
 }

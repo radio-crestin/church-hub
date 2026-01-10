@@ -1,4 +1,4 @@
-import { Book, Megaphone, Music, User } from 'lucide-react'
+import { Book, Megaphone, MonitorPlay, Music, User } from 'lucide-react'
 import { useMemo, useRef } from 'react'
 
 import { AnimatedText } from './AnimatedText'
@@ -561,6 +561,45 @@ export function ScreenContent({
     )
   }
 
+  // Render screen share preview placeholder
+  const renderScreenSharePreview = () => {
+    if (contentType !== 'screen_share') return null
+
+    const iconSize = Math.min(containerWidth, containerHeight) * 0.15
+
+    return (
+      <div
+        className="absolute inset-0 flex flex-col items-center justify-center gap-4"
+        style={{
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        }}
+      >
+        <div
+          style={{
+            width: iconSize * 2,
+            height: iconSize * 2,
+            borderRadius: '50%',
+            backgroundColor: 'rgba(59, 130, 246, 0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <MonitorPlay size={iconSize} style={{ color: 'rgb(59, 130, 246)' }} />
+        </div>
+        <span
+          style={{
+            color: 'rgba(255, 255, 255, 0.7)',
+            fontSize: Math.max(14, containerWidth * 0.025),
+            fontWeight: 500,
+          }}
+        >
+          Screen Share Active
+        </span>
+      </div>
+    )
+  }
+
   return (
     <div
       className="relative"
@@ -575,6 +614,7 @@ export function ScreenContent({
       {renderPersonLabel()}
       {renderClock()}
       {renderNextSlideSection()}
+      {renderScreenSharePreview()}
     </div>
   )
 }
