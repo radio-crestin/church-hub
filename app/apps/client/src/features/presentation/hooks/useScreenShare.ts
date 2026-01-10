@@ -289,9 +289,8 @@ export function useScreenShare({ send, clientId }: UseScreenShareProps) {
             isActive: true,
             broadcasterId: payload.broadcasterId,
             audioEnabled: payload.audioEnabled,
-            // Don't override isSharing if we're the broadcaster
-            isSharing:
-              payload.broadcasterId === clientId ? prev.isSharing : false,
+            // isSharing is managed locally via startScreenShare/stopScreenShare
+            // Don't override it from server messages
           }))
           break
         }
