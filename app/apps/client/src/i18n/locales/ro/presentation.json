@@ -271,9 +271,9 @@
         "nextSlide": "Slide Următor",
         "prevSlide": "Slide Anterior",
         "addShortcut": "Adaugă Scurtătură",
-        "conflict": "Folosită deja de scena \"{{scene}}\"",
+        "conflict": "Folosită deja de \"{{action}}\"",
         "duplicate": "Scurtătura există deja",
-        "conflictOther": "Folosită deja de \"{{item}}\""
+        "conflictOther": "Folosită deja de \"{{action}}\""
       }
     },
     "selectProgram": "Selectează un program",
