@@ -86,6 +86,9 @@ export function loadMIDIShortcuts(): void {
   // Load global shortcuts from settings
   try {
     const setting = getSetting('app_settings', 'global_keyboard_shortcuts')
+    midiLogger.debug(
+      `Raw global_keyboard_shortcuts setting: ${JSON.stringify(setting)}`,
+    )
     if (setting?.value) {
       const config = JSON.parse(setting.value) as GlobalShortcutsConfig
 
@@ -264,6 +267,9 @@ export async function handleMIDIShortcut(
   // Look up the action for this shortcut
   const mapping = shortcutMap.get(shortcutString)
   if (!mapping) {
+    midiLogger.debug(
+      `No mapping found for: ${shortcutString}. Map has ${shortcutMap.size} entries`,
+    )
     return false
   }
 
@@ -291,4 +297,16 @@ export async function handleMIDIShortcut(
  */
 export function getMIDIShortcutCount(): number {
   return shortcutMap.size
+}
+
+/**
+ * Dump the current shortcut map contents for debugging
+ */
+export function dumpShortcutMap(): Record<string, ShortcutMapping> {
+  const result: Record<string, ShortcutMapping> = {}
+  shortcutMap.forEach((value, key) => {
+    result[key] = value
+  })
+  midiLogger.info(`Current shortcut map: ${JSON.stringify(result, null, 2)}`)
+  return result
 }
