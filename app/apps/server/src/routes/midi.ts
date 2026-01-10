@@ -7,6 +7,11 @@ import {
   getConnectionStatus,
   setEnabled,
 } from '../service/midi'
+import {
+  dumpShortcutMap,
+  getMIDIShortcutCount,
+} from '../service/midi/shortcuts'
+import { getSetting } from '../service/settings'
 import { midiLogger } from '../utils/fileLogger'
 import { broadcastMIDIConnectionStatus } from '../websocket'
 
@@ -64,6 +69,44 @@ export async function handleMIDIRoutes(
           status: 500,
           headers: { 'Content-Type': 'application/json' },
         }),
+      )
+    }
+  }
+
+  // GET /api/midi/debug-shortcuts - Debug MIDI shortcuts map
+  if (req.method === 'GET' && url.pathname === '/api/midi/debug-shortcuts') {
+    try {
+      const shortcutCount = getMIDIShortcutCount()
+      const shortcutMap = dumpShortcutMap()
+      const setting = getSetting('app_settings', 'global_keyboard_shortcuts')
+
+      return handleCors(
+        req,
+        new Response(
+          JSON.stringify({
+            data: {
+              shortcutCount,
+              shortcutMap,
+              rawSetting: setting?.value ? JSON.parse(setting.value) : null,
+            },
+          }),
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          },
+        ),
+      )
+    } catch (error) {
+      midiLogger.error(`Failed to get MIDI shortcuts debug info: ${error}`)
+      return handleCors(
+        req,
+        new Response(
+          JSON.stringify({ error: 'Failed to get MIDI shortcuts debug info' }),
+          {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' },
+          },
+        ),
       )
     }
   }
