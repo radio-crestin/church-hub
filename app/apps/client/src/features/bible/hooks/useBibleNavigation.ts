@@ -270,12 +270,15 @@ export function useBibleNavigation(
       bookId: params.bookId,
       bookName: params.bookName,
       chapter: params.chapter,
-      // selectOnly: set searchedIndex (select without presenting), clear search
-      // isSearchNavigation: set searchedIndex, keep search query
-      // default: set presentedIndex (present), clear search
-      presentedIndex:
-        selectOnly || isSearchNavigation
-          ? prev.presentedIndex
+      // selectOnly: clear presentedIndex (select without presenting)
+      // isSearchNavigation: keep presentedIndex only if staying in same chapter
+      // default: set presentedIndex (present)
+      presentedIndex: selectOnly
+        ? null
+        : isSearchNavigation
+          ? prev.bookId === params.bookId && prev.chapter === params.chapter
+            ? prev.presentedIndex
+            : null
           : (params.verseIndex ?? null),
       searchedIndex:
         selectOnly || isSearchNavigation ? (params.verseIndex ?? null) : null,

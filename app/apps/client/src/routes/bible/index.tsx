@@ -159,6 +159,12 @@ function BiblePage() {
   const prevChapterRef = useRef<{ bookId: number; chapter: number } | null>(
     null,
   )
+  // Track previous server state to detect when SERVER changes (vs client navigation)
+  const prevServerStateRef = useRef<{
+    bookId: number
+    chapter: number
+    verseIndex: number
+  } | null>(null)
 
   // Initialize navigation with primary translation
   const navigation = useBibleNavigation(primaryTranslation?.id)
@@ -197,6 +203,10 @@ function BiblePage() {
     } else if (urlBookId && urlBookName && urlChapter !== undefined) {
       // Book + chapter in URL - verses level
       // When select=true (from search result click), only select the verse without presenting
+      // Set browse mode to prevent server sync from overriding user's selection
+      if (urlSelectOnly === true) {
+        isBrowsingRef.current = true
+      }
       navigation.navigateToChapter({
         bookId: urlBookId,
         bookName: urlBookName,
@@ -320,6 +330,7 @@ function BiblePage() {
 
   // Sync navigation when server moves to a different chapter (e.g., via navigateTemporary)
   // Only sync if the presentation content matches the primary translation
+  // IMPORTANT: Only sync when the SERVER state changes, not when the client navigates
   useEffect(() => {
     // Only sync after initial navigation has happened
     if (!hasNavigatedOnOpen.current) return
@@ -347,6 +358,27 @@ function BiblePage() {
       serverBookId !== undefined &&
       serverVerseIndex !== undefined
     ) {
+      // Check if the SERVER state actually changed (not just client navigation)
+      const prevServer = prevServerStateRef.current
+      const serverChanged =
+        !prevServer ||
+        prevServer.bookId !== serverBookId ||
+        prevServer.chapter !== serverChapter ||
+        prevServer.verseIndex !== serverVerseIndex
+
+      // Update the prev server state ref
+      prevServerStateRef.current = {
+        bookId: serverBookId,
+        chapter: serverChapter,
+        verseIndex: serverVerseIndex,
+      }
+
+      // Only sync if the SERVER state changed (e.g., via Next/Prev in presentation)
+      // If the client navigated away, the server state hasn't changed, so we don't sync
+      if (!serverChanged) {
+        return
+      }
+
       const book = temporaryBooks.find((b) => b.id === serverBookId)
 
       // Check if the server moved to a different chapter than what we're showing
@@ -644,8 +676,10 @@ function BiblePage() {
   // Handle search result selection - navigate to verse via URL and select it (without presenting)
   const handleSelectSearchResult = useCallback(
     (result: BibleSearchResult) => {
-      // Clear browse mode when selecting a verse (re-enables sync)
-      isBrowsingRef.current = false
+      // Keep browse mode ON - user is just selecting/browsing, not presenting
+      // This prevents the sync effect from overriding the user's selection with old server state
+      // Browse mode will be cleared when user actually presents a verse (handleSelectVerse)
+      isBrowsingRef.current = true
       // Mark as navigated so sync effect works for subsequent chapter changes
       hasNavigatedOnOpen.current = true
       // Mark as internal navigation (from search results) so back uses browser history
