@@ -47,7 +47,6 @@ export function ControlRoom() {
     state: screenShareState,
     startScreenShare,
     stopScreenShare,
-    handleWebSocketMessage: handleScreenShareMessage,
     setClientId,
     setSend,
   } = useScreenShareContext()
@@ -62,24 +61,6 @@ export function ControlRoom() {
     setClientId(clientId)
     setSend(wsSend)
   }, [clientId, wsSend, setClientId, setSend])
-
-  // Listen for screen share WebSocket messages
-  useEffect(() => {
-    const handleMessage = (event: CustomEvent) => {
-      handleScreenShareMessage(event.detail)
-    }
-
-    window.addEventListener(
-      'screen-share-message',
-      handleMessage as EventListener,
-    )
-    return () => {
-      window.removeEventListener(
-        'screen-share-message',
-        handleMessage as EventListener,
-      )
-    }
-  }, [handleScreenShareMessage])
 
   // Start screen share with audio always enabled (audio playback controlled per-screen)
   const handleStartScreenShare = useCallback(() => {

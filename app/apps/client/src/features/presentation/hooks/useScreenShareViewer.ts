@@ -12,7 +12,6 @@ const RTC_CONFIG: RTCConfiguration = {
     { urls: 'stun:stun1.l.google.com:19302' },
   ],
   iceCandidatePoolSize: 10,
-  sdpSemantics: 'unified-plan',
   // Prefer UDP for lower latency
   iceTransportPolicy: 'all',
   // Bundle all media over single transport for efficiency
@@ -106,7 +105,6 @@ export function useScreenShareViewer({
           // This prioritizes low latency over buffering since local network is stable
           if (event.receiver && 'jitterBufferTarget' in event.receiver) {
             try {
-              // @ts-expect-error - jitterBufferTarget is valid but may not be in all TS types
               event.receiver.jitterBufferTarget = 50
               logger.debug('Set jitterBufferTarget to 50ms for low latency')
             } catch (e) {
@@ -162,8 +160,7 @@ export function useScreenShareViewer({
             isConnected: false,
             isConnecting: false,
             remoteStream: null,
-            error:
-              pc.connectionState === 'failed' ? 'Connection failed' : undefined,
+            error: pc.connectionState === 'failed' ? 'Connection failed' : null,
           }))
         }
       }
