@@ -147,7 +147,7 @@ export async function handleMIDIRoutes(
         } else {
           midiLogger.info(`Connecting to output device ${body.outputDeviceId}`)
           // Pass startReconnectOnFail=true to start monitoring if device not found
-          outputConnected = connectOutput(
+          outputConnected = await connectOutput(
             body.outputDeviceId,
             undefined,
             true, // Start reconnection if device not available

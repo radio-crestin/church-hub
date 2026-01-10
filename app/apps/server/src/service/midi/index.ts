@@ -560,11 +560,11 @@ export function disconnectInput(clearName = true) {
  * @param byName - If provided, connect by device name instead of index (used for reconnection)
  * @param startReconnectOnFail - If true and connection fails, start reconnection process
  */
-export function connectOutput(
+export async function connectOutput(
   deviceId: number,
   byName?: string,
   startReconnectOnFail = false,
-): boolean {
+): Promise<boolean> {
   if (!loadMidi() || !easymidi) {
     midiLogger.warn('Cannot connect to output: MIDI not available')
     return false
@@ -626,7 +626,8 @@ export function connectOutput(
     // Reset all LEDs to off state on connection
     // Windows doesn't reset MIDI port state when opening, unlike macOS
     // This ensures a clean LED state regardless of platform
-    resetAllLEDs()
+    // Await to prevent race conditions with client LED refresh
+    await resetAllLEDs()
 
     // Start device monitoring if not already running
     startDeviceMonitoring()
@@ -789,7 +790,15 @@ export function setDevicesChangedCallback(
 function broadcastConnectionStatus() {
   if (connectionStatusCallback) {
     const status = getConnectionStatus()
+    midiLogger.debug(
+      `Broadcasting connection status: isReconnecting=${isReconnecting}, ` +
+        `inputConnected=${status.inputConnected}, outputConnected=${status.outputConnected}`,
+    )
     connectionStatusCallback({ ...status, isReconnecting })
+  } else {
+    midiLogger.debug(
+      'No connection status callback registered, skipping broadcast',
+    )
   }
 }
 
@@ -867,7 +876,7 @@ function startReconnecting() {
 /**
  * Attempt to reconnect to previously connected devices
  */
-function attemptReconnection() {
+async function attemptReconnection() {
   if (!loadMidi() || !easymidi) return
 
   midiLogger.debug('Attempting to reconnect MIDI devices...')
@@ -933,7 +942,7 @@ function attemptReconnection() {
       midiLogger.info(
         `Found output device "${connectedOutputName}", reconnecting...`,
       )
-      if (connectOutput(0, connectedOutputName)) {
+      if (await connectOutput(0, connectedOutputName)) {
         outputReconnected = true
         midiLogger.info(
           `✓ Reconnected to output device: ${connectedOutputName}`,
@@ -949,7 +958,7 @@ function attemptReconnection() {
       midiLogger.info(
         `Output devices available, reconnecting to device ID ${requestedOutputDeviceId}...`,
       )
-      if (connectOutput(requestedOutputDeviceId)) {
+      if (await connectOutput(requestedOutputDeviceId)) {
         outputReconnected = true
         midiLogger.info(
           `✓ Reconnected to output device ID: ${requestedOutputDeviceId}`,
@@ -961,7 +970,7 @@ function attemptReconnection() {
       midiLogger.info(
         `Requested output device ID ${requestedOutputDeviceId} out of range, connecting to first available device...`,
       )
-      if (connectOutput(0)) {
+      if (await connectOutput(0)) {
         outputReconnected = true
         midiLogger.info(`✓ Connected to first available output device`)
       }
@@ -981,7 +990,9 @@ function stopReconnecting() {
   if (!isReconnecting) return
 
   isReconnecting = false
-  midiLogger.info('MIDI device reconnection complete')
+  midiLogger.info(
+    'MIDI device reconnection complete, notifying clients to refresh LED states',
+  )
 
   if (reconnectIntervalId) {
     clearInterval(reconnectIntervalId)
@@ -990,6 +1001,10 @@ function stopReconnecting() {
 
   // Broadcast updated device list and connection status to all clients
   // Device IDs may have changed after reconnection
+  // This triggers client-side LED refresh via the isReconnecting transition
+  midiLogger.debug(
+    'Broadcasting devices and connection status after reconnection',
+  )
   broadcastDevices()
   broadcastConnectionStatus()
 }

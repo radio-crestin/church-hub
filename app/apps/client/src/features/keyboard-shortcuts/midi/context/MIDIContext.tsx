@@ -93,6 +93,14 @@ export function MIDIProvider({
   // Subscribers for reconnection events (to refresh LEDs)
   const reconnectionSubscribersRef = useRef<Set<() => void>>(new Set())
 
+  // Ref to track isReconnecting for WebSocket closure (avoids stale closure issue)
+  const isReconnectingRef = useRef(isReconnecting)
+
+  // Keep the ref in sync with state
+  useEffect(() => {
+    isReconnectingRef.current = isReconnecting
+  }, [isReconnecting])
+
   // Server-side MIDI is always supported
   const isSupported = true
 
@@ -144,6 +152,28 @@ export function MIDIProvider({
       ws.onopen = () => {
         setHasPermission(true)
         setPermissionError(null)
+
+        // Sync MIDI status on WebSocket connect to handle reconnection during MIDI reconnection cycle
+        fetch(`${getApiUrl()}/api/midi/status`)
+          .then((res) => res.json())
+          .then((result) => {
+            if (result.data) {
+              const newIsReconnecting = result.data.isReconnecting || false
+              setIsReconnecting(newIsReconnecting)
+              isReconnectingRef.current = newIsReconnecting
+              setReconnectingDeviceName(
+                result.data.reconnectingInputDevice ||
+                  result.data.reconnectingOutputDevice ||
+                  null,
+              )
+              logger.debug('Synced MIDI status on WebSocket connect', {
+                isReconnecting: newIsReconnecting,
+              })
+            }
+          })
+          .catch((err) =>
+            logger.error('Failed to fetch MIDI status on connect', { err }),
+          )
       }
 
       ws.onmessage = (event) => {
@@ -172,7 +202,8 @@ export function MIDIProvider({
 
           if (data.type === 'midi_connection_status') {
             logger.debug('MIDI connection status', data.payload)
-            const wasReconnecting = isReconnecting
+            // Use ref to get current value (avoids stale closure issue)
+            const wasReconnecting = isReconnectingRef.current
             const newIsReconnecting = data.payload.isReconnecting
 
             setIsReconnecting(newIsReconnecting)
@@ -223,8 +254,9 @@ export function MIDIProvider({
               logger.info(
                 'MIDI device reconnected, notifying subscribers to refresh state',
               )
-              // Small delay to let the connection stabilize
-              setTimeout(() => {
+
+              // Helper to notify all reconnection subscribers
+              const notifySubscribers = () => {
                 reconnectionSubscribersRef.current.forEach((callback) => {
                   try {
                     callback()
@@ -232,7 +264,19 @@ export function MIDIProvider({
                     logger.error('Error in reconnection subscriber', { error })
                   }
                 })
-              }, 100)
+              }
+
+              // Delay to let the connection stabilize and server resetAllLEDs() to complete
+              // Server resets all LEDs on connect, so we need to wait for that to finish
+              setTimeout(() => {
+                notifySubscribers()
+                // Retry after another delay to ensure LEDs are properly set
+                // (handles potential race conditions with server LED reset)
+                setTimeout(() => {
+                  logger.debug('Retrying LED refresh after reconnection')
+                  notifySubscribers()
+                }, 200)
+              }, 200)
             }
           }
 
