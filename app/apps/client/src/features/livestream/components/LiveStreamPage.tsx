@@ -50,7 +50,7 @@ export function LiveStreamPage() {
       <div className="space-y-4 lg:space-y-6 flex-1 lg:overflow-auto">
         <BroadcastInfo />
 
-        <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
+        <div className="mt-2 p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
           <SceneGrid />
         </div>
       </div>

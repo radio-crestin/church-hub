@@ -7,7 +7,15 @@ import { getStoredApiUrl } from './service/api-url'
 const API_PORT = import.meta.env.VITE_API_PORT || '3000'
 
 // Check if we're running in Tauri mode
-const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+const isTauriEnv =
+  typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+
+/**
+ * Returns true if running in Tauri context
+ */
+export function isTauri(): boolean {
+  return isTauriEnv
+}
 
 /**
  * Checks if we're running on a mobile platform (iOS/Android) in Tauri
@@ -15,7 +23,7 @@ const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
  */
 export function isMobile(): boolean {
   if (typeof window === 'undefined') return false
-  if (!isTauri) return false
+  if (!isTauriEnv) return false
 
   const ua = navigator.userAgent.toLowerCase()
 
@@ -55,7 +63,7 @@ export function needsApiUrlConfiguration(): boolean {
  */
 function getApiHost(): string {
   // In Tauri desktop, always use localhost (sidecar runs locally)
-  if (isTauri && !isMobile()) {
+  if (isTauriEnv && !isMobile()) {
     return 'localhost'
   }
 
@@ -115,7 +123,7 @@ export function isLocalhost(): boolean {
   if (isMobile()) return false
 
   // In Tauri desktop, always treat as localhost
-  if (isTauri) return true
+  if (isTauriEnv) return true
 
   const hostname = window.location.hostname.toLowerCase()
   return (

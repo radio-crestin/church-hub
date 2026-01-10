@@ -118,6 +118,14 @@ interface MusicStateMessage {
   }
 }
 
+interface SidebarNavigationMessage {
+  type: 'sidebar_navigation'
+  payload: {
+    route: string
+    focusSearch: boolean
+  }
+}
+
 type MessageData =
   | PresentationMessage
   | ScreenConfigUpdatedMessage
@@ -126,6 +134,7 @@ type MessageData =
   | SlideHighlightsUpdatedMessage
   | SettingsUpdatedMessage
   | MusicStateMessage
+  | SidebarNavigationMessage
   | { type: 'pong' }
 
 // Check if we should use Tauri WebSocket plugin (on mobile)
@@ -254,6 +263,18 @@ export function useWebSocket() {
         if (data.type === 'music_state') {
           // Update music player state cache
           queryClient.setQueryData(['music', 'playerState'], data.payload)
+        }
+
+        if (data.type === 'sidebar_navigation') {
+          // Dispatch custom event for sidebar navigation (handled by App layout)
+          window.dispatchEvent(
+            new CustomEvent('sidebar-navigation', {
+              detail: {
+                route: data.payload.route,
+                focusSearch: data.payload.focusSearch,
+              },
+            }),
+          )
         }
       } catch {
         // Failed to parse message

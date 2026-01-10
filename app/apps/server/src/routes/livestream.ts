@@ -6,9 +6,6 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
   console.log(`[${level.toUpperCase()}] [livestream-routes] ${message}`)
 }
 
-// Mutex to prevent concurrent stream start requests
-let streamStartInProgress = false
-
 import { generateBroadcastMessage } from '../service/livestream/message'
 import {
   getMixerChannels,
@@ -28,12 +25,15 @@ import {
   obsConnection,
   reorderScenes,
   setSceneAutomationEnabled,
-  startStreaming,
-  stopStreaming,
   switchScene,
   updateOBSConfig,
   updateScene,
 } from '../service/livestream/obs'
+import {
+  isStreamStartInProgress,
+  startStream,
+  stopStream,
+} from '../service/livestream/stream-control'
 import type {
   ContentType,
   MixerConfig,
@@ -41,7 +41,6 @@ import type {
   YouTubeConfig,
 } from '../service/livestream/types'
 import {
-  clearActiveBroadcastCache,
   consumePKCESession,
   createBroadcast,
   endBroadcast,
@@ -62,8 +61,6 @@ import {
   broadcastLivestreamStatus,
   broadcastOBSConnectionStatus,
   broadcastOBSCurrentScene,
-  broadcastOBSStreamingStatus,
-  broadcastStreamStartProgress,
   broadcastYouTubeAuthStatus,
 } from '../websocket'
 
@@ -1005,7 +1002,7 @@ export async function handleLivestreamRoutes(
     url.pathname === '/api/livestream/obs/stream/start'
   ) {
     // Prevent concurrent stream start requests
-    if (streamStartInProgress) {
+    if (isStreamStartInProgress()) {
       log('warning', 'Stream start already in progress, rejecting request')
       return handleCors(
         req,
@@ -1016,130 +1013,26 @@ export async function handleLivestreamRoutes(
       )
     }
 
-    streamStartInProgress = true
-    try {
-      const youtubeConfig = await getYouTubeConfig()
-      const obsStatus = obsConnection.getConnectionStatus()
+    const result = await startStream()
 
-      // Step 1: Switch to start scene if configured (only if OBS is connected)
-      if (youtubeConfig.startSceneName && obsStatus.connected) {
-        await switchScene(youtubeConfig.startSceneName)
-        broadcastOBSCurrentScene(youtubeConfig.startSceneName)
-      }
-
-      // Step 2: Create YouTube broadcast
-      broadcastStreamStartProgress({
-        step: 'creating_broadcast',
-        progress: 5,
-        message: 'Creating YouTube broadcast...',
-        updatedAt: Date.now(),
-      })
-
-      const broadcast = await createBroadcast()
-
-      // Step 3: Wait 5 seconds for YouTube to process the broadcast
-      for (let i = 5; i > 0; i--) {
-        broadcastStreamStartProgress({
-          step: 'delay_before_stream',
-          progress: 15 + (5 - i) * 15,
-          message: `Starting in ${i} seconds...`,
-          broadcastId: broadcast.broadcastId,
-          updatedAt: Date.now(),
-        })
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-      }
-
-      // Step 4: Start OBS streaming (only if OBS is connected)
-      // Re-fetch connection status to get the latest state
-      const currentObsStatus = obsConnection.getConnectionStatus()
-      if (currentObsStatus.connected) {
-        broadcastStreamStartProgress({
-          step: 'starting_obs',
-          progress: 90,
-          message: 'Starting OBS stream...',
-          broadcastId: broadcast.broadcastId,
-          updatedAt: Date.now(),
-        })
-
-        try {
-          await startStreaming()
-        } catch (obsError) {
-          // OBS was connected but failed to start - this is an error
-          const obsErrorMessage =
-            obsError instanceof Error ? obsError.message : 'Failed to start OBS'
-          broadcastStreamStartProgress({
-            step: 'error',
-            progress: 0,
-            message: 'Failed to start OBS streaming',
-            error: obsErrorMessage,
-            updatedAt: Date.now(),
-          })
-          throw obsError
-        }
-      } else {
-        // OBS not connected - broadcast error
-        broadcastStreamStartProgress({
-          step: 'error',
-          progress: 0,
-          message: 'OBS is not connected',
-          error: 'Please connect to OBS first',
-          updatedAt: Date.now(),
-        })
-        throw new Error('OBS not connected')
-      }
-
-      // Step 5: Complete
-      broadcastStreamStartProgress({
-        step: 'completed',
-        progress: 100,
-        message: 'Stream started successfully!',
-        broadcastId: broadcast.broadcastId,
-        updatedAt: Date.now(),
-      })
-
-      const streamingStatus = obsConnection.getStreamingStatus()
-      broadcastOBSStreamingStatus(streamingStatus)
-      broadcastLivestreamStatus({
-        isLive: true,
-        broadcastId: broadcast.broadcastId,
-        broadcastUrl: broadcast.url,
-        title: broadcast.title,
-        startedAt: Date.now(),
-        updatedAt: Date.now(),
-      })
-
-      // Clear cache so next query fetches fresh data
-      clearActiveBroadcastCache()
-
-      return handleCors(
-        req,
-        new Response(JSON.stringify({ data: { success: true, broadcast } }), {
-          headers: { 'Content-Type': 'application/json' },
-        }),
-      )
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Failed to start stream'
-
-      broadcastStreamStartProgress({
-        step: 'error',
-        progress: 0,
-        message: 'Stream start failed',
-        error: errorMessage,
-        updatedAt: Date.now(),
-      })
-
+    if (result.success) {
       return handleCors(
         req,
         new Response(
           JSON.stringify({
-            error: errorMessage,
+            data: { success: true, broadcast: result.broadcast },
           }),
-          { status: 500, headers: { 'Content-Type': 'application/json' } },
+          { headers: { 'Content-Type': 'application/json' } },
         ),
       )
-    } finally {
-      streamStartInProgress = false
+    } else {
+      return handleCors(
+        req,
+        new Response(JSON.stringify({ error: result.error }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
     }
   }
 
@@ -1148,59 +1041,22 @@ export async function handleLivestreamRoutes(
     req.method === 'POST' &&
     url.pathname === '/api/livestream/obs/stream/stop'
   ) {
-    try {
-      // Get the active broadcast BEFORE stopping OBS streaming
-      // This is important because YouTube's auto-stop (enableAutoStop: true)
-      // may transition the broadcast to 'complete' as soon as the stream stops,
-      // making it impossible to find via getActiveBroadcast()
-      const activeBroadcast = await getActiveBroadcast()
+    const result = await stopStream()
 
-      // Only stop OBS streaming if OBS is connected
-      const obsStatus = obsConnection.getConnectionStatus()
-      if (obsStatus.connected) {
-        await stopStreaming()
-      }
-
-      if (activeBroadcast) {
-        await endBroadcast(activeBroadcast.broadcastId)
-      }
-
-      const youtubeConfig = await getYouTubeConfig()
-      if (youtubeConfig.stopSceneName && obsStatus.connected) {
-        await switchScene(youtubeConfig.stopSceneName)
-        broadcastOBSCurrentScene(youtubeConfig.stopSceneName)
-      }
-
-      const streamingStatus = obsConnection.getStreamingStatus()
-      broadcastOBSStreamingStatus(streamingStatus)
-      broadcastLivestreamStatus({
-        isLive: false,
-        broadcastId: null,
-        broadcastUrl: null,
-        title: null,
-        startedAt: null,
-        updatedAt: Date.now(),
-      })
-
-      // Clear cache so next query fetches fresh data
-      clearActiveBroadcastCache()
-
+    if (result.success) {
       return handleCors(
         req,
         new Response(JSON.stringify({ data: { success: true } }), {
           headers: { 'Content-Type': 'application/json' },
         }),
       )
-    } catch (error) {
+    } else {
       return handleCors(
         req,
-        new Response(
-          JSON.stringify({
-            error:
-              error instanceof Error ? error.message : 'Failed to stop stream',
-          }),
-          { status: 500, headers: { 'Content-Type': 'application/json' } },
-        ),
+        new Response(JSON.stringify({ error: result.error }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       )
     }
   }

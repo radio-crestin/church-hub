@@ -522,10 +522,11 @@ async function main() {
           // Broadcast settings update via WebSocket
           broadcastSettingsUpdated(table, body.key)
 
-          // Reload MIDI shortcuts if keyboard shortcuts were updated
+          // Reload MIDI shortcuts if keyboard shortcuts or sidebar config were updated
           if (
             table === 'app_settings' &&
-            body.key === 'global_keyboard_shortcuts'
+            (body.key === 'global_keyboard_shortcuts' ||
+              body.key === 'sidebar_configuration')
           ) {
             loadMIDIShortcuts()
           }
