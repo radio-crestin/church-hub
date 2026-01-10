@@ -12,8 +12,6 @@ const RTC_CONFIG: RTCConfiguration = {
     { urls: 'stun:stun1.l.google.com:19302' },
   ],
   iceCandidatePoolSize: 10,
-  // Use unified plan for better codec control
-  sdpSemantics: 'unified-plan',
   // Prefer UDP for lower latency (default, but explicit)
   iceTransportPolicy: 'all',
   // Bundle all media over single transport for efficiency

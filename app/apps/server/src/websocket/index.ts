@@ -129,6 +129,36 @@ export function getActiveScreenShare(): ActiveScreenShare | null {
 }
 
 /**
+ * Stop active screen share and broadcast to all clients
+ * Used when presenting other content (Bible/song) that should stop screen sharing
+ */
+export function stopActiveScreenShare(): void {
+  if (!activeScreenShare) return
+
+  const broadcasterId = activeScreenShare.broadcasterId
+  const message = JSON.stringify({
+    type: 'screen_share_stopped',
+    payload: {
+      broadcasterId,
+      stoppedAt: Date.now(),
+      stoppedBy: 'system', // Stopped by presenting other content
+    },
+  } satisfies ScreenShareStoppedMessage)
+
+  activeScreenShare = null
+  wsLogger.info(`Screen share stopped due to presenting other content`)
+
+  // Broadcast to all clients
+  for (const [id, conn] of clients) {
+    try {
+      conn.ws.send(message)
+    } catch (error) {
+      wsLogger.error(`Failed to broadcast screen share stop to ${id}: ${error}`)
+    }
+  }
+}
+
+/**
  * Send message to a specific client
  */
 function sendToClient(

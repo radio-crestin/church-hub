@@ -20,8 +20,6 @@ const RTC_CONFIG: RTCConfiguration = {
     { urls: 'stun:stun1.l.google.com:19302' },
   ],
   iceCandidatePoolSize: 10,
-  // Use unified plan for better codec control
-  sdpSemantics: 'unified-plan',
   // Prefer UDP for lower latency (default, but explicit)
   iceTransportPolicy: 'all',
   // Bundle all media over single transport for efficiency
@@ -537,6 +535,24 @@ export function ScreenShareProvider({
   const getMediaStream = useCallback(() => {
     return mediaStreamRef.current
   }, [])
+
+  // Listen for screen share WebSocket messages (persists across page navigations)
+  useEffect(() => {
+    const handleMessage = (event: CustomEvent) => {
+      handleWebSocketMessage(event.detail)
+    }
+
+    window.addEventListener(
+      'screen-share-message',
+      handleMessage as EventListener,
+    )
+    return () => {
+      window.removeEventListener(
+        'screen-share-message',
+        handleMessage as EventListener,
+      )
+    }
+  }, [handleWebSocketMessage])
 
   // Cleanup on unmount (app closing)
   useEffect(() => {

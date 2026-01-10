@@ -218,6 +218,7 @@ import {
   setMIDIMessageHandler,
   setMusicCommandHandler,
   setMusicStateProvider,
+  stopActiveScreenShare,
   type WebSocketData,
 } from './websocket'
 
@@ -2253,6 +2254,8 @@ async function main() {
 
         try {
           const body = (await req.json()) as PresentTemporaryBibleInput
+          // Stop any active screen share when presenting other content
+          stopActiveScreenShare()
           const state = presentTemporaryBible(body)
           broadcastPresentationState(state)
           triggerSceneAutomation(state)
@@ -2284,6 +2287,8 @@ async function main() {
 
         try {
           const body = (await req.json()) as PresentTemporarySongInput
+          // Stop any active screen share when presenting other content
+          stopActiveScreenShare()
           const state = presentTemporarySong(body)
           broadcastPresentationState(state)
           triggerSceneAutomation(state)
@@ -2369,6 +2374,7 @@ async function main() {
         if (permError) return permError
 
         const state = clearTemporaryContent()
+
         broadcastPresentationState(state)
         triggerSceneAutomation(state)
 
@@ -2489,6 +2495,8 @@ async function main() {
 
         try {
           const body = (await req.json()) as PresentTemporaryAnnouncementInput
+          // Stop any active screen share when presenting other content
+          stopActiveScreenShare()
           const state = presentTemporaryAnnouncement(body)
           broadcastPresentationState(state)
           triggerSceneAutomation(state)
@@ -2520,6 +2528,8 @@ async function main() {
 
         try {
           const body = (await req.json()) as PresentTemporaryBiblePassageInput
+          // Stop any active screen share when presenting other content
+          stopActiveScreenShare()
           const state = presentTemporaryBiblePassage(body)
           broadcastPresentationState(state)
           triggerSceneAutomation(state)
@@ -2551,6 +2561,8 @@ async function main() {
 
         try {
           const body = (await req.json()) as PresentTemporaryVerseteTineriInput
+          // Stop any active screen share when presenting other content
+          stopActiveScreenShare()
           const state = presentTemporaryVerseteTineri(body)
           broadcastPresentationState(state)
           triggerSceneAutomation(state)
@@ -2582,6 +2594,8 @@ async function main() {
 
         try {
           const body = (await req.json()) as PresentTemporarySceneInput
+          // Stop any active screen share when presenting other content
+          stopActiveScreenShare()
           const state = presentTemporaryScene(body)
           broadcastPresentationState(state)
 

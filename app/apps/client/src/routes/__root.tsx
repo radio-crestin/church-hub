@@ -20,7 +20,10 @@ import {
   KioskScreenDimManager,
   KioskWakeLockManager,
 } from '~/features/kiosk'
-import { ScreenShareProvider } from '~/features/presentation/context'
+import {
+  ScreenShareProvider,
+  WebSocketProvider,
+} from '~/features/presentation/context'
 import { useAutoOpenScreens } from '~/features/presentation/hooks'
 import { FileDropZoneProvider } from '~/features/song-import'
 import { I18nProvider } from '~/provider/i18n-provider'
@@ -93,12 +96,14 @@ function ScreenLayout() {
   return (
     <ThemeProvider>
       <QueryClientProvider>
-        <ScreenShareProvider>
-          <KioskWakeLockManager />
-          <KioskFullscreenManager />
-          <KioskScreenDimManager />
-          <Outlet />
-        </ScreenShareProvider>
+        <WebSocketProvider>
+          <ScreenShareProvider>
+            <KioskWakeLockManager />
+            <KioskFullscreenManager />
+            <KioskScreenDimManager />
+            <Outlet />
+          </ScreenShareProvider>
+        </WebSocketProvider>
       </QueryClientProvider>
     </ThemeProvider>
   )
@@ -111,36 +116,38 @@ function MainLayout() {
   return (
     <ThemeProvider>
       <QueryClientProvider>
-        <ScreenShareProvider>
-          <KioskWakeLockManager />
-          <KioskFullscreenManager />
-          <KioskScreenDimManager />
-          <PermissionsProvider>
-            <MobileConnectionGuard>
-              <I18nProvider>
-                <ToastProvider>
-                  <KeyboardNavigationProvider>
-                    <MIDISettingsProvider>
-                      <ShortcutRecordingProvider>
-                        <FileDropZoneProvider>
-                          <AutoOpenScreens />
-                          <SidebarNavigationListener />
-                          <GlobalAppShortcutManager />
-                          <AppLayout>
-                            <Outlet />
-                          </AppLayout>
-                        </FileDropZoneProvider>
-                      </ShortcutRecordingProvider>
-                    </MIDISettingsProvider>
-                  </KeyboardNavigationProvider>
-                  {isDev ? (
-                    <TanStackRouterDevtools position="bottom-right" />
-                  ) : null}
-                </ToastProvider>
-              </I18nProvider>
-            </MobileConnectionGuard>
-          </PermissionsProvider>
-        </ScreenShareProvider>
+        <WebSocketProvider>
+          <ScreenShareProvider>
+            <KioskWakeLockManager />
+            <KioskFullscreenManager />
+            <KioskScreenDimManager />
+            <PermissionsProvider>
+              <MobileConnectionGuard>
+                <I18nProvider>
+                  <ToastProvider>
+                    <KeyboardNavigationProvider>
+                      <MIDISettingsProvider>
+                        <ShortcutRecordingProvider>
+                          <FileDropZoneProvider>
+                            <AutoOpenScreens />
+                            <SidebarNavigationListener />
+                            <GlobalAppShortcutManager />
+                            <AppLayout>
+                              <Outlet />
+                            </AppLayout>
+                          </FileDropZoneProvider>
+                        </ShortcutRecordingProvider>
+                      </MIDISettingsProvider>
+                    </KeyboardNavigationProvider>
+                    {isDev ? (
+                      <TanStackRouterDevtools position="bottom-right" />
+                    ) : null}
+                  </ToastProvider>
+                </I18nProvider>
+              </MobileConnectionGuard>
+            </PermissionsProvider>
+          </ScreenShareProvider>
+        </WebSocketProvider>
       </QueryClientProvider>
     </ThemeProvider>
   )
