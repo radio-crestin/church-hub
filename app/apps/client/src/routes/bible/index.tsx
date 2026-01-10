@@ -945,12 +945,18 @@ function BiblePage() {
                     search: { book: bookId, bookName },
                   })
                 }}
-                onNavigateToChapter={(bookId, bookName, chapter) => {
+                onNavigateToChapter={(bookId, bookName, chapter, verse) => {
                   // Mark as internal navigation (from within Bible) so back uses browser history
                   pendingInternalNavRef.current = true
                   navigate({
                     to: '/bible/',
-                    search: { book: bookId, bookName, chapter },
+                    search: {
+                      book: bookId,
+                      bookName,
+                      chapter,
+                      verse,
+                      select: verse !== undefined ? true : undefined,
+                    },
                   })
                 }}
                 onSearchQueryChange={(query) => {
