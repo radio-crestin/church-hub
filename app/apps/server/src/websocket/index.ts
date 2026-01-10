@@ -63,6 +63,7 @@ export type ScreenShareStoppedMessage = {
   payload: {
     broadcasterId: string
     stoppedAt: number
+    stoppedBy?: string // Who stopped the share (may differ from broadcaster)
   }
 }
 
@@ -452,17 +453,22 @@ export function handleWebSocketMessage(
     }
 
     if (data.type === 'screen_share_stop') {
-      if (activeScreenShare?.broadcasterId === clientId) {
+      // Allow any client to stop the screen share (not just broadcaster)
+      if (activeScreenShare) {
+        const broadcasterId = activeScreenShare.broadcasterId
         const message = JSON.stringify({
           type: 'screen_share_stopped',
           payload: {
-            broadcasterId: clientId,
+            broadcasterId,
             stoppedAt: Date.now(),
+            stoppedBy: clientId, // Track who stopped it
           },
         } satisfies ScreenShareStoppedMessage)
 
         activeScreenShare = null
-        wsLogger.info(`Screen share stopped by ${clientId}`)
+        wsLogger.info(
+          `Screen share stopped by ${clientId} (broadcaster was ${broadcasterId})`,
+        )
 
         // Clear presentation state
         const newState = clearTemporaryContent()

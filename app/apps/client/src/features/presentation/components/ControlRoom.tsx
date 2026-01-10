@@ -2,7 +2,6 @@ import { useNavigate } from '@tanstack/react-router'
 import {
   BookOpen,
   Calendar,
-  ChevronDown,
   Eraser,
   Eye,
   EyeOff,
@@ -12,10 +11,8 @@ import {
   MonitorUp,
   Music,
   Settings,
-  Volume2,
-  VolumeX,
 } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import {
@@ -44,11 +41,6 @@ export function ControlRoom() {
 
   // Connect to WebSocket for real-time updates
   const { send: wsSend } = useWebSocket()
-
-  // Screen sharing state
-  const [showScreenShareMenu, setShowScreenShareMenu] = useState(false)
-  const [screenShareAudioEnabled, setScreenShareAudioEnabled] = useState(false)
-  const screenShareMenuRef = useRef<HTMLDivElement>(null)
 
   // Get client ID from WebSocket debug info (it's generated on connection)
   const clientId = useMemo(() => {
@@ -81,25 +73,18 @@ export function ControlRoom() {
     }
   }, [handleScreenShareMessage])
 
-  // Close screen share menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        screenShareMenuRef.current &&
-        !screenShareMenuRef.current.contains(event.target as Node)
-      ) {
-        setShowScreenShareMenu(false)
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
+  // Start screen share with audio always enabled (audio playback controlled per-screen)
   const handleStartScreenShare = useCallback(() => {
-    startScreenShare({ audio: screenShareAudioEnabled })
-    setShowScreenShareMenu(false)
-  }, [startScreenShare, screenShareAudioEnabled])
+    startScreenShare({ audio: true })
+  }, [startScreenShare])
+
+  // Stop screen share (any client can stop)
+  const handleStopScreenShare = useCallback(() => {
+    // Send stop command - works for both broadcaster and other clients
+    wsSend({ type: 'screen_share_stop' })
+    // If we're the broadcaster, also stop our local stream
+    stopScreenShare()
+  }, [wsSend, stopScreenShare])
 
   const { data: state } = usePresentationState()
   const clearSlide = useClearSlide()
@@ -278,67 +263,30 @@ export function ControlRoom() {
           </h1>
         </div>
         <div className="flex items-center gap-2">
-          {/* Screen Share Button */}
-          <div className="relative" ref={screenShareMenuRef}>
-            {screenShareState.isSharing ? (
-              <button
-                type="button"
-                onClick={stopScreenShare}
-                className="flex items-center gap-2 px-2 py-1.5 lg:px-3 text-sm bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-700 dark:text-red-300 rounded-lg transition-colors"
-              >
-                <MonitorOff className="w-4 h-4" />
-                <span className="hidden sm:inline">
-                  {t('presentation:controlRoom.screenShare.stop')}
-                </span>
-              </button>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setShowScreenShareMenu(!showScreenShareMenu)}
-                  className="flex items-center gap-2 px-2 py-1.5 lg:px-3 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors"
-                >
-                  <MonitorPlay className="w-4 h-4" />
-                  <span className="hidden sm:inline">
-                    {t('presentation:controlRoom.screenShare.start')}
-                  </span>
-                  <ChevronDown className="w-3 h-3" />
-                </button>
-                {showScreenShareMenu && (
-                  <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
-                    <div className="p-2">
-                      <label className="flex items-center gap-2 px-2 py-1.5 text-sm text-gray-700 dark:text-gray-200 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
-                        <input
-                          type="checkbox"
-                          checked={screenShareAudioEnabled}
-                          onChange={(e) =>
-                            setScreenShareAudioEnabled(e.target.checked)
-                          }
-                          className="rounded border-gray-300 dark:border-gray-600"
-                        />
-                        {screenShareAudioEnabled ? (
-                          <Volume2 className="w-4 h-4" />
-                        ) : (
-                          <VolumeX className="w-4 h-4" />
-                        )}
-                        {t('presentation:controlRoom.screenShare.includeAudio')}
-                      </label>
-                    </div>
-                    <div className="border-t border-gray-200 dark:border-gray-700 p-2">
-                      <button
-                        type="button"
-                        onClick={handleStartScreenShare}
-                        className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
-                      >
-                        <MonitorPlay className="w-4 h-4" />
-                        {t('presentation:controlRoom.screenShare.startNow')}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+          {/* Screen Share Button - synced across all clients */}
+          {screenShareState.isActive ? (
+            <button
+              type="button"
+              onClick={handleStopScreenShare}
+              className="flex items-center gap-2 px-2 py-1.5 lg:px-3 text-sm bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-700 dark:text-red-300 rounded-lg transition-colors"
+            >
+              <MonitorOff className="w-4 h-4" />
+              <span className="hidden sm:inline">
+                {t('presentation:controlRoom.screenShare.stop')}
+              </span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleStartScreenShare}
+              className="flex items-center gap-2 px-2 py-1.5 lg:px-3 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors"
+            >
+              <MonitorPlay className="w-4 h-4" />
+              <span className="hidden sm:inline">
+                {t('presentation:controlRoom.screenShare.start')}
+              </span>
+            </button>
+          )}
           {/* Settings Button */}
           <button
             type="button"
