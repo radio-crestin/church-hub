@@ -526,21 +526,21 @@ export function LivestreamSettingsModal({
             </div>
           </div>
         </div>
-      </dialog>
 
-      {/* Scene Settings Popup */}
-      {selectedScene && (
-        <SceneSettingsPopup
-          scene={selectedScene}
-          allScenes={scenes}
-          youtubeConfig={youtubeConfig}
-          onUpdateYouTubeConfig={updateYouTubeConfig}
-          onClose={handleCloseScenePopup}
-          onSave={handleSaveSceneSettings}
-          onDelete={handleDeleteScene}
-          isDeleting={isDeleting}
-        />
-      )}
+        {/* Scene Settings Popup - must be inside dialog to appear above it */}
+        {selectedScene && (
+          <SceneSettingsPopup
+            scene={selectedScene}
+            allScenes={scenes}
+            youtubeConfig={youtubeConfig}
+            onUpdateYouTubeConfig={updateYouTubeConfig}
+            onClose={handleCloseScenePopup}
+            onSave={handleSaveSceneSettings}
+            onDelete={handleDeleteScene}
+            isDeleting={isDeleting}
+          />
+        )}
+      </dialog>
     </ShortcutRecordingProvider>
   )
 }
