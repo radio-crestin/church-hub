@@ -47,8 +47,8 @@ export function useSidebarItemShortcuts(): SidebarShortcut[] {
         displayName = builtinItem.builtinId
       } else {
         const customItem = item as CustomPageMenuItem
-        // Custom pages use webview route
-        route = `/webview/${customItem.id}`
+        // Custom pages use custom-page route (matches useResolvedSidebarItems)
+        route = `/custom-page/${customItem.id}`
         displayName = customItem.title
       }
 
