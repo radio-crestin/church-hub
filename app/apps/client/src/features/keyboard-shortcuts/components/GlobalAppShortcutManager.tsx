@@ -2,7 +2,10 @@ import { useNavigate } from '@tanstack/react-router'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 
 import { useOBSScenes, useStreaming } from '~/features/livestream/hooks'
-import { useNavigateTemporary } from '~/features/presentation/hooks'
+import {
+  useNavigateTemporary,
+  useShowSlide,
+} from '~/features/presentation/hooks'
 import { useSidebarItemShortcuts } from '~/features/sidebar-config'
 import { createLogger } from '~/utils/logger'
 import { useShortcutRecording } from '../context'
@@ -20,6 +23,7 @@ export function GlobalAppShortcutManager() {
   const { scenes, switchScene, currentScene } = useOBSScenes()
   const { isRecordingRef } = useShortcutRecording()
   const navigateTemporary = useNavigateTemporary()
+  const showSlide = useShowSlide()
   const sidebarShortcuts = useSidebarItemShortcuts()
 
   // Synchronous guards to prevent multiple rapid triggers (React state can be stale)
@@ -103,22 +107,10 @@ export function GlobalAppShortcutManager() {
     stop()
   }, [stop, navigate, isLive, isStopping, isStartingStream])
 
-  const handleSearchSong = useCallback(async () => {
-    logger.debug('Navigating to song search via shortcut')
-    // Focus the main window first so input.focus() works when triggered from background
-    await focusMainWindow()
-    // Pass reset timestamp to clear search and focus, even if already on page
-    // Include fromSong: true to prevent auto-navigation back to last visited song
-    navigate({ to: '/songs/', search: { reset: Date.now(), fromSong: true } })
-  }, [navigate])
-
-  const handleSearchBible = useCallback(async () => {
-    logger.debug('Navigating to Bible search via shortcut')
-    // Focus the main window first so input.focus() works when triggered from background
-    await focusMainWindow()
-    // Pass reset timestamp to clear search and focus, even if already on page
-    navigate({ to: '/bible/', search: { reset: Date.now() } })
-  }, [navigate])
+  const handleShowSlide = useCallback(() => {
+    logger.debug('Showing slide via shortcut')
+    showSlide.mutate()
+  }, [showSlide])
 
   const handleNextSlide = useCallback(() => {
     logger.debug('Navigating to next slide via shortcut')
@@ -144,12 +136,10 @@ export function GlobalAppShortcutManager() {
         `Navigating to sidebar route: ${route}, focusSearch: ${focusSearch}`,
       )
       // Focus the main window first so input.focus() works when triggered from background
+      await focusMainWindow()
+      // Navigate with focus param if focusing search is enabled
       if (focusSearch) {
-        await focusMainWindow()
-      }
-      // Navigate with reset timestamp if focusing search
-      if (focusSearch) {
-        navigate({ to: route, search: { reset: Date.now() } })
+        navigate({ to: route, search: { focus: true } })
       } else {
         navigate({ to: route })
       }
@@ -164,8 +154,7 @@ export function GlobalAppShortcutManager() {
     sidebarShortcuts,
     onStartLive: handleStartLive,
     onStopLive: handleStopLive,
-    onSearchSong: handleSearchSong,
-    onSearchBible: handleSearchBible,
+    onShowSlide: handleShowSlide,
     onNextSlide: handleNextSlide,
     onPrevSlide: handlePrevSlide,
     onSceneSwitch: handleSceneSwitch,

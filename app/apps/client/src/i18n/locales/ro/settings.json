@@ -161,13 +161,9 @@
           "label": "Oprește Transmisiunea",
           "description": "Oprește transmisiunea YouTube curentă"
         },
-        "searchSong": {
-          "label": "Caută Cântări",
-          "description": "Navighează la cântări și focusează câmpul de căutare"
-        },
-        "searchBible": {
-          "label": "Caută în Biblie",
-          "description": "Navighează la Biblie și focusează câmpul de căutare"
+        "showSlide": {
+          "label": "Afișează Slide",
+          "description": "Afișează slide-ul curent (arată prezentarea)"
         },
         "nextSlide": {
           "label": "Slide Următor",

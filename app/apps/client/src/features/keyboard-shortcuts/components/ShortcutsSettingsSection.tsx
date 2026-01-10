@@ -1,9 +1,8 @@
 import {
-  BookOpen,
   ChevronLeft,
   ChevronRight,
+  Eye,
   Keyboard,
-  Music,
   Play,
   Square,
 } from 'lucide-react'
@@ -35,16 +34,10 @@ const SHORTCUT_ACTIONS: ShortcutActionMeta[] = [
     icon: Square,
   },
   {
-    id: 'searchSong',
-    labelKey: 'sections.shortcuts.actions.searchSong.label',
-    descriptionKey: 'sections.shortcuts.actions.searchSong.description',
-    icon: Music,
-  },
-  {
-    id: 'searchBible',
-    labelKey: 'sections.shortcuts.actions.searchBible.label',
-    descriptionKey: 'sections.shortcuts.actions.searchBible.description',
-    icon: BookOpen,
+    id: 'showSlide',
+    labelKey: 'sections.shortcuts.actions.showSlide.label',
+    descriptionKey: 'sections.shortcuts.actions.showSlide.description',
+    icon: Eye,
   },
   {
     id: 'nextSlide',

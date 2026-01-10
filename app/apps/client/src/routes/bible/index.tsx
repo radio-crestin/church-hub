@@ -33,6 +33,7 @@ import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
 
 interface BibleSearchParams {
   reset?: number
+  focus?: boolean
   book?: number
   bookName?: string
   chapter?: number
@@ -51,6 +52,7 @@ export const Route = createFileRoute('/bible/')({
         : typeof search.reset === 'string'
           ? parseInt(search.reset, 10) || undefined
           : undefined,
+    focus: search.focus === true || search.focus === 'true',
     book:
       typeof search.book === 'number'
         ? search.book
@@ -81,6 +83,7 @@ function BiblePage() {
   const navigate = useNavigate()
   const {
     reset,
+    focus,
     book: urlBookId,
     bookName: urlBookName,
     chapter: urlChapter,
@@ -209,17 +212,28 @@ function BiblePage() {
     urlSelectOnly,
   ])
 
-  // Handle reset from keyboard shortcut - clear search and trigger focus
+  // Handle focus from keyboard shortcut - trigger focus on search input
   useEffect(() => {
-    if (reset) {
-      // Clear the reset param from URL
+    if (reset || focus) {
+      // Clear the reset/focus param from URL, keep other params if just focusing
       navigate({
         to: '/bible/',
-        search: {},
+        search: reset
+          ? {}
+          : {
+              book: urlBookId,
+              bookName: urlBookName,
+              chapter: urlChapter,
+              verse: urlVerse,
+              q: urlSearchQuery,
+              select: urlSelectOnly,
+            },
         replace: true,
       })
-      // Clear Bible search
-      navigation.clearSearch()
+      // Clear Bible search only if reset was triggered
+      if (reset) {
+        navigation.clearSearch()
+      }
       // Trigger focus in BibleNavigationPanel after a short delay
       // to allow cascading state updates from clearSearch() to settle
       setTimeout(() => {
@@ -227,7 +241,7 @@ function BiblePage() {
       }, 50)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reset, navigate])
+  }, [reset, focus, navigate])
 
   // Get presentation state to sync with current Bible item
   const { data: presentationState } = usePresentationState()
