@@ -201,6 +201,17 @@ export interface TemporarySceneContent {
 }
 
 /**
+ * Temporary screen share content for WebRTC streaming
+ */
+export interface TemporaryScreenShareContent {
+  broadcasterId: string
+  audioEnabled: boolean
+  // Schedule context (for deep-linking back to schedule)
+  scheduleId?: number
+  scheduleItemIndex?: number // Index in flatItems for navigation
+}
+
+/**
  * Union type for temporary content
  */
 export type TemporaryContent =
@@ -210,6 +221,7 @@ export type TemporaryContent =
   | { type: 'bible_passage'; data: TemporaryBiblePassageContent }
   | { type: 'versete_tineri'; data: TemporaryVerseteTineriContent }
   | { type: 'scene'; data: TemporarySceneContent }
+  | { type: 'screen_share'; data: TemporaryScreenShareContent }
 
 /**
  * Input for presenting a temporary Bible verse
@@ -327,6 +339,7 @@ export type ContentType =
   | 'bible_passage'
   | 'announcement'
   | 'versete_tineri'
+  | 'screen_share'
   | 'empty'
 
 /**
@@ -598,6 +611,7 @@ export interface NextSlideSectionConfig {
 export interface ScreenGlobalSettings {
   defaultBackground: ScreenBackgroundConfig
   clockConfig?: ClockElementConfig // Shared clock config (position, style, format) - enable is per-content-type
+  screenShareAudioEnabled?: boolean // Whether to play audio when receiving screen share (default: false)
 }
 
 /**

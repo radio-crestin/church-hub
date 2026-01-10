@@ -4,6 +4,7 @@ import {
   Clock,
   Eye,
   Film,
+  MonitorPlay,
   Move,
   Palette,
   Settings,
@@ -56,6 +57,7 @@ interface ScreenEditorSidebarProps {
   onUpdateNextSlideConfig: (config: Partial<NextSlideSectionConfig>) => void
   onUpdateGlobalSettings: (settings: ScreenGlobalSettings) => void
   onUpdateScreenDimensions: (width: number, height: number) => void
+  portalContainer?: HTMLElement | null
 }
 
 // Collapsible section component
@@ -169,6 +171,7 @@ export function ScreenEditorSidebar({
   onUpdateNextSlideConfig,
   onUpdateGlobalSettings,
   onUpdateScreenDimensions,
+  portalContainer,
 }: ScreenEditorSidebarProps) {
   const { t } = useTranslation('presentation')
   const config = screen.contentConfigs[contentType]
@@ -430,6 +433,7 @@ export function ScreenEditorSidebar({
                     }}
                     options={FONT_FAMILIES}
                     className="w-full"
+                    portalContainer={portalContainer}
                   />
                 </div>
                 <div className="space-y-2">
@@ -667,6 +671,7 @@ export function ScreenEditorSidebar({
                           label: t(`screens.textStyle.separators.${opt.key}`),
                         }))}
                         className="w-full"
+                        portalContainer={portalContainer}
                       />
                     </div>
                   )}
@@ -712,6 +717,7 @@ export function ScreenEditorSidebar({
                       }}
                       options={FONT_FAMILIES}
                       className="w-full"
+                      portalContainer={portalContainer}
                     />
                   </div>
                   <div className="space-y-2">
@@ -1022,6 +1028,7 @@ export function ScreenEditorSidebar({
                             label: t(`screens.textStyle.separators.${opt.key}`),
                           }))}
                           className="w-full"
+                          portalContainer={portalContainer}
                         />
                       </div>
                     )}
@@ -1072,6 +1079,7 @@ export function ScreenEditorSidebar({
                       }}
                       options={FONT_FAMILIES}
                       className="w-full"
+                      portalContainer={portalContainer}
                     />
                   </div>
                   <div className="space-y-2">
@@ -1386,6 +1394,7 @@ export function ScreenEditorSidebar({
                             label: t(`screens.textStyle.separators.${opt.key}`),
                           }))}
                           className="w-full"
+                          portalContainer={portalContainer}
                         />
                       </div>
                     )}
@@ -1444,6 +1453,7 @@ export function ScreenEditorSidebar({
                     }}
                     options={ANIMATION_TYPES}
                     className="w-full mb-2"
+                    portalContainer={portalContainer}
                   />
                   <div className="space-y-2">
                     <div>
@@ -1512,6 +1522,7 @@ export function ScreenEditorSidebar({
                     }}
                     options={ANIMATION_TYPES}
                     className="w-full mb-2"
+                    portalContainer={portalContainer}
                   />
                   <div className="space-y-2">
                     <div>
@@ -1582,6 +1593,7 @@ export function ScreenEditorSidebar({
                     }}
                     options={ANIMATION_TYPES}
                     className="w-full mb-2"
+                    portalContainer={portalContainer}
                   />
                   <div className="space-y-2">
                     <div>
@@ -1647,6 +1659,7 @@ export function ScreenEditorSidebar({
                     }}
                     options={ANIMATION_TYPES}
                     className="w-full mb-2"
+                    portalContainer={portalContainer}
                   />
                   <div className="space-y-2">
                     <div>
@@ -1872,6 +1885,7 @@ export function ScreenEditorSidebar({
                   }}
                   options={BACKGROUND_TYPES}
                   className="w-full"
+                  portalContainer={portalContainer}
                 />
               </div>
               {config.background.type === 'color' && (
@@ -2084,6 +2098,29 @@ export function ScreenEditorSidebar({
                   </p>
                 </>
               )}
+            </div>
+          </Section>
+
+          {/* Screen Share Settings */}
+          <Section
+            title={t('screens.screenShare.title')}
+            icon={MonitorPlay}
+            defaultOpen={false}
+          >
+            <div className="space-y-3">
+              <Checkbox
+                checked={screen.globalSettings.screenShareAudioEnabled ?? false}
+                onCheckedChange={(checked) => {
+                  onUpdateGlobalSettings({
+                    ...screen.globalSettings,
+                    screenShareAudioEnabled: !!checked,
+                  })
+                }}
+                label={t('screens.screenShare.enableAudio')}
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 ml-6">
+                {t('screens.screenShare.enableAudioDescription')}
+              </p>
             </div>
           </Section>
 

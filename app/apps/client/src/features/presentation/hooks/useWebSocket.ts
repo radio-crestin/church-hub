@@ -276,6 +276,23 @@ export function useWebSocket() {
             }),
           )
         }
+
+        // Handle screen share WebRTC signaling messages
+        if (
+          data.type === 'screen_share_started' ||
+          data.type === 'screen_share_stopped' ||
+          data.type === 'screen_share_join_request' ||
+          data.type === 'webrtc_offer' ||
+          data.type === 'webrtc_answer' ||
+          data.type === 'webrtc_ice_candidate'
+        ) {
+          // Dispatch custom event for screen share handling
+          window.dispatchEvent(
+            new CustomEvent('screen-share-message', {
+              detail: data,
+            }),
+          )
+        }
       } catch {
         // Failed to parse message
       }

@@ -146,6 +146,11 @@
       "clockEnabled": "Show Clock",
       "defaultBackground": "Default Background"
     },
+    "screenShare": {
+      "title": "Screen Share",
+      "enableAudio": "Enable audio playback",
+      "enableAudioDescription": "When receiving a screen share with audio, play the audio on this screen"
+    },
     "nextSlide": {
       "title": "Next Slide Preview",
       "enable": "Show next slide preview",
@@ -287,7 +292,20 @@
     "noSlides": "No slides in this program",
     "preview": "Preview",
     "openSong": "Open Song",
-    "openBible": "Open Bible"
+    "openBible": "Open Bible",
+    "screenShare": {
+      "start": "Share Screen",
+      "stop": "Stop Sharing",
+      "startNow": "Start Sharing",
+      "includeAudio": "Include Audio",
+      "sharing": "Sharing Screen",
+      "connecting": "Connecting...",
+      "error": {
+        "notSupported": "Screen sharing is not supported in this browser",
+        "permissionDenied": "Screen sharing permission was denied",
+        "failed": "Failed to start screen sharing"
+      }
+    }
   },
   "textStyle": {
     "highlight": "Highlight",

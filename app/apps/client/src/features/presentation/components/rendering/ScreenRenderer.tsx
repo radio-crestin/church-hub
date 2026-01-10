@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { getApiUrl, isMobile } from '~/config'
 import { getStoredUserToken } from '~/service/api-url'
 import { ScreenContent } from './ScreenContent'
+import { ScreenShareReceiver } from './ScreenShareReceiver'
 import type { ContentData, NextSlideData } from './types'
 import { calculateNextSlideData, getBackgroundCSS } from './utils'
 import { calculateMaxExitAnimationDuration } from './utils/styleUtils'
@@ -54,7 +55,7 @@ interface ScreenRendererProps {
 }
 
 export function ScreenRenderer({ screenId }: ScreenRendererProps) {
-  const { debugInfo: wsDebugInfo } = useWebSocket()
+  const { debugInfo: wsDebugInfo, send: wsSend } = useWebSocket()
   const navigate = useNavigate()
 
   const { data: presentationState } = usePresentationState()
@@ -708,6 +709,13 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
             return
           }
         }
+
+        if (temp.type === 'screen_share') {
+          setContentType('screen_share')
+          setContentData(null) // No content data needed, stream comes via WebRTC
+          setNextSlideData(undefined)
+          return
+        }
       }
 
       try {
@@ -994,16 +1002,31 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
           className={isMobileDevice ? 'flex-1 relative' : 'w-full h-full'}
         >
           {containerSize.width > 0 && containerSize.height > 0 && (
-            <ScreenContent
-              screen={screen}
-              contentType={contentType}
-              contentData={contentData}
-              containerWidth={containerSize.width}
-              containerHeight={containerSize.height}
-              isVisible={isVisible}
-              nextSlideData={nextSlideData}
-              styleRanges={styleRanges}
-            />
+            <>
+              {contentType === 'screen_share' &&
+              presentationState?.temporaryContent?.type === 'screen_share' ? (
+                <ScreenShareReceiver
+                  broadcasterId={
+                    presentationState.temporaryContent.data.broadcasterId
+                  }
+                  audioEnabled={
+                    screen.globalSettings.screenShareAudioEnabled ?? false
+                  }
+                  send={wsSend}
+                />
+              ) : (
+                <ScreenContent
+                  screen={screen}
+                  contentType={contentType}
+                  contentData={contentData}
+                  containerWidth={containerSize.width}
+                  containerHeight={containerSize.height}
+                  isVisible={isVisible}
+                  nextSlideData={nextSlideData}
+                  styleRanges={styleRanges}
+                />
+              )}
+            </>
           )}
         </div>
       </div>
