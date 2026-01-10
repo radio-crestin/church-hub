@@ -11,15 +11,17 @@ import { midiLogger } from '../../utils/fileLogger'
 import { broadcastPresentationState } from '../../websocket'
 import { switchScene } from '../livestream/obs/scenes'
 import { startStreaming, stopStreaming } from '../livestream/obs/streaming'
-import { navigateTemporary } from '../presentation/presentation-state'
+import {
+  navigateTemporary,
+  showSlide,
+} from '../presentation/presentation-state'
 import { getSetting } from '../settings'
 
 // Action IDs that can be triggered via MIDI
 type GlobalShortcutActionId =
   | 'startLive'
   | 'stopLive'
-  | 'searchSong'
-  | 'searchBible'
+  | 'showSlide'
   | 'nextSlide'
   | 'prevSlide'
 
@@ -168,11 +170,13 @@ async function executeAction(actionId: GlobalShortcutActionId): Promise<void> {
       }
       break
 
-    case 'searchSong':
-    case 'searchBible':
-      // These are UI-only actions, cannot be executed server-side
-      // The client will handle these based on the MIDI message broadcast
-      midiLogger.debug(`Skipping UI-only action: ${actionId}`)
+    case 'showSlide':
+      try {
+        const state = showSlide()
+        broadcastPresentationState(state)
+      } catch (error) {
+        midiLogger.error(`Failed to show slide: ${error}`)
+      }
       break
   }
 }

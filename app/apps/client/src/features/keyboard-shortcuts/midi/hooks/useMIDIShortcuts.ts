@@ -20,8 +20,7 @@ interface UseMIDIShortcutsOptions {
   sceneShortcuts: SceneShortcut[]
   onStartLive?: () => void
   onStopLive?: () => void
-  onSearchSong?: () => void
-  onSearchBible?: () => void
+  onShowSlide?: () => void
   onNextSlide?: () => void
   onPrevSlide?: () => void
   onSceneSwitch?: (sceneName: string) => void
@@ -37,8 +36,7 @@ export function useMIDIShortcuts({
   sceneShortcuts,
   onStartLive,
   onStopLive,
-  onSearchSong,
-  onSearchBible,
+  onShowSlide,
   onNextSlide,
   onPrevSlide,
   onSceneSwitch,
@@ -50,8 +48,7 @@ export function useMIDIShortcuts({
   const handlersRef = useRef({
     onStartLive,
     onStopLive,
-    onSearchSong,
-    onSearchBible,
+    onShowSlide,
     onNextSlide,
     onPrevSlide,
     onSceneSwitch,
@@ -61,8 +58,7 @@ export function useMIDIShortcuts({
     handlersRef.current = {
       onStartLive,
       onStopLive,
-      onSearchSong,
-      onSearchBible,
+      onShowSlide,
       onNextSlide,
       onPrevSlide,
       onSceneSwitch,
@@ -70,8 +66,7 @@ export function useMIDIShortcuts({
   }, [
     onStartLive,
     onStopLive,
-    onSearchSong,
-    onSearchBible,
+    onShowSlide,
     onNextSlide,
     onPrevSlide,
     onSceneSwitch,
@@ -190,11 +185,8 @@ export function useMIDIShortcuts({
             case 'stopLive':
               handlersRef.current.onStopLive?.()
               break
-            case 'searchSong':
-              handlersRef.current.onSearchSong?.()
-              break
-            case 'searchBible':
-              handlersRef.current.onSearchBible?.()
+            case 'showSlide':
+              handlersRef.current.onShowSlide?.()
               break
             case 'nextSlide':
               handlersRef.current.onNextSlide?.()
