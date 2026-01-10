@@ -43,6 +43,7 @@ interface BibleNavigationPanelProps {
     bookId: number,
     bookName: string,
     chapter: number,
+    verse?: number,
   ) => void
   onSearchQueryChange?: (query: string) => void
 }
@@ -85,6 +86,42 @@ export function BibleNavigationPanel({
     SEARCH_DEBOUNCE_MS,
   )
 
+  const { primaryTranslation, selectedTranslations } =
+    useSelectedBibleTranslations()
+
+  // Always use the primary translation for all data fetching
+  const translationId = primaryTranslation?.id
+
+  const { data: books = [], isLoading: isLoadingBooks } =
+    useBooks(translationId)
+  const { data: chapters = [], isLoading: isLoadingChapters } = useChapters(
+    state.bookId,
+  )
+  const { data: verses = [], isLoading: isLoadingVerses } = useVerses(
+    state.bookId,
+    state.chapter,
+  )
+
+  // Get the book code for the current book
+  const currentBook = books.find((b) => b.id === state.bookId)
+  const bookCode = currentBook?.bookCode || ''
+
+  // Smart search uses local query for immediate reference detection (e.g., "John 3:16")
+  // Must be defined before the URL sync effect that uses isReferenceSearch
+  const { isReferenceSearch } = useSmartSearch({
+    searchQuery: localQuery,
+    books,
+    navigation,
+    enabled: localQuery.length >= 2,
+    onNavigateToBook,
+    onNavigateToChapter: onNavigateToChapter
+      ? (bookId, bookName, chapter, verse) => {
+          // Pass verse to URL navigation - URL sync will handle setting searchedIndex
+          onNavigateToChapter(bookId, bookName, chapter, verse)
+        }
+      : undefined,
+  })
+
   // Sync local state when navigation searchQuery changes externally (e.g., from URL)
   // Only run when state.searchQuery changes, NOT when localQuery changes
   useEffect(() => {
@@ -104,15 +141,18 @@ export function BibleNavigationPanel({
 
   // Sync debounced query to URL (for URL-based navigation)
   // Only sync when user typed something (not when state was set externally from URL)
+  // Don't sync when smart search detected a reference (it handles navigation itself)
   useEffect(() => {
     // Only sync to URL when:
     // 1. Debounce completed (localQuery === debouncedQuery)
     // 2. This is from user typing (not external state sync)
     // 3. The debounced value differs from current state
+    // 4. It's NOT a reference search (smart search handles those navigations)
     if (
       localQuery === debouncedQuery &&
       isUserTypingRef.current &&
-      debouncedQuery !== state.searchQuery
+      debouncedQuery !== state.searchQuery &&
+      !isReferenceSearch
     ) {
       // Update the ref so the external sync effect doesn't revert this change
       lastSyncedStateQueryRef.current = debouncedQuery
@@ -128,6 +168,7 @@ export function BibleNavigationPanel({
     localQuery,
     setSearchQuery,
     onSearchQueryChange,
+    isReferenceSearch,
   ])
 
   // Use provided onGoBack or fallback to navigation's goBack
@@ -148,42 +189,6 @@ export function BibleNavigationPanel({
       return () => clearTimeout(timeoutId)
     }
   }, [focusTrigger])
-
-  const { primaryTranslation, selectedTranslations } =
-    useSelectedBibleTranslations()
-
-  // Always use the primary translation for all data fetching
-  const translationId = primaryTranslation?.id
-
-  const { data: books = [], isLoading: isLoadingBooks } =
-    useBooks(translationId)
-  const { data: chapters = [], isLoading: isLoadingChapters } = useChapters(
-    state.bookId,
-  )
-  const { data: verses = [], isLoading: isLoadingVerses } = useVerses(
-    state.bookId,
-    state.chapter,
-  )
-
-  // Get the book code for the current book
-  const currentBook = books.find((b) => b.id === state.bookId)
-  const bookCode = currentBook?.bookCode || ''
-  // Smart search uses local query for immediate reference detection (e.g., "John 3:16")
-  const { isReferenceSearch } = useSmartSearch({
-    searchQuery: localQuery,
-    books,
-    navigation,
-    enabled: localQuery.length >= 2,
-    onNavigateToBook,
-    onNavigateToChapter: onNavigateToChapter
-      ? (bookId, bookName, chapter, verse) => {
-          onNavigateToChapter(bookId, bookName, chapter)
-          if (verse !== undefined) {
-            navigation.setSearchedIndex(verse - 1)
-          }
-        }
-      : undefined,
-  })
 
   // Text search uses debounced query for API calls
   const { data: searchResults, isLoading: isSearching } = useSearchBible(
