@@ -142,10 +142,10 @@ export function GlobalAppShortcutManager() {
       // Focus the main window first so input.focus() works when triggered from background
       await focusMainWindow()
 
-      // Check if we're already on the target route
-      const currentPath = location.pathname
-      const isAlreadyOnRoute =
-        currentPath === route || currentPath === `${route}/`
+      // Check if we're already on the target route (normalize trailing slashes)
+      const currentPath = location.pathname.replace(/\/$/, '')
+      const normalizedRoute = route.replace(/\/$/, '')
+      const isAlreadyOnRoute = currentPath === normalizedRoute
 
       if (isAlreadyOnRoute && focusSearch) {
         // Already on the route - emit focus event instead of navigating
