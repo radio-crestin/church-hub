@@ -150,7 +150,16 @@
     "screenShare": {
       "title": "Screen Share",
       "enableAudio": "Enable audio playback",
-      "enableAudioDescription": "When receiving a screen share with audio, play the audio on this screen"
+      "enableAudioDescription": "When receiving a screen share with audio, play the audio on this screen",
+      "videoSettings": "Video Display Settings",
+      "videoPosition": "Position & Size",
+      "objectFit": "Video Scaling",
+      "objectFitDescription": "How the video fits within its container",
+      "objectFitOptions": {
+        "contain": "Contain",
+        "cover": "Cover",
+        "fill": "Fill"
+      }
     },
     "nextSlide": {
       "title": "Next Slide Preview",

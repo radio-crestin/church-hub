@@ -238,6 +238,11 @@ function getDefaultEmptyConfig() {
 function getDefaultScreenShareConfig() {
   return {
     background: getDefaultBackground(),
+    videoElement: {
+      constraints: constraintsAll(0, 0, 0, 0), // Fullscreen by default
+      size: sizeWithUnits(100, 100),
+      objectFit: 'contain' as const,
+    },
     clockEnabled: false, // Clock typically not needed during screen share
   }
 }

@@ -281,6 +281,12 @@ export function LivePreview() {
             return
           }
         }
+
+        if (temp.type === 'screen_share') {
+          setContentType('screen_share')
+          setContentData({})
+          return
+        }
       }
 
       try {

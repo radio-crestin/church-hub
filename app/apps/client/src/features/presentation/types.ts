@@ -568,11 +568,21 @@ export interface EmptyContentConfig {
 }
 
 /**
- * Screen share content config (minimal - just background)
- * The actual video stream is handled by WebRTC, this is just for styling
+ * Video element configuration for screen share
+ */
+export interface VideoElementConfig {
+  constraints: Constraints
+  size: SizeWithUnits
+  objectFit: 'contain' | 'cover' | 'fill'
+}
+
+/**
+ * Screen share content config
+ * The actual video stream is handled by WebRTC, this configures how it's displayed
  */
 export interface ScreenShareContentConfig {
   background: ScreenBackgroundConfig
+  videoElement: VideoElementConfig
   clockEnabled?: boolean // Per-slide-type enable, uses global clockConfig for position/style
 }
 

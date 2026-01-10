@@ -21,6 +21,7 @@ import {
 } from '~/features/keyboard-shortcuts'
 import { ControlRoomSettingsModal } from './ControlRoomSettingsModal'
 import { LivePreview } from './LivePreview'
+import { useScreenShareContext } from '../context'
 import {
   useClearSlide,
   useClearTemporaryContent,
@@ -28,7 +29,6 @@ import {
   useShowSlide,
   useWebSocket,
 } from '../hooks'
-import { useScreenShare } from '../hooks/useScreenShare'
 import {
   useClearSlideHighlights,
   useSlideHighlights,
@@ -42,18 +42,26 @@ export function ControlRoom() {
   // Connect to WebSocket for real-time updates
   const { send: wsSend } = useWebSocket()
 
-  // Get client ID from WebSocket debug info (it's generated on connection)
-  const clientId = useMemo(() => {
-    // Generate a stable client ID for this session
-    return `control-room-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
-  }, [])
-
+  // Get screen share context (persists across page navigations)
   const {
     state: screenShareState,
     startScreenShare,
     stopScreenShare,
     handleWebSocketMessage: handleScreenShareMessage,
-  } = useScreenShare({ send: wsSend, clientId })
+    setClientId,
+    setSend,
+  } = useScreenShareContext()
+
+  // Generate a stable client ID for this session
+  const clientId = useMemo(() => {
+    return `control-room-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
+  }, [])
+
+  // Initialize the screen share context with client ID and send function
+  useEffect(() => {
+    setClientId(clientId)
+    setSend(wsSend)
+  }, [clientId, wsSend, setClientId, setSend])
 
   // Listen for screen share WebSocket messages
   useEffect(() => {

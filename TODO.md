@@ -161,6 +161,8 @@
 ~~- adauga shortcuts pentru programe, muzica, whatsapp, Live Stream, Camera de control~~
 - testeaza pe windows player-ul audio si intreaga aplicatie
 ~~- butoanele din camera de control nu functioneaza.. (pare putin cam inutila aceasta pagina..)~~
+- implementeaza screen share
+- adauga background as black and not white
 - in livestream adauga un preview cu feed-ul live
 - creaza un quickstart guide pentru utilizatori
 - adauga optiunea de a face screen share la o fereastra
