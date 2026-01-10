@@ -1,3 +1,4 @@
+export { emitFocusSearchEvent, useFocusSearchEvent } from './focusSearchEvent'
 export {
   isGlobalRecordingActive,
   setGlobalRecordingState,

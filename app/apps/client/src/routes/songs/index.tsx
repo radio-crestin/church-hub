@@ -1,8 +1,9 @@
 import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router'
 import { Plus, Settings } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useFocusSearchEvent } from '~/features/keyboard-shortcuts/utils'
 import { getSongsLastVisited } from '~/features/navigation'
 import { usePresentationState } from '~/features/presentation'
 import { SongList, SongsSettingsModal } from '~/features/songs/components'
@@ -60,6 +61,14 @@ function SongsPage() {
   })
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
   const [focusTrigger, setFocusTrigger] = useState(0)
+
+  // Listen for focus events from keyboard shortcuts when already on this route
+  useFocusSearchEvent(
+    '/songs',
+    useCallback(() => {
+      setFocusTrigger((prev) => prev + 1)
+    }, []),
+  )
 
   // Handle focus from keyboard shortcut - trigger focus on search input
   useEffect(() => {

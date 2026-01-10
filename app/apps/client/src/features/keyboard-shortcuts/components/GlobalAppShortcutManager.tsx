@@ -12,6 +12,7 @@ import { useShortcutRecording } from '../context'
 import { useAppShortcuts, useGlobalAppShortcuts } from '../hooks'
 import { useMIDILEDFeedback } from '../midi/hooks'
 import { focusMainWindow } from '../utils/focusMainWindow'
+import { emitFocusSearchEvent } from '../utils/focusSearchEvent'
 import { useGlobalRecordingState } from '../utils/recordingState'
 
 const logger = createLogger('keyboard-shortcuts:manager')
@@ -146,21 +147,13 @@ export function GlobalAppShortcutManager() {
       const isAlreadyOnRoute =
         currentPath === route || currentPath === `${route}/`
 
-      // Navigate with focus param if focusing search is enabled
-      if (focusSearch) {
-        if (isAlreadyOnRoute) {
-          // Preserve current search params and just add focus
-          const currentSearch =
-            (location.search as Record<string, unknown>) || {}
-          navigate({
-            to: route,
-            search: { ...currentSearch, focus: true },
-            replace: true,
-          })
-        } else {
-          // Navigating to a different route, just add focus
-          navigate({ to: route, search: { focus: true } })
-        }
+      if (isAlreadyOnRoute && focusSearch) {
+        // Already on the route - emit focus event instead of navigating
+        // This avoids state changes and preserves the current input value
+        emitFocusSearchEvent(route)
+      } else if (focusSearch) {
+        // Navigating to a different route with focus
+        navigate({ to: route, search: { focus: true } })
       } else {
         navigate({ to: route })
       }

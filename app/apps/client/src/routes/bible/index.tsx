@@ -22,6 +22,7 @@ import {
   useSelectedBibleTranslations,
   useVerses,
 } from '~/features/bible'
+import { useFocusSearchEvent } from '~/features/keyboard-shortcuts/utils'
 import { getBibleLastVisited, setBibleLastVisited } from '~/features/navigation'
 import {
   useClearSlide,
@@ -92,6 +93,14 @@ function BiblePage() {
     select: urlSelectOnly,
   } = useSearch({ from: '/bible/' })
   const [focusTrigger, setFocusTrigger] = useState(0)
+
+  // Listen for focus events from keyboard shortcuts when already on this route
+  useFocusSearchEvent(
+    '/bible',
+    useCallback(() => {
+      setFocusTrigger((prev) => prev + 1)
+    }, []),
+  )
 
   const {
     selectedTranslations,
