@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react'
 
 import { createLogger } from '~/utils/logger'
 import type { GlobalShortcutActionId, GlobalShortcutsConfig } from '../types'
+import { isGlobalRecordingActive } from '../utils'
 
 const logger = createLogger('keyboard-shortcuts:global')
 
@@ -35,6 +36,8 @@ interface UseGlobalAppShortcutsOptions {
   onSidebarNavigation: (route: string, focusSearch: boolean) => void
   /** Ref to check if a ShortcutRecorder is currently recording */
   isRecordingRef?: React.RefObject<boolean>
+  /** Whether any ShortcutRecorder is currently recording (reactive state) */
+  isRecording?: boolean
 }
 
 export function useGlobalAppShortcuts({
@@ -49,6 +52,7 @@ export function useGlobalAppShortcuts({
   onSceneSwitch,
   onSidebarNavigation,
   isRecordingRef,
+  isRecording = false,
 }: UseGlobalAppShortcutsOptions) {
   // Use refs to always have current handlers without causing re-registration
   const handlersRef = useRef({
@@ -91,6 +95,17 @@ export function useGlobalAppShortcuts({
     // Skip if not running in Tauri (global shortcuts require Tauri)
     if (!isTauri) {
       logger.debug('Skipping global shortcuts - not running in Tauri')
+      return
+    }
+
+    // Skip registration during recording - this allows keys to reach the input field
+    if (isRecording) {
+      logger.debug(
+        'Skipping shortcut registration - recording in progress, unregistering all',
+      )
+      unregisterAll().catch((error) => {
+        logger.debug('Failed to unregister shortcuts during recording:', error)
+      })
       return
     }
 
@@ -162,8 +177,8 @@ export function useGlobalAppShortcuts({
               try {
                 await register(shortcut, (event) => {
                   if (event.state === 'Pressed') {
-                    // Skip if recording a new shortcut
-                    if (isRecordingRef?.current) {
+                    // Skip if recording a new shortcut (check both global state and ref)
+                    if (isGlobalRecordingActive() || isRecordingRef?.current) {
                       logger.debug(
                         `Skipping shortcut ${shortcut} - recording in progress`,
                       )
@@ -197,8 +212,8 @@ export function useGlobalAppShortcuts({
           try {
             await register(shortcut, (event) => {
               if (event.state === 'Pressed') {
-                // Skip if recording a new shortcut
-                if (isRecordingRef?.current) {
+                // Skip if recording a new shortcut (check both global state and ref)
+                if (isGlobalRecordingActive() || isRecordingRef?.current) {
                   logger.debug(
                     `Skipping scene shortcut ${shortcut} - recording in progress`,
                   )
@@ -234,8 +249,8 @@ export function useGlobalAppShortcuts({
           try {
             await register(shortcut, (event) => {
               if (event.state === 'Pressed') {
-                // Skip if recording a new shortcut
-                if (isRecordingRef?.current) {
+                // Skip if recording a new shortcut (check both global state and ref)
+                if (isGlobalRecordingActive() || isRecordingRef?.current) {
                   logger.debug(
                     `Skipping sidebar shortcut ${shortcut} - recording in progress`,
                   )
@@ -279,5 +294,5 @@ export function useGlobalAppShortcuts({
         })
       }
     }
-  }, [shortcutsJson, sceneShortcutsJson, sidebarShortcutsJson])
+  }, [shortcutsJson, sceneShortcutsJson, sidebarShortcutsJson, isRecording])
 }

@@ -2,10 +2,15 @@ import { X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useWebSocket } from '~/features/presentation/hooks'
 import { useShortcutRecordingOptional } from '../context'
 import { useMIDIOptional } from '../midi/context'
 import { isMIDIShortcut, midiMessageToShortcutString } from '../midi/utils'
-import { formatShortcutForDisplay, isModifierKey } from '../utils'
+import {
+  formatShortcutForDisplay,
+  isModifierKey,
+  setGlobalRecordingState,
+} from '../utils'
 
 interface ShortcutRecorderProps {
   value: string
@@ -28,6 +33,7 @@ export function ShortcutRecorder({
   const onChangeRef = useRef(onChange)
   const midi = useMIDIOptional()
   const recording = useShortcutRecordingOptional()
+  const { send: sendWs } = useWebSocket()
 
   // Keep refs in sync with state/props
   useEffect(() => {
@@ -102,12 +108,20 @@ export function ShortcutRecorder({
   const handleFocus = useCallback(() => {
     setIsRecording(true)
     recording?.startRecording()
-  }, [recording])
+    // Set global state for keyboard shortcuts (client-side Tauri handlers)
+    setGlobalRecordingState(true)
+    // Notify server to pause MIDI shortcut execution during recording
+    sendWs({ type: 'shortcut_recording_start' })
+  }, [recording, sendWs])
 
   const handleBlur = useCallback(() => {
     setIsRecording(false)
     recording?.stopRecording()
-  }, [recording])
+    // Clear global state for keyboard shortcuts
+    setGlobalRecordingState(false)
+    // Notify server to resume MIDI shortcut execution
+    sendWs({ type: 'shortcut_recording_stop' })
+  }, [recording, sendWs])
 
   // Determine if current value is a MIDI shortcut
   const isMIDI = value && isMIDIShortcut(value)

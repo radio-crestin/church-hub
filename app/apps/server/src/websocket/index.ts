@@ -48,6 +48,17 @@ interface ClientConnection {
 }
 const clients = new Map<string, ClientConnection>()
 
+// Track if any client is recording a shortcut (disables MIDI shortcut execution)
+let shortcutRecordingInProgress = false
+
+/**
+ * Check if any client is currently recording a shortcut
+ * Used by MIDI shortcut handler to skip execution during recording
+ */
+export function isShortcutRecordingActive(): boolean {
+  return shortcutRecordingInProgress
+}
+
 // Stale connection cleanup interval (60 seconds)
 const STALE_CHECK_INTERVAL_MS = 60_000
 // Consider connection stale after 90 seconds of no activity (3x ping interval of 30s)
@@ -225,6 +236,19 @@ export function handleWebSocketMessage(
     // Handle ping/pong for keepalive
     if (data.type === 'ping') {
       ws.send(JSON.stringify({ type: 'pong' }))
+      return
+    }
+
+    // Handle shortcut recording state changes (disables MIDI shortcuts during recording)
+    if (data.type === 'shortcut_recording_start') {
+      shortcutRecordingInProgress = true
+      wsLogger.debug(`Shortcut recording started by ${clientId}`)
+      return
+    }
+
+    if (data.type === 'shortcut_recording_stop') {
+      shortcutRecordingInProgress = false
+      wsLogger.debug(`Shortcut recording stopped by ${clientId}`)
       return
     }
 
@@ -608,6 +632,45 @@ export function broadcastSettingsUpdated(table: string, key: string) {
 
   wsLogger.debug(
     `Broadcasting settings update (${table}/${key}) to ${clients.size} clients`,
+  )
+
+  for (const [clientId, conn] of clients) {
+    try {
+      conn.ws.send(message)
+    } catch (error) {
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
+      clients.delete(clientId)
+    }
+  }
+}
+
+// Sidebar navigation message type
+export type SidebarNavigationMessage = {
+  type: 'sidebar_navigation'
+  payload: {
+    route: string
+    focusSearch: boolean
+  }
+}
+
+/**
+ * Broadcasts sidebar navigation command to all connected clients
+ * Used for MIDI shortcuts that navigate to sidebar pages
+ */
+export function broadcastSidebarNavigation(
+  route: string,
+  focusSearch: boolean,
+) {
+  const message = JSON.stringify({
+    type: 'sidebar_navigation',
+    payload: {
+      route,
+      focusSearch,
+    },
+  } satisfies SidebarNavigationMessage)
+
+  wsLogger.debug(
+    `Broadcasting sidebar navigation (${route}) to ${clients.size} clients`,
   )
 
   for (const [clientId, conn] of clients) {
