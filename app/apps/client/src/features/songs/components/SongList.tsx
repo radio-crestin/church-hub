@@ -2,7 +2,7 @@ import { Loader2, Music, Search, Sparkles } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { useAppShortcuts } from '~/features/keyboard-shortcuts'
+import { useSidebarItemShortcuts } from '~/features/sidebar-config'
 import { useDebouncedValue } from '~/hooks/useDebouncedValue'
 import { Combobox } from '~/ui/combobox'
 import { KeyboardShortcutBadge } from '~/ui/kbd'
@@ -76,14 +76,12 @@ export function SongList({
   const { isEnabled: aiSearchAvailable } = useSongsAISearchSettings()
   const aiSearchMutation = useAISearchSongs()
 
-  // Get search shortcut for display
-  const { shortcuts } = useAppShortcuts()
+  // Get search shortcut for display from sidebar config
+  const sidebarShortcuts = useSidebarItemShortcuts()
   const searchSongShortcut = useMemo(() => {
-    const action = shortcuts.actions.searchSong
-    return action?.enabled && action.shortcuts.length > 0
-      ? action.shortcuts[0]
-      : undefined
-  }, [shortcuts])
+    const songsShortcut = sidebarShortcuts.find((s) => s.route === '/songs')
+    return songsShortcut?.shortcut
+  }, [sidebarShortcuts])
   const [aiSearchResults, setAiSearchResults] = useState<AISearchResult[]>([])
   const [isAISearchActive, setIsAISearchActive] = useState(false)
 

@@ -10,9 +10,13 @@ import {
   Music,
   Settings,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import {
+  formatShortcutForDisplay,
+  useAppShortcuts,
+} from '~/features/keyboard-shortcuts'
 import { ControlRoomSettingsModal } from './ControlRoomSettingsModal'
 import { LivePreview } from './LivePreview'
 import {
@@ -37,8 +41,17 @@ export function ControlRoom() {
 
   const { data: state } = usePresentationState()
   const clearSlide = useClearSlide()
-  const showSlide = useShowSlide()
+  const showSlideCommand = useShowSlide()
   const clearTemporary = useClearTemporaryContent()
+
+  // Get configured showSlide shortcut for display
+  const { shortcuts } = useAppShortcuts()
+  const showSlideShortcut = useMemo(() => {
+    const action = shortcuts.actions.showSlide
+    return action?.enabled && action.shortcuts.length > 0
+      ? action.shortcuts[0]
+      : undefined
+  }, [shortcuts])
 
   // Highlight management (auto-clear is handled globally in AppLayout)
   const { data: highlights } = useSlideHighlights()
@@ -52,7 +65,7 @@ export function ControlRoom() {
   // Show = display the last slide
   const handleShow = async () => {
     if (state?.lastSongSlideId) {
-      await showSlide.mutateAsync()
+      await showSlideCommand.mutateAsync()
     }
   }
 
@@ -286,17 +299,21 @@ export function ControlRoom() {
               <button
                 type="button"
                 onClick={handleShow}
-                disabled={!hasContent || showSlide.isPending}
+                disabled={!hasContent || showSlideCommand.isPending}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
-                title={`${t('presentation:controls.show')} (F10)`}
+                title={t('presentation:controls.show')}
               >
-                {showSlide.isPending ? (
+                {showSlideCommand.isPending ? (
                   <Loader2 size={18} className="animate-spin" />
                 ) : (
                   <Eye size={18} />
                 )}
                 <span>{t('presentation:controls.show')}</span>
-                <span className="text-xs opacity-75">(F10)</span>
+                {showSlideShortcut && (
+                  <span className="text-xs opacity-75">
+                    ({formatShortcutForDisplay(showSlideShortcut)})
+                  </span>
+                )}
               </button>
             )}
           </div>

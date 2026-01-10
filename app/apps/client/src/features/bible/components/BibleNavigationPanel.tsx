@@ -2,7 +2,7 @@ import { Search, Sparkles, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { useAppShortcuts } from '~/features/keyboard-shortcuts'
+import { useSidebarItemShortcuts } from '~/features/sidebar-config'
 import { useDebouncedValue } from '~/hooks/useDebouncedValue'
 import { KeyboardShortcutBadge } from '~/ui/kbd'
 import { BooksList } from './BooksList'
@@ -197,14 +197,12 @@ export function BibleNavigationPanel({
   const { isEnabled: aiSearchAvailable } = useBibleAISearchSettings()
   const aiSearchMutation = useAIBibleSearch()
 
-  // Get search shortcut for display
-  const { shortcuts } = useAppShortcuts()
+  // Get search shortcut for display from sidebar config
+  const sidebarShortcuts = useSidebarItemShortcuts()
   const searchBibleShortcut = useMemo(() => {
-    const action = shortcuts.actions.searchBible
-    return action?.enabled && action.shortcuts.length > 0
-      ? action.shortcuts[0]
-      : undefined
-  }, [shortcuts])
+    const bibleShortcut = sidebarShortcuts.find((s) => s.route === '/bible')
+    return bibleShortcut?.shortcut
+  }, [sidebarShortcuts])
   const [aiSearchResults, setAiSearchResults] = useState<AIBibleSearchResult[]>(
     [],
   )

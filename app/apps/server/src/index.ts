@@ -201,6 +201,7 @@ import {
   upsertSong,
   upsertSongSlide,
 } from './service/songs'
+import { createLogger } from './utils/logger'
 import { proxyToVite, serveStaticFile } from './utils/static-server'
 import {
   broadcastMIDIConnectionStatus,
@@ -298,6 +299,8 @@ async function main() {
 
   t = performance.now()
 
+  const logger = createLogger('BibleAPI')
+
   function handleCors(req: Request, res: Response) {
     // Allow any origin - this app is designed for LAN use
     // Reflect the origin header if present, otherwise allow all
@@ -318,9 +321,33 @@ async function main() {
     return res
   }
 
+  // Global error handlers to catch unhandled errors
+  process.on('uncaughtException', (error) => {
+    // biome-ignore lint/suspicious/noConsole: error logging
+    console.error('[FATAL] Uncaught Exception:', error)
+  })
+  process.on('unhandledRejection', (reason) => {
+    // biome-ignore lint/suspicious/noConsole: error logging
+    console.error('[FATAL] Unhandled Promise Rejection:', reason)
+  })
+
   const server = Bun.serve<WebSocketData>({
     port: process.env['PORT'] ?? 3000,
     hostname: '0.0.0.0',
+    error(error) {
+      // biome-ignore lint/suspicious/noConsole: error logging
+      console.error('[SERVER ERROR] Fetch handler error:', error)
+      return new Response(
+        JSON.stringify({
+          error:
+            error instanceof Error ? error.message : 'Internal server error',
+        }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      )
+    },
     async fetch(req: Request, server) {
       if (req.method === 'OPTIONS') {
         return handleCors(req, new Response(null, { status: 204 }))
@@ -3608,13 +3635,32 @@ async function main() {
         const permError = checkPermission('bible.view')
         if (permError) return permError
 
-        const translations = getAllTranslations()
-        return handleCors(
-          req,
-          new Response(JSON.stringify({ data: translations }), {
-            headers: { 'Content-Type': 'application/json' },
-          }),
-        )
+        try {
+          const translations = getAllTranslations()
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: translations }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch (error) {
+          logger.error('Error fetching translations: ' + JSON.stringify(error))
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({
+                error:
+                  error instanceof Error
+                    ? error.message
+                    : 'Failed to fetch translations',
+              }),
+              {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        }
       }
 
       // GET /api/bible/translations/:id - Get single translation
@@ -3625,25 +3671,44 @@ async function main() {
         const permError = checkPermission('bible.view')
         if (permError) return permError
 
-        const id = parseInt(getTranslationMatch[1], 10)
-        const translation = getTranslationById(id)
+        try {
+          const id = parseInt(getTranslationMatch[1], 10)
+          const translation = getTranslationById(id)
 
-        if (!translation) {
+          if (!translation) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Translation not found' }), {
+                status: 404,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
           return handleCors(
             req,
-            new Response(JSON.stringify({ error: 'Translation not found' }), {
-              status: 404,
+            new Response(JSON.stringify({ data: translation }), {
               headers: { 'Content-Type': 'application/json' },
             }),
           )
+        } catch (error) {
+          logger.error('Error fetching translation: ' + JSON.stringify(error))
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({
+                error:
+                  error instanceof Error
+                    ? error.message
+                    : 'Failed to fetch translation',
+              }),
+              {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
         }
-
-        return handleCors(
-          req,
-          new Response(JSON.stringify({ data: translation }), {
-            headers: { 'Content-Type': 'application/json' },
-          }),
-        )
       }
 
       // POST /api/bible/translations - Import new translation
@@ -3740,15 +3805,34 @@ async function main() {
         const permError = checkPermission('bible.view')
         if (permError) return permError
 
-        const translationId = parseInt(getBooksMatch[1], 10)
-        const books = getBooksByTranslation(translationId)
+        try {
+          const translationId = parseInt(getBooksMatch[1], 10)
+          const books = getBooksByTranslation(translationId)
 
-        return handleCors(
-          req,
-          new Response(JSON.stringify({ data: books }), {
-            headers: { 'Content-Type': 'application/json' },
-          }),
-        )
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: books }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch (error) {
+          logger.error('Error fetching books: ' + JSON.stringify(error))
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({
+                error:
+                  error instanceof Error
+                    ? error.message
+                    : 'Failed to fetch books',
+              }),
+              {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        }
       }
 
       // GET /api/bible/chapters/:bookId - Get chapters for book
@@ -3759,15 +3843,34 @@ async function main() {
         const permError = checkPermission('bible.view')
         if (permError) return permError
 
-        const bookId = parseInt(getChaptersMatch[1], 10)
-        const chapters = getChaptersForBook(bookId)
+        try {
+          const bookId = parseInt(getChaptersMatch[1], 10)
+          const chapters = getChaptersForBook(bookId)
 
-        return handleCors(
-          req,
-          new Response(JSON.stringify({ data: chapters }), {
-            headers: { 'Content-Type': 'application/json' },
-          }),
-        )
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: chapters }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch (error) {
+          logger.error('Error fetching chapters: ' + JSON.stringify(error))
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({
+                error:
+                  error instanceof Error
+                    ? error.message
+                    : 'Failed to fetch chapters',
+              }),
+              {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        }
       }
 
       // GET /api/bible/verses/:bookId/:chapter - Get verses for chapter
@@ -3778,16 +3881,35 @@ async function main() {
         const permError = checkPermission('bible.view')
         if (permError) return permError
 
-        const bookId = parseInt(getVersesMatch[1], 10)
-        const chapter = parseInt(getVersesMatch[2], 10)
-        const verses = getVersesByChapter(bookId, chapter)
+        try {
+          const bookId = parseInt(getVersesMatch[1], 10)
+          const chapter = parseInt(getVersesMatch[2], 10)
+          const verses = getVersesByChapter(bookId, chapter)
 
-        return handleCors(
-          req,
-          new Response(JSON.stringify({ data: verses }), {
-            headers: { 'Content-Type': 'application/json' },
-          }),
-        )
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: verses }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch (error) {
+          logger.error('Error fetching verses: ' + JSON.stringify(error))
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({
+                error:
+                  error instanceof Error
+                    ? error.message
+                    : 'Failed to fetch verses',
+              }),
+              {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        }
       }
 
       // GET /api/bible/verse/:verseId - Get single verse by ID
@@ -3796,25 +3918,44 @@ async function main() {
         const permError = checkPermission('bible.view')
         if (permError) return permError
 
-        const verseId = parseInt(getVerseMatch[1], 10)
-        const verse = getVerseById(verseId)
+        try {
+          const verseId = parseInt(getVerseMatch[1], 10)
+          const verse = getVerseById(verseId)
 
-        if (!verse) {
+          if (!verse) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Verse not found' }), {
+                status: 404,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
           return handleCors(
             req,
-            new Response(JSON.stringify({ error: 'Verse not found' }), {
-              status: 404,
+            new Response(JSON.stringify({ data: verse }), {
               headers: { 'Content-Type': 'application/json' },
             }),
           )
+        } catch (error) {
+          logger.error('Error fetching verse: ' + JSON.stringify(error))
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({
+                error:
+                  error instanceof Error
+                    ? error.message
+                    : 'Failed to fetch verse',
+              }),
+              {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
         }
-
-        return handleCors(
-          req,
-          new Response(JSON.stringify({ data: verse }), {
-            headers: { 'Content-Type': 'application/json' },
-          }),
-        )
       }
 
       // GET /api/bible/next-verse/:verseId - Get next sequential verse
@@ -3825,15 +3966,34 @@ async function main() {
         const permError = checkPermission('bible.view')
         if (permError) return permError
 
-        const verseId = parseInt(getNextVerseMatch[1], 10)
-        const nextVerse = getNextVerse(verseId)
+        try {
+          const verseId = parseInt(getNextVerseMatch[1], 10)
+          const nextVerse = getNextVerse(verseId)
 
-        return handleCors(
-          req,
-          new Response(JSON.stringify({ data: nextVerse }), {
-            headers: { 'Content-Type': 'application/json' },
-          }),
-        )
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: nextVerse }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch (error) {
+          logger.error('Error fetching next verse: ' + JSON.stringify(error))
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({
+                error:
+                  error instanceof Error
+                    ? error.message
+                    : 'Failed to fetch next verse',
+              }),
+              {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        }
       }
 
       // GET /api/bible/verse-by-reference/:translationId/:bookCode/:chapter/:verse - Get verse by reference
@@ -3850,18 +4010,39 @@ async function main() {
         const permError = checkPermission('bible.view')
         if (permError) return permError
 
-        const translationId = parseInt(getVerseByRefMatch[1], 10)
-        const bookCode = getVerseByRefMatch[2]
-        const chapter = parseInt(getVerseByRefMatch[3], 10)
-        const verseNumber = parseInt(getVerseByRefMatch[4], 10)
-        const verse = getVerse(translationId, bookCode, chapter, verseNumber)
+        try {
+          const translationId = parseInt(getVerseByRefMatch[1], 10)
+          const bookCode = getVerseByRefMatch[2]
+          const chapter = parseInt(getVerseByRefMatch[3], 10)
+          const verseNumber = parseInt(getVerseByRefMatch[4], 10)
+          const verse = getVerse(translationId, bookCode, chapter, verseNumber)
 
-        return handleCors(
-          req,
-          new Response(JSON.stringify({ data: verse }), {
-            headers: { 'Content-Type': 'application/json' },
-          }),
-        )
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: verse }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch (error) {
+          logger.error(
+            'Error fetching verse by reference: ' + JSON.stringify(error),
+          )
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({
+                error:
+                  error instanceof Error
+                    ? error.message
+                    : 'Failed to fetch verse',
+              }),
+              {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        }
       }
 
       // GET /api/bible/search - Search verses (by reference or text)
@@ -3869,34 +4050,53 @@ async function main() {
         const permError = checkPermission('bible.view')
         if (permError) return permError
 
-        const query = url.searchParams.get('q') || ''
-        const translationIdParam = url.searchParams.get('translationId')
-        const limitParam = url.searchParams.get('limit')
+        try {
+          const query = url.searchParams.get('q') || ''
+          const translationIdParam = url.searchParams.get('translationId')
+          const limitParam = url.searchParams.get('limit')
 
-        const input: SearchVersesInput = {
-          query,
-          translationId: translationIdParam
-            ? parseInt(translationIdParam, 10)
-            : undefined,
-          limit: limitParam ? parseInt(limitParam, 10) : 50,
-        }
+          const input: SearchVersesInput = {
+            query,
+            translationId: translationIdParam
+              ? parseInt(translationIdParam, 10)
+              : undefined,
+            limit: limitParam ? parseInt(limitParam, 10) : 50,
+          }
 
-        const result = searchBible(input)
+          const result = searchBible(input)
 
-        return handleCors(
-          req,
-          new Response(
-            JSON.stringify({
-              data: {
-                type: result.type,
-                results: result.results,
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({
+                data: {
+                  type: result.type,
+                  results: result.results,
+                },
+              }),
+              {
+                headers: { 'Content-Type': 'application/json' },
               },
-            }),
-            {
-              headers: { 'Content-Type': 'application/json' },
-            },
-          ),
-        )
+            ),
+          )
+        } catch (error) {
+          logger.error('Error searching Bible: ' + JSON.stringify(error))
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({
+                error:
+                  error instanceof Error
+                    ? error.message
+                    : 'Failed to search Bible',
+              }),
+              {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        }
       }
 
       // POST /api/bible/ai-search - AI-enhanced semantic search

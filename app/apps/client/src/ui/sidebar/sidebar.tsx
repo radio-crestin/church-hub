@@ -15,7 +15,6 @@ import { SidebarHeader } from './sidebar-header'
 import { SidebarItem } from './sidebar-item'
 import { UpdateNotification } from '../../features/app-update'
 import { ContactModal, FeedbackModal } from '../../features/feedback'
-import { useAppShortcuts } from '../../features/keyboard-shortcuts'
 import { useKioskSettings } from '../../features/kiosk'
 import { usePresentationState } from '../../features/presentation'
 import {
@@ -23,6 +22,7 @@ import {
   updateCurrentWebviewBounds,
   useResolvedSidebarItems,
   useSidebarConfig,
+  useSidebarItemShortcuts,
 } from '../../features/sidebar-config'
 import type { Permission } from '../../features/users/types'
 import { usePermissions } from '../../provider/permissions-provider'
@@ -46,22 +46,20 @@ export function Sidebar() {
   const { config } = useSidebarConfig()
   const resolvedItems = useResolvedSidebarItems(config?.items)
 
-  // Get keyboard shortcuts for sidebar items
-  const { shortcuts } = useAppShortcuts()
+  // Get keyboard shortcuts for sidebar items from sidebar config
+  const sidebarShortcuts = useSidebarItemShortcuts()
 
   // Map route paths to their configured shortcuts
   const routeShortcuts = useMemo(() => {
-    const getFirstShortcut = (actionId: keyof typeof shortcuts.actions) => {
-      const action = shortcuts.actions[actionId]
-      return action?.enabled && action.shortcuts.length > 0
-        ? action.shortcuts[0]
-        : undefined
+    const map: Record<string, string | undefined> = {}
+    for (const s of sidebarShortcuts) {
+      // Only use the first shortcut for each route
+      if (!map[s.route]) {
+        map[s.route] = s.shortcut
+      }
     }
-    return {
-      '/songs': getFirstShortcut('searchSong'),
-      '/bible': getFirstShortcut('searchBible'),
-    }
-  }, [shortcuts])
+    return map
+  }, [sidebarShortcuts])
 
   // Get kiosk settings to determine if kiosk menu item should be visible
   const { data: kioskSettings } = useKioskSettings()
@@ -103,7 +101,8 @@ export function Sidebar() {
       // Handle Bible navigation - go to currently displayed verse if available
       // But only if not currently viewing search results (URL has ?q= param)
       if (destinationPath === '/bible') {
-        const hasSearchQuery = location.search.includes('q=')
+        const hasSearchQuery =
+          'q' in (location.search as Record<string, unknown>)
         const tempContent = presentationState?.temporaryContent
         if (
           !hasSearchQuery &&

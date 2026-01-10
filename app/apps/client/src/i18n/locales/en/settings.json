@@ -161,13 +161,9 @@
           "label": "Stop Live Stream",
           "description": "Stop the current YouTube live stream"
         },
-        "searchSong": {
-          "label": "Search Songs",
-          "description": "Navigate to songs and focus the search input"
-        },
-        "searchBible": {
-          "label": "Search Bible",
-          "description": "Navigate to Bible and focus the search input"
+        "showSlide": {
+          "label": "Show Slide",
+          "description": "Show the current slide (unhide presentation)"
         },
         "nextSlide": {
           "label": "Next Slide",

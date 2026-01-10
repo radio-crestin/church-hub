@@ -28,8 +28,7 @@ interface UseGlobalAppShortcutsOptions {
   sidebarShortcuts: SidebarShortcut[]
   onStartLive: () => void
   onStopLive: () => void
-  onSearchSong: () => void
-  onSearchBible: () => void
+  onShowSlide: () => void
   onNextSlide: () => void
   onPrevSlide: () => void
   onSceneSwitch: (sceneName: string) => void
@@ -44,8 +43,7 @@ export function useGlobalAppShortcuts({
   sidebarShortcuts,
   onStartLive,
   onStopLive,
-  onSearchSong,
-  onSearchBible,
+  onShowSlide,
   onNextSlide,
   onPrevSlide,
   onSceneSwitch,
@@ -56,8 +54,7 @@ export function useGlobalAppShortcuts({
   const handlersRef = useRef({
     onStartLive,
     onStopLive,
-    onSearchSong,
-    onSearchBible,
+    onShowSlide,
     onNextSlide,
     onPrevSlide,
     onSceneSwitch,
@@ -69,8 +66,7 @@ export function useGlobalAppShortcuts({
     handlersRef.current = {
       onStartLive,
       onStopLive,
-      onSearchSong,
-      onSearchBible,
+      onShowSlide,
       onNextSlide,
       onPrevSlide,
       onSceneSwitch,
@@ -79,8 +75,7 @@ export function useGlobalAppShortcuts({
   }, [
     onStartLive,
     onStopLive,
-    onSearchSong,
-    onSearchBible,
+    onShowSlide,
     onNextSlide,
     onPrevSlide,
     onSceneSwitch,
@@ -117,8 +112,7 @@ export function useGlobalAppShortcuts({
         const actionHandlers: Record<GlobalShortcutActionId, () => void> = {
           startLive: () => handlersRef.current.onStartLive(),
           stopLive: () => handlersRef.current.onStopLive(),
-          searchSong: () => handlersRef.current.onSearchSong(),
-          searchBible: () => handlersRef.current.onSearchBible(),
+          showSlide: () => handlersRef.current.onShowSlide(),
           nextSlide: () => handlersRef.current.onNextSlide(),
           prevSlide: () => handlersRef.current.onPrevSlide(),
         }

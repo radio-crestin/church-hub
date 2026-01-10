@@ -5,8 +5,7 @@ import type { MIDIConfig } from './midi/types'
 export type GlobalShortcutActionId =
   | 'startLive'
   | 'stopLive'
-  | 'searchSong'
-  | 'searchBible'
+  | 'showSlide'
   | 'nextSlide'
   | 'prevSlide'
 
@@ -38,8 +37,7 @@ export const DEFAULT_SHORTCUTS_CONFIG: GlobalShortcutsConfig = {
   actions: {
     startLive: { shortcuts: [], enabled: true },
     stopLive: { shortcuts: [], enabled: true },
-    searchSong: { shortcuts: [], enabled: true },
-    searchBible: { shortcuts: [], enabled: true },
+    showSlide: { shortcuts: [], enabled: true },
     nextSlide: { shortcuts: [], enabled: true },
     prevSlide: { shortcuts: [], enabled: true },
   },

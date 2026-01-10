@@ -53,8 +53,6 @@ export function useKeyboardShortcuts() {
           clearSlide.mutate()
           return true
 
-        case 'F5':
-        case 'F10':
         case 'Enter':
           // Show presentation (unhide)
           event.preventDefault()

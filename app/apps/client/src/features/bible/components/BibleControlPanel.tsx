@@ -10,8 +10,10 @@ import {
   PanelRightClose,
   PanelRightOpen,
 } from 'lucide-react'
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useAppShortcuts } from '~/features/keyboard-shortcuts'
 import {
   LivePreview,
   useClearSlide,
@@ -46,7 +48,16 @@ export function BibleControlPanel({
 
   const { data: state } = usePresentationState()
   const clearSlide = useClearSlide()
-  const showSlide = useShowSlide()
+  const showSlideCommand = useShowSlide()
+
+  // Get configured showSlide shortcut for display
+  const { shortcuts } = useAppShortcuts()
+  const showSlideShortcut = useMemo(() => {
+    const action = shortcuts.actions.showSlide
+    return action?.enabled && action.shortcuts.length > 0
+      ? action.shortcuts[0]
+      : undefined
+  }, [shortcuts])
 
   // Highlight management
   const { data: highlights } = useSlideHighlights()
@@ -61,7 +72,7 @@ export function BibleControlPanel({
 
   const handleShow = async () => {
     if (state?.lastSongSlideId || state?.currentQueueItemId) {
-      await showSlide.mutateAsync()
+      await showSlideCommand.mutateAsync()
     }
   }
 
@@ -160,21 +171,23 @@ export function BibleControlPanel({
             <button
               type="button"
               onClick={handleShow}
-              disabled={!hasContent || showSlide.isPending}
+              disabled={!hasContent || showSlideCommand.isPending}
               className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
-              title={`${t('controls.show')} (F10)`}
+              title={t('controls.show')}
             >
-              {showSlide.isPending ? (
+              {showSlideCommand.isPending ? (
                 <Loader2 size={18} className="animate-spin" />
               ) : (
                 <Eye size={18} />
               )}
               <span className="hidden sm:inline">{t('controls.show')}</span>
-              <KeyboardShortcutBadge
-                shortcut="F10"
-                variant="muted"
-                className="hidden sm:inline-block"
-              />
+              {showSlideShortcut && (
+                <KeyboardShortcutBadge
+                  shortcut={showSlideShortcut}
+                  variant="muted"
+                  className="hidden sm:inline-block"
+                />
+              )}
             </button>
           )}
         </div>
