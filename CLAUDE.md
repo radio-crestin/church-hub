@@ -2,7 +2,7 @@
 
 ## DO:
 - ALWAYS DEBUG TO FIND THE ROOT CAUSE OF A PROBLEM AND FIX IT PERMANENTLY
-- Commit changes granularly after each task using a granular-commiter task
+- Commit changes granularly after each task using the /commit skill
 - Analyze source code in spawned subtasks, return summaries with key insights and file paths (e.g., path/to/file.js:10:20)
 - Navigate to claude's cwd first, then cd into the correct folder before running commands
 - Centralize database interactions in service folder with only upsert and delete operations
