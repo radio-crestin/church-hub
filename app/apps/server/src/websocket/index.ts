@@ -41,12 +41,114 @@ export type SlideHighlightsUpdatedMessage = {
   }
 }
 
+// ============================================================================
+// WEBRTC SCREEN SHARE MESSAGE TYPES
+// ============================================================================
+
+export type ScreenShareStartedMessage = {
+  type: 'screen_share_started'
+  payload: {
+    broadcasterId: string
+    audioEnabled: boolean
+    startedAt: number
+  }
+}
+
+export type ScreenShareStoppedMessage = {
+  type: 'screen_share_stopped'
+  payload: {
+    broadcasterId: string
+    stoppedAt: number
+  }
+}
+
+export type WebRTCOfferMessage = {
+  type: 'webrtc_offer'
+  payload: {
+    broadcasterId: string
+    targetClientId: string
+    sdp: string
+  }
+}
+
+export type WebRTCAnswerMessage = {
+  type: 'webrtc_answer'
+  payload: {
+    viewerId: string
+    targetClientId: string
+    sdp: string
+  }
+}
+
+export type WebRTCIceCandidateMessage = {
+  type: 'webrtc_ice_candidate'
+  payload: {
+    fromClientId: string
+    targetClientId: string
+    candidate: {
+      candidate: string
+      sdpMid: string | null
+      sdpMLineIndex: number | null
+      usernameFragment: string | null
+    }
+  }
+}
+
+export type ScreenShareJoinRequestMessage = {
+  type: 'screen_share_join_request'
+  payload: {
+    viewerId: string
+  }
+}
+
 // Store connected clients with last activity timestamp
 interface ClientConnection {
   ws: ServerWebSocket<WebSocketData>
   lastActivity: number
 }
 const clients = new Map<string, ClientConnection>()
+
+// Track active screen share state
+interface ActiveScreenShare {
+  broadcasterId: string
+  audioEnabled: boolean
+  startedAt: number
+}
+let activeScreenShare: ActiveScreenShare | null = null
+
+/**
+ * Get active screen share state
+ */
+export function getActiveScreenShare(): ActiveScreenShare | null {
+  return activeScreenShare
+}
+
+/**
+ * Send message to a specific client
+ */
+function sendToClient(
+  targetClientId: string,
+  message: Record<string, unknown>,
+): boolean {
+  const client = clients.get(targetClientId)
+  if (client) {
+    try {
+      client.ws.send(JSON.stringify(message))
+      return true
+    } catch (error) {
+      wsLogger.error(`Failed to send to ${targetClientId}: ${error}`)
+      clients.delete(targetClientId)
+    }
+  }
+  return false
+}
+
+/**
+ * Get all connected client IDs
+ */
+export function getAllClientIds(): string[] {
+  return Array.from(clients.keys())
+}
 
 // Track if any client is recording a shortcut (disables MIDI shortcut execution)
 let shortcutRecordingInProgress = false
@@ -212,6 +314,23 @@ export function handleWebSocketOpen(ws: ServerWebSocket<WebSocketData>) {
       )
     }
   }
+
+  // Send active screen share state to the new client
+  if (activeScreenShare) {
+    try {
+      ws.send(
+        JSON.stringify({
+          type: 'screen_share_started',
+          payload: activeScreenShare,
+        } satisfies ScreenShareStartedMessage),
+      )
+      wsLogger.debug(`Sent active screen share state to ${clientId}`)
+    } catch (error) {
+      wsLogger.error(
+        `Failed to send screen share state to ${clientId}: ${error}`,
+      )
+    }
+  }
 }
 
 /**
@@ -289,6 +408,121 @@ export function handleWebSocketMessage(
     if (data.type?.startsWith('music_') && musicCommandHandler) {
       musicCommandHandler(data.type, data.payload || {})
     }
+
+    // Handle WebRTC screen share signaling
+    if (data.type === 'screen_share_start') {
+      activeScreenShare = {
+        broadcasterId: clientId,
+        audioEnabled: data.payload?.audioEnabled ?? false,
+        startedAt: Date.now(),
+      }
+
+      const message = JSON.stringify({
+        type: 'screen_share_started',
+        payload: activeScreenShare,
+      } satisfies ScreenShareStartedMessage)
+
+      wsLogger.info(
+        `Screen share started by ${clientId} (audio: ${activeScreenShare.audioEnabled})`,
+      )
+
+      for (const [id, conn] of clients) {
+        try {
+          conn.ws.send(message)
+        } catch (error) {
+          wsLogger.error(`Failed to send to ${id}: ${error}`)
+          clients.delete(id)
+        }
+      }
+      return
+    }
+
+    if (data.type === 'screen_share_stop') {
+      if (activeScreenShare?.broadcasterId === clientId) {
+        const message = JSON.stringify({
+          type: 'screen_share_stopped',
+          payload: {
+            broadcasterId: clientId,
+            stoppedAt: Date.now(),
+          },
+        } satisfies ScreenShareStoppedMessage)
+
+        activeScreenShare = null
+        wsLogger.info(`Screen share stopped by ${clientId}`)
+
+        for (const [id, conn] of clients) {
+          try {
+            conn.ws.send(message)
+          } catch (error) {
+            wsLogger.error(`Failed to send to ${id}: ${error}`)
+            clients.delete(id)
+          }
+        }
+      }
+      return
+    }
+
+    if (data.type === 'screen_share_join_request') {
+      // Forward join request to broadcaster
+      if (activeScreenShare) {
+        sendToClient(activeScreenShare.broadcasterId, {
+          type: 'screen_share_join_request',
+          payload: { viewerId: clientId },
+        })
+        wsLogger.debug(
+          `Join request from ${clientId} forwarded to broadcaster ${activeScreenShare.broadcasterId}`,
+        )
+      }
+      return
+    }
+
+    if (data.type === 'webrtc_offer') {
+      // Forward offer to target client
+      sendToClient(data.payload.targetClientId, {
+        type: 'webrtc_offer',
+        payload: {
+          broadcasterId: clientId,
+          targetClientId: data.payload.targetClientId,
+          sdp: data.payload.sdp,
+        },
+      })
+      wsLogger.debug(
+        `WebRTC offer from ${clientId} forwarded to ${data.payload.targetClientId}`,
+      )
+      return
+    }
+
+    if (data.type === 'webrtc_answer') {
+      // Forward answer to broadcaster
+      sendToClient(data.payload.targetClientId, {
+        type: 'webrtc_answer',
+        payload: {
+          viewerId: clientId,
+          targetClientId: data.payload.targetClientId,
+          sdp: data.payload.sdp,
+        },
+      })
+      wsLogger.debug(
+        `WebRTC answer from ${clientId} forwarded to ${data.payload.targetClientId}`,
+      )
+      return
+    }
+
+    if (data.type === 'webrtc_ice_candidate') {
+      // Forward ICE candidate to target
+      sendToClient(data.payload.targetClientId, {
+        type: 'webrtc_ice_candidate',
+        payload: {
+          fromClientId: clientId,
+          targetClientId: data.payload.targetClientId,
+          candidate: data.payload.candidate,
+        },
+      })
+      wsLogger.debug(
+        `ICE candidate from ${clientId} forwarded to ${data.payload.targetClientId}`,
+      )
+      return
+    }
   } catch (error) {
     wsLogger.error(`Failed to parse message: ${error}`)
   }
@@ -299,10 +533,32 @@ export function handleWebSocketMessage(
  */
 export function handleWebSocketClose(ws: ServerWebSocket<WebSocketData>) {
   if (ws.data.clientId) {
-    clients.delete(ws.data.clientId)
-    wsLogger.info(
-      `Client disconnected: ${ws.data.clientId} (total: ${clients.size})`,
-    )
+    const clientId = ws.data.clientId
+    clients.delete(clientId)
+    wsLogger.info(`Client disconnected: ${clientId} (total: ${clients.size})`)
+
+    // If the broadcaster disconnects, stop the screen share
+    if (activeScreenShare?.broadcasterId === clientId) {
+      const message = JSON.stringify({
+        type: 'screen_share_stopped',
+        payload: {
+          broadcasterId: clientId,
+          stoppedAt: Date.now(),
+        },
+      } satisfies ScreenShareStoppedMessage)
+
+      activeScreenShare = null
+      wsLogger.info(`Screen share stopped due to broadcaster disconnect`)
+
+      for (const [id, conn] of clients) {
+        try {
+          conn.ws.send(message)
+        } catch (error) {
+          wsLogger.error(`Failed to send to ${id}: ${error}`)
+          clients.delete(id)
+        }
+      }
+    }
   }
 }
 

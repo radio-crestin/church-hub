@@ -146,6 +146,11 @@
       "clockEnabled": "Afișează Ceas",
       "defaultBackground": "Fundal Implicit"
     },
+    "screenShare": {
+      "title": "Partajare Ecran",
+      "enableAudio": "Activează redarea audio",
+      "enableAudioDescription": "Când primiți o partajare de ecran cu audio, redați audio pe acest ecran"
+    },
     "nextSlide": {
       "title": "Previzualizare Slide Următor",
       "enable": "Afișează previzualizarea slide-ului următor",
@@ -287,7 +292,20 @@
     "noSlides": "Niciun slide în acest program",
     "preview": "Previzualizare",
     "openSong": "Deschide Cântec",
-    "openBible": "Deschide Biblia"
+    "openBible": "Deschide Biblia",
+    "screenShare": {
+      "start": "Partajare Ecran",
+      "stop": "Oprește Partajarea",
+      "startNow": "Începe Partajarea",
+      "includeAudio": "Include Audio",
+      "sharing": "Partajare Ecran Activă",
+      "connecting": "Se conectează...",
+      "error": {
+        "notSupported": "Partajarea ecranului nu este suportată în acest browser",
+        "permissionDenied": "Permisiunea de partajare a fost refuzată",
+        "failed": "Eroare la pornirea partajării ecranului"
+      }
+    }
   },
   "textStyle": {
     "highlight": "Evidențiere",
