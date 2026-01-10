@@ -284,14 +284,11 @@ export function BibleNavigationPanel({
       }
       if (e.key === 'Enter') {
         e.preventDefault()
-        // If a result is focused, select it
-        if (
-          focusedResultIndex >= 0 &&
-          focusedResultIndex < currentSearchResults.length
-        ) {
-          const result = currentSearchResults[
-            focusedResultIndex
-          ] as BibleSearchResult
+        // Select the focused result, or the first result if none is focused
+        const indexToSelect =
+          focusedResultIndex >= 0 ? focusedResultIndex : 0
+        if (indexToSelect < currentSearchResults.length) {
+          const result = currentSearchResults[indexToSelect] as BibleSearchResult
           onSelectSearchResult(result)
         }
         return
