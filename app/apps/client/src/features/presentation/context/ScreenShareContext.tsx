@@ -488,6 +488,7 @@ export function ScreenShareProvider({
         }
 
         case 'screen_share_stopped': {
+          stopMediaStream()
           cleanupAllConnections()
           setState((prev) => ({
             ...prev,
