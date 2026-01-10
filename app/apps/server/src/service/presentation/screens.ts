@@ -235,6 +235,13 @@ function getDefaultEmptyConfig() {
   }
 }
 
+function getDefaultScreenShareConfig() {
+  return {
+    background: getDefaultBackground(),
+    clockEnabled: false, // Clock typically not needed during screen share
+  }
+}
+
 function getDefaultContentConfig(
   contentType: ContentType,
 ): Record<string, unknown> {
@@ -250,6 +257,8 @@ function getDefaultContentConfig(
       return getDefaultVerseteTineriConfig()
     case 'empty':
       return getDefaultEmptyConfig()
+    case 'screen_share':
+      return getDefaultScreenShareConfig()
   }
 }
 

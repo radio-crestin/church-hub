@@ -14,6 +14,7 @@ export const contentTypes = [
   'announcement',
   'versete_tineri',
   'empty',
+  'screen_share',
 ] as const
 
 // New screens table - replaces displays with enhanced functionality
