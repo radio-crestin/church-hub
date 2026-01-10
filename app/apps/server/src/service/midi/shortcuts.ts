@@ -8,13 +8,18 @@ import type { MIDIInputMessage } from './types'
 import { getDatabase } from '../../db'
 import { obsScenes } from '../../db/schema'
 import { midiLogger } from '../../utils/fileLogger'
-import { broadcastPresentationState } from '../../websocket'
+import {
+  broadcastOBSCurrentScene,
+  broadcastPresentationState,
+  broadcastSidebarNavigation,
+  isShortcutRecordingActive,
+} from '../../websocket'
 import { switchScene } from '../livestream/obs/scenes'
 import {
-  startStreaming,
-  stopStreaming,
-  toggleStreaming,
-} from '../livestream/obs/streaming'
+  startStream,
+  stopStream,
+  toggleStream,
+} from '../livestream/stream-control'
 import {
   navigateTemporary,
   showSlide,
@@ -41,8 +46,47 @@ interface GlobalShortcutsConfig {
 }
 
 interface ShortcutMapping {
-  type: 'global' | 'scene'
-  action: string // ActionId or scene name
+  type: 'global' | 'scene' | 'sidebar'
+  action: string // ActionId, scene name, or sidebar route
+  meta?: { focusSearch?: boolean } // For sidebar shortcuts
+}
+
+// Sidebar configuration types
+interface SidebarItemSettings {
+  shortcuts?: string[]
+  focusSearchOnNavigate?: boolean
+}
+
+interface SidebarItem {
+  id: string
+  type: 'builtin' | 'custom'
+  builtinId?: string
+  settings?: SidebarItemSettings
+}
+
+interface SidebarConfig {
+  version: number
+  items: SidebarItem[]
+}
+
+// Map builtin sidebar IDs to their routes
+const BUILTIN_SIDEBAR_ROUTES: Record<string, string> = {
+  present: '/',
+  songs: '/songs',
+  bible: '/bible',
+  schedules: '/schedules',
+  livestream: '/livestream',
+}
+
+/**
+ * Get the route for a sidebar item
+ */
+function getSidebarItemRoute(item: SidebarItem): string {
+  if (item.type === 'builtin' && item.builtinId) {
+    return BUILTIN_SIDEBAR_ROUTES[item.builtinId] || `/${item.builtinId}`
+  }
+  // Custom pages use /page/:id pattern
+  return `/page/${item.id}`
 }
 
 // In-memory cache of MIDI shortcut mappings
@@ -175,6 +219,36 @@ export function loadMIDIShortcuts(): void {
     midiLogger.error(`Failed to load scene shortcuts: ${error}`)
   }
 
+  // Load sidebar shortcuts from settings
+  try {
+    const sidebarSetting = getSetting('app_settings', 'sidebar_configuration')
+    if (sidebarSetting?.value) {
+      const config = JSON.parse(sidebarSetting.value) as SidebarConfig
+
+      for (const item of config.items) {
+        if (item.settings?.shortcuts) {
+          const route = getSidebarItemRoute(item)
+          for (const shortcut of item.settings.shortcuts) {
+            if (isMIDIShortcut(shortcut)) {
+              newMap.set(shortcut, {
+                type: 'sidebar',
+                action: route,
+                meta: {
+                  focusSearch: item.settings.focusSearchOnNavigate ?? false,
+                },
+              })
+              midiLogger.debug(
+                `Mapped MIDI shortcut ${shortcut} -> sidebar:${route}`,
+              )
+            }
+          }
+        }
+      }
+    }
+  } catch (error) {
+    midiLogger.error(`Failed to load sidebar shortcuts: ${error}`)
+  }
+
   shortcutMap = newMap
   midiLogger.info(`Loaded ${newMap.size} MIDI shortcuts`)
 }
@@ -204,29 +278,35 @@ async function executeAction(actionId: GlobalShortcutActionId): Promise<void> {
       }
       break
 
-    case 'startLive':
-      try {
-        await startStreaming()
-      } catch (error) {
-        midiLogger.error(`Failed to start streaming: ${error}`)
+    case 'startLive': {
+      const startResult = await startStream()
+      if (!startResult.success) {
+        midiLogger.error(`Failed to start streaming: ${startResult.error}`)
+      } else {
+        midiLogger.info('Stream started successfully via MIDI')
       }
       break
+    }
 
-    case 'stopLive':
-      try {
-        await stopStreaming()
-      } catch (error) {
-        midiLogger.error(`Failed to stop streaming: ${error}`)
+    case 'stopLive': {
+      const stopResult = await stopStream()
+      if (!stopResult.success) {
+        midiLogger.error(`Failed to stop streaming: ${stopResult.error}`)
+      } else {
+        midiLogger.info('Stream stopped successfully via MIDI')
       }
       break
+    }
 
-    case 'toggleLive':
-      try {
-        await toggleStreaming()
-      } catch (error) {
-        midiLogger.error(`Failed to toggle streaming: ${error}`)
+    case 'toggleLive': {
+      const toggleResult = await toggleStream()
+      if (!toggleResult.success) {
+        midiLogger.error(`Failed to toggle streaming: ${toggleResult.error}`)
+      } else {
+        midiLogger.info(`Stream ${toggleResult.action}ed successfully via MIDI`)
       }
       break
+    }
 
     case 'showSlide':
       try {
@@ -249,6 +329,12 @@ export async function handleMIDIShortcut(
   // Only trigger on note_on or control_change with value > 0 (press, not release)
   if (message.type === 'note_off') return false
   if (message.type === 'control_change' && message.value === 0) return false
+
+  // Skip shortcuts when user is recording a new shortcut
+  if (isShortcutRecordingActive()) {
+    midiLogger.debug('Skipping MIDI shortcut - recording in progress')
+    return false
+  }
 
   const shortcutString = midiMessageToShortcutString(message)
   if (!shortcutString) return false
@@ -283,9 +369,21 @@ export async function handleMIDIShortcut(
   } else if (mapping.type === 'scene') {
     try {
       await switchScene(mapping.action)
+      // Broadcast the scene change to all clients for UI update
+      broadcastOBSCurrentScene(mapping.action)
       return true
     } catch (error) {
       midiLogger.error(`Failed to switch scene: ${error}`)
+    }
+  } else if (mapping.type === 'sidebar') {
+    try {
+      broadcastSidebarNavigation(
+        mapping.action,
+        mapping.meta?.focusSearch ?? false,
+      )
+      return true
+    } catch (error) {
+      midiLogger.error(`Failed to broadcast sidebar navigation: ${error}`)
     }
   }
 

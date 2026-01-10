@@ -1,3 +1,8 @@
+export {
+  isGlobalRecordingActive,
+  setGlobalRecordingState,
+  useGlobalRecordingState,
+} from './recordingState'
 export type {
   SceneShortcutSource,
   SidebarShortcutSource,

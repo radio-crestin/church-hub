@@ -12,6 +12,7 @@ import { useShortcutRecording } from '../context'
 import { useAppShortcuts, useGlobalAppShortcuts } from '../hooks'
 import { useMIDILEDFeedback } from '../midi/hooks'
 import { focusMainWindow } from '../utils/focusMainWindow'
+import { useGlobalRecordingState } from '../utils/recordingState'
 
 const logger = createLogger('keyboard-shortcuts:manager')
 
@@ -22,6 +23,7 @@ export function GlobalAppShortcutManager() {
     useStreaming()
   const { scenes, switchScene, currentScene } = useOBSScenes()
   const { isRecordingRef } = useShortcutRecording()
+  const isGlobalRecording = useGlobalRecordingState()
   const navigateTemporary = useNavigateTemporary()
   const showSlide = useShowSlide()
   const sidebarShortcuts = useSidebarItemShortcuts()
@@ -160,6 +162,7 @@ export function GlobalAppShortcutManager() {
     onSceneSwitch: handleSceneSwitch,
     onSidebarNavigation: handleSidebarNavigation,
     isRecordingRef,
+    isRecording: isGlobalRecording,
   })
 
   // MIDI shortcuts are handled server-side for reliability
