@@ -1,4 +1,4 @@
-import { useNavigate } from '@tanstack/react-router'
+import { useLocation, useNavigate } from '@tanstack/react-router'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 
 import { useOBSScenes, useStreaming } from '~/features/livestream/hooks'
@@ -18,6 +18,7 @@ const logger = createLogger('keyboard-shortcuts:manager')
 
 export function GlobalAppShortcutManager() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { shortcuts, isLoading } = useAppShortcuts()
   const { start, stop, isLive, isStarting, isStopping, streamStartProgress } =
     useStreaming()
@@ -139,14 +140,32 @@ export function GlobalAppShortcutManager() {
       )
       // Focus the main window first so input.focus() works when triggered from background
       await focusMainWindow()
+
+      // Check if we're already on the target route
+      const currentPath = location.pathname
+      const isAlreadyOnRoute =
+        currentPath === route || currentPath === `${route}/`
+
       // Navigate with focus param if focusing search is enabled
       if (focusSearch) {
-        navigate({ to: route, search: { focus: true } })
+        if (isAlreadyOnRoute) {
+          // Preserve current search params and just add focus
+          const currentSearch =
+            (location.search as Record<string, unknown>) || {}
+          navigate({
+            to: route,
+            search: { ...currentSearch, focus: true },
+            replace: true,
+          })
+        } else {
+          // Navigating to a different route, just add focus
+          navigate({ to: route, search: { focus: true } })
+        }
       } else {
         navigate({ to: route })
       }
     },
-    [navigate],
+    [navigate, location],
   )
 
   // Register keyboard shortcuts
