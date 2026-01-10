@@ -3,6 +3,7 @@ import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite'
 import { migrate } from 'drizzle-orm/bun-sqlite/migrator'
 
 import { EMBEDDED_MIGRATIONS } from './embedded'
+import { migrateShortcuts } from './migrate-shortcuts'
 import { migrateSongTitles } from './migrate-song-titles'
 import { seedSystemRoles } from './seed'
 import { seedBibleTranslations } from './seed-bibles'
@@ -166,6 +167,12 @@ export function runMigrations(
   t = performance.now()
   seedAppSettings(rawDb)
   logTiming('seed_app_settings', t)
+
+  // Clean up legacy shortcuts (searchSong, searchBible removed from codebase)
+  log('info', 'Running shortcuts cleanup migration...')
+  t = performance.now()
+  migrateShortcuts(rawDb)
+  logTiming('migrate_shortcuts', t)
 
   return { ftsRecreated: ftsCreated }
 }
