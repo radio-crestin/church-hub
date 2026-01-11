@@ -41,6 +41,9 @@ tauri-plugin-process = "2"
 # Audio playback (Rodio with symphonia for format support)
 rodio = { version = "0.19", default-features = false, features = ["symphonia-all"] }
 
+# Symphonia for audio metadata probing (duration)
+symphonia = { version = "0.5", default-features = false, features = ["mp3", "aac", "flac", "ogg", "wav", "pcm"] }
+
 # WebSocket client for audio controller
 tokio-tungstenite = { version = "0.24", features = ["native-tls"] }
 futures-util = "0.3"

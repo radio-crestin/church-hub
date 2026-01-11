@@ -177,13 +177,18 @@ async fn run_audio_client(server_url: &str) -> Result<(), String> {
         }
     });
 
-    // Spawn state update task (sends updates every 100ms)
+    // Spawn state update task (sends updates only when playing or state changes)
     let player_clone = player.clone();
     let tx_clone = tx.clone();
     let state_task = tokio::spawn(async move {
         let mut interval = tokio::time::interval(Duration::from_millis(100));
         let mut was_playing = false;
         let mut finished_sent = false;
+        let mut last_volume: f64 = -1.0;
+        let mut last_muted = false;
+        let mut last_duration: f64 = 0.0;
+        let mut last_is_loading = false;
+        let mut last_error: Option<String> = None;
 
         loop {
             interval.tick().await;
@@ -224,29 +229,45 @@ async fn run_audio_client(server_url: &str) -> Result<(), String> {
                 finished_sent = false;
             }
 
-            was_playing = state.is_playing;
+            // Check if any state has changed (excluding currentTime which changes while playing)
+            let state_changed = state.is_playing != was_playing
+                || (state.volume - last_volume).abs() > 0.001
+                || state.is_muted != last_muted
+                || (state.duration - last_duration).abs() > 0.001
+                || state.is_loading != last_is_loading
+                || state.error != last_error;
 
-            // Send state update
-            let state_msg = AudioStateUpdate {
-                msg_type: "audio_state_update",
-                payload: AudioStatePayload {
-                    is_playing: state.is_playing,
-                    current_time: state.current_time,
-                    duration: state.duration,
-                    volume: state.volume,
-                    is_muted: state.is_muted,
-                    is_loading: state.is_loading,
-                    error: state.error,
-                    updated_at: state.updated_at,
-                },
-            };
+            // Only send state updates when playing (need to update currentTime) or when state changed
+            if state.is_playing || state_changed {
+                let state_msg = AudioStateUpdate {
+                    msg_type: "audio_state_update",
+                    payload: AudioStatePayload {
+                        is_playing: state.is_playing,
+                        current_time: state.current_time,
+                        duration: state.duration,
+                        volume: state.volume,
+                        is_muted: state.is_muted,
+                        is_loading: state.is_loading,
+                        error: state.error.clone(),
+                        updated_at: state.updated_at,
+                    },
+                };
 
-            if tx_clone
-                .send(serde_json::to_string(&state_msg).unwrap())
-                .is_err()
-            {
-                break;
+                if tx_clone
+                    .send(serde_json::to_string(&state_msg).unwrap())
+                    .is_err()
+                {
+                    break;
+                }
             }
+
+            // Update last known values
+            was_playing = state.is_playing;
+            last_volume = state.volume;
+            last_muted = state.is_muted;
+            last_duration = state.duration;
+            last_is_loading = state.is_loading;
+            last_error = state.error;
         }
     });
 

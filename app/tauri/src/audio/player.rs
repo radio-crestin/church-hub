@@ -3,6 +3,10 @@ use std::fs::File;
 use std::io::BufReader;
 use std::sync::mpsc;
 use std::time::{Duration, Instant};
+use symphonia::core::formats::FormatOptions;
+use symphonia::core::io::MediaSourceStream;
+use symphonia::core::meta::MetadataOptions;
+use symphonia::core::probe::Hint;
 
 #[derive(Clone, serde::Serialize)]
 pub struct AudioState {
@@ -181,13 +185,10 @@ fn run_audio_player_thread(rx: mpsc::Receiver<AudioCommand>) {
                     state.current_time = 0.0;
                     state.start_time = None;
                     state.pause_offset = Duration::ZERO;
+                    state.current_path = None;
                 }
                 AudioCommand::Seek(position) => {
-                    state.current_time = position;
-                    state.pause_offset = Duration::from_secs_f64(position);
-                    if state.is_playing {
-                        state.start_time = Some(Instant::now());
-                    }
+                    seek_to_position(&stream_handle, &mut sink, &mut state, position);
                 }
                 AudioCommand::SetVolume(level) => {
                     let volume = (level / 100.0).clamp(0.0, 1.0) as f32;
@@ -298,8 +299,12 @@ fn load_file(
         }
     };
 
-    // Get duration if available
-    let duration = source.total_duration().map(|d| d.as_secs_f64()).unwrap_or(0.0);
+    // Get duration - try rodio first, then probe with symphonia
+    let duration = source
+        .total_duration()
+        .map(|d| d.as_secs_f64())
+        .or_else(|| probe_duration(path))
+        .unwrap_or(0.0);
 
     // Create a new sink for this track
     let new_sink = match Sink::try_new(stream_handle) {
@@ -336,8 +341,93 @@ fn load_file(
     state.error = None;
     state.start_time = Some(Instant::now());
     state.pause_offset = Duration::ZERO;
+    state.current_path = Some(path.to_string());
 
     println!("[audio] Loaded successfully, duration: {:.2}s", duration);
+}
+
+fn seek_to_position(
+    stream_handle: &OutputStreamHandle,
+    sink: &mut Option<Sink>,
+    state: &mut InternalState,
+    position: f64,
+) {
+    let path = match &state.current_path {
+        Some(p) => p.clone(),
+        None => {
+            println!("[audio] Cannot seek: no file loaded");
+            return;
+        }
+    };
+
+    println!("[audio] Seeking to position: {:.2}s", position);
+
+    // Clamp position to valid range (if duration is known)
+    let position = if state.duration > 0.0 {
+        position.clamp(0.0, state.duration)
+    } else {
+        position.max(0.0)
+    };
+
+    // Open and decode the file
+    let file = match File::open(&path) {
+        Ok(f) => f,
+        Err(e) => {
+            println!("[audio] Seek failed - cannot open file: {}", e);
+            return;
+        }
+    };
+
+    let source = match Decoder::new(BufReader::new(file)) {
+        Ok(s) => s,
+        Err(e) => {
+            println!("[audio] Seek failed - cannot decode: {}", e);
+            return;
+        }
+    };
+
+    // Skip to the desired position
+    let skip_duration = Duration::from_secs_f64(position);
+    let source = source.skip_duration(skip_duration);
+
+    // Create a new sink
+    let new_sink = match Sink::try_new(stream_handle) {
+        Ok(s) => s,
+        Err(e) => {
+            println!("[audio] Seek failed - cannot create sink: {}", e);
+            return;
+        }
+    };
+
+    // Set volume
+    let volume = if state.is_muted {
+        0.0
+    } else {
+        (state.volume / 100.0) as f32
+    };
+    new_sink.set_volume(volume);
+    new_sink.append(source);
+
+    // If we were paused, pause the new sink too
+    if !state.is_playing {
+        new_sink.pause();
+    }
+
+    // Stop old sink
+    if let Some(old_sink) = sink.take() {
+        old_sink.stop();
+    }
+
+    *sink = Some(new_sink);
+
+    // Update state
+    state.current_time = position;
+    state.pause_offset = Duration::from_secs_f64(position);
+    if state.is_playing {
+        state.start_time = Some(Instant::now());
+    }
+
+    println!("[audio] Seeked to {:.2}s successfully", position);
 }
 
 struct InternalState {
@@ -351,6 +441,7 @@ struct InternalState {
     start_time: Option<Instant>,
     pause_offset: Duration,
     pre_mute_volume: f64,
+    current_path: Option<String>,
 }
 
 impl Default for InternalState {
@@ -366,6 +457,7 @@ impl Default for InternalState {
             start_time: None,
             pause_offset: Duration::ZERO,
             pre_mute_volume: 100.0,
+            current_path: None,
         }
     }
 }
@@ -375,4 +467,37 @@ fn timestamp_now() -> u64 {
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()
         .as_millis() as u64
+}
+
+/// Probe audio file for duration using symphonia
+fn probe_duration(path: &str) -> Option<f64> {
+    let file = File::open(path).ok()?;
+    let mss = MediaSourceStream::new(Box::new(file), Default::default());
+
+    // Create a hint based on file extension
+    let mut hint = Hint::new();
+    if let Some(ext) = std::path::Path::new(path).extension() {
+        hint.with_extension(ext.to_str().unwrap_or(""));
+    }
+
+    let format_opts = FormatOptions::default();
+    let metadata_opts = MetadataOptions::default();
+
+    let probed = symphonia::default::get_probe()
+        .format(&hint, mss, &format_opts, &metadata_opts)
+        .ok()?;
+
+    let format = probed.format;
+
+    // Get the default track
+    let track = format.default_track()?;
+
+    // Calculate duration from codec params
+    let time_base = track.codec_params.time_base?;
+    let n_frames = track.codec_params.n_frames?;
+
+    let duration_secs = time_base.calc_time(n_frames).seconds as f64
+        + (time_base.calc_time(n_frames).frac as f64);
+
+    Some(duration_secs)
 }

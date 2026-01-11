@@ -1,8 +1,9 @@
-import { forwardRef } from 'react'
+import { forwardRef, useCallback, useEffect, useRef, useState } from 'react'
 
 interface SliderProps {
   value?: number[]
   onValueChange?: (value: number[]) => void
+  onValueCommit?: (value: number[]) => void
   min?: number
   max?: number
   step?: number
@@ -17,6 +18,7 @@ export const Slider = forwardRef<HTMLInputElement, SliderProps>(
     {
       value = [0],
       onValueChange,
+      onValueCommit,
       min = 0,
       max = 100,
       step = 1,
@@ -27,6 +29,40 @@ export const Slider = forwardRef<HTMLInputElement, SliderProps>(
     },
     ref,
   ) => {
+    const [isInteracting, setIsInteracting] = useState(false)
+    const [localValue, setLocalValue] = useState(value[0])
+    const interactingRef = useRef(false)
+
+    // Sync local value with prop when not interacting
+    useEffect(() => {
+      if (!interactingRef.current) {
+        setLocalValue(value[0])
+      }
+    }, [value])
+
+    const handleChange = useCallback(
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newValue = parseFloat(e.target.value)
+        setLocalValue(newValue)
+        onValueChange?.([newValue])
+      },
+      [onValueChange],
+    )
+
+    const handleInteractionStart = useCallback(() => {
+      interactingRef.current = true
+      setIsInteracting(true)
+    }, [])
+
+    const handleInteractionEnd = useCallback(() => {
+      interactingRef.current = false
+      setIsInteracting(false)
+      onValueCommit?.([localValue])
+    }, [onValueCommit, localValue])
+
+    // Use local value while interacting, prop value otherwise
+    const displayValue = isInteracting ? localValue : value[0]
+
     return (
       <div
         className={`flex items-center ${showValue ? 'gap-3' : ''} ${className}`}
@@ -34,8 +70,12 @@ export const Slider = forwardRef<HTMLInputElement, SliderProps>(
         <input
           ref={ref}
           type="range"
-          value={value[0]}
-          onChange={(e) => onValueChange?.([parseFloat(e.target.value)])}
+          value={displayValue}
+          onChange={handleChange}
+          onMouseDown={handleInteractionStart}
+          onMouseUp={handleInteractionEnd}
+          onTouchStart={handleInteractionStart}
+          onTouchEnd={handleInteractionEnd}
           min={min}
           max={max}
           step={step}
@@ -44,7 +84,7 @@ export const Slider = forwardRef<HTMLInputElement, SliderProps>(
         />
         {showValue && (
           <span className="text-xs text-gray-500 dark:text-gray-400 w-12 text-right">
-            {formatValue ? formatValue(value[0]) : Math.round(value[0])}
+            {formatValue ? formatValue(displayValue) : Math.round(displayValue)}
           </span>
         )}
       </div>
