@@ -18,7 +18,7 @@ export interface AISearchConfig {
  */
 export interface AISearchInput {
   query: string
-  categoryId?: number
+  categoryIds?: number[]
 }
 
 /**

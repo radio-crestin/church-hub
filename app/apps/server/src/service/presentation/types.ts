@@ -144,6 +144,7 @@ export interface BiblePassageVerse {
 export interface TemporaryBiblePassageContent {
   translationId: number
   translationAbbreviation: string
+  bookId?: number
   bookCode: string
   bookName: string
   startChapter: number
@@ -283,6 +284,7 @@ export interface PresentTemporaryAnnouncementInput {
 export interface PresentTemporaryBiblePassageInput {
   translationId: number
   translationAbbreviation: string
+  bookId?: number
   bookCode: string
   bookName: string
   startChapter: number

@@ -6,7 +6,6 @@ import {
   EyeOff,
   History,
   Loader2,
-  MonitorUp,
   PanelRightClose,
   PanelRightOpen,
 } from 'lucide-react'
@@ -15,6 +14,7 @@ import { useTranslation } from 'react-i18next'
 
 import { useAppShortcuts } from '~/features/keyboard-shortcuts'
 import {
+  ContentTypeButton,
   LivePreview,
   useClearSlide,
   usePresentationState,
@@ -84,13 +84,9 @@ export function BibleControlPanel({
     <div className="flex flex-col lg:h-full bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
       <div className="flex items-center justify-between p-2 lg:p-3 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center gap-2">
-          <MonitorUp
-            size={18}
-            className="text-indigo-600 dark:text-indigo-400"
-          />
-          <h3 className="font-medium text-gray-900 dark:text-white text-sm lg:text-base">
-            {t('controls.title')}
-          </h3>
+          {state?.temporaryContent && (
+            <ContentTypeButton temporaryContent={state.temporaryContent} />
+          )}
           {hasHighlights && (
             <button
               type="button"

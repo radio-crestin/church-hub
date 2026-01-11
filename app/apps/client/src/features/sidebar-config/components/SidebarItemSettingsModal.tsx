@@ -8,6 +8,7 @@ import type { GlobalShortcutActionId } from '~/features/keyboard-shortcuts/types
 import { VALID_ACTION_IDS } from '~/features/keyboard-shortcuts/utils'
 import { useOBSScenes } from '~/features/livestream/hooks'
 import { ConfirmModal } from '~/ui/modal'
+import { isTauri } from '~/utils/isTauri'
 import { IconPicker } from './IconPicker'
 import {
   BUILTIN_ITEMS,
@@ -77,6 +78,11 @@ export function SidebarItemSettingsModal({
   const [focusSearchOnNavigate, setFocusSearchOnNavigate] = useState(false)
   const [isVisible, setIsVisible] = useState(true)
 
+  // Native window settings
+  const [openInNativeWindow, setOpenInNativeWindow] = useState(false)
+  const [autoOpenOnStartup, setAutoOpenOnStartup] = useState(false)
+  const [forceNativeWindow, setForceNativeWindow] = useState(false)
+
   // Custom page fields
   const [title, setTitle] = useState('')
   const [url, setUrl] = useState('')
@@ -120,6 +126,9 @@ export function SidebarItemSettingsModal({
         )
       setShortcuts([...settings.shortcuts])
       setFocusSearchOnNavigate(settings.focusSearchOnNavigate)
+      setOpenInNativeWindow(settings.nativeWindow?.openInNativeWindow ?? false)
+      setAutoOpenOnStartup(settings.nativeWindow?.autoOpenOnStartup ?? false)
+      setForceNativeWindow(settings.nativeWindow?.forceNativeWindow ?? false)
       setIsVisible(item.isVisible)
 
       if (isCustom) {
@@ -253,6 +262,11 @@ export function SidebarItemSettingsModal({
       settings: {
         shortcuts: validShortcuts,
         focusSearchOnNavigate,
+        nativeWindow: {
+          openInNativeWindow,
+          autoOpenOnStartup,
+          forceNativeWindow,
+        },
       },
       isVisible,
     }
@@ -382,6 +396,95 @@ export function SidebarItemSettingsModal({
                 {isVisible ? <Eye size={20} /> : <EyeOff size={20} />}
               </button>
             </div>
+
+            {/* Native Window Settings (Tauri only) */}
+            {isTauri() && (
+              <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                  {t('sections.sidebarItem.nativeWindow.title')}
+                </h3>
+
+                {/* Enable Native Window Toggle */}
+                <div className="flex items-start gap-3">
+                  <input
+                    id="open-in-native-window"
+                    type="checkbox"
+                    checked={openInNativeWindow}
+                    onChange={(e) => {
+                      setOpenInNativeWindow(e.target.checked)
+                      // If disabling, also disable auto-open
+                      if (!e.target.checked) {
+                        setAutoOpenOnStartup(false)
+                      }
+                    }}
+                    className="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <div className="flex flex-col">
+                    <label
+                      htmlFor="open-in-native-window"
+                      className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer"
+                    >
+                      {t('sections.sidebarItem.nativeWindow.enableLabel')}
+                    </label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {t('sections.sidebarItem.nativeWindow.enableDescription')}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Auto-open on Startup Toggle (nested under native window) */}
+                {openInNativeWindow && (
+                  <div className="flex items-start gap-3 ml-7">
+                    <input
+                      id="auto-open-startup"
+                      type="checkbox"
+                      checked={autoOpenOnStartup}
+                      onChange={(e) => setAutoOpenOnStartup(e.target.checked)}
+                      className="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <div className="flex flex-col">
+                      <label
+                        htmlFor="auto-open-startup"
+                        className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer"
+                      >
+                        {t('sections.sidebarItem.nativeWindow.autoOpenLabel')}
+                      </label>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {t(
+                          'sections.sidebarItem.nativeWindow.autoOpenDescription',
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Force Native Window Toggle (nested under native window) */}
+                {openInNativeWindow && (
+                  <div className="flex items-start gap-3 ml-7">
+                    <input
+                      id="force-native-window"
+                      type="checkbox"
+                      checked={forceNativeWindow}
+                      onChange={(e) => setForceNativeWindow(e.target.checked)}
+                      className="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <div className="flex flex-col">
+                      <label
+                        htmlFor="force-native-window"
+                        className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer"
+                      >
+                        {t('sections.sidebarItem.nativeWindow.forceLabel')}
+                      </label>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {t(
+                          'sections.sidebarItem.nativeWindow.forceDescription',
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Custom Page Settings */}
             {isCustom && (

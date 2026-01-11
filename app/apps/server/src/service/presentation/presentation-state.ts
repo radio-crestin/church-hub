@@ -904,6 +904,7 @@ export function presentTemporaryBiblePassage(
       data: {
         translationId: input.translationId,
         translationAbbreviation: input.translationAbbreviation,
+        bookId: input.bookId,
         bookCode: input.bookCode,
         bookName: input.bookName,
         startChapter: input.startChapter,

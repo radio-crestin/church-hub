@@ -14,7 +14,6 @@ interface SongsSearchParams {
   q?: string
   fromSong?: boolean
   selectedSongId?: number
-  categoryId?: number
   reset?: number
   focus?: boolean
 }
@@ -29,12 +28,6 @@ export const Route = createFileRoute('/songs/')({
         ? search.selectedSongId
         : typeof search.selectedSongId === 'string'
           ? parseInt(search.selectedSongId, 10) || undefined
-          : undefined,
-    categoryId:
-      typeof search.categoryId === 'number'
-        ? search.categoryId
-        : typeof search.categoryId === 'string'
-          ? parseInt(search.categoryId, 10) || undefined
           : undefined,
     reset:
       typeof search.reset === 'number'
@@ -53,7 +46,6 @@ function SongsPage() {
     q: searchQuery = '',
     fromSong,
     selectedSongId,
-    categoryId,
     reset,
     focus,
   } = useSearch({
@@ -78,14 +70,13 @@ function SongsPage() {
         to: '/songs/',
         search: {
           q: reset ? undefined : searchQuery || undefined,
-          categoryId: reset ? undefined : categoryId || undefined,
         },
         replace: true,
       })
       // Trigger focus in SongList
       setFocusTrigger((prev) => prev + 1)
     }
-  }, [reset, focus, navigate, searchQuery, categoryId])
+  }, [reset, focus, navigate, searchQuery])
 
   const { data: presentationState } = usePresentationState()
   const hasNavigatedOnOpen = useRef(false)
@@ -113,7 +104,6 @@ function SongsPage() {
         params: { songId: String(presentedSongId) },
         search: {
           q: searchQuery || undefined,
-          categoryId: categoryId || undefined,
         },
       })
       return
@@ -128,11 +118,10 @@ function SongsPage() {
         params: { songId: String(lastVisited.songId) },
         search: {
           q: searchQuery || undefined,
-          categoryId: categoryId || undefined,
         },
       })
     }
-  }, [presentationState, navigate, searchQuery, fromSong, categoryId])
+  }, [presentationState, navigate, searchQuery, fromSong])
 
   const handleSongClick = (songId: number) => {
     navigate({
@@ -140,8 +129,6 @@ function SongsPage() {
       params: { songId: String(songId) },
       search: {
         q: searchQuery || undefined,
-        // Mark as internal navigation so back button uses browser history
-        internal: true,
       },
     })
   }
@@ -149,18 +136,7 @@ function SongsPage() {
   const handleSearchChange = (query: string) => {
     navigate({
       to: '/songs/',
-      search: { q: query || undefined, categoryId: categoryId || undefined },
-      replace: true,
-    })
-  }
-
-  const handleCategoryChange = (newCategoryId: number | undefined) => {
-    navigate({
-      to: '/songs/',
-      search: {
-        q: searchQuery || undefined,
-        categoryId: newCategoryId || undefined,
-      },
+      search: { q: query || undefined },
       replace: true,
     })
   }
@@ -202,8 +178,6 @@ function SongsPage() {
             searchQuery={searchQuery}
             onSearchChange={handleSearchChange}
             initialSelectedSongId={selectedSongId}
-            categoryId={categoryId}
-            onCategoryChange={handleCategoryChange}
             focusTrigger={focusTrigger}
           />
         </div>

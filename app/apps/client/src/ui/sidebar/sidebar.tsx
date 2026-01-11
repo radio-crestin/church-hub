@@ -24,6 +24,10 @@ import {
   useSidebarConfig,
   useSidebarItemShortcuts,
 } from '../../features/sidebar-config'
+import type {
+  CustomPageMenuItem,
+  NativeWindowSettings,
+} from '../../features/sidebar-config/types'
 import type { Permission } from '../../features/users/types'
 import { usePermissions } from '../../provider/permissions-provider'
 
@@ -60,6 +64,38 @@ export function Sidebar() {
     }
     return map
   }, [sidebarShortcuts])
+
+  // Get native window settings and icon name for an item
+  const getItemNativeWindowSettings = useCallback(
+    (itemId: string): NativeWindowSettings | undefined => {
+      const item = config?.items.find((i) => i.id === itemId)
+      return item?.settings?.nativeWindow
+    },
+    [config],
+  )
+
+  const getItemIconName = useCallback(
+    (itemId: string): string | undefined => {
+      const item = config?.items.find((i) => i.id === itemId)
+      if (item?.type === 'custom') {
+        return (item as CustomPageMenuItem).iconName
+      }
+      return undefined
+    },
+    [config],
+  )
+
+  // Get external URL for custom pages (used for native windows)
+  const getItemExternalUrl = useCallback(
+    (itemId: string): string | undefined => {
+      const item = config?.items.find((i) => i.id === itemId)
+      if (item?.type === 'custom') {
+        return (item as CustomPageMenuItem).url
+      }
+      return undefined
+    },
+    [config],
+  )
 
   // Get kiosk settings to determine if kiosk menu item should be visible
   const { data: kioskSettings } = useKioskSettings()
@@ -238,6 +274,7 @@ export function Sidebar() {
           {menuItems.map((item) => (
             <SidebarItem
               key={item.id}
+              pageId={item.id}
               icon={item.icon}
               label={item.label}
               to={item.to}
@@ -249,6 +286,9 @@ export function Sidebar() {
               className="md:flex"
               onClick={(e) => handleSidebarItemClick(item.to, e)}
               shortcut={routeShortcuts[item.to as keyof typeof routeShortcuts]}
+              nativeWindowSettings={getItemNativeWindowSettings(item.id)}
+              iconName={getItemIconName(item.id)}
+              externalUrl={getItemExternalUrl(item.id)}
             />
           ))}
 
@@ -257,6 +297,7 @@ export function Sidebar() {
             {/* Kiosk - shown when kiosk mode is enabled */}
             {showKiosk && (
               <SidebarItem
+                pageId="kiosk"
                 icon={Monitor}
                 label={t('sidebar:navigation.kiosk')}
                 to="/kiosk"
@@ -264,6 +305,7 @@ export function Sidebar() {
                 isActive={false}
                 className="md:flex"
                 onClick={(e) => handleSidebarItemClick('/kiosk', e)}
+                nativeWindowSettings={getItemNativeWindowSettings('kiosk')}
               />
             )}
 
@@ -293,6 +335,7 @@ export function Sidebar() {
             {/* Settings */}
             {canViewSettings && (
               <SidebarItem
+                pageId="settings"
                 icon={Settings}
                 label={t('sidebar:navigation.settings')}
                 to="/settings"
@@ -303,6 +346,7 @@ export function Sidebar() {
                 }
                 className="md:flex"
                 onClick={(e) => handleSidebarItemClick('/settings', e)}
+                nativeWindowSettings={getItemNativeWindowSettings('settings')}
               />
             )}
           </div>

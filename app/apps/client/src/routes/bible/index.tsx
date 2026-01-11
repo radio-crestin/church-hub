@@ -109,6 +109,7 @@ function BiblePage() {
     translations,
     isLoading: translationsLoading,
   } = useSelectedBibleTranslations()
+  const { data: primaryBooks = [] } = useBooks(primaryTranslation?.id)
   const presentTemporaryBible = usePresentTemporaryBible()
   const clearSlide = useClearSlide()
   const navigateTemporary = useNavigateTemporary()
@@ -222,6 +223,17 @@ function BiblePage() {
               : undefined,
         selectOnly: urlSelectOnly === true,
       })
+    } else if (!urlBookId && urlBookName && urlChapter !== undefined) {
+      // Book name + chapter in URL but no book ID - look up book ID from name
+      const book = primaryBooks.find((b) => b.bookName === urlBookName)
+      if (book) {
+        navigation.navigateToChapter({
+          bookId: book.id,
+          bookName: urlBookName,
+          chapter: urlChapter,
+          verseIndex: urlVerse !== undefined ? urlVerse - 1 : undefined,
+        })
+      }
     } else if (urlBookId && urlBookName) {
       // Only book in URL - chapters level
       navigation.selectBook(urlBookId, urlBookName)
@@ -237,6 +249,7 @@ function BiblePage() {
     urlVerse,
     urlSearchQuery,
     urlSelectOnly,
+    primaryBooks,
   ])
 
   // Handle focus from keyboard shortcut - trigger focus on search input

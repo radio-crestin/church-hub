@@ -165,7 +165,7 @@
 - adauga background as black and not white
 - in livestream adauga un preview cu feed-ul live
 - creaza un quickstart guide pentru utilizatori
-- adauga optiunea de a face screen share la o fereastra
+~~- adauga optiunea de a face screen share la o fereastra~~
 
 ~~- rezolva problema cu programele~~
 
@@ -173,17 +173,15 @@
 ~~- cand se sterge search-ul din Biblie, intoarce-te la fisierul afisat~~
 ~~- am cautat "ca sa ne invete ce sa facem" in Biblie si nu a functiona~~
 
+~~- cand e afisata o cantare, lasa utilizatorul sa mearga in spate~~
+~~- adauga buton de a deschide cantarea existenta~~
 
-
-- cand schimb ecranul, midi state is destroyed
 ~~- selectarea unui verset din istoric sa nu fie afisat direct~~
-- :Ierusalime cetate impodobita: - amin nu e ok, split ex on sieds
+~~- :Ierusalime cetate impodobita: - amin nu e ok, split ex on sieds~~
 ~~- shortcut-urile nu functioneaza F5 si F6~~
 ~~- afiseaza versetul complet in istoric~~
 - (optional) afisare in 2 pasi
-- afiseaza Whatsapp intr-o fereastra nativa
-- pagina dedicata pentru game (nea Mihai)
-- pagina dedicata pentru control sunet camera copii
+~~- afiseaza Whatsapp intr-o fereastra nativa~~
 - pagina de prezentari
 - slide-uri temporare
 - adauga upvote/downvote la cantari

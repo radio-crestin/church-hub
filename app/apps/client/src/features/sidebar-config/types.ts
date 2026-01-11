@@ -16,6 +16,18 @@ export type BuiltInMenuItemId =
   | 'settings'
 
 /**
+ * Settings for native window behavior
+ */
+export interface NativeWindowSettings {
+  /** Whether this page can be opened in a native window (via middle-click) */
+  openInNativeWindow: boolean
+  /** Auto-open this page in a native window on app startup */
+  autoOpenOnStartup: boolean
+  /** Force all clicks to open in native window instead of navigating in main window */
+  forceNativeWindow: boolean
+}
+
+/**
  * Settings for a sidebar item (shortcuts, navigation behavior)
  */
 export interface SidebarItemSettings {
@@ -23,6 +35,8 @@ export interface SidebarItemSettings {
   shortcuts: string[]
   /** Whether to focus the search input when navigating via shortcut */
   focusSearchOnNavigate: boolean
+  /** Native window settings (Tauri only) */
+  nativeWindow?: NativeWindowSettings
 }
 
 /**

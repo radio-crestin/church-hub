@@ -147,6 +147,15 @@
         "title": "Setări Pagină",
         "dangerZone": "Zonă Periculoasă",
         "deleteDescription": "Șterge permanent această pagină personalizată"
+      },
+      "nativeWindow": {
+        "title": "Fereastră Nativă",
+        "enableLabel": "Activează Fereastra Nativă",
+        "enableDescription": "Permite deschiderea acestei pagini într-o fereastră separată (click mijloc)",
+        "autoOpenLabel": "Deschide Automat la Pornire",
+        "autoOpenDescription": "Deschide automat această pagină într-o fereastră nativă când pornește aplicația",
+        "forceLabel": "Deschide Mereu în Fereastră Nativă",
+        "forceDescription": "Deschide întotdeauna această pagină într-o fereastră nativă în loc de fereastra principală (orice click)"
       }
     },
     "shortcuts": {

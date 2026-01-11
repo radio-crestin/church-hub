@@ -27,7 +27,7 @@ export async function aiSearchSongs(
     throw new Error('AI search configuration not found')
   }
 
-  const { query, categoryId } = input
+  const { query, categoryIds } = input
 
   // Step 1: Generate search terms using AI
   const { terms } = await generateSearchTerms(query, config)
@@ -39,7 +39,7 @@ export async function aiSearchSongs(
   // Step 3: Execute search using existing FTS infrastructure
   // This builds an efficient OR query and handles ranking
   // Request 150 candidates for AI analysis
-  const ftsResults = searchSongs(combinedQuery, categoryId, 150)
+  const ftsResults = searchSongs(combinedQuery, categoryIds, 150)
 
   // Step 4: Optionally use AI to analyze content and score relevance
   // Skip if analyzeResults is false (default) - only query expansion is used

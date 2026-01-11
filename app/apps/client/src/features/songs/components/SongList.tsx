@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 
 import { useSidebarItemShortcuts } from '~/features/sidebar-config'
 import { useDebouncedValue } from '~/hooks/useDebouncedValue'
-import { Combobox } from '~/ui/combobox'
+import { MultiSelectCombobox } from '~/ui/combobox'
 import { KeyboardShortcutBadge } from '~/ui/kbd'
 import { SongCard } from './SongCard'
 import {
@@ -19,14 +19,16 @@ import type { AISearchResult, SongSearchResult } from '../types'
 
 const SEARCH_DEBOUNCE_MS = 600
 
+const CATEGORY_FILTER_STORAGE_KEY = 'songList.categoryFilter'
+
 interface SongListProps {
   onSongClick: (songId: number) => void
   onSongMiddleClick?: (songId: number, songTitle: string) => void
   searchQuery?: string
   onSearchChange?: (query: string) => void
   initialSelectedSongId?: number
-  categoryId?: number
-  onCategoryChange?: (categoryId: number | undefined) => void
+  categoryIds?: number[]
+  onCategoryChange?: (categoryIds: number[]) => void
   focusTrigger?: number
 }
 
@@ -36,13 +38,61 @@ export function SongList({
   searchQuery = '',
   onSearchChange,
   initialSelectedSongId,
-  categoryId,
+  categoryIds: propCategoryIds,
   onCategoryChange,
   focusTrigger,
 }: SongListProps) {
   const { t } = useTranslation('songs')
   const searchInputRef = useRef<HTMLInputElement>(null)
   const loadMoreRef = useRef<HTMLDivElement>(null)
+
+  // Initialize category filter from local storage or props
+  const [categoryIds, setCategoryIds] = useState<number[]>(() => {
+    // If props provide category IDs, use them
+    if (propCategoryIds && propCategoryIds.length > 0) {
+      return propCategoryIds
+    }
+    // Otherwise try to load from local storage
+    try {
+      const stored = localStorage.getItem(CATEGORY_FILTER_STORAGE_KEY)
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (Array.isArray(parsed)) {
+          return parsed.filter((id): id is number => typeof id === 'number')
+        }
+      }
+    } catch {
+      // Ignore storage errors
+    }
+    return []
+  })
+
+  // Sync with props when they change
+  useEffect(() => {
+    if (propCategoryIds !== undefined) {
+      setCategoryIds(propCategoryIds)
+    }
+  }, [propCategoryIds])
+
+  // Persist category selection to local storage
+  const handleCategoryChange = useCallback(
+    (newCategoryIds: Array<number | string>) => {
+      const numericIds = newCategoryIds.filter(
+        (id): id is number => typeof id === 'number',
+      )
+      setCategoryIds(numericIds)
+      try {
+        localStorage.setItem(
+          CATEGORY_FILTER_STORAGE_KEY,
+          JSON.stringify(numericIds),
+        )
+      } catch {
+        // Ignore storage errors
+      }
+      onCategoryChange?.(numericIds)
+    },
+    [onCategoryChange],
+  )
 
   // Local state for immediate input feedback
   const [localQuery, setLocalQuery] = useState(searchQuery)
@@ -61,14 +111,14 @@ export function SongList({
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
-  } = useSongsInfinite(categoryId)
+  } = useSongsInfinite(categoryIds)
 
   // Search query for search mode
   const {
     data: searchResults,
     isLoading: searchLoading,
     isFetching,
-  } = useSearchSongs(debouncedQuery, categoryId)
+  } = useSearchSongs(debouncedQuery, categoryIds)
 
   const { data: categories } = useCategories()
 
@@ -93,13 +143,13 @@ export function SongList({
     try {
       const response = await aiSearchMutation.mutateAsync({
         query: localQuery,
-        categoryId,
+        categoryIds,
       })
       setAiSearchResults(response.results)
     } catch {
       setAiSearchResults([])
     }
-  }, [localQuery, categoryId, aiSearchMutation])
+  }, [localQuery, categoryIds, aiSearchMutation])
 
   // Clear AI results when query changes
   useEffect(() => {
@@ -367,22 +417,17 @@ export function SongList({
           </button>
         )}
         <div style={{ width: categoryDropdownWidth }}>
-          <Combobox
-            options={[
-              { value: 'all', label: t('search.allCategories') },
-              ...(categories?.map((category) => ({
+          <MultiSelectCombobox
+            options={
+              categories?.map((category) => ({
                 value: category.id,
                 label: category.name,
-              })) ?? []),
-            ]}
-            value={categoryId ?? 'all'}
-            onChange={(value) => {
-              onCategoryChange?.(
-                value !== null && value !== 'all' ? Number(value) : undefined,
-              )
-            }}
+              })) ?? []
+            }
+            value={categoryIds}
+            onChange={handleCategoryChange}
             placeholder={t('search.allCategories')}
-            allowClear={false}
+            allSelectedLabel={t('search.allCategories')}
           />
         </div>
       </div>

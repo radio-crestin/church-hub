@@ -2,7 +2,7 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "remote-access",
   "description": "Capability for display windows loading from localhost",
-  "windows": ["display-*", "custom-page-*", "song-*"],
+  "windows": ["display-*", "custom-page-*", "song-*", "page-*"],
   "remote": {
     "urls": ["http://localhost:*", "http://127.0.0.1:*"]
   },

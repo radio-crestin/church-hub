@@ -1,4 +1,12 @@
 export {
+  closePageWindow,
+  focusPageWindow,
+  getPageWindowState,
+  isPageWindowOpen,
+  openInBrowserTab,
+  openPageInNativeWindow,
+} from './pageWindowManager'
+export {
   generateCustomPageId,
   getCustomPagePermission,
   getSidebarConfiguration,

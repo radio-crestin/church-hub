@@ -2626,11 +2626,17 @@ async function main() {
         if (permError) return permError
 
         const query = url.searchParams.get('q') || ''
-        const categoryIdParam = url.searchParams.get('categoryId')
-        const categoryId = categoryIdParam
-          ? parseInt(categoryIdParam, 10)
+        const categoryIdsParam = url.searchParams.get('categoryIds')
+        const categoryIds = categoryIdsParam
+          ? categoryIdsParam
+              .split(',')
+              .map((id) => parseInt(id, 10))
+              .filter((id) => !isNaN(id))
           : undefined
-        const results = searchSongs(query, categoryId)
+        const results = searchSongs(
+          query,
+          categoryIds && categoryIds.length > 0 ? categoryIds : undefined,
+        )
 
         return handleCors(
           req,
@@ -2651,7 +2657,7 @@ async function main() {
         try {
           const body = (await req.json()) as {
             query: string
-            categoryId?: number
+            categoryIds?: number[]
           }
 
           if (!body.query?.trim()) {
@@ -2666,7 +2672,7 @@ async function main() {
 
           const results = await aiSearchSongs({
             query: body.query,
-            categoryId: body.categoryId,
+            categoryIds: body.categoryIds,
           })
 
           return handleCors(
@@ -2757,17 +2763,24 @@ async function main() {
 
         const limitParam = url.searchParams.get('limit')
         const offsetParam = url.searchParams.get('offset')
-        const categoryIdParam = url.searchParams.get('categoryId')
+        const categoryIdsParam = url.searchParams.get('categoryIds')
 
         // If pagination params provided, use paginated query
         if (limitParam) {
           const limit = parseInt(limitParam, 10) || 50
           const offset = offsetParam ? parseInt(offsetParam, 10) || 0 : 0
-          const categoryId = categoryIdParam
-            ? parseInt(categoryIdParam, 10)
+          const categoryIds = categoryIdsParam
+            ? categoryIdsParam
+                .split(',')
+                .map((id) => parseInt(id, 10))
+                .filter((id) => !isNaN(id))
             : undefined
 
-          const result = getSongsPaginated(limit, offset, categoryId)
+          const result = getSongsPaginated(
+            limit,
+            offset,
+            categoryIds && categoryIds.length > 0 ? categoryIds : undefined,
+          )
           return handleCors(
             req,
             new Response(JSON.stringify({ data: result }), {
