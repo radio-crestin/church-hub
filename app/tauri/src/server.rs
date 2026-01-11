@@ -55,6 +55,11 @@ pub fn start_server(app_handle: &AppHandle, server_port: u16) -> Result<(), Stri
     sidecar = sidecar.env("TAURI_MODE", "true");
     sidecar = sidecar.env("PORT", server_port.to_string());
 
+    // Pass PATH to allow the sidecar to find external binaries like mpv
+    if let Ok(path) = std::env::var("PATH") {
+        sidecar = sidecar.env("PATH", path);
+    }
+
     // Pass the client dist path for static file serving
     if let Ok(resource_dir) = app_handle.path().resolve("client-dist", BaseDirectory::Resource) {
         let resource_path = resource_dir.to_string_lossy().to_string();
