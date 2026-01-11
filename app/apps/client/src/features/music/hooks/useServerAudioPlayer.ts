@@ -18,7 +18,7 @@ const defaultState: ServerPlayerState = {
   isPlaying: false,
   currentTime: 0,
   duration: 0,
-  volume: 0,
+  volume: 100,
   isMuted: false,
   isShuffled: false,
   currentIndex: -1,
