@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useCallback } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 
 import { useWebSocket } from '~/features/presentation/hooks/useWebSocket'
 import type { ServerPlayerState } from '../types'
@@ -34,6 +34,21 @@ export function useServerAudioPlayer() {
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   })
+
+  // Track if we've already requested state to avoid duplicate requests
+  const hasRequestedState = useRef(false)
+
+  // Request state from server when connected and state hasn't been received yet
+  useEffect(() => {
+    if (
+      status === 'connected' &&
+      !hasRequestedState.current &&
+      state?.updatedAt === 0
+    ) {
+      hasRequestedState.current = true
+      send({ type: 'music_get_state' })
+    }
+  }, [status, state?.updatedAt, send])
 
   const play = useCallback(() => {
     send({ type: 'music_play' })

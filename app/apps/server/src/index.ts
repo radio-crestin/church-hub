@@ -4665,6 +4665,8 @@ async function main() {
       case 'music_clear_queue':
         clearNowPlayingQueue()
         await executeCommand({ type: 'stop' })
+        refreshQueueState()
+        broadcastMusicState(getPlayerState())
         break
       case 'music_set_queue': {
         const { fileIds } = payload as { fileIds: number[] }
@@ -4685,6 +4687,10 @@ async function main() {
         await executeCommand({ type: 'shuffle', enabled })
         break
       }
+      case 'music_get_state':
+        refreshQueueState()
+        broadcastMusicState(getPlayerState())
+        break
     }
   })
 
