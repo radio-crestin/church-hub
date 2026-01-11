@@ -1076,7 +1076,9 @@ function BiblePage() {
                 >
                   <BibleHistoryPanel
                     onSelectVerse={(item: BibleHistoryItem) => {
-                      // Navigate via URL
+                      // Navigate via URL - select only without presenting
+                      isBrowsingRef.current = true
+                      pendingInternalNavRef.current = true
                       navigate({
                         to: '/bible/',
                         search: {
@@ -1084,9 +1086,9 @@ function BiblePage() {
                           bookName: item.bookName,
                           chapter: item.chapter,
                           verse: item.verse,
+                          select: true,
                         },
                       })
-                      navigation.setSearchedIndex(item.verse - 1)
                     }}
                   />
                 </div>

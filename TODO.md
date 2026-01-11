@@ -159,13 +159,31 @@
 ~~- muta setarile in paginile relevante~~
 ~~- rezolva problemele cu shortcuts bara~~ 
 ~~- adauga shortcuts pentru programe, muzica, whatsapp, Live Stream, Camera de control~~
-- testeaza pe windows player-ul audio si intreaga aplicatie
+~~- testeaza pe windows player-ul audio si intreaga aplicatie~~
 ~~- butoanele din camera de control nu functioneaza.. (pare putin cam inutila aceasta pagina..)~~
-- implementeaza screen share
+~~- implementeaza screen share~~
 - adauga background as black and not white
 - in livestream adauga un preview cu feed-ul live
 - creaza un quickstart guide pentru utilizatori
 - adauga optiunea de a face screen share la o fereastra
+
+
+- cand schimb ecranul, midi state is destroyed
+~~- selectarea unui verset din istoric sa nu fie afisat direct~~
+- :Ierusalime cetate impodobita: - amin nu e ok, split ex on sieds
+- adauga upvote/downvote la cantari
+- cand se sterge search-ul din Biblie, intoarce-te la fisierul afisat
+- shortcut-urile nu functioneaza F5 si F6
+- afiseaza versetul complet in istoric
+- am cautat "ca sa ne invete ce sa facem" in Biblie si nu a functiona
+- (optional) afisare in 2 pasi
+- afiseaza Whatsapp intr-o fereastra nativa
+- pagina dedicata pentru game (nea Mihai)
+- pagina dedicata pentru control sunet camera copii
+- pagina de prezentari
+- slide-uri temporare
+
+
 
 ### Optionals
 - implementeaza transcription folosind AI
