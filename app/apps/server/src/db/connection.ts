@@ -62,6 +62,9 @@ export async function initializeDatabase(): Promise<InitializeResult> {
     // Enable foreign keys
     sqlite.run('PRAGMA foreign_keys = ON')
 
+    // Set busy timeout to 10 seconds to prevent deadlocks
+    sqlite.run('PRAGMA busy_timeout = 10000')
+
     // RAM optimizations for better performance on slow machines
     // 64MB page cache (negative value = KB)
     sqlite.run('PRAGMA cache_size = -65536')

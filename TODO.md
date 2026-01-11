@@ -171,7 +171,7 @@
 
 
 ~~- cand se sterge search-ul din Biblie, intoarce-te la fisierul afisat~~
-- am cautat "ca sa ne invete ce sa facem" in Biblie si nu a functiona
+~~- am cautat "ca sa ne invete ce sa facem" in Biblie si nu a functiona~~
 
 
 

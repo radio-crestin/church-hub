@@ -1,4 +1,4 @@
-import { Search, Sparkles, X } from 'lucide-react'
+import { ArrowLeft, Search, Sparkles, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -478,6 +478,7 @@ export function BibleNavigationPanel({
             type="ai"
             isLoading={false}
             onSelectResult={onSelectSearchResult}
+            onClearSearch={clearSearch}
             getBookName={getBookName}
             focusedIndex={focusedResultIndex}
           />
@@ -487,6 +488,7 @@ export function BibleNavigationPanel({
             type={searchResults?.type || 'text'}
             isLoading={isSearching}
             onSelectResult={onSelectSearchResult}
+            onClearSearch={clearSearch}
             getBookName={getBookName}
             focusedIndex={focusedResultIndex}
           />
@@ -540,6 +542,7 @@ interface SearchResultsProps {
   type: 'reference' | 'text' | 'ai'
   isLoading: boolean
   onSelectResult: (result: BibleSearchResult) => void
+  onClearSearch: () => void
   getBookName: (bookCode: string) => string | undefined
   focusedIndex?: number
 }
@@ -549,6 +552,7 @@ function SearchResults({
   type,
   isLoading,
   onSelectResult,
+  onClearSearch,
   getBookName,
   focusedIndex = -1,
 }: SearchResultsProps) {
@@ -582,59 +586,77 @@ function SearchResults({
   }
 
   return (
-    <div className="space-y-1">
-      {results.map((result, index) => {
-        const isSearchResult = type === 'text' || type === 'ai'
-        const searchResult = result as BibleSearchResult
-        const aiResult = result as AIBibleSearchResult
-        const verse = result as BibleVerse
-        const isFocused = index === focusedIndex
+    <div className="flex flex-col h-full">
+      <div className="flex items-center justify-between mb-3">
+        <button
+          type="button"
+          onClick={onClearSearch}
+          className="flex items-center gap-1.5 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+        >
+          <ArrowLeft size={16} />
+          {t('navigation.back')}
+          <KeyboardShortcutBadge shortcut="Escape" variant="muted" />
+        </button>
+        <span className="text-sm text-gray-500 dark:text-gray-400">
+          {t('search.resultsCount', { count: results.length })}
+        </span>
+      </div>
+      <div className="space-y-1">
+        {results.map((result, index) => {
+          const isSearchResult = type === 'text' || type === 'ai'
+          const searchResult = result as BibleSearchResult
+          const aiResult = result as AIBibleSearchResult
+          const verse = result as BibleVerse
+          const isFocused = index === focusedIndex
 
-        // Get localized book name, fall back to original book name
-        const bookCode = isSearchResult ? searchResult.bookCode : verse.bookCode
-        const localizedBookName =
-          getBookName(bookCode) ||
-          (isSearchResult ? searchResult.bookName : verse.bookName)
+          // Get localized book name, fall back to original book name
+          const bookCode = isSearchResult
+            ? searchResult.bookCode
+            : verse.bookCode
+          const localizedBookName =
+            getBookName(bookCode) ||
+            (isSearchResult ? searchResult.bookName : verse.bookName)
 
-        // Format reference with localized book name
-        const reference = isSearchResult
-          ? `${localizedBookName} ${searchResult.chapter}:${searchResult.verse}`
-          : `${localizedBookName} ${verse.chapter}:${verse.verse}`
+          // Format reference with localized book name
+          const reference = isSearchResult
+            ? `${localizedBookName} ${searchResult.chapter}:${searchResult.verse}`
+            : `${localizedBookName} ${verse.chapter}:${verse.verse}`
 
-        return (
-          <button
-            key={result.id}
-            ref={isFocused ? focusedRef : undefined}
-            type="button"
-            onClick={() => onSelectResult(searchResult)}
-            className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
-              isFocused
-                ? 'bg-indigo-100 dark:bg-indigo-900/50 ring-2 ring-indigo-500'
-                : 'hover:bg-gray-100 dark:hover:bg-gray-700'
-            }`}
-          >
-            <div className="flex items-center gap-2 mb-0.5">
-              <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400">
-                {reference}
-              </span>
-              {type === 'ai' && aiResult.aiRelevanceScore !== undefined && (
-                <span className="flex items-center gap-0.5 text-xs font-medium text-indigo-600 dark:text-indigo-400">
-                  <Sparkles className="w-3 h-3" />
-                  {aiResult.aiRelevanceScore}%
+          return (
+            <button
+              key={result.id}
+              ref={isFocused ? focusedRef : undefined}
+              type="button"
+              onClick={() => onSelectResult(searchResult)}
+              className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
+                isFocused
+                  ? 'bg-indigo-100 dark:bg-indigo-900/50 ring-2 ring-indigo-500'
+                  : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+            >
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400">
+                  {reference}
                 </span>
-              )}
-            </div>
-            <div
-              className="text-sm text-gray-700 dark:text-gray-200 line-clamp-2"
-              dangerouslySetInnerHTML={{
-                __html: isSearchResult
-                  ? searchResult.highlightedText
-                  : verse.text,
-              }}
-            />
-          </button>
-        )
-      })}
+                {type === 'ai' && aiResult.aiRelevanceScore !== undefined && (
+                  <span className="flex items-center gap-0.5 text-xs font-medium text-indigo-600 dark:text-indigo-400">
+                    <Sparkles className="w-3 h-3" />
+                    {aiResult.aiRelevanceScore}%
+                  </span>
+                )}
+              </div>
+              <div
+                className="text-sm text-gray-700 dark:text-gray-200"
+                dangerouslySetInnerHTML={{
+                  __html: isSearchResult
+                    ? searchResult.highlightedText
+                    : verse.text,
+                }}
+              />
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }

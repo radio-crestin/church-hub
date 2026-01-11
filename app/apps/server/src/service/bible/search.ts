@@ -17,6 +17,14 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
 }
 
 /**
+ * Removes diacritics from text for normalized search
+ * This ensures searches work regardless of whether the user types with diacritics
+ */
+function removeDiacritics(text: string): string {
+  return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+}
+
+/**
  * Parsed reference result
  */
 interface ParsedReference {
@@ -207,7 +215,8 @@ export function searchVersesByText(
   }
 
   // Escape special FTS characters and prepare for FTS5 query
-  const sanitizedQuery = query
+  // Also remove diacritics to match the FTS index tokenizer settings
+  const sanitizedQuery = removeDiacritics(query)
     .replace(/['"]/g, '')
     .replace(/[*()]/g, ' ')
     .trim()
@@ -222,7 +231,10 @@ export function searchVersesByText(
   const words = sanitizedQuery.split(/\s+/).filter((w) => w.length >= 1)
   const ftsQuery = words.map((w) => `${w}*`).join(' ')
 
-  log('debug', `Searching for: "${sanitizedQuery}" → FTS query: "${ftsQuery}"`)
+  log(
+    'debug',
+    `Searching for: "${query}" → normalized: "${sanitizedQuery}" → FTS query: "${ftsQuery}"`,
+  )
 
   try {
     // Build the query based on whether we're filtering by translation

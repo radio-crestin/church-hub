@@ -207,11 +207,19 @@ function BiblePage() {
       if (urlSelectOnly === true) {
         isBrowsingRef.current = true
       }
+      // When selectOnly is true (from search results), don't set verseIndex here
+      // The verse index will be computed from urlVerse after verses load (see fix effect below)
+      // This avoids the bug where verse-1 doesn't equal array index for non-sequential verses
       navigation.navigateToChapter({
         bookId: urlBookId,
         bookName: urlBookName,
         chapter: urlChapter,
-        verseIndex: urlVerse !== undefined ? urlVerse - 1 : undefined,
+        verseIndex:
+          urlSelectOnly === true
+            ? undefined
+            : urlVerse !== undefined
+              ? urlVerse - 1
+              : undefined,
         selectOnly: urlSelectOnly === true,
       })
     } else if (urlBookId && urlBookName) {
@@ -560,6 +568,18 @@ function BiblePage() {
     navigation.state.chapter,
   )
 
+  // Set searchedIndex when coming from search results
+  // We compute the actual array index from the verse number after verses are loaded
+  // This correctly handles non-sequential verse numbers (where verse-1 !== array index)
+  useEffect(() => {
+    if (urlSelectOnly && urlVerse !== undefined && verses.length > 0) {
+      const actualIndex = verses.findIndex((v) => v.verse === urlVerse)
+      if (actualIndex !== -1) {
+        navigation.setSearchedIndex(actualIndex)
+      }
+    }
+  }, [urlSelectOnly, urlVerse, verses, navigation.setSearchedIndex])
+
   // Get current translation (the one being navigated)
   const currentTranslation = translations.find(
     (t) => t.id === navigation.state.translationId,
@@ -792,7 +812,7 @@ function BiblePage() {
     } else {
       // External navigation - use hierarchical navigation (verses → chapters → books)
       // and update URL to match the new state
-      const { level, bookId, bookName } = navigation.state
+      const { level, bookId, bookName, searchQuery } = navigation.state
       if (level === 'verses' && bookId && bookName) {
         // Go back to chapters view
         navigate({
@@ -807,23 +827,34 @@ function BiblePage() {
           search: {},
           replace: true,
         })
+      } else if (level === 'books' && searchQuery) {
+        // At books level with search - clear the search to show books
+        navigation.clearSearch()
+        navigate({
+          to: '/bible/',
+          search: {},
+          replace: true,
+        })
       } else {
-        // Already at books level, use browser back
+        // Already at books level without search, use browser back
         window.history.back()
       }
     }
-  }, [tempContentType, navigation.state, navigate])
+  }, [tempContentType, navigation.state, navigation.clearSearch, navigate])
 
-  // Enable keyboard shortcuts (for chapters and verses levels)
+  // Enable keyboard shortcuts (for chapters and verses levels, or books level with search)
   const isVersesLevel = navigation.state.level === 'verses'
   const isChaptersLevel = navigation.state.level === 'chapters'
+  const isBooksLevelWithSearch =
+    navigation.state.level === 'books' &&
+    navigation.state.searchQuery.length > 0
   useBibleKeyboardShortcuts({
     onNextVerse: handleNextVerse,
     onPreviousVerse: handlePreviousVerse,
     onGoBack: handleGoBack,
     onHidePresentation: handleHidePresentation,
     onPresentSearched: handlePresentSearched,
-    enabled: isVersesLevel || isChaptersLevel,
+    enabled: isVersesLevel || isChaptersLevel || isBooksLevelWithSearch,
     isPresenting: navigation.state.presentedIndex !== null,
     isVersesLevel,
   })
