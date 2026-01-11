@@ -54,9 +54,10 @@ export function FolderCard({
 
   // Load files when expanded OR when there's a search query
   const shouldLoadFiles = isExpanded || searchQuery.length > 0
-  const { data: files = [], isLoading: isLoadingFiles } = useMusicFiles(
-    shouldLoadFiles ? folder.id : undefined,
-  )
+  const { data: files = [], isLoading: isLoadingFiles } = useMusicFiles({
+    folderId: folder.id,
+    enabled: shouldLoadFiles,
+  })
 
   const filteredFiles = searchQuery
     ? files.filter(
