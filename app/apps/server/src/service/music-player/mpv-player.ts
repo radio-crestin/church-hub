@@ -330,8 +330,24 @@ function findMpvPath(): string | null {
   // Development mode: check for mpv in tauri/resources/mpv
   const devMpvPaths = [
     // Relative to server cwd (apps/server)
-    path.join(process.cwd(), '..', '..', 'tauri', 'resources', 'mpv', 'mpv.exe'),
-    path.join(process.cwd(), '..', '..', 'tauri', 'resources', 'mpv', 'mpv'),
+    path.join(
+      process.cwd(),
+      '..',
+      '..',
+      'tauri',
+      'resources',
+      'mpv',
+      'mpv.exe',
+    ),
+    path.join(
+      process.cwd(),
+      '..',
+      '..',
+      'tauri',
+      'resources',
+      'mpv',
+      'mpv',
+    ),
     // Relative to app root
     path.join(process.cwd(), 'tauri', 'resources', 'mpv', 'mpv.exe'),
     path.join(process.cwd(), 'tauri', 'resources', 'mpv', 'mpv'),

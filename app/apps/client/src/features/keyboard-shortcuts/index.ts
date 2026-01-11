@@ -3,8 +3,6 @@ export {
   MIDISettingsSection,
   ShortcutActionRow,
   ShortcutRecorder,
-  /** @deprecated Use MIDISettingsSection instead. Shortcuts moved to per-feature settings. */
-  ShortcutsSettingsSection,
 } from './components'
 export type { KeyboardPriority } from './context'
 export {
