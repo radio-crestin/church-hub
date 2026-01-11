@@ -45,8 +45,6 @@ import { useToast } from '~/ui/toast'
 interface SongSearchParams {
   q?: string
   reset?: number
-  /** When true, navigation was from within the songs list - use browser history for back */
-  internal?: boolean
 }
 
 export const Route = createFileRoute('/songs/$songId/')({
@@ -59,7 +57,6 @@ export const Route = createFileRoute('/songs/$songId/')({
         : typeof search.reset === 'string'
           ? parseInt(search.reset, 10) || undefined
           : undefined,
-    internal: search.internal === true || search.internal === 'true',
   }),
   beforeLoad: ({ params }) => {
     // Redirect "new" to the edit page
@@ -73,11 +70,7 @@ function SongPreviewPage() {
   const { t } = useTranslation('songs')
   const navigate = useNavigate()
   const { songId } = Route.useParams()
-  const {
-    q: searchQuery,
-    reset,
-    internal,
-  } = useSearch({ from: '/songs/$songId/' })
+  const { q: searchQuery, reset } = useSearch({ from: '/songs/$songId/' })
 
   // Handle reset from keyboard shortcut - redirect to song list with reset
   useEffect(() => {
@@ -163,15 +156,8 @@ function SongPreviewPage() {
     // Clear last visited so user stays on list when going back
     clearSectionLastVisited('songs')
 
-    // If user navigated internally (from songs list), use browser history
-    // This preserves the exact previous state (search query, scroll position, etc.)
-    if (internal) {
-      window.history.back()
-      return
-    }
-
-    // External navigation (direct URL, sidebar) - use programmatic navigation
-    // Preserve search query and current song ID so user returns to their position
+    // Always use programmatic navigation with fromSong flag
+    // This prevents auto-navigation from redirecting user back to the same song
     navigate({
       to: '/songs/',
       search: {
@@ -180,7 +166,7 @@ function SongPreviewPage() {
         selectedSongId: numericId,
       },
     })
-  }, [navigate, searchQuery, numericId, internal])
+  }, [navigate, searchQuery, numericId])
 
   const handlePrevSlide = useCallback(async () => {
     if (presentedSlideIndex !== null && presentedSlideIndex > 0) {

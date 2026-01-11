@@ -26,14 +26,14 @@ export interface PaginatedSongsResult {
 export async function getSongsPaginated(
   limit: number,
   offset: number,
-  categoryId?: number,
+  categoryIds?: number[],
   signal?: AbortSignal,
 ): Promise<PaginatedSongsResult> {
   const params = new URLSearchParams()
   params.set('limit', String(limit))
   params.set('offset', String(offset))
-  if (categoryId !== undefined) {
-    params.set('categoryId', String(categoryId))
+  if (categoryIds && categoryIds.length > 0) {
+    params.set('categoryIds', categoryIds.join(','))
   }
   const response = await fetcher<ApiResponse<PaginatedSongsResult>>(
     `/api/songs?${params.toString()}`,
@@ -105,13 +105,13 @@ export async function deleteSong(id: number): Promise<boolean> {
 
 export async function searchSongs(
   query: string,
-  categoryId?: number,
+  categoryIds?: number[],
   signal?: AbortSignal,
 ): Promise<SongSearchResult[]> {
   const params = new URLSearchParams()
   params.set('q', query)
-  if (categoryId !== undefined) {
-    params.set('categoryId', String(categoryId))
+  if (categoryIds && categoryIds.length > 0) {
+    params.set('categoryIds', categoryIds.join(','))
   }
   const response = await fetcher<ApiResponse<SongSearchResult[]>>(
     `/api/songs/search?${params.toString()}`,
@@ -143,7 +143,7 @@ export async function rebuildSearchIndex(): Promise<{
 
 export async function aiSearchSongs(
   query: string,
-  categoryId?: number,
+  categoryIds?: number[],
   signal?: AbortSignal,
 ): Promise<AISearchResponse> {
   const response = await fetcher<ApiResponse<AISearchResponse>>(
@@ -151,7 +151,7 @@ export async function aiSearchSongs(
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, categoryId }),
+      body: JSON.stringify({ query, categoryIds }),
       signal,
     },
   )

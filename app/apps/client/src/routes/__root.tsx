@@ -25,6 +25,7 @@ import {
   WebSocketProvider,
 } from '~/features/presentation/context'
 import { useAutoOpenScreens } from '~/features/presentation/hooks'
+import { useAutoOpenPageWindows } from '~/features/sidebar-config/hooks'
 import { FileDropZoneProvider } from '~/features/song-import'
 import { I18nProvider } from '~/provider/i18n-provider'
 import { PermissionsProvider } from '~/provider/permissions-provider'
@@ -48,6 +49,15 @@ const isDev = import.meta.env.DEV
  */
 function AutoOpenScreens() {
   useAutoOpenScreens()
+  return null
+}
+
+/**
+ * Component that handles auto-opening page windows
+ * Must be inside QueryClientProvider to use hooks
+ */
+function AutoOpenPageWindows() {
+  useAutoOpenPageWindows()
   return null
 }
 
@@ -130,6 +140,7 @@ function MainLayout() {
                         <ShortcutRecordingProvider>
                           <FileDropZoneProvider>
                             <AutoOpenScreens />
+                            <AutoOpenPageWindows />
                             <SidebarNavigationListener />
                             <GlobalAppShortcutManager />
                             <AppLayout>

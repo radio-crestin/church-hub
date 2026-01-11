@@ -131,32 +131,38 @@ export interface PaginatedSongsResult {
  * Gets songs with pagination support
  * @param limit - Number of songs to return
  * @param offset - Number of songs to skip
- * @param categoryId - Optional category filter
+ * @param categoryIds - Optional category filter (array of category IDs)
  */
 export function getSongsPaginated(
   limit: number,
   offset: number,
-  categoryId?: number,
+  categoryIds?: number[],
 ): PaginatedSongsResult {
   try {
     log(
       'debug',
-      `Getting songs paginated: limit=${limit}, offset=${offset}, categoryId=${categoryId}`,
+      `Getting songs paginated: limit=${limit}, offset=${offset}, categoryIds=${categoryIds?.join(',')}`,
     )
 
     const db = getDatabase()
 
     // Build base query with optional category filter
     let query = db.select().from(songs)
-    if (categoryId !== undefined) {
-      query = query.where(eq(songs.categoryId, categoryId)) as typeof query
+    if (categoryIds && categoryIds.length > 0) {
+      query = query.where(
+        inArray(songs.categoryId, categoryIds),
+      ) as typeof query
     }
 
     // Get total count using raw SQL for efficiency
     const rawDb = getRawDatabase()
-    const categoryFilter =
-      categoryId !== undefined ? 'WHERE category_id = ?' : ''
-    const countParams = categoryId !== undefined ? [categoryId] : []
+    let categoryFilter = ''
+    let countParams: number[] = []
+    if (categoryIds && categoryIds.length > 0) {
+      const placeholders = categoryIds.map(() => '?').join(',')
+      categoryFilter = `WHERE category_id IN (${placeholders})`
+      countParams = categoryIds
+    }
     const countResult = rawDb
       .query(`SELECT COUNT(*) as total FROM songs ${categoryFilter}`)
       .get(...countParams) as { total: number }

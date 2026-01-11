@@ -1,3 +1,4 @@
+export { useAutoOpenPageWindows } from './useAutoOpenPageWindows'
 export {
   getIconComponent,
   useResolvedSidebarItems,

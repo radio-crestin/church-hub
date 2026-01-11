@@ -55,6 +55,11 @@ export function getDefaultSidebarItemSettings(
   return {
     shortcuts: [],
     focusSearchOnNavigate: builtinId ? DEFAULT_FOCUS_SEARCH[builtinId] : false,
+    nativeWindow: {
+      openInNativeWindow: false,
+      autoOpenOnStartup: false,
+      forceNativeWindow: false,
+    },
   }
 }
 

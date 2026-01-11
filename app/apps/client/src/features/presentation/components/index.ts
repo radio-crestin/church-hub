@@ -1,4 +1,5 @@
 export * from './ClockOverlay'
+export * from './ContentTypeButton'
 export * from './ControlRoom'
 export * from './ControlRoomSettingsModal'
 export * from './LivePreview'

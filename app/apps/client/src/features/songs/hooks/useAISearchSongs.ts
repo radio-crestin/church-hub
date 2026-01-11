@@ -5,11 +5,11 @@ import type { AISearchResponse } from '../types'
 
 interface AISearchInput {
   query: string
-  categoryId?: number
+  categoryIds?: number[]
 }
 
 export function useAISearchSongs() {
   return useMutation<AISearchResponse, Error, AISearchInput>({
-    mutationFn: ({ query, categoryId }) => aiSearchSongs(query, categoryId),
+    mutationFn: ({ query, categoryIds }) => aiSearchSongs(query, categoryIds),
   })
 }

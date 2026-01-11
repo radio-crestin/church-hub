@@ -855,12 +855,12 @@ function buildTrigramQuery(terms: string[]): string {
  * - Limits candidates, returns top results after re-ranking
  *
  * @param query - Search query string
- * @param categoryId - Optional category ID to filter results
+ * @param categoryIds - Optional category IDs to filter results (array)
  * @param limit - Maximum number of results to return (default: 50)
  */
 export function searchSongs(
   query: string,
-  categoryId?: number,
+  categoryIds?: number[],
   limit = 50,
 ): SongSearchResult[] {
   try {
@@ -940,10 +940,14 @@ export function searchSongs(
     log('debug', `FTS query: ${ftsQuery}`)
 
     // Phase 1: Standard FTS5 search for exact/prefix matches
-    const categoryFilter =
-      categoryId !== undefined ? 'AND s.category_id = ?' : ''
-    const standardQueryParams =
-      categoryId !== undefined ? [ftsQuery, categoryId] : [ftsQuery]
+    let categoryFilter = ''
+    let categoryParams: number[] = []
+    if (categoryIds && categoryIds.length > 0) {
+      const placeholders = categoryIds.map(() => '?').join(',')
+      categoryFilter = `AND s.category_id IN (${placeholders})`
+      categoryParams = categoryIds
+    }
+    const standardQueryParams = [ftsQuery, ...categoryParams]
 
     const standardResults = db
       .query(
@@ -997,8 +1001,7 @@ export function searchSongs(
 
     if (trigramQuery) {
       try {
-        const trigramQueryParams =
-          categoryId !== undefined ? [trigramQuery, categoryId] : [trigramQuery]
+        const trigramQueryParams = [trigramQuery, ...categoryParams]
         trigramResults = db
           .query(
             `

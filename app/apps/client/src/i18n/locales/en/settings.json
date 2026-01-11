@@ -147,6 +147,15 @@
         "title": "Page Settings",
         "dangerZone": "Danger Zone",
         "deleteDescription": "Permanently delete this custom page"
+      },
+      "nativeWindow": {
+        "title": "Native Window",
+        "enableLabel": "Enable Native Window",
+        "enableDescription": "Allow this page to be opened in a separate native window (middle-click)",
+        "autoOpenLabel": "Auto-open on Startup",
+        "autoOpenDescription": "Automatically open this page in a native window when the app starts",
+        "forceLabel": "Always Open in Native Window",
+        "forceDescription": "Always open this page in a native window instead of the main window (any click)"
       }
     },
     "shortcuts": {

@@ -9,6 +9,7 @@ import {
 import { useTranslation } from 'react-i18next'
 
 import {
+  ContentTypeButton,
   LivePreview,
   useClearTemporaryContent,
   useNavigateTemporary,
@@ -80,8 +81,11 @@ export function SongControlPanel({
   return (
     <div className="flex flex-col lg:h-full bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
       <div className="flex items-center justify-between p-2 lg:p-3 border-b border-gray-200 dark:border-gray-700">
-        {/* Left side - Clear highlights button */}
+        {/* Left side - Content type button and clear highlights */}
         <div className="flex items-center gap-2">
+          {state?.temporaryContent && (
+            <ContentTypeButton temporaryContent={state.temporaryContent} />
+          )}
           {hasHighlights && (
             <button
               type="button"
