@@ -113,3 +113,13 @@ export interface ServerPlayerState {
   queue: QueueItemSummary[]
   updatedAt: number
 }
+
+export interface MpvStatus {
+  available: boolean
+  installed: boolean
+  installInstructions?: {
+    mac: string
+    windows: string
+    linux: string
+  }
+}
