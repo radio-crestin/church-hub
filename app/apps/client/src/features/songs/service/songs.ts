@@ -23,17 +23,29 @@ export interface PaginatedSongsResult {
   hasMore: boolean
 }
 
+export interface SongFilters {
+  categoryIds?: number[]
+  presentedOnly?: boolean
+  inSchedulesOnly?: boolean
+}
+
 export async function getSongsPaginated(
   limit: number,
   offset: number,
-  categoryIds?: number[],
+  filters?: SongFilters,
   signal?: AbortSignal,
 ): Promise<PaginatedSongsResult> {
   const params = new URLSearchParams()
   params.set('limit', String(limit))
   params.set('offset', String(offset))
-  if (categoryIds && categoryIds.length > 0) {
-    params.set('categoryIds', categoryIds.join(','))
+  if (filters?.categoryIds && filters.categoryIds.length > 0) {
+    params.set('categoryIds', filters.categoryIds.join(','))
+  }
+  if (filters?.presentedOnly) {
+    params.set('presentedOnly', 'true')
+  }
+  if (filters?.inSchedulesOnly) {
+    params.set('inSchedulesOnly', 'true')
   }
   const response = await fetcher<ApiResponse<PaginatedSongsResult>>(
     `/api/songs?${params.toString()}`,

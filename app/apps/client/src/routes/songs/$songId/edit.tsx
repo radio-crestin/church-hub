@@ -97,6 +97,9 @@ function SongEditorPage() {
   const [metadata, setMetadata] = useState<SongMetadata>(defaultMetadata)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
 
+  // Track saved song ID for deferred navigation (to avoid unsaved changes modal race condition)
+  const [savedSongId, setSavedSongId] = useState<number | null>(null)
+
   // Duplicate song modal state
   const [showDuplicateModal, setShowDuplicateModal] = useState(false)
   const [existingSongId, setExistingSongId] = useState<number | null>(null)
@@ -226,11 +229,8 @@ function SongEditorPage() {
           metadata: savedMetadata,
         })
 
-        // Navigate to the song view page after save
-        navigate({
-          to: '/songs/$songId',
-          params: { songId: String(result.data.id) },
-        })
+        // Defer navigation until after re-render to avoid unsaved changes modal race condition
+        setSavedSongId(result.data.id)
         return true
       } else {
         showToast(t('songs:messages.error'), 'error')
@@ -265,6 +265,17 @@ function SongEditorPage() {
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [handleSave, upsertMutation.isPending])
+
+  // Navigate after save only when dirty state is cleared (avoids unsaved changes modal race condition)
+  useEffect(() => {
+    if (savedSongId !== null && !hasUnsavedChanges) {
+      navigate({
+        to: '/songs/$songId',
+        params: { songId: String(savedSongId) },
+      })
+      setSavedSongId(null)
+    }
+  }, [savedSongId, hasUnsavedChanges, navigate])
 
   const handleBack = useCallback(() => {
     if (isNew) {

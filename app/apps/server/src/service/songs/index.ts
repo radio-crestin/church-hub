@@ -45,6 +45,7 @@ export {
   getSongsPaginated,
   getSongWithSlides,
   type PaginatedSongsResult,
+  type SongFilters,
   upsertSong,
 } from './songs'
 export type {

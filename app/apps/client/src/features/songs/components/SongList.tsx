@@ -1,4 +1,11 @@
-import { Loader2, Music, Search, Sparkles } from 'lucide-react'
+import {
+  CalendarDays,
+  Eye,
+  Loader2,
+  Music,
+  Search,
+  Sparkles,
+} from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -6,6 +13,7 @@ import { useSidebarItemShortcuts } from '~/features/sidebar-config'
 import { useDebouncedValue } from '~/hooks/useDebouncedValue'
 import { MultiSelectCombobox } from '~/ui/combobox'
 import { KeyboardShortcutBadge } from '~/ui/kbd'
+import { Tooltip } from '~/ui/tooltip'
 import { SongCard } from './SongCard'
 import {
   useAISearchSongs,
@@ -15,11 +23,14 @@ import {
   useSongsAISearchSettings,
   useSongsInfinite,
 } from '../hooks'
+import type { SongFilters } from '../service'
 import type { AISearchResult, SongSearchResult } from '../types'
 
 const SEARCH_DEBOUNCE_MS = 600
 
 const CATEGORY_FILTER_STORAGE_KEY = 'songList.categoryFilter'
+const PRESENTED_ONLY_STORAGE_KEY = 'songList.presentedOnly'
+const IN_SCHEDULES_ONLY_STORAGE_KEY = 'songList.inSchedulesOnly'
 
 interface SongListProps {
   onSongClick: (songId: number) => void
@@ -67,6 +78,24 @@ export function SongList({
     return []
   })
 
+  // Initialize presented only filter from local storage
+  const [presentedOnly, setPresentedOnly] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(PRESENTED_ONLY_STORAGE_KEY) === 'true'
+    } catch {
+      return false
+    }
+  })
+
+  // Initialize in schedules only filter from local storage
+  const [inSchedulesOnly, setInSchedulesOnly] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(IN_SCHEDULES_ONLY_STORAGE_KEY) === 'true'
+    } catch {
+      return false
+    }
+  })
+
   // Sync with props when they change
   useEffect(() => {
     if (propCategoryIds !== undefined) {
@@ -94,6 +123,36 @@ export function SongList({
     [onCategoryChange],
   )
 
+  // Handle presented only filter toggle
+  const handlePresentedOnlyChange = useCallback((checked: boolean) => {
+    setPresentedOnly(checked)
+    try {
+      localStorage.setItem(PRESENTED_ONLY_STORAGE_KEY, String(checked))
+    } catch {
+      // Ignore storage errors
+    }
+  }, [])
+
+  // Handle in schedules only filter toggle
+  const handleInSchedulesOnlyChange = useCallback((checked: boolean) => {
+    setInSchedulesOnly(checked)
+    try {
+      localStorage.setItem(IN_SCHEDULES_ONLY_STORAGE_KEY, String(checked))
+    } catch {
+      // Ignore storage errors
+    }
+  }, [])
+
+  // Build filters object for the API
+  const songFilters: SongFilters = useMemo(
+    () => ({
+      categoryIds: categoryIds.length > 0 ? categoryIds : undefined,
+      presentedOnly: presentedOnly || undefined,
+      inSchedulesOnly: inSchedulesOnly || undefined,
+    }),
+    [categoryIds, presentedOnly, inSchedulesOnly],
+  )
+
   // Local state for immediate input feedback
   const [localQuery, setLocalQuery] = useState(searchQuery)
 
@@ -111,7 +170,7 @@ export function SongList({
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
-  } = useSongsInfinite(categoryIds)
+  } = useSongsInfinite(songFilters)
 
   // Search query for search mode
   const {
@@ -416,6 +475,34 @@ export function SongList({
             <Sparkles className="w-4 h-4" />
           </button>
         )}
+        <Tooltip content={t('search.presentedOnly')}>
+          <button
+            type="button"
+            onClick={() => handlePresentedOnlyChange(!presentedOnly)}
+            className={`px-3 py-2 rounded-lg border transition-colors flex items-center gap-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+              presentedOnly
+                ? 'bg-indigo-600 text-white border-indigo-600'
+                : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400'
+            }`}
+            aria-pressed={presentedOnly}
+          >
+            <Eye className="w-4 h-4" />
+          </button>
+        </Tooltip>
+        <Tooltip content={t('search.inSchedulesOnly')}>
+          <button
+            type="button"
+            onClick={() => handleInSchedulesOnlyChange(!inSchedulesOnly)}
+            className={`px-3 py-2 rounded-lg border transition-colors flex items-center gap-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+              inSchedulesOnly
+                ? 'bg-indigo-600 text-white border-indigo-600'
+                : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400'
+            }`}
+            aria-pressed={inSchedulesOnly}
+          >
+            <CalendarDays className="w-4 h-4" />
+          </button>
+        </Tooltip>
         <div style={{ width: categoryDropdownWidth }}>
           <MultiSelectCombobox
             options={

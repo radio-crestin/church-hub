@@ -162,41 +162,39 @@
 ~~- testeaza pe windows player-ul audio si intreaga aplicatie~~
 ~~- butoanele din camera de control nu functioneaza.. (pare putin cam inutila aceasta pagina..)~~
 ~~- implementeaza screen share~~
+- afiseaza in timp real modificarile cantarilor
 - adauga background as black and not white
+- cand schimb ecranul, midi state is destroyed
+- salveaza rezultatele cu ai in ceva cache local
+- cateodata WhatsApp-ul ramane aprins..
+- regenereaza midi-urile cu instrumentale mai bune
+- (optional) afisare in 2 pasi
+- pagina de prezentari
+- slide-uri temporare
+- adauga upvote/downvote la cantari
+- pagina dedicata pentru game (nea Mihai)
+- pagina dedicata pentru control sunet camera copii
 - in livestream adauga un preview cu feed-ul live
 - creaza un quickstart guide pentru utilizatori
 ~~- adauga optiunea de a face screen share la o fereastra~~
 
 ~~- rezolva problema cu programele~~
-
-
 ~~- cand se sterge search-ul din Biblie, intoarce-te la fisierul afisat~~
 ~~- am cautat "ca sa ne invete ce sa facem" in Biblie si nu a functiona~~
-
 ~~- cand e afisata o cantare, lasa utilizatorul sa mearga in spate~~
 ~~- adauga buton de a deschide cantarea existenta~~
-
 ~~- selectarea unui verset din istoric sa nu fie afisat direct~~
 ~~- :Ierusalime cetate impodobita: - amin nu e ok, split ex on sieds~~
 ~~- shortcut-urile nu functioneaza F5 si F6~~
 ~~- afiseaza versetul complet in istoric~~
-- (optional) afisare in 2 pasi
 ~~- afiseaza Whatsapp intr-o fereastra nativa~~
-- pagina de prezentari
-- slide-uri temporare
-- adauga upvote/downvote la cantari
-
-
-- salveaza rezultatele cu ai in ceva cache local
-- nu pot da back cand este o cantare deja selectata
-- adauga un filtru cu cantari prezentate/unul cu cantarile din programe, e util pentru explorare
-- cantarea in fereastra noua nu are access
-- versete tineri nu functinoeaza in program cum trebuie cand este unul dupa altul
-- salvarea cantarilor afiseaza un dialog, deasemenea ar trebui actualizata in timp real prezentarea..
-- adauga buton de edit al cantarii in preview-ul din program
-- cateodata WhatsApp-ul ramane aprins..
-- regenereaza midi-urile cu instrumentale mai bune
-- adauga sql lock timeout
+~~- nu pot da back cand este o cantare deja selectata~~
+~~- adauga un filtru cu cantari prezentate/unul cu cantarile din programe, e util pentru explorare~~
+~~- cantarea in fereastra noua nu are access~~
+~~- versete tineri nu functinoeaza in program cum trebuie cand este unul dupa altul~~
+~~- salvarea cantarilor afiseaza un dialog,~~
+  ~~- adauga sql lock timeout~~
+~~- adauga buton de edit al cantarii in preview-ul din program~~
 
 
 ### Optionals

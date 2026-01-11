@@ -191,8 +191,46 @@ export const songsPaths = {
     get: {
       tags: ['Songs'],
       summary: 'List all songs',
-      description: 'Returns all songs in the database',
+      description:
+        'Returns all songs in the database with optional pagination and filters',
       security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      parameters: [
+        {
+          name: 'limit',
+          in: 'query',
+          required: false,
+          schema: { type: 'integer', default: 50 },
+          description: 'Number of songs to return (enables pagination)',
+        },
+        {
+          name: 'offset',
+          in: 'query',
+          required: false,
+          schema: { type: 'integer', default: 0 },
+          description: 'Number of songs to skip',
+        },
+        {
+          name: 'categoryIds',
+          in: 'query',
+          required: false,
+          schema: { type: 'string' },
+          description: 'Comma-separated list of category IDs to filter by',
+        },
+        {
+          name: 'presentedOnly',
+          in: 'query',
+          required: false,
+          schema: { type: 'boolean', default: false },
+          description: 'Filter to only songs that have been presented',
+        },
+        {
+          name: 'inSchedulesOnly',
+          in: 'query',
+          required: false,
+          schema: { type: 'boolean', default: false },
+          description: 'Filter to only songs that are in at least one schedule',
+        },
+      ],
       responses: {
         '200': {
           description: 'List of songs',
