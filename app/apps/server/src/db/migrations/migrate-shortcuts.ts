@@ -8,7 +8,7 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
   console.log(`[migrate-shortcuts:${level}] ${message}`)
 }
 
-const MIGRATION_KEY = 'migrate_shortcuts_cleanup_v1'
+const MIGRATION_KEY = 'migrate_shortcuts_cleanup_v2'
 
 // Legacy action IDs that were removed from the codebase
 const LEGACY_ACTION_IDS = ['searchSong', 'searchBible']

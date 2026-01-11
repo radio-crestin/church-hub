@@ -11,6 +11,7 @@ export type {
 export {
   formatShortcutForDisplay,
   isModifierKey,
+  VALID_ACTION_IDS,
   validateGlobalShortcut,
   validateSceneShortcut,
   validateSidebarShortcut,

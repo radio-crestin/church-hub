@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next'
 
 import { ShortcutRecorder } from '~/features/keyboard-shortcuts/components/ShortcutRecorder'
 import { useAppShortcuts } from '~/features/keyboard-shortcuts/hooks'
+import type { GlobalShortcutActionId } from '~/features/keyboard-shortcuts/types'
+import { VALID_ACTION_IDS } from '~/features/keyboard-shortcuts/utils'
 import { useOBSScenes } from '~/features/livestream/hooks'
 import { ConfirmModal } from '~/ui/modal'
 import { IconPicker } from './IconPicker'
@@ -186,10 +188,14 @@ export function SidebarItemSettingsModal({
         return t('sections.sidebarItem.shortcuts.duplicateError')
       }
 
-      // Check against global shortcuts
+      // Check against global shortcuts (only valid action IDs, ignore legacy ones)
       for (const [actionId, config] of Object.entries(
         globalShortcuts.actions,
       )) {
+        // Skip legacy action IDs that may still exist in the database
+        if (!VALID_ACTION_IDS.includes(actionId as GlobalShortcutActionId)) {
+          continue
+        }
         if (config.shortcuts.includes(shortcut)) {
           return t('sections.sidebarItem.shortcuts.conflictGlobal', {
             action: actionId,
