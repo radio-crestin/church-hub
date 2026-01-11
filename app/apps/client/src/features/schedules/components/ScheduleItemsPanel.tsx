@@ -774,7 +774,7 @@ function SortableItemWrapper({
 
       {/* Expanded Content */}
       {isExpanded && (
-        <div className="px-3 pb-3 space-y-1">
+        <div className="px-3 pb-3 flex flex-col gap-1">
           {/* Song Slides */}
           {item.itemType === 'song' && (
             <SongSlides
