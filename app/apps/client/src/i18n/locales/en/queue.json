@@ -1,0 +1,9 @@
+{
+  "actions": {
+    "presentNow": "Present Now"
+  },
+  "messages": {
+    "presenting": "Presenting song",
+    "error": "Failed to present song"
+  }
+}

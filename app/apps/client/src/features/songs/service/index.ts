@@ -19,6 +19,7 @@ export {
   getSongsPaginated,
   type PaginatedSongsResult,
   rebuildSearchIndex,
+  type SongFilters,
   searchSongs,
   upsertSong,
 } from './songs'

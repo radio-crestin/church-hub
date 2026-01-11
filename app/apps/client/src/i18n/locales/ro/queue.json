@@ -1,0 +1,9 @@
+{
+  "actions": {
+    "presentNow": "Prezintă acum"
+  },
+  "messages": {
+    "presenting": "Se prezintă cântarea",
+    "error": "Nu s-a putut prezenta cântarea"
+  }
+}

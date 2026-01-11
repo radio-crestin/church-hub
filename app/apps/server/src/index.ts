@@ -191,6 +191,7 @@ import {
   removeFromSearchIndex,
   reorderCategories,
   reorderSongSlides,
+  type SongFilters,
   searchSongs,
   type UpsertCategoryInput,
   type UpsertSongInput,
@@ -2764,6 +2765,8 @@ async function main() {
         const limitParam = url.searchParams.get('limit')
         const offsetParam = url.searchParams.get('offset')
         const categoryIdsParam = url.searchParams.get('categoryIds')
+        const presentedOnlyParam = url.searchParams.get('presentedOnly')
+        const inSchedulesOnlyParam = url.searchParams.get('inSchedulesOnly')
 
         // If pagination params provided, use paginated query
         if (limitParam) {
@@ -2776,11 +2779,14 @@ async function main() {
                 .filter((id) => !isNaN(id))
             : undefined
 
-          const result = getSongsPaginated(
-            limit,
-            offset,
-            categoryIds && categoryIds.length > 0 ? categoryIds : undefined,
-          )
+          const filters: SongFilters = {
+            categoryIds:
+              categoryIds && categoryIds.length > 0 ? categoryIds : undefined,
+            presentedOnly: presentedOnlyParam === 'true',
+            inSchedulesOnly: inSchedulesOnlyParam === 'true',
+          }
+
+          const result = getSongsPaginated(limit, offset, filters)
           return handleCors(
             req,
             new Response(JSON.stringify({ data: result }), {

@@ -1,4 +1,4 @@
-import { asc, desc, eq, inArray } from 'drizzle-orm'
+import { asc, eq, inArray } from 'drizzle-orm'
 
 import { getCategoryById } from './categories'
 import { sanitizeSongTitle } from './sanitizeTitle'
@@ -127,55 +127,109 @@ export interface PaginatedSongsResult {
   hasMore: boolean
 }
 
+export interface SongFilters {
+  categoryIds?: number[]
+  presentedOnly?: boolean
+  inSchedulesOnly?: boolean
+}
+
 /**
  * Gets songs with pagination support
  * @param limit - Number of songs to return
  * @param offset - Number of songs to skip
- * @param categoryIds - Optional category filter (array of category IDs)
+ * @param filters - Optional filters (categoryIds, presentedOnly, inSchedulesOnly)
  */
 export function getSongsPaginated(
   limit: number,
   offset: number,
-  categoryIds?: number[],
+  filters?: SongFilters,
 ): PaginatedSongsResult {
   try {
+    const { categoryIds, presentedOnly, inSchedulesOnly } = filters ?? {}
     log(
       'debug',
-      `Getting songs paginated: limit=${limit}, offset=${offset}, categoryIds=${categoryIds?.join(',')}`,
+      `Getting songs paginated: limit=${limit}, offset=${offset}, categoryIds=${categoryIds?.join(',')}, presentedOnly=${presentedOnly}, inSchedulesOnly=${inSchedulesOnly}`,
     )
 
-    const db = getDatabase()
-
-    // Build base query with optional category filter
-    let query = db.select().from(songs)
-    if (categoryIds && categoryIds.length > 0) {
-      query = query.where(
-        inArray(songs.categoryId, categoryIds),
-      ) as typeof query
-    }
-
-    // Get total count using raw SQL for efficiency
     const rawDb = getRawDatabase()
-    let categoryFilter = ''
-    let countParams: number[] = []
+
+    // Build WHERE conditions
+    const conditions: string[] = []
+    const params: (number | string)[] = []
+
     if (categoryIds && categoryIds.length > 0) {
       const placeholders = categoryIds.map(() => '?').join(',')
-      categoryFilter = `WHERE category_id IN (${placeholders})`
-      countParams = categoryIds
+      conditions.push(`category_id IN (${placeholders})`)
+      params.push(...categoryIds)
     }
+
+    if (presentedOnly) {
+      conditions.push('presentation_count > 0')
+    }
+
+    if (inSchedulesOnly) {
+      conditions.push(
+        `id IN (SELECT DISTINCT song_id FROM schedule_items WHERE song_id IS NOT NULL)`,
+      )
+    }
+
+    const whereClause =
+      conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+
+    // Get total count
     const countResult = rawDb
-      .query(`SELECT COUNT(*) as total FROM songs ${categoryFilter}`)
-      .get(...countParams) as { total: number }
+      .query(`SELECT COUNT(*) as total FROM songs ${whereClause}`)
+      .get(...params) as { total: number }
     const total = countResult.total
 
     // Get paginated songs - sorted by presentation count (most presented first), then by title
-    const records = query
-      .orderBy(desc(songs.presentationCount), asc(songs.title))
-      .limit(limit)
-      .offset(offset)
-      .all()
+    const records = rawDb
+      .query(
+        `SELECT * FROM songs ${whereClause} ORDER BY presentation_count DESC, title ASC LIMIT ? OFFSET ?`,
+      )
+      .all(...params, limit, offset) as Array<{
+      id: number
+      title: string
+      category_id: number | null
+      source_filename: string | null
+      author: string | null
+      copyright: string | null
+      ccli: string | null
+      key: string | null
+      tempo: string | null
+      time_signature: string | null
+      theme: string | null
+      alt_theme: string | null
+      hymn_number: string | null
+      key_line: string | null
+      presentation_order: string | null
+      presentation_count: number
+      last_manual_edit: number | null
+      created_at: number
+      updated_at: number
+    }>
 
-    const songsList = records.map(toSong)
+    const songsList: Song[] = records.map((record) => ({
+      id: record.id,
+      title: record.title,
+      categoryId: record.category_id,
+      sourceFilename: record.source_filename,
+      author: record.author,
+      copyright: record.copyright,
+      ccli: record.ccli,
+      key: record.key,
+      tempo: record.tempo,
+      timeSignature: record.time_signature,
+      theme: record.theme,
+      altTheme: record.alt_theme,
+      hymnNumber: record.hymn_number,
+      keyLine: record.key_line,
+      presentationOrder: record.presentation_order,
+      presentationCount: record.presentation_count,
+      lastManualEdit: record.last_manual_edit,
+      createdAt: record.created_at,
+      updatedAt: record.updated_at,
+    }))
 
     return {
       songs: songsList,

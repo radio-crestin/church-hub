@@ -1,16 +1,20 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
 
-import { getSongsPaginated, type PaginatedSongsResult } from '../service'
+import {
+  getSongsPaginated,
+  type PaginatedSongsResult,
+  type SongFilters,
+} from '../service'
 
 const PAGE_SIZE = 50
 
-export function useSongsInfinite(categoryIds?: number[]) {
+export function useSongsInfinite(filters?: SongFilters) {
   // Note: Prefetching is handled by the IntersectionObserver in SongList.tsx
   // which triggers fetchNextPage() with a 200px rootMargin for preloading
   return useInfiniteQuery<PaginatedSongsResult>({
-    queryKey: ['songs', 'infinite', categoryIds],
+    queryKey: ['songs', 'infinite', filters],
     queryFn: ({ pageParam, signal }) =>
-      getSongsPaginated(PAGE_SIZE, pageParam as number, categoryIds, signal),
+      getSongsPaginated(PAGE_SIZE, pageParam as number, filters, signal),
     getNextPageParam: (lastPage, _, lastPageParam) =>
       lastPage.hasMore ? (lastPageParam as number) + PAGE_SIZE : undefined,
     initialPageParam: 0,
