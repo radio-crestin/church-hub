@@ -98,7 +98,7 @@ export function MusicPage() {
             onPlayPause={player.togglePlayPause}
             onPrevious={player.previous}
             onNext={player.next}
-            onSeek={player.seek}
+            onSeek={player.seekImmediate}
             onVolumeChange={player.setVolume}
             onToggleMute={player.toggleMute}
             onClearQueue={player.clearQueue}
@@ -163,7 +163,7 @@ export function MusicPage() {
             onPlayPause={player.togglePlayPause}
             onPrevious={player.previous}
             onNext={player.next}
-            onSeek={player.seek}
+            onSeek={player.seekImmediate}
             onVolumeChange={player.setVolume}
             onToggleMute={player.toggleMute}
             onClearQueue={player.clearQueue}

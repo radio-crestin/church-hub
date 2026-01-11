@@ -1,3 +1,5 @@
+import { useCallback } from 'react'
+
 import { Slider } from '~/ui/slider'
 import { formatDuration } from '../utils'
 
@@ -12,9 +14,13 @@ export function ProgressBar({
   duration,
   onSeek,
 }: ProgressBarProps) {
-  const handleSeek = (values: number[]) => {
-    onSeek(values[0])
-  }
+  // Only seek when user releases the slider to avoid race conditions
+  const handleSeekCommit = useCallback(
+    (values: number[]) => {
+      onSeek(values[0])
+    },
+    [onSeek],
+  )
 
   return (
     <div className="flex items-center gap-3 w-full">
@@ -26,7 +32,7 @@ export function ProgressBar({
         min={0}
         max={duration || 100}
         step={1}
-        onValueChange={handleSeek}
+        onValueCommit={handleSeekCommit}
         className="flex-1"
         showValue={false}
       />
