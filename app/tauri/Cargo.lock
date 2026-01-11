@@ -536,7 +536,7 @@ dependencies = [
 
 [[package]]
 name = "church-hub"
-version = "0.1.22"
+version = "0.1.28"
 dependencies = [
  "futures-util",
  "parking_lot",
