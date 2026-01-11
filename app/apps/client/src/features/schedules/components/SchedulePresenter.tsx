@@ -340,24 +340,28 @@ export function SchedulePresenter({
     return result
   }, [items])
 
-  // Get current presentation info
+  // Get current presentation info - includes scheduleItemIndex for accurate matching
   const presentedInfo = useMemo(() => {
     const temp = presentationState?.temporaryContent
     if (!temp) return null
+
+    // Extract scheduleItemIndex from all content types (it's stored in the presentation state)
+    const scheduleItemIndex = temp.data.scheduleItemIndex ?? -1
 
     if (temp.type === 'song') {
       return {
         type: 'song' as const,
         songId: temp.data.songId,
         slideIndex: temp.data.currentSlideIndex,
+        scheduleItemIndex,
       }
     }
 
     if (temp.type === 'bible_passage') {
       return {
         type: 'bible_passage' as const,
-        bookName: temp.data.bookName,
         currentVerseIndex: temp.data.currentVerseIndex,
+        scheduleItemIndex,
       }
     }
 
@@ -365,12 +369,14 @@ export function SchedulePresenter({
       return {
         type: 'versete_tineri' as const,
         currentEntryIndex: temp.data.currentEntryIndex,
+        scheduleItemIndex,
       }
     }
 
     if (temp.type === 'announcement') {
       return {
         type: 'announcement' as const,
+        scheduleItemIndex,
       }
     }
 
@@ -378,63 +384,19 @@ export function SchedulePresenter({
       return {
         type: 'scene' as const,
         obsSceneName: temp.data.obsSceneName,
+        scheduleItemIndex,
       }
     }
 
     return null
   }, [presentationState?.temporaryContent])
 
-  // Find current position in flat list
+  // Find current position in flat list - use scheduleItemIndex directly for accurate matching
   const currentFlatIndex = useMemo(() => {
     if (!presentedInfo) return -1
-
-    return flatItems.findIndex((fi) => {
-      // Song matching
-      if (fi.item.itemType === 'song' && presentedInfo.type === 'song') {
-        return (
-          fi.item.songId === presentedInfo.songId &&
-          fi.index === presentedInfo.slideIndex
-        )
-      }
-
-      // Bible passage matching
-      if (
-        fi.item.itemType === 'bible_passage' &&
-        presentedInfo.type === 'bible_passage'
-      ) {
-        return fi.index === presentedInfo.currentVerseIndex
-      }
-
-      // Versete tineri matching
-      if (
-        fi.item.itemType === 'slide' &&
-        fi.item.slideType === 'versete_tineri' &&
-        presentedInfo.type === 'versete_tineri'
-      ) {
-        return fi.index === presentedInfo.currentEntryIndex
-      }
-
-      // Announcement matching
-      if (
-        fi.item.itemType === 'slide' &&
-        fi.item.slideType === 'announcement' &&
-        presentedInfo.type === 'announcement'
-      ) {
-        return true
-      }
-
-      // Scene matching
-      if (
-        fi.item.itemType === 'slide' &&
-        fi.item.slideType === 'scene' &&
-        presentedInfo.type === 'scene'
-      ) {
-        return fi.item.obsSceneName === presentedInfo.obsSceneName
-      }
-
-      return false
-    })
-  }, [flatItems, presentedInfo])
+    // scheduleItemIndex is the exact position in flatItems, works for all content types
+    return presentedInfo.scheduleItemIndex
+  }, [presentedInfo])
 
   const canNavigatePrev = currentFlatIndex > 0
   // Can navigate next if there are more slides, OR if we're on the last slide with content (to hide)

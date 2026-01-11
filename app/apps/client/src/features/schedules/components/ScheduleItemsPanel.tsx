@@ -173,16 +173,20 @@ export function ScheduleItemsPanel({
     }
   }, [collapseAllTrigger, items])
 
-  // Determine what's currently presented
+  // Determine what's currently presented - includes scheduleItemIndex for accurate matching
   const presentedInfo = useMemo(() => {
     const temp = presentationState?.temporaryContent
     if (!temp) return null
+
+    // Extract scheduleItemIndex from all content types
+    const scheduleItemIndex = temp.data.scheduleItemIndex ?? -1
 
     if (temp.type === 'song') {
       return {
         type: 'song' as const,
         songId: temp.data.songId,
         slideIndex: temp.data.currentSlideIndex,
+        scheduleItemIndex,
       }
     }
 
@@ -190,6 +194,7 @@ export function ScheduleItemsPanel({
       return {
         type: 'bible_passage' as const,
         currentVerseIndex: temp.data.currentVerseIndex,
+        scheduleItemIndex,
       }
     }
 
@@ -197,12 +202,14 @@ export function ScheduleItemsPanel({
       return {
         type: 'versete_tineri' as const,
         currentEntryIndex: temp.data.currentEntryIndex,
+        scheduleItemIndex,
       }
     }
 
     if (temp.type === 'announcement') {
       return {
         type: 'announcement' as const,
+        scheduleItemIndex,
       }
     }
 
@@ -210,43 +217,67 @@ export function ScheduleItemsPanel({
       return {
         type: 'scene' as const,
         obsSceneName: temp.data.obsSceneName,
+        scheduleItemIndex,
       }
     }
 
     return null
   }, [presentationState?.temporaryContent])
 
+  // Compute starting flat index for each item - used for accurate sub-item highlighting
+  const itemStartFlatIndex = useMemo(() => {
+    const map: Record<number, number> = {}
+    let flatIndex = 0
+
+    items.forEach((item) => {
+      map[item.id] = flatIndex
+
+      if (item.itemType === 'song') {
+        const expandedSlides = expandSongSlidesWithChoruses(item.slides)
+        flatIndex += expandedSlides.length
+      } else if (item.itemType === 'bible_passage') {
+        flatIndex += item.biblePassageVerses.length
+      } else if (item.itemType === 'slide') {
+        if (item.slideType === 'versete_tineri') {
+          flatIndex += item.verseteTineriEntries.length
+        } else {
+          // announcement, scene - single flat item
+          flatIndex += 1
+        }
+      }
+    })
+
+    return map
+  }, [items])
+
   // Auto-expand the item when a slide from it is presented
+  // Uses scheduleItemIndex to find the exact item being presented
   useEffect(() => {
-    if (!presentedInfo) return
+    if (!presentedInfo || presentedInfo.scheduleItemIndex < 0) return
 
-    let presentedItem: ScheduleItem | undefined
+    // Find the item whose flat index range contains the presented scheduleItemIndex
+    const presentedItem = items.find((item) => {
+      const startIndex = itemStartFlatIndex[item.id]
+      if (startIndex === undefined) return false
 
-    if (presentedInfo.type === 'song' && presentedInfo.songId) {
-      presentedItem = items.find(
-        (item) =>
-          item.itemType === 'song' && item.songId === presentedInfo.songId,
+      let itemLength = 1
+      if (item.itemType === 'song') {
+        itemLength = expandSongSlidesWithChoruses(item.slides).length
+      } else if (item.itemType === 'bible_passage') {
+        itemLength = item.biblePassageVerses.length
+      } else if (
+        item.itemType === 'slide' &&
+        item.slideType === 'versete_tineri'
+      ) {
+        itemLength = item.verseteTineriEntries.length
+      }
+
+      const endIndex = startIndex + itemLength - 1
+      return (
+        presentedInfo.scheduleItemIndex >= startIndex &&
+        presentedInfo.scheduleItemIndex <= endIndex
       )
-    } else if (presentedInfo.type === 'bible_passage') {
-      presentedItem = items.find((item) => item.itemType === 'bible_passage')
-    } else if (presentedInfo.type === 'versete_tineri') {
-      presentedItem = items.find(
-        (item) =>
-          item.itemType === 'slide' && item.slideType === 'versete_tineri',
-      )
-    } else if (presentedInfo.type === 'announcement') {
-      presentedItem = items.find(
-        (item) =>
-          item.itemType === 'slide' && item.slideType === 'announcement',
-      )
-    } else if (presentedInfo.type === 'scene') {
-      presentedItem = items.find(
-        (item) =>
-          item.itemType === 'slide' &&
-          item.slideType === 'scene' &&
-          item.obsSceneName === presentedInfo.obsSceneName,
-      )
-    }
+    })
 
     if (presentedItem && !expanded[`${presentedItem.id}`]) {
       setExpanded((prev) => ({
@@ -254,7 +285,7 @@ export function ScheduleItemsPanel({
         [`${presentedItem.id}`]: true,
       }))
     }
-  }, [presentedInfo, items, expanded])
+  }, [presentedInfo, items, expanded, itemStartFlatIndex])
 
   // Auto-scroll to position the previous slide at the top of the container
   useEffect(() => {
@@ -443,6 +474,7 @@ export function ScheduleItemsPanel({
                   item={item}
                   isExpanded={isExpanded}
                   presentedInfo={presentedInfo}
+                  itemStartFlatIndex={itemStartFlatIndex[item.id] ?? 0}
                   highlightedRef={highlightedRef}
                   onHeaderClick={handleHeaderClick}
                   onAuxClick={handleAuxClick}
@@ -478,13 +510,26 @@ export function ScheduleItemsPanel({
   )
 }
 
-// Presented info type
+// Presented info type - includes scheduleItemIndex for accurate matching
 type PresentedInfo =
-  | { type: 'song'; songId: number; slideIndex: number }
-  | { type: 'bible_passage'; currentVerseIndex: number }
-  | { type: 'versete_tineri'; currentEntryIndex: number }
-  | { type: 'announcement' }
-  | { type: 'scene'; obsSceneName: string }
+  | {
+      type: 'song'
+      songId: number
+      slideIndex: number
+      scheduleItemIndex: number
+    }
+  | {
+      type: 'bible_passage'
+      currentVerseIndex: number
+      scheduleItemIndex: number
+    }
+  | {
+      type: 'versete_tineri'
+      currentEntryIndex: number
+      scheduleItemIndex: number
+    }
+  | { type: 'announcement'; scheduleItemIndex: number }
+  | { type: 'scene'; obsSceneName: string; scheduleItemIndex: number }
   | null
 
 // Sortable item wrapper with drag handle
@@ -492,6 +537,7 @@ interface SortableItemWrapperProps {
   item: ScheduleItem
   isExpanded: boolean
   presentedInfo: PresentedInfo
+  itemStartFlatIndex: number
   highlightedRef: React.RefObject<HTMLButtonElement | null>
   onHeaderClick: (e: React.MouseEvent, item: ScheduleItem) => void
   onAuxClick: (e: React.MouseEvent, item: ScheduleItem) => void
@@ -511,6 +557,7 @@ function SortableItemWrapper({
   item,
   isExpanded,
   presentedInfo,
+  itemStartFlatIndex,
   highlightedRef,
   onHeaderClick,
   onAuxClick,
@@ -733,6 +780,7 @@ function SortableItemWrapper({
             <SongSlides
               item={item}
               presentedInfo={presentedInfo}
+              itemStartFlatIndex={itemStartFlatIndex}
               highlightedRef={highlightedRef}
               onSlideClick={onSlideClick}
             />
@@ -743,6 +791,7 @@ function SortableItemWrapper({
             <BiblePassageVerses
               item={item}
               presentedInfo={presentedInfo}
+              itemStartFlatIndex={itemStartFlatIndex}
               highlightedRef={highlightedRef}
               onVerseClick={onVerseClick}
             />
@@ -753,6 +802,7 @@ function SortableItemWrapper({
             <VerseteTineriEntries
               item={item}
               presentedInfo={presentedInfo}
+              itemStartFlatIndex={itemStartFlatIndex}
               highlightedRef={highlightedRef}
               onEntryClick={onEntryClick}
             />
@@ -787,6 +837,7 @@ function SortableItemWrapper({
 interface SongSlidesProps {
   item: ScheduleItem
   presentedInfo: PresentedInfo
+  itemStartFlatIndex: number
   highlightedRef: React.RefObject<HTMLButtonElement | null>
   onSlideClick: (item: ScheduleItem, slideIndex: number) => void
 }
@@ -794,6 +845,7 @@ interface SongSlidesProps {
 function SongSlides({
   item,
   presentedInfo,
+  itemStartFlatIndex,
   highlightedRef,
   onSlideClick,
 }: SongSlidesProps) {
@@ -823,10 +875,10 @@ function SongSlides({
   return (
     <>
       {expandedSlides.map((slide, index) => {
+        // Use scheduleItemIndex for accurate matching - only highlight if this specific slide is presented
         const isPresented =
           presentedInfo?.type === 'song' &&
-          presentedInfo.songId === item.songId &&
-          presentedInfo.slideIndex === index
+          presentedInfo.scheduleItemIndex === itemStartFlatIndex + index
 
         const plainText = stripHtmlTags(slide.content)
 
@@ -878,6 +930,7 @@ function SongSlides({
 interface BiblePassageVersesProps {
   item: ScheduleItem
   presentedInfo: PresentedInfo
+  itemStartFlatIndex: number
   highlightedRef: React.RefObject<HTMLButtonElement | null>
   onVerseClick: (item: ScheduleItem, verseIndex: number) => void
 }
@@ -885,6 +938,7 @@ interface BiblePassageVersesProps {
 function BiblePassageVerses({
   item,
   presentedInfo,
+  itemStartFlatIndex,
   highlightedRef,
   onVerseClick,
 }: BiblePassageVersesProps) {
@@ -908,9 +962,10 @@ function BiblePassageVerses({
   return (
     <>
       {item.biblePassageVerses.map((verse, index) => {
+        // Use scheduleItemIndex for accurate matching - only highlight if this specific verse is presented
         const isPresented =
           presentedInfo?.type === 'bible_passage' &&
-          presentedInfo.currentVerseIndex === index
+          presentedInfo.scheduleItemIndex === itemStartFlatIndex + index
 
         return (
           <button
@@ -966,6 +1021,7 @@ function BiblePassageVerses({
 interface VerseteTineriEntriesProps {
   item: ScheduleItem
   presentedInfo: PresentedInfo
+  itemStartFlatIndex: number
   highlightedRef: React.RefObject<HTMLButtonElement | null>
   onEntryClick: (item: ScheduleItem, entryIndex: number) => void
 }
@@ -973,6 +1029,7 @@ interface VerseteTineriEntriesProps {
 function VerseteTineriEntries({
   item,
   presentedInfo,
+  itemStartFlatIndex,
   highlightedRef,
   onEntryClick,
 }: VerseteTineriEntriesProps) {
@@ -996,9 +1053,10 @@ function VerseteTineriEntries({
   return (
     <>
       {item.verseteTineriEntries.map((entry, index) => {
+        // Use scheduleItemIndex for accurate matching - only highlight if this specific entry is presented
         const isPresented =
           presentedInfo?.type === 'versete_tineri' &&
-          presentedInfo.currentEntryIndex === index
+          presentedInfo.scheduleItemIndex === itemStartFlatIndex + index
 
         return (
           <button
