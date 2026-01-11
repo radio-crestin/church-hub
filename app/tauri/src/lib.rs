@@ -324,9 +324,16 @@ pub fn run() {
                             }
                             return;
                         }
+
+                        // Prevent function keys (F1-F11) from browser default actions (e.g., F5 refresh, F6 address bar)
+                        // These may be configured as shortcuts and handled by Tauri global-shortcut plugin
+                        if (/^F([1-9]|1[01])$/.test(e.key)) {
+                            e.preventDefault();
+                            return;
+                        }
                     });
 
-                    console.log('[tauri] Keyboard shortcuts installed: F12/Ctrl+Shift+I (DevTools), Ctrl+/-/0 (Zoom)');
+                    console.log('[tauri] Keyboard handler installed: F1-F11 (prevented browser default), F12/Ctrl+Shift+I (DevTools), Ctrl+/-/0 (Zoom)');
                 })();
             "#;
 
