@@ -3,8 +3,6 @@ pub mod domain;
 
 // Desktop-only modules
 #[cfg(desktop)]
-pub mod audio;
-#[cfg(desktop)]
 pub mod server;
 #[cfg(desktop)]
 pub mod webview;
@@ -269,11 +267,6 @@ pub fn run() {
             }
             println!("[startup] dev_server_ready_wait: {:?}", t.elapsed());
         }
-
-        // Start the audio controller WebSocket client (connects to server for music playback)
-        let t = Instant::now();
-        audio::start_audio_controller(server_port);
-        println!("[startup] audio_controller_started: {:?}", t.elapsed());
 
         // Inject keyboard shortcut handler into main webview
         let t = Instant::now();

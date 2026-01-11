@@ -168,9 +168,6 @@
 - adauga optiunea de a face screen share la o fereastra
 
 ### Optionals
-- cand se sincronizeaza un folder, nu se elimina melodiile existente..
-- deasemenea, adauga buton de a elimina o melodie dintr-un folder..
-- sincronizarea numai va adauga melodii, nu va elimina..
 - implementeaza transcription folosind AI
 - test backing up the database in https://turso.tech/blog/turso-offline-sync-public-beta
 - exportul ca si pptx ar trebui sa aiba textul ceva mai mare
