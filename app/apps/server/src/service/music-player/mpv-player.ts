@@ -300,6 +300,52 @@ export function shutdownMusicPlayer(): void {
 function findMpvPath(): string | null {
   const platform = os.platform()
 
+  // First, check for bundled mpv in resources (production mode)
+  if (process.env.TAURI_MODE === 'true') {
+    const execPath = process.execPath
+    let resourcesDir: string
+
+    if (platform === 'darwin') {
+      // macOS: Resources are at Contents/Resources/
+      const contentsDir = path.join(execPath, '..', '..')
+      resourcesDir = path.join(contentsDir, 'Resources')
+    } else {
+      // Windows/Linux: Resources are in the same directory as the executable
+      resourcesDir = path.join(execPath, '..')
+    }
+
+    const bundledMpvPath = path.join(
+      resourcesDir,
+      'mpv',
+      platform === 'win32' ? 'mpv.exe' : 'mpv',
+    )
+
+    if (fs.existsSync(bundledMpvPath)) {
+      // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
+      console.log(LOG_PREFIX, 'Found bundled mpv at:', bundledMpvPath)
+      return bundledMpvPath
+    }
+  }
+
+  // Development mode: check for mpv in tauri/resources/mpv
+  const devMpvPaths = [
+    // Relative to server cwd (apps/server)
+    path.join(process.cwd(), '..', '..', 'tauri', 'resources', 'mpv', 'mpv.exe'),
+    path.join(process.cwd(), '..', '..', 'tauri', 'resources', 'mpv', 'mpv'),
+    // Relative to app root
+    path.join(process.cwd(), 'tauri', 'resources', 'mpv', 'mpv.exe'),
+    path.join(process.cwd(), 'tauri', 'resources', 'mpv', 'mpv'),
+  ]
+
+  for (const p of devMpvPaths) {
+    if (fs.existsSync(p)) {
+      // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
+      console.log(LOG_PREFIX, 'Found dev mpv at:', p)
+      return p
+    }
+  }
+
+  // Check common system paths
   const commonPaths: Record<string, string[]> = {
     darwin: ['/opt/homebrew/bin/mpv', '/usr/local/bin/mpv', '/usr/bin/mpv'],
     linux: ['/usr/bin/mpv', '/usr/local/bin/mpv'],
@@ -317,6 +363,7 @@ function findMpvPath(): string | null {
     }
   }
 
+  // Try to find mpv in PATH
   try {
     const which = platform === 'win32' ? 'where' : 'which'
     const result = Bun.spawnSync([which, 'mpv'])
