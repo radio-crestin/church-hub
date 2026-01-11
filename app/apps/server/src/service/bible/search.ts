@@ -206,7 +206,7 @@ export function searchVersesByText(
     return []
   }
 
-  // Escape special FTS characters
+  // Escape special FTS characters and prepare for FTS5 query
   const sanitizedQuery = query
     .replace(/['"]/g, '')
     .replace(/[*()]/g, ' ')
@@ -216,7 +216,13 @@ export function searchVersesByText(
     return []
   }
 
-  log('debug', `Searching for: "${sanitizedQuery}"`)
+  // Split into words and add prefix matching for more flexible search
+  // This allows partial matching (e.g., "ca" matches "care")
+  // and handles cases where users don't type exact words
+  const words = sanitizedQuery.split(/\s+/).filter((w) => w.length >= 1)
+  const ftsQuery = words.map((w) => `${w}*`).join(' ')
+
+  log('debug', `Searching for: "${sanitizedQuery}" → FTS query: "${ftsQuery}"`)
 
   try {
     // Build the query based on whether we're filtering by translation
@@ -243,7 +249,7 @@ export function searchVersesByText(
         ORDER BY bm25(bible_verses_fts)
         LIMIT ?
       `
-      params = [sanitizedQuery, translationId, limit]
+      params = [ftsQuery, translationId, limit]
     } else {
       sql = `
         SELECT
@@ -263,7 +269,7 @@ export function searchVersesByText(
         ORDER BY bm25(bible_verses_fts)
         LIMIT ?
       `
-      params = [sanitizedQuery, limit]
+      params = [ftsQuery, limit]
     }
 
     const results = rawDb.query(sql).all(...params) as Array<{
