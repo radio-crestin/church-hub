@@ -155,6 +155,7 @@ async function playPrevious(): Promise<void> {
   // If more than 3 seconds into the track, restart it
   if (playerState.currentTime > 3) {
     sendAudioCommand({ type: 'audio_seek', payload: { time: 0 } })
+    updateState({ currentTime: 0 })
     return
   }
 
@@ -164,6 +165,7 @@ async function playPrevious(): Promise<void> {
   } else {
     // At the beginning, just restart current track
     sendAudioCommand({ type: 'audio_seek', payload: { time: 0 } })
+    updateState({ currentTime: 0 })
   }
 }
 
@@ -190,6 +192,8 @@ async function playAtIndex(index: number): Promise<void> {
     currentIndex: index,
     currentTrack,
     queueLength: getQueueLength(),
+    isPlaying: true,
+    currentTime: 0,
   })
 
   // Send load command to Tauri audio controller
@@ -216,11 +220,15 @@ export async function executeCommand(
         await playAtIndex(0)
       } else {
         sendAudioCommand({ type: 'audio_play' })
+        // Update state immediately for responsive UI
+        updateState({ isPlaying: true })
       }
       break
 
     case 'pause':
       sendAudioCommand({ type: 'audio_pause' })
+      // Update state immediately for responsive UI
+      updateState({ isPlaying: false })
       break
 
     case 'stop':
@@ -235,6 +243,8 @@ export async function executeCommand(
 
     case 'seek':
       sendAudioCommand({ type: 'audio_seek', payload: { time: command.time } })
+      // Update state immediately for responsive UI
+      updateState({ currentTime: command.time })
       break
 
     case 'volume':
@@ -242,6 +252,8 @@ export async function executeCommand(
         type: 'audio_volume',
         payload: { level: command.level },
       })
+      // Update state immediately for responsive UI
+      updateState({ volume: command.level })
       break
 
     case 'mute':
@@ -249,6 +261,8 @@ export async function executeCommand(
         type: 'audio_mute',
         payload: { muted: command.muted },
       })
+      // Update state immediately for responsive UI
+      updateState({ isMuted: command.muted })
       break
 
     case 'next':
