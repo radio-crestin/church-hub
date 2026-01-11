@@ -6,9 +6,6 @@ interface BibleHistoryItemProps {
 }
 
 export function BibleHistoryItem({ item, onClick }: BibleHistoryItemProps) {
-  const previewText =
-    item.text.length > 100 ? `${item.text.slice(0, 100)}...` : item.text
-
   return (
     <button
       type="button"
@@ -19,8 +16,8 @@ export function BibleHistoryItem({ item, onClick }: BibleHistoryItemProps) {
         <div className="text-xs font-medium mb-0.5 text-gray-500 dark:text-gray-400">
           {item.reference}
         </div>
-        <div className="text-sm line-clamp-2 text-gray-700 dark:text-gray-300">
-          {previewText}
+        <div className="text-sm text-gray-700 dark:text-gray-300">
+          {item.text}
         </div>
       </div>
     </button>
