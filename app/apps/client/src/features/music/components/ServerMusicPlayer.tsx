@@ -1,11 +1,13 @@
 import { Shuffle, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import { MpvInstallGuide } from './MpvInstallGuide'
 import { NowPlaying } from './NowPlaying'
 import { PlayerControls } from './PlayerControls'
 import { ProgressBar } from './ProgressBar'
 import { QueueList } from './QueueList'
 import { VolumeSlider } from './VolumeSlider'
+import { useMpvStatus } from '../hooks/useMpvStatus'
 import type { QueueItem, ServerPlayerState } from '../types'
 
 interface PlayerProps {
@@ -15,7 +17,6 @@ interface PlayerProps {
   onPrevious: () => void
   onNext: () => void
   onSeek: (time: number) => void
-  onSeekCommit?: (time: number) => void
   onVolumeChange: (volume: number) => void
   onToggleMute: () => void
   onClearQueue: () => void
@@ -31,7 +32,6 @@ export function Player({
   onPrevious,
   onNext,
   onSeek,
-  onSeekCommit,
   onVolumeChange,
   onToggleMute,
   onClearQueue,
@@ -40,6 +40,9 @@ export function Player({
   onToggleShuffle,
 }: PlayerProps) {
   const { t } = useTranslation('music')
+  const { data: mpvStatus } = useMpvStatus()
+
+  const showInstallGuide = mpvStatus && !mpvStatus.installed
 
   return (
     <div className="w-full min-w-0 flex flex-col overflow-hidden lg:flex-1 lg:min-h-0 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
@@ -56,6 +59,13 @@ export function Player({
           />
         </div>
       </div>
+      {showInstallGuide && (
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+          <MpvInstallGuide
+            installInstructions={mpvStatus?.installInstructions}
+          />
+        </div>
+      )}
       <div className="p-3 sm:p-4 space-y-4 flex-shrink-0">
         <NowPlaying currentTrack={currentTrack} />
 
@@ -63,7 +73,6 @@ export function Player({
           currentTime={state.currentTime}
           duration={state.duration}
           onSeek={onSeek}
-          onSeekCommit={onSeekCommit}
         />
 
         <div className="flex justify-center">
