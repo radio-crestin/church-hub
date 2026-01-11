@@ -28,7 +28,7 @@
     "ios:launch": "xcrun devicectl device process launch --device A0B78F24-E37A-5781-A622-4C1933760D99 com.church-hub",
     "ios:run": "pnpm ios:build && pnpm ios:install && pnpm ios:launch",
     "ios:run:release": "pnpm ios:build:release && pnpm ios:install && pnpm ios:launch",
-    "setup:libmpv": "npx tauri-plugin-libmpv-api setup-lib && mkdir -p tauri/lib && cp -r src-tauri/lib/* tauri/lib/ 2>/dev/null || true && rm -rf src-tauri",
+    "setup:libmpv": "node scripts/setup-libmpv.js",
     "postinstall": "npm run setup:libmpv"
   },
   "devDependencies": {
