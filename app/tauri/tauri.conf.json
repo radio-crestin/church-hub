@@ -42,7 +42,8 @@
     ],
     "resources": {
       "../apps/client/dist": "client-dist",
-      "resources/midi-native": "midi-native"
+      "resources/midi-native": "midi-native",
+      "lib/**/*": "lib"
     },
     "icon": [
       "icons/32x32.png",
