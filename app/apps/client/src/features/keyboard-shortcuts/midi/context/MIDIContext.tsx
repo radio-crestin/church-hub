@@ -214,40 +214,10 @@ export function MIDIProvider({
               data.payload.reconnectingOutputDevice
             setReconnectingDeviceName(deviceName)
 
-            // Sync device IDs from server - device IDs can change after reconnection
-            const serverInputId = data.payload.inputDeviceId
-            const serverOutputId = data.payload.outputDeviceId
-            if (serverInputId !== undefined || serverOutputId !== undefined) {
-              setConfig((prev) => {
-                const newInputId =
-                  serverInputId !== null && serverInputId !== undefined
-                    ? String(serverInputId)
-                    : prev.inputDeviceId
-                const newOutputId =
-                  serverOutputId !== null && serverOutputId !== undefined
-                    ? String(serverOutputId)
-                    : prev.outputDeviceId
-
-                // Only update if something changed
-                if (
-                  newInputId !== prev.inputDeviceId ||
-                  newOutputId !== prev.outputDeviceId
-                ) {
-                  logger.info('Syncing device IDs from server', {
-                    inputDeviceId: newInputId,
-                    outputDeviceId: newOutputId,
-                  })
-                  const updated = {
-                    ...prev,
-                    inputDeviceId: newInputId,
-                    outputDeviceId: newOutputId,
-                  }
-                  onConfigChange?.(updated)
-                  return updated
-                }
-                return prev
-              })
-            }
+            // Note: We intentionally do NOT sync device IDs from server here.
+            // The server may auto-connect to a different device than what the user selected.
+            // We keep the user's saved selection and only display devices that match AND are available.
+            // This prevents showing "MPK mini 3" when the user actually selected "LPD8" (which is unavailable).
 
             // If we just finished reconnecting, notify subscribers to refresh LEDs
             if (wasReconnecting && !newIsReconnecting) {
