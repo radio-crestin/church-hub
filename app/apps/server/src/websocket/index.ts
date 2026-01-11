@@ -1,6 +1,12 @@
 import type { ServerWebSocket } from 'bun'
 
 import {
+  handleAudioControllerMessage,
+  isAudioController,
+  registerAudioController,
+  unregisterAudioController,
+} from './audio-controller'
+import {
   clearTemporaryContent,
   presentTemporaryScreenShare,
 } from '../service/presentation/presentation-state'
@@ -393,6 +399,18 @@ export function handleWebSocketMessage(
       return
     }
 
+    // Handle audio controller registration (Tauri connects as audio controller)
+    if (data.type === 'audio_controller_register') {
+      registerAudioController(ws)
+      return
+    }
+
+    // Handle audio controller state updates
+    if (data.type === 'audio_state_update' || data.type === 'audio_finished') {
+      handleAudioControllerMessage(data)
+      return
+    }
+
     // Handle shortcut recording state changes (disables MIDI shortcuts during recording)
     if (data.type === 'shortcut_recording_start') {
       shortcutRecordingInProgress = true
@@ -588,6 +606,11 @@ export function handleWebSocketMessage(
  * Handles WebSocket disconnections
  */
 export function handleWebSocketClose(ws: ServerWebSocket<WebSocketData>) {
+  // Check if the disconnecting client is the audio controller
+  if (isAudioController(ws)) {
+    unregisterAudioController(ws)
+  }
+
   if (ws.data.clientId) {
     const clientId = ws.data.clientId
     clients.delete(clientId)
