@@ -65,5 +65,13 @@
     "removed": "{{count}} fișiere șterse",
     "updated": "{{count}} fișiere actualizate",
     "errors": "{{count}} erori"
+  },
+  "mpv": {
+    "notInstalled": "Player audio neinstalat",
+    "installDescription": "mpv media player este necesar pentru redarea audio. Te rugăm să-l instalezi folosind una din următoarele comenzi:",
+    "macOS": "macOS",
+    "windows": "Windows",
+    "linux": "Linux",
+    "restartAfterInstall": "După instalare, repornește aplicația."
   }
 }

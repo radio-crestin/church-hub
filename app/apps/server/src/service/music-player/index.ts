@@ -1,3 +1,14 @@
+export type { MpvStatus } from './mpv-player'
+export {
+  executeCommand,
+  getMpvStatus,
+  getPlayerState,
+  initializeMusicPlayer,
+  isPlayerAvailable,
+  refreshQueueState,
+  setStateCallback,
+  shutdownMusicPlayer,
+} from './mpv-player'
 export {
   addMultipleToNowPlaying,
   addToNowPlaying,
@@ -9,17 +20,6 @@ export {
   reorderNowPlaying,
   setNowPlayingQueue,
 } from './now-playing'
-export type { AudioStatus } from './rodio-player'
-export {
-  executeCommand,
-  getAudioStatus,
-  getPlayerState,
-  initializeMusicPlayer,
-  isPlayerAvailable,
-  refreshQueueState,
-  setStateCallback,
-  shutdownMusicPlayer,
-} from './rodio-player'
 export type {
   CurrentTrack,
   MusicPlayerCommand,
