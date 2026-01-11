@@ -15,6 +15,7 @@ interface PlayerProps {
   onPrevious: () => void
   onNext: () => void
   onSeek: (time: number) => void
+  onSeekCommit?: (time: number) => void
   onVolumeChange: (volume: number) => void
   onToggleMute: () => void
   onClearQueue: () => void
@@ -30,6 +31,7 @@ export function Player({
   onPrevious,
   onNext,
   onSeek,
+  onSeekCommit,
   onVolumeChange,
   onToggleMute,
   onClearQueue,
@@ -61,6 +63,7 @@ export function Player({
           currentTime={state.currentTime}
           duration={state.duration}
           onSeek={onSeek}
+          onSeekCommit={onSeekCommit}
         />
 
         <div className="flex justify-center">

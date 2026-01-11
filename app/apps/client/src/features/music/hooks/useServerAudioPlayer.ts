@@ -1,10 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
-import { useCallback } from 'react'
+import { useCallback, useRef } from 'react'
 
 import { useWebSocket } from '~/features/presentation/hooks/useWebSocket'
+import { useThrottledCallback } from '~/hooks/useThrottledCallback'
 import type { ServerPlayerState } from '../types'
 
 const VOLUME_STORAGE_KEY = 'music-player-volume'
+const SEEK_THROTTLE_MS = 100
+const VOLUME_THROTTLE_MS = 50
+const VOLUME_STORAGE_DEBOUNCE_MS = 300
 
 function storeVolume(volume: number): void {
   localStorage.setItem(VOLUME_STORAGE_KEY, String(volume))
@@ -55,20 +59,44 @@ export function useServerAudioPlayer() {
     send({ type: 'music_stop' })
   }, [send])
 
-  const seek = useCallback(
+  const sendSeek = useCallback(
     (time: number) => {
       send({ type: 'music_seek', payload: { time } })
     },
     [send],
   )
 
-  const setVolume = useCallback(
+  const seek = useThrottledCallback(sendSeek, SEEK_THROTTLE_MS)
+
+  const volumeStorageTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  )
+
+  const sendVolume = useCallback(
     (volume: number) => {
       const level = Math.round(volume * 100)
       send({ type: 'music_volume', payload: { level } })
-      storeVolume(volume)
     },
     [send],
+  )
+
+  const throttledSendVolume = useThrottledCallback(
+    sendVolume,
+    VOLUME_THROTTLE_MS,
+  )
+
+  const setVolume = useCallback(
+    (volume: number) => {
+      throttledSendVolume(volume)
+
+      if (volumeStorageTimeoutRef.current) {
+        clearTimeout(volumeStorageTimeoutRef.current)
+      }
+      volumeStorageTimeoutRef.current = setTimeout(() => {
+        storeVolume(volume)
+      }, VOLUME_STORAGE_DEBOUNCE_MS)
+    },
+    [throttledSendVolume],
   )
 
   const toggleMute = useCallback(() => {
@@ -158,6 +186,7 @@ export function useServerAudioPlayer() {
     togglePlayPause,
     stop,
     seek,
+    seekImmediate: sendSeek,
     setVolume,
     toggleMute,
     next,
