@@ -168,7 +168,7 @@
 - adauga optiunea de a face screen share la o fereastra
 
 
-- cand se sterge search-ul din Biblie, intoarce-te la fisierul afisat
+~~- cand se sterge search-ul din Biblie, intoarce-te la fisierul afisat~~
 - am cautat "ca sa ne invete ce sa facem" in Biblie si nu a functiona
 
 - cand schimb ecranul, midi state is destroyed

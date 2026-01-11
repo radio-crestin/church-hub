@@ -77,6 +77,15 @@ export function BibleNavigationPanel({
   const [localQuery, setLocalQuery] = useState(state.searchQuery)
   // Track whether user is actively typing to prevent external sync from overwriting
   const isUserTypingRef = useRef(false)
+  // Track navigation state before search was initiated (to restore when search is cleared)
+  const preSearchStateRef = useRef<{
+    level: typeof state.level
+    bookId: typeof state.bookId
+    bookName: typeof state.bookName
+    chapter: typeof state.chapter
+    presentedIndex: typeof state.presentedIndex
+    searchedIndex: typeof state.searchedIndex
+  } | null>(null)
 
   // Debounced query for text search API calls
   const { debouncedValue: debouncedQuery, isPending } = useDebouncedValue(
@@ -128,11 +137,33 @@ export function BibleNavigationPanel({
     }
   }, [state.searchQuery])
 
-  // Handle user input - mark as user typing
-  const handleQueryChange = useCallback((value: string) => {
-    isUserTypingRef.current = true // Mark as user typing
-    setLocalQuery(value)
-  }, [])
+  // Handle user input - mark as user typing and capture pre-search state
+  const handleQueryChange = useCallback(
+    (value: string) => {
+      isUserTypingRef.current = true // Mark as user typing
+
+      // Capture navigation state when user STARTS typing (first character)
+      // This must happen before any search/smart-search can navigate away
+      const wasEmpty = localQuery.length === 0
+      const willHaveContent = value.length > 0
+
+      if (wasEmpty && willHaveContent && !preSearchStateRef.current) {
+        // User is starting to type - save current navigation state immediately
+        // This captures state before smart search can match book names and navigate
+        preSearchStateRef.current = {
+          level: state.level,
+          bookId: state.bookId,
+          bookName: state.bookName,
+          chapter: state.chapter,
+          presentedIndex: state.presentedIndex,
+          searchedIndex: state.searchedIndex,
+        }
+      }
+
+      setLocalQuery(value)
+    },
+    [localQuery, state],
+  )
 
   // Sync debounced query to URL (for URL-based navigation)
   // Only sync when user typed (not external), debounce completed, and not a reference search
@@ -244,6 +275,61 @@ export function BibleNavigationPanel({
   // Use localQuery for immediate feedback (shows "Searching..." during typing and on restore)
   const isTextSearchActive = localQuery.length >= 2 && !isReferenceSearch
 
+  // Restore navigation state when search is cleared
+  // State capture happens synchronously in handleQueryChange (before URL sync)
+  useEffect(() => {
+    if (!isTextSearchActive && !localQuery && preSearchStateRef.current) {
+      // Restore saved state when search is fully cleared (by any means - X button or manual delete)
+      const savedState = preSearchStateRef.current
+      preSearchStateRef.current = null
+
+      // Navigate back to the saved state
+      if (
+        savedState.level === 'verses' &&
+        savedState.bookId &&
+        savedState.bookName &&
+        savedState.chapter
+      ) {
+        // Calculate verse number (1-based) from index (0-based)
+        const verseNumber =
+          savedState.presentedIndex !== null
+            ? savedState.presentedIndex + 1
+            : savedState.searchedIndex !== null
+              ? savedState.searchedIndex + 1
+              : undefined
+
+        if (onNavigateToChapter) {
+          onNavigateToChapter(
+            savedState.bookId,
+            savedState.bookName,
+            savedState.chapter,
+            verseNumber,
+          )
+        } else {
+          selectBook(savedState.bookId, savedState.bookName, false)
+          selectChapter(savedState.chapter)
+        }
+      } else if (
+        savedState.level === 'chapters' &&
+        savedState.bookId &&
+        savedState.bookName
+      ) {
+        if (onNavigateToBook) {
+          onNavigateToBook(savedState.bookId, savedState.bookName)
+        } else {
+          selectBook(savedState.bookId, savedState.bookName, false)
+        }
+      }
+    }
+  }, [
+    isTextSearchActive,
+    localQuery,
+    onNavigateToChapter,
+    onNavigateToBook,
+    selectBook,
+    selectChapter,
+  ])
+
   // Focus search input when returning to search results (e.g., after pressing Escape from verse view)
   // This tracks when we transition back to showing search results
   const wasShowingSearchResultsRef = useRef(false)
@@ -312,6 +398,7 @@ export function BibleNavigationPanel({
   const showPendingIndicator = isPending && localQuery.length >= 2
 
   const handleClearSearch = () => {
+    // Just clear the query - the effect will handle restoring pre-search navigation state
     handleQueryChange('')
     clearSearch()
   }
