@@ -1,0 +1,15 @@
+{
+  "name": "upstash-search-songs",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Push songs to Upstash Search",
+  "main": "index.js",
+  "scripts": {
+    "push": "node index.js"
+  },
+  "dependencies": {
+    "@upstash/search": "^0.1.7",
+    "dotenv": "^16.4.5",
+    "fast-xml-parser": "^4.5.0"
+  }
+}
