@@ -339,15 +339,7 @@ function findMpvPath(): string | null {
       'mpv',
       'mpv.exe',
     ),
-    path.join(
-      process.cwd(),
-      '..',
-      '..',
-      'tauri',
-      'resources',
-      'mpv',
-      'mpv',
-    ),
+    path.join(process.cwd(), '..', '..', 'tauri', 'resources', 'mpv', 'mpv'),
     // Relative to app root
     path.join(process.cwd(), 'tauri', 'resources', 'mpv', 'mpv.exe'),
     path.join(process.cwd(), 'tauri', 'resources', 'mpv', 'mpv'),

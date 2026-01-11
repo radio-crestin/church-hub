@@ -5,6 +5,15 @@ import type {
   ShortcutConflict,
 } from '../types'
 
+// Valid action IDs - used to filter out legacy actions that may still exist in the database
+export const VALID_ACTION_IDS: GlobalShortcutActionId[] = [
+  'startLive',
+  'stopLive',
+  'showSlide',
+  'nextSlide',
+  'prevSlide',
+]
+
 export function formatShortcutForDisplay(shortcut: string): string {
   // Handle MIDI shortcuts
   if (isMIDIShortcut(shortcut)) {
@@ -70,6 +79,10 @@ export function validateGlobalShortcut(
   currentActionId?: string,
 ): ShortcutConflict | null {
   for (const [actionId, config] of Object.entries(allGlobalShortcuts.actions)) {
+    // Skip legacy action IDs that may still exist in the database
+    if (!VALID_ACTION_IDS.includes(actionId as GlobalShortcutActionId)) {
+      continue
+    }
     if (actionId === currentActionId) continue
     // Allow startLive/stopLive to share the same shortcut
     if (
@@ -115,9 +128,13 @@ export function validateSidebarShortcut(
     }
   }
 
-  // Check against global shortcuts
+  // Check against global shortcuts (only valid action IDs, ignore legacy ones)
   if (globalShortcuts) {
     for (const [actionId, config] of Object.entries(globalShortcuts.actions)) {
+      // Skip legacy action IDs that may still exist in the database
+      if (!VALID_ACTION_IDS.includes(actionId as GlobalShortcutActionId)) {
+        continue
+      }
       if (config.shortcuts.includes(shortcut)) {
         return {
           shortcut,
@@ -161,8 +178,13 @@ export function validateSceneShortcut(
     }
   }
 
+  // Check against global shortcuts (only valid action IDs, ignore legacy ones)
   if (globalShortcuts) {
     for (const [actionId, config] of Object.entries(globalShortcuts.actions)) {
+      // Skip legacy action IDs that may still exist in the database
+      if (!VALID_ACTION_IDS.includes(actionId as GlobalShortcutActionId)) {
+        continue
+      }
       if (config.shortcuts.includes(shortcut)) {
         return {
           shortcut,
