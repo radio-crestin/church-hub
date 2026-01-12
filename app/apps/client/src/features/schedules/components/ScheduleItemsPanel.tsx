@@ -20,11 +20,11 @@ import {
   Camera,
   ChevronDown,
   ChevronRight,
-  Eye,
   FileText,
   GripVertical,
   Loader2,
   Megaphone,
+  MoreVertical,
   Music,
   User,
 } from 'lucide-react'
@@ -746,30 +746,21 @@ function SortableItemWrapper({
           </div>
         )}
 
-        {/* Edit Button for Songs */}
-        {item.itemType === 'song' && item.songId && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              onEditSong?.(item.songId!)
-            }}
-            onAuxClick={(e) => {
-              if (e.button === 1) {
-                e.preventDefault()
-                e.stopPropagation()
-                onNavigateToSong?.(item.songId!)
-              }
-            }}
-            className="flex-shrink-0 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            title={t('presenter.editSong')}
-          >
-            <Eye
-              size={16}
-              className="text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400"
-            />
-          </button>
-        )}
+        {/* Options Menu Button */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            onContextMenu(e, item)
+          }}
+          className="flex-shrink-0 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          title={t('common.options')}
+        >
+          <MoreVertical
+            size={16}
+            className="text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400"
+          />
+        </button>
       </div>
 
       {/* Expanded Content */}

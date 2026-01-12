@@ -168,7 +168,7 @@ export function EditSlidesAsTextModal({
   return (
     <dialog
       ref={dialogRef}
-      className="fixed inset-0 p-0 m-auto w-full max-w-2xl bg-transparent backdrop:bg-black/50"
+      className="fixed inset-0 p-0 m-auto w-full max-w-2xl bg-transparent backdrop:bg-black/50 z-[60]"
       onClose={handleClose}
       onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}

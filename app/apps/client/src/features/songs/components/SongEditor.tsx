@@ -1,49 +1,20 @@
 import { useNavigate } from '@tanstack/react-router'
-import {
-  ArrowLeft,
-  CalendarPlus,
-  ChevronDown,
-  ChevronUp,
-  FileText,
-  Loader2,
-  Play,
-  Save,
-  Trash2,
-  X,
-} from 'lucide-react'
+import { ArrowLeft, CalendarPlus, Loader2, Play, Save, Trash2, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { usePresentTemporarySong } from '~/features/presentation'
 import { AddSongToScheduleModal } from '~/features/schedules'
 import { useToast } from '~/ui/toast'
-import { CategoryPicker } from './CategoryPicker'
-import { EditSlidesAsTextModal } from './EditSlidesAsTextModal'
-import { type LocalSlide, SongSlideList } from './SongSlideList'
+import {
+  type SongMetadata,
+  defaultSongMetadata,
+  SongDetailsSection,
+} from './SongDetailsSection'
+import { type LocalSlide } from './SongSlideList'
+import { SongSlidesSection } from './SongSlidesSection'
 
 type PendingAction = 'present' | 'addToSchedule' | null
-
-// IMPORTANT: When adding new metadata fields, ensure they are also included in:
-// 1. SongMetadata interface below
-// 2. defaultMetadata object
-// 3. The parent component's save handler (e.g., $songId.tsx handleSave)
-// 4. SongEditorModal.tsx (both state initialization and handleSave)
-// 5. UpsertSongInput type in features/songs/types.ts
-// 6. Server-side songs service
-interface SongMetadata {
-  author: string | null
-  copyright: string | null
-  ccli: string | null
-  key: string | null
-  tempo: string | null
-  timeSignature: string | null
-  theme: string | null
-  altTheme: string | null
-  hymnNumber: string | null
-  keyLine: string | null
-  presentationOrder: string | null
-  sourceFilename: string | null
-}
 
 interface SongEditorProps {
   isNew: boolean
@@ -68,21 +39,6 @@ interface SongEditorProps {
   onBack: () => void
 }
 
-const defaultMetadata: SongMetadata = {
-  author: null,
-  copyright: null,
-  ccli: null,
-  key: null,
-  tempo: null,
-  timeSignature: null,
-  theme: null,
-  altTheme: null,
-  hymnNumber: null,
-  keyLine: null,
-  presentationOrder: null,
-  sourceFilename: null,
-}
-
 export function SongEditor({
   isNew,
   isLoading,
@@ -93,7 +49,7 @@ export function SongEditor({
   title,
   categoryId,
   slides,
-  metadata = defaultMetadata,
+  metadata = defaultSongMetadata,
   presentationCount = 0,
   lastManualEdit,
   onTitleChange,
@@ -107,8 +63,6 @@ export function SongEditor({
   const { t } = useTranslation(['songs', 'queue'])
   const navigate = useNavigate()
   const { showToast } = useToast()
-  const [showEditAsTextModal, setShowEditAsTextModal] = useState(false)
-  const [showDetails, setShowDetails] = useState(false)
   const [showAddToScheduleModal, setShowAddToScheduleModal] = useState(false)
   const [showUnsavedChangesModal, setShowUnsavedChangesModal] = useState(false)
   const [pendingAction, setPendingAction] = useState<PendingAction>(null)
@@ -197,17 +151,14 @@ export function SongEditor({
     })
   }
 
-  const handleMetadataFieldChange = (
+  const handleMetadataChange = (
     field: keyof SongMetadata,
-    value: string,
+    value: string | null,
   ) => {
     if (onMetadataChange) {
-      onMetadataChange(field, value || null)
+      onMetadataChange(field, value)
     }
   }
-
-  // Check if there's any metadata to show in the collapsed summary
-  const hasMetadata = metadata.author || metadata.hymnNumber || metadata.key
 
   return (
     <div className="space-y-6 [scrollbar-gutter:stable] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -293,362 +244,24 @@ export function SongEditor({
       </div>
 
       {/* Song Details */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-        <div className="space-y-4">
-          {/* Title */}
-          <div>
-            <label
-              htmlFor="title"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-            >
-              {t('editor.titlePlaceholder').replace('...', '')}
-            </label>
-            {isLoading ? (
-              <div className="w-full h-10 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
-            ) : (
-              <input
-                id="title"
-                type="text"
-                value={title}
-                onChange={(e) => onTitleChange(e.target.value)}
-                className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-white"
-                placeholder={t('editor.titlePlaceholder')}
-              />
-            )}
-          </div>
-
-          {/* Key Line (always visible) */}
-          <div>
-            <label
-              htmlFor="keyLine"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-            >
-              {t('metadata.keyLine')}
-            </label>
-            {isLoading ? (
-              <div className="w-full h-10 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
-            ) : (
-              <input
-                id="keyLine"
-                type="text"
-                value={metadata.keyLine || ''}
-                onChange={(e) =>
-                  handleMetadataFieldChange('keyLine', e.target.value)
-                }
-                className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-white"
-                placeholder={t('metadata.keyLinePlaceholder')}
-              />
-            )}
-          </div>
-
-          {/* Category */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {t('category.name')}
-            </label>
-            {isLoading ? (
-              <div className="w-full h-10 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
-            ) : (
-              <CategoryPicker value={categoryId} onChange={onCategoryChange} />
-            )}
-          </div>
-
-          {/* Collapsible Details Section */}
-          <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-            <button
-              type="button"
-              onClick={() => setShowDetails(!showDetails)}
-              className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-            >
-              {showDetails ? (
-                <ChevronUp size={16} />
-              ) : (
-                <ChevronDown size={16} />
-              )}
-              {t('metadata.detailsSection')}
-              {!showDetails && hasMetadata && (
-                <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
-                  {[
-                    metadata.author,
-                    metadata.hymnNumber && `#${metadata.hymnNumber}`,
-                    metadata.key,
-                  ]
-                    .filter(Boolean)
-                    .join(' · ')}
-                </span>
-              )}
-            </button>
-
-            {showDetails && !isLoading && (
-              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Author */}
-                <div>
-                  <label
-                    htmlFor="author"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                  >
-                    {t('metadata.author')}
-                  </label>
-                  <input
-                    id="author"
-                    type="text"
-                    value={metadata.author || ''}
-                    onChange={(e) =>
-                      handleMetadataFieldChange('author', e.target.value)
-                    }
-                    className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-white text-sm"
-                  />
-                </div>
-
-                {/* Copyright */}
-                <div>
-                  <label
-                    htmlFor="copyright"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                  >
-                    {t('metadata.copyright')}
-                  </label>
-                  <input
-                    id="copyright"
-                    type="text"
-                    value={metadata.copyright || ''}
-                    onChange={(e) =>
-                      handleMetadataFieldChange('copyright', e.target.value)
-                    }
-                    className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-white text-sm"
-                  />
-                </div>
-
-                {/* CCLI */}
-                <div>
-                  <label
-                    htmlFor="ccli"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                  >
-                    {t('metadata.ccli')}
-                  </label>
-                  <input
-                    id="ccli"
-                    type="text"
-                    value={metadata.ccli || ''}
-                    onChange={(e) =>
-                      handleMetadataFieldChange('ccli', e.target.value)
-                    }
-                    className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-white text-sm"
-                  />
-                </div>
-
-                {/* Hymn Number */}
-                <div>
-                  <label
-                    htmlFor="hymnNumber"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                  >
-                    {t('metadata.hymnNumber')}
-                  </label>
-                  <input
-                    id="hymnNumber"
-                    type="text"
-                    value={metadata.hymnNumber || ''}
-                    onChange={(e) =>
-                      handleMetadataFieldChange('hymnNumber', e.target.value)
-                    }
-                    className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-white text-sm"
-                  />
-                </div>
-
-                {/* Tempo */}
-                <div>
-                  <label
-                    htmlFor="tempo"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                  >
-                    {t('metadata.tempo')}
-                  </label>
-                  <input
-                    id="tempo"
-                    type="text"
-                    value={metadata.tempo || ''}
-                    onChange={(e) =>
-                      handleMetadataFieldChange('tempo', e.target.value)
-                    }
-                    className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-white text-sm"
-                  />
-                </div>
-
-                {/* Time Signature */}
-                <div>
-                  <label
-                    htmlFor="timeSignature"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                  >
-                    {t('metadata.timeSignature')}
-                  </label>
-                  <input
-                    id="timeSignature"
-                    type="text"
-                    value={metadata.timeSignature || ''}
-                    onChange={(e) =>
-                      handleMetadataFieldChange('timeSignature', e.target.value)
-                    }
-                    className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-white text-sm"
-                  />
-                </div>
-
-                {/* Theme */}
-                <div>
-                  <label
-                    htmlFor="theme"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                  >
-                    {t('metadata.theme')}
-                  </label>
-                  <input
-                    id="theme"
-                    type="text"
-                    value={metadata.theme || ''}
-                    onChange={(e) =>
-                      handleMetadataFieldChange('theme', e.target.value)
-                    }
-                    className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-white text-sm"
-                  />
-                </div>
-
-                {/* Alternative Theme */}
-                <div>
-                  <label
-                    htmlFor="altTheme"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                  >
-                    {t('metadata.altTheme')}
-                  </label>
-                  <input
-                    id="altTheme"
-                    type="text"
-                    value={metadata.altTheme || ''}
-                    onChange={(e) =>
-                      handleMetadataFieldChange('altTheme', e.target.value)
-                    }
-                    className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-white text-sm"
-                  />
-                </div>
-
-                {/* Source File Path (read-only) */}
-                {metadata.sourceFilename && (
-                  <div className="sm:col-span-2">
-                    <label
-                      htmlFor="sourceFilename"
-                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                    >
-                      {t('metadata.sourceFilename')}
-                    </label>
-                    <input
-                      id="sourceFilename"
-                      type="text"
-                      value={metadata.sourceFilename || ''}
-                      readOnly
-                      className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 text-sm cursor-not-allowed"
-                    />
-                  </div>
-                )}
-
-                {/* Presentation Order (read-only) */}
-                {metadata.presentationOrder && (
-                  <div className="sm:col-span-2">
-                    <label
-                      htmlFor="presentationOrder"
-                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                    >
-                      {t('metadata.presentationOrder')}
-                    </label>
-                    <input
-                      id="presentationOrder"
-                      type="text"
-                      value={metadata.presentationOrder || ''}
-                      readOnly
-                      className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 text-sm cursor-not-allowed"
-                    />
-                  </div>
-                )}
-
-                {/* Tracking Stats (read-only) */}
-                {!isNew && (
-                  <>
-                    <div>
-                      <label
-                        htmlFor="presentationCount"
-                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                      >
-                        {t('metadata.presentationCount')}
-                      </label>
-                      <input
-                        id="presentationCount"
-                        type="text"
-                        value={presentationCount}
-                        readOnly
-                        className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 text-sm cursor-not-allowed"
-                      />
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="lastManualEdit"
-                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                      >
-                        {t('metadata.lastManualEdit')}
-                      </label>
-                      <input
-                        id="lastManualEdit"
-                        type="text"
-                        value={
-                          lastManualEdit
-                            ? new Date(lastManualEdit).toLocaleString()
-                            : t('metadata.neverEdited')
-                        }
-                        readOnly
-                        className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 text-sm cursor-not-allowed"
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      <SongDetailsSection
+        title={title}
+        categoryId={categoryId}
+        metadata={metadata}
+        isLoading={isLoading}
+        isNew={isNew}
+        presentationCount={presentationCount}
+        lastManualEdit={lastManualEdit}
+        onTitleChange={onTitleChange}
+        onCategoryChange={onCategoryChange}
+        onMetadataChange={handleMetadataChange}
+      />
 
       {/* Slides Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {t('editor.slides')} ({isLoading ? '-' : slides.length})
-          </h2>
-          <button
-            type="button"
-            onClick={() => setShowEditAsTextModal(true)}
-            disabled={isLoading}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-amber-900 bg-amber-400 hover:bg-amber-500 dark:text-amber-100 dark:bg-amber-700 dark:hover:bg-amber-600 rounded-lg transition-colors disabled:opacity-50"
-          >
-            <FileText className="w-5 h-5" />
-            {t('actions.editAsText')}
-          </button>
-        </div>
-        <div className="p-6 bg-gray-100 dark:bg-gray-900/30">
-          {isLoading ? (
-            <div className="space-y-3">
-              <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
-              <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
-            </div>
-          ) : (
-            <SongSlideList slides={slides} onSlidesChange={onSlidesChange} />
-          )}
-        </div>
-      </div>
-
-      <EditSlidesAsTextModal
-        isOpen={showEditAsTextModal}
-        onClose={() => setShowEditAsTextModal(false)}
+      <SongSlidesSection
         slides={slides}
         onSlidesChange={onSlidesChange}
+        isLoading={isLoading}
       />
 
       {songId && (
