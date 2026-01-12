@@ -1,11 +1,4 @@
-import {
-  CalendarDays,
-  Eye,
-  Loader2,
-  Music,
-  Search,
-  Sparkles,
-} from 'lucide-react'
+import { Loader2, Music, Search, Sparkles } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -13,8 +6,9 @@ import { useSidebarItemShortcuts } from '~/features/sidebar-config'
 import { useDebouncedValue } from '~/hooks/useDebouncedValue'
 import { MultiSelectCombobox } from '~/ui/combobox'
 import { KeyboardShortcutBadge } from '~/ui/kbd'
-import { Tooltip } from '~/ui/tooltip'
 import { SongCard } from './SongCard'
+import { SongFiltersDropdown } from './SongFiltersDropdown'
+import type { SongFiltersState } from './SongFiltersDropdown'
 import {
   useAISearchSongs,
   useCategories,
@@ -31,6 +25,7 @@ const SEARCH_DEBOUNCE_MS = 600
 const CATEGORY_FILTER_STORAGE_KEY = 'songList.categoryFilter'
 const PRESENTED_ONLY_STORAGE_KEY = 'songList.presentedOnly'
 const IN_SCHEDULES_ONLY_STORAGE_KEY = 'songList.inSchedulesOnly'
+const HAS_KEY_LINE_STORAGE_KEY = 'songList.hasKeyLine'
 
 interface SongListProps {
   onSongClick: (songId: number) => void
@@ -96,6 +91,15 @@ export function SongList({
     }
   })
 
+  // Initialize has key line filter from local storage
+  const [hasKeyLine, setHasKeyLine] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(HAS_KEY_LINE_STORAGE_KEY) === 'true'
+    } catch {
+      return false
+    }
+  })
+
   // Sync with props when they change
   useEffect(() => {
     if (propCategoryIds !== undefined) {
@@ -123,21 +127,24 @@ export function SongList({
     [onCategoryChange],
   )
 
-  // Handle presented only filter toggle
-  const handlePresentedOnlyChange = useCallback((checked: boolean) => {
-    setPresentedOnly(checked)
+  // Handle filters change from dropdown
+  const handleFiltersChange = useCallback((newFilters: SongFiltersState) => {
+    setPresentedOnly(newFilters.presentedOnly)
+    setInSchedulesOnly(newFilters.inSchedulesOnly)
+    setHasKeyLine(newFilters.hasKeyLine)
     try {
-      localStorage.setItem(PRESENTED_ONLY_STORAGE_KEY, String(checked))
-    } catch {
-      // Ignore storage errors
-    }
-  }, [])
-
-  // Handle in schedules only filter toggle
-  const handleInSchedulesOnlyChange = useCallback((checked: boolean) => {
-    setInSchedulesOnly(checked)
-    try {
-      localStorage.setItem(IN_SCHEDULES_ONLY_STORAGE_KEY, String(checked))
+      localStorage.setItem(
+        PRESENTED_ONLY_STORAGE_KEY,
+        String(newFilters.presentedOnly),
+      )
+      localStorage.setItem(
+        IN_SCHEDULES_ONLY_STORAGE_KEY,
+        String(newFilters.inSchedulesOnly),
+      )
+      localStorage.setItem(
+        HAS_KEY_LINE_STORAGE_KEY,
+        String(newFilters.hasKeyLine),
+      )
     } catch {
       // Ignore storage errors
     }
@@ -149,8 +156,19 @@ export function SongList({
       categoryIds: categoryIds.length > 0 ? categoryIds : undefined,
       presentedOnly: presentedOnly || undefined,
       inSchedulesOnly: inSchedulesOnly || undefined,
+      hasKeyLine: hasKeyLine || undefined,
     }),
-    [categoryIds, presentedOnly, inSchedulesOnly],
+    [categoryIds, presentedOnly, inSchedulesOnly, hasKeyLine],
+  )
+
+  // Build filters state for the dropdown
+  const filtersState: SongFiltersState = useMemo(
+    () => ({
+      presentedOnly,
+      inSchedulesOnly,
+      hasKeyLine,
+    }),
+    [presentedOnly, inSchedulesOnly, hasKeyLine],
   )
 
   // Local state for immediate input feedback
@@ -478,34 +496,10 @@ export function SongList({
             <Sparkles className="w-4 h-4" />
           </button>
         )}
-        <Tooltip content={t('search.presentedOnly')}>
-          <button
-            type="button"
-            onClick={() => handlePresentedOnlyChange(!presentedOnly)}
-            className={`px-3 py-2 rounded-lg border transition-colors flex items-center gap-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
-              presentedOnly
-                ? 'bg-indigo-600 text-white border-indigo-600'
-                : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400'
-            }`}
-            aria-pressed={presentedOnly}
-          >
-            <Eye className="w-4 h-4" />
-          </button>
-        </Tooltip>
-        <Tooltip content={t('search.inSchedulesOnly')}>
-          <button
-            type="button"
-            onClick={() => handleInSchedulesOnlyChange(!inSchedulesOnly)}
-            className={`px-3 py-2 rounded-lg border transition-colors flex items-center gap-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
-              inSchedulesOnly
-                ? 'bg-indigo-600 text-white border-indigo-600'
-                : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400'
-            }`}
-            aria-pressed={inSchedulesOnly}
-          >
-            <CalendarDays className="w-4 h-4" />
-          </button>
-        </Tooltip>
+        <SongFiltersDropdown
+          filters={filtersState}
+          onChange={handleFiltersChange}
+        />
         <div style={{ width: categoryDropdownWidth }}>
           <MultiSelectCombobox
             options={

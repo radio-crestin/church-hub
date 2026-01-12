@@ -129,6 +129,9 @@ export function LivePreview() {
   const exitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const prevHiddenRef = useRef(presentationState?.isHidden)
   const currentContentTypeRef = useRef<ContentType>(contentType)
+  // Track if exit animation should complete - prevents race condition where
+  // timeout fires after user has started a new presentation
+  const shouldCompleteExitRef = useRef(false)
 
   // Keep track of current content type for exit animation calculation
   if (contentType !== 'empty') {
@@ -141,11 +144,16 @@ export function LivePreview() {
     const isHidden = presentationState?.isHidden
 
     // Detect transition from visible to hidden
-    if (!wasHidden && isHidden) {
+    // wasHidden must be explicitly false (not undefined) to count as "was visible"
+    // This prevents false triggering on initial load when prevHiddenRef is undefined
+    if (wasHidden === false && isHidden) {
       // Clear any existing timeout
       if (exitTimeoutRef.current) {
         clearTimeout(exitTimeoutRef.current)
       }
+
+      // Mark that exit animation should complete
+      shouldCompleteExitRef.current = true
 
       // Start exit animation
       setIsExitAnimating(true)
@@ -158,6 +166,10 @@ export function LivePreview() {
 
       // After animation duration + buffer, transition to empty state
       exitTimeoutRef.current = setTimeout(() => {
+        // Only execute if exit wasn't cancelled (e.g., by starting new presentation)
+        if (!shouldCompleteExitRef.current) {
+          return
+        }
         setContentData({})
         setContentType('empty')
         setIsExitAnimating(false)
@@ -166,6 +178,9 @@ export function LivePreview() {
 
     // If becoming visible, cancel any pending exit transition
     if (wasHidden && !isHidden) {
+      // Cancel exit animation - this prevents the timeout from clearing content
+      shouldCompleteExitRef.current = false
+
       if (exitTimeoutRef.current) {
         clearTimeout(exitTimeoutRef.current)
         exitTimeoutRef.current = null
@@ -184,8 +199,13 @@ export function LivePreview() {
 
   // Fetch content based on presentation state
   useEffect(() => {
+    // Track if this effect has been superseded by a newer one
+    // This prevents stale async operations from setting state
+    let isCancelled = false
+
     const fetchContent = async () => {
       if (!presentationState) {
+        if (isCancelled) return
         setContentData({})
         setContentType('empty')
         return
@@ -415,15 +435,22 @@ export function LivePreview() {
         }
 
         // No content, show empty/clock
+        if (isCancelled) return
         setContentData({})
         setContentType('empty')
       } catch (_error) {
+        if (isCancelled) return
         setContentData({})
         setContentType('empty')
       }
     }
 
     fetchContent()
+
+    // Cleanup: mark this effect as cancelled so stale async ops don't set state
+    return () => {
+      isCancelled = true
+    }
   }, [
     presentationState?.currentSongSlideId,
     presentationState?.currentQueueItemId,

@@ -437,8 +437,10 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
           disconnectCount: 0,
         }))
 
-        // Invalidate presentation state to refetch current state on reconnection
-        queryClient.invalidateQueries({ queryKey: presentationStateQueryKey })
+        // Note: We no longer invalidate presentation state on WebSocket reconnection
+        // because it causes race conditions with mutations.
+        // WebSocket updates will provide real-time state updates, and the
+        // refetchInterval in usePresentationState provides fallback polling.
 
         // Start ping interval with 3-strike rule
         pingIntervalRef.current = setInterval(() => {
@@ -608,8 +610,10 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
         disconnectCount: 0,
       }))
 
-      // Invalidate presentation state to refetch current state on reconnection
-      queryClient.invalidateQueries({ queryKey: presentationStateQueryKey })
+      // Note: We no longer invalidate presentation state on WebSocket reconnection
+      // because it causes race conditions with mutations.
+      // WebSocket updates will provide real-time state updates, and the
+      // refetchInterval in usePresentationState provides fallback polling.
 
       // Listen for messages and connection events
       ws.addListener((message) => {
