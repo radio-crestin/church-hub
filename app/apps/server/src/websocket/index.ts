@@ -3,6 +3,7 @@ import type { ServerWebSocket } from 'bun'
 import {
   clearTemporaryContent,
   presentTemporaryScreenShare,
+  setOnSongPresentedCallback,
 } from '../service/presentation/presentation-state'
 import type {
   PresentationState,
@@ -1222,3 +1223,7 @@ export function broadcastMusicState(state: MusicPlayerStateMessage['payload']) {
     }
   }
 }
+
+// Register callback to broadcast song updates when songs are presented
+// This avoids circular dependencies between websocket and presentation-state modules
+setOnSongPresentedCallback(broadcastSongUpdated)

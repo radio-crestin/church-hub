@@ -29,7 +29,6 @@ export const songs = sqliteTable(
     author: text('author'),
     copyright: text('copyright'),
     ccli: text('ccli'),
-    key: text('key'),
     tempo: text('tempo'),
     timeSignature: text('time_signature'),
     theme: text('theme'),
@@ -38,6 +37,7 @@ export const songs = sqliteTable(
     keyLine: text('key_line'),
     presentationOrder: text('presentation_order'),
     presentationCount: integer('presentation_count').notNull().default(0),
+    lastPresentedAt: integer('last_presented_at', { mode: 'timestamp' }),
     lastManualEdit: integer('last_manual_edit', { mode: 'timestamp' }),
     createdAt: integer('created_at', { mode: 'timestamp' })
       .notNull()

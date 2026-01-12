@@ -16,6 +16,7 @@ export interface MultiSelectComboboxProps {
   disabled?: boolean
   className?: string
   portalContainer?: HTMLElement | null
+  emptyMeansAll?: boolean
 }
 
 export function MultiSelectCombobox({
@@ -27,6 +28,7 @@ export function MultiSelectCombobox({
   disabled = false,
   className = '',
   portalContainer,
+  emptyMeansAll = false,
 }: MultiSelectComboboxProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState('')
@@ -52,11 +54,29 @@ export function MultiSelectCombobox({
     option.label.toLowerCase().includes(search.toLowerCase()),
   )
 
+  const isAllSelected =
+    emptyMeansAll && value.length === 0
+      ? true
+      : options.length > 0 && value.length === options.length
+
+  // Debug logging for Tauri issue
+  console.log('[MultiSelectCombobox]', {
+    valueLength: value.length,
+    optionsLength: options.length,
+    emptyMeansAll,
+    isAllSelected,
+    value,
+    optionValues: options.map((o) => o.value),
+  })
+
   const getDisplayText = () => {
+    if (emptyMeansAll && value.length === 0) {
+      return allSelectedLabel ?? placeholder
+    }
     if (value.length === 0) {
       return placeholder
     }
-    if (allSelectedLabel && value.length === options.length) {
+    if (allSelectedLabel && isAllSelected) {
       return allSelectedLabel
     }
     if (selectedOptions.length === 1) {
@@ -116,11 +136,24 @@ export function MultiSelectCombobox({
   }, [isOpen])
 
   const handleToggle = (optionValue: number | string) => {
+    // When emptyMeansAll is true and value is empty, clicking an item deselects it
+    // (selects all others)
+    if (emptyMeansAll && value.length === 0) {
+      onChange(options.filter((o) => o.value !== optionValue).map((o) => o.value))
+      return
+    }
+
     const isSelected = value.includes(optionValue)
     if (isSelected) {
       onChange(value.filter((v) => v !== optionValue))
     } else {
-      onChange([...value, optionValue])
+      // If adding this item would select all, reset to empty (all selected)
+      const newValue = [...value, optionValue]
+      if (emptyMeansAll && newValue.length === options.length) {
+        onChange([])
+      } else {
+        onChange(newValue)
+      }
     }
   }
 
@@ -147,13 +180,15 @@ export function MultiSelectCombobox({
       >
         <span
           className={
-            value.length > 0 ? 'truncate' : 'text-gray-400 dark:text-gray-500'
+            value.length > 0 || (emptyMeansAll && value.length === 0)
+              ? 'truncate'
+              : 'text-gray-400 dark:text-gray-500'
           }
         >
           {getDisplayText()}
         </span>
         <div className="flex items-center gap-1 flex-shrink-0">
-          {value.length > 0 && (
+          {value.length > 0 && !isAllSelected && (
             <X
               className="w-4 h-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               onClick={handleClear}
@@ -197,7 +232,10 @@ export function MultiSelectCombobox({
                 </div>
               ) : (
                 filteredOptions.map((option) => {
-                  const isSelected = value.includes(option.value)
+                  const isSelected =
+                    emptyMeansAll && value.length === 0
+                      ? true
+                      : value.includes(option.value)
                   return (
                     <button
                       key={option.value}

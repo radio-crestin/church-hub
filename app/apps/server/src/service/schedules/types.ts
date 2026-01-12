@@ -104,6 +104,7 @@ export interface ScheduleItem {
     categoryName: string | null
   } | null
   slides: SongSlide[]
+  keyLine: string | null
   // Standalone slide fields (present when itemType === 'slide')
   slideType: SlideTemplate | null
   slideContent: string | null

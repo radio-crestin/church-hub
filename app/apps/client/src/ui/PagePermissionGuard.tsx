@@ -1,7 +1,10 @@
+import { useLocation, useNavigate } from '@tanstack/react-router'
 import { ShieldX, WifiOff } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { type ReactNode, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { getFirstAccessibleRoute } from './utils/getFirstAccessibleRoute'
+import { useSidebarConfig } from '../features/sidebar-config/hooks'
 import type { Permission } from '../features/users/types'
 import { usePermissions } from '../provider/permissions-provider'
 
@@ -64,8 +67,40 @@ export function PagePermissionGuard({
   children,
 }: PagePermissionGuardProps) {
   const { hasPermission, isLoading, isConnectionError } = usePermissions()
+  const { config: sidebarConfig, isLoading: isSidebarLoading } =
+    useSidebarConfig()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const [hasAttemptedRedirect, setHasAttemptedRedirect] = useState(false)
 
-  if (isLoading) {
+  const isPermissionDenied =
+    !isLoading && !isConnectionError && !hasPermission(permission)
+
+  useEffect(() => {
+    // Only attempt redirect once when permission is denied
+    if (isPermissionDenied && !isSidebarLoading && !hasAttemptedRedirect) {
+      const firstAccessibleRoute = getFirstAccessibleRoute(
+        sidebarConfig,
+        hasPermission,
+        location.pathname,
+      )
+
+      if (firstAccessibleRoute) {
+        setHasAttemptedRedirect(true)
+        navigate({ to: firstAccessibleRoute, replace: true })
+      }
+    }
+  }, [
+    isPermissionDenied,
+    sidebarConfig,
+    isSidebarLoading,
+    hasPermission,
+    navigate,
+    location.pathname,
+    hasAttemptedRedirect,
+  ])
+
+  if (isLoading || (isPermissionDenied && isSidebarLoading)) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
@@ -78,6 +113,7 @@ export function PagePermissionGuard({
   }
 
   if (!hasPermission(permission)) {
+    // Show no permission page only if there's no accessible route to redirect to
     return <NoPermissionPage />
   }
 

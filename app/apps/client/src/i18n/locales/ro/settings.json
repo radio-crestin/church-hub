@@ -237,7 +237,8 @@
         "admin": "Administrator",
         "presenter": "Prezentator",
         "viewer": "Vizualizator",
-        "queue_manager": "Manager coadă"
+        "queue_manager": "Manager coadă",
+        "song_key_only": "Doar Gama Cântări"
       },
       "groups": {
         "songs": "Cântări",
@@ -246,7 +247,8 @@
         "queue": "Coadă",
         "settings": "Setări",
         "displays": "Afișaje",
-        "users": "Administrare utilizatori"
+        "users": "Administrare utilizatori",
+        "song_key": "Gama cântări"
       },
       "permissionLabels": {
         "songs.view": "Vizualizare cântări",
@@ -276,7 +278,9 @@
         "users.view": "Vizualizare utilizatori",
         "users.create": "Creare utilizatori",
         "users.edit": "Editare utilizatori",
-        "users.delete": "Ștergere utilizatori"
+        "users.delete": "Ștergere utilizatori",
+        "song_key.view": "Vizualizare gama cântări",
+        "song_key.edit": "Editare gama cântări"
       },
       "actions": {
         "edit": "Editează",
@@ -656,6 +660,9 @@
         },
         "categories": {
           "title": "Selectează datele de importat:",
+          "copyAndMigrate": "Copiere & Migrare (Recomandat)",
+          "copyAndMigrateDescription": "Copiază întreaga bază de date și rulează migrațiile pentru a actualiza schema. Ideal pentru importul din versiuni mai vechi.",
+          "orSelectiveImport": "Sau selectează date specifice",
           "songs": "Cântări",
           "songsDescription": "Categorii de cântări, cântări și versuri",
           "bible": "Biblie",

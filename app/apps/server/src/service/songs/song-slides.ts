@@ -42,22 +42,18 @@ function toSongSlide(record: typeof songSlides.$inferSelect): SongSlide {
  * Gets all slides for a song
  */
 export function getSlidesBySongId(songId: number): SongSlide[] {
-  try {
-    log('debug', `Getting slides for song: ${songId}`)
+  log('debug', `Getting slides for song: ${songId}`)
 
-    const db = getDatabase()
-    const records = db
-      .select()
-      .from(songSlides)
-      .where(eq(songSlides.songId, songId))
-      .orderBy(asc(songSlides.sortOrder))
-      .all()
+  const db = getDatabase()
+  const records = db
+    .select()
+    .from(songSlides)
+    .where(eq(songSlides.songId, songId))
+    .orderBy(asc(songSlides.sortOrder))
+    .all()
 
-    return records.map(toSongSlide)
-  } catch (error) {
-    log('error', `Failed to get slides: ${error}`)
-    return []
-  }
+  log('debug', `Found ${records.length} slides for song ${songId}`)
+  return records.map(toSongSlide)
 }
 
 /**

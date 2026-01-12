@@ -8,6 +8,8 @@ export interface ImportOptions {
   bible: boolean
   schedules: boolean
   configurations: boolean
+  /** When true, copies the entire database and runs migrations to update schema */
+  copyAndMigrate?: boolean
 }
 
 interface ImportResult {

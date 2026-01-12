@@ -2761,13 +2761,21 @@ async function main() {
 
       // GET /api/songs - List all songs (with pagination support)
       if (req.method === 'GET' && url.pathname === '/api/songs') {
-        const permError = checkPermission('songs.view')
-        if (permError) return permError
+        const presentedOnlyParam = url.searchParams.get('presentedOnly')
+
+        // Allow song_key.view permission when only fetching presented songs
+        if (presentedOnlyParam === 'true') {
+          const songKeyPermError = checkPermission('song_key.view')
+          const songsPermError = checkPermission('songs.view')
+          if (songKeyPermError && songsPermError) return songsPermError
+        } else {
+          const permError = checkPermission('songs.view')
+          if (permError) return permError
+        }
 
         const limitParam = url.searchParams.get('limit')
         const offsetParam = url.searchParams.get('offset')
         const categoryIdsParam = url.searchParams.get('categoryIds')
-        const presentedOnlyParam = url.searchParams.get('presentedOnly')
         const inSchedulesOnlyParam = url.searchParams.get('inSchedulesOnly')
 
         // If pagination params provided, use paginated query
@@ -2848,9 +2856,18 @@ async function main() {
           }
 
           // Check create or edit permission based on whether it's a new song
-          const permError = checkPermission(
-            body.id ? 'songs.edit' : 'songs.create',
-          )
+          // Allow song_key.edit for keyLine-only updates (id, title, keyLine only)
+          const bodyKeys = Object.keys(body)
+          const isKeyLineOnlyUpdate =
+            body.id &&
+            bodyKeys.every((k) => ['id', 'title', 'keyLine'].includes(k))
+
+          let permError: Response | null = null
+          if (isKeyLineOnlyUpdate) {
+            permError = checkPermission('song_key.edit')
+          } else {
+            permError = checkPermission(body.id ? 'songs.edit' : 'songs.create')
+          }
           if (permError) return permError
 
           if (!body.title) {
@@ -2865,7 +2882,10 @@ async function main() {
 
           // Check for duplicate title (skip if we're replacing an existing song)
           if (!body.replaceExistingSongId) {
-            const existingSong = getSongByTitle(body.title)
+            // For updates (body.id is set): use exact title matching
+            // For new songs: use sanitized matching to catch duplicates with different formatting
+            const isUpdate = !!body.id
+            const existingSong = getSongByTitle(body.title, isUpdate)
             // For new songs: any match is a duplicate
             // For existing songs: match is a duplicate only if it's a different song
             if (existingSong && (!body.id || existingSong.id !== body.id)) {
@@ -2939,13 +2959,7 @@ async function main() {
 
           // If this song is currently being presented, refresh its slides
           const refreshedState = refreshPresentedSongSlides(song.id)
-          console.log(
-            `[song-save] Song ${song.id} saved, refreshedState: ${refreshedState ? 'updated' : 'null'}`,
-          )
           if (refreshedState) {
-            console.log(
-              `[song-save] Broadcasting presentation state for song ${song.id}`,
-            )
             broadcastPresentationState(refreshedState)
           }
 

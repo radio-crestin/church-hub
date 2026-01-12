@@ -12,6 +12,7 @@ export type BuiltInMenuItemId =
   | 'schedules'
   | 'livestream'
   | 'music'
+  | 'song_key'
   | 'kiosk'
   | 'settings'
 

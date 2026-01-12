@@ -22,7 +22,6 @@ interface SongFixture {
   author: string | null
   copyright: string | null
   ccli: string | null
-  key: string | null
   tempo: string | null
   timeSignature: string | null
   theme: string | null
@@ -88,10 +87,10 @@ export function seedSongs(db: Database): void {
     // Insert song
     db.run(
       `INSERT INTO songs
-        (title, category_id, source_filename, author, copyright, ccli, key, tempo,
+        (title, category_id, source_filename, author, copyright, ccli, tempo,
          time_signature, theme, alt_theme, hymn_number, key_line, presentation_order,
          presentation_count, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, unixepoch(), unixepoch())`,
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, unixepoch(), unixepoch())`,
       [
         song.title,
         categoryId,
@@ -99,7 +98,6 @@ export function seedSongs(db: Database): void {
         song.author,
         song.copyright,
         song.ccli,
-        song.key,
         song.tempo,
         song.timeSignature,
         song.theme,

@@ -37,6 +37,9 @@ export type Permission =
   | 'users.create'
   | 'users.edit'
   | 'users.delete'
+  // Song Key Configuration
+  | 'song_key.view'
+  | 'song_key.edit'
 
 /**
  * All available permissions as an array
@@ -77,6 +80,9 @@ export const ALL_PERMISSIONS: Permission[] = [
   'users.create',
   'users.edit',
   'users.delete',
+  // Song Key Configuration
+  'song_key.view',
+  'song_key.edit',
 ]
 
 /**
@@ -119,6 +125,7 @@ export const PERMISSION_GROUPS = {
     'users.edit',
     'users.delete',
   ] as Permission[],
+  song_key: ['song_key.view', 'song_key.edit'] as Permission[],
 } as const
 
 export type PermissionGroup = keyof typeof PERMISSION_GROUPS
@@ -126,7 +133,12 @@ export type PermissionGroup = keyof typeof PERMISSION_GROUPS
 /**
  * Role template names
  */
-export type RoleTemplate = 'admin' | 'presenter' | 'viewer' | 'queue_manager'
+export type RoleTemplate =
+  | 'admin'
+  | 'presenter'
+  | 'viewer'
+  | 'queue_manager'
+  | 'song_key_only'
 
 /**
  * Role templates with their default permissions
@@ -166,6 +178,7 @@ export const ROLE_TEMPLATES: Record<RoleTemplate, Permission[]> = {
     'programs.import_to_queue',
     'control_room.view',
   ],
+  song_key_only: ['song_key.view', 'song_key.edit', 'songs.view'],
 }
 
 /**

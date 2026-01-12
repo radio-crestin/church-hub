@@ -26,7 +26,6 @@ export const songSchemas = {
       author: { type: 'string', nullable: true },
       copyright: { type: 'string', nullable: true },
       ccli: { type: 'string', nullable: true },
-      key: { type: 'string', nullable: true },
       tempo: { type: 'string', nullable: true },
       timeSignature: { type: 'string', nullable: true },
       theme: { type: 'string', nullable: true },
@@ -37,6 +36,11 @@ export const songSchemas = {
       presentationCount: {
         type: 'integer',
         description: 'Number of times the song was presented',
+      },
+      lastPresentedAt: {
+        type: 'integer',
+        nullable: true,
+        description: 'Unix timestamp of when the song was last presented',
       },
       lastManualEdit: {
         type: 'integer',
@@ -104,7 +108,6 @@ export const songSchemas = {
       author: { type: 'string', nullable: true },
       copyright: { type: 'string', nullable: true },
       ccli: { type: 'string', nullable: true },
-      key: { type: 'string', nullable: true },
       tempo: { type: 'string', nullable: true },
       timeSignature: { type: 'string', nullable: true },
       theme: { type: 'string', nullable: true },
@@ -162,7 +165,6 @@ export const songSchemas = {
       author: { type: 'string', nullable: true },
       copyright: { type: 'string', nullable: true },
       ccli: { type: 'string', nullable: true },
-      key: { type: 'string', nullable: true },
       tempo: { type: 'string', nullable: true },
       timeSignature: { type: 'string', nullable: true },
       theme: { type: 'string', nullable: true },
