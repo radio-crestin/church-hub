@@ -163,19 +163,20 @@
 ~~- butoanele din camera de control nu functioneaza.. (pare putin cam inutila aceasta pagina..)~~
 ~~- implementeaza screen share~~
 - afiseaza in timp real modificarile cantarilor
-- adauga background as black and not white
+- cand faci quick edit, copiaza si edit as text
 - cand schimb ecranul, midi state is destroyed
-- salveaza rezultatele cu ai in ceva cache local
+- pagina dedicata pentru a seta gamele (nea Mihai)
+- adauga background as black and not white
+- salveaza rezultatele tuturor cautarilor (inclusiv cu AI) in ceva cache in DB
 - cateodata WhatsApp-ul ramane aprins..
 - regenereaza midi-urile cu instrumentale mai bune
-- (optional) afisare in 2 pasi
-- pagina de prezentari
-- slide-uri temporare
 - adauga upvote/downvote la cantari
-- pagina dedicata pentru game (nea Mihai)
 - pagina dedicata pentru control sunet camera copii
 - in livestream adauga un preview cu feed-ul live
 - creaza un quickstart guide pentru utilizatori
+- (optional) afisare in 2 pasi
+- pagina de prezentari
+- slide-uri temporare
 ~~- adauga optiunea de a face screen share la o fereastra~~
 
 ~~- rezolva problema cu programele~~

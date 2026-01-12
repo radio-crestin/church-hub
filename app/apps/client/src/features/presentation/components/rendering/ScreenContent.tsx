@@ -57,12 +57,18 @@ export function ScreenContent({
   const config = isVisible ? currentConfig : cachedConfigRef.current.config
 
   // Generate a content key that changes when the actual content changes
+  // Include start, end, and length to detect changes anywhere in the text
   const contentKey = useMemo(() => {
     if (!contentData) return 'empty'
     const parts: string[] = [contentType]
-    if (contentData.mainText) parts.push(contentData.mainText.slice(0, 50))
-    if (contentData.contentText)
-      parts.push(contentData.contentText.slice(0, 50))
+    if (contentData.mainText) {
+      const text = contentData.mainText
+      parts.push(`${text.slice(0, 30)}|${text.slice(-30)}|${text.length}`)
+    }
+    if (contentData.contentText) {
+      const text = contentData.contentText
+      parts.push(`${text.slice(0, 30)}|${text.slice(-30)}|${text.length}`)
+    }
     if (contentData.referenceText) parts.push(contentData.referenceText)
     if (contentData.personLabel) parts.push(contentData.personLabel)
     return parts.join('|')

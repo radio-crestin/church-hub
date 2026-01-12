@@ -221,6 +221,7 @@ interface WebSocketContextValue {
   status: WebSocketStatus
   send: (message: Record<string, unknown>) => Promise<boolean>
   debugInfo: WebSocketDebugInfo
+  songUpdateTimestamp: number | null
 }
 
 const WebSocketContext = createContext<WebSocketContextValue | null>(null)
@@ -238,6 +239,9 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
   const disconnectCountRef = useRef(0)
   const hasCountedDisconnectRef = useRef(false)
   const [status, setStatus] = useState<WebSocketStatus>('disconnected')
+  const [songUpdateTimestamp, setSongUpdateTimestamp] = useState<number | null>(
+    null,
+  )
   const isConnectingRef = useRef(false)
 
   // Debug info state
@@ -327,6 +331,23 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
               queryKey: ['app_settings', 'global_keyboard_shortcuts'],
             })
           }
+        }
+
+        if (data.type === 'song_updated') {
+          // Invalidate the specific song query to trigger refetch
+          queryClient.invalidateQueries({
+            queryKey: ['song', data.payload.songId],
+          })
+          // Also invalidate the songs list to update any list views
+          queryClient.invalidateQueries({
+            queryKey: ['songs'],
+          })
+          // Invalidate all schedule queries to update slides in schedule panels
+          queryClient.invalidateQueries({
+            queryKey: ['schedule'],
+          })
+          // Update timestamp to trigger refetch in components that use queue data
+          setSongUpdateTimestamp(data.payload.updatedAt)
         }
 
         if (data.type === 'slide_highlights_updated') {
@@ -812,8 +833,9 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
       status,
       send,
       debugInfo,
+      songUpdateTimestamp,
     }),
-    [status, send, debugInfo],
+    [status, send, debugInfo, songUpdateTimestamp],
   )
 
   return (
@@ -831,4 +853,14 @@ export function useWebSocketContext() {
     )
   }
   return context
+}
+
+/**
+ * Hook to get the song update timestamp.
+ * Use this to trigger refetches when a song is updated via WebSocket.
+ * This is a lightweight hook that avoids the re-renders from debug info updates.
+ */
+export function useSongUpdateTimestamp() {
+  const context = useContext(WebSocketContext)
+  return context?.songUpdateTimestamp ?? null
 }

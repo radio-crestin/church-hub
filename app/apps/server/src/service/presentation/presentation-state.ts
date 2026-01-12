@@ -1058,3 +1058,78 @@ export function presentTemporaryScreenShare(
     return getPresentationState()
   }
 }
+
+/**
+ * Refreshes the slides of a presented song when the song is updated.
+ * If the specified song is currently being presented via temporaryContent,
+ * this function fetches fresh slides from the database and updates the presentation state.
+ *
+ * @returns The updated presentation state if the song was refreshed, null otherwise
+ */
+export function refreshPresentedSongSlides(
+  songId: number,
+): PresentationState | null {
+  try {
+    const currentState = getPresentationState()
+
+    // Check if a song is being presented via temporaryContent
+    if (currentState.temporaryContent?.type !== 'song') {
+      return null
+    }
+
+    // Check if the presented song is the one that was updated
+    if (currentState.temporaryContent.data.songId !== songId) {
+      return null
+    }
+
+    log('info', `Refreshing presented song slides for song ${songId}`)
+
+    const db = getDatabase()
+
+    // Fetch fresh slides from database
+    const slides = db
+      .select({
+        id: songSlides.id,
+        content: songSlides.content,
+        sortOrder: songSlides.sortOrder,
+        label: songSlides.label,
+      })
+      .from(songSlides)
+      .where(eq(songSlides.songId, songId))
+      .orderBy(songSlides.sortOrder)
+      .all()
+
+    if (slides.length === 0) {
+      log('warning', `Song has no slides: ${songId}`)
+      return null
+    }
+
+    // Expand slides with dynamic chorus insertion
+    const expandedSlides = expandSongSlidesWithChoruses(slides)
+
+    // Keep the current slide index, but clamp to valid range
+    const currentSlideIndex = Math.min(
+      currentState.temporaryContent.data.currentSlideIndex,
+      expandedSlides.length - 1,
+    )
+
+    const temporaryContent: TemporaryContent = {
+      type: 'song',
+      data: {
+        ...currentState.temporaryContent.data,
+        slides: expandedSlides.map((s, idx) => ({
+          id: s.id,
+          content: s.content,
+          sortOrder: idx,
+        })),
+        currentSlideIndex,
+      },
+    }
+
+    const result = updatePresentationState({ temporaryContent })
+    return result
+  } catch (error) {
+    log('error', `Failed to refresh presented song slides: ${error}`)
+    return null
+  }
+}

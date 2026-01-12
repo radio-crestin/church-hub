@@ -15,6 +15,7 @@ import type { BibleVerse } from '../../../bible/types'
 import { useKioskSettings } from '../../../kiosk'
 import type { QueueItem } from '../../../queue/types'
 import type { SongSlide } from '../../../songs/types'
+import { useSongUpdateTimestamp } from '../../context/WebSocketContext'
 import {
   usePresentationState,
   useUpsertScreen,
@@ -67,6 +68,7 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
   const upsertScreen = useUpsertScreen()
   const { data: kioskSettings } = useKioskSettings()
   const { data: slideHighlights } = useSlideHighlights()
+  const songUpdateTimestamp = useSongUpdateTimestamp()
 
   // Determine if current screen is being viewed in kiosk mode context
   const isKioskModeScreen =
@@ -539,10 +541,14 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
 
   // Fetch content based on presentation state
   useEffect(() => {
+    let cancelled = false
+
     const fetchContent = async () => {
       if (!presentationState) {
-        setContentData(null)
-        setContentType('empty')
+        if (!cancelled) {
+          setContentData(null)
+          setContentType('empty')
+        }
         return
       }
 
@@ -588,12 +594,13 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
 
         if (temp.type === 'song') {
           const currentSlide = temp.data.slides[temp.data.currentSlideIndex]
-          if (currentSlide) {
+          if (currentSlide && !cancelled) {
             const isLastSlide =
               temp.data.currentSlideIndex === temp.data.slides.length - 1
+            const newContent = addAminToLastSlide(currentSlide.content, isLastSlide)
             setContentType('song')
             setContentData({
-              mainText: addAminToLastSlide(currentSlide.content, isLastSlide),
+              mainText: newContent,
             })
             // Show next slide preview if enabled in screen config
             if (screen?.nextSlideConfig?.enabled) {
@@ -886,6 +893,11 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
     }
 
     fetchContent()
+
+    // Cleanup: cancel this effect's state updates if a newer effect runs
+    return () => {
+      cancelled = true
+    }
   }, [
     presentationState?.currentSongSlideId,
     presentationState?.currentQueueItemId,
@@ -895,6 +907,8 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
     presentationState?.updatedAt,
     screen?.type,
     isExitAnimating,
+    // Note: songUpdateTimestamp removed - presentationState?.updatedAt already triggers re-render
+    // when song content changes via WebSocket broadcast
   ])
 
   // Keep transparent background while loading or on error

@@ -45,6 +45,14 @@ export type SlideHighlightsUpdatedMessage = {
   }
 }
 
+export type SongUpdatedMessage = {
+  type: 'song_updated'
+  payload: {
+    songId: number
+    updatedAt: number
+  }
+}
+
 // ============================================================================
 // WEBRTC SCREEN SHARE MESSAGE TYPES
 // ============================================================================
@@ -950,6 +958,32 @@ export function broadcastSettingsUpdated(table: string, key: string) {
 
   wsLogger.debug(
     `Broadcasting settings update (${table}/${key}) to ${clients.size} clients`,
+  )
+
+  for (const [clientId, conn] of clients) {
+    try {
+      conn.ws.send(message)
+    } catch (error) {
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
+      clients.delete(clientId)
+    }
+  }
+}
+
+/**
+ * Broadcasts song update to all connected clients
+ */
+export function broadcastSongUpdated(songId: number) {
+  const message = JSON.stringify({
+    type: 'song_updated',
+    payload: {
+      songId,
+      updatedAt: Date.now(),
+    },
+  } satisfies SongUpdatedMessage)
+
+  wsLogger.debug(
+    `Broadcasting song update (id=${songId}) to ${clients.size} clients`,
   )
 
   for (const [clientId, conn] of clients) {

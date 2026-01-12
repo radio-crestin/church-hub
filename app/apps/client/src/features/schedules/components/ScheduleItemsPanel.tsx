@@ -905,7 +905,7 @@ function SongSlides({
                 {index + 1}
               </span>
               <span
-                className={`text-sm whitespace-pre-line line-clamp-3 ${
+                className={`text-sm whitespace-pre-line ${
                   isPresented
                     ? 'text-green-900 dark:text-green-100'
                     : 'text-gray-600 dark:text-gray-400'
