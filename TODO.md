@@ -162,8 +162,9 @@
 ~~- testeaza pe windows player-ul audio si intreaga aplicatie~~
 ~~- butoanele din camera de control nu functioneaza.. (pare putin cam inutila aceasta pagina..)~~
 ~~- implementeaza screen share~~
-- afiseaza in timp real modificarile cantarilor
+~~- afiseaza in timp real modificarile cantarilor~~
 - cand faci quick edit, copiaza si edit as text
+- fa un algoritm care extrage gamele din BCEV Baicoi si le foloseste pentru Resurse crestine (?)
 - cand schimb ecranul, midi state is destroyed
 - pagina dedicata pentru a seta gamele (nea Mihai)
 - adauga background as black and not white
