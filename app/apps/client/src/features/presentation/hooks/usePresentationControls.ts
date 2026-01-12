@@ -87,7 +87,9 @@ export function useStopPresentation() {
 
   return useMutation({
     mutationFn: stopPresentation,
-    onSuccess: (data: PresentationState) => {
+    onSuccess: async (data: PresentationState) => {
+      // Cancel any in-flight queries to prevent them from overwriting our update
+      await queryClient.cancelQueries({ queryKey: presentationStateQueryKey })
       queryClient.setQueryData(presentationStateQueryKey, data)
     },
   })
@@ -98,7 +100,8 @@ export function useClearSlide() {
 
   return useMutation({
     mutationFn: clearSlide,
-    onSuccess: (data: PresentationState) => {
+    onSuccess: async (data: PresentationState) => {
+      await queryClient.cancelQueries({ queryKey: presentationStateQueryKey })
       queryClient.setQueryData(presentationStateQueryKey, data)
     },
   })
@@ -109,7 +112,8 @@ export function useShowSlide() {
 
   return useMutation({
     mutationFn: showSlide,
-    onSuccess: (data: PresentationState) => {
+    onSuccess: async (data: PresentationState) => {
+      await queryClient.cancelQueries({ queryKey: presentationStateQueryKey })
       queryClient.setQueryData(presentationStateQueryKey, data)
     },
   })
@@ -120,7 +124,8 @@ export function useUpdatePresentationState() {
 
   return useMutation({
     mutationFn: updatePresentationState,
-    onSuccess: (data: PresentationState) => {
+    onSuccess: async (data: PresentationState) => {
+      await queryClient.cancelQueries({ queryKey: presentationStateQueryKey })
       queryClient.setQueryData(presentationStateQueryKey, data)
     },
   })
@@ -131,7 +136,8 @@ export function useNavigateQueueSlide() {
 
   return useMutation({
     mutationFn: navigateQueueSlide,
-    onSuccess: (data: PresentationState) => {
+    onSuccess: async (data: PresentationState) => {
+      await queryClient.cancelQueries({ queryKey: presentationStateQueryKey })
       updateStateIfNewer(queryClient, data)
     },
   })
@@ -146,9 +152,10 @@ export function usePresentTemporaryBible() {
 
   return useMutation({
     mutationFn: presentTemporaryBible,
-    onSuccess: (data: PresentationState) => {
+    onSuccess: async (data: PresentationState) => {
       // Reset tracking when presenting new content
       resetNavigationTracking()
+      await queryClient.cancelQueries({ queryKey: presentationStateQueryKey })
       queryClient.setQueryData(presentationStateQueryKey, data)
     },
   })
@@ -159,6 +166,10 @@ export function usePresentTemporarySong() {
 
   return useMutation({
     mutationFn: presentTemporarySong,
+    onMutate: async () => {
+      // Cancel any in-flight queries to prevent them from overwriting our update
+      await queryClient.cancelQueries({ queryKey: presentationStateQueryKey })
+    },
     onSuccess: (data: PresentationState) => {
       // Reset tracking when presenting new content
       resetNavigationTracking()
@@ -185,7 +196,8 @@ export function useNavigateTemporary() {
       navigationQueue = navigationPromise.catch(() => {})
       return navigationPromise
     },
-    onSuccess: (data: PresentationState) => {
+    onSuccess: async (data: PresentationState) => {
+      await queryClient.cancelQueries({ queryKey: presentationStateQueryKey })
       updateStateIfNewer(queryClient, data)
     },
   })
@@ -196,7 +208,8 @@ export function useClearTemporaryContent() {
 
   return useMutation({
     mutationFn: clearTemporaryContent,
-    onSuccess: (data: PresentationState) => {
+    onSuccess: async (data: PresentationState) => {
+      await queryClient.cancelQueries({ queryKey: presentationStateQueryKey })
       queryClient.setQueryData(presentationStateQueryKey, data)
     },
   })
@@ -207,9 +220,10 @@ export function usePresentTemporaryAnnouncement() {
 
   return useMutation({
     mutationFn: presentTemporaryAnnouncement,
-    onSuccess: (data: PresentationState) => {
+    onSuccess: async (data: PresentationState) => {
       // Reset tracking when presenting new content
       resetNavigationTracking()
+      await queryClient.cancelQueries({ queryKey: presentationStateQueryKey })
       queryClient.setQueryData(presentationStateQueryKey, data)
     },
   })
@@ -220,9 +234,10 @@ export function usePresentTemporaryBiblePassage() {
 
   return useMutation({
     mutationFn: presentTemporaryBiblePassage,
-    onSuccess: (data: PresentationState) => {
+    onSuccess: async (data: PresentationState) => {
       // Reset tracking when presenting new content
       resetNavigationTracking()
+      await queryClient.cancelQueries({ queryKey: presentationStateQueryKey })
       queryClient.setQueryData(presentationStateQueryKey, data)
     },
   })
@@ -233,9 +248,10 @@ export function usePresentTemporaryVerseteTineri() {
 
   return useMutation({
     mutationFn: presentTemporaryVerseteTineri,
-    onSuccess: (data: PresentationState) => {
+    onSuccess: async (data: PresentationState) => {
       // Reset tracking when presenting new content
       resetNavigationTracking()
+      await queryClient.cancelQueries({ queryKey: presentationStateQueryKey })
       queryClient.setQueryData(presentationStateQueryKey, data)
     },
   })
@@ -246,9 +262,10 @@ export function usePresentTemporaryScene() {
 
   return useMutation({
     mutationFn: presentTemporaryScene,
-    onSuccess: (data: PresentationState) => {
+    onSuccess: async (data: PresentationState) => {
       // Reset tracking when presenting new content
       resetNavigationTracking()
+      await queryClient.cancelQueries({ queryKey: presentationStateQueryKey })
       queryClient.setQueryData(presentationStateQueryKey, data)
     },
   })

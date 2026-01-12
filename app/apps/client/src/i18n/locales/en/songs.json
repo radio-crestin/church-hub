@@ -33,8 +33,10 @@
     "allCategories": "All Categories",
     "aiSearchTooltip": "AI Search - find songs by topic",
     "aiProcessing": "AI analyzing...",
-    "presentedOnly": "Show only presented songs",
-    "inSchedulesOnly": "Show only songs in schedules"
+    "presentedOnly": "Presented songs",
+    "inSchedulesOnly": "In schedules",
+    "hasKeyLine": "Has key line",
+    "filters": "Filters"
   },
   "picker": {
     "selectSong": "Select Song"

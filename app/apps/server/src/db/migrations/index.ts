@@ -3,6 +3,7 @@ import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite'
 
 import { addLastPresentedAt } from './add-last-presented-at'
 import { dropSongKeyColumn } from './drop-song-key-column'
+import { extractKeylinesFromSlides } from './extract-keylines-from-slides'
 import { EMBEDDED_MIGRATIONS } from './embedded'
 import { migrateShortcuts } from './migrate-shortcuts'
 import { migrateSongTitles } from './migrate-song-titles'
@@ -182,6 +183,12 @@ export function runMigrations(
   t = performance.now()
   addLastPresentedAt(rawDb)
   logTiming('add_last_presented_at', t)
+
+  // Extract keylines from first slide last paragraphs to keyLine field
+  log('info', 'Running extract keylines migration...')
+  t = performance.now()
+  extractKeylinesFromSlides(rawDb)
+  logTiming('extract_keylines_from_slides', t)
 
   return { ftsRecreated: ftsCreated }
 }

@@ -33,8 +33,10 @@
     "allCategories": "Toate categoriile",
     "aiSearchTooltip": "Căutare AI - găsește cântece după temă",
     "aiProcessing": "AI analizează...",
-    "presentedOnly": "Afișează doar cântările prezentate",
-    "inSchedulesOnly": "Afișează doar cântările din programe"
+    "presentedOnly": "Cântări prezentate",
+    "inSchedulesOnly": "În programe",
+    "hasKeyLine": "Cu gamă",
+    "filters": "Filtre"
   },
   "picker": {
     "selectSong": "Selectează Cântare"

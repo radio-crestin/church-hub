@@ -133,6 +133,7 @@ export interface SongFilters {
   categoryIds?: number[]
   presentedOnly?: boolean
   inSchedulesOnly?: boolean
+  hasKeyLine?: boolean
 }
 
 /**
@@ -147,10 +148,11 @@ export function getSongsPaginated(
   filters?: SongFilters,
 ): PaginatedSongsResult {
   try {
-    const { categoryIds, presentedOnly, inSchedulesOnly } = filters ?? {}
+    const { categoryIds, presentedOnly, inSchedulesOnly, hasKeyLine } =
+      filters ?? {}
     log(
       'debug',
-      `Getting songs paginated: limit=${limit}, offset=${offset}, categoryIds=${categoryIds?.join(',')}, presentedOnly=${presentedOnly}, inSchedulesOnly=${inSchedulesOnly}`,
+      `Getting songs paginated: limit=${limit}, offset=${offset}, categoryIds=${categoryIds?.join(',')}, presentedOnly=${presentedOnly}, inSchedulesOnly=${inSchedulesOnly}, hasKeyLine=${hasKeyLine}`,
     )
 
     const rawDb = getRawDatabase()
@@ -173,6 +175,10 @@ export function getSongsPaginated(
       conditions.push(
         `id IN (SELECT DISTINCT song_id FROM schedule_items WHERE song_id IS NOT NULL)`,
       )
+    }
+
+    if (hasKeyLine) {
+      conditions.push(`key_line IS NOT NULL AND key_line != ''`)
     }
 
     const whereClause =

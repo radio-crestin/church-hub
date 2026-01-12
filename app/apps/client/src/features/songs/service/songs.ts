@@ -27,6 +27,7 @@ export interface SongFilters {
   categoryIds?: number[]
   presentedOnly?: boolean
   inSchedulesOnly?: boolean
+  hasKeyLine?: boolean
 }
 
 export async function getSongsPaginated(
@@ -46,6 +47,9 @@ export async function getSongsPaginated(
   }
   if (filters?.inSchedulesOnly) {
     params.set('inSchedulesOnly', 'true')
+  }
+  if (filters?.hasKeyLine) {
+    params.set('hasKeyLine', 'true')
   }
   const response = await fetcher<ApiResponse<PaginatedSongsResult>>(
     `/api/songs?${params.toString()}`,

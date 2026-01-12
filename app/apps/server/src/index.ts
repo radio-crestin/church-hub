@@ -2759,6 +2759,171 @@ async function main() {
         )
       }
 
+      // GET /api/songs/debug/analyze-keylines - Analyze keylines in first slide last line
+      if (
+        req.method === 'GET' &&
+        url.pathname === '/api/songs/debug/analyze-keylines'
+      ) {
+        const permError = checkPermission('songs.manage')
+        if (permError) return permError
+
+        // Musical key patterns - solfège (Romanian/Italian) and letter notation
+        // Matches: Mi M, Do M, Sol, Fa(Mi), Re(Mi M), Sol (Fa M sau Mi), La M, Mi m, etc.
+        // Pattern: Note + optional sharp/flat + optional Major/Minor + optional alternate in parentheses
+        const KEY_REGEX =
+          /^(Do|Re|Mi|Fa|Sol|La|Si)(#|b)?\s*(Major|Minor|Maj|Min|M|m)?(\s*\(.*\))?(\s+sau\s+.*)?$/i
+
+        // Extract text from last <p> tag
+        const extractLastParagraph = (html: string): string | null => {
+          const paragraphs = html.match(/<p>([^<]*)<\/p>/gi)
+          if (!paragraphs || paragraphs.length === 0) return null
+          const lastP = paragraphs[paragraphs.length - 1]
+          return lastP.replace(/<\/?p>/gi, '').trim()
+        }
+
+        // Filter by category names if provided
+        const categoryNamesParam = url.searchParams.get('categoryNames')
+        const categoryNames = categoryNamesParam
+          ? categoryNamesParam.split(',').map((n) => n.trim())
+          : null
+
+        // Get category IDs from names
+        let categoryIds: number[] | null = null
+        if (categoryNames) {
+          const allCategories = getAllCategories()
+          categoryIds = allCategories
+            .filter((c) => categoryNames.some((name) => c.name.includes(name)))
+            .map((c) => c.id)
+        }
+
+        // Get songs - if categoryIds is provided, get songs for each category
+        let allSongs: Awaited<ReturnType<typeof getAllSongsWithSlides>> = []
+        if (categoryIds && categoryIds.length > 0) {
+          for (const catId of categoryIds) {
+            const catSongs = getAllSongsWithSlides(catId)
+            allSongs = allSongs.concat(catSongs)
+          }
+        } else {
+          allSongs = getAllSongsWithSlides(null)
+        }
+
+        const matches: Array<{
+          songId: number
+          title: string
+          lastParagraph: string
+          existingKeyLine: string | null
+          categoryName: string | null
+        }> = []
+
+        for (const song of allSongs) {
+          // Get first slide (sort_order = 0 or minimum)
+          const firstSlide = song.slides?.sort(
+            (a, b) => a.sortOrder - b.sortOrder,
+          )[0]
+
+          if (!firstSlide?.content) continue
+
+          const lastParagraph = extractLastParagraph(firstSlide.content)
+          if (!lastParagraph) continue
+
+          // Check if last paragraph matches key pattern
+          if (KEY_REGEX.test(lastParagraph)) {
+            matches.push({
+              songId: song.id,
+              title: song.title,
+              lastParagraph,
+              existingKeyLine: song.keyLine,
+              categoryName: song.category?.name ?? null,
+            })
+          }
+        }
+
+        // Get unique keylines if requested
+        const uniqueOnly = url.searchParams.get('unique') === 'true'
+        const uniqueKeylines = [...new Set(matches.map((m) => m.lastParagraph))].sort()
+
+        return handleCors(
+          req,
+          new Response(
+            JSON.stringify({
+              regex: KEY_REGEX.source,
+              categoryFilter: categoryNames,
+              categoryIds,
+              totalSongs: allSongs.length,
+              totalMatches: matches.length,
+              matchesWithExistingKeyLine: matches.filter(
+                (m) => m.existingKeyLine,
+              ).length,
+              matchesWithoutKeyLine: matches.filter((m) => !m.existingKeyLine)
+                .length,
+              uniqueKeylines,
+              matches: uniqueOnly ? undefined : matches,
+            }),
+            {
+              headers: { 'Content-Type': 'application/json' },
+            },
+          ),
+        )
+      }
+
+      // GET /api/songs/debug/sample-last-lines - Sample last lines from first slides
+      if (
+        req.method === 'GET' &&
+        url.pathname === '/api/songs/debug/sample-last-lines'
+      ) {
+        const permError = checkPermission('songs.manage')
+        if (permError) return permError
+
+        const limitParam = url.searchParams.get('limit')
+        const limit = limitParam ? parseInt(limitParam, 10) : 100
+
+        // Extract text from last <p> tag
+        const extractLastParagraph = (html: string): string | null => {
+          const paragraphs = html.match(/<p>([^<]*)<\/p>/gi)
+          if (!paragraphs || paragraphs.length === 0) return null
+          const lastP = paragraphs[paragraphs.length - 1]
+          return lastP.replace(/<\/?p>/gi, '').trim()
+        }
+
+        const allSongs = getAllSongsWithSlides(null)
+        const samples: Array<{
+          songId: number
+          title: string
+          lastParagraph: string
+          existingKeyLine: string | null
+        }> = []
+
+        for (const song of allSongs) {
+          if (samples.length >= limit) break
+
+          const firstSlide = song.slides?.sort(
+            (a, b) => a.sortOrder - b.sortOrder,
+          )[0]
+
+          if (!firstSlide?.content) continue
+
+          const lastParagraph = extractLastParagraph(firstSlide.content)
+
+          if (lastParagraph) {
+            samples.push({
+              songId: song.id,
+              title: song.title,
+              lastParagraph,
+              existingKeyLine: song.keyLine,
+            })
+          }
+        }
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ samples }),
+            {
+              headers: { 'Content-Type': 'application/json' },
+            },
+          ),
+        )
+      }
+
       // GET /api/songs - List all songs (with pagination support)
       if (req.method === 'GET' && url.pathname === '/api/songs') {
         const presentedOnlyParam = url.searchParams.get('presentedOnly')
@@ -2777,6 +2942,7 @@ async function main() {
         const offsetParam = url.searchParams.get('offset')
         const categoryIdsParam = url.searchParams.get('categoryIds')
         const inSchedulesOnlyParam = url.searchParams.get('inSchedulesOnly')
+        const hasKeyLineParam = url.searchParams.get('hasKeyLine')
 
         // If pagination params provided, use paginated query
         if (limitParam) {
@@ -2794,6 +2960,7 @@ async function main() {
               categoryIds && categoryIds.length > 0 ? categoryIds : undefined,
             presentedOnly: presentedOnlyParam === 'true',
             inSchedulesOnly: inSchedulesOnlyParam === 'true',
+            hasKeyLine: hasKeyLineParam === 'true',
           }
 
           const result = getSongsPaginated(limit, offset, filters)
