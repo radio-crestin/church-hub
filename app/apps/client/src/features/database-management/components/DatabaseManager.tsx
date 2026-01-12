@@ -54,6 +54,7 @@ export function DatabaseManager() {
     bible: true,
     schedules: true,
     configurations: true,
+    copyAndMigrate: false,
   })
 
   const { exportDatabase, isPending: isExporting } = useDatabaseExport()
@@ -195,6 +196,7 @@ export function DatabaseManager() {
   }, [])
 
   const hasAnyOptionSelected =
+    importOptions.copyAndMigrate ||
     importOptions.songs ||
     importOptions.bible ||
     importOptions.schedules ||
@@ -376,12 +378,51 @@ export function DatabaseManager() {
 
             {/* Import options checkboxes */}
             <div className="mt-4 space-y-3">
-              <label className="flex items-start gap-3 cursor-pointer">
+              {/* Copy and Migrate option - special mode */}
+              <label className="flex items-start gap-3 cursor-pointer p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <input
+                  type="checkbox"
+                  checked={importOptions.copyAndMigrate}
+                  onChange={() => toggleImportOption('copyAndMigrate')}
+                  disabled={isImporting}
+                  className="mt-0.5 w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
+                />
+                <div>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    {t('sections.database.import.categories.copyAndMigrate')}
+                  </span>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {t(
+                      'sections.database.import.categories.copyAndMigrateDescription',
+                    )}
+                  </p>
+                </div>
+              </label>
+
+              {/* Divider when not using copyAndMigrate */}
+              {!importOptions.copyAndMigrate && (
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-200 dark:border-gray-700" />
+                  </div>
+                  <div className="relative flex justify-center text-xs">
+                    <span className="bg-white dark:bg-gray-800 px-2 text-gray-500 dark:text-gray-400">
+                      {t(
+                        'sections.database.import.categories.orSelectiveImport',
+                      )}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              <label
+                className={`flex items-start gap-3 cursor-pointer ${importOptions.copyAndMigrate ? 'opacity-50 pointer-events-none' : ''}`}
+              >
                 <input
                   type="checkbox"
                   checked={importOptions.songs}
                   onChange={() => toggleImportOption('songs')}
-                  disabled={isImporting}
+                  disabled={isImporting || importOptions.copyAndMigrate}
                   className="mt-0.5 w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500 disabled:opacity-50"
                 />
                 <div>
@@ -394,12 +435,14 @@ export function DatabaseManager() {
                 </div>
               </label>
 
-              <label className="flex items-start gap-3 cursor-pointer">
+              <label
+                className={`flex items-start gap-3 cursor-pointer ${importOptions.copyAndMigrate ? 'opacity-50 pointer-events-none' : ''}`}
+              >
                 <input
                   type="checkbox"
                   checked={importOptions.bible}
                   onChange={() => toggleImportOption('bible')}
-                  disabled={isImporting}
+                  disabled={isImporting || importOptions.copyAndMigrate}
                   className="mt-0.5 w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500 disabled:opacity-50"
                 />
                 <div>
@@ -412,12 +455,14 @@ export function DatabaseManager() {
                 </div>
               </label>
 
-              <label className="flex items-start gap-3 cursor-pointer">
+              <label
+                className={`flex items-start gap-3 cursor-pointer ${importOptions.copyAndMigrate ? 'opacity-50 pointer-events-none' : ''}`}
+              >
                 <input
                   type="checkbox"
                   checked={importOptions.schedules}
                   onChange={() => toggleImportOption('schedules')}
-                  disabled={isImporting}
+                  disabled={isImporting || importOptions.copyAndMigrate}
                   className="mt-0.5 w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500 disabled:opacity-50"
                 />
                 <div>
@@ -432,12 +477,14 @@ export function DatabaseManager() {
                 </div>
               </label>
 
-              <label className="flex items-start gap-3 cursor-pointer">
+              <label
+                className={`flex items-start gap-3 cursor-pointer ${importOptions.copyAndMigrate ? 'opacity-50 pointer-events-none' : ''}`}
+              >
                 <input
                   type="checkbox"
                   checked={importOptions.configurations}
                   onChange={() => toggleImportOption('configurations')}
-                  disabled={isImporting}
+                  disabled={isImporting || importOptions.copyAndMigrate}
                   className="mt-0.5 w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500 disabled:opacity-50"
                 />
                 <div>

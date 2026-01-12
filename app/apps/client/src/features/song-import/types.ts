@@ -49,7 +49,6 @@ export interface OpenSongMetadata {
   author: string | null
   copyright: string | null
   ccli: string | null
-  key: string | null
   tempo: string | null
   timeSignature: string | null
   theme: string | null
@@ -93,7 +92,6 @@ export interface BatchImportInput {
     author?: string | null
     copyright?: string | null
     ccli?: string | null
-    key?: string | null
     tempo?: string | null
     timeSignature?: string | null
     theme?: string | null

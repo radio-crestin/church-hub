@@ -7,7 +7,7 @@ import { join } from 'node:path'
  *   - macOS: ~/Library/Application Support/church-hub
  *   - Windows: %APPDATA%/church-hub (e.g., C:\Users\<user>\AppData\Roaming\church-hub)
  *   - Linux: ~/.config/church-hub
- * In development, uses ./data relative to cwd
+ * In development, uses the monorepo data directory (app/data)
  */
 export function getDataDir(): string {
   if (process.env.TAURI_MODE === 'true') {
@@ -26,20 +26,23 @@ export function getDataDir(): string {
     // Linux: ~/.config/church-hub
     return join(home, '.config', 'church-hub')
   }
-  // Development - use relative path
-  return join(process.cwd(), 'data')
+  // Development - use monorepo data directory
+  // This file is at: apps/server/src/utils/paths.ts
+  // Data dir should be at: app/data (4 levels up + data)
+  return join(import.meta.dir, '..', '..', '..', '..', 'data')
 }
 
 /**
  * Gets the logs directory
  * In production (Tauri mode), uses <app-data-dir>/logs
- * In development, uses ./logs relative to cwd
+ * In development, uses the monorepo logs directory
  */
 export function getLogsDir(): string {
   if (process.env.TAURI_MODE === 'true') {
     return join(getDataDir(), 'logs')
   }
-  return join(process.cwd(), 'logs')
+  // Development - use monorepo logs directory
+  return join(import.meta.dir, '..', '..', '..', '..', 'logs')
 }
 
 /**

@@ -18,6 +18,7 @@ const GROUP_ORDER: PermissionGroup[] = [
   'control_room',
   'programs',
   'queue',
+  'song_key',
   'settings',
   'displays',
   'users',

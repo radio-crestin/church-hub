@@ -139,8 +139,6 @@
     "copyright": "Copyright",
     "ccli": "CCLI Number",
     "hymnNumber": "Hymn Number",
-    "key": "Musical Key",
-    "keyPlaceholder": "C Major",
     "tempo": "Tempo",
     "timeSignature": "Time Signature",
     "theme": "Theme",

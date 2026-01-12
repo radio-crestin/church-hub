@@ -87,7 +87,6 @@ function toSong(record: typeof songs.$inferSelect): Song {
     author: record.author,
     copyright: record.copyright,
     ccli: record.ccli,
-    key: record.key,
     tempo: record.tempo,
     timeSignature: record.timeSignature,
     theme: record.theme,
@@ -96,6 +95,9 @@ function toSong(record: typeof songs.$inferSelect): Song {
     keyLine: record.keyLine,
     presentationOrder: record.presentationOrder,
     presentationCount: record.presentationCount,
+    lastPresentedAt: record.lastPresentedAt
+      ? Math.floor(record.lastPresentedAt.getTime() / 1000)
+      : null,
     lastManualEdit: record.lastManualEdit
       ? Math.floor(record.lastManualEdit.getTime() / 1000)
       : null,
@@ -182,10 +184,11 @@ export function getSongsPaginated(
       .get(...params) as { total: number }
     const total = countResult.total
 
-    // Get paginated songs - sorted by presentation count (most presented first), then by title
+    // Get paginated songs - sorted by last presented time (most recent first), then by title
+    // NULLS LAST ensures songs that were never presented appear at the end
     const records = rawDb
       .query(
-        `SELECT * FROM songs ${whereClause} ORDER BY presentation_count DESC, title ASC LIMIT ? OFFSET ?`,
+        `SELECT * FROM songs ${whereClause} ORDER BY last_presented_at DESC NULLS LAST, title ASC LIMIT ? OFFSET ?`,
       )
       .all(...params, limit, offset) as Array<{
       id: number
@@ -195,7 +198,6 @@ export function getSongsPaginated(
       author: string | null
       copyright: string | null
       ccli: string | null
-      key: string | null
       tempo: string | null
       time_signature: string | null
       theme: string | null
@@ -204,6 +206,7 @@ export function getSongsPaginated(
       key_line: string | null
       presentation_order: string | null
       presentation_count: number
+      last_presented_at: number | null
       last_manual_edit: number | null
       created_at: number
       updated_at: number
@@ -217,7 +220,6 @@ export function getSongsPaginated(
       author: record.author,
       copyright: record.copyright,
       ccli: record.ccli,
-      key: record.key,
       tempo: record.tempo,
       timeSignature: record.time_signature,
       theme: record.theme,
@@ -226,6 +228,7 @@ export function getSongsPaginated(
       keyLine: record.key_line,
       presentationOrder: record.presentation_order,
       presentationCount: record.presentation_count,
+      lastPresentedAt: record.last_presented_at,
       lastManualEdit: record.last_manual_edit,
       createdAt: record.created_at,
       updatedAt: record.updated_at,
@@ -267,22 +270,25 @@ export function getSongById(id: number): Song | null {
 /**
  * Gets a song by title (case-insensitive)
  * Used for duplicate detection
+ * @param title - The title to search for
+ * @param exact - If true, matches the exact title without sanitization.
+ *                If false (default), sanitizes the title before matching.
  */
-export function getSongByTitle(title: string): Song | null {
+export function getSongByTitle(title: string, exact = false): Song | null {
   try {
-    const sanitizedTitle = sanitizeSongTitle(title)
-    log('debug', `Getting song by title: ${sanitizedTitle}`)
+    const searchTitle = exact ? title : sanitizeSongTitle(title)
+    log('debug', `Getting song by title: ${searchTitle} (exact: ${exact})`)
 
     const db = getDatabase()
     // SQLite title column uses COLLATE NOCASE for case-insensitive comparison
     const record = db
       .select()
       .from(songs)
-      .where(eq(songs.title, sanitizedTitle))
+      .where(eq(songs.title, searchTitle))
       .get()
 
     if (!record) {
-      log('debug', `Song not found with title: ${sanitizedTitle}`)
+      log('debug', `Song not found with title: ${searchTitle}`)
       return null
     }
 
@@ -410,7 +416,6 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
         author: input.author ?? null,
         copyright: input.copyright ?? null,
         ccli: input.ccli ?? null,
-        key: input.key ?? null,
         tempo: input.tempo ?? null,
         timeSignature: input.timeSignature ?? null,
         theme: input.theme ?? null,
@@ -445,7 +450,6 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
           author: input.author ?? null,
           copyright: input.copyright ?? null,
           ccli: input.ccli ?? null,
-          key: input.key ?? null,
           tempo: input.tempo ?? null,
           timeSignature: input.timeSignature ?? null,
           theme: input.theme ?? null,
@@ -613,18 +617,17 @@ export function batchImportSongs(
       ? rawDb.query(`
           INSERT INTO songs (
             title, category_id, source_filename,
-            author, copyright, ccli, key, tempo, time_signature,
+            author, copyright, ccli, tempo, time_signature,
             theme, alt_theme, hymn_number, key_line, presentation_order,
             created_at, updated_at
           )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON CONFLICT(title) DO UPDATE SET
             category_id = excluded.category_id,
             source_filename = excluded.source_filename,
             author = excluded.author,
             copyright = excluded.copyright,
             ccli = excluded.ccli,
-            key = excluded.key,
             tempo = excluded.tempo,
             time_signature = excluded.time_signature,
             theme = excluded.theme,
@@ -638,11 +641,11 @@ export function batchImportSongs(
       : rawDb.query(`
           INSERT INTO songs (
             title, category_id, source_filename,
-            author, copyright, ccli, key, tempo, time_signature,
+            author, copyright, ccli, tempo, time_signature,
             theme, alt_theme, hymn_number, key_line, presentation_order,
             created_at, updated_at
           )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON CONFLICT(title) DO NOTHING
           RETURNING id
         `)
@@ -697,7 +700,6 @@ export function batchImportSongs(
           input.author ?? null,
           input.copyright ?? null,
           input.ccli ?? null,
-          input.key ?? null,
           input.tempo ?? null,
           input.timeSignature ?? null,
           input.theme ?? null,

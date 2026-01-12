@@ -1,3 +1,4 @@
+import { getVersion } from '@tauri-apps/api/app'
 import { save } from '@tauri-apps/plugin-dialog'
 import { useCallback, useState } from 'react'
 
@@ -26,11 +27,12 @@ export function useDatabaseExport() {
     cancelled?: boolean
     error?: string
   }> => {
-    // Generate default filename with date and time
+    // Generate default filename with version, date and time
+    const version = await getVersion()
     const now = new Date()
     const date = now.toISOString().split('T')[0]
     const time = now.toTimeString().split(' ')[0].replace(/:/g, '-')
-    const defaultFilename = `church-hub-backup-${date}_${time}.db`
+    const defaultFilename = `church-hub-backup-v${version}-${date}_${time}.db`
 
     // Show save dialog first so user can choose location
     const savePath = await save({

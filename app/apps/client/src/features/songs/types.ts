@@ -15,7 +15,6 @@ export interface Song {
   author: string | null
   copyright: string | null
   ccli: string | null
-  key: string | null
   tempo: string | null
   timeSignature: string | null
   theme: string | null
@@ -24,6 +23,7 @@ export interface Song {
   keyLine: string | null
   presentationOrder: string | null
   presentationCount: number
+  lastPresentedAt: number | null
   lastManualEdit: number | null
   createdAt: number
   updatedAt: number
@@ -59,7 +59,6 @@ export interface UpsertSongInput {
   author?: string | null
   copyright?: string | null
   ccli?: string | null
-  key?: string | null
   tempo?: string | null
   timeSignature?: string | null
   theme?: string | null

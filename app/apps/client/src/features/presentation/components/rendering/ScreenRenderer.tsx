@@ -13,8 +13,29 @@ import { calculateMaxExitAnimationDuration } from './utils/styleUtils'
 import { getNextVerse } from '../../../bible/service/bible'
 import type { BibleVerse } from '../../../bible/types'
 import { useKioskSettings } from '../../../kiosk'
-import type { QueueItem } from '../../../queue/types'
 import type { SongSlide } from '../../../songs/types'
+
+interface QueueItem {
+  id: number
+  itemType: string
+  slideType?: string
+  slideContent?: string
+  bibleReference?: string
+  bibleText?: string
+  bibleTranslation?: string
+  bibleVerseId?: number
+  biblePassageVerses?: Array<{ id: number; reference: string; text: string }>
+  biblePassageTranslation?: string
+  verseteTineriEntries?: Array<{
+    id: number
+    reference: string
+    text: string
+    person?: string
+  }>
+  slides?: SongSlide[]
+  keyLine?: string | null
+}
+
 import { useSongUpdateTimestamp } from '../../context/WebSocketContext'
 import {
   usePresentationState,
@@ -29,6 +50,7 @@ import type {
   ScreenShareContentConfig,
 } from '../../types'
 import { addAminToLastSlide } from '../../utils/addAminToLastSlide'
+import { addKeyLineToFirstSlide } from '../../utils/addKeyLineToFirstSlide'
 import { setWindowFullscreen } from '../../utils/fullscreen'
 import { isTauri } from '../../utils/openDisplayWindow'
 
@@ -595,12 +617,19 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
         if (temp.type === 'song') {
           const currentSlide = temp.data.slides[temp.data.currentSlideIndex]
           if (currentSlide && !cancelled) {
+            const isFirstSlide = temp.data.currentSlideIndex === 0
             const isLastSlide =
               temp.data.currentSlideIndex === temp.data.slides.length - 1
-            const newContent = addAminToLastSlide(currentSlide.content, isLastSlide)
+            let slideContent = currentSlide.content
+            slideContent = addKeyLineToFirstSlide(
+              slideContent,
+              isFirstSlide,
+              temp.data.keyLine,
+            )
+            slideContent = addAminToLastSlide(slideContent, isLastSlide)
             setContentType('song')
             setContentData({
-              mainText: newContent,
+              mainText: slideContent,
             })
             // Show next slide preview if enabled in screen config
             if (screen?.nextSlideConfig?.enabled) {
@@ -757,10 +786,18 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
             )
             if (slideIndex !== undefined && slideIndex !== -1 && item.slides) {
               const slide = item.slides[slideIndex]
+              const isFirstSlide = slideIndex === 0
               const isLastSlide = slideIndex === item.slides.length - 1
+              let slideContent = slide.content
+              slideContent = addKeyLineToFirstSlide(
+                slideContent,
+                isFirstSlide,
+                item.keyLine,
+              )
+              slideContent = addAminToLastSlide(slideContent, isLastSlide)
               foundContentType = 'song'
               foundContentData = {
-                mainText: addAminToLastSlide(slide.content, isLastSlide),
+                mainText: slideContent,
               }
               break
             }
@@ -907,8 +944,7 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
     presentationState?.updatedAt,
     screen?.type,
     isExitAnimating,
-    // Note: songUpdateTimestamp removed - presentationState?.updatedAt already triggers re-render
-    // when song content changes via WebSocket broadcast
+    songUpdateTimestamp,
   ])
 
   // Keep transparent background while loading or on error

@@ -1,0 +1,30 @@
+{
+  "title": "Song Key Configuration",
+  "dateGroups": {
+    "today": "Today",
+    "yesterday": "Yesterday"
+  },
+  "songCount": "{{count}} songs presented",
+  "songCount_one": "{{count}} song presented",
+  "songCount_other": "{{count}} songs presented",
+  "presentedCount": "Presented {{count}} times",
+  "presentedCount_one": "Presented {{count}} time",
+  "presentedCount_other": "Presented {{count}} times",
+  "noKeyLine": "No key set",
+  "actions": {
+    "refresh": "Refresh list"
+  },
+  "emptyState": {
+    "title": "No presented songs",
+    "description": "Songs will appear here after being presented"
+  },
+  "dialog": {
+    "title": "Set Song Key",
+    "songTitle": "Song",
+    "keyLine": "Key",
+    "keyLinePlaceholder": "e.g., Do Major, La minor",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving..."
+  }
+}

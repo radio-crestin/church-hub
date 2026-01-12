@@ -1,0 +1,32 @@
+{
+  "title": "Configurare Gama Cântare",
+  "dateGroups": {
+    "today": "Astăzi",
+    "yesterday": "Ieri"
+  },
+  "songCount": "{{count}} cântări prezentate",
+  "songCount_one": "{{count}} cântare prezentată",
+  "songCount_few": "{{count}} cântări prezentate",
+  "songCount_other": "{{count}} de cântări prezentate",
+  "presentedCount": "Prezentată de {{count}} ori",
+  "presentedCount_one": "Prezentată o dată",
+  "presentedCount_few": "Prezentată de {{count}} ori",
+  "presentedCount_other": "Prezentată de {{count}} de ori",
+  "noKeyLine": "Fără gamă",
+  "actions": {
+    "refresh": "Reîmprospătează lista"
+  },
+  "emptyState": {
+    "title": "Nicio cântare prezentată",
+    "description": "Cântările vor apărea aici după ce sunt prezentate"
+  },
+  "dialog": {
+    "title": "Setează Gama Cântării",
+    "songTitle": "Cântare",
+    "keyLine": "Gama",
+    "keyLinePlaceholder": "ex: Do Major, La minor",
+    "cancel": "Anulează",
+    "save": "Salvează",
+    "saving": "Se salvează..."
+  }
+}

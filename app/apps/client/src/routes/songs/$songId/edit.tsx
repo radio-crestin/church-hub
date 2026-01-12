@@ -27,7 +27,6 @@ interface SongMetadata {
   author: string | null
   copyright: string | null
   ccli: string | null
-  key: string | null
   tempo: string | null
   timeSignature: string | null
   theme: string | null
@@ -42,7 +41,6 @@ const defaultMetadata: SongMetadata = {
   author: null,
   copyright: null,
   ccli: null,
-  key: null,
   tempo: null,
   timeSignature: null,
   theme: null,
@@ -126,7 +124,6 @@ function SongEditorPage() {
         author: song.author,
         copyright: song.copyright,
         ccli: song.ccli,
-        key: song.key,
         tempo: song.tempo,
         timeSignature: song.timeSignature,
         theme: song.theme,
@@ -173,7 +170,6 @@ function SongEditorPage() {
         author: metadata.author,
         copyright: metadata.copyright,
         ccli: metadata.ccli,
-        key: metadata.key,
         tempo: metadata.tempo,
         timeSignature: metadata.timeSignature,
         theme: metadata.theme,
@@ -212,7 +208,6 @@ function SongEditorPage() {
           author: result.data.author,
           copyright: result.data.copyright,
           ccli: result.data.ccli,
-          key: result.data.key,
           tempo: result.data.tempo,
           timeSignature: result.data.timeSignature,
           theme: result.data.theme,

@@ -19,6 +19,7 @@ import {
 import { useTextSelection } from '../hooks/useTextSelection'
 import type { ContentType, TextStyleRange } from '../types'
 import { addAminToLastSlide } from '../utils/addAminToLastSlide'
+import { addKeyLineToFirstSlide } from '../utils/addKeyLineToFirstSlide'
 
 // Extra buffer time after animation completes before transitioning to empty state (ms)
 const EXIT_ANIMATION_BUFFER = 100
@@ -65,6 +66,7 @@ interface QueueItem {
     person?: string
   }>
   slides?: Array<{ id: number; content: string }>
+  keyLine?: string | null
 }
 
 interface ContentData {
@@ -239,11 +241,19 @@ export function LivePreview() {
         if (temp.type === 'song') {
           const currentSlide = temp.data.slides[temp.data.currentSlideIndex]
           if (currentSlide) {
+            const isFirstSlide = temp.data.currentSlideIndex === 0
             const isLastSlide =
               temp.data.currentSlideIndex === temp.data.slides.length - 1
+            let slideContent = currentSlide.content
+            slideContent = addKeyLineToFirstSlide(
+              slideContent,
+              isFirstSlide,
+              temp.data.keyLine,
+            )
+            slideContent = addAminToLastSlide(slideContent, isLastSlide)
             setContentType('song')
             setContentData({
-              mainText: addAminToLastSlide(currentSlide.content, isLastSlide),
+              mainText: slideContent,
             })
             return
           }
@@ -316,10 +326,18 @@ export function LivePreview() {
             )
             if (slideIndex !== undefined && slideIndex !== -1 && item.slides) {
               const slide = item.slides[slideIndex]
+              const isFirstSlide = slideIndex === 0
               const isLastSlide = slideIndex === item.slides.length - 1
+              let slideContent = slide.content
+              slideContent = addKeyLineToFirstSlide(
+                slideContent,
+                isFirstSlide,
+                item.keyLine,
+              )
+              slideContent = addAminToLastSlide(slideContent, isLastSlide)
               setContentType('song')
               setContentData({
-                mainText: addAminToLastSlide(slide.content, isLastSlide),
+                mainText: slideContent,
               })
               return
             }

@@ -147,6 +147,7 @@ export function getScheduleById(id: number): ScheduleWithItems | null {
         itemType: scheduleItems.itemType,
         songId: scheduleItems.songId,
         songTitle: songs.title,
+        songKeyLine: songs.keyLine,
         categoryName: songCategories.name,
         slideType: scheduleItems.slideType,
         slideContent: scheduleItems.slideContent,
@@ -196,6 +197,8 @@ export function getScheduleById(id: number): ScheduleWithItems | null {
               categoryName: record.categoryName,
             }
           : null,
+        slides,
+        keyLine: record.songKeyLine ?? null,
         slideType: record.slideType,
         slideContent: record.slideContent,
         biblePassageReference: record.biblePassageReference,
@@ -206,7 +209,6 @@ export function getScheduleById(id: number): ScheduleWithItems | null {
         sortOrder: record.sortOrder,
         createdAt: Math.floor(record.createdAt.getTime() / 1000),
         updatedAt: Math.floor(record.updatedAt.getTime() / 1000),
-        slides,
       }
     })
 
@@ -243,6 +245,7 @@ export function getScheduleItemById(id: number): ScheduleItem | null {
         itemType: scheduleItems.itemType,
         songId: scheduleItems.songId,
         songTitle: songs.title,
+        songKeyLine: songs.keyLine,
         categoryName: songCategories.name,
         slideType: scheduleItems.slideType,
         slideContent: scheduleItems.slideContent,
@@ -294,6 +297,8 @@ export function getScheduleItemById(id: number): ScheduleItem | null {
             categoryName: record.categoryName,
           }
         : null,
+      slides,
+      keyLine: record.songKeyLine ?? null,
       slideType: record.slideType,
       slideContent: record.slideContent,
       biblePassageReference: record.biblePassageReference,
@@ -304,7 +309,6 @@ export function getScheduleItemById(id: number): ScheduleItem | null {
       sortOrder: record.sortOrder,
       createdAt: Math.floor(record.createdAt.getTime() / 1000),
       updatedAt: Math.floor(record.updatedAt.getTime() / 1000),
-      slides,
     }
   } catch (error) {
     log('error', `Failed to get schedule item: ${error}`)

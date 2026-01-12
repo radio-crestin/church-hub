@@ -1,22 +1,22 @@
-import { Loader2, Save, X } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { Loader2, Save, X } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
-import { useToast } from "~/ui/toast";
+import { useToast } from '~/ui/toast'
 import {
-  type SongMetadata,
   defaultSongMetadata,
   SongDetailsSection,
-} from "./SongDetailsSection";
-import { type LocalSlide } from "./SongSlideList";
-import { SongSlidesSection } from "./SongSlidesSection";
-import { useSong, useUpsertSong } from "../hooks";
+  type SongMetadata,
+} from './SongDetailsSection'
+import { type LocalSlide } from './SongSlideList'
+import { SongSlidesSection } from './SongSlidesSection'
+import { useSong, useUpsertSong } from '../hooks'
 
 interface SongEditorModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  songId: number;
-  onSaved?: () => void;
+  isOpen: boolean
+  onClose: () => void
+  songId: number
+  onSaved?: () => void
 }
 
 export function SongEditorModal({
@@ -25,30 +25,30 @@ export function SongEditorModal({
   songId,
   onSaved,
 }: SongEditorModalProps) {
-  const { t } = useTranslation(["songs", "common"]);
-  const { showToast } = useToast();
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  const mouseDownTargetRef = useRef<EventTarget | null>(null);
+  const { t } = useTranslation(['songs', 'common'])
+  const { showToast } = useToast()
+  const dialogRef = useRef<HTMLDialogElement>(null)
+  const mouseDownTargetRef = useRef<EventTarget | null>(null)
 
-  const { data: song, isLoading } = useSong(songId);
-  const upsertMutation = useUpsertSong();
+  const { data: song, isLoading } = useSong(songId)
+  const upsertMutation = useUpsertSong()
 
   // Local state for editing
   // NOTE: When adding new fields to song editing, ensure they are:
   // 1. Added to the local state here
   // 2. Initialized from loaded song data in useEffect
   // 3. Included in handleSave mutation call
-  const [title, setTitle] = useState("");
-  const [categoryId, setCategoryId] = useState<number | null>(null);
-  const [slides, setSlides] = useState<LocalSlide[]>([]);
-  const [metadata, setMetadata] = useState<SongMetadata>(defaultSongMetadata);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [title, setTitle] = useState('')
+  const [categoryId, setCategoryId] = useState<number | null>(null)
+  const [slides, setSlides] = useState<LocalSlide[]>([])
+  const [metadata, setMetadata] = useState<SongMetadata>(defaultSongMetadata)
+  const [isInitialized, setIsInitialized] = useState(false)
 
   // Initialize local state when song is loaded
   useEffect(() => {
     if (song && isOpen) {
-      setTitle(song.title);
-      setCategoryId(song.categoryId);
+      setTitle(song.title)
+      setCategoryId(song.categoryId)
       setSlides(
         song.slides.map((s) => ({
           id: s.id,
@@ -56,12 +56,11 @@ export function SongEditorModal({
           sortOrder: s.sortOrder,
           label: s.label,
         })),
-      );
+      )
       setMetadata({
         author: song.author,
         copyright: song.copyright,
         ccli: song.ccli,
-        key: song.key,
         tempo: song.tempo,
         timeSignature: song.timeSignature,
         theme: song.theme,
@@ -70,36 +69,36 @@ export function SongEditorModal({
         keyLine: song.keyLine,
         presentationOrder: song.presentationOrder,
         sourceFilename: song.sourceFilename,
-      });
-      setIsInitialized(true);
+      })
+      setIsInitialized(true)
     }
-  }, [song, isOpen]);
+  }, [song, isOpen])
 
   // Reset state when modal closes
   useEffect(() => {
     if (!isOpen) {
-      setIsInitialized(false);
+      setIsInitialized(false)
     }
-  }, [isOpen]);
+  }, [isOpen])
 
   // Dialog open/close handling
   useEffect(() => {
     if (isOpen) {
-      dialogRef.current?.showModal();
+      dialogRef.current?.showModal()
     } else {
-      dialogRef.current?.close();
+      dialogRef.current?.close()
     }
-  }, [isOpen]);
+  }, [isOpen])
 
   const handleSave = useCallback(async () => {
-    if (!title.trim()) return;
+    if (!title.trim()) return
 
     const result = await upsertMutation.mutateAsync({
       id: songId,
       title: title.trim(),
       categoryId,
       slides: slides.map((s, idx) => ({
-        id: typeof s.id === "number" ? s.id : undefined,
+        id: typeof s.id === 'number' ? s.id : undefined,
         content: s.content,
         sortOrder: idx,
         label: s.label,
@@ -108,7 +107,6 @@ export function SongEditorModal({
       author: metadata.author,
       copyright: metadata.copyright,
       ccli: metadata.ccli,
-      key: metadata.key,
       tempo: metadata.tempo,
       timeSignature: metadata.timeSignature,
       theme: metadata.theme,
@@ -116,10 +114,10 @@ export function SongEditorModal({
       hymnNumber: metadata.hymnNumber,
       keyLine: metadata.keyLine,
       presentationOrder: metadata.presentationOrder,
-    });
+    })
 
     if (result.success && result.data) {
-      showToast(t("songs:messages.saved"), "success");
+      showToast(t('songs:messages.saved'), 'success')
       // Update local state with saved data
       setSlides(
         result.data.slides.map((s) => ({
@@ -128,12 +126,11 @@ export function SongEditorModal({
           sortOrder: s.sortOrder,
           label: s.label,
         })),
-      );
+      )
       setMetadata({
         author: result.data.author,
         copyright: result.data.copyright,
         ccli: result.data.ccli,
-        key: result.data.key,
         tempo: result.data.tempo,
         timeSignature: result.data.timeSignature,
         theme: result.data.theme,
@@ -141,11 +138,11 @@ export function SongEditorModal({
         hymnNumber: result.data.hymnNumber,
         keyLine: result.data.keyLine,
         presentationOrder: result.data.presentationOrder,
-      });
-      onSaved?.();
-      onClose();
+      })
+      onSaved?.()
+      onClose()
     } else {
-      showToast(t("songs:messages.error"), "error");
+      showToast(t('songs:messages.error'), 'error')
     }
   }, [
     title,
@@ -158,34 +155,34 @@ export function SongEditorModal({
     t,
     onSaved,
     onClose,
-  ]);
+  ])
 
   // CMD+S / Ctrl+S keyboard shortcut to save
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) return
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "s") {
-        e.preventDefault();
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault()
         if (!upsertMutation.isPending) {
-          handleSave();
+          handleSave()
         }
       }
-    };
+    }
 
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, handleSave, upsertMutation.isPending]);
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, handleSave, upsertMutation.isPending])
 
   const handleClose = () => {
     if (!upsertMutation.isPending) {
-      onClose();
+      onClose()
     }
-  };
+  }
 
   const handleBackdropMouseDown = (e: React.MouseEvent<HTMLDialogElement>) => {
-    mouseDownTargetRef.current = e.target;
-  };
+    mouseDownTargetRef.current = e.target
+  }
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
     // Only close if both mousedown and mouseup happened on the backdrop
@@ -193,18 +190,18 @@ export function SongEditorModal({
       e.target === dialogRef.current &&
       mouseDownTargetRef.current === dialogRef.current
     ) {
-      handleClose();
+      handleClose()
     }
-  };
+  }
 
-  const showLoading = isLoading || !isInitialized;
+  const showLoading = isLoading || !isInitialized
 
   const handleMetadataChange = (
     field: keyof SongMetadata,
     value: string | null,
   ) => {
-    setMetadata((prev) => ({ ...prev, [field]: value }));
-  };
+    setMetadata((prev) => ({ ...prev, [field]: value }))
+  }
 
   return (
     <dialog
@@ -221,7 +218,7 @@ export function SongEditorModal({
             {showLoading ? (
               <span className="inline-block w-48 h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
             ) : (
-              title || t("songs:editor.titlePlaceholder")
+              title || t('songs:editor.titlePlaceholder')
             )}
           </h2>
           <button
@@ -264,7 +261,7 @@ export function SongEditorModal({
             disabled={upsertMutation.isPending}
             className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg disabled:opacity-50"
           >
-            {t("common:buttons.cancel")}
+            {t('common:buttons.cancel')}
           </button>
           <button
             type="button"
@@ -277,10 +274,10 @@ export function SongEditorModal({
             ) : (
               <Save size={18} />
             )}
-            {t("songs:actions.save")}
+            {t('songs:actions.save')}
           </button>
         </div>
       </div>
     </dialog>
-  );
+  )
 }

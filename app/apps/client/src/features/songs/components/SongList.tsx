@@ -177,7 +177,10 @@ export function SongList({
     data: searchResults,
     isLoading: searchLoading,
     isFetching,
-  } = useSearchSongs(debouncedQuery, categoryIds)
+  } = useSearchSongs(
+    debouncedQuery,
+    categoryIds.length > 0 ? categoryIds : undefined,
+  )
 
   const { data: categories } = useCategories()
 
@@ -515,6 +518,7 @@ export function SongList({
             onChange={handleCategoryChange}
             placeholder={t('search.allCategories')}
             allSelectedLabel={t('search.allCategories')}
+            emptyMeansAll
           />
         </div>
       </div>

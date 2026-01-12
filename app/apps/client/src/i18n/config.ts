@@ -13,6 +13,7 @@ import queueEN from './locales/en/queue.json'
 import schedulesEN from './locales/en/schedules.json'
 import settingsEN from './locales/en/settings.json'
 import sidebarEN from './locales/en/sidebar.json'
+import songKeyEN from './locales/en/songKey.json'
 import songsEN from './locales/en/songs.json'
 import bibleRO from './locales/ro/bible.json'
 import bibleBooksRO from './locales/ro/bibleBooks.json'
@@ -24,6 +25,7 @@ import queueRO from './locales/ro/queue.json'
 import schedulesRO from './locales/ro/schedules.json'
 import settingsRO from './locales/ro/settings.json'
 import sidebarRO from './locales/ro/sidebar.json'
+import songKeyRO from './locales/ro/songKey.json'
 import songsRO from './locales/ro/songs.json'
 
 // Define resources type for type safety
@@ -39,6 +41,7 @@ export const resources = {
     schedules: schedulesEN,
     sidebar: sidebarEN,
     settings: settingsEN,
+    songKey: songKeyEN,
     songs: songsEN,
   },
   ro: {
@@ -52,6 +55,7 @@ export const resources = {
     schedules: schedulesRO,
     sidebar: sidebarRO,
     settings: settingsRO,
+    songKey: songKeyRO,
     songs: songsRO,
   },
 } as const
@@ -75,6 +79,7 @@ i18n
       'schedules',
       'sidebar',
       'settings',
+      'songKey',
       'songs',
     ], // Available namespaces
 

@@ -20,7 +20,6 @@ export interface SongRecord {
   author: string | null
   copyright: string | null
   ccli: string | null
-  key: string | null
   tempo: string | null
   time_signature: string | null
   theme: string | null
@@ -29,6 +28,7 @@ export interface SongRecord {
   key_line: string | null
   presentation_order: string | null
   presentation_count: number
+  last_presented_at: number | null
   last_manual_edit: number | null
   created_at: number
   updated_at: number
@@ -70,7 +70,6 @@ export interface Song {
   author: string | null
   copyright: string | null
   ccli: string | null
-  key: string | null
   tempo: string | null
   timeSignature: string | null
   theme: string | null
@@ -79,6 +78,7 @@ export interface Song {
   keyLine: string | null
   presentationOrder: string | null
   presentationCount: number
+  lastPresentedAt: number | null
   lastManualEdit: number | null
   createdAt: number
   updatedAt: number
@@ -135,7 +135,6 @@ export interface UpsertSongInput {
   author?: string | null
   copyright?: string | null
   ccli?: string | null
-  key?: string | null
   tempo?: string | null
   timeSignature?: string | null
   theme?: string | null
@@ -205,7 +204,6 @@ export interface BatchImportSongInput {
   author?: string | null
   copyright?: string | null
   ccli?: string | null
-  key?: string | null
   tempo?: string | null
   timeSignature?: string | null
   theme?: string | null

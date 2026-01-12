@@ -43,6 +43,8 @@ export interface ImportOptions {
   bible: boolean
   schedules: boolean
   configurations: boolean
+  /** When true, copies the entire database and runs migrations to update schema */
+  copyAndMigrate?: boolean
 }
 
 /**
@@ -351,6 +353,15 @@ export async function selectiveImportDatabase(
       }
     }
 
+    // 2.5. If copyAndMigrate is true, use full database import which triggers migrations
+    if (options.copyAndMigrate) {
+      log(
+        'info',
+        'Using copy and migrate mode - replacing database and running migrations',
+      )
+      return await importDatabase(sourcePath)
+    }
+
     // 3. Validate at least one category is selected
     const hasSelection =
       options.songs ||
@@ -437,29 +448,64 @@ export async function selectiveImportDatabase(
         }
 
         // Get column names from source table
-        const columns = sourceDb
+        const sourceColumns = sourceDb
           .query(`PRAGMA table_info(${tableName})`)
           .all() as Array<{ name: string }>
-        const columnNames = columns.map((c) => c.name)
+        const sourceColumnNames = new Set(sourceColumns.map((c) => c.name))
+
+        // Get column names from destination table
+        const destColumns = destDb
+          .query(`PRAGMA table_info(${tableName})`)
+          .all() as Array<{ name: string }>
+        const destColumnNames = new Set(destColumns.map((c) => c.name))
+
+        // Only use columns that exist in BOTH source and destination
+        // This handles schema differences (e.g., removed columns)
+        const columnNames = sourceColumns
+          .map((c) => c.name)
+          .filter((name) => destColumnNames.has(name))
 
         if (columnNames.length === 0) {
-          log('debug', `Table ${tableName} has no columns, skipping`)
+          log('debug', `Table ${tableName} has no common columns, skipping`)
           continue
+        }
+
+        // Log schema differences for debugging
+        const removedCols = [...sourceColumnNames].filter(
+          (c) => !destColumnNames.has(c),
+        )
+        const addedCols = [...destColumnNames].filter(
+          (c) => !sourceColumnNames.has(c),
+        )
+        if (removedCols.length > 0) {
+          log(
+            'debug',
+            `Table ${tableName}: skipping columns not in dest: ${removedCols.join(', ')}`,
+          )
+        }
+        if (addedCols.length > 0) {
+          log(
+            'debug',
+            `Table ${tableName}: dest has new columns (will use defaults): ${addedCols.join(', ')}`,
+          )
         }
 
         // Delete existing data in destination
         log('debug', `Deleting existing data from ${tableName}`)
         destDb.run(`DELETE FROM ${tableName}`)
 
-        // Read all rows from source
-        const rows = sourceDb.query(`SELECT * FROM ${tableName}`).all()
+        // Read only the common columns from source
+        const selectColumns = columnNames.join(', ')
+        const rows = sourceDb
+          .query(`SELECT ${selectColumns} FROM ${tableName}`)
+          .all()
 
         if (rows.length === 0) {
           log('debug', `Table ${tableName} is empty in source`)
           continue
         }
 
-        // Build insert statement
+        // Build insert statement with only common columns
         const placeholders = columnNames.map(() => '?').join(', ')
         const insertSql = `INSERT INTO ${tableName} (${columnNames.join(', ')}) VALUES (${placeholders})`
         const insertStmt = destDb.prepare(insertSql)

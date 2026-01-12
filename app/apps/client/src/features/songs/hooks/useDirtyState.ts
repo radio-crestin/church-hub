@@ -1,11 +1,35 @@
 import { useCallback, useRef } from 'react'
 
+import type { SongMetadata } from '../components/SongDetailsSection'
 import type { LocalSlide } from '../components/SongSlideList'
 
 interface SongState {
   title: string
   categoryId: number | null
   slides: LocalSlide[]
+  metadata?: SongMetadata
+}
+
+function areMetadataEqual(
+  a: SongMetadata | undefined,
+  b: SongMetadata | undefined,
+): boolean {
+  if (!a && !b) return true
+  if (!a || !b) return false
+
+  return (
+    a.author === b.author &&
+    a.copyright === b.copyright &&
+    a.ccli === b.ccli &&
+    a.tempo === b.tempo &&
+    a.timeSignature === b.timeSignature &&
+    a.theme === b.theme &&
+    a.altTheme === b.altTheme &&
+    a.hymnNumber === b.hymnNumber &&
+    a.keyLine === b.keyLine &&
+    a.presentationOrder === b.presentationOrder &&
+    a.sourceFilename === b.sourceFilename
+  )
 }
 
 function areStatesEqual(a: SongState, b: SongState): boolean {
@@ -18,6 +42,8 @@ function areStatesEqual(a: SongState, b: SongState): boolean {
     // Compare by index position (sortOrder after save reflects position)
     if (a.slides[i].sortOrder !== b.slides[i].sortOrder) return false
   }
+
+  if (!areMetadataEqual(a.metadata, b.metadata)) return false
 
   return true
 }
@@ -34,6 +60,7 @@ export function useDirtyState() {
         content: s.content,
         sortOrder: idx,
       })),
+      metadata: state.metadata ? { ...state.metadata } : undefined,
     }
   }, [])
 
@@ -49,6 +76,9 @@ export function useDirtyState() {
         content: s.content,
         sortOrder: idx,
       })),
+      metadata: currentState.metadata
+        ? { ...currentState.metadata }
+        : undefined,
     }
 
     return !areStatesEqual(normalizedCurrent, savedStateRef.current)

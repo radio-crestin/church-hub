@@ -13,6 +13,7 @@ import {
 import { getApiUrl, getWsUrl, isMobile } from '~/config'
 import { getStoredUserToken } from '~/service/api-url'
 import { createLogger } from '~/utils/logger'
+import { presentedSongsQueryKey } from '../../song-key/hooks/usePresentedSongs'
 import { updateStateIfNewer } from '../hooks/usePresentationControls'
 import { presentationStateQueryKey } from '../hooks/usePresentationState'
 import { screenQueryKey } from '../hooks/useScreen'
@@ -341,6 +342,11 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
           // Also invalidate the songs list to update any list views
           queryClient.invalidateQueries({
             queryKey: ['songs'],
+          })
+          // Reset the presented songs infinite query to refetch from beginning
+          // This ensures newly presented songs appear at the top in real-time
+          queryClient.resetQueries({
+            queryKey: presentedSongsQueryKey,
           })
           // Invalidate all schedule queries to update slides in schedule panels
           queryClient.invalidateQueries({

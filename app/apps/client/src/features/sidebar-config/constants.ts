@@ -2,6 +2,7 @@ import {
   Book,
   CalendarDays,
   Headphones,
+  KeyRound,
   Monitor,
   Music,
   Radio,
@@ -26,6 +27,7 @@ export const PAGES_WITH_SEARCH: Record<BuiltInMenuItemId, boolean> = {
   schedules: true,
   present: false,
   livestream: false,
+  song_key: false,
   kiosk: false,
   settings: false,
 }
@@ -42,6 +44,7 @@ export const DEFAULT_FOCUS_SEARCH: Record<BuiltInMenuItemId, boolean> = {
   schedules: false,
   present: false,
   livestream: false,
+  song_key: false,
   kiosk: false,
   settings: false,
 }
@@ -108,6 +111,13 @@ export const BUILTIN_ITEMS: Record<BuiltInMenuItemId, BuiltInItemDefinition> = {
     labelKey: 'sidebar:navigation.music',
     to: '/music',
     permission: 'settings.view',
+  },
+  song_key: {
+    id: 'song_key',
+    icon: KeyRound,
+    labelKey: 'sidebar:navigation.songKey',
+    to: '/song-key',
+    permission: 'song_key.view',
   },
   kiosk: {
     id: 'kiosk',
@@ -178,6 +188,14 @@ export const DEFAULT_SIDEBAR_CONFIG: SidebarConfiguration = {
       order: 5,
       isVisible: true,
       settings: getDefaultSidebarItemSettings('music'),
+    },
+    {
+      id: 'song_key',
+      type: 'builtin',
+      builtinId: 'song_key',
+      order: 6,
+      isVisible: true,
+      settings: getDefaultSidebarItemSettings('song_key'),
     },
     // Note: Settings is not configurable - it's fixed at the bottom of the sidebar
     // Note: Kiosk is not configurable - it's dynamically shown when kiosk mode is enabled

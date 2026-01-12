@@ -26,6 +26,19 @@ let lastNavigationTimestamp = 0
 // This prevents counting multiple times when navigating between slides of the same song
 let lastCountedSongId: number | null = null
 
+// Callback to notify when a song is presented (for WebSocket broadcast)
+let onSongPresentedCallback: ((songId: number) => void) | null = null
+
+/**
+ * Sets a callback to be called when a song is presented.
+ * Used by WebSocket module to broadcast song updates without circular dependencies.
+ */
+export function setOnSongPresentedCallback(
+  callback: ((songId: number) => void) | null,
+): void {
+  onSongPresentedCallback = callback
+}
+
 /**
  * Generates a unique, monotonically increasing timestamp in milliseconds.
  * Ensures each update gets a strictly greater timestamp even within same millisecond.
@@ -89,6 +102,7 @@ function incrementSongPresentationCount(
     db.update(songs)
       .set({
         presentationCount: sql`${songs.presentationCount} + 1`,
+        lastPresentedAt: sql`(unixepoch())`,
       })
       .where(eq(songs.id, songId))
       .run()
@@ -98,6 +112,11 @@ function incrementSongPresentationCount(
       'debug',
       `Incremented presentation count for song ${songId} (resuming: ${isResumingFromHidden})`,
     )
+
+    // Notify WebSocket to broadcast song update
+    if (onSongPresentedCallback) {
+      onSongPresentedCallback(songId)
+    }
   } catch (error) {
     log('error', `Failed to increment presentation count: ${error}`)
   }
@@ -389,7 +408,7 @@ export function presentTemporarySong(
 
     // Fetch song details
     const song = db
-      .select({ id: songs.id, title: songs.title })
+      .select({ id: songs.id, title: songs.title, keyLine: songs.keyLine })
       .from(songs)
       .where(eq(songs.id, input.songId))
       .get()
@@ -431,6 +450,7 @@ export function presentTemporarySong(
       data: {
         songId: song.id,
         title: song.title,
+        keyLine: song.keyLine,
         slides: expandedSlides.map((s, idx) => ({
           id: s.id,
           content: s.content,
@@ -448,6 +468,7 @@ export function presentTemporarySong(
       db.update(songs)
         .set({
           presentationCount: sql`${songs.presentationCount} + 1`,
+          lastPresentedAt: sql`(unixepoch())`,
         })
         .where(eq(songs.id, input.songId))
         .run()
@@ -456,6 +477,11 @@ export function presentTemporarySong(
         'debug',
         `Incremented presentation count for temporary song ${input.songId}`,
       )
+
+      // Notify WebSocket to broadcast song update
+      if (onSongPresentedCallback) {
+        onSongPresentedCallback(input.songId)
+      }
     }
 
     return updatePresentationState({
@@ -1086,6 +1112,13 @@ export function refreshPresentedSongSlides(
 
     const db = getDatabase()
 
+    // Fetch the song's keyLine
+    const song = db
+      .select({ keyLine: songs.keyLine })
+      .from(songs)
+      .where(eq(songs.id, songId))
+      .get()
+
     // Fetch fresh slides from database
     const slides = db
       .select({
@@ -1123,6 +1156,7 @@ export function refreshPresentedSongSlides(
           sortOrder: idx,
         })),
         currentSlideIndex,
+        keyLine: song?.keyLine ?? null,
       },
     }
 

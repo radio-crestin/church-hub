@@ -179,6 +179,11 @@ export const databasePaths: Record<string, Record<string, unknown>> = {
                       description:
                         'Import configuration (screens, settings, preferences)',
                     },
+                    copyAndMigrate: {
+                      type: 'boolean',
+                      description:
+                        'Copy database file and run migrations to update schema. Use this when importing from older versions.',
+                    },
                   },
                 },
               },

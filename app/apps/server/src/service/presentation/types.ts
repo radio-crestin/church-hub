@@ -110,6 +110,7 @@ export interface NextItemPreview {
 export interface TemporarySongContent {
   songId: number
   title: string
+  keyLine?: string | null // Musical key (e.g., "C Major", "Am")
   slides: TemporarySongSlide[]
   currentSlideIndex: number // 0-based index
   nextItemPreview?: NextItemPreview // Preview of next schedule item (when at last slide)

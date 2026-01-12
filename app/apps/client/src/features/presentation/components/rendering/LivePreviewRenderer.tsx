@@ -6,8 +6,11 @@ import { getStoredUserToken } from '~/service/api-url'
 import { ClockElement } from './ClockElement'
 import { ContentRenderer } from './ContentRenderer'
 import { getBackgroundCSS } from './utils/styleUtils'
+import { useSongUpdateTimestamp } from '../../context/WebSocketContext'
 import { usePresentationState, useScreens, useWebSocket } from '../../hooks'
 import type { ContentType, ScreenWithConfigs } from '../../types'
+import { addAminToLastSlide } from '../../utils/addAminToLastSlide'
+import { addKeyLineToFirstSlide } from '../../utils/addKeyLineToFirstSlide'
 
 // Check if we're running in Tauri context
 const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
@@ -51,6 +54,7 @@ interface QueueItem {
     person?: string
   }>
   slides?: Array<{ id: number; content: string }>
+  keyLine?: string | null
 }
 
 interface ContentData {
@@ -66,6 +70,7 @@ export function LivePreviewRenderer() {
 
   const { data: presentationState } = usePresentationState()
   const { data: screens } = useScreens()
+  const songUpdateTimestamp = useSongUpdateTimestamp()
 
   const [contentData, setContentData] = useState<ContentData | null>(null)
   const [contentType, setContentType] = useState<ContentType>('empty')
@@ -158,15 +163,25 @@ export function LivePreviewRenderer() {
         // Find current content
         if (presentationState.currentSongSlideId) {
           for (const item of queueItems) {
-            const slide = item.slides?.find(
+            const slideIndex = item.slides?.findIndex(
               (s: SongSlideData) =>
                 s.id === presentationState.currentSongSlideId,
             )
-            if (slide) {
+            if (slideIndex !== undefined && slideIndex !== -1 && item.slides) {
+              const slide = item.slides[slideIndex]
+              const isFirstSlide = slideIndex === 0
+              const isLastSlide = slideIndex === item.slides.length - 1
+              let slideContent = slide.content
+              slideContent = addKeyLineToFirstSlide(
+                slideContent,
+                isFirstSlide,
+                item.keyLine,
+              )
+              slideContent = addAminToLastSlide(slideContent, isLastSlide)
               setContentType('song')
               setContentData({
                 type: 'song',
-                mainText: slide.content,
+                mainText: slideContent,
               })
               return
             }
@@ -261,6 +276,7 @@ export function LivePreviewRenderer() {
     presentationState?.currentVerseteTineriEntryId,
     presentationState?.isHidden,
     presentationState?.updatedAt,
+    songUpdateTimestamp,
   ])
 
   // Fallback to legacy preview if no screen configured

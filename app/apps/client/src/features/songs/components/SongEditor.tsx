@@ -1,5 +1,13 @@
 import { useNavigate } from '@tanstack/react-router'
-import { ArrowLeft, CalendarPlus, Loader2, Play, Save, Trash2, X } from 'lucide-react'
+import {
+  ArrowLeft,
+  CalendarPlus,
+  Loader2,
+  Play,
+  Save,
+  Trash2,
+  X,
+} from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -7,9 +15,9 @@ import { usePresentTemporarySong } from '~/features/presentation'
 import { AddSongToScheduleModal } from '~/features/schedules'
 import { useToast } from '~/ui/toast'
 import {
-  type SongMetadata,
   defaultSongMetadata,
   SongDetailsSection,
+  type SongMetadata,
 } from './SongDetailsSection'
 import { type LocalSlide } from './SongSlideList'
 import { SongSlidesSection } from './SongSlidesSection'

@@ -1,7 +1,8 @@
 import { join } from 'node:path'
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite'
-import { migrate } from 'drizzle-orm/bun-sqlite/migrator'
 
+import { addLastPresentedAt } from './add-last-presented-at'
+import { dropSongKeyColumn } from './drop-song-key-column'
 import { EMBEDDED_MIGRATIONS } from './embedded'
 import { migrateShortcuts } from './migrate-shortcuts'
 import { migrateSongTitles } from './migrate-song-titles'
@@ -15,10 +16,10 @@ import type { Database } from 'bun:sqlite'
 import { createFtsTables } from '../fts'
 
 // Resolve migrations folder relative to this file (only used in dev mode)
-const MIGRATIONS_FOLDER = join(import.meta.dir, '../../../drizzle/migrations')
+const _MIGRATIONS_FOLDER = join(import.meta.dir, '../../../drizzle/migrations')
 
 // Check if running in Tauri production mode
-const IS_TAURI_PRODUCTION = process.env.TAURI_MODE === 'true'
+const _IS_TAURI_PRODUCTION = process.env.TAURI_MODE === 'true'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -103,14 +104,10 @@ export function runMigrations(
 
   log('info', 'Running Drizzle migrations...')
 
-  // Use embedded migrations in Tauri production mode, otherwise use file-based
+  // Always use embedded migrations for consistency between dev and production
+  // This ensures the same migration tracking (hash-based) regardless of environment
   let t = performance.now()
-  if (IS_TAURI_PRODUCTION) {
-    runEmbeddedMigrations(rawDb)
-  } else {
-    // Run Drizzle schema migrations from filesystem
-    migrate(drizzleDb, { migrationsFolder: MIGRATIONS_FOLDER })
-  }
+  runEmbeddedMigrations(rawDb)
   logTiming('drizzle_migrations', t)
 
   log('info', 'Drizzle migrations complete')
@@ -173,6 +170,18 @@ export function runMigrations(
   t = performance.now()
   migrateShortcuts(rawDb)
   logTiming('migrate_shortcuts', t)
+
+  // Drop redundant 'key' column from songs table (keyLine is kept)
+  log('info', 'Running drop key column migration...')
+  t = performance.now()
+  dropSongKeyColumn(rawDb)
+  logTiming('drop_song_key_column', t)
+
+  // Add last_presented_at column to songs table
+  log('info', 'Running add last_presented_at migration...')
+  t = performance.now()
+  addLastPresentedAt(rawDb)
+  logTiming('add_last_presented_at', t)
 
   return { ftsRecreated: ftsCreated }
 }

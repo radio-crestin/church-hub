@@ -237,7 +237,8 @@
         "admin": "Administrator",
         "presenter": "Presenter",
         "viewer": "Viewer",
-        "queue_manager": "Queue Manager"
+        "queue_manager": "Queue Manager",
+        "song_key_only": "Song Key Only"
       },
       "groups": {
         "songs": "Songs",
@@ -246,7 +247,8 @@
         "queue": "Queue",
         "settings": "Settings",
         "displays": "Displays",
-        "users": "User Management"
+        "users": "User Management",
+        "song_key": "Song Keys"
       },
       "permissionLabels": {
         "songs.view": "View songs",
@@ -276,7 +278,9 @@
         "users.view": "View users",
         "users.create": "Create users",
         "users.edit": "Edit users",
-        "users.delete": "Delete users"
+        "users.delete": "Delete users",
+        "song_key.view": "View song keys",
+        "song_key.edit": "Edit song keys"
       },
       "actions": {
         "edit": "Edit",
@@ -655,6 +659,9 @@
         },
         "categories": {
           "title": "Select data to import:",
+          "copyAndMigrate": "Copy & Migrate (Recommended)",
+          "copyAndMigrateDescription": "Copies the entire database and runs migrations to update the schema. Best for importing from older versions.",
+          "orSelectiveImport": "Or select specific data",
           "songs": "Songs",
           "songsDescription": "Song categories, songs and slides",
           "bible": "Bible",

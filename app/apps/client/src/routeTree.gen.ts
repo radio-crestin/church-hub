@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SongsIndexRouteImport } from './routes/songs/index'
+import { Route as SongKeyIndexRouteImport } from './routes/song-key/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings/index'
 import { Route as SchedulesIndexRouteImport } from './routes/schedules/index'
 import { Route as PresentIndexRouteImport } from './routes/present/index'
@@ -28,6 +29,11 @@ import { Route as AuthYoutubeCallbackRouteImport } from './routes/auth/youtube/c
 const SongsIndexRoute = SongsIndexRouteImport.update({
   id: '/songs/',
   path: '/songs/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SongKeyIndexRoute = SongKeyIndexRouteImport.update({
+  id: '/song-key/',
+  path: '/song-key/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsIndexRoute = SettingsIndexRouteImport.update({
@@ -113,6 +119,7 @@ export interface FileRoutesByFullPath {
   '/present': typeof PresentIndexRoute
   '/schedules': typeof SchedulesIndexRoute
   '/settings': typeof SettingsIndexRoute
+  '/song-key': typeof SongKeyIndexRoute
   '/songs': typeof SongsIndexRoute
   '/auth/youtube/callback': typeof AuthYoutubeCallbackRoute
   '/songs/$songId/edit': typeof SongsSongIdEditRoute
@@ -130,6 +137,7 @@ export interface FileRoutesByTo {
   '/present': typeof PresentIndexRoute
   '/schedules': typeof SchedulesIndexRoute
   '/settings': typeof SettingsIndexRoute
+  '/song-key': typeof SongKeyIndexRoute
   '/songs': typeof SongsIndexRoute
   '/auth/youtube/callback': typeof AuthYoutubeCallbackRoute
   '/songs/$songId/edit': typeof SongsSongIdEditRoute
@@ -148,6 +156,7 @@ export interface FileRoutesById {
   '/present/': typeof PresentIndexRoute
   '/schedules/': typeof SchedulesIndexRoute
   '/settings/': typeof SettingsIndexRoute
+  '/song-key/': typeof SongKeyIndexRoute
   '/songs/': typeof SongsIndexRoute
   '/auth/youtube/callback': typeof AuthYoutubeCallbackRoute
   '/songs/$songId/edit': typeof SongsSongIdEditRoute
@@ -167,6 +176,7 @@ export interface FileRouteTypes {
     | '/present'
     | '/schedules'
     | '/settings'
+    | '/song-key'
     | '/songs'
     | '/auth/youtube/callback'
     | '/songs/$songId/edit'
@@ -184,6 +194,7 @@ export interface FileRouteTypes {
     | '/present'
     | '/schedules'
     | '/settings'
+    | '/song-key'
     | '/songs'
     | '/auth/youtube/callback'
     | '/songs/$songId/edit'
@@ -201,6 +212,7 @@ export interface FileRouteTypes {
     | '/present/'
     | '/schedules/'
     | '/settings/'
+    | '/song-key/'
     | '/songs/'
     | '/auth/youtube/callback'
     | '/songs/$songId/edit'
@@ -219,6 +231,7 @@ export interface RootRouteChildren {
   PresentIndexRoute: typeof PresentIndexRoute
   SchedulesIndexRoute: typeof SchedulesIndexRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
+  SongKeyIndexRoute: typeof SongKeyIndexRoute
   SongsIndexRoute: typeof SongsIndexRoute
   AuthYoutubeCallbackRoute: typeof AuthYoutubeCallbackRoute
   SongsSongIdEditRoute: typeof SongsSongIdEditRoute
@@ -232,6 +245,13 @@ declare module '@tanstack/react-router' {
       path: '/songs'
       fullPath: '/songs'
       preLoaderRoute: typeof SongsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/song-key/': {
+      id: '/song-key/'
+      path: '/song-key'
+      fullPath: '/song-key'
+      preLoaderRoute: typeof SongKeyIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings/': {
@@ -347,6 +367,7 @@ const rootRouteChildren: RootRouteChildren = {
   PresentIndexRoute: PresentIndexRoute,
   SchedulesIndexRoute: SchedulesIndexRoute,
   SettingsIndexRoute: SettingsIndexRoute,
+  SongKeyIndexRoute: SongKeyIndexRoute,
   SongsIndexRoute: SongsIndexRoute,
   AuthYoutubeCallbackRoute: AuthYoutubeCallbackRoute,
   SongsSongIdEditRoute: SongsSongIdEditRoute,
