@@ -136,6 +136,7 @@ import {
   presentTemporaryScene,
   presentTemporarySong,
   presentTemporaryVerseteTineri,
+  refreshPresentedSongSlides,
   removeSlideHighlight,
   type ScreenGlobalSettings,
   showSlide,
@@ -213,6 +214,7 @@ import {
   broadcastScreenConfigUpdated,
   broadcastSettingsUpdated,
   broadcastSlideHighlights,
+  broadcastSongUpdated,
   handleWebSocketClose,
   handleWebSocketMessage,
   handleWebSocketOpen,
@@ -2931,6 +2933,21 @@ async function main() {
 
           // Update search index
           updateSearchIndex(song.id)
+
+          // Broadcast song update to all connected clients
+          broadcastSongUpdated(song.id)
+
+          // If this song is currently being presented, refresh its slides
+          const refreshedState = refreshPresentedSongSlides(song.id)
+          console.log(
+            `[song-save] Song ${song.id} saved, refreshedState: ${refreshedState ? 'updated' : 'null'}`,
+          )
+          if (refreshedState) {
+            console.log(
+              `[song-save] Broadcasting presentation state for song ${song.id}`,
+            )
+            broadcastPresentationState(refreshedState)
+          }
 
           return handleCors(
             req,

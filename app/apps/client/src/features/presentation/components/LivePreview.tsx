@@ -7,6 +7,7 @@ import { getStoredUserToken } from '~/service/api-url'
 import { calculateMaxExitAnimationDuration } from './rendering/utils/styleUtils'
 import { ScreenPreview } from './ScreenPreview'
 import { TextStyleContextMenu } from './TextStyleContextMenu'
+import { useSongUpdateTimestamp } from '../context/WebSocketContext'
 import { usePresentationState } from '../hooks'
 import { useScreen } from '../hooks/useScreen'
 import { useScreens } from '../hooks/useScreens'
@@ -87,6 +88,7 @@ export function LivePreview() {
   const { data: presentationState } = usePresentationState()
   const { data: screens } = useScreens()
   const { getBookName } = useLocalizedBookNames()
+  const songUpdateTimestamp = useSongUpdateTimestamp()
 
   // Highlight hooks
   const { data: slideHighlights } = useSlideHighlights()
@@ -414,6 +416,8 @@ export function LivePreview() {
     // Include temporaryContent to ensure re-render when navigating temporary songs/bible
     presentationState?.temporaryContent,
     isExitAnimating,
+    // Refetch when a song is updated via WebSocket
+    songUpdateTimestamp,
   ])
 
   const hasContent = Object.keys(contentData).length > 0
