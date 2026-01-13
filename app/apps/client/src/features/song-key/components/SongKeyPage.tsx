@@ -175,7 +175,7 @@ export function SongKeyPage() {
             {groupedSongs.map((group) => (
               <div key={group.dateKey}>
                 {/* Date Header */}
-                <div className="sticky top-0 bg-gray-50 dark:bg-gray-900/80 backdrop-blur-sm py-2 px-1 -mx-1 mb-2 z-10">
+                <div className="bg-gray-50/95 dark:bg-gray-900/95 py-2 px-3 rounded-lg mb-3">
                   <h2 className="text-sm font-semibold text-gray-600 dark:text-gray-400">
                     {group.dateLabel}
                   </h2>
