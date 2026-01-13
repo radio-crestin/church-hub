@@ -64,14 +64,14 @@ export function KeyLineEditDialog({
   return (
     <dialog
       ref={dialogRef}
-      className="fixed inset-0 m-auto p-0 rounded-xl shadow-2xl backdrop:bg-black/50 max-w-md w-full"
+      className="fixed inset-x-0 top-4 sm:top-auto sm:inset-0 mx-auto sm:m-auto p-0 rounded-xl shadow-2xl backdrop:bg-black/50 max-w-md w-[calc(100%-2rem)] sm:w-full"
       onClose={onClose}
       onClick={handleBackdropClick}
     >
-      <div className="bg-white dark:bg-gray-800 rounded-xl">
+      <div className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
             {t('dialog.title')}
           </h2>
           <button
@@ -83,13 +83,13 @@ export function KeyLineEditDialog({
         </div>
 
         {/* Content */}
-        <div className="px-6 py-4 space-y-4">
+        <div className="px-4 sm:px-6 py-4 space-y-4">
           {song && (
-            <div>
+            <div className="min-w-0">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 {t('dialog.songTitle')}
               </label>
-              <p className="text-gray-900 dark:text-white font-medium">
+              <p className="text-gray-900 dark:text-white font-medium break-words">
                 {song.title}
               </p>
             </div>
@@ -119,7 +119,7 @@ export function KeyLineEditDialog({
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex justify-end gap-3 px-4 sm:px-6 py-4 border-t border-gray-200 dark:border-gray-700">
           <button
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300

@@ -134,12 +134,12 @@ export function SongKeyPage() {
   }, [hasNextPage, isFetchingNextPage, fetchNextPage])
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full overflow-x-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center gap-3">
-          <Music className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+      <div className="flex items-center justify-between px-3 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <Music className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600 dark:text-indigo-400 flex-shrink-0" />
+          <h1 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white truncate">
             {t('title')}
           </h1>
         </div>
@@ -155,7 +155,7 @@ export function SongKeyPage() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto px-2 py-4 sm:px-4">
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
@@ -187,7 +187,7 @@ export function SongKeyPage() {
                     <button
                       key={song.id}
                       onClick={() => handleSongClick(song)}
-                      className="w-full flex items-center justify-between px-4 py-3 rounded-lg
+                      className="w-full flex items-center justify-between px-3 sm:px-4 py-3 rounded-lg
                         bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700
                         hover:border-indigo-300 dark:hover:border-indigo-600
                         hover:bg-indigo-50 dark:hover:bg-indigo-900/20
@@ -203,13 +203,13 @@ export function SongKeyPage() {
                           })}
                         </p>
                       </div>
-                      <div className="ml-4 flex-shrink-0">
+                      <div className="ml-2 sm:ml-4 flex-shrink-0">
                         {song.keyLine ? (
-                          <span className="px-3 py-1 text-sm font-medium rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">
+                          <span className="px-2 sm:px-3 py-1 text-sm font-medium rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">
                             {song.keyLine}
                           </span>
                         ) : (
-                          <span className="px-3 py-1 text-sm rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                          <span className="px-2 sm:px-3 py-1 text-sm rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
                             {t('noKeyLine')}
                           </span>
                         )}
