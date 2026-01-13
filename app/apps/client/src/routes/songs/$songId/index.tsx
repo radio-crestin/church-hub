@@ -45,6 +45,7 @@ import { useToast } from '~/ui/toast'
 interface SongSearchParams {
   q?: string
   reset?: number
+  aiSearchId?: number
 }
 
 export const Route = createFileRoute('/songs/$songId/')({
@@ -56,6 +57,12 @@ export const Route = createFileRoute('/songs/$songId/')({
         ? search.reset
         : typeof search.reset === 'string'
           ? parseInt(search.reset, 10) || undefined
+          : undefined,
+    aiSearchId:
+      typeof search.aiSearchId === 'number'
+        ? search.aiSearchId
+        : typeof search.aiSearchId === 'string'
+          ? parseInt(search.aiSearchId, 10) || undefined
           : undefined,
   }),
   beforeLoad: ({ params }) => {
@@ -70,7 +77,13 @@ function SongPreviewPage() {
   const { t } = useTranslation('songs')
   const navigate = useNavigate()
   const { songId } = Route.useParams()
-  const { q: searchQuery, reset } = useSearch({ from: '/songs/$songId/' })
+  const {
+    q: searchQuery,
+    reset,
+    aiSearchId,
+  } = useSearch({
+    from: '/songs/$songId/',
+  })
 
   // Handle reset from keyboard shortcut - redirect to song list with reset
   useEffect(() => {
@@ -164,9 +177,10 @@ function SongPreviewPage() {
         fromSong: true,
         q: searchQuery || undefined,
         selectedSongId: numericId,
+        aiSearchId: aiSearchId || undefined,
       },
     })
-  }, [navigate, searchQuery, numericId])
+  }, [navigate, searchQuery, numericId, aiSearchId])
 
   const handlePrevSlide = useCallback(async () => {
     if (presentedSlideIndex !== null && presentedSlideIndex > 0) {

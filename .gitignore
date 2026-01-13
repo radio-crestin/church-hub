@@ -97,3 +97,7 @@ app/apps/server/church-hub.db
 # Tauri generated files
 app/tauri/gen/
 app/apps/server/churchhub.db
+*.db
+
+# Soundfonts (downloaded dynamically)
+scripts/convert-midi-to-mp3/soundfonts/

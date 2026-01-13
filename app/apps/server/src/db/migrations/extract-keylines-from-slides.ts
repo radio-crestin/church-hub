@@ -115,10 +115,10 @@ export function extractKeylinesFromSlides(db: Database): void {
       }
 
       // Update song's keyLine
-      db.run('UPDATE songs SET key_line = ?, updated_at = unixepoch() WHERE id = ?', [
-        lastParagraph,
-        song.id,
-      ])
+      db.run(
+        'UPDATE songs SET key_line = ?, updated_at = unixepoch() WHERE id = ?',
+        [lastParagraph, song.id],
+      )
 
       // Remove last paragraph from slide content
       const newContent = removeLastParagraph(firstSlide.content)
@@ -128,7 +128,10 @@ export function extractKeylinesFromSlides(db: Database): void {
       )
 
       updatedCount++
-      log('debug', `Updated song "${song.title}" with keyLine: ${lastParagraph}`)
+      log(
+        'debug',
+        `Updated song "${song.title}" with keyLine: ${lastParagraph}`,
+      )
     }
 
     db.run('COMMIT')

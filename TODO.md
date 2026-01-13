@@ -168,10 +168,10 @@
 ~~- fa un algoritm care extrage gamele din BCEV Baicoi si le foloseste pentru Resurse crestine (?)~~
 - cand schimb ecranul, midi state is destroyed
 ~~- pagina dedicata pentru a seta gamele (nea Mihai)~~
-- adauga background as black and not white
-- salveaza rezultatele tuturor cautarilor (inclusiv cu AI) in ceva cache in DB
-- cateodata WhatsApp-ul ramane aprins..
-- regenereaza midi-urile cu instrumentale mai bune
+~~- adauga background as black and not white~~
+~~- salveaza rezultatele tuturor cautarilor (inclusiv cu AI) in ceva cache in DB~~
+~~- cateodata WhatsApp-ul ramane aprins..~~
+~~- regenereaza midi-urile cu instrumentale mai bune~~
 - adauga upvote/downvote la cantari
 - pagina dedicata pentru control sunet camera copii
 - in livestream adauga un preview cu feed-ul live

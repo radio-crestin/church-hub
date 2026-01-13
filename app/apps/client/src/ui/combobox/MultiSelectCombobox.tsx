@@ -59,16 +59,6 @@ export function MultiSelectCombobox({
       ? true
       : options.length > 0 && value.length === options.length
 
-  // Debug logging for Tauri issue
-  console.log('[MultiSelectCombobox]', {
-    valueLength: value.length,
-    optionsLength: options.length,
-    emptyMeansAll,
-    isAllSelected,
-    value,
-    optionValues: options.map((o) => o.value),
-  })
-
   const getDisplayText = () => {
     if (emptyMeansAll && value.length === 0) {
       return allSelectedLabel ?? placeholder
@@ -139,7 +129,9 @@ export function MultiSelectCombobox({
     // When emptyMeansAll is true and value is empty, clicking an item deselects it
     // (selects all others)
     if (emptyMeansAll && value.length === 0) {
-      onChange(options.filter((o) => o.value !== optionValue).map((o) => o.value))
+      onChange(
+        options.filter((o) => o.value !== optionValue).map((o) => o.value),
+      )
       return
     }
 

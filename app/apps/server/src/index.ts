@@ -169,6 +169,13 @@ import {
   upsertSchedule,
 } from './service/schedules'
 import {
+  deleteSearch,
+  getSearchById,
+  getSearchByUrlPath,
+  type SaveSearchInput,
+  saveSearch,
+} from './service/search-history'
+import {
   type BatchImportSongInput,
   batchImportSongs,
   batchUpdateSearchIndex,
@@ -2840,7 +2847,9 @@ async function main() {
 
         // Get unique keylines if requested
         const uniqueOnly = url.searchParams.get('unique') === 'true'
-        const uniqueKeylines = [...new Set(matches.map((m) => m.lastParagraph))].sort()
+        const uniqueKeylines = [
+          ...new Set(matches.map((m) => m.lastParagraph)),
+        ].sort()
 
         return handleCors(
           req,
@@ -2916,11 +2925,9 @@ async function main() {
 
         return handleCors(
           req,
-          new Response(JSON.stringify({ samples }),
-            {
-              headers: { 'Content-Type': 'application/json' },
-            },
-          ),
+          new Response(JSON.stringify({ samples }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
         )
       }
 
@@ -4635,6 +4642,118 @@ async function main() {
         if (permError) return permError
 
         const result = clearHistory()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ success: result.success }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // ============================================================
+      // Search History API Endpoints
+      // ============================================================
+
+      // GET /api/search-history?id=... or ?urlPath=... - Get search history by ID or URL path
+      if (req.method === 'GET' && url.pathname === '/api/search-history') {
+        const permError = checkPermission('songs.view')
+        if (permError) return permError
+
+        const id = url.searchParams.get('id')
+        const urlPath = url.searchParams.get('urlPath')
+
+        if (!id && !urlPath) {
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({ error: 'id or urlPath is required' }),
+              {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        }
+
+        // Prefer ID if provided
+        const result = id
+          ? getSearchById(parseInt(id, 10))
+          : getSearchByUrlPath(urlPath as string)
+
+        if ('error' in result) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: result.error }), {
+              status: 500,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: result.data }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/search-history - Save a search to history
+      if (req.method === 'POST' && url.pathname === '/api/search-history') {
+        const permError = checkPermission('songs.view')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as SaveSearchInput
+          const result = saveSearch(body)
+
+          if ('error' in result) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: result.error }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: result.data }), {
+              status: 201,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // DELETE /api/search-history?urlPath=... - Delete search history entry
+      if (req.method === 'DELETE' && url.pathname === '/api/search-history') {
+        const permError = checkPermission('songs.view')
+        if (permError) return permError
+
+        const urlPath = url.searchParams.get('urlPath')
+        if (!urlPath) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'urlPath is required' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        const result = deleteSearch(urlPath)
         return handleCors(
           req,
           new Response(JSON.stringify({ success: result.success }), {
