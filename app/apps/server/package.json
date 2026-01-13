@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "@types/bun": "latest",
+    "better-sqlite3": "^12.6.0",
     "drizzle-kit": "^0.31.8"
   },
   "peerDependencies": {

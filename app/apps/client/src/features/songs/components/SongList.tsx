@@ -7,11 +7,12 @@ import { useDebouncedValue } from '~/hooks/useDebouncedValue'
 import { MultiSelectCombobox } from '~/ui/combobox'
 import { KeyboardShortcutBadge } from '~/ui/kbd'
 import { SongCard } from './SongCard'
-import { SongFiltersDropdown } from './SongFiltersDropdown'
 import type { SongFiltersState } from './SongFiltersDropdown'
+import { SongFiltersDropdown } from './SongFiltersDropdown'
 import {
   useAISearchSongs,
   useCategories,
+  useSaveSearchHistory,
   useSearchKeyboardNavigation,
   useSearchSongs,
   useSongsAISearchSettings,
@@ -36,6 +37,10 @@ interface SongListProps {
   categoryIds?: number[]
   onCategoryChange?: (categoryIds: number[]) => void
   focusTrigger?: number
+  initialAIResults?: AISearchResult[]
+  aiSearchId?: number
+  urlPath?: string
+  onAISearchSaved?: (searchId: number) => void
 }
 
 export function SongList({
@@ -47,6 +52,10 @@ export function SongList({
   categoryIds: propCategoryIds,
   onCategoryChange,
   focusTrigger,
+  initialAIResults,
+  aiSearchId,
+  urlPath,
+  onAISearchSaved,
 }: SongListProps) {
   const { t } = useTranslation('songs')
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -212,8 +221,18 @@ export function SongList({
     const songsShortcut = sidebarShortcuts.find((s) => s.route === '/songs')
     return songsShortcut?.shortcut
   }, [sidebarShortcuts])
-  const [aiSearchResults, setAiSearchResults] = useState<AISearchResult[]>([])
-  const [isAISearchActive, setIsAISearchActive] = useState(false)
+  const [aiSearchResults, setAiSearchResults] = useState<AISearchResult[]>(
+    () => initialAIResults ?? [],
+  )
+  // Initialize isAISearchActive to true when aiSearchId is present (restoring AI search)
+  // This prevents regular search from overwriting AI search data while loading
+  const [isAISearchActive, setIsAISearchActive] = useState(
+    () =>
+      !!aiSearchId || (!!initialAIResults && initialAIResults.length > 0),
+  )
+
+  // Save search history mutation
+  const saveSearchHistory = useSaveSearchHistory()
 
   // Handle AI search button click
   const handleAISearch = useCallback(async () => {
@@ -226,18 +245,76 @@ export function SongList({
         categoryIds,
       })
       setAiSearchResults(response.results)
+
+      // Save AI search to history and notify parent
+      if (urlPath) {
+        const savedHistory = await saveSearchHistory.mutateAsync({
+          query: localQuery,
+          urlPath,
+          searchType: 'ai',
+          categoryIds: categoryIds.length > 0 ? categoryIds : null,
+          aiResults: response.results,
+          resultCount: response.results.length,
+        })
+        if (savedHistory?.id && onAISearchSaved) {
+          onAISearchSaved(savedHistory.id)
+        }
+      }
     } catch {
       setAiSearchResults([])
     }
-  }, [localQuery, categoryIds, aiSearchMutation])
+  }, [
+    localQuery,
+    categoryIds,
+    aiSearchMutation,
+    urlPath,
+    saveSearchHistory,
+    onAISearchSaved,
+  ])
 
-  // Clear AI results when query changes
+  // Update AI results when initialAIResults is loaded (async fetch)
   useEffect(() => {
+    if (initialAIResults && initialAIResults.length > 0) {
+      setAiSearchResults(initialAIResults)
+      setIsAISearchActive(true)
+    }
+  }, [initialAIResults])
+
+  // Track previous query to detect actual user-initiated changes (not initial load)
+  const prevLocalQueryRef = useRef(localQuery)
+
+  // Clear AI results when query changes (user typing), but not on initial render
+  useEffect(() => {
+    // Skip if this is the initial render or query hasn't actually changed
+    if (prevLocalQueryRef.current === localQuery) {
+      return
+    }
+    prevLocalQueryRef.current = localQuery
+
     if (isAISearchActive) {
       setIsAISearchActive(false)
       setAiSearchResults([])
     }
-  }, [localQuery])
+  }, [localQuery, isAISearchActive])
+
+  // Save regular searches to history when search completes
+  useEffect(() => {
+    if (
+      urlPath &&
+      debouncedQuery.trim() &&
+      searchResults &&
+      searchResults.length > 0 &&
+      !isAISearchActive
+    ) {
+      saveSearchHistory.mutate({
+        query: debouncedQuery,
+        urlPath,
+        searchType: 'regular',
+        categoryIds: categoryIds.length > 0 ? categoryIds : null,
+        resultCount: searchResults.length,
+      })
+    }
+  }, [debouncedQuery, searchResults, urlPath, categoryIds, isAISearchActive])
 
   // Sync local state when URL search param changes (e.g., navigation)
   useEffect(() => {

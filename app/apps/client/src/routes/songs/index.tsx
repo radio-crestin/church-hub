@@ -1,12 +1,13 @@
 import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router'
 import { Plus, Settings } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useFocusSearchEvent } from '~/features/keyboard-shortcuts/utils'
 import { getSongsLastVisited } from '~/features/navigation'
 import { usePresentationState } from '~/features/presentation'
 import { SongList, SongsSettingsModal } from '~/features/songs/components'
+import { useSearchHistoryById } from '~/features/songs/hooks'
 import { openSongWindow } from '~/features/songs/utils/openSongWindow'
 import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
 
@@ -16,6 +17,7 @@ interface SongsSearchParams {
   selectedSongId?: number
   reset?: number
   focus?: boolean
+  aiSearchId?: number
 }
 
 export const Route = createFileRoute('/songs/')({
@@ -36,6 +38,12 @@ export const Route = createFileRoute('/songs/')({
           ? parseInt(search.reset, 10) || undefined
           : undefined,
     focus: search.focus === true || search.focus === 'true',
+    aiSearchId:
+      typeof search.aiSearchId === 'number'
+        ? search.aiSearchId
+        : typeof search.aiSearchId === 'string'
+          ? parseInt(search.aiSearchId, 10) || undefined
+          : undefined,
   }),
 })
 
@@ -48,11 +56,46 @@ function SongsPage() {
     selectedSongId,
     reset,
     focus,
+    aiSearchId,
   } = useSearch({
     from: '/songs/',
   })
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
   const [focusTrigger, setFocusTrigger] = useState(0)
+
+  // Build URL path for search history storage
+  const urlPath = useMemo(() => {
+    return searchQuery ? `/songs/?q=${encodeURIComponent(searchQuery)}` : null
+  }, [searchQuery])
+
+  // Fetch search history by ID when aiSearchId is present
+  const { data: searchHistoryData } = useSearchHistoryById(aiSearchId)
+
+  // Get AI results from history if available (only for AI searches)
+  const initialAIResults = useMemo(() => {
+    if (
+      searchHistoryData?.searchType === 'ai' &&
+      searchHistoryData?.aiResults
+    ) {
+      return searchHistoryData.aiResults
+    }
+    return undefined
+  }, [searchHistoryData])
+
+  // Handle when AI search is saved - update URL with the aiSearchId
+  const handleAISearchSaved = useCallback(
+    (savedId: number) => {
+      navigate({
+        to: '/songs/',
+        search: {
+          q: searchQuery || undefined,
+          aiSearchId: savedId,
+        },
+        replace: true,
+      })
+    },
+    [navigate, searchQuery],
+  )
 
   // Listen for focus events from keyboard shortcuts when already on this route
   useFocusSearchEvent(
@@ -129,11 +172,13 @@ function SongsPage() {
       params: { songId: String(songId) },
       search: {
         q: searchQuery || undefined,
+        aiSearchId: aiSearchId || undefined,
       },
     })
   }
 
   const handleSearchChange = (query: string) => {
+    // Clear aiSearchId when search query changes
     navigate({
       to: '/songs/',
       search: { q: query || undefined },
@@ -179,6 +224,10 @@ function SongsPage() {
             onSearchChange={handleSearchChange}
             initialSelectedSongId={selectedSongId}
             focusTrigger={focusTrigger}
+            initialAIResults={initialAIResults}
+            aiSearchId={aiSearchId}
+            urlPath={urlPath ?? undefined}
+            onAISearchSaved={handleAISearchSaved}
           />
         </div>
 

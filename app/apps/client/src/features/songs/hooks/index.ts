@@ -7,6 +7,12 @@ export { useDeleteSong } from './useDeleteSong'
 export { useDirtyState } from './useDirtyState'
 export { useReorderCategories } from './useReorderCategories'
 export { useReorderSlides } from './useReorderSlides'
+export {
+  useDeleteSearchHistory,
+  useSaveSearchHistory,
+  useSearchHistory,
+  useSearchHistoryById,
+} from './useSearchHistory'
 export { useSearchKeyboardNavigation } from './useSearchKeyboardNavigation'
 export { useSearchSongs } from './useSearchSongs'
 export { useSong } from './useSong'

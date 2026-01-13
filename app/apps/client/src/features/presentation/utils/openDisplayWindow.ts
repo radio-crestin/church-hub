@@ -204,6 +204,7 @@ async function openInNativeWindow(
         alwaysOnTop,
         skipTaskbar: true,
         focus: true,
+        backgroundColor: '#000000',
       }
       // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
       console.log(
