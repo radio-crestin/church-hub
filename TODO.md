@@ -164,10 +164,10 @@
 ~~- implementeaza screen share~~
 ~~- afiseaza in timp real modificarile cantarilor~~
 ~~- cand faci quick edit, copiaza si edit as text~~
-- migreaza toate gamele din conitnutul slide-ului in field-ul dedicat
-- fa un algoritm care extrage gamele din BCEV Baicoi si le foloseste pentru Resurse crestine (?)
+~~- migreaza toate gamele din conitnutul slide-ului in field-ul dedicat~~
+~~- fa un algoritm care extrage gamele din BCEV Baicoi si le foloseste pentru Resurse crestine (?)~~
 - cand schimb ecranul, midi state is destroyed
-- pagina dedicata pentru a seta gamele (nea Mihai)
+~~- pagina dedicata pentru a seta gamele (nea Mihai)~~
 - adauga background as black and not white
 - salveaza rezultatele tuturor cautarilor (inclusiv cu AI) in ceva cache in DB
 - cateodata WhatsApp-ul ramane aprins..

@@ -12,8 +12,12 @@
     "value": "false"
   },
   {
+    "key": "drop_song_key_column_v1",
+    "value": "{\"success\":true}"
+  },
+  {
     "key": "global_keyboard_shortcuts",
-    "value": "{\"actions\":{\"startLive\":{\"shortcuts\":[\"midi:note_on:40\",\"F1\"],\"enabled\":true},\"stopLive\":{\"shortcuts\":[\"midi:note_on:40\"],\"enabled\":true},\"showSlide\":{\"shortcuts\":[],\"enabled\":true},\"nextSlide\":{\"shortcuts\":[],\"enabled\":true},\"prevSlide\":{\"shortcuts\":[],\"enabled\":true}},\"version\":1,\"midi\":{\"enabled\":true,\"inputDeviceId\":\"0\",\"outputDeviceId\":\"0\"}}"
+    "value": "{\"actions\":{\"startLive\":{\"shortcuts\":[\"midi:note_on:40\"],\"enabled\":true},\"stopLive\":{\"shortcuts\":[\"midi:note_on:40\"],\"enabled\":true},\"showSlide\":{\"shortcuts\":[],\"enabled\":true},\"nextSlide\":{\"shortcuts\":[],\"enabled\":true},\"prevSlide\":{\"shortcuts\":[],\"enabled\":true}},\"version\":1,\"midi\":{\"enabled\":true,\"inputDeviceId\":null,\"outputDeviceId\":null}}"
   },
   {
     "key": "kiosk_mode_enabled",
@@ -32,6 +36,10 @@
     "value": "{\"cleaned\":true,\"removedCount\":2}"
   },
   {
+    "key": "migrate_shortcuts_cleanup_v2",
+    "value": "{\"cleaned\":true,\"removedCount\":2}"
+  },
+  {
     "key": "migrate_song_titles_ascii_v3",
     "value": "{\"updatedCount\":1927,\"skippedCount\":570,\"replacedCount\":193}"
   },
@@ -45,7 +53,7 @@
   },
   {
     "key": "sidebar_configuration",
-    "value": "{\"version\":2,\"items\":[{\"id\":\"present\",\"type\":\"builtin\",\"builtinId\":\"present\",\"order\":0,\"isVisible\":true,\"settings\":{\"shortcuts\":[\"F4\"],\"focusSearchOnNavigate\":false}},{\"id\":\"bible\",\"type\":\"builtin\",\"builtinId\":\"bible\",\"order\":1,\"isVisible\":true,\"settings\":{\"shortcuts\":[\"F5\"],\"focusSearchOnNavigate\":true}},{\"id\":\"songs\",\"type\":\"builtin\",\"builtinId\":\"songs\",\"order\":2,\"isVisible\":true,\"settings\":{\"shortcuts\":[\"F6\"],\"focusSearchOnNavigate\":true}},{\"id\":\"schedules\",\"type\":\"builtin\",\"builtinId\":\"schedules\",\"order\":3,\"isVisible\":true,\"settings\":{\"shortcuts\":[\"F7\"],\"focusSearchOnNavigate\":false}},{\"id\":\"music\",\"type\":\"builtin\",\"builtinId\":\"music\",\"order\":4,\"isVisible\":true,\"settings\":{\"shortcuts\":[\"F8\"],\"focusSearchOnNavigate\":true}},{\"id\":\"custom_1767730144882_yd2xnu2\",\"type\":\"custom\",\"title\":\"WhatsApp\",\"url\":\"https://web.whatsapp.com/\",\"iconName\":\"Mail\",\"useIframeEmbedding\":false,\"order\":5,\"isVisible\":true,\"settings\":{\"shortcuts\":[\"F9\"],\"focusSearchOnNavigate\":false}},{\"id\":\"livestream\",\"type\":\"builtin\",\"builtinId\":\"livestream\",\"order\":6,\"isVisible\":true,\"settings\":{\"shortcuts\":[\"F10\"],\"focusSearchOnNavigate\":false}}]}"
+    "value": "{\"version\":2,\"items\":[{\"id\":\"present\",\"type\":\"builtin\",\"builtinId\":\"present\",\"order\":0,\"isVisible\":true,\"settings\":{\"shortcuts\":[\"F4\"],\"focusSearchOnNavigate\":false,\"nativeWindow\":{\"openInNativeWindow\":true,\"autoOpenOnStartup\":false}}},{\"id\":\"songs\",\"type\":\"builtin\",\"builtinId\":\"songs\",\"order\":1,\"isVisible\":true,\"settings\":{\"shortcuts\":[\"F5\"],\"focusSearchOnNavigate\":true,\"nativeWindow\":{\"openInNativeWindow\":true,\"autoOpenOnStartup\":false}}},{\"id\":\"bible\",\"type\":\"builtin\",\"builtinId\":\"bible\",\"order\":2,\"isVisible\":true,\"settings\":{\"shortcuts\":[\"F6\"],\"focusSearchOnNavigate\":true,\"nativeWindow\":{\"openInNativeWindow\":true,\"autoOpenOnStartup\":false}}},{\"id\":\"schedules\",\"type\":\"builtin\",\"builtinId\":\"schedules\",\"order\":3,\"isVisible\":true,\"settings\":{\"shortcuts\":[\"F7\"],\"focusSearchOnNavigate\":false,\"nativeWindow\":{\"openInNativeWindow\":true,\"autoOpenOnStartup\":false}}},{\"id\":\"livestream\",\"type\":\"builtin\",\"builtinId\":\"livestream\",\"order\":4,\"isVisible\":true,\"settings\":{\"shortcuts\":[\"F8\"],\"focusSearchOnNavigate\":false,\"nativeWindow\":{\"openInNativeWindow\":true,\"autoOpenOnStartup\":false}}},{\"id\":\"custom_1767730144882_yd2xnu2\",\"type\":\"custom\",\"title\":\"WhatsApp\",\"url\":\"https://web.whatsapp.com/\",\"iconName\":\"MessageSquare\",\"useIframeEmbedding\":false,\"order\":5,\"isVisible\":true,\"settings\":{\"shortcuts\":[\"F9\"],\"focusSearchOnNavigate\":false,\"nativeWindow\":{\"openInNativeWindow\":true,\"autoOpenOnStartup\":true,\"forceNativeWindow\":true}}},{\"id\":\"music\",\"type\":\"builtin\",\"builtinId\":\"music\",\"order\":6,\"isVisible\":true,\"settings\":{\"shortcuts\":[\"F10\"],\"focusSearchOnNavigate\":true,\"nativeWindow\":{\"openInNativeWindow\":true,\"autoOpenOnStartup\":false}}},{\"id\":\"song_key\",\"type\":\"builtin\",\"builtinId\":\"song_key\",\"order\":7,\"isVisible\":false,\"settings\":{\"shortcuts\":[],\"focusSearchOnNavigate\":false,\"nativeWindow\":{\"openInNativeWindow\":false,\"autoOpenOnStartup\":false,\"forceNativeWindow\":false}}}]}"
   },
   {
     "key": "songs_ai_search_config",
