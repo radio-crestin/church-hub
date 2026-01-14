@@ -324,6 +324,12 @@ export function useSlideAnimation({
   // before the effect has a chance to update the phase state.
   const isBecomingVisible = isVisible && phase === 'hidden'
 
+  // Detect if content is about to change (contentKey changed but effect hasn't run yet)
+  // This prevents a flash where new content briefly shows at full opacity before
+  // the effect runs and starts the exit animation.
+  const isContentAboutToChange =
+    isVisible && phase === 'visible' && contentKey !== cachedKeyRef.current
+
   // Generate CSS styles based on current phase
   const getStyle = (): React.CSSProperties => {
     // Use the stored configs for current animation
@@ -390,11 +396,16 @@ export function useSlideAnimation({
   // This ensures content updates are reflected immediately without extra render cycles.
   // During animations (mounting, entering, exiting), use the cached content to preserve
   // the correct content for the animation (old content during exit, new during enter).
-  // Special case: when becoming visible, use current content (cached may be stale/empty).
-  const displayContent =
-    phase === 'visible' || isBecomingVisible
-      ? content
-      : cachedContentRef.current
+  // Special cases:
+  // - When becoming visible: use current content (cached may be stale/empty)
+  // - When content about to change: use cached content (old) to prevent flash
+  const displayContent = isBecomingVisible
+    ? content
+    : isContentAboutToChange
+      ? cachedContentRef.current
+      : phase === 'visible'
+        ? content
+        : cachedContentRef.current
 
   const style = getStyle()
 
