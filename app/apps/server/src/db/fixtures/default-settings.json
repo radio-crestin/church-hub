@@ -1,11 +1,11 @@
 [
   {
     "key": "ai_search_config",
-    "value": "{\"enabled\":true,\"provider\":\"openai\",\"model\":\"gpt-5.2\",\"apiKey\":\"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\",\"baseUrl\":\"\"}"
+    "value": "{\"enabled\":true,\"provider\":\"openai\",\"model\":\"gpt-5.2\",\"apiKey\":null,\"baseUrl\":\"\"}"
   },
   {
     "key": "bible_ai_search_config",
-    "value": "{\"enabled\":true,\"provider\":\"openai\",\"model\":\"gpt-5.2\",\"apiKey\":\"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\",\"baseUrl\":\"\",\"analyzeResults\":false}"
+    "value": "{\"enabled\":true,\"provider\":\"openai\",\"model\":\"gpt-5.2\",\"apiKey\":null,\"baseUrl\":\"\",\"analyzeResults\":false}"
   },
   {
     "key": "debug_mode",
@@ -57,7 +57,7 @@
   },
   {
     "key": "songs_ai_search_config",
-    "value": "{\"enabled\":true,\"provider\":\"openai\",\"model\":\"gpt-5.2\",\"apiKey\":\"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\",\"baseUrl\":\"\",\"analyzeResults\":false}"
+    "value": "{\"enabled\":true,\"provider\":\"openai\",\"model\":\"gpt-5.2\",\"apiKey\":null,\"baseUrl\":\"\",\"analyzeResults\":false}"
   },
   {
     "key": "theme",
