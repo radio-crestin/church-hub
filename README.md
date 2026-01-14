@@ -120,6 +120,7 @@ Built with modern web technologies and powered by Tauri, Church Hub runs as a na
 ### 📋 Service Programs
 
 <img src="docs/screenshots/schedules.png" alt="Schedules" width="100%">
+<img src="docs/screenshots/schedule-song.png" alt="Schedule Song View" width="100%">
 
 > Create and manage service schedules
 
