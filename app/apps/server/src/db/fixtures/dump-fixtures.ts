@@ -380,6 +380,20 @@ function dumpBibleTranslations(db: Database): void {
   )
 }
 
+function sanitizeSettingValue(value: string): string {
+  try {
+    const parsed = JSON.parse(value)
+    if (typeof parsed === 'object' && parsed !== null && 'apiKey' in parsed) {
+      parsed.apiKey = null
+      return JSON.stringify(parsed)
+    }
+    return value
+  } catch {
+    // Not valid JSON, return as-is
+    return value
+  }
+}
+
 function dumpAppSettings(db: Database): void {
   const settings = db
     .query('SELECT key, value FROM app_settings ORDER BY key')
@@ -393,7 +407,7 @@ function dumpAppSettings(db: Database): void {
 
   const fixtures: AppSettingFixture[] = settings.map((s) => ({
     key: s.key,
-    value: s.value,
+    value: sanitizeSettingValue(s.value),
   }))
 
   const outputPath = join(FIXTURES_DIR, 'default-settings.json')
