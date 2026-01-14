@@ -36,6 +36,12 @@
 - make sure that any api is integrated into openapi and in scalar docs
 - the app must be cross platform (windows, macos and linux)
 
+## Presentation Rendering
+- Use the shared `usePresentationContent` hook (`apps/client/src/features/presentation/hooks/usePresentationContent.ts`) for all presentation content rendering
+- NEVER create separate rendering engines for LivePreview, ScreenRenderer, or any other presentation display component
+- Both LivePreview and ScreenRenderer must use this shared hook to ensure consistent behavior (exit animations, content fetching, visibility calculation)
+- When adding new content types or modifying rendering logic, update the shared hook - not individual components
+
 ## Worktrees
 
 For worktrees, create a Tauri config override to avoid port conflicts:

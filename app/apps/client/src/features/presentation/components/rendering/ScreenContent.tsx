@@ -98,7 +98,9 @@ export function ScreenContent({
 
   // Render main text
   const renderMainText = () => {
-    if (!config || !('mainText' in config)) return null
+    if (!config || !('mainText' in config)) {
+      return null
+    }
 
     const mt = config.mainText
     if (mt.hidden) return null

@@ -283,7 +283,13 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
         }))
 
         if (data.type === 'presentation_state') {
+          logger.debug(
+            `Received presentation_state: updatedAt=${data.payload.updatedAt}, isHidden=${data.payload.isHidden}`,
+          )
           const wasApplied = updateStateIfNewer(queryClient, data.payload)
+          logger.debug(
+            `WebSocket state update ${wasApplied ? 'APPLIED' : 'REJECTED (stale)'}`,
+          )
 
           // Extract slide index from temporary content if present
           let slideIndex: number | null = null

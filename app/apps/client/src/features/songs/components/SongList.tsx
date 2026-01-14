@@ -227,8 +227,7 @@ export function SongList({
   // Initialize isAISearchActive to true when aiSearchId is present (restoring AI search)
   // This prevents regular search from overwriting AI search data while loading
   const [isAISearchActive, setIsAISearchActive] = useState(
-    () =>
-      !!aiSearchId || (!!initialAIResults && initialAIResults.length > 0),
+    () => !!aiSearchId || (!!initialAIResults && initialAIResults.length > 0),
   )
 
   // Save search history mutation
