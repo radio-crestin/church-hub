@@ -205,3 +205,4 @@
 - test backing up the database in https://turso.tech/blog/turso-offline-sync-public-beta
 - exportul ca si pptx ar trebui sa aiba textul ceva mai mare
 - adauga optiunea de a afisa pe un ecran separat continutul in anumita limba (o versiune a Bibliei diferita, traduceri cu AI ale cantarilor.. si eventual traduceri in timp real)
+- ar fi util ca in timpul instalarii sa se faca un backup la db-ul vechi, si astfel fiecare versiune a aplicatiei sa foloseasca propria copie a DB-ului astfel ca se poate reveni la vechea versiune fara probleme

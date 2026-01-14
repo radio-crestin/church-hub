@@ -1,81 +1,26 @@
 import { useNavigate } from '@tanstack/react-router'
-import { fetch as tauriFetch } from '@tauri-apps/plugin-http'
 import { Maximize, Minimize } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { getApiUrl, isMobile } from '~/config'
-import { getStoredUserToken } from '~/service/api-url'
+import { isMobile } from '~/config'
+import { createLogger } from '~/utils/logger'
 import { ScreenContent } from './ScreenContent'
 import { ScreenShareReceiver } from './ScreenShareReceiver'
-import type { ContentData, NextSlideData } from './types'
-import { calculateNextSlideData, getBackgroundCSS } from './utils'
-import { calculateMaxExitAnimationDuration } from './utils/styleUtils'
+import { getBackgroundCSS } from './utils'
 import { getNextVerse } from '../../../bible/service/bible'
-import type { BibleVerse } from '../../../bible/types'
 import { useKioskSettings } from '../../../kiosk'
-import type { SongSlide } from '../../../songs/types'
-
-interface QueueItem {
-  id: number
-  itemType: string
-  slideType?: string
-  slideContent?: string
-  bibleReference?: string
-  bibleText?: string
-  bibleTranslation?: string
-  bibleVerseId?: number
-  biblePassageVerses?: Array<{ id: number; reference: string; text: string }>
-  biblePassageTranslation?: string
-  verseteTineriEntries?: Array<{
-    id: number
-    reference: string
-    text: string
-    person?: string
-  }>
-  slides?: SongSlide[]
-  keyLine?: string | null
-}
-
-import { useSongUpdateTimestamp } from '../../context/WebSocketContext'
-import {
-  usePresentationState,
-  useUpsertScreen,
-  useWebSocket,
-} from '../../hooks'
+import { useUpsertScreen, useWebSocket } from '../../hooks'
+import { usePresentationContent } from '../../hooks/usePresentationContent'
 import { useScreen } from '../../hooks/useScreen'
 import { useSlideHighlights } from '../../hooks/useSlideHighlights'
-import type {
-  ContentType,
-  PresentationState,
-  ScreenShareContentConfig,
-} from '../../types'
-import { addAminToLastSlide } from '../../utils/addAminToLastSlide'
-import { addKeyLineToFirstSlide } from '../../utils/addKeyLineToFirstSlide'
+import type { ScreenShareContentConfig } from '../../types'
 import { setWindowFullscreen } from '../../utils/fullscreen'
 import { isTauri } from '../../utils/openDisplayWindow'
 
-// Use Tauri fetch on mobile (iOS WKWebView blocks HTTP fetch)
-const fetchFn = isTauri() && isMobile() ? tauriFetch : window.fetch.bind(window)
-
-// Extra buffer time after animation completes before transitioning to empty state (ms)
-const EXIT_ANIMATION_BUFFER = 100
+const logger = createLogger('ScreenRenderer')
 
 // Number of missed pings before hiding content on disconnection
 const DISCONNECT_HIDE_THRESHOLD = 5
-
-// Get headers with auth token for mobile
-function getHeaders(): Record<string, string> {
-  const headers: Record<string, string> = {
-    'Cache-Control': 'no-cache',
-  }
-  if (isMobile()) {
-    const userToken = getStoredUserToken()
-    if (userToken) {
-      headers['Cookie'] = `user_auth=${userToken}`
-    }
-  }
-  return headers
-}
 
 interface ScreenRendererProps {
   screenId: number
@@ -85,12 +30,27 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
   const { debugInfo: wsDebugInfo, send: wsSend } = useWebSocket()
   const navigate = useNavigate()
 
-  const { data: presentationState } = usePresentationState()
   const { data: screen, isLoading, isError } = useScreen(screenId)
   const upsertScreen = useUpsertScreen()
   const { data: kioskSettings } = useKioskSettings()
   const { data: slideHighlights } = useSlideHighlights()
-  const songUpdateTimestamp = useSongUpdateTimestamp()
+
+  // Use shared presentation content hook
+  const {
+    contentType,
+    contentData,
+    isVisible: hookIsVisible,
+    isExitAnimating,
+    nextSlideData,
+    presentationState,
+  } = usePresentationContent({
+    screen,
+    includeNextSlide: screen?.nextSlideConfig?.enabled ?? false,
+    getNextVerse: async (verseId: number) => {
+      const result = await getNextVerse(verseId)
+      return result
+    },
+  })
 
   // Determine if current screen is being viewed in kiosk mode context
   const isKioskModeScreen =
@@ -99,20 +59,6 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
     kioskSettings?.startupPage?.screenId === screenId
 
   const containerRef = useRef<HTMLDivElement>(null)
-  const [contentData, setContentData] = useState<ContentData | null>(null)
-  const [contentType, setContentType] = useState<ContentType>('empty')
-  const [nextSlideData, setNextSlideData] = useState<
-    NextSlideData | undefined
-  >()
-  const [isExitAnimating, setIsExitAnimating] = useState(false)
-  const exitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const prevHiddenRef = useRef(presentationState?.isHidden)
-  const currentContentTypeRef = useRef<ContentType>(contentType)
-
-  // Keep track of current content type for exit animation calculation
-  if (contentType !== 'empty') {
-    currentContentTypeRef.current = contentType
-  }
 
   // Fullscreen state and toolbar visibility
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -491,7 +437,7 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
       html.style.overflow = originalHtmlOverflow
       body.style.overflow = originalBodyOverflow
     }
-  }, [isKioskModeScreen])
+  }, [isKioskModeScreen, screen])
 
   // Handle keyboard shortcuts
   useEffect(() => {
@@ -513,440 +459,6 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
     return () => clearInterval(interval)
   }, [])
 
-  // Handle exit animation timing - delay empty state transition
-  useEffect(() => {
-    const wasHidden = prevHiddenRef.current
-    const isHidden = presentationState?.isHidden
-
-    // Detect transition from visible to hidden
-    if (!wasHidden && isHidden) {
-      // Clear any existing timeout
-      if (exitTimeoutRef.current) {
-        clearTimeout(exitTimeoutRef.current)
-      }
-
-      // Start exit animation
-      setIsExitAnimating(true)
-
-      // Calculate the max exit animation duration from the current content type's config
-      const currentConfig =
-        screen?.contentConfigs[currentContentTypeRef.current]
-      const animationDuration = calculateMaxExitAnimationDuration(currentConfig)
-      const totalDelay = animationDuration + EXIT_ANIMATION_BUFFER
-
-      // After animation duration + buffer, transition to empty state
-      exitTimeoutRef.current = setTimeout(() => {
-        setContentData(null)
-        setContentType('empty')
-        setNextSlideData(undefined)
-        setIsExitAnimating(false)
-      }, totalDelay)
-    }
-
-    // If becoming visible, cancel any pending exit transition
-    if (wasHidden && !isHidden) {
-      if (exitTimeoutRef.current) {
-        clearTimeout(exitTimeoutRef.current)
-        exitTimeoutRef.current = null
-      }
-      setIsExitAnimating(false)
-    }
-
-    prevHiddenRef.current = isHidden
-
-    return () => {
-      if (exitTimeoutRef.current) {
-        clearTimeout(exitTimeoutRef.current)
-      }
-    }
-  }, [presentationState?.isHidden, screen])
-
-  // Fetch content based on presentation state
-  useEffect(() => {
-    let cancelled = false
-
-    const fetchContent = async () => {
-      if (!presentationState) {
-        if (!cancelled) {
-          setContentData(null)
-          setContentType('empty')
-        }
-        return
-      }
-
-      // When hidden or exit animating, don't fetch new content
-      // The exit animation effect will handle transitioning to empty state
-      if (presentationState.isHidden || isExitAnimating) {
-        return
-      }
-
-      // Check for temporary content first (bypasses queue)
-      if (presentationState.temporaryContent) {
-        const temp = presentationState.temporaryContent
-
-        if (temp.type === 'bible') {
-          // Remove translation abbreviation from reference if present
-          const reference = temp.data.reference.replace(/\s*-\s*[A-Z]+\s*$/, '')
-          setContentType('bible')
-          setContentData({
-            referenceText: reference,
-            contentText: temp.data.text,
-          })
-          // Show next verse preview if enabled in screen config
-          if (screen?.nextSlideConfig?.enabled && temp.data.verseId) {
-            try {
-              const nextVerse = await getNextVerse(temp.data.verseId)
-              if (nextVerse) {
-                const nextReference = `${nextVerse.bookName} ${nextVerse.chapter}:${nextVerse.verse}`
-                setNextSlideData({
-                  contentType: 'bible',
-                  preview: `${nextReference}: ${nextVerse.text}`,
-                })
-              } else {
-                setNextSlideData(undefined)
-              }
-            } catch {
-              setNextSlideData(undefined)
-            }
-          } else {
-            setNextSlideData(undefined)
-          }
-          return
-        }
-
-        if (temp.type === 'song') {
-          const currentSlide = temp.data.slides[temp.data.currentSlideIndex]
-          if (currentSlide && !cancelled) {
-            const isFirstSlide = temp.data.currentSlideIndex === 0
-            const isLastSlide =
-              temp.data.currentSlideIndex === temp.data.slides.length - 1
-            let slideContent = currentSlide.content
-            slideContent = addKeyLineToFirstSlide(
-              slideContent,
-              isFirstSlide,
-              temp.data.keyLine,
-            )
-            slideContent = addAminToLastSlide(slideContent, isLastSlide)
-            setContentType('song')
-            setContentData({
-              mainText: slideContent,
-            })
-            // Show next slide preview if enabled in screen config
-            if (screen?.nextSlideConfig?.enabled) {
-              const nextSlide =
-                temp.data.slides[temp.data.currentSlideIndex + 1]
-              if (nextSlide) {
-                setNextSlideData({
-                  contentType: 'song',
-                  preview: nextSlide.content,
-                })
-              } else if (temp.data.nextItemPreview) {
-                // At last slide - show next schedule item preview if available
-                setNextSlideData({
-                  contentType: temp.data.nextItemPreview.contentType,
-                  preview: temp.data.nextItemPreview.preview,
-                  label: temp.data.nextItemPreview.label,
-                  title: temp.data.nextItemPreview.title,
-                })
-              } else {
-                setNextSlideData(undefined)
-              }
-            } else {
-              setNextSlideData(undefined)
-            }
-            return
-          }
-        }
-
-        if (temp.type === 'announcement') {
-          setContentType('announcement')
-          setContentData({
-            mainText: temp.data.content,
-          })
-          // Show next schedule item preview if available and enabled
-          if (screen?.nextSlideConfig?.enabled && temp.data.nextItemPreview) {
-            setNextSlideData({
-              contentType: temp.data.nextItemPreview.contentType,
-              preview: temp.data.nextItemPreview.preview,
-              label: temp.data.nextItemPreview.label,
-              title: temp.data.nextItemPreview.title,
-            })
-          } else {
-            setNextSlideData(undefined)
-          }
-          return
-        }
-
-        if (temp.type === 'bible_passage') {
-          const currentVerse = temp.data.verses[temp.data.currentVerseIndex]
-          if (currentVerse) {
-            // Build reference: "BookName Chapter:Verse"
-            const reference = `${temp.data.bookName} ${temp.data.startChapter}:${currentVerse.verse}`
-            setContentType('bible_passage')
-            setContentData({
-              referenceText: reference,
-              contentText: currentVerse.text,
-            })
-            // Show next verse preview if enabled
-            if (screen?.nextSlideConfig?.enabled) {
-              const nextVerse =
-                temp.data.verses[temp.data.currentVerseIndex + 1]
-              if (nextVerse) {
-                setNextSlideData({
-                  contentType: 'bible_passage',
-                  preview: `${temp.data.bookName} ${temp.data.startChapter}:${nextVerse.verse}: ${nextVerse.text}`,
-                })
-              } else if (temp.data.nextItemPreview) {
-                // At last verse - show next schedule item preview if available
-                setNextSlideData({
-                  contentType: temp.data.nextItemPreview.contentType,
-                  preview: temp.data.nextItemPreview.preview,
-                  label: temp.data.nextItemPreview.label,
-                  title: temp.data.nextItemPreview.title,
-                })
-              } else {
-                setNextSlideData(undefined)
-              }
-            } else {
-              setNextSlideData(undefined)
-            }
-            return
-          }
-        }
-
-        if (temp.type === 'versete_tineri') {
-          const currentEntry = temp.data.entries[temp.data.currentEntryIndex]
-          if (currentEntry) {
-            setContentType('versete_tineri')
-            setContentData({
-              personLabel: currentEntry.personName,
-              referenceText: currentEntry.reference,
-              contentText: currentEntry.text,
-            })
-            // Show next entry preview if enabled
-            if (screen?.nextSlideConfig?.enabled) {
-              const nextEntry =
-                temp.data.entries[temp.data.currentEntryIndex + 1]
-              if (nextEntry) {
-                setNextSlideData({
-                  contentType: 'versete_tineri',
-                  preview: `${nextEntry.personName} - ${nextEntry.reference}: ${nextEntry.text}`,
-                })
-              } else if (temp.data.nextItemPreview) {
-                // At last entry - show next schedule item preview if available
-                setNextSlideData({
-                  contentType: temp.data.nextItemPreview.contentType,
-                  preview: temp.data.nextItemPreview.preview,
-                  label: temp.data.nextItemPreview.label,
-                  title: temp.data.nextItemPreview.title,
-                })
-              } else {
-                setNextSlideData(undefined)
-              }
-            } else {
-              setNextSlideData(undefined)
-            }
-            return
-          }
-        }
-
-        if (temp.type === 'screen_share') {
-          setContentType('screen_share')
-          setContentData(null) // No content data needed, stream comes via WebRTC
-          setNextSlideData(undefined)
-          return
-        }
-      }
-
-      try {
-        const queueResponse = await fetchFn(`${getApiUrl()}/api/queue`, {
-          cache: 'no-store',
-          headers: getHeaders(),
-          credentials: 'include',
-        })
-
-        if (!queueResponse.ok) {
-          setContentData(null)
-          setContentType('empty')
-          setNextSlideData(undefined)
-          return
-        }
-
-        const queueResult = await queueResponse.json()
-        const queueItems: QueueItem[] = queueResult.data || []
-
-        let foundContentType: ContentType = 'empty'
-        let foundContentData: ContentData | null = null
-
-        // Find current content - song slide
-        if (presentationState.currentSongSlideId) {
-          for (const item of queueItems) {
-            const slideIndex = item.slides?.findIndex(
-              (s: SongSlide) => s.id === presentationState.currentSongSlideId,
-            )
-            if (slideIndex !== undefined && slideIndex !== -1 && item.slides) {
-              const slide = item.slides[slideIndex]
-              const isFirstSlide = slideIndex === 0
-              const isLastSlide = slideIndex === item.slides.length - 1
-              let slideContent = slide.content
-              slideContent = addKeyLineToFirstSlide(
-                slideContent,
-                isFirstSlide,
-                item.keyLine,
-              )
-              slideContent = addAminToLastSlide(slideContent, isLastSlide)
-              foundContentType = 'song'
-              foundContentData = {
-                mainText: slideContent,
-              }
-              break
-            }
-          }
-        }
-
-        // If no song slide found, check other content types
-        if (
-          !foundContentData &&
-          presentationState.currentQueueItemId &&
-          !presentationState.currentSongSlideId
-        ) {
-          const queueItem = queueItems.find(
-            (item) => item.id === presentationState.currentQueueItemId,
-          )
-
-          if (queueItem) {
-            if (queueItem.itemType === 'slide') {
-              if (
-                queueItem.slideType === 'versete_tineri' &&
-                queueItem.verseteTineriEntries
-              ) {
-                const entryId = presentationState.currentVerseteTineriEntryId
-                const entry = entryId
-                  ? queueItem.verseteTineriEntries.find((e) => e.id === entryId)
-                  : queueItem.verseteTineriEntries[0]
-
-                if (entry) {
-                  foundContentType = 'versete_tineri'
-                  foundContentData = {
-                    personLabel: entry.personName || '',
-                    referenceText: entry.reference,
-                    contentText: entry.text,
-                  }
-                }
-              }
-
-              if (!foundContentData) {
-                foundContentType = 'announcement'
-                foundContentData = { mainText: queueItem.slideContent || '' }
-              }
-            } else if (queueItem.itemType === 'bible') {
-              const reference = (queueItem.bibleReference || '').replace(
-                /\s*-\s*[A-Z]+\s*$/,
-                '',
-              )
-              foundContentType = 'bible'
-              foundContentData = {
-                referenceText: reference,
-                contentText: queueItem.bibleText || '',
-              }
-            } else if (queueItem.itemType === 'bible_passage') {
-              const verseId = presentationState.currentBiblePassageVerseId
-              const verse = verseId
-                ? queueItem.biblePassageVerses?.find((v) => v.id === verseId)
-                : queueItem.biblePassageVerses?.[0]
-
-              if (verse) {
-                foundContentType = 'bible_passage'
-                foundContentData = {
-                  referenceText: verse.reference,
-                  contentText: verse.text,
-                }
-              }
-            }
-          }
-        }
-
-        // Set content state
-        setContentType(foundContentType)
-        setContentData(foundContentData)
-
-        // Calculate next slide if enabled in screen config
-        if (screen?.nextSlideConfig?.enabled) {
-          // Check if we need to fetch next Bible verse (when at end of Bible content with no next queue item)
-          let nextBibleVerse: BibleVerse | null = null
-          const currentItemIndex = queueItems.findIndex(
-            (item) => item.id === presentationState.currentQueueItemId,
-          )
-          const hasNextQueueItem =
-            currentItemIndex !== -1 && currentItemIndex < queueItems.length - 1
-          const currentItem = queueItems[currentItemIndex]
-
-          if (!hasNextQueueItem && currentItem) {
-            let currentVerseId: number | null = null
-
-            if (currentItem.itemType === 'bible') {
-              // Single verse - always at "last slide"
-              currentVerseId = currentItem.bibleVerseId
-            } else if (currentItem.itemType === 'bible_passage') {
-              // Bible passage - check if at last verse
-              const verses = currentItem.biblePassageVerses || []
-              const currentVerseIndex =
-                presentationState.currentBiblePassageVerseId
-                  ? verses.findIndex(
-                      (v) =>
-                        v.id === presentationState.currentBiblePassageVerseId,
-                    )
-                  : 0
-              const isAtLastVerse = currentVerseIndex === verses.length - 1
-
-              if (isAtLastVerse) {
-                currentVerseId = verses[currentVerseIndex]?.verseId ?? null
-              }
-            }
-
-            if (currentVerseId) {
-              try {
-                nextBibleVerse = await getNextVerse(currentVerseId)
-              } catch {
-                // Silently fail - no next verse preview
-              }
-            }
-          }
-
-          const nextSlide = calculateNextSlideData({
-            queueItems,
-            presentationState: presentationState as PresentationState,
-            nextBibleVerse,
-          })
-          setNextSlideData(nextSlide)
-        } else {
-          setNextSlideData(undefined)
-        }
-      } catch {
-        setContentData(null)
-        setContentType('empty')
-        setNextSlideData(undefined)
-      }
-    }
-
-    fetchContent()
-
-    // Cleanup: cancel this effect's state updates if a newer effect runs
-    return () => {
-      cancelled = true
-    }
-  }, [
-    presentationState?.currentSongSlideId,
-    presentationState?.currentQueueItemId,
-    presentationState?.currentBiblePassageVerseId,
-    presentationState?.currentVerseteTineriEntryId,
-    presentationState?.isHidden,
-    presentationState?.updatedAt,
-    screen?.type,
-    isExitAnimating,
-    songUpdateTimestamp,
-  ])
-
   // Keep transparent background while loading or on error
   if (isError || isLoading || !screen) {
     return (
@@ -957,7 +469,7 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
     )
   }
 
-  const hasContent = contentData !== null
+  const hasContent = Object.keys(contentData).length > 0
 
   // Check if we should hide content due to disconnection (5+ missed pings)
   const isDisconnectedAndHidden =
@@ -965,12 +477,13 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
 
   // Visibility is false when hidden, during exit animation, or disconnected with too many missed pings
   // During exit animation, content is still rendered but animating out
-  // After animation completes, contentData becomes null
-  const isVisible =
-    hasContent &&
-    !presentationState?.isHidden &&
-    !isExitAnimating &&
-    !isDisconnectedAndHidden
+  // After animation completes, contentData becomes empty
+  const isVisible = hookIsVisible && !isDisconnectedAndHidden
+
+  // Log visibility state changes for debugging
+  logger.debug(
+    `Render state: isVisible=${isVisible}, hasContent=${hasContent}, isHidden=${presentationState?.isHidden}, isExitAnimating=${isExitAnimating}, contentType=${contentType}, updatedAt=${presentationState?.updatedAt}`,
+  )
 
   // Get background from screen config for fullscreen display
   // When disconnected and hidden, use empty state background

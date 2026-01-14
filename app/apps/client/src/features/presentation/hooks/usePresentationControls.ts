@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
+import { createLogger } from '~/utils/logger'
 import { presentationStateQueryKey } from './usePresentationState'
 import {
   clearSlide,
@@ -17,6 +18,8 @@ import {
   updatePresentationState,
 } from '../service/presentation'
 import type { PresentationState } from '../types'
+
+const logger = createLogger('PresentationControls')
 
 /**
  * Generates a unique, monotonically increasing timestamp.
@@ -59,11 +62,45 @@ export function updateStateIfNewer(
 ): boolean {
   // Only apply if this state is newer than the last applied
   if (newState.updatedAt > lastAppliedUpdatedAt) {
+    logger.debug(
+      `Applying state update: updatedAt=${newState.updatedAt}, isHidden=${newState.isHidden}, lastApplied=${lastAppliedUpdatedAt}`,
+    )
     lastAppliedUpdatedAt = newState.updatedAt
     queryClient.setQueryData(presentationStateQueryKey, newState)
     return true
   }
+  logger.debug(
+    `Rejecting stale state: updatedAt=${newState.updatedAt} <= lastApplied=${lastAppliedUpdatedAt}`,
+  )
   return false
+}
+
+/**
+ * Helper to set presentation state from mutation responses.
+ * CRITICAL: Only applies state if it's newer than the last applied state.
+ * This prevents stale HTTP responses (arriving out of order) from overwriting
+ * newer state during rapid show -> hide -> show cycles.
+ */
+export function setStateFromMutation(
+  queryClient: ReturnType<typeof useQueryClient>,
+  newState: PresentationState,
+): void {
+  logger.debug(
+    `Mutation setting state: updatedAt=${newState.updatedAt}, isHidden=${newState.isHidden}, prev lastApplied=${lastAppliedUpdatedAt}`,
+  )
+  // Only apply state if this is newer than the last applied
+  // This prevents stale HTTP responses from overwriting newer state
+  if (newState.updatedAt > lastAppliedUpdatedAt) {
+    lastAppliedUpdatedAt = newState.updatedAt
+    queryClient.setQueryData(presentationStateQueryKey, newState)
+    logger.debug(
+      `Mutation state APPLIED: updatedAt=${newState.updatedAt}, isHidden=${newState.isHidden}`,
+    )
+  } else {
+    logger.debug(
+      `Mutation state REJECTED (stale): ${newState.updatedAt} <= ${lastAppliedUpdatedAt}`,
+    )
+  }
 }
 
 /**
@@ -90,7 +127,7 @@ export function useStopPresentation() {
     onSuccess: async (data: PresentationState) => {
       // Cancel any in-flight queries to prevent them from overwriting our update
       await queryClient.cancelQueries({ queryKey: presentationStateQueryKey })
-      queryClient.setQueryData(presentationStateQueryKey, data)
+      setStateFromMutation(queryClient, data)
     },
   })
 }
@@ -102,7 +139,7 @@ export function useClearSlide() {
     mutationFn: clearSlide,
     onSuccess: async (data: PresentationState) => {
       await queryClient.cancelQueries({ queryKey: presentationStateQueryKey })
-      queryClient.setQueryData(presentationStateQueryKey, data)
+      setStateFromMutation(queryClient, data)
     },
   })
 }
@@ -114,7 +151,7 @@ export function useShowSlide() {
     mutationFn: showSlide,
     onSuccess: async (data: PresentationState) => {
       await queryClient.cancelQueries({ queryKey: presentationStateQueryKey })
-      queryClient.setQueryData(presentationStateQueryKey, data)
+      setStateFromMutation(queryClient, data)
     },
   })
 }
@@ -126,7 +163,7 @@ export function useUpdatePresentationState() {
     mutationFn: updatePresentationState,
     onSuccess: async (data: PresentationState) => {
       await queryClient.cancelQueries({ queryKey: presentationStateQueryKey })
-      queryClient.setQueryData(presentationStateQueryKey, data)
+      setStateFromMutation(queryClient, data)
     },
   })
 }
@@ -156,7 +193,8 @@ export function usePresentTemporaryBible() {
       // Reset tracking when presenting new content
       resetNavigationTracking()
       await queryClient.cancelQueries({ queryKey: presentationStateQueryKey })
-      queryClient.setQueryData(presentationStateQueryKey, data)
+      // Use setStateFromMutation to update lastAppliedUpdatedAt after reset
+      setStateFromMutation(queryClient, data)
     },
   })
 }
@@ -173,7 +211,8 @@ export function usePresentTemporarySong() {
     onSuccess: (data: PresentationState) => {
       // Reset tracking when presenting new content
       resetNavigationTracking()
-      queryClient.setQueryData(presentationStateQueryKey, data)
+      // Use setStateFromMutation to update lastAppliedUpdatedAt after reset
+      setStateFromMutation(queryClient, data)
     },
   })
 }
@@ -210,7 +249,7 @@ export function useClearTemporaryContent() {
     mutationFn: clearTemporaryContent,
     onSuccess: async (data: PresentationState) => {
       await queryClient.cancelQueries({ queryKey: presentationStateQueryKey })
-      queryClient.setQueryData(presentationStateQueryKey, data)
+      setStateFromMutation(queryClient, data)
     },
   })
 }
@@ -224,7 +263,8 @@ export function usePresentTemporaryAnnouncement() {
       // Reset tracking when presenting new content
       resetNavigationTracking()
       await queryClient.cancelQueries({ queryKey: presentationStateQueryKey })
-      queryClient.setQueryData(presentationStateQueryKey, data)
+      // Use setStateFromMutation to update lastAppliedUpdatedAt after reset
+      setStateFromMutation(queryClient, data)
     },
   })
 }
@@ -238,7 +278,8 @@ export function usePresentTemporaryBiblePassage() {
       // Reset tracking when presenting new content
       resetNavigationTracking()
       await queryClient.cancelQueries({ queryKey: presentationStateQueryKey })
-      queryClient.setQueryData(presentationStateQueryKey, data)
+      // Use setStateFromMutation to update lastAppliedUpdatedAt after reset
+      setStateFromMutation(queryClient, data)
     },
   })
 }
@@ -252,7 +293,8 @@ export function usePresentTemporaryVerseteTineri() {
       // Reset tracking when presenting new content
       resetNavigationTracking()
       await queryClient.cancelQueries({ queryKey: presentationStateQueryKey })
-      queryClient.setQueryData(presentationStateQueryKey, data)
+      // Use setStateFromMutation to update lastAppliedUpdatedAt after reset
+      setStateFromMutation(queryClient, data)
     },
   })
 }
@@ -266,7 +308,8 @@ export function usePresentTemporaryScene() {
       // Reset tracking when presenting new content
       resetNavigationTracking()
       await queryClient.cancelQueries({ queryKey: presentationStateQueryKey })
-      queryClient.setQueryData(presentationStateQueryKey, data)
+      // Use setStateFromMutation to update lastAppliedUpdatedAt after reset
+      setStateFromMutation(queryClient, data)
     },
   })
 }

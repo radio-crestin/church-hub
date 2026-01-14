@@ -133,7 +133,7 @@ export function useSlideAnimation({
   const hasAnimatedIn = useRef(false)
 
   // Animation phase state - start visible if already visible to avoid flash
-  const [phase, setPhase] = useState<AnimationPhase>(
+  const [phase, setPhase] = useState<AnimationPhase>(() =>
     isVisible ? 'visible' : 'hidden',
   )
 
@@ -319,6 +319,11 @@ export function useSlideAnimation({
     return clearTimers
   }, [clearTimers])
 
+  // Detect if we're about to become visible (isVisible=true but phase=hidden)
+  // This happens on the first render after isVisible changes from false to true,
+  // before the effect has a chance to update the phase state.
+  const isBecomingVisible = isVisible && phase === 'hidden'
+
   // Generate CSS styles based on current phase
   const getStyle = (): React.CSSProperties => {
     // Use the stored configs for current animation
@@ -332,6 +337,15 @@ export function useSlideAnimation({
 
     const enterStyles = getAnimationStyles(enterType)
     const exitStyles = getAnimationStyles(exitType)
+
+    // Special case: becoming visible but effect hasn't run yet
+    // Render with START styles so element is ready for animation
+    if (isBecomingVisible) {
+      return {
+        ...enterStyles.start,
+        transition: `all ${enterDuration}ms ease-out`,
+      }
+    }
 
     switch (phase) {
       case 'hidden':
@@ -369,11 +383,24 @@ export function useSlideAnimation({
   }
 
   // Should we render the element?
-  const shouldRender = phase !== 'hidden'
+  // Also render if we're becoming visible (before effect updates phase)
+  const shouldRender = phase !== 'hidden' || isBecomingVisible
+
+  // When in visible phase and not animating, use current content directly.
+  // This ensures content updates are reflected immediately without extra render cycles.
+  // During animations (mounting, entering, exiting), use the cached content to preserve
+  // the correct content for the animation (old content during exit, new during enter).
+  // Special case: when becoming visible, use current content (cached may be stale/empty).
+  const displayContent =
+    phase === 'visible' || isBecomingVisible
+      ? content
+      : cachedContentRef.current
+
+  const style = getStyle()
 
   return {
-    displayContent: cachedContentRef.current,
-    style: getStyle(),
+    displayContent,
+    style,
     shouldRender,
   }
 }

@@ -1,8 +1,11 @@
 import { Loader2, Music, RefreshCw } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { KeyLineEditDialog } from './KeyLineEditDialog'
+import {
+  KeyLineEditDialog,
+  type KeyLineEditDialogHandle,
+} from './KeyLineEditDialog'
 import type { Song } from '../../songs/types'
 import { usePresentedSongs } from '../hooks/usePresentedSongs'
 
@@ -57,18 +60,12 @@ export function SongKeyPage() {
     fetchNextPage,
     isFetchingNextPage,
   } = usePresentedSongs()
-  const [selectedSong, setSelectedSong] = useState<Song | null>(null)
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const dialogRef = useRef<KeyLineEditDialogHandle>(null)
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
+  // Called synchronously from user click - this is critical for iOS keyboard
   const handleSongClick = (song: Song) => {
-    setSelectedSong(song)
-    setIsDialogOpen(true)
-  }
-
-  const handleDialogClose = () => {
-    setIsDialogOpen(false)
-    setSelectedSong(null)
+    dialogRef.current?.open(song)
   }
 
   // Flatten all pages into a single array
@@ -233,11 +230,7 @@ export function SongKeyPage() {
       </div>
 
       {/* Edit Dialog */}
-      <KeyLineEditDialog
-        song={selectedSong}
-        isOpen={isDialogOpen}
-        onClose={handleDialogClose}
-      />
+      <KeyLineEditDialog ref={dialogRef} />
     </div>
   )
 }
