@@ -179,6 +179,7 @@
 - (optional) afisare in 2 pasi
 - pagina de prezentari
 - slide-uri temporare
+- check-ul de actualizari nu functioneaza in tauri
 ~~- adauga optiunea de a face screen share la o fereastra~~
 
 ~~- rezolva problema cu programele~~

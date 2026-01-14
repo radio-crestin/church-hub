@@ -19,9 +19,9 @@
 
 ## 🎯 Overview
 
-Church Hub is a comprehensive church presentation software designed to streamline worship services. It combines song lyrics management, Bible verse display, service scheduling, multi-screen presentation, and YouTube/OBS livestream integration into a single, elegant application.
+Church Hub is a comprehensive church presentation software designed to streamline worship services. It combines song lyrics management, Bible verse display, service scheduling, multi-screen presentation, YouTube/OBS livestream integration, background music player, and song key tracking into a single, elegant application.
 
-Built with modern web technologies and powered by Tauri, Church Hub runs as a native desktop application on Windows and macOS, while also being accessible via web browser.
+Built with modern web technologies and powered by Tauri, Church Hub runs as a native desktop application on Windows, macOS, and Linux, while also being accessible via web browser.
 
 ---
 
@@ -143,6 +143,33 @@ Built with modern web technologies and powered by Tauri, Church Hub runs as a na
 
 ---
 
+### 🎵 Music Player
+
+<img src="docs/screenshots/music.png" alt="Music Player" width="100%">
+
+> Background music player for worship services
+
+- 📁 **Folder Support** — Organize music by folders
+- 🎵 **Queue Management** — Build and manage playlists
+- 🔀 **Shuffle Mode** — Randomize playback order
+- 🔊 **Volume Control** — Independent volume slider
+- ▶️ **Playback Controls** — Play, pause, skip tracks
+
+---
+
+### 🎹 Song Key
+
+<img src="docs/screenshots/song-key.png" alt="Song Key" width="100%">
+
+> Track recently presented songs with their musical keys
+
+- 🎼 **Key Display** — Shows musical key for each song
+- 📊 **Usage Stats** — Track how often songs are presented
+- 📅 **Timeline View** — Organized by date (Today, Yesterday, etc.)
+- 🎸 **For Musicians** — Quick reference for band members
+
+---
+
 ### 🎨 Screen Editor
 
 <img src="docs/screenshots/screen-editor.png" alt="Screen Editor" width="100%">
@@ -160,6 +187,21 @@ Built with modern web technologies and powered by Tauri, Church Hub runs as a na
 
 ---
 
+### 🖥️ Control Room Settings
+
+<img src="docs/screenshots/control-room-settings.png" alt="Control Room Settings" width="100%">
+
+> Configure presentation screens and keyboard shortcuts
+
+- ⌨️ **Keyboard Shortcuts** — Custom shortcuts for next/previous slide
+- 🎹 **MIDI Support** — Use MIDI controllers for slide navigation
+- 📺 **Multi-Screen Setup** — Main, Stage, Livestream & Kiosk displays
+- 🪟 **Window Management** — Launch screens as separate windows
+- 📤 **Export/Import** — Share screen configurations
+- 🔗 **OBS Browser Source** — Copy URLs for livestream overlays
+
+---
+
 ### ⚙️ Settings
 
 <img src="docs/screenshots/settings.png" alt="Settings" width="100%">
@@ -171,6 +213,9 @@ Built with modern web technologies and powered by Tauri, Church Hub runs as a na
 - 📱 **QR Login** — Easy mobile authentication
 - 🌙 **Dark Mode** — Beautiful dark interface
 - 🌍 **Multi-Language** — English & Romanian
+- 📄 **Custom Pages** — Add custom menu items with embedded web pages
+- 🎛️ **MIDI Controller** — Configure hardware controllers
+- 🗄️ **Database Management** — Export/import database backups
 
 ---
 
