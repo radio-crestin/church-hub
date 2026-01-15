@@ -1,6 +1,17 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <!-- Google Tag Manager (skip on /screen/ routes) -->
+    <script>
+    if (!window.location.pathname.startsWith('/screen/')) {
+      (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+      j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+      'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+      })(window,document,'script','dataLayer','GTM-K23GKHJR');
+    }
+    </script>
+    <!-- End Google Tag Manager -->
     <meta charset="UTF-8" />
     <meta
       name="viewport"
@@ -29,7 +40,7 @@
     </script>
   </head>
   <body>
-    <script>
+        <script>
       // Capture HTML load time (before any modules)
       window.__htmlLoadTime = performance.now();
       window.__htmlLoadTimestamp = Date.now();

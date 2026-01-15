@@ -128,6 +128,7 @@ const config = defineConfig(({ mode }) => {
       port: VITE_PORT,
       strictPort: true,
       host: host || '0.0.0.0',
+      allowedHosts: ['churchhub-dev.radiocrestin.ro'],
       // Always configure HMR to connect directly to Vite's port
       // This is needed because the app is accessed via port 3000 (proxy)
       hmr: {
