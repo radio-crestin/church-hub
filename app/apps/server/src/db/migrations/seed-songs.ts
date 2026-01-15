@@ -30,6 +30,8 @@ interface SongFixture {
   keyLine: string | null
   presentationOrder: string | null
   presentationCount: number
+  lastPresentedAt: number | null
+  lastManualEdit: number | null
   slides: SongSlideFixture[]
 }
 
@@ -89,8 +91,8 @@ export function seedSongs(db: Database): void {
       `INSERT INTO songs
         (title, category_id, source_filename, author, copyright, ccli, tempo,
          time_signature, theme, alt_theme, hymn_number, key_line, presentation_order,
-         presentation_count, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, unixepoch(), unixepoch())`,
+         presentation_count, last_presented_at, last_manual_edit, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, unixepoch(), unixepoch())`,
       [
         song.title,
         categoryId,
@@ -106,6 +108,8 @@ export function seedSongs(db: Database): void {
         song.keyLine,
         song.presentationOrder,
         song.presentationCount,
+        song.lastPresentedAt,
+        song.lastManualEdit,
       ],
     )
 
