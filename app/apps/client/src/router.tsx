@@ -4,6 +4,11 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import './styles.css'
 
+// Initialize Sentry early for error tracking
+import { initSentry } from './sentry'
+
+initSentry()
+
 import { getApiUrl, isMobile, needsApiUrlConfiguration } from './config'
 import { ApiUrlSetup } from './features/api-url-config'
 import { routeTree } from './routeTree.gen'

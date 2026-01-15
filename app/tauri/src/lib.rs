@@ -12,6 +12,8 @@ use commands::{clear_pending_import, get_pending_import, get_server_config};
 use commands::PendingImport;
 #[cfg(desktop)]
 use commands::{reset_zoom, restart_server, toggle_devtools, zoom_in, zoom_out, ZoomState};
+#[cfg(all(desktop, not(debug_assertions)))]
+use server::{get_port_process_info, is_port_in_use, kill_port_process};
 #[cfg(desktop)]
 use webview::{
     close_child_webview, create_child_webview, hide_child_webview, show_child_webview,
@@ -35,6 +37,23 @@ use tauri::WindowEvent;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // Initialize Sentry for crash reporting (must be first!)
+    let _sentry_guard = sentry::init(("https://b03cb4a2222d30afae18571fb703c6f4@o4510714091536384.ingest.de.sentry.io/4510714105233488", sentry::ClientOptions {
+        release: sentry::release_name!(),
+        environment: if cfg!(debug_assertions) {
+            Some("development".into())
+        } else {
+            Some("production".into())
+        },
+        ..Default::default()
+    }));
+
+    // Set component tag for Sentry events
+    sentry::configure_scope(|scope| {
+        scope.set_tag("component", "tauri");
+        scope.set_tag("platform", std::env::consts::OS);
+    });
+
     let app_start = Instant::now();
     println!("[startup] === Tauri Starting ===");
 
@@ -243,6 +262,62 @@ pub fn run() {
         // In release mode, start the sidecar server
         #[cfg(not(debug_assertions))]
         {
+            // Check if port is already in use
+            let t = Instant::now();
+            if is_port_in_use(server_port) {
+                println!("[port-conflict] Port {} is already in use!", server_port);
+
+                let process_info = get_port_process_info(server_port);
+                let message = if let Some(ref info) = process_info {
+                    format!(
+                        "Port {} is already in use by:\n\nProcess: {}\nPID: {}\n\nWould you like to terminate this process and start the server?",
+                        server_port, info.name, info.pid
+                    )
+                } else {
+                    format!(
+                        "Port {} is already in use by another process.\n\nWould you like to terminate the process and start the server?",
+                        server_port
+                    )
+                };
+
+                // Show blocking dialog using the dialog plugin
+                use tauri_plugin_dialog::DialogExt;
+                let should_kill = app.dialog()
+                    .message(message)
+                    .title("Port Conflict")
+                    .kind(tauri_plugin_dialog::MessageDialogKind::Warning)
+                    .buttons(tauri_plugin_dialog::MessageDialogButtons::OkCancelCustom(
+                        "Terminate & Start".to_string(),
+                        "Cancel".to_string(),
+                    ))
+                    .blocking_show();
+
+                if should_kill {
+                    println!("[port-conflict] User chose to terminate the process");
+                    match kill_port_process(server_port) {
+                        Ok(_) => {
+                            println!("[port-conflict] Successfully terminated process on port {}", server_port);
+                            // Wait a bit for the port to be released
+                            std::thread::sleep(std::time::Duration::from_millis(500));
+                        }
+                        Err(e) => {
+                            println!("[port-conflict] Failed to terminate process: {}", e);
+                            // Show error dialog and exit
+                            app.dialog()
+                                .message(format!("Failed to terminate the process: {}\n\nPlease manually close the application using port {} and try again.", e, server_port))
+                                .title("Error")
+                                .kind(tauri_plugin_dialog::MessageDialogKind::Error)
+                                .blocking_show();
+                            std::process::exit(1);
+                        }
+                    }
+                } else {
+                    println!("[port-conflict] User cancelled - exiting");
+                    std::process::exit(0);
+                }
+            }
+            println!("[startup] port_conflict_check: {:?}", t.elapsed());
+
             // Start the sidecar server
             let t = Instant::now();
             if let Err(err) = server::start_server(app.handle(), server_port) {

@@ -6,6 +6,9 @@ import {
   useMatch,
   useRouter,
 } from '@tanstack/react-router'
+import { useEffect } from 'react'
+
+import { Sentry } from '~/sentry'
 
 export default function DefaultCatchBoundary({ error }: ErrorComponentProps) {
   const router = useRouter()
@@ -13,6 +16,18 @@ export default function DefaultCatchBoundary({ error }: ErrorComponentProps) {
     strict: false,
     select: (state) => state.id === rootRouteId,
   })
+
+  // Capture error to Sentry
+  useEffect(() => {
+    if (error) {
+      Sentry.captureException(error, {
+        tags: {
+          boundary: 'DefaultCatchBoundary',
+          route: router.state.location.pathname,
+        },
+      })
+    }
+  }, [error, router.state.location.pathname])
 
   return (
     <div className="min-w-0 flex-1 p-4 flex flex-col items-center justify-center gap-6">

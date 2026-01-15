@@ -294,6 +294,16 @@ npm run dev
 - 🌐 **Web**: http://localhost:3000
 - 📚 **API Docs**: http://localhost:3000/api/docs
 
+### Logs Path
+
+Application logs are stored at:
+
+| Platform | Path |
+|----------|------|
+| Windows | `C:\Users\<YOUR_USERNAME>\AppData\Local\church-hub\logs` |
+| macOS | `~/Library/Application Support/church-hub/logs` |
+| Linux | `~/.config/church-hub/logs` |
+
 ---
 
 ## 📜 Scripts

@@ -1,3 +1,17 @@
+// Sentry must be imported and initialized before any other code
+import * as Sentry from '@sentry/bun'
+
+Sentry.init({
+  dsn: 'https://b03cb4a2222d30afae18571fb703c6f4@o4510714091536384.ingest.de.sentry.io/4510714105233488',
+  release: `church-hub@${process.env.npm_package_version || '0.1.22'}`,
+  environment:
+    process.env.NODE_ENV === 'production' ? 'production' : 'development',
+  beforeSend(event) {
+    event.tags = { ...event.tags, component: 'server' }
+    return event
+  },
+})
+
 import { existsSync } from 'node:fs'
 import process from 'node:process'
 
@@ -336,10 +350,14 @@ async function main() {
   process.on('uncaughtException', (error) => {
     // biome-ignore lint/suspicious/noConsole: error logging
     console.error('[FATAL] Uncaught Exception:', error)
+    Sentry.captureException(error)
   })
   process.on('unhandledRejection', (reason) => {
     // biome-ignore lint/suspicious/noConsole: error logging
     console.error('[FATAL] Unhandled Promise Rejection:', reason)
+    Sentry.captureException(
+      reason instanceof Error ? reason : new Error(String(reason)),
+    )
   })
 
   const server = Bun.serve<WebSocketData>({
@@ -5052,19 +5070,21 @@ async function main() {
   }
 
   // Graceful shutdown
-  process.on('SIGINT', () => {
+  process.on('SIGINT', async () => {
     clearHistory()
     shutdownMusicPlayer()
     shutdownMIDI()
     closeDatabase()
+    await Sentry.close(2000) // Wait up to 2 seconds to flush pending events
     process.exit(0)
   })
 
-  process.on('SIGTERM', () => {
+  process.on('SIGTERM', async () => {
     clearHistory()
     shutdownMusicPlayer()
     shutdownMIDI()
     closeDatabase()
+    await Sentry.close(2000) // Wait up to 2 seconds to flush pending events
     process.exit(0)
   })
 }

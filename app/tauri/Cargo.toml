@@ -38,3 +38,4 @@ tauri-plugin-screen-brightness = { path = "../tauri-plugins/tauri-plugin-screen-
 tauri-plugin-single-instance = "2"
 tauri-plugin-process = "2"
 tauri-plugin-libmpv = "0.3"
+sentry = "0.46.1"
