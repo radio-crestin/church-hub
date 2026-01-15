@@ -172,6 +172,25 @@
 ~~- salveaza rezultatele tuturor cautarilor (inclusiv cu AI) in ceva cache in DB~~
 ~~- cateodata WhatsApp-ul ramane aprins..~~
 ~~- regenereaza midi-urile cu instrumentale mai bune~~
+- rezolva problema fixtures initiale
+- load prea mare in timpul cantarii
+- nu mai oferi autocorrect la game
+- la search adauga fallback fara filtre
+- afiseaza in rezultate cand o melodie are gama
+- ia o tastatura
+- adauga automatizare cand este prezentata o cantare, ca sa activezi microfon sala melodie
+- search-ul in Biblie sa fie manual
+- ESC va trebui prima data sa ascunda slide-ul
+- grupeaza istoricul dupa zi, cu limita maxima de zile (infinite scroll up)
+- fa istoricul scrollable
+- adauga documentatie la mixer, cu mixere suportate
+- adauga video in player si youtube download
+- user agent din whatsapp
+- 
+
+
+
+
 - adauga upvote/downvote la cantari
 - pagina dedicata pentru control sunet camera copii
 - in livestream adauga un preview cu feed-ul live
@@ -180,6 +199,7 @@
 - pagina de prezentari
 - slide-uri temporare
 - check-ul de actualizari nu functioneaza in tauri
+- in procesul de instalare asigura-te ca aplicatia a fost inchisa
 ~~- adauga optiunea de a face screen share la o fereastra~~
 
 ~~- rezolva problema cu programele~~

@@ -80,7 +80,6 @@ interface SongRow {
   author: string | null
   copyright: string | null
   ccli: string | null
-  key: string | null
   tempo: string | null
   time_signature: string | null
   theme: string | null
@@ -89,6 +88,8 @@ interface SongRow {
   key_line: string | null
   presentation_order: string | null
   presentation_count: number
+  last_presented_at: number | null
+  last_manual_edit: number | null
 }
 
 interface SongFixture {
@@ -98,7 +99,6 @@ interface SongFixture {
   author: string | null
   copyright: string | null
   ccli: string | null
-  key: string | null
   tempo: string | null
   timeSignature: string | null
   theme: string | null
@@ -107,6 +107,8 @@ interface SongFixture {
   keyLine: string | null
   presentationOrder: string | null
   presentationCount: number
+  lastPresentedAt: number | null
+  lastManualEdit: number | null
   slides: Array<{
     content: string
     label: string | null
@@ -291,7 +293,6 @@ function dumpSongs(db: Database): void {
       author: song.author,
       copyright: song.copyright,
       ccli: song.ccli,
-      key: song.key,
       tempo: song.tempo,
       timeSignature: song.time_signature,
       theme: song.theme,
@@ -300,6 +301,8 @@ function dumpSongs(db: Database): void {
       keyLine: song.key_line,
       presentationOrder: song.presentation_order,
       presentationCount: song.presentation_count,
+      lastPresentedAt: song.last_presented_at,
+      lastManualEdit: song.last_manual_edit,
       slides: slides.map((s) => ({
         content: s.content,
         label: s.label,
