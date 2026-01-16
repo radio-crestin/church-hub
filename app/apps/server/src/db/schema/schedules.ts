@@ -78,6 +78,7 @@ export const scheduleBiblePassageVerses = sqliteTable(
   (table) => [
     index('idx_schedule_bible_passage_verses_item_id').on(table.scheduleItemId),
     index('idx_schedule_bible_passage_verses_sort_order').on(table.sortOrder),
+    index('idx_schedule_bible_passage_verses_verse_id').on(table.verseId),
   ],
 )
 

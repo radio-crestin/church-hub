@@ -204,10 +204,8 @@ pub fn run() {
                     }
                 }
 
-                // Small delay to allow windows to close gracefully
-                std::thread::sleep(std::time::Duration::from_millis(100));
-
-                // Exit the application
+                // Exit the application immediately - Tauri handles cleanup gracefully
+                // No need for blocking sleep which would freeze the main thread
                 println!("[window-event] Exiting application");
                 app_handle.exit(0);
             }

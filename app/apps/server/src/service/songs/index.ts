@@ -29,6 +29,7 @@ export {
   cloneSongSlide,
   deleteSongSlide,
   getSlidesBySongId,
+  getSlidesBySongIds,
   getSongSlideById,
   reorderSongSlides,
   upsertSongSlide,

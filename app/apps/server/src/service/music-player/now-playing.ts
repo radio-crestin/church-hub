@@ -1,4 +1,4 @@
-import { asc, eq } from 'drizzle-orm'
+import { asc, eq, sql } from 'drizzle-orm'
 
 import type { NowPlayingItem } from './types'
 import { getDatabase } from '../../db'
@@ -64,6 +64,8 @@ export function addToNowPlaying(fileId: number): number {
 }
 
 export function addMultipleToNowPlaying(fileIds: number[]): void {
+  if (fileIds.length === 0) return
+
   const db = getDatabase()
 
   const maxSortOrder = db
@@ -73,17 +75,15 @@ export function addMultipleToNowPlaying(fileIds: number[]): void {
     .all()
     .pop()
 
-  let nextSortOrder = (maxSortOrder?.sortOrder ?? -1) + 1
+  const startSortOrder = (maxSortOrder?.sortOrder ?? -1) + 1
 
-  for (const fileId of fileIds) {
-    db.insert(musicNowPlaying)
-      .values({
-        fileId,
-        sortOrder: nextSortOrder,
-      })
-      .run()
-    nextSortOrder++
-  }
+  // Batch insert all items in a single query
+  const values = fileIds.map((fileId, index) => ({
+    fileId,
+    sortOrder: startSortOrder + index,
+  }))
+
+  db.insert(musicNowPlaying).values(values).run()
 }
 
 export function removeFromNowPlaying(itemId: number): boolean {
@@ -102,25 +102,36 @@ export function setNowPlayingQueue(fileIds: number[]): void {
 
   db.delete(musicNowPlaying).run()
 
-  for (let i = 0; i < fileIds.length; i++) {
-    db.insert(musicNowPlaying)
-      .values({
-        fileId: fileIds[i],
-        sortOrder: i,
-      })
-      .run()
-  }
+  if (fileIds.length === 0) return
+
+  // Batch insert all items in a single query
+  const values = fileIds.map((fileId, index) => ({
+    fileId,
+    sortOrder: index,
+  }))
+
+  db.insert(musicNowPlaying).values(values).run()
 }
 
 export function reorderNowPlaying(itemIds: number[]): void {
+  if (itemIds.length === 0) return
+
   const db = getDatabase()
 
-  for (let i = 0; i < itemIds.length; i++) {
-    db.update(musicNowPlaying)
-      .set({ sortOrder: i })
-      .where(eq(musicNowPlaying.id, itemIds[i]))
-      .run()
-  }
+  // Build a single UPDATE with CASE for all items (batch operation)
+  // This reduces N queries to 1 query
+  const caseParts = itemIds
+    .map((id, index) => `WHEN ${id} THEN ${index}`)
+    .join(' ')
+  const idList = itemIds.join(',')
+
+  db.run(
+    sql.raw(`
+    UPDATE music_now_playing
+    SET sort_order = CASE id ${caseParts} END
+    WHERE id IN (${idList})
+  `),
+  )
 }
 
 export function getQueueItemAtIndex(index: number): NowPlayingItem | null {

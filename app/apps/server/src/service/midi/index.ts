@@ -275,8 +275,9 @@ let requestedOutputDeviceId: number | null = null
 // Reconnection state
 let isReconnecting = false
 let reconnectIntervalId: ReturnType<typeof setInterval> | null = null
-const RECONNECT_INTERVAL_MS = 3000 // Check every 3 seconds
-const DEVICE_CHECK_INTERVAL_MS = 2000 // Check device status every 2 seconds
+// Unified polling interval - consolidates device check and reconnection into a single interval
+// This reduces redundant system calls from 2 separate intervals to 1
+const UNIFIED_POLL_INTERVAL_MS = 2500 // Check every 2.5 seconds
 let deviceCheckIntervalId: ReturnType<typeof setInterval> | null = null
 
 // Callback for MIDI messages to be sent via WebSocket
@@ -813,11 +814,14 @@ function broadcastDevices() {
 }
 
 /**
- * Check if devices are still available and handle disconnection
+ * Unified device status check and reconnection handler
+ * This consolidates what was previously two separate intervals into one,
+ * reducing redundant MIDI system calls by 50%
  */
-function checkDeviceStatus() {
+function checkDeviceStatusAndReconnect() {
   if (!loadMidi() || !easymidi) return
 
+  // Get device lists once (shared between status check and reconnection)
   const inputs = easymidi.getInputs()
   const outputs = easymidi.getOutputs()
 
@@ -846,12 +850,19 @@ function checkDeviceStatus() {
   }
 
   if (needsReconnect && !isReconnecting) {
-    startReconnecting()
+    isReconnecting = true
+    midiLogger.info('Starting MIDI device reconnection process...')
+    broadcastConnectionStatus()
+  }
+
+  // If we're in reconnection mode, attempt to reconnect (using same device lists)
+  if (isReconnecting) {
+    attemptReconnectionWithDevices(inputs, outputs)
   }
 }
 
 /**
- * Start the reconnection process
+ * Start the reconnection process (simplified - just sets flag, polling handles the rest)
  */
 function startReconnecting() {
   if (isReconnecting) return
@@ -860,29 +871,20 @@ function startReconnecting() {
   midiLogger.info('Starting MIDI device reconnection process...')
   broadcastConnectionStatus()
 
-  // Clear existing reconnect interval if any
-  if (reconnectIntervalId) {
-    clearInterval(reconnectIntervalId)
-  }
-
-  reconnectIntervalId = setInterval(() => {
-    attemptReconnection()
-  }, RECONNECT_INTERVAL_MS)
-
-  // Try immediately
-  attemptReconnection()
+  // Immediately attempt reconnection
+  checkDeviceStatusAndReconnect()
 }
 
 /**
  * Attempt to reconnect to previously connected devices
+ * @param inputs - Pre-fetched list of input device names (to avoid redundant system calls)
+ * @param outputs - Pre-fetched list of output device names (to avoid redundant system calls)
  */
-async function attemptReconnection() {
-  if (!loadMidi() || !easymidi) return
-
+async function attemptReconnectionWithDevices(
+  inputs: string[],
+  outputs: string[],
+) {
   midiLogger.debug('Attempting to reconnect MIDI devices...')
-
-  const inputs = easymidi.getInputs()
-  const outputs = easymidi.getOutputs()
 
   // Determine what we need to reconnect
   const needInputReconnect =
@@ -1010,15 +1012,16 @@ function stopReconnecting() {
 }
 
 /**
- * Start device monitoring (checks if devices are still connected)
+ * Start unified device monitoring (checks status and handles reconnection in one interval)
+ * This replaces the previous two separate intervals (device check + reconnection)
  */
 function startDeviceMonitoring() {
   if (deviceCheckIntervalId) return // Already monitoring
 
-  midiLogger.debug('Starting MIDI device monitoring')
+  midiLogger.debug('Starting unified MIDI device monitoring')
   deviceCheckIntervalId = setInterval(() => {
-    checkDeviceStatus()
-  }, DEVICE_CHECK_INTERVAL_MS)
+    checkDeviceStatusAndReconnect()
+  }, UNIFIED_POLL_INTERVAL_MS)
 }
 
 /**

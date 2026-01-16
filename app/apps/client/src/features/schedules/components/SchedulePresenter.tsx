@@ -1084,11 +1084,12 @@ export function SchedulePresenter({
       showToast(t('messages.deleted'), 'success')
       setShowDeleteConfirm(false)
       onDeleted?.()
-      onBack()
+      clearSectionLastVisited('schedules')
+      navigate({ to: '/schedules' })
     } else {
       showToast(t('messages.error'), 'error')
     }
-  }, [scheduleId, deleteSchedule, showToast, t, onDeleted, onBack])
+  }, [scheduleId, deleteSchedule, showToast, t, onDeleted, navigate])
 
   // Export handlers
   const handleOpenExportModal = useCallback(() => {

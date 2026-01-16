@@ -1,4 +1,4 @@
-import { and, asc, eq, gt, max, sql } from 'drizzle-orm'
+import { and, asc, eq, gt, inArray, max, sql } from 'drizzle-orm'
 
 import type {
   OperationResult,
@@ -54,6 +54,50 @@ export function getSlidesBySongId(songId: number): SongSlide[] {
 
   log('debug', `Found ${records.length} slides for song ${songId}`)
   return records.map(toSongSlide)
+}
+
+/**
+ * Gets slides for multiple songs in a single query (batch operation)
+ * Returns a Map of songId -> slides array
+ */
+export function getSlidesBySongIds(
+  songIds: number[],
+): Map<number, SongSlide[]> {
+  if (songIds.length === 0) {
+    return new Map()
+  }
+
+  log('debug', `Getting slides for ${songIds.length} songs in batch`)
+
+  const db = getDatabase()
+  const records = db
+    .select()
+    .from(songSlides)
+    .where(inArray(songSlides.songId, songIds))
+    .orderBy(asc(songSlides.songId), asc(songSlides.sortOrder))
+    .all()
+
+  // Group slides by songId
+  const slidesBySongId = new Map<number, SongSlide[]>()
+
+  // Initialize empty arrays for all requested songIds
+  for (const songId of songIds) {
+    slidesBySongId.set(songId, [])
+  }
+
+  // Populate with actual slides
+  for (const record of records) {
+    const slides = slidesBySongId.get(record.songId)
+    if (slides) {
+      slides.push(toSongSlide(record))
+    }
+  }
+
+  log(
+    'debug',
+    `Found ${records.length} total slides for ${songIds.length} songs`,
+  )
+  return slidesBySongId
 }
 
 /**
@@ -210,7 +254,7 @@ export function cloneSongSlide(id: number): SongSlide | null {
 }
 
 /**
- * Reorders slides within a song
+ * Reorders slides within a song using a single batch UPDATE with CASE
  */
 export function reorderSongSlides(
   songId: number,
@@ -219,24 +263,29 @@ export function reorderSongSlides(
   try {
     log('debug', `Reordering slides for song: ${songId}`)
 
-    const db = getDatabase()
-
-    for (let i = 0; i < input.slideIds.length; i++) {
-      db.update(songSlides)
-        .set({
-          sortOrder: i,
-          updatedAt: sql`(unixepoch())` as unknown as Date,
-        })
-        .where(
-          and(
-            eq(songSlides.id, input.slideIds[i]),
-            eq(songSlides.songId, songId),
-          ),
-        )
-        .run()
+    if (input.slideIds.length === 0) {
+      return { success: true }
     }
 
-    log('info', `Slides reordered for song: ${songId}`)
+    const db = getDatabase()
+
+    // Build a single UPDATE with CASE for all slides (batch operation)
+    // This reduces N queries to 1 query
+    const caseParts = input.slideIds
+      .map((id, index) => `WHEN ${id} THEN ${index}`)
+      .join(' ')
+    const idList = input.slideIds.join(',')
+
+    db.run(
+      sql.raw(`
+      UPDATE song_slides
+      SET sort_order = CASE id ${caseParts} END,
+          updated_at = unixepoch()
+      WHERE id IN (${idList}) AND song_id = ${songId}
+    `),
+    )
+
+    log('info', `Slides reordered for song: ${songId} (batch)`)
     return { success: true }
   } catch (error) {
     log('error', `Failed to reorder slides: ${error}`)
