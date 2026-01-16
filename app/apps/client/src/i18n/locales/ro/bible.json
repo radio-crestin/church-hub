@@ -96,6 +96,11 @@
   "history": {
     "title": "Istoric",
     "empty": "Niciun verset afisat",
-    "clear": "Sterge"
+    "clear": "Sterge",
+    "today": "Azi",
+    "yesterday": "Ieri",
+    "export": "Exporta ca program",
+    "exportTitle": "Istoric Versete Biblice",
+    "exportHelp": "Foloseste [V] pentru versete biblice"
   }
 }

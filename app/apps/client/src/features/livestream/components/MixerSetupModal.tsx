@@ -119,7 +119,7 @@ export function MixerSetupModal({ isOpen, onClose }: MixerSetupModalProps) {
       onClick={handleBackdropClick}
     >
       <div className="p-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-2">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
             {t('mixer.setup.title')}
           </h2>
@@ -144,7 +144,16 @@ export function MixerSetupModal({ isOpen, onClose }: MixerSetupModalProps) {
           </button>
         </div>
 
-        <div className="space-y-6 max-h-[60vh] overflow-y-auto">
+        <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2">
+          <div>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+              {t('mixer.setup.description')}
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-500">
+              {t('mixer.setup.supportedMixers')}
+            </p>
+          </div>
+
           <div>
             <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
               {t('mixer.setup.connectionSettings')}
@@ -226,7 +235,7 @@ export function MixerSetupModal({ isOpen, onClose }: MixerSetupModalProps) {
               </select>
             </div>
 
-            <div className="space-y-2 max-h-64 overflow-y-auto">
+            <div className="space-y-2">
               {Array.from({ length: channelCount }, (_, i) => i + 1).map(
                 (num) => (
                   <div key={num} className="flex items-center gap-2">

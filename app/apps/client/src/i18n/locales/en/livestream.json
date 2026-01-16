@@ -179,7 +179,7 @@
     "deleting": "Deleting..."
   },
   "mixer": {
-    "title": "Mixer",
+    "title": "Mixer audio",
     "connected": "Mixer Connected",
     "disconnected": "Mixer Disconnected",
     "reconnecting": "Reconnecting...",
@@ -190,6 +190,8 @@
     "openGuide": "Settings",
     "setup": {
       "title": "Mixer Setup",
+      "description": "Control digital audio mixers via OSC protocol. Automatically mute/unmute channels based on scene changes during livestreams.",
+      "supportedMixers": "Supported mixers: Behringer X32, XR18, XR16, XR12, X-AIR series, and other OSC-compatible mixers.",
       "connectionSettings": "Connection Settings",
       "host": "Host IP",
       "port": "Port",

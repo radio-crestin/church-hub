@@ -179,7 +179,7 @@
     "deleting": "Se sterge..."
   },
   "mixer": {
-    "title": "Mixer",
+    "title": "Mixer audio",
     "connected": "Mixer Conectat",
     "disconnected": "Mixer Deconectat",
     "reconnecting": "Se reconecteaza...",
@@ -190,6 +190,8 @@
     "openGuide": "Setari",
     "setup": {
       "title": "Configurare Mixer",
+      "description": "Controlează mixere audio digitale prin protocolul OSC. Pornește/oprește automat canalele în funcție de schimbările de scenă în timpul transmisiunilor live.",
+      "supportedMixers": "Mixere compatibile: Behringer X32, XR18, XR16, XR12, seria X-AIR și alte mixere compatibile OSC.",
       "connectionSettings": "Setari Conexiune",
       "host": "Adresa IP",
       "port": "Port",
