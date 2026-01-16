@@ -1,5 +1,6 @@
 export const CONTENT_TYPES = [
-  { value: 'song', labelKey: 'scenes.contentTypes.song' },
+  { value: 'song_temporary', labelKey: 'scenes.contentTypes.songTemporary' },
+  { value: 'song_schedule', labelKey: 'scenes.contentTypes.songSchedule' },
   { value: 'bible', labelKey: 'scenes.contentTypes.bible' },
   { value: 'bible_passage', labelKey: 'scenes.contentTypes.biblePassage' },
   { value: 'announcement', labelKey: 'scenes.contentTypes.announcement' },

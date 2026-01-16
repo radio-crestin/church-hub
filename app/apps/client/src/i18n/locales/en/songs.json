@@ -36,7 +36,8 @@
     "presentedOnly": "Presented songs",
     "inSchedulesOnly": "In schedules",
     "hasKeyLine": "Has key line",
-    "filters": "Filters"
+    "filters": "Filters",
+    "clearFiltersForMore": "Clear all filters for more results"
   },
   "picker": {
     "selectSong": "Select Song"

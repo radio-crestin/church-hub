@@ -90,8 +90,10 @@ export const songSchemas = {
       title: { type: 'string' },
       categoryId: { type: 'integer', nullable: true },
       categoryName: { type: 'string', nullable: true },
+      keyLine: { type: 'string', nullable: true },
       highlightedTitle: { type: 'string' },
       matchedContent: { type: 'string' },
+      presentationCount: { type: 'integer' },
     },
   },
   UpsertSongInput: {

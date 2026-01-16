@@ -210,6 +210,22 @@ export function SceneSettingsPopup({
     setMixerMute((prev) => prev.filter((c) => c !== channelNum))
   }, [])
 
+  const handleAddAllMixerUnmute = useCallback(() => {
+    const allChannelStrs = mixerChannels.map((ch) =>
+      ch.channelNumber.toString().padStart(2, '0'),
+    )
+    setMixerUnmute(allChannelStrs)
+    setMixerMute([])
+  }, [mixerChannels])
+
+  const handleAddAllMixerMute = useCallback(() => {
+    const allChannelStrs = mixerChannels.map((ch) =>
+      ch.channelNumber.toString().padStart(2, '0'),
+    )
+    setMixerMute(allChannelStrs)
+    setMixerUnmute([])
+  }, [mixerChannels])
+
   const hasErrors = Object.keys(errors).length > 0
 
   return (
@@ -434,14 +450,23 @@ export function SceneSettingsPopup({
 
               <div className="space-y-4">
                 <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Volume2
-                      size={16}
-                      className="text-green-600 dark:text-green-400"
-                    />
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {t('scenes.unmute')}
-                    </span>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Volume2
+                        size={16}
+                        className="text-green-600 dark:text-green-400"
+                      />
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {t('scenes.unmute')}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleAddAllMixerUnmute}
+                      className="text-xs text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-medium"
+                    >
+                      {t('scenes.addAllChannels')}
+                    </button>
                   </div>
                   <div className="flex flex-wrap gap-1.5 min-h-[36px] p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
                     {mixerUnmute.map((channelStr) => {
@@ -502,14 +527,23 @@ export function SceneSettingsPopup({
                 </div>
 
                 <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <VolumeX
-                      size={16}
-                      className="text-red-600 dark:text-red-400"
-                    />
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {t('scenes.mute')}
-                    </span>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <VolumeX
+                        size={16}
+                        className="text-red-600 dark:text-red-400"
+                      />
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {t('scenes.mute')}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleAddAllMixerMute}
+                      className="text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium"
+                    >
+                      {t('scenes.addAllChannels')}
+                    </button>
                   </div>
                   <div className="flex flex-wrap gap-1.5 min-h-[36px] p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
                     {mixerMute.map((channelStr) => {

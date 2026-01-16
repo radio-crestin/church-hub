@@ -153,7 +153,8 @@
     "autoSceneSettings": "Setari auto-switch",
     "autoSceneDescription": "Schimba la aceasta scena cand afisezi:",
     "contentTypes": {
-      "song": "Cantari",
+      "songTemporary": "Cântări (afișat manual)",
+      "songSchedule": "Cântări (din program)",
       "bible": "Verset biblic",
       "biblePassage": "Pasaj biblic",
       "announcement": "Anunturi",
@@ -167,6 +168,7 @@
     "selectChannels": "Selecteaza canale...",
     "selectContentTypes": "Selecteaza tipuri de continut...",
     "addMore": "Adauga...",
+    "addAllChannels": "Adauga toate",
     "addCustomScene": "Adauga scena personalizata",
     "newScenePlaceholder": "Nume scena",
     "add": "Adauga",

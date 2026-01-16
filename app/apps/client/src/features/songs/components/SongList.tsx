@@ -1,4 +1,4 @@
-import { Loader2, Music, Search, Sparkles } from 'lucide-react'
+import { Loader2, Music, Search, Sparkles, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -179,6 +179,30 @@ export function SongList({
     }),
     [presentedOnly, inSchedulesOnly, hasKeyLine],
   )
+
+  // Check if any filters are active
+  const hasActiveFilters = useMemo(
+    () =>
+      categoryIds.length > 0 || presentedOnly || inSchedulesOnly || hasKeyLine,
+    [categoryIds, presentedOnly, inSchedulesOnly, hasKeyLine],
+  )
+
+  // Clear all filters
+  const handleClearAllFilters = useCallback(() => {
+    setCategoryIds([])
+    setPresentedOnly(false)
+    setInSchedulesOnly(false)
+    setHasKeyLine(false)
+    try {
+      localStorage.setItem(CATEGORY_FILTER_STORAGE_KEY, JSON.stringify([]))
+      localStorage.setItem(PRESENTED_ONLY_STORAGE_KEY, 'false')
+      localStorage.setItem(IN_SCHEDULES_ONLY_STORAGE_KEY, 'false')
+      localStorage.setItem(HAS_KEY_LINE_STORAGE_KEY, 'false')
+    } catch {
+      // Ignore storage errors
+    }
+    onCategoryChange?.([])
+  }, [onCategoryChange])
 
   // Local state for immediate input feedback
   const [localQuery, setLocalQuery] = useState(searchQuery)
@@ -376,6 +400,7 @@ export function SongList({
       title: string
       categoryId: number | null
       categoryName: string | null
+      keyLine?: string | null
       highlightedTitle?: string
       matchedContent?: string
       presentationCount?: number
@@ -389,6 +414,7 @@ export function SongList({
         title: result.title,
         categoryId: result.categoryId,
         categoryName: result.categoryName,
+        keyLine: result.keyLine,
         highlightedTitle: result.highlightedTitle,
         matchedContent: result.matchedContent,
         presentationCount: result.presentationCount,
@@ -407,6 +433,7 @@ export function SongList({
         title: result.title,
         categoryId: result.categoryId,
         categoryName: result.categoryName,
+        keyLine: result.keyLine,
         highlightedTitle: result.highlightedTitle,
         matchedContent: result.matchedContent,
         presentationCount: result.presentationCount,
@@ -428,6 +455,7 @@ export function SongList({
       categoryId: song.categoryId,
       categoryName:
         categories?.find((c) => c.id === song.categoryId)?.name ?? null,
+      keyLine: song.keyLine,
       presentationCount: song.presentationCount,
     }))
 
@@ -617,6 +645,16 @@ export function SongList({
             <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
               {t('noSongsDescription')}
             </p>
+          )}
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={handleClearAllFilters}
+              className="mt-4 py-2 px-4 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors inline-flex items-center gap-2"
+            >
+              <X className="w-4 h-4" />
+              {t('search.clearFiltersForMore')}
+            </button>
           )}
         </div>
       ) : (

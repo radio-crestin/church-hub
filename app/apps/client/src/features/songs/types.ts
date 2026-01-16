@@ -90,6 +90,7 @@ export interface SongSearchResult {
   title: string
   categoryId: number | null
   categoryName: string | null
+  keyLine: string | null
   highlightedTitle: string
   matchedContent: string
   presentationCount: number

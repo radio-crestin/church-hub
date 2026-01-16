@@ -244,6 +244,12 @@ export function BibleNavigationPanel({
 
     setIsAISearchActive(true)
     setIsTextSearchTriggered(false)
+    // Update URL immediately so keyboard shortcuts are enabled
+    if (onSearchQueryChange) {
+      onSearchQueryChange(localQuery)
+    } else {
+      setSearchQuery(localQuery)
+    }
     try {
       const response = await aiSearchMutation.mutateAsync({
         query: localQuery,
@@ -253,7 +259,7 @@ export function BibleNavigationPanel({
     } catch {
       setAiSearchResults([])
     }
-  }, [localQuery, translationId, aiSearchMutation])
+  }, [localQuery, translationId, aiSearchMutation, onSearchQueryChange, setSearchQuery])
 
   // Handle manual text search button click
   const handleTextSearch = useCallback(() => {
@@ -261,7 +267,13 @@ export function BibleNavigationPanel({
     setIsTextSearchTriggered(true)
     setIsAISearchActive(false)
     setAiSearchResults([])
-  }, [localQuery])
+    // Update URL immediately so keyboard shortcuts are enabled
+    if (onSearchQueryChange) {
+      onSearchQueryChange(localQuery)
+    } else {
+      setSearchQuery(localQuery)
+    }
+  }, [localQuery, onSearchQueryChange, setSearchQuery])
 
   // Clear search results when query changes
   useEffect(() => {
@@ -635,7 +647,6 @@ function SearchResults({
         >
           <ArrowLeft size={16} />
           {t('navigation.back')}
-          <KeyboardShortcutBadge shortcut="Escape" variant="muted" />
         </button>
         <span className="text-sm text-gray-500 dark:text-gray-400">
           {t('search.resultsCount', { count: results.length })}

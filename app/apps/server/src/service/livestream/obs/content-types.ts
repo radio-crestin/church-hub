@@ -1,5 +1,6 @@
 export const CONTENT_TYPES = [
-  'song',
+  'song_temporary',
+  'song_schedule',
   'bible',
   'bible_passage',
   'announcement',

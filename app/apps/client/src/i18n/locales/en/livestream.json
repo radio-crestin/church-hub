@@ -153,7 +153,8 @@
     "autoSceneSettings": "Auto-Switch Settings",
     "autoSceneDescription": "Switch to this scene when showing:",
     "contentTypes": {
-      "song": "Songs",
+      "songTemporary": "Songs (manual display)",
+      "songSchedule": "Songs (from schedule)",
       "bible": "Bible Verse",
       "biblePassage": "Bible Passage",
       "announcement": "Announcements",
@@ -167,6 +168,7 @@
     "selectChannels": "Select channels...",
     "selectContentTypes": "Select content types...",
     "addMore": "Add more...",
+    "addAllChannels": "Add all",
     "addCustomScene": "Add custom scene",
     "newScenePlaceholder": "Scene name",
     "add": "Add",
