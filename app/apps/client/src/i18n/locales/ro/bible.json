@@ -9,7 +9,8 @@
     "resultsCount": "{{count}} verset gasit",
     "resultsCount_other": "{{count}} versete gasite",
     "aiSearchTooltip": "Cautare inteligenta cu AI - gaseste versete relevante semantic",
-    "aiProcessing": "AI..."
+    "aiProcessing": "AI...",
+    "fullTextSearchTooltip": "Caută în textul versetelor"
   },
   "navigation": {
     "back": "Inapoi",

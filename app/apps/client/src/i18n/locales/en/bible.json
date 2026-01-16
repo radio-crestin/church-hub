@@ -9,7 +9,8 @@
     "resultsCount": "{{count}} verse found",
     "resultsCount_other": "{{count}} verses found",
     "aiSearchTooltip": "AI-enhanced search - finds semantically relevant verses",
-    "aiProcessing": "AI..."
+    "aiProcessing": "AI...",
+    "fullTextSearchTooltip": "Search in verse text"
   },
   "navigation": {
     "back": "Back",

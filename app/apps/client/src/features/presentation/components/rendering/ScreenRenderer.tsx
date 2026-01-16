@@ -35,6 +35,13 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
   const { data: kioskSettings } = useKioskSettings()
   const { data: slideHighlights } = useSlideHighlights()
 
+  // Memoize getNextVerse callback to prevent infinite re-renders
+  // The dependency array is empty because getNextVerse is a stable import
+  const memoizedGetNextVerse = useCallback(async (verseId: number) => {
+    const result = await getNextVerse(verseId)
+    return result
+  }, [])
+
   // Use shared presentation content hook
   const {
     contentType,
@@ -46,10 +53,7 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
   } = usePresentationContent({
     screen,
     includeNextSlide: screen?.nextSlideConfig?.enabled ?? false,
-    getNextVerse: async (verseId: number) => {
-      const result = await getNextVerse(verseId)
-      return result
-    },
+    getNextVerse: memoizedGetNextVerse,
   })
 
   // Determine if current screen is being viewed in kiosk mode context
