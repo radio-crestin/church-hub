@@ -172,7 +172,7 @@
 ~~- salveaza rezultatele tuturor cautarilor (inclusiv cu AI) in ceva cache in DB~~
 ~~- cateodata WhatsApp-ul ramane aprins..~~
 ~~- regenereaza midi-urile cu instrumentale mai bune~~
-- rezolva problema fixtures initiale
+~~- rezolva problema fixtures initiale~~
 - load prea mare in timpul cantarii
 - nu mai oferi autocorrect la game
 - la search adauga fallback fara filtre
@@ -186,8 +186,6 @@
 - adauga documentatie la mixer, cu mixere suportate
 - adauga video in player si youtube download
 - user agent din whatsapp
-- 
-
 
 
 
