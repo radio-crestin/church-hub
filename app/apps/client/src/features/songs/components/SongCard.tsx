@@ -1,4 +1,4 @@
-import { ChevronRight, Eye, Sparkles, Tag } from 'lucide-react'
+import { ChevronRight, Eye, Music2, Sparkles, Tag } from 'lucide-react'
 import { forwardRef } from 'react'
 
 interface SongCardProps {
@@ -7,6 +7,7 @@ interface SongCardProps {
     title: string
     categoryId: number | null
     categoryName: string | null
+    keyLine?: string | null
     highlightedTitle?: string
     matchedContent?: string
     presentationCount?: number
@@ -57,30 +58,31 @@ export const SongCard = forwardRef<HTMLButtonElement, SongCardProps>(
               {song.title}
             </h3>
           )}
-          <div className="flex items-center gap-3 mt-1">
+          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
             {song.categoryName && (
-              <div className="flex items-center gap-1">
-                <Tag className="w-3 h-3 text-gray-400" />
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  {song.categoryName}
-                </span>
-              </div>
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded">
+                <Tag className="w-3 h-3" />
+                {song.categoryName}
+              </span>
             )}
-            {song.presentationCount !== undefined && (
-              <div className="flex items-center gap-1">
-                <Eye className="w-3 h-3 text-gray-400" />
-                <span className="text-sm text-gray-500 dark:text-gray-400">
+            {song.presentationCount !== undefined &&
+              song.presentationCount > 0 && (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 rounded">
+                  <Eye className="w-3 h-3" />
                   {song.presentationCount}
                 </span>
-              </div>
-            )}
+              )}
             {song.aiRelevanceScore !== undefined && (
-              <div className="flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-indigo-500" />
-                <span className="text-sm font-medium text-indigo-600 dark:text-indigo-400">
-                  {song.aiRelevanceScore}%
-                </span>
-              </div>
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded">
+                <Sparkles className="w-3 h-3" />
+                {song.aiRelevanceScore}%
+              </span>
+            )}
+            {song.keyLine && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 rounded">
+                <Music2 className="w-3 h-3" />
+                {song.keyLine}
+              </span>
             )}
           </div>
           {song.matchedContent && (

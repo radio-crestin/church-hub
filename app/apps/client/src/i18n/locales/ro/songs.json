@@ -36,7 +36,8 @@
     "presentedOnly": "Cântări prezentate",
     "inSchedulesOnly": "În programe",
     "hasKeyLine": "Cu gamă",
-    "filters": "Filtre"
+    "filters": "Filtre",
+    "clearFiltersForMore": "Șterge toate filtrele pentru mai multe rezultate"
   },
   "picker": {
     "selectSong": "Selectează Cântare"

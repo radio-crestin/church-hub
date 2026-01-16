@@ -366,6 +366,7 @@ export type ContentType =
   | 'announcement'
   | 'versete_tineri'
   | 'empty'
+  | 'screen_share'
 
 /**
  * Screen record from database

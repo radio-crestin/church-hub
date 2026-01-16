@@ -868,7 +868,8 @@ function BiblePage() {
     onHidePresentation: handleHidePresentation,
     onPresentSearched: handlePresentSearched,
     enabled: isVersesLevel || isChaptersLevel || isBooksLevelWithSearch,
-    isPresenting: navigation.state.presentedIndex !== null,
+    // Check if Bible content is actually displayed on screen (not just selected)
+    isPresenting: tempContentType === 'bible',
     isVersesLevel,
   })
 

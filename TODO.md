@@ -173,14 +173,13 @@
 ~~- cateodata WhatsApp-ul ramane aprins..~~
 ~~- regenereaza midi-urile cu instrumentale mai bune~~
 ~~- rezolva problema fixtures initiale~~
-- load prea mare in timpul cantarii
-- nu mai oferi autocorrect la game
-- la search adauga fallback fara filtre
-- afiseaza in rezultate cand o melodie are gama
-- ia o tastatura
-- adauga automatizare cand este prezentata o cantare, ca sa activezi microfon sala melodie
-- search-ul in Biblie sa fie manual
-- ESC va trebui prima data sa ascunda slide-ul
+~~- load prea mare in timpul cantarii~~
+~~- nu mai oferi autocorrect la game~~
+~~- la search adauga fallback fara filtre~~
+~~- afiseaza in rezultate cand o melodie are gama~~
+~~- adauga automatizare cand este prezentata o cantare, ca sa activezi microfon sala melodie~~
+~~- search-ul in Biblie sa fie manual~~
+~~- ESC va trebui prima data sa ascunda slide-ul~~
 - grupeaza istoricul dupa zi, cu limita maxima de zile (infinite scroll up)
 - fa istoricul scrollable
 - adauga documentatie la mixer, cu mixere suportate

@@ -106,6 +106,7 @@ export function getSceneForContentType(
         sortOrder: scene.sortOrder,
         shortcuts: JSON.parse(scene.shortcuts) as string[],
         contentTypes,
+        mixerChannelActions: JSON.parse(scene.mixerChannelActions || '{}'),
         isCurrent: scene.obsSceneName === currentScene,
       }
     }

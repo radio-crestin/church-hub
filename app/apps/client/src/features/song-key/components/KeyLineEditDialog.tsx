@@ -178,6 +178,9 @@ export const KeyLineEditDialog = forwardRef<KeyLineEditDialogHandle>(
                 autoCapitalize="words"
                 autoCorrect="off"
                 spellCheck={false}
+                data-gramm="false"
+                data-gramm_editor="false"
+                data-enable-grammarly="false"
                 value={keyLine}
                 onChange={(e) => {
                   const value = e.target.value

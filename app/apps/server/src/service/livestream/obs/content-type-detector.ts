@@ -26,7 +26,14 @@ export function detectContentType(state: PresentationState): ContentType {
     log('debug', `Temporary content type: ${contentType}`)
 
     if (contentType === 'song') {
-      return 'song'
+      // Differentiate between scheduled and temporary songs
+      const songData = state.temporaryContent.data
+      if ('scheduleId' in songData && songData.scheduleId) {
+        log('debug', `Song from schedule: ${songData.scheduleId}`)
+        return 'song_schedule'
+      }
+      log('debug', 'Temporary song (not from schedule)')
+      return 'song_temporary'
     }
 
     if (contentType === 'bible') {
@@ -46,10 +53,10 @@ export function detectContentType(state: PresentationState): ContentType {
     }
   }
 
-  // Check for song slide (legacy/fallback)
+  // Check for song slide (legacy/fallback) - treat as temporary
   if (state.currentSongSlideId) {
     log('debug', `Song slide detected: ${state.currentSongSlideId}`)
-    return 'song'
+    return 'song_temporary'
   }
 
   log('debug', 'No content type detected, returning empty')
