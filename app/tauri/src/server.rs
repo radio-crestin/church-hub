@@ -4,6 +4,7 @@ use std::time::{Duration, Instant};
 use tauri::path::BaseDirectory;
 use tauri::{AppHandle, Manager};
 use tauri_plugin_shell::{process::CommandEvent, ShellExt};
+use tokio::time::sleep;
 
 /// Information about a process using a port
 #[derive(Debug, Clone)]
@@ -202,8 +203,8 @@ pub fn kill_port_process(port: u16) -> Result<(), String> {
     Ok(())
 }
 
-/// Waits for the server to be ready by polling the /ping endpoint
-pub fn wait_for_server_ready(port: u16, timeout_secs: u64) -> Result<(), String> {
+/// Waits for the server to be ready by polling the /ping endpoint (async version)
+pub async fn wait_for_server_ready_async(port: u16, timeout_secs: u64) -> Result<(), String> {
     let start = Instant::now();
     let timeout = Duration::from_secs(timeout_secs);
     let url = format!("http://127.0.0.1:{}/ping", port);
@@ -211,8 +212,17 @@ pub fn wait_for_server_ready(port: u16, timeout_secs: u64) -> Result<(), String>
     println!("[sidecar] Waiting for server to be ready on port {port}...");
 
     while start.elapsed() < timeout {
-        match ureq::get(&url).timeout(Duration::from_millis(500)).call() {
-            Ok(response) if response.status() == 200 => {
+        // Use tokio::task::spawn_blocking for the HTTP request to avoid blocking async runtime
+        let url_clone = url.clone();
+        let result = tokio::task::spawn_blocking(move || {
+            ureq::get(&url_clone)
+                .timeout(Duration::from_millis(500))
+                .call()
+        })
+        .await;
+
+        match result {
+            Ok(Ok(response)) if response.status() == 200 => {
                 println!(
                     "[sidecar] Server is ready! (took {:.2}s)",
                     start.elapsed().as_secs_f64()
@@ -220,7 +230,7 @@ pub fn wait_for_server_ready(port: u16, timeout_secs: u64) -> Result<(), String>
                 return Ok(());
             }
             _ => {
-                std::thread::sleep(Duration::from_millis(100));
+                sleep(Duration::from_millis(100)).await;
             }
         }
     }
@@ -229,6 +239,12 @@ pub fn wait_for_server_ready(port: u16, timeout_secs: u64) -> Result<(), String>
         "Server failed to become ready within {} seconds",
         timeout_secs
     ))
+}
+
+/// Waits for the server to be ready by polling the /ping endpoint (sync version for setup hook)
+pub fn wait_for_server_ready(port: u16, timeout_secs: u64) -> Result<(), String> {
+    // Run the async version using Tauri's runtime
+    tauri::async_runtime::block_on(wait_for_server_ready_async(port, timeout_secs))
 }
 
 pub fn start_server(app_handle: &AppHandle, server_port: u16) -> Result<(), String> {
@@ -327,8 +343,8 @@ pub fn shutdown_server(app_handle: &AppHandle) -> Result<(), String> {
     Ok(())
 }
 
-/// Restarts the sidecar server
-pub fn restart_server(app_handle: &AppHandle) -> Result<(), String> {
+/// Restarts the sidecar server (async version - preferred)
+pub async fn restart_server_async(app_handle: &AppHandle) -> Result<(), String> {
     println!("[sidecar] Restarting server...");
 
     // Get the server port from app state
@@ -341,14 +357,14 @@ pub fn restart_server(app_handle: &AppHandle) -> Result<(), String> {
     // Shutdown the server
     shutdown_server(app_handle)?;
 
-    // Wait a bit for cleanup
-    std::thread::sleep(Duration::from_millis(500));
+    // Wait a bit for cleanup using async sleep (doesn't block main thread)
+    sleep(Duration::from_millis(500)).await;
 
     // Start the server again
     start_server(app_handle, server_port)?;
 
-    // Wait for server to be ready
-    wait_for_server_ready(server_port, 30)?;
+    // Wait for server to be ready using async version
+    wait_for_server_ready_async(server_port, 30).await?;
 
     println!("[sidecar] Server restarted successfully.");
     Ok(())

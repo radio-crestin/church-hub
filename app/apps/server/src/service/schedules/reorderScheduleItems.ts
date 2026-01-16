@@ -1,8 +1,8 @@
-import { and, eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 
 import type { ReorderScheduleItemsInput } from './types'
 import { getDatabase } from '../../db'
-import { scheduleItems, schedules } from '../../db/schema'
+import { schedules } from '../../db/schema'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -13,7 +13,7 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
 }
 
 /**
- * Reorders items within a schedule
+ * Reorders items within a schedule using a single batch UPDATE with CASE
  */
 export function reorderScheduleItems(
   scheduleId: number,
@@ -22,24 +22,29 @@ export function reorderScheduleItems(
   try {
     log('debug', `Reordering schedule items for schedule: ${scheduleId}`)
 
+    if (input.itemIds.length === 0) {
+      return true
+    }
+
     const db = getDatabase()
     const now = new Date()
+    const nowTimestamp = Math.floor(now.getTime() / 1000)
 
-    // Update sort_order for each item
-    for (let i = 0; i < input.itemIds.length; i++) {
-      db.update(scheduleItems)
-        .set({
-          sortOrder: i,
-          updatedAt: now,
-        })
-        .where(
-          and(
-            eq(scheduleItems.id, input.itemIds[i]),
-            eq(scheduleItems.scheduleId, scheduleId),
-          ),
-        )
-        .run()
-    }
+    // Build a single UPDATE with CASE for all items (batch operation)
+    // This reduces N queries to 1 query
+    const caseParts = input.itemIds
+      .map((id, index) => `WHEN ${id} THEN ${index}`)
+      .join(' ')
+    const idList = input.itemIds.join(',')
+
+    db.run(
+      sql.raw(`
+      UPDATE schedule_items
+      SET sort_order = CASE id ${caseParts} END,
+          updated_at = ${nowTimestamp}
+      WHERE id IN (${idList}) AND schedule_id = ${scheduleId}
+    `),
+    )
 
     // Update schedule's updated_at
     db.update(schedules)
@@ -47,7 +52,10 @@ export function reorderScheduleItems(
       .where(eq(schedules.id, scheduleId))
       .run()
 
-    log('info', `Schedule items reordered: ${input.itemIds.length} items`)
+    log(
+      'info',
+      `Schedule items reordered: ${input.itemIds.length} items (batch)`,
+    )
     return true
   } catch (error) {
     log('error', `Failed to reorder schedule items: ${error}`)

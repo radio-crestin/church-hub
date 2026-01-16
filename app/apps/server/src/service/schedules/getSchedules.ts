@@ -1,4 +1,4 @@
-import { asc, desc, eq, sql } from 'drizzle-orm'
+import { asc, desc, eq, inArray, sql } from 'drizzle-orm'
 
 import type {
   Schedule,
@@ -16,7 +16,7 @@ import {
   songCategories,
   songs,
 } from '../../db/schema'
-import { getSlidesBySongId } from '../songs'
+import { getSlidesBySongId, getSlidesBySongIds } from '../songs'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -50,6 +50,53 @@ function getBiblePassageVerses(
 }
 
 /**
+ * Gets bible passage verses for multiple schedule items in a single query (batch operation)
+ * Returns a Map of scheduleItemId -> verses array
+ */
+function getBiblePassageVersesBatch(
+  scheduleItemIds: number[],
+): Map<number, ScheduleBiblePassageVerse[]> {
+  if (scheduleItemIds.length === 0) {
+    return new Map()
+  }
+
+  const db = getDatabase()
+  const verses = db
+    .select()
+    .from(scheduleBiblePassageVerses)
+    .where(inArray(scheduleBiblePassageVerses.scheduleItemId, scheduleItemIds))
+    .orderBy(
+      asc(scheduleBiblePassageVerses.scheduleItemId),
+      asc(scheduleBiblePassageVerses.sortOrder),
+    )
+    .all()
+
+  // Group verses by scheduleItemId
+  const versesByItemId = new Map<number, ScheduleBiblePassageVerse[]>()
+
+  // Initialize empty arrays for all requested itemIds
+  for (const itemId of scheduleItemIds) {
+    versesByItemId.set(itemId, [])
+  }
+
+  // Populate with actual verses
+  for (const v of verses) {
+    const itemVerses = versesByItemId.get(v.scheduleItemId)
+    if (itemVerses) {
+      itemVerses.push({
+        id: v.id,
+        verseId: v.verseId,
+        reference: v.reference,
+        text: v.text,
+        sortOrder: v.sortOrder,
+      })
+    }
+  }
+
+  return versesByItemId
+}
+
+/**
  * Gets versete tineri entries for a schedule item
  */
 function getVerseteTineriEntries(
@@ -77,6 +124,62 @@ function getVerseteTineriEntries(
     endVerse: e.endVerse,
     sortOrder: e.sortOrder,
   }))
+}
+
+/**
+ * Gets versete tineri entries for multiple schedule items in a single query (batch operation)
+ * Returns a Map of scheduleItemId -> entries array
+ */
+function getVerseteTineriEntriesBatch(
+  scheduleItemIds: number[],
+): Map<number, ScheduleVerseteTineriEntry[]> {
+  if (scheduleItemIds.length === 0) {
+    return new Map()
+  }
+
+  const db = getDatabase()
+  const entries = db
+    .select()
+    .from(scheduleVerseteTineriEntries)
+    .where(
+      inArray(scheduleVerseteTineriEntries.scheduleItemId, scheduleItemIds),
+    )
+    .orderBy(
+      asc(scheduleVerseteTineriEntries.scheduleItemId),
+      asc(scheduleVerseteTineriEntries.sortOrder),
+    )
+    .all()
+
+  // Group entries by scheduleItemId
+  const entriesByItemId = new Map<number, ScheduleVerseteTineriEntry[]>()
+
+  // Initialize empty arrays for all requested itemIds
+  for (const itemId of scheduleItemIds) {
+    entriesByItemId.set(itemId, [])
+  }
+
+  // Populate with actual entries
+  for (const e of entries) {
+    const itemEntries = entriesByItemId.get(e.scheduleItemId)
+    if (itemEntries) {
+      itemEntries.push({
+        id: e.id,
+        personName: e.personName,
+        translationId: e.translationId,
+        bookCode: e.bookCode,
+        bookName: e.bookName,
+        reference: e.reference,
+        text: e.text,
+        startChapter: e.startChapter,
+        startVerse: e.startVerse,
+        endChapter: e.endChapter,
+        endVerse: e.endVerse,
+        sortOrder: e.sortOrder,
+      })
+    }
+  }
+
+  return entriesByItemId
 }
 
 /**
@@ -165,24 +268,47 @@ export function getScheduleById(id: number): ScheduleWithItems | null {
       .orderBy(asc(scheduleItems.sortOrder))
       .all()
 
-    // Convert items with slides
+    // Collect IDs for batch loading (eliminates N+1 queries)
+    const songIds: number[] = []
+    const biblePassageItemIds: number[] = []
+    const verseteTineriItemIds: number[] = []
+
+    for (const record of itemRecords) {
+      if (record.itemType === 'song' && record.songId) {
+        songIds.push(record.songId)
+      }
+      if (record.itemType === 'bible_passage') {
+        biblePassageItemIds.push(record.id)
+      }
+      if (
+        record.itemType === 'slide' &&
+        record.slideType === 'versete_tineri'
+      ) {
+        verseteTineriItemIds.push(record.id)
+      }
+    }
+
+    // Batch load all related data in 3 queries instead of N queries
+    const slidesBySongId = getSlidesBySongIds(songIds)
+    const versesByItemId = getBiblePassageVersesBatch(biblePassageItemIds)
+    const entriesByItemId = getVerseteTineriEntriesBatch(verseteTineriItemIds)
+
+    // Convert items with pre-loaded data
     const items: ScheduleItem[] = itemRecords.map((record) => {
       const isSongItem = record.itemType === 'song' && record.songId !== null
       const slides =
         record.itemType === 'song' && record.songId
-          ? getSlidesBySongId(record.songId)
+          ? (slidesBySongId.get(record.songId) ?? [])
           : []
 
-      // Fetch bible passage verses if this is a bible_passage item
       const biblePassageVerses =
         record.itemType === 'bible_passage'
-          ? getBiblePassageVerses(record.id)
+          ? (versesByItemId.get(record.id) ?? [])
           : []
 
-      // Fetch versete tineri entries if this is a versete_tineri slide
       const verseteTineriEntries =
         record.itemType === 'slide' && record.slideType === 'versete_tineri'
-          ? getVerseteTineriEntries(record.id)
+          ? (entriesByItemId.get(record.id) ?? [])
           : []
 
       return {

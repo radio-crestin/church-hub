@@ -110,6 +110,6 @@ pub fn reset_zoom(
 /// Restart the sidecar server (database connection will be re-initialized)
 #[cfg(desktop)]
 #[tauri::command]
-pub fn restart_server(app_handle: tauri::AppHandle) -> Result<(), String> {
-    crate::server::restart_server(&app_handle)
+pub async fn restart_server(app_handle: tauri::AppHandle) -> Result<(), String> {
+    crate::server::restart_server_async(&app_handle).await
 }

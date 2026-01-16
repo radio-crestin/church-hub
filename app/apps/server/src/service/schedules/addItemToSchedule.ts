@@ -178,23 +178,20 @@ export function addItemToSchedule(
         .get()
       itemId = result.id
 
-      // Insert individual verses
-      for (let i = 0; i < verses.length; i++) {
-        const verse = verses[i]
-        const verseReference = `${verse.bookName} ${verse.chapter}:${verse.verse}`
+      // Batch insert all verses in a single query
+      if (verses.length > 0) {
+        const verseValues = verses.map((verse, i) => ({
+          scheduleItemId: itemId,
+          verseId: verse.id,
+          reference: `${verse.bookName} ${verse.chapter}:${verse.verse}`,
+          text: verse.text,
+          sortOrder: i,
+        }))
 
-        db.insert(scheduleBiblePassageVerses)
-          .values({
-            scheduleItemId: itemId,
-            verseId: verse.id,
-            reference: verseReference,
-            text: verse.text,
-            sortOrder: i,
-          })
-          .run()
+        db.insert(scheduleBiblePassageVerses).values(verseValues).run()
       }
 
-      log('info', `Bible passage added with ${verses.length} verses`)
+      log('info', `Bible passage added with ${verses.length} verses (batch)`)
     } else if (isVerseteTineri) {
       // Handle Versete Tineri slide with entries
       const result = db
@@ -212,8 +209,23 @@ export function addItemToSchedule(
         .get()
       itemId = result.id
 
-      // Insert versete tineri entries
+      // Process versete tineri entries and collect data for batch insert
       const entries = input.verseteTineriEntries!
+      const entryValues: Array<{
+        scheduleItemId: number
+        personName: string
+        translationId: number
+        bookCode: string
+        bookName: string
+        reference: string
+        text: string
+        startChapter: number
+        startVerse: number
+        endChapter: number
+        endVerse: number
+        sortOrder: number
+      }> = []
+
       for (let i = 0; i < entries.length; i++) {
         const entry = entries[i]
 
@@ -256,25 +268,31 @@ export function addItemToSchedule(
           entry.endVerse,
         )
 
-        db.insert(scheduleVerseteTineriEntries)
-          .values({
-            scheduleItemId: itemId,
-            personName: entry.personName,
-            translationId: entry.translationId,
-            bookCode: entry.bookCode,
-            bookName: entry.bookName,
-            reference,
-            text: combinedText,
-            startChapter: entry.startChapter,
-            startVerse: entry.startVerse,
-            endChapter: entry.endChapter,
-            endVerse: entry.endVerse,
-            sortOrder: i,
-          })
-          .run()
+        entryValues.push({
+          scheduleItemId: itemId,
+          personName: entry.personName,
+          translationId: entry.translationId,
+          bookCode: entry.bookCode,
+          bookName: entry.bookName,
+          reference,
+          text: combinedText,
+          startChapter: entry.startChapter,
+          startVerse: entry.startVerse,
+          endChapter: entry.endChapter,
+          endVerse: entry.endVerse,
+          sortOrder: entryValues.length, // Use current length as sort order
+        })
       }
 
-      log('info', `Versete Tineri added with ${entries.length} entries`)
+      // Batch insert all entries in a single query
+      if (entryValues.length > 0) {
+        db.insert(scheduleVerseteTineriEntries).values(entryValues).run()
+      }
+
+      log(
+        'info',
+        `Versete Tineri added with ${entryValues.length} entries (batch)`,
+      )
     } else if (isScene) {
       // Handle Scene slide (OBS scene switch)
       const result = db
