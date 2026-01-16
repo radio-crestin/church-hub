@@ -162,17 +162,7 @@ export function useMIDILEDFeedback({
     return unsubscribe
   }, [midi, refreshLEDs])
 
-  // Cleanup: turn off all LEDs when unmounting
-  useEffect(() => {
-    return () => {
-      if (!midi || !midi.isEnabled) return
-
-      logger.debug('Cleaning up LED states')
-      previousLEDStatesRef.current.forEach((on, note) => {
-        if (on) {
-          midi.setLED(note, false)
-        }
-      })
-    }
-  }, [midi])
+  // Note: We intentionally do NOT turn off LEDs on unmount.
+  // LED state should persist across page navigation. When the component
+  // remounts, it will re-sync LED states based on current app state.
 }
