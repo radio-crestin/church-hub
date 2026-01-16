@@ -180,25 +180,10 @@
 ~~- adauga automatizare cand este prezentata o cantare, ca sa activezi microfon sala melodie~~
 ~~- search-ul in Biblie sa fie manual~~
 ~~- ESC va trebui prima data sa ascunda slide-ul~~
-- grupeaza istoricul dupa zi, cu limita maxima de zile (infinite scroll up)
-- fa istoricul scrollable
-- adauga documentatie la mixer, cu mixere suportate
-- adauga video in player si youtube download
-- user agent din whatsapp
-
-
-
-- adauga upvote/downvote la cantari
-- pagina dedicata pentru control sunet camera copii
-- in livestream adauga un preview cu feed-ul live
-- creaza un quickstart guide pentru utilizatori
-- (optional) afisare in 2 pasi
-- pagina de prezentari
-- slide-uri temporare
-- check-ul de actualizari nu functioneaza in tauri
-- in procesul de instalare asigura-te ca aplicatia a fost inchisa
+~~- grupeaza istoricul dupa zi, cu limita maxima de zile (infinite scroll up)~~
+~~- fa istoricul scrollable~~
+~~- adauga documentatie la mixer, cu mixere suportate~~ 
 ~~- adauga optiunea de a face screen share la o fereastra~~
-
 ~~- rezolva problema cu programele~~
 ~~- cand se sterge search-ul din Biblie, intoarce-te la fisierul afisat~~
 ~~- am cautat "ca sa ne invete ce sa facem" in Biblie si nu a functiona~~
@@ -217,8 +202,18 @@
   ~~- adauga sql lock timeout~~
 ~~- adauga buton de edit al cantarii in preview-ul din program~~
 
+- user agent din whatsapp
+- check-ul de actualizari nu functioneaza in tauri
+- in procesul de instalare asigura-te ca aplicatia a fost inchisa
+- creaza un quickstart guide pentru utilizatori
 
 ### Optionals
+- adauga video in player si youtube download
+- adauga upvote/downvote la cantari
+- pagina dedicata pentru control sunet camera copii
+- in livestream adauga un preview cu feed-ul live
+- pagina de prezentari
+- slide-uri temporare
 - implementeaza transcription folosind AI
 - test backing up the database in https://turso.tech/blog/turso-offline-sync-public-beta
 - exportul ca si pptx ar trebui sa aiba textul ceva mai mare

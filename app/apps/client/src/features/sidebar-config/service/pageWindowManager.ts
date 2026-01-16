@@ -1,14 +1,11 @@
 import { isTauri } from '~/utils/isTauri'
 import { createLogger } from '~/utils/logger'
 import { generateWindowIcon } from '../utils/generateWindowIcon'
+import { getChromeUserAgent } from '../utils/getUserAgent'
 
 const logger = createLogger('app:pageWindow')
 
 const WINDOW_POSITIONS_KEY = 'sidebar-page-window-positions'
-
-// Modern Chrome user agent for compatibility with sites like YouTube and WhatsApp Web
-const CHROME_USER_AGENT =
-  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36'
 
 interface PageWindowState {
   x: number
@@ -150,7 +147,7 @@ export async function openPageInNativeWindow(
 
     // For external URLs, set Chrome user agent for compatibility
     if (externalUrl) {
-      windowOptions.userAgent = CHROME_USER_AGENT
+      windowOptions.userAgent = await getChromeUserAgent()
     }
 
     logger.debug('Creating window with options:', windowOptions)

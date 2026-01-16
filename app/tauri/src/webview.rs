@@ -3,8 +3,16 @@ use tauri::{webview::WebviewBuilder, LogicalPosition, LogicalSize, Manager, Webv
 use tauri_utils::config::BackgroundThrottlingPolicy;
 use tokio::time::sleep;
 
-// Modern Chrome user agent to ensure compatibility with sites like YouTube and WhatsApp Web
+// Modern Chrome user agents for compatibility with sites like YouTube and WhatsApp Web
+// Uses OS-specific user agent strings to match the actual platform
+#[cfg(target_os = "macos")]
 const CHROME_USER_AGENT: &str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36";
+
+#[cfg(target_os = "windows")]
+const CHROME_USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36";
+
+#[cfg(target_os = "linux")]
+const CHROME_USER_AGENT: &str = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36";
 
 // Maximum retries for getting main window (handles timing issues during startup)
 const MAX_MAIN_WINDOW_RETRIES: u32 = 10;

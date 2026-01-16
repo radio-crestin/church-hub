@@ -96,6 +96,11 @@
   "history": {
     "title": "History",
     "empty": "No verses displayed yet",
-    "clear": "Clear"
+    "clear": "Clear",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "export": "Export as schedule",
+    "exportTitle": "Bible History",
+    "exportHelp": "Use [V] for Bible verses"
   }
 }

@@ -1,4 +1,5 @@
 import { isTauri } from '~/features/presentation/utils/openDisplayWindow'
+import { getChromeUserAgent } from '../utils/getUserAgent'
 import { transformToEmbedUrl } from '../utils/transformEmbedUrl'
 
 /**
@@ -23,10 +24,6 @@ let currentVisibleWebview: string | null = null
 
 // Window resize listener cleanup
 let resizeCleanup: (() => void) | null = null
-
-// Modern Chrome user agent for compatibility with sites like YouTube and WhatsApp Web
-const CHROME_USER_AGENT =
-  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36'
 
 /**
  * Gets the webview label for a custom page
@@ -158,13 +155,14 @@ export async function showCustomPageWebview(
     }
     const mainWindow = getCurrentWindow()
 
+    const userAgent = await getChromeUserAgent()
     const webview = new Webview(mainWindow, label, {
       url: embedUrl,
       x: bounds.x,
       y: bounds.y,
       width: bounds.width,
       height: bounds.height,
-      userAgent: CHROME_USER_AGENT,
+      userAgent,
     })
 
     // Wait for webview to be created
