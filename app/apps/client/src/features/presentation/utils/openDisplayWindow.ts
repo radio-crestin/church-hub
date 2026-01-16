@@ -12,21 +12,30 @@ interface WindowState {
   fullscreen: boolean
 }
 
+// Cached isTauri result to avoid repeated checks and logging
+let isTauriCached: boolean | null = null
+
 /**
  * Checks if we're running inside Tauri
  * In Tauri v2, checks for __TAURI_INTERNALS__ or __TAURI__
+ * Result is cached after first check to prevent excessive logging and computation
  */
 export function isTauri(): boolean {
+  if (isTauriCached !== null) {
+    return isTauriCached
+  }
   const hasTauriInternals = '__TAURI_INTERNALS__' in window
   const hasTauri = '__TAURI__' in window
-  // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri detection
+  isTauriCached = hasTauriInternals || hasTauri
+  // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri detection (logged once)
   console.log(
     '[isTauri] __TAURI_INTERNALS__:',
     hasTauriInternals,
     '__TAURI__:',
     hasTauri,
+    '(cached)',
   )
-  return hasTauriInternals || hasTauri
+  return isTauriCached
 }
 
 /**
