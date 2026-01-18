@@ -80,6 +80,8 @@ export function BibleNavigationPanel({
   const [isTextSearchTriggered, setIsTextSearchTriggered] = useState(false)
   // Track whether user is actively typing to prevent external sync from overwriting
   const isUserTypingRef = useRef(false)
+  // Track if text has been selected once (to allow normal selection on second click)
+  const hasSelectedAllRef = useRef(false)
   // Track navigation state before search was initiated (to restore when search is cleared)
   const preSearchStateRef = useRef<{
     level: typeof state.level
@@ -457,8 +459,23 @@ export function BibleNavigationPanel({
               value={localQuery}
               onChange={(e) => handleQueryChange(e.target.value)}
               onKeyDown={handleSearchKeyDown}
-              onClick={(e) => e.currentTarget.select()}
-              onFocus={(e) => e.target.select()}
+              onMouseDown={(e) => {
+                if (localQuery) {
+                  // If already selected all once, allow normal selection behavior
+                  if (hasSelectedAllRef.current) return
+                  e.preventDefault()
+                  e.currentTarget.focus()
+                  e.currentTarget.select()
+                  hasSelectedAllRef.current = true
+                }
+              }}
+              onFocus={(e) => {
+                e.target.select()
+                hasSelectedAllRef.current = true
+              }}
+              onBlur={() => {
+                hasSelectedAllRef.current = false
+              }}
               placeholder={t('search.placeholder')}
               className={`w-full pl-9 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-white placeholder-gray-400 ${
                 searchBibleShortcut && !localQuery ? 'pr-20' : 'pr-9'

@@ -14,7 +14,8 @@ export function parseReference(
   query: string,
   books: BibleBook[],
 ): ParsedReference {
-  const trimmed = query.trim()
+  // Normalize: trim and collapse multiple spaces to single space
+  const trimmed = query.trim().replace(/\s+/g, ' ')
   if (!trimmed) {
     return { type: 'none' }
   }
