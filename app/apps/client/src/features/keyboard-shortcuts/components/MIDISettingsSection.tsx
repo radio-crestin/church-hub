@@ -1,7 +1,7 @@
 import { Disc3 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-import { MIDIDeviceSelector, MIDISettingsProvider } from '../midi/components'
+import { MIDIDeviceSelector } from '../midi/components'
 
 /**
  * Settings section for MIDI controller configuration.
@@ -9,6 +9,10 @@ import { MIDIDeviceSelector, MIDISettingsProvider } from '../midi/components'
  * - Sidebar navigation shortcuts -> Sidebar item settings
  * - Stream shortcuts -> Livestream settings
  * - Slide navigation shortcuts -> Presentation settings
+ *
+ * Note: MIDIDeviceSelector uses the MIDIProvider context from the root-level
+ * MIDISettingsProvider in __root.tsx. Do NOT wrap it in another MIDISettingsProvider
+ * as that causes duplicate connections and LED state resets on page re-renders.
  */
 export function MIDISettingsSection() {
   const { t } = useTranslation('settings')
@@ -30,9 +34,7 @@ export function MIDISettingsSection() {
         </div>
       </div>
 
-      <MIDISettingsProvider>
-        <MIDIDeviceSelector />
-      </MIDISettingsProvider>
+      <MIDIDeviceSelector />
     </div>
   )
 }
