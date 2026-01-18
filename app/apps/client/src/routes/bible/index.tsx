@@ -1093,6 +1093,8 @@ function BiblePage() {
                   canNavigate={canNavigateVerses}
                   onToggleHistory={handleToggleHistory}
                   isHistoryCollapsed={isHistoryCollapsed}
+                  onHide={handleHidePresentation}
+                  isHiding={clearSlide.isPending}
                 />
               </div>
 

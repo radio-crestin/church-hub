@@ -10,6 +10,7 @@ import {
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { ICON_COLOR_CLASSES } from '~/features/sidebar-config/constants'
 import type { ScheduleItem, SlideTemplate } from '../types'
 
 interface ScheduleItemBiblePassageProps {
@@ -62,8 +63,10 @@ export function ScheduleItemBiblePassage({
 
         {/* Passage Icon & Title */}
         <div className="flex items-center gap-3 flex-1 min-w-0 text-left">
-          <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-teal-100 dark:bg-teal-900/30">
-            <Book size={16} className="text-teal-600 dark:text-teal-400" />
+          <div
+            className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${ICON_COLOR_CLASSES.teal.bg}`}
+          >
+            <Book size={16} className={ICON_COLOR_CLASSES.teal.text} />
           </div>
 
           {/* Passage Reference & Info */}
@@ -135,7 +138,9 @@ export function ScheduleItemBiblePassage({
               key={verse.id}
               className="p-2 rounded bg-gray-50 dark:bg-gray-700/50 text-sm"
             >
-              <div className="font-medium text-teal-700 dark:text-teal-400 text-xs mb-1">
+              <div
+                className={`font-medium text-xs mb-1 ${ICON_COLOR_CLASSES.teal.text}`}
+              >
                 {verse.reference}
               </div>
               <div className="text-gray-600 dark:text-gray-300 line-clamp-2">

@@ -121,6 +121,9 @@ export function SidebarConfigManager() {
       url: input.url,
       iconName: input.iconName,
       useIframeEmbedding: input.useIframeEmbedding,
+      customIconUrl: input.customIconUrl,
+      iconSource: input.iconSource ?? 'favicon',
+      faviconColor: input.faviconColor,
       order: config.items.length,
       isVisible: true,
       settings: getDefaultSidebarItemSettings(),
@@ -163,6 +166,9 @@ export function SidebarConfigManager() {
           url: updates.customPageData.url,
           iconName: updates.customPageData.iconName,
           useIframeEmbedding: updates.customPageData.useIframeEmbedding,
+          customIconUrl: updates.customPageData.customIconUrl,
+          iconSource: updates.customPageData.iconSource,
+          faviconColor: updates.customPageData.faviconColor,
         } as CustomPageMenuItem
       }
 

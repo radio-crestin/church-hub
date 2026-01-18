@@ -34,7 +34,11 @@ export {
   useDeleteTranslation,
   useImportTranslation,
 } from './useImportTranslation'
+export type { ChapterData } from './useInfiniteChapters'
+export { useInfiniteChapters } from './useInfiniteChapters'
 export { useLocalizedBookNames } from './useLocalizedBookNames'
+export type { ChapterVerses } from './useMultiChapterVerses'
+export { useChapterCount } from './useMultiChapterVerses'
 export type { MultiTranslationVerseResult } from './useMultiTranslationVerse'
 export { useMultiTranslationVerse } from './useMultiTranslationVerse'
 export { useSearchBible } from './useSearchBible'

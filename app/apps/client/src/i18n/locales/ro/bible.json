@@ -16,7 +16,10 @@
     "back": "Inapoi",
     "oldTestament": "Vechiul Testament",
     "newTestament": "Noul Testament",
-    "noBooks": "Nicio carte disponibila"
+    "noBooks": "Nicio carte disponibila",
+    "previousChapter": "Capitolul anterior",
+    "nextChapter": "Capitolul urmator",
+    "scrollToVerse": "Deruleaza la versetul curent"
   },
   "queue": {
     "title": "Lista versete",

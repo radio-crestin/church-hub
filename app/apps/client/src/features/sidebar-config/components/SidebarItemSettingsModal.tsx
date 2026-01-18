@@ -1,4 +1,13 @@
-import { Eye, EyeOff, Plus, Trash2, X } from 'lucide-react'
+import {
+  Eye,
+  EyeOff,
+  Globe,
+  Loader2,
+  Plus,
+  RefreshCw,
+  Trash2,
+  X,
+} from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -9,18 +18,24 @@ import { VALID_ACTION_IDS } from '~/features/keyboard-shortcuts/utils'
 import { useOBSScenes } from '~/features/livestream/hooks'
 import { ConfirmModal } from '~/ui/modal'
 import { isTauri } from '~/utils/isTauri'
+import { IconColorPicker } from './IconColorPicker'
 import { IconPicker } from './IconPicker'
 import {
   BUILTIN_ITEMS,
+  DEFAULT_ICON_COLORS,
   getDefaultSidebarItemSettings,
+  ICON_COLOR_HEX,
   PAGES_WITH_SEARCH,
 } from '../constants'
 import type {
   BuiltInMenuItem,
   CustomPageMenuItem,
+  IconColor,
+  IconSourceType,
   SidebarItemSettings,
   SidebarMenuItem,
 } from '../types'
+import { fetchFavicon } from '../utils/fetchFavicon'
 
 interface SidebarItemSettingsModalProps {
   isOpen: boolean
@@ -40,6 +55,9 @@ export interface SidebarItemSettingsUpdate {
     url: string
     iconName: string
     useIframeEmbedding?: boolean
+    customIconUrl?: string
+    iconSource?: IconSourceType
+    faviconColor?: string
   }
 }
 
@@ -89,6 +107,16 @@ export function SidebarItemSettingsModal({
   const [iconName, setIconName] = useState('Globe')
   const [useIframeEmbedding, setUseIframeEmbedding] = useState(false)
   const [errors, setErrors] = useState<{ title?: string; url?: string }>({})
+  const [customIconUrl, setCustomIconUrl] = useState<string | undefined>()
+  const [iconSource, setIconSource] = useState<IconSourceType>('favicon')
+  const [isFetchingFavicon, setIsFetchingFavicon] = useState(false)
+  const [faviconColor, setFaviconColor] = useState<string | undefined>()
+
+  // Icon color
+  const [iconColor, setIconColor] = useState<IconColor | undefined>('gray')
+  const [customIconBgColor, setCustomIconBgColor] = useState<
+    string | undefined
+  >()
 
   // Delete confirmation
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -119,11 +147,10 @@ export function SidebarItemSettingsModal({
   // Reset form when modal opens or item changes
   useEffect(() => {
     if (isOpen && item) {
-      const settings =
-        item.settings ??
-        getDefaultSidebarItemSettings(
-          isBuiltin ? (item as BuiltInMenuItem).builtinId : undefined,
-        )
+      const builtinId = isBuiltin
+        ? (item as BuiltInMenuItem).builtinId
+        : undefined
+      const settings = item.settings ?? getDefaultSidebarItemSettings(builtinId)
       setShortcuts([...settings.shortcuts])
       setFocusSearchOnNavigate(settings.focusSearchOnNavigate)
       setOpenInNativeWindow(settings.nativeWindow?.openInNativeWindow ?? false)
@@ -131,14 +158,25 @@ export function SidebarItemSettingsModal({
       setForceNativeWindow(settings.nativeWindow?.forceNativeWindow ?? false)
       setIsVisible(item.isVisible)
 
+      // Set icon color - use saved value, or default for built-in, or undefined for custom
+      const defaultColor = builtinId
+        ? DEFAULT_ICON_COLORS[builtinId]
+        : undefined
+      setIconColor(settings.iconColor ?? defaultColor)
+      setCustomIconBgColor(settings.customIconBgColor)
+
       if (isCustom) {
         const customItem = item as CustomPageMenuItem
         setTitle(customItem.title)
         setUrl(customItem.url)
         setIconName(customItem.iconName)
         setUseIframeEmbedding(customItem.useIframeEmbedding ?? false)
+        setCustomIconUrl(customItem.customIconUrl)
+        setIconSource(customItem.iconSource ?? 'favicon')
+        setFaviconColor(customItem.faviconColor)
       }
       setErrors({})
+      setIsFetchingFavicon(false)
     }
   }, [isOpen, item, isBuiltin, isCustom])
 
@@ -246,6 +284,23 @@ export function SidebarItemSettingsModal({
     return Object.keys(newErrors).length === 0
   }
 
+  // Fetch favicon from URL
+  const handleFetchFavicon = useCallback(async () => {
+    if (!url.trim() || !isValidUrl(url)) return
+
+    setIsFetchingFavicon(true)
+    try {
+      const result = await fetchFavicon(url.trim())
+      if (result) {
+        setCustomIconUrl(result.dataUrl)
+        setFaviconColor(result.dominantColor)
+        setIconSource('favicon')
+      }
+    } finally {
+      setIsFetchingFavicon(false)
+    }
+  }, [url])
+
   const handleSave = () => {
     if (!item) return
 
@@ -267,6 +322,8 @@ export function SidebarItemSettingsModal({
           autoOpenOnStartup,
           forceNativeWindow,
         },
+        iconColor,
+        customIconBgColor,
       },
       isVisible,
     }
@@ -277,6 +334,9 @@ export function SidebarItemSettingsModal({
         url: url.trim(),
         iconName,
         useIframeEmbedding,
+        customIconUrl: iconSource === 'favicon' ? customIconUrl : undefined,
+        iconSource,
+        faviconColor: iconSource === 'favicon' ? faviconColor : undefined,
       }
     }
 
@@ -348,6 +408,25 @@ export function SidebarItemSettingsModal({
                 <Plus size={16} />
                 {t('sections.shortcuts.addShortcut')}
               </button>
+            </div>
+
+            {/* Icon Color Section */}
+            <div className="space-y-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+              <div>
+                <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                  {t('sections.sidebarItem.iconColor.title')}
+                </h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  {t('sections.sidebarItem.iconColor.description')}
+                </p>
+              </div>
+              <IconColorPicker
+                value={iconColor}
+                customColor={customIconBgColor}
+                onChange={setIconColor}
+                onCustomColorChange={setCustomIconBgColor}
+                showCustomOption={isCustom}
+              />
             </div>
 
             {/* Focus Search Toggle (only for pages with search) */}
@@ -547,8 +626,111 @@ export function SidebarItemSettingsModal({
                   )}
                 </div>
 
-                {/* Icon Picker */}
-                <IconPicker value={iconName} onChange={setIconName} />
+                {/* Icon Source Selection */}
+                <div className="space-y-3">
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {t('sections.sidebar.fields.icon')}
+                    </h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      {t('sections.sidebar.fields.iconSourceDescription')}
+                    </p>
+                  </div>
+
+                  {/* Icon Source Toggle */}
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIconSource('favicon')}
+                      className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg border transition-colors ${
+                        iconSource === 'favicon'
+                          ? 'bg-indigo-50 dark:bg-indigo-950 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300'
+                          : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      <Globe size={16} />
+                      {t('sections.sidebar.fields.useFavicon')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIconSource('icon')}
+                      className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg border transition-colors ${
+                        iconSource === 'icon'
+                          ? 'bg-indigo-50 dark:bg-indigo-950 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300'
+                          : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      {t('sections.sidebar.fields.useCustomIcon')}
+                    </button>
+                  </div>
+
+                  {/* Favicon Section */}
+                  {iconSource === 'favicon' && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3">
+                        {/* Favicon Preview */}
+                        <div
+                          className="w-12 h-12 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center overflow-hidden"
+                          style={{
+                            backgroundColor: customIconUrl
+                              ? (customIconBgColor ??
+                                (iconColor
+                                  ? ICON_COLOR_HEX[iconColor]
+                                  : (faviconColor ?? '#6366f1')))
+                              : undefined,
+                          }}
+                        >
+                          {isFetchingFavicon ? (
+                            <Loader2
+                              size={20}
+                              className="text-gray-400 animate-spin"
+                            />
+                          ) : customIconUrl ? (
+                            <img
+                              src={customIconUrl}
+                              alt="Favicon"
+                              className="w-7 h-7 object-contain"
+                            />
+                          ) : (
+                            <Globe size={20} className="text-gray-400" />
+                          )}
+                        </div>
+
+                        {/* Fetch Button */}
+                        <button
+                          type="button"
+                          onClick={handleFetchFavicon}
+                          disabled={
+                            isFetchingFavicon ||
+                            !url.trim() ||
+                            !isValidUrl(url.trim())
+                          }
+                          className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors text-gray-700 dark:text-gray-300"
+                        >
+                          {isFetchingFavicon ? (
+                            <Loader2 size={16} className="animate-spin" />
+                          ) : (
+                            <RefreshCw size={16} />
+                          )}
+                          {customIconUrl
+                            ? t('sections.sidebar.fields.refetchFavicon')
+                            : t('sections.sidebar.fields.fetchFavicon')}
+                        </button>
+                      </div>
+
+                      {!customIconUrl && !isFetchingFavicon && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {t('sections.sidebar.fields.faviconHint')}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Icon Picker (when using custom icon) */}
+                  {iconSource === 'icon' && (
+                    <IconPicker value={iconName} onChange={setIconName} />
+                  )}
+                </div>
 
                 {/* Iframe Embedding Toggle */}
                 <div className="flex items-start gap-3">

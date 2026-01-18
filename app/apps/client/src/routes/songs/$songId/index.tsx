@@ -8,9 +8,13 @@ import {
   ArrowLeft,
   CalendarPlus,
   Download,
+  Eye,
   GripVertical,
   Loader2,
+  Music,
+  Music2,
   Pencil,
+  Tag,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -31,8 +35,18 @@ import {
   ExportFormatModal,
   useSaveSongToFile,
 } from '~/features/song-export'
-import { SongControlPanel, SongSlidesPanel } from '~/features/songs/components'
 import {
+  KeyLineEditDialog,
+  type KeyLineEditDialogHandle,
+} from '~/features/song-key'
+import {
+  CategoryEditDialog,
+  type CategoryEditDialogHandle,
+  SongControlPanel,
+  SongSlidesPanel,
+} from '~/features/songs/components'
+import {
+  useResetPresentationCount,
   useSong,
   useSongKeyboardShortcuts,
   useSongSlideSelectionKeyboard,
@@ -40,6 +54,7 @@ import {
 import type { SongSlide } from '~/features/songs/types'
 import { expandSongSlidesWithChoruses } from '~/features/songs/utils/expandSongSlides'
 import { KeyboardShortcutBadge } from '~/ui/kbd'
+import { ConfirmModal } from '~/ui/modal'
 import { useToast } from '~/ui/toast'
 
 interface SongSearchParams {
@@ -102,15 +117,19 @@ function SongPreviewPage() {
   const clearTemporary = useClearTemporaryContent()
   const { data: presentationState } = usePresentationState()
   const { saveSong, isPending: isSaving } = useSaveSongToFile()
+  const resetPresentationCount = useResetPresentationCount()
   const { showToast } = useToast()
 
   const [dividerPosition, setDividerPosition] = useState(40)
   const [showAddToScheduleModal, setShowAddToScheduleModal] = useState(false)
   const [showExportFormatModal, setShowExportFormatModal] = useState(false)
+  const [showResetCountConfirm, setShowResetCountConfirm] = useState(false)
   const [isLargeScreen, setIsLargeScreen] = useState(false)
   const [selectedSlideIndex, setSelectedSlideIndex] = useState(0)
   const containerRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
+  const keyLineDialogRef = useRef<KeyLineEditDialogHandle>(null)
+  const categoryDialogRef = useRef<CategoryEditDialogHandle>(null)
 
   // Get expanded slides count for navigation bounds
   const expandedSlidesCount = useMemo(
@@ -216,6 +235,25 @@ function SongPreviewPage() {
   const handleOpenExportModal = useCallback(() => {
     setShowExportFormatModal(true)
   }, [])
+
+  const handleOpenKeyLineDialog = useCallback(() => {
+    if (song) {
+      keyLineDialogRef.current?.open(song)
+    }
+  }, [song])
+
+  const handleOpenCategoryDialog = useCallback(() => {
+    if (song) {
+      categoryDialogRef.current?.open(song)
+    }
+  }, [song])
+
+  const handleResetPresentationCount = useCallback(async () => {
+    if (!song) return
+    setShowResetCountConfirm(false)
+    await resetPresentationCount.mutateAsync(song.id)
+    showToast(t('messages.presentationCountReset'), 'success')
+  }, [song, resetPresentationCount, showToast, t])
 
   const handleExportFormatConfirm = useCallback(
     async (format: ExportFormat) => {
@@ -331,38 +369,75 @@ function SongPreviewPage() {
           <h1 className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white truncate">
             {song.title}
           </h1>
+          {song.category?.name && (
+            <button
+              type="button"
+              onClick={handleOpenCategoryDialog}
+              className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              title={t('categoryDialog.title')}
+            >
+              <Tag className="w-3 h-3" />
+              {song.category.name}
+            </button>
+          )}
+          {song.presentationCount !== undefined &&
+            song.presentationCount > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowResetCountConfirm(true)}
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 rounded hover:bg-sky-200 dark:hover:bg-sky-800/40 transition-colors"
+                title={t('resetCountDialog.title')}
+              >
+                <Eye className="w-3 h-3" />
+                {song.presentationCount}
+              </button>
+            )}
+          {song.keyLine && (
+            <button
+              type="button"
+              onClick={handleOpenKeyLineDialog}
+              className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 rounded hover:bg-amber-200 dark:hover:bg-amber-800/40 transition-colors"
+              title={t('actions.setKeyLine')}
+            >
+              <Music2 className="w-3 h-3" />
+              {song.keyLine}
+            </button>
+          )}
         </div>
         {/* Action buttons */}
         <div className="flex items-center gap-2 justify-end shrink-0">
           <button
             type="button"
+            onClick={handleOpenKeyLineDialog}
+            className="p-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors inline-flex items-center justify-center"
+            title={t('actions.setKeyLine')}
+          >
+            <Music size={20} />
+          </button>
+          <button
+            type="button"
             onClick={handleOpenExportModal}
             disabled={isSaving}
-            className="p-2 sm:px-4 sm:py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50 inline-flex items-center gap-2"
+            className="p-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50 inline-flex items-center justify-center"
             title={t('actions.saveToFile')}
           >
             <Download size={20} />
-            <span className="hidden sm:inline">{t('actions.saveToFile')}</span>
           </button>
           <button
             type="button"
             onClick={() => setShowAddToScheduleModal(true)}
-            className="p-2 sm:px-4 sm:py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors inline-flex items-center gap-2"
+            className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors inline-flex items-center justify-center"
             title={t('actions.addToSchedule')}
           >
             <CalendarPlus size={20} />
-            <span className="hidden sm:inline">
-              {t('actions.addToSchedule')}
-            </span>
           </button>
           <button
             type="button"
             onClick={handleEdit}
-            className="p-2 sm:px-4 sm:py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors inline-flex items-center gap-2"
+            className="p-2 text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors inline-flex items-center justify-center"
             title={t('preview.edit')}
           >
-            <Pencil size={16} />
-            <span className="hidden sm:inline">{t('preview.edit')}</span>
+            <Pencil size={20} />
           </button>
         </div>
       </div>
@@ -430,6 +505,18 @@ function SongPreviewPage() {
         isOpen={showExportFormatModal}
         onConfirm={handleExportFormatConfirm}
         onCancel={() => setShowExportFormatModal(false)}
+      />
+
+      <KeyLineEditDialog ref={keyLineDialogRef} />
+      <CategoryEditDialog ref={categoryDialogRef} />
+
+      <ConfirmModal
+        isOpen={showResetCountConfirm}
+        title={t('resetCountDialog.title')}
+        message={t('resetCountDialog.message')}
+        confirmLabel={t('resetCountDialog.confirm')}
+        onConfirm={handleResetPresentationCount}
+        onCancel={() => setShowResetCountConfirm(false)}
       />
     </div>
   )

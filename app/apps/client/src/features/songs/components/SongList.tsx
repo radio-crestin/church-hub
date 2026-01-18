@@ -21,7 +21,7 @@ import {
 import type { SongFilters } from '../service'
 import type { AISearchResult, SongSearchResult } from '../types'
 
-const SEARCH_DEBOUNCE_MS = 600
+const SEARCH_DEBOUNCE_MS = 200
 
 const CATEGORY_FILTER_STORAGE_KEY = 'songList.categoryFilter'
 const PRESENTED_ONLY_STORAGE_KEY = 'songList.presentedOnly'
@@ -60,6 +60,7 @@ export function SongList({
   const { t } = useTranslation('songs')
   const searchInputRef = useRef<HTMLInputElement>(null)
   const loadMoreRef = useRef<HTMLDivElement>(null)
+  const hasSelectedAllRef = useRef(false)
 
   // Initialize category filter from local storage or props
   const [categoryIds, setCategoryIds] = useState<number[]>(() => {
@@ -548,13 +549,27 @@ export function SongList({
             value={localQuery}
             onChange={handleSearchChange}
             onKeyDown={handleKeyDown}
-            onClick={(e) => {
-              e.currentTarget.select()
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
+            onMouseDown={(e) => {
+              if (localQuery) {
+                // If already selected all once, allow normal selection behavior
+                if (hasSelectedAllRef.current) return
+                e.preventDefault()
+                e.currentTarget.focus()
+                e.currentTarget.select()
+                hasSelectedAllRef.current = true
+              }
               setSelectedIndex(-1)
             }}
             onFocus={(e) => {
               e.target.select()
+              hasSelectedAllRef.current = true
               setSelectedIndex(-1)
+            }}
+            onBlur={() => {
+              hasSelectedAllRef.current = false
             }}
             placeholder={t('search.placeholder')}
             className={`w-full pl-10 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${

@@ -1,8 +1,14 @@
-import { useEffect, useRef, useState } from 'react'
+import { Globe, Loader2, RefreshCw } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { IconPicker } from './IconPicker'
-import type { CustomPageInput, CustomPageMenuItem } from '../types'
+import type {
+  CustomPageInput,
+  CustomPageMenuItem,
+  IconSourceType,
+} from '../types'
+import { fetchFavicon } from '../utils/fetchFavicon'
 
 interface CustomPageFormModalProps {
   isOpen: boolean
@@ -42,6 +48,11 @@ export function CustomPageFormModal({
   const [iconName, setIconName] = useState('Globe')
   const [useIframeEmbedding, setUseIframeEmbedding] = useState(false)
   const [errors, setErrors] = useState<{ title?: string; url?: string }>({})
+  const [customIconUrl, setCustomIconUrl] = useState<string | undefined>()
+  const [iconSource, setIconSource] = useState<IconSourceType>('favicon')
+  const [isFetchingFavicon, setIsFetchingFavicon] = useState(false)
+  const [faviconColor, setFaviconColor] = useState<string | undefined>()
+  const lastFetchedUrlRef = useRef<string>('')
 
   const isEditing = !!editingPage
 
@@ -53,15 +64,54 @@ export function CustomPageFormModal({
         setUrl(editingPage.url)
         setIconName(editingPage.iconName)
         setUseIframeEmbedding(editingPage.useIframeEmbedding ?? false)
+        setCustomIconUrl(editingPage.customIconUrl)
+        setIconSource(editingPage.iconSource ?? 'favicon')
+        setFaviconColor(editingPage.faviconColor)
+        lastFetchedUrlRef.current = editingPage.url
       } else {
         setTitle('')
         setUrl('')
         setIconName('Globe')
         setUseIframeEmbedding(false)
+        setCustomIconUrl(undefined)
+        setIconSource('favicon')
+        setFaviconColor(undefined)
+        lastFetchedUrlRef.current = ''
       }
       setErrors({})
+      setIsFetchingFavicon(false)
     }
   }, [isOpen, editingPage])
+
+  // Fetch favicon function
+  const handleFetchFavicon = useCallback(async (urlToFetch: string) => {
+    if (!urlToFetch.trim() || !isValidUrl(urlToFetch)) return
+
+    setIsFetchingFavicon(true)
+    try {
+      const result = await fetchFavicon(urlToFetch.trim())
+      if (result) {
+        setCustomIconUrl(result.dataUrl)
+        setFaviconColor(result.dominantColor)
+        setIconSource('favicon')
+        lastFetchedUrlRef.current = urlToFetch.trim()
+      }
+    } finally {
+      setIsFetchingFavicon(false)
+    }
+  }, [])
+
+  // Auto-fetch favicon when URL changes (with debounce)
+  useEffect(() => {
+    if (!isOpen || !url.trim() || !isValidUrl(url)) return
+    if (lastFetchedUrlRef.current === url.trim()) return
+
+    const timer = setTimeout(() => {
+      void handleFetchFavicon(url)
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [url, isOpen, handleFetchFavicon])
 
   // Handle dialog open/close
   useEffect(() => {
@@ -120,6 +170,9 @@ export function CustomPageFormModal({
       url: url.trim(),
       iconName,
       useIframeEmbedding,
+      customIconUrl: iconSource === 'favicon' ? customIconUrl : undefined,
+      iconSource,
+      faviconColor: iconSource === 'favicon' ? faviconColor : undefined,
     })
   }
 
@@ -195,8 +248,109 @@ export function CustomPageFormModal({
             </p>
           </div>
 
-          {/* Icon Picker */}
-          <IconPicker value={iconName} onChange={setIconName} />
+          {/* Icon Source Selection */}
+          <div className="space-y-3">
+            <div>
+              <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                {t('sections.sidebar.fields.icon')}
+              </h4>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                {t('sections.sidebar.fields.iconSourceDescription')}
+              </p>
+            </div>
+
+            {/* Icon Source Toggle */}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setIconSource('favicon')}
+                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg border transition-colors ${
+                  iconSource === 'favicon'
+                    ? 'bg-indigo-50 dark:bg-indigo-950 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300'
+                    : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
+                }`}
+              >
+                <Globe size={16} />
+                {t('sections.sidebar.fields.useFavicon')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setIconSource('icon')}
+                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg border transition-colors ${
+                  iconSource === 'icon'
+                    ? 'bg-indigo-50 dark:bg-indigo-950 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300'
+                    : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
+                }`}
+              >
+                {t('sections.sidebar.fields.useCustomIcon')}
+              </button>
+            </div>
+
+            {/* Favicon Section */}
+            {iconSource === 'favicon' && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  {/* Favicon Preview */}
+                  <div
+                    className="w-12 h-12 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center overflow-hidden"
+                    style={{
+                      backgroundColor:
+                        customIconUrl && faviconColor
+                          ? faviconColor
+                          : undefined,
+                    }}
+                  >
+                    {isFetchingFavicon ? (
+                      <Loader2
+                        size={20}
+                        className="text-gray-400 animate-spin"
+                      />
+                    ) : customIconUrl ? (
+                      <img
+                        src={customIconUrl}
+                        alt="Favicon"
+                        className="w-7 h-7 object-contain"
+                      />
+                    ) : (
+                      <Globe size={20} className="text-gray-400" />
+                    )}
+                  </div>
+
+                  {/* Fetch Button */}
+                  <button
+                    type="button"
+                    onClick={() => handleFetchFavicon(url)}
+                    disabled={
+                      isFetchingFavicon ||
+                      !url.trim() ||
+                      !isValidUrl(url.trim())
+                    }
+                    className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors text-gray-700 dark:text-gray-300"
+                  >
+                    {isFetchingFavicon ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <RefreshCw size={16} />
+                    )}
+                    {customIconUrl
+                      ? t('sections.sidebar.fields.refetchFavicon')
+                      : t('sections.sidebar.fields.fetchFavicon')}
+                  </button>
+                </div>
+
+                {!customIconUrl && !isFetchingFavicon && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {t('sections.sidebar.fields.faviconHint')}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Icon Picker (when using custom icon) */}
+            {iconSource === 'icon' && (
+              <IconPicker value={iconName} onChange={setIconName} />
+            )}
+          </div>
 
           {/* Use Iframe Embedding Checkbox */}
           <div className="flex items-start gap-3 pt-2">

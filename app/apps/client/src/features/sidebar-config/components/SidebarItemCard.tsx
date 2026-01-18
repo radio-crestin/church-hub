@@ -7,9 +7,14 @@ import {
   formatShortcutForDisplay,
   isMIDIShortcut,
 } from '~/features/keyboard-shortcuts'
-import { BUILTIN_ITEMS } from '../constants'
+import {
+  BUILTIN_ITEMS,
+  DEFAULT_ICON_COLORS,
+  ICON_COLOR_CLASSES,
+  ICON_COLOR_HEX,
+} from '../constants'
 import { getIconComponent } from '../hooks/useResolvedSidebarItems'
-import type { SidebarMenuItem } from '../types'
+import type { CustomPageMenuItem, SidebarMenuItem } from '../types'
 
 interface SidebarItemCardProps {
   item: SidebarMenuItem
@@ -50,14 +55,43 @@ export function SidebarItemCard({
   // Get icon and label
   let Icon
   let label: string
+  let customIconUrl: string | undefined
+  let faviconBgColor: string | undefined
+  let iconColorClasses: { bg: string; text: string } | null = null
 
   if (isBuiltin) {
     const definition = BUILTIN_ITEMS[item.builtinId]
     Icon = definition?.icon
     label = t(definition?.labelKey ?? '')
+    // Get icon color - saved value or default
+    const iconColor =
+      item.settings?.iconColor ?? DEFAULT_ICON_COLORS[item.builtinId]
+    if (iconColor) {
+      iconColorClasses = ICON_COLOR_CLASSES[iconColor]
+    }
   } else {
-    Icon = getIconComponent(item.iconName)
-    label = item.title
+    const customItem = item as CustomPageMenuItem
+    Icon = getIconComponent(customItem.iconName)
+    label = customItem.title
+    // Get custom icon URL if using favicon
+    if (customItem.iconSource === 'favicon' && customItem.customIconUrl) {
+      customIconUrl = customItem.customIconUrl
+      // Compute favicon background color (priority order):
+      // 1. customIconBgColor - user's custom hex color
+      // 2. iconColor - predefined color from settings
+      // 3. faviconColor - extracted color from the favicon
+      const customBgColor = item.settings?.customIconBgColor
+      const iconColor = item.settings?.iconColor
+      faviconBgColor =
+        customBgColor ??
+        (iconColor ? ICON_COLOR_HEX[iconColor] : undefined) ??
+        customItem.faviconColor
+    }
+    // Get icon color if set (for non-favicon icons)
+    const iconColor = item.settings?.iconColor
+    if (iconColor && !customIconUrl) {
+      iconColorClasses = ICON_COLOR_CLASSES[iconColor]
+    }
   }
 
   return (
@@ -82,11 +116,24 @@ export function SidebarItemCard({
       </button>
 
       {/* Icon */}
-      {Icon && (
+      {customIconUrl ? (
+        <div
+          className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-md"
+          style={{ backgroundColor: faviconBgColor ?? '#6366f1' }}
+        >
+          <img src={customIconUrl} alt="" className="w-5 h-5 object-contain" />
+        </div>
+      ) : Icon && iconColorClasses ? (
+        <div
+          className={`flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-md ${iconColorClasses.bg}`}
+        >
+          <Icon size={18} className={iconColorClasses.text} />
+        </div>
+      ) : Icon ? (
         <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-md bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
           <Icon size={18} />
         </div>
-      )}
+      ) : null}
 
       {/* Label and Type Badge */}
       <div className="flex-1 min-w-0">

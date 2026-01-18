@@ -11,6 +11,7 @@ import {
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { ICON_COLOR_CLASSES } from '~/features/sidebar-config/constants'
 import type { ScheduleItem, SlideTemplate } from '../types'
 
 interface ScheduleItemVerseteTineriProps {
@@ -69,8 +70,10 @@ export function ScheduleItemVerseteTineri({
           onClick={onEditSlide}
           className="flex items-center gap-3 flex-1 min-w-0 text-left"
         >
-          <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-purple-100 dark:bg-purple-900/30">
-            <Users size={16} className="text-purple-600 dark:text-purple-400" />
+          <div
+            className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${ICON_COLOR_CLASSES.green.bg}`}
+          >
+            <Users size={16} className={ICON_COLOR_CLASSES.green.text} />
           </div>
 
           {/* Title & Info */}
@@ -154,7 +157,9 @@ export function ScheduleItemVerseteTineri({
               className="p-2 rounded bg-gray-50 dark:bg-gray-700/50 text-sm"
             >
               <div className="flex items-center justify-between mb-1">
-                <span className="font-medium text-purple-700 dark:text-purple-400">
+                <span
+                  className={`font-medium ${ICON_COLOR_CLASSES.green.text}`}
+                >
                   {entry.personName}
                 </span>
                 <span className="text-xs text-gray-500 dark:text-gray-400">
