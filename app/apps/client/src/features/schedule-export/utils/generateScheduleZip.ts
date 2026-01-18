@@ -1,5 +1,9 @@
 import JSZip from 'jszip'
 
+import {
+  generateChurchProgramJson,
+  serializeChurchProgram,
+} from './generateChurchProgramJson'
 import type { ScheduleWithItems } from '../../schedules/types'
 import { generateScheduleText } from '../../schedules/utils/generateScheduleText'
 import { sanitizeFilename } from '../../song-export/utils/createExportZip'
@@ -20,22 +24,35 @@ interface SongForPptx {
 
 /**
  * Creates a ZIP archive containing:
- * - PPTX files for each song in the schedule
+ * - A root folder named after the schedule
+ * - PPTX files for each song in the schedule (inside songs subfolder)
  * - A text file with the schedule overview
+ * - The ChurchHub .churchprogram JSON file
  */
 export async function generateScheduleZip(
   schedule: ScheduleWithItems,
   onProgress?: ProgressCallback,
 ): Promise<Blob> {
   const zip = new JSZip()
+  const sanitizedScheduleTitle = sanitizeFilename(schedule.title)
+
+  // Create root folder with schedule name
+  const rootFolder = zip.folder(sanitizedScheduleTitle)
+  if (!rootFolder) {
+    throw new Error('Failed to create schedule folder')
+  }
 
   // Add schedule text file (using same format as Edit as Text modal)
   const scheduleText = generateScheduleText(schedule.items)
-  const sanitizedScheduleTitle = sanitizeFilename(schedule.title)
-  zip.file(`${sanitizedScheduleTitle} - Schedule.txt`, scheduleText)
+  rootFolder.file(`${sanitizedScheduleTitle} - Schedule.txt`, scheduleText)
+
+  // Add ChurchHub .churchprogram JSON file
+  const churchProgramData = generateChurchProgramJson(schedule)
+  const churchProgramJson = serializeChurchProgram(churchProgramData)
+  rootFolder.file(`${sanitizedScheduleTitle}.churchprogram`, churchProgramJson)
 
   // Create a songs folder for PPTX files
-  const songsFolder = zip.folder('songs')
+  const songsFolder = rootFolder.folder('songs')
   if (!songsFolder) {
     throw new Error('Failed to create songs folder')
   }

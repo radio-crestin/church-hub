@@ -1,6 +1,9 @@
 import { isTauri } from '~/utils/isTauri'
 import { createLogger } from '~/utils/logger'
-import { generateWindowIcon } from '../utils/generateWindowIcon'
+import {
+  generateWindowIcon,
+  generateWindowIconFromImage,
+} from '../utils/generateWindowIcon'
 import { getChromeUserAgent } from '../utils/getUserAgent'
 
 const logger = createLogger('app:pageWindow')
@@ -78,6 +81,7 @@ export function openInBrowserTab(route: string): void {
  * @param pageRoute - App route (e.g., /bible, /custom-page/123)
  * @param iconName - Optional Lucide icon name for window icon
  * @param externalUrl - Optional external URL for custom pages (e.g., https://web.whatsapp.com)
+ * @param customIconUrl - Optional custom icon URL (base64 data URL) for favicon
  */
 export async function openPageInNativeWindow(
   pageId: string,
@@ -85,9 +89,11 @@ export async function openPageInNativeWindow(
   pageRoute: string,
   iconName?: string,
   externalUrl?: string,
+  customIconUrl?: string,
 ): Promise<void> {
   logger.debug(`Opening page ${pageId} (${pageLabel}) at ${pageRoute}`, {
     externalUrl,
+    customIconUrl: customIconUrl ? 'present' : 'none',
   })
 
   if (!isTauri()) {
@@ -176,7 +182,18 @@ export async function openPageInNativeWindow(
       }
 
       // Set custom icon if available
-      if (iconName) {
+      // Priority: customIconUrl (favicon) > iconName (Lucide icon)
+      if (customIconUrl) {
+        try {
+          const iconData = await generateWindowIconFromImage(customIconUrl)
+          if (iconData) {
+            await win.setIcon(iconData)
+            logger.debug('Custom favicon icon set')
+          }
+        } catch (iconError) {
+          logger.warn('Failed to set custom favicon icon:', iconError)
+        }
+      } else if (iconName) {
         try {
           const iconData = await generateWindowIcon(iconName)
           if (iconData) {

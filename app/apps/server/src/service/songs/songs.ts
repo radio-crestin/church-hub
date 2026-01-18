@@ -432,6 +432,11 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
         updatedAt: now,
       }
 
+      // Update presentationCount if explicitly provided
+      if (input.presentationCount !== undefined) {
+        updateData.presentationCount = input.presentationCount
+      }
+
       // Set last_manual_edit only when isManualEdit is true (UI edit)
       if (input.isManualEdit) {
         updateData.lastManualEdit = now
@@ -537,6 +542,32 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
     return getSongWithSlides(songId)
   } catch (error) {
     log('error', `Failed to upsert song: ${error}`)
+    return null
+  }
+}
+
+/**
+ * Resets the presentation count for a song to 0
+ * This only updates the presentationCount field, preserving all other data
+ */
+export function resetSongPresentationCount(id: number): SongWithSlides | null {
+  try {
+    log('debug', `Resetting presentation count for song: ${id}`)
+
+    const db = getDatabase()
+
+    db.update(songs)
+      .set({
+        presentationCount: 0,
+        updatedAt: new Date(),
+      })
+      .where(eq(songs.id, id))
+      .run()
+
+    log('info', `Presentation count reset for song: ${id}`)
+    return getSongWithSlides(id)
+  } catch (error) {
+    log('error', `Failed to reset presentation count: ${error}`)
     return null
   }
 }

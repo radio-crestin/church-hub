@@ -3,6 +3,22 @@ import type { LucideIcon } from 'lucide-react'
 import type { Permission } from '../users/types'
 
 /**
+ * Available icon colors for sidebar items
+ */
+export type IconColor =
+  | 'gray'
+  | 'indigo'
+  | 'blue'
+  | 'teal'
+  | 'green'
+  | 'orange'
+  | 'purple'
+  | 'violet'
+  | 'red'
+  | 'pink'
+  | 'yellow'
+
+/**
  * Identifier for built-in menu items
  */
 export type BuiltInMenuItemId =
@@ -38,6 +54,10 @@ export interface SidebarItemSettings {
   focusSearchOnNavigate: boolean
   /** Native window settings (Tauri only) */
   nativeWindow?: NativeWindowSettings
+  /** Icon color for the sidebar item (predefined colors) */
+  iconColor?: IconColor
+  /** Custom icon background color (hex string) - overrides iconColor and faviconColor */
+  customIconBgColor?: string
 }
 
 /**
@@ -60,6 +80,11 @@ export interface BuiltInMenuItem extends BaseMenuItem {
 }
 
 /**
+ * Icon source type for custom pages
+ */
+export type IconSourceType = 'favicon' | 'icon'
+
+/**
  * Custom page menu item with embedded URL
  */
 export interface CustomPageMenuItem extends BaseMenuItem {
@@ -69,6 +94,12 @@ export interface CustomPageMenuItem extends BaseMenuItem {
   iconName: string
   /** Use iframe embedding instead of native webview (default: false) */
   useIframeEmbedding?: boolean
+  /** Custom icon URL (base64 data URL) - downloaded favicon */
+  customIconUrl?: string
+  /** Icon source type - 'favicon' for downloaded favicon, 'icon' for predefined icons */
+  iconSource?: IconSourceType
+  /** Extracted dominant color from favicon (hex string like #4f46e5) */
+  faviconColor?: string
 }
 
 /**
@@ -107,6 +138,12 @@ export interface CustomPageInput {
   url: string
   iconName: string
   useIframeEmbedding?: boolean
+  /** Custom icon URL (base64 data URL) - downloaded favicon */
+  customIconUrl?: string
+  /** Icon source type - 'favicon' for downloaded favicon, 'icon' for predefined icons */
+  iconSource?: IconSourceType
+  /** Extracted dominant color from favicon (hex string like #4f46e5) */
+  faviconColor?: string
 }
 
 /**
@@ -119,4 +156,8 @@ export interface ResolvedMenuItem {
   to: string
   permission: Permission | null
   isCustom: boolean
+  /** Custom icon URL (base64 data URL) - for favicon display */
+  customIconUrl?: string
+  /** Favicon background color (hex or from iconColor setting) */
+  faviconBgColor?: string
 }

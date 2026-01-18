@@ -25,6 +25,66 @@ let synonymsCache: Map<string, string[]> | null = null
 let synonymsCacheTimestamp = 0
 const SYNONYMS_CACHE_TTL = 60000 // 1 minute cache TTL
 
+// ============================================================================
+// LRU Cache for Search Results
+// ============================================================================
+
+interface SearchCacheEntry {
+  results: SongSearchResult[]
+  timestamp: number
+}
+
+const SEARCH_CACHE_MAX_SIZE = 100
+const SEARCH_CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
+
+const searchResultsCache = new Map<string, SearchCacheEntry>()
+
+function getSearchCacheKey(
+  query: string,
+  categoryIds: number[] | undefined,
+): string {
+  const categoryKey = categoryIds?.sort().join(',') ?? 'all'
+  return `${query.toLowerCase().trim()}:${categoryKey}`
+}
+
+function getFromSearchCache(key: string): SongSearchResult[] | null {
+  const entry = searchResultsCache.get(key)
+  if (!entry) return null
+
+  // Check if expired
+  if (Date.now() - entry.timestamp > SEARCH_CACHE_TTL_MS) {
+    searchResultsCache.delete(key)
+    return null
+  }
+
+  // Move to end (most recently used) by re-inserting
+  searchResultsCache.delete(key)
+  searchResultsCache.set(key, entry)
+
+  return entry.results
+}
+
+function setInSearchCache(key: string, results: SongSearchResult[]): void {
+  // Evict oldest entries if cache is full
+  if (searchResultsCache.size >= SEARCH_CACHE_MAX_SIZE) {
+    const firstKey = searchResultsCache.keys().next().value
+    if (firstKey) searchResultsCache.delete(firstKey)
+  }
+
+  searchResultsCache.set(key, {
+    results,
+    timestamp: Date.now(),
+  })
+}
+
+/**
+ * Clears the search results cache (call when index is updated)
+ */
+export function clearSearchCache(): void {
+  searchResultsCache.clear()
+  log('debug', 'Search cache cleared')
+}
+
 /**
  * Loads and caches synonyms from the database
  * Returns a Map where each term (primary and synonyms) maps to all related terms
@@ -119,6 +179,45 @@ function removeDiacritics(text: string): string {
 }
 
 /**
+ * Normalizes text for FTS indexing:
+ * - Replaces hyphens with spaces (so "să-nfăptuiesc" becomes "să nfăptuiesc")
+ * - Expands Romanian contractions (n- prefix) for better searchability
+ * - Diacritics are handled by the FTS5 tokenizer (remove_diacritics 2)
+ *
+ * Romanian linguistic patterns handled:
+ * - "să-nfăptuiesc" → "sa nfaptuiesc faptuiesc" (n- is contraction of "în")
+ * - "n-am" → "n am am" (expands contraction)
+ * - "s-a" → "s a" (reflexive pronoun contraction)
+ */
+function normalizeForIndex(text: string): string {
+  let normalized = text
+    .replace(/-/g, ' ') // Replace hyphens with spaces
+    .replace(/\s+/g, ' ') // Collapse multiple spaces
+    .trim()
+
+  // Expand Romanian n- contractions: words starting with "n" followed by consonant
+  // are often contractions of "în" + word (e.g., "nfăptuiesc" = "înfăptuiesc" → also index "făptuiesc")
+  // This helps match "faptuiesc" to "nfaptuiesc"
+  const words = normalized.split(' ')
+  const expandedWords: string[] = []
+
+  for (const word of words) {
+    expandedWords.push(word)
+    // If word starts with 'n' followed by a consonant (not a vowel),
+    // it might be a contraction - also add the word without 'n'
+    if (
+      word.length > 2 &&
+      word[0].toLowerCase() === 'n' &&
+      !/^n[aeiouăâî]/i.test(word)
+    ) {
+      expandedWords.push(word.substring(1))
+    }
+  }
+
+  return expandedWords.join(' ')
+}
+
+/**
  * Updates the FTS index for a specific song (both standard and trigram)
  */
 export function updateSearchIndex(songId: number): void {
@@ -151,19 +250,24 @@ export function updateSearchIndex(songId: number): void {
     const slides = slidesQuery.all(songId) as { content: string }[]
     const combinedContent = slides.map((s) => s.content).join(' ')
 
+    // Normalize text for indexing (replace hyphens with spaces for better matching)
+    const normalizedTitle = normalizeForIndex(song.title)
+    const normalizedCategory = normalizeForIndex(song.category_name ?? '')
+    const normalizedContent = normalizeForIndex(combinedContent)
+
     // Update standard FTS index
     db.query('DELETE FROM songs_fts WHERE song_id = ?').run(songId)
     db.query(`
       INSERT INTO songs_fts (song_id, title, category_name, content)
       VALUES (?, ?, ?, ?)
-    `).run(songId, song.title, song.category_name ?? '', combinedContent)
+    `).run(songId, normalizedTitle, normalizedCategory, normalizedContent)
 
     // Update trigram FTS index for fuzzy matching
     db.query('DELETE FROM songs_fts_trigram WHERE song_id = ?').run(songId)
     db.query(`
       INSERT INTO songs_fts_trigram (song_id, title, content)
       VALUES (?, ?, ?)
-    `).run(songId, song.title, combinedContent)
+    `).run(songId, normalizedTitle, normalizedContent)
 
     log('debug', `Search index updated for song: ${songId}`)
   } catch (error) {
@@ -212,7 +316,7 @@ export function updateSearchIndexByCategory(categoryId: number): void {
 
 /**
  * Batch updates the FTS index for multiple songs in a single transaction
- * Much faster than calling updateSearchIndex() individually for each song
+ * Uses JavaScript normalization to properly expand Romanian contractions
  */
 export function batchUpdateSearchIndex(songIds: number[]): void {
   if (songIds.length === 0) return
@@ -223,12 +327,37 @@ export function batchUpdateSearchIndex(songIds: number[]): void {
 
     const db = getRawDatabase()
 
-    db.exec('BEGIN TRANSACTION')
+    // Build placeholders for IN clause
+    const placeholders = songIds.map(() => '?').join(',')
+
+    // Fetch songs data
+    const songs = db
+      .query(
+        `
+      SELECT
+        s.id,
+        s.title,
+        COALESCE(sc.name, '') as category_name,
+        COALESCE(GROUP_CONCAT(ss.content, ' '), '') as content
+      FROM songs s
+      LEFT JOIN song_categories sc ON s.category_id = sc.id
+      LEFT JOIN (
+        SELECT song_id, content FROM song_slides ORDER BY sort_order
+      ) ss ON ss.song_id = s.id
+      WHERE s.id IN (${placeholders})
+      GROUP BY s.id
+    `,
+      )
+      .all(...songIds) as Array<{
+      id: number
+      title: string
+      category_name: string
+      content: string
+    }>
+
+    db.run('BEGIN TRANSACTION')
 
     try {
-      // Build placeholders for IN clause
-      const placeholders = songIds.map(() => '?').join(',')
-
       // Delete existing FTS entries for these songs
       const deleteStart = performance.now()
       db.query(`DELETE FROM songs_fts WHERE song_id IN (${placeholders})`).run(
@@ -239,50 +368,47 @@ export function batchUpdateSearchIndex(songIds: number[]): void {
       ).run(...songIds)
       const deleteTime = performance.now() - deleteStart
 
-      // Batch insert all songs with their slides in a single query
-      const ftsStart = performance.now()
-      db.query(`
+      // Prepare insert statements
+      const ftsInsert = db.prepare(`
         INSERT INTO songs_fts (song_id, title, category_name, content)
-        SELECT
-          s.id,
-          s.title,
-          COALESCE(sc.name, ''),
-          COALESCE(GROUP_CONCAT(ss.content, ' '), '')
-        FROM songs s
-        LEFT JOIN song_categories sc ON s.category_id = sc.id
-        LEFT JOIN (
-          SELECT song_id, content FROM song_slides ORDER BY sort_order
-        ) ss ON ss.song_id = s.id
-        WHERE s.id IN (${placeholders})
-        GROUP BY s.id
-      `).run(...songIds)
+        VALUES (?, ?, ?, ?)
+      `)
+
+      const trigramInsert = db.prepare(`
+        INSERT INTO songs_fts_trigram (song_id, title, content)
+        VALUES (?, ?, ?)
+      `)
+
+      // Insert each song with normalized content
+      const ftsStart = performance.now()
+      for (const song of songs) {
+        const normalizedTitle = normalizeForIndex(song.title)
+        const normalizedCategory = normalizeForIndex(song.category_name)
+        const normalizedContent = normalizeForIndex(song.content)
+
+        ftsInsert.run(
+          song.id,
+          normalizedTitle,
+          normalizedCategory,
+          normalizedContent,
+        )
+
+        trigramInsert.run(song.id, normalizedTitle, normalizedContent)
+      }
       const ftsTime = performance.now() - ftsStart
 
-      // Also update trigram index
-      const trigramStart = performance.now()
-      db.query(`
-        INSERT INTO songs_fts_trigram (song_id, title, content)
-        SELECT
-          s.id,
-          s.title,
-          COALESCE(GROUP_CONCAT(ss.content, ' '), '')
-        FROM songs s
-        LEFT JOIN (
-          SELECT song_id, content FROM song_slides ORDER BY sort_order
-        ) ss ON ss.song_id = s.id
-        WHERE s.id IN (${placeholders})
-        GROUP BY s.id
-      `).run(...songIds)
-      const trigramTime = performance.now() - trigramStart
-
-      db.exec('COMMIT')
+      db.run('COMMIT')
       const totalTime = performance.now() - totalStart
+
+      // Clear the search cache since index changed
+      clearSearchCache()
+
       log(
         'info',
-        `[PERF] Search index update: ${totalTime.toFixed(2)}ms | Delete: ${deleteTime.toFixed(0)}ms | FTS: ${ftsTime.toFixed(0)}ms | Trigram: ${trigramTime.toFixed(0)}ms`,
+        `[PERF] Search index update: ${totalTime.toFixed(2)}ms | Delete: ${deleteTime.toFixed(0)}ms | FTS: ${ftsTime.toFixed(0)}ms`,
       )
     } catch (error) {
-      db.exec('ROLLBACK')
+      db.run('ROLLBACK')
       throw error
     }
   } catch (error) {
@@ -292,7 +418,8 @@ export function batchUpdateSearchIndex(songIds: number[]): void {
 
 /**
  * Rebuilds the entire search index (both standard and trigram)
- * This is much faster than updating each song individually
+ * Uses JavaScript normalization to properly expand Romanian contractions
+ * and handle hyphenated words for better searchability
  */
 export function rebuildSearchIndex(): void {
   try {
@@ -300,50 +427,75 @@ export function rebuildSearchIndex(): void {
 
     const db = getRawDatabase()
 
+    // Fetch all songs with their content
+    const songs = db
+      .query(
+        `
+      SELECT
+        s.id,
+        s.title,
+        COALESCE(sc.name, '') as category_name,
+        COALESCE(GROUP_CONCAT(ss.content, ' '), '') as content
+      FROM songs s
+      LEFT JOIN song_categories sc ON s.category_id = sc.id
+      LEFT JOIN (
+        SELECT song_id, content FROM song_slides ORDER BY sort_order
+      ) ss ON ss.song_id = s.id
+      GROUP BY s.id
+    `,
+      )
+      .all() as Array<{
+      id: number
+      title: string
+      category_name: string
+      content: string
+    }>
+
+    log('info', `Found ${songs.length} songs to index`)
+
     // Use a transaction for atomicity
-    db.exec('BEGIN TRANSACTION')
+    db.run('BEGIN TRANSACTION')
 
     try {
       // Clear existing indexes
-      db.exec('DELETE FROM songs_fts')
-      db.exec('DELETE FROM songs_fts_trigram')
+      db.run('DELETE FROM songs_fts')
+      db.run('DELETE FROM songs_fts_trigram')
 
-      // Batch insert all songs with their slides in a single query
-      // Uses GROUP_CONCAT to combine all slide content per song
-      // Subquery ensures slides are ordered by sort_order before concatenation
-      const result = db.run(`
+      // Prepare insert statements
+      const ftsInsert = db.prepare(`
         INSERT INTO songs_fts (song_id, title, category_name, content)
-        SELECT
-          s.id,
-          s.title,
-          COALESCE(sc.name, ''),
-          COALESCE(GROUP_CONCAT(ss.content, ' '), '')
-        FROM songs s
-        LEFT JOIN song_categories sc ON s.category_id = sc.id
-        LEFT JOIN (
-          SELECT song_id, content FROM song_slides ORDER BY sort_order
-        ) ss ON ss.song_id = s.id
-        GROUP BY s.id
+        VALUES (?, ?, ?, ?)
       `)
 
-      // Also rebuild trigram index for fuzzy matching
-      db.run(`
+      const trigramInsert = db.prepare(`
         INSERT INTO songs_fts_trigram (song_id, title, content)
-        SELECT
-          s.id,
-          s.title,
-          COALESCE(GROUP_CONCAT(ss.content, ' '), '')
-        FROM songs s
-        LEFT JOIN (
-          SELECT song_id, content FROM song_slides ORDER BY sort_order
-        ) ss ON ss.song_id = s.id
-        GROUP BY s.id
+        VALUES (?, ?, ?)
       `)
 
-      db.exec('COMMIT')
-      log('info', `Search index rebuilt: ${result.changes} songs indexed`)
+      // Insert each song with normalized content
+      for (const song of songs) {
+        const normalizedTitle = normalizeForIndex(song.title)
+        const normalizedCategory = normalizeForIndex(song.category_name)
+        const normalizedContent = normalizeForIndex(song.content)
+
+        ftsInsert.run(
+          song.id,
+          normalizedTitle,
+          normalizedCategory,
+          normalizedContent,
+        )
+
+        trigramInsert.run(song.id, normalizedTitle, normalizedContent)
+      }
+
+      db.run('COMMIT')
+
+      // Clear the search cache since index changed
+      clearSearchCache()
+
+      log('info', `Search index rebuilt: ${songs.length} songs indexed`)
     } catch (error) {
-      db.exec('ROLLBACK')
+      db.run('ROLLBACK')
       throw error
     }
   } catch (error) {
@@ -863,11 +1015,24 @@ export function searchSongs(
   categoryIds?: number[],
   limit = 50,
 ): SongSearchResult[] {
+  const startTime = performance.now()
+
   try {
     log('debug', `Searching songs: ${query}`)
 
     if (!query.trim()) {
       return []
+    }
+
+    // Check cache first (before any processing)
+    const cacheKey = getSearchCacheKey(query, categoryIds)
+    const cachedResults = getFromSearchCache(cacheKey)
+    if (cachedResults) {
+      log(
+        'debug',
+        `Cache hit for: "${query}" (${cachedResults.length} results)`,
+      )
+      return cachedResults.slice(0, limit)
     }
 
     const db = getRawDatabase()
@@ -1142,7 +1307,7 @@ export function searchSongs(
       `Phase 3: Re-ranked. Top score: ${topResults[0]?.termScore ?? 0}%`,
     )
 
-    return topResults.map((r) => {
+    const finalResults = topResults.map((r) => {
       // Always use fuzzy highlighting to ensure fuzzy matches are highlighted
       // (e.g., "Cristos" highlighted when searching "Hristos")
       // Use expanded terms (includes synonyms) for highlighting
@@ -1162,6 +1327,17 @@ export function searchSongs(
         presentationCount: r.presentation_count,
       }
     })
+
+    // Cache results for future queries
+    setInSearchCache(cacheKey, finalResults)
+
+    const elapsed = performance.now() - startTime
+    log(
+      'debug',
+      `Search completed: "${query}" → ${finalResults.length} results in ${elapsed.toFixed(1)}ms`,
+    )
+
+    return finalResults
   } catch (error) {
     log('error', `Failed to search songs with query "${query}": ${error}`)
     return []

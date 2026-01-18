@@ -13,11 +13,11 @@ import {
   useBibleAISearchSettings,
   useBooks,
   useChapters,
+  useInfiniteChapters,
   useLocalizedBookNames,
   useSearchBible,
   useSelectedBibleTranslations,
   useSmartSearch,
-  useVerses,
 } from '../hooks'
 import type { UseBibleNavigationReturn } from '../hooks/useBibleNavigation'
 import type {
@@ -26,7 +26,7 @@ import type {
   BibleVerse,
 } from '../types'
 
-const SEARCH_DEBOUNCE_MS = 600
+const SEARCH_DEBOUNCE_MS = 200
 
 interface BibleNavigationPanelProps {
   navigation: UseBibleNavigationReturn
@@ -109,14 +109,33 @@ export function BibleNavigationPanel({
   const { data: chapters = [], isLoading: isLoadingChapters } = useChapters(
     state.bookId,
   )
-  const { data: verses = [], isLoading: isLoadingVerses } = useVerses(
-    state.bookId,
-    state.chapter,
-  )
 
   // Get the book code for the current book
   const currentBook = books.find((b) => b.id === state.bookId)
   const bookCode = currentBook?.bookCode || ''
+
+  // Use infinite chapters hook for seamless scrolling through chapters and books
+  const {
+    chapters: infiniteChapters,
+    isLoading: isLoadingVerses,
+    loadPrevious,
+    loadNext,
+    canLoadPrevious,
+    canLoadNext,
+    isLoadingPrevious,
+    isLoadingNext,
+  } = useInfiniteChapters({
+    books,
+    currentBookId: state.bookId,
+    currentChapter: state.chapter,
+    enabled: state.level === 'verses' && !!state.bookId && !!state.chapter,
+  })
+
+  // Get current chapter verses for compatibility
+  const currentChapterData = infiniteChapters.find(
+    (ch) => ch.bookId === state.bookId && ch.chapter === state.chapter,
+  )
+  const verses = currentChapterData?.verses || []
 
   // Smart search uses local query for immediate reference detection (e.g., "John 3:16")
   // Must be defined before the URL sync effect that uses isReferenceSearch
@@ -261,7 +280,13 @@ export function BibleNavigationPanel({
     } catch {
       setAiSearchResults([])
     }
-  }, [localQuery, translationId, aiSearchMutation, onSearchQueryChange, setSearchQuery])
+  }, [
+    localQuery,
+    translationId,
+    aiSearchMutation,
+    onSearchQueryChange,
+    setSearchQuery,
+  ])
 
   // Handle manual text search button click
   const handleTextSearch = useCallback(() => {
@@ -293,11 +318,45 @@ export function BibleNavigationPanel({
     setFocusedResultIndex(-1)
   }, [searchResults, aiSearchResults])
 
-  const handleSelectVerse = (index: number) => {
-    const verse = verses[index]
-    if (verse) {
-      onSelectVerse(verse, index)
+  const handleSelectVerse = (
+    index: number,
+    chapterNum?: number,
+    verseBookId?: number,
+    verseBookName?: string,
+  ) => {
+    // Find the chapter data from infinite chapters
+    const targetBookId = verseBookId ?? state.bookId
+    const targetChapter = chapterNum ?? state.chapter
+    const chapterData = infiniteChapters.find(
+      (ch) => ch.bookId === targetBookId && ch.chapter === targetChapter,
+    )
+    const verse = chapterData?.verses[index]
+
+    if (!verse) return
+
+    // If verse is from a different book or chapter, navigate first
+    if (
+      (verseBookId !== undefined && verseBookId !== state.bookId) ||
+      (chapterNum !== undefined && chapterNum !== state.chapter)
+    ) {
+      const bookName = verseBookName ?? state.bookName
+      if (onNavigateToChapter && bookName) {
+        onNavigateToChapter(targetBookId!, bookName, targetChapter!, index + 1)
+      } else if (verseBookId !== undefined && verseBookId !== state.bookId) {
+        selectBook(verseBookId, verseBookName || '', false)
+        selectChapter(targetChapter!)
+      } else {
+        selectChapter(targetChapter!)
+      }
+      // Present the verse after navigation
+      setTimeout(() => {
+        onSelectVerse(verse, index)
+      }, 50)
+      return
     }
+
+    // Same chapter - use normal logic
+    onSelectVerse(verse, index)
   }
 
   // Show text search results only when user manually triggered full text search
@@ -459,6 +518,9 @@ export function BibleNavigationPanel({
               value={localQuery}
               onChange={(e) => handleQueryChange(e.target.value)}
               onKeyDown={handleSearchKeyDown}
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
               onMouseDown={(e) => {
                 if (localQuery) {
                   // If already selected all once, allow normal selection behavior
@@ -589,16 +651,23 @@ export function BibleNavigationPanel({
           />
         ) : (
           <VersesList
+            bookId={state.bookId || 0}
             bookName={state.bookName || ''}
             bookCode={bookCode}
             chapter={state.chapter || 0}
-            verses={verses}
+            chapters={infiniteChapters}
             presentedIndex={state.presentedIndex}
             searchedIndex={state.searchedIndex}
             isLoading={isLoadingVerses}
             selectedTranslations={selectedTranslations}
             onSelectVerse={handleSelectVerse}
             onGoBack={handleGoBack}
+            onLoadPrevious={loadPrevious}
+            onLoadNext={loadNext}
+            canLoadPrevious={canLoadPrevious}
+            canLoadNext={canLoadNext}
+            isLoadingPrevious={isLoadingPrevious}
+            isLoadingNext={isLoadingNext}
           />
         )}
       </div>

@@ -13,9 +13,116 @@ import {
 import type {
   BuiltInItemDefinition,
   BuiltInMenuItemId,
+  IconColor,
   SidebarConfiguration,
   SidebarItemSettings,
 } from './types'
+
+/**
+ * Available icon colors for sidebar items and schedule items
+ * These colors match the design system used in AddMenuModal and schedule components
+ */
+export const ICON_COLORS = [
+  'gray',
+  'indigo',
+  'blue',
+  'teal',
+  'green',
+  'orange',
+  'purple',
+  'violet',
+  'red',
+  'pink',
+  'yellow',
+] as const
+
+/**
+ * Default icon colors for built-in sidebar items
+ * These match the colors used in AddMenuModal and schedule item components
+ */
+export const DEFAULT_ICON_COLORS: Record<BuiltInMenuItemId, IconColor> = {
+  present: 'violet',
+  songs: 'indigo',
+  bible: 'blue',
+  schedules: 'orange',
+  livestream: 'red',
+  music: 'purple',
+  song_key: 'yellow',
+  kiosk: 'gray',
+  settings: 'gray',
+}
+
+/**
+ * Tailwind CSS classes for each icon color
+ * Includes background and text colors for light and dark modes
+ */
+export const ICON_COLOR_CLASSES: Record<
+  IconColor,
+  { bg: string; text: string }
+> = {
+  gray: {
+    bg: 'bg-gray-100 dark:bg-gray-700',
+    text: 'text-gray-600 dark:text-gray-400',
+  },
+  indigo: {
+    bg: 'bg-indigo-100 dark:bg-indigo-900/30',
+    text: 'text-indigo-600 dark:text-indigo-400',
+  },
+  blue: {
+    bg: 'bg-blue-100 dark:bg-blue-900/30',
+    text: 'text-blue-600 dark:text-blue-400',
+  },
+  teal: {
+    bg: 'bg-teal-100 dark:bg-teal-900/30',
+    text: 'text-teal-600 dark:text-teal-400',
+  },
+  green: {
+    bg: 'bg-green-100 dark:bg-green-900/30',
+    text: 'text-green-600 dark:text-green-400',
+  },
+  orange: {
+    bg: 'bg-orange-100 dark:bg-orange-900/30',
+    text: 'text-orange-600 dark:text-orange-400',
+  },
+  purple: {
+    bg: 'bg-purple-100 dark:bg-purple-900/30',
+    text: 'text-purple-600 dark:text-purple-400',
+  },
+  violet: {
+    bg: 'bg-violet-100 dark:bg-violet-900/30',
+    text: 'text-violet-600 dark:text-violet-400',
+  },
+  red: {
+    bg: 'bg-red-100 dark:bg-red-900/30',
+    text: 'text-red-600 dark:text-red-400',
+  },
+  pink: {
+    bg: 'bg-pink-100 dark:bg-pink-900/30',
+    text: 'text-pink-600 dark:text-pink-400',
+  },
+  yellow: {
+    bg: 'bg-yellow-100 dark:bg-yellow-900/30',
+    text: 'text-yellow-600 dark:text-yellow-400',
+  },
+}
+
+/**
+ * Hex colors for each icon color (darker versions for favicon backgrounds)
+ * These are used when the user overrides the favicon color using icon color picker
+ */
+export const ICON_COLOR_HEX: Record<IconColor, string> = {
+  gray: '#4b5563',
+  indigo: '#4338ca',
+  blue: '#1d4ed8',
+  teal: '#0f766e',
+  green: '#15803d',
+  orange: '#c2410c',
+  purple: '#7e22ce',
+  violet: '#6d28d9',
+  red: '#b91c1c',
+  pink: '#be185d',
+  yellow: '#a16207',
+}
 
 /**
  * Which built-in pages have search functionality
@@ -63,6 +170,7 @@ export function getDefaultSidebarItemSettings(
       autoOpenOnStartup: false,
       forceNativeWindow: false,
     },
+    iconColor: builtinId ? DEFAULT_ICON_COLORS[builtinId] : 'gray',
   }
 }
 

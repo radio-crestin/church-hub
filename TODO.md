@@ -202,19 +202,16 @@
   ~~- adauga sql lock timeout~~
 ~~- adauga buton de edit al cantarii in preview-ul din program~~
 ~~- user agent din whatsapp~~
-
-
 ~~- ignore empty spaces in Bible search~~
 ~~- cand am dat pe setari, s-a oprit midi-ul~~
 ~~- nici nu se reconecteaza midi-ul automat~~
-- continus verses (nu se schimba pagina)
-
-- search-ul nu prea functiona
-- adauga un buton de a adauga rapid gama pe pagina de edit
-- cand salvezi ca si powerpoint, salveaza si opensong deasemenea
-- nu a gasit cantarea care trebuie cand am cautat "invata-ma sa faptuiesc"
+~~- continus verses (nu se schimba pagina)~~
+~~- search-ul nu prea functiona~~
+~~- adauga un buton de a adauga rapid gama pe pagina de edit~~
+~~- cand salvezi ca si powerpoint, salveaza si opensong deasemenea~~
+~~- nu a gasit cantarea care trebuie cand am cautat "invata-ma sa faptuiesc"~~
 - drag and drop-ul nu functioneaza in whatsapp
-- apasand pe F6 nu selecteaza referinta
+~~- apasand pe F6 nu selecteaza referinta~~
 - search typing component
 - ascunderea din buton nu ascunde versetul
 - asigura-te ca nu ai deadlocks in cautare, deloc

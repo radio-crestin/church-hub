@@ -1,11 +1,15 @@
 import { Link } from '@tanstack/react-router'
 import type { LucideIcon } from 'lucide-react'
 
+import { ICON_COLOR_CLASSES } from '~/features/sidebar-config/constants'
 import {
   openInBrowserTab,
   openPageInNativeWindow,
 } from '~/features/sidebar-config/service'
-import type { NativeWindowSettings } from '~/features/sidebar-config/types'
+import type {
+  IconColor,
+  NativeWindowSettings,
+} from '~/features/sidebar-config/types'
 import { KeyboardShortcutBadge } from '~/ui/kbd'
 import { isTauri } from '~/utils/isTauri'
 import { createLogger } from '~/utils/logger'
@@ -30,6 +34,12 @@ interface SidebarItemProps {
   iconName?: string
   /** External URL for custom pages (loaded directly in native window) */
   externalUrl?: string
+  /** Icon color for the sidebar item */
+  iconColor?: IconColor
+  /** Custom icon URL (base64 data URL) for favicon */
+  customIconUrl?: string
+  /** Favicon background color (hex) */
+  faviconBgColor?: string
 }
 
 export function SidebarItem({
@@ -46,6 +56,9 @@ export function SidebarItem({
   nativeWindowSettings,
   iconName,
   externalUrl,
+  iconColor,
+  customIconUrl,
+  faviconBgColor,
 }: SidebarItemProps) {
   /**
    * Handle middle-click to open page in native window or new tab
@@ -62,7 +75,14 @@ export function SidebarItem({
     // Check if native window is enabled for this page
     if (isTauri() && nativeWindowSettings?.openInNativeWindow) {
       logger.debug(`Opening ${pageId} in native window`)
-      void openPageInNativeWindow(pageId, label, to, iconName, externalUrl)
+      void openPageInNativeWindow(
+        pageId,
+        label,
+        to,
+        iconName,
+        externalUrl,
+        customIconUrl,
+      )
     } else {
       // Browser mode or native window not enabled: open in new tab
       logger.debug(`Opening ${pageId} in browser tab`)
@@ -119,7 +139,14 @@ export function SidebarItem({
       )
       e.preventDefault()
       e.stopPropagation()
-      void openPageInNativeWindow(pageId, label, to, iconName, externalUrl)
+      void openPageInNativeWindow(
+        pageId,
+        label,
+        to,
+        iconName,
+        externalUrl,
+        customIconUrl,
+      )
       return
     }
 
@@ -139,9 +166,41 @@ export function SidebarItem({
   const disabledClasses =
     'opacity-50 cursor-not-allowed text-gray-400 dark:text-gray-600'
 
+  // Get icon color classes if specified
+  const iconColorClasses = iconColor ? ICON_COLOR_CLASSES[iconColor] : null
+
+  // Render icon based on available data: customIconUrl (favicon) > iconColorClasses > regular icon
+  const renderIcon = () => {
+    // If custom icon URL is provided (favicon), show with colored background
+    if (customIconUrl) {
+      return (
+        <div
+          className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center"
+          style={{ backgroundColor: faviconBgColor ?? '#6366f1' }}
+        >
+          <img src={customIconUrl} alt="" className="w-4 h-4 object-contain" />
+        </div>
+      )
+    }
+
+    // If icon color is specified, show colored circle with icon
+    if (iconColorClasses) {
+      return (
+        <div
+          className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center ${iconColorClasses.bg}`}
+        >
+          <Icon size={16} className={iconColorClasses.text} />
+        </div>
+      )
+    }
+
+    // Default: regular icon
+    return <Icon size={20} className="flex-shrink-0" />
+  }
+
   const content = (
     <>
-      <Icon size={20} className="flex-shrink-0" />
+      {renderIcon()}
       {/* Mobile: always show label, Desktop: respect isCollapsed */}
       <span className="text-sm font-medium md:hidden">{label}</span>
       {!isCollapsed && (

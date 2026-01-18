@@ -10,6 +10,7 @@ import {
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { ICON_COLOR_CLASSES } from '~/features/sidebar-config/constants'
 import type { ScheduleItem, SlideTemplate } from '../types'
 
 interface ScheduleItemSlideProps {
@@ -35,12 +36,9 @@ export function ScheduleItemSlide({
 
   const isAnnouncement = item.slideType === 'announcement'
   const Icon = isAnnouncement ? Megaphone : FileText
-  const iconBgColor = isAnnouncement
-    ? 'bg-orange-100 dark:bg-orange-900/30'
-    : 'bg-green-100 dark:bg-green-900/30'
-  const iconColor = isAnnouncement
-    ? 'text-orange-600 dark:text-orange-400'
-    : 'text-green-600 dark:text-green-400'
+  const colorClasses = isAnnouncement
+    ? ICON_COLOR_CLASSES.orange
+    : ICON_COLOR_CLASSES.green
 
   // Strip HTML and get preview
   const contentPreview = item.slideContent
@@ -68,9 +66,9 @@ export function ScheduleItemSlide({
           className="flex items-center gap-3 flex-1 min-w-0 text-left"
         >
           <div
-            className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${iconBgColor}`}
+            className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${colorClasses.bg}`}
           >
-            <Icon size={16} className={iconColor} />
+            <Icon size={16} className={colorClasses.text} />
           </div>
 
           {/* Slide Content */}

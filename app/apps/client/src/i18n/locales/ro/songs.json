@@ -11,7 +11,8 @@
     "addSlide": "Adaugă slide",
     "cloneSlide": "Clonează slide",
     "addToSchedule": "Adaugă în program",
-    "saveToFile": "Salvează în fișier"
+    "saveToFile": "Salvează în fișier",
+    "setKeyLine": "Setează gama"
   },
   "editor": {
     "titlePlaceholder": "Introdu titlul cântării...",
@@ -77,7 +78,8 @@
     "slideCloned": "Slide clonat",
     "reorderFailed": "Nu s-a putut reordona slide-urile",
     "categoryCreated": "Categoria a fost creată",
-    "savedToFile": "Cântarea a fost salvată în fișier"
+    "savedToFile": "Cântarea a fost salvată în fișier",
+    "presentationCountReset": "Contorul de prezentări a fost resetat"
   },
   "modal": {
     "deleteTitle": "Șterge cântarea",
@@ -175,5 +177,18 @@
     "clickToPreview": "Apasă pe titlu pentru a previzualiza cântarea existentă într-o fereastră nouă.",
     "replaceExisting": "Înlocuiește cântarea existentă",
     "replaceExistingDescription": "Șterge cântarea existentă și salvează aceasta în loc. Toate referințele din program și coadă vor fi actualizate automat să folosească această cântare."
+  },
+  "categoryDialog": {
+    "title": "Setează categoria",
+    "songTitle": "Cântare",
+    "category": "Categorie",
+    "cancel": "Anulează",
+    "save": "Salvează",
+    "saving": "Se salvează..."
+  },
+  "resetCountDialog": {
+    "title": "Resetează contorul de prezentări",
+    "message": "Ești sigur că vrei să resetezi contorul de prezentări la 0?",
+    "confirm": "Resetează"
   }
 }

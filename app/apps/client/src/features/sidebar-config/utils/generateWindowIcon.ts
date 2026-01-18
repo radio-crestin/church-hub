@@ -160,3 +160,63 @@ export async function generateWindowIcon(
 export function getAvailableIconNames(): string[] {
   return Object.keys(ICON_PATHS)
 }
+
+/**
+ * Generates a window icon from a custom image URL (base64 data URL)
+ * Creates a rounded icon suitable for window title bar
+ *
+ * @param imageUrl - Base64 data URL of the image
+ * @returns PNG image as Uint8Array, or null if generation fails
+ */
+export async function generateWindowIconFromImage(
+  imageUrl: string,
+): Promise<Uint8Array | null> {
+  try {
+    // Create canvas
+    const canvas = document.createElement('canvas')
+    canvas.width = ICON_SIZE
+    canvas.height = ICON_SIZE
+    const ctx = canvas.getContext('2d')
+    if (!ctx) {
+      logger.error('Could not get canvas context')
+      return null
+    }
+
+    // Create image from URL
+    const img = new Image()
+
+    return new Promise((resolve) => {
+      img.onload = () => {
+        // Draw image to fill the canvas
+        ctx.drawImage(img, 0, 0, ICON_SIZE, ICON_SIZE)
+
+        // Convert to PNG bytes
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              logger.error('Failed to create blob from custom image')
+              resolve(null)
+              return
+            }
+
+            blob.arrayBuffer().then((buffer) => {
+              resolve(new Uint8Array(buffer))
+            })
+          },
+          'image/png',
+          1.0,
+        )
+      }
+
+      img.onerror = () => {
+        logger.error('Failed to load custom image for icon')
+        resolve(null)
+      }
+
+      img.src = imageUrl
+    })
+  } catch (error) {
+    logger.error('Error generating icon from custom image:', error)
+    return null
+  }
+}

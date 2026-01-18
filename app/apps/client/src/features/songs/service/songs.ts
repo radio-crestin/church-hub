@@ -119,6 +119,18 @@ export async function deleteSong(id: number): Promise<boolean> {
   return response.data?.success ?? false
 }
 
+export async function resetSongPresentationCount(
+  id: number,
+): Promise<SongWithSlides | null> {
+  const response = await fetcher<ApiResponse<SongWithSlides>>(
+    `/api/songs/${id}/reset-presentation-count`,
+    {
+      method: 'POST',
+    },
+  )
+  return response.data ?? null
+}
+
 export async function searchSongs(
   query: string,
   categoryIds?: number[],

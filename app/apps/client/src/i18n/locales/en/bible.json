@@ -16,7 +16,10 @@
     "back": "Back",
     "oldTestament": "Old Testament",
     "newTestament": "New Testament",
-    "noBooks": "No books available"
+    "noBooks": "No books available",
+    "previousChapter": "Previous chapter",
+    "nextChapter": "Next chapter",
+    "scrollToVerse": "Scroll to current verse"
   },
   "queue": {
     "title": "Bible Queue",

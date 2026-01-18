@@ -213,6 +213,7 @@ import {
   removeFromSearchIndex,
   reorderCategories,
   reorderSongSlides,
+  resetSongPresentationCount,
   type SongFilters,
   searchSongs,
   type UpsertCategoryInput,
@@ -3553,6 +3554,35 @@ async function main() {
             }),
           )
         }
+      }
+
+      // POST /api/songs/:id/reset-presentation-count - Reset presentation count to 0
+      const resetCountMatch = url.pathname.match(
+        /^\/api\/songs\/(\d+)\/reset-presentation-count$/,
+      )
+      if (req.method === 'POST' && resetCountMatch?.[1]) {
+        const permError = checkPermission('songs.edit')
+        if (permError) return permError
+
+        const id = parseInt(resetCountMatch[1], 10)
+        const result = resetSongPresentationCount(id)
+
+        if (!result) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Song not found' }), {
+              status: 404,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: result }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
       }
 
       // DELETE /api/songs/:id - Delete song

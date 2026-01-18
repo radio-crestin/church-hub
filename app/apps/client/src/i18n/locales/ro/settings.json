@@ -156,6 +156,12 @@
         "autoOpenDescription": "Deschide automat această pagină într-o fereastră nativă când pornește aplicația",
         "forceLabel": "Deschide Mereu în Fereastră Nativă",
         "forceDescription": "Deschide întotdeauna această pagină într-o fereastră nativă în loc de fereastra principală (orice click)"
+      },
+      "iconColor": {
+        "title": "Culoarea Iconiței",
+        "description": "Alege o culoare pentru iconița din bara laterală",
+        "default": "Implicit",
+        "custom": "Culoare personalizată"
       }
     },
     "shortcuts": {
@@ -538,6 +544,12 @@
         "urlHint": "URL-ul va fi încorporat într-un iframe",
         "icon": "Pictogramă",
         "selectIcon": "Selectează o pictogramă pentru bara laterală",
+        "iconSourceDescription": "Alege să folosești favicon-ul site-ului sau o pictogramă personalizată",
+        "useFavicon": "Favicon",
+        "useCustomIcon": "Personalizată",
+        "fetchFavicon": "Preia Favicon",
+        "refetchFavicon": "Reîncarcă",
+        "faviconHint": "Introdu un URL mai sus pentru a prelua automat favicon-ul site-ului",
         "useIframeEmbedding": "Folosește încorporare iframe",
         "useIframeEmbeddingHint": "Încorporează folosind un iframe în loc de webview nativ. Recomandat pentru site-uri ca YouTube care suportă încorporarea iframe."
       },

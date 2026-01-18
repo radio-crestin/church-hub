@@ -28,9 +28,9 @@ import {
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { BUILTIN_ITEMS } from '../constants'
+import { BUILTIN_ITEMS, ICON_COLOR_HEX } from '../constants'
 import { getCustomPagePermission } from '../service/sidebarConfig'
-import type { ResolvedMenuItem, SidebarMenuItem } from '../types'
+import type { IconColor, ResolvedMenuItem, SidebarMenuItem } from '../types'
 
 /**
  * Map of icon names to Lucide icon components
@@ -98,6 +98,21 @@ export function useResolvedSidebarItems(
       } else {
         // Custom page
         const IconComponent = ICON_MAP[item.iconName] ?? Globe
+        // Use customIconUrl if iconSource is 'favicon', otherwise undefined
+        const customIconUrl =
+          item.iconSource === 'favicon' ? item.customIconUrl : undefined
+
+        // Compute favicon background color (priority order):
+        // 1. customIconBgColor - user's custom hex color
+        // 2. iconColor - predefined color from settings
+        // 3. faviconColor - extracted color from the favicon
+        const customBgColor = item.settings?.customIconBgColor
+        const iconColor = item.settings?.iconColor as IconColor | undefined
+        const faviconBgColor = customIconUrl
+          ? (customBgColor ??
+            (iconColor ? ICON_COLOR_HEX[iconColor] : item.faviconColor))
+          : undefined
+
         result.push({
           id: item.id,
           icon: IconComponent,
@@ -105,6 +120,8 @@ export function useResolvedSidebarItems(
           to: `/custom-page/${item.id}`,
           permission: getCustomPagePermission(item.id),
           isCustom: true,
+          customIconUrl,
+          faviconBgColor,
         })
       }
     }

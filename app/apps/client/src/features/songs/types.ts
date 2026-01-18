@@ -66,6 +66,7 @@ export interface UpsertSongInput {
   hymnNumber?: string | null
   keyLine?: string | null
   presentationOrder?: string | null
+  presentationCount?: number
   slides?: SlideInput[]
   /** When set, replaces the existing song with this ID (updates references and deletes it) */
   replaceExistingSongId?: number

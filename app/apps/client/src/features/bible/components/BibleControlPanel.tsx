@@ -16,7 +16,6 @@ import { useAppShortcuts } from '~/features/keyboard-shortcuts'
 import {
   ContentTypeButton,
   LivePreview,
-  useClearSlide,
   usePresentationState,
   useShowSlide,
   useWebSocket,
@@ -33,6 +32,8 @@ interface BibleControlPanelProps {
   canNavigate: boolean
   onToggleHistory?: () => void
   isHistoryCollapsed?: boolean
+  onHide: () => Promise<void>
+  isHiding?: boolean
 }
 
 export function BibleControlPanel({
@@ -41,13 +42,14 @@ export function BibleControlPanel({
   canNavigate,
   onToggleHistory,
   isHistoryCollapsed,
+  onHide,
+  isHiding = false,
 }: BibleControlPanelProps) {
   const { t } = useTranslation('bible')
 
   useWebSocket()
 
   const { data: state } = usePresentationState()
-  const clearSlide = useClearSlide()
   const showSlideCommand = useShowSlide()
 
   // Get configured showSlide shortcut for display
@@ -77,7 +79,7 @@ export function BibleControlPanel({
   }
 
   const handleHide = async () => {
-    await clearSlide.mutateAsync()
+    await onHide()
   }
 
   return (
@@ -147,11 +149,11 @@ export function BibleControlPanel({
             <button
               type="button"
               onClick={handleHide}
-              disabled={clearSlide.isPending}
+              disabled={isHiding}
               className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
               title={`${t('controls.hide')} (Esc)`}
             >
-              {clearSlide.isPending ? (
+              {isHiding ? (
                 <Loader2 size={18} className="animate-spin" />
               ) : (
                 <EyeOff size={18} />

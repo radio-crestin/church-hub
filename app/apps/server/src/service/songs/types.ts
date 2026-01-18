@@ -142,6 +142,7 @@ export interface UpsertSongInput {
   hymnNumber?: string | null
   keyLine?: string | null
   presentationOrder?: string | null
+  presentationCount?: number
   slides?: SlideInput[]
   /** Whether this is a manual edit from the UI (sets last_manual_edit timestamp) */
   isManualEdit?: boolean

@@ -1,3 +1,5 @@
+export type { CategoryEditDialogHandle } from './CategoryEditDialog'
+export { CategoryEditDialog } from './CategoryEditDialog'
 export { CategoryManager } from './CategoryManager'
 export { CategoryPicker } from './CategoryPicker'
 export { DuplicateSongModal } from './DuplicateSongModal'

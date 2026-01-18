@@ -11,6 +11,7 @@ import {
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { ICON_COLOR_CLASSES } from '~/features/sidebar-config/constants'
 import type { ScheduleItem, SlideTemplate } from '../types'
 
 interface ScheduleItemSongProps {
@@ -70,8 +71,10 @@ export function ScheduleItemSong({
           onClick={onEditSong}
           className="flex items-center gap-3 flex-1 min-w-0 text-left"
         >
-          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 flex items-center justify-center">
-            <Music size={16} />
+          <div
+            className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${ICON_COLOR_CLASSES.indigo.bg}`}
+          >
+            <Music size={16} className={ICON_COLOR_CLASSES.indigo.text} />
           </div>
 
           {/* Song Title & Info */}

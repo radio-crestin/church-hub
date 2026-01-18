@@ -11,7 +11,8 @@
     "addSlide": "Add Slide",
     "cloneSlide": "Clone Slide",
     "addToSchedule": "Add to Schedule",
-    "saveToFile": "Save to File"
+    "saveToFile": "Save to File",
+    "setKeyLine": "Set Key Line"
   },
   "editor": {
     "titlePlaceholder": "Enter song title...",
@@ -77,7 +78,8 @@
     "slideCloned": "Slide cloned",
     "reorderFailed": "Failed to reorder slides",
     "categoryCreated": "Category created",
-    "savedToFile": "Song saved to file"
+    "savedToFile": "Song saved to file",
+    "presentationCountReset": "Presentation count reset"
   },
   "modal": {
     "deleteTitle": "Delete Song",
@@ -175,5 +177,18 @@
     "clickToPreview": "Click the title above to preview the existing song in a new window.",
     "replaceExisting": "Replace Existing Song",
     "replaceExistingDescription": "Delete the existing song and save this one instead. All schedule and queue references will be automatically updated to use this song."
+  },
+  "categoryDialog": {
+    "title": "Set Category",
+    "songTitle": "Song",
+    "category": "Category",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving..."
+  },
+  "resetCountDialog": {
+    "title": "Reset Presentation Count",
+    "message": "Are you sure you want to reset the presentation count to 0?",
+    "confirm": "Reset"
   }
 }

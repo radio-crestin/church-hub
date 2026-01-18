@@ -156,6 +156,12 @@
         "autoOpenDescription": "Automatically open this page in a native window when the app starts",
         "forceLabel": "Always Open in Native Window",
         "forceDescription": "Always open this page in a native window instead of the main window (any click)"
+      },
+      "iconColor": {
+        "title": "Icon Color",
+        "description": "Choose a color for the sidebar icon",
+        "default": "Default",
+        "custom": "Custom color"
       }
     },
     "shortcuts": {
@@ -537,6 +543,12 @@
         "urlHint": "The URL will be embedded in an iframe",
         "icon": "Icon",
         "selectIcon": "Select an icon for the sidebar",
+        "iconSourceDescription": "Choose to use the website's favicon or a custom icon",
+        "useFavicon": "Favicon",
+        "useCustomIcon": "Custom Icon",
+        "fetchFavicon": "Fetch Favicon",
+        "refetchFavicon": "Refetch",
+        "faviconHint": "Enter a URL above to automatically fetch the website's favicon",
         "useIframeEmbedding": "Use iframe embedding",
         "useIframeEmbeddingHint": "Embed using an iframe instead of native webview. Recommended for sites like YouTube that support iframe embedding."
       },
