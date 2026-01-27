@@ -210,15 +210,18 @@
 ~~- adauga un buton de a adauga rapid gama pe pagina de edit~~
 ~~- cand salvezi ca si powerpoint, salveaza si opensong deasemenea~~
 ~~- nu a gasit cantarea care trebuie cand am cautat "invata-ma sa faptuiesc"~~
+  ~~- apasand pe F6 nu selecteaza referinta~~
+- asigura-te ca nu ai deadlocks in cautare, deloc
+- dupa ce ai cautat un verset, nu se deschide cum trebuie
+- la crearea programului din text, cand lipseste ceva, nu se adauga cum trebuie
+- adauga optiunea VT fara verset, display just a blank verse
 - drag and drop-ul nu functioneaza in whatsapp
-~~- apasand pe F6 nu selecteaza referinta~~
 - search typing component
 - ascunderea din buton nu ascunde versetul
-- asigura-te ca nu ai deadlocks in cautare, deloc
 - adauga favicon in ferestrele native
 - creaza o veriune web cu local sqlite database in browser
 - eventual cu ceva tabele sync'ed with turso (?)
-
+- adauga un buton pentru a deschide intr-un tab nou
 
 
 
