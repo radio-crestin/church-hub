@@ -90,22 +90,29 @@ const ROLE_TEMPLATES: Record<string, string[]> = {
 /**
  * Seeds system roles and their permissions
  * Uses INSERT OR IGNORE to avoid duplicates on subsequent runs
+ * @throws Error if seeding fails
  */
 export function seedSystemRoles(db: Database): void {
   log('debug', 'Seeding system roles and permissions...')
 
-  for (const [roleName, permissions] of Object.entries(ROLE_TEMPLATES)) {
-    // Insert role if it doesn't exist
-    db.run('INSERT OR IGNORE INTO roles (name, is_system) VALUES (?, 1)', [
-      roleName,
-    ])
+  try {
+    for (const [roleName, permissions] of Object.entries(ROLE_TEMPLATES)) {
+      // Insert role if it doesn't exist
+      db.run('INSERT OR IGNORE INTO roles (name, is_system) VALUES (?, 1)', [
+        roleName,
+      ])
 
-    // Get the role ID
-    const role = db
-      .query('SELECT id FROM roles WHERE name = ?')
-      .get(roleName) as { id: number } | null
+      // Get the role ID
+      const role = db
+        .query('SELECT id FROM roles WHERE name = ?')
+        .get(roleName) as { id: number } | null
 
-    if (role) {
+      if (!role) {
+        throw new Error(
+          `[seed] Failed to insert or retrieve role '${roleName}'. The roles table may be missing or corrupted.`,
+        )
+      }
+
       // Insert permissions for this role
       for (const permission of permissions) {
         db.run(
@@ -118,7 +125,13 @@ export function seedSystemRoles(db: Database): void {
         `Seeded role: ${roleName} with ${permissions.length} permissions`,
       )
     }
-  }
 
-  log('debug', 'System roles seeding complete')
+    log('debug', 'System roles seeding complete')
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : 'Unknown error during seeding'
+    throw new Error(
+      `[seed] Failed to seed system roles: ${message}. Ensure the 'roles' and 'role_permissions' tables exist and have the correct schema.`,
+    )
+  }
 }

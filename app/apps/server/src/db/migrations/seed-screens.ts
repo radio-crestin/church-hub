@@ -30,52 +30,59 @@ interface ScreenFixture {
  * To update fixtures:
  * 1. Configure screens in the UI
  * 2. Run: bun run apps/server/src/db/fixtures/dump-screens.ts
+ * @throws Error if seeding fails
  */
 export function seedDefaultScreens(db: Database): void {
   log('debug', 'Checking if screens need to be seeded...')
 
-  // Check if any screens already exist
-  const existingCount = db
-    .query('SELECT COUNT(*) as count FROM screens')
-    .get() as { count: number }
+  try {
+    // Check if any screens already exist
+    const existingCount = db
+      .query('SELECT COUNT(*) as count FROM screens')
+      .get() as { count: number }
 
-  if (existingCount.count > 0) {
-    log(
-      'debug',
-      `Screens already exist (${existingCount.count}), skipping seed`,
-    )
-    return
-  }
+    if (existingCount.count > 0) {
+      log(
+        'debug',
+        `Screens already exist (${existingCount.count}), skipping seed`,
+      )
+      return
+    }
 
-  log('info', 'Seeding default screens from fixtures...')
+    log('info', 'Seeding default screens from fixtures...')
 
-  const screens = defaultScreens as ScreenFixture[]
+    const screens = defaultScreens as ScreenFixture[]
 
-  for (const screen of screens) {
-    // Insert screen
-    db.run(
-      `INSERT INTO screens
-        (name, type, is_active, open_mode, is_fullscreen, width, height, global_settings, sort_order, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, unixepoch(), unixepoch())`,
-      [
-        screen.name,
-        screen.type,
-        screen.isActive ? 1 : 0,
-        screen.openMode,
-        screen.isFullscreen ? 1 : 0,
-        screen.width,
-        screen.height,
-        JSON.stringify(screen.globalSettings),
-        screen.sortOrder,
-      ],
-    )
+    for (const screen of screens) {
+      // Insert screen
+      db.run(
+        `INSERT INTO screens
+          (name, type, is_active, open_mode, is_fullscreen, width, height, global_settings, sort_order, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, unixepoch(), unixepoch())`,
+        [
+          screen.name,
+          screen.type,
+          screen.isActive ? 1 : 0,
+          screen.openMode,
+          screen.isFullscreen ? 1 : 0,
+          screen.width,
+          screen.height,
+          JSON.stringify(screen.globalSettings),
+          screen.sortOrder,
+        ],
+      )
 
-    // Get the inserted screen ID
-    const inserted = db
-      .query('SELECT id FROM screens WHERE name = ?')
-      .get(screen.name) as { id: number } | null
+      // Get the inserted screen ID
+      const inserted = db
+        .query('SELECT id FROM screens WHERE name = ?')
+        .get(screen.name) as { id: number } | null
 
-    if (inserted) {
+      if (!inserted) {
+        throw new Error(
+          `[seed-screens] Failed to insert screen '${screen.name}'. The screens table may be missing required columns.`,
+        )
+      }
+
       // Create content configs for all content types
       for (const [contentType, config] of Object.entries(
         screen.contentConfigs,
@@ -100,7 +107,13 @@ export function seedDefaultScreens(db: Database): void {
 
       log('debug', `Seeded screen: ${screen.name} (${screen.type})`)
     }
-  }
 
-  log('info', `Seeded ${screens.length} default screens from fixtures`)
+    log('info', `Seeded ${screens.length} default screens from fixtures`)
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : 'Unknown error during seeding'
+    throw new Error(
+      `[seed-screens] Failed to seed default screens: ${message}. Ensure the 'screens', 'screen_content_configs', and 'screen_next_slide_configs' tables exist with correct schema.`,
+    )
+  }
 }
