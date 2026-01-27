@@ -15,8 +15,10 @@ import { join } from 'node:path'
 
 import Database from 'bun:sqlite'
 
-// Resolve path relative to this file's location
-const DB_PATH = join(import.meta.dir, '..', '..', '..', 'data', 'app.db')
+import { getDatabasePath } from '../../utils/paths'
+
+// Use the same database path as the dev server
+const DB_PATH = getDatabasePath()
 const FIXTURES_DIR = join(import.meta.dir)
 
 // ============================================================================

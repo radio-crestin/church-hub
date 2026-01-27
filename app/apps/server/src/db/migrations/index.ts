@@ -6,7 +6,6 @@ import { dropSongKeyColumn } from './drop-song-key-column'
 import { EMBEDDED_MIGRATIONS } from './embedded'
 import { extractKeylinesFromSlides } from './extract-keylines-from-slides'
 import { migrateShortcuts } from './migrate-shortcuts'
-import { migrateSongTitles } from './migrate-song-titles'
 import { seedSystemRoles } from './seed'
 import { seedBibleTranslations } from './seed-bibles'
 import { seedDefaultScreens } from './seed-screens'
@@ -153,12 +152,6 @@ export function runMigrations(
   t = performance.now()
   seedSongs(rawDb)
   logTiming('seed_songs', t)
-
-  // Migrate song titles for specific categories (ASCII-only extraction)
-  log('info', 'Running song titles migration...')
-  t = performance.now()
-  migrateSongTitles(rawDb)
-  logTiming('migrate_song_titles', t)
 
   // Seed bible translations metadata
   log('info', 'Seeding bible translations...')
