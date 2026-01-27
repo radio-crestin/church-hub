@@ -29,6 +29,7 @@ interface AppSettingFixture {
  * To update fixtures:
  * 1. Configure settings in the UI
  * 2. Run: bun run fixtures
+ * @throws Error if seeding fails
  */
 export function seedAppSettings(db: Database): void {
   const settings = defaultSettings as AppSettingFixture[]
@@ -40,29 +41,37 @@ export function seedAppSettings(db: Database): void {
 
   log('info', `Seeding ${settings.length} app setting(s) from fixtures...`)
 
-  let seededCount = 0
+  try {
+    let seededCount = 0
 
-  for (const setting of settings) {
-    // Check if setting already exists (preserve user modifications)
-    const existing = db
-      .query('SELECT id FROM app_settings WHERE key = ?')
-      .get(setting.key) as { id: number } | null
+    for (const setting of settings) {
+      // Check if setting already exists (preserve user modifications)
+      const existing = db
+        .query('SELECT id FROM app_settings WHERE key = ?')
+        .get(setting.key) as { id: number } | null
 
-    if (existing) {
-      log('debug', `Setting already exists: ${setting.key}, skipping`)
-      continue
+      if (existing) {
+        log('debug', `Setting already exists: ${setting.key}, skipping`)
+        continue
+      }
+
+      db.run(
+        `INSERT INTO app_settings
+          (key, value, created_at, updated_at)
+          VALUES (?, ?, unixepoch(), unixepoch())`,
+        [setting.key, setting.value],
+      )
+
+      log('debug', `Seeded setting: ${setting.key}`)
+      seededCount++
     }
 
-    db.run(
-      `INSERT INTO app_settings
-        (key, value, created_at, updated_at)
-        VALUES (?, ?, unixepoch(), unixepoch())`,
-      [setting.key, setting.value],
+    log('info', `Seeded ${seededCount} app setting(s) from fixtures`)
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : 'Unknown error during seeding'
+    throw new Error(
+      `[seed-settings] Failed to seed app settings: ${message}. Ensure the 'app_settings' table exists with columns: key, value, created_at, updated_at.`,
     )
-
-    log('debug', `Seeded setting: ${setting.key}`)
-    seededCount++
   }
-
-  log('info', `Seeded ${seededCount} app setting(s) from fixtures`)
 }

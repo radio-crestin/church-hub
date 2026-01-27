@@ -12,6 +12,7 @@ Sentry.init({
   },
 })
 
+import { execFileSync, execSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import process from 'node:process'
 
@@ -254,9 +255,81 @@ const logTiming = (label: string, start: number) => {
   console.log(`[startup] ${label}: ${(performance.now() - start).toFixed(1)}ms`)
 }
 
+/**
+ * Kills any process listening on the specified port
+ * Uses execFileSync for safety (no shell interpolation)
+ */
+function killProcessOnPort(port: number): void {
+  const platform = process.platform
+  const portStr = String(port)
+
+  try {
+    if (platform === 'darwin' || platform === 'linux') {
+      // macOS/Linux: Find PID using lsof and kill it
+      // Using execFileSync with args array prevents shell injection
+      const result = execFileSync('lsof', ['-ti', `:${portStr}`], {
+        encoding: 'utf-8',
+      }).trim()
+      if (result) {
+        const pids = result.split('\n').filter(Boolean)
+        for (const pid of pids) {
+          if (/^\d+$/.test(pid)) {
+            try {
+              execFileSync('kill', ['-9', pid])
+              // biome-ignore lint/suspicious/noConsole: Startup info
+              console.log(`[startup] Killed process ${pid} on port ${portStr}`)
+            } catch {
+              // Process might have already exited
+            }
+          }
+        }
+      }
+    } else if (platform === 'win32') {
+      // Windows: Find PID using netstat and kill with taskkill
+      // Note: netstat requires shell piping, but we sanitize the port number
+      const result = execSync(
+        `netstat -ano | findstr :${portStr} | findstr LISTENING`,
+        { encoding: 'utf-8' },
+      ).trim()
+      if (result) {
+        const lines = result.split('\n').filter(Boolean)
+        const pids = new Set<string>()
+        for (const line of lines) {
+          const parts = line.trim().split(/\s+/)
+          const pid = parts[parts.length - 1]
+          if (pid && /^\d+$/.test(pid)) {
+            pids.add(pid)
+          }
+        }
+        for (const pid of pids) {
+          try {
+            execFileSync('taskkill', ['/F', '/PID', pid])
+            // biome-ignore lint/suspicious/noConsole: Startup info
+            console.log(`[startup] Killed process ${pid} on port ${portStr}`)
+          } catch {
+            // Process might have already exited
+          }
+        }
+      }
+    }
+  } catch {
+    // No process found on port or command failed - that's fine
+  }
+}
+
 async function main() {
   // biome-ignore lint/suspicious/noConsole: Startup timing logs
   console.log('[startup] === Server Starting ===')
+
+  // Kill any existing process on the server port to avoid EADDRINUSE
+  // Only do this in production (Tauri) mode, not in dev mode with watch
+  // In dev mode, the watch runner handles restarts gracefully
+  const isProduction = process.env.NODE_ENV === 'production'
+  const isTauri = process.env.TAURI_MODE === 'true'
+  if (isProduction || isTauri) {
+    const serverPort = Number(process.env['PORT']) || 3000
+    killProcessOnPort(serverPort)
+  }
 
   // Initialize database (Drizzle ORM wrapper) and run migrations
   let t = performance.now()
@@ -1316,8 +1389,6 @@ async function main() {
                 data: {
                   id: 0,
                   name: 'Local Admin',
-                  authType: 'app',
-                  isAdmin: true,
                   isApp: true,
                   permissions: ALL_PERMISSIONS,
                 },
@@ -1331,22 +1402,24 @@ async function main() {
 
         if (authResult.context?.userId) {
           const user = getUserById(authResult.context.userId)
-          return handleCors(
-            req,
-            new Response(
-              JSON.stringify({
-                data: {
-                  authType: 'user',
-                  user,
-                  isAdmin: false,
-                  permissions: authResult.context.permissions || [],
+          if (user) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({
+                  data: {
+                    id: user.id,
+                    name: user.name,
+                    isApp: false,
+                    permissions: authResult.context.permissions || [],
+                  },
+                }),
+                {
+                  headers: { 'Content-Type': 'application/json' },
                 },
-              }),
-              {
-                headers: { 'Content-Type': 'application/json' },
-              },
-            ),
-          )
+              ),
+            )
+          }
         }
 
         return handleCors(

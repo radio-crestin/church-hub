@@ -142,6 +142,12 @@ export function runMigrations(
   seedSongCategories(rawDb)
   logTiming('seed_song_categories', t)
 
+  // Add last_presented_at column to songs table (must run before seedSongs)
+  log('info', 'Running add last_presented_at migration...')
+  t = performance.now()
+  addLastPresentedAt(rawDb)
+  logTiming('add_last_presented_at', t)
+
   // Seed songs
   log('info', 'Seeding songs...')
   t = performance.now()
@@ -177,12 +183,6 @@ export function runMigrations(
   t = performance.now()
   dropSongKeyColumn(rawDb)
   logTiming('drop_song_key_column', t)
-
-  // Add last_presented_at column to songs table
-  log('info', 'Running add last_presented_at migration...')
-  t = performance.now()
-  addLastPresentedAt(rawDb)
-  logTiming('add_last_presented_at', t)
 
   // Extract keylines from first slide last paragraphs to keyLine field
   log('info', 'Running extract keylines migration...')

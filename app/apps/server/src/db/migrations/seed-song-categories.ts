@@ -21,6 +21,7 @@ interface SongCategoryFixture {
  * To update fixtures:
  * 1. Configure song categories in the UI
  * 2. Run: bun run fixtures
+ * @throws Error if seeding fails
  */
 export function seedSongCategories(db: Database): void {
   const categories = defaultSongCategories as SongCategoryFixture[]
@@ -35,15 +36,23 @@ export function seedSongCategories(db: Database): void {
     `Seeding ${categories.length} song category(ies) from fixtures...`,
   )
 
-  for (const category of categories) {
-    db.run(
-      `INSERT OR IGNORE INTO song_categories
-        (name, priority, created_at, updated_at)
-        VALUES (?, ?, unixepoch(), unixepoch())`,
-      [category.name, category.priority],
-    )
-    log('debug', `Seeded song category: ${category.name}`)
-  }
+  try {
+    for (const category of categories) {
+      db.run(
+        `INSERT OR IGNORE INTO song_categories
+          (name, priority, created_at, updated_at)
+          VALUES (?, ?, unixepoch(), unixepoch())`,
+        [category.name, category.priority],
+      )
+      log('debug', `Seeded song category: ${category.name}`)
+    }
 
-  log('info', `Seeded ${categories.length} song category(ies) from fixtures`)
+    log('info', `Seeded ${categories.length} song category(ies) from fixtures`)
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : 'Unknown error during seeding'
+    throw new Error(
+      `[seed-song-categories] Failed to seed song categories: ${message}. Ensure the 'song_categories' table exists with columns: name, priority, created_at, updated_at.`,
+    )
+  }
 }
