@@ -2745,6 +2745,45 @@
           "hidden": true
         },
         "clockEnabled": false
+      },
+      "screen_share": {
+        "background": {
+          "type": "color",
+          "color": "#000000",
+          "opacity": 1
+        },
+        "videoElement": {
+          "constraints": {
+            "top": {
+              "enabled": true,
+              "value": 0,
+              "unit": "%"
+            },
+            "right": {
+              "enabled": true,
+              "value": 0,
+              "unit": "%"
+            },
+            "bottom": {
+              "enabled": true,
+              "value": 0,
+              "unit": "%"
+            },
+            "left": {
+              "enabled": true,
+              "value": 0,
+              "unit": "%"
+            }
+          },
+          "size": {
+            "width": 100,
+            "widthUnit": "%",
+            "height": 100,
+            "heightUnit": "%"
+          },
+          "objectFit": "contain"
+        },
+        "clockEnabled": false
       }
     },
     "nextSlideConfig": {
