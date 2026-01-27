@@ -8,7 +8,8 @@
   "private": true,
   "scripts": {
     "dev": "node ../../scripts/run-bun.js --watch ./src/index.ts",
-    "compile": "node ../../scripts/run-bun.js ./scripts/compile.ts"
+    "compile": "node ../../scripts/run-bun.js ./scripts/compile.ts",
+    "test": "bun test"
   },
   "dependencies": {
     "@ai-sdk/openai": "^1.0.0",
