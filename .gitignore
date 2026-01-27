@@ -101,3 +101,8 @@ app/apps/server/churchhub.db
 
 # Soundfonts (downloaded dynamically)
 scripts/convert-midi-to-mp3/soundfonts/
+
+# Test artifacts
+app/apps/client/test-results/
+app/apps/client/playwright-report/
+app/apps/client/coverage/
