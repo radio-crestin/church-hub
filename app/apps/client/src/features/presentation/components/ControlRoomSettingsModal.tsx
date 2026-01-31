@@ -354,7 +354,7 @@ export function ControlRoomSettingsModal({
 
             {/* Kiosk Mode Section */}
             <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-              <KioskSettingsSection />
+              <KioskSettingsSection portalContainer={dialogRef.current} />
             </div>
           </div>
         </div>
