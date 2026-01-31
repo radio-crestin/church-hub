@@ -666,7 +666,7 @@ dependencies = [
 
 [[package]]
 name = "church-hub"
-version = "0.1.22"
+version = "0.1.40"
 dependencies = [
  "parking_lot",
  "sentry",

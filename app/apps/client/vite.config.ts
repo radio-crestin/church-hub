@@ -8,7 +8,7 @@ import type { Plugin } from 'vite'
 import { defineConfig, loadEnv } from 'vite'
 import viteTsConfigPaths from 'vite-tsconfig-paths'
 
-import packageJSON from './package.json'
+import tauriConf from '../../tauri/tauri.conf.json'
 
 const host = process.env.TAURI_DEV_HOST
 
@@ -182,7 +182,7 @@ const config = defineConfig(({ mode }) => {
     },
     // See `src/router.tsx` file to assign these defined values to window.
     define: {
-      __appVersion: JSON.stringify(packageJSON.version),
+      __appVersion: JSON.stringify(tauriConf.version),
       __envMode: JSON.stringify(mode),
     },
   }

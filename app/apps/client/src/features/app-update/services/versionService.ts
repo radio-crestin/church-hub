@@ -45,7 +45,7 @@ export async function getCurrentVersion(): Promise<string> {
       return 'Unknown'
     }
   }
-  return 'Web'
+  return __appVersion
 }
 
 /**
