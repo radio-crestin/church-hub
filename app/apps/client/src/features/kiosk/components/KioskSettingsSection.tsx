@@ -21,7 +21,11 @@ import {
 import type { KioskStartupPage } from '../types'
 import { KIOSK_ROUTE_OPTIONS } from '../types'
 
-export function KioskSettingsSection() {
+interface KioskSettingsSectionProps {
+  portalContainer?: HTMLElement | null
+}
+
+export function KioskSettingsSection({ portalContainer }: KioskSettingsSectionProps) {
   const { t } = useTranslation('settings')
   const { showToast } = useToast()
   const [showDebugOverlay, setShowDebugOverlay] = useState(false)
@@ -129,6 +133,7 @@ export function KioskSettingsSection() {
           onChange={handleStartupPageChange}
           disabled={!settings?.enabled || updateSettings.isPending}
           allowClear={false}
+          portalContainer={portalContainer}
         />
         <p className="text-gray-600 dark:text-gray-400 text-xs">
           {t('sections.kiosk.startupPage.description')}
