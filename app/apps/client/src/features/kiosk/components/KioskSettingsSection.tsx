@@ -25,7 +25,9 @@ interface KioskSettingsSectionProps {
   portalContainer?: HTMLElement | null
 }
 
-export function KioskSettingsSection({ portalContainer }: KioskSettingsSectionProps) {
+export function KioskSettingsSection({
+  portalContainer,
+}: KioskSettingsSectionProps) {
   const { t } = useTranslation('settings')
   const { showToast } = useToast()
   const [showDebugOverlay, setShowDebugOverlay] = useState(false)

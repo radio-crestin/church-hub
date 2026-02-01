@@ -62,5 +62,8 @@
   "dependencies": {
     "reveal.js": "^5.2.1",
     "tauri-plugin-libmpv-api": "^0.3"
-  }
+  },
+  "trustedDependencies": [
+    "audify"
+  ]
 }

@@ -207,6 +207,10 @@ type MessageData =
   | WebRTCOfferMessage
   | WebRTCAnswerMessage
   | WebRTCIceCandidateMessage
+  | { type: 'translation_state'; payload: Record<string, unknown> }
+  | { type: 'translation_audio_level'; payload: Record<string, unknown> }
+  | { type: 'translation_transcription'; payload: Record<string, unknown> }
+  | { type: 'translation_audio_output'; payload: Record<string, unknown> }
   | { type: 'pong' }
 
 // Check if we should use Tauri WebSocket plugin (on mobile)
@@ -379,6 +383,20 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
                 route: data.payload.route,
                 focusSearch: data.payload.focusSearch,
               },
+            }),
+          )
+        }
+
+        // Handle live translation messages
+        if (
+          data.type === 'translation_state' ||
+          data.type === 'translation_audio_level' ||
+          data.type === 'translation_transcription' ||
+          data.type === 'translation_audio_output'
+        ) {
+          window.dispatchEvent(
+            new CustomEvent('live-translation-message', {
+              detail: data,
             }),
           )
         }

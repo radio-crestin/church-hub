@@ -24,6 +24,7 @@ import {
   requirePermission,
 } from './middleware'
 import { getOpenApiSpec, getScalarDocs } from './openapi'
+import { handleLiveTranslationRoutes } from './routes/live-translation'
 import { handleLivestreamRoutes } from './routes/livestream'
 import { handleMIDIRoutes } from './routes/midi'
 import { handleMusicRoutes } from './routes/music'
@@ -4963,6 +4964,17 @@ async function main() {
       // MIDI routes
       const midiResponse = await handleMIDIRoutes(req, url, handleCors)
       if (midiResponse) return midiResponse
+
+      // Live translation routes
+      if (url.pathname.startsWith('/api/live-translation/')) {
+        const translationResponse = handleLiveTranslationRoutes(
+          req,
+          url,
+          _context!,
+        )
+        if (translationResponse)
+          return handleCors(req, await translationResponse)
+      }
 
       // Music routes (folders, files, playlists)
       const musicResponse = await handleMusicRoutes(req, url, handleCors)

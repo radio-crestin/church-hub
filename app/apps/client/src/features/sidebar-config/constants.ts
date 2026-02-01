@@ -1,6 +1,7 @@
 import {
   Book,
   CalendarDays,
+  Globe,
   Headphones,
   KeyRound,
   Monitor,
@@ -48,6 +49,7 @@ export const DEFAULT_ICON_COLORS: Record<BuiltInMenuItemId, IconColor> = {
   livestream: 'red',
   music: 'purple',
   song_key: 'yellow',
+  live_translation: 'blue',
   kiosk: 'gray',
   settings: 'gray',
 }
@@ -227,6 +229,13 @@ export const BUILTIN_ITEMS: Record<BuiltInMenuItemId, BuiltInItemDefinition> = {
     to: '/song-key',
     permission: 'song_key.view',
   },
+  live_translation: {
+    id: 'live_translation',
+    icon: Globe,
+    labelKey: 'sidebar:navigation.liveTranslation',
+    to: '/live-translation',
+    permission: 'settings.view',
+  },
   kiosk: {
     id: 'kiosk',
     icon: Monitor,
@@ -304,6 +313,14 @@ export const DEFAULT_SIDEBAR_CONFIG: SidebarConfiguration = {
       order: 6,
       isVisible: true,
       settings: getDefaultSidebarItemSettings('song_key'),
+    },
+    {
+      id: 'live_translation',
+      type: 'builtin',
+      builtinId: 'live_translation',
+      order: 7,
+      isVisible: true,
+      settings: getDefaultSidebarItemSettings('live_translation'),
     },
     // Note: Settings is not configurable - it's fixed at the bottom of the sidebar
     // Note: Kiosk is not configurable - it's dynamically shown when kiosk mode is enabled

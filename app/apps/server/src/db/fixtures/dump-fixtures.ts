@@ -14,7 +14,6 @@ import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 import Database from 'bun:sqlite'
-
 import { getDatabasePath } from '../../utils/paths'
 
 // Use the same database path as the dev server
@@ -388,9 +387,16 @@ function dumpBibleTranslations(db: Database): void {
 function sanitizeSettingValue(value: string): string {
   try {
     const parsed = JSON.parse(value)
-    if (typeof parsed === 'object' && parsed !== null && 'apiKey' in parsed) {
-      parsed.apiKey = null
-      return JSON.stringify(parsed)
+    if (typeof parsed === 'object' && parsed !== null) {
+      if ('apiKey' in parsed) {
+        parsed.apiKey = null
+      }
+      if ('geminiApiKey' in parsed) {
+        parsed.geminiApiKey = null
+      }
+      if ('apiKey' in parsed || 'geminiApiKey' in parsed) {
+        return JSON.stringify(parsed)
+      }
     }
     return value
   } catch {
