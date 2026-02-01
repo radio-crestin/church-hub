@@ -218,6 +218,10 @@ let activeBroadcastCache: {
 } | null = null
 const ACTIVE_BROADCAST_CACHE_TTL = 10 * 1000 // 10 seconds
 
+// The broadcast ID that our app created/is using for the current session.
+// When set, getActiveBroadcast() will prefer this over whatever YouTube API returns.
+let currentSessionBroadcastId: string | null = null
+
 export async function getActiveBroadcast(): Promise<BroadcastInfo | null> {
   // Return cached result if still fresh
   if (
@@ -241,15 +245,54 @@ export async function getActiveBroadcast(): Promise<BroadcastInfo | null> {
       broadcastStatus: 'active',
     })
 
-    const broadcast = response.data.items?.[0]
+    const activeItems = response.data.items || []
+
+    // If we have a session broadcast ID, prefer it over other active broadcasts
+    const broadcast = currentSessionBroadcastId
+      ? activeItems.find((b) => b.id === currentSessionBroadcastId) || activeItems[0]
+      : activeItems[0]
+
     if (!broadcast) {
       const upcomingResponse = await youtube.liveBroadcasts.list({
         part: ['snippet', 'status'],
         broadcastStatus: 'upcoming',
       })
 
-      const upcomingBroadcast = upcomingResponse.data.items?.[0]
+      const upcomingItems = upcomingResponse.data.items || []
+      const upcomingBroadcast = currentSessionBroadcastId
+        ? upcomingItems.find((b) => b.id === currentSessionBroadcastId) || upcomingItems[0]
+        : upcomingItems[0]
+
       if (!upcomingBroadcast) {
+        // If we have a session broadcast, query it directly by ID
+        // (it might be in 'created' state, not yet 'upcoming')
+        if (currentSessionBroadcastId) {
+          try {
+            const directResponse = await youtube.liveBroadcasts.list({
+              part: ['snippet', 'status'],
+              id: [currentSessionBroadcastId],
+            })
+            const directBroadcast = directResponse.data.items?.[0]
+            if (directBroadcast) {
+              const result: BroadcastInfo = {
+                broadcastId: directBroadcast.id!,
+                title: directBroadcast.snippet?.title || '',
+                url: `https://youtu.be/${directBroadcast.id}`,
+                status: directBroadcast.status?.lifeCycleStatus === 'live' ? 'live' : 'scheduled',
+                scheduledStartTime: new Date(
+                  directBroadcast.snippet?.scheduledStartTime || Date.now(),
+                ),
+                actualStartTime: directBroadcast.snippet?.actualStartTime
+                  ? new Date(directBroadcast.snippet.actualStartTime)
+                  : undefined,
+              }
+              activeBroadcastCache = { data: result, timestamp: Date.now() }
+              return result
+            }
+          } catch {
+            // Fall through
+          }
+        }
         activeBroadcastCache = { data: null, timestamp: Date.now() }
         return null
       }
@@ -287,9 +330,16 @@ export async function getActiveBroadcast(): Promise<BroadcastInfo | null> {
   }
 }
 
-// Clear the cache when broadcast status changes (start/stop)
+// Prime the cache with a known broadcast (e.g. after creation)
+export function setActiveBroadcastCache(broadcast: BroadcastInfo): void {
+  activeBroadcastCache = { data: broadcast, timestamp: Date.now() }
+  currentSessionBroadcastId = broadcast.broadcastId
+}
+
+// Clear the cache and session broadcast ID (call on stream stop)
 export function clearActiveBroadcastCache(): void {
   activeBroadcastCache = null
+  currentSessionBroadcastId = null
 }
 
 export async function endBroadcast(broadcastId: string): Promise<void> {

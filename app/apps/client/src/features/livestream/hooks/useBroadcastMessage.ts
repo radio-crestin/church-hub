@@ -1,38 +1,44 @@
-import { useMutation } from '@tanstack/react-query'
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 
 import { generateBroadcastMessage } from '../service'
 
 export function useBroadcastMessage() {
   const [copied, setCopied] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  // Track which URL the current message was generated for
+  const messageUrlRef = useRef<string | null>(null)
 
-  const mutation = useMutation({
-    mutationFn: (broadcastUrl?: string) =>
-      generateBroadcastMessage(broadcastUrl),
-  })
-
-  const fetchMessage = useCallback(
-    async (broadcastUrl?: string) => {
-      return await mutation.mutateAsync(broadcastUrl)
-    },
-    [mutation],
-  )
+  const fetchMessage = useCallback(async (broadcastUrl?: string) => {
+    setIsLoading(true)
+    try {
+      const result = await generateBroadcastMessage(broadcastUrl)
+      setMessage(result)
+      messageUrlRef.current = broadcastUrl || null
+      return result
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
 
   const copyMessage = useCallback(
     async (broadcastUrl?: string) => {
-      const message =
-        mutation.data || (await mutation.mutateAsync(broadcastUrl))
-      await navigator.clipboard.writeText(message)
+      // Re-fetch if the URL changed since the last fetch
+      let text = message
+      if (!text || messageUrlRef.current !== (broadcastUrl || null)) {
+        text = await fetchMessage(broadcastUrl)
+      }
+      await navigator.clipboard.writeText(text)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
-      return message
+      return text
     },
-    [mutation],
+    [message, fetchMessage],
   )
 
   return {
-    message: mutation.data,
-    isLoading: mutation.isPending,
+    message,
+    isLoading,
     fetchMessage,
     copyMessage,
     copied,

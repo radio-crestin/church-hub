@@ -7,6 +7,7 @@ export {
 export {
   clearActiveBroadcastCache,
   createBroadcast,
+  setActiveBroadcastCache,
   deleteUpcomingBroadcasts,
   endBroadcast,
   getActiveBroadcast,
