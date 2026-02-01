@@ -135,11 +135,10 @@ export function BroadcastInfo() {
     useBroadcastMessage()
 
   useEffect(() => {
-    if (activeBroadcast?.url && !message && !isLoading) {
+    if (activeBroadcast?.url) {
       fetchMessage(activeBroadcast.url).catch(() => {})
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeBroadcast?.url])
+  }, [activeBroadcast?.url, fetchMessage])
 
   const handleRetry = () => {
     clearStreamStartProgress()

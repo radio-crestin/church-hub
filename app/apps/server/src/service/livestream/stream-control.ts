@@ -11,7 +11,9 @@ import {
   createBroadcast,
   endBroadcast,
   getActiveBroadcast,
+  getUpcomingBroadcasts,
   getYouTubeConfig,
+  setActiveBroadcastCache,
 } from './youtube'
 import {
   broadcastLivestreamStatus,
@@ -70,15 +72,35 @@ export async function startStream(): Promise<{
       broadcastOBSCurrentScene(youtubeConfig.startSceneName)
     }
 
-    // Step 2: Create YouTube broadcast
+    // Step 2: Use existing upcoming broadcast or create a new one
     broadcastStreamStartProgress({
       step: 'creating_broadcast',
       progress: 5,
-      message: 'Creating YouTube broadcast...',
+      message: 'Preparing YouTube broadcast...',
       updatedAt: Date.now(),
     })
 
-    const broadcast = await createBroadcast()
+    let broadcast: Awaited<ReturnType<typeof createBroadcast>>
+
+    // Check for an existing upcoming broadcast before creating a new one
+    const upcomingBroadcasts = await getUpcomingBroadcasts()
+    if (upcomingBroadcasts.length > 0) {
+      const upcoming = upcomingBroadcasts[0]
+      log('info', `Using existing upcoming broadcast: ${upcoming.broadcastId} (${upcoming.title})`)
+      broadcast = {
+        broadcastId: upcoming.broadcastId,
+        title: upcoming.title,
+        url: upcoming.url,
+        status: 'scheduled',
+        scheduledStartTime: upcoming.scheduledStartTime,
+      }
+    } else {
+      log('info', 'No upcoming broadcasts found, creating a new one')
+      broadcast = await createBroadcast()
+    }
+
+    // Prime the cache so getActiveBroadcast() returns this broadcast
+    setActiveBroadcastCache(broadcast)
 
     // Step 3: Wait 5 seconds for YouTube to process the broadcast
     for (let i = 5; i > 0; i--) {
@@ -149,8 +171,13 @@ export async function startStream(): Promise<{
       updatedAt: Date.now(),
     })
 
-    // Clear cache so next query fetches fresh data
-    clearActiveBroadcastCache()
+    // Prime cache with the live broadcast so getActiveBroadcast() returns
+    // the correct one (YouTube API may still return a stale previous broadcast)
+    setActiveBroadcastCache({
+      ...broadcast,
+      status: 'live',
+      actualStartTime: new Date(),
+    })
 
     return {
       success: true,
