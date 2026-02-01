@@ -170,6 +170,11 @@
       "labelStyle": "Stil Etichetă",
       "contentStyle": "Stil Conținut"
     },
+    "songOptions": {
+      "title": "Opțiuni Cântare",
+      "displayKeyLine": "Afișează tonalitatea",
+      "displayKeyLineDescription": "Afișează tonalitatea muzicală pe primul slide al cântării"
+    },
     "bibleOptions": {
       "title": "Opțiuni Biblie",
       "includeReferenceInContent": "Include referința în conținut",

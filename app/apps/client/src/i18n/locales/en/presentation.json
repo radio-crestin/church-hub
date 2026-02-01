@@ -170,6 +170,11 @@
       "labelStyle": "Label Style",
       "contentStyle": "Content Style"
     },
+    "songOptions": {
+      "title": "Song Options",
+      "displayKeyLine": "Display key line",
+      "displayKeyLineDescription": "Show the musical key on the first slide of the song"
+    },
     "bibleOptions": {
       "title": "Bible Options",
       "includeReferenceInContent": "Include reference in content",

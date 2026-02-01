@@ -166,6 +166,7 @@ export function getDefaultSongConfig(): SongContentConfig {
       slideTransition: getDefaultSlideTransition(),
     },
     clockEnabled: false,
+    displayKeyLine: true,
   }
 }
 
