@@ -1,6 +1,38 @@
-import { describe, expect, test } from 'bun:test'
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
+import { spawn, type Subprocess } from 'bun'
+import { resolve } from 'path'
 
-const BASE_URL = 'http://localhost:3000'
+const TEST_PORT = 3099
+const BASE_URL = `http://localhost:${TEST_PORT}`
+
+let serverProcess: Subprocess | null = null
+
+async function waitForServer(url: string, maxAttempts = 30): Promise<void> {
+  for (let i = 0; i < maxAttempts; i++) {
+    try {
+      await fetch(url)
+      return
+    } catch {
+      await new Promise((r) => setTimeout(r, 500))
+    }
+  }
+  throw new Error(`Server did not start within ${maxAttempts * 500}ms`)
+}
+
+beforeAll(async () => {
+  const serverEntry = resolve(import.meta.dir, '..', 'index.ts')
+  serverProcess = spawn({
+    cmd: ['bun', 'run', serverEntry],
+    env: { ...process.env, PORT: String(TEST_PORT) },
+    stdout: 'ignore',
+    stderr: 'ignore',
+  })
+  await waitForServer(`${BASE_URL}/api/database/info`)
+})
+
+afterAll(() => {
+  serverProcess?.kill()
+})
 
 describe('API Health', () => {
   test('GET /api/database/info returns 200', async () => {
@@ -26,7 +58,6 @@ describe('Songs API', () => {
     const res = await fetch(`${BASE_URL}/api/songs`)
     expect(res.status).toBe(200)
     const json = await res.json()
-    // Response has { data: [...] } structure
     expect(json).toHaveProperty('data')
     expect(Array.isArray(json.data)).toBe(true)
   })
