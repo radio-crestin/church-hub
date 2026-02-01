@@ -135,12 +135,20 @@ export async function searchSongs(
   query: string,
   categoryIds?: number[],
   signal?: AbortSignal,
+  filters?: {
+    presentedOnly?: boolean
+    inSchedulesOnly?: boolean
+    hasKeyLine?: boolean
+  },
 ): Promise<SongSearchResult[]> {
   const params = new URLSearchParams()
   params.set('q', query)
   if (categoryIds && categoryIds.length > 0) {
     params.set('categoryIds', categoryIds.join(','))
   }
+  if (filters?.presentedOnly) params.set('presentedOnly', 'true')
+  if (filters?.inSchedulesOnly) params.set('inSchedulesOnly', 'true')
+  if (filters?.hasKeyLine) params.set('hasKeyLine', 'true')
   const response = await fetcher<ApiResponse<SongSearchResult[]>>(
     `/api/songs/search?${params.toString()}`,
     { signal, cache: 'no-store' },

@@ -232,6 +232,11 @@ export function SongList({
   } = useSearchSongs(
     debouncedQuery,
     categoryIds.length > 0 ? categoryIds : undefined,
+    {
+      presentedOnly: presentedOnly || undefined,
+      inSchedulesOnly: inSchedulesOnly || undefined,
+      hasKeyLine: hasKeyLine || undefined,
+    },
   )
 
   const { data: categories } = useCategories()

@@ -42,9 +42,21 @@ const searchResultsCache = new Map<string, SearchCacheEntry>()
 function getSearchCacheKey(
   query: string,
   categoryIds: number[] | undefined,
+  filters?: {
+    presentedOnly?: boolean
+    inSchedulesOnly?: boolean
+    hasKeyLine?: boolean
+  },
 ): string {
   const categoryKey = categoryIds?.sort().join(',') ?? 'all'
-  return `${query.toLowerCase().trim()}:${categoryKey}`
+  const filterKey = [
+    filters?.presentedOnly ? 'p' : '',
+    filters?.inSchedulesOnly ? 's' : '',
+    filters?.hasKeyLine ? 'k' : '',
+  ]
+    .filter(Boolean)
+    .join('')
+  return `${query.toLowerCase().trim()}:${categoryKey}:${filterKey}`
 }
 
 function getFromSearchCache(key: string): SongSearchResult[] | null {
@@ -190,25 +202,22 @@ function removeDiacritics(text: string): string {
  * - "s-a" → "s a" (reflexive pronoun contraction)
  */
 function normalizeForIndex(text: string): string {
-  let normalized = text
+  let normalized = removeDiacritics(text)
     .replace(/-/g, ' ') // Replace hyphens with spaces
     .replace(/\s+/g, ' ') // Collapse multiple spaces
     .trim()
 
   // Expand Romanian n- contractions: words starting with "n" followed by consonant
-  // are often contractions of "în" + word (e.g., "nfăptuiesc" = "înfăptuiesc" → also index "făptuiesc")
-  // This helps match "faptuiesc" to "nfaptuiesc"
+  // are often contractions of "în" + word (e.g., "nfaptuiesc" = "infaptuiesc" → also index "faptuiesc")
   const words = normalized.split(' ')
   const expandedWords: string[] = []
 
   for (const word of words) {
     expandedWords.push(word)
-    // If word starts with 'n' followed by a consonant (not a vowel),
-    // it might be a contraction - also add the word without 'n'
     if (
       word.length > 2 &&
       word[0].toLowerCase() === 'n' &&
-      !/^n[aeiouăâî]/i.test(word)
+      !/^n[aeiou]/i.test(word)
     ) {
       expandedWords.push(word.substring(1))
     }
@@ -507,7 +516,7 @@ export function rebuildSearchIndex(): void {
  * Extracts and sanitizes search terms from query text
  */
 function extractSearchTerms(queryText: string): string[] {
-  const sanitized = queryText
+  const sanitized = removeDiacritics(queryText)
     .replace(/['"]/g, '')
     .replace(/[*()^:+\-\\]/g, ' ')
     .trim()
@@ -517,41 +526,17 @@ function extractSearchTerms(queryText: string): string[] {
 }
 
 /**
- * Filters query terms to only those that exist meaningfully in the corpus
- * Excludes:
- * - Terms that don't exist at all (typos, random strings)
- * - Terms matching very few documents (<10) - likely noise like IDs or rare typos
+ * Checks which terms exist in the corpus.
+ * Uses a single FTS query with OR to check all terms at once.
+ * All terms that match at least one document are considered valid.
  */
-function getValidTerms(
-  db: ReturnType<typeof getDatabase>,
-  terms: string[],
-): { validTerms: string[]; termCounts: Map<string, number> } {
-  const MIN_TERM_FREQUENCY = 10 // Terms must match at least this many docs
-  const termCounts = new Map<string, number>()
-  const validTerms: string[] = []
-
-  for (const term of terms) {
-    try {
-      // Check if term exists in FTS index (with prefix matching)
-      const result = db
-        .query(
-          `SELECT COUNT(*) as count FROM songs_fts WHERE songs_fts MATCH ?`,
-        )
-        .get(`"${term}"*`) as { count: number } | null
-
-      const count = result?.count ?? 0
-      // Only include terms that appear in enough documents
-      // This filters out noise like "123" which might match a few song titles
-      if (count >= MIN_TERM_FREQUENCY) {
-        validTerms.push(term)
-        termCounts.set(term, count)
-      }
-    } catch {
-      // Term might have special characters, skip it
-    }
-  }
-
-  return { validTerms, termCounts }
+function getValidTerms(terms: string[]): { validTerms: string[] } {
+  // All terms are valid if they can be part of an FTS query
+  // The FTS engine handles non-matching terms gracefully
+  const validTerms = terms.filter(
+    (t) => t.length > 0 && /^[\p{L}\p{N}]+$/u.test(t),
+  )
+  return { validTerms }
 }
 
 /**
@@ -581,43 +566,27 @@ function buildSearchQuery(queryText: string): string {
 }
 
 /**
- * Calculates title match score with bonuses for exact phrase and term order
- * Title matching is simpler since titles are short
- *
- * Score breakdown:
- * - 100: Title starts with exact phrase
- * - 95: Exact phrase match (anywhere in title)
- * - 80-94: All terms present in correct order
- * - 60-79: All terms present (any order)
- * - 0-59: Partial term matches
+ * Title scoring for pre-normalized (diacritics-free, lowercase) text.
+ * Skips redundant removeDiacritics calls.
  */
-function calculateTitleScore(title: string, queryTerms: string[]): number {
-  if (!title || queryTerms.length === 0) return 0
+function calculateTitleScoreNormalized(
+  normalizedTitle: string,
+  queryTerms: string[],
+): number {
+  if (!normalizedTitle || queryTerms.length === 0) return 0
 
-  const normalizedTitle = removeDiacritics(title).toLowerCase()
-  const normalizedTerms = queryTerms.map((t) =>
-    removeDiacritics(t).toLowerCase(),
-  )
+  const title = normalizedTitle.toLowerCase()
+  const exactPhrase = queryTerms.join(' ')
 
-  const exactPhrase = normalizedTerms.join(' ')
+  if (title.startsWith(exactPhrase)) return 100
+  if (title.includes(exactPhrase)) return 95
 
-  // Highest score: title starts with the exact phrase
-  if (normalizedTitle.startsWith(exactPhrase)) {
-    return 100
-  }
-
-  // Second highest: phrase appears elsewhere in title
-  if (normalizedTitle.includes(exactPhrase)) {
-    return 95
-  }
-
-  // Count matched terms and check order
   let matchedCount = 0
   let lastMatchPos = -1
   let inOrderCount = 0
 
-  for (const term of normalizedTerms) {
-    const pos = normalizedTitle.indexOf(term)
+  for (const term of queryTerms) {
+    const pos = title.indexOf(term)
     if (pos !== -1) {
       matchedCount++
       if (pos > lastMatchPos) {
@@ -629,117 +598,82 @@ function calculateTitleScore(title: string, queryTerms: string[]): number {
 
   if (matchedCount === 0) return 0
 
-  const matchPercentage = matchedCount / normalizedTerms.length
+  const matchPercentage = matchedCount / queryTerms.length
   const orderBonus = inOrderCount === matchedCount ? 0.2 : 0
-  const allMatchedBonus = matchedCount === normalizedTerms.length ? 0.2 : 0
+  const allMatchedBonus = matchedCount === queryTerms.length ? 0.2 : 0
 
-  // Score: base 54% for matches, +20% for all matched, +20% for correct order (max 94)
   return Math.round(
     matchPercentage * 54 + allMatchedBonus * 100 + orderBonus * 100,
   )
 }
 
 /**
- * Finds the best matching phrase/region in content and returns its score
- * Instead of counting scattered word occurrences, this finds the SINGLE BEST
- * contiguous region where query terms cluster together
- *
- * Score breakdown:
- * - 100: Exact phrase match found
- * - 70-99: All terms found in a tight cluster
- * - 40-69: Most terms found with reasonable proximity
- * - 0-39: Sparse/partial matches
+ * Optimized content scoring for pre-normalized (diacritics-free) text.
+ * Skips redundant removeDiacritics calls.
  */
-function calculateBestPhraseScore(
-  content: string,
+function calculateBestPhraseScoreNormalized(
+  normalizedContent: string,
   queryTerms: string[],
 ): number {
-  if (!content || queryTerms.length === 0) return 0
+  if (!normalizedContent || queryTerms.length === 0) return 0
 
-  const normalizedContent = removeDiacritics(content).toLowerCase()
-  const normalizedTerms = queryTerms.map((t) =>
-    removeDiacritics(t).toLowerCase(),
-  )
+  const content = normalizedContent.toLowerCase()
+  const exactPhrase = queryTerms.join(' ')
+  if (content.includes(exactPhrase)) return 100
 
-  // Check for exact phrase match (highest score)
-  const exactPhrase = normalizedTerms.join(' ')
-  if (normalizedContent.includes(exactPhrase)) {
-    return 100
-  }
-
-  // Find all positions where each query term appears
   const termPositions: Map<number, number[]> = new Map()
-  for (let i = 0; i < normalizedTerms.length; i++) {
-    const term = normalizedTerms[i]
+  for (let i = 0; i < queryTerms.length; i++) {
     const positions: number[] = []
     let pos = 0
-    while ((pos = normalizedContent.indexOf(term, pos)) !== -1) {
+    while ((pos = content.indexOf(queryTerms[i], pos)) !== -1) {
       positions.push(pos)
       pos++
     }
-    if (positions.length > 0) {
-      termPositions.set(i, positions)
-    }
+    if (positions.length > 0) termPositions.set(i, positions)
   }
 
-  // If no terms found at all
   if (termPositions.size === 0) return 0
+  if (termPositions.size === 1) return Math.round((1 / queryTerms.length) * 50)
 
-  // If only one term type found, simple percentage score
-  if (termPositions.size === 1) {
-    return Math.round((1 / normalizedTerms.length) * 50)
-  }
-
-  // Find the best cluster: region where most terms appear closest together
   let bestScore = 0
+  const CLUSTER_RADIUS = 150
 
-  // Try starting from each occurrence of each term
   for (const [startTermIdx, startPositions] of termPositions) {
     for (const anchorPos of startPositions) {
-      // For this anchor position, find the best cluster of terms
       const termsInCluster = new Set<number>([startTermIdx])
       let clusterStart = anchorPos
-      let clusterEnd = anchorPos + normalizedTerms[startTermIdx].length
-
-      // Greedily add closest terms to the cluster
-      const CLUSTER_RADIUS = 150 // Max chars to look for related terms
+      let clusterEnd = anchorPos + queryTerms[startTermIdx].length
 
       for (const [termIdx, positions] of termPositions) {
         if (termIdx === startTermIdx) continue
-
-        // Find the closest occurrence to our current cluster
         let closestPos = -1
         let closestDist = Number.POSITIVE_INFINITY
-
         for (const pos of positions) {
-          const distToCluster = Math.min(
+          const d = Math.min(
             Math.abs(pos - clusterStart),
             Math.abs(pos - clusterEnd),
           )
-          if (distToCluster < closestDist && distToCluster <= CLUSTER_RADIUS) {
-            closestDist = distToCluster
+          if (d < closestDist && d <= CLUSTER_RADIUS) {
+            closestDist = d
             closestPos = pos
           }
         }
-
         if (closestPos !== -1) {
           termsInCluster.add(termIdx)
           clusterStart = Math.min(clusterStart, closestPos)
           clusterEnd = Math.max(
             clusterEnd,
-            closestPos + normalizedTerms[termIdx].length,
+            closestPos + queryTerms[termIdx].length,
           )
         }
       }
 
-      // Score this cluster
-      const matchRatio = termsInCluster.size / normalizedTerms.length
+      const matchRatio = termsInCluster.size / queryTerms.length
       const clusterSpan = clusterEnd - clusterStart
 
-      // Check if terms appear in query order within the cluster
       let inOrder = true
       let lastPos = -1
-      for (let i = 0; i < normalizedTerms.length; i++) {
+      for (let i = 0; i < queryTerms.length; i++) {
         if (!termsInCluster.has(i)) continue
         const positions = termPositions.get(i) || []
         const posInCluster = positions.find(
@@ -754,20 +688,14 @@ function calculateBestPhraseScore(
         }
       }
 
-      // Calculate score:
-      // - Base: 50% for match ratio
-      // - Proximity bonus: up to 30% (tighter cluster = higher)
-      // - Order bonus: 20% if terms appear in correct order
       const baseScore = matchRatio * 50
-      const idealSpan = termsInCluster.size * 10 // ~10 chars per term is ideal
+      const idealSpan = termsInCluster.size * 10
       const proximityScore =
         termsInCluster.size > 1
           ? Math.max(0, 30 * (1 - Math.min(1, (clusterSpan - idealSpan) / 200)))
           : 0
       const orderScore = inOrder ? 20 : 0
-
-      const clusterScore = baseScore + proximityScore + orderScore
-      bestScore = Math.max(bestScore, clusterScore)
+      bestScore = Math.max(bestScore, baseScore + proximityScore + orderScore)
     }
   }
 
@@ -1014,6 +942,11 @@ export function searchSongs(
   query: string,
   categoryIds?: number[],
   limit = 50,
+  filters?: {
+    presentedOnly?: boolean
+    inSchedulesOnly?: boolean
+    hasKeyLine?: boolean
+  },
 ): SongSearchResult[] {
   const startTime = performance.now()
 
@@ -1025,7 +958,7 @@ export function searchSongs(
     }
 
     // Check cache first (before any processing)
-    const cacheKey = getSearchCacheKey(query, categoryIds)
+    const cacheKey = getSearchCacheKey(query, categoryIds, filters)
     const cachedResults = getFromSearchCache(cacheKey)
     if (cachedResults) {
       log(
@@ -1038,31 +971,21 @@ export function searchSongs(
     const db = getRawDatabase()
     const queryTerms = extractSearchTerms(query)
 
-    // Filter to valid terms (terms that exist in corpus) - ignore noise like "123"
-    let { validTerms, termCounts } = getValidTerms(db, queryTerms)
+    // Filter to valid terms (terms that exist in corpus)
+    const validTermsStart = performance.now()
+    let { validTerms } = getValidTerms(queryTerms)
+    log(
+      'debug',
+      `getValidTerms: ${(performance.now() - validTermsStart).toFixed(1)}ms`,
+    )
 
     // If ALL terms were filtered out, fall back to original terms
-    // This handles cases like searching "001" where the user wants that specific song
-    // vs adding "123" noise to a longer query like "Isus Cristos 123"
     if (validTerms.length === 0 && queryTerms.length > 0) {
       log(
         'debug',
         'All terms filtered as noise, falling back to original terms',
       )
       validTerms = queryTerms
-      // Get actual counts for these terms (even if below threshold)
-      for (const term of queryTerms) {
-        try {
-          const result = db
-            .query(
-              `SELECT COUNT(*) as count FROM songs_fts WHERE songs_fts MATCH ?`,
-            )
-            .get(`"${term}"*`) as { count: number } | null
-          termCounts.set(term, result?.count ?? 0)
-        } catch {
-          termCounts.set(term, 0)
-        }
-      }
     }
 
     log(
@@ -1079,22 +1002,6 @@ export function searchSongs(
     // Expand valid terms with synonyms for broader search
     const expandedTerms = expandTermsWithSynonyms(validTerms)
 
-    // Update term counts for expanded terms
-    for (const term of expandedTerms) {
-      if (!termCounts.has(term)) {
-        try {
-          const result = db
-            .query(
-              `SELECT COUNT(*) as count FROM songs_fts WHERE songs_fts MATCH ?`,
-            )
-            .get(`"${term}"*`) as { count: number } | null
-          termCounts.set(term, result?.count ?? 0)
-        } catch {
-          termCounts.set(term, 0)
-        }
-      }
-    }
-
     // Build FTS query using expanded terms for broader results
     const ftsQuery = buildSearchQuery(expandedTerms.join(' '))
 
@@ -1105,13 +1012,27 @@ export function searchSongs(
     log('debug', `FTS query: ${ftsQuery}`)
 
     // Phase 1: Standard FTS5 search for exact/prefix matches
-    let categoryFilter = ''
+    // Build additional SQL filters
+    const extraConditions: string[] = []
     let categoryParams: number[] = []
     if (categoryIds && categoryIds.length > 0) {
       const placeholders = categoryIds.map(() => '?').join(',')
-      categoryFilter = `AND s.category_id IN (${placeholders})`
+      extraConditions.push(`s.category_id IN (${placeholders})`)
       categoryParams = categoryIds
     }
+    if (filters?.presentedOnly) {
+      extraConditions.push('s.presentation_count > 0')
+    }
+    if (filters?.inSchedulesOnly) {
+      extraConditions.push(
+        `s.id IN (SELECT DISTINCT song_id FROM schedule_items WHERE song_id IS NOT NULL)`,
+      )
+    }
+    if (filters?.hasKeyLine) {
+      extraConditions.push(`s.key_line IS NOT NULL AND s.key_line != ''`)
+    }
+    const extraFilter =
+      extraConditions.length > 0 ? `AND ${extraConditions.join(' AND ')}` : ''
     const standardQueryParams = [ftsQuery, ...categoryParams]
 
     const standardResults = db
@@ -1128,13 +1049,14 @@ export function searchSongs(
         highlight(songs_fts, 1, '<mark>', '</mark>') as highlighted_title,
         snippet(songs_fts, 3, '<mark>', '</mark>', '...', 30) as matched_content,
         songs_fts.content as full_content,
+        songs_fts.title as fts_title,
         rank as bm25_rank
       FROM songs_fts
       JOIN songs s ON s.id = songs_fts.song_id
       LEFT JOIN song_categories sc ON s.category_id = sc.id
-      WHERE songs_fts MATCH ? ${categoryFilter}
+      WHERE songs_fts MATCH ? ${extraFilter}
       ORDER BY rank
-      LIMIT 500
+      LIMIT 100
     `,
       )
       .all(...standardQueryParams) as Array<{
@@ -1148,12 +1070,18 @@ export function searchSongs(
       highlighted_title: string
       matched_content: string
       full_content: string
+      fts_title: string
       bm25_rank: number
     }>
 
-    log('debug', `Phase 1 (standard): Found ${standardResults.length} results`)
+    const phase1Elapsed = performance.now() - startTime
+    log(
+      'debug',
+      `Phase 1 (standard): Found ${standardResults.length} results in ${phase1Elapsed.toFixed(1)}ms`,
+    )
 
     // Phase 2: Trigram search for fuzzy matches (use expanded terms)
+    let phase2Elapsed = phase1Elapsed
     const trigramQuery = buildTrigramQuery(expandedTerms)
     let trigramResults: Array<{
       id: number
@@ -1186,16 +1114,17 @@ export function searchSongs(
           FROM songs_fts_trigram
           JOIN songs s ON s.id = songs_fts_trigram.song_id
           LEFT JOIN song_categories sc ON s.category_id = sc.id
-          WHERE songs_fts_trigram MATCH ? ${categoryFilter}
+          WHERE songs_fts_trigram MATCH ? ${extraFilter}
           ORDER BY rank
-          LIMIT 200
+          LIMIT 50
         `,
           )
           .all(...trigramQueryParams) as typeof trigramResults
 
+        phase2Elapsed = performance.now() - startTime
         log(
           'debug',
-          `Phase 2 (trigram): Found ${trigramResults.length} results`,
+          `Phase 2 (trigram): Found ${trigramResults.length} results in ${phase2Elapsed.toFixed(1)}ms`,
         )
       } catch (e) {
         // Trigram table might not exist yet, continue without it
@@ -1217,6 +1146,7 @@ export function searchSongs(
         highlighted_title: string
         matched_content: string
         full_content: string
+        fts_title: string
         bm25_rank: number
         fromTrigram: boolean
       }
@@ -1232,7 +1162,8 @@ export function searchSongs(
       if (!candidateMap.has(r.id)) {
         candidateMap.set(r.id, {
           ...r,
-          highlighted_title: r.title, // No highlighting for trigram-only matches
+          fts_title: removeDiacritics(r.title).toLowerCase(),
+          highlighted_title: r.title,
           matched_content: '',
           fromTrigram: true,
         })
@@ -1243,18 +1174,20 @@ export function searchSongs(
     log('debug', `Combined: ${candidates.length} unique candidates`)
 
     // Phase 3: Calculate match scores using phrase-based scoring
-    // Title: uses calculateTitleScore (bonuses for exact phrase, term order)
-    // Content: uses calculateBestPhraseScore (finds BEST matching region, not scattered words)
-    // Title matches get 2x weight compared to content matches
+    // FTS content is already diacritics-free (normalizeForIndex strips diacritics)
+    // so we skip redundant removeDiacritics calls in scoring
     const TITLE_WEIGHT = 2
     const CONTENT_WEIGHT = 1
 
     const scoredResults = candidates.map((r) => {
-      // Calculate title score (0-100) with phrase matching
-      const titleScore = calculateTitleScore(r.title, expandedTerms)
+      // Use pre-normalized fts_title (already diacritics-free) for scoring
+      const titleScore = calculateTitleScoreNormalized(
+        r.fts_title,
+        expandedTerms,
+      )
 
-      // Calculate content score (0-100) - finds the BEST single phrase match
-      const contentScore = calculateBestPhraseScore(
+      // Use pre-normalized full_content (already diacritics-free) for scoring
+      const contentScore = calculateBestPhraseScoreNormalized(
         r.full_content,
         expandedTerms,
       )
@@ -1302,9 +1235,10 @@ export function searchSongs(
     // Return top results based on limit
     const topResults = scoredResults.slice(0, limit)
 
+    const phase3Elapsed = performance.now() - startTime
     log(
       'debug',
-      `Phase 3: Re-ranked. Top score: ${topResults[0]?.termScore ?? 0}%`,
+      `Phase 3: Re-ranked ${candidates.length} candidates in ${(phase3Elapsed - phase2Elapsed).toFixed(1)}ms. Top score: ${topResults[0]?.termScore ?? 0}%`,
     )
 
     const finalResults = topResults.map((r) => {

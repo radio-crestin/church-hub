@@ -18,6 +18,7 @@ export {
 // Search
 export {
   batchUpdateSearchIndex,
+  clearSearchCache,
   rebuildSearchIndex,
   removeFromSearchIndex,
   searchSongs,
