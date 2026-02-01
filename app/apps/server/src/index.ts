@@ -195,6 +195,7 @@ import {
   type BatchImportSongInput,
   batchImportSongs,
   batchUpdateSearchIndex,
+  clearSearchCache,
   cloneSongSlide,
   completeSongReplacement,
   deleteCategory,
@@ -2736,9 +2737,17 @@ async function main() {
               .map((id) => parseInt(id, 10))
               .filter((id) => !isNaN(id))
           : undefined
+        const presentedOnly =
+          url.searchParams.get('presentedOnly') === 'true' || undefined
+        const inSchedulesOnly =
+          url.searchParams.get('inSchedulesOnly') === 'true' || undefined
+        const hasKeyLine =
+          url.searchParams.get('hasKeyLine') === 'true' || undefined
         const results = searchSongs(
           query,
           categoryIds && categoryIds.length > 0 ? categoryIds : undefined,
+          50,
+          { presentedOnly, inSchedulesOnly, hasKeyLine },
         )
 
         return handleCors(
@@ -2798,6 +2807,71 @@ async function main() {
             }),
           )
         }
+      }
+
+      // GET /api/songs/search/benchmark - Benchmark search performance
+      if (
+        req.method === 'GET' &&
+        url.pathname === '/api/songs/search/benchmark'
+      ) {
+        const permError = checkPermission('songs.view')
+        if (permError) return permError
+
+        const testQueries = [
+          'În străvechea Carte sfânt',
+          'in stravechea carte sfant',
+          'Isus',
+          'Doamne',
+          'har',
+          'credinta',
+          'slavă Domnului',
+        ]
+        const iterations = 5
+        const results: Array<{
+          query: string
+          avgMs: number
+          minMs: number
+          maxMs: number
+          resultCount: number
+          topResult: string | null
+        }> = []
+
+        // Clear search cache before benchmarking
+        clearSearchCache()
+
+        for (const q of testQueries) {
+          const times: number[] = []
+          let resultCount = 0
+          let topResult: string | null = null
+
+          for (let i = 0; i < iterations; i++) {
+            clearSearchCache()
+            const start = performance.now()
+            const res = searchSongs(q)
+            times.push(performance.now() - start)
+            resultCount = res.length
+            topResult = res[0]?.title ?? null
+          }
+
+          results.push({
+            query: q,
+            avgMs:
+              Math.round(
+                (times.reduce((a, b) => a + b, 0) / times.length) * 100,
+              ) / 100,
+            minMs: Math.round(Math.min(...times) * 100) / 100,
+            maxMs: Math.round(Math.max(...times) * 100) / 100,
+            resultCount,
+            topResult,
+          })
+        }
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: results }, null, 2), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
       }
 
       // POST /api/songs/search/rebuild - Rebuild FTS search index
