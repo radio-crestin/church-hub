@@ -2,7 +2,8 @@ import { useNavigate } from '@tanstack/react-router'
 import {
   ArrowLeft,
   Check,
-  ChevronsRightLeft,
+  ChevronsDownUp,
+  ChevronsUpDown,
   Download,
   FileText,
   GripVertical,
@@ -163,7 +164,8 @@ export function SchedulePresenter({
   const [showAddMenu, setShowAddMenu] = useState(false)
 
   // Expand/collapse all triggers
-  const [expandAllTrigger, _setExpandAllTrigger] = useState(0)
+  const [allExpanded, setAllExpanded] = useState(true)
+  const [expandAllTrigger, setExpandAllTrigger] = useState(1)
   const [collapseAllTrigger, setCollapseAllTrigger] = useState(0)
 
   const deleteDialogRef = useRef<HTMLDialogElement>(null)
@@ -1313,11 +1315,18 @@ export function SchedulePresenter({
           <div className="flex items-center justify-between p-3 lg:p-4 pb-2 border-b border-gray-200 dark:border-gray-700">
             <button
               type="button"
-              onClick={() => setCollapseAllTrigger((prev) => prev + 1)}
+              onClick={() => {
+                if (allExpanded) {
+                  setCollapseAllTrigger((prev) => prev + 1)
+                } else {
+                  setExpandAllTrigger((prev) => prev + 1)
+                }
+                setAllExpanded((prev) => !prev)
+              }}
               className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition-colors"
-              title={t('actions.collapseAll')}
+              title={allExpanded ? t('actions.collapseAll') : t('actions.expandAll')}
             >
-              <ChevronsRightLeft size={16} />
+              {allExpanded ? <ChevronsDownUp size={16} /> : <ChevronsUpDown size={16} />}
             </button>
             <div className="flex items-center gap-1.5">
               <button

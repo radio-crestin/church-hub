@@ -150,6 +150,10 @@ export async function handleContentTypeChange(
   isPresenting: boolean,
 ): Promise<void> {
   const state = getSceneAutomationState()
+  log(
+    'debug',
+    `handleContentTypeChange: contentType=${contentType}, isPresenting=${isPresenting}, state=${JSON.stringify(state)}`,
+  )
 
   // Skip if automation is disabled
   if (!state.isEnabled) {
@@ -157,11 +161,20 @@ export async function handleContentTypeChange(
     return
   }
 
-  // Skip if not presenting
+  // If not presenting, revert to previous scene if we were in auto mode, then clear state
   if (!isPresenting) {
-    log('debug', 'Not presenting, clearing scene automation state')
-    // Always clear state when not presenting
-    // This ensures the next presentation triggers automation
+    if (state.currentAutoScene && state.previousSceneName) {
+      log(
+        'info',
+        `Not presenting, reverting to previous scene: ${state.previousSceneName}`,
+      )
+      try {
+        await switchScene(state.previousSceneName)
+        broadcastOBSCurrentScene(state.previousSceneName)
+      } catch (error) {
+        log('error', `Failed to revert scene: ${error}`)
+      }
+    }
     updateAutomationState({
       previousSceneName: null,
       currentAutoScene: null,
@@ -188,9 +201,9 @@ export async function handleContentTypeChange(
   if (targetScene) {
     // We have a scene configured for this content type
     if (targetScene.obsSceneName !== currentOBSScene) {
-      // Save the previous scene if we're not already in auto mode
-      if (!state.currentAutoScene && currentOBSScene) {
-        log('debug', `Saving previous scene: ${currentOBSScene}`)
+      // Save the previous scene if we don't have one yet
+      if (!state.previousSceneName && currentOBSScene) {
+        log('info', `Saving previous scene: ${currentOBSScene}`)
         updateAutomationState({ previousSceneName: currentOBSScene })
       }
 
@@ -210,8 +223,14 @@ export async function handleContentTypeChange(
         log('error', `Failed to switch scene: ${error}`)
       }
     } else {
-      // Already on the correct scene, just update state
+      // Already on the correct scene - save previous scene if we don't have one
+      if (!state.previousSceneName && currentOBSScene) {
+        log('info', `Saving previous scene (already on target): ${currentOBSScene}`)
+      }
       updateAutomationState({
+        ...(!state.previousSceneName && currentOBSScene
+          ? { previousSceneName: currentOBSScene }
+          : {}),
         currentAutoScene: targetScene.obsSceneName,
         lastContentType: contentType,
       })
@@ -227,14 +246,24 @@ export async function handleContentTypeChange(
       try {
         await switchScene(state.previousSceneName)
         broadcastOBSCurrentScene(state.previousSceneName)
-        updateAutomationState({
-          previousSceneName: null,
-          currentAutoScene: null,
-          lastContentType: contentType,
-        })
       } catch (error) {
         log('error', `Failed to revert scene: ${error}`)
       }
+      updateAutomationState({
+        previousSceneName: null,
+        currentAutoScene: null,
+        lastContentType: contentType,
+      })
+    } else if (state.currentAutoScene) {
+      // Stale auto scene with no previous scene - clear the stale state
+      log(
+        'info',
+        `Clearing stale auto scene: ${state.currentAutoScene} (no previous scene to revert to)`,
+      )
+      updateAutomationState({
+        currentAutoScene: null,
+        lastContentType: contentType,
+      })
     } else {
       // Just update the last content type
       updateAutomationState({ lastContentType: contentType })

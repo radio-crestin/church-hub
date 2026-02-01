@@ -7,7 +7,7 @@ import { createLogger } from '~/utils/logger'
 import { usePresentationState } from './usePresentationState'
 import { calculateMaxExitAnimationDuration } from '../components/rendering/utils/styleUtils'
 import { useSongUpdateTimestamp } from '../context/WebSocketContext'
-import type { ContentType, ScreenConfig } from '../types'
+import type { ContentType, ScreenConfig, SongContentConfig } from '../types'
 import { addAminToLastSlide } from '../utils/addAminToLastSlide'
 import { addKeyLineToFirstSlide } from '../utils/addKeyLineToFirstSlide'
 
@@ -301,10 +301,14 @@ export function usePresentationContent({
             const isLastSlide =
               temp.data.currentSlideIndex === temp.data.slides.length - 1
             let slideContent = currentSlide.content
+            const songConfig = screen?.contentConfigs?.song as
+              | SongContentConfig
+              | undefined
+            const shouldShowKeyLine = songConfig?.displayKeyLine ?? true
             slideContent = addKeyLineToFirstSlide(
               slideContent,
               isFirstSlide,
-              temp.data.keyLine,
+              shouldShowKeyLine ? temp.data.keyLine : null,
             )
             slideContent = addAminToLastSlide(slideContent, isLastSlide)
             setContentType('song')
@@ -441,10 +445,14 @@ export function usePresentationContent({
               const isFirstSlide = slideIndex === 0
               const isLastSlide = slideIndex === item.slides.length - 1
               let slideContent = slide.content
+              const songCfg = screen?.contentConfigs?.song as
+                | SongContentConfig
+                | undefined
+              const showKeyLine = songCfg?.displayKeyLine ?? true
               slideContent = addKeyLineToFirstSlide(
                 slideContent,
                 isFirstSlide,
-                item.keyLine,
+                showKeyLine ? item.keyLine : null,
               )
               slideContent = addAminToLastSlide(slideContent, isLastSlide)
 

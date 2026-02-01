@@ -538,6 +538,7 @@ export interface SongContentConfig {
   background: ScreenBackgroundConfig
   mainText: TextElementConfig
   clockEnabled?: boolean // Per-slide-type enable, uses global clockConfig for position/style
+  displayKeyLine?: boolean // Whether to display the song key line on the first slide (default: true)
 }
 
 export type ReferenceWrapperStyle = 'none' | 'parentheses' | 'brackets'

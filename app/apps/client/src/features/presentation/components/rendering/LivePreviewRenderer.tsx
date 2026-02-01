@@ -8,7 +8,11 @@ import { ContentRenderer } from './ContentRenderer'
 import { getBackgroundCSS } from './utils/styleUtils'
 import { useSongUpdateTimestamp } from '../../context/WebSocketContext'
 import { usePresentationState, useScreens, useWebSocket } from '../../hooks'
-import type { ContentType, ScreenWithConfigs } from '../../types'
+import type {
+  ContentType,
+  ScreenWithConfigs,
+  SongContentConfig,
+} from '../../types'
 import { addAminToLastSlide } from '../../utils/addAminToLastSlide'
 import { addKeyLineToFirstSlide } from '../../utils/addKeyLineToFirstSlide'
 
@@ -172,10 +176,14 @@ export function LivePreviewRenderer() {
               const isFirstSlide = slideIndex === 0
               const isLastSlide = slideIndex === item.slides.length - 1
               let slideContent = slide.content
+              const songCfg = primaryScreen?.contentConfigs?.song as
+                | SongContentConfig
+                | undefined
+              const showKeyLine = songCfg?.displayKeyLine ?? true
               slideContent = addKeyLineToFirstSlide(
                 slideContent,
                 isFirstSlide,
-                item.keyLine,
+                showKeyLine ? item.keyLine : null,
               )
               slideContent = addAminToLastSlide(slideContent, isLastSlide)
               setContentType('song')

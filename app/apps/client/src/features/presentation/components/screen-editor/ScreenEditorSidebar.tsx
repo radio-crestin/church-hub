@@ -41,6 +41,7 @@ import type {
   ScreenShareContentConfig,
   ScreenWithConfigs,
   SizeWithUnits,
+  SongContentConfig,
   TextStyle,
 } from '../../types'
 
@@ -697,6 +698,28 @@ export function ScreenEditorSidebar({
                     {t('screens.textStyle.fitLineToWidthDescription')}
                   </p>
                 </div>
+
+                {/* Display Key Line - song only */}
+                {contentType === 'song' && (
+                  <div className="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <Checkbox
+                      checked={
+                        (config as SongContentConfig).displayKeyLine ?? true
+                      }
+                      onCheckedChange={(checked) => {
+                        const songConfig = config as SongContentConfig
+                        onUpdateContentConfig(contentType, {
+                          ...songConfig,
+                          displayKeyLine: !!checked,
+                        })
+                      }}
+                      label={t('screens.songOptions.displayKeyLine')}
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 ml-6">
+                      {t('screens.songOptions.displayKeyLineDescription')}
+                    </p>
+                  </div>
+                )}
               </div>
             </Section>
           )}

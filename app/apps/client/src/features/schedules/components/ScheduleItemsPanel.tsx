@@ -115,10 +115,10 @@ export function ScheduleItemsPanel({
 
   // Track which items are expanded
   const [expanded, setExpanded] = useState<ExpandedState>(() => {
-    // Start with all items collapsed
+    // Start with all items expanded
     const initial: ExpandedState = {}
     items.forEach((item) => {
-      initial[`${item.id}`] = false
+      initial[`${item.id}`] = true
     })
     return initial
   })
@@ -140,8 +140,8 @@ export function ScheduleItemsPanel({
     setExpanded((prev) => {
       const next: ExpandedState = {}
       items.forEach((item) => {
-        // Keep existing state or default to collapsed for new items
-        next[`${item.id}`] = prev[`${item.id}`] ?? false
+        // Keep existing state or default to expanded for new items
+        next[`${item.id}`] = prev[`${item.id}`] ?? true
       })
       return next
     })
@@ -340,7 +340,7 @@ export function ScheduleItemsPanel({
       }, 100)
       return () => clearTimeout(timeoutId)
     }
-  }, [presentedInfo])
+  }, [presentedInfo, items])
 
   const toggleExpanded = useCallback((itemId: number) => {
     setExpanded((prev) => ({
