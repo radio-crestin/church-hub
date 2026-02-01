@@ -1,0 +1,41 @@
+{
+  "title": "Live Translation",
+  "status": {
+    "live": "Live",
+    "inactive": "Inactive"
+  },
+  "settings": {
+    "button": "Settings",
+    "apiKey": "Gemini API Key",
+    "apiKeyPlaceholder": "Enter your Gemini API key",
+    "apiKeyDescription": "Required for real-time audio translation powered by Gemini 2.5 Flash. Your key is stored locally in this browser only.",
+    "apiKeyConfigured": "API key configured and saved locally.",
+    "howToGetKey": "How to get your API key:",
+    "step1": "Go to Google AI Studio (link below)",
+    "step2": "Sign in with your Google account and click \"Create API Key\"",
+    "step3": "Copy the key and paste it above",
+    "getApiKey": "Open Google AI Studio",
+    "sourceLanguage": "Source Language",
+    "targetLanguage": "Target Language",
+    "swapLanguages": "Swap languages",
+    "voice": "Voice",
+    "muteWhileSpeaking": "Mute mic while AI speaks",
+    "muteWhileSpeakingDescription": "Pauses recording when the AI is speaking to avoid feedback",
+    "inputDevice": "Input Device",
+    "outputDevice": "Output Device",
+    "defaultDevice": "System Default"
+  },
+  "controls": {
+    "start": "Start Translation",
+    "stop": "Stop Translation",
+    "clear": "Clear conversation"
+  },
+  "levels": {
+    "input": "Input",
+    "output": "Output"
+  },
+  "transcription": {
+    "waitingForSpeech": "Waiting for speech...",
+    "startSpeaking": "Start speaking to begin translation"
+  }
+}

@@ -16,6 +16,7 @@ import { Route as SchedulesIndexRouteImport } from './routes/schedules/index'
 import { Route as PresentIndexRouteImport } from './routes/present/index'
 import { Route as MusicIndexRouteImport } from './routes/music/index'
 import { Route as LivestreamIndexRouteImport } from './routes/livestream/index'
+import { Route as LiveTranslationIndexRouteImport } from './routes/live-translation/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as BibleIndexRouteImport } from './routes/bible/index'
 import { Route as rootIndexRouteImport } from './routes/(root)/index'
@@ -59,6 +60,11 @@ const MusicIndexRoute = MusicIndexRouteImport.update({
 const LivestreamIndexRoute = LivestreamIndexRouteImport.update({
   id: '/livestream/',
   path: '/livestream/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LiveTranslationIndexRoute = LiveTranslationIndexRouteImport.update({
+  id: '/live-translation/',
+  path: '/live-translation/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
@@ -114,6 +120,7 @@ export interface FileRoutesByFullPath {
   '/': typeof rootIndexRoute
   '/bible': typeof BibleIndexRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/live-translation': typeof LiveTranslationIndexRoute
   '/livestream': typeof LivestreamIndexRoute
   '/music': typeof MusicIndexRoute
   '/present': typeof PresentIndexRoute
@@ -132,6 +139,7 @@ export interface FileRoutesByTo {
   '/': typeof rootIndexRoute
   '/bible': typeof BibleIndexRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/live-translation': typeof LiveTranslationIndexRoute
   '/livestream': typeof LivestreamIndexRoute
   '/music': typeof MusicIndexRoute
   '/present': typeof PresentIndexRoute
@@ -151,6 +159,7 @@ export interface FileRoutesById {
   '/(root)/': typeof rootIndexRoute
   '/bible/': typeof BibleIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/live-translation/': typeof LiveTranslationIndexRoute
   '/livestream/': typeof LivestreamIndexRoute
   '/music/': typeof MusicIndexRoute
   '/present/': typeof PresentIndexRoute
@@ -171,6 +180,7 @@ export interface FileRouteTypes {
     | '/'
     | '/bible'
     | '/dashboard'
+    | '/live-translation'
     | '/livestream'
     | '/music'
     | '/present'
@@ -189,6 +199,7 @@ export interface FileRouteTypes {
     | '/'
     | '/bible'
     | '/dashboard'
+    | '/live-translation'
     | '/livestream'
     | '/music'
     | '/present'
@@ -207,6 +218,7 @@ export interface FileRouteTypes {
     | '/(root)/'
     | '/bible/'
     | '/dashboard/'
+    | '/live-translation/'
     | '/livestream/'
     | '/music/'
     | '/present/'
@@ -226,6 +238,7 @@ export interface RootRouteChildren {
   rootIndexRoute: typeof rootIndexRoute
   BibleIndexRoute: typeof BibleIndexRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
+  LiveTranslationIndexRoute: typeof LiveTranslationIndexRoute
   LivestreamIndexRoute: typeof LivestreamIndexRoute
   MusicIndexRoute: typeof MusicIndexRoute
   PresentIndexRoute: typeof PresentIndexRoute
@@ -287,6 +300,13 @@ declare module '@tanstack/react-router' {
       path: '/livestream'
       fullPath: '/livestream'
       preLoaderRoute: typeof LivestreamIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/live-translation/': {
+      id: '/live-translation/'
+      path: '/live-translation'
+      fullPath: '/live-translation'
+      preLoaderRoute: typeof LiveTranslationIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard/': {
@@ -362,6 +382,7 @@ const rootRouteChildren: RootRouteChildren = {
   rootIndexRoute: rootIndexRoute,
   BibleIndexRoute: BibleIndexRoute,
   DashboardIndexRoute: DashboardIndexRoute,
+  LiveTranslationIndexRoute: LiveTranslationIndexRoute,
   LivestreamIndexRoute: LivestreamIndexRoute,
   MusicIndexRoute: MusicIndexRoute,
   PresentIndexRoute: PresentIndexRoute,

@@ -29,6 +29,7 @@ export type BuiltInMenuItemId =
   | 'livestream'
   | 'music'
   | 'song_key'
+  | 'live_translation'
   | 'kiosk'
   | 'settings'
 

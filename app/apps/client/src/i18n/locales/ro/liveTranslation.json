@@ -1,0 +1,41 @@
+{
+  "title": "Traducere Live",
+  "status": {
+    "live": "Live",
+    "inactive": "Inactiv"
+  },
+  "settings": {
+    "button": "Setări",
+    "apiKey": "Cheie API Gemini",
+    "apiKeyPlaceholder": "Introduceți cheia API Gemini",
+    "apiKeyDescription": "Necesară pentru traducerea audio în timp real cu Gemini 2.5 Flash. Cheia este stocată local doar în acest browser.",
+    "apiKeyConfigured": "Cheia API este configurată și salvată local.",
+    "howToGetKey": "Cum obțineți cheia API:",
+    "step1": "Accesați Google AI Studio (link mai jos)",
+    "step2": "Autentificați-vă cu contul Google și apăsați \"Create API Key\"",
+    "step3": "Copiați cheia și lipiți-o mai sus",
+    "getApiKey": "Deschide Google AI Studio",
+    "sourceLanguage": "Limba sursă",
+    "targetLanguage": "Limba țintă",
+    "swapLanguages": "Schimbă limbile",
+    "voice": "Voce",
+    "muteWhileSpeaking": "Oprește microfonul când AI vorbește",
+    "muteWhileSpeakingDescription": "Pune pauză înregistrării când AI-ul vorbește pentru a evita feedback-ul",
+    "inputDevice": "Dispozitiv de intrare",
+    "outputDevice": "Dispozitiv de ieșire",
+    "defaultDevice": "Implicit sistem"
+  },
+  "controls": {
+    "start": "Pornește traducerea",
+    "stop": "Oprește traducerea",
+    "clear": "Șterge conversația"
+  },
+  "levels": {
+    "input": "Intrare",
+    "output": "Ieșire"
+  },
+  "transcription": {
+    "waitingForSpeech": "Se așteaptă vorbirea...",
+    "startSpeaking": "Începeți să vorbiți pentru a începe traducerea"
+  }
+}

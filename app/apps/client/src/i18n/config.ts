@@ -7,6 +7,7 @@ import bibleEN from './locales/en/bible.json'
 import bibleBooksEN from './locales/en/bibleBooks.json'
 import commonEN from './locales/en/common.json'
 import livestreamEN from './locales/en/livestream.json'
+import liveTranslationEN from './locales/en/liveTranslation.json'
 import musicEN from './locales/en/music.json'
 import presentationEN from './locales/en/presentation.json'
 import queueEN from './locales/en/queue.json'
@@ -19,6 +20,7 @@ import bibleRO from './locales/ro/bible.json'
 import bibleBooksRO from './locales/ro/bibleBooks.json'
 import commonRO from './locales/ro/common.json'
 import livestreamRO from './locales/ro/livestream.json'
+import liveTranslationRO from './locales/ro/liveTranslation.json'
 import musicRO from './locales/ro/music.json'
 import presentationRO from './locales/ro/presentation.json'
 import queueRO from './locales/ro/queue.json'
@@ -43,6 +45,7 @@ export const resources = {
     settings: settingsEN,
     songKey: songKeyEN,
     songs: songsEN,
+    liveTranslation: liveTranslationEN,
   },
   ro: {
     bible: bibleRO,
@@ -57,6 +60,7 @@ export const resources = {
     settings: settingsRO,
     songKey: songKeyRO,
     songs: songsRO,
+    liveTranslation: liveTranslationRO,
   },
 } as const
 
@@ -81,6 +85,7 @@ i18n
       'settings',
       'songKey',
       'songs',
+      'liveTranslation',
     ], // Available namespaces
 
     // Language detection options

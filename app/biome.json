@@ -15,7 +15,8 @@
       "!**/dist",
       "!src-tauri/src",
       "!**/src/routeTree.gen.ts",
-      "!**/db/fixtures/*.json"
+      "!**/db/fixtures/*.json",
+      "!**/playwright-report/**"
     ]
   },
   "formatter": {

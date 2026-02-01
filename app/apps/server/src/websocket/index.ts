@@ -1224,6 +1224,129 @@ export function broadcastMusicState(state: MusicPlayerStateMessage['payload']) {
   }
 }
 
+// ============================================================================
+// LIVE TRANSLATION MESSAGE TYPES
+// ============================================================================
+
+import type {
+  LiveTranslationState,
+  TranscriptionEntry,
+} from '../service/live-translation/types'
+
+export type TranslationStateMessage = {
+  type: 'translation_state'
+  payload: LiveTranslationState
+}
+
+export type TranslationAudioLevelMessage = {
+  type: 'translation_audio_level'
+  payload: {
+    level: number
+    type: 'input' | 'output'
+    timestamp: number
+  }
+}
+
+export type TranslationTranscriptionMessage = {
+  type: 'translation_transcription'
+  payload: TranscriptionEntry
+  action: 'add' | 'update'
+}
+
+export type TranslationAudioOutputMessage = {
+  type: 'translation_audio_output'
+  payload: {
+    data: string // base64 PCM 24kHz
+    timestamp: number
+  }
+}
+
+/**
+ * Broadcasts live translation state to all connected clients
+ */
+export function broadcastTranslationState(state: LiveTranslationState) {
+  const message = JSON.stringify({
+    type: 'translation_state',
+    payload: state,
+  } satisfies TranslationStateMessage)
+
+  for (const [clientId, conn] of clients) {
+    try {
+      conn.ws.send(message)
+    } catch (error) {
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
+      clients.delete(clientId)
+    }
+  }
+}
+
+/**
+ * Broadcasts audio level updates for input/output
+ */
+export function broadcastTranslationAudioLevel(
+  level: number,
+  type: 'input' | 'output',
+) {
+  const message = JSON.stringify({
+    type: 'translation_audio_level',
+    payload: { level, type, timestamp: Date.now() },
+  } satisfies TranslationAudioLevelMessage)
+
+  for (const [clientId, conn] of clients) {
+    try {
+      conn.ws.send(message)
+    } catch (error) {
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
+      clients.delete(clientId)
+    }
+  }
+}
+
+/**
+ * Broadcasts transcription entries (source or translated text)
+ */
+export function broadcastTranslationTranscription(
+  entry: TranscriptionEntry,
+  action: 'add' | 'update',
+) {
+  const message = JSON.stringify({
+    type: 'translation_transcription',
+    payload: entry,
+    action,
+  } satisfies TranslationTranscriptionMessage)
+
+  for (const [clientId, conn] of clients) {
+    try {
+      conn.ws.send(message)
+    } catch (error) {
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
+      clients.delete(clientId)
+    }
+  }
+}
+
+/**
+ * Broadcasts translated audio output (PCM 24kHz) as base64
+ */
+export function broadcastTranslationAudioOutput(pcmData: Buffer) {
+  const message = JSON.stringify({
+    type: 'translation_audio_output',
+    payload: {
+      data: pcmData.toString('base64'),
+      timestamp: Date.now(),
+    },
+  } satisfies TranslationAudioOutputMessage)
+
+  for (const [clientId, conn] of clients) {
+    try {
+      conn.ws.send(message)
+    } catch (error) {
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
+      clients.delete(clientId)
+    }
+  }
+}
+
 // Register callback to broadcast song updates when songs are presented
 // This avoids circular dependencies between websocket and presentation-state modules
 setOnSongPresentedCallback(broadcastSongUpdated)
