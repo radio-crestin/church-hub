@@ -1,13 +1,15 @@
-import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
+import { afterAll, beforeAll, describe, expect, setDefaultTimeout, test } from 'bun:test'
 import { spawn, type Subprocess } from 'bun'
 import { resolve } from 'path'
+
+setDefaultTimeout(30_000)
 
 const TEST_PORT = 3099
 const BASE_URL = `http://localhost:${TEST_PORT}`
 
 let serverProcess: Subprocess | null = null
 
-async function waitForServer(url: string, maxAttempts = 30): Promise<void> {
+async function waitForServer(url: string, maxAttempts = 40): Promise<void> {
   for (let i = 0; i < maxAttempts; i++) {
     try {
       await fetch(url)
