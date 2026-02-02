@@ -46,22 +46,6 @@ jobs:
         working-directory: app
         run: bun run test:unit
 
-      - name: Build client (required for server tests)
-        working-directory: app
-        run: bun run --filter client build
-
-      - name: Start server in background
-        working-directory: app
-        run: |
-          bun run dev:server &
-          for i in {1..30}; do
-            if curl -s http://localhost:3000/api/database/info > /dev/null; then
-              echo "Server is ready!"
-              break
-            fi
-            sleep 1
-          done
-
       - name: Run server integration tests
         working-directory: app
         run: bun run test:server

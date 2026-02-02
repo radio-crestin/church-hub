@@ -50,6 +50,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install native audio libraries
+        run: sudo apt-get update && sudo apt-get install -y libpulse-dev libasound2-dev
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -145,23 +148,6 @@ jobs:
       - name: Install dependencies
         working-directory: app
         run: bun install --frozen-lockfile
-
-      - name: Build client (required for server)
-        working-directory: app
-        run: bun run --filter client build
-
-      - name: Start server in background
-        working-directory: app
-        run: |
-          bun run dev:server &
-          echo "Waiting for server to start..."
-          for i in {1..30}; do
-            if curl -s http://localhost:3000/api/database/info > /dev/null; then
-              echo "Server is ready!"
-              break
-            fi
-            sleep 1
-          done
 
       - name: Run server integration tests
         working-directory: app
