@@ -1,5 +1,3 @@
-import { RtAudio, RtAudioFormat } from 'audify'
-
 import { log } from '../../utils/fileLogger'
 
 const logger = {
@@ -9,8 +7,27 @@ const logger = {
   error: (msg: string, data?: unknown) => log('audio-io', 'error', msg, data),
 }
 
-let inputAudio: RtAudio | null = null
-let outputAudio: RtAudio | null = null
+let RtAudio: typeof import('audify').RtAudio | null = null
+let RtAudioFormat: typeof import('audify').RtAudioFormat | null = null
+
+async function loadAudify() {
+  if (RtAudio) return
+  try {
+    const audify = await import('audify')
+    RtAudio = audify.RtAudio
+    RtAudioFormat = audify.RtAudioFormat
+  } catch (error) {
+    logger.error('Failed to load audify (audio features unavailable)', {
+      error: String(error),
+    })
+    throw new Error(
+      'Audio library (audify) is not available on this system. Live translation audio features require native audio support.',
+    )
+  }
+}
+
+let inputAudio: InstanceType<typeof import('audify').RtAudio> | null = null
+let outputAudio: InstanceType<typeof import('audify').RtAudio> | null = null
 let inputMuted = false
 
 /** Hardware capture rate (most devices support 48kHz) */
@@ -55,16 +72,18 @@ function resampleInt16(
  * Start capturing audio from the microphone using RtAudio.
  * Captures at 48kHz and resamples to 16kHz before calling onChunk.
  */
-export function startAudioCapture(
+export async function startAudioCapture(
   onChunk: AudioChunkCallback,
   inputDeviceId?: number,
-): void {
+): Promise<void> {
+  await loadAudify()
+
   if (inputAudio) {
     logger.warn('Audio capture already active')
     return
   }
 
-  inputAudio = new RtAudio()
+  inputAudio = new RtAudio!()
 
   const deviceId = inputDeviceId ?? inputAudio.getDefaultInputDevice()
 
@@ -79,7 +98,7 @@ export function startAudioCapture(
   inputAudio.openStream(
     null,
     { deviceId, nChannels: 1, firstChannel: 0 },
-    RtAudioFormat.RTAUDIO_SINT16,
+    RtAudioFormat!.RTAUDIO_SINT16,
     HARDWARE_RATE,
     1920,
     'translation-input',
@@ -123,13 +142,17 @@ export function stopAudioCapture(): void {
  * Start the audio playback stream using RtAudio at 48kHz.
  * Accepts 24kHz PCM via playAudioChunk() which resamples to 48kHz.
  */
-export function startAudioPlayback(outputDeviceId?: number): void {
+export async function startAudioPlayback(
+  outputDeviceId?: number,
+): Promise<void> {
+  await loadAudify()
+
   if (outputAudio) {
     logger.warn('Audio playback already active')
     return
   }
 
-  outputAudio = new RtAudio()
+  outputAudio = new RtAudio!()
 
   const deviceId = outputDeviceId ?? outputAudio.getDefaultOutputDevice()
 
@@ -142,7 +165,7 @@ export function startAudioPlayback(outputDeviceId?: number): void {
   outputAudio.openStream(
     { deviceId, nChannels: 1, firstChannel: 0 },
     null,
-    RtAudioFormat.RTAUDIO_SINT16,
+    RtAudioFormat!.RTAUDIO_SINT16,
     HARDWARE_RATE,
     1920,
     'translation-output',
@@ -217,8 +240,10 @@ export function unmuteAudioCapture(): void {
 /**
  * Get available audio devices.
  */
-export function getAudioDevices() {
-  const rtAudio = new RtAudio()
+export async function getAudioDevices() {
+  await loadAudify()
+
+  const rtAudio = new RtAudio!()
   const devices = rtAudio.getDevices()
   const defaultInput = rtAudio.getDefaultInputDevice()
   const defaultOutput = rtAudio.getDefaultOutputDevice()

@@ -144,7 +144,7 @@ export async function startTranslation(
       outputAudioTranscription: {},
     },
     callbacks: {
-      onopen() {
+      async onopen() {
         logger.info('Connected to Gemini Live API')
         updateState({
           isActive: true,
@@ -156,7 +156,7 @@ export async function startTranslation(
 
         // Start audio capture only after Gemini is connected
         // so no chunks are lost before the session is ready
-        startAudioCapture((pcmBuffer) => {
+        await startAudioCapture((pcmBuffer) => {
           sendAudioChunk(pcmBuffer)
         }, config.inputDeviceId)
       },
@@ -183,7 +183,7 @@ export async function startTranslation(
   currentSession = session as typeof currentSession
 
   // Start server-side audio playback process (capture starts in onopen callback)
-  startAudioPlayback(config.outputDeviceId)
+  await startAudioPlayback(config.outputDeviceId)
 }
 
 /**

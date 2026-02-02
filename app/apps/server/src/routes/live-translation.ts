@@ -44,11 +44,11 @@ setAudioLevelCallback((level, type) => {
   broadcastTranslationAudioLevel(level, type)
 })
 
-export function handleLiveTranslationRoutes(
+export async function handleLiveTranslationRoutes(
   req: Request,
   url: URL,
   _context: RequestContext,
-): Response | null {
+): Promise<Response | null> {
   // GET /api/live-translation/state
   if (req.method === 'GET' && url.pathname === '/api/live-translation/state') {
     return Response.json(getTranslationState())
@@ -75,7 +75,7 @@ export function handleLiveTranslationRoutes(
     req.method === 'GET' &&
     url.pathname === '/api/live-translation/devices'
   ) {
-    return Response.json(getAudioDevices())
+    return Response.json(await getAudioDevices())
   }
 
   // GET /api/live-translation/settings
