@@ -5041,13 +5041,13 @@ async function main() {
 
       // Live translation routes
       if (url.pathname.startsWith('/api/live-translation/')) {
-        const translationResponse = handleLiveTranslationRoutes(
+        const translationResponse = await handleLiveTranslationRoutes(
           req,
           url,
           _context!,
         )
         if (translationResponse)
-          return handleCors(req, await translationResponse)
+          return handleCors(req, translationResponse)
       }
 
       // Music routes (folders, files, playlists)
