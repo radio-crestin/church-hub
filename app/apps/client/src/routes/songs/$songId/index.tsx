@@ -355,57 +355,64 @@ function SongPreviewPage() {
     <div className="flex flex-col h-full lg:overflow-hidden overflow-auto scrollbar-thin">
       {/* Header - Back button, title, and action buttons */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-3 lg:mb-4 flex-shrink-0">
-        <div className="flex items-center gap-3 lg:gap-4 min-w-0 flex-1">
-          <button
-            type="button"
-            onClick={handleGoBack}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 shrink-0 flex items-center gap-2"
-            title="Back (Esc)"
-          >
-            <ArrowLeft size={20} className="text-gray-600 dark:text-gray-400" />
-            <KeyboardShortcutBadge
-              shortcut="Escape"
-              variant="muted"
-              className="hidden sm:inline-block"
-            />
-          </button>
-          <h1 className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white truncate">
-            {song.title}
-          </h1>
-          {song.category?.name && (
+        <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-3 lg:gap-4 min-w-0 flex-1">
+          <div className="flex items-center gap-2 lg:gap-4 min-w-0">
             <button
               type="button"
-              onClick={handleOpenCategoryDialog}
-              className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-              title={t('categoryDialog.title')}
+              onClick={handleGoBack}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 shrink-0 flex items-center gap-2"
+              title="Back (Esc)"
             >
-              <Tag className="w-3 h-3" />
-              {song.category.name}
+              <ArrowLeft
+                size={20}
+                className="text-gray-600 dark:text-gray-400"
+              />
+              <KeyboardShortcutBadge
+                shortcut="Escape"
+                variant="muted"
+                className="hidden sm:inline-block"
+              />
             </button>
-          )}
-          {song.presentationCount !== undefined &&
-            song.presentationCount > 0 && (
+            <h1 className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white truncate">
+              {song.title}
+            </h1>
+          </div>
+          <div className="flex items-center gap-1.5 flex-wrap pl-1 md:pl-0">
+            {song.category?.name && (
               <button
                 type="button"
-                onClick={() => setShowResetCountConfirm(true)}
-                className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 rounded hover:bg-sky-200 dark:hover:bg-sky-800/40 transition-colors"
-                title={t('resetCountDialog.title')}
+                onClick={handleOpenCategoryDialog}
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                title={t('categoryDialog.title')}
               >
-                <Eye className="w-3 h-3" />
-                {song.presentationCount}
+                <Tag className="w-3 h-3" />
+                {song.category.name}
               </button>
             )}
-          {song.keyLine && (
-            <button
-              type="button"
-              onClick={handleOpenKeyLineDialog}
-              className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 rounded hover:bg-amber-200 dark:hover:bg-amber-800/40 transition-colors"
-              title={t('actions.setKeyLine')}
-            >
-              <Music2 className="w-3 h-3" />
-              {song.keyLine}
-            </button>
-          )}
+            {song.presentationCount !== undefined &&
+              song.presentationCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowResetCountConfirm(true)}
+                  className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 rounded hover:bg-sky-200 dark:hover:bg-sky-800/40 transition-colors"
+                  title={t('resetCountDialog.title')}
+                >
+                  <Eye className="w-3 h-3" />
+                  {song.presentationCount}
+                </button>
+              )}
+            {song.keyLine && (
+              <button
+                type="button"
+                onClick={handleOpenKeyLineDialog}
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 rounded hover:bg-amber-200 dark:hover:bg-amber-800/40 transition-colors"
+                title={t('actions.setKeyLine')}
+              >
+                <Music2 className="w-3 h-3" />
+                {song.keyLine}
+              </button>
+            )}
+          </div>
         </div>
         {/* Action buttons */}
         <div className="flex items-center gap-2 justify-end shrink-0">

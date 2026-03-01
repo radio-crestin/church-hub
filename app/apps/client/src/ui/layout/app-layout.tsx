@@ -54,7 +54,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       <WebviewRouteManager />
       <Sidebar />
       <main className="flex-1 flex flex-col min-h-0 min-w-0 bg-gray-50 dark:bg-gray-950 md:pt-0 safe-area-right safe-area-bottom mobile-main-content overflow-hidden">
-        <div className="flex-1 min-h-0 overflow-x-hidden overflow-y-auto bg-gray-50 dark:bg-gray-950 p-3 sm:p-4 md:p-6">
+        <div className="flex-1 min-h-0 overflow-x-hidden overflow-y-auto bg-gray-50 dark:bg-gray-950 p-3 pb-16 sm:p-4 sm:pb-16 md:p-6 md:pb-6">
           {children}
         </div>
       </main>
