@@ -16,8 +16,18 @@ import type {
   MusicPlayerState,
   QueueItemSummary,
 } from './types'
+import { getSetting, upsertSetting } from '../settings'
 
 const LOG_PREFIX = '[MusicPlayer]'
+
+// Settings keys for persistence
+const SETTING_VOLUME = 'music_player_volume'
+const SETTING_SHUFFLE = 'music_player_shuffle'
+const SETTING_CURRENT_INDEX = 'music_player_current_index'
+
+// IPC retry config
+const IPC_MAX_RETRIES = 3
+const IPC_RETRY_DELAY_MS = 200
 
 let mpvProcess: ReturnType<typeof spawn> | null = null
 let ipcSocket: net.Socket | null = null
@@ -25,6 +35,7 @@ let socketPath: string | null = null
 let stateCallback: ((state: MusicPlayerState) => void) | null = null
 let statePollingInterval: ReturnType<typeof setInterval> | null = null
 let reconnectTimeout: ReturnType<typeof setTimeout> | null = null
+let healthCheckInterval: ReturnType<typeof setInterval> | null = null
 
 let playerState: MusicPlayerState = {
   isPlaying: false,
@@ -57,7 +68,10 @@ function updateState(partial: Partial<MusicPlayerState>): void {
   stateCallback?.(playerState)
 }
 
-async function sendCommand(command: unknown[]): Promise<void> {
+async function sendCommand(
+  command: unknown[],
+  retries = IPC_MAX_RETRIES,
+): Promise<void> {
   if (!ipcSocket || ipcSocket.destroyed) {
     // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
     console.warn(LOG_PREFIX, 'IPC socket not connected')
@@ -66,17 +80,96 @@ async function sendCommand(command: unknown[]): Promise<void> {
 
   const message = JSON.stringify({ command }) + '\n'
 
-  return new Promise((resolve, reject) => {
-    ipcSocket!.write(message, (err) => {
-      if (err) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      await new Promise<void>((resolve, reject) => {
+        if (!ipcSocket || ipcSocket.destroyed) {
+          reject(new Error('IPC socket not connected'))
+          return
+        }
+        ipcSocket.write(message, (err) => {
+          if (err) {
+            reject(err)
+          } else {
+            resolve()
+          }
+        })
+      })
+      return
+    } catch (err) {
+      if (attempt < retries) {
         // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
-        console.error(LOG_PREFIX, 'Failed to send command:', err)
-        reject(err)
+        console.warn(
+          LOG_PREFIX,
+          `IPC command failed (attempt ${attempt + 1}/${retries + 1}), retrying:`,
+          err,
+        )
+        await new Promise((resolve) => setTimeout(resolve, IPC_RETRY_DELAY_MS))
       } else {
-        resolve()
+        // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
+        console.error(
+          LOG_PREFIX,
+          `IPC command failed after ${retries + 1} attempts:`,
+          err,
+        )
       }
-    })
+    }
+  }
+}
+
+function persistPlayerSettings(): void {
+  upsertSetting('app_settings', {
+    key: SETTING_VOLUME,
+    value: String(playerState.volume),
   })
+  upsertSetting('app_settings', {
+    key: SETTING_SHUFFLE,
+    value: String(playerState.isShuffled),
+  })
+  upsertSetting('app_settings', {
+    key: SETTING_CURRENT_INDEX,
+    value: String(playerState.currentIndex),
+  })
+}
+
+function loadPersistedSettings(): {
+  volume: number
+  isShuffled: boolean
+  currentIndex: number
+} {
+  const volumeSetting = getSetting('app_settings', SETTING_VOLUME)
+  const shuffleSetting = getSetting('app_settings', SETTING_SHUFFLE)
+  const indexSetting = getSetting('app_settings', SETTING_CURRENT_INDEX)
+
+  const volume = volumeSetting ? Number(volumeSetting.value) : 50
+  const isShuffled = shuffleSetting ? shuffleSetting.value === 'true' : false
+  const currentIndex = indexSetting ? Number(indexSetting.value) : -1
+
+  return { volume, isShuffled, currentIndex }
+}
+
+function startHealthCheck(): void {
+  if (healthCheckInterval) return
+
+  healthCheckInterval = setInterval(() => {
+    if (!mpvProcess || mpvProcess.killed) return
+
+    if (!ipcSocket || ipcSocket.destroyed) {
+      // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
+      console.warn(
+        LOG_PREFIX,
+        'Health check: IPC socket disconnected, reconnecting',
+      )
+      connectToSocket()
+    }
+  }, 5000)
+}
+
+function stopHealthCheck(): void {
+  if (healthCheckInterval) {
+    clearInterval(healthCheckInterval)
+    healthCheckInterval = null
+  }
 }
 
 function handleMpvEvent(event: MpvEvent): void {
@@ -95,14 +188,16 @@ function handleMpvEvent(event: MpvEvent): void {
         }
         break
       case 'pause':
-        // Only update isPlaying if we have a file loaded
-        if (playerState.currentIndex >= 0) {
-          updateState({ isPlaying: data === false })
+        // Always update isPlaying regardless of currentIndex
+        updateState({ isPlaying: data === false })
+        if (data !== undefined) {
+          persistPlayerSettings()
         }
         break
       case 'volume':
         if (typeof data === 'number') {
           updateState({ volume: data })
+          persistPlayerSettings()
         }
         break
       case 'mute':
@@ -120,6 +215,11 @@ function handleMpvEvent(event: MpvEvent): void {
 
 function connectToSocket(): void {
   if (!socketPath) return
+
+  // Prevent double-connecting
+  if (ipcSocket && !ipcSocket.destroyed) {
+    return
+  }
 
   ipcSocket = net.createConnection(socketPath)
 
@@ -188,6 +288,9 @@ export async function initializeMusicPlayer(): Promise<boolean> {
     return false
   }
 
+  // Load persisted settings before starting
+  const persisted = loadPersistedSettings()
+
   const mpvArgs = [
     '--idle=yes',
     '--no-video',
@@ -195,7 +298,7 @@ export async function initializeMusicPlayer(): Promise<boolean> {
     `--input-ipc-server=${socketPath}`,
     '--audio-display=no',
     '--keep-open=no',
-    '--volume=0',
+    `--volume=${persisted.volume}`,
   ]
 
   mpvProcess = spawn(mpvPath, mpvArgs, {
@@ -237,8 +340,37 @@ export async function initializeMusicPlayer(): Promise<boolean> {
 
   await new Promise((resolve) => setTimeout(resolve, 500))
 
+  // Restore persisted state
+  updateState({
+    volume: persisted.volume,
+    isShuffled: persisted.isShuffled,
+  })
+
   // Load persisted queue from database
   refreshQueueState()
+
+  // If there was a persisted currentIndex, restore the track info without auto-playing
+  if (persisted.currentIndex >= 0) {
+    const queueLen = getQueueLength()
+    if (persisted.currentIndex < queueLen) {
+      const item = getQueueItemAtIndex(persisted.currentIndex)
+      if (item) {
+        const currentTrack: CurrentTrack = {
+          id: item.id,
+          fileId: item.fileId,
+          path: item.file.path,
+          filename: item.file.filename,
+          title: item.file.title ?? undefined,
+          artist: item.file.artist ?? undefined,
+          album: item.file.album ?? undefined,
+          duration: item.file.duration ?? undefined,
+        }
+        updateState({ currentIndex: persisted.currentIndex, currentTrack })
+      }
+    }
+  }
+
+  startHealthCheck()
 
   // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
   console.log(LOG_PREFIX, 'Music player initialized')
@@ -248,6 +380,8 @@ export async function initializeMusicPlayer(): Promise<boolean> {
 export function shutdownMusicPlayer(): void {
   // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
   console.log(LOG_PREFIX, 'Shutting down music player')
+
+  stopHealthCheck()
 
   if (statePollingInterval) {
     clearInterval(statePollingInterval)
@@ -413,6 +547,7 @@ async function playNext(): Promise<void> {
       currentIndex: -1,
       currentTrack: null,
     })
+    persistPlayerSettings()
   }
 }
 
@@ -455,6 +590,8 @@ async function playAtIndex(index: number): Promise<void> {
     queueLength: getQueueLength(),
   })
 
+  persistPlayerSettings()
+
   await loadAndPlayFile(item.file.path)
 }
 
@@ -482,6 +619,7 @@ export async function executeCommand(
         currentTrack: null,
         currentIndex: -1,
       })
+      persistPlayerSettings()
       break
 
     case 'seek':
@@ -510,6 +648,7 @@ export async function executeCommand(
 
     case 'shuffle':
       updateState({ isShuffled: command.enabled })
+      persistPlayerSettings()
       break
   }
 }
