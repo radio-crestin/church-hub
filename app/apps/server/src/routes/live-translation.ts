@@ -10,6 +10,14 @@ import {
   startTranslation,
   stopTranslation,
 } from '../service/live-translation/session'
+import {
+  broadcastAudioToListeners,
+  getListenerCount,
+  getStreamSecret,
+  resetStreamSecret,
+  startSignalingRelay,
+  stopSignalingRelay,
+} from '../service/live-translation/stream'
 import type { LiveTranslationConfig } from '../service/live-translation/types'
 import { getSetting, upsertSetting } from '../service/settings'
 import { log } from '../utils/fileLogger'
@@ -34,6 +42,8 @@ setStateCallback((state) => {
 
 setAudioOutputCallback((pcmData) => {
   broadcastTranslationAudioOutput(pcmData)
+  // Also broadcast to WebRTC/stream listeners
+  broadcastAudioToListeners(pcmData)
 })
 
 setTranscriptionCallback((entry, action) => {
@@ -94,6 +104,30 @@ export async function handleLiveTranslationRoutes(
     return handleSaveSettings(req)
   }
 
+  // GET /api/live-translation/stream-secret
+  if (
+    req.method === 'GET' &&
+    url.pathname === '/api/live-translation/stream-secret'
+  ) {
+    return Response.json({ secret: getStreamSecret() })
+  }
+
+  // POST /api/live-translation/stream-secret/reset
+  if (
+    req.method === 'POST' &&
+    url.pathname === '/api/live-translation/stream-secret/reset'
+  ) {
+    return Response.json({ secret: resetStreamSecret() })
+  }
+
+  // GET /api/live-translation/stream-info
+  if (
+    req.method === 'GET' &&
+    url.pathname === '/api/live-translation/stream-info'
+  ) {
+    return Response.json({ listeners: getListenerCount() })
+  }
+
   return null
 }
 
@@ -101,6 +135,15 @@ function handleStart(req: Request): Response {
   const startPromise = (async () => {
     try {
       const body = (await req.json()) as Partial<LiveTranslationConfig>
+
+      // Use provided key or fall back to saved settings
+      if (!body.geminiApiKey) {
+        const saved = getSetting('app_settings', SETTINGS_KEY)
+        if (saved) {
+          const parsed = JSON.parse(saved.value)
+          body.geminiApiKey = parsed.geminiApiKey
+        }
+      }
 
       if (!body.geminiApiKey) {
         return Response.json(
@@ -116,14 +159,22 @@ function handleStart(req: Request): Response {
         geminiApiKey: body.geminiApiKey,
         inputDeviceId: body.inputDeviceId,
         outputDeviceId: body.outputDeviceId,
-        muteWhileSpeaking: body.muteWhileSpeaking ?? false,
+        outputMode: body.outputMode ?? 'device',
       }
 
       await startTranslation(config)
 
+      // Start signaling relay if WebRTC output is enabled
+      const useWebrtc =
+        config.outputMode === 'webrtc' || config.outputMode === 'both'
+      if (useWebrtc) {
+        await startSignalingRelay()
+      }
+
       logger.info('Translation started', {
         source: config.sourceLanguage,
         target: config.targetLanguage,
+        outputMode: config.outputMode,
       })
 
       return Response.json({ success: true })
@@ -140,6 +191,7 @@ function handleStart(req: Request): Response {
 function handleStop(): Response {
   const stopPromise = (async () => {
     try {
+      await stopSignalingRelay()
       await stopTranslation()
       logger.info('Translation stopped')
       return Response.json({ success: true })
@@ -161,7 +213,6 @@ function handleGetSettings(): Response {
       sourceLanguage: 'ro',
       targetLanguage: 'en',
       voiceName: 'Kore',
-      muteWhileSpeaking: false,
       inputDeviceId: null,
       outputDeviceId: null,
     })
@@ -173,11 +224,10 @@ function handleSaveSettings(req: Request): Response {
   const savePromise = (async () => {
     try {
       const body = await req.json()
-      // Never persist the API key — it stays client-side only
-      const { geminiApiKey: _, ...settings } = body as Record<string, unknown>
+      // Persist all settings including API key (encrypted at rest in DB)
       upsertSetting('app_settings', {
         key: SETTINGS_KEY,
-        value: JSON.stringify(settings),
+        value: JSON.stringify(body),
       })
       return Response.json({ success: true })
     } catch (error) {

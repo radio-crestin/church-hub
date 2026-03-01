@@ -8,6 +8,7 @@ export interface Bindings {
   COOKIE_MAX_AGE: number
   ALLOWED_ORIGINS: string
   GITHUB_TOKEN: string
+  SIGNALING_KV: KVNamespace
 }
 
 export interface OAuthState {

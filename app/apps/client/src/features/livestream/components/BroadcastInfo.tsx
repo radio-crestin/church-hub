@@ -131,8 +131,7 @@ export function BroadcastInfo() {
     start,
     isLive,
   } = useStreaming()
-  const { message, fetchMessage, copyMessage, copied, isLoading } =
-    useBroadcastMessage()
+  const { message, fetchMessage, copyMessage, copied } = useBroadcastMessage()
 
   useEffect(() => {
     if (activeBroadcast?.url) {

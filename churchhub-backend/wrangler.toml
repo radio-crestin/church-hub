@@ -16,6 +16,11 @@ routes = [
   { pattern = "churchub-backend.radiocrestin.ro", custom_domain = true }
 ]
 
+# KV namespace for WebRTC signaling relay
+[[kv_namespaces]]
+binding = "SIGNALING_KV"
+id = "bc1b72f2df754e88a81e8e8c99ccee50"
+
 # Non-sensitive environment variables
 [vars]
 YOUTUBE_SCOPE = "https://www.googleapis.com/auth/youtube.force-ssl"

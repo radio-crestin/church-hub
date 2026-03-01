@@ -35,7 +35,7 @@ export function createCorsMiddleware(): MiddlewareHandler<{
       }
       return null
     },
-    allowMethods: ['GET', 'OPTIONS'],
+    allowMethods: ['GET', 'POST', 'OPTIONS'],
     allowHeaders: ['Content-Type'],
     credentials: true,
     maxAge: 86400,

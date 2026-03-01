@@ -7,7 +7,6 @@ export {
 export {
   clearActiveBroadcastCache,
   createBroadcast,
-  setActiveBroadcastCache,
   deleteUpcomingBroadcasts,
   endBroadcast,
   getActiveBroadcast,
@@ -15,6 +14,7 @@ export {
   getPastBroadcasts,
   getStreamKeys,
   getUpcomingBroadcasts,
+  setActiveBroadcastCache,
   waitForBroadcastReady,
 } from './broadcast'
 export { getYouTubeConfig, updateYouTubeConfig } from './config'

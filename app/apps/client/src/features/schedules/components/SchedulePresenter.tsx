@@ -1324,9 +1324,15 @@ export function SchedulePresenter({
                 setAllExpanded((prev) => !prev)
               }}
               className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition-colors"
-              title={allExpanded ? t('actions.collapseAll') : t('actions.expandAll')}
+              title={
+                allExpanded ? t('actions.collapseAll') : t('actions.expandAll')
+              }
             >
-              {allExpanded ? <ChevronsDownUp size={16} /> : <ChevronsUpDown size={16} />}
+              {allExpanded ? (
+                <ChevronsDownUp size={16} />
+              ) : (
+                <ChevronsUpDown size={16} />
+              )}
             </button>
             <div className="flex items-center gap-1.5">
               <button

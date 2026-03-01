@@ -86,7 +86,10 @@ export async function startStream(): Promise<{
     const upcomingBroadcasts = await getUpcomingBroadcasts()
     if (upcomingBroadcasts.length > 0) {
       const upcoming = upcomingBroadcasts[0]
-      log('info', `Using existing upcoming broadcast: ${upcoming.broadcastId} (${upcoming.title})`)
+      log(
+        'info',
+        `Using existing upcoming broadcast: ${upcoming.broadcastId} (${upcoming.title})`,
+      )
       broadcast = {
         broadcastId: upcoming.broadcastId,
         title: upcoming.title,
