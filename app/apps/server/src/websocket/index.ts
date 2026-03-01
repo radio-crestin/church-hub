@@ -449,8 +449,18 @@ export function handleWebSocketMessage(
     }
 
     // Handle Music Player messages from clients
-    if (data.type?.startsWith('music_') && musicCommandHandler) {
-      musicCommandHandler(data.type, data.payload || {})
+    if (data.type?.startsWith('music_')) {
+      if (musicCommandHandler) {
+        Promise.resolve(
+          musicCommandHandler(data.type, data.payload || {}),
+        ).catch((err) => {
+          wsLogger.error(`Music command '${data.type}' failed: ${err}`)
+        })
+      } else {
+        wsLogger.warn(
+          `Music command '${data.type}' received but handler not yet registered (server still initializing)`,
+        )
+      }
     }
 
     // Handle WebRTC screen share signaling

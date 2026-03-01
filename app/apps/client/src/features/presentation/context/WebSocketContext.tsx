@@ -102,6 +102,7 @@ interface MusicStateMessage {
     duration: number
     volume: number
     isMuted: boolean
+    isShuffled: boolean
     currentIndex: number
     queueLength: number
     currentTrack: {

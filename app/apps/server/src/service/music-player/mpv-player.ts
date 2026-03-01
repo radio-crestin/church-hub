@@ -598,6 +598,15 @@ async function playAtIndex(index: number): Promise<void> {
 export async function executeCommand(
   command: MusicPlayerCommand,
 ): Promise<void> {
+  if (!mpvProcess || mpvProcess.killed) {
+    // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
+    console.warn(
+      LOG_PREFIX,
+      `Cannot execute '${command.type}': mpv process not running`,
+    )
+    return
+  }
+
   switch (command.type) {
     case 'play':
       if (playerState.currentIndex === -1 && getQueueLength() > 0) {

@@ -117,6 +117,87 @@ describe('Bible API', () => {
   })
 })
 
+describe('Music Player API', () => {
+  test('GET /api/music/player/status returns 200 with status', async () => {
+    const res = await fetch(`${BASE_URL}/api/music/player/status`)
+    expect(res.status).toBe(200)
+    const json = await res.json()
+    expect(json).toHaveProperty('data')
+    expect(json.data).toHaveProperty('installed')
+    expect(json.data).toHaveProperty('available')
+    expect(typeof json.data.installed).toBe('boolean')
+    expect(typeof json.data.available).toBe('boolean')
+  })
+
+  test('GET /api/music/folders returns 200 with data array', async () => {
+    const res = await fetch(`${BASE_URL}/api/music/folders`)
+    expect(res.status).toBe(200)
+    const json = await res.json()
+    expect(json).toHaveProperty('data')
+    expect(Array.isArray(json.data)).toBe(true)
+  })
+
+  test('GET /api/music/files returns 200 with data array', async () => {
+    const res = await fetch(`${BASE_URL}/api/music/files`)
+    expect(res.status).toBe(200)
+    const json = await res.json()
+    expect(json).toHaveProperty('data')
+    expect(Array.isArray(json.data)).toBe(true)
+  })
+
+  test('GET /api/music/playlists returns 200 with data array', async () => {
+    const res = await fetch(`${BASE_URL}/api/music/playlists`)
+    expect(res.status).toBe(200)
+    const json = await res.json()
+    expect(json).toHaveProperty('data')
+    expect(Array.isArray(json.data)).toBe(true)
+  })
+
+  test('WebSocket receives music_state after music_get_state request', async () => {
+    const ws = new WebSocket(`${BASE_URL.replace('http', 'ws')}/ws`)
+
+    const result = await new Promise<boolean>((resolve) => {
+      const timeout = setTimeout(() => resolve(false), 10000)
+
+      ws.onopen = () => {
+        // Give server time to fully initialize music handler
+        setTimeout(() => {
+          ws.send(JSON.stringify({ type: 'music_get_state' }))
+        }, 1000)
+      }
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(
+            typeof event.data === 'string'
+              ? event.data
+              : new TextDecoder().decode(event.data as ArrayBuffer),
+          )
+          if (data.type === 'music_state') {
+            clearTimeout(timeout)
+            expect(data.payload).toHaveProperty('isPlaying')
+            expect(data.payload).toHaveProperty('volume')
+            expect(data.payload).toHaveProperty('currentIndex')
+            expect(data.payload).toHaveProperty('queue')
+            expect(data.payload).toHaveProperty('updatedAt')
+            resolve(true)
+          }
+        } catch {
+          // Ignore parse errors for non-JSON messages
+        }
+      }
+
+      ws.onerror = () => {
+        clearTimeout(timeout)
+        resolve(false)
+      }
+    })
+
+    ws.close()
+    expect(result).toBe(true)
+  })
+})
+
 describe('Presentation API', () => {
   test('GET /api/presentation/state returns 200', async () => {
     const res = await fetch(`${BASE_URL}/api/presentation/state`)
