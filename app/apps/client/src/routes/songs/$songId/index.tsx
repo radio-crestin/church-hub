@@ -153,9 +153,12 @@ function SongPreviewPage() {
   // Save last visited song to localStorage
   useEffect(() => {
     if (song && !isLoading) {
-      setSongsLastVisited({ songId: numericId })
+      setSongsLastVisited({
+        songId: numericId,
+        searchQuery: searchQuery || undefined,
+      })
     }
-  }, [song, isLoading, numericId])
+  }, [song, isLoading, numericId, searchQuery])
 
   // Track screen size for responsive layout
   useEffect(() => {

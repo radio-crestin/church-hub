@@ -12,6 +12,7 @@ const STORAGE_KEY = 'church-hub-last-visited'
 export interface SongsLastVisited {
   songId?: number
   searchQuery?: string
+  scrollPosition?: number
 }
 
 /**

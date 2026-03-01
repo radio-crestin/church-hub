@@ -160,7 +160,7 @@ function SongsPage() {
         to: '/songs/$songId',
         params: { songId: String(lastVisited.songId) },
         search: {
-          q: searchQuery || undefined,
+          q: lastVisited.searchQuery || searchQuery || undefined,
         },
       })
     }
