@@ -17,11 +17,17 @@ interface SongCardProps {
   onClick: () => void
   onMiddleClick?: () => void
   isSelected?: boolean
+  showCategoryInTitle?: boolean
 }
 
 export const SongCard = forwardRef<HTMLButtonElement, SongCardProps>(
-  function SongCard({ song, onClick, onMiddleClick, isSelected = false }, ref) {
+  function SongCard(
+    { song, onClick, onMiddleClick, isSelected = false, showCategoryInTitle },
+    ref,
+  ) {
     const hasHighlight = song.highlightedTitle?.includes('<mark>')
+    const categorySuffix =
+      showCategoryInTitle && song.categoryName ? ` (${song.categoryName})` : ''
 
     return (
       <button
@@ -50,13 +56,27 @@ export const SongCard = forwardRef<HTMLButtonElement, SongCardProps>(
       >
         <div className="flex-1 min-w-0">
           {hasHighlight ? (
-            <h3
-              className="font-medium text-gray-900 dark:text-white truncate [&_mark]:bg-yellow-300 [&_mark]:dark:bg-yellow-400/60 [&_mark]:rounded-sm [&_mark]:px-0.5"
-              dangerouslySetInnerHTML={{ __html: song.highlightedTitle! }}
-            />
+            <h3 className="font-medium text-gray-900 dark:text-white truncate">
+              <span
+                className="[&_mark]:bg-yellow-300 [&_mark]:dark:bg-yellow-400/60 [&_mark]:rounded-sm [&_mark]:px-0.5"
+                dangerouslySetInnerHTML={{
+                  __html: song.highlightedTitle!,
+                }}
+              />
+              {categorySuffix && (
+                <span className="text-gray-400 dark:text-gray-500 font-normal">
+                  {categorySuffix}
+                </span>
+              )}
+            </h3>
           ) : (
             <h3 className="font-medium text-gray-900 dark:text-white truncate">
               {song.title}
+              {categorySuffix && (
+                <span className="text-gray-400 dark:text-gray-500 font-normal">
+                  {categorySuffix}
+                </span>
+              )}
             </h3>
           )}
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">

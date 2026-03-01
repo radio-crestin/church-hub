@@ -129,11 +129,19 @@ export interface PaginatedSongsResult {
   hasMore: boolean
 }
 
+export type SongSortBy =
+  | 'lastPlayed'
+  | 'mostPlayed'
+  | 'title'
+  | 'newest'
+  | 'oldest'
+
 export interface SongFilters {
   categoryIds?: number[]
   presentedOnly?: boolean
   inSchedulesOnly?: boolean
   hasKeyLine?: boolean
+  sortBy?: SongSortBy
 }
 
 /**
@@ -148,7 +156,7 @@ export function getSongsPaginated(
   filters?: SongFilters,
 ): PaginatedSongsResult {
   try {
-    const { categoryIds, presentedOnly, inSchedulesOnly, hasKeyLine } =
+    const { categoryIds, presentedOnly, inSchedulesOnly, hasKeyLine, sortBy } =
       filters ?? {}
     log(
       'debug',
@@ -190,11 +198,31 @@ export function getSongsPaginated(
       .get(...params) as { total: number }
     const total = countResult.total
 
-    // Get paginated songs - sorted by last presented time (most recent first), then by title
-    // NULLS LAST ensures songs that were never presented appear at the end
+    // Build ORDER BY clause based on sortBy parameter
+    let orderByClause: string
+    switch (sortBy) {
+      case 'title':
+        orderByClause = 'ORDER BY title ASC'
+        break
+      case 'mostPlayed':
+        orderByClause =
+          'ORDER BY presentation_count DESC, last_presented_at DESC NULLS LAST, title ASC'
+        break
+      case 'newest':
+        orderByClause = 'ORDER BY created_at DESC, title ASC'
+        break
+      case 'oldest':
+        orderByClause = 'ORDER BY created_at ASC, title ASC'
+        break
+      case 'lastPlayed':
+      default:
+        orderByClause = 'ORDER BY last_presented_at DESC NULLS LAST, title ASC'
+        break
+    }
+
     const records = rawDb
       .query(
-        `SELECT * FROM songs ${whereClause} ORDER BY last_presented_at DESC NULLS LAST, title ASC LIMIT ? OFFSET ?`,
+        `SELECT * FROM songs ${whereClause} ${orderByClause} LIMIT ? OFFSET ?`,
       )
       .all(...params, limit, offset) as Array<{
       id: number

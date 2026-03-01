@@ -3117,6 +3117,7 @@ async function main() {
         const categoryIdsParam = url.searchParams.get('categoryIds')
         const inSchedulesOnlyParam = url.searchParams.get('inSchedulesOnly')
         const hasKeyLineParam = url.searchParams.get('hasKeyLine')
+        const sortByParam = url.searchParams.get('sortBy')
 
         // If pagination params provided, use paginated query
         if (limitParam) {
@@ -3129,12 +3130,28 @@ async function main() {
                 .filter((id) => !isNaN(id))
             : undefined
 
+          const validSortValues = [
+            'lastPlayed',
+            'mostPlayed',
+            'title',
+            'newest',
+            'oldest',
+          ] as const
+          const sortBy =
+            sortByParam &&
+            validSortValues.includes(
+              sortByParam as (typeof validSortValues)[number],
+            )
+              ? (sortByParam as SongFilters['sortBy'])
+              : undefined
+
           const filters: SongFilters = {
             categoryIds:
               categoryIds && categoryIds.length > 0 ? categoryIds : undefined,
             presentedOnly: presentedOnlyParam === 'true',
             inSchedulesOnly: inSchedulesOnlyParam === 'true',
             hasKeyLine: hasKeyLineParam === 'true',
+            sortBy,
           }
 
           const result = getSongsPaginated(limit, offset, filters)

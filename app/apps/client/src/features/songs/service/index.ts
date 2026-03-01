@@ -21,6 +21,7 @@ export {
   rebuildSearchIndex,
   resetSongPresentationCount,
   type SongFilters,
+  type SongSortBy,
   searchSongs,
   upsertSong,
 } from './songs'
