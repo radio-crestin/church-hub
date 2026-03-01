@@ -23,11 +23,19 @@ export interface PaginatedSongsResult {
   hasMore: boolean
 }
 
+export type SongSortBy =
+  | 'lastPlayed'
+  | 'mostPlayed'
+  | 'title'
+  | 'newest'
+  | 'oldest'
+
 export interface SongFilters {
   categoryIds?: number[]
   presentedOnly?: boolean
   inSchedulesOnly?: boolean
   hasKeyLine?: boolean
+  sortBy?: SongSortBy
 }
 
 export async function getSongsPaginated(
@@ -50,6 +58,9 @@ export async function getSongsPaginated(
   }
   if (filters?.hasKeyLine) {
     params.set('hasKeyLine', 'true')
+  }
+  if (filters?.sortBy) {
+    params.set('sortBy', filters.sortBy)
   }
   const response = await fetcher<ApiResponse<PaginatedSongsResult>>(
     `/api/songs?${params.toString()}`,

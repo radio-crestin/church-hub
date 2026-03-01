@@ -80,6 +80,18 @@ describe('Songs API', () => {
     expect(Array.isArray(json.data)).toBe(true)
   })
 
+  test('GET /api/songs with sortBy returns paginated results', async () => {
+    for (const sortBy of ['lastPlayed', 'mostPlayed', 'title', 'newest', 'oldest']) {
+      const res = await fetch(
+        `${BASE_URL}/api/songs?limit=5&offset=0&sortBy=${sortBy}`,
+      )
+      expect(res.status).toBe(200)
+      const json = await res.json()
+      expect(json.data).toHaveProperty('songs')
+      expect(Array.isArray(json.data.songs)).toBe(true)
+    }
+  })
+
   test('GET /api/categories returns 200 with data array', async () => {
     const res = await fetch(`${BASE_URL}/api/categories`)
     expect(res.status).toBe(200)

@@ -38,7 +38,11 @@
     "inSchedulesOnly": "In schedules",
     "hasKeyLine": "Has key line",
     "filters": "Filters",
-    "clearFiltersForMore": "Clear all filters for more results"
+    "clearFiltersForMore": "Clear all filters for more results",
+    "sortBy": "Sort by",
+    "sortLastPlayed": "Last played",
+    "sortMostPlayed": "Most played",
+    "sortTitle": "Title (A-Z)"
   },
   "picker": {
     "selectSong": "Select Song"

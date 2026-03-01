@@ -18,7 +18,7 @@ import {
   useSongsAISearchSettings,
   useSongsInfinite,
 } from '../hooks'
-import type { SongFilters } from '../service'
+import type { SongFilters, SongSortBy } from '../service'
 import type { AISearchResult, SongSearchResult } from '../types'
 
 const SEARCH_DEBOUNCE_MS = 200
@@ -27,6 +27,7 @@ const CATEGORY_FILTER_STORAGE_KEY = 'songList.categoryFilter'
 const PRESENTED_ONLY_STORAGE_KEY = 'songList.presentedOnly'
 const IN_SCHEDULES_ONLY_STORAGE_KEY = 'songList.inSchedulesOnly'
 const HAS_KEY_LINE_STORAGE_KEY = 'songList.hasKeyLine'
+const SORT_BY_STORAGE_KEY = 'songList.sortBy'
 
 interface SongListProps {
   onSongClick: (songId: number) => void
@@ -110,6 +111,24 @@ export function SongList({
     }
   })
 
+  // Initialize sort from local storage
+  const [sortBy, setSortBy] = useState<SongSortBy | undefined>(() => {
+    try {
+      const stored = localStorage.getItem(SORT_BY_STORAGE_KEY)
+      if (
+        stored &&
+        ['lastPlayed', 'mostPlayed', 'title', 'newest', 'oldest'].includes(
+          stored,
+        )
+      ) {
+        return stored as SongSortBy
+      }
+    } catch {
+      // Ignore storage errors
+    }
+    return undefined
+  })
+
   // Sync with props when they change
   useEffect(() => {
     if (propCategoryIds !== undefined) {
@@ -142,6 +161,7 @@ export function SongList({
     setPresentedOnly(newFilters.presentedOnly)
     setInSchedulesOnly(newFilters.inSchedulesOnly)
     setHasKeyLine(newFilters.hasKeyLine)
+    setSortBy(newFilters.sortBy)
     try {
       localStorage.setItem(
         PRESENTED_ONLY_STORAGE_KEY,
@@ -155,6 +175,7 @@ export function SongList({
         HAS_KEY_LINE_STORAGE_KEY,
         String(newFilters.hasKeyLine),
       )
+      localStorage.setItem(SORT_BY_STORAGE_KEY, newFilters.sortBy ?? '')
     } catch {
       // Ignore storage errors
     }
@@ -167,8 +188,9 @@ export function SongList({
       presentedOnly: presentedOnly || undefined,
       inSchedulesOnly: inSchedulesOnly || undefined,
       hasKeyLine: hasKeyLine || undefined,
+      sortBy,
     }),
-    [categoryIds, presentedOnly, inSchedulesOnly, hasKeyLine],
+    [categoryIds, presentedOnly, inSchedulesOnly, hasKeyLine, sortBy],
   )
 
   // Build filters state for the dropdown
@@ -177,8 +199,9 @@ export function SongList({
       presentedOnly,
       inSchedulesOnly,
       hasKeyLine,
+      sortBy,
     }),
-    [presentedOnly, inSchedulesOnly, hasKeyLine],
+    [presentedOnly, inSchedulesOnly, hasKeyLine, sortBy],
   )
 
   // Check if any filters are active
@@ -194,11 +217,13 @@ export function SongList({
     setPresentedOnly(false)
     setInSchedulesOnly(false)
     setHasKeyLine(false)
+    setSortBy(undefined)
     try {
       localStorage.setItem(CATEGORY_FILTER_STORAGE_KEY, JSON.stringify([]))
       localStorage.setItem(PRESENTED_ONLY_STORAGE_KEY, 'false')
       localStorage.setItem(IN_SCHEDULES_ONLY_STORAGE_KEY, 'false')
       localStorage.setItem(HAS_KEY_LINE_STORAGE_KEY, 'false')
+      localStorage.setItem(SORT_BY_STORAGE_KEY, '')
     } catch {
       // Ignore storage errors
     }
@@ -484,6 +509,20 @@ export function SongList({
     aiSearchResults,
   ])
 
+  // Detect duplicate titles to show category disambiguation
+  const duplicateTitles = useMemo(() => {
+    const titleCounts = new Map<string, number>()
+    for (const song of displaySongs) {
+      const lower = song.title.toLowerCase()
+      titleCounts.set(lower, (titleCounts.get(lower) ?? 0) + 1)
+    }
+    const duplicates = new Set<string>()
+    for (const [title, count] of titleCounts) {
+      if (count > 1) duplicates.add(title)
+    }
+    return duplicates
+  }, [displaySongs])
+
   // Keyboard navigation for search results
   const handleSelectSong = useCallback(
     (index: number) => {
@@ -558,7 +597,7 @@ export function SongList({
     <div className="flex flex-col h-full min-h-0">
       <div className="flex-shrink-0 flex gap-2">
         <div
-          className={`relative transition-all duration-200 ${isSearchFocused ? 'flex-[3]' : 'flex-1'}`}
+          className={`relative transition-all duration-200 ${isSearchFocused ? 'flex-[3]' : 'flex-[2] md:flex-1'}`}
         >
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
@@ -624,7 +663,7 @@ export function SongList({
             type="button"
             onClick={handleAISearch}
             disabled={!localQuery.trim() || aiSearchMutation.isPending}
-            className={`px-3 py-2 rounded-lg border transition-colors flex items-center gap-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+            className={`px-2 py-1.5 md:px-3 md:py-2 rounded-lg border transition-colors flex items-center gap-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
               isAISearchActive
                 ? 'bg-indigo-600 text-white border-indigo-600'
                 : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400'
@@ -643,7 +682,7 @@ export function SongList({
           <button
             type="button"
             onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-            className={`md:hidden px-3 py-2 rounded-lg border transition-colors flex items-center ${
+            className={`md:hidden px-2 py-1.5 rounded-lg border transition-colors flex items-center ${
               categoryIds.length > 0
                 ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-600 text-indigo-600 dark:text-indigo-400'
                 : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400'
@@ -790,6 +829,9 @@ export function SongList({
                       : undefined
                   }
                   isSelected={selectedIndex === index}
+                  showCategoryInTitle={duplicateTitles.has(
+                    song.title.toLowerCase(),
+                  )}
                 />
               ))}
 
