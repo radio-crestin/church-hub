@@ -1,5 +1,12 @@
-import { AlertCircle, FileText, Loader2, X } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  AlertCircle,
+  Check,
+  Clipboard,
+  FileText,
+  Loader2,
+  X,
+} from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { getSelectedBibleTranslationIds } from '~/service/bible/bible'
@@ -84,6 +91,34 @@ export function EditAsTextModal({
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>(
     [],
   )
+  const [plainView, setPlainView] = useState(false)
+  const [copied, setCopied] = useState(false)
+
+  // Generate plain text (no markers, no comments, no song IDs)
+  const plainText = useMemo(() => {
+    return (
+      text
+        .split('\n')
+        .filter((line) => {
+          const trimmed = line.trim()
+          return trimmed && !trimmed.startsWith('#')
+        })
+        .map((line) => line.trim().replace(/\s*\[(SC|S|C|A|VT|V)\]\s*$/i, ''))
+        // Strip song IDs (#123) from end of lines
+        .map((line) => line.replace(/\s+#\d+$/, ''))
+        .join('\n')
+    )
+  }, [text])
+
+  const handleCopy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(plainView ? plainText : text)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // fallback
+    }
+  }, [plainView, plainText, text])
 
   // Initialize text from current items when modal opens
   useEffect(() => {
@@ -109,6 +144,8 @@ export function EditAsTextModal({
       setMissingSongs([])
       setParsedItems([])
       setValidationErrors([])
+      setPlainView(false)
+      setCopied(false)
     }
   }, [isOpen, currentItems, t])
 
@@ -164,9 +201,16 @@ export function EditAsTextModal({
       // Find missing songs - parallel search
       const songItems = parseResult.items.filter((item) => item.type === 'song')
 
-      // Search all songs in parallel
+      // Search all songs in parallel - use songId when available for exact match
       const searchResults = await Promise.all(
         songItems.map(async (item) => {
+          if (item.songId) {
+            // Song ID provided - use it directly
+            return {
+              item,
+              exactMatch: { id: item.songId, title: item.content },
+            }
+          }
           const results = await searchSongs(item.content)
           const exactMatch = results.find(
             (r) => r.title.toLowerCase() === item.content.toLowerCase(),
@@ -535,43 +579,79 @@ export function EditAsTextModal({
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {modalState === 'editing' && (
             <>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                {t('editAsText.description')}
-              </p>
-
-              <textarea
-                ref={textareaRef}
-                value={text}
-                onChange={(e) => {
-                  setText(e.target.value)
-                  // Clear validation errors when user edits
-                  if (validationErrors.length > 0) {
-                    setValidationErrors([])
-                  }
-                }}
-                placeholder={t('editAsText.formatHelp')}
-                rows={15}
-                className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none font-mono text-sm"
-              />
-
-              <div className="flex items-center justify-between text-sm">
-                {parseResult.items.length > 0 && (
-                  <span className="text-indigo-600 dark:text-indigo-400">
-                    {t('editAsText.preview', {
-                      count: parseResult.items.length,
-                    })}
-                  </span>
-                )}
-                {parseResult.errors.length > 0 && (
-                  <span className="text-red-600 dark:text-red-400">
-                    {t('editAsText.errors', {
-                      count: parseResult.errors.length,
-                    })}
-                  </span>
-                )}
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {t('editAsText.description')}
+                </p>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={handleCopy}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md transition-colors"
+                    title={t('editAsText.copyToClipboard')}
+                  >
+                    {copied ? (
+                      <Check className="w-3.5 h-3.5 text-green-500" />
+                    ) : (
+                      <Clipboard className="w-3.5 h-3.5" />
+                    )}
+                    {copied ? t('editAsText.copied') : t('editAsText.copy')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPlainView((v) => !v)}
+                    className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                      plainView
+                        ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300'
+                        : 'text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    }`}
+                  >
+                    {t('editAsText.plainView')}
+                  </button>
+                </div>
               </div>
 
-              {parseResult.errors.length > 0 && (
+              {plainView ? (
+                <pre className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white font-mono text-sm whitespace-pre-wrap min-h-[22.5rem] select-text">
+                  {plainText}
+                </pre>
+              ) : (
+                <textarea
+                  ref={textareaRef}
+                  value={text}
+                  onChange={(e) => {
+                    setText(e.target.value)
+                    // Clear validation errors when user edits
+                    if (validationErrors.length > 0) {
+                      setValidationErrors([])
+                    }
+                  }}
+                  placeholder={t('editAsText.formatHelp')}
+                  rows={15}
+                  className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none font-mono text-sm"
+                />
+              )}
+
+              {!plainView && (
+                <div className="flex items-center justify-between text-sm">
+                  {parseResult.items.length > 0 && (
+                    <span className="text-indigo-600 dark:text-indigo-400">
+                      {t('editAsText.preview', {
+                        count: parseResult.items.length,
+                      })}
+                    </span>
+                  )}
+                  {parseResult.errors.length > 0 && (
+                    <span className="text-red-600 dark:text-red-400">
+                      {t('editAsText.errors', {
+                        count: parseResult.errors.length,
+                      })}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {!plainView && parseResult.errors.length > 0 && (
                 <div className="text-sm text-red-600 dark:text-red-400 space-y-1">
                   {parseResult.errors.map((error) => (
                     <div key={error.line}>
@@ -584,7 +664,7 @@ export function EditAsTextModal({
                 </div>
               )}
 
-              {validationErrors.length > 0 && (
+              {!plainView && validationErrors.length > 0 && (
                 <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 space-y-2">
                   <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-medium">
                     <AlertCircle className="w-4 h-4" />
@@ -627,7 +707,7 @@ export function EditAsTextModal({
         </div>
 
         {/* Footer */}
-        {modalState === 'editing' && (
+        {modalState === 'editing' && !plainView && (
           <div className="flex justify-end gap-2 px-4 py-3 border-t border-gray-200 dark:border-gray-700">
             <button
               type="button"

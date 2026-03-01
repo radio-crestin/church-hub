@@ -13,10 +13,18 @@ const SLIDE_CONFIG = {
   text: {
     color: 'FFFFFF',
     fontFace: 'Arial',
-    fontSize: 44,
+    fontSize: 52,
     bold: true,
     align: 'center' as const,
     valign: 'middle' as const,
+  },
+  keyLine: {
+    color: 'CCCCCC',
+    fontFace: 'Arial',
+    fontSize: 18,
+    bold: false,
+    align: 'right' as const,
+    valign: 'bottom' as const,
   },
 }
 
@@ -56,22 +64,16 @@ function addAmin(text: string): string {
 }
 
 /**
- * Generates a PPTX presentation from a song
- * Matches the rendering engine configuration with:
- * - Black background
- * - White centered text
- * - Auto-scaling font
+ * Creates a configured PptxGenJS instance with all slides populated
  */
-export function generatePptx(song: SongWithSlides): Blob {
+function buildPptx(song: SongWithSlides): PptxGenJS {
   const pptx = new PptxGenJS()
 
-  // Set presentation properties
   pptx.author = 'Church Hub'
   pptx.title = song.title
   pptx.subject = 'Song Presentation'
   pptx.company = 'Church Hub'
 
-  // Define a custom layout matching 16:9 aspect ratio
   pptx.defineLayout({
     name: 'CUSTOM_16x9',
     width: SLIDE_CONFIG.width,
@@ -79,45 +81,62 @@ export function generatePptx(song: SongWithSlides): Blob {
   })
   pptx.layout = 'CUSTOM_16x9'
 
-  // Expand slides with dynamic chorus insertion (C1 V1 C1 V2 C1 V3 C2...)
   const expandedSlides = expandSongSlidesWithChoruses(song.slides)
+  const hasKeyLine = Boolean(song.keyLine)
 
-  // Create a slide for each expanded slide
   for (let i = 0; i < expandedSlides.length; i++) {
     const songSlide = expandedSlides[i]
     const isLastSlide = i === expandedSlides.length - 1
     const slide = pptx.addSlide()
 
-    // Set black background
     slide.background = { color: SLIDE_CONFIG.background.replace('#', '') }
 
-    // Convert HTML content to plain text
     let text = htmlToPlainText(songSlide.content)
 
-    // Add "Amin!" to the last slide
     if (isLastSlide && text) {
       text = addAmin(text)
     }
 
     if (text) {
-      // Add centered text with styling matching rendering engine
       slide.addText(text, {
         x: 0.5,
         y: 0.5,
         w: SLIDE_CONFIG.width - 1,
-        h: SLIDE_CONFIG.height - 1,
+        h: SLIDE_CONFIG.height - (hasKeyLine ? 1.2 : 1),
         color: SLIDE_CONFIG.text.color,
         fontFace: SLIDE_CONFIG.text.fontFace,
         fontSize: SLIDE_CONFIG.text.fontSize,
         bold: SLIDE_CONFIG.text.bold,
         align: SLIDE_CONFIG.text.align,
         valign: SLIDE_CONFIG.text.valign,
-        shrinkText: true, // Enable auto-shrink for text fitting
+        shrinkText: true,
+      })
+    }
+
+    if (song.keyLine) {
+      slide.addText(song.keyLine, {
+        x: SLIDE_CONFIG.width - 4,
+        y: SLIDE_CONFIG.height - 0.8,
+        w: 3.5,
+        h: 0.5,
+        color: SLIDE_CONFIG.keyLine.color,
+        fontFace: SLIDE_CONFIG.keyLine.fontFace,
+        fontSize: SLIDE_CONFIG.keyLine.fontSize,
+        bold: SLIDE_CONFIG.keyLine.bold,
+        align: SLIDE_CONFIG.keyLine.align,
+        valign: SLIDE_CONFIG.keyLine.valign,
       })
     }
   }
 
-  // Generate the PPTX as a Blob
+  return pptx
+}
+
+/**
+ * Generates a PPTX presentation from a song as a Blob
+ */
+export function generatePptx(song: SongWithSlides): Blob {
+  const pptx = buildPptx(song)
   return pptx.write({ outputType: 'blob' }) as unknown as Blob
 }
 
@@ -127,61 +146,7 @@ export function generatePptx(song: SongWithSlides): Blob {
 export async function generatePptxBase64(
   song: SongWithSlides,
 ): Promise<string> {
-  const pptx = new PptxGenJS()
-
-  // Set presentation properties
-  pptx.author = 'Church Hub'
-  pptx.title = song.title
-  pptx.subject = 'Song Presentation'
-  pptx.company = 'Church Hub'
-
-  // Define a custom layout matching 16:9 aspect ratio
-  pptx.defineLayout({
-    name: 'CUSTOM_16x9',
-    width: SLIDE_CONFIG.width,
-    height: SLIDE_CONFIG.height,
-  })
-  pptx.layout = 'CUSTOM_16x9'
-
-  // Expand slides with dynamic chorus insertion (C1 V1 C1 V2 C1 V3 C2...)
-  const expandedSlides = expandSongSlidesWithChoruses(song.slides)
-
-  // Create a slide for each expanded slide
-  for (let i = 0; i < expandedSlides.length; i++) {
-    const songSlide = expandedSlides[i]
-    const isLastSlide = i === expandedSlides.length - 1
-    const slide = pptx.addSlide()
-
-    // Set black background
-    slide.background = { color: SLIDE_CONFIG.background.replace('#', '') }
-
-    // Convert HTML content to plain text
-    let text = htmlToPlainText(songSlide.content)
-
-    // Add "Amin!" to the last slide
-    if (isLastSlide && text) {
-      text = addAmin(text)
-    }
-
-    if (text) {
-      // Add centered text with styling matching rendering engine
-      slide.addText(text, {
-        x: 0.5,
-        y: 0.5,
-        w: SLIDE_CONFIG.width - 1,
-        h: SLIDE_CONFIG.height - 1,
-        color: SLIDE_CONFIG.text.color,
-        fontFace: SLIDE_CONFIG.text.fontFace,
-        fontSize: SLIDE_CONFIG.text.fontSize,
-        bold: SLIDE_CONFIG.text.bold,
-        align: SLIDE_CONFIG.text.align,
-        valign: SLIDE_CONFIG.text.valign,
-        shrinkText: true, // Enable auto-shrink for text fitting
-      })
-    }
-  }
-
-  // Generate the PPTX as base64
+  const pptx = buildPptx(song)
   const data = await pptx.write({ outputType: 'base64' })
   return data as string
 }

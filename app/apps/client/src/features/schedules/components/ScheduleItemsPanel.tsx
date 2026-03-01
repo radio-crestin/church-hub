@@ -37,6 +37,7 @@ import { ScheduleItemContextMenu } from './ScheduleItemContextMenu'
 import type { ScheduleItem } from '../types'
 
 interface ScheduleItemsPanelProps {
+  scheduleId: number
   items: ScheduleItem[]
   isLoading: boolean
   onSlideClick: (item: ScheduleItem, slideIndex: number) => void
@@ -50,6 +51,7 @@ interface ScheduleItemsPanelProps {
   onDeleteItem?: (item: ScheduleItem) => void
   onEditItem?: (item: ScheduleItem) => void
   onChangeSong?: (item: ScheduleItem) => void
+  onEditKeyLine?: (item: ScheduleItem) => void
   expandAllTrigger?: number
   collapseAllTrigger?: number
 }
@@ -86,6 +88,7 @@ interface ExpandedState {
 }
 
 export function ScheduleItemsPanel({
+  scheduleId,
   items,
   isLoading,
   onSlideClick,
@@ -99,6 +102,7 @@ export function ScheduleItemsPanel({
   onDeleteItem,
   onEditItem,
   onChangeSong,
+  onEditKeyLine,
   expandAllTrigger,
   collapseAllTrigger,
 }: ScheduleItemsPanelProps) {
@@ -113,15 +117,33 @@ export function ScheduleItemsPanel({
     position: { x: 0, y: 0 },
   })
 
-  // Track which items are expanded
+  // Track which items are expanded - persist to localStorage per schedule
+  const storageKey = `schedule-items-expanded-${scheduleId}`
   const [expanded, setExpanded] = useState<ExpandedState>(() => {
-    // Start with all items expanded
+    try {
+      const saved = localStorage.getItem(storageKey)
+      if (saved) {
+        return JSON.parse(saved)
+      }
+    } catch {
+      // ignore parse errors
+    }
+    // Default: all collapsed
     const initial: ExpandedState = {}
     items.forEach((item) => {
-      initial[`${item.id}`] = true
+      initial[`${item.id}`] = false
     })
     return initial
   })
+
+  // Persist expanded state to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(expanded))
+    } catch {
+      // ignore storage errors
+    }
+  }, [expanded, storageKey])
 
   // DnD sensors
   const sensors = useSensors(
@@ -140,8 +162,8 @@ export function ScheduleItemsPanel({
     setExpanded((prev) => {
       const next: ExpandedState = {}
       items.forEach((item) => {
-        // Keep existing state or default to expanded for new items
-        next[`${item.id}`] = prev[`${item.id}`] ?? true
+        // Keep existing state or default to collapsed for new items
+        next[`${item.id}`] = prev[`${item.id}`] ?? false
       })
       return next
     })
@@ -504,6 +526,7 @@ export function ScheduleItemsPanel({
           onEdit={handleEditFromContextMenu}
           onDelete={handleDeleteFromContextMenu}
           onChangeSong={onChangeSong}
+          onEditKeyLine={onEditKeyLine}
         />
       )}
     </div>
@@ -684,7 +707,11 @@ function SortableItemWrapper({
               t('presenter.announcement')}
             {item.itemType === 'slide' &&
               item.slideType === 'versete_tineri' &&
-              t('presenter.verseteTineri')}
+              (!isExpanded && item.verseteTineriEntries.length > 0
+                ? item.verseteTineriEntries
+                    .map((e) => `${e.personName} – ${e.reference}`)
+                    .join(', ')
+                : t('presenter.verseteTineri'))}
             {item.itemType === 'slide' &&
               item.slideType === 'scene' &&
               (item.slideContent || item.obsSceneName)}

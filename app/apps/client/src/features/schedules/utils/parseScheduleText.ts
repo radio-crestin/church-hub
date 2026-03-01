@@ -13,6 +13,7 @@ export interface ParsedScheduleItem {
   type: ParsedItemType
   content: string
   lineNumber: number
+  songId?: number
 }
 
 export interface ParseScheduleTextResult {
@@ -77,10 +78,22 @@ export function parseScheduleText(text: string): ParseScheduleTextResult {
       return
     }
 
+    // Extract song ID if present (e.g., "Song Title #123")
+    let songId: number | undefined
+    let finalContent = trimmedContent
+    if (type === 'song') {
+      const idMatch = trimmedContent.match(/^(.+?)\s+#(\d+)$/)
+      if (idMatch) {
+        finalContent = idMatch[1].trim()
+        songId = Number.parseInt(idMatch[2], 10)
+      }
+    }
+
     items.push({
       type,
-      content: trimmedContent,
+      content: finalContent,
       lineNumber,
+      ...(songId !== undefined && { songId }),
     })
   })
 

@@ -1,4 +1,12 @@
-import { FolderOpen, Loader2, Music, Search, Sparkles, X } from 'lucide-react'
+import {
+  Clock,
+  FolderOpen,
+  Loader2,
+  Music,
+  Search,
+  Sparkles,
+  X,
+} from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -801,13 +809,21 @@ export function SongList({
         </div>
       ) : (
         <div className="flex-1 flex flex-col min-h-0 mt-4">
-          <p className="flex-shrink-0 text-sm text-gray-500 dark:text-gray-400 truncate mb-3">
-            {isSearching
-              ? t('search.resultsCount', { count: totalCount })
-              : t('search.showingCount', {
-                  showing: displaySongs.length,
-                  total: totalCount,
-                })}
+          <p className="flex-shrink-0 text-sm text-gray-500 dark:text-gray-400 truncate mb-3 flex items-center gap-1.5">
+            <span>
+              {isSearching
+                ? t('search.resultsCount', { count: totalCount })
+                : t('search.showingCount', {
+                    showing: displaySongs.length,
+                    total: totalCount,
+                  })}
+            </span>
+            {!isSearching && (!sortBy || sortBy === 'lastPlayed') && (
+              <span className="inline-flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
+                <Clock className="w-3 h-3" />
+                {t('search.sortLastPlayed')}
+              </span>
+            )}
           </p>
           <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin -mr-1.5 pr-1.5">
             <div className="grid gap-3">

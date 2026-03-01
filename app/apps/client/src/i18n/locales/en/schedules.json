@@ -171,6 +171,7 @@
     "edit": "Edit",
     "delete": "Delete",
     "changeSong": "Change song",
+    "editKeyLine": "Edit key line",
     "missingContent": "Content not found"
   },
   "editAsText": {
@@ -180,7 +181,7 @@
     "formatHelpLines": {
       "title": "Format examples:",
       "songSuffix": "S",
-      "song": "Song Title [S]",
+      "song": "Song Title #123 [S]",
       "announcement": "Announcement text [A]",
       "bibleComment": "Bible passage:",
       "bible": "John 3:16 [V]",
@@ -197,6 +198,10 @@
     "errors_other": "{{count}} errors found",
     "save": "Apply Changes",
     "cancel": "Cancel",
+    "copy": "Copy",
+    "copied": "Copied",
+    "copyToClipboard": "Copy to clipboard",
+    "plainView": "Plain View",
     "processing": "Applying changes...",
     "missingSongs": {
       "title": "Songs Not Found",

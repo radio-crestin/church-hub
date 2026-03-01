@@ -1,4 +1,4 @@
-import { AlertTriangle, Edit, RefreshCw, Trash2 } from 'lucide-react'
+import { AlertTriangle, Edit, Music2, RefreshCw, Trash2 } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -16,6 +16,7 @@ interface ScheduleItemContextMenuProps {
   onEdit: (item: ScheduleItem) => void
   onDelete: (item: ScheduleItem) => void
   onChangeSong?: (item: ScheduleItem) => void
+  onEditKeyLine?: (item: ScheduleItem) => void
 }
 
 export function ScheduleItemContextMenu({
@@ -25,6 +26,7 @@ export function ScheduleItemContextMenu({
   onEdit,
   onDelete,
   onChangeSong,
+  onEditKeyLine,
 }: ScheduleItemContextMenuProps) {
   const { t } = useTranslation('schedules')
   const menuRef = useRef<HTMLDivElement>(null)
@@ -94,6 +96,13 @@ export function ScheduleItemContextMenu({
     }
   }
 
+  const handleEditKeyLine = () => {
+    if (item.itemType === 'song' && onEditKeyLine) {
+      onEditKeyLine(item)
+      onClose()
+    }
+  }
+
   return (
     <div
       ref={menuRef}
@@ -131,6 +140,18 @@ export function ScheduleItemContextMenu({
         >
           <RefreshCw size={14} />
           {t('contextMenu.changeSong')}
+        </button>
+      )}
+
+      {/* Edit key line option - for songs only */}
+      {item.itemType === 'song' && onEditKeyLine && (
+        <button
+          type="button"
+          onClick={handleEditKeyLine}
+          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        >
+          <Music2 size={14} />
+          {t('contextMenu.editKeyLine')}
         </button>
       )}
 
