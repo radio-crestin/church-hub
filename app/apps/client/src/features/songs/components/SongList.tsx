@@ -1,4 +1,4 @@
-import { Loader2, Music, Search, Sparkles, X } from 'lucide-react'
+import { FolderOpen, Loader2, Music, Search, Sparkles, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -550,10 +550,15 @@ export function SongList({
     return Math.max(140, longestLabel.length * 8 + 48)
   }, [categories, t])
 
+  const [isSearchFocused, setIsSearchFocused] = useState(false)
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false)
+
   return (
     <div className="flex flex-col h-full min-h-0">
       <div className="flex-shrink-0 flex gap-2">
-        <div className="relative flex-1">
+        <div
+          className={`relative transition-all duration-200 ${isSearchFocused ? 'flex-[3]' : 'flex-1'}`}
+        >
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             ref={searchInputRef}
@@ -566,7 +571,6 @@ export function SongList({
             spellCheck={false}
             onMouseDown={(e) => {
               if (localQuery) {
-                // If already selected all once, allow normal selection behavior
                 if (hasSelectedAllRef.current) return
                 e.preventDefault()
                 e.currentTarget.focus()
@@ -579,9 +583,11 @@ export function SongList({
               e.target.select()
               hasSelectedAllRef.current = true
               setSelectedIndex(-1)
+              setIsSearchFocused(true)
             }}
             onBlur={() => {
               hasSelectedAllRef.current = false
+              setIsSearchFocused(false)
             }}
             placeholder={t('search.placeholder')}
             className={`w-full pl-10 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${
@@ -631,7 +637,76 @@ export function SongList({
           filters={filtersState}
           onChange={handleFiltersChange}
         />
-        <div style={{ width: categoryDropdownWidth }}>
+        {/* Category dropdown: icon on mobile, full dropdown on desktop */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+            className={`md:hidden px-3 py-2 rounded-lg border transition-colors flex items-center ${
+              categoryIds.length > 0
+                ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-600 text-indigo-600 dark:text-indigo-400'
+                : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400'
+            }`}
+            title={t('search.allCategories')}
+          >
+            <FolderOpen className="w-4 h-4" />
+            {categoryIds.length > 0 && (
+              <span className="ml-1 text-xs font-medium">
+                {categoryIds.length}
+              </span>
+            )}
+          </button>
+          {isCategoryOpen && (
+            <>
+              <div
+                className="md:hidden fixed inset-0 z-10"
+                onClick={() => setIsCategoryOpen(false)}
+              />
+              <div
+                className="md:hidden absolute right-0 top-full mt-1 z-20 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg overflow-hidden"
+                style={{ minWidth: 200, maxWidth: 'calc(100vw - 24px)' }}
+              >
+                <div className="p-1 max-h-64 overflow-y-auto">
+                  {categories?.map((category) => {
+                    const isSelected = categoryIds.includes(category.id)
+                    return (
+                      <button
+                        key={category.id}
+                        type="button"
+                        onClick={() => {
+                          const next = isSelected
+                            ? categoryIds.filter((id) => id !== category.id)
+                            : [...categoryIds, category.id]
+                          handleCategoryChange(next)
+                        }}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                          isSelected
+                            ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400'
+                            : 'text-gray-900 dark:text-white'
+                        }`}
+                      >
+                        <div
+                          className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${
+                            isSelected
+                              ? 'bg-indigo-600 border-indigo-600'
+                              : 'border-gray-300 dark:border-gray-500'
+                          }`}
+                        >
+                          {isSelected && <X className="w-3 h-3 text-white" />}
+                        </div>
+                        {category.name}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+        <div
+          className="hidden md:block"
+          style={{ width: categoryDropdownWidth }}
+        >
           <MultiSelectCombobox
             options={
               categories?.map((category) => ({

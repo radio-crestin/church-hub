@@ -199,7 +199,7 @@ function SongsPage() {
               onClick={() =>
                 navigate({ to: '/songs/$songId', params: { songId: 'new' } })
               }
-              className="flex items-center gap-2 px-2 py-1.5 lg:px-3 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
+              className="flex items-center gap-2 px-3 py-2 lg:px-3 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
             >
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">{t('actions.create')}</span>
@@ -207,7 +207,7 @@ function SongsPage() {
             <button
               type="button"
               onClick={() => setIsSettingsModalOpen(true)}
-              className="flex items-center gap-2 px-2 py-1.5 lg:px-3 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors"
+              className="flex items-center gap-2 px-3 py-2 lg:px-3 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors"
               title={t('settings.title')}
             >
               <Settings className="w-4 h-4" />
