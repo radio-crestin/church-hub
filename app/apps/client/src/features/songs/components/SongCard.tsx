@@ -12,6 +12,7 @@ interface SongCardProps {
     matchedContent?: string
     presentationCount?: number
     aiRelevanceScore?: number
+    score?: number
   }
   onClick: () => void
   onMiddleClick?: () => void
@@ -76,6 +77,12 @@ export const SongCard = forwardRef<HTMLButtonElement, SongCardProps>(
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded">
                 <Sparkles className="w-3 h-3" />
                 {song.aiRelevanceScore}%
+              </span>
+            )}
+            {song.score !== undefined && song.score > 0 && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400 rounded">
+                <Sparkles className="w-3 h-3" />
+                {song.score}
               </span>
             )}
             {song.keyLine && (
