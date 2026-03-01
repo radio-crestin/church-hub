@@ -659,6 +659,10 @@ function navigateTemporaryBible(
             text: newVerse.text,
             chapter: nextChapter,
             currentVerseIndex: 0,
+            // Clear secondary text on chapter transition
+            secondaryText: undefined,
+            secondaryBookName: undefined,
+            secondaryTranslationAbbreviation: undefined,
           },
         }
 
@@ -722,6 +726,10 @@ function navigateTemporaryBible(
           text: newVerse.text,
           chapter: newVerse.chapter,
           currentVerseIndex: verseCount.count - 1,
+          // Clear secondary text on chapter transition
+          secondaryText: undefined,
+          secondaryBookName: undefined,
+          secondaryTranslationAbbreviation: undefined,
         },
       }
 

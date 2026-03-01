@@ -115,7 +115,7 @@ export function CustomPageView({ pageId }: CustomPageViewProps) {
           src={embedUrl ?? page.url}
           title={page.title}
           className="flex-1 w-full border-0"
-          sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-downloads"
+          sandbox="allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms allow-downloads"
           allow="clipboard-write; clipboard-read; fullscreen"
         />
       </div>
