@@ -1,13 +1,17 @@
 import {
   ArrowRightLeft,
+  Check,
+  Copy,
   ExternalLink,
   Globe,
   Key,
   Mic,
   MicOff,
+  RefreshCw,
   Settings,
   Trash2,
   Volume2,
+  Wifi,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -17,6 +21,7 @@ import { AudioLevelMeter } from './AudioLevelMeter'
 import { TranscriptionDisplay } from './TranscriptionDisplay'
 import {
   LANGUAGES,
+  type OutputMode,
   useLiveTranslation,
   VOICES,
 } from '../hooks/useLiveTranslation'
@@ -24,17 +29,20 @@ import {
 export function LiveTranslationPage() {
   const { t } = useTranslation('liveTranslation')
   const [showSettings, setShowSettings] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   const {
     state,
     settings,
     apiKey,
     audioDevices,
+    streamUrl,
     setApiKey,
     updateSetting,
     startTranslation,
     stopTranslation,
     clearTranscription,
+    resetSecret,
   } = useLiveTranslation()
 
   const swapLanguages = () => {
@@ -164,41 +172,6 @@ export function LiveTranslationPage() {
 
           {/* Translation Settings */}
           <div className="p-4">
-            {/* Mute While Speaking Toggle */}
-            <div className="flex items-center justify-between mb-4 px-1">
-              <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {t('settings.muteWhileSpeaking')}
-                </label>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {t('settings.muteWhileSpeakingDescription')}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() =>
-                  updateSetting(
-                    'muteWhileSpeaking',
-                    !settings.muteWhileSpeaking,
-                  )
-                }
-                disabled={state.isActive}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-50 ${
-                  settings.muteWhileSpeaking
-                    ? 'bg-blue-600'
-                    : 'bg-gray-300 dark:bg-gray-600'
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    settings.muteWhileSpeaking
-                      ? 'translate-x-6'
-                      : 'translate-x-1'
-                  }`}
-                />
-              </button>
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Source Language */}
               <div>
@@ -305,6 +278,87 @@ export function LiveTranslationPage() {
                 </div>
               </div>
             )}
+
+            {/* Output Mode */}
+            <div className="mt-4">
+              <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                <Wifi className="w-3.5 h-3.5" />
+                {t('settings.outputMode')}
+              </label>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                {t('settings.outputModeDescription')}
+              </p>
+              <div className="flex gap-2">
+                {(['device', 'webrtc', 'both'] as OutputMode[]).map((mode) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => updateSetting('outputMode', mode)}
+                    disabled={state.isActive}
+                    className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 ${
+                      settings.outputMode === mode
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    }`}
+                  >
+                    {t(
+                      `settings.outputMode${mode.charAt(0).toUpperCase() + mode.slice(1)}`,
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Stream URL (shown when WebRTC output is enabled) */}
+            {(settings.outputMode === 'webrtc' ||
+              settings.outputMode === 'both') &&
+              streamUrl && (
+                <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    {t('settings.streamUrl')}
+                  </label>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                    {t('settings.streamUrlDescription')}
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={streamUrl}
+                      className="flex-1 px-3 py-2 text-xs bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg font-mono select-all"
+                      onClick={(e) => (e.target as HTMLInputElement).select()}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(streamUrl)
+                        setCopied(true)
+                        setTimeout(() => setCopied(false), 2000)
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                    >
+                      {copied ? (
+                        <Check className="w-3.5 h-3.5" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5" />
+                      )}
+                      {copied ? t('settings.copiedUrl') : t('settings.copyUrl')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (window.confirm(t('settings.resetSecretConfirm'))) {
+                          resetSecret()
+                        }
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      {t('settings.resetSecret')}
+                    </button>
+                  </div>
+                </div>
+              )}
           </div>
         </div>
       )}

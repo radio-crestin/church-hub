@@ -1,6 +1,14 @@
-import { afterAll, beforeAll, describe, expect, setDefaultTimeout, test } from 'bun:test'
-import { spawn, type Subprocess } from 'bun'
 import { resolve } from 'path'
+import { type Subprocess, spawn } from 'bun'
+
+import {
+  afterAll,
+  beforeAll,
+  describe,
+  expect,
+  setDefaultTimeout,
+  test,
+} from 'bun:test'
 
 setDefaultTimeout(30_000)
 

@@ -225,7 +225,10 @@ export async function handleContentTypeChange(
     } else {
       // Already on the correct scene - save previous scene if we don't have one
       if (!state.previousSceneName && currentOBSScene) {
-        log('info', `Saving previous scene (already on target): ${currentOBSScene}`)
+        log(
+          'info',
+          `Saving previous scene (already on target): ${currentOBSScene}`,
+        )
       }
       updateAutomationState({
         ...(!state.previousSceneName && currentOBSScene

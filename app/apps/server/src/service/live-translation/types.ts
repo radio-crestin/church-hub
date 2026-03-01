@@ -1,3 +1,5 @@
+export type OutputMode = 'device' | 'webrtc' | 'both'
+
 export interface LiveTranslationConfig {
   sourceLanguage: string
   targetLanguage: string
@@ -5,7 +7,7 @@ export interface LiveTranslationConfig {
   geminiApiKey: string
   inputDeviceId?: number
   outputDeviceId?: number
-  muteWhileSpeaking?: boolean
+  outputMode?: OutputMode
 }
 
 export interface LiveTranslationState {

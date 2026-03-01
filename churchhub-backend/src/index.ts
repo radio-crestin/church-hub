@@ -8,6 +8,7 @@ import {
 import auth from './routes/auth'
 import feedback from './routes/feedback'
 import health from './routes/health'
+import signal from './routes/signal'
 
 const app = new Hono<{ Bindings: Bindings }>()
 
@@ -26,6 +27,7 @@ app.use('*', logger())
 app.route('/', health)
 app.route('/', auth)
 app.route('/', feedback)
+app.route('/', signal)
 
 // 404 handler
 app.notFound((c) => c.json({ error: 'Not found' }, 404))

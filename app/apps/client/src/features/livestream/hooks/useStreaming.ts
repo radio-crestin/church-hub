@@ -1,5 +1,5 @@
-import { useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMemo } from 'react'
 
 import { useLivestreamWebSocket } from './useLivestreamWebSocket'
 import { getActiveBroadcast, startStream, stopStream } from '../service'
@@ -45,7 +45,9 @@ export function useStreaming() {
       return {
         broadcastId: livestreamStatus.broadcastId,
         title: livestreamStatus.title || '',
-        url: livestreamStatus.broadcastUrl || `https://youtu.be/${livestreamStatus.broadcastId}`,
+        url:
+          livestreamStatus.broadcastUrl ||
+          `https://youtu.be/${livestreamStatus.broadcastId}`,
         status: 'live',
         scheduledStartTime: new Date(livestreamStatus.startedAt || Date.now()),
         actualStartTime: new Date(livestreamStatus.startedAt || Date.now()),

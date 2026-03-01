@@ -249,7 +249,8 @@ export async function getActiveBroadcast(): Promise<BroadcastInfo | null> {
 
     // If we have a session broadcast ID, prefer it over other active broadcasts
     const broadcast = currentSessionBroadcastId
-      ? activeItems.find((b) => b.id === currentSessionBroadcastId) || activeItems[0]
+      ? activeItems.find((b) => b.id === currentSessionBroadcastId) ||
+        activeItems[0]
       : activeItems[0]
 
     if (!broadcast) {
@@ -260,7 +261,8 @@ export async function getActiveBroadcast(): Promise<BroadcastInfo | null> {
 
       const upcomingItems = upcomingResponse.data.items || []
       const upcomingBroadcast = currentSessionBroadcastId
-        ? upcomingItems.find((b) => b.id === currentSessionBroadcastId) || upcomingItems[0]
+        ? upcomingItems.find((b) => b.id === currentSessionBroadcastId) ||
+          upcomingItems[0]
         : upcomingItems[0]
 
       if (!upcomingBroadcast) {
@@ -278,7 +280,10 @@ export async function getActiveBroadcast(): Promise<BroadcastInfo | null> {
                 broadcastId: directBroadcast.id!,
                 title: directBroadcast.snippet?.title || '',
                 url: `https://youtu.be/${directBroadcast.id}`,
-                status: directBroadcast.status?.lifeCycleStatus === 'live' ? 'live' : 'scheduled',
+                status:
+                  directBroadcast.status?.lifeCycleStatus === 'live'
+                    ? 'live'
+                    : 'scheduled',
                 scheduledStartTime: new Date(
                   directBroadcast.snippet?.scheduledStartTime || Date.now(),
                 ),

@@ -62,22 +62,26 @@ const VOICES = [
 
 export { LANGUAGES, VOICES }
 
+export type OutputMode = 'device' | 'webrtc' | 'both'
+
 interface LiveTranslationSettings {
   sourceLanguage: string
   targetLanguage: string
   voiceName: string
-  muteWhileSpeaking: boolean
   inputDeviceId: number | null
   outputDeviceId: number | null
+  geminiApiKey: string
+  outputMode: OutputMode
 }
 
 const DEFAULT_SETTINGS: LiveTranslationSettings = {
   sourceLanguage: 'ro',
   targetLanguage: 'en',
   voiceName: 'Kore',
-  muteWhileSpeaking: false,
   inputDeviceId: null,
   outputDeviceId: null,
+  geminiApiKey: '',
+  outputMode: 'device',
 }
 
 export function useLiveTranslation() {
@@ -93,22 +97,36 @@ export function useLiveTranslation() {
 
   const [settings, setSettings] =
     useState<LiveTranslationSettings>(DEFAULT_SETTINGS)
-  const [apiKey, setApiKey] = useState(
-    () => localStorage.getItem('gemini-api-key') || '',
-  )
   const [audioDevices, setAudioDevices] = useState<AudioDevice[]>([])
   const [settingsLoaded, setSettingsLoaded] = useState(false)
+  const [streamSecret, setStreamSecret] = useState<string>('')
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const baseUrl = getApiUrl() || ''
 
-  // Load settings from server on mount
+  // Load settings from server on mount (includes API key)
   useEffect(() => {
     fetch(`${baseUrl}/api/live-translation/settings`)
       .then((res) => res.json())
       .then((data: LiveTranslationSettings) => {
-        setSettings({ ...DEFAULT_SETTINGS, ...data })
+        // Migrate from localStorage if server has no key
+        const migratedKey =
+          data.geminiApiKey || localStorage.getItem('gemini-api-key') || ''
+        const merged = {
+          ...DEFAULT_SETTINGS,
+          ...data,
+          geminiApiKey: migratedKey,
+        }
+        setSettings(merged)
         setSettingsLoaded(true)
+        // If we migrated from localStorage, save to server and clean up
+        if (!data.geminiApiKey && migratedKey) {
+          fetch(`${baseUrl}/api/live-translation/settings`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(merged),
+          }).then(() => localStorage.removeItem('gemini-api-key'))
+        }
       })
       .catch(() => setSettingsLoaded(true))
   }, [baseUrl])
@@ -129,12 +147,13 @@ export function useLiveTranslation() {
       .catch(() => {})
   }, [baseUrl])
 
-  // Save API key to localStorage (never to server)
+  // Load stream secret on mount
   useEffect(() => {
-    if (apiKey) {
-      localStorage.setItem('gemini-api-key', apiKey)
-    }
-  }, [apiKey])
+    fetch(`${baseUrl}/api/live-translation/stream-secret`)
+      .then((res) => res.json())
+      .then((data: { secret: string }) => setStreamSecret(data.secret))
+      .catch(() => {})
+  }, [baseUrl])
 
   // Debounced save settings to server
   const saveSettings = useCallback(
@@ -165,6 +184,13 @@ export function useLiveTranslation() {
       })
     },
     [saveSettings],
+  )
+
+  // Convenience accessor for apiKey
+  const apiKey = settings.geminiApiKey
+  const setApiKey = useCallback(
+    (key: string) => updateSetting('geminiApiKey', key),
+    [updateSetting],
   )
 
   // Listen for WebSocket translation messages (state, levels, transcription)
@@ -215,9 +241,9 @@ export function useLiveTranslation() {
         targetLanguage: settings.targetLanguage,
         voiceName: settings.voiceName,
         geminiApiKey: apiKey,
-        muteWhileSpeaking: settings.muteWhileSpeaking,
         inputDeviceId: settings.inputDeviceId,
         outputDeviceId: settings.outputDeviceId,
+        outputMode: settings.outputMode,
       }),
     })
 
@@ -259,16 +285,36 @@ export function useLiveTranslation() {
     setState((prev) => ({ ...prev, transcription: [] }))
   }, [baseUrl])
 
+  const resetSecret = useCallback(async () => {
+    const res = await fetch(
+      `${baseUrl}/api/live-translation/stream-secret/reset`,
+      {
+        method: 'POST',
+      },
+    )
+    if (res.ok) {
+      const data = await res.json()
+      setStreamSecret(data.secret)
+    }
+  }, [baseUrl])
+
+  const streamUrl = streamSecret
+    ? `https://churchub-backend.radiocrestin.ro/listen/${streamSecret}`
+    : ''
+
   return {
     state,
     settings,
     apiKey,
     audioDevices,
     settingsLoaded,
+    streamUrl,
+    streamSecret,
     setApiKey,
     updateSetting,
     startTranslation,
     stopTranslation,
     clearTranscription,
+    resetSecret,
   }
 }

@@ -5046,8 +5046,7 @@ async function main() {
           url,
           _context!,
         )
-        if (translationResponse)
-          return handleCors(req, translationResponse)
+        if (translationResponse) return handleCors(req, translationResponse)
       }
 
       // Music routes (folders, files, playlists)

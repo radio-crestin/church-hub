@@ -28,7 +28,6 @@ async function loadAudify() {
 
 let inputAudio: InstanceType<typeof import('audify').RtAudio> | null = null
 let outputAudio: InstanceType<typeof import('audify').RtAudio> | null = null
-let inputMuted = false
 
 /** Hardware capture rate (most devices support 48kHz) */
 const HARDWARE_RATE = 48000
@@ -92,8 +91,6 @@ export async function startAudioCapture(
     hardwareRate: HARDWARE_RATE,
   })
 
-  inputMuted = false
-
   // 1920 samples at 48kHz = 40ms frames
   inputAudio.openStream(
     null,
@@ -103,7 +100,6 @@ export async function startAudioCapture(
     1920,
     'translation-input',
     (pcm) => {
-      if (inputMuted) return
       const resampled = resampleInt16(pcm, HARDWARE_RATE, GEMINI_INPUT_RATE)
       onChunk(resampled)
     },
@@ -221,20 +217,6 @@ export function stopAudioPlayback(): void {
     logger.error('Error stopping audio playback', { error: String(error) })
   }
   outputAudio = null
-}
-
-/**
- * Mute the audio input (discard captured frames without stopping the stream).
- */
-export function muteAudioCapture(): void {
-  inputMuted = true
-}
-
-/**
- * Unmute the audio input (resume forwarding captured frames).
- */
-export function unmuteAudioCapture(): void {
-  inputMuted = false
 }
 
 /**
