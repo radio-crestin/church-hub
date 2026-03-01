@@ -26,7 +26,7 @@ import type {
   BibleVerse,
 } from '../types'
 
-const SEARCH_DEBOUNCE_MS = 200
+const SEARCH_DEBOUNCE_MS = 500
 
 interface BibleNavigationPanelProps {
   navigation: UseBibleNavigationReturn

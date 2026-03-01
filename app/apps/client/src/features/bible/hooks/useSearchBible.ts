@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 
 import { searchBible } from '../service'
 
@@ -13,5 +13,6 @@ export function useSearchBible(
     queryFn: ({ signal }) => searchBible(query, translationId, limit, signal),
     enabled: enabled && query.length >= 2,
     staleTime: 60 * 1000, // 1 minute
+    placeholderData: keepPreviousData,
   })
 }

@@ -60,8 +60,10 @@ export function updateStateIfNewer(
   queryClient: ReturnType<typeof useQueryClient>,
   newState: PresentationState,
 ): boolean {
-  // Only apply if this state is newer than the last applied
-  if (newState.updatedAt > lastAppliedUpdatedAt) {
+  // Only apply if this state is newer or equal to the last applied.
+  // Using >= so WebSocket updates with the same timestamp as the HTTP response
+  // can still apply (they may carry additional state like sidebar updates).
+  if (newState.updatedAt >= lastAppliedUpdatedAt) {
     logger.debug(
       `Applying state update: updatedAt=${newState.updatedAt}, isHidden=${newState.isHidden}, lastApplied=${lastAppliedUpdatedAt}`,
     )
@@ -70,7 +72,7 @@ export function updateStateIfNewer(
     return true
   }
   logger.debug(
-    `Rejecting stale state: updatedAt=${newState.updatedAt} <= lastApplied=${lastAppliedUpdatedAt}`,
+    `Rejecting stale state: updatedAt=${newState.updatedAt} < lastApplied=${lastAppliedUpdatedAt}`,
   )
   return false
 }
