@@ -48,14 +48,15 @@ body {
   padding-left: env(safe-area-inset-left, 0px);
 }
 
-/* Mobile main content */
+/* Mobile main content - account for fixed header + safe area */
 .mobile-main-content {
-  /* Bottom padding so content isn't cut off by browser chrome on mobile */
+  padding-top: calc(env(safe-area-inset-top, 0px) + 56px);
   padding-bottom: env(safe-area-inset-bottom, 16px);
 }
 
 @media (min-width: 768px) {
   .mobile-main-content {
+    padding-top: 0;
     padding-bottom: 0;
   }
 }

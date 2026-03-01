@@ -228,8 +228,8 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile Header */}
-      <header className="md:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 safe-area-top safe-area-left safe-area-right shrink-0">
+      {/* Mobile Header - fixed at top */}
+      <header className="md:hidden fixed top-0 left-0 right-0 z-40 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 safe-area-top safe-area-left safe-area-right">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
             <img src="/logo192.png" alt="Church Hub" className="w-8 h-8" />
