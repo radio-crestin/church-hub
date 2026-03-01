@@ -619,6 +619,70 @@ export function deleteSongsByIds(
 }
 
 /**
+ * Compares the slide content of an imported song against an existing song's slides.
+ * Returns true if the content is identical (ignoring whitespace differences).
+ */
+export function compareSongContent(
+  existingSongId: number,
+  importedSlides: Array<{ content: string; sortOrder: number }>,
+): boolean {
+  const existingSlides = getSlidesBySongId(existingSongId)
+
+  if (existingSlides.length !== importedSlides.length) {
+    return false
+  }
+
+  // Sort both by sortOrder to ensure consistent comparison
+  const sortedExisting = [...existingSlides].sort(
+    (a, b) => a.sortOrder - b.sortOrder,
+  )
+  const sortedImported = [...importedSlides].sort(
+    (a, b) => a.sortOrder - b.sortOrder,
+  )
+
+  for (let i = 0; i < sortedExisting.length; i++) {
+    const existingContent = sortedExisting[i].content.trim()
+    const importedContent = sortedImported[i].content.trim()
+    if (existingContent !== importedContent) {
+      return false
+    }
+  }
+
+  return true
+}
+
+/**
+ * Finds the next available title by appending "(2)", "(3)", etc.
+ * Example: "Song" -> "Song (2)" if "Song (2)" exists -> "Song (3)"
+ */
+export function getNextAvailableTitle(baseTitle: string): string {
+  const rawDb = getRawDatabase()
+
+  // Check if base title is taken (case-insensitive)
+  const existingBase = rawDb
+    .query('SELECT title FROM songs WHERE LOWER(title) = LOWER(?) LIMIT 1')
+    .get(baseTitle) as { title: string } | null
+
+  if (!existingBase) {
+    return baseTitle
+  }
+
+  // Try (2), (3), (4)... until we find a free slot
+  let counter = 2
+  while (true) {
+    const candidate = `${baseTitle} (${counter})`
+    const existing = rawDb
+      .query('SELECT title FROM songs WHERE LOWER(title) = LOWER(?) LIMIT 1')
+      .get(candidate) as { title: string } | null
+
+    if (!existing) {
+      return candidate
+    }
+    counter++
+  }
+}
+
+/**
  * Batch imports multiple songs in a single transaction
  * Optimized for high performance with:
  * - UPSERT (INSERT ... ON CONFLICT) for single-statement insert/update
@@ -753,9 +817,74 @@ export function batchImportSongs(
           songsWithIds.push({ songId: result.id, slides: input.slides || [] })
           successCount++
         } else {
-          // DO NOTHING was triggered (duplicate without overwrite)
-          failedCount++
-          errors.push(`Song "${input.title}": duplicate title (skipped)`)
+          // DO NOTHING was triggered (duplicate without overwrite) — compare content
+          const existingSong = getSongByTitle(title)
+          if (existingSong) {
+            const importedSlides = (input.slides || []).map((s) => ({
+              content: s.content,
+              sortOrder: s.sortOrder,
+            }))
+            const contentIdentical = compareSongContent(
+              existingSong.id,
+              importedSlides,
+            )
+            if (contentIdentical) {
+              skippedCount++
+              errors.push(`Song "${input.title}": identical content (skipped)`)
+            } else {
+              // Content differs — import with auto-numbered title
+              const newTitle = getNextAvailableTitle(title)
+              const newResult = rawDb
+                .query(`
+                  INSERT INTO songs (
+                    title, category_id, source_filename,
+                    author, copyright, ccli, tempo, time_signature,
+                    theme, alt_theme, hymn_number, key_line, presentation_order,
+                    created_at, updated_at
+                  )
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                  RETURNING id
+                `)
+                .get(
+                  newTitle,
+                  input.categoryId ?? defaultCategoryId ?? null,
+                  input.sourceFilename ?? null,
+                  input.author ?? null,
+                  input.copyright ?? null,
+                  input.ccli ?? null,
+                  input.tempo ?? null,
+                  input.timeSignature ?? null,
+                  input.theme ?? null,
+                  input.altTheme ?? null,
+                  input.hymnNumber ?? null,
+                  input.keyLine ?? null,
+                  input.presentationOrder ?? null,
+                  now,
+                  now,
+                ) as { id: number } | null
+
+              if (newResult) {
+                songIds.push(newResult.id)
+                songsWithIds.push({
+                  songId: newResult.id,
+                  slides: input.slides || [],
+                })
+                successCount++
+                log(
+                  'info',
+                  `Song "${input.title}" has different content — imported as "${newTitle}"`,
+                )
+              } else {
+                failedCount++
+                errors.push(
+                  `Song "${input.title}": failed to import with new title "${newTitle}"`,
+                )
+              }
+            }
+          } else {
+            failedCount++
+            errors.push(`Song "${input.title}": duplicate title (skipped)`)
+          }
         }
       } catch (error) {
         failedCount++

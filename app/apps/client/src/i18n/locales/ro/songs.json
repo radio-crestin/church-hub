@@ -102,7 +102,10 @@
     "songTitle": "Titlul cântării",
     "createSong": "Creează cântare",
     "dropHint": "Trage fișierul PPTX pentru a importa ca cântare",
-    "slideNumber": "Slide {{number}}"
+    "slideNumber": "Slide {{number}}",
+    "duplicateIdentical": "O cântare cu numele \"{{title}}\" există deja cu conținut identic. Importul a fost omis.",
+    "duplicateDifferent": "O cântare cu numele \"{{title}}\" există deja dar cu conținut diferit. Importă ca o cântare nouă cu titlu numerotat automat?",
+    "importAsNew": "Importă ca nou"
   },
   "batchImport": {
     "title": "Importă cântări",
