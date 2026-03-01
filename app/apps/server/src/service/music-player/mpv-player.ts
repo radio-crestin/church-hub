@@ -74,8 +74,17 @@ async function sendCommand(
 ): Promise<void> {
   if (!ipcSocket || ipcSocket.destroyed) {
     // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
-    console.warn(LOG_PREFIX, 'IPC socket not connected')
-    return
+    console.warn(LOG_PREFIX, 'IPC socket not connected, attempting reconnect')
+    // Try to reconnect before giving up
+    if (mpvProcess && !mpvProcess.killed) {
+      connectToSocket()
+      await new Promise((resolve) => setTimeout(resolve, 500))
+    }
+    if (!ipcSocket || ipcSocket.destroyed) {
+      // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
+      console.error(LOG_PREFIX, 'IPC socket reconnect failed, command dropped')
+      return
+    }
   }
 
   const message = JSON.stringify({ command }) + '\n'
@@ -104,6 +113,10 @@ async function sendCommand(
           `IPC command failed (attempt ${attempt + 1}/${retries + 1}), retrying:`,
           err,
         )
+        // On failure, try reconnecting before next retry
+        if (!ipcSocket || ipcSocket.destroyed) {
+          connectToSocket()
+        }
         await new Promise((resolve) => setTimeout(resolve, IPC_RETRY_DELAY_MS))
       } else {
         // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
@@ -613,11 +626,24 @@ export async function executeCommand(
         await playAtIndex(0)
       } else {
         await sendCommand(['set_property', 'pause', false])
+        // Fallback: if mpv doesn't respond with property-change within 500ms,
+        // force-update state to prevent stuck UI (especially on Windows)
+        setTimeout(() => {
+          if (!playerState.isPlaying && playerState.currentTrack) {
+            updateState({ isPlaying: true })
+          }
+        }, 500)
       }
       break
 
     case 'pause':
       await sendCommand(['set_property', 'pause', true])
+      // Fallback: force-update state if mpv property-change is delayed
+      setTimeout(() => {
+        if (playerState.isPlaying) {
+          updateState({ isPlaying: false })
+        }
+      }, 500)
       break
 
     case 'stop':

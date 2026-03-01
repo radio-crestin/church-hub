@@ -346,9 +346,13 @@ export function SongList({
   }, [debouncedQuery, searchResults, urlPath, categoryIds, isAISearchActive])
 
   // Sync local state when URL search param changes (e.g., navigation)
+  // Also clear filters when a new search begins
   useEffect(() => {
     setLocalQuery(searchQuery)
-  }, [searchQuery])
+    if (searchQuery) {
+      handleClearAllFilters()
+    }
+  }, [searchQuery, handleClearAllFilters])
 
   // Auto-focus search input on mount
   useEffect(() => {
@@ -517,9 +521,6 @@ export function SongList({
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
-    if (!localQuery.trim() && value.trim()) {
-      handleClearAllFilters()
-    }
     setLocalQuery(value)
     onSearchChange?.(value)
   }
