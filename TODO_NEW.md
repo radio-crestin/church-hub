@@ -5,7 +5,7 @@
 ## Bugs
 
 ### Search & Scoring (major)
-- [ ] **Fix song search scoring system** - Display the score in results. Fix scoring so that songs with a key line get higher priority. Completely ignore diacritics (replace with normal characters). Match title first, then slide content. Add shown/played count into the scoring formula. Do all scoring efficiently at SQL level. Covers: song #034 not found, "cand Isus Hristos m-a mantuit" not found, "l-am cautat si l-am gasit" not found
+- [x] **Fix song search scoring system** - Display the score in results. Fix scoring so that songs with a key line get higher priority. Completely ignore diacritics (replace with normal characters). Match title first, then slide content. Add shown/played count into the scoring formula. Do all scoring efficiently at SQL level. Covers: song #034 not found, "cand Isus Hristos m-a mantuit" not found, "l-am cautat si l-am gasit" not found *(Fixed: search.ts implements diacritics removal, title/content weighting, key line boost, presentation count boost; SongCard.tsx displays score)*
 - [ ] **Clear search filters on new search** - When opening a new search, the previous filters should be cleared automatically
 - [ ] **Bible search freezes the app** - Searching in the Bible blocks/freezes the entire application
 
@@ -13,15 +13,15 @@
 - [ ] **Remember last songs page selection** - Keep the last selection in memory. If a song is currently displayed/presented, always navigate to that song's page. Otherwise, restore the last visited songs page state. Persist across tab switches (e.g. going to another page and coming back)
 
 ### Presentation / Display
-- [ ] **PPTX import dialog missing i18n translations** - When importing a PPTX, the import dialog doesn't have translated strings
+- [x] **PPTX import dialog missing i18n translations** - When importing a PPTX, the import dialog doesn't have translated strings *(Fixed: translations in both EN and RO songs.json under pptxImport key)*
 - [ ] **Bible chapter transition bugs** - When pressing down to navigate to the next chapter, the left sidebar doesn't update and the presentation slides start flickering/switching randomly between the two chapter states. Fix the entire Bible chapter transition flow so the presentation slide works 100% correctly
-- [ ] **Hide animation flicker** - When hiding a song, there's a flicker/glitch (jumps too quickly to the first slide)
+- [x] **Hide animation flicker** - When hiding a song, there's a flicker/glitch (jumps too quickly to the first slide) *(Fixed: AnimatedElement.tsx eliminates gap between exit/enter animations)*
 
 ### PPTX Import
-- [ ] **Fix PPTX import slide comparison** - Currently only checks by title. Must also compare all slide content and notify if the content differs from the existing song. When importing a song with a duplicate title, auto-number it with (2), (3), etc. to ensure unique titles
+- [x] **Fix PPTX import slide comparison** - Currently only checks by title. Must also compare all slide content and notify if the content differs from the existing song. When importing a song with a duplicate title, auto-number it with (2), (3), etc. to ensure unique titles *(Fixed: PptxImportDialog.tsx compares content + auto-numbers duplicate titles)*
 
 ### Music Player
-- [ ] **Music player stuck on Windows** - On Windows, the player gets stuck after pausing or when controlled remotely from another device. Also: persist player settings (volume, shuffle/random, etc.) across app restarts so the user gets the exact same state
+- [ ] **Music player stuck on Windows** - On Windows, the player gets stuck after pausing or when controlled remotely from another device. ~~Also: persist player settings (volume, shuffle/random, etc.) across app restarts so the user gets the exact same state~~ *(Settings persistence fixed: mpv-player.ts persists volume, shuffle, currentIndex to DB and restores on startup)*
 
 ### Other Bugs
 - [ ] **WhatsApp links don't open** - Links shared via WhatsApp embed don't open (probably a webview/embed bug)
@@ -46,7 +46,7 @@
 - [ ] **Show notification for "last played songs"** - Add an indicator that the displayed songs are the most recently played
 
 ### Schedule/Program
-- [ ] **Collapse all button in schedule** - Add a button to collapse all items in the schedule, and persist the collapsed state when switching tabs
+- [x] **Collapse all button in schedule** - Add a button to collapse all items in the schedule, and persist the collapsed state when switching tabs *(Fixed: SchedulePresenter.tsx with collapseAllTrigger + state persistence)*
 - [ ] **Smarter "add to schedule" flow** - If no schedule exists for today, show dialog to create one. If one already exists, just add directly (no confirmation dialog). Show an "edit" tooltip in bottom-right that stays for 5 seconds
 
 ### UI/UX
