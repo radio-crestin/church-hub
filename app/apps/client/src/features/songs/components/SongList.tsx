@@ -499,7 +499,7 @@ export function SongList({
     onSelect: handleSelectSong,
   })
 
-  // Set initial selection based on initialSelectedSongId
+  // Set initial selection based on initialSelectedSongId and scroll into view
   useEffect(() => {
     if (initialSelectedSongId && displaySongs.length > 0) {
       const index = displaySongs.findIndex(
@@ -507,12 +507,17 @@ export function SongList({
       )
       if (index >= 0) {
         setSelectedIndex(index)
+        const el = itemRefs.current.get(index)
+        el?.scrollIntoView({ block: 'center' })
       }
     }
-  }, [initialSelectedSongId, displaySongs, setSelectedIndex])
+  }, [initialSelectedSongId, displaySongs, setSelectedIndex, itemRefs])
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
+    if (!localQuery.trim() && value.trim()) {
+      handleClearAllFilters()
+    }
     setLocalQuery(value)
     onSearchChange?.(value)
   }
