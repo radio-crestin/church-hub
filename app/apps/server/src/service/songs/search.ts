@@ -526,6 +526,80 @@ function extractSearchTerms(queryText: string): string[] {
 }
 
 /**
+ * Searches for a song by hymn number (e.g. "#034", "#34", "034", "34")
+ * Returns results directly from DB lookup (pre-phase, before FTS)
+ */
+function searchByHymnNumber(
+  rawQuery: string,
+  db: ReturnType<typeof getRawDatabase>,
+  extraFilter: string,
+  categoryParams: number[],
+): Array<{
+  id: number
+  title: string
+  category_id: number | null
+  category_name: string | null
+  category_priority: number
+  presentation_count: number
+  key_line: string | null
+  hymn_number: string | null
+}> | null {
+  // Match queries like "#034", "#34", "034", "34" — purely numeric with optional # prefix
+  const match = rawQuery.trim().match(/^#?(\d+)$/)
+  if (!match) return null
+
+  const numericPart = match[1]
+  // Strip leading zeros for a normalized comparison
+  const numericValue = Number.parseInt(numericPart, 10).toString()
+
+  log(
+    'debug',
+    `Hymn number pre-phase lookup for: "${rawQuery}" → ${numericValue}`,
+  )
+
+  const rows = db
+    .query(
+      `
+      SELECT
+        s.id,
+        s.title,
+        s.category_id,
+        sc.name as category_name,
+        COALESCE(sc.priority, 1) as category_priority,
+        s.presentation_count,
+        s.key_line,
+        s.hymn_number
+      FROM songs s
+      LEFT JOIN song_categories sc ON s.category_id = sc.id
+      WHERE (
+        s.hymn_number = ?
+        OR s.hymn_number = ?
+        OR CAST(CAST(s.hymn_number AS INTEGER) AS TEXT) = ?
+      )
+      ${extraFilter ? `AND ${extraFilter.replace(/^AND /, '')}` : ''}
+      LIMIT 20
+    `,
+    )
+    .all(
+      numericPart,
+      `#${numericPart}`,
+      numericValue,
+      ...categoryParams,
+    ) as Array<{
+    id: number
+    title: string
+    category_id: number | null
+    category_name: string | null
+    category_priority: number
+    presentation_count: number
+    key_line: string | null
+    hymn_number: string | null
+  }>
+
+  return rows.length > 0 ? rows : null
+}
+
+/**
  * Checks which terms exist in the corpus.
  * Uses a single FTS query with OR to check all terms at once.
  * All terms that match at least one document are considered valid.
@@ -547,20 +621,30 @@ function getValidTerms(terms: string[]): { validTerms: string[] } {
  * 1. Exact phrase match (highest BM25 boost)
  * 2. NEAR query for proximity matching
  * 3. OR with prefix for each term (broad candidate search)
+ *
+ * Single-character terms are filtered out to reduce noise
+ * (e.g., "m-a mantuit" becomes ["a", "mantuit"] → only ["mantuit"] is used for FTS)
  */
 function buildSearchQuery(queryText: string): string {
-  const terms = extractSearchTerms(queryText)
+  const allTerms = extractSearchTerms(queryText)
 
-  if (terms.length === 0) return ''
+  // Filter out single-character terms to reduce noise in FTS queries
+  // They cause too many false positives (e.g. "a", "m", "s" match almost everything)
+  const terms = allTerms.filter((t) => t.length > 1)
 
-  if (terms.length === 1) {
-    return `"${terms[0]}"*`
+  // If all terms were single-char, fall back to originals to avoid empty query
+  const effectiveTerms = terms.length > 0 ? terms : allTerms
+
+  if (effectiveTerms.length === 0) return ''
+
+  if (effectiveTerms.length === 1) {
+    return `"${effectiveTerms[0]}"*`
   }
 
   // Simple tiered query - avoids combinatorial explosion
-  const phraseQuery = `"${terms.join(' ')}"` // Exact phrase
-  const nearQuery = `NEAR(${terms.map((t) => `"${t}"`).join(' ')}, 10)` // Proximity (wider window)
-  const orQuery = terms.map((t) => `"${t}"*`).join(' OR ') // Broad match
+  const phraseQuery = `"${effectiveTerms.join(' ')}"` // Exact phrase
+  const nearQuery = `NEAR(${effectiveTerms.map((t) => `"${t}"`).join(' ')}, 10)` // Proximity (wider window)
+  const orQuery = effectiveTerms.map((t) => `"${t}"*`).join(' OR ') // Broad match
 
   return `(${phraseQuery}) OR (${nearQuery}) OR (${orQuery})`
 }
@@ -969,6 +1053,59 @@ export function searchSongs(
     }
 
     const db = getRawDatabase()
+
+    // Build extra filter conditions early for hymn number pre-phase
+    const prePhaseExtraConditions: string[] = []
+    const prePhaseCategoryParams: number[] = []
+    if (categoryIds && categoryIds.length > 0) {
+      const placeholders = categoryIds.map(() => '?').join(',')
+      prePhaseExtraConditions.push(`s.category_id IN (${placeholders})`)
+      prePhaseCategoryParams.push(...categoryIds)
+    }
+    if (filters?.presentedOnly) {
+      prePhaseExtraConditions.push('s.presentation_count > 0')
+    }
+    if (filters?.inSchedulesOnly) {
+      prePhaseExtraConditions.push(
+        `s.id IN (SELECT DISTINCT song_id FROM schedule_items WHERE song_id IS NOT NULL)`,
+      )
+    }
+    if (filters?.hasKeyLine) {
+      prePhaseExtraConditions.push(
+        `s.key_line IS NOT NULL AND s.key_line != ''`,
+      )
+    }
+    const prePhaseExtraFilter =
+      prePhaseExtraConditions.length > 0
+        ? `AND ${prePhaseExtraConditions.join(' AND ')}`
+        : ''
+
+    // Pre-phase: Hymn number direct lookup (e.g. "#034", "034", "34")
+    const hymnRows = searchByHymnNumber(
+      query,
+      db,
+      prePhaseExtraFilter,
+      prePhaseCategoryParams,
+    )
+    if (hymnRows && hymnRows.length > 0) {
+      log('debug', `Hymn number pre-phase: ${hymnRows.length} results`)
+      const hymnFinalResults: SongSearchResult[] = hymnRows
+        .slice(0, limit)
+        .map((r) => ({
+          id: r.id,
+          title: r.title,
+          categoryId: r.category_id,
+          categoryName: r.category_name,
+          keyLine: r.key_line,
+          highlightedTitle: r.title,
+          matchedContent: r.hymn_number ? `Hymn #${r.hymn_number}` : '',
+          presentationCount: r.presentation_count,
+          score: 100,
+        }))
+      setInSearchCache(cacheKey, hymnFinalResults)
+      return hymnFinalResults
+    }
+
     const queryTerms = extractSearchTerms(query)
 
     // Filter to valid terms (terms that exist in corpus)
@@ -1178,6 +1315,12 @@ export function searchSongs(
     // so we skip redundant removeDiacritics calls in scoring
     const TITLE_WEIGHT = 2
     const CONTENT_WEIGHT = 1
+    // key_line boost: 15% additive bonus for songs that have a key line set
+    const KEY_LINE_BOOST = 0.15
+    // presentationCount logarithmic boost: up to ~10% extra for frequently presented songs
+    // log10(1+n) / log10(1+100) * 0.1 ≈ 0-10% for n in [0, 100]
+    const PRESENTATION_BOOST_SCALE = 0.1
+    const PRESENTATION_BOOST_DENOM = Math.log10(101)
 
     const scoredResults = candidates.map((r) => {
       // Use pre-normalized fts_title (already diacritics-free) for scoring
@@ -1197,8 +1340,23 @@ export function searchSongs(
         (titleScore * TITLE_WEIGHT + contentScore * CONTENT_WEIGHT) /
         (TITLE_WEIGHT + CONTENT_WEIGHT)
 
-      // Apply category priority multiplier (default 1 for uncategorized)
-      const boostedScore = termScore * r.category_priority
+      // key_line boost: songs with a key line get +15% of base score
+      const keyLineMultiplier =
+        r.key_line && r.key_line.length > 0 ? 1 + KEY_LINE_BOOST : 1
+
+      // presentationCount logarithmic boost: frequently presented songs rank slightly higher
+      const presentationMultiplier =
+        1 +
+        (Math.log10(1 + (r.presentation_count ?? 0)) /
+          PRESENTATION_BOOST_DENOM) *
+          PRESENTATION_BOOST_SCALE
+
+      // Apply all boosts and category priority multiplier
+      const boostedScore =
+        termScore *
+        r.category_priority *
+        keyLineMultiplier *
+        presentationMultiplier
 
       return {
         ...r,
@@ -1259,6 +1417,7 @@ export function searchSongs(
         highlightedTitle: r.highlighted_title,
         matchedContent,
         presentationCount: r.presentation_count,
+        score: Math.round(r.boostedScore),
       }
     })
 

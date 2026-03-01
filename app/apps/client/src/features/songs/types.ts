@@ -95,6 +95,7 @@ export interface SongSearchResult {
   highlightedTitle: string
   matchedContent: string
   presentationCount: number
+  score: number
 }
 
 export interface AISearchResult extends SongSearchResult {

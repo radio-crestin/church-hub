@@ -411,6 +411,7 @@ export function SongList({
       matchedContent?: string
       presentationCount?: number
       aiRelevanceScore?: number
+      score?: number
     }>
 
     // AI search results take priority when active
@@ -443,6 +444,7 @@ export function SongList({
         highlightedTitle: result.highlightedTitle,
         matchedContent: result.matchedContent,
         presentationCount: result.presentationCount,
+        score: result.score,
       }))
       return {
         displaySongs: allSongs,

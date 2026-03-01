@@ -185,6 +185,7 @@ export interface SongSearchResult {
   highlightedTitle: string
   matchedContent: string
   presentationCount: number
+  score: number
 }
 
 /**
