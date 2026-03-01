@@ -175,6 +175,35 @@ export async function showCustomPageWebview(
       })
     })
 
+    // Inject JS to intercept external link clicks and open them in the system browser
+    try {
+      const interceptScript = `
+        (function() {
+          if (window.__churchHubLinkInterceptorInstalled) return;
+          window.__churchHubLinkInterceptorInstalled = true;
+          document.addEventListener('click', function(e) {
+            var el = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+            if (!el) return;
+            var href = el.getAttribute('href');
+            if (!href) return;
+            try {
+              var url = new URL(href, window.location.href);
+              if (url.origin !== window.location.origin) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (window.__TAURI_INTERNALS__) {
+                  window.__TAURI_INTERNALS__.invoke('plugin:shell|open', { path: url.href });
+                } else if (window.__TAURI__ && window.__TAURI__.shell) {
+                  window.__TAURI__.shell.open(url.href);
+                }
+              }
+            } catch (_) {}
+          }, true);
+        })();
+      `
+      await webview.evaluate(interceptScript)
+    } catch (_injectError) {}
+
     createdWebviews.set(label, webview)
     currentVisibleWebview = label
     setupResizeListener()

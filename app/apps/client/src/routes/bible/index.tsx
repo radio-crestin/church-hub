@@ -166,6 +166,8 @@ function BiblePage() {
     chapter: number
     verseIndex: number
   } | null>(null)
+  // Guard to prevent auto-present effect from re-firing after server-triggered chapter changes
+  const serverNavigatedChapterRef = useRef(false)
 
   // Initialize navigation with primary translation
   const navigation = useBibleNavigation(primaryTranslation?.id)
@@ -400,7 +402,9 @@ function BiblePage() {
         return
       }
 
-      const book = temporaryBooks.find((b) => b.id === serverBookId)
+      const book =
+        temporaryBooks.find((b) => b.id === serverBookId) ??
+        primaryBooks.find((b) => b.id === serverBookId)
 
       // Check if the server moved to a different chapter than what we're showing
       const currentChapter = navigation.state.chapter
@@ -411,6 +415,8 @@ function BiblePage() {
         (currentChapter !== serverChapter || currentBookId !== serverBookId)
       ) {
         // Server moved to a different chapter, sync the UI
+        // Set guard so auto-present effect skips redundant re-presentation
+        serverNavigatedChapterRef.current = true
         navigation.navigateToChapter({
           bookId: serverBookId,
           bookName: book.bookName,
@@ -680,6 +686,13 @@ function BiblePage() {
 
     // If chapter changed and we have a presentedIndex, present that verse
     if (chapterChanged && presentedIndex !== null) {
+      // Skip if the chapter change was triggered by the server sync effect
+      // to avoid redundant re-presentation (server already presented the verse)
+      if (serverNavigatedChapterRef.current) {
+        serverNavigatedChapterRef.current = false
+        return
+      }
+
       // Clamp the index to valid range
       const clampedIndex = Math.min(presentedIndex, verses.length - 1)
       const verse = verses[clampedIndex]
