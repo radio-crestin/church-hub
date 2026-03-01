@@ -3,7 +3,6 @@ import { fileURLToPath } from 'url'
 import tailwindcss from '@tailwindcss/vite'
 import { TanStackRouterVite } from '@tanstack/router-plugin/vite'
 import viteReact from '@vitejs/plugin-react'
-import { codeInspectorPlugin } from 'code-inspector-plugin'
 import type { Plugin } from 'vite'
 import { defineConfig, loadEnv } from 'vite'
 import viteTsConfigPaths from 'vite-tsconfig-paths'
@@ -111,13 +110,6 @@ const config = defineConfig(({ mode }) => {
         routeFileIgnorePattern: '(^[A-Z].*)',
       }),
       tailwindcss(),
-      codeInspectorPlugin({
-        bundler: 'vite',
-        behavior: {
-          copy: '{file}:{line}:{column}',
-          locate: false,
-        },
-      }),
       viteReact(),
     ],
     // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`

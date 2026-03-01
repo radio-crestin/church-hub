@@ -171,6 +171,7 @@
     "edit": "Editeaza",
     "delete": "Sterge",
     "changeSong": "Schimba cantarea",
+    "editKeyLine": "Editeaza gama",
     "missingContent": "Continut negasit"
   },
   "editAsText": {
@@ -180,7 +181,7 @@
     "formatHelpLines": {
       "title": "Exemple de format:",
       "songSuffix": "C",
-      "song": "Titlu Cantare [C]",
+      "song": "Titlu Cantare #123 [C]",
       "announcement": "Text anunt [A]",
       "bibleComment": "Pasaj biblic:",
       "bible": "Ioan 3:16 [V]",
@@ -197,6 +198,10 @@
     "errors_other": "{{count}} erori gasite",
     "save": "Aplica Modificarile",
     "cancel": "Anuleaza",
+    "copy": "Copiaza",
+    "copied": "Copiat",
+    "copyToClipboard": "Copiaza in clipboard",
+    "plainView": "Vizualizare Simpla",
     "processing": "Se aplica modificarile...",
     "missingSongs": {
       "title": "Cantari Negasite",

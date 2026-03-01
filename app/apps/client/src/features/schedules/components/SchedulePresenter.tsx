@@ -37,7 +37,12 @@ import {
   useLoadScheduleFromFile,
   useSaveScheduleToFile,
 } from '~/features/schedule-export'
+import {
+  KeyLineEditDialog,
+  type KeyLineEditDialogHandle,
+} from '~/features/song-key'
 import { SongEditorModal, SongPickerModal } from '~/features/songs/components'
+import { getSongById } from '~/features/songs/service'
 import { expandSongSlidesWithChoruses } from '~/features/songs/utils/expandSongSlides'
 import { useToast } from '~/ui/toast'
 import { createLogger } from '~/utils/logger'
@@ -164,12 +169,13 @@ export function SchedulePresenter({
   const [showAddMenu, setShowAddMenu] = useState(false)
 
   // Expand/collapse all triggers
-  const [allExpanded, setAllExpanded] = useState(true)
-  const [expandAllTrigger, setExpandAllTrigger] = useState(1)
+  const [allExpanded, setAllExpanded] = useState(false)
+  const [expandAllTrigger, setExpandAllTrigger] = useState(0)
   const [collapseAllTrigger, setCollapseAllTrigger] = useState(0)
 
   const deleteDialogRef = useRef<HTMLDialogElement>(null)
   const importDialogRef = useRef<HTMLDialogElement>(null)
+  const keyLineDialogRef = useRef<KeyLineEditDialogHandle>(null)
 
   // Track screen size for responsive layout
   useEffect(() => {
@@ -1010,6 +1016,16 @@ export function SchedulePresenter({
     }
   }, [])
 
+  // Edit key line handler - open key line dialog for the song
+  const handleEditKeyLine = useCallback(async (item: ScheduleItem) => {
+    if (item.itemType === 'song' && item.songId) {
+      const song = await getSongById(item.songId)
+      if (song) {
+        keyLineDialogRef.current?.open(song)
+      }
+    }
+  }, [])
+
   // Navigate to song page handler (middle-click)
   const handleNavigateToSong = useCallback(
     (songId: number) => {
@@ -1358,6 +1374,7 @@ export function SchedulePresenter({
           {/* Left Panel Content */}
           <div className="flex-1 overflow-hidden p-3 lg:p-4 pt-2">
             <ScheduleItemsPanel
+              scheduleId={scheduleId}
               items={items}
               isLoading={isLoading}
               onSlideClick={handleSlideClick}
@@ -1371,6 +1388,7 @@ export function SchedulePresenter({
               onDeleteItem={handleDeleteItem}
               onEditItem={handleEditItem}
               onChangeSong={handleChangeSong}
+              onEditKeyLine={handleEditKeyLine}
               expandAllTrigger={expandAllTrigger}
               collapseAllTrigger={collapseAllTrigger}
             />
@@ -1617,6 +1635,8 @@ export function SchedulePresenter({
           }}
         />
       )}
+
+      <KeyLineEditDialog ref={keyLineDialogRef} />
     </div>
   )
 }

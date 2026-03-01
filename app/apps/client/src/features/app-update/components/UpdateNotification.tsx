@@ -1,6 +1,7 @@
 import { Download, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import { isTauri } from '~/utils/isTauri'
 import { useAppUpdate } from '../hooks/useAppUpdate'
 
 interface UpdateNotificationProps {
@@ -17,8 +18,8 @@ export function UpdateNotification({ isCollapsed }: UpdateNotificationProps) {
     downloadUpdate,
   } = useAppUpdate()
 
-  // Don't show if no update, dismissed, or collapsed
-  if (!updateInfo?.hasUpdate || isDismissed) {
+  // Only show inside Tauri desktop app
+  if (!isTauri() || !updateInfo?.hasUpdate || isDismissed) {
     return null
   }
 
