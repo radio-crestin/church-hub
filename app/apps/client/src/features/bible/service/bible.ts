@@ -115,6 +115,7 @@ export async function searchBible(
   query: string,
   translationId?: number,
   limit?: number,
+  signal?: AbortSignal,
 ): Promise<SearchBibleResponse> {
   const params = new URLSearchParams({ q: query })
   if (translationId) params.set('translationId', String(translationId))
@@ -122,6 +123,7 @@ export async function searchBible(
 
   const response = await fetcher<{ data: SearchBibleResponse }>(
     `/api/bible/search?${params.toString()}`,
+    { signal },
   )
   return response.data
 }

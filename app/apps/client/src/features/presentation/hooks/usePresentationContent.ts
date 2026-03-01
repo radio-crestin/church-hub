@@ -14,7 +14,7 @@ import { addKeyLineToFirstSlide } from '../utils/addKeyLineToFirstSlide'
 const logger = createLogger('usePresentationContent')
 
 // Extra buffer time after animation completes before transitioning to empty state (ms)
-const EXIT_ANIMATION_BUFFER = 100
+const EXIT_ANIMATION_BUFFER = 200
 
 // Check if we're running in Tauri context
 const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
@@ -229,9 +229,11 @@ export function usePresentationContent({
         return
       }
 
-      // When hidden or exit animating, don't fetch new content
-      // The exit animation effect will handle transitioning to empty state
-      if (presentationState.isHidden || isExitAnimating) {
+      // When hidden, don't fetch new content - check isHidden directly here because
+      // isExitAnimating may still be false in the same render cycle that triggered
+      // the exit animation (stale closure). isHidden is always current.
+      // The exit animation effect will handle transitioning to empty state.
+      if (presentationState.isHidden) {
         logger.debug(
           `Skipping fetch: isHidden=${presentationState.isHidden}, isExitAnimating=${isExitAnimating}`,
         )
@@ -589,9 +591,11 @@ export function usePresentationContent({
   ])
 
   // Calculate visibility
+  // isVisible stays true during exit animation so CSS transitions can complete smoothly.
+  // Content becomes invisible only after the exit animation finishes and state is cleared.
   const hasContent = Object.keys(contentData).length > 0
   const isVisible =
-    !presentationState?.isHidden && !isExitAnimating && hasContent
+    (!presentationState?.isHidden || isExitAnimating) && hasContent
 
   logger.debug(
     `Render state: isVisible=${isVisible}, hasContent=${hasContent}, isHidden=${presentationState?.isHidden}, isExitAnimating=${isExitAnimating}, contentType=${contentType}, updatedAt=${presentationState?.updatedAt}`,
