@@ -10,7 +10,7 @@ export function useSearchBible(
 ) {
   return useQuery({
     queryKey: ['bible', 'search', query, translationId, limit],
-    queryFn: () => searchBible(query, translationId, limit),
+    queryFn: ({ signal }) => searchBible(query, translationId, limit, signal),
     enabled: enabled && query.length >= 2,
     staleTime: 60 * 1000, // 1 minute
   })

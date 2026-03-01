@@ -137,29 +137,23 @@ function setInCache(key: string, results: BibleSearchResult[]): void {
 // ============================================================================
 
 /**
- * Generates FTS query with OR variants for fuzzy matching
+ * Generates FTS query with AND semantics for multi-word queries
  * Uses prefix matching for partial word matches (e.g., "ca" matches "care")
+ * For multiple words, uses NEAR/10 for proximity matching to avoid matching
+ * thousands of verses that would freeze the UI
  */
 function generateFuzzyFtsQuery(words: string[]): string {
-  // For FTS5, we use prefix matching with * which already handles partial matches
-  // For truly fuzzy matching, we'd need trigram index, but prefix is usually sufficient
+  // For FTS5, use prefix matching with * which handles partial matches
+  const ftsTerms = words.map((w) => `${w}*`)
 
-  // Build FTS query: each word with prefix matching
-  // Using OR between words allows partial phrase matching
-  const ftsTerms = words.map((w) => {
-    // Add prefix wildcard for partial matching
-    return `${w}*`
-  })
-
-  // Join with space (implicit AND in FTS5) for phrase-like searching
-  // But also allow any word match by using OR
   if (ftsTerms.length === 1) {
     return ftsTerms[0]
   }
 
-  // For multiple words, try exact phrase first (quoted), then fallback to all words
-  // FTS5 syntax: "word1 word2" for phrase, word1 word2 for AND, word1 OR word2 for OR
-  return ftsTerms.join(' OR ')
+  // For multiple words, use NEAR proximity operator (implicit AND within proximity window)
+  // This prevents OR from matching thousands of unrelated verses
+  // NEAR/10 means all words must appear within 10 tokens of each other
+  return `NEAR(${ftsTerms.join(' ')}, 10)`
 }
 
 /**
@@ -394,7 +388,7 @@ export function searchVersesByText(
   input: SearchVersesInput,
 ): BibleSearchResult[] {
   const startTime = performance.now()
-  const { query, translationId, limit = 50 } = input
+  const { query, translationId, limit = 30 } = input
 
   if (!query || query.trim().length < 2) {
     return []
