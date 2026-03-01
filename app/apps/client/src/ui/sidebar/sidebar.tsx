@@ -2,7 +2,6 @@ import { useLocation, useNavigate } from '@tanstack/react-router'
 import {
   ChevronLeft,
   ChevronRight,
-  Menu,
   MessageSquarePlus,
   Monitor,
   Settings,
@@ -36,12 +35,22 @@ import { usePermissions } from '../../provider/permissions-provider'
 
 const SIDEBAR_COLLAPSED_KEY = 'sidebar-collapsed'
 
-export function Sidebar() {
+interface SidebarProps {
+  isMobileMenuOpen?: boolean
+  onMobileMenuChange?: (open: boolean) => void
+}
+
+export function Sidebar({
+  isMobileMenuOpen: externalMobileMenuOpen,
+  onMobileMenuChange,
+}: SidebarProps = {}) {
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const saved = localStorage.getItem(SIDEBAR_COLLAPSED_KEY)
     return saved !== null ? saved === 'true' : true // Default to collapsed
   })
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [internalMobileMenuOpen, setInternalMobileMenuOpen] = useState(false)
+  const isMobileMenuOpen = externalMobileMenuOpen ?? internalMobileMenuOpen
+  const setIsMobileMenuOpen = onMobileMenuChange ?? setInternalMobileMenuOpen
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false)
   const [isContactModalOpen, setIsContactModalOpen] = useState(false)
   const location = useLocation()
@@ -228,25 +237,6 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile Header - fixed at top */}
-      <header className="md:hidden fixed top-0 left-0 right-0 z-40 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 safe-area-top safe-area-left safe-area-right">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-3">
-            <img src="/logo192.png" alt="Church Hub" className="w-8 h-8" />
-            <span className="font-semibold text-gray-900 dark:text-white">
-              Church Hub
-            </span>
-          </div>
-          <button
-            onClick={() => setIsMobileMenuOpen(true)}
-            className="p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            aria-label={t('sidebar:actions.openMenu')}
-          >
-            <Menu size={24} />
-          </button>
-        </div>
-      </header>
-
       {/* Mobile Overlay */}
       {isMobileMenuOpen && (
         <div
