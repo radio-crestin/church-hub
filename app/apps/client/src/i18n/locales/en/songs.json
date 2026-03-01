@@ -102,7 +102,10 @@
     "songTitle": "Song Title",
     "createSong": "Create Song",
     "dropHint": "Drop PPTX file to import as song",
-    "slideNumber": "Slide {{number}}"
+    "slideNumber": "Slide {{number}}",
+    "duplicateIdentical": "A song named \"{{title}}\" already exists with identical content. Import was skipped.",
+    "duplicateDifferent": "A song named \"{{title}}\" already exists but with different content. Import as a new song with an auto-numbered title?",
+    "importAsNew": "Import as New"
   },
   "batchImport": {
     "title": "Import Songs",
