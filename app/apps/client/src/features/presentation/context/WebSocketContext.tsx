@@ -15,6 +15,7 @@ import { getStoredUserToken } from '~/service/api-url'
 import { createLogger } from '~/utils/logger'
 import { presentedSongsQueryKey } from '../../song-key/hooks/usePresentedSongs'
 import { updateStateIfNewer } from '../hooks/usePresentationControls'
+import { presentationStateQueryKey } from '../hooks/usePresentationState'
 import { screenQueryKey } from '../hooks/useScreen'
 import { slideHighlightsQueryKey } from '../hooks/useSlideHighlights'
 import type { PresentationState } from '../types'
@@ -364,6 +365,47 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
           })
           // Update timestamp to trigger refetch in components that use queue data
           setSongUpdateTimestamp(data.payload.updatedAt)
+
+          // Sync temporary content slides when the presented song is edited
+          const state = queryClient.getQueryData<PresentationState>(presentationStateQueryKey)
+          if (
+            state?.temporaryContent?.type === 'song' &&
+            state.temporaryContent.data.songId === data.payload.songId
+          ) {
+            // Wait for the song query to resolve with fresh data, then update temp content
+            queryClient
+              .refetchQueries({ queryKey: ['song', data.payload.songId] })
+              .then(() => {
+                const freshSong = queryClient.getQueryData<{ slides: Array<{ id: number; content: string; sortOrder: number }> }>(['song', data.payload.songId])
+                const currentState = queryClient.getQueryData<PresentationState>(presentationStateQueryKey)
+                if (
+                  !freshSong?.slides ||
+                  currentState?.temporaryContent?.type !== 'song' ||
+                  currentState.temporaryContent.data.songId !== data.payload.songId
+                ) return
+
+                const updatedSlides = currentState.temporaryContent.data.slides.map(
+                  (tempSlide) => {
+                    const fresh = freshSong.slides.find((s) => s.id === tempSlide.id)
+                    return fresh ? { ...tempSlide, content: fresh.content } : tempSlide
+                  },
+                )
+
+                queryClient.setQueryData<PresentationState>(presentationStateQueryKey, {
+                  ...currentState,
+                  temporaryContent: {
+                    ...currentState.temporaryContent,
+                    data: {
+                      ...currentState.temporaryContent.data,
+                      slides: updatedSlides,
+                    },
+                  },
+                })
+              })
+              .catch(() => {
+                // Ignore - song query will eventually resolve
+              })
+          }
         }
 
         if (data.type === 'slide_highlights_updated') {
