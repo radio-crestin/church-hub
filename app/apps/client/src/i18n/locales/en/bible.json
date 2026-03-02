@@ -19,7 +19,9 @@
     "noBooks": "No books available",
     "previousChapter": "Previous chapter",
     "nextChapter": "Next chapter",
-    "scrollToVerse": "Scroll to current verse"
+    "scrollToVerse": "Scroll to current verse",
+    "loadPrevious": "Load previous verses",
+    "loadNext": "Load more verses"
   },
   "queue": {
     "title": "Bible Queue",

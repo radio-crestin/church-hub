@@ -279,7 +279,7 @@ export function Sidebar({
           <SidebarHeader isCollapsed={isCollapsed} />
         </div>
 
-        <nav className="flex-1 flex flex-col gap-2 p-3 overflow-y-auto">
+        <nav className="flex-1 flex flex-col gap-2 p-3 overflow-y-auto scrollbar-thin">
           {menuItems.map((item) => (
             <SidebarItem
               key={item.id}
