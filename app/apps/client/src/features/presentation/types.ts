@@ -683,6 +683,7 @@ export interface ScreenWithConfigs extends Screen {
     [K in ContentType]: ContentConfigMap[K]
   }
   nextSlideConfig?: NextSlideSectionConfig
+  sceneOverrides?: Record<string, Record<string, Record<string, unknown>>>
 }
 
 /**

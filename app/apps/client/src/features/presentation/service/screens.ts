@@ -235,3 +235,79 @@ export async function batchUpdateScreenConfig(
   const result = await response.json()
   return result.data
 }
+
+/**
+ * Upserts a scene override for a specific screen/scene/contentType combination
+ */
+export async function upsertSceneOverride(
+  screenId: number,
+  obsSceneName: string,
+  contentType: ContentType,
+  config: Record<string, unknown>,
+): Promise<void> {
+  log(
+    'debug',
+    `Upserting scene override: screen=${screenId}, scene=${obsSceneName}, type=${contentType}`,
+  )
+
+  const response = await fetchFn(
+    `${getApiUrl()}/api/screens/${screenId}/scene-overrides/${encodeURIComponent(obsSceneName)}/${contentType}`,
+    {
+      method: 'PUT',
+      headers: getHeaders('application/json'),
+      body: JSON.stringify({ config }),
+      credentials: 'include',
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error('Failed to upsert scene override')
+  }
+}
+
+/**
+ * Deletes a specific scene override
+ */
+export async function deleteSceneOverride(
+  screenId: number,
+  obsSceneName: string,
+  contentType: ContentType,
+): Promise<void> {
+  log(
+    'debug',
+    `Deleting scene override: screen=${screenId}, scene=${obsSceneName}, type=${contentType}`,
+  )
+
+  const response = await fetchFn(
+    `${getApiUrl()}/api/screens/${screenId}/scene-overrides/${encodeURIComponent(obsSceneName)}/${contentType}`,
+    {
+      method: 'DELETE',
+      headers: getHeaders(),
+      credentials: 'include',
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error('Failed to delete scene override')
+  }
+}
+
+/**
+ * Deletes all scene overrides for a screen
+ */
+export async function deleteAllSceneOverrides(screenId: number): Promise<void> {
+  log('debug', `Deleting all scene overrides for screen=${screenId}`)
+
+  const response = await fetchFn(
+    `${getApiUrl()}/api/screens/${screenId}/scene-overrides`,
+    {
+      method: 'DELETE',
+      headers: getHeaders(),
+      credentials: 'include',
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error('Failed to delete all scene overrides')
+  }
+}

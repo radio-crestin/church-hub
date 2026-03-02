@@ -183,6 +183,13 @@ export const EMBEDDED_JOURNAL = {
       tag: '0023_add_song_bookmarks',
       breakpoints: true,
     },
+    {
+      idx: 24,
+      version: '6',
+      when: 1768400000000,
+      tag: '0024_add_screen_scene_overrides',
+      breakpoints: true,
+    },
   ],
 } as const
 
@@ -306,5 +313,10 @@ export const EMBEDDED_MIGRATIONS: EmbeddedMigration[] = [
     tag: '0023_add_song_bookmarks',
     sql: 'CREATE TABLE `song_bookmarks` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`song_id` integer NOT NULL,\n\t`sort_order` integer DEFAULT 0 NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tFOREIGN KEY (`song_id`) REFERENCES `songs`(`id`) ON UPDATE no action ON DELETE cascade\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX `idx_song_bookmarks_song_id` ON `song_bookmarks` (`song_id`);\n--> statement-breakpoint\nCREATE INDEX `idx_song_bookmarks_sort_order` ON `song_bookmarks` (`sort_order`);\n--> statement-breakpoint\nCREATE INDEX `idx_song_bookmarks_created_at` ON `song_bookmarks` (`created_at`);\n',
     when: 1768300000000,
+  },
+  {
+    tag: '0024_add_screen_scene_overrides',
+    sql: "CREATE TABLE `screen_scene_overrides` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`screen_id` integer NOT NULL,\n\t`obs_scene_name` text NOT NULL,\n\t`content_type` text NOT NULL,\n\t`config` text DEFAULT '{}' NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tFOREIGN KEY (`screen_id`) REFERENCES `screens`(`id`) ON UPDATE no action ON DELETE cascade\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX `idx_screen_scene_overrides_unique` ON `screen_scene_overrides` (`screen_id`, `obs_scene_name`, `content_type`);\n--> statement-breakpoint\nCREATE INDEX `idx_screen_scene_overrides_screen_id` ON `screen_scene_overrides` (`screen_id`);\n",
+    when: 1768400000000,
   },
 ]

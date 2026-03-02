@@ -18,6 +18,7 @@ import {
   contentTypes,
   screenContentConfigs,
   screenNextSlideConfigs,
+  screenSceneOverrides,
   screens,
 } from '../../db/schema'
 
@@ -453,10 +454,33 @@ export function getScreenWithConfigs(id: number): ScreenWithConfigs | null {
       }
     }
 
+    // Get scene overrides for this screen
+    const overrideRecords = db
+      .select()
+      .from(screenSceneOverrides)
+      .where(eq(screenSceneOverrides.screenId, id))
+      .all()
+
+    // Build scene overrides map: sceneName → contentType → config
+    const sceneOverrides: Record<
+      string,
+      Record<string, Record<string, unknown>>
+    > = {}
+    for (const record of overrideRecords) {
+      if (!sceneOverrides[record.obsSceneName]) {
+        sceneOverrides[record.obsSceneName] = {}
+      }
+      sceneOverrides[record.obsSceneName][record.contentType] = parseConfig(
+        record.config,
+      )
+    }
+
     return {
       ...screen,
       contentConfigs: configMap,
       nextSlideConfig,
+      sceneOverrides:
+        Object.keys(sceneOverrides).length > 0 ? sceneOverrides : undefined,
     }
   } catch (error) {
     log('error', `Failed to get screen with configs: ${error}`)
@@ -940,6 +964,117 @@ export function batchUpdateScreenConfigs(
     return { success: true }
   } catch (error) {
     log('error', `Failed to batch update screen configs: ${error}`)
+    return { success: false, error: String(error) }
+  }
+}
+
+// ============================================================================
+// SCENE OVERRIDE OPERATIONS
+// ============================================================================
+
+export function upsertSceneOverride(
+  screenId: number,
+  obsSceneName: string,
+  contentType: ContentType,
+  config: Record<string, unknown>,
+): OperationResult {
+  try {
+    log(
+      'debug',
+      `Upserting scene override: screen=${screenId}, scene=${obsSceneName}, type=${contentType}`,
+    )
+
+    const db = getDatabase()
+    const configJson = JSON.stringify(config)
+
+    const existing = db
+      .select()
+      .from(screenSceneOverrides)
+      .where(
+        and(
+          eq(screenSceneOverrides.screenId, screenId),
+          eq(screenSceneOverrides.obsSceneName, obsSceneName),
+          eq(screenSceneOverrides.contentType, contentType),
+        ),
+      )
+      .get()
+
+    if (existing) {
+      db.update(screenSceneOverrides)
+        .set({
+          config: configJson,
+          updatedAt: sql`(unixepoch())` as unknown as Date,
+        })
+        .where(eq(screenSceneOverrides.id, existing.id))
+        .run()
+    } else {
+      db.insert(screenSceneOverrides)
+        .values({
+          screenId,
+          obsSceneName,
+          contentType,
+          config: configJson,
+        })
+        .run()
+    }
+
+    log(
+      'info',
+      `Scene override upserted: screen=${screenId}, scene=${obsSceneName}, type=${contentType}`,
+    )
+    return { success: true }
+  } catch (error) {
+    log('error', `Failed to upsert scene override: ${error}`)
+    return { success: false, error: String(error) }
+  }
+}
+
+export function deleteSceneOverride(
+  screenId: number,
+  obsSceneName: string,
+  contentType: ContentType,
+): OperationResult {
+  try {
+    log(
+      'debug',
+      `Deleting scene override: screen=${screenId}, scene=${obsSceneName}, type=${contentType}`,
+    )
+
+    const db = getDatabase()
+    db.delete(screenSceneOverrides)
+      .where(
+        and(
+          eq(screenSceneOverrides.screenId, screenId),
+          eq(screenSceneOverrides.obsSceneName, obsSceneName),
+          eq(screenSceneOverrides.contentType, contentType),
+        ),
+      )
+      .run()
+
+    log(
+      'info',
+      `Scene override deleted: screen=${screenId}, scene=${obsSceneName}, type=${contentType}`,
+    )
+    return { success: true }
+  } catch (error) {
+    log('error', `Failed to delete scene override: ${error}`)
+    return { success: false, error: String(error) }
+  }
+}
+
+export function deleteAllSceneOverrides(screenId: number): OperationResult {
+  try {
+    log('debug', `Deleting all scene overrides for screen=${screenId}`)
+
+    const db = getDatabase()
+    db.delete(screenSceneOverrides)
+      .where(eq(screenSceneOverrides.screenId, screenId))
+      .run()
+
+    log('info', `All scene overrides deleted for screen=${screenId}`)
+    return { success: true }
+  } catch (error) {
+    log('error', `Failed to delete all scene overrides: ${error}`)
     return { success: false, error: String(error) }
   }
 }
