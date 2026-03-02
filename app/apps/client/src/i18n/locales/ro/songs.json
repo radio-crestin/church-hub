@@ -37,6 +37,7 @@
     "presentedOnly": "Cântări prezentate",
     "inSchedulesOnly": "În programe",
     "hasKeyLine": "Cu gamă",
+    "bookmarkedOnly": "Marcate",
     "filters": "Filtre",
     "clearFiltersForMore": "Șterge toate filtrele pentru mai multe rezultate",
     "sortBy": "Sortare",
@@ -97,6 +98,12 @@
     "saveAndContinue": "Salvează și continuă",
     "continueWithoutSaving": "Continuă fără a salva",
     "cancel": "Anulează"
+  },
+  "bookmarks": {
+    "add": "Marcheaza",
+    "remove": "Sterge marcajul",
+    "empty": "Nicio cantare marcata",
+    "emptyDescription": "Marcheaza cantari din pagina cantarii pentru a le vedea aici"
   },
   "noSongs": "Nu există cântări încă",
   "noSongsDescription": "Creează prima ta cântare pentru a începe",

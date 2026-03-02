@@ -23,6 +23,7 @@ import {
   useSaveSearchHistory,
   useSearchKeyboardNavigation,
   useSearchSongs,
+  useSongBookmarks,
   useSongsAISearchSettings,
   useSongsInfinite,
 } from '../hooks'
@@ -35,6 +36,7 @@ const CATEGORY_FILTER_STORAGE_KEY = 'songList.categoryFilter'
 const PRESENTED_ONLY_STORAGE_KEY = 'songList.presentedOnly'
 const IN_SCHEDULES_ONLY_STORAGE_KEY = 'songList.inSchedulesOnly'
 const HAS_KEY_LINE_STORAGE_KEY = 'songList.hasKeyLine'
+const BOOKMARKED_ONLY_STORAGE_KEY = 'songList.bookmarkedOnly'
 const SORT_BY_STORAGE_KEY = 'songList.sortBy'
 
 interface SongListProps {
@@ -119,6 +121,15 @@ export function SongList({
     }
   })
 
+  // Initialize bookmarked only filter from local storage
+  const [bookmarkedOnly, setBookmarkedOnly] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(BOOKMARKED_ONLY_STORAGE_KEY) === 'true'
+    } catch {
+      return false
+    }
+  })
+
   // Initialize sort from local storage
   const [sortBy, setSortBy] = useState<SongSortBy | undefined>(() => {
     try {
@@ -169,6 +180,7 @@ export function SongList({
     setPresentedOnly(newFilters.presentedOnly)
     setInSchedulesOnly(newFilters.inSchedulesOnly)
     setHasKeyLine(newFilters.hasKeyLine)
+    setBookmarkedOnly(newFilters.bookmarkedOnly)
     setSortBy(newFilters.sortBy)
     try {
       localStorage.setItem(
@@ -182,6 +194,10 @@ export function SongList({
       localStorage.setItem(
         HAS_KEY_LINE_STORAGE_KEY,
         String(newFilters.hasKeyLine),
+      )
+      localStorage.setItem(
+        BOOKMARKED_ONLY_STORAGE_KEY,
+        String(newFilters.bookmarkedOnly),
       )
       localStorage.setItem(SORT_BY_STORAGE_KEY, newFilters.sortBy ?? '')
     } catch {
@@ -207,16 +223,21 @@ export function SongList({
       presentedOnly,
       inSchedulesOnly,
       hasKeyLine,
+      bookmarkedOnly,
       sortBy,
     }),
-    [presentedOnly, inSchedulesOnly, hasKeyLine, sortBy],
+    [presentedOnly, inSchedulesOnly, hasKeyLine, bookmarkedOnly, sortBy],
   )
 
   // Check if any filters are active
   const hasActiveFilters = useMemo(
     () =>
-      categoryIds.length > 0 || presentedOnly || inSchedulesOnly || hasKeyLine,
-    [categoryIds, presentedOnly, inSchedulesOnly, hasKeyLine],
+      categoryIds.length > 0 ||
+      presentedOnly ||
+      inSchedulesOnly ||
+      hasKeyLine ||
+      bookmarkedOnly,
+    [categoryIds, presentedOnly, inSchedulesOnly, hasKeyLine, bookmarkedOnly],
   )
 
   // Clear all filters
@@ -225,12 +246,14 @@ export function SongList({
     setPresentedOnly(false)
     setInSchedulesOnly(false)
     setHasKeyLine(false)
+    setBookmarkedOnly(false)
     setSortBy(undefined)
     try {
       localStorage.setItem(CATEGORY_FILTER_STORAGE_KEY, JSON.stringify([]))
       localStorage.setItem(PRESENTED_ONLY_STORAGE_KEY, 'false')
       localStorage.setItem(IN_SCHEDULES_ONLY_STORAGE_KEY, 'false')
       localStorage.setItem(HAS_KEY_LINE_STORAGE_KEY, 'false')
+      localStorage.setItem(BOOKMARKED_ONLY_STORAGE_KEY, 'false')
       localStorage.setItem(SORT_BY_STORAGE_KEY, '')
     } catch {
       // Ignore storage errors
@@ -273,6 +296,7 @@ export function SongList({
   )
 
   const { data: categories } = useCategories()
+  const { data: bookmarks = [] } = useSongBookmarks()
 
   // AI Search
   const { isEnabled: aiSearchAvailable } = useSongsAISearchSettings()
@@ -437,6 +461,12 @@ export function SongList({
     }
   }, [hasSearchQuery, hasNextPage, isFetchingNextPage, fetchNextPage])
 
+  // Set of bookmarked song IDs for efficient filtering
+  const bookmarkedSongIds = useMemo(
+    () => new Set(bookmarks.map((b) => b.songId)),
+    [bookmarks],
+  )
+
   const { displaySongs, totalCount } = useMemo(() => {
     let allSongs: Array<{
       id: number
@@ -451,6 +481,21 @@ export function SongList({
       score?: number
     }>
 
+    // When bookmarkedOnly is active and not searching, show bookmarks directly
+    if (bookmarkedOnly && !hasSearchQuery && !isAISearchActive) {
+      allSongs = bookmarks.map((b) => ({
+        id: b.songId,
+        title: b.songTitle,
+        categoryId: null,
+        categoryName: b.songCategoryName,
+        keyLine: b.songKeyLine,
+      }))
+      return {
+        displaySongs: allSongs,
+        totalCount: allSongs.length,
+      }
+    }
+
     // AI search results take priority when active
     if (isAISearchActive && aiSearchResults.length > 0) {
       allSongs = aiSearchResults.map((result: AISearchResult) => ({
@@ -464,6 +509,9 @@ export function SongList({
         presentationCount: result.presentationCount,
         aiRelevanceScore: result.aiRelevanceScore,
       }))
+      if (bookmarkedOnly) {
+        allSongs = allSongs.filter((s) => bookmarkedSongIds.has(s.id))
+      }
       return {
         displaySongs: allSongs,
         totalCount: allSongs.length,
@@ -483,6 +531,9 @@ export function SongList({
         presentationCount: result.presentationCount,
         score: result.score,
       }))
+      if (bookmarkedOnly) {
+        allSongs = allSongs.filter((s) => bookmarkedSongIds.has(s.id))
+      }
       return {
         displaySongs: allSongs,
         totalCount: allSongs.length,
@@ -504,6 +555,14 @@ export function SongList({
       presentationCount: song.presentationCount,
     }))
 
+    if (bookmarkedOnly) {
+      allSongs = allSongs.filter((s) => bookmarkedSongIds.has(s.id))
+      return {
+        displaySongs: allSongs,
+        totalCount: allSongs.length,
+      }
+    }
+
     return {
       displaySongs: allSongs,
       totalCount: total,
@@ -515,6 +574,9 @@ export function SongList({
     categories,
     isAISearchActive,
     aiSearchResults,
+    bookmarkedOnly,
+    bookmarks,
+    bookmarkedSongIds,
   ])
 
   // Detect duplicate titles to show category disambiguation

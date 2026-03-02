@@ -1,0 +1,6 @@
+export { addBookmark } from './addBookmark'
+export { clearBookmarks } from './clearBookmarks'
+export { getBookmarks } from './getBookmarks'
+export { removeBookmark } from './removeBookmark'
+export { reorderBookmarks } from './reorderBookmarks'
+export * from './types'
