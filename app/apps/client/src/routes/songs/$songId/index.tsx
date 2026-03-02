@@ -50,6 +50,7 @@ import {
   useSong,
   useSongKeyboardShortcuts,
   useSongSlideSelectionKeyboard,
+  useUpsertSlide,
 } from '~/features/songs/hooks'
 import type { SongSlide } from '~/features/songs/types'
 import { expandSongSlidesWithChoruses } from '~/features/songs/utils/expandSongSlides'
@@ -118,6 +119,7 @@ function SongPreviewPage() {
   const { data: presentationState } = usePresentationState()
   const { saveSong, isPending: isSaving } = useSaveSongToFile()
   const resetPresentationCount = useResetPresentationCount()
+  const upsertSlide = useUpsertSlide()
   const { showToast } = useToast()
 
   const [dividerPosition, setDividerPosition] = useState(40)
@@ -224,6 +226,17 @@ function SongPreviewPage() {
   const handleEdit = useCallback(() => {
     navigate({ to: '/songs/$songId/edit', params: { songId } })
   }, [navigate, songId])
+
+  const handleSlideEdit = useCallback(
+    async (slideId: number, content: string) => {
+      await upsertSlide.mutateAsync({
+        id: slideId,
+        songId: numericId,
+        content,
+      })
+    },
+    [upsertSlide, numericId],
+  )
 
   const handleSongAddedToSchedule = useCallback(
     (scheduleId: number) => {
@@ -471,6 +484,7 @@ function SongPreviewPage() {
             selectedSlideIndex={selectedSlideIndex}
             isLoading={isLoading}
             onSlideClick={handleSlideClick}
+            onSlideEdit={handleSlideEdit}
           />
         </div>
 
