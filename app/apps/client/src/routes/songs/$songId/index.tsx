@@ -47,6 +47,7 @@ import {
   SongControlPanel,
   SongSlidesPanel,
 } from '~/features/songs/components'
+import { EditSlidesAsTextModal } from '~/features/songs/components/EditSlidesAsTextModal'
 import {
   useAddBookmark,
   useDeleteSlide,
@@ -58,6 +59,7 @@ import {
   useSongKeyboardShortcuts,
   useSongSlideSelectionKeyboard,
   useUpsertSlide,
+  useUpsertSong,
 } from '~/features/songs/hooks'
 import type { SongSlide } from '~/features/songs/types'
 import { expandSongSlidesWithChoruses } from '~/features/songs/utils/expandSongSlides'
@@ -127,6 +129,7 @@ function SongPreviewPage() {
   const { saveSong, isPending: isSaving } = useSaveSongToFile()
   const resetPresentationCount = useResetPresentationCount()
   const upsertSlide = useUpsertSlide()
+  const upsertSong = useUpsertSong()
   const deleteSlide = useDeleteSlide()
   const reorderSlides = useReorderSlides()
   const addBookmarkMutation = useAddBookmark()
@@ -138,6 +141,7 @@ function SongPreviewPage() {
   const [showAddToScheduleModal, setShowAddToScheduleModal] = useState(false)
   const [showExportFormatModal, setShowExportFormatModal] = useState(false)
   const [showResetCountConfirm, setShowResetCountConfirm] = useState(false)
+  const [showEditAsTextModal, setShowEditAsTextModal] = useState(false)
   const [isLargeScreen, setIsLargeScreen] = useState(false)
   const [selectedSlideIndex, setSelectedSlideIndex] = useState(0)
   const [isEditMode, setIsEditMode] = useState(false)
@@ -281,6 +285,30 @@ function SongPreviewPage() {
   const handleToggleEditMode = useCallback(() => {
     setIsEditMode((prev) => !prev)
   }, [])
+
+  // Convert SongSlide[] to LocalSlide[] for the text modal
+  const editAsTextSlides = useMemo(() => {
+    if (!song) return []
+    return [...song.slides]
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((s) => ({ id: s.id, content: s.content, sortOrder: s.sortOrder, label: s.label }))
+  }, [song])
+
+  const handleEditAsTextApply = useCallback(
+    (newSlides: Array<{ id: string | number; content: string; sortOrder: number; label?: string | null }>) => {
+      if (!song) return
+      void upsertSong.mutateAsync({
+        id: numericId,
+        title: song.title,
+        slides: newSlides.map((s, i) => ({
+          content: s.content,
+          sortOrder: i,
+          label: s.label ?? null,
+        })),
+      })
+    },
+    [song, upsertSong, numericId],
+  )
 
   const isBookmarked = useMemo(
     () => bookmarks.some((b) => b.songId === numericId),
@@ -564,7 +592,7 @@ function SongPreviewPage() {
             onSlideDelete={handleSlideDelete}
             onSlideAdd={handleSlideAdd}
             onSlidesReorder={handleSlidesReorder}
-            onEditAsText={handleEdit}
+            onEditAsText={() => setShowEditAsTextModal(true)}
           />
           </div>
         </div>
@@ -622,6 +650,13 @@ function SongPreviewPage() {
         confirmLabel={t('resetCountDialog.confirm')}
         onConfirm={handleResetPresentationCount}
         onCancel={() => setShowResetCountConfirm(false)}
+      />
+
+      <EditSlidesAsTextModal
+        isOpen={showEditAsTextModal}
+        onClose={() => setShowEditAsTextModal(false)}
+        slides={editAsTextSlides}
+        onSlidesChange={handleEditAsTextApply}
       />
     </div>
   )
