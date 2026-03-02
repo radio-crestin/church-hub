@@ -17,6 +17,13 @@ export {
 export { useSearchKeyboardNavigation } from './useSearchKeyboardNavigation'
 export { useSearchSongs } from './useSearchSongs'
 export { useSong } from './useSong'
+export {
+  useAddBookmark,
+  useClearBookmarks,
+  useRemoveBookmark,
+  useReorderBookmarks,
+  useSongBookmarks,
+} from './useSongBookmarks'
 export { useSongKeyboardShortcuts } from './useSongKeyboardShortcuts'
 export { useSongSlideSelectionKeyboard } from './useSongSlideSelectionKeyboard'
 export { useSongs } from './useSongs'

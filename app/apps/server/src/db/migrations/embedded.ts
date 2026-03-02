@@ -176,6 +176,13 @@ export const EMBEDDED_JOURNAL = {
       tag: '0022_add_song_search_history',
       breakpoints: true,
     },
+    {
+      idx: 23,
+      version: '6',
+      when: 1768300000000,
+      tag: '0023_add_song_bookmarks',
+      breakpoints: true,
+    },
   ],
 } as const
 
@@ -294,5 +301,10 @@ export const EMBEDDED_MIGRATIONS: EmbeddedMigration[] = [
     tag: '0022_add_song_search_history',
     sql: "-- Add song_search_history table for saving AI search results\r\nCREATE TABLE `song_search_history` (\r\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\r\n\t`query` text NOT NULL,\r\n\t`url_path` text NOT NULL,\r\n\t`search_type` text DEFAULT 'regular' NOT NULL,\r\n\t`category_ids` text,\r\n\t`ai_results` text,\r\n\t`result_count` integer,\r\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL\r\n);\r\n--> statement-breakpoint\r\nCREATE INDEX `idx_song_search_history_created_at` ON `song_search_history` (`created_at`);\r\n--> statement-breakpoint\r\nCREATE INDEX `idx_song_search_history_search_type` ON `song_search_history` (`search_type`);\r\n",
     when: 1768200000000,
+  },
+  {
+    tag: '0023_add_song_bookmarks',
+    sql: 'CREATE TABLE `song_bookmarks` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`song_id` integer NOT NULL,\n\t`sort_order` integer DEFAULT 0 NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tFOREIGN KEY (`song_id`) REFERENCES `songs`(`id`) ON UPDATE no action ON DELETE cascade\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX `idx_song_bookmarks_song_id` ON `song_bookmarks` (`song_id`);\n--> statement-breakpoint\nCREATE INDEX `idx_song_bookmarks_sort_order` ON `song_bookmarks` (`sort_order`);\n--> statement-breakpoint\nCREATE INDEX `idx_song_bookmarks_created_at` ON `song_bookmarks` (`created_at`);\n',
+    when: 1768300000000,
   },
 ]

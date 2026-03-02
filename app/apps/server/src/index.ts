@@ -192,6 +192,13 @@ import {
   saveSearch,
 } from './service/search-history'
 import {
+  addBookmark,
+  clearBookmarks,
+  getBookmarks,
+  removeBookmark,
+  reorderBookmarks,
+} from './service/song-bookmarks'
+import {
   type BatchImportSongInput,
   batchImportSongs,
   batchUpdateSearchIndex,
@@ -4855,6 +4862,135 @@ async function main() {
         if (permError) return permError
 
         const result = clearHistory()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ success: result.success }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // ============================================================
+      // Song Bookmarks API Endpoints
+      // ============================================================
+
+      // GET /api/song-bookmarks - Get all bookmarks
+      if (req.method === 'GET' && url.pathname === '/api/song-bookmarks') {
+        const permError = checkPermission('songs.view')
+        if (permError) return permError
+
+        const items = getBookmarks()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: items }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/song-bookmarks - Add bookmark
+      if (req.method === 'POST' && url.pathname === '/api/song-bookmarks') {
+        const permError = checkPermission('songs.view')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as { songId: number }
+          const result = addBookmark(body.songId)
+
+          if ('error' in result) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: result.error }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: result.data }), {
+              status: 201,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid request body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // PUT /api/song-bookmarks/reorder - Reorder bookmarks
+      if (
+        req.method === 'PUT' &&
+        url.pathname === '/api/song-bookmarks/reorder'
+      ) {
+        const permError = checkPermission('songs.view')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as { songIds: number[] }
+          const result = reorderBookmarks(body.songIds)
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ success: result.success }), {
+              status: 200,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid request body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // DELETE /api/song-bookmarks/:songId - Remove single bookmark
+      if (
+        req.method === 'DELETE' &&
+        url.pathname.startsWith('/api/song-bookmarks/')
+      ) {
+        const permError = checkPermission('songs.view')
+        if (permError) return permError
+
+        const songId = Number(url.pathname.split('/').pop())
+        if (Number.isNaN(songId)) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid song ID' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        const result = removeBookmark(songId)
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ success: result.success }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // DELETE /api/song-bookmarks - Clear all bookmarks
+      if (req.method === 'DELETE' && url.pathname === '/api/song-bookmarks') {
+        const permError = checkPermission('songs.view')
+        if (permError) return permError
+
+        const result = clearBookmarks()
         return handleCors(
           req,
           new Response(JSON.stringify({ success: result.success }), {

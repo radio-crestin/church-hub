@@ -1,5 +1,11 @@
 import { sql } from 'drizzle-orm'
-import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import {
+  index,
+  integer,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from 'drizzle-orm/sqlite-core'
 
 export const songCategories = sqliteTable(
   'song_categories',
@@ -76,5 +82,24 @@ export const songSlides = sqliteTable(
       table.songId,
       table.sortOrder,
     ),
+  ],
+)
+
+export const songBookmarks = sqliteTable(
+  'song_bookmarks',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    songId: integer('song_id')
+      .notNull()
+      .references(() => songs.id, { onDelete: 'cascade' }),
+    sortOrder: integer('sort_order').notNull().default(0),
+    createdAt: integer('created_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (table) => [
+    uniqueIndex('idx_song_bookmarks_song_id').on(table.songId),
+    index('idx_song_bookmarks_sort_order').on(table.sortOrder),
+    index('idx_song_bookmarks_created_at').on(table.createdAt),
   ],
 )

@@ -6,6 +6,8 @@ import {
 } from '@tanstack/react-router'
 import {
   ArrowLeft,
+  Bookmark,
+  BookmarkCheck,
   CalendarPlus,
   Download,
   Eye,
@@ -46,8 +48,11 @@ import {
   SongSlidesPanel,
 } from '~/features/songs/components'
 import {
+  useAddBookmark,
+  useRemoveBookmark,
   useResetPresentationCount,
   useSong,
+  useSongBookmarks,
   useSongKeyboardShortcuts,
   useSongSlideSelectionKeyboard,
   useUpsertSlide,
@@ -120,6 +125,9 @@ function SongPreviewPage() {
   const { saveSong, isPending: isSaving } = useSaveSongToFile()
   const resetPresentationCount = useResetPresentationCount()
   const upsertSlide = useUpsertSlide()
+  const addBookmarkMutation = useAddBookmark()
+  const removeBookmarkMutation = useRemoveBookmark()
+  const { data: bookmarks = [] } = useSongBookmarks()
   const { showToast } = useToast()
 
   const [dividerPosition, setDividerPosition] = useState(40)
@@ -237,6 +245,19 @@ function SongPreviewPage() {
     },
     [upsertSlide, numericId],
   )
+
+  const isBookmarked = useMemo(
+    () => bookmarks.some((b) => b.songId === numericId),
+    [bookmarks, numericId],
+  )
+
+  const handleToggleBookmark = useCallback(() => {
+    if (isBookmarked) {
+      removeBookmarkMutation.mutate(numericId)
+    } else {
+      addBookmarkMutation.mutate(numericId)
+    }
+  }, [isBookmarked, numericId, addBookmarkMutation, removeBookmarkMutation])
 
   const handleSongAddedToSchedule = useCallback(
     (scheduleId: number) => {
@@ -429,6 +450,22 @@ function SongPreviewPage() {
         </div>
         {/* Action buttons */}
         <div className="flex items-center gap-2 sm:justify-end shrink-0">
+          <button
+            type="button"
+            onClick={handleToggleBookmark}
+            className={`p-2 rounded-lg transition-colors inline-flex items-center justify-center ${
+              isBookmarked
+                ? 'bg-amber-500 text-white hover:bg-amber-600'
+                : 'bg-gray-600 text-white hover:bg-gray-700'
+            }`}
+            title={isBookmarked ? t('bookmarks.remove') : t('bookmarks.add')}
+          >
+            {isBookmarked ? (
+              <BookmarkCheck size={20} />
+            ) : (
+              <Bookmark size={20} />
+            )}
+          </button>
           <button
             type="button"
             onClick={handleOpenKeyLineDialog}

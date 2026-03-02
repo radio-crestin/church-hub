@@ -37,6 +37,7 @@
     "presentedOnly": "Presented songs",
     "inSchedulesOnly": "In schedules",
     "hasKeyLine": "Has key line",
+    "bookmarkedOnly": "Bookmarked",
     "filters": "Filters",
     "clearFiltersForMore": "Clear all filters for more results",
     "sortBy": "Sort by",
@@ -97,6 +98,12 @@
     "saveAndContinue": "Save and continue",
     "continueWithoutSaving": "Continue without saving",
     "cancel": "Cancel"
+  },
+  "bookmarks": {
+    "add": "Bookmark",
+    "remove": "Remove Bookmark",
+    "empty": "No bookmarked songs",
+    "emptyDescription": "Bookmark songs from the song page to see them here"
   },
   "noSongs": "No songs yet",
   "noSongsDescription": "Create your first song to get started",

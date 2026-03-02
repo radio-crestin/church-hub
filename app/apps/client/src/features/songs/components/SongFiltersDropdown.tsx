@@ -1,5 +1,6 @@
 import {
   ArrowDownAZ,
+  Bookmark,
   CalendarDays,
   Check,
   Clock,
@@ -18,6 +19,7 @@ export interface SongFiltersState {
   presentedOnly: boolean
   inSchedulesOnly: boolean
   hasKeyLine: boolean
+  bookmarkedOnly: boolean
   sortBy?: SongSortBy
 }
 
@@ -33,6 +35,11 @@ interface FilterOption {
 }
 
 const FILTER_OPTIONS: FilterOption[] = [
+  {
+    key: 'bookmarkedOnly',
+    icon: <Bookmark className="w-4 h-4" />,
+    labelKey: 'search.bookmarkedOnly',
+  },
   {
     key: 'presentedOnly',
     icon: <Eye className="w-4 h-4" />,
@@ -96,9 +103,13 @@ export function SongFiltersDropdown({
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   const activeFiltersCount =
-    [filters.presentedOnly, filters.inSchedulesOnly, filters.hasKeyLine].filter(
-      Boolean,
-    ).length + (filters.sortBy && filters.sortBy !== 'lastPlayed' ? 1 : 0)
+    [
+      filters.presentedOnly,
+      filters.inSchedulesOnly,
+      filters.hasKeyLine,
+      filters.bookmarkedOnly,
+    ].filter(Boolean).length +
+    (filters.sortBy && filters.sortBy !== 'lastPlayed' ? 1 : 0)
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -144,7 +155,7 @@ export function SongFiltersDropdown({
   }, [isOpen])
 
   const handleToggle = (
-    key: 'presentedOnly' | 'inSchedulesOnly' | 'hasKeyLine',
+    key: 'presentedOnly' | 'inSchedulesOnly' | 'hasKeyLine' | 'bookmarkedOnly',
   ) => {
     onChange({
       ...filters,
