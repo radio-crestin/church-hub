@@ -69,4 +69,96 @@ test.describe('Songs Feature', () => {
     // Verify page is still functional
     await expect(page.locator('body')).toBeVisible()
   })
+
+  test('slide edit syncs to preview in real-time', async ({ page }) => {
+    await page.goto('/songs')
+    await page.waitForLoadState('networkidle')
+
+    // Click the first song to open its preview page
+    const songElement = page
+      .locator('[data-testid="song-card"], [data-testid="song-list-item"]')
+      .first()
+
+    if (!(await songElement.isVisible({ timeout: 5000 }).catch(() => false))) {
+      test.skip(true, 'No songs available to test')
+      return
+    }
+    await songElement.click()
+    await page.waitForLoadState('networkidle')
+
+    // Wait for slides to render
+    await page.waitForTimeout(1000)
+
+    // Click the first slide to select and present it
+    const firstSlide = page.locator('button.rounded-lg').first()
+    if (!(await firstSlide.isVisible({ timeout: 3000 }).catch(() => false))) {
+      test.skip(true, 'No slides visible')
+      return
+    }
+    await firstSlide.click()
+    await page.waitForTimeout(500)
+
+    // Click the edit mode button (yellow amber button with pencil icon)
+    const editButton = page
+      .getByRole('button', { name: /editare|edit mode/i })
+      .first()
+    if (!(await editButton.isVisible({ timeout: 3000 }).catch(() => false))) {
+      test.skip(true, 'Edit button not found')
+      return
+    }
+    await editButton.click()
+    await page.waitForTimeout(500)
+
+    // In edit mode, textareas should appear for inline editing
+    const textarea = page.locator('textarea').first()
+    if (!(await textarea.isVisible({ timeout: 3000 }).catch(() => false))) {
+      test.skip(true, 'No textarea found in edit mode')
+      return
+    }
+
+    // Get original content
+    const originalContent = await textarea.inputValue()
+
+    // Append a test marker to the content
+    const testMarker = ` [sync-test-${Date.now()}]`
+    await textarea.fill(originalContent + testMarker)
+
+    // Blur the textarea to trigger save
+    await page.click('body', { position: { x: 0, y: 0 } })
+    await page.waitForTimeout(2000) // Wait for save + WebSocket sync
+
+    // Exit edit mode to see updated slides
+    const doneButton = page
+      .getByRole('button', { name: /gata|done/i })
+      .first()
+    if (await doneButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await doneButton.click()
+      await page.waitForTimeout(500)
+    }
+
+    // Verify the slide content now contains the test marker
+    const updatedSlide = page.locator('button.rounded-lg').first()
+    await expect(updatedSlide).toContainText(testMarker.trim(), {
+      timeout: 5000,
+    })
+
+    // Restore original content: re-enter edit mode and revert
+    const editAgainButton = page
+      .getByRole('button', { name: /editare|edit mode/i })
+      .first()
+    if (
+      await editAgainButton.isVisible({ timeout: 2000 }).catch(() => false)
+    ) {
+      await editAgainButton.click()
+      await page.waitForTimeout(500)
+      const restoreTextarea = page.locator('textarea').first()
+      if (
+        await restoreTextarea.isVisible({ timeout: 2000 }).catch(() => false)
+      ) {
+        await restoreTextarea.fill(originalContent)
+        await page.click('body', { position: { x: 0, y: 0 } })
+        await page.waitForTimeout(1000)
+      }
+    }
+  })
 })
