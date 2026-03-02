@@ -42,6 +42,7 @@ interface SongSlidesPanelProps {
   presentedSlideIndex: number | null
   selectedSlideIndex: number
   isLoading: boolean
+  isSaving?: boolean
   isEditMode: boolean
   onToggleEditMode: () => void
   onSlideClick: (slide: SongSlide, index: number) => void
@@ -195,6 +196,7 @@ export function SongSlidesPanel({
   presentedSlideIndex,
   selectedSlideIndex,
   isLoading,
+  isSaving,
   isEditMode,
   onToggleEditMode,
   onSlideClick,
@@ -331,37 +333,43 @@ export function SongSlidesPanel({
       {/* Toolbar */}
       <div className="flex items-center justify-between pb-2 mb-2 border-b border-gray-200 dark:border-gray-700 shrink-0">
         <div className="flex items-center gap-2">
-          {!isEditMode ? (
+          <button
+            type="button"
+            onClick={!isEditMode ? onToggleEditMode : undefined}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-lg border transition-colors bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-600 ${
+              !isEditMode
+                ? 'hover:bg-amber-200 dark:hover:bg-amber-900/60 cursor-pointer'
+                : 'opacity-60 cursor-default'
+            }`}
+          >
+            <Pencil size={14} />
+            <span>{t('preview.editMode')}</span>
+          </button>
+          {isEditMode && onEditAsText && (
             <button
               type="button"
-              onClick={onToggleEditMode}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-lg border transition-colors bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-600 hover:bg-amber-200 dark:hover:bg-amber-900/60"
+              onClick={onEditAsText}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm text-gray-700 dark:text-gray-300 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
-              <Pencil size={14} />
-              <span>{t('preview.editMode')}</span>
+              <FileText size={14} />
+              <span className="hidden sm:inline">
+                {t('preview.editAsText')}
+              </span>
             </button>
-          ) : (
-            onEditAsText && (
-              <button
-                type="button"
-                onClick={onEditAsText}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm text-gray-700 dark:text-gray-300 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              >
-                <FileText size={14} />
-                <span className="hidden sm:inline">
-                  {t('preview.editAsText')}
-                </span>
-              </button>
-            )
           )}
         </div>
         {isEditMode && (
           <button
             type="button"
             onClick={onToggleEditMode}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-lg border transition-colors bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border-green-300 dark:border-green-600 hover:bg-green-200 dark:hover:bg-green-900/60"
+            disabled={isSaving}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-lg border transition-colors bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border-green-300 dark:border-green-600 hover:bg-green-200 dark:hover:bg-green-900/60 disabled:opacity-50"
           >
-            <Check size={14} />
+            {isSaving ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <Check size={14} />
+            )}
             <span>{t('preview.exitEditMode')}</span>
           </button>
         )}

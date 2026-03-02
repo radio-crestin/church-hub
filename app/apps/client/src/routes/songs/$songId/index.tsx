@@ -588,6 +588,7 @@ function SongPreviewPage() {
             isEditMode={isEditMode}
             onToggleEditMode={handleToggleEditMode}
             onSlideClick={handleSlideClick}
+            isSaving={upsertSlide.isPending || deleteSlide.isPending || reorderSlides.isPending || upsertSong.isPending}
             onSlideEdit={handleSlideEdit}
             onSlideDelete={handleSlideDelete}
             onSlideAdd={handleSlideAdd}

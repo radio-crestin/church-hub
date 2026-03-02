@@ -103,6 +103,8 @@ interface UsePresentationContentOptions {
 interface UsePresentationContentResult {
   contentType: ContentType
   contentData: ContentData
+  /** Identity-based key that only changes on slide navigation, not content edits */
+  contentKey: string
   isVisible: boolean
   isExitAnimating: boolean
   nextSlideData: NextSlideData | undefined
@@ -129,6 +131,7 @@ export function usePresentationContent({
 
   const [contentType, setContentType] = useState<ContentType>('empty')
   const [contentData, setContentData] = useState<ContentData>({})
+  const [contentKey, setContentKey] = useState('empty')
   const [nextSlideData, setNextSlideData] = useState<
     NextSlideData | undefined
   >()
@@ -190,6 +193,7 @@ export function usePresentationContent({
         }
         logger.debug('Exit animation complete, clearing content')
         setContentData({})
+        setContentKey('')
         setContentType('empty')
         setNextSlideData(undefined)
         setIsExitAnimating(false)
@@ -233,6 +237,7 @@ export function usePresentationContent({
         logger.debug('No presentation state, setting empty content')
         if (isCancelled) return
         setContentData({})
+        setContentKey('')
         setContentType('empty')
         setNextSlideData(undefined)
         return
@@ -324,6 +329,7 @@ export function usePresentationContent({
             slideContent = addAminToLastSlide(slideContent, isLastSlide)
             setContentType('song')
             setContentData({ mainText: slideContent })
+            setContentKey(`song|${temp.data.songId}|${temp.data.currentSlideIndex}`)
 
             // Show next slide preview if enabled
             if (includeNextSlide) {
@@ -490,6 +496,7 @@ export function usePresentationContent({
               if (isCancelled) return
               setContentType('song')
               setContentData({ mainText: slideContent })
+              setContentKey(`song|${item.songId}|${slideIndex}`)
 
               // Show next slide preview if enabled
               if (includeNextSlide) {
@@ -585,12 +592,14 @@ export function usePresentationContent({
         // No content, show empty
         if (isCancelled) return
         setContentData({})
+        setContentKey('')
         setContentType('empty')
         setNextSlideData(undefined)
       } catch (error) {
         logger.debug(`Error fetching content: ${error}`)
         if (isCancelled) return
         setContentData({})
+        setContentKey('')
         setContentType('empty')
         setNextSlideData(undefined)
       }
@@ -633,6 +642,7 @@ export function usePresentationContent({
   return {
     contentType,
     contentData,
+    contentKey,
     isVisible,
     isExitAnimating,
     nextSlideData,
