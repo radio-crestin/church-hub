@@ -145,6 +145,7 @@ function SongPreviewPage() {
   const [isLargeScreen, setIsLargeScreen] = useState(false)
   const [selectedSlideIndex, setSelectedSlideIndex] = useState(0)
   const [isEditMode, setIsEditMode] = useState(false)
+  const pendingExit = useRef(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
   const keyLineDialogRef = useRef<KeyLineEditDialogHandle>(null)
@@ -282,9 +283,28 @@ function SongPreviewPage() {
     [reorderSlides, numericId],
   )
 
+  const isMutating = upsertSlide.isPending || deleteSlide.isPending || reorderSlides.isPending || upsertSong.isPending
+
   const handleToggleEditMode = useCallback(() => {
+    pendingExit.current = false
     setIsEditMode((prev) => !prev)
   }, [])
+
+  const handleSave = useCallback(() => {
+    if (isMutating) {
+      pendingExit.current = true
+    } else {
+      setIsEditMode(false)
+    }
+  }, [isMutating])
+
+  // Exit edit mode after pending saves complete
+  useEffect(() => {
+    if (pendingExit.current && !isMutating) {
+      pendingExit.current = false
+      setIsEditMode(false)
+    }
+  }, [isMutating])
 
   // Convert SongSlide[] to LocalSlide[] for the text modal
   const editAsTextSlides = useMemo(() => {
@@ -587,8 +607,9 @@ function SongPreviewPage() {
             isLoading={isLoading}
             isEditMode={isEditMode}
             onToggleEditMode={handleToggleEditMode}
+            onSave={handleSave}
             onSlideClick={handleSlideClick}
-            isSaving={upsertSlide.isPending || deleteSlide.isPending || reorderSlides.isPending || upsertSong.isPending}
+            isSaving={isMutating}
             onSlideEdit={handleSlideEdit}
             onSlideDelete={handleSlideDelete}
             onSlideAdd={handleSlideAdd}

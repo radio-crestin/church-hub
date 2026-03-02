@@ -46,6 +46,7 @@ interface SongSlidesPanelProps {
   isSaving?: boolean
   isEditMode: boolean
   onToggleEditMode: () => void
+  onSave?: () => void
   onSlideClick: (slide: SongSlide, index: number) => void
   onSlideEdit?: (slideId: number, content: string) => Promise<void>
   onSlideDelete?: (slideId: number) => Promise<void>
@@ -200,6 +201,7 @@ export function SongSlidesPanel({
   isSaving,
   isEditMode,
   onToggleEditMode,
+  onSave,
   onSlideClick,
   onSlideEdit,
   onSlideDelete,
@@ -371,7 +373,7 @@ export function SongSlidesPanel({
             </button>
             <button
               type="button"
-              onClick={onToggleEditMode}
+              onClick={onSave}
               disabled={isSaving}
               className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-lg border transition-colors bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border-green-300 dark:border-green-600 hover:bg-green-200 dark:hover:bg-green-900/60 disabled:opacity-50"
             >
