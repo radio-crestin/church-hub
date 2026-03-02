@@ -993,7 +993,7 @@ function BiblePage() {
 
   return (
     <PagePermissionGuard permission="bible.view">
-      <div className="flex flex-col h-full lg:overflow-hidden overflow-auto scrollbar-thin">
+      <div className="flex flex-col h-full lg:overflow-hidden lg:h-[calc(100vh-3rem)] overflow-auto scrollbar-thin">
         <div className="flex items-center justify-between mb-3 lg:mb-4 flex-shrink-0">
           <div className="flex items-center gap-3">
             <Book className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
@@ -1022,13 +1022,14 @@ function BiblePage() {
           >
             {/* Left Panel - Navigation (shows last on mobile) */}
             <div
-              className="order-2 lg:order-1 lg:min-h-0 lg:h-full lg:flex-initial overflow-hidden"
+              className="order-2 lg:order-1 lg:min-h-0 lg:flex-initial overflow-hidden lg:relative lg:self-stretch"
               style={
                 isLargeScreen
                   ? { width: `calc(${dividerPosition}% - 8px)` }
                   : undefined
               }
             >
+              <div className="lg:absolute lg:inset-0">
               <BibleNavigationPanel
                 navigation={navigation}
                 onSelectVerse={handleSelectVerse}
@@ -1068,6 +1069,7 @@ function BiblePage() {
                   })
                 }}
               />
+              </div>
             </div>
 
             {/* Draggable Divider */}
