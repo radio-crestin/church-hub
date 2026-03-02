@@ -464,7 +464,7 @@ function SongPreviewPage() {
   const canNavigateNext = presentedSlideIndex !== null
 
   return (
-    <div className="flex flex-col h-full lg:overflow-hidden overflow-auto scrollbar-thin">
+    <div className="flex flex-col h-full lg:overflow-hidden lg:h-[calc(100vh-3rem)] overflow-auto scrollbar-thin">
       {/* Header - Back button, title, and action buttons */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-3 lg:mb-4 flex-shrink-0">
         <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-3 lg:gap-4 min-w-0 flex-1">
@@ -586,13 +586,14 @@ function SongPreviewPage() {
       >
         {/* Left Panel - Slides List (shows last on mobile) */}
         <div
-          className="order-2 lg:order-1 lg:min-h-0 lg:h-full lg:flex-initial overflow-hidden bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 lg:p-4"
+          className="order-2 lg:order-1 lg:min-h-0 lg:self-stretch lg:flex-initial overflow-hidden bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 lg:relative"
           style={
             isLargeScreen
               ? { width: `calc(${dividerPosition}% - 8px)` }
               : undefined
           }
         >
+          <div className="p-3 lg:p-4 lg:absolute lg:inset-0">
           <SongSlidesPanel
             song={song}
             presentedSlideIndex={presentedSlideIndex}
@@ -605,6 +606,7 @@ function SongPreviewPage() {
             onSlideAdd={handleSlideAdd}
             onSlideReorder={handleSlideReorder}
           />
+          </div>
         </div>
 
         {/* Draggable Divider */}
