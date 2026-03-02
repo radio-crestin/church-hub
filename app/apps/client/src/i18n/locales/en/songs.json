@@ -150,7 +150,16 @@
     "edit": "Edit",
     "slides": "Slides",
     "noSlides": "No slides",
-    "slideNumber": "Slide {{number}}"
+    "slideNumber": "Slide {{number}}",
+    "editMode": "Edit Mode",
+    "exitEditMode": "Done Editing",
+    "addSlide": "Add Slide",
+    "deleteSlide": "Delete",
+    "moveUp": "Move Up",
+    "moveDown": "Move Down",
+    "chorusRepeat": "Auto-inserted chorus",
+    "editPreview": "Edit current slide",
+    "slideAdded": "Slide added"
   },
   "metadata": {
     "detailsSection": "Details",

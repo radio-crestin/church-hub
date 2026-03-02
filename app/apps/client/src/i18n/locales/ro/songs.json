@@ -150,7 +150,16 @@
     "edit": "Editează",
     "slides": "Slide-uri",
     "noSlides": "Fără slide-uri",
-    "slideNumber": "Slide {{number}}"
+    "slideNumber": "Slide {{number}}",
+    "editMode": "Mod editare",
+    "exitEditMode": "Gata",
+    "addSlide": "Adaugă slide",
+    "deleteSlide": "Șterge",
+    "moveUp": "Mută sus",
+    "moveDown": "Mută jos",
+    "chorusRepeat": "Refren inserat automat",
+    "editPreview": "Editează slide-ul curent",
+    "slideAdded": "Slide adăugat"
   },
   "metadata": {
     "detailsSection": "Detalii",
