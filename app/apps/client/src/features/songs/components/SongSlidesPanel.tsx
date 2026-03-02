@@ -16,6 +16,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
+  Check,
   FileText,
   GripVertical,
   Loader2,
@@ -340,45 +341,27 @@ export function SongSlidesPanel({
               <span>{t('preview.editMode')}</span>
             </button>
           ) : (
-            <>
-              {onEditAsText && (
-                <button
-                  type="button"
-                  onClick={onEditAsText}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm text-gray-700 dark:text-gray-300 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                >
-                  <FileText size={14} />
-                  <span className="hidden sm:inline">
-                    {t('preview.editAsText')}
-                  </span>
-                </button>
-              )}
-              {onSlideAdd && (
-                <button
-                  type="button"
-                  onClick={handleAddSlide}
-                  disabled={isAdding}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-lg border transition-colors bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-600 hover:bg-amber-200 dark:hover:bg-amber-900/60 disabled:opacity-50"
-                >
-                  {isAdding ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <Plus size={14} />
-                  )}
-                  <span className="hidden sm:inline">
-                    {t('preview.addSlide')}
-                  </span>
-                </button>
-              )}
-            </>
+            onEditAsText && (
+              <button
+                type="button"
+                onClick={onEditAsText}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm text-gray-700 dark:text-gray-300 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                <FileText size={14} />
+                <span className="hidden sm:inline">
+                  {t('preview.editAsText')}
+                </span>
+              </button>
+            )
           )}
         </div>
         {isEditMode && (
           <button
             type="button"
             onClick={onToggleEditMode}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-lg border transition-colors bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-600 hover:bg-indigo-200 dark:hover:bg-indigo-900/60"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-lg border transition-colors bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border-green-300 dark:border-green-600 hover:bg-green-200 dark:hover:bg-green-900/60"
           >
+            <Check size={14} />
             <span>{t('preview.exitEditMode')}</span>
           </button>
         )}
@@ -412,6 +395,21 @@ export function SongSlidesPanel({
                     }
                   />
                 ))}
+                {onSlideAdd && (
+                  <button
+                    type="button"
+                    onClick={handleAddSlide}
+                    disabled={isAdding}
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg border-2 border-dashed transition-colors border-green-300 dark:border-green-700 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 hover:border-green-400 dark:hover:border-green-600 disabled:opacity-50"
+                  >
+                    {isAdding ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <Plus size={14} />
+                    )}
+                    {t('preview.addSlide')}
+                  </button>
+                )}
               </div>
             </SortableContext>
           </DndContext>

@@ -77,29 +77,25 @@ function markdownToSlides(text: string): LocalSlide[] {
     .map((s) => s.trim())
     .filter((s) => s.length > 0) // Skip empty slides
 
-  return slideTexts
-    .map((slideText, idx) => {
-      // Each line within the slide becomes a <p>
-      const lines = slideText
-        .split('\n')
-        .filter((line) => line.trim().length > 0)
+  const result: LocalSlide[] = []
+  for (const slideText of slideTexts) {
+    const lines = slideText
+      .split('\n')
+      .filter((line) => line.trim().length > 0)
 
-      // Skip if no content after filtering empty lines
-      if (lines.length === 0) {
-        return null
-      }
+    if (lines.length === 0) continue
 
-      const htmlContent = lines
-        .map((line) => `<p>${markdownToHtml(line)}</p>`)
-        .join('')
+    const htmlContent = lines
+      .map((line) => `<p>${markdownToHtml(line)}</p>`)
+      .join('')
 
-      return {
-        id: `temp-${Date.now()}-${idx}`,
-        content: htmlContent || '<p></p>',
-        sortOrder: idx,
-      }
+    result.push({
+      id: `temp-${Date.now()}-${result.length}`,
+      content: htmlContent || '<p></p>',
+      sortOrder: result.length,
     })
-    .filter((slide): slide is LocalSlide => slide !== null)
+  }
+  return result
 }
 
 export function EditSlidesAsTextModal({
