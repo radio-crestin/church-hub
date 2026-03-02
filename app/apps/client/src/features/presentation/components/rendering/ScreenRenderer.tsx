@@ -73,6 +73,7 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
   const {
     contentType,
     contentData,
+    contentKey,
     isVisible: hookIsVisible,
     isExitAnimating,
     nextSlideData,
@@ -623,6 +624,7 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
                   screen={screen}
                   contentType={contentType}
                   contentData={contentData}
+                  contentKey={contentKey}
                   containerWidth={containerSize.width}
                   containerHeight={containerSize.height}
                   isVisible={isVisible}

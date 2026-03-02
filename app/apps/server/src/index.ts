@@ -212,6 +212,7 @@ import {
   deleteSong,
   deleteSongSlide,
   deleteSongsByIds,
+  getSongSlideById,
   deleteUncategorizedSongs,
   getAllCategories,
   getAllSongs,
@@ -3929,6 +3930,15 @@ async function main() {
           // Update search index for the song
           updateSearchIndex(body.songId)
 
+          // Broadcast song update so LivePreview syncs in real-time
+          broadcastSongUpdated(body.songId)
+
+          // Refresh presented song slides if this song is currently being presented
+          const refreshedState = refreshPresentedSongSlides(body.songId)
+          if (refreshedState) {
+            broadcastPresentationState(refreshedState)
+          }
+
           return handleCors(
             req,
             new Response(JSON.stringify({ data: slide }), {
@@ -3956,6 +3966,9 @@ async function main() {
         if (permError) return permError
 
         const id = parseInt(deleteSongSlideMatch[1], 10)
+
+        // Get the slide's songId before deleting for broadcast
+        const slideToDelete = getSongSlideById(id)
         const result = deleteSongSlide(id)
 
         if (!result.success) {
@@ -3966,6 +3979,15 @@ async function main() {
               headers: { 'Content-Type': 'application/json' },
             }),
           )
+        }
+
+        // Broadcast song update so LivePreview syncs in real-time
+        if (slideToDelete) {
+          broadcastSongUpdated(slideToDelete.songId)
+          const refreshedState = refreshPresentedSongSlides(slideToDelete.songId)
+          if (refreshedState) {
+            broadcastPresentationState(refreshedState)
+          }
         }
 
         return handleCors(
@@ -4044,6 +4066,13 @@ async function main() {
                 headers: { 'Content-Type': 'application/json' },
               }),
             )
+          }
+
+          // Broadcast song update so LivePreview syncs in real-time
+          broadcastSongUpdated(songId)
+          const refreshedState = refreshPresentedSongSlides(songId)
+          if (refreshedState) {
+            broadcastPresentationState(refreshedState)
           }
 
           return handleCors(

@@ -28,6 +28,8 @@ interface ScreenContentProps {
   isVisible?: boolean
   nextSlideData?: NextSlideData
   styleRanges?: TextStyleRange[]
+  /** Identity-based key that changes only on slide navigation, not content edits */
+  contentKey?: string
 }
 
 export function ScreenContent({
@@ -39,6 +41,7 @@ export function ScreenContent({
   isVisible = true,
   nextSlideData,
   styleRanges,
+  contentKey: externalContentKey,
 }: ScreenContentProps) {
   const currentConfig = screen.contentConfigs[contentType]
 
@@ -56,9 +59,11 @@ export function ScreenContent({
   // Use cached config when not visible (for exit animation), otherwise use current
   const config = isVisible ? currentConfig : cachedConfigRef.current.config
 
-  // Generate a content key that changes when the actual content changes
-  // Include start, end, and length to detect changes anywhere in the text
+  // Generate a content key that changes when navigating to a different slide.
+  // When an external identity-based key is provided (e.g. song|id|slideIndex),
+  // use it so that editing the same slide's text doesn't trigger animations.
   const contentKey = useMemo(() => {
+    if (externalContentKey) return externalContentKey
     if (!contentData) return 'empty'
     const parts: string[] = [contentType]
     if (contentData.mainText) {
@@ -72,7 +77,7 @@ export function ScreenContent({
     if (contentData.referenceText) parts.push(contentData.referenceText)
     if (contentData.personLabel) parts.push(contentData.personLabel)
     return parts.join('|')
-  }, [contentType, contentData])
+  }, [externalContentKey, contentType, contentData])
 
   // Screen dimensions
   const canvasWidth = screen.width

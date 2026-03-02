@@ -9,6 +9,7 @@ interface ScreenPreviewProps {
   screen: ScreenWithConfigs
   contentType: ContentType
   contentData: ContentData
+  contentKey?: string
   isVisible?: boolean
   styleRanges?: TextStyleRange[]
 }
@@ -17,6 +18,7 @@ export function ScreenPreview({
   screen,
   contentType,
   contentData,
+  contentKey,
   isVisible = true,
   styleRanges,
 }: ScreenPreviewProps) {
@@ -57,6 +59,7 @@ export function ScreenPreview({
         screen={screen}
         contentType={contentType}
         contentData={contentData}
+        contentKey={contentKey}
         containerWidth={displaySize.width}
         containerHeight={displaySize.height}
         isVisible={isVisible}
