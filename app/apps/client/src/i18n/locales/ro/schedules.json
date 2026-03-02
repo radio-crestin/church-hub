@@ -44,6 +44,7 @@
     "deleted": "Programul a fost sters cu succes",
     "titleRequired": "Titlul este obligatoriu",
     "itemAdded": "Element adaugat la program",
+    "itemAddedToSchedule": "Adaugat in \"{{title}}\"",
     "itemRemoved": "Element eliminat din program",
     "importedToQueue": "Programul a fost importat in coada",
     "savedToFile": "Programul a fost salvat in fisier",
@@ -129,7 +130,8 @@
     "scheduleName": "Numele programului",
     "create": "Creeaza",
     "cancel": "Anuleaza",
-    "createNew": "Creeaza program nou"
+    "createNew": "Creeaza program nou",
+    "goToSchedule": "Editeaza"
   },
   "export": {
     "formatTitle": "Format de Export",

@@ -1,17 +1,33 @@
 import { Loader2, Plus, X } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useToast } from '~/ui/toast'
 import { CreateScheduleModal } from './CreateScheduleModal'
 import { ScheduleList } from './ScheduleList'
-import { useAddItemToSchedule } from '../hooks'
+import { useAddItemToSchedule, useSchedules } from '../hooks'
 
 interface AddSongToScheduleModalProps {
   isOpen: boolean
   songId: number
   onClose: () => void
   onAdded?: (scheduleId: number) => void
+}
+
+function getTodaySchedule(
+  schedules: { id: number; title: string; createdAt: number }[],
+) {
+  const now = new Date()
+  const todayStart = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+  ).getTime()
+  const todayEnd = todayStart + 24 * 60 * 60 * 1000
+
+  return schedules.find(
+    (s) => s.createdAt >= todayStart && s.createdAt < todayEnd,
+  )
 }
 
 export function AddSongToScheduleModal({
@@ -24,15 +40,65 @@ export function AddSongToScheduleModal({
   const { showToast } = useToast()
   const dialogRef = useRef<HTMLDialogElement>(null)
   const addToSchedule = useAddItemToSchedule()
+  const { data: schedules = [] } = useSchedules()
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showFullList, setShowFullList] = useState(false)
+  const autoAddAttemptedRef = useRef(false)
 
+  // Reset state when modal opens/closes
   useEffect(() => {
     if (isOpen) {
-      dialogRef.current?.showModal()
-    } else {
-      dialogRef.current?.close()
+      autoAddAttemptedRef.current = false
+      setShowFullList(false)
     }
   }, [isOpen])
+
+  // Smart add: if there's a today schedule, add directly without showing the modal
+  const handleSmartAdd = useCallback(async () => {
+    if (autoAddAttemptedRef.current) return
+    autoAddAttemptedRef.current = true
+
+    const todaySchedule = getTodaySchedule(schedules)
+
+    if (todaySchedule) {
+      // Add directly to today's schedule
+      const result = await addToSchedule.mutateAsync({
+        scheduleId: todaySchedule.id,
+        input: { songId },
+      })
+
+      if (result.success) {
+        showToast(
+          t('messages.itemAddedToSchedule', { title: todaySchedule.title }),
+          'success',
+          {
+            duration: 5000,
+            action: {
+              label: t('modal.goToSchedule'),
+              onClick: () => onAdded?.(todaySchedule.id),
+            },
+          },
+        )
+        onClose()
+      } else {
+        showToast(t('messages.error'), 'error')
+        // Fall back to showing full list
+        setShowFullList(true)
+        dialogRef.current?.showModal()
+      }
+    } else {
+      // No today schedule - show full dialog
+      setShowFullList(true)
+      dialogRef.current?.showModal()
+    }
+  }, [schedules, songId, addToSchedule, showToast, t, onClose, onAdded])
+
+  // Trigger smart add when modal opens with schedules loaded
+  useEffect(() => {
+    if (isOpen && schedules.length >= 0 && !autoAddAttemptedRef.current) {
+      handleSmartAdd()
+    }
+  }, [isOpen, schedules, handleSmartAdd])
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -65,7 +131,6 @@ export function AddSongToScheduleModal({
   }
 
   const handleScheduleCreated = () => {
-    // Just close the create modal - user will select the schedule manually
     setShowCreateModal(false)
   }
 
@@ -73,6 +138,11 @@ export function AddSongToScheduleModal({
     if (!addToSchedule.isPending) {
       onClose()
     }
+  }
+
+  // If smart add handled it (no dialog needed), render nothing
+  if (isOpen && !showFullList && !addToSchedule.isPending) {
+    return null
   }
 
   return (

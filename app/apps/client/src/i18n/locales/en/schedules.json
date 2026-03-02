@@ -44,6 +44,7 @@
     "deleted": "Schedule deleted successfully",
     "titleRequired": "Title is required",
     "itemAdded": "Item added to schedule",
+    "itemAddedToSchedule": "Added to \"{{title}}\"",
     "itemRemoved": "Item removed from schedule",
     "importedToQueue": "Schedule imported to queue",
     "savedToFile": "Schedule saved to file",
@@ -129,7 +130,8 @@
     "scheduleName": "Schedule name",
     "create": "Create",
     "cancel": "Cancel",
-    "createNew": "Create new schedule"
+    "createNew": "Create new schedule",
+    "goToSchedule": "Edit"
   },
   "export": {
     "formatTitle": "Export Format",

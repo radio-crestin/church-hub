@@ -104,6 +104,8 @@
     "yesterday": "Yesterday",
     "export": "Export as schedule",
     "exportTitle": "Bible History",
-    "exportHelp": "Use [V] for Bible verses"
+    "exportHelp": "Use [V] for Bible verses",
+    "searchPlaceholder": "Search history...",
+    "noResults": "No matching verses found"
   }
 }

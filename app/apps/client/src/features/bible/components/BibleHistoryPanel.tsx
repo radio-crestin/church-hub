@@ -1,4 +1,4 @@
-import { Download, History, Trash2 } from 'lucide-react'
+import { Download, History, Search, Trash2, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -116,11 +116,24 @@ export function BibleHistoryPanel({ onSelectVerse }: BibleHistoryPanelProps) {
 
   const { data: historyItems = [], isLoading } = useBibleHistory()
   const clearHistoryMutation = useClearHistory()
+  const [searchQuery, setSearchQuery] = useState('')
+  const searchInputRef = useRef<HTMLInputElement>(null)
+
+  // Filter items by search query
+  const filteredItems = useMemo(() => {
+    if (!searchQuery.trim()) return historyItems
+    const q = searchQuery.toLowerCase()
+    return historyItems.filter(
+      (item) =>
+        item.reference.toLowerCase().includes(q) ||
+        item.text.toLowerCase().includes(q),
+    )
+  }, [historyItems, searchQuery])
 
   // Group and sort items (newest first)
   const groupedHistory = useMemo(
-    () => groupHistoryByDay(historyItems, t),
-    [historyItems, t],
+    () => groupHistoryByDay(filteredItems, t),
+    [filteredItems, t],
   )
 
   // Get visible items based on infinite scroll
@@ -147,7 +160,7 @@ export function BibleHistoryPanel({ onSelectVerse }: BibleHistoryPanelProps) {
     return result
   }, [groupedHistory, visibleCount])
 
-  const totalItems = historyItems.length
+  const totalItems = filteredItems.length
   const hasMore = visibleCount < totalItems
 
   // Scroll to top when new item is added
@@ -176,12 +189,10 @@ export function BibleHistoryPanel({ onSelectVerse }: BibleHistoryPanelProps) {
     return () => observer.disconnect()
   }, [hasMore, totalItems])
 
-  // Reset visible count when history changes significantly
+  // Reset visible count when history or search changes
   useEffect(() => {
-    if (historyItems.length === 0) {
-      setVisibleCount(ITEMS_PER_PAGE)
-    }
-  }, [historyItems.length])
+    setVisibleCount(ITEMS_PER_PAGE)
+  }, [filteredItems.length])
 
   const handleClear = useCallback(() => {
     clearHistoryMutation.mutate()
@@ -231,7 +242,8 @@ export function BibleHistoryPanel({ onSelectVerse }: BibleHistoryPanelProps) {
           </span>
           {historyItems.length > 0 && (
             <span className="text-xs text-gray-500 dark:text-gray-400">
-              ({historyItems.length})
+              ({searchQuery ? `${filteredItems.length}/` : ''}
+              {historyItems.length})
             </span>
           )}
         </div>
@@ -258,6 +270,32 @@ export function BibleHistoryPanel({ onSelectVerse }: BibleHistoryPanelProps) {
         )}
       </div>
 
+      {/* Search */}
+      {historyItems.length > 3 && (
+        <div className="px-3 py-1.5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t('history.searchPlaceholder')}
+              className="w-full pl-8 pr-7 py-1.5 text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-md text-gray-900 dark:text-white placeholder-gray-400 focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Content */}
       <div
         ref={scrollContainerRef}
@@ -270,6 +308,10 @@ export function BibleHistoryPanel({ onSelectVerse }: BibleHistoryPanelProps) {
         ) : historyItems.length === 0 ? (
           <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
             {t('history.empty')}
+          </div>
+        ) : filteredItems.length === 0 ? (
+          <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+            {t('history.noResults')}
           </div>
         ) : (
           <div className="p-2 flex flex-col gap-3">
