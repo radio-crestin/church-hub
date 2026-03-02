@@ -22,6 +22,15 @@ const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 // Use Tauri fetch on mobile (iOS WKWebView blocks HTTP fetch)
 const fetchFn = isTauri && isMobile() ? tauriFetch : window.fetch.bind(window)
 
+// Queue cache to avoid redundant fetches during slide navigation
+let queueCache: {
+  data: QueueItem[]
+  updatedAt: number
+  songUpdatedAt: number
+  fetchedAt: number
+} | null = null
+const QUEUE_CACHE_MAX_AGE = 5000 // 5 seconds
+
 // Get headers with auth token for mobile
 function getHeaders(): Record<string, string> {
   const headers: Record<string, string> = {
@@ -417,24 +426,44 @@ export function usePresentationContent({
         }
       }
 
-      // Fetch from queue if no temporary content
+      // Fetch from queue if no temporary content (with caching)
       try {
-        const queueResponse = await fetchFn(`${getApiUrl()}/api/queue`, {
-          cache: 'no-store',
-          headers: getHeaders(),
-          credentials: 'include',
-        })
+        const stateUpdatedAt = presentationState.updatedAt || 0
+        const now = Date.now()
+        const cacheValid =
+          queueCache &&
+          queueCache.updatedAt === stateUpdatedAt &&
+          queueCache.songUpdatedAt === songUpdateTimestamp &&
+          now - queueCache.fetchedAt < QUEUE_CACHE_MAX_AGE
 
-        if (!queueResponse.ok) {
-          if (isCancelled) return
-          setContentData({})
-          setContentType('empty')
-          setNextSlideData(undefined)
-          return
+        let queueItems: QueueItem[]
+
+        if (cacheValid) {
+          queueItems = queueCache.data
+        } else {
+          const queueResponse = await fetchFn(`${getApiUrl()}/api/queue`, {
+            cache: 'no-store',
+            headers: getHeaders(),
+            credentials: 'include',
+          })
+
+          if (!queueResponse.ok) {
+            if (isCancelled) return
+            setContentData({})
+            setContentType('empty')
+            setNextSlideData(undefined)
+            return
+          }
+
+          const queueResult = await queueResponse.json()
+          queueItems = queueResult.data || []
+          queueCache = {
+            data: queueItems,
+            updatedAt: stateUpdatedAt,
+            songUpdatedAt: songUpdateTimestamp,
+            fetchedAt: now,
+          }
         }
-
-        const queueResult = await queueResponse.json()
-        const queueItems: QueueItem[] = queueResult.data || []
 
         // Find current content - song slide
         if (presentationState.currentSongSlideId) {

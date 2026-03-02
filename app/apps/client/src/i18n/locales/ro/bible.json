@@ -104,6 +104,8 @@
     "yesterday": "Ieri",
     "export": "Exporta ca program",
     "exportTitle": "Istoric Versete Biblice",
-    "exportHelp": "Foloseste [V] pentru versete biblice"
+    "exportHelp": "Foloseste [V] pentru versete biblice",
+    "searchPlaceholder": "Cauta in istoric...",
+    "noResults": "Niciun verset gasit"
   }
 }
