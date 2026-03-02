@@ -23,6 +23,7 @@ import {
   Pencil,
   Plus,
   Trash2,
+  X,
 } from 'lucide-react'
 import {
   useCallback,
@@ -335,11 +336,11 @@ export function SongSlidesPanel({
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={!isEditMode ? onToggleEditMode : undefined}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-lg border transition-colors bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-600 ${
-              !isEditMode
-                ? 'hover:bg-amber-200 dark:hover:bg-amber-900/60 cursor-pointer'
-                : 'opacity-60 cursor-default'
+            onClick={onToggleEditMode}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-lg border transition-colors ${
+              isEditMode
+                ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-600 hover:bg-amber-200 dark:hover:bg-amber-900/60'
+                : 'text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20'
             }`}
           >
             <Pencil size={14} />
@@ -359,19 +360,29 @@ export function SongSlidesPanel({
           )}
         </div>
         {isEditMode && (
-          <button
-            type="button"
-            onClick={onToggleEditMode}
-            disabled={isSaving}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-lg border transition-colors bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border-green-300 dark:border-green-600 hover:bg-green-200 dark:hover:bg-green-900/60 disabled:opacity-50"
-          >
-            {isSaving ? (
-              <Loader2 size={14} className="animate-spin" />
-            ) : (
-              <Check size={14} />
-            )}
-            <span>{t('preview.exitEditMode')}</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onToggleEditMode}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-lg border transition-colors text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              <X size={14} />
+              <span>{t('preview.discardChanges')}</span>
+            </button>
+            <button
+              type="button"
+              onClick={onToggleEditMode}
+              disabled={isSaving}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-lg border transition-colors bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border-green-300 dark:border-green-600 hover:bg-green-200 dark:hover:bg-green-900/60 disabled:opacity-50"
+            >
+              {isSaving ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <Check size={14} />
+              )}
+              <span>{t('preview.exitEditMode')}</span>
+            </button>
+          </div>
         )}
       </div>
 
