@@ -49,6 +49,8 @@ import {
 } from '~/features/songs/components'
 import {
   useAddBookmark,
+  useDeleteSlide,
+  useReorderSlides,
   useRemoveBookmark,
   useResetPresentationCount,
   useSong,
@@ -125,6 +127,8 @@ function SongPreviewPage() {
   const { saveSong, isPending: isSaving } = useSaveSongToFile()
   const resetPresentationCount = useResetPresentationCount()
   const upsertSlide = useUpsertSlide()
+  const deleteSlide = useDeleteSlide()
+  const reorderSlides = useReorderSlides()
   const addBookmarkMutation = useAddBookmark()
   const removeBookmarkMutation = useRemoveBookmark()
   const { data: bookmarks = [] } = useSongBookmarks()
@@ -136,6 +140,7 @@ function SongPreviewPage() {
   const [showResetCountConfirm, setShowResetCountConfirm] = useState(false)
   const [isLargeScreen, setIsLargeScreen] = useState(false)
   const [selectedSlideIndex, setSelectedSlideIndex] = useState(0)
+  const [isEditMode, setIsEditMode] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
   const keyLineDialogRef = useRef<KeyLineEditDialogHandle>(null)
@@ -244,6 +249,79 @@ function SongPreviewPage() {
       })
     },
     [upsertSlide, numericId],
+  )
+
+  const handleSlideDelete = useCallback(
+    async (slideId: number) => {
+      await deleteSlide.mutateAsync({
+        slideId,
+        songId: numericId,
+      })
+    },
+    [deleteSlide, numericId],
+  )
+
+  const handleSlideAdd = useCallback(async () => {
+    await upsertSlide.mutateAsync({
+      songId: numericId,
+      content: '<p><br></p>',
+    })
+  }, [upsertSlide, numericId])
+
+  const handleSlideReorder = useCallback(
+    async (slideId: number, direction: 'up' | 'down') => {
+      if (!song) return
+      const sorted = [...song.slides].sort((a, b) => a.sortOrder - b.sortOrder)
+      const currentIndex = sorted.findIndex((s) => s.id === slideId)
+      if (currentIndex === -1) return
+
+      const targetIndex =
+        direction === 'up' ? currentIndex - 1 : currentIndex + 1
+      if (targetIndex < 0 || targetIndex >= sorted.length) return
+
+      // Swap IDs in the order array
+      const newOrder = sorted.map((s) => s.id)
+      ;[newOrder[currentIndex], newOrder[targetIndex]] = [
+        newOrder[targetIndex],
+        newOrder[currentIndex],
+      ]
+
+      await reorderSlides.mutateAsync({
+        songId: numericId,
+        slideIds: newOrder,
+      })
+    },
+    [song, reorderSlides, numericId],
+  )
+
+  const handleToggleEditMode = useCallback(() => {
+    setIsEditMode((prev) => !prev)
+  }, [])
+
+  // Get the current presented slide's content for preview editing
+  const currentPresentedSlideContent = useMemo(() => {
+    if (!song || presentedSlideIndex === null) return undefined
+    const expanded = expandSongSlidesWithChoruses(song.slides)
+    return expanded[presentedSlideIndex]?.content
+  }, [song, presentedSlideIndex])
+
+  // Get the current presented slide's ID for preview editing
+  const currentPresentedSlideId = useMemo(() => {
+    if (!song || presentedSlideIndex === null) return undefined
+    const expanded = expandSongSlidesWithChoruses(song.slides)
+    return expanded[presentedSlideIndex]?.id
+  }, [song, presentedSlideIndex])
+
+  const handleEditCurrentSlide = useCallback(
+    async (content: string) => {
+      if (!currentPresentedSlideId) return
+      await upsertSlide.mutateAsync({
+        id: currentPresentedSlideId,
+        songId: numericId,
+        content,
+      })
+    },
+    [currentPresentedSlideId, upsertSlide, numericId],
   )
 
   const isBookmarked = useMemo(
@@ -520,8 +598,12 @@ function SongPreviewPage() {
             presentedSlideIndex={presentedSlideIndex}
             selectedSlideIndex={selectedSlideIndex}
             isLoading={isLoading}
+            isEditMode={isEditMode}
             onSlideClick={handleSlideClick}
             onSlideEdit={handleSlideEdit}
+            onSlideDelete={handleSlideDelete}
+            onSlideAdd={handleSlideAdd}
+            onSlideReorder={handleSlideReorder}
           />
         </div>
 
@@ -551,6 +633,10 @@ function SongPreviewPage() {
             onNextSlide={handleNextSlide}
             canNavigatePrev={canNavigatePrev}
             canNavigateNext={canNavigateNext}
+            isEditMode={isEditMode}
+            onToggleEditMode={handleToggleEditMode}
+            currentSlideContent={currentPresentedSlideContent}
+            onEditCurrentSlide={handleEditCurrentSlide}
           />
         </div>
       </div>
