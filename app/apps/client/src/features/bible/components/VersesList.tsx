@@ -1,4 +1,4 @@
-import { ArrowLeft, Loader2, LocateFixed } from 'lucide-react'
+import { ArrowLeft, ChevronDown, ChevronUp, Loader2, LocateFixed } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -301,12 +301,28 @@ export function VersesList({
 
       <div
         ref={containerRef}
-        className="flex-1 min-h-0 overflow-y-auto px-0.5 py-0.5"
+        className="flex-1 min-h-0 overflow-y-auto lg:scrollbar-thin px-0.5 py-0.5"
       >
-        {/* Top sentinel for loading previous chapters */}
+        {/* Mobile: load previous button */}
+        {canLoadPrevious && (
+          <button
+            type="button"
+            onClick={onLoadPrevious}
+            disabled={isLoadingPrevious}
+            className="w-full flex items-center justify-center gap-2 py-2 mb-2 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors lg:hidden disabled:opacity-50"
+          >
+            {isLoadingPrevious ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <ChevronUp size={16} />
+            )}
+            {t('navigation.loadPrevious')}
+          </button>
+        )}
+        {/* Desktop: invisible sentinel for infinite scroll */}
         <div
           ref={topSentinelRef}
-          className="h-8 flex items-center justify-center"
+          className="hidden lg:flex h-8 items-center justify-center"
         >
           {isLoadingPrevious && (
             <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
@@ -440,15 +456,31 @@ export function VersesList({
           )
         })}
 
-        {/* Bottom sentinel for loading next chapters */}
+        {/* Desktop: invisible sentinel for infinite scroll */}
         <div
           ref={bottomSentinelRef}
-          className="h-8 flex items-center justify-center"
+          className="hidden lg:flex h-8 items-center justify-center"
         >
           {isLoadingNext && (
             <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
           )}
         </div>
+        {/* Mobile: load next button */}
+        {canLoadNext && (
+          <button
+            type="button"
+            onClick={onLoadNext}
+            disabled={isLoadingNext}
+            className="w-full flex items-center justify-center gap-2 py-2 mt-2 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors lg:hidden disabled:opacity-50"
+          >
+            {isLoadingNext ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <ChevronDown size={16} />
+            )}
+            {t('navigation.loadNext')}
+          </button>
+        )}
       </div>
     </div>
   )

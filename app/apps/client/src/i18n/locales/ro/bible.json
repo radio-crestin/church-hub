@@ -19,7 +19,9 @@
     "noBooks": "Nicio carte disponibila",
     "previousChapter": "Capitolul anterior",
     "nextChapter": "Capitolul urmator",
-    "scrollToVerse": "Deruleaza la versetul curent"
+    "scrollToVerse": "Deruleaza la versetul curent",
+    "loadPrevious": "Incarca versetele anterioare",
+    "loadNext": "Incarca mai multe versete"
   },
   "queue": {
     "title": "Lista versete",
