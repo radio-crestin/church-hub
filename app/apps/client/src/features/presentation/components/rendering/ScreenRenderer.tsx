@@ -1,6 +1,6 @@
 import { useNavigate } from '@tanstack/react-router'
 import { Maximize, Minimize } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { isMobile } from '~/config'
 import { createLogger } from '~/utils/logger'
@@ -9,11 +9,12 @@ import { ScreenShareReceiver } from './ScreenShareReceiver'
 import { getBackgroundCSS } from './utils'
 import { getNextVerse } from '../../../bible/service/bible'
 import { useKioskSettings } from '../../../kiosk'
+import { useOBSScenes } from '../../../livestream/hooks'
 import { useUpsertScreen, useWebSocket } from '../../hooks'
 import { usePresentationContent } from '../../hooks/usePresentationContent'
 import { useScreen } from '../../hooks/useScreen'
 import { useSlideHighlights } from '../../hooks/useSlideHighlights'
-import type { ScreenShareContentConfig } from '../../types'
+import type { ScreenShareContentConfig, ScreenWithConfigs } from '../../types'
 import { setWindowFullscreen } from '../../utils/fullscreen'
 import { isTauri } from '../../utils/openDisplayWindow'
 
@@ -30,10 +31,36 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
   const { debugInfo: wsDebugInfo, send: wsSend } = useWebSocket()
   const navigate = useNavigate()
 
-  const { data: screen, isLoading, isError } = useScreen(screenId)
+  const { data: screenData, isLoading, isError } = useScreen(screenId)
   const upsertScreen = useUpsertScreen()
   const { data: kioskSettings } = useKioskSettings()
   const { data: slideHighlights } = useSlideHighlights()
+  const { currentScene } = useOBSScenes()
+
+  // Apply scene-specific config overrides when an OBS scene is active
+  const screen: ScreenWithConfigs | undefined = useMemo(() => {
+    if (!screenData) return undefined
+    const sceneName = currentScene?.obsSceneName
+    if (!sceneName || !screenData.sceneOverrides?.[sceneName]) {
+      return screenData
+    }
+
+    const overrides = screenData.sceneOverrides[sceneName]
+    // Shallow clone and apply overrides (scene configs are full replacements)
+    const mergedConfigs = { ...screenData.contentConfigs } as Record<
+      string,
+      unknown
+    >
+    for (const [ct, overrideConfig] of Object.entries(overrides)) {
+      mergedConfigs[ct] = overrideConfig
+    }
+
+    return {
+      ...screenData,
+      contentConfigs:
+        mergedConfigs as unknown as ScreenWithConfigs['contentConfigs'],
+    }
+  }, [screenData, currentScene?.obsSceneName])
 
   // Memoize getNextVerse callback to prevent infinite re-renders
   // The dependency array is empty because getNextVerse is a stable import

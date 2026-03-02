@@ -1,13 +1,15 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { RotateCcw, Save, X, ZoomIn, ZoomOut } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { Monitor, RotateCcw, Save, X, ZoomIn, ZoomOut } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { Button } from '~/ui/button/Button'
 import { Combobox } from '~/ui/combobox/Combobox'
 import { useEditorState } from './hooks/useEditorState'
 import { ScreenEditorCanvas } from './ScreenEditorCanvas'
 import { ScreenEditorSidebar } from './ScreenEditorSidebar'
+import { useOBSScenes } from '../../../livestream/hooks'
 import { useWebSocket } from '../../hooks'
+import { useUpsertSceneOverride } from '../../hooks/useSceneOverrides'
 import { screenQueryKey } from '../../hooks/useScreen'
 import type {
   Constraints,
@@ -49,6 +51,22 @@ export function ScreenEditor({
   const [portalContainer, setPortalContainer] = useState<HTMLDivElement | null>(
     null,
   )
+  const { scenes } = useOBSScenes()
+  const upsertSceneOverrideMutation = useUpsertSceneOverride()
+
+  // Scene selector options
+  const sceneOptions = useMemo(() => {
+    const opts: { value: string; label: string }[] = [
+      { value: '__default__', label: 'Default (No Scene)' },
+    ]
+    for (const scene of scenes) {
+      opts.push({
+        value: scene.obsSceneName,
+        label: scene.displayName || scene.obsSceneName,
+      })
+    }
+    return opts
+  }, [scenes])
 
   // Initialize editor with screen data (only on mount)
   useEffect(() => {
@@ -95,7 +113,7 @@ export function ScreenEditor({
 
   // Emit config changes via WebSocket (debounced to avoid flooding)
   useEffect(() => {
-    if (!state.screen || !state.isDirty) return
+    if (!state.effectiveScreen || !state.isDirty) return
 
     const emitUpdate = () => {
       // Mark as local update to prevent echo back
@@ -103,8 +121,8 @@ export function ScreenEditor({
       send({
         type: 'screen_config_preview',
         payload: {
-          screenId: state.screen!.id,
-          config: state.screen,
+          screenId: state.effectiveScreen!.id,
+          config: state.effectiveScreen,
         },
       })
       lastEmitRef.current = Date.now()
@@ -119,7 +137,7 @@ export function ScreenEditor({
     }
 
     emitUpdate()
-  }, [state.screen, state.isDirty, send])
+  }, [state.effectiveScreen, state.isDirty, send])
 
   const handleZoomIn = useCallback(() => {
     actions.setZoom(Math.min(state.zoom + 0.25, 2))
@@ -139,6 +157,23 @@ export function ScreenEditor({
     saveVersionRef.current = Date.now()
     try {
       await onSave(state.screen)
+
+      // Save scene overrides
+      if (state.screen.sceneOverrides) {
+        for (const [sceneName, configs] of Object.entries(
+          state.screen.sceneOverrides,
+        )) {
+          for (const [contentType, config] of Object.entries(configs)) {
+            await upsertSceneOverrideMutation.mutateAsync({
+              screenId: state.screen.id,
+              obsSceneName: sceneName,
+              contentType: contentType as ContentType,
+              config: config as Record<string, unknown>,
+            })
+          }
+        }
+      }
+
       actions.markClean()
       // Update the last applied version to match the save version
       lastAppliedVersionRef.current = saveVersionRef.current
@@ -147,7 +182,7 @@ export function ScreenEditor({
         type: 'screen_config_preview',
         payload: {
           screenId: state.screen.id,
-          config: state.screen,
+          config: state.effectiveScreen,
         },
       })
     } catch {
@@ -155,30 +190,38 @@ export function ScreenEditor({
       saveVersionRef.current = lastAppliedVersionRef.current
       throw new Error('Save failed')
     }
-  }, [state.screen, onSave, actions, send])
+  }, [
+    state.screen,
+    state.effectiveScreen,
+    onSave,
+    actions,
+    send,
+    upsertSceneOverrideMutation,
+  ])
 
   const handleClose = useCallback(() => {
     // Emit final config before closing (in case there are unsaved preview changes)
-    if (state.screen) {
+    if (state.effectiveScreen) {
       send({
         type: 'screen_config_preview',
         payload: {
-          screenId: state.screen.id,
+          screenId: state.effectiveScreen.id,
           config: initialScreen, // Revert to original config on close without save
         },
       })
     }
     onClose()
-  }, [state.screen, initialScreen, send, onClose])
+  }, [state.effectiveScreen, initialScreen, send, onClose])
 
   const handleUpdateElement = useCallback(
     (
       elementType: string,
       updates: { constraints?: Constraints; size?: SizeWithUnits },
     ) => {
-      if (!state.screen) return
+      if (!state.effectiveScreen) return
 
-      const config = state.screen.contentConfigs[state.selectedContentType]
+      const config =
+        state.effectiveScreen.contentConfigs[state.selectedContentType]
       const newConfig = { ...config }
 
       // Update the specific element with constraints and size
@@ -211,19 +254,22 @@ export function ScreenEditor({
         }
       } else if (
         elementType === 'clock' &&
-        state.screen.globalSettings.clockConfig
+        state.effectiveScreen.globalSettings.clockConfig
       ) {
         // Clock uses global settings, not content config
         actions.updateGlobalSettings({
-          ...state.screen.globalSettings,
+          ...state.effectiveScreen.globalSettings,
           clockConfig: {
-            ...state.screen.globalSettings.clockConfig,
+            ...state.effectiveScreen.globalSettings.clockConfig,
             ...(updates.constraints && { constraints: updates.constraints }),
             ...(updates.size && { size: updates.size }),
           },
         })
         return
-      } else if (elementType === 'nextSlide' && state.screen.nextSlideConfig) {
+      } else if (
+        elementType === 'nextSlide' &&
+        state.effectiveScreen.nextSlideConfig
+      ) {
         // Pass only the changed fields - updateNextSlideConfig will merge with previous state
         actions.updateNextSlideConfig({
           ...(updates.constraints && { constraints: updates.constraints }),
@@ -237,10 +283,10 @@ export function ScreenEditor({
         newConfig as typeof config,
       )
     },
-    [state.screen, state.selectedContentType, actions],
+    [state.effectiveScreen, state.selectedContentType, actions],
   )
 
-  if (!state.screen) {
+  if (!state.effectiveScreen) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-gray-500 dark:text-gray-400">Loading...</div>
@@ -254,14 +300,33 @@ export function ScreenEditor({
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
         <div className="flex items-center gap-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            {state.screen.name}
+            {state.effectiveScreen.name}
           </h2>
           <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 capitalize">
-            {state.screen.type}
+            {state.effectiveScreen.type}
           </span>
         </div>
 
         <div className="flex items-center gap-4">
+          {/* Scene selector (only shown when OBS scenes exist) */}
+          {scenes.length > 0 && (
+            <div className="flex items-center gap-2">
+              <Monitor className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+              <Combobox
+                value={state.selectedScene ?? '__default__'}
+                onChange={(value) => {
+                  actions.setSelectedScene(
+                    value === '__default__' ? null : value,
+                  )
+                  actions.clearSelection()
+                }}
+                options={sceneOptions}
+                className="w-48"
+                portalContainer={portalContainer}
+              />
+            </div>
+          )}
+
           {/* Content type selector */}
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-500 dark:text-gray-400">
@@ -326,7 +391,7 @@ export function ScreenEditor({
       <div className="flex flex-1 overflow-hidden">
         {/* Canvas area */}
         <ScreenEditorCanvas
-          screen={state.screen}
+          screen={state.effectiveScreen}
           contentType={state.selectedContentType}
           selectedElement={state.selectedElement}
           zoom={state.zoom}
@@ -337,7 +402,7 @@ export function ScreenEditor({
 
         {/* Right sidebar */}
         <ScreenEditorSidebar
-          screen={state.screen}
+          screen={state.effectiveScreen}
           contentType={state.selectedContentType}
           selectedElement={state.selectedElement}
           previewTexts={state.previewTexts[state.selectedContentType]}

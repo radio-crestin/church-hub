@@ -129,6 +129,8 @@ import {
   clearSlide,
   clearSlideHighlights,
   clearTemporaryContent,
+  deleteAllSceneOverrides,
+  deleteSceneOverride,
   deleteScreen,
   getAllScreens,
   getContentConfig,
@@ -164,6 +166,7 @@ import {
   updateGlobalSettings,
   updateNextSlideConfig,
   updatePresentationState,
+  upsertSceneOverride,
   upsertScreen,
 } from './service/presentation'
 import {
@@ -2243,6 +2246,105 @@ async function main() {
             }),
           )
         }
+      }
+
+      // ============================================================
+      // Screen Scene Override API Endpoints
+      // ============================================================
+
+      // PUT /api/screens/:id/scene-overrides/:sceneName/:contentType - Upsert scene override
+      const sceneOverrideMatch = url.pathname.match(
+        /^\/api\/screens\/(\d+)\/scene-overrides\/([^/]+)\/([^/]+)$/,
+      )
+      if (req.method === 'PUT' && sceneOverrideMatch?.[1]) {
+        const permError = checkPermission('displays.edit')
+        if (permError) return permError
+
+        try {
+          const screenId = parseInt(sceneOverrideMatch[1], 10)
+          const obsSceneName = decodeURIComponent(sceneOverrideMatch[2])
+          const contentType = sceneOverrideMatch[3] as ContentType
+          const body = (await req.json()) as { config: Record<string, unknown> }
+
+          const result = upsertSceneOverride(
+            screenId,
+            obsSceneName,
+            contentType,
+            body.config,
+          )
+
+          if (!result.success) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: result.error }), {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          broadcastScreenConfigUpdated(screenId)
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ success: true }), {
+              status: 200,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // DELETE /api/screens/:id/scene-overrides/:sceneName/:contentType - Delete specific override
+      if (req.method === 'DELETE' && sceneOverrideMatch?.[1]) {
+        const permError = checkPermission('displays.edit')
+        if (permError) return permError
+
+        const screenId = parseInt(sceneOverrideMatch[1], 10)
+        const obsSceneName = decodeURIComponent(sceneOverrideMatch[2]!)
+        const contentType = sceneOverrideMatch[3] as ContentType
+
+        const result = deleteSceneOverride(screenId, obsSceneName, contentType)
+
+        broadcastScreenConfigUpdated(screenId)
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ success: result.success }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // DELETE /api/screens/:id/scene-overrides - Clear all overrides for a screen
+      const clearSceneOverridesMatch = url.pathname.match(
+        /^\/api\/screens\/(\d+)\/scene-overrides$/,
+      )
+      if (req.method === 'DELETE' && clearSceneOverridesMatch?.[1]) {
+        const permError = checkPermission('displays.edit')
+        if (permError) return permError
+
+        const screenId = parseInt(clearSceneOverridesMatch[1], 10)
+        const result = deleteAllSceneOverrides(screenId)
+
+        broadcastScreenConfigUpdated(screenId)
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ success: result.success }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
       }
 
       // ============================================================
