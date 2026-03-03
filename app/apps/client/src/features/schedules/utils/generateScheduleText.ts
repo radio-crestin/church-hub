@@ -83,9 +83,11 @@ export function generateScheduleText(
     const referenceLines = generateReferenceSection(items)
     if (referenceLines.length > 0) {
       lines.push('')
-      lines.push('---')
+      lines.push('--- Schedule Content ---')
       lines.push('')
       lines.push(...referenceLines)
+      lines.push('')
+      lines.push('--- End Schedule Content ---')
     }
   }
 
@@ -100,44 +102,43 @@ function generateReferenceSection(items: ScheduleItem[]): string[] {
 
   for (const item of items) {
     if (item.itemType === 'song' && item.song) {
-      lines.push(`# ${item.song.title}`)
+      lines.push(item.song.title)
       const expandedSlides = expandSongSlidesWithChoruses(item.slides)
       for (const slide of expandedSlides) {
         const text = stripHtml(slide.content)
         if (text) {
           const label = slide.label ? ` (${slide.label})` : ''
-          lines.push(`#   ${text.replace(/\n/g, ' / ')}${label}`)
+          lines.push(`  ${text.replace(/\n/g, ' / ')}${label}`)
         }
       }
-      lines.push('#')
+      lines.push('')
     } else if (item.itemType === 'bible_passage') {
       if (item.biblePassageReference) {
-        lines.push(`# ${item.biblePassageReference}`)
+        lines.push(item.biblePassageReference)
       }
       for (const verse of item.biblePassageVerses) {
-        lines.push(`#   ${verse.reference}: ${verse.text}`)
+        lines.push(`  ${verse.reference}: ${verse.text}`)
       }
-      lines.push('#')
+      lines.push('')
     } else if (
       item.itemType === 'slide' &&
       item.slideType === 'versete_tineri'
     ) {
-      lines.push('# Versete Tineri')
       for (const entry of item.verseteTineriEntries) {
-        lines.push(`#   ${entry.personName} - ${entry.reference}`)
+        lines.push(`${entry.personName} - ${entry.reference}`)
         if (entry.text) {
-          lines.push(`#     ${entry.text}`)
+          lines.push(`  ${entry.text}`)
         }
       }
-      lines.push('#')
+      lines.push('')
     } else if (
       item.itemType === 'slide' &&
       item.slideType === 'announcement'
     ) {
       const plainText = stripHtml(item.slideContent || '')
       if (plainText) {
-        lines.push(`# ${plainText}`)
-        lines.push('#')
+        lines.push(plainText)
+        lines.push('')
       }
     }
   }
