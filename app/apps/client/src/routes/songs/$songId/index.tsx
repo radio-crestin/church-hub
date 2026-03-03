@@ -208,11 +208,10 @@ function SongPreviewPage() {
   )
 
   const handleGoBack = useCallback(() => {
-    // Keep last visited state so it persists across tab switches
-    // The fromSong flag prevents auto-navigation loop when going back to the list
+    // Clear last visited so returning from another page shows the list
+    // (not the song we just navigated away from)
+    clearSectionLastVisited('songs')
 
-    // Always use programmatic navigation with fromSong flag
-    // This prevents auto-navigation from redirecting user back to the same song
     navigate({
       to: '/songs/',
       search: {

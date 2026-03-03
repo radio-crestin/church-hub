@@ -70,6 +70,59 @@ test.describe('Songs Feature', () => {
     await expect(page.locator('body')).toBeVisible()
   })
 
+  test('shows song list (not last opened song) when returning from another page after going back', async ({
+    page,
+  }) => {
+    // Clear any stale lastVisited state and go to songs
+    await page.goto('/songs')
+    await page.waitForLoadState('networkidle')
+    await page.evaluate(() =>
+      localStorage.removeItem('church-hub-last-visited'),
+    )
+    await page.goto('/songs')
+    await page.waitForLoadState('networkidle')
+
+    // Wait for song list to render (search input is visible on the list page)
+    const searchInput = page.getByPlaceholder(/caută|search/i).first()
+    await expect(searchInput).toBeVisible({ timeout: 10000 })
+
+    // Click the first song card (button with h3 title inside)
+    const firstSong = page.locator('button:has(h3)').first()
+    if (!(await firstSong.isVisible({ timeout: 5000 }).catch(() => false))) {
+      test.skip(true, 'No songs available to test')
+      return
+    }
+    await firstSong.click()
+
+    // Verify we navigated to a song detail page (/songs/<id>)
+    await expect(page).toHaveURL(/\/songs\/\d+/, { timeout: 5000 })
+
+    // Go back to the song list via the back button (ArrowLeft icon)
+    const backButton = page.locator('button:has(svg.lucide-arrow-left)').first()
+    await expect(backButton).toBeVisible({ timeout: 3000 })
+    await backButton.click()
+
+    // Verify we're back on the song list
+    await expect(page).toHaveURL(/\/songs\/?(\?.*)?$/, { timeout: 5000 })
+    await expect(searchInput).toBeVisible({ timeout: 5000 })
+
+    // Navigate to a different page
+    await page.goto('/schedules')
+    await page.waitForLoadState('networkidle')
+    await expect(page).toHaveURL(/\/schedules/)
+
+    // Navigate back to songs
+    await page.goto('/songs')
+    await page.waitForLoadState('networkidle')
+
+    // Wait for any auto-navigation effect to settle
+    await page.waitForTimeout(1500)
+
+    // Should still show the song list, NOT redirect to the song detail page
+    await expect(page).toHaveURL(/\/songs\/?(\?.*)?$/)
+    await expect(searchInput).toBeVisible()
+  })
+
   test('slide edit syncs to preview in real-time', async ({ page }) => {
     await page.goto('/songs')
     await page.waitForLoadState('networkidle')
@@ -128,9 +181,7 @@ test.describe('Songs Feature', () => {
     await page.waitForTimeout(2000) // Wait for save + WebSocket sync
 
     // Exit edit mode to see updated slides
-    const doneButton = page
-      .getByRole('button', { name: /gata|done/i })
-      .first()
+    const doneButton = page.getByRole('button', { name: /gata|done/i }).first()
     if (await doneButton.isVisible({ timeout: 2000 }).catch(() => false)) {
       await doneButton.click()
       await page.waitForTimeout(500)
@@ -146,9 +197,7 @@ test.describe('Songs Feature', () => {
     const editAgainButton = page
       .getByRole('button', { name: /editare|edit mode/i })
       .first()
-    if (
-      await editAgainButton.isVisible({ timeout: 2000 }).catch(() => false)
-    ) {
+    if (await editAgainButton.isVisible({ timeout: 2000 }).catch(() => false)) {
       await editAgainButton.click()
       await page.waitForTimeout(500)
       const restoreTextarea = page.locator('textarea').first()
