@@ -1,4 +1,5 @@
 import { basename } from 'node:path'
+import { eq } from 'drizzle-orm'
 
 import { syncFolder } from './syncFolder'
 import type { AddFolderInput, MusicFolder } from './types'
@@ -49,7 +50,7 @@ export async function addFolder(
     const updatedRow = db
       .select()
       .from(musicFolders)
-      .where((t) => t.id.equals(folder.id))
+      .where(eq(musicFolders.id, folder.id))
       .get()
 
     if (updatedRow) {
