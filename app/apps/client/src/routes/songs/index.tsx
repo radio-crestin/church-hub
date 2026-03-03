@@ -1,12 +1,16 @@
 import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router'
-import { Plus, Settings } from 'lucide-react'
+import { GripVertical, Plus, Settings } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useFocusSearchEvent } from '~/features/keyboard-shortcuts/utils'
 import { getSongsLastVisited } from '~/features/navigation'
 import { usePresentationState } from '~/features/presentation'
-import { SongList, SongsSettingsModal } from '~/features/songs/components'
+import {
+  SongBookmarksPanel,
+  SongList,
+  SongsSettingsModal,
+} from '~/features/songs/components'
 import { useSearchHistoryById } from '~/features/songs/hooks'
 import { openSongWindow } from '~/features/songs/utils/openSongWindow'
 import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
@@ -62,6 +66,13 @@ function SongsPage() {
   })
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
   const [focusTrigger, setFocusTrigger] = useState(0)
+  const [dividerPosition, setDividerPosition] = useState(() => {
+    const stored = localStorage.getItem('songs-bookmarks-divider')
+    return stored ? Number(stored) : 75
+  })
+  const [isLargeScreen, setIsLargeScreen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const isDragging = useRef(false)
 
   // Build URL path for search history storage
   const urlPath = useMemo(() => {
@@ -186,6 +197,52 @@ function SongsPage() {
     })
   }
 
+  // Track screen size for responsive layout
+  useEffect(() => {
+    const checkScreenSize = () => setIsLargeScreen(window.innerWidth >= 1024)
+    checkScreenSize()
+    window.addEventListener('resize', checkScreenSize)
+    return () => window.removeEventListener('resize', checkScreenSize)
+  }, [])
+
+  const handleDividerMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    isDragging.current = true
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      if (!isDragging.current || !containerRef.current) return
+      const rect = containerRef.current.getBoundingClientRect()
+      const newPos = ((moveEvent.clientX - rect.left) / rect.width) * 100
+      const clamped = Math.min(85, Math.max(50, newPos))
+      setDividerPosition(clamped)
+      localStorage.setItem('songs-bookmarks-divider', String(clamped))
+    }
+
+    const handleMouseUp = () => {
+      isDragging.current = false
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+  }, [])
+
+  const handleBookmarkSongClick = useCallback(
+    (bookmark: { songId: number }) => {
+      navigate({
+        to: '/songs/$songId',
+        params: { songId: String(bookmark.songId) },
+        search: { q: searchQuery || undefined },
+      })
+    },
+    [navigate, searchQuery],
+  )
+
   return (
     <PagePermissionGuard permission="songs.view">
       <div className="flex flex-col h-full min-h-0">
@@ -216,19 +273,52 @@ function SongsPage() {
           </div>
         </div>
 
-        <div className="flex-1 min-h-0">
-          <SongList
-            onSongClick={handleSongClick}
-            onSongMiddleClick={openSongWindow}
-            searchQuery={searchQuery}
-            onSearchChange={handleSearchChange}
-            initialSelectedSongId={selectedSongId}
-            focusTrigger={focusTrigger}
-            initialAIResults={initialAIResults}
-            aiSearchId={aiSearchId}
-            urlPath={urlPath ?? undefined}
-            onAISearchSaved={handleAISearchSaved}
-          />
+        <div ref={containerRef} className="flex-1 min-h-0 flex flex-row">
+          {/* Song List */}
+          <div
+            className="min-h-0 h-full"
+            style={
+              isLargeScreen
+                ? { width: `calc(${dividerPosition}% - 4px)` }
+                : { flex: 1, minWidth: 0 }
+            }
+          >
+            <SongList
+              onSongClick={handleSongClick}
+              onSongMiddleClick={openSongWindow}
+              searchQuery={searchQuery}
+              onSearchChange={handleSearchChange}
+              initialSelectedSongId={selectedSongId}
+              focusTrigger={focusTrigger}
+              initialAIResults={initialAIResults}
+              aiSearchId={aiSearchId}
+              urlPath={urlPath ?? undefined}
+              onAISearchSaved={handleAISearchSaved}
+            />
+          </div>
+
+          {/* Draggable Divider */}
+          <div
+            className="hidden lg:flex items-center justify-center w-2 cursor-col-resize hover:bg-indigo-100 dark:hover:bg-indigo-900/30 rounded transition-colors group"
+            onMouseDown={handleDividerMouseDown}
+          >
+            <GripVertical
+              size={16}
+              className="text-gray-400 group-hover:text-indigo-500 transition-colors"
+            />
+          </div>
+
+          {/* Bookmarks Panel */}
+          <div
+            className="overflow-hidden h-full hidden lg:block"
+            style={
+              isLargeScreen
+                ? { width: `calc(${100 - dividerPosition}% - 4px)` }
+                : undefined
+            }
+          >
+            <SongBookmarksPanel onSelectSong={handleBookmarkSongClick} />
+          </div>
         </div>
 
         <SongsSettingsModal
