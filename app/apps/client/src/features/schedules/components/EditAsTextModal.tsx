@@ -91,20 +91,20 @@ export function EditAsTextModal({
   )
   const [plainView, setPlainView] = useState(false)
 
-  // Generate plain text (no markers, no comments, no song IDs)
+  // Generate plain text (no markers, no comments, no song IDs, stop at ---)
   const plainText = useMemo(() => {
-    return (
-      text
-        .split('\n')
-        .filter((line) => {
-          const trimmed = line.trim()
-          return trimmed && !trimmed.startsWith('#')
-        })
-        .map((line) => line.trim().replace(/\s*\[(SC|S|C|A|VT|V)\]\s*$/i, ''))
-        // Strip song IDs (#123) from end of lines
-        .map((line) => line.replace(/\s+#\d+$/, ''))
-        .join('\n')
-    )
+    const result: string[] = []
+    for (const line of text.split('\n')) {
+      if (line.trim() === '---') break
+      const trimmed = line.trim()
+      if (!trimmed || trimmed.startsWith('#')) continue
+      result.push(
+        trimmed
+          .replace(/\s*\[(SC|S|C|A|VT|V)\]\s*$/i, '')
+          .replace(/\s+#\d+$/, ''),
+      )
+    }
+    return result.join('\n')
   }, [text])
 
   // Initialize text from current items when modal opens

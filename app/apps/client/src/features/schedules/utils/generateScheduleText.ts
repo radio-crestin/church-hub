@@ -1,3 +1,4 @@
+import { expandSongSlidesWithChoruses } from '../../songs/utils/expandSongSlides'
 import type { ScheduleItem } from '../types'
 
 interface GenerateScheduleTextOptions {
@@ -14,8 +15,8 @@ export function generateScheduleText(
 ): string {
   const lines: string[] = []
 
-  // Add format help as comments at the top (from i18n)
-  if (options?.formatHelpLines) {
+  // Only show format help when the schedule is empty
+  if (items.length === 0 && options?.formatHelpLines) {
     for (const line of options.formatHelpLines) {
       lines.push(`# ${line}`)
     }
@@ -77,7 +78,71 @@ export function generateScheduleText(
     }
   }
 
+  // Add reference section with full content (ignored by parser)
+  if (items.length > 0) {
+    const referenceLines = generateReferenceSection(items)
+    if (referenceLines.length > 0) {
+      lines.push('')
+      lines.push('---')
+      lines.push('')
+      lines.push(...referenceLines)
+    }
+  }
+
   return lines.join('\n')
+}
+
+/**
+ * Generate a read-only reference section showing the full content of each item
+ */
+function generateReferenceSection(items: ScheduleItem[]): string[] {
+  const lines: string[] = []
+
+  for (const item of items) {
+    if (item.itemType === 'song' && item.song) {
+      lines.push(`# ${item.song.title}`)
+      const expandedSlides = expandSongSlidesWithChoruses(item.slides)
+      for (const slide of expandedSlides) {
+        const text = stripHtml(slide.content)
+        if (text) {
+          const label = slide.label ? ` (${slide.label})` : ''
+          lines.push(`#   ${text.replace(/\n/g, ' / ')}${label}`)
+        }
+      }
+      lines.push('#')
+    } else if (item.itemType === 'bible_passage') {
+      if (item.biblePassageReference) {
+        lines.push(`# ${item.biblePassageReference}`)
+      }
+      for (const verse of item.biblePassageVerses) {
+        lines.push(`#   ${verse.reference}: ${verse.text}`)
+      }
+      lines.push('#')
+    } else if (
+      item.itemType === 'slide' &&
+      item.slideType === 'versete_tineri'
+    ) {
+      lines.push('# Versete Tineri')
+      for (const entry of item.verseteTineriEntries) {
+        lines.push(`#   ${entry.personName} - ${entry.reference}`)
+        if (entry.text) {
+          lines.push(`#     ${entry.text}`)
+        }
+      }
+      lines.push('#')
+    } else if (
+      item.itemType === 'slide' &&
+      item.slideType === 'announcement'
+    ) {
+      const plainText = stripHtml(item.slideContent || '')
+      if (plainText) {
+        lines.push(`# ${plainText}`)
+        lines.push('#')
+      }
+    }
+  }
+
+  return lines
 }
 
 /**
