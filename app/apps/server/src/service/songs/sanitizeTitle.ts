@@ -14,8 +14,8 @@ export function sanitizeSongTitle(title: string): string {
   // Remove leading special characters like /:, numbers, etc.
   let cleaned = title.replace(/^[/:.*•►\d]+\s*/u, '')
 
-  // Keep only: letters (including accented), spaces, and hyphens
-  cleaned = cleaned.replace(/[^\p{L}\s-]/gu, '').trim()
+  // Replace non-letter/space/hyphen chars with space (preserves word boundaries)
+  cleaned = cleaned.replace(/[^\p{L}\s-]/gu, ' ').trim()
 
   // Normalize multiple spaces/hyphens to single
   cleaned = cleaned.replace(/\s+/g, ' ').replace(/-+/g, '-')
