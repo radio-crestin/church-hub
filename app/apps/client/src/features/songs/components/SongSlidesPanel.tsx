@@ -374,15 +374,18 @@ export function SongSlidesPanel({
             <button
               type="button"
               onClick={onSave}
-              disabled={isSaving}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-lg border transition-colors bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border-green-300 dark:border-green-600 hover:bg-green-200 dark:hover:bg-green-900/60 disabled:opacity-50"
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-lg border transition-colors ${
+                isSaving
+                  ? 'bg-green-200 dark:bg-green-900/60 text-green-700 dark:text-green-300 border-green-300 dark:border-green-600 cursor-wait'
+                  : 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border-green-300 dark:border-green-600 hover:bg-green-200 dark:hover:bg-green-900/60'
+              }`}
             >
               {isSaving ? (
                 <Loader2 size={14} className="animate-spin" />
               ) : (
                 <Check size={14} />
               )}
-              <span>{t('preview.exitEditMode')}</span>
+              <span>{isSaving ? t('preview.saving') : t('preview.exitEditMode')}</span>
             </button>
           </div>
         )}

@@ -8,11 +8,13 @@ import {
   useSensors,
 } from '@dnd-kit/core'
 import {
+  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers'
 import { CSS } from '@dnd-kit/utilities'
 import {
   Bookmark,
@@ -46,22 +48,34 @@ function SortableBookmarkItem({
   onSelect,
   onRemove,
 }: SortableBookmarkItemProps) {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: bookmark.id })
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
     transition,
+    isDragging,
+  } = useSortable({ id: bookmark.id })
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(
+      transform ? { ...transform, scaleX: 1, scaleY: 1 } : null,
+    ),
+    transition: isDragging ? 'none' : transition ?? undefined,
+    zIndex: isDragging ? 10 : undefined,
+    position: isDragging ? 'relative' : undefined,
   }
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-1 rounded-lg border transition-all ${
-        isActive
-          ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20'
-          : 'border-gray-200 dark:border-gray-700 hover:border-amber-300 dark:hover:border-amber-600 bg-white dark:bg-gray-800 hover:bg-amber-50/50 dark:hover:bg-amber-900/10'
+      className={`flex items-center gap-1 rounded-lg border transition-colors ${
+        isDragging
+          ? 'opacity-80 shadow-lg border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20'
+          : isActive
+            ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20'
+            : 'border-gray-200 dark:border-gray-700 hover:border-amber-300 dark:hover:border-amber-600 bg-white dark:bg-gray-800 hover:bg-amber-50/50 dark:hover:bg-amber-900/10'
       }`}
     >
       <div
@@ -130,7 +144,9 @@ export function SongBookmarksPanel({
   const [searchQuery, setSearchQuery] = useState('')
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     }),
@@ -157,10 +173,7 @@ export function SongBookmarksPanel({
 
       if (oldIndex === -1 || newIndex === -1) return
 
-      const newOrder = [...bookmarks]
-      const [removed] = newOrder.splice(oldIndex, 1)
-      newOrder.splice(newIndex, 0, removed)
-
+      const newOrder = arrayMove(bookmarks, oldIndex, newIndex)
       reorderBookmarksMutation.mutate(newOrder.map((b) => b.songId))
     },
     [bookmarks, reorderBookmarksMutation],
@@ -284,6 +297,7 @@ export function SongBookmarksPanel({
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
+            modifiers={[restrictToVerticalAxis]}
             onDragEnd={handleDragEnd}
           >
             <SortableContext

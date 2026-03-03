@@ -157,6 +157,7 @@
     "slideNumber": "Slide {{number}}",
     "editMode": "Editează",
     "exitEditMode": "Salvează",
+    "saving": "Se salvează...",
     "discardChanges": "Renunță",
     "addSlide": "Adaugă slide",
     "deleteSlide": "Șterge",

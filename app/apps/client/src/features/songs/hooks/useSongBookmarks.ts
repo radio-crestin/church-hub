@@ -56,7 +56,24 @@ export function useReorderBookmarks() {
 
   return useMutation({
     mutationFn: (songIds: number[]) => reorderBookmarks(songIds),
-    onSuccess: () => {
+    onMutate: async (songIds: number[]) => {
+      await queryClient.cancelQueries({ queryKey: SONG_BOOKMARKS_QUERY_KEY })
+      const previous =
+        queryClient.getQueryData<SongBookmark[]>(SONG_BOOKMARKS_QUERY_KEY)
+
+      if (previous) {
+        const reordered = songIds
+          .map((id) => previous.find((b) => b.songId === id))
+          .filter((b): b is SongBookmark => b !== undefined)
+        queryClient.setQueryData(SONG_BOOKMARKS_QUERY_KEY, reordered)
+      }
+
+      return { previous }
+    },
+    onError: (_err, _songIds, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(SONG_BOOKMARKS_QUERY_KEY, context.previous)
+      }
       queryClient.invalidateQueries({ queryKey: SONG_BOOKMARKS_QUERY_KEY })
     },
   })

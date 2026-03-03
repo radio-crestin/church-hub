@@ -62,9 +62,9 @@ export function AppLayout({ children }: AppLayoutProps) {
         onMobileMenuChange={setIsMobileMenuOpen}
       />
       <main className="flex-1 flex flex-col min-h-0 min-w-0 bg-gray-50 dark:bg-gray-950 safe-area-right safe-area-bottom overflow-hidden">
-        <div className="flex-1 min-h-0 overflow-x-hidden overflow-y-auto bg-gray-50 dark:bg-gray-950">
+        <div className="flex-1 min-h-0 overflow-x-hidden overflow-y-auto flex flex-col bg-gray-50 dark:bg-gray-950">
           {/* Mobile Header - inside scroll area so it scrolls away */}
-          <header className="md:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 safe-area-top safe-area-left safe-area-right">
+          <header className="shrink-0 md:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 safe-area-top safe-area-left safe-area-right">
             <div className="flex items-center justify-between px-4 py-3">
               <div className="flex items-center gap-3">
                 <img src="/logo192.png" alt="Church Hub" className="w-8 h-8" />
@@ -82,7 +82,7 @@ export function AppLayout({ children }: AppLayoutProps) {
               </button>
             </div>
           </header>
-          <div className="p-3 pb-16 sm:p-4 sm:pb-16 md:p-6 md:pb-6">
+          <div className="p-3 pb-16 sm:p-4 sm:pb-16 md:p-6 md:pb-6 flex-1">
             {children}
           </div>
         </div>

@@ -152,7 +152,7 @@ function SongPreviewPage() {
     const stored = localStorage.getItem('songs-right-divider')
     return stored ? Number(stored) : 60
   })
-  const pendingExit = useRef(false)
+  const [pendingExit, setPendingExit] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const rightPanelRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
@@ -294,25 +294,25 @@ function SongPreviewPage() {
   const isMutating = upsertSlide.isPending || deleteSlide.isPending || reorderSlides.isPending || upsertSong.isPending
 
   const handleToggleEditMode = useCallback(() => {
-    pendingExit.current = false
+    setPendingExit(false)
     setIsEditMode((prev) => !prev)
   }, [])
 
   const handleSave = useCallback(() => {
-    if (isMutating) {
-      pendingExit.current = true
-    } else {
-      setIsEditMode(false)
+    // Force blur to trigger any pending slide edits before exiting
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur()
     }
-  }, [isMutating])
+    setPendingExit(true)
+  }, [])
 
   // Exit edit mode after pending saves complete
   useEffect(() => {
-    if (pendingExit.current && !isMutating) {
-      pendingExit.current = false
+    if (pendingExit && !isMutating) {
+      setPendingExit(false)
       setIsEditMode(false)
     }
-  }, [isMutating])
+  }, [pendingExit, isMutating])
 
   // Convert SongSlide[] to LocalSlide[] for the text modal
   const editAsTextSlides = useMemo(() => {
@@ -656,7 +656,7 @@ function SongPreviewPage() {
             onToggleEditMode={handleToggleEditMode}
             onSave={handleSave}
             onSlideClick={handleSlideClick}
-            isSaving={isMutating}
+            isSaving={pendingExit || isMutating}
             onSlideEdit={handleSlideEdit}
             onSlideDelete={handleSlideDelete}
             onSlideAdd={handleSlideAdd}
