@@ -290,7 +290,129 @@ function connectToSocket(): void {
   })
 }
 
+/**
+ * Kill any orphaned mpv processes left from previous server instances.
+ * Since mpv is spawned detached+unref, it survives server restarts and accumulates.
+ */
+function killStaleMpvProcesses(): void {
+  const platform = os.platform()
+  try {
+    let pids: string[] = []
+
+    if (platform === 'win32') {
+      const result = Bun.spawnSync([
+        'wmic',
+        'process',
+        'where',
+        "name='mpv.exe' and commandline like '%mpv-socket-%'",
+        'get',
+        'processid',
+        '/format:list',
+      ])
+      if (result.exitCode === 0) {
+        const output = result.stdout.toString().trim()
+        pids = output
+          .split('\n')
+          .filter((line) => line.startsWith('ProcessId='))
+          .map((line) => line.split('=')[1]?.trim())
+          .filter(Boolean)
+      }
+      for (const pid of pids) {
+        try {
+          Bun.spawnSync(['taskkill', '/F', '/PID', pid])
+          // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
+          console.log(LOG_PREFIX, `Killed stale mpv process PID ${pid}`)
+        } catch {
+          // Process may have already exited
+        }
+      }
+    } else {
+      // On macOS/Linux, use pgrep to find mpv processes with our socket pattern
+      const result = Bun.spawnSync(['pgrep', '-f', 'mpv.*mpv-socket-'])
+      if (result.exitCode === 0) {
+        const output = result.stdout.toString().trim()
+        pids = output.split('\n').filter(Boolean)
+      }
+      for (const pid of pids) {
+        try {
+          process.kill(Number(pid), 'SIGTERM')
+          // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
+          console.log(LOG_PREFIX, `Killed stale mpv process PID ${pid}`)
+        } catch {
+          // Process may have already exited
+        }
+      }
+    }
+
+    if (pids.length > 0) {
+      // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
+      console.log(LOG_PREFIX, `Cleaned up ${pids.length} stale mpv process(es)`)
+    }
+  } catch {
+    // Silently ignore errors — best-effort cleanup
+  }
+}
+
+/**
+ * Clean up stale mpv socket files from /tmp that no longer have an associated process.
+ */
+function cleanupStaleSockets(): void {
+  if (os.platform() === 'win32') return // Named pipes auto-clean on Windows
+
+  const tmpDir = os.tmpdir()
+  try {
+    const entries = fs.readdirSync(tmpDir)
+    for (const entry of entries) {
+      if (!entry.startsWith('mpv-socket-')) continue
+      const fullPath = path.join(tmpDir, entry)
+      try {
+        fs.unlinkSync(fullPath)
+        // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
+        console.log(LOG_PREFIX, `Cleaned up stale socket: ${entry}`)
+      } catch {
+        // Ignore errors (might be in use by the current process)
+      }
+    }
+  } catch {
+    // Ignore errors
+  }
+}
+
+let cleanupRegistered = false
+
+function registerProcessExitCleanup(): void {
+  if (cleanupRegistered) return
+  cleanupRegistered = true
+
+  const cleanup = () => {
+    if (mpvProcess && !mpvProcess.killed) {
+      try {
+        mpvProcess.kill('SIGTERM')
+      } catch {
+        // Ignore errors during cleanup
+      }
+    }
+    if (socketPath && os.platform() !== 'win32' && fs.existsSync(socketPath)) {
+      try {
+        fs.unlinkSync(socketPath)
+      } catch {
+        // Ignore cleanup errors
+      }
+    }
+  }
+
+  process.on('exit', cleanup)
+  process.on('SIGTERM', cleanup)
+  process.on('SIGINT', cleanup)
+}
+
 export async function initializeMusicPlayer(): Promise<boolean> {
+  // Kill any orphaned mpv processes from previous server instances
+  killStaleMpvProcesses()
+  // Wait briefly for processes to terminate
+  await new Promise((resolve) => setTimeout(resolve, 200))
+  cleanupStaleSockets()
+
   socketPath = getSocketPath()
 
   if (os.platform() !== 'win32' && fs.existsSync(socketPath)) {
@@ -391,6 +513,9 @@ export async function initializeMusicPlayer(): Promise<boolean> {
   }
 
   startHealthCheck()
+
+  // Ensure mpv is killed when the server process exits (prevents zombie accumulation)
+  registerProcessExitCleanup()
 
   // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
   console.log(LOG_PREFIX, 'Music player initialized')
