@@ -89,6 +89,45 @@ describe('scoring - score bounds', () => {
   })
 })
 
+describe('normalizeForIndex - HTML tag stripping', () => {
+  test('strips HTML tags from content before normalization', () => {
+    const normalized = normalizeForIndex(
+      '<p>Sa ne speli de-orice pacat;</p><p>A noastra nelegiuire</p>',
+    )
+    // Should not contain "p" tokens from <p> tags
+    expect(normalized).not.toMatch(/\bp\b/)
+    expect(normalized).toContain('Sa ne speli de orice pacat')
+    expect(normalized).toContain('A noastra nelegiuire')
+  })
+})
+
+describe('scoring - content-only match should score high', () => {
+  test('exact phrase in content scores 100 even when title has no match', () => {
+    // Song 20: searching slide lyrics "Sa ne speli de-orice pacat;"
+    // should find "020 - O Isuse jertfa sfanta" as top result
+    const normalizedContent = normalizeForIndex(
+      '<p>Ai venit cu-a Ta iubire</p><p>Sa ne speli de-orice pacat;</p>',
+    )
+    const terms = extractSearchTerms('Sa ne speli de-orice pacat;')
+    const contentScore = calculateBestPhraseScoreNormalized(
+      normalizedContent,
+      terms,
+    )
+    expect(contentScore).toBe(100)
+
+    // Title has no matching terms
+    const titleScore = calculateTitleScoreNormalized(
+      normalizeForIndex('020 - O Isuse jertfa sfanta').toLowerCase(),
+      terms,
+    )
+    expect(titleScore).toBe(0)
+
+    // Final combined score should still be high (not penalized by title miss)
+    const termScore = Math.max(titleScore, contentScore) + titleScore * 0.15
+    expect(termScore).toBeGreaterThanOrEqual(100)
+  })
+})
+
 describe('scoring - exact phrase matching across punctuation', () => {
   test('content with comma-separated words scores high for matching phrase', () => {
     // Simulates song 749's indexed content (after normalizeForIndex fix)
