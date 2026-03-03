@@ -1421,7 +1421,7 @@ export function searchSongs(
         highlightedTitle: r.highlighted_title,
         matchedContent,
         presentationCount: r.presentation_count,
-        score: Math.round(r.boostedScore),
+        score: Math.min(100, Math.round(r.boostedScore)),
       }
     })
 
