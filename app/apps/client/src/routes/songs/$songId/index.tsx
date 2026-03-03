@@ -140,6 +140,8 @@ function SongPreviewPage() {
 
   const [dividerPosition, setDividerPosition] = useState(40)
   const [showAddToScheduleModal, setShowAddToScheduleModal] = useState(false)
+  const [showAddBookmarksToScheduleModal, setShowAddBookmarksToScheduleModal] = useState(false)
+  const [bookmarkSongIds, setBookmarkSongIds] = useState<number[]>([])
   const [showExportFormatModal, setShowExportFormatModal] = useState(false)
   const [showResetCountConfirm, setShowResetCountConfirm] = useState(false)
   const [showEditAsTextModal, setShowEditAsTextModal] = useState(false)
@@ -500,6 +502,11 @@ function SongPreviewPage() {
     [navigate, searchQuery],
   )
 
+  const handleAddAllBookmarksToSchedule = useCallback((songIds: number[]) => {
+    setBookmarkSongIds(songIds)
+    setShowAddBookmarksToScheduleModal(true)
+  }, [])
+
   if (isLoading || !song) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -721,6 +728,7 @@ function SongPreviewPage() {
             <SongBookmarksPanel
               onSelectSong={handleBookmarkSongClick}
               activeSongId={numericId}
+              onAddAllToSchedule={handleAddAllBookmarksToSchedule}
             />
           </div>
         </div>
@@ -731,6 +739,12 @@ function SongPreviewPage() {
         songId={numericId}
         onClose={() => setShowAddToScheduleModal(false)}
         onAdded={handleSongAddedToSchedule}
+      />
+
+      <AddSongToScheduleModal
+        isOpen={showAddBookmarksToScheduleModal}
+        songIds={bookmarkSongIds}
+        onClose={() => setShowAddBookmarksToScheduleModal(false)}
       />
 
       <ExportFormatModal

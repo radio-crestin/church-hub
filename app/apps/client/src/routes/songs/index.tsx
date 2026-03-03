@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { useFocusSearchEvent } from '~/features/keyboard-shortcuts/utils'
 import { getSongsLastVisited } from '~/features/navigation'
 import { usePresentationState } from '~/features/presentation'
+import { AddSongToScheduleModal } from '~/features/schedules'
 import {
   SongBookmarksPanel,
   SongList,
@@ -65,6 +66,8 @@ function SongsPage() {
     from: '/songs/',
   })
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
+  const [showAddToScheduleModal, setShowAddToScheduleModal] = useState(false)
+  const [bookmarkSongIds, setBookmarkSongIds] = useState<number[]>([])
   const [focusTrigger, setFocusTrigger] = useState(0)
   const [dividerPosition, setDividerPosition] = useState(() => {
     const stored = localStorage.getItem('songs-bookmarks-divider')
@@ -243,9 +246,14 @@ function SongsPage() {
     [navigate, searchQuery],
   )
 
+  const handleAddAllToSchedule = useCallback((songIds: number[]) => {
+    setBookmarkSongIds(songIds)
+    setShowAddToScheduleModal(true)
+  }, [])
+
   return (
     <PagePermissionGuard permission="songs.view">
-      <div className="flex flex-col h-full min-h-0">
+      <div className="flex flex-col min-h-0 lg:h-[calc(100vh-3rem)] lg:overflow-hidden">
         <div className="flex-shrink-0 flex items-center justify-between mb-4">
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">
             {t('title')}
@@ -276,7 +284,7 @@ function SongsPage() {
         <div ref={containerRef} className="flex-1 min-h-0 flex flex-row">
           {/* Song List */}
           <div
-            className="min-h-0 h-full"
+            className="min-h-0 h-full overflow-hidden"
             style={
               isLargeScreen
                 ? { width: `calc(${dividerPosition}% - 4px)` }
@@ -317,13 +325,22 @@ function SongsPage() {
                 : undefined
             }
           >
-            <SongBookmarksPanel onSelectSong={handleBookmarkSongClick} />
+            <SongBookmarksPanel
+              onSelectSong={handleBookmarkSongClick}
+              onAddAllToSchedule={handleAddAllToSchedule}
+            />
           </div>
         </div>
 
         <SongsSettingsModal
           isOpen={isSettingsModalOpen}
           onClose={() => setIsSettingsModalOpen(false)}
+        />
+
+        <AddSongToScheduleModal
+          isOpen={showAddToScheduleModal}
+          songIds={bookmarkSongIds}
+          onClose={() => setShowAddToScheduleModal(false)}
         />
       </div>
     </PagePermissionGuard>

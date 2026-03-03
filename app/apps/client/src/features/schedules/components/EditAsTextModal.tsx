@@ -91,12 +91,12 @@ export function EditAsTextModal({
   )
   const [plainView, setPlainView] = useState(false)
 
-  // Generate plain text (no markers, no comments, no song IDs, stop at ---)
+  // Generate plain text (no markers, no comments, no song IDs, stop at --- or schedule content delimiter)
   const plainText = useMemo(() => {
     const result: string[] = []
     for (const line of text.split('\n')) {
-      if (line.trim() === '---') break
       const trimmed = line.trim()
+      if (trimmed === '---' || trimmed === '--- Schedule Content ---') break
       if (!trimmed || trimmed.startsWith('#')) continue
       result.push(
         trimmed

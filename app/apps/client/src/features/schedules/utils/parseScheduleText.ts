@@ -45,7 +45,7 @@ export function parseScheduleText(text: string): ParseScheduleTextResult {
     const trimmed = lines[index].trim()
 
     // Stop parsing at separator — everything after is reference-only
-    if (trimmed === '---') {
+    if (trimmed === '---' || trimmed === '--- Schedule Content ---') {
       break
     }
 

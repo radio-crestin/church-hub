@@ -78,16 +78,24 @@ export function ScheduleItemVerseteTineri({
 
           {/* Title & Info */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="font-medium text-sm truncate text-gray-900 dark:text-white">
-                {t('slideTemplates.versete_tineri')}
+            {item.verseteTineriEntries.length > 0 ? (
+              <div className="space-y-0.5">
+                {item.verseteTineriEntries.map((entry) => (
+                  <div key={entry.id} className="flex items-center gap-2 text-sm">
+                    <span className="font-medium truncate text-gray-900 dark:text-white">
+                      {entry.personName}
+                    </span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">
+                      {entry.reference}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <span className="font-medium text-sm text-gray-400 dark:text-gray-500">
+                {t('verseteTineri.entriesCount', { count: 0 })}
               </span>
-            </div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">
-              {t('verseteTineri.entriesCount', {
-                count: item.verseteTineriEntries.length,
-              })}
-            </div>
+            )}
           </div>
         </button>
 

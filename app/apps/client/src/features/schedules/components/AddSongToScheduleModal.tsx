@@ -9,7 +9,8 @@ import { useAddItemToSchedule, useSchedules } from '../hooks'
 
 interface AddSongToScheduleModalProps {
   isOpen: boolean
-  songId: number
+  songId?: number
+  songIds?: number[]
   onClose: () => void
   onAdded?: (scheduleId: number) => void
 }
@@ -33,6 +34,7 @@ function getTodaySchedule(
 export function AddSongToScheduleModal({
   isOpen,
   songId,
+  songIds,
   onClose,
   onAdded,
 }: AddSongToScheduleModalProps) {
@@ -45,6 +47,9 @@ export function AddSongToScheduleModal({
   const [showFullList, setShowFullList] = useState(false)
   const autoAddAttemptedRef = useRef(false)
 
+  // Resolve effective song IDs (support both single and multiple)
+  const effectiveSongIds = songIds ?? (songId ? [songId] : [])
+
   // Reset state when modal opens/closes
   useEffect(() => {
     if (isOpen) {
@@ -52,6 +57,20 @@ export function AddSongToScheduleModal({
       setShowFullList(false)
     }
   }, [isOpen])
+
+  const addSongsToSchedule = useCallback(
+    async (scheduleId: number) => {
+      for (const id of effectiveSongIds) {
+        const result = await addToSchedule.mutateAsync({
+          scheduleId,
+          input: { songId: id },
+        })
+        if (!result.success) return false
+      }
+      return true
+    },
+    [effectiveSongIds, addToSchedule],
+  )
 
   // Smart add: if there's a today schedule, add directly without showing the modal
   const handleSmartAdd = useCallback(async () => {
@@ -62,12 +81,9 @@ export function AddSongToScheduleModal({
 
     if (todaySchedule) {
       // Add directly to today's schedule
-      const result = await addToSchedule.mutateAsync({
-        scheduleId: todaySchedule.id,
-        input: { songId },
-      })
+      const success = await addSongsToSchedule(todaySchedule.id)
 
-      if (result.success) {
+      if (success) {
         showToast(
           t('messages.itemAddedToSchedule', { title: todaySchedule.title }),
           'success',
@@ -91,7 +107,7 @@ export function AddSongToScheduleModal({
       setShowFullList(true)
       dialogRef.current?.showModal()
     }
-  }, [schedules, songId, addToSchedule, showToast, t, onClose, onAdded])
+  }, [schedules, addSongsToSchedule, showToast, t, onClose, onAdded])
 
   // Trigger smart add when modal opens with schedules loaded
   useEffect(() => {
@@ -116,12 +132,9 @@ export function AddSongToScheduleModal({
   }, [onClose, addToSchedule.isPending])
 
   const handleScheduleSelect = async (scheduleId: number) => {
-    const result = await addToSchedule.mutateAsync({
-      scheduleId,
-      input: { songId },
-    })
+    const success = await addSongsToSchedule(scheduleId)
 
-    if (result.success) {
+    if (success) {
       showToast(t('messages.itemAdded'), 'success')
       onAdded?.(scheduleId)
       onClose()
