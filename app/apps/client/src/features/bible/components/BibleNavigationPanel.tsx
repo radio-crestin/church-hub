@@ -288,6 +288,18 @@ export function BibleNavigationPanel({
     setSearchQuery,
   ])
 
+  // Wrap onSelectSearchResult to clear pre-search state and typing flag before navigating
+  // This prevents the restore effect from overriding the search result navigation,
+  // and prevents the debounce sync from re-navigating back to the search query URL
+  const handleSelectSearchResult = useCallback(
+    (result: BibleSearchResult) => {
+      preSearchStateRef.current = null
+      isUserTypingRef.current = false
+      onSelectSearchResult(result)
+    },
+    [onSelectSearchResult],
+  )
+
   // Handle manual text search button click
   const handleTextSearch = useCallback(() => {
     if (!localQuery.trim()) return
@@ -458,7 +470,7 @@ export function BibleNavigationPanel({
           const result = currentSearchResults[
             indexToSelect
           ] as BibleSearchResult
-          onSelectSearchResult(result)
+          handleSelectSearchResult(result)
         }
         return
       }
@@ -608,7 +620,7 @@ export function BibleNavigationPanel({
             results={aiSearchResults}
             type="ai"
             isLoading={false}
-            onSelectResult={onSelectSearchResult}
+            onSelectResult={handleSelectSearchResult}
             onClearSearch={clearSearch}
             getBookName={getBookName}
             focusedIndex={focusedResultIndex}
@@ -618,7 +630,7 @@ export function BibleNavigationPanel({
             results={searchResults?.results || []}
             type={searchResults?.type || 'text'}
             isLoading={isSearching}
-            onSelectResult={onSelectSearchResult}
+            onSelectResult={handleSelectSearchResult}
             onClearSearch={clearSearch}
             getBookName={getBookName}
             focusedIndex={focusedResultIndex}
