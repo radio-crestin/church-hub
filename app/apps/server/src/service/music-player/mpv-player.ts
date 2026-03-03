@@ -48,6 +48,7 @@ let playerState: MusicPlayerState = {
   queueLength: 0,
   currentTrack: null,
   queue: [],
+  error: null,
   updatedAt: Date.now(),
 }
 
@@ -223,9 +224,23 @@ function handleMpvEvent(event: MpvEvent): void {
         // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
         console.error(LOG_PREFIX, 'Error playing next track:', err)
       })
+    } else if (event.reason === 'error') {
+      const trackName =
+        playerState.currentTrack?.title ??
+        playerState.currentTrack?.filename ??
+        'unknown'
+      // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
+      console.error(
+        LOG_PREFIX,
+        `Failed to play "${trackName}": file not found or unreadable`,
+      )
+      updateState({
+        isPlaying: false,
+        error: `Failed to play "${trackName}": file not found or unreadable`,
+      })
     }
   } else if (event.event === 'file-loaded') {
-    updateState({ isPlaying: true })
+    updateState({ isPlaying: true, error: null })
   }
 }
 
@@ -569,6 +584,7 @@ export function shutdownMusicPlayer(): void {
     queueLength: 0,
     currentTrack: null,
     queue: [],
+    error: null,
     updatedAt: Date.now(),
   }
 

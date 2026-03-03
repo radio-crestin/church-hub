@@ -111,6 +111,7 @@ export interface ServerPlayerState {
     duration?: number
   } | null
   queue: QueueItemSummary[]
+  error: string | null
   updatedAt: number
 }
 
