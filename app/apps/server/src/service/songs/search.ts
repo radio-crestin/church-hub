@@ -203,6 +203,7 @@ function removeDiacritics(text: string): string {
  */
 export function normalizeForIndex(text: string): string {
   let normalized = removeDiacritics(text)
+    .replace(/<[^>]+>/g, ' ') // Strip HTML tags before normalization
     .replace(/[^\p{L}\p{N}\s]/gu, ' ') // Replace ALL punctuation (commas, hyphens, periods, etc.) with spaces
     .replace(/\s+/g, ' ') // Collapse multiple spaces
     .trim()
@@ -1327,8 +1328,8 @@ export function searchSongs(
     // Phase 3: Calculate match scores using phrase-based scoring
     // FTS content is already diacritics-free (normalizeForIndex strips diacritics)
     // so we skip redundant removeDiacritics calls in scoring
-    const TITLE_WEIGHT = 2
-    const CONTENT_WEIGHT = 1
+    // Title bonus: songs where the search matches the title get a ranking edge
+    const TITLE_BONUS = 0.15
     // key_line boost: 15% additive bonus for songs that have a key line set
     const KEY_LINE_BOOST = 0.15
     // presentationCount logarithmic boost: up to ~10% extra for frequently presented songs
@@ -1349,10 +1350,10 @@ export function searchSongs(
         expandedTerms,
       )
 
-      // Weighted combined score: title matches count 2x more than content matches
+      // Use best match location as base score (don't penalize content-only matches)
+      // Add a title bonus so title matches rank above content-only matches
       const termScore =
-        (titleScore * TITLE_WEIGHT + contentScore * CONTENT_WEIGHT) /
-        (TITLE_WEIGHT + CONTENT_WEIGHT)
+        Math.max(titleScore, contentScore) + titleScore * TITLE_BONUS
 
       // key_line boost: songs with a key line get +15% of base score
       const keyLineMultiplier =
