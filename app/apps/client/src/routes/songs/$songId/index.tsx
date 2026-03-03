@@ -44,6 +44,7 @@ import {
 import {
   CategoryEditDialog,
   type CategoryEditDialogHandle,
+  SongBookmarksPanel,
   SongControlPanel,
   SongSlidesPanel,
 } from '~/features/songs/components'
@@ -145,9 +146,15 @@ function SongPreviewPage() {
   const [isLargeScreen, setIsLargeScreen] = useState(false)
   const [selectedSlideIndex, setSelectedSlideIndex] = useState(0)
   const [isEditMode, setIsEditMode] = useState(false)
+  const [rightDividerPosition, setRightDividerPosition] = useState(() => {
+    const stored = localStorage.getItem('songs-right-divider')
+    return stored ? Number(stored) : 60
+  })
   const pendingExit = useRef(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const rightPanelRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
+  const isRightDragging = useRef(false)
   const keyLineDialogRef = useRef<KeyLineEditDialogHandle>(null)
   const categoryDialogRef = useRef<CategoryEditDialogHandle>(null)
 
@@ -455,6 +462,44 @@ function SongPreviewPage() {
     document.addEventListener('mouseup', handleMouseUp)
   }, [])
 
+  const handleRightDividerMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    isRightDragging.current = true
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      if (!isRightDragging.current || !rightPanelRef.current) return
+      const rect = rightPanelRef.current.getBoundingClientRect()
+      const newPos = ((moveEvent.clientX - rect.left) / rect.width) * 100
+      const clamped = Math.min(80, Math.max(30, newPos))
+      setRightDividerPosition(clamped)
+      localStorage.setItem('songs-right-divider', String(clamped))
+    }
+
+    const handleMouseUp = () => {
+      isRightDragging.current = false
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+  }, [])
+
+  const handleBookmarkSongClick = useCallback(
+    (bookmark: { songId: number }) => {
+      navigate({
+        to: '/songs/$songId',
+        params: { songId: String(bookmark.songId) },
+        search: { q: searchQuery || undefined },
+      })
+    },
+    [navigate, searchQuery],
+  )
+
   if (isLoading || !song) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -543,11 +588,7 @@ function SongPreviewPage() {
             }`}
             title={isBookmarked ? t('bookmarks.remove') : t('bookmarks.add')}
           >
-            {isBookmarked ? (
-              <BookmarkCheck size={20} />
-            ) : (
-              <Bookmark size={20} />
-            )}
+            {isBookmarked ? <BookmarkCheck size={20} /> : <Bookmark size={20} />}
           </button>
           <button
             type="button"
@@ -629,22 +670,59 @@ function SongPreviewPage() {
           />
         </div>
 
-        {/* Right Panel - Control Panel with Preview (shows first on mobile) */}
+        {/* Right Panel - Control Panel + Bookmarks (shows first on mobile) */}
         <div
-          className="order-1 lg:order-3 lg:min-h-0 lg:flex-1 overflow-hidden shrink-0"
+          ref={rightPanelRef}
+          className="order-1 lg:order-3 lg:min-h-0 lg:flex-1 overflow-hidden shrink-0 flex flex-col lg:flex-row"
           style={
             isLargeScreen
               ? { width: `calc(${100 - dividerPosition}% - 8px)` }
               : undefined
           }
         >
-          <SongControlPanel
-            songId={numericId}
-            onPrevSlide={handlePrevSlide}
-            onNextSlide={handleNextSlide}
-            canNavigatePrev={canNavigatePrev}
-            canNavigateNext={canNavigateNext}
-          />
+          {/* Control Panel */}
+          <div
+            className="overflow-hidden h-full"
+            style={
+              isLargeScreen
+                ? { width: `calc(${rightDividerPosition}% - 4px)` }
+                : { flex: 1, minWidth: 0 }
+            }
+          >
+            <SongControlPanel
+              songId={numericId}
+              onPrevSlide={handlePrevSlide}
+              onNextSlide={handleNextSlide}
+              canNavigatePrev={canNavigatePrev}
+              canNavigateNext={canNavigateNext}
+            />
+          </div>
+
+          {/* Vertical Divider */}
+          <div
+            className="hidden lg:flex items-center justify-center w-2 cursor-col-resize hover:bg-indigo-100 dark:hover:bg-indigo-900/30 rounded transition-colors group"
+            onMouseDown={handleRightDividerMouseDown}
+          >
+            <GripVertical
+              size={16}
+              className="text-gray-400 group-hover:text-indigo-500 transition-colors"
+            />
+          </div>
+
+          {/* Bookmarks Panel */}
+          <div
+            className="overflow-hidden h-full hidden lg:block"
+            style={
+              isLargeScreen
+                ? { width: `calc(${100 - rightDividerPosition}% - 4px)` }
+                : undefined
+            }
+          >
+            <SongBookmarksPanel
+              onSelectSong={handleBookmarkSongClick}
+              activeSongId={numericId}
+            />
+          </div>
         </div>
       </div>
 

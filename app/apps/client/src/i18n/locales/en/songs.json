@@ -102,6 +102,10 @@
   "bookmarks": {
     "add": "Bookmark",
     "remove": "Remove Bookmark",
+    "title": "Bookmarks",
+    "searchPlaceholder": "Search bookmarks...",
+    "noResults": "No matching bookmarks",
+    "clear": "Clear all bookmarks",
     "empty": "No bookmarked songs",
     "emptyDescription": "Bookmark songs from the song page to see them here"
   },

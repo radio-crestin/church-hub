@@ -100,10 +100,14 @@
     "cancel": "Anulează"
   },
   "bookmarks": {
-    "add": "Marcheaza",
-    "remove": "Sterge marcajul",
-    "empty": "Nicio cantare marcata",
-    "emptyDescription": "Marcheaza cantari din pagina cantarii pentru a le vedea aici"
+    "add": "Marchează",
+    "remove": "Șterge marcajul",
+    "title": "Marcaje",
+    "searchPlaceholder": "Caută în marcaje...",
+    "noResults": "Niciun marcaj găsit",
+    "clear": "Șterge toate marcajele",
+    "empty": "Nicio cântare marcată",
+    "emptyDescription": "Marchează cântări din pagina cântării pentru a le vedea aici"
   },
   "noSongs": "Nu există cântări încă",
   "noSongsDescription": "Creează prima ta cântare pentru a începe",
