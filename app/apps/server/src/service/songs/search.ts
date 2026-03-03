@@ -579,6 +579,15 @@ function searchByHymnNumber(
         s.hymn_number = ?
         OR s.hymn_number = ?
         OR CAST(CAST(s.hymn_number AS INTEGER) AS TEXT) = ?
+        OR (
+          s.title GLOB '[0-9]*'
+          AND CAST(SUBSTR(s.title, 1,
+            CASE WHEN INSTR(s.title, ' ') > 0
+              THEN INSTR(s.title, ' ') - 1
+              ELSE LENGTH(s.title)
+            END
+          ) AS INTEGER) = CAST(? AS INTEGER)
+        )
       )
       ${extraFilter ? `AND ${extraFilter.replace(/^AND /, '')}` : ''}
       LIMIT 20
@@ -587,6 +596,7 @@ function searchByHymnNumber(
     .all(
       numericPart,
       `#${numericPart}`,
+      numericValue,
       numericValue,
       ...categoryParams,
     ) as Array<{
