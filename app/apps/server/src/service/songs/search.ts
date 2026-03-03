@@ -201,9 +201,9 @@ function removeDiacritics(text: string): string {
  * - "n-am" → "n am am" (expands contraction)
  * - "s-a" → "s a" (reflexive pronoun contraction)
  */
-function normalizeForIndex(text: string): string {
+export function normalizeForIndex(text: string): string {
   let normalized = removeDiacritics(text)
-    .replace(/-/g, ' ') // Replace hyphens with spaces
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ') // Replace ALL punctuation (commas, hyphens, periods, etc.) with spaces
     .replace(/\s+/g, ' ') // Collapse multiple spaces
     .trim()
 
@@ -515,14 +515,18 @@ export function rebuildSearchIndex(): void {
 /**
  * Extracts and sanitizes search terms from query text
  */
-function extractSearchTerms(queryText: string): string[] {
+export function extractSearchTerms(queryText: string): string[] {
   const sanitized = removeDiacritics(queryText)
     .replace(/['"]/g, '')
-    .replace(/[*()^:+\-\\]/g, ' ')
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ') // Replace ALL non-letter, non-number, non-space chars with space
+    .replace(/\s+/g, ' ')
     .trim()
     .toLowerCase()
 
-  return sanitized.split(/\s+/).filter((t) => t.length > 0)
+  const terms = sanitized.split(/\s+/).filter((t) => t.length > 0)
+
+  // Deduplicate terms (e.g. "Isus,Isus" → ["isus", "isus"] → ["isus"])
+  return [...new Set(terms)]
 }
 
 /**
@@ -604,7 +608,7 @@ function searchByHymnNumber(
  * Uses a single FTS query with OR to check all terms at once.
  * All terms that match at least one document are considered valid.
  */
-function getValidTerms(terms: string[]): { validTerms: string[] } {
+export function getValidTerms(terms: string[]): { validTerms: string[] } {
   // All terms are valid if they can be part of an FTS query
   // The FTS engine handles non-matching terms gracefully
   const validTerms = terms.filter(
@@ -625,7 +629,7 @@ function getValidTerms(terms: string[]): { validTerms: string[] } {
  * Single-character terms are filtered out to reduce noise
  * (e.g., "m-a mantuit" becomes ["a", "mantuit"] → only ["mantuit"] is used for FTS)
  */
-function buildSearchQuery(queryText: string): string {
+export function buildSearchQuery(queryText: string): string {
   const allTerms = extractSearchTerms(queryText)
 
   // Filter out single-character terms to reduce noise in FTS queries
@@ -653,7 +657,7 @@ function buildSearchQuery(queryText: string): string {
  * Title scoring for pre-normalized (diacritics-free, lowercase) text.
  * Skips redundant removeDiacritics calls.
  */
-function calculateTitleScoreNormalized(
+export function calculateTitleScoreNormalized(
   normalizedTitle: string,
   queryTerms: string[],
 ): number {
@@ -695,7 +699,7 @@ function calculateTitleScoreNormalized(
  * Optimized content scoring for pre-normalized (diacritics-free) text.
  * Skips redundant removeDiacritics calls.
  */
-function calculateBestPhraseScoreNormalized(
+export function calculateBestPhraseScoreNormalized(
   normalizedContent: string,
   queryTerms: string[],
 ): number {
