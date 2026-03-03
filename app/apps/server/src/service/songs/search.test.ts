@@ -71,6 +71,24 @@ describe('normalizeForIndex', () => {
   })
 })
 
+describe('scoring - score bounds', () => {
+  test('title score never exceeds 100', () => {
+    const score = calculateTitleScoreNormalized(
+      'cat de bine ma simt cu alesii domnului',
+      extractSearchTerms('Cât de bine mă simt cu aleşii Domnului'),
+    )
+    expect(score).toBeLessThanOrEqual(100)
+  })
+
+  test('content score never exceeds 100', () => {
+    const score = calculateBestPhraseScoreNormalized(
+      'cat de bine ma simt cu alesii domnului in fiecare zi',
+      extractSearchTerms('Cât de bine mă simt cu aleşii Domnului'),
+    )
+    expect(score).toBeLessThanOrEqual(100)
+  })
+})
+
 describe('scoring - exact phrase matching across punctuation', () => {
   test('content with comma-separated words scores high for matching phrase', () => {
     // Simulates song 749's indexed content (after normalizeForIndex fix)
