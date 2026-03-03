@@ -40,13 +40,18 @@ export function parseScheduleText(text: string): ParseScheduleTextResult {
   const items: ParsedScheduleItem[] = []
   const errors: Array<{ line: number; message: string }> = []
 
-  lines.forEach((line, index) => {
+  for (let index = 0; index < lines.length; index++) {
     const lineNumber = index + 1
-    const trimmed = line.trim()
+    const trimmed = lines[index].trim()
+
+    // Stop parsing at separator — everything after is reference-only
+    if (trimmed === '---') {
+      break
+    }
 
     // Skip empty lines and comments
     if (!trimmed || trimmed.startsWith('#')) {
-      return
+      continue
     }
 
     const match = trimmed.match(SUFFIX_REGEX)
@@ -55,7 +60,7 @@ export function parseScheduleText(text: string): ParseScheduleTextResult {
         line: lineNumber,
         message: 'Invalid format. Use [S], [C], [SC], [A], [V], or [VT] suffix',
       })
-      return
+      continue
     }
 
     const [, content, suffix] = match
@@ -66,7 +71,7 @@ export function parseScheduleText(text: string): ParseScheduleTextResult {
         line: lineNumber,
         message: 'Unknown suffix',
       })
-      return
+      continue
     }
 
     const trimmedContent = content.trim()
@@ -75,7 +80,7 @@ export function parseScheduleText(text: string): ParseScheduleTextResult {
         line: lineNumber,
         message: 'Content cannot be empty',
       })
-      return
+      continue
     }
 
     // Extract song ID if present (e.g., "Song Title #123")
@@ -95,7 +100,7 @@ export function parseScheduleText(text: string): ParseScheduleTextResult {
       lineNumber,
       ...(songId !== undefined && { songId }),
     })
-  })
+  }
 
   return { items, errors }
 }
