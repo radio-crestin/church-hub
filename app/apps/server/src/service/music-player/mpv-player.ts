@@ -219,7 +219,10 @@ function handleMpvEvent(event: MpvEvent): void {
     }
   } else if (event.event === 'end-file') {
     if (event.reason === 'eof') {
-      playNext()
+      playNext().catch((err) => {
+        // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
+        console.error(LOG_PREFIX, 'Error playing next track:', err)
+      })
     }
   } else if (event.event === 'file-loaded') {
     updateState({ isPlaying: true })
@@ -316,8 +319,12 @@ export async function initializeMusicPlayer(): Promise<boolean> {
 
   mpvProcess = spawn(mpvPath, mpvArgs, {
     stdio: ['ignore', 'pipe', 'pipe'],
-    detached: false,
+    detached: true,
   })
+
+  // Detach mpv from the server's process group so signals (SIGTERM)
+  // don't propagate between them — prevents mpv crashes from killing the server
+  mpvProcess.unref()
 
   mpvProcess.stdout?.on('data', (data) => {
     // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC

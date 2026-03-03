@@ -5470,7 +5470,9 @@ async function main() {
         const file = getFileById(fileId)
         if (file) {
           setNowPlayingQueue([fileId])
+          refreshQueueState()
           await executeCommand({ type: 'play_index', index: 0 })
+          broadcastMusicState(getPlayerState())
         }
         break
       }
