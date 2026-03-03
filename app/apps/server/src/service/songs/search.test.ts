@@ -1,0 +1,113 @@
+import {
+  calculateBestPhraseScoreNormalized,
+  calculateTitleScoreNormalized,
+  extractSearchTerms,
+  getValidTerms,
+  normalizeForIndex,
+} from './search'
+import { describe, expect, test } from 'bun:test'
+
+describe('extractSearchTerms', () => {
+  test('splits comma-separated words into separate terms', () => {
+    // Bug: "Isus,Isus" was treated as single token "isus,isus" and filtered out
+    const terms = extractSearchTerms('Isus,Isus noi te aşteptăm')
+    expect(terms).toContain('isus')
+    expect(terms).toContain('noi')
+    expect(terms).toContain('te')
+    expect(terms).toContain('asteptam')
+  })
+
+  test('handles various punctuation as separators', () => {
+    expect(extractSearchTerms('word1.word2')).toEqual(['word1', 'word2'])
+    expect(extractSearchTerms('word1;word2')).toEqual(['word1', 'word2'])
+    expect(extractSearchTerms('word1!word2')).toEqual(['word1', 'word2'])
+    expect(extractSearchTerms('word1?word2')).toEqual(['word1', 'word2'])
+  })
+
+  test('removes diacritics', () => {
+    const terms = extractSearchTerms('aşteptăm')
+    expect(terms).toEqual(['asteptam'])
+  })
+
+  test('deduplicates repeated terms', () => {
+    // "Isus,Isus" should produce one "isus", not two
+    const terms = extractSearchTerms('Isus,Isus noi te aşteptăm')
+    const isusCount = terms.filter((t) => t === 'isus').length
+    expect(isusCount).toBe(1)
+  })
+})
+
+describe('getValidTerms', () => {
+  test('keeps standard word terms', () => {
+    const { validTerms } = getValidTerms(['isus', 'noi', 'te', 'asteptam'])
+    expect(validTerms).toEqual(['isus', 'noi', 'te', 'asteptam'])
+  })
+
+  test('filters out terms with punctuation', () => {
+    // After fix, this case should not occur since extractSearchTerms handles punctuation
+    // But getValidTerms should still handle it gracefully
+    const { validTerms } = getValidTerms(['isus,isus', 'noi'])
+    expect(validTerms).toEqual(['noi'])
+  })
+})
+
+describe('normalizeForIndex', () => {
+  test('replaces commas with spaces', () => {
+    // Bug: indexed content kept commas, breaking phrase matching in scoring
+    const normalized = normalizeForIndex('Isus,Isus noi te aşteptăm')
+    expect(normalized).not.toContain(',')
+    expect(normalized).toContain('Isus Isus')
+  })
+
+  test('replaces hyphens with spaces', () => {
+    const normalized = normalizeForIndex('Te-aşteptăm')
+    expect(normalized).not.toContain('-')
+  })
+
+  test('replaces other punctuation with spaces', () => {
+    const normalized = normalizeForIndex('cuvânt.alt;cuvânt')
+    expect(normalized).not.toContain('.')
+    expect(normalized).not.toContain(';')
+  })
+})
+
+describe('scoring - exact phrase matching across punctuation', () => {
+  test('content with comma-separated words scores high for matching phrase', () => {
+    // Simulates song 749's indexed content (after normalizeForIndex fix)
+    const normalizedContent = normalizeForIndex(
+      'Isus,Isus noi te aşteptăm Vino Doamne mai degrabă',
+    )
+    const queryTerms = extractSearchTerms('Isus,Isus noi te aşteptăm')
+
+    const score = calculateBestPhraseScoreNormalized(
+      normalizedContent,
+      queryTerms,
+    )
+    // Should be 100 since exact phrase is present
+    expect(score).toBe(100)
+  })
+
+  test('title "Isus Isus noi Te-asteptam" scores high for query "Isus,Isus noi te aşteptăm"', () => {
+    const normalizedTitle = normalizeForIndex('Isus Isus noi Te-asteptam')
+    const queryTerms = extractSearchTerms('Isus,Isus noi te aşteptăm')
+
+    const score = calculateTitleScoreNormalized(normalizedTitle, queryTerms)
+    // Should be 95+ since exact phrase is in title
+    expect(score).toBeGreaterThanOrEqual(95)
+  })
+
+  test('title "Noi Te aşteptăm cu dor" scores lower than full-phrase match', () => {
+    const fullMatchTitle = normalizeForIndex('Isus Isus noi Te-asteptam')
+    const partialMatchTitle = normalizeForIndex('Noi Te aşteptăm cu dor')
+    const queryTerms = extractSearchTerms('Isus,Isus noi te aşteptăm')
+
+    const fullScore = calculateTitleScoreNormalized(fullMatchTitle, queryTerms)
+    const partialScore = calculateTitleScoreNormalized(
+      partialMatchTitle,
+      queryTerms,
+    )
+
+    // Full match should score higher than partial match
+    expect(fullScore).toBeGreaterThan(partialScore)
+  })
+})
