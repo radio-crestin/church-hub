@@ -272,7 +272,7 @@ export function ScheduleItemsPanel({
     return map
   }, [items])
 
-  // Auto-expand the item when a slide from it is presented
+  // Auto-expand the presented item and collapse all others
   // Uses scheduleItemIndex to find the exact item being presented
   useEffect(() => {
     if (!presentedInfo || presentedInfo.scheduleItemIndex < 0) return
@@ -301,13 +301,16 @@ export function ScheduleItemsPanel({
       )
     })
 
-    if (presentedItem && !expanded[`${presentedItem.id}`]) {
-      setExpanded((prev) => ({
-        ...prev,
-        [`${presentedItem.id}`]: true,
-      }))
+    if (presentedItem) {
+      setExpanded(() => {
+        const next: ExpandedState = {}
+        items.forEach((item) => {
+          next[`${item.id}`] = item.id === presentedItem.id
+        })
+        return next
+      })
     }
-  }, [presentedInfo, items, expanded, itemStartFlatIndex])
+  }, [presentedInfo, items, itemStartFlatIndex])
 
   // Auto-scroll to position the previous slide at the top of the container
   useEffect(() => {

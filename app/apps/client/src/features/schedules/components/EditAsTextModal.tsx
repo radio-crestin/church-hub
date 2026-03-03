@@ -1,12 +1,10 @@
 import {
   AlertCircle,
-  Check,
-  Clipboard,
   FileText,
   Loader2,
   X,
 } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { getSelectedBibleTranslationIds } from '~/service/bible/bible'
@@ -92,7 +90,6 @@ export function EditAsTextModal({
     [],
   )
   const [plainView, setPlainView] = useState(false)
-  const [copied, setCopied] = useState(false)
 
   // Generate plain text (no markers, no comments, no song IDs)
   const plainText = useMemo(() => {
@@ -109,16 +106,6 @@ export function EditAsTextModal({
         .join('\n')
     )
   }, [text])
-
-  const handleCopy = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(plainView ? plainText : text)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    } catch {
-      // fallback
-    }
-  }, [plainView, plainText, text])
 
   // Initialize text from current items when modal opens
   useEffect(() => {
@@ -145,7 +132,6 @@ export function EditAsTextModal({
       setParsedItems([])
       setValidationErrors([])
       setPlainView(false)
-      setCopied(false)
     }
   }, [isOpen, currentItems, t])
 
@@ -583,32 +569,28 @@ export function EditAsTextModal({
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   {t('editAsText.description')}
                 </p>
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={handleCopy}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md transition-colors"
-                    title={t('editAsText.copyToClipboard')}
-                  >
-                    {copied ? (
-                      <Check className="w-3.5 h-3.5 text-green-500" />
-                    ) : (
-                      <Clipboard className="w-3.5 h-3.5" />
-                    )}
-                    {copied ? t('editAsText.copied') : t('editAsText.copy')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPlainView((v) => !v)}
-                    className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                <button
+                  type="button"
+                  onClick={() => setPlainView((v) => !v)}
+                  className="flex items-center gap-2 group"
+                >
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors">
+                    {t('editAsText.plainView')}
+                  </span>
+                  <div
+                    className={`relative w-9 h-5 rounded-full transition-colors ${
                       plainView
-                        ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300'
-                        : 'text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
+                        ? 'bg-indigo-500'
+                        : 'bg-gray-300 dark:bg-gray-600'
                     }`}
                   >
-                    {t('editAsText.plainView')}
-                  </button>
-                </div>
+                    <div
+                      className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${
+                        plainView ? 'translate-x-4' : 'translate-x-0'
+                      }`}
+                    />
+                  </div>
+                </button>
               </div>
 
               {plainView ? (
