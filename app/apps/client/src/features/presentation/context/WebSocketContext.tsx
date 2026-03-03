@@ -124,6 +124,7 @@ interface MusicStateMessage {
       artist?: string
       duration?: number
     }>
+    error: string | null
     updatedAt: number
   }
 }

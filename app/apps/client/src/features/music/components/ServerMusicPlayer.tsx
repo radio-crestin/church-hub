@@ -1,4 +1,4 @@
-import { Shuffle, Trash2 } from 'lucide-react'
+import { AlertTriangle, Shuffle, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { MpvInstallGuide } from './MpvInstallGuide'
@@ -64,6 +64,12 @@ export function Player({
           <MpvInstallGuide
             installInstructions={mpvStatus?.installInstructions}
           />
+        </div>
+      )}
+      {state.error && (
+        <div className="mx-3 sm:mx-4 mt-3 flex items-start gap-2 rounded-md bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-700 dark:text-red-400">
+          <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+          <span>{state.error}</span>
         </div>
       )}
       <div className="p-3 sm:p-4 space-y-4 flex-shrink-0">

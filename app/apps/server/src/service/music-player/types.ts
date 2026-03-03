@@ -18,6 +18,7 @@ export interface MusicPlayerState {
   queueLength: number
   currentTrack: CurrentTrack | null
   queue: QueueItemSummary[]
+  error: string | null
   updatedAt: number
 }
 

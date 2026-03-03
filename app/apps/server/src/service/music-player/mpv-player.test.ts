@@ -43,6 +43,28 @@ describe('mpv-player', () => {
       expect(sourceFile).toContain("event.event === 'end-file'")
       expect(sourceFile).toContain("event.event === 'file-loaded'")
     })
+
+    test('end-file error should set error state', async () => {
+      const sourceFile = await Bun.file(
+        `${import.meta.dir}/mpv-player.ts`,
+      ).text()
+
+      // Verify end-file with reason 'error' is handled
+      expect(sourceFile).toContain("event.reason === 'error'")
+      // Verify error state is set with a message
+      expect(sourceFile).toMatch(/updateState\(\{[^}]*error:/)
+    })
+
+    test('file-loaded should clear error state', async () => {
+      const sourceFile = await Bun.file(
+        `${import.meta.dir}/mpv-player.ts`,
+      ).text()
+
+      // Verify file-loaded clears the error
+      expect(sourceFile).toContain(
+        'updateState({ isPlaying: true, error: null })',
+      )
+    })
   })
 
   describe('executeCommand', () => {
