@@ -942,29 +942,38 @@ function createFuzzyHighlightedSnippet(
   // Sort matches by position, then by length (longer matches first)
   matches.sort((a, b) => a.start - b.start || b.length - a.length)
 
-  // Merge overlapping matches - keep longer ones, remove shorter overlapping
+  // Merge overlapping and adjacent matches (separated only by whitespace)
+  // This produces continuous highlights for phrases like "Sa ne speli de orice pacat"
   const mergedMatches: Array<{ start: number; end: number }> = []
   for (const match of matches) {
-    const overlaps = mergedMatches.some(
-      (m) => match.start < m.end && match.end > m.start,
-    )
-    if (!overlaps) {
+    const adjacent = mergedMatches.find((m) => {
+      if (match.start < m.end && match.end > m.start) return true // overlapping
+      const gap =
+        match.start >= m.end
+          ? plainContent.substring(m.end, match.start)
+          : plainContent.substring(match.end, m.start)
+      return gap.length > 0 && gap.trim() === '' // only whitespace between
+    })
+    if (adjacent) {
+      adjacent.start = Math.min(adjacent.start, match.start)
+      adjacent.end = Math.max(adjacent.end, match.end)
+    } else {
       mergedMatches.push({ start: match.start, end: match.end })
     }
   }
 
-  // Find the best snippet window (area with most matches)
+  // Find the best snippet window (area with most highlighted characters)
   let bestStart = 0
-  let bestMatchCount = 0
+  let bestHighlightChars = 0
 
   for (const match of mergedMatches) {
     const windowStart = Math.max(0, match.start - 30)
     const windowEnd = windowStart + maxLength
-    const matchesInWindow = mergedMatches.filter(
-      (m) => m.start >= windowStart && m.end <= windowEnd,
-    ).length
-    if (matchesInWindow > bestMatchCount) {
-      bestMatchCount = matchesInWindow
+    const highlightChars = mergedMatches
+      .filter((m) => m.start >= windowStart && m.end <= windowEnd)
+      .reduce((sum, m) => sum + (m.end - m.start), 0)
+    if (highlightChars > bestHighlightChars) {
+      bestHighlightChars = highlightChars
       bestStart = windowStart
     }
   }
