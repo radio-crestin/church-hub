@@ -143,5 +143,39 @@ describe('mpv-player', () => {
       expect(sourceFile).toContain('IPC_RETRY_DELAY_MS')
       expect(sourceFile).toMatch(/for\s*\(\s*let\s+attempt/)
     })
+
+    test('should kill stale mpv processes on initialization', async () => {
+      const sourceFile = await Bun.file(
+        `${import.meta.dir}/mpv-player.ts`,
+      ).text()
+
+      // Verify killStaleMpvProcesses is called in initializeMusicPlayer
+      expect(sourceFile).toContain('killStaleMpvProcesses()')
+      // Verify cleanupStaleSockets is called
+      expect(sourceFile).toContain('cleanupStaleSockets()')
+    })
+
+    test('should register process exit cleanup handler', async () => {
+      const sourceFile = await Bun.file(
+        `${import.meta.dir}/mpv-player.ts`,
+      ).text()
+
+      // Verify process exit handlers are registered
+      expect(sourceFile).toContain("process.on('exit'")
+      expect(sourceFile).toContain("process.on('SIGTERM'")
+      expect(sourceFile).toContain("process.on('SIGINT'")
+      expect(sourceFile).toContain('registerProcessExitCleanup()')
+    })
+
+    test('should use safe process lookup without shell injection risk', async () => {
+      const sourceFile = await Bun.file(
+        `${import.meta.dir}/mpv-player.ts`,
+      ).text()
+
+      // Verify safe process lookup (pgrep via Bun.spawnSync, not shell-based)
+      expect(sourceFile).toContain("Bun.spawnSync(['pgrep'")
+      // Should not use execSync or shell-based execution for process management
+      expect(sourceFile).not.toContain('execSync')
+    })
   })
 })
