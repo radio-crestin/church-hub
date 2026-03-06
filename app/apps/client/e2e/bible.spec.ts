@@ -2,17 +2,32 @@ import { expect, type Page, test } from '@playwright/test'
 
 /**
  * Helper: perform a text search and wait for results to appear.
+ * In CI, the Bible FTS index is rebuilt asynchronously after server start,
+ * so we retry the search if it initially returns no results.
  */
 async function searchBible(page: Page, query: string) {
   const searchInput = page.getByPlaceholder(/search|cauta|căuta/i).first()
   await expect(searchInput).toBeVisible({ timeout: 5000 })
-  await searchInput.fill(query)
-  await page.keyboard.press('Enter')
 
-  // Wait for results to appear (Romanian: "N versete gasite", English: "N verses found")
-  await expect(
-    page.locator('text=/\\d+ (versete? gasi(t|te)|verses? found)/i'),
-  ).toBeVisible({ timeout: 10000 })
+  const resultsCountLocator = page.locator(
+    'text=/\\d+ (versete? gasi(t|te)|verses? found)/i',
+  )
+
+  // Retry search up to 3 times — FTS index may still be building in CI
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await searchInput.fill(query)
+    await page.keyboard.press('Enter')
+
+    try {
+      await expect(resultsCountLocator).toBeVisible({ timeout: 15000 })
+      return searchInput
+    } catch {
+      if (attempt === 2) throw new Error('Bible search returned no results after 3 attempts')
+      // Clear search and retry — FTS index may not be ready yet
+      await searchInput.fill('')
+      await page.waitForTimeout(3000)
+    }
+  }
 
   return searchInput
 }
