@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 
 test.describe('Application Health', () => {
   test('app loads successfully', async ({ page }) => {
-    const response = await page.goto('/')
+    const response = await page.goto('/', { waitUntil: 'domcontentloaded' })
     expect(response?.status()).toBe(200)
   })
 

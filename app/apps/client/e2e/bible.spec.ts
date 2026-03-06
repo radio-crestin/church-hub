@@ -9,9 +9,9 @@ async function searchBible(page: Page, query: string) {
   await searchInput.fill(query)
   await page.keyboard.press('Enter')
 
-  // Wait for results to appear
+  // Wait for results to appear (Romanian: "N versete gasite", English: "N verses found")
   await expect(
-    page.locator('text=/\\d+ versete gasite|\\d+ results/i'),
+    page.locator('text=/\\d+ (versete? gasi(t|te)|verses? found)/i'),
   ).toBeVisible({ timeout: 10000 })
 
   return searchInput
