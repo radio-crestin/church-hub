@@ -83,17 +83,23 @@ jobs:
         shell: bash
         run: |
           VERSION=${GITHUB_REF#refs/tags/v}
+          # MSI requires numeric-only pre-release identifiers
+          # Strip non-numeric pre-release (e.g., "0.1.46-beta.2" -> "0.1.46")
+          TAURI_VERSION=$(echo "$VERSION" | sed 's/-[^0-9].*//')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Building version: $VERSION"
+          echo "tauri_version=$TAURI_VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION (tauri: $TAURI_VERSION)"
 
       - name: Update version in tauri.conf.json
         shell: bash
+        env:
+          TAURI_VERSION: ${{ steps.version.outputs.tauri_version }}
         run: |
           cd app/tauri
           if [[ "$RUNNER_OS" == "Windows" ]]; then
-            powershell -Command "(Get-Content tauri.conf.json) -replace '\"version\": \"[^\"]*\"', '\"version\": \"${{ steps.version.outputs.version }}\"' | Set-Content tauri.conf.json"
+            powershell -Command "(Get-Content tauri.conf.json) -replace '\"version\": \"[^\"]*\"', '\"version\": \"$TAURI_VERSION\"' | Set-Content tauri.conf.json"
           else
-            sed -i.bak 's/"version": "[^"]*"/"version": "${{ steps.version.outputs.version }}"/' tauri.conf.json
+            sed -i.bak "s/\"version\": \"[^\"]*\"/\"version\": \"$TAURI_VERSION\"/" tauri.conf.json
             rm -f tauri.conf.json.bak
           fi
 
