@@ -24,6 +24,7 @@ export {
   searchSongs,
   updateSearchIndex,
   updateSearchIndexByCategory,
+  warmupSearchIndex,
 } from './search'
 // Song Slides
 export {

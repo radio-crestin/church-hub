@@ -795,7 +795,7 @@ function SearchResults({
                 )}
               </div>
               <div
-                className="text-sm text-gray-700 dark:text-gray-200"
+                className="text-sm text-gray-700 dark:text-gray-200 [&_mark]:bg-yellow-300 [&_mark]:dark:bg-yellow-400/60 [&_mark]:rounded-sm [&_mark]:px-0.5"
                 dangerouslySetInnerHTML={{
                   __html: isSearchResult
                     ? searchResult.highlightedText

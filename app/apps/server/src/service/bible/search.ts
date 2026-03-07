@@ -34,6 +34,12 @@ const preparedStatements: PreparedStatements = {
 function getSearchStatement(withTranslation: boolean): Statement {
   const rawDb = getRawDatabase()
 
+  // Use a subquery to rank FTS results first, then JOIN only the top matches.
+  // This avoids the performance trap where SQLite JOINs ALL FTS matches
+  // before sorting/limiting, which is ~50x slower (~460ms vs ~10ms).
+  // We fetch more candidates (limit * 5) from FTS to account for filtering
+  // by translationId, then apply the final LIMIT after the JOIN.
+
   if (withTranslation) {
     if (!preparedStatements.searchWithTranslation) {
       preparedStatements.searchWithTranslation = rawDb.prepare(`
@@ -46,12 +52,17 @@ function getSearchStatement(withTranslation: boolean): Statement {
           v.chapter,
           v.verse,
           v.text
-        FROM bible_verses_fts fts
-        JOIN bible_verses v ON v.id = fts.rowid
-        JOIN bible_books b ON b.id = v.book_id
-        WHERE bible_verses_fts MATCH $query
+        FROM (
+          SELECT rowid AS rid, bm25(bible_verses_fts) AS rank
+          FROM bible_verses_fts
+          WHERE bible_verses_fts MATCH $query
+          ORDER BY bm25(bible_verses_fts)
+          LIMIT $limit * 5
+        ) fts
+        JOIN bible_verses v ON v.id = fts.rid
           AND v.translation_id = $translationId
-        ORDER BY bm25(bible_verses_fts)
+        JOIN bible_books b ON b.id = v.book_id
+        ORDER BY fts.rank
         LIMIT $limit
       `)
     }
@@ -69,11 +80,16 @@ function getSearchStatement(withTranslation: boolean): Statement {
         v.chapter,
         v.verse,
         v.text
-      FROM bible_verses_fts fts
-      JOIN bible_verses v ON v.id = fts.rowid
+      FROM (
+        SELECT rowid AS rid, bm25(bible_verses_fts) AS rank
+        FROM bible_verses_fts
+        WHERE bible_verses_fts MATCH $query
+        ORDER BY bm25(bible_verses_fts)
+        LIMIT $limit * 5
+      ) fts
+      JOIN bible_verses v ON v.id = fts.rid
       JOIN bible_books b ON b.id = v.book_id
-      WHERE bible_verses_fts MATCH $query
-      ORDER BY bm25(bible_verses_fts)
+      ORDER BY fts.rank
       LIMIT $limit
     `)
   }
@@ -137,23 +153,23 @@ function setInCache(key: string, results: BibleSearchResult[]): void {
 // ============================================================================
 
 /**
- * Generates FTS query with AND semantics for multi-word queries
- * Uses prefix matching for partial word matches (e.g., "ca" matches "care")
- * For multiple words, uses NEAR/10 for proximity matching to avoid matching
- * thousands of verses that would freeze the UI
+ * Generates FTS query with implicit AND semantics for multi-word queries.
+ * Only the LAST word gets prefix matching (the word still being typed).
+ * Previous words are treated as exact terms since the user finished typing them.
+ * This avoids the FTS5 performance trap where prefix expansion on multiple words
+ * causes queries to take seconds instead of milliseconds.
  */
 function generateFuzzyFtsQuery(words: string[]): string {
-  // For FTS5, use prefix matching with * which handles partial matches
-  const ftsTerms = words.map((w) => `${w}*`)
-
-  if (ftsTerms.length === 1) {
-    return ftsTerms[0]
+  if (words.length === 1) {
+    // Single word: always use prefix matching (user is still typing)
+    return `${words[0]}*`
   }
 
-  // For multiple words, use NEAR proximity operator (implicit AND within proximity window)
-  // This prevents OR from matching thousands of unrelated verses
-  // NEAR/10 means all words must appear within 10 tokens of each other
-  return `NEAR(${ftsTerms.join(' ')}, 10)`
+  // Multiple words: exact match for completed words, prefix only on the last word
+  // FTS5 implicit AND is used (terms separated by spaces)
+  const completed = words.slice(0, -1)
+  const lastWord = words[words.length - 1]
+  return [...completed, `${lastWord}*`].join(' ')
 }
 
 /**
@@ -344,21 +360,56 @@ export function searchByReference(
  * Generates highlighted text by wrapping matching terms in <mark> tags
  * Done in JS to avoid expensive SQLite highlight() function
  */
+/**
+ * Builds a regex pattern where each character also matches its diacritical variants.
+ * e.g., "a" matches "a", "ă", "â" so that a diacritic-stripped search word
+ * highlights the original text that contains diacritics.
+ */
+function buildDiacriticInsensitivePattern(word: string): string {
+  const diacriticMap: Record<string, string> = {
+    a: '[aăâ]',
+    i: '[iî]',
+    s: '[sș]',
+    t: '[tț]',
+  }
+  return word
+    .split('')
+    .map((ch) => {
+      const lower = ch.toLowerCase()
+      if (diacriticMap[lower]) return diacriticMap[lower]
+      return ch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    })
+    .join('')
+}
+
 function generateHighlightedText(text: string, searchWords: string[]): string {
   if (!searchWords.length) return text
 
-  let result = text
+  // Build patterns: first try the full phrase (all words joined by whitespace),
+  // then individual words >= 2 chars. Single-char words only participate in the
+  // phrase pattern to avoid highlighting every "a" or "o" in the text.
+  const patterns: string[] = []
+  const wordSuffix = '[a-zA-ZăâîșțĂÂÎȘȚ]*'
 
-  for (const word of searchWords) {
-    if (word.length < 2) continue
-    // Create pattern that matches the word (with prefix matching already handled by FTS)
-    // Use word boundary or start of string to avoid partial matches within words
-    const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    const pattern = new RegExp(`(${escapedWord}[a-zA-ZăâîșțĂÂÎȘȚ]*)`, 'gi')
-    result = result.replace(pattern, '<mark>$1</mark>')
+  // Full phrase pattern: matches all search words separated by whitespace
+  if (searchWords.length > 1) {
+    const phrasePattern = searchWords
+      .map((w) => buildDiacriticInsensitivePattern(w))
+      .join('\\s+')
+    // Allow the last word to match as a prefix (user may still be typing)
+    patterns.push(`${phrasePattern}${wordSuffix}`)
   }
 
-  return result
+  // Individual word patterns (only words >= 2 chars to avoid noisy single-char matches)
+  for (const word of searchWords) {
+    if (word.length < 2) continue
+    const diacriticPattern = buildDiacriticInsensitivePattern(word)
+    patterns.push(`${diacriticPattern}${wordSuffix}`)
+  }
+
+  // Combine all patterns with OR, longest first (phrase before individual words)
+  const combined = new RegExp(`(${patterns.join('|')})`, 'gi')
+  return text.replace(combined, '<mark>$1</mark>')
 }
 
 /**
@@ -388,22 +439,14 @@ export function searchVersesByText(
   input: SearchVersesInput,
 ): BibleSearchResult[] {
   const startTime = performance.now()
-  const { query, translationId, limit = 30 } = input
+  const { query, translationId, limit: rawLimit = 30 } = input
+  const limit = Math.min(Math.max(1, rawLimit), 100)
 
   if (!query || query.trim().length < 2) {
     return []
   }
 
-  // Check cache first (before any processing)
-  const cacheKey = getCacheKey(query, translationId, limit)
-  const cachedResults = getFromCache(cacheKey)
-  if (cachedResults) {
-    log('debug', `Cache hit for: "${query}" (${cachedResults.length} results)`)
-    return cachedResults
-  }
-
-  // Escape special FTS characters and prepare for FTS5 query
-  // Also remove diacritics to match the FTS index tokenizer settings
+  // Normalize query for cache key consistency (trim, remove diacritics)
   const sanitizedQuery = removeDiacritics(query)
     .replace(/['"]/g, '')
     .replace(/[*()]/g, ' ')
@@ -413,8 +456,23 @@ export function searchVersesByText(
     return []
   }
 
-  // Split into words for fuzzy matching
-  const words = sanitizedQuery.split(/\s+/).filter((w) => w.length >= 1)
+  // Use sanitized query for cache key so "O zi Isus " and "O zi Isus" hit the same cache
+  const cacheKey = getCacheKey(sanitizedQuery, translationId, limit)
+  const cachedResults = getFromCache(cacheKey)
+  if (cachedResults) {
+    log('debug', `Cache hit for: "${query}" (${cachedResults.length} results)`)
+    return cachedResults
+  }
+
+  // All words for highlighting (including short ones like "a", "o")
+  const allWords = sanitizedQuery.split(/\s+/).filter(Boolean)
+  // Filter out single-character words for FTS queries only (common articles like "o", "a"
+  // cause prefix queries like "o*" to match thousands of words and are extremely slow in FTS5)
+  const words = allWords.filter((w) => w.length >= 2)
+
+  if (words.length === 0) {
+    return []
+  }
 
   // Generate fuzzy FTS query
   const ftsQuery = generateFuzzyFtsQuery(words)
@@ -458,7 +516,7 @@ export function searchVersesByText(
       verse: r.verse,
       text: r.text,
       reference: formatReference(r.book_name, r.chapter, r.verse),
-      highlightedText: generateHighlightedText(r.text, words),
+      highlightedText: generateHighlightedText(r.text, allWords),
     }))
 
     // Cache results for future queries
@@ -545,6 +603,24 @@ export function updateSearchIndex(translationId: number): void {
 }
 
 /**
+ * Warms up the FTS index by running a cheap query that forces SQLite
+ * to load the index pages from disk into the OS page cache.
+ * Without this, the first user search takes ~1s instead of ~2ms.
+ */
+export function warmupSearchIndex(): void {
+  const startTime = performance.now()
+  try {
+    const rawDb = getRawDatabase()
+    // COUNT(*) forces SQLite to scan the FTS index, loading pages into OS cache
+    rawDb.run('SELECT COUNT(*) FROM bible_verses_fts')
+  } catch {
+    // FTS table might not exist yet, that's fine
+  }
+  const elapsed = performance.now() - startTime
+  log('info', `FTS index warmup completed in ${elapsed.toFixed(1)}ms`)
+}
+
+/**
  * Rebuilds the entire Bible FTS index
  * Uses raw SQL for FTS operations (not supported by Drizzle)
  */
@@ -553,32 +629,25 @@ export function rebuildSearchIndex(): void {
 
   log('info', 'Rebuilding entire Bible FTS index')
 
-  // For FTS5 tables with external content (content=bible_verses),
-  // use the 'rebuild' command which re-reads from the content table
-  try {
-    rawDb.run(
-      "INSERT INTO bible_verses_fts(bible_verses_fts) VALUES('rebuild')",
+  // Always drop and recreate the FTS table to ensure the correct tokenizer
+  // config is applied (e.g., remove_diacritics 2 for accent-insensitive search)
+  rawDb.run('DROP TABLE IF EXISTS bible_verses_fts')
+  rawDb.run(`
+    CREATE VIRTUAL TABLE bible_verses_fts USING fts5(
+      text,
+      content=bible_verses,
+      content_rowid=id,
+      tokenize='unicode61 remove_diacritics 2'
     )
-  } catch (error) {
-    // If rebuild fails (e.g., table doesn't exist or is corrupted), recreate it
-    log('warning', `FTS rebuild command failed, recreating table: ${error}`)
+  `)
 
-    // Drop and recreate the FTS table
-    rawDb.run('DROP TABLE IF EXISTS bible_verses_fts')
-    rawDb.run(`
-      CREATE VIRTUAL TABLE bible_verses_fts USING fts5(
-        text,
-        content=bible_verses,
-        content_rowid=id,
-        tokenize='unicode61 remove_diacritics 2'
-      )
-    `)
+  // Rebuild from content table
+  rawDb.run(
+    "INSERT INTO bible_verses_fts(bible_verses_fts) VALUES('rebuild')",
+  )
 
-    // Now rebuild
-    rawDb.run(
-      "INSERT INTO bible_verses_fts(bible_verses_fts) VALUES('rebuild')",
-    )
-  }
+  // Invalidate prepared statements since table was recreated
+  invalidatePreparedStatements()
 
   // Clear cache since index changed
   clearSearchCache()

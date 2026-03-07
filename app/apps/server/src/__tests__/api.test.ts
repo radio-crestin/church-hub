@@ -223,4 +223,58 @@ describe('Presentation API', () => {
     expect(json).toHaveProperty('data')
     expect(Array.isArray(json.data)).toBe(true)
   })
+
+  test('clearing temporary content sets isHidden to true', async () => {
+    // First, create a song to present (use timestamp for unique title)
+    const testTitle = `__test_clear_temp_${Date.now()}__`
+    const createRes = await fetch(`${BASE_URL}/api/songs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: testTitle,
+        slides: [{ content: '<p>Test slide</p>', sortOrder: 0 }],
+      }),
+    })
+    expect(createRes.ok).toBe(true)
+    const createJson = await createRes.json()
+    const songId = createJson.data.id
+
+    try {
+      // Present the song as temporary content
+      const presentRes = await fetch(
+        `${BASE_URL}/api/presentation/temporary-song`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ songId, slideIndex: 0 }),
+        },
+      )
+      expect(presentRes.status).toBe(200)
+      const presentJson = await presentRes.json()
+      expect(presentJson.data.isHidden).toBe(false)
+      expect(presentJson.data.temporaryContent).not.toBeNull()
+
+      // Clear temporary content (this is what ESC triggers)
+      const clearRes = await fetch(
+        `${BASE_URL}/api/presentation/clear-temporary`,
+        { method: 'POST' },
+      )
+      expect(clearRes.status).toBe(200)
+      const clearJson = await clearRes.json()
+
+      // isHidden must be true so the exit animation triggers cleanly
+      // (prevents the hide/show/hide flicker bug)
+      expect(clearJson.data.isHidden).toBe(true)
+      expect(clearJson.data.temporaryContent).toBeNull()
+
+      // Verify state is persisted correctly
+      const stateRes = await fetch(`${BASE_URL}/api/presentation/state`)
+      const stateJson = await stateRes.json()
+      expect(stateJson.data.isHidden).toBe(true)
+      expect(stateJson.data.temporaryContent).toBeNull()
+    } finally {
+      // Clean up: delete the test song
+      await fetch(`${BASE_URL}/api/songs/${songId}`, { method: 'DELETE' })
+    }
+  })
 })

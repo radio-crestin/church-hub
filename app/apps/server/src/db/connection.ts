@@ -1,5 +1,6 @@
-import { mkdir } from 'node:fs/promises'
-import { dirname } from 'node:path'
+import { existsSync, readdirSync, unlinkSync } from 'node:fs'
+import { copyFile, mkdir } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
 import { type BunSQLiteDatabase, drizzle } from 'drizzle-orm/bun-sqlite'
 
 import { type MigrationResult, runMigrations } from './migrations'
@@ -27,6 +28,111 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
   console.log(`[db:${level}] ${message}`)
 }
 
+const MAX_VERSION_BACKUPS = 3
+const VERSION_BACKUP_PATTERN = /^app-v(.+)\.db$/
+
+/**
+ * Creates a versioned database backup before migrations run.
+ * On first launch of a new version, copies the current app.db to app-v{version}.db.
+ * Keeps only the latest MAX_VERSION_BACKUPS versioned files, deleting older ones.
+ */
+function getAppVersion(): string | null {
+  if (process.env.APP_VERSION) return process.env.APP_VERSION
+
+  // Fallback: read version from tauri.conf.json (dev mode)
+  try {
+    // This file is at: apps/server/src/db/connection.ts
+    // Monorepo root is at: ../../../../ (apps/server/src/db -> app/)
+    // tauri.conf.json is at: app/tauri/tauri.conf.json
+    const tauriConfPath = join(
+      import.meta.dir,
+      '..',
+      '..',
+      '..',
+      '..',
+      'tauri',
+      'tauri.conf.json',
+    )
+    const content = require('node:fs').readFileSync(tauriConfPath, 'utf8')
+    const conf = JSON.parse(content)
+    return conf.version || null
+  } catch {
+    return null
+  }
+}
+
+async function createVersionBackup(dbPath: string): Promise<void> {
+  const version = getAppVersion()
+  if (!version) {
+    log('debug', 'Could not determine app version, skipping version backup')
+    return
+  }
+
+  const dbDir = dirname(dbPath)
+  const versionedFile = join(dbDir, `app-v${version}.db`)
+
+  // If this version's backup already exists, nothing to do
+  if (existsSync(versionedFile)) {
+    log('debug', `Version backup already exists: ${versionedFile}`)
+    cleanupOldVersionBackups(dbDir)
+    return
+  }
+
+  // Copy current database (if it exists) to the versioned backup
+  if (existsSync(dbPath)) {
+    try {
+      // Checkpoint WAL to ensure the main db file is up-to-date
+      const tempDb = new Database(dbPath, { readonly: true })
+      try {
+        tempDb.run('PRAGMA wal_checkpoint(TRUNCATE)')
+      } catch {
+        // WAL checkpoint may fail if no WAL exists — that's fine
+      }
+      tempDb.close()
+
+      await copyFile(dbPath, versionedFile)
+      log('info', `Created version backup: app-v${version}.db`)
+    } catch (err) {
+      log('warning', `Failed to create version backup: ${err}`)
+    }
+  } else {
+    log('debug', 'No existing database to back up (fresh install)')
+  }
+
+  cleanupOldVersionBackups(dbDir)
+}
+
+/**
+ * Removes old versioned backups, keeping only the latest MAX_VERSION_BACKUPS.
+ * Sorts by file modification time (most recent first).
+ */
+function cleanupOldVersionBackups(dbDir: string): void {
+  try {
+    const files = readdirSync(dbDir)
+      .filter((f) => VERSION_BACKUP_PATTERN.test(f))
+      .map((f) => ({
+        name: f,
+        path: join(dbDir, f),
+        mtime: Bun.file(join(dbDir, f)).lastModified,
+      }))
+      .sort((a, b) => b.mtime - a.mtime)
+
+    if (files.length <= MAX_VERSION_BACKUPS) return
+
+    for (const file of files.slice(MAX_VERSION_BACKUPS)) {
+      log('info', `Removing old version backup: ${file.name}`)
+      unlinkSync(file.path)
+      // Also remove WAL/SHM files if they exist
+      for (const suffix of ['-wal', '-shm']) {
+        const sideFile = `${file.path}${suffix}`
+        if (existsSync(sideFile)) unlinkSync(sideFile)
+      }
+    }
+  } catch (err) {
+    log('warning', `Failed to clean up old version backups: ${err}`)
+  }
+}
+
 /**
  * Initializes the SQLite database connection with Drizzle ORM
  * Creates the data directory if it doesn't exist
@@ -50,6 +156,11 @@ export async function initializeDatabase(): Promise<InitializeResult> {
     logTiming('db_mkdir', t)
     log('debug', `Data directory ensured: ${dbDir}`)
 
+    // Create versioned backup before migrations modify the database
+    t = performance.now()
+    await createVersionBackup(DATABASE_PATH)
+    logTiming('db_version_backup', t)
+
     // Create database connection using Bun's built-in SQLite
     t = performance.now()
     sqlite = new Database(DATABASE_PATH, { create: true })
@@ -62,8 +173,9 @@ export async function initializeDatabase(): Promise<InitializeResult> {
     // Enable foreign keys
     sqlite.run('PRAGMA foreign_keys = ON')
 
-    // Set busy timeout to 10 seconds to prevent deadlocks
-    sqlite.run('PRAGMA busy_timeout = 10000')
+    // Set busy timeout to 15 seconds so queries waiting for a lock
+    // will retry rather than fail immediately
+    sqlite.run('PRAGMA busy_timeout = 15000')
 
     // RAM optimizations for better performance on slow machines
     // 64MB page cache (negative value = KB)
@@ -74,6 +186,9 @@ export async function initializeDatabase(): Promise<InitializeResult> {
     sqlite.run('PRAGMA mmap_size = 268435456')
     // NORMAL sync is safe with WAL and faster than FULL
     sqlite.run('PRAGMA synchronous = NORMAL')
+    // Allow readers to proceed without acquiring shared locks, so SELECT
+    // queries never block writes and long writes never block reads
+    sqlite.run('PRAGMA read_uncommitted = ON')
 
     logTiming('sqlite_pragma', t)
 

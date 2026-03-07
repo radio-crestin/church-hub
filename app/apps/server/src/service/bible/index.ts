@@ -22,6 +22,7 @@ export {
   parseReference,
   rebuildSearchIndex,
   searchBible,
+  warmupSearchIndex,
   searchByReference,
   searchVersesByText,
   updateSearchIndex,

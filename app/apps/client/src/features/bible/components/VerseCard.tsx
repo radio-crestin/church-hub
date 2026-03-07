@@ -36,7 +36,7 @@ export function VerseCard({
             {reference}
           </h3>
           <p
-            className="mt-1 text-gray-600 dark:text-gray-300 text-sm line-clamp-3"
+            className="mt-1 text-gray-600 dark:text-gray-300 text-sm line-clamp-3 [&_mark]:bg-yellow-300 [&_mark]:dark:bg-yellow-400/60 [&_mark]:rounded-sm [&_mark]:px-0.5"
             dangerouslySetInnerHTML={{
               __html: highlightedText || verse.text,
             }}

@@ -72,6 +72,7 @@ import {
   rebuildSearchIndex as rebuildBibleSearchIndex,
   type SearchVersesInput,
   searchBible,
+  warmupSearchIndex as warmupBibleSearchIndex,
 } from './service/bible'
 import {
   type AddToHistoryInput,
@@ -212,12 +213,12 @@ import {
   deleteSong,
   deleteSongSlide,
   deleteSongsByIds,
-  getSongSlideById,
   deleteUncategorizedSongs,
   getAllCategories,
   getAllSongs,
   getAllSongsWithSlides,
   getSongByTitle,
+  getSongSlideById,
   getSongsPaginated,
   getSongWithSlides,
   prepareForSongReplacement,
@@ -236,6 +237,7 @@ import {
   updateSearchIndex,
   updateSearchIndexByCategory,
   upsertCategory,
+  warmupSearchIndex as warmupSongsSearchIndex,
   upsertSong,
   upsertSongSlide,
 } from './service/songs'
@@ -266,6 +268,69 @@ const startupStart = performance.now()
 const logTiming = (label: string, start: number) => {
   // biome-ignore lint/suspicious/noConsole: Startup timing logs
   console.log(`[startup] ${label}: ${(performance.now() - start).toFixed(1)}ms`)
+}
+
+/**
+ * Starts Bun.serve with retry logic for EADDRINUSE errors.
+ * Handles ghost PIDs on Windows where the OS needs time to release the port.
+ */
+async function serveWithRetry<T>(
+  options: Parameters<typeof Bun.serve<T>>[0],
+  maxRetries = 10,
+  delayMs = 1000,
+): Promise<ReturnType<typeof Bun.serve<T>>> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return Bun.serve<T>(options)
+    } catch (error) {
+      const isPortConflict =
+        error instanceof Error &&
+        (('code' in error &&
+          (error as NodeJS.ErrnoException).code === 'EADDRINUSE') ||
+          error.message?.includes('Is port'))
+
+      if (isPortConflict && attempt < maxRetries) {
+        // biome-ignore lint/suspicious/noConsole: Startup retry logging
+        console.log(
+          `[startup] Port in use, retrying in ${delayMs}ms... (${attempt}/${maxRetries})`,
+        )
+        await new Promise((r) => setTimeout(r, delayMs))
+        continue
+      }
+      throw error
+    }
+  }
+  // Unreachable, but TypeScript needs it
+  throw new Error('serveWithRetry: exhausted retries')
+}
+
+/**
+ * Waits for a port to become available, retrying up to maxRetries times.
+ * Handles ghost PIDs on Windows where the process is gone but the binding lingers.
+ */
+async function waitForPortAvailable(
+  port: number,
+  maxRetries = 6,
+  delayMs = 500,
+): Promise<void> {
+  const net = await import('node:net')
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const inUse = await new Promise<boolean>((resolve) => {
+      const srv = net.createServer()
+      srv.once('error', () => resolve(true))
+      srv.once('listening', () => {
+        srv.close()
+        resolve(false)
+      })
+      srv.listen(port, '127.0.0.1')
+    })
+    if (!inUse) return
+    // biome-ignore lint/suspicious/noConsole: Startup info
+    console.log(
+      `[startup] Port ${port} still in use, waiting... (${attempt}/${maxRetries})`,
+    )
+    await new Promise((r) => setTimeout(r, delayMs))
+  }
 }
 
 /**
@@ -334,15 +399,10 @@ async function main() {
   // biome-ignore lint/suspicious/noConsole: Startup timing logs
   console.log('[startup] === Server Starting ===')
 
-  // Kill any existing process on the server port to avoid EADDRINUSE
-  // Only do this in production (Tauri) mode, not in dev mode with watch
-  // In dev mode, the watch runner handles restarts gracefully
-  const isProduction = process.env.NODE_ENV === 'production'
-  const isTauri = process.env.TAURI_MODE === 'true'
-  if (isProduction || isTauri) {
-    const serverPort = Number(process.env['PORT']) || 3000
-    killProcessOnPort(serverPort)
-  }
+  // Kill any existing process on the server port and wait for it to be free
+  const serverPort = Number(process.env['PORT']) || 3000
+  killProcessOnPort(serverPort)
+  await waitForPortAvailable(serverPort)
 
   // Initialize database (Drizzle ORM wrapper) and run migrations
   let t = performance.now()
@@ -350,6 +410,12 @@ async function main() {
   logTiming('database_init', t)
 
   // Note: Search index rebuild is deferred to after server starts (if ftsRecreated is true)
+
+  // Warm up FTS indexes so first user search is fast (loads index pages from disk into OS cache)
+  t = performance.now()
+  warmupBibleSearchIndex()
+  warmupSongsSearchIndex()
+  logTiming('fts_warmup', t)
 
   // Clear the displayed slide on startup to ensure a clean state
   t = performance.now()
@@ -447,9 +513,10 @@ async function main() {
     )
   })
 
-  const server = Bun.serve<WebSocketData>({
+  const server = await serveWithRetry<WebSocketData>({
     port: process.env['PORT'] ?? 3000,
     hostname: '0.0.0.0',
+    reusePort: true,
     error(error) {
       // biome-ignore lint/suspicious/noConsole: error logging
       console.error('[SERVER ERROR] Fetch handler error:', error)
@@ -3984,7 +4051,9 @@ async function main() {
         // Broadcast song update so LivePreview syncs in real-time
         if (slideToDelete) {
           broadcastSongUpdated(slideToDelete.songId)
-          const refreshedState = refreshPresentedSongSlides(slideToDelete.songId)
+          const refreshedState = refreshPresentedSongSlides(
+            slideToDelete.songId,
+          )
           if (refreshedState) {
             broadcastPresentationState(refreshedState)
           }
