@@ -219,6 +219,14 @@ jobs:
         working-directory: app
         run: bun install --frozen-lockfile
 
+      - name: Run unit tests
+        working-directory: app
+        run: bun run test:unit
+
+      - name: Run server integration tests
+        working-directory: app
+        run: bun run test:server
+
       - name: Cache frontend build
         uses: actions/cache@v4
         id: frontend-cache
