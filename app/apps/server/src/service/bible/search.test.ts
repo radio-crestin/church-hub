@@ -3,7 +3,7 @@ import { describe, expect, test } from 'bun:test'
 import { existsSync } from 'fs'
 import { resolve } from 'path'
 
-// Use the real app database for benchmarking
+// Real app database for benchmarking (only available locally)
 const DB_PATH = resolve(
   import.meta.dir,
   '../../../../../data/app-v0.1.40.db',
@@ -13,6 +13,61 @@ const hasDb = existsSync(DB_PATH)
 
 function openDb() {
   return new Database(DB_PATH, { readonly: true })
+}
+
+// Create an in-memory fixture DB with sample verses for CI
+function createFixtureDb(): Database {
+  const db = new Database(':memory:')
+  db.run(`
+    CREATE TABLE bible_books (
+      id INTEGER PRIMARY KEY,
+      book_name TEXT NOT NULL
+    )
+  `)
+  db.run(`
+    CREATE TABLE bible_verses (
+      id INTEGER PRIMARY KEY,
+      book_id INTEGER NOT NULL,
+      chapter INTEGER NOT NULL,
+      verse INTEGER NOT NULL,
+      text TEXT NOT NULL,
+      FOREIGN KEY (book_id) REFERENCES bible_books(id)
+    )
+  `)
+  db.run(`
+    CREATE VIRTUAL TABLE bible_verses_fts USING fts5(text, content='bible_verses', content_rowid='id')
+  `)
+
+  // Insert sample books
+  db.run(`INSERT INTO bible_books (id, book_name) VALUES (1, 'Geneza')`)
+  db.run(`INSERT INTO bible_books (id, book_name) VALUES (2, 'Ioan')`)
+  db.run(`INSERT INTO bible_books (id, book_name) VALUES (3, 'Romani')`)
+  db.run(`INSERT INTO bible_books (id, book_name) VALUES (4, 'Psalmi')`)
+
+  // Insert sample verses
+  const verses = [
+    [1, 1, 1, 1, 'La inceput, Dumnezeu a facut cerurile si pamantul.'],
+    [2, 1, 1, 2, 'Pamantul era pustiu si gol; peste fata adancului de ape era intuneric.'],
+    [3, 2, 3, 16, 'Fiindca atat de mult a iubit Dumnezeu lumea, ca a dat pe singurul Lui Fiu.'],
+    [4, 2, 1, 1, 'La inceput era Cuvantul, si Cuvantul era cu Dumnezeu, si Cuvantul era Dumnezeu.'],
+    [5, 2, 14, 6, 'Isus a zis: Eu sunt Calea, Adevarul si Viata.'],
+    [6, 3, 8, 28, 'De altfel, stim ca toate lucrurile lucreaza impreuna spre binele celor ce iubesc pe Dumnezeu.'],
+    [7, 3, 5, 8, 'Dumnezeu isi arata dragostea fata de noi prin faptul ca Isus a murit pentru noi.'],
+    [8, 4, 23, 1, 'Domnul este Pastorul meu: nu voi duce lipsa de nimic.'],
+    [9, 2, 11, 35, 'Isus a plans. O zi de tristete si durere.'],
+    [10, 4, 119, 105, 'Cuvantul Tau este o lumina pentru picioarele mele si o lumina pe cararea mea.'],
+    [11, 3, 12, 12, 'Bucurati-va in nadejde. Fiti rabdatori in necaz. Staruiti in rugaciune.'],
+    [12, 2, 8, 32, 'Veti cunoaste adevarul si adevarul va va face liberi.'],
+  ]
+
+  const insertStmt = db.prepare('INSERT INTO bible_verses (id, book_id, chapter, verse, text) VALUES (?, ?, ?, ?, ?)')
+  const insertFts = db.prepare('INSERT INTO bible_verses_fts (rowid, text) VALUES (?, ?)')
+  for (const v of verses) {
+    insertStmt.run(...v)
+    insertFts.run(v[0], v[4])
+  }
+
+  return db
 }
 
 function checkFtsIndex(db: Database) {
@@ -78,9 +133,14 @@ function searchBible(
   return { results: results as unknown[], elapsed }
 }
 
+// Helper to get a DB - uses real DB if available, otherwise fixture
+function getTestDb(): Database {
+  return hasDb ? openDb() : createFixtureDb()
+}
+
 describe('Bible FTS Index', () => {
-  test.skipIf(!hasDb)('FTS index has verses indexed', () => {
-    const db = openDb()
+  test('FTS index has verses indexed', () => {
+    const db = getTestDb()
     const count = checkFtsIndex(db)
     expect(count).toBeGreaterThan(0)
     // biome-ignore lint/suspicious/noConsole: test output
@@ -88,8 +148,8 @@ describe('Bible FTS Index', () => {
     db.close()
   })
 
-  test.skipIf(!hasDb)('FTS index verse count matches bible_verses table', () => {
-    const db = openDb()
+  test('FTS index verse count matches bible_verses table', () => {
+    const db = getTestDb()
     const ftsCount = db
       .query<{ c: number }, []>('SELECT COUNT(*) as c FROM bible_verses_fts')
       .get()!.c
@@ -103,8 +163,59 @@ describe('Bible FTS Index', () => {
   })
 })
 
-describe('Bible Search Performance', () => {
-  test.skipIf(!hasDb)('"O zi Isus " (with trailing space) completes under 100ms', () => {
+describe('Bible Search', () => {
+  test('search returns matching results', () => {
+    const db = getTestDb()
+    const { results } = searchBible(db, 'Isus a zis')
+    expect(results.length).toBeGreaterThan(0)
+    db.close()
+  })
+
+  test('search for "Dumnezeu" returns results', () => {
+    const db = getTestDb()
+    const { results } = searchBible(db, 'Dumnezeu')
+    expect(results.length).toBeGreaterThan(0)
+    db.close()
+  })
+
+  test('search for "Fiindca atat de mult" returns results', () => {
+    const db = getTestDb()
+    const { results } = searchBible(db, 'Fiindca atat de mult')
+    expect(results.length).toBeGreaterThan(0)
+    db.close()
+  })
+
+  test('search for "Domnul este Pastorul" returns results', () => {
+    const db = getTestDb()
+    const { results } = searchBible(db, 'Domnul este Pastorul')
+    expect(results.length).toBeGreaterThan(0)
+    db.close()
+  })
+
+  test('single-character queries return empty (stop word filtering)', () => {
+    const { words } = sanitizeAndBuildQuery('o')
+    expect(words).toEqual([])
+    const { words: words2 } = sanitizeAndBuildQuery('a e i o')
+    expect(words2).toEqual([])
+  })
+
+  test('problematic prefix "o*" is excluded from FTS query', () => {
+    // "O zi Isus" should generate "zi Isus*" not "NEAR(o* zi* isus*, 10)"
+    const { ftsQuery } = sanitizeAndBuildQuery('O zi Isus')
+    expect(ftsQuery).toBe('zi Isus*')
+    expect(ftsQuery).not.toContain('O*')
+  })
+
+  test('both "O zi Isus " and "O zi Isus" produce same FTS query', () => {
+    const q1 = sanitizeAndBuildQuery('O zi Isus ')
+    const q2 = sanitizeAndBuildQuery('O zi Isus')
+    expect(q1.ftsQuery).toBe(q2.ftsQuery)
+    expect(q1.words).toEqual(q2.words)
+  })
+})
+
+describe.skipIf(!hasDb)('Bible Search Performance (real DB)', () => {
+  test('"O zi Isus " (with trailing space) completes under 100ms', () => {
     const db = openDb()
     const { results, elapsed } = searchBible(db, 'O zi Isus ')
     // biome-ignore lint/suspicious/noConsole: test output
@@ -116,7 +227,7 @@ describe('Bible Search Performance', () => {
     db.close()
   })
 
-  test.skipIf(!hasDb)('"O zi Isus" (without trailing space) completes under 100ms', () => {
+  test('"O zi Isus" (without trailing space) completes under 100ms', () => {
     const db = openDb()
     const { results, elapsed } = searchBible(db, 'O zi Isus')
     // biome-ignore lint/suspicious/noConsole: test output
@@ -128,14 +239,7 @@ describe('Bible Search Performance', () => {
     db.close()
   })
 
-  test('single-character queries return empty (stop word filtering)', () => {
-    const { words } = sanitizeAndBuildQuery('o')
-    expect(words).toEqual([])
-    const { words: words2 } = sanitizeAndBuildQuery('a e i o')
-    expect(words2).toEqual([])
-  })
-
-  test.skipIf(!hasDb)('common searches complete under 100ms', () => {
+  test('common searches complete under 100ms', () => {
     const db = openDb()
     const queries = [
       'Isus a zis',
@@ -155,7 +259,7 @@ describe('Bible Search Performance', () => {
     db.close()
   })
 
-  test.skipIf(!hasDb)('short prefix queries complete under 200ms', () => {
+  test('short prefix queries complete under 200ms', () => {
     const db = openDb()
     const queries = ['zi', 'Is', 'cr']
 
@@ -168,21 +272,7 @@ describe('Bible Search Performance', () => {
     db.close()
   })
 
-  test('problematic prefix "o*" is excluded from FTS query', () => {
-    // "O zi Isus" should generate "zi Isus*" not "NEAR(o* zi* isus*, 10)"
-    const { ftsQuery } = sanitizeAndBuildQuery('O zi Isus')
-    expect(ftsQuery).toBe('zi Isus*')
-    expect(ftsQuery).not.toContain('O*')
-  })
-
-  test('both "O zi Isus " and "O zi Isus" produce same FTS query', () => {
-    const q1 = sanitizeAndBuildQuery('O zi Isus ')
-    const q2 = sanitizeAndBuildQuery('O zi Isus')
-    expect(q1.ftsQuery).toBe(q2.ftsQuery)
-    expect(q1.words).toEqual(q2.words)
-  })
-
-  test.skipIf(!hasDb)('"Fiindca atat de mult" completes under 100ms', () => {
+  test('"Fiindca atat de mult" completes under 100ms', () => {
     const db = openDb()
     const { results, elapsed } = searchBible(db, 'Fiindca atat de mult')
     // biome-ignore lint/suspicious/noConsole: test output
@@ -194,7 +284,7 @@ describe('Bible Search Performance', () => {
     db.close()
   })
 
-  test.skipIf(!hasDb)('BENCHMARK: fixed query vs old slow query with o* prefix', () => {
+  test('BENCHMARK: fixed query vs old slow query with o* prefix', () => {
     const db = openDb()
 
     const stmtFixed = db.prepare(`
