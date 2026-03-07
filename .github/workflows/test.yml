@@ -2,8 +2,9 @@ name: Test
 
 on:
   push:
-    tags:
-      - 'v*.*.*'
+    branches: [main]
+    tags-ignore:
+      - '**'
   pull_request:
     branches: [main]
 
