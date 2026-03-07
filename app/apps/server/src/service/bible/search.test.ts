@@ -1,5 +1,6 @@
 import Database from 'bun:sqlite'
 import { describe, expect, test } from 'bun:test'
+import { existsSync } from 'fs'
 import { resolve } from 'path'
 
 // Use the real app database for benchmarking
@@ -7,6 +8,8 @@ const DB_PATH = resolve(
   import.meta.dir,
   '../../../../../data/app-v0.1.40.db',
 )
+
+const hasDb = existsSync(DB_PATH)
 
 function openDb() {
   return new Database(DB_PATH, { readonly: true })
@@ -76,7 +79,7 @@ function searchBible(
 }
 
 describe('Bible FTS Index', () => {
-  test('FTS index has verses indexed', () => {
+  test.skipIf(!hasDb)('FTS index has verses indexed', () => {
     const db = openDb()
     const count = checkFtsIndex(db)
     expect(count).toBeGreaterThan(0)
@@ -85,7 +88,7 @@ describe('Bible FTS Index', () => {
     db.close()
   })
 
-  test('FTS index verse count matches bible_verses table', () => {
+  test.skipIf(!hasDb)('FTS index verse count matches bible_verses table', () => {
     const db = openDb()
     const ftsCount = db
       .query<{ c: number }, []>('SELECT COUNT(*) as c FROM bible_verses_fts')
@@ -101,7 +104,7 @@ describe('Bible FTS Index', () => {
 })
 
 describe('Bible Search Performance', () => {
-  test('"O zi Isus " (with trailing space) completes under 100ms', () => {
+  test.skipIf(!hasDb)('"O zi Isus " (with trailing space) completes under 100ms', () => {
     const db = openDb()
     const { results, elapsed } = searchBible(db, 'O zi Isus ')
     // biome-ignore lint/suspicious/noConsole: test output
@@ -113,7 +116,7 @@ describe('Bible Search Performance', () => {
     db.close()
   })
 
-  test('"O zi Isus" (without trailing space) completes under 100ms', () => {
+  test.skipIf(!hasDb)('"O zi Isus" (without trailing space) completes under 100ms', () => {
     const db = openDb()
     const { results, elapsed } = searchBible(db, 'O zi Isus')
     // biome-ignore lint/suspicious/noConsole: test output
@@ -132,7 +135,7 @@ describe('Bible Search Performance', () => {
     expect(words2).toEqual([])
   })
 
-  test('common searches complete under 100ms', () => {
+  test.skipIf(!hasDb)('common searches complete under 100ms', () => {
     const db = openDb()
     const queries = [
       'Isus a zis',
@@ -152,7 +155,7 @@ describe('Bible Search Performance', () => {
     db.close()
   })
 
-  test('short prefix queries complete under 200ms', () => {
+  test.skipIf(!hasDb)('short prefix queries complete under 200ms', () => {
     const db = openDb()
     const queries = ['zi', 'Is', 'cr']
 
@@ -179,7 +182,7 @@ describe('Bible Search Performance', () => {
     expect(q1.words).toEqual(q2.words)
   })
 
-  test('"Fiindca atat de mult" completes under 100ms', () => {
+  test.skipIf(!hasDb)('"Fiindca atat de mult" completes under 100ms', () => {
     const db = openDb()
     const { results, elapsed } = searchBible(db, 'Fiindca atat de mult')
     // biome-ignore lint/suspicious/noConsole: test output
@@ -191,7 +194,7 @@ describe('Bible Search Performance', () => {
     db.close()
   })
 
-  test('BENCHMARK: fixed query vs old slow query with o* prefix', () => {
+  test.skipIf(!hasDb)('BENCHMARK: fixed query vs old slow query with o* prefix', () => {
     const db = openDb()
 
     const stmtFixed = db.prepare(`
