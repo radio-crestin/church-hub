@@ -72,26 +72,34 @@ function createEasymidiWrapper(nativeMidi: {
 }): typeof import('easymidi') {
   // Get list of input device names
   function getInputs(): string[] {
-    const tempInput = new nativeMidi.Input(() => {})
-    const count = tempInput.getPortCount()
-    const names: string[] = []
-    for (let i = 0; i < count; i++) {
-      names.push(tempInput.getPortName(i))
+    try {
+      const tempInput = new nativeMidi.Input(() => {})
+      const count = tempInput.getPortCount()
+      const names: string[] = []
+      for (let i = 0; i < count; i++) {
+        names.push(tempInput.getPortName(i))
+      }
+      tempInput.destroy()
+      return names
+    } catch {
+      return []
     }
-    tempInput.destroy()
-    return names
   }
 
   // Get list of output device names
   function getOutputs(): string[] {
-    const tempOutput = new nativeMidi.Output()
-    const count = tempOutput.getPortCount()
-    const names: string[] = []
-    for (let i = 0; i < count; i++) {
-      names.push(tempOutput.getPortName(i))
+    try {
+      const tempOutput = new nativeMidi.Output()
+      const count = tempOutput.getPortCount()
+      const names: string[] = []
+      for (let i = 0; i < count; i++) {
+        names.push(tempOutput.getPortName(i))
+      }
+      tempOutput.destroy()
+      return names
+    } catch {
+      return []
     }
-    tempOutput.destroy()
-    return names
   }
 
   class Input {
