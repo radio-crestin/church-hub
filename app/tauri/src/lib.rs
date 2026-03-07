@@ -13,7 +13,7 @@ use commands::PendingImport;
 #[cfg(desktop)]
 use commands::{reset_zoom, restart_server, toggle_devtools, zoom_in, zoom_out, ZoomState};
 #[cfg(all(desktop, not(debug_assertions)))]
-use server::{get_port_process_info, is_port_in_use, kill_port_process};
+use server::auto_cleanup_port;
 #[cfg(desktop)]
 use webview::{
     close_child_webview, create_child_webview, hide_child_webview, show_child_webview,
@@ -261,61 +261,22 @@ pub fn run() {
         // In release mode, start the sidecar server
         #[cfg(not(debug_assertions))]
         {
-            // Check if port is already in use
+            // Automatically clean up port if in use (kill stale processes, wait for ghost PIDs)
             let t = Instant::now();
-            if is_port_in_use(server_port) {
-                println!("[port-conflict] Port {} is already in use!", server_port);
-
-                let process_info = get_port_process_info(server_port);
-                let message = if let Some(ref info) = process_info {
-                    format!(
-                        "Port {} is already in use by:\n\nProcess: {}\nPID: {}\n\nWould you like to terminate this process and start the server?",
-                        server_port, info.name, info.pid
-                    )
-                } else {
-                    format!(
-                        "Port {} is already in use by another process.\n\nWould you like to terminate the process and start the server?",
-                        server_port
-                    )
-                };
-
-                // Show blocking dialog using the dialog plugin
+            if let Err(e) = auto_cleanup_port(server_port) {
+                println!("[port-conflict] Auto-cleanup failed: {}", e);
                 use tauri_plugin_dialog::DialogExt;
-                let should_kill = app.dialog()
-                    .message(message)
-                    .title("Port Conflict")
-                    .kind(tauri_plugin_dialog::MessageDialogKind::Warning)
-                    .buttons(tauri_plugin_dialog::MessageDialogButtons::OkCancelCustom(
-                        "Terminate & Start".to_string(),
-                        "Cancel".to_string(),
+                app.dialog()
+                    .message(format!(
+                        "Could not free port {}:\n\n{}\n\nPlease manually close the application using this port and try again.",
+                        server_port, e
                     ))
+                    .title("Port Conflict")
+                    .kind(tauri_plugin_dialog::MessageDialogKind::Error)
                     .blocking_show();
-
-                if should_kill {
-                    println!("[port-conflict] User chose to terminate the process");
-                    match kill_port_process(server_port) {
-                        Ok(_) => {
-                            println!("[port-conflict] Successfully terminated process on port {}", server_port);
-                            // Wait a bit for the port to be released
-                            std::thread::sleep(std::time::Duration::from_millis(500));
-                        }
-                        Err(e) => {
-                            println!("[port-conflict] Failed to terminate process: {}", e);
-                            // Show error dialog and exit
-                            app.dialog()
-                                .message(format!("Failed to terminate the process: {}\n\nPlease manually close the application using port {} and try again.", e, server_port))
-                                .title("Error")
-                                .kind(tauri_plugin_dialog::MessageDialogKind::Error)
-                                .blocking_show();
-                            std::process::exit(1);
-                        }
-                    }
-                } else {
-                    println!("[port-conflict] User cancelled - exiting");
-                    std::process::exit(0);
-                }
+                std::process::exit(1);
             }
-            println!("[startup] port_conflict_check: {:?}", t.elapsed());
+            println!("[startup] port_cleanup: {:?}", t.elapsed());
 
             // Start the sidecar server
             let t = Instant::now();
@@ -342,6 +303,40 @@ pub fn run() {
             }
             println!("[startup] dev_server_ready_wait: {:?}", t.elapsed());
         }
+
+        // Ensure the main window is visible on a connected monitor
+        // (window-state plugin may restore a position from a disconnected monitor)
+        let t = Instant::now();
+        if let Some(main_window) = app.webview_windows().get("main") {
+            if let (Ok(pos), Ok(size)) = (main_window.outer_position(), main_window.outer_size()) {
+                let wx = pos.x;
+                let wy = pos.y;
+                let ww = size.width as i32;
+                let wh = size.height as i32;
+
+                let visible_on_any = main_window.available_monitors().map(|monitors| {
+                    monitors.iter().any(|monitor| {
+                        let mp = monitor.position();
+                        let ms = monitor.size();
+                        let mx = mp.x;
+                        let my = mp.y;
+                        let mw = ms.width as i32;
+                        let mh = ms.height as i32;
+
+                        // Window overlaps monitor by at least 100px in each axis
+                        let overlap_x = (wx + ww).min(mx + mw) - wx.max(mx);
+                        let overlap_y = (wy + wh).min(my + mh) - wy.max(my);
+                        overlap_x >= 100 && overlap_y >= 50
+                    })
+                }).unwrap_or(false);
+
+                if !visible_on_any {
+                    println!("[window] Main window at ({wx}, {wy}) is off-screen, centering");
+                    let _ = main_window.center();
+                }
+            }
+        }
+        println!("[startup] window_bounds_check: {:?}", t.elapsed());
 
         // Inject keyboard shortcut handler into main webview
         let t = Instant::now();

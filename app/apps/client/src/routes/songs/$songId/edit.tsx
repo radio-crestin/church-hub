@@ -197,7 +197,7 @@ function SongEditorPage() {
       if (result.success && result.data) {
         showToast(t('songs:messages.saved'), 'success')
 
-        // Update saved state after successful save
+        // Update local state with server response to ensure dirty state clears
         const savedSlides = result.data.slides.map((s) => ({
           id: s.id,
           content: s.content,
@@ -217,6 +217,13 @@ function SongEditorPage() {
           presentationOrder: result.data.presentationOrder,
           sourceFilename: result.data.sourceFilename,
         }
+
+        // Sync local state with server response (e.g., trimmed title, assigned IDs)
+        setTitle(result.data.title)
+        setCategoryId(result.data.categoryId)
+        setSlides(savedSlides)
+        setMetadata(savedMetadata)
+
         setSavedState({
           title: result.data.title,
           categoryId: result.data.categoryId,

@@ -868,6 +868,7 @@ export function clearTemporaryContent(): PresentationState {
 
     return updatePresentationState({
       temporaryContent: null,
+      isHidden: true,
     })
   } catch (error) {
     log('error', `Failed to clear temporary content: ${error}`)

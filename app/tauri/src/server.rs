@@ -95,7 +95,18 @@ pub fn get_port_process_info(port: u16) -> Option<PortProcessInfo> {
                         .output()
                         .ok()?;
 
-                    let name = String::from_utf8_lossy(&tasklist_output.stdout)
+                    let tasklist_str = String::from_utf8_lossy(&tasklist_output.stdout);
+                    let trimmed = tasklist_str.trim();
+
+                    // tasklist returns "INFO: No tasks are running..." for ghost PIDs
+                    if trimmed.starts_with("INFO:") || trimmed.is_empty() {
+                        return Some(PortProcessInfo {
+                            pid,
+                            name: String::new(), // Empty name signals ghost PID
+                        });
+                    }
+
+                    let name = trimmed
                         .split(',')
                         .next()
                         .map(|s| s.trim_matches('"').to_string())
@@ -161,20 +172,76 @@ pub fn kill_port_process(port: u16) -> Result<(), String> {
 
 #[cfg(target_os = "windows")]
 pub fn kill_port_process(port: u16) -> Result<(), String> {
-    if let Some(info) = get_port_process_info(port) {
-        println!("[port-conflict] Killing process with PID: {}", info.pid);
-        let kill_result = Command::new("taskkill")
-            .args(["/F", "/PID", &info.pid.to_string()])
-            .output()
-            .map_err(|e| e.to_string())?;
+    // Collect ALL PIDs connected to this port (listeners, CLOSE_WAIT, FIN_WAIT, etc.)
+    let output = Command::new("netstat")
+        .args(["-ano"])
+        .output()
+        .map_err(|e| e.to_string())?;
 
-        if !kill_result.status.success() {
-            return Err(format!("Failed to kill process {}", info.pid));
-        }
-        Ok(())
-    } else {
-        Err("No process found on port".to_string())
+    if !output.status.success() {
+        return Err("Failed to run netstat".to_string());
     }
+
+    let output_str = String::from_utf8_lossy(&output.stdout);
+    let port_str = format!(":{}", port);
+    let mut pids = std::collections::HashSet::new();
+
+    for line in output_str.lines() {
+        if line.contains(&port_str) {
+            if let Some(pid_str) = line.split_whitespace().last() {
+                if let Ok(pid) = pid_str.parse::<u32>() {
+                    if pid != 0 {
+                        pids.insert(pid);
+                    }
+                }
+            }
+        }
+    }
+
+    if pids.is_empty() {
+        return Err("No process found on port".to_string());
+    }
+
+    let mut killed_any = false;
+    for pid in &pids {
+        // Check if process actually exists
+        let tasklist_output = Command::new("tasklist")
+            .args(["/FI", &format!("PID eq {}", pid), "/FO", "CSV", "/NH"])
+            .output();
+
+        let is_alive = match &tasklist_output {
+            Ok(out) => {
+                let s = String::from_utf8_lossy(&out.stdout);
+                let trimmed = s.trim();
+                !trimmed.is_empty() && !trimmed.starts_with("INFO:")
+            }
+            Err(_) => false,
+        };
+
+        if !is_alive {
+            continue;
+        }
+
+        println!("[port-conflict] Killing PID {} on port {}", pid, port);
+        match Command::new("taskkill")
+            .args(["/F", "/PID", &pid.to_string()])
+            .output()
+        {
+            Ok(result) if result.status.success() => {
+                killed_any = true;
+            }
+            _ => {}
+        }
+    }
+
+    if !killed_any && !pids.is_empty() {
+        println!(
+            "[port-conflict] Ghost PIDs on port {} — waiting for OS to release",
+            port
+        );
+    }
+
+    Ok(())
 }
 
 #[cfg(target_os = "linux")]
@@ -201,6 +268,44 @@ pub fn kill_port_process(port: u16) -> Result<(), String> {
         }
     }
     Ok(())
+}
+
+/// Automatically cleans up a port by killing the owning process (if any) and
+/// waiting for the OS to release the binding. Returns Ok if the port is free,
+/// Err if cleanup failed after all retries.
+pub fn auto_cleanup_port(port: u16) -> Result<(), String> {
+    const MAX_RETRIES: u32 = 6;
+    const RETRY_DELAY_MS: u64 = 500;
+
+    for attempt in 1..=MAX_RETRIES {
+        if !is_port_in_use(port) {
+            println!("[port-cleanup] Port {} is free", port);
+            return Ok(());
+        }
+
+        println!(
+            "[port-cleanup] Port {} in use, attempt {}/{}",
+            port, attempt, MAX_RETRIES
+        );
+
+        match kill_port_process(port) {
+            Ok(_) => println!("[port-cleanup] Kill command succeeded for port {}", port),
+            Err(e) => println!("[port-cleanup] Kill attempt: {}", e),
+        }
+
+        // Wait for OS to release the port
+        std::thread::sleep(std::time::Duration::from_millis(RETRY_DELAY_MS));
+    }
+
+    // Final check
+    if is_port_in_use(port) {
+        Err(format!(
+            "Port {} is still in use after {} attempts. Please restart your computer or manually free the port.",
+            port, MAX_RETRIES
+        ))
+    } else {
+        Ok(())
+    }
 }
 
 /// Waits for the server to be ready by polling the /ping endpoint (async version)
@@ -268,6 +373,10 @@ pub fn start_server(app_handle: &AppHandle, server_port: u16) -> Result<(), Stri
     sidecar = sidecar.env("NODE_ENV", "production");
     sidecar = sidecar.env("TAURI_MODE", "true");
     sidecar = sidecar.env("PORT", server_port.to_string());
+
+    // Pass app version for database versioned backups
+    let app_version = app_handle.config().version.clone().unwrap_or_default();
+    sidecar = sidecar.env("APP_VERSION", &app_version);
 
     // Pass the client dist path for static file serving
     if let Ok(resource_dir) = app_handle.path().resolve("client-dist", BaseDirectory::Resource) {

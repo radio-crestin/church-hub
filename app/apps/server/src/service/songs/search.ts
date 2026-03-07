@@ -427,6 +427,26 @@ export function batchUpdateSearchIndex(songIds: number[]): void {
 }
 
 /**
+ * Warms up the songs FTS index by running a cheap query to load index pages into OS page cache.
+ */
+export function warmupSearchIndex(): void {
+  const startTime = performance.now()
+  try {
+    const rawDb = getRawDatabase()
+    rawDb.run(
+      "SELECT rowid FROM songs_fts WHERE songs_fts MATCH 'a*' LIMIT 1",
+    )
+    rawDb.run(
+      "SELECT rowid FROM songs_fts_trigram WHERE songs_fts_trigram MATCH 'aaa' LIMIT 1",
+    )
+  } catch {
+    // FTS tables might not exist yet
+  }
+  const elapsed = performance.now() - startTime
+  log('info', `FTS index warmup completed in ${elapsed.toFixed(1)}ms`)
+}
+
+/**
  * Rebuilds the entire search index (both standard and trigram)
  * Uses JavaScript normalization to properly expand Romanian contractions
  * and handle hyphenated words for better searchability
@@ -857,6 +877,49 @@ function findFuzzyMatchWord(
 }
 
 /**
+ * Builds a regex pattern where each character also matches its diacritical variants.
+ * e.g., "a" matches "a", "ă", "â" so that a diacritic-stripped search word
+ * highlights the original text that contains diacritics.
+ */
+function buildDiacriticInsensitivePattern(word: string): string {
+  const diacriticMap: Record<string, string> = {
+    a: '[aăâ]',
+    i: '[iî]',
+    s: '[sș]',
+    t: '[tț]',
+  }
+  return word
+    .split('')
+    .map((ch) => {
+      const lower = ch.toLowerCase()
+      if (diacriticMap[lower]) return diacriticMap[lower]
+      return ch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    })
+    .join('')
+}
+
+/**
+ * Highlights search terms in text with diacritic-insensitive matching.
+ * Operates on original text (with diacritics) so highlighted output preserves them.
+ */
+function highlightWithDiacritics(text: string, searchTerms: string[]): string {
+  if (!searchTerms.length) return text
+
+  let result = text
+  for (const term of searchTerms) {
+    if (term.length < 2) continue
+    const normalized = removeDiacritics(term).toLowerCase()
+    const diacriticPattern = buildDiacriticInsensitivePattern(normalized)
+    const pattern = new RegExp(
+      `(${diacriticPattern}[a-zA-ZăâîșțĂÂÎȘȚ]*)`,
+      'gi',
+    )
+    result = result.replace(pattern, '<mark>$1</mark>')
+  }
+  return result
+}
+
+/**
  * Creates highlighted content with fuzzy match support
  * Highlights both exact matches and fuzzy matches (e.g., "Hristos" -> "Cristos")
  * Supports diacritic-insensitive matching (e.g., "in" matches "în")
@@ -1049,13 +1112,14 @@ function buildTrigramQuery(terms: string[]): string {
 export function searchSongs(
   query: string,
   categoryIds?: number[],
-  limit = 50,
+  rawLimit = 50,
   filters?: {
     presentedOnly?: boolean
     inSchedulesOnly?: boolean
     hasKeyLine?: boolean
   },
 ): SongSearchResult[] {
+  const limit = Math.min(Math.max(1, rawLimit), 200)
   const startTime = performance.now()
 
   try {
@@ -1207,10 +1271,9 @@ export function searchSongs(
         COALESCE(sc.priority, 1) as category_priority,
         s.presentation_count,
         s.key_line,
-        highlight(songs_fts, 1, '<mark>', '</mark>') as highlighted_title,
-        snippet(songs_fts, 3, '<mark>', '</mark>', '...', 30) as matched_content,
         songs_fts.content as full_content,
         songs_fts.title as fts_title,
+        COALESCE((SELECT GROUP_CONCAT(content, ' ') FROM (SELECT content FROM song_slides WHERE song_id = s.id ORDER BY sort_order)), '') as original_content,
         rank as bm25_rank
       FROM songs_fts
       JOIN songs s ON s.id = songs_fts.song_id
@@ -1228,10 +1291,9 @@ export function searchSongs(
       category_priority: number
       presentation_count: number
       key_line: string | null
-      highlighted_title: string
-      matched_content: string
       full_content: string
       fts_title: string
+      original_content: string
       bm25_rank: number
     }>
 
@@ -1304,16 +1366,15 @@ export function searchSongs(
         category_priority: number
         presentation_count: number
         key_line: string | null
-        highlighted_title: string
-        matched_content: string
         full_content: string
         fts_title: string
+        original_content: string
         bm25_rank: number
         fromTrigram: boolean
       }
     >()
 
-    // Add standard results first (they have highlighting)
+    // Add standard results first
     for (const r of standardResults) {
       candidateMap.set(r.id, { ...r, fromTrigram: false })
     }
@@ -1324,8 +1385,7 @@ export function searchSongs(
         candidateMap.set(r.id, {
           ...r,
           fts_title: removeDiacritics(r.title).toLowerCase(),
-          highlighted_title: r.title,
-          matched_content: '',
+          original_content: '',
           fromTrigram: true,
         })
       }
@@ -1424,13 +1484,16 @@ export function searchSongs(
     )
 
     const finalResults = topResults.map((r) => {
-      // Always use fuzzy highlighting to ensure fuzzy matches are highlighted
-      // (e.g., "Cristos" highlighted when searching "Hristos")
-      // Use expanded terms (includes synonyms) for highlighting
+      // Use original content (with diacritics) for snippet highlighting
+      // Fall back to FTS content if original is not available
+      const contentForSnippet = r.original_content || r.full_content
       const matchedContent = createFuzzyHighlightedSnippet(
-        r.full_content,
+        contentForSnippet,
         expandedTerms,
       )
+
+      // Highlight original title with diacritic-insensitive matching
+      const highlightedTitle = highlightWithDiacritics(r.title, expandedTerms)
 
       return {
         id: r.id,
@@ -1438,7 +1501,7 @@ export function searchSongs(
         categoryId: r.category_id,
         categoryName: r.category_name,
         keyLine: r.key_line,
-        highlightedTitle: r.highlighted_title,
+        highlightedTitle,
         matchedContent,
         presentationCount: r.presentation_count,
         score: Math.min(100, Math.round(r.boostedScore)),
