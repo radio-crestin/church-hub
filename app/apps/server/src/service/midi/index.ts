@@ -830,8 +830,15 @@ function checkDeviceStatusAndReconnect() {
   if (!loadMidi() || !easymidi) return
 
   // Get device lists once (shared between status check and reconnection)
-  const inputs = easymidi.getInputs()
-  const outputs = easymidi.getOutputs()
+  let inputs: string[]
+  let outputs: string[]
+  try {
+    inputs = easymidi.getInputs()
+    outputs = easymidi.getOutputs()
+  } catch (error) {
+    midiLogger.debug(`Failed to enumerate MIDI devices: ${error}`)
+    return
+  }
 
   let needsReconnect = false
 
