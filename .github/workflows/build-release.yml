@@ -130,8 +130,74 @@ jobs:
           path: app/apps/client/test-results/
           retention-days: 7
 
-  build:
+  create-release:
     needs: [test, e2e-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Create draft release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "v${{ steps.version.outputs.version }}" \
+            --draft \
+            --title "Church Hub v${{ steps.version.outputs.version }}" \
+            --notes "$(cat <<'EOF'
+          # Church Hub v${{ steps.version.outputs.version }}
+
+          A modern, feature-rich church presentation and livestream management system.
+
+          ---
+
+          ## Direct Downloads
+
+          | Platform | Download |
+          |----------|----------|
+          | **macOS** (Apple Silicon) | [Download .dmg](https://github.com/radio-crestin/church-hub/releases/latest/download/church-hub-macos-arm64.dmg) |
+          | **Windows** (x64) | [Download .exe](https://github.com/radio-crestin/church-hub/releases/latest/download/church-hub-windows-x64.exe) |
+
+          ---
+
+          ## Quick Start
+
+          1. Click the download link for your platform above
+          2. Run the installer
+          3. Launch Church Hub
+          4. Access the web interface at `http://localhost:3000`
+
+          ---
+
+          ## macOS Installation Note
+
+          After installing, if you see **"church-hub.app is damaged and can't be opened"**, run this command in Terminal:
+
+          ```bash
+          xattr -c /Applications/church-hub.app
+          ```
+
+          This removes the quarantine flag from unsigned apps.
+
+          ---
+
+          ## Documentation
+
+          - [README](https://github.com/radio-crestin/church-hub#readme)
+          - [API Documentation](http://localhost:3000/api/docs) (after installation)
+
+          ---
+
+          <sub>Made with love for churches everywhere</sub>
+          EOF
+          )"
+
+  build:
+    needs: [test, e2e-tests, create-release]
     strategy:
       fail-fast: false
       matrix:
@@ -294,51 +360,6 @@ jobs:
           args: --target ${{ matrix.rust_target }}
           tagName: v__VERSION__
           releaseName: 'Church Hub v__VERSION__'
-          releaseBody: |
-            # Church Hub v__VERSION__
-
-            A modern, feature-rich church presentation and livestream management system.
-
-            ---
-
-            ## Direct Downloads
-
-            | Platform | Download |
-            |----------|----------|
-            | **macOS** (Apple Silicon) | [Download .dmg](https://github.com/radio-crestin/church-hub/releases/latest/download/church-hub-macos-arm64.dmg) |
-            | **Windows** (x64) | [Download .exe](https://github.com/radio-crestin/church-hub/releases/latest/download/church-hub-windows-x64.exe) |
-
-            ---
-
-            ## Quick Start
-
-            1. Click the download link for your platform above
-            2. Run the installer
-            3. Launch Church Hub
-            4. Access the web interface at `http://localhost:3000`
-
-            ---
-
-            ## macOS Installation Note
-
-            After installing, if you see **"church-hub.app is damaged and can't be opened"**, run this command in Terminal:
-
-            ```bash
-            xattr -c /Applications/church-hub.app
-            ```
-
-            This removes the quarantine flag from unsigned apps.
-
-            ---
-
-            ## Documentation
-
-            - [README](https://github.com/radio-crestin/church-hub#readme)
-            - [API Documentation](http://localhost:3000/api/docs) (after installation)
-
-            ---
-
-            <sub>Made with love for churches everywhere</sub>
           releaseDraft: true
           prerelease: false
           includeUpdaterJson: false
