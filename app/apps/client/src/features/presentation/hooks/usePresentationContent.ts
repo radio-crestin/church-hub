@@ -143,10 +143,25 @@ export function usePresentationContent({
   // Track if exit animation should complete - prevents race condition where
   // timeout fires after user has started a new presentation
   const shouldCompleteExitRef = useRef(false)
+  // Synchronous flag to prevent visibility flicker during the render cycle
+  // where isHidden becomes true but isExitAnimating hasn't been set yet
+  const exitAnimatingSyncRef = useRef(false)
 
   // Keep track of current content type for exit animation calculation
   if (contentType !== 'empty') {
     currentContentTypeRef.current = contentType
+  }
+
+  // Detect transition synchronously during render to prevent visibility flicker.
+  // useEffect runs after render, so without this, there's one frame where
+  // isHidden=true and isExitAnimating=false, causing content to disappear then reappear.
+  const wasHiddenSync = prevHiddenRef.current
+  const isHiddenSync = presentationState?.isHidden
+  if (wasHiddenSync === false && isHiddenSync && !exitAnimatingSyncRef.current) {
+    exitAnimatingSyncRef.current = true
+  }
+  if (wasHiddenSync && !isHiddenSync && exitAnimatingSyncRef.current) {
+    exitAnimatingSyncRef.current = false
   }
 
   // Handle exit animation timing - delay empty state transition
@@ -192,6 +207,7 @@ export function usePresentationContent({
           return
         }
         logger.debug('Exit animation complete, clearing content')
+        exitAnimatingSyncRef.current = false
         setContentData({})
         setContentKey('')
         setContentType('empty')
@@ -205,6 +221,7 @@ export function usePresentationContent({
       logger.debug('Transition: hidden -> visible, cancelling exit animation')
       // Cancel exit animation - this prevents the timeout from clearing content
       shouldCompleteExitRef.current = false
+      exitAnimatingSyncRef.current = false
 
       if (exitTimeoutRef.current) {
         clearTimeout(exitTimeoutRef.current)
@@ -633,7 +650,7 @@ export function usePresentationContent({
   // Content becomes invisible only after the exit animation finishes and state is cleared.
   const hasContent = Object.keys(contentData).length > 0
   const isVisible =
-    (!presentationState?.isHidden || isExitAnimating) && hasContent
+    (!presentationState?.isHidden || isExitAnimating || exitAnimatingSyncRef.current) && hasContent
 
   logger.debug(
     `Render state: isVisible=${isVisible}, hasContent=${hasContent}, isHidden=${presentationState?.isHidden}, isExitAnimating=${isExitAnimating}, contentType=${contentType}, updatedAt=${presentationState?.updatedAt}`,
