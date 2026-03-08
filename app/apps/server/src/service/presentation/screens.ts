@@ -483,7 +483,9 @@ export function getScreenWithConfigs(id: number): ScreenWithConfigs | null {
         Object.keys(sceneOverrides).length > 0 ? sceneOverrides : undefined,
     }
   } catch (error) {
-    log('error', `Failed to get screen with configs: ${error}`)
+    log('error', `Failed to get screen with configs (id=${id}): ${error}`)
+    // biome-ignore lint/suspicious/noConsole: critical error debug
+    console.error(`[screens] getScreenWithConfigs(${id}) error:`, error)
     return null
   }
 }

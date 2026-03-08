@@ -67,21 +67,26 @@ function runEmbeddedMigrations(rawDb: Database): void {
 
     log('info', `Applying migration: ${migration.tag}`)
 
-    // Split by statement breakpoint and execute each statement
-    const statements = migration.sql
-      .split('--> statement-breakpoint')
-      .map((s) => s.trim())
-      .filter((s) => s.length > 0)
+    try {
+      // Split by statement breakpoint and execute each statement
+      const statements = migration.sql
+        .split('--> statement-breakpoint')
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0)
 
-    for (const statement of statements) {
-      rawDb.run(statement)
+      for (const statement of statements) {
+        rawDb.run(statement)
+      }
+
+      // Record migration as applied
+      rawDb.run(
+        'INSERT INTO __drizzle_migrations (hash, created_at) VALUES (?, ?)',
+        [hash, migration.when],
+      )
+    } catch (error) {
+      log('error', `Failed to apply migration ${migration.tag}: ${error}`)
+      throw error
     }
-
-    // Record migration as applied
-    rawDb.run(
-      'INSERT INTO __drizzle_migrations (hash, created_at) VALUES (?, ?)',
-      [hash, migration.when],
-    )
   }
 
   log('info', 'Embedded migrations complete')
