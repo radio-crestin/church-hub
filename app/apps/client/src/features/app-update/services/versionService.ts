@@ -54,8 +54,14 @@ export async function getCurrentVersion(): Promise<string> {
 function getAssetPattern(): RegExp | null {
   if (!isTauri) return null
 
-  const osType = type()
-  const osArch = arch()
+  let osType: string
+  let osArch: string
+  try {
+    osType = type()
+    osArch = arch()
+  } catch {
+    return null
+  }
 
   // Map OS and arch to GitHub release asset patterns
   if (osType === 'macos') {
