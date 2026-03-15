@@ -22,6 +22,50 @@ const CHROME_USER_AGENT: &str = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537
 const MAX_MAIN_WINDOW_RETRIES: u32 = 10;
 const RETRY_DELAY_MS: u64 = 200;
 
+/// JavaScript fallback: intercept clicks and window.open, redirect external URLs
+/// via location.href so the Rust on_navigation handler catches them.
+/// This is a safety net for cases where on_new_window doesn't fire.
+/// CSP-safe: no IPC calls, just location.href redirect.
+const EXTERNAL_LINK_INTERCEPT_SCRIPT: &str = r#"
+(function() {
+    if (window.__churchHubLinkInterceptorInstalled) return;
+    window.__churchHubLinkInterceptorInstalled = true;
+    var pageOrigin = window.location.origin;
+    console.log('[church-hub] Link interceptor installed for origin:', pageOrigin);
+
+    document.addEventListener('click', function(e) {
+        var el = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+        if (!el) return;
+        var href = el.getAttribute('href');
+        if (!href || href.startsWith('javascript:') || href.startsWith('#')) return;
+        try {
+            var url = new URL(href, window.location.href);
+            if (url.origin !== pageOrigin) {
+                console.log('[church-hub] External link click intercepted:', url.href);
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                window.location.href = url.href;
+            }
+        } catch (_) {}
+    }, true);
+
+    var origOpen = window.open;
+    window.open = function(url, target, features) {
+        if (url) {
+            try {
+                var parsed = new URL(url, window.location.href);
+                if (parsed.origin !== pageOrigin) {
+                    console.log('[church-hub] External window.open intercepted:', parsed.href);
+                    window.location.href = parsed.href;
+                    return null;
+                }
+            } catch (_) {}
+        }
+        return origOpen.call(window, url, target, features);
+    };
+})();
+"#;
 
 /// Helper function to get the main window with retries
 async fn get_main_window_with_retry(
@@ -145,7 +189,10 @@ pub async fn create_child_webview(
             } else {
                 NewWindowResponse::Allow // Allow same-origin popups
             }
-        });
+        })
+        // JS fallback: intercept clicks/window.open and redirect via location.href
+        // This triggers on_navigation which opens external URLs in system browser
+        .initialization_script(EXTERNAL_LINK_INTERCEPT_SCRIPT);
 
     // Get the window reference for add_child
     let window = main_window.as_ref().window();
@@ -158,7 +205,7 @@ pub async fn create_child_webview(
         )
         .map_err(|e| format!("Failed to create child webview: {}", e))?;
 
-    println!("[webview] Child webview '{}' created successfully", label);
+    println!("[webview] Child webview '{}' created successfully with on_navigation + on_new_window + initialization_script handlers", label);
 
     Ok(())
 }
