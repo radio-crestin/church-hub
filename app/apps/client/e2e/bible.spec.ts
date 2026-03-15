@@ -241,4 +241,245 @@ test.describe('Bible Feature', () => {
     // The URL should contain the expected chapter
     await expect(page).toHaveURL(new RegExp(`chapter=${expectedChapter}`))
   })
+
+  test('search mid-chapter then navigate to boundary does not snap back', async ({
+    page,
+  }) => {
+    // Exact reproduction of user bug: search "Evrei 2:14" → present → navigate
+    // with arrows through several verses to end of chapter → cross boundary.
+    // The VersesList should follow to chapter 3:1, not snap back to 2:14.
+
+    await page.goto('/bible')
+    await page.waitForLoadState('networkidle')
+
+    // Type a Romanian reference to trigger smart search (mid-chapter verse)
+    const searchInput = page.getByPlaceholder(/search|cauta|căuta/i).first()
+    await expect(searchInput).toBeVisible({ timeout: 5000 })
+    // Use Evrei 2:14 - the exact user scenario (Hebrews in Romanian)
+    await searchInput.fill('Evrei 2:14')
+
+    // Wait for smart search to navigate (indigo highlight)
+    const indigoHighlight = page.locator('button.ring-indigo-500')
+    await expect(indigoHighlight).toBeVisible({ timeout: 15000 })
+
+    // Verify URL has select=true
+    await expect(page).toHaveURL(/select=true/)
+
+    const searchedVerse = await indigoHighlight
+      .locator('span.font-semibold')
+      .first()
+      .textContent()
+    expect(searchedVerse?.trim()).toBe('14')
+
+    // Present the verse via Enter
+    await searchInput.press('Enter')
+    await page.waitForTimeout(800)
+    await expect(page.locator('button.ring-green-500')).toBeVisible({ timeout: 5000 })
+
+    // Navigate with ArrowDown to the last verse of Evrei 2 (18 verses)
+    // From verse 14, need 4 presses to reach verse 18
+    for (let i = 0; i < 4; i++) {
+      await page.keyboard.press('ArrowDown')
+      await page.waitForTimeout(300)
+    }
+
+    // Should be on the last verse now
+    const lastV = page.locator('button.ring-green-500')
+    await expect(lastV).toBeVisible({ timeout: 5000 })
+    const lastVNum = await lastV.locator('span.font-semibold').first().textContent()
+    expect(parseInt(lastVNum!.trim(), 10)).toBeGreaterThan(14)
+
+    // Cross the chapter boundary
+    await page.keyboard.press('ArrowDown')
+    await page.waitForTimeout(3000)
+
+    // Should be on chapter 3, verse 1 - NOT snapped back to verse 14
+    const newHighlight = page.locator('button.ring-green-500')
+    await expect(newHighlight).toBeVisible({ timeout: 10000 })
+
+    const finalVerse = await newHighlight
+      .locator('span.font-semibold')
+      .first()
+      .textContent()
+    expect(finalVerse?.trim()).toBe('1')
+
+    // CRITICAL: Verify the highlighted verse is scrolled into view
+    // (the bug might show correct highlight but wrong scroll position)
+    const box = await newHighlight.boundingBox()
+    expect(box).toBeTruthy()
+    // The verse should be in the visible area of the page (not scrolled out)
+    const viewport = page.viewportSize()!
+    expect(box!.y).toBeGreaterThanOrEqual(0)
+    expect(box!.y).toBeLessThan(viewport.height)
+
+    // Wait extra time and re-check - the bug might cause a delayed snap-back
+    await page.waitForTimeout(2000)
+    const afterWait = page.locator('button.ring-green-500')
+    const afterVerseNum = await afterWait
+      .locator('span.font-semibold')
+      .first()
+      .textContent()
+    expect(afterVerseNum?.trim()).toBe('1')
+
+    // Re-verify scroll position after the wait
+    const afterBox = await afterWait.boundingBox()
+    expect(afterBox).toBeTruthy()
+    expect(afterBox!.y).toBeGreaterThanOrEqual(0)
+    expect(afterBox!.y).toBeLessThan(viewport.height)
+
+    // Verify chapter 3 header is visible (Evrei 3)
+    const stickyHeaders = page.locator('.sticky span.font-bold')
+    const count = await stickyHeaders.count()
+    const texts: string[] = []
+    for (let i = 0; i < count; i++) {
+      const t = await stickyHeaders.nth(i).textContent()
+      if (t?.trim()) texts.push(t.trim())
+    }
+    expect(texts.some((t) => t.includes('3'))).toBe(true)
+  })
+
+  test('search then arrow key across chapter boundary does not snap back (Geneza)', async ({
+    page,
+  }) => {
+    await page.goto('/bible')
+    await page.waitForLoadState('networkidle')
+
+    const searchInput = page.getByPlaceholder(/search|cauta|căuta/i).first()
+    await expect(searchInput).toBeVisible({ timeout: 5000 })
+    await searchInput.fill('Geneza 2:25')
+
+    const indigoHighlight = page.locator('button.ring-indigo-500')
+    await expect(indigoHighlight).toBeVisible({ timeout: 15000 })
+    await expect(page).toHaveURL(/select=true/)
+
+    await searchInput.press('Enter')
+    await page.waitForTimeout(800)
+    await expect(page.locator('button.ring-green-500')).toBeVisible({ timeout: 5000 })
+
+    await page.keyboard.press('ArrowDown')
+    await page.waitForTimeout(3000)
+
+    const newHighlight = page.locator('button.ring-green-500')
+    await expect(newHighlight).toBeVisible({ timeout: 10000 })
+    const newVerseNum = await newHighlight
+      .locator('span.font-semibold')
+      .first()
+      .textContent()
+    expect(newVerseNum?.trim()).toBe('1')
+  })
+
+  test('arrow key navigation across chapter boundary does not snap back', async ({
+    page,
+  }) => {
+    // Bug: presenting a verse then using arrow keys to cross a chapter boundary
+    // would snap the VersesList back to the old verse instead of following.
+    // Root cause: isBrowsingRef was never cleared after presenting/navigating.
+
+    await page.goto('/bible')
+    await page.waitForLoadState('networkidle')
+
+    // Click Geneza (Genesis) in the books list
+    const geneza = page.getByRole('button', { name: /geneza/i }).first()
+    await expect(geneza).toBeVisible({ timeout: 10000 })
+    await geneza.click()
+
+    // Select chapter 2
+    const chapter2 = page.getByRole('button', { name: '2' }).first()
+    await expect(chapter2).toBeVisible({ timeout: 5000 })
+    await chapter2.click()
+
+    // Wait for verses to load
+    const verseButtons = page.locator('.space-y-1 button.w-full.text-left')
+    await expect(verseButtons.first()).toBeVisible({ timeout: 15000 })
+
+    // Click the LAST verse to present it
+    const verseCount = await verseButtons.count()
+    expect(verseCount).toBeGreaterThan(0)
+    await verseButtons.nth(verseCount - 1).click()
+    await page.waitForTimeout(800)
+
+    // Verify green highlight on presented verse
+    const greenHighlight = page.locator('button.ring-green-500')
+    await expect(greenHighlight).toBeVisible({ timeout: 5000 })
+
+    const lastVerseNum = await greenHighlight
+      .locator('span.font-semibold')
+      .first()
+      .textContent()
+    const lastNum = parseInt(lastVerseNum!.trim(), 10)
+    expect(lastNum).toBeGreaterThan(0)
+
+    // Press ArrowDown to cross into next chapter
+    await page.keyboard.press('ArrowDown')
+    await page.waitForTimeout(3000)
+
+    // The green highlight should now show verse 1 of the NEXT chapter
+    const newHighlight = page.locator('button.ring-green-500')
+    await expect(newHighlight).toBeVisible({ timeout: 10000 })
+
+    const newVerseNum = await newHighlight
+      .locator('span.font-semibold')
+      .first()
+      .textContent()
+    expect(newVerseNum?.trim()).toBe('1')
+
+    // Verify a chapter header with "3" is visible
+    const stickyHeaders = page.locator('.sticky span.font-bold')
+    const count = await stickyHeaders.count()
+    const texts: string[] = []
+    for (let i = 0; i < count; i++) {
+      const t = await stickyHeaders.nth(i).textContent()
+      if (t?.trim()) texts.push(t.trim())
+    }
+    expect(texts.some((t) => t.includes('3'))).toBe(true)
+  })
+
+  test('arrow key navigation backwards across chapter boundary', async ({
+    page,
+  }) => {
+    await page.goto('/bible')
+    await page.waitForLoadState('networkidle')
+
+    // Click Geneza
+    const geneza = page.getByRole('button', { name: /geneza/i }).first()
+    await expect(geneza).toBeVisible({ timeout: 10000 })
+    await geneza.click()
+
+    // Select chapter 3
+    const chapter3 = page.getByRole('button', { name: '3' }).first()
+    await expect(chapter3).toBeVisible({ timeout: 5000 })
+    await chapter3.click()
+
+    // Wait for verses
+    const verseButtons = page.locator('.space-y-1 button.w-full.text-left')
+    await expect(verseButtons.first()).toBeVisible({ timeout: 15000 })
+
+    // Click the FIRST verse to present it
+    await verseButtons.first().click()
+    await page.waitForTimeout(800)
+
+    const greenHighlight = page.locator('button.ring-green-500')
+    await expect(greenHighlight).toBeVisible({ timeout: 5000 })
+
+    const verseNum = await greenHighlight
+      .locator('span.font-semibold')
+      .first()
+      .textContent()
+    expect(verseNum?.trim()).toBe('1')
+
+    // Press ArrowUp to cross back into previous chapter
+    await page.keyboard.press('ArrowUp')
+    await page.waitForTimeout(3000)
+
+    // Should be on the last verse of chapter 2, not stuck on 3:1
+    const newHighlight = page.locator('button.ring-green-500')
+    await expect(newHighlight).toBeVisible({ timeout: 10000 })
+
+    const newVerseNum = await newHighlight
+      .locator('span.font-semibold')
+      .first()
+      .textContent()
+    const num = parseInt(newVerseNum!.trim(), 10)
+    expect(num).toBeGreaterThan(1)
+  })
 })
