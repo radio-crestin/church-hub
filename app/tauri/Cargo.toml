@@ -32,6 +32,7 @@ tauri-plugin-dialog = "2"
 tauri-plugin-global-shortcut = "2"
 tauri-plugin-websocket = "2"
 tauri-utils = "2"
+url = "2"
 ureq = "2"
 tauri-plugin-keep-screen-on = "0.1.2"
 tauri-plugin-screen-brightness = { path = "../tauri-plugins/tauri-plugin-screen-brightness" }
