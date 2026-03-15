@@ -81,7 +81,13 @@ describe('Songs API', () => {
   })
 
   test('GET /api/songs with sortBy returns paginated results', async () => {
-    for (const sortBy of ['lastPlayed', 'mostPlayed', 'title', 'newest', 'oldest']) {
+    for (const sortBy of [
+      'lastPlayed',
+      'mostPlayed',
+      'title',
+      'newest',
+      'oldest',
+    ]) {
       const res = await fetch(
         `${BASE_URL}/api/songs?limit=5&offset=0&sortBy=${sortBy}`,
       )
@@ -116,6 +122,130 @@ describe('Schedules API', () => {
     const json = await res.json()
     expect(json).toHaveProperty('data')
     expect(Array.isArray(json.data)).toBe(true)
+  })
+
+  test('adding a song to a schedule returns the item with song data', async () => {
+    // Create a test song
+    const testTitle = `__test_schedule_song_${Date.now()}__`
+    const songRes = await fetch(`${BASE_URL}/api/songs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: testTitle,
+        slides: [{ content: '<p>Verse 1</p>', sortOrder: 0 }],
+      }),
+    })
+    expect(songRes.ok).toBe(true)
+    const songJson = await songRes.json()
+    const songId = songJson.data.id
+
+    // Create a test schedule
+    const scheduleRes = await fetch(`${BASE_URL}/api/schedules`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: `__test_schedule_${Date.now()}__` }),
+    })
+    expect(scheduleRes.ok).toBe(true)
+    const scheduleJson = await scheduleRes.json()
+    const scheduleId = scheduleJson.data.id
+
+    try {
+      // Add song to schedule
+      const addRes = await fetch(
+        `${BASE_URL}/api/schedules/${scheduleId}/items`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ songId }),
+        },
+      )
+      expect(addRes.status).toBe(201)
+      const addJson = await addRes.json()
+      expect(addJson).toHaveProperty('data')
+      expect(addJson.data.itemType).toBe('song')
+      expect(addJson.data.songId).toBe(songId)
+
+      // Verify the item appears when fetching the schedule
+      const getRes = await fetch(`${BASE_URL}/api/schedules/${scheduleId}`)
+      expect(getRes.ok).toBe(true)
+      const getJson = await getRes.json()
+      expect(getJson.data.items.length).toBe(1)
+      expect(getJson.data.items[0].itemType).toBe('song')
+      expect(getJson.data.items[0].songId).toBe(songId)
+    } finally {
+      await fetch(`${BASE_URL}/api/schedules/${scheduleId}`, {
+        method: 'DELETE',
+      })
+      await fetch(`${BASE_URL}/api/songs/${songId}`, { method: 'DELETE' })
+    }
+  })
+
+  test('adding multiple songs (bookmarks) to a schedule works', async () => {
+    // Create test songs with completely unique titles
+    const songIds: number[] = []
+    const uniqueTitles = [
+      `__alpha_${Date.now()}__`,
+      `__bravo_${Date.now()}__`,
+      `__charlie_${Date.now()}__`,
+    ]
+    for (const title of uniqueTitles) {
+      const res = await fetch(`${BASE_URL}/api/songs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          slides: [{ content: '<p>Test</p>', sortOrder: 0 }],
+        }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        throw new Error(
+          `Song creation failed (${res.status}): ${JSON.stringify(json)}`,
+        )
+      }
+      songIds.push(json.data.id)
+    }
+
+    // Create a test schedule
+    const scheduleRes = await fetch(`${BASE_URL}/api/schedules`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: `__test_bookmarks_schedule_${Date.now()}__`,
+      }),
+    })
+    expect(scheduleRes.ok).toBe(true)
+    const scheduleId = scheduleRes.json().then((j: any) => j.data.id)
+    const sid = await scheduleId
+
+    try {
+      // Add each song (simulating bookmark batch add)
+      for (const songId of songIds) {
+        const addRes = await fetch(`${BASE_URL}/api/schedules/${sid}/items`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ songId }),
+        })
+        expect(addRes.status).toBe(201)
+      }
+
+      // Verify all items appear
+      const getRes = await fetch(`${BASE_URL}/api/schedules/${sid}`)
+      expect(getRes.ok).toBe(true)
+      const getJson = await getRes.json()
+      expect(getJson.data.items.length).toBe(3)
+
+      // Verify correct sort order
+      for (let i = 0; i < 3; i++) {
+        expect(getJson.data.items[i].songId).toBe(songIds[i])
+        expect(getJson.data.items[i].sortOrder).toBe(i)
+      }
+    } finally {
+      await fetch(`${BASE_URL}/api/schedules/${sid}`, { method: 'DELETE' })
+      for (const songId of songIds) {
+        await fetch(`${BASE_URL}/api/songs/${songId}`, { method: 'DELETE' })
+      }
+    }
   })
 })
 

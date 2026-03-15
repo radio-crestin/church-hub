@@ -152,21 +152,17 @@ export function VersesList({
     return () => container.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Scroll to highlighted verse or first verse of current chapter on initial render
+  // Scroll to highlighted verse or first verse of current chapter
   useEffect(() => {
-    // Use instant scroll (no animation) to avoid triggering observers
     const scrollToTarget = () => {
       if (!containerRef.current) return
 
       if (scrollTargetIndex !== null && highlightedRef.current) {
-        // Scroll to highlighted verse centered in view
         highlightedRef.current.scrollIntoView({
           behavior: 'auto',
           block: 'center',
         })
       } else if (currentChapterFirstVerseRef.current) {
-        // No verse selected - scroll to show sticky header and first verse at top
-        // Scroll to the parent chapter container to align sticky header at top
         const verseElement = currentChapterFirstVerseRef.current
         const chapterContainer = verseElement.closest('.mb-4')
         if (chapterContainer) {
@@ -183,7 +179,7 @@ export function VersesList({
     })
 
     return () => cancelAnimationFrame(rafId)
-  }, [scrollTargetIndex, versesKey])
+  }, [scrollTargetIndex, versesKey, currentChapterKey])
 
   // IntersectionObserver for infinite scroll - load previous chapters
   useEffect(() => {

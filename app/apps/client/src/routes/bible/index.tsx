@@ -439,6 +439,7 @@ function BiblePage() {
     serverBookId,
     serverVerseIndex,
     temporaryBooks,
+    primaryBooks,
     navigation,
     primaryTranslation,
   ])
@@ -587,9 +588,9 @@ function BiblePage() {
     navigation.state.chapter,
   )
 
-  // Set searchedIndex when coming from search results
-  // We compute the actual array index from the verse number after verses are loaded
-  // This correctly handles non-sequential verse numbers (where verse-1 !== array index)
+  // Set searchedIndex when navigating from search results (URL has select=true).
+  // Computes the actual array index from the verse number after verses load,
+  // correctly handling non-sequential verse numbers (where verse-1 !== array index).
   useEffect(() => {
     if (urlSelectOnly && urlVerse !== undefined && verses.length > 0) {
       const actualIndex = verses.findIndex((v) => v.verse === urlVerse)
@@ -714,9 +715,22 @@ function BiblePage() {
       // Mark as navigated so sync effect works for subsequent chapter changes
       hasNavigatedOnOpen.current = true
       navigation.presentVerse(index)
+      // Clear select from URL so searchedIndex effect doesn't re-apply stale verse
+      if (urlSelectOnly) {
+        navigate({
+          to: '/bible/',
+          search: {
+            book: navigation.state.bookId,
+            bookName: navigation.state.bookName,
+            chapter: navigation.state.chapter,
+            verse: verse.verse,
+          },
+          replace: true,
+        })
+      }
       await presentVerseToScreen(verse, index)
     },
-    [navigation, presentVerseToScreen],
+    [navigation, presentVerseToScreen, urlSelectOnly, navigate],
   )
 
   // Handle search result selection - navigate to verse via URL and select it (without presenting)
@@ -749,6 +763,9 @@ function BiblePage() {
 
   // Handle next/previous verse navigation
   const handleNextVerse = useCallback(async () => {
+    // Active navigation clears browse mode so sync works for chapter transitions
+    isBrowsingRef.current = false
+
     const { presentedIndex, searchedIndex } = navigation.state
     const currentIndex = presentedIndex ?? searchedIndex ?? -1
     const nextIndex = currentIndex + 1
@@ -776,6 +793,9 @@ function BiblePage() {
   }, [navigation, verses, presentVerseToScreen, navigateTemporary])
 
   const handlePreviousVerse = useCallback(async () => {
+    // Active navigation clears browse mode so sync works for chapter transitions
+    isBrowsingRef.current = false
+
     const { presentedIndex, searchedIndex } = navigation.state
     const currentIndex = presentedIndex ?? searchedIndex ?? 0
     const prevIndex = currentIndex - 1
@@ -817,11 +837,27 @@ function BiblePage() {
     if (searchedIndex !== null && searchedIndex !== presentedIndex) {
       const verse = verses[searchedIndex]
       if (verse) {
+        // Clear browse mode so sync effect works for subsequent chapter changes
+        isBrowsingRef.current = false
         navigation.presentVerse(searchedIndex)
+        // Clear select from URL so the searchedIndex effect doesn't re-apply
+        // after chapter transitions (the URL verse would match in the new chapter)
+        if (urlSelectOnly) {
+          navigate({
+            to: '/bible/',
+            search: {
+              book: navigation.state.bookId,
+              bookName: navigation.state.bookName,
+              chapter: navigation.state.chapter,
+              verse: verse.verse,
+            },
+            replace: true,
+          })
+        }
         await presentVerseToScreen(verse, searchedIndex)
       }
     }
-  }, [navigation, verses, presentVerseToScreen])
+  }, [navigation, verses, presentVerseToScreen, urlSelectOnly, navigate])
 
   // Handle go back - use browser history when navigated internally, hierarchical when external
   const handleGoBack = useCallback(() => {

@@ -100,12 +100,10 @@ export function AddSongToScheduleModal({
         showToast(t('messages.error'), 'error')
         // Fall back to showing full list
         setShowFullList(true)
-        dialogRef.current?.showModal()
       }
     } else {
       // No today schedule - show full dialog
       setShowFullList(true)
-      dialogRef.current?.showModal()
     }
   }, [schedules, addSongsToSchedule, showToast, t, onClose, onAdded])
 
@@ -116,20 +114,33 @@ export function AddSongToScheduleModal({
     }
   }, [isOpen, schedules, handleSmartAdd])
 
+  const handleClose = useCallback(() => {
+    if (!addToSchedule.isPending) {
+      dialogRef.current?.close()
+      setShowFullList(false)
+      onClose()
+    }
+  }, [addToSchedule.isPending, onClose])
+
+  // Open the dialog when showFullList becomes true
+  useEffect(() => {
+    if (showFullList && dialogRef.current && !dialogRef.current.open) {
+      dialogRef.current.showModal()
+    }
+  }, [showFullList])
+
   useEffect(() => {
     const dialog = dialogRef.current
     if (!dialog) return
 
     const handleCancel = (e: Event) => {
       e.preventDefault()
-      if (!addToSchedule.isPending) {
-        onClose()
-      }
+      handleClose()
     }
 
     dialog.addEventListener('cancel', handleCancel)
     return () => dialog.removeEventListener('cancel', handleCancel)
-  }, [onClose, addToSchedule.isPending])
+  }, [handleClose])
 
   const handleScheduleSelect = async (scheduleId: number) => {
     const success = await addSongsToSchedule(scheduleId)
@@ -137,7 +148,7 @@ export function AddSongToScheduleModal({
     if (success) {
       showToast(t('messages.itemAdded'), 'success')
       onAdded?.(scheduleId)
-      onClose()
+      handleClose()
     } else {
       showToast(t('messages.error'), 'error')
     }
@@ -145,12 +156,6 @@ export function AddSongToScheduleModal({
 
   const handleScheduleCreated = () => {
     setShowCreateModal(false)
-  }
-
-  const handleClose = () => {
-    if (!addToSchedule.isPending) {
-      onClose()
-    }
   }
 
   // If smart add handled it (no dialog needed), render nothing

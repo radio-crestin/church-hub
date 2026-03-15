@@ -11,6 +11,7 @@ import type {
   PresentTemporaryScreenShareInput,
   PresentTemporarySongInput,
   PresentTemporaryVerseteTineriInput,
+  TemporaryBibleContent,
   TemporaryContent,
   UpdatePresentationStateInput,
 } from './types'
@@ -597,7 +598,7 @@ function navigateTemporaryBible(
   // If within current chapter
   if (newIndex >= 0 && newIndex < chapterVerses.length) {
     const newVerse = chapterVerses[newIndex]
-    const reference = `${data.reference.split(' ')[0]} ${data.chapter}:${newVerse.verse} - ${data.translationAbbreviation}`
+    const reference = `${data.bookName} ${data.chapter}:${newVerse.verse} - ${data.translationAbbreviation}`
 
     const temporaryContent: TemporaryContent = {
       type: 'bible',
@@ -613,132 +614,187 @@ function navigateTemporaryBible(
     return updatePresentationState({ temporaryContent })
   }
 
-  // Handle chapter boundary - move to next chapter if available
+  // Handle chapter boundary
   if (direction === 'next') {
-    // Get the book's chapter count to check if there's a next chapter
-    const book = rawDb
-      .query(
-        `
-      SELECT chapter_count
-      FROM bible_books
-      WHERE translation_id = ? AND id = ?
-    `,
-      )
-      .get(data.translationId, data.bookId) as { chapter_count: number } | null
-
-    if (book && data.chapter < book.chapter_count) {
-      // Move to first verse of next chapter
-      const nextChapter = data.chapter + 1
-      const nextChapterVerses = rawDb
-        .query(
-          `
-        SELECT id, verse, text
-        FROM bible_verses
-        WHERE translation_id = ? AND book_id = ? AND chapter = ?
-        ORDER BY verse ASC
-        LIMIT 1
-      `,
-        )
-        .all(data.translationId, data.bookId, nextChapter) as {
-        id: number
-        verse: number
-        text: string
-      }[]
-
-      if (nextChapterVerses.length > 0) {
-        const newVerse = nextChapterVerses[0]
-        const bookName = data.reference.split(' ')[0]
-        const reference = `${bookName} ${nextChapter}:${newVerse.verse} - ${data.translationAbbreviation}`
-
-        const temporaryContent: TemporaryContent = {
-          type: 'bible',
-          data: {
-            ...data,
-            verseId: newVerse.id,
-            reference,
-            text: newVerse.text,
-            chapter: nextChapter,
-            currentVerseIndex: 0,
-            // Clear secondary text on chapter transition
-            secondaryText: undefined,
-            secondaryBookName: undefined,
-            secondaryTranslationAbbreviation: undefined,
-          },
-        }
-
-        log('info', `Moving to next chapter: ${nextChapter}`)
-        return updatePresentationState({ temporaryContent })
-      }
-    }
-
-    // No next chapter available - end of book, hide presentation
-    log('info', 'Reached end of book, hiding temporary presentation')
-    return updatePresentationState({
-      temporaryContent: null,
-      isHidden: true,
-    })
+    return navigateToNextChapterOrBook(rawDb, data)
   }
 
   // direction === 'prev' and at start of chapter
-  if (data.chapter > 1) {
-    // Try previous chapter (last verse)
-    const prevChapterVerses = rawDb
+  return navigateToPrevChapterOrBook(rawDb, data)
+}
+
+/**
+ * Navigates to the next chapter (or first chapter of the next book)
+ */
+function navigateToNextChapterOrBook(
+  rawDb: ReturnType<typeof getRawDatabase>,
+  data: TemporaryBibleContent,
+): PresentationState {
+  // Check if there's a next chapter in the current book
+  const book = rawDb
+    .query(
+      `SELECT chapter_count, book_order FROM bible_books WHERE translation_id = ? AND id = ?`,
+    )
+    .get(data.translationId, data.bookId) as {
+    chapter_count: number
+    book_order: number
+  } | null
+
+  if (book && data.chapter < book.chapter_count) {
+    // Move to first verse of next chapter (same book)
+    const nextChapter = data.chapter + 1
+    return navigateToChapterFirstVerse(rawDb, data, data.bookId, data.bookCode, data.bookName, nextChapter)
+  }
+
+  // End of book - try first chapter of next book
+  if (book) {
+    const nextBook = rawDb
       .query(
-        `
-      SELECT id, verse, text, chapter
-      FROM bible_verses
-      WHERE translation_id = ? AND book_id = ? AND chapter = ?
-      ORDER BY verse DESC
-      LIMIT 1
-    `,
+        `SELECT id, book_code, book_name FROM bible_books WHERE translation_id = ? AND book_order = ?`,
       )
-      .all(data.translationId, data.bookId, data.chapter - 1) as {
+      .get(data.translationId, book.book_order + 1) as {
       id: number
-      verse: number
-      text: string
-      chapter: number
-    }[]
+      book_code: string
+      book_name: string
+    } | null
 
-    if (prevChapterVerses.length > 0) {
-      const newVerse = prevChapterVerses[0]
-      const bookName = data.reference.split(' ')[0]
-      const reference = `${bookName} ${newVerse.chapter}:${newVerse.verse} - ${data.translationAbbreviation}`
-
-      // Get verse count to set correct index
-      const verseCount = rawDb
-        .query(
-          `
-        SELECT COUNT(*) as count
-        FROM bible_verses
-        WHERE translation_id = ? AND book_id = ? AND chapter = ?
-      `,
-        )
-        .get(data.translationId, data.bookId, newVerse.chapter) as {
-        count: number
-      }
-
-      const temporaryContent: TemporaryContent = {
-        type: 'bible',
-        data: {
-          ...data,
-          verseId: newVerse.id,
-          reference,
-          text: newVerse.text,
-          chapter: newVerse.chapter,
-          currentVerseIndex: verseCount.count - 1,
-          // Clear secondary text on chapter transition
-          secondaryText: undefined,
-          secondaryBookName: undefined,
-          secondaryTranslationAbbreviation: undefined,
-        },
-      }
-
-      return updatePresentationState({ temporaryContent })
+    if (nextBook) {
+      log('info', `Moving to next book: ${nextBook.book_name}`)
+      return navigateToChapterFirstVerse(rawDb, data, nextBook.id, nextBook.book_code, nextBook.book_name, 1)
     }
   }
 
-  // Stay on first verse
+  // No next book - end of Bible, hide presentation
+  log('info', 'Reached end of Bible, hiding temporary presentation')
+  return updatePresentationState({ temporaryContent: null, isHidden: true })
+}
+
+/**
+ * Navigates to the previous chapter (or last chapter of the previous book)
+ */
+function navigateToPrevChapterOrBook(
+  rawDb: ReturnType<typeof getRawDatabase>,
+  data: TemporaryBibleContent,
+): PresentationState {
+  if (data.chapter > 1) {
+    // Move to last verse of previous chapter (same book)
+    return navigateToChapterLastVerse(rawDb, data, data.bookId, data.bookCode, data.bookName, data.chapter - 1)
+  }
+
+  // Start of book - try last chapter of previous book
+  const book = rawDb
+    .query(
+      `SELECT book_order FROM bible_books WHERE translation_id = ? AND id = ?`,
+    )
+    .get(data.translationId, data.bookId) as { book_order: number } | null
+
+  if (book) {
+    const prevBook = rawDb
+      .query(
+        `SELECT id, book_code, book_name, chapter_count FROM bible_books WHERE translation_id = ? AND book_order = ?`,
+      )
+      .get(data.translationId, book.book_order - 1) as {
+      id: number
+      book_code: string
+      book_name: string
+      chapter_count: number
+    } | null
+
+    if (prevBook) {
+      log('info', `Moving to previous book: ${prevBook.book_name}`)
+      return navigateToChapterLastVerse(rawDb, data, prevBook.id, prevBook.book_code, prevBook.book_name, prevBook.chapter_count)
+    }
+  }
+
+  // No previous book - stay on first verse
   return getPresentationState()
+}
+
+/**
+ * Navigates to the first verse of a given chapter
+ */
+function navigateToChapterFirstVerse(
+  rawDb: ReturnType<typeof getRawDatabase>,
+  data: TemporaryBibleContent,
+  bookId: number,
+  bookCode: string,
+  bookName: string,
+  chapter: number,
+): PresentationState {
+  const verse = rawDb
+    .query(
+      `SELECT id, verse, text FROM bible_verses WHERE translation_id = ? AND book_id = ? AND chapter = ? ORDER BY verse ASC LIMIT 1`,
+    )
+    .get(data.translationId, bookId, chapter) as { id: number; verse: number; text: string } | null
+
+  if (!verse) {
+    return getPresentationState()
+  }
+
+  const reference = `${bookName} ${chapter}:${verse.verse} - ${data.translationAbbreviation}`
+  return updatePresentationState({
+    temporaryContent: {
+      type: 'bible',
+      data: {
+        ...data,
+        verseId: verse.id,
+        reference,
+        text: verse.text,
+        bookId,
+        bookCode,
+        bookName,
+        chapter,
+        currentVerseIndex: 0,
+        secondaryText: undefined,
+        secondaryBookName: undefined,
+        secondaryTranslationAbbreviation: undefined,
+      },
+    },
+  })
+}
+
+/**
+ * Navigates to the last verse of a given chapter
+ */
+function navigateToChapterLastVerse(
+  rawDb: ReturnType<typeof getRawDatabase>,
+  data: TemporaryBibleContent,
+  bookId: number,
+  bookCode: string,
+  bookName: string,
+  chapter: number,
+): PresentationState {
+  const verses = rawDb
+    .query(
+      `SELECT id, verse, text FROM bible_verses WHERE translation_id = ? AND book_id = ? AND chapter = ? ORDER BY verse ASC`,
+    )
+    .all(data.translationId, bookId, chapter) as { id: number; verse: number; text: string }[]
+
+  if (verses.length === 0) {
+    return getPresentationState()
+  }
+
+  const lastVerse = verses[verses.length - 1]
+  const reference = `${bookName} ${chapter}:${lastVerse.verse} - ${data.translationAbbreviation}`
+  return updatePresentationState({
+    temporaryContent: {
+      type: 'bible',
+      data: {
+        ...data,
+        verseId: lastVerse.id,
+        reference,
+        text: lastVerse.text,
+        bookId,
+        bookCode,
+        bookName,
+        chapter,
+        currentVerseIndex: verses.length - 1,
+        secondaryText: undefined,
+        secondaryBookName: undefined,
+        secondaryTranslationAbbreviation: undefined,
+      },
+    },
+  })
 }
 
 /**

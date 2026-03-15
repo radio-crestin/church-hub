@@ -60,8 +60,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install native audio libraries
-        run: sudo apt-get update && sudo apt-get install -y libpulse-dev libasound2-dev
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y \
+            libpulse-dev \
+            libasound2-dev \
+            xvfb
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -108,9 +112,9 @@ jobs:
         working-directory: app
         run: bun run --filter client build
 
-      - name: Start server and run E2E tests
+      - name: Run E2E tests
         working-directory: app/apps/client
-        run: npx playwright test
+        run: xvfb-run --auto-servernum -- npx playwright test
         env:
           CI: true
 
