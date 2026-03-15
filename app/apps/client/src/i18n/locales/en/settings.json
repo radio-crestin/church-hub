@@ -130,14 +130,17 @@
       "shortcuts": {
         "title": "Keyboard Shortcuts",
         "description": "Configure shortcuts to navigate to this page",
+        "switchTitle": "Switch to Page",
+        "switchDescription": "Shortcut to navigate to this page",
+        "focusSearchTitle": "Focus Search",
+        "focusSearchDescription": "Shortcut to navigate to this page and focus the search input",
+        "showSlideTitle": "Display Selected Slide",
+        "showSlideDescription": "Shortcut to display the currently selected slide on screen",
+        "sameShortcutHint": "You can use the same shortcut for switching to the page and focusing search.",
         "duplicateError": "Shortcut already exists",
         "conflictGlobal": "Already used by global action \"{{action}}\"",
         "conflictScene": "Already used by scene \"{{scene}}\"",
         "conflictSidebar": "Already used by \"{{item}}\""
-      },
-      "focusSearch": {
-        "label": "Focus Search on Navigate",
-        "description": "Automatically focus the search input when navigating via shortcut"
       },
       "visibility": {
         "label": "Visible in Sidebar",

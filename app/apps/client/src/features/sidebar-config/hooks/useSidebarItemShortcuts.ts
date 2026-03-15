@@ -15,6 +15,9 @@ export interface SidebarShortcut {
 /**
  * Returns all configured shortcuts for sidebar items.
  * Used by GlobalAppShortcutManager to register sidebar navigation shortcuts.
+ *
+ * Emits separate entries for switch shortcuts (focusSearchOnNavigate=false)
+ * and focus-search shortcuts (focusSearchOnNavigate=true).
  */
 export function useSidebarItemShortcuts(): SidebarShortcut[] {
   const { config, isLoading } = useSidebarConfig()
@@ -27,10 +30,7 @@ export function useSidebarItemShortcuts(): SidebarShortcut[] {
     const shortcuts: SidebarShortcut[] = []
 
     for (const item of config.items) {
-      // Skip items without settings or shortcuts
-      if (!item.settings?.shortcuts?.length) {
-        continue
-      }
+      if (!item.settings) continue
 
       // Get route and display name based on item type
       let route: string
@@ -42,27 +42,45 @@ export function useSidebarItemShortcuts(): SidebarShortcut[] {
         if (!definition) continue
 
         route = definition.to
-        // We'll use the builtinId as display name for conflict messages
-        // The actual translation happens in the UI
         displayName = builtinItem.builtinId
       } else {
         const customItem = item as CustomPageMenuItem
-        // Custom pages use custom-page route (matches useResolvedSidebarItems)
         route = `/custom-page/${customItem.id}`
         displayName = customItem.title
       }
 
-      // Add all shortcuts for this item
-      for (const shortcut of item.settings.shortcuts) {
-        if (!shortcut) continue
+      // Add switch shortcuts (no focus search)
+      if (item.settings.shortcuts?.length) {
+        for (const shortcut of item.settings.shortcuts) {
+          if (!shortcut) continue
 
-        shortcuts.push({
-          shortcut,
-          itemId: item.id,
-          route,
-          focusSearchOnNavigate: item.settings.focusSearchOnNavigate ?? false,
-          displayName,
-        })
+          // If using legacy model (no focusSearchShortcuts), use focusSearchOnNavigate
+          const useLegacy = !item.settings.focusSearchShortcuts
+          shortcuts.push({
+            shortcut,
+            itemId: item.id,
+            route,
+            focusSearchOnNavigate: useLegacy
+              ? (item.settings.focusSearchOnNavigate ?? false)
+              : false,
+            displayName,
+          })
+        }
+      }
+
+      // Add focus-search shortcuts (always focus search)
+      if (item.settings.focusSearchShortcuts?.length) {
+        for (const shortcut of item.settings.focusSearchShortcuts) {
+          if (!shortcut) continue
+
+          shortcuts.push({
+            shortcut,
+            itemId: item.id,
+            route,
+            focusSearchOnNavigate: true,
+            displayName,
+          })
+        }
       }
     }
 

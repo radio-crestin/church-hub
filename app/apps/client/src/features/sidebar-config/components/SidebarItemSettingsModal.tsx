@@ -93,7 +93,7 @@ export function SidebarItemSettingsModal({
 
   // Form state
   const [shortcuts, setShortcuts] = useState<string[]>([])
-  const [focusSearchOnNavigate, setFocusSearchOnNavigate] = useState(false)
+  const [focusSearchShortcuts, setFocusSearchShortcuts] = useState<string[]>([])
   const [isVisible, setIsVisible] = useState(true)
 
   // Native window settings
@@ -152,7 +152,17 @@ export function SidebarItemSettingsModal({
         : undefined
       const settings = item.settings ?? getDefaultSidebarItemSettings(builtinId)
       setShortcuts([...settings.shortcuts])
-      setFocusSearchOnNavigate(settings.focusSearchOnNavigate)
+      // Migrate legacy: if focusSearchOnNavigate was true and no focusSearchShortcuts,
+      // copy shortcuts to focusSearchShortcuts
+      if (
+        settings.focusSearchOnNavigate &&
+        !settings.focusSearchShortcuts?.length &&
+        settings.shortcuts.length > 0
+      ) {
+        setFocusSearchShortcuts([...settings.shortcuts])
+      } else {
+        setFocusSearchShortcuts([...(settings.focusSearchShortcuts ?? [])])
+      }
       setOpenInNativeWindow(settings.nativeWindow?.openInNativeWindow ?? false)
       setAutoOpenOnStartup(settings.nativeWindow?.autoOpenOnStartup ?? false)
       setForceNativeWindow(settings.nativeWindow?.forceNativeWindow ?? false)
@@ -222,24 +232,51 @@ export function SidebarItemSettingsModal({
     setShortcuts((prev) => prev.filter((_, i) => i !== index))
   }, [])
 
-  // Validate shortcut for conflicts
+  // Focus search shortcut handlers
+  const handleAddFocusSearchShortcut = useCallback(() => {
+    setFocusSearchShortcuts((prev) => [...prev, ''])
+  }, [])
+
+  const handleUpdateFocusSearchShortcut = useCallback(
+    (index: number, value: string) => {
+      setFocusSearchShortcuts((prev) => {
+        const updated = [...prev]
+        updated[index] = value
+        return updated
+      })
+    },
+    [],
+  )
+
+  const handleRemoveFocusSearchShortcut = useCallback((index: number) => {
+    setFocusSearchShortcuts((prev) => prev.filter((_, i) => i !== index))
+  }, [])
+
+  // Validate shortcut for conflicts (shared between switch and focus-search shortcuts)
   const getShortcutError = useCallback(
-    (shortcut: string, index: number): string | undefined => {
+    (
+      shortcut: string,
+      index: number,
+      sourceList: string[],
+      allowSameAsFocusSearch = false,
+    ): string | undefined => {
       if (!shortcut) return undefined
 
-      // Check for duplicates within this item's shortcuts
-      const duplicateIndex = shortcuts.findIndex(
+      // Check for duplicates within the same list
+      const duplicateIndex = sourceList.findIndex(
         (s, i) => i !== index && s === shortcut,
       )
       if (duplicateIndex !== -1) {
         return t('sections.sidebarItem.shortcuts.duplicateError')
       }
 
+      // Allow same shortcut between switch and focus-search lists
+      // (user explicitly wants this allowed)
+
       // Check against global shortcuts (only valid action IDs, ignore legacy ones)
       for (const [actionId, config] of Object.entries(
         globalShortcuts.actions,
       )) {
-        // Skip legacy action IDs that may still exist in the database
         if (!VALID_ACTION_IDS.includes(actionId as GlobalShortcutActionId)) {
           continue
         }
@@ -261,7 +298,7 @@ export function SidebarItemSettingsModal({
 
       return undefined
     },
-    [shortcuts, globalShortcuts, scenes, t],
+    [globalShortcuts, scenes, t],
   )
 
   // Validate custom page fields
@@ -311,12 +348,16 @@ export function SidebarItemSettingsModal({
 
     // Filter out empty shortcuts
     const validShortcuts = shortcuts.filter((s) => s.trim())
+    const validFocusSearchShortcuts = focusSearchShortcuts.filter((s) =>
+      s.trim(),
+    )
 
     const update: SidebarItemSettingsUpdate = {
       itemId: item.id,
       settings: {
         shortcuts: validShortcuts,
-        focusSearchOnNavigate,
+        focusSearchOnNavigate: false,
+        focusSearchShortcuts: validFocusSearchShortcuts,
         nativeWindow: {
           openInNativeWindow,
           autoOpenOnStartup,
@@ -376,14 +417,14 @@ export function SidebarItemSettingsModal({
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-4 space-y-6">
-            {/* Keyboard Shortcuts Section */}
+            {/* Switch to Page Shortcuts Section */}
             <div className="space-y-3">
               <div>
                 <h3 className="text-sm font-medium text-gray-900 dark:text-white">
-                  {t('sections.sidebarItem.shortcuts.title')}
+                  {t('sections.sidebarItem.shortcuts.switchTitle')}
                 </h3>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                  {t('sections.sidebarItem.shortcuts.description')}
+                  {t('sections.sidebarItem.shortcuts.switchDescription')}
                 </p>
               </div>
 
@@ -394,7 +435,7 @@ export function SidebarItemSettingsModal({
                     value={shortcut}
                     onChange={(value) => handleUpdateShortcut(index, value)}
                     onRemove={() => handleRemoveShortcut(index)}
-                    error={getShortcutError(shortcut, index)}
+                    error={getShortcutError(shortcut, index, shortcuts)}
                     namespace="settings"
                   />
                 ))}
@@ -409,6 +450,50 @@ export function SidebarItemSettingsModal({
                 {t('sections.shortcuts.addShortcut')}
               </button>
             </div>
+
+            {/* Focus Search Shortcuts Section (only for pages with search) */}
+            {hasSearch && (
+              <div className="space-y-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                    {t('sections.sidebarItem.shortcuts.focusSearchTitle')}
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    {t(
+                      'sections.sidebarItem.shortcuts.focusSearchDescription',
+                    )}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  {focusSearchShortcuts.map((shortcut, index) => (
+                    <ShortcutRecorder
+                      key={index}
+                      value={shortcut}
+                      onChange={(value) =>
+                        handleUpdateFocusSearchShortcut(index, value)
+                      }
+                      onRemove={() => handleRemoveFocusSearchShortcut(index)}
+                      error={getShortcutError(
+                        shortcut,
+                        index,
+                        focusSearchShortcuts,
+                      )}
+                      namespace="settings"
+                    />
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleAddFocusSearchShortcut}
+                  className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
+                >
+                  <Plus size={16} />
+                  {t('sections.shortcuts.addShortcut')}
+                </button>
+              </div>
+            )}
 
             {/* Icon Color Section */}
             <div className="space-y-3 pt-2 border-t border-gray-200 dark:border-gray-700">
@@ -429,29 +514,7 @@ export function SidebarItemSettingsModal({
               />
             </div>
 
-            {/* Focus Search Toggle (only for pages with search) */}
-            {hasSearch && (
-              <div className="flex items-start gap-3 pt-2 border-t border-gray-200 dark:border-gray-700">
-                <input
-                  id="focus-search-toggle"
-                  type="checkbox"
-                  checked={focusSearchOnNavigate}
-                  onChange={(e) => setFocusSearchOnNavigate(e.target.checked)}
-                  className="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                />
-                <div className="flex flex-col">
-                  <label
-                    htmlFor="focus-search-toggle"
-                    className="text-sm font-medium text-gray-900 dark:text-white cursor-pointer"
-                  >
-                    {t('sections.sidebarItem.focusSearch.label')}
-                  </label>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {t('sections.sidebarItem.focusSearch.description')}
-                  </p>
-                </div>
-              </div>
-            )}
+            {/* Note: focusSearchOnNavigate toggle removed - replaced by separate focus search shortcuts */}
 
             {/* Visibility Toggle */}
             <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">

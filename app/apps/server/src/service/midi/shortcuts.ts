@@ -226,19 +226,40 @@ export function loadMIDIShortcuts(): void {
       const config = JSON.parse(sidebarSetting.value) as SidebarConfig
 
       for (const item of config.items) {
+        const route = getSidebarItemRoute(item)
+
+        // Switch shortcuts (no focus search)
         if (item.settings?.shortcuts) {
-          const route = getSidebarItemRoute(item)
+          const useLegacy = !item.settings.focusSearchShortcuts
           for (const shortcut of item.settings.shortcuts) {
             if (isMIDIShortcut(shortcut)) {
               newMap.set(shortcut, {
                 type: 'sidebar',
                 action: route,
                 meta: {
-                  focusSearch: item.settings.focusSearchOnNavigate ?? false,
+                  focusSearch: useLegacy
+                    ? (item.settings.focusSearchOnNavigate ?? false)
+                    : false,
                 },
               })
               midiLogger.debug(
                 `Mapped MIDI shortcut ${shortcut} -> sidebar:${route}`,
+              )
+            }
+          }
+        }
+
+        // Focus search shortcuts (always focus search)
+        if (item.settings?.focusSearchShortcuts) {
+          for (const shortcut of item.settings.focusSearchShortcuts) {
+            if (isMIDIShortcut(shortcut)) {
+              newMap.set(shortcut, {
+                type: 'sidebar',
+                action: route,
+                meta: { focusSearch: true },
+              })
+              midiLogger.debug(
+                `Mapped MIDI focus-search shortcut ${shortcut} -> sidebar:${route}`,
               )
             }
           }

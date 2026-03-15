@@ -130,14 +130,17 @@
       "shortcuts": {
         "title": "Scurtături de Tastatură",
         "description": "Configurează scurtături pentru a naviga la această pagină",
+        "switchTitle": "Comută la Pagină",
+        "switchDescription": "Scurtătură pentru a naviga la această pagină",
+        "focusSearchTitle": "Focusează Căutarea",
+        "focusSearchDescription": "Scurtătură pentru a naviga la pagină și a focusa câmpul de căutare",
+        "showSlideTitle": "Afișează Slide-ul Selectat",
+        "showSlideDescription": "Scurtătură pentru a afișa slide-ul selectat pe ecran",
+        "sameShortcutHint": "Poți folosi aceeași scurtătură pentru a comuta la pagină și a focusa căutarea.",
         "duplicateError": "Scurtătura există deja",
         "conflictGlobal": "Folosită deja de acțiunea globală \"{{action}}\"",
         "conflictScene": "Folosită deja de scena \"{{scene}}\"",
         "conflictSidebar": "Folosită deja de \"{{item}}\""
-      },
-      "focusSearch": {
-        "label": "Focusează Căutarea la Navigare",
-        "description": "Focusează automat câmpul de căutare când navighezi prin scurtătură"
       },
       "visibility": {
         "label": "Vizibil în Bara Laterală",
