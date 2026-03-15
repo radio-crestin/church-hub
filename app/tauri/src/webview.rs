@@ -1,5 +1,8 @@
 use std::time::Duration;
-use tauri::{webview::WebviewBuilder, LogicalPosition, LogicalSize, Manager, WebviewUrl};
+use tauri::{
+    webview::{NewWindowResponse, WebviewBuilder},
+    LogicalPosition, LogicalSize, Manager, WebviewUrl,
+};
 use tauri_plugin_opener::OpenerExt;
 use tauri_utils::config::BackgroundThrottlingPolicy;
 use tokio::time::sleep;
@@ -19,54 +22,6 @@ const CHROME_USER_AGENT: &str = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537
 const MAX_MAIN_WINDOW_RETRIES: u32 = 10;
 const RETRY_DELAY_MS: u64 = 200;
 
-/// JavaScript injected on every page load to intercept window.open calls
-/// and links with target=_blank, redirecting external URLs through
-/// window.location.href so the Rust on_navigation handler can catch them.
-/// We can't use Tauri IPC here because sites like WhatsApp have strict CSP
-/// that blocks connections to ipc.localhost.
-const EXTERNAL_LINK_INTERCEPT_SCRIPT: &str = r#"
-(function() {
-    if (window.__churchHubLinkInterceptorInstalled) return;
-    window.__churchHubLinkInterceptorInstalled = true;
-
-    var pageOrigin = window.location.origin;
-
-    // Intercept clicks on anchor elements with external hrefs
-    // Redirect through location.href so Rust on_navigation catches it
-    document.addEventListener('click', function(e) {
-        var el = e.target && e.target.closest ? e.target.closest('a[href]') : null;
-        if (!el) return;
-        var href = el.getAttribute('href');
-        if (!href) return;
-        if (href.startsWith('javascript:') || href === '#' || href.startsWith('#')) return;
-        try {
-            var url = new URL(href, window.location.href);
-            if (url.origin !== pageOrigin) {
-                e.preventDefault();
-                e.stopPropagation();
-                // Navigate current page - Rust on_navigation will open in system browser and block
-                window.location.href = url.href;
-            }
-        } catch (_) {}
-    }, true);
-
-    // Intercept window.open for popup/SPA navigation (e.g. WhatsApp shared links)
-    var origOpen = window.open;
-    window.open = function(url, target, features) {
-        if (url) {
-            try {
-                var parsed = new URL(url, window.location.href);
-                if (parsed.origin !== pageOrigin) {
-                    // Navigate current page - Rust on_navigation will open in system browser and block
-                    window.location.href = parsed.href;
-                    return null;
-                }
-            } catch (_) {}
-        }
-        return origOpen.call(window, url, target, features);
-    };
-})();
-"#;
 
 /// Helper function to get the main window with retries
 async fn get_main_window_with_retry(
@@ -149,7 +104,9 @@ pub async fn create_child_webview(
 
     // Extract origin for navigation filtering
     let origin = parsed_url.origin().unicode_serialization();
-    let app_handle = app.clone();
+    let nav_origin_clone = origin.clone();
+    let app_for_nav = app.clone();
+    let app_for_new_window = app.clone();
 
     // Build and add the child webview with modern Chrome user agent
     // Note: We don't use auto_resize() because we want to control the exact position
@@ -157,16 +114,15 @@ pub async fn create_child_webview(
     let webview_builder = WebviewBuilder::new(&label, webview_url)
         .user_agent(CHROME_USER_AGENT)
         .background_throttling(BackgroundThrottlingPolicy::Disabled)
-        // Intercept navigation: open external URLs in system browser
+        // Intercept direct navigation: open external URLs in system browser
         .on_navigation(move |nav_url| {
             let nav_origin = nav_url.origin().unicode_serialization();
-            if nav_origin != origin {
+            if nav_origin != nav_origin_clone {
                 println!(
                     "[webview] External navigation intercepted: {} (origin: {} != {})",
-                    nav_url, nav_origin, origin
+                    nav_url, nav_origin, nav_origin_clone
                 );
-                // Open in system browser
-                if let Err(e) = app_handle.opener().open_url(nav_url.as_str(), None::<&str>) {
+                if let Err(e) = app_for_nav.opener().open_url(nav_url.as_str(), None::<&str>) {
                     println!("[webview] Failed to open external URL: {}", e);
                 }
                 false // Block navigation in webview
@@ -174,8 +130,22 @@ pub async fn create_child_webview(
                 true // Allow same-origin navigation
             }
         })
-        // Inject JS on every page load to intercept window.open and target=_blank links
-        .initialization_script(EXTERNAL_LINK_INTERCEPT_SCRIPT);
+        // Intercept window.open / target="_blank": open external URLs in system browser
+        .on_new_window(move |new_url, _features| {
+            let new_origin = new_url.origin().unicode_serialization();
+            if new_origin != origin {
+                println!(
+                    "[webview] New window request intercepted: {} (origin: {} != {})",
+                    new_url, new_origin, origin
+                );
+                if let Err(e) = app_for_new_window.opener().open_url(new_url.as_str(), None::<&str>) {
+                    println!("[webview] Failed to open external URL: {}", e);
+                }
+                NewWindowResponse::Deny // Don't open new window in app
+            } else {
+                NewWindowResponse::Allow // Allow same-origin popups
+            }
+        });
 
     // Get the window reference for add_child
     let window = main_window.as_ref().window();
