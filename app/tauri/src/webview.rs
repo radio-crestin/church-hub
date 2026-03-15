@@ -282,6 +282,100 @@ pub async fn webview_exists(app: tauri::AppHandle, label: String) -> Result<bool
     Ok(app.get_webview(&label).is_some())
 }
 
+/// Creates a native window with external URL and handlers for opening external links
+/// in the system browser. Used for custom pages opened in native windows.
+#[tauri::command]
+pub async fn create_native_page_window(
+    app: tauri::AppHandle,
+    label: String,
+    url: String,
+    title: String,
+    width: f64,
+    height: f64,
+    x: Option<f64>,
+    y: Option<f64>,
+    center: bool,
+    user_agent: Option<String>,
+) -> Result<(), String> {
+    println!("[webview] Creating native page window '{}' for URL: {}", label, url);
+
+    // Check if window already exists
+    if let Some(existing) = app.get_webview_window(&label) {
+        println!("[webview] Window '{}' already exists, focusing", label);
+        let _ = existing.unminimize();
+        existing.set_focus().map_err(|e| format!("Failed to focus: {}", e))?;
+        return Ok(());
+    }
+
+    let parsed_url: url::Url = url
+        .parse()
+        .map_err(|e| format!("Invalid URL '{}': {}", url, e))?;
+    let origin = parsed_url.origin().unicode_serialization();
+    let nav_origin_clone = origin.clone();
+    let app_for_nav = app.clone();
+    let app_for_new_window = app.clone();
+
+    let mut builder = tauri::WebviewWindowBuilder::new(
+        &app,
+        &label,
+        WebviewUrl::External(parsed_url),
+    )
+    .title(&title)
+    .inner_size(width, height)
+    .resizable(true)
+    .maximizable(true)
+    .minimizable(true)
+    .decorations(true)
+    .skip_taskbar(false)
+    .focused(true)
+    .on_navigation(move |nav_url| {
+        let nav_origin = nav_url.origin().unicode_serialization();
+        if nav_origin != nav_origin_clone {
+            println!(
+                "[webview] Native window external navigation: {} (origin: {} != {})",
+                nav_url, nav_origin, nav_origin_clone
+            );
+            if let Err(e) = app_for_nav.opener().open_url(nav_url.as_str(), None::<&str>) {
+                println!("[webview] Failed to open external URL: {}", e);
+            }
+            false
+        } else {
+            true
+        }
+    })
+    .on_new_window(move |new_url, _features| {
+        let new_origin = new_url.origin().unicode_serialization();
+        if new_origin != origin {
+            println!(
+                "[webview] Native window new window request: {} (origin: {} != {})",
+                new_url, new_origin, origin
+            );
+            if let Err(e) = app_for_new_window.opener().open_url(new_url.as_str(), None::<&str>) {
+                println!("[webview] Failed to open external URL: {}", e);
+            }
+            NewWindowResponse::Deny
+        } else {
+            NewWindowResponse::Allow
+        }
+    })
+    .initialization_script(EXTERNAL_LINK_INTERCEPT_SCRIPT);
+
+    if let Some(ua) = user_agent {
+        builder = builder.user_agent(&ua);
+    }
+
+    if center {
+        builder = builder.center();
+    } else if let (Some(px), Some(py)) = (x, y) {
+        builder = builder.position(px, py);
+    }
+
+    builder.build().map_err(|e| format!("Failed to create window: {}", e))?;
+
+    println!("[webview] Native page window '{}' created with external link handlers", label);
+    Ok(())
+}
+
 /// Repositions and resizes a child webview
 #[tauri::command]
 pub async fn update_child_webview(
