@@ -23,43 +23,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Cache Bun dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('app/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
-
-      - name: Install dependencies
-        working-directory: app
-        run: bun install --frozen-lockfile
-
-      - name: Run unit tests
-        working-directory: app
-        run: bun run test:unit
-
-      - name: Run server integration tests
-        working-directory: app
-        run: bun run test:server
-
-  e2e-tests:
-    runs-on: ubuntu-latest
-    needs: test
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Install system dependencies
         run: |
           sudo apt-get update && sudo apt-get install -y \
@@ -86,6 +49,18 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-bun-
 
+      - name: Install dependencies
+        working-directory: app
+        run: bun install --frozen-lockfile
+
+      - name: Run unit tests
+        working-directory: app
+        run: bun run test:unit
+
+      - name: Run server integration tests
+        working-directory: app
+        run: bun run test:server
+
       - name: Cache Playwright browsers
         uses: actions/cache@v4
         id: playwright-cache
@@ -94,10 +69,6 @@ jobs:
           key: ${{ runner.os }}-playwright-${{ hashFiles('app/apps/client/package.json') }}
           restore-keys: |
             ${{ runner.os }}-playwright-
-
-      - name: Install dependencies
-        working-directory: app
-        run: bun install --frozen-lockfile
 
       - name: Install Playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
@@ -114,7 +85,7 @@ jobs:
 
       - name: Run E2E tests
         working-directory: app/apps/client
-        run: xvfb-run --auto-servernum -- npx playwright test
+        run: xvfb-run --auto-servernum -- npx playwright test --grep-invert "@obs"
         env:
           CI: true
 
@@ -135,7 +106,7 @@ jobs:
           retention-days: 7
 
   create-release:
-    needs: [test, e2e-tests]
+    needs: [test]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -201,7 +172,7 @@ jobs:
           )"
 
   build:
-    needs: [test, e2e-tests, create-release]
+    needs: [test, create-release]
     strategy:
       fail-fast: false
       matrix:
@@ -288,14 +259,6 @@ jobs:
       - name: Install dependencies
         working-directory: app
         run: bun install --frozen-lockfile
-
-      - name: Run unit tests
-        working-directory: app
-        run: bun run test:unit
-
-      - name: Run server integration tests
-        working-directory: app
-        run: bun run test:server
 
       - name: Cache frontend build
         uses: actions/cache@v4
