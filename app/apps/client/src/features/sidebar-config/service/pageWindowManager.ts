@@ -109,6 +109,7 @@ export async function openPageInNativeWindow(
 
   try {
     const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow')
+    const { invoke } = await import('@tauri-apps/api/core')
 
     const windowLabel = `page-${pageId}`
     // For custom pages with external URLs, load the external URL directly
@@ -117,126 +118,128 @@ export async function openPageInNativeWindow(
       ? externalUrl
       : `${getFrontendUrl()}${pageRoute}${pageRoute.includes('?') ? '&' : '?'}standalone=true`
 
-    // Check if window already exists
-    const existingWindow = await WebviewWindow.getByLabel(windowLabel)
-    if (existingWindow) {
-      logger.debug('Window exists, focusing and bringing to front')
-      // Unminimize if minimized
-      const isMinimized = await existingWindow.isMinimized()
-      if (isMinimized) {
-        await existingWindow.unminimize()
-      }
-      // Bring to front and focus
-      await existingWindow.setFocus()
-      return
-    }
-
     // Get stored state or use defaults
     const storedState = getPageWindowState(pageId)
 
-    // Build window options
-    const windowOptions: Record<string, unknown> = {
-      url,
-      title: pageLabel,
-      width: storedState?.width ?? 1200,
-      height: storedState?.height ?? 800,
-      x: storedState?.x,
-      y: storedState?.y,
-      center: !storedState,
-      resizable: true,
-      maximizable: true,
-      minimizable: true,
-      decorations: true,
-      skipTaskbar: false, // Show in taskbar/dock
-      focus: true,
-    }
-
-    // For external URLs, set Chrome user agent for compatibility
+    // For external URLs, use our Rust command which sets up on_navigation
+    // and on_new_window handlers to open external links in the system browser
     if (externalUrl) {
-      windowOptions.userAgent = await getChromeUserAgent()
-    }
-
-    logger.debug('Creating window with options:', windowOptions)
-
-    // Create new native window
-    const webview = new WebviewWindow(windowLabel, windowOptions)
-
-    // Set up event listeners
-    webview.once('tauri://created', async () => {
-      logger.debug(`Window created: ${windowLabel}`)
-
-      // Small delay to ensure window is fully ready
-      await new Promise((resolve) => setTimeout(resolve, 100))
-
-      // Get the window by label to ensure we have the correct reference
-      const win = await WebviewWindow.getByLabel(windowLabel)
-      if (!win) {
-        logger.error('Could not get window by label')
+      const userAgent = await getChromeUserAgent()
+      logger.debug(
+        'Creating native window via Rust command with external link handlers',
+      )
+      await invoke('create_native_page_window', {
+        label: windowLabel,
+        url,
+        title: pageLabel,
+        width: storedState?.width ?? 1200,
+        height: storedState?.height ?? 800,
+        x: storedState?.x ?? null,
+        y: storedState?.y ?? null,
+        center: !storedState,
+        userAgent,
+      })
+    } else {
+      // Check if window already exists
+      const existingWindow = await WebviewWindow.getByLabel(windowLabel)
+      if (existingWindow) {
+        logger.debug('Window exists, focusing and bringing to front')
+        const isMinimized = await existingWindow.isMinimized()
+        if (isMinimized) {
+          await existingWindow.unminimize()
+        }
+        await existingWindow.setFocus()
         return
       }
 
-      // Restore maximized state if it was saved
-      if (storedState?.maximized) {
-        logger.debug('Restoring maximized state')
-        await win.maximize()
+      // For app routes, use the JS API (no external link handling needed)
+      const windowOptions: Record<string, unknown> = {
+        url,
+        title: pageLabel,
+        width: storedState?.width ?? 1200,
+        height: storedState?.height ?? 800,
+        x: storedState?.x,
+        y: storedState?.y,
+        center: !storedState,
+        resizable: true,
+        maximizable: true,
+        minimizable: true,
+        decorations: true,
+        skipTaskbar: false,
+        focus: true,
       }
 
-      // Set custom icon if available
-      // Priority: customIconUrl (favicon) > iconName (Lucide icon)
-      if (customIconUrl) {
-        try {
-          const iconData = await generateWindowIconFromImage(customIconUrl)
-          if (iconData) {
-            await win.setIcon(iconData)
-            logger.debug('Custom favicon icon set')
-          }
-        } catch (iconError) {
-          logger.warn('Failed to set custom favicon icon:', iconError)
+      logger.debug('Creating window with options:', windowOptions)
+      const webview = new WebviewWindow(windowLabel, windowOptions)
+
+      webview.once('tauri://error', (e) => {
+        logger.error('tauri://error event:', e)
+      })
+    }
+
+    // Wait for window to be ready, then set icon and tracking
+    await new Promise((resolve) => setTimeout(resolve, 300))
+
+    const win = await WebviewWindow.getByLabel(windowLabel)
+    if (!win) {
+      logger.error('Could not get window by label after creation')
+      return
+    }
+
+    // Restore maximized state if it was saved
+    if (storedState?.maximized) {
+      logger.debug('Restoring maximized state')
+      await win.maximize()
+    }
+
+    // Set custom icon
+    if (customIconUrl) {
+      try {
+        const iconData = await generateWindowIconFromImage(customIconUrl)
+        if (iconData) {
+          await win.setIcon(iconData)
+          logger.debug('Custom favicon icon set')
         }
-      } else if (iconName) {
-        try {
-          const iconData = await generateWindowIcon(iconName)
-          if (iconData) {
-            await win.setIcon(iconData)
-            logger.debug('Custom icon set')
-          }
-        } catch (iconError) {
-          logger.warn('Failed to set custom icon:', iconError)
-        }
+      } catch (iconError) {
+        logger.warn('Failed to set custom favicon icon:', iconError)
       }
-
-      // Set up state tracking
-      const trackState = async () => {
-        try {
-          const win = await WebviewWindow.getByLabel(windowLabel)
-          if (win) {
-            const position = await win.outerPosition()
-            const size = await win.outerSize()
-            const isMaximized = await win.isMaximized()
-            savePageWindowState(pageId, {
-              x: position.x,
-              y: position.y,
-              width: size.width,
-              height: size.height,
-              maximized: isMaximized,
-            })
-          }
-        } catch {
-          // Window might be closed
+    } else if (iconName) {
+      try {
+        const iconData = await generateWindowIcon(iconName)
+        if (iconData) {
+          await win.setIcon(iconData)
+          logger.debug('Custom icon set')
         }
+      } catch (iconError) {
+        logger.warn('Failed to set custom icon:', iconError)
       }
+    }
 
-      // Track state on move, resize, and other changes
-      webview.listen('tauri://move', trackState)
-      webview.listen('tauri://resize', trackState)
-    })
+    // Set up state tracking
+    const trackState = async () => {
+      try {
+        const w = await WebviewWindow.getByLabel(windowLabel)
+        if (w) {
+          const position = await w.outerPosition()
+          const size = await w.outerSize()
+          const isMaximized = await w.isMaximized()
+          savePageWindowState(pageId, {
+            x: position.x,
+            y: position.y,
+            width: size.width,
+            height: size.height,
+            maximized: isMaximized,
+          })
+        }
+      } catch {
+        // Window might be closed
+      }
+    }
 
-    webview.once('tauri://error', (e) => {
-      logger.error('tauri://error event:', e)
-    })
+    win.listen('tauri://move', trackState)
+    win.listen('tauri://resize', trackState)
   } catch (error) {
     logger.error('Error opening native window:', error)
-    // Fallback to browser
     openInBrowserTab(pageRoute)
   }
 }

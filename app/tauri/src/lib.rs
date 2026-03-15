@@ -16,8 +16,8 @@ use commands::{reset_zoom, restart_server, toggle_devtools, zoom_in, zoom_out, Z
 use server::auto_cleanup_port;
 #[cfg(desktop)]
 use webview::{
-    close_child_webview, create_child_webview, hide_child_webview, show_child_webview,
-    update_child_webview, webview_exists,
+    close_child_webview, create_child_webview, create_native_page_window, hide_child_webview,
+    show_child_webview, update_child_webview, webview_exists,
 };
 #[cfg(desktop)]
 use domain::AppState;
@@ -444,6 +444,7 @@ pub fn run() {
         get_pending_import,
         clear_pending_import,
         create_child_webview,
+        create_native_page_window,
         close_child_webview,
         show_child_webview,
         hide_child_webview,
