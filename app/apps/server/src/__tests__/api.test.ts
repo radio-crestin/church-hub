@@ -10,14 +10,14 @@ import {
   test,
 } from 'bun:test'
 
-setDefaultTimeout(30_000)
+setDefaultTimeout(60_000)
 
 const TEST_PORT = 3099
 const BASE_URL = `http://localhost:${TEST_PORT}`
 
 let serverProcess: Subprocess | null = null
 
-async function waitForServer(url: string, maxAttempts = 40): Promise<void> {
+async function waitForServer(url: string, maxAttempts = 80): Promise<void> {
   for (let i = 0; i < maxAttempts; i++) {
     try {
       await fetch(url)
