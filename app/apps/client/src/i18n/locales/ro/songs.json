@@ -107,7 +107,15 @@
     "noResults": "Niciun marcaj găsit",
     "clear": "Șterge toate marcajele",
     "empty": "Nicio cântare marcată",
-    "emptyDescription": "Marchează cântări din pagina cântării pentru a le vedea aici"
+    "emptyDescription": "Marchează cântări din pagina cântării pentru a le vedea aici",
+    "addNote": "Adaugă notă",
+    "notePlaceholder": "Introdu nota...",
+    "editNote": "Editează nota",
+    "deleteNote": "Șterge nota",
+    "exportAsText": "Exportă ca text",
+    "exportCopied": "Marcajele au fost copiate în clipboard",
+    "exportEmpty": "Nimic de exportat",
+    "focusPresentedSong": "Mergi la cântarea afișată"
   },
   "noSongs": "Nu există cântări încă",
   "noSongsDescription": "Creează prima ta cântare pentru a începe",

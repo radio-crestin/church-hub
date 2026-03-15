@@ -190,6 +190,13 @@ export const EMBEDDED_JOURNAL = {
       tag: '0024_add_screen_scene_overrides',
       breakpoints: true,
     },
+    {
+      idx: 25,
+      version: '6',
+      when: 1768500000000,
+      tag: '0025_add_song_bookmark_notes',
+      breakpoints: true,
+    },
   ],
 } as const
 
@@ -318,5 +325,10 @@ export const EMBEDDED_MIGRATIONS: EmbeddedMigration[] = [
     tag: '0024_add_screen_scene_overrides',
     sql: "CREATE TABLE `screen_scene_overrides` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`screen_id` integer NOT NULL,\n\t`obs_scene_name` text NOT NULL,\n\t`content_type` text NOT NULL,\n\t`config` text DEFAULT '{}' NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tFOREIGN KEY (`screen_id`) REFERENCES `screens`(`id`) ON UPDATE no action ON DELETE cascade\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX `idx_screen_scene_overrides_unique` ON `screen_scene_overrides` (`screen_id`, `obs_scene_name`, `content_type`);\n--> statement-breakpoint\nCREATE INDEX `idx_screen_scene_overrides_screen_id` ON `screen_scene_overrides` (`screen_id`);\n",
     when: 1768400000000,
+  },
+  {
+    tag: '0025_add_song_bookmark_notes',
+    sql: 'CREATE TABLE `song_bookmark_notes` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`content` text NOT NULL,\n\t`sort_order` integer DEFAULT 0 NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE INDEX `idx_song_bookmark_notes_sort_order` ON `song_bookmark_notes` (`sort_order`);\n',
+    when: 1768500000000,
   },
 ]

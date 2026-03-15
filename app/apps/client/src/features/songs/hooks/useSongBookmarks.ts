@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
+import { BOOKMARK_NOTES_QUERY_KEY } from './useBookmarkNotes'
 import {
   addBookmark,
   clearBookmarks,
@@ -47,6 +48,7 @@ export function useClearBookmarks() {
     mutationFn: clearBookmarks,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: SONG_BOOKMARKS_QUERY_KEY })
+      queryClient.invalidateQueries({ queryKey: BOOKMARK_NOTES_QUERY_KEY })
     },
   })
 }

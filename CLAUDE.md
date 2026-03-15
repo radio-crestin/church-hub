@@ -16,6 +16,7 @@
 - Spawn subtasks with ultrathink for debugging or work requiring deep context
 - Keep main task context minimal with only critical insights
 - Always add user-facing strings to i18n translation files (apps/client/src/i18n/locales/) instead of hardcoding them. Use the appropriate namespace (common, settings, sidebar, etc.) and ensure translations exist for all supported languages (English and Romanian)
+- Always write e2e tests for each new feature
 
 ## DON'T:
 - Don't overuse try-catch blocks that mask bugs (use minimally, log errors properly)

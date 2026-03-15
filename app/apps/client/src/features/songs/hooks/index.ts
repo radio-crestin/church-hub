@@ -1,4 +1,12 @@
 export { useAISearchSongs } from './useAISearchSongs'
+export {
+  useAddBookmarkNote,
+  useBookmarkNotes,
+  useExportBookmarksAsText,
+  useRemoveBookmarkNote,
+  useReorderBookmarkItems,
+  useUpdateBookmarkNote,
+} from './useBookmarkNotes'
 export { useCategories } from './useCategories'
 export { useCloneSlide } from './useCloneSlide'
 export { useDeleteCategory } from './useDeleteCategory'
