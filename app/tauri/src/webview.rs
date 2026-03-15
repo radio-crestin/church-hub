@@ -1,5 +1,6 @@
 use std::time::Duration;
 use tauri::{webview::WebviewBuilder, LogicalPosition, LogicalSize, Manager, WebviewUrl};
+use tauri_plugin_opener::OpenerExt;
 use tauri_utils::config::BackgroundThrottlingPolicy;
 use tokio::time::sleep;
 
@@ -17,6 +18,61 @@ const CHROME_USER_AGENT: &str = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537
 // Maximum retries for getting main window (handles timing issues during startup)
 const MAX_MAIN_WINDOW_RETRIES: u32 = 10;
 const RETRY_DELAY_MS: u64 = 200;
+
+/// JavaScript injected on every page load to intercept window.open calls
+/// and links with target=_blank, opening them in the system browser.
+/// The on_navigation handler catches direct navigations, but window.open
+/// and target=_blank bypass it, so we need this JS layer too.
+const EXTERNAL_LINK_INTERCEPT_SCRIPT: &str = r#"
+(function() {
+    if (window.__churchHubLinkInterceptorInstalled) return;
+    window.__churchHubLinkInterceptorInstalled = true;
+
+    var pageOrigin = window.location.origin;
+
+    function openExternal(href) {
+        try {
+            if (window.__TAURI_INTERNALS__) {
+                window.__TAURI_INTERNALS__.invoke('plugin:opener|open_url', { url: href });
+            } else if (window.__TAURI__ && window.__TAURI__.opener) {
+                window.__TAURI__.opener.openUrl(href);
+            }
+        } catch (_) {}
+    }
+
+    // Intercept clicks on anchor elements with external hrefs
+    document.addEventListener('click', function(e) {
+        var el = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+        if (!el) return;
+        var href = el.getAttribute('href');
+        if (!href) return;
+        if (href.startsWith('javascript:') || href === '#' || href.startsWith('#')) return;
+        try {
+            var url = new URL(href, window.location.href);
+            if (url.origin !== pageOrigin) {
+                e.preventDefault();
+                e.stopPropagation();
+                openExternal(url.href);
+            }
+        } catch (_) {}
+    }, true);
+
+    // Intercept window.open for popup/SPA navigation
+    var origOpen = window.open;
+    window.open = function(url, target, features) {
+        if (url) {
+            try {
+                var parsed = new URL(url, window.location.href);
+                if (parsed.origin !== pageOrigin) {
+                    openExternal(parsed.href);
+                    return null;
+                }
+            } catch (_) {}
+        }
+        return origOpen.call(window, url, target, features);
+    };
+})();
+"#;
 
 /// Helper function to get the main window with retries
 async fn get_main_window_with_retry(
@@ -92,17 +148,40 @@ pub async fn create_child_webview(
     }
 
     // Create the webview URL
-    let webview_url = WebviewUrl::External(
-        url.parse()
-            .map_err(|e| format!("Invalid URL '{}': {}", url, e))?,
-    );
+    let parsed_url: url::Url = url
+        .parse()
+        .map_err(|e| format!("Invalid URL '{}': {}", url, e))?;
+    let webview_url = WebviewUrl::External(parsed_url.clone());
+
+    // Extract origin for navigation filtering
+    let origin = parsed_url.origin().unicode_serialization();
+    let app_handle = app.clone();
 
     // Build and add the child webview with modern Chrome user agent
     // Note: We don't use auto_resize() because we want to control the exact position
     // Disable background throttling to ensure smooth video playback (macOS 14.0+)
     let webview_builder = WebviewBuilder::new(&label, webview_url)
         .user_agent(CHROME_USER_AGENT)
-        .background_throttling(BackgroundThrottlingPolicy::Disabled);
+        .background_throttling(BackgroundThrottlingPolicy::Disabled)
+        // Intercept navigation: open external URLs in system browser
+        .on_navigation(move |nav_url| {
+            let nav_origin = nav_url.origin().unicode_serialization();
+            if nav_origin != origin {
+                println!(
+                    "[webview] External navigation intercepted: {} (origin: {} != {})",
+                    nav_url, nav_origin, origin
+                );
+                // Open in system browser
+                if let Err(e) = app_handle.opener().open_url(nav_url.as_str(), None::<&str>) {
+                    println!("[webview] Failed to open external URL: {}", e);
+                }
+                false // Block navigation in webview
+            } else {
+                true // Allow same-origin navigation
+            }
+        })
+        // Inject JS on every page load to intercept window.open and target=_blank links
+        .initialization_script(EXTERNAL_LINK_INTERCEPT_SCRIPT);
 
     // Get the window reference for add_child
     let window = main_window.as_ref().window();

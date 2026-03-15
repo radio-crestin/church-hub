@@ -1,5 +1,4 @@
 import { isTauri } from '~/features/presentation/utils/openDisplayWindow'
-import { getChromeUserAgent } from '../utils/getUserAgent'
 import { transformToEmbedUrl } from '../utils/transformEmbedUrl'
 
 /**
@@ -153,100 +152,29 @@ export async function showCustomPageWebview(
       setupResizeListener()
       return
     }
-    const mainWindow = getCurrentWindow()
-
-    const userAgent = await getChromeUserAgent()
-    const webview = new Webview(mainWindow, label, {
+    // Use our Rust create_child_webview command which has on_navigation
+    // handler for intercepting external URLs and opening them in system browser
+    const { invoke } = await import('@tauri-apps/api/core')
+    await invoke('create_child_webview', {
+      label,
       url: embedUrl,
       x: bounds.x,
       y: bounds.y,
       width: bounds.width,
       height: bounds.height,
-      userAgent,
     })
 
-    // Wait for webview to be created
-    await new Promise<void>((resolve, reject) => {
-      webview.once('tauri://created', () => {
-        resolve()
-      })
-      webview.once('tauri://error', (e) => {
-        reject(new Error(`Failed to create webview: ${e}`))
-      })
-    })
+    // Get the webview handle for later management (hide/show/close)
+    const webview = await Webview.getByLabel(label)
+    if (webview) {
+      createdWebviews.set(label, webview)
+    }
 
-    // Inject JS to intercept external link clicks and open them in the system browser
-    // Also intercept window.open calls for SPA links (e.g., WhatsApp)
-    try {
-      const interceptScript = `
-        (function() {
-          if (window.__churchHubLinkInterceptorInstalled) return;
-          window.__churchHubLinkInterceptorInstalled = true;
-
-          function openExternal(href) {
-            try {
-              if (window.__TAURI_INTERNALS__) {
-                window.__TAURI_INTERNALS__.invoke('plugin:shell|open', { path: href });
-              } else if (window.__TAURI__ && window.__TAURI__.shell) {
-                window.__TAURI__.shell.open(href);
-              } else {
-                // Fallback: post message to parent for handling
-                window.parent.postMessage({ type: 'open-external', url: href }, '*');
-              }
-            } catch (_) {
-              // Last resort: use a hidden anchor with target=_blank
-              var a = document.createElement('a');
-              a.href = href;
-              a.target = '_blank';
-              a.rel = 'noopener';
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-            }
-          }
-
-          // Intercept clicks on anchor elements
-          document.addEventListener('click', function(e) {
-            var el = e.target && e.target.closest ? e.target.closest('a[href]') : null;
-            if (!el) return;
-            var href = el.getAttribute('href');
-            if (!href) return;
-            // Skip javascript: and # links
-            if (href.startsWith('javascript:') || href === '#') return;
-            try {
-              var url = new URL(href, window.location.href);
-              if (url.origin !== window.location.origin) {
-                e.preventDefault();
-                e.stopPropagation();
-                openExternal(url.href);
-              }
-            } catch (_) {}
-          }, true);
-
-          // Intercept window.open for SPA navigation (WhatsApp, etc.)
-          var origOpen = window.open;
-          window.open = function(url, target, features) {
-            if (url) {
-              try {
-                var parsed = new URL(url, window.location.href);
-                if (parsed.origin !== window.location.origin) {
-                  openExternal(parsed.href);
-                  return null;
-                }
-              } catch (_) {}
-            }
-            return origOpen.call(window, url, target, features);
-          };
-        })();
-      `
-      await webview.evaluate(interceptScript)
-    } catch (_injectError) {}
-
-    createdWebviews.set(label, webview)
     currentVisibleWebview = label
     setupResizeListener()
 
     // Listen for main window resize to update webview position
+    const mainWindow = getCurrentWindow()
     mainWindow.onResized(handleWindowResize)
   } catch (error) {
     throw error
