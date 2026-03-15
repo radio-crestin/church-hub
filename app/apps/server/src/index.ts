@@ -197,10 +197,17 @@ import {
 } from './service/search-history'
 import {
   addBookmark,
+  addBookmarkNote,
+  type BookmarkItemRef,
   clearBookmarks,
+  exportBookmarksAsText,
+  getBookmarkNotes,
   getBookmarks,
   removeBookmark,
+  removeBookmarkNote,
+  reorderBookmarkItems,
   reorderBookmarks,
+  updateBookmarkNote,
 } from './service/song-bookmarks'
 import {
   type BatchImportSongInput,
@@ -237,9 +244,9 @@ import {
   updateSearchIndex,
   updateSearchIndexByCategory,
   upsertCategory,
-  warmupSearchIndex as warmupSongsSearchIndex,
   upsertSong,
   upsertSongSlide,
+  warmupSearchIndex as warmupSongsSearchIndex,
 } from './service/songs'
 import { createLogger } from './utils/logger'
 import { proxyToVite, serveStaticFile } from './utils/static-server'
@@ -5194,6 +5201,182 @@ async function main() {
         return handleCors(
           req,
           new Response(JSON.stringify({ success: result.success }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // ============================================================
+      // Song Bookmark Notes API Endpoints
+      // ============================================================
+
+      // GET /api/song-bookmark-notes - Get all bookmark notes
+      if (req.method === 'GET' && url.pathname === '/api/song-bookmark-notes') {
+        const permError = checkPermission('songs.view')
+        if (permError) return permError
+
+        const items = getBookmarkNotes()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: items }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/song-bookmark-notes - Add bookmark note
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/song-bookmark-notes'
+      ) {
+        const permError = checkPermission('songs.view')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as { content: string }
+          const result = addBookmarkNote(body.content)
+
+          if ('error' in result) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: result.error }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: result.data }), {
+              status: 201,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid request body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // PUT /api/song-bookmark-notes/:id - Update bookmark note
+      if (
+        req.method === 'PUT' &&
+        url.pathname.startsWith('/api/song-bookmark-notes/') &&
+        !url.pathname.endsWith('/reorder')
+      ) {
+        const permError = checkPermission('songs.view')
+        if (permError) return permError
+
+        const id = Number(url.pathname.split('/').pop())
+        if (Number.isNaN(id)) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid note ID' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        try {
+          const body = (await req.json()) as { content: string }
+          const result = updateBookmarkNote(id, body.content)
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ success: result.success }), {
+              status: 200,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid request body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // DELETE /api/song-bookmark-notes/:id - Remove bookmark note
+      if (
+        req.method === 'DELETE' &&
+        url.pathname.startsWith('/api/song-bookmark-notes/')
+      ) {
+        const permError = checkPermission('songs.view')
+        if (permError) return permError
+
+        const id = Number(url.pathname.split('/').pop())
+        if (Number.isNaN(id)) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid note ID' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        const result = removeBookmarkNote(id)
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ success: result.success }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // PUT /api/song-bookmarks/reorder-items - Reorder both bookmarks and notes
+      if (
+        req.method === 'PUT' &&
+        url.pathname === '/api/song-bookmarks/reorder-items'
+      ) {
+        const permError = checkPermission('songs.view')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as { items: BookmarkItemRef[] }
+          const result = reorderBookmarkItems(body.items)
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ success: result.success }), {
+              status: 200,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid request body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // GET /api/song-bookmarks/export - Export bookmarks as text
+      if (
+        req.method === 'GET' &&
+        url.pathname === '/api/song-bookmarks/export'
+      ) {
+        const permError = checkPermission('songs.view')
+        if (permError) return permError
+
+        const text = exportBookmarksAsText()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: text }), {
             status: 200,
             headers: { 'Content-Type': 'application/json' },
           }),

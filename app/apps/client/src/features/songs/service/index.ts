@@ -1,4 +1,14 @@
 export {
+  addBookmarkNote,
+  type BookmarkItemRef,
+  type BookmarkNote,
+  exportBookmarksAsText,
+  getBookmarkNotes,
+  removeBookmarkNote,
+  reorderBookmarkItems,
+  updateBookmarkNote,
+} from './bookmark-notes'
+export {
   addBookmark,
   clearBookmarks,
   getBookmarks,

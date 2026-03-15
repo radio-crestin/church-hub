@@ -1,27 +1,28 @@
+import { eq } from 'drizzle-orm'
+
 import type { OperationResult } from './types'
 import { getDatabase } from '../../db'
-import { songBookmarkNotes, songBookmarks } from '../../db/schema'
+import { songBookmarkNotes } from '../../db/schema'
 
 const DEBUG = process.env.DEBUG === 'true'
 
 function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
   if (level === 'debug' && !DEBUG) return
   // biome-ignore lint/suspicious/noConsole: logging utility
-  console.log(`[${level.toUpperCase()}] [song-bookmarks] ${message}`)
+  console.log(`[${level.toUpperCase()}] [song-bookmark-notes] ${message}`)
 }
 
-export function clearBookmarks(): OperationResult {
+export function removeBookmarkNote(id: number): OperationResult {
   try {
-    log('debug', 'Clearing all bookmarks')
+    log('debug', `Removing bookmark note ${id}`)
 
     const db = getDatabase()
-    db.delete(songBookmarks).run()
-    db.delete(songBookmarkNotes).run()
+    db.delete(songBookmarkNotes).where(eq(songBookmarkNotes.id, id)).run()
 
-    log('info', 'All bookmarks and notes cleared')
+    log('info', `Bookmark note ${id} removed`)
     return { success: true }
   } catch (error) {
-    log('error', `Failed to clear bookmarks: ${error}`)
+    log('error', `Failed to remove bookmark note: ${error}`)
     return { success: false, error: String(error) }
   }
 }

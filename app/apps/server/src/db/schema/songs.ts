@@ -103,3 +103,16 @@ export const songBookmarks = sqliteTable(
     index('idx_song_bookmarks_created_at').on(table.createdAt),
   ],
 )
+
+export const songBookmarkNotes = sqliteTable(
+  'song_bookmark_notes',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    content: text('content').notNull(),
+    sortOrder: integer('sort_order').notNull().default(0),
+    createdAt: integer('created_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (table) => [index('idx_song_bookmark_notes_sort_order').on(table.sortOrder)],
+)

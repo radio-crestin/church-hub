@@ -107,7 +107,15 @@
     "noResults": "No matching bookmarks",
     "clear": "Clear all bookmarks",
     "empty": "No bookmarked songs",
-    "emptyDescription": "Bookmark songs from the song page to see them here"
+    "emptyDescription": "Bookmark songs from the song page to see them here",
+    "addNote": "Add note",
+    "notePlaceholder": "Enter note...",
+    "editNote": "Edit note",
+    "deleteNote": "Delete note",
+    "exportAsText": "Export as text",
+    "exportCopied": "Bookmarks copied to clipboard",
+    "exportEmpty": "Nothing to export",
+    "focusPresentedSong": "Go to displayed song"
   },
   "noSongs": "No songs yet",
   "noSongsDescription": "Create your first song to get started",
