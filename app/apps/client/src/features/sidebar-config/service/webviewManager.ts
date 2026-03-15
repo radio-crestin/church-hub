@@ -139,21 +139,9 @@ export async function showCustomPageWebview(
     // Calculate content area bounds
     const bounds = await getContentAreaBounds()
 
-    // Check if webview already exists
-    const existingWebview = await Webview.getByLabel(label)
-    if (existingWebview) {
-      await existingWebview.setPosition(new LogicalPosition(bounds.x, bounds.y))
-      await existingWebview.setSize(
-        new LogicalSize(bounds.width, bounds.height),
-      )
-      await existingWebview.show()
-      await existingWebview.setFocus()
-      currentVisibleWebview = label
-      setupResizeListener()
-      return
-    }
     // Use our Rust create_child_webview command which has on_navigation
-    // handler for intercepting external URLs and opening them in system browser
+    // and on_new_window handlers for intercepting external URLs.
+    // This command handles both creation and showing existing webviews.
     const { invoke } = await import('@tauri-apps/api/core')
     await invoke('create_child_webview', {
       label,
