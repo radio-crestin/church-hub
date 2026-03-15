@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { AISearchSettings } from '~/features/ai-search'
+import { PageShortcutsSettings } from '~/features/keyboard-shortcuts/components/PageShortcutsSettings'
 import { AlertModal } from '~/ui/modal'
 import { BibleDownloadSection } from './BibleDownloadSection'
 import { BibleTranslationsManager } from './BibleTranslationsManager'
@@ -120,6 +121,11 @@ export function BibleSettingsModal({
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            {/* Keyboard Shortcuts Section */}
+            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+              <PageShortcutsSettings pageId="bible" />
+            </div>
+
             {/* Bible Translations Section */}
             <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
               <BibleTranslationsManager portalContainer={dialogElement} />

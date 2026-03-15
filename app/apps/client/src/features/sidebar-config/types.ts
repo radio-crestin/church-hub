@@ -51,8 +51,10 @@ export interface NativeWindowSettings {
 export interface SidebarItemSettings {
   /** Keyboard/MIDI shortcuts that navigate to this page */
   shortcuts: string[]
-  /** Whether to focus the search input when navigating via shortcut */
+  /** Whether to focus the search input when navigating via shortcut (legacy, use focusSearchShortcuts instead) */
   focusSearchOnNavigate: boolean
+  /** Keyboard/MIDI shortcuts that navigate to this page AND focus the search input */
+  focusSearchShortcuts?: string[]
   /** Native window settings (Tauri only) */
   nativeWindow?: NativeWindowSettings
   /** Icon color for the sidebar item (predefined colors) */
