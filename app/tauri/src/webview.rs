@@ -20,9 +20,10 @@ const MAX_MAIN_WINDOW_RETRIES: u32 = 10;
 const RETRY_DELAY_MS: u64 = 200;
 
 /// JavaScript injected on every page load to intercept window.open calls
-/// and links with target=_blank, opening them in the system browser.
-/// The on_navigation handler catches direct navigations, but window.open
-/// and target=_blank bypass it, so we need this JS layer too.
+/// and links with target=_blank, redirecting external URLs through
+/// window.location.href so the Rust on_navigation handler can catch them.
+/// We can't use Tauri IPC here because sites like WhatsApp have strict CSP
+/// that blocks connections to ipc.localhost.
 const EXTERNAL_LINK_INTERCEPT_SCRIPT: &str = r#"
 (function() {
     if (window.__churchHubLinkInterceptorInstalled) return;
@@ -30,17 +31,8 @@ const EXTERNAL_LINK_INTERCEPT_SCRIPT: &str = r#"
 
     var pageOrigin = window.location.origin;
 
-    function openExternal(href) {
-        try {
-            if (window.__TAURI_INTERNALS__) {
-                window.__TAURI_INTERNALS__.invoke('plugin:opener|open_url', { url: href });
-            } else if (window.__TAURI__ && window.__TAURI__.opener) {
-                window.__TAURI__.opener.openUrl(href);
-            }
-        } catch (_) {}
-    }
-
     // Intercept clicks on anchor elements with external hrefs
+    // Redirect through location.href so Rust on_navigation catches it
     document.addEventListener('click', function(e) {
         var el = e.target && e.target.closest ? e.target.closest('a[href]') : null;
         if (!el) return;
@@ -52,19 +44,21 @@ const EXTERNAL_LINK_INTERCEPT_SCRIPT: &str = r#"
             if (url.origin !== pageOrigin) {
                 e.preventDefault();
                 e.stopPropagation();
-                openExternal(url.href);
+                // Navigate current page - Rust on_navigation will open in system browser and block
+                window.location.href = url.href;
             }
         } catch (_) {}
     }, true);
 
-    // Intercept window.open for popup/SPA navigation
+    // Intercept window.open for popup/SPA navigation (e.g. WhatsApp shared links)
     var origOpen = window.open;
     window.open = function(url, target, features) {
         if (url) {
             try {
                 var parsed = new URL(url, window.location.href);
                 if (parsed.origin !== pageOrigin) {
-                    openExternal(parsed.href);
+                    // Navigate current page - Rust on_navigation will open in system browser and block
+                    window.location.href = parsed.href;
                     return null;
                 }
             } catch (_) {}
