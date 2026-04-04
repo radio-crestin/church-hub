@@ -1,10 +1,16 @@
 import type { ContentType } from '../../types'
 
+export interface ChordMapping {
+  wordIndex: number
+  chord: string
+}
+
 export interface ContentData {
   mainText?: string
   referenceText?: string
   contentText?: string
   personLabel?: string
+  chords?: ChordMapping[] | null
 }
 
 export interface VerseteTineriSummaryEntry {

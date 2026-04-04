@@ -89,7 +89,13 @@ export interface TemporaryBibleContent {
 export interface TemporarySongSlide {
   id: number
   content: string
+  chords?: ChordMapping[] | null
   sortOrder: number
+}
+
+export interface ChordMapping {
+  wordIndex: number
+  chord: string
 }
 
 /**

@@ -21,10 +21,19 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
  * Converts database slide record to API format
  */
 function toSongSlide(record: typeof songSlides.$inferSelect): SongSlide {
+  let chords = null
+  if (record.chords) {
+    try {
+      chords = JSON.parse(record.chords)
+    } catch {
+      chords = null
+    }
+  }
   return {
     id: record.id,
     songId: record.songId,
     content: record.content,
+    chords,
     sortOrder: record.sortOrder,
     label: record.label,
     createdAt:
@@ -153,6 +162,7 @@ export function upsertSongSlide(input: UpsertSongSlideInput): SongSlide | null {
         .set({
           content: input.content,
           label: input.label ?? null,
+          chords: input.chords ? JSON.stringify(input.chords) : null,
           updatedAt: sql`(unixepoch())` as unknown as Date,
         })
         .where(eq(songSlides.id, input.id))
@@ -171,6 +181,7 @@ export function upsertSongSlide(input: UpsertSongSlideInput): SongSlide | null {
       .values({
         songId: input.songId,
         content: input.content,
+        chords: input.chords ? JSON.stringify(input.chords) : null,
         sortOrder,
         label: input.label ?? null,
       })

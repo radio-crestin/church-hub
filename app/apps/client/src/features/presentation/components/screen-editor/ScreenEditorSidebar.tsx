@@ -720,6 +720,28 @@ export function ScreenEditorSidebar({
                     </p>
                   </div>
                 )}
+
+                {/* Display Chords - song only */}
+                {contentType === 'song' && (
+                  <div className="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <Checkbox
+                      checked={
+                        (config as SongContentConfig).displayChords ?? false
+                      }
+                      onCheckedChange={(checked) => {
+                        const songConfig = config as SongContentConfig
+                        onUpdateContentConfig(contentType, {
+                          ...songConfig,
+                          displayChords: !!checked,
+                        })
+                      }}
+                      label={t('screens.songOptions.displayChords')}
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 ml-6">
+                      {t('screens.songOptions.displayChordsDescription')}
+                    </p>
+                  </div>
+                )}
               </div>
             </Section>
           )}

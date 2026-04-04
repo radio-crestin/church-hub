@@ -1,4 +1,12 @@
 /**
+ * Chord annotation mapping a word position to a chord name
+ */
+export interface ChordMapping {
+  wordIndex: number
+  chord: string
+}
+
+/**
  * Song category record from database
  */
 export interface SongCategoryRecord {
@@ -41,6 +49,7 @@ export interface SongSlideRecord {
   id: number
   song_id: number
   content: string
+  chords: string | null // JSON string of ChordMapping[]
   sort_order: number
   label: string | null
   created_at: number
@@ -91,6 +100,7 @@ export interface SongSlide {
   id: number
   songId: number
   content: string
+  chords: ChordMapping[] | null
   sortOrder: number
   label: string | null
   createdAt: number
@@ -120,6 +130,7 @@ export interface UpsertCategoryInput {
 export interface SlideInput {
   id?: number | string // Can be numeric (existing) or string (temp id for new)
   content: string
+  chords?: ChordMapping[] | null
   sortOrder: number
   label?: string | null
 }
@@ -155,6 +166,7 @@ export interface UpsertSongSlideInput {
   id?: number
   songId: number
   content: string
+  chords?: ChordMapping[] | null
   sortOrder?: number
   label?: string | null
 }

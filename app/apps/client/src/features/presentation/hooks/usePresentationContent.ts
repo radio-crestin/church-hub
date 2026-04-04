@@ -9,7 +9,9 @@ import { calculateMaxExitAnimationDuration } from '../components/rendering/utils
 import { useSongUpdateTimestamp } from '../context/WebSocketContext'
 import type { ContentType, ScreenConfig, SongContentConfig } from '../types'
 import { addAminToLastSlide } from '../utils/addAminToLastSlide'
+import { addChordsToContent } from '../utils/addChordsToContent'
 import { addKeyLineToFirstSlide } from '../utils/addKeyLineToFirstSlide'
+import { resolveSlideChords } from '../utils/resolveSlideChords'
 
 const logger = createLogger('usePresentationContent')
 
@@ -45,9 +47,15 @@ function getHeaders(): Record<string, string> {
   return headers
 }
 
+interface ChordMapping {
+  wordIndex: number
+  chord: string
+}
+
 interface SongSlide {
   id: number
   content: string
+  chords?: ChordMapping[] | null
 }
 
 interface QueueItem {
@@ -77,6 +85,7 @@ export interface ContentData {
   contentText?: string
   personLabel?: string
   secondaryContentText?: string
+  chords?: ChordMapping[] | null
 }
 
 export interface NextSlideData {
@@ -157,7 +166,11 @@ export function usePresentationContent({
   // isHidden=true and isExitAnimating=false, causing content to disappear then reappear.
   const wasHiddenSync = prevHiddenRef.current
   const isHiddenSync = presentationState?.isHidden
-  if (wasHiddenSync === false && isHiddenSync && !exitAnimatingSyncRef.current) {
+  if (
+    wasHiddenSync === false &&
+    isHiddenSync &&
+    !exitAnimatingSyncRef.current
+  ) {
     exitAnimatingSyncRef.current = true
   }
   if (wasHiddenSync && !isHiddenSync && exitAnimatingSyncRef.current) {
@@ -344,9 +357,20 @@ export function usePresentationContent({
               shouldShowKeyLine ? temp.data.keyLine : null,
             )
             slideContent = addAminToLastSlide(slideContent, isLastSlide)
+            // Resolve chords for this slide
+            const resolvedChords = resolveSlideChords(
+              temp.data.currentSlideIndex,
+              temp.data.slides,
+            )
+            const shouldShowChords = songConfig?.displayChords ?? false
+            const finalContent = shouldShowChords
+              ? addChordsToContent(slideContent, resolvedChords)
+              : slideContent
             setContentType('song')
-            setContentData({ mainText: slideContent })
-            setContentKey(`song|${temp.data.songId}|${temp.data.currentSlideIndex}`)
+            setContentData({ mainText: finalContent, chords: resolvedChords })
+            setContentKey(
+              `song|${temp.data.songId}|${temp.data.currentSlideIndex}`,
+            )
 
             // Show next slide preview if enabled
             if (includeNextSlide) {
@@ -510,9 +534,22 @@ export function usePresentationContent({
               )
               slideContent = addAminToLastSlide(slideContent, isLastSlide)
 
+              // Resolve chords for this slide
+              const queueChords = resolveSlideChords(slideIndex, item.slides)
+              const queueSongCfg = screen?.contentConfigs?.song as
+                | SongContentConfig
+                | undefined
+              const showChords = queueSongCfg?.displayChords ?? false
+              const finalSlideContent = showChords
+                ? addChordsToContent(slideContent, queueChords)
+                : slideContent
+
               if (isCancelled) return
               setContentType('song')
-              setContentData({ mainText: slideContent })
+              setContentData({
+                mainText: finalSlideContent,
+                chords: queueChords,
+              })
               setContentKey(`song|${item.songId}|${slideIndex}`)
 
               // Show next slide preview if enabled
@@ -650,7 +687,10 @@ export function usePresentationContent({
   // Content becomes invisible only after the exit animation finishes and state is cleared.
   const hasContent = Object.keys(contentData).length > 0
   const isVisible =
-    (!presentationState?.isHidden || isExitAnimating || exitAnimatingSyncRef.current) && hasContent
+    (!presentationState?.isHidden ||
+      isExitAnimating ||
+      exitAnimatingSyncRef.current) &&
+    hasContent
 
   logger.debug(
     `Render state: isVisible=${isVisible}, hasContent=${hasContent}, isHidden=${presentationState?.isHidden}, isExitAnimating=${isExitAnimating}, contentType=${contentType}, updatedAt=${presentationState?.updatedAt}`,

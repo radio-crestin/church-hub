@@ -53,6 +53,7 @@ export function SongEditorModal({
         song.slides.map((s) => ({
           id: s.id,
           content: s.content,
+          chords: s.chords,
           sortOrder: s.sortOrder,
           label: s.label,
         })),
@@ -100,6 +101,7 @@ export function SongEditorModal({
       slides: slides.map((s, idx) => ({
         id: typeof s.id === 'number' ? s.id : undefined,
         content: s.content,
+        chords: s.chords,
         sortOrder: idx,
         label: s.label,
       })),
@@ -123,6 +125,7 @@ export function SongEditorModal({
         result.data.slides.map((s) => ({
           id: s.id,
           content: s.content,
+          chords: s.chords,
           sortOrder: s.sortOrder,
           label: s.label,
         })),

@@ -173,7 +173,9 @@
     "songOptions": {
       "title": "Opțiuni Cântare",
       "displayKeyLine": "Afișează tonalitatea",
-      "displayKeyLineDescription": "Afișează tonalitatea muzicală pe primul slide al cântării"
+      "displayKeyLineDescription": "Afișează tonalitatea muzicală pe primul slide al cântării",
+      "displayChords": "Afișează acorduri",
+      "displayChordsDescription": "Afișează acordurile deasupra versurilor pe ecran"
     },
     "bibleOptions": {
       "title": "Opțiuni Biblie",

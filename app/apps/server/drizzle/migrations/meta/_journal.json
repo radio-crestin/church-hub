@@ -162,6 +162,13 @@
       "when": 1768200000000,
       "tag": "0022_add_song_search_history",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "6",
+      "when": 1768300000000,
+      "tag": "0026_add_song_slide_chords",
+      "breakpoints": true
     }
   ]
 }

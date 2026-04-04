@@ -115,6 +115,7 @@ function SongEditorPage() {
       const mappedSlides = song.slides.map((s) => ({
         id: s.id,
         content: s.content,
+        chords: s.chords,
         sortOrder: s.sortOrder,
         label: s.label,
       }))
@@ -163,6 +164,7 @@ function SongEditorPage() {
         slides: slides.map((s, idx) => ({
           id: typeof s.id === 'number' ? s.id : undefined,
           content: s.content,
+          chords: s.chords,
           sortOrder: idx,
           label: s.label,
         })),
@@ -201,6 +203,7 @@ function SongEditorPage() {
         const savedSlides = result.data.slides.map((s) => ({
           id: s.id,
           content: s.content,
+          chords: s.chords,
           sortOrder: s.sortOrder,
           label: s.label,
         }))

@@ -173,7 +173,9 @@
     "songOptions": {
       "title": "Song Options",
       "displayKeyLine": "Display key line",
-      "displayKeyLineDescription": "Show the musical key on the first slide of the song"
+      "displayKeyLineDescription": "Show the musical key on the first slide of the song",
+      "displayChords": "Display chords",
+      "displayChordsDescription": "Show chord annotations above lyrics on screen"
     },
     "bibleOptions": {
       "title": "Bible Options",
