@@ -419,11 +419,12 @@ export function presentTemporarySong(
       return getPresentationState()
     }
 
-    // Fetch song slides with labels for dynamic chorus insertion
+    // Fetch song slides with labels and chords for dynamic chorus insertion
     const slides = db
       .select({
         id: songSlides.id,
         content: songSlides.content,
+        chords: songSlides.chords,
         sortOrder: songSlides.sortOrder,
         label: songSlides.label,
       })
@@ -452,11 +453,24 @@ export function presentTemporarySong(
         songId: song.id,
         title: song.title,
         keyLine: song.keyLine,
-        slides: expandedSlides.map((s, idx) => ({
-          id: s.id,
-          content: s.content,
-          sortOrder: idx, // Use expanded index as sortOrder
-        })),
+        slides: expandedSlides.map((s, idx) => {
+          let chords = null
+          // Find the original slide to get chords (expanded slides reference original IDs)
+          const originalSlide = slides.find((os) => os.id === s.id)
+          if (originalSlide?.chords) {
+            try {
+              chords = typeof originalSlide.chords === 'string'
+                ? JSON.parse(originalSlide.chords)
+                : originalSlide.chords
+            } catch { /* ignore parse errors */ }
+          }
+          return {
+            id: s.id,
+            content: s.content,
+            chords,
+            sortOrder: idx, // Use expanded index as sortOrder
+          }
+        }),
         currentSlideIndex: startIndex,
         nextItemPreview: input.nextItemPreview,
         scheduleId: input.scheduleId,

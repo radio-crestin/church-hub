@@ -223,6 +223,18 @@
     "save": "Salvează",
     "saving": "Se salvează..."
   },
+  "chords": {
+    "editChords": "Editează acorduri",
+    "setLabel": "Setează tipul slide-ului",
+    "removeLabel": "Elimină eticheta",
+    "searchChord": "Caută acord...",
+    "removeChord": "Click pentru a elimina acordul",
+    "clearAll": "Șterge toate acordurile",
+    "useCustom": "Folosește \"{{chord}}\"",
+    "guitar": "Chitară",
+    "piano": "Pian",
+    "noChordData": "Nicio diagramă disponibilă"
+  },
   "resetCountDialog": {
     "title": "Resetează contorul de prezentări",
     "message": "Ești sigur că vrei să resetezi contorul de prezentări la 0?",

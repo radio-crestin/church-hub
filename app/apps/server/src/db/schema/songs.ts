@@ -66,6 +66,7 @@ export const songSlides = sqliteTable(
       .notNull()
       .references(() => songs.id, { onDelete: 'cascade' }),
     content: text('content').notNull(),
+    chords: text('chords'), // JSON array: [{wordIndex: number, chord: string}]
     label: text('label'),
     sortOrder: integer('sort_order').notNull().default(0),
     createdAt: integer('created_at', { mode: 'timestamp' })

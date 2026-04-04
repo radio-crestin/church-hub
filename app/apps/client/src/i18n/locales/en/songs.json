@@ -223,6 +223,18 @@
     "save": "Save",
     "saving": "Saving..."
   },
+  "chords": {
+    "editChords": "Edit Chords",
+    "setLabel": "Set slide type",
+    "removeLabel": "Remove label",
+    "searchChord": "Search chord...",
+    "removeChord": "Click to remove chord",
+    "clearAll": "Clear all chords",
+    "useCustom": "Use \"{{chord}}\"",
+    "guitar": "Guitar",
+    "piano": "Piano",
+    "noChordData": "No diagram available"
+  },
   "resetCountDialog": {
     "title": "Reset Presentation Count",
     "message": "Are you sure you want to reset the presentation count to 0?",

@@ -1,3 +1,4 @@
+export { ChordDiagram } from './ChordDiagram'
 export type { CategoryEditDialogHandle } from './CategoryEditDialog'
 export { CategoryEditDialog } from './CategoryEditDialog'
 export { CategoryManager } from './CategoryManager'

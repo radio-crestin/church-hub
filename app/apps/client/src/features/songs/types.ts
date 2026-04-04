@@ -1,3 +1,8 @@
+export interface ChordMapping {
+  wordIndex: number
+  chord: string
+}
+
 export interface SongCategory {
   id: number
   name: string
@@ -33,6 +38,7 @@ export interface SongSlide {
   id: number
   songId: number
   content: string
+  chords: ChordMapping[] | null
   sortOrder: number
   label: string | null
   createdAt: number
@@ -47,6 +53,7 @@ export interface SongWithSlides extends Song {
 export interface SlideInput {
   id?: number | string
   content: string
+  chords?: ChordMapping[] | null
   sortOrder: number
   label?: string | null
 }

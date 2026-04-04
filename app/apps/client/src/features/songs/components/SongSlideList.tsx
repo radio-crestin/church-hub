@@ -19,10 +19,12 @@ import { useTranslation } from 'react-i18next'
 
 import { ConfirmModal } from '~/ui/modal'
 import { SongSlideCard } from './SongSlideCard'
+import type { ChordMapping } from '../types'
 
 export interface LocalSlide {
   id: string | number
   content: string
+  chords?: ChordMapping[] | null
   sortOrder: number
   label?: string | null
 }
@@ -79,12 +81,34 @@ export function SongSlideList({ slides, onSlidesChange }: SongSlideListProps) {
     onSlidesChange(updatedSlides)
   }
 
+  const handleSlideChordsChange = (
+    slideId: string | number,
+    chords: ChordMapping[] | null,
+  ) => {
+    const updatedSlides = slides.map((slide) =>
+      slide.id === slideId ? { ...slide, chords } : slide,
+    )
+    onSlidesChange(updatedSlides)
+  }
+
+  const handleSlideLabelChange = (
+    slideId: string | number,
+    label: string | null,
+  ) => {
+    const updatedSlides = slides.map((slide) =>
+      slide.id === slideId ? { ...slide, label } : slide,
+    )
+    onSlidesChange(updatedSlides)
+  }
+
   const handleCloneSlide = (slide: LocalSlide) => {
     const slideIndex = slides.findIndex((s) => s.id === slide.id)
     const clonedSlide: LocalSlide = {
       id: `temp-${Date.now()}`,
       content: slide.content,
+      chords: slide.chords ? [...slide.chords] : null,
       sortOrder: slideIndex + 1,
+      label: slide.label,
     }
 
     const newSlides = [
@@ -127,6 +151,12 @@ export function SongSlideList({ slides, onSlidesChange }: SongSlideListProps) {
                   index={index}
                   onContentChange={(content) =>
                     handleSlideContentChange(slide.id, content)
+                  }
+                  onChordsChange={(chords) =>
+                    handleSlideChordsChange(slide.id, chords)
+                  }
+                  onLabelChange={(label) =>
+                    handleSlideLabelChange(slide.id, label)
                   }
                   onClone={() => handleCloneSlide(slide)}
                   onDelete={() => setSlideToDelete(slide)}

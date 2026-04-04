@@ -1,6 +1,7 @@
 import { Book, Megaphone, MonitorPlay, Music, User } from 'lucide-react'
-import { useMemo, useRef } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 
+import { ChordDiagram } from '~/features/songs/components/ChordDiagram'
 import { AnimatedText } from './AnimatedText'
 import { ClockText } from './ClockText'
 import { TextContent } from './TextContent'
@@ -15,6 +16,7 @@ import type {
   ContentType,
   ContentTypeConfig,
   ScreenWithConfigs,
+  SongContentConfig,
   TextStyleRange,
 } from '../../types'
 import { formatReferenceWithWrapper } from '../../utils/formatReferenceWithWrapper'
@@ -43,7 +45,34 @@ export function ScreenContent({
   styleRanges,
   contentKey: externalContentKey,
 }: ScreenContentProps) {
+  const [activeChord, setActiveChord] = useState<string | null>(null)
+
   const currentConfig = screen.contentConfigs[contentType]
+
+  // Check if chords display is enabled
+  const songConfig =
+    contentType === 'song'
+      ? (currentConfig as SongContentConfig | undefined)
+      : null
+  const displayChordsEnabled = songConfig?.displayChords ?? false
+
+  // Handle clicks on chord annotations in the rendered content
+  const handleContentClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (!displayChordsEnabled) return
+      const target = e.target as HTMLElement
+      // Chord annotations have amber color and bold font, wrapped in specific spans
+      if (
+        target.tagName === 'SPAN' &&
+        target.style.fontWeight === 'bold' &&
+        target.style.color === 'rgb(245, 158, 11)' &&
+        target.textContent
+      ) {
+        setActiveChord(target.textContent.trim())
+      }
+    },
+    [displayChordsEnabled],
+  )
 
   // Cache the previous config when visible so we can use it for exit animations
   const cachedConfigRef = useRef<{
@@ -620,6 +649,7 @@ export function ScreenContent({
         width: containerWidth,
         height: containerHeight,
       }}
+      onClick={handleContentClick}
     >
       {renderMainText()}
       {renderContentText()}
@@ -628,6 +658,12 @@ export function ScreenContent({
       {renderClock()}
       {renderNextSlideSection()}
       {renderScreenSharePreview()}
+      {activeChord && (
+        <ChordDiagram
+          chord={activeChord}
+          onClose={() => setActiveChord(null)}
+        />
+      )}
     </div>
   )
 }

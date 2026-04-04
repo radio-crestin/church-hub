@@ -535,6 +535,7 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
           db.update(songSlides)
             .set({
               content: slide.content,
+              chords: slide.chords ? JSON.stringify(slide.chords) : null,
               sortOrder: slide.sortOrder,
               label: slide.label ?? null,
               updatedAt: now,
@@ -548,6 +549,7 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
             .values({
               songId,
               content: slide.content,
+              chords: slide.chords ? JSON.stringify(slide.chords) : null,
               sortOrder: slide.sortOrder,
               label: slide.label ?? null,
               createdAt: now,
