@@ -652,7 +652,7 @@ async function main() {
         if (authResult.response) return handleCors(req, authResult.response)
         _context = authResult.context
       }
-      if (url.pathname === '/ping') {
+      if (url.pathname === '/ping' || url.pathname === '/api/ping') {
         return handleCors(req, new Response(JSON.stringify({ data: 'pong' })))
       }
 
