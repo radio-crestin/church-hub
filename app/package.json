@@ -57,6 +57,9 @@
       "biome check --write"
     ]
   },
+  "overrides": {
+    "jsondiffpatch": ">=0.7.2"
+  },
   "dependencies": {
     "reveal.js": "^5.2.1",
     "werift": "^0.22.9"

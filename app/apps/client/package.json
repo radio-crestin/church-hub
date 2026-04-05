@@ -59,6 +59,13 @@
     "vite-tsconfig-paths": "^5.1.4",
     "zod": "^4.3.6"
   },
+  "pnpm": {
+    "overrides": {
+      "picomatch": ">=4.0.4",
+      "seroval": ">=1.4.1",
+      "file-type": "21.3.4"
+    }
+  },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
     "@testing-library/dom": "^10.4.1",
