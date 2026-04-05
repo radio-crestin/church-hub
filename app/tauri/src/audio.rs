@@ -30,7 +30,7 @@ enum AudioCommand {
     },
 }
 
-#[derive(Serialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct AudioState {
     pub is_playing: bool,
     pub current_time: f64,
@@ -363,4 +363,422 @@ fn handle_http_request(mut stream: std::net::TcpStream, player: &AudioPlayer) {
     );
 
     let _ = stream.write_all(response.as_bytes());
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::{Read, Write};
+
+    // =========================================================================
+    // AudioPlayer tests (command channel + state management)
+    // =========================================================================
+
+    #[test]
+    fn new_player_returns_default_state() {
+        let player = AudioPlayer::new();
+        let state = player.get_state();
+
+        assert!(!state.is_playing);
+        assert_eq!(state.current_time, 0.0);
+        assert_eq!(state.duration, 0.0);
+        assert_eq!(state.volume, 50.0);
+        assert!(!state.is_muted);
+        assert!(state.current_file.is_none());
+    }
+
+    #[test]
+    fn set_volume_updates_state() {
+        let player = AudioPlayer::new();
+        player.set_volume(75.0);
+        let state = player.get_state();
+        assert_eq!(state.volume, 75.0);
+    }
+
+    #[test]
+    fn set_volume_zero() {
+        let player = AudioPlayer::new();
+        player.set_volume(0.0);
+        let state = player.get_state();
+        assert_eq!(state.volume, 0.0);
+    }
+
+    #[test]
+    fn set_volume_100() {
+        let player = AudioPlayer::new();
+        player.set_volume(100.0);
+        let state = player.get_state();
+        assert_eq!(state.volume, 100.0);
+    }
+
+    #[test]
+    fn set_muted_true() {
+        let player = AudioPlayer::new();
+        player.set_muted(true);
+        let state = player.get_state();
+        assert!(state.is_muted);
+    }
+
+    #[test]
+    fn set_muted_false() {
+        let player = AudioPlayer::new();
+        player.set_muted(true);
+        player.set_muted(false);
+        let state = player.get_state();
+        assert!(!state.is_muted);
+    }
+
+    #[test]
+    fn pause_without_playing_does_not_crash() {
+        let player = AudioPlayer::new();
+        player.pause(); // Should not panic
+        let state = player.get_state();
+        assert!(!state.is_playing);
+    }
+
+    #[test]
+    fn resume_without_playing_does_not_crash() {
+        let player = AudioPlayer::new();
+        player.resume(); // Should not panic
+    }
+
+    #[test]
+    fn stop_without_playing_does_not_crash() {
+        let player = AudioPlayer::new();
+        player.stop(); // Should not panic
+        let state = player.get_state();
+        assert!(!state.is_playing);
+        assert!(state.current_file.is_none());
+    }
+
+    #[test]
+    fn play_nonexistent_file_returns_error() {
+        let player = AudioPlayer::new();
+        let result = player.play_file("/nonexistent/path/to/file.mp3");
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Failed to open file"));
+    }
+
+    #[test]
+    fn seek_without_playing_does_not_crash() {
+        let player = AudioPlayer::new();
+        // Seek on empty sink - may succeed or fail gracefully
+        let _ = player.seek(10.0);
+    }
+
+    #[test]
+    fn multiple_volume_changes() {
+        let player = AudioPlayer::new();
+        for level in [0.0, 25.0, 50.0, 75.0, 100.0] {
+            player.set_volume(level);
+            let state = player.get_state();
+            assert_eq!(state.volume, level);
+        }
+    }
+
+    #[test]
+    fn mute_preserves_volume() {
+        let player = AudioPlayer::new();
+        player.set_volume(80.0);
+        player.set_muted(true);
+
+        let state = player.get_state();
+        assert!(state.is_muted);
+        assert_eq!(state.volume, 80.0); // Volume value preserved even when muted
+    }
+
+    // =========================================================================
+    // AudioState serialization tests
+    // =========================================================================
+
+    #[test]
+    fn audio_state_serializes_to_json() {
+        let state = AudioState {
+            is_playing: true,
+            current_time: 42.5,
+            duration: 180.0,
+            volume: 75.0,
+            is_muted: false,
+            current_file: Some("/path/to/song.mp3".to_string()),
+        };
+
+        let json = serde_json::to_string(&state).unwrap();
+        assert!(json.contains("\"is_playing\":true"));
+        assert!(json.contains("\"current_time\":42.5"));
+        assert!(json.contains("\"duration\":180.0"));
+        assert!(json.contains("\"volume\":75.0"));
+        assert!(json.contains("\"is_muted\":false"));
+        assert!(json.contains("/path/to/song.mp3"));
+    }
+
+    #[test]
+    fn audio_state_serializes_null_file() {
+        let state = AudioState {
+            is_playing: false,
+            current_time: 0.0,
+            duration: 0.0,
+            volume: 50.0,
+            is_muted: false,
+            current_file: None,
+        };
+
+        let json = serde_json::to_string(&state).unwrap();
+        assert!(json.contains("\"current_file\":null"));
+    }
+
+    #[test]
+    fn default_state_function_returns_correct_values() {
+        let state = default_state();
+        assert!(!state.is_playing);
+        assert_eq!(state.current_time, 0.0);
+        assert_eq!(state.duration, 0.0);
+        assert_eq!(state.volume, 50.0);
+        assert!(!state.is_muted);
+        assert!(state.current_file.is_none());
+    }
+
+    // =========================================================================
+    // Request deserialization tests
+    // =========================================================================
+
+    #[test]
+    fn play_request_deserializes() {
+        let json = r#"{"path":"/music/song.mp3"}"#;
+        let req: PlayRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.path, "/music/song.mp3");
+    }
+
+    #[test]
+    fn seek_request_deserializes() {
+        let json = r#"{"time":42.5}"#;
+        let req: SeekRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.time, 42.5);
+    }
+
+    #[test]
+    fn volume_request_deserializes() {
+        let json = r#"{"level":75.0}"#;
+        let req: VolumeRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.level, 75.0);
+    }
+
+    #[test]
+    fn mute_request_deserializes() {
+        let json_true = r#"{"muted":true}"#;
+        let req: MuteRequest = serde_json::from_str(json_true).unwrap();
+        assert!(req.muted);
+
+        let json_false = r#"{"muted":false}"#;
+        let req: MuteRequest = serde_json::from_str(json_false).unwrap();
+        assert!(!req.muted);
+    }
+
+    #[test]
+    fn invalid_json_fails_deserialization() {
+        let result = serde_json::from_str::<PlayRequest>("not json");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn missing_field_fails_deserialization() {
+        let result = serde_json::from_str::<PlayRequest>(r#"{"wrong":"field"}"#);
+        assert!(result.is_err());
+    }
+
+    // =========================================================================
+    // HTTP server integration tests
+    // =========================================================================
+
+    fn send_http_request(port: u16, method: &str, path: &str, body: Option<&str>) -> (u16, String) {
+        let mut stream = std::net::TcpStream::connect(format!("127.0.0.1:{port}")).unwrap();
+        stream.set_read_timeout(Some(Duration::from_secs(5))).unwrap();
+
+        let body_str = body.unwrap_or("");
+        let request = format!(
+            "{method} {path} HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body_str}",
+            body_str.len()
+        );
+        stream.write_all(request.as_bytes()).unwrap();
+
+        let mut response = String::new();
+        let _ = stream.read_to_string(&mut response);
+
+        // Parse status code
+        let status_line = response.lines().next().unwrap_or("");
+        let status: u16 = status_line
+            .split_whitespace()
+            .nth(1)
+            .unwrap_or("0")
+            .parse()
+            .unwrap_or(0);
+
+        // Parse body
+        let body = response
+            .find("\r\n\r\n")
+            .map(|i| response[i + 4..].to_string())
+            .unwrap_or_default();
+
+        (status, body)
+    }
+
+    #[test]
+    fn http_health_endpoint() {
+        let player = AudioPlayer::new();
+        let port = 13200;
+        start_audio_server(player, port);
+        std::thread::sleep(Duration::from_millis(100));
+
+        let (status, body) = send_http_request(port, "GET", "/health", None);
+        assert_eq!(status, 200);
+        assert!(body.contains("\"ok\":true"));
+    }
+
+    #[test]
+    fn http_state_endpoint_returns_json() {
+        let player = AudioPlayer::new();
+        let port = 13201;
+        start_audio_server(player, port);
+        std::thread::sleep(Duration::from_millis(100));
+
+        let (status, body) = send_http_request(port, "GET", "/state", None);
+        assert_eq!(status, 200);
+
+        let state: AudioState = serde_json::from_str(&body).unwrap();
+        assert!(!state.is_playing);
+        assert_eq!(state.volume, 50.0);
+    }
+
+    #[test]
+    fn http_volume_endpoint() {
+        let player = AudioPlayer::new();
+        let port = 13202;
+        start_audio_server(player, port);
+        std::thread::sleep(Duration::from_millis(100));
+
+        let (status, _) = send_http_request(port, "POST", "/volume", Some(r#"{"level":80}"#));
+        assert_eq!(status, 200);
+
+        // Verify state reflects the change
+        let (_, body) = send_http_request(port, "GET", "/state", None);
+        let state: AudioState = serde_json::from_str(&body).unwrap();
+        assert_eq!(state.volume, 80.0);
+    }
+
+    #[test]
+    fn http_mute_endpoint() {
+        let player = AudioPlayer::new();
+        let port = 13203;
+        start_audio_server(player, port);
+        std::thread::sleep(Duration::from_millis(100));
+
+        let (status, _) = send_http_request(port, "POST", "/mute", Some(r#"{"muted":true}"#));
+        assert_eq!(status, 200);
+
+        let (_, body) = send_http_request(port, "GET", "/state", None);
+        let state: AudioState = serde_json::from_str(&body).unwrap();
+        assert!(state.is_muted);
+    }
+
+    #[test]
+    fn http_pause_and_resume_endpoints() {
+        let player = AudioPlayer::new();
+        let port = 13204;
+        start_audio_server(player, port);
+        std::thread::sleep(Duration::from_millis(100));
+
+        let (status, _) = send_http_request(port, "POST", "/pause", None);
+        assert_eq!(status, 200);
+
+        let (status, _) = send_http_request(port, "POST", "/resume", None);
+        assert_eq!(status, 200);
+    }
+
+    #[test]
+    fn http_stop_endpoint() {
+        let player = AudioPlayer::new();
+        let port = 13205;
+        start_audio_server(player, port);
+        std::thread::sleep(Duration::from_millis(100));
+
+        let (status, _) = send_http_request(port, "POST", "/stop", None);
+        assert_eq!(status, 200);
+
+        let (_, body) = send_http_request(port, "GET", "/state", None);
+        let state: AudioState = serde_json::from_str(&body).unwrap();
+        assert!(!state.is_playing);
+        assert!(state.current_file.is_none());
+    }
+
+    #[test]
+    fn http_play_nonexistent_file_returns_500() {
+        let player = AudioPlayer::new();
+        let port = 13206;
+        start_audio_server(player, port);
+        std::thread::sleep(Duration::from_millis(100));
+
+        let (status, body) = send_http_request(
+            port,
+            "POST",
+            "/play",
+            Some(r#"{"path":"/nonexistent/file.mp3"}"#),
+        );
+        assert_eq!(status, 500);
+        assert!(body.contains("error"));
+    }
+
+    #[test]
+    fn http_invalid_json_returns_400() {
+        let player = AudioPlayer::new();
+        let port = 13207;
+        start_audio_server(player, port);
+        std::thread::sleep(Duration::from_millis(100));
+
+        let (status, _) = send_http_request(port, "POST", "/play", Some("not json"));
+        assert_eq!(status, 400);
+    }
+
+    #[test]
+    fn http_unknown_route_returns_404() {
+        let player = AudioPlayer::new();
+        let port = 13208;
+        start_audio_server(player, port);
+        std::thread::sleep(Duration::from_millis(100));
+
+        let (status, body) = send_http_request(port, "GET", "/unknown", None);
+        assert_eq!(status, 404);
+        assert!(body.contains("Not found"));
+    }
+
+    #[test]
+    fn http_seek_bad_json_returns_400() {
+        let player = AudioPlayer::new();
+        let port = 13209;
+        start_audio_server(player, port);
+        std::thread::sleep(Duration::from_millis(100));
+
+        let (status, _) = send_http_request(port, "POST", "/seek", Some(r#"{"wrong":"field"}"#));
+        assert_eq!(status, 400);
+    }
+
+    #[test]
+    fn http_volume_bad_json_returns_400() {
+        let player = AudioPlayer::new();
+        let port = 13210;
+        start_audio_server(player, port);
+        std::thread::sleep(Duration::from_millis(100));
+
+        let (status, _) = send_http_request(port, "POST", "/volume", Some("{}"));
+        assert_eq!(status, 400);
+    }
+
+    #[test]
+    fn http_mute_bad_json_returns_400() {
+        let player = AudioPlayer::new();
+        let port = 13211;
+        start_audio_server(player, port);
+        std::thread::sleep(Duration::from_millis(100));
+
+        let (status, _) = send_http_request(port, "POST", "/mute", Some("invalid"));
+        assert_eq!(status, 400);
+    }
 }
