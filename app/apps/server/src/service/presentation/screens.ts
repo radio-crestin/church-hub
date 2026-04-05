@@ -21,14 +21,9 @@ import {
   screenSceneOverrides,
   screens,
 } from '../../db/schema'
+import { createLogger } from '../../utils/logger'
 
-const DEBUG = process.env.DEBUG === 'true'
-
-function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
-  if (level === 'debug' && !DEBUG) return
-  // biome-ignore lint/suspicious/noConsole: logging utility
-  console.log(`[${level.toUpperCase()}] [screens] ${message}`)
-}
+const logger = createLogger('screens')
 
 // ============================================================================
 // DEFAULT CONFIGURATIONS
@@ -349,7 +344,7 @@ function toScreen(record: typeof screens.$inferSelect): Screen {
 
 export function getAllScreens(): Screen[] {
   try {
-    log('debug', 'Getting all screens')
+    logger.debug('Getting all screens')
 
     const db = getDatabase()
     const records = db
@@ -360,14 +355,14 @@ export function getAllScreens(): Screen[] {
 
     return records.map(toScreen)
   } catch (error) {
-    log('error', `Failed to get all screens: ${error}`)
+    logger.error(`Failed to get all screens: ${error}`)
     return []
   }
 }
 
 export function getActiveScreens(): Screen[] {
   try {
-    log('debug', 'Getting active screens')
+    logger.debug('Getting active screens')
 
     const db = getDatabase()
     const records = db
@@ -379,33 +374,33 @@ export function getActiveScreens(): Screen[] {
 
     return records.map(toScreen)
   } catch (error) {
-    log('error', `Failed to get active screens: ${error}`)
+    logger.error(`Failed to get active screens: ${error}`)
     return []
   }
 }
 
 export function getScreenById(id: number): Screen | null {
   try {
-    log('debug', `Getting screen by ID: ${id}`)
+    logger.debug(`Getting screen by ID: ${id}`)
 
     const db = getDatabase()
     const record = db.select().from(screens).where(eq(screens.id, id)).get()
 
     if (!record) {
-      log('debug', `Screen not found: ${id}`)
+      logger.debug(`Screen not found: ${id}`)
       return null
     }
 
     return toScreen(record)
   } catch (error) {
-    log('error', `Failed to get screen: ${error}`)
+    logger.error(`Failed to get screen: ${error}`)
     return null
   }
 }
 
 export function getScreenWithConfigs(id: number): ScreenWithConfigs | null {
   try {
-    log('debug', `Getting screen with configs: ${id}`)
+    logger.debug(`Getting screen with configs: ${id}`)
 
     const screen = getScreenById(id)
     if (!screen) return null
@@ -483,7 +478,7 @@ export function getScreenWithConfigs(id: number): ScreenWithConfigs | null {
         Object.keys(sceneOverrides).length > 0 ? sceneOverrides : undefined,
     }
   } catch (error) {
-    log('error', `Failed to get screen with configs (id=${id}): ${error}`)
+    logger.error(`Failed to get screen with configs (id=${id}): ${error}`)
     // biome-ignore lint/suspicious/noConsole: critical error debug
     console.error(`[screens] getScreenWithConfigs(${id}) error:`, error)
     return null
@@ -506,7 +501,7 @@ export function upsertScreen(input: UpsertScreenInput): Screen | null {
 
     if (input.id) {
       // Update existing screen
-      log('debug', `Updating screen: ${input.id}`)
+      logger.debug(`Updating screen: ${input.id}`)
 
       // Build update object - only update fields that are explicitly provided
       const updateData: Record<string, unknown> = {
@@ -543,12 +538,12 @@ export function upsertScreen(input: UpsertScreenInput): Screen | null {
 
       db.update(screens).set(updateData).where(eq(screens.id, input.id)).run()
 
-      log('info', `Screen updated: ${input.id}`)
+      logger.info(`Screen updated: ${input.id}`)
       return getScreenById(input.id)
     }
 
     // Create new screen
-    log('debug', `Creating screen: ${input.name}`)
+    logger.debug(`Creating screen: ${input.name}`)
 
     const inserted = db
       .insert(screens)
@@ -601,10 +596,10 @@ export function upsertScreen(input: UpsertScreenInput): Screen | null {
       })
       .run()
 
-    log('info', `Screen created: ${inserted.id}`)
+    logger.info(`Screen created: ${inserted.id}`)
     return getScreenById(inserted.id)
   } catch (error) {
-    log('error', `Failed to upsert screen: ${error}`)
+    logger.error(`Failed to upsert screen: ${error}`)
     return null
   }
 }
@@ -667,16 +662,16 @@ function adjustConfigForLivestream(config: Record<string, unknown>) {
 
 export function deleteScreen(id: number): OperationResult {
   try {
-    log('debug', `Deleting screen: ${id}`)
+    logger.debug(`Deleting screen: ${id}`)
 
     const db = getDatabase()
     // Content configs and next slide configs are deleted via CASCADE
     db.delete(screens).where(eq(screens.id, id)).run()
 
-    log('info', `Screen deleted: ${id}`)
+    logger.info(`Screen deleted: ${id}`)
     return { success: true }
   } catch (error) {
-    log('error', `Failed to delete screen: ${error}`)
+    logger.error(`Failed to delete screen: ${error}`)
     return { success: false, error: String(error) }
   }
 }
@@ -689,8 +684,7 @@ export function updateContentConfig(
   input: UpdateContentConfigInput,
 ): OperationResult {
   try {
-    log(
-      'debug',
+    logger.debug(
       `Updating content config: screen=${input.screenId}, type=${input.contentType}`,
     )
 
@@ -727,13 +721,12 @@ export function updateContentConfig(
         .run()
     }
 
-    log(
-      'info',
+    logger.info(
       `Content config updated: screen=${input.screenId}, type=${input.contentType}`,
     )
     return { success: true }
   } catch (error) {
-    log('error', `Failed to update content config: ${error}`)
+    logger.error(`Failed to update content config: ${error}`)
     return { success: false, error: String(error) }
   }
 }
@@ -761,7 +754,7 @@ export function getContentConfig(
 
     return getDefaultContentConfig(contentType)
   } catch (error) {
-    log('error', `Failed to get content config: ${error}`)
+    logger.error(`Failed to get content config: ${error}`)
     return getDefaultContentConfig(contentType)
   }
 }
@@ -774,7 +767,7 @@ export function updateNextSlideConfig(
   input: UpdateNextSlideConfigInput,
 ): OperationResult {
   try {
-    log('debug', `Updating next slide config: screen=${input.screenId}`)
+    logger.debug(`Updating next slide config: screen=${input.screenId}`)
 
     const db = getDatabase()
     const configJson = JSON.stringify(input.config)
@@ -803,10 +796,10 @@ export function updateNextSlideConfig(
         .run()
     }
 
-    log('info', `Next slide config updated: screen=${input.screenId}`)
+    logger.info(`Next slide config updated: screen=${input.screenId}`)
     return { success: true }
   } catch (error) {
-    log('error', `Failed to update next slide config: ${error}`)
+    logger.error(`Failed to update next slide config: ${error}`)
     return { success: false, error: String(error) }
   }
 }
@@ -826,7 +819,7 @@ export function getNextSlideConfig(screenId: number): NextSlideSectionConfig {
 
     return getDefaultNextSlideConfig()
   } catch (error) {
-    log('error', `Failed to get next slide config: ${error}`)
+    logger.error(`Failed to get next slide config: ${error}`)
     return getDefaultNextSlideConfig()
   }
 }
@@ -840,7 +833,7 @@ export function updateGlobalSettings(
   settings: ScreenGlobalSettings,
 ): OperationResult {
   try {
-    log('debug', `Updating global settings: screen=${screenId}`)
+    logger.debug(`Updating global settings: screen=${screenId}`)
 
     const db = getDatabase()
     const settingsJson = JSON.stringify(settings)
@@ -853,10 +846,10 @@ export function updateGlobalSettings(
       .where(eq(screens.id, screenId))
       .run()
 
-    log('info', `Global settings updated: screen=${screenId}`)
+    logger.info(`Global settings updated: screen=${screenId}`)
     return { success: true }
   } catch (error) {
-    log('error', `Failed to update global settings: ${error}`)
+    logger.error(`Failed to update global settings: ${error}`)
     return { success: false, error: String(error) }
   }
 }
@@ -878,7 +871,7 @@ export function batchUpdateScreenConfigs(
   input: BatchUpdateScreenConfigInput,
 ): OperationResult {
   try {
-    log('debug', `Batch updating screen configs: screen=${input.screenId}`)
+    logger.debug(`Batch updating screen configs: screen=${input.screenId}`)
 
     const db = getDatabase()
 
@@ -962,10 +955,10 @@ export function batchUpdateScreenConfigs(
       }
     }
 
-    log('info', `Batch update complete: screen=${input.screenId}`)
+    logger.info(`Batch update complete: screen=${input.screenId}`)
     return { success: true }
   } catch (error) {
-    log('error', `Failed to batch update screen configs: ${error}`)
+    logger.error(`Failed to batch update screen configs: ${error}`)
     return { success: false, error: String(error) }
   }
 }
@@ -981,8 +974,7 @@ export function upsertSceneOverride(
   config: Record<string, unknown>,
 ): OperationResult {
   try {
-    log(
-      'debug',
+    logger.debug(
       `Upserting scene override: screen=${screenId}, scene=${obsSceneName}, type=${contentType}`,
     )
 
@@ -1020,13 +1012,12 @@ export function upsertSceneOverride(
         .run()
     }
 
-    log(
-      'info',
+    logger.info(
       `Scene override upserted: screen=${screenId}, scene=${obsSceneName}, type=${contentType}`,
     )
     return { success: true }
   } catch (error) {
-    log('error', `Failed to upsert scene override: ${error}`)
+    logger.error(`Failed to upsert scene override: ${error}`)
     return { success: false, error: String(error) }
   }
 }
@@ -1037,8 +1028,7 @@ export function deleteSceneOverride(
   contentType: ContentType,
 ): OperationResult {
   try {
-    log(
-      'debug',
+    logger.debug(
       `Deleting scene override: screen=${screenId}, scene=${obsSceneName}, type=${contentType}`,
     )
 
@@ -1053,30 +1043,29 @@ export function deleteSceneOverride(
       )
       .run()
 
-    log(
-      'info',
+    logger.info(
       `Scene override deleted: screen=${screenId}, scene=${obsSceneName}, type=${contentType}`,
     )
     return { success: true }
   } catch (error) {
-    log('error', `Failed to delete scene override: ${error}`)
+    logger.error(`Failed to delete scene override: ${error}`)
     return { success: false, error: String(error) }
   }
 }
 
 export function deleteAllSceneOverrides(screenId: number): OperationResult {
   try {
-    log('debug', `Deleting all scene overrides for screen=${screenId}`)
+    logger.debug(`Deleting all scene overrides for screen=${screenId}`)
 
     const db = getDatabase()
     db.delete(screenSceneOverrides)
       .where(eq(screenSceneOverrides.screenId, screenId))
       .run()
 
-    log('info', `All scene overrides deleted for screen=${screenId}`)
+    logger.info(`All scene overrides deleted for screen=${screenId}`)
     return { success: true }
   } catch (error) {
-    log('error', `Failed to delete all scene overrides: ${error}`)
+    logger.error(`Failed to delete all scene overrides: ${error}`)
     return { success: false, error: String(error) }
   }
 }

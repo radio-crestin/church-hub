@@ -9,6 +9,15 @@ import { initSentry } from './sentry'
 
 initSentry()
 
+// Initialize global error handlers for unhandled errors and rejections
+import { initGlobalErrorHandlers } from './utils/error-handler'
+
+try {
+  initGlobalErrorHandlers()
+} catch {
+  // Silently fail if error handlers can't be initialized (e.g., SSR)
+}
+
 import { getApiUrl, isMobile, needsApiUrlConfiguration } from './config'
 import { ApiUrlSetup } from './features/api-url-config'
 import { routeTree } from './routeTree.gen'

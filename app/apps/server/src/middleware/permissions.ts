@@ -1,13 +1,8 @@
 import type { RequestContext } from './types'
 import type { Permission } from '../service/users'
+import { createLogger } from '../utils/logger'
 
-const DEBUG = process.env.DEBUG === 'true'
-
-function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
-  if (level === 'debug' && !DEBUG) return
-  // biome-ignore lint/suspicious/noConsole: permission logging
-  console.log(`[permissions:${level}] ${message}`)
-}
+const logger = createLogger('permissions')
 
 /**
  * Creates a permission checker for a specific permission
@@ -19,14 +14,13 @@ export function requirePermission(
   return (context: RequestContext): Response | null => {
     // App auth bypasses permission checks (full access)
     if (context.authType === 'app') {
-      log('debug', `App auth: bypassing ${permission} check`)
+      logger.debug(`App auth: bypassing ${permission} check`)
       return null
     }
 
     // Check user permissions
     if (!context.permissions) {
-      log(
-        'warning',
+      logger.warning(
         `No permissions found for user ${context.userId} - required: ${permission}`,
       )
       return new Response(
@@ -43,8 +37,7 @@ export function requirePermission(
 
     const hasPermission = context.permissions.includes(permission)
     if (!hasPermission) {
-      log(
-        'warning',
+      logger.warning(
         `Permission denied: ${permission} for user ${context.userId}. User has: ${context.permissions.join(', ')}`,
       )
       return new Response(
@@ -59,7 +52,7 @@ export function requirePermission(
       )
     }
 
-    log('debug', `Permission granted: ${permission}`)
+    logger.debug(`Permission granted: ${permission}`)
     return null // Proceed
   }
 }

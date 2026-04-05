@@ -4,6 +4,9 @@ import { getNextBook } from './books'
 import type { BibleVerse } from './types'
 import { getDatabase } from '../../db'
 import { bibleBooks, bibleVerses } from '../../db/schema'
+import { createLogger } from '../../utils/logger'
+
+const logger = createLogger('bible:verses')
 
 type VerseWithBook = typeof bibleVerses.$inferSelect & {
   bookCode: string
@@ -33,6 +36,7 @@ export function getVersesByChapter(
   bookId: number,
   chapter: number,
 ): BibleVerse[] {
+  logger.debug(`getVersesByChapter: bookId=${bookId}, chapter=${chapter}`)
   const db = getDatabase()
   const records = db
     .select({
@@ -60,6 +64,7 @@ export function getVersesByChapter(
  * Gets a single verse by ID
  */
 export function getVerseById(verseId: number): BibleVerse | null {
+  logger.debug(`getVerseById: verseId=${verseId}`)
   const db = getDatabase()
   const record = db
     .select({
@@ -89,6 +94,9 @@ export function getVerse(
   chapter: number,
   verseNumber: number,
 ): BibleVerse | null {
+  logger.debug(
+    `getVerse: ${bookCode} ${chapter}:${verseNumber} (translation=${translationId})`,
+  )
   const db = getDatabase()
   const record = db
     .select({
@@ -126,6 +134,9 @@ export function getVerseRange(
   startVerse: number,
   endVerse: number,
 ): BibleVerse[] {
+  logger.debug(
+    `getVerseRange: ${bookCode} ${chapter}:${startVerse}-${endVerse} (translation=${translationId})`,
+  )
   const db = getDatabase()
   const records = db
     .select({
@@ -165,6 +176,9 @@ export function getVersesAcrossChapters(
   endChapter: number,
   endVerse: number,
 ): BibleVerse[] {
+  logger.debug(
+    `getVersesAcrossChapters: ${bookCode} ${startChapter}:${startVerse}-${endChapter}:${endVerse}`,
+  )
   const db = getDatabase()
 
   // Get verses from start chapter (from startVerse to end)
@@ -248,6 +262,7 @@ export function formatRangeReference(
  * - If at end of Bible: returns null
  */
 export function getNextVerse(verseId: number): BibleVerse | null {
+  logger.debug(`getNextVerse: verseId=${verseId}`)
   const current = getVerseById(verseId)
   if (!current) return null
 

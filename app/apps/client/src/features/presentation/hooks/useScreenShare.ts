@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { createLogger } from '~/utils/logger'
 
-const logger = createLogger('ScreenShare')
+const logger = createLogger('app:presentation:screenshare')
 
 // Optimized WebRTC configuration for local network / high quality streaming
 const RTC_CONFIG: RTCConfiguration = {

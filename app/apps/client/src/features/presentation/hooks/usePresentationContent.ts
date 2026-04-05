@@ -12,7 +12,7 @@ import { addAminToLastSlide } from '../utils/addAminToLastSlide'
 import { addKeyLineToFirstSlide } from '../utils/addKeyLineToFirstSlide'
 import { resolveSlideChords } from '../utils/resolveSlideChords'
 
-const logger = createLogger('usePresentationContent')
+const logger = createLogger('app:presentation:content')
 
 // Extra buffer time after animation completes before transitioning to empty state (ms)
 const EXIT_ANIMATION_BUFFER = 200
@@ -286,6 +286,7 @@ export function usePresentationContent({
       // Check for temporary content first (bypasses queue)
       if (presentationState.temporaryContent) {
         const temp = presentationState.temporaryContent
+        logger.debug(`Temporary content detected: type=${temp.type}`)
 
         if (temp.type === 'bible') {
           const data = temp.data
@@ -481,8 +482,10 @@ export function usePresentationContent({
         let queueItems: QueueItem[]
 
         if (cacheValid) {
+          logger.debug('Using cached queue data')
           queueItems = queueCache.data
         } else {
+          logger.debug('Fetching fresh queue data')
           const queueResponse = await fetchFn(`${getApiUrl()}/api/queue`, {
             cache: 'no-store',
             headers: getHeaders(),

@@ -94,7 +94,7 @@ function setInSearchCache(key: string, results: SongSearchResult[]): void {
  */
 export function clearSearchCache(): void {
   searchResultsCache.clear()
-  log('debug', 'Search cache cleared')
+  logger.debug('Search cache cleared')
 }
 
 /**
@@ -109,13 +109,13 @@ function loadSynonyms(): Map<string, string[]> {
     return synonymsCache
   }
 
-  log('debug', 'Loading synonyms from database')
+  logger.debug('Loading synonyms from database')
 
   const setting = getSetting('app_settings', 'search_synonyms')
   const synonymMap = new Map<string, string[]>()
 
   if (!setting) {
-    log('debug', 'No synonyms configured')
+    logger.debug('No synonyms configured')
     synonymsCache = synonymMap
     synonymsCacheTimestamp = now
     return synonymMap
@@ -139,9 +139,9 @@ function loadSynonyms(): Map<string, string[]> {
       }
     }
 
-    log('debug', `Loaded ${config.groups.length} synonym groups`)
+    logger.debug(`Loaded ${config.groups.length} synonym groups`)
   } catch (error) {
-    log('error', `Failed to parse synonyms config: ${error}`)
+    logger.error(`Failed to parse synonyms config: ${error}`)
   }
 
   synonymsCache = synonymMap
@@ -168,19 +168,15 @@ function expandTermsWithSynonyms(terms: string[]): string[] {
 
   const result = Array.from(expandedTerms)
   if (result.length > terms.length) {
-    log('debug', `Expanded terms: ${terms.join(', ')} -> ${result.join(', ')}`)
+    logger.debug(`Expanded terms: ${terms.join(', ')} -> ${result.join(', ')}`)
   }
 
   return result
 }
 
-const DEBUG = process.env.DEBUG === 'true'
+import { createLogger } from '../../utils/logger'
 
-function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
-  if (level === 'debug' && !DEBUG) return
-  // biome-ignore lint/suspicious/noConsole: logging utility
-  console.log(`[${level.toUpperCase()}] [song-search] ${message}`)
-}
+const logger = createLogger('song-search')
 
 /**
  * Normalizes text by removing diacritics (accents)
@@ -232,7 +228,7 @@ export function normalizeForIndex(text: string): string {
  */
 export function updateSearchIndex(songId: number): void {
   try {
-    log('debug', `Updating search index for song: ${songId}`)
+    logger.debug(`Updating search index for song: ${songId}`)
 
     const db = getRawDatabase()
 
@@ -249,7 +245,7 @@ export function updateSearchIndex(songId: number): void {
     } | null
 
     if (!song) {
-      log('debug', `Song not found for indexing: ${songId}`)
+      logger.debug(`Song not found for indexing: ${songId}`)
       return
     }
 
@@ -279,9 +275,9 @@ export function updateSearchIndex(songId: number): void {
       VALUES (?, ?, ?)
     `).run(songId, normalizedTitle, normalizedContent)
 
-    log('debug', `Search index updated for song: ${songId}`)
+    logger.debug(`Search index updated for song: ${songId}`)
   } catch (error) {
-    log('error', `Failed to update search index: ${error}`)
+    logger.error(`Failed to update search index: ${error}`)
   }
 }
 
@@ -290,15 +286,15 @@ export function updateSearchIndex(songId: number): void {
  */
 export function removeFromSearchIndex(songId: number): void {
   try {
-    log('debug', `Removing song from search index: ${songId}`)
+    logger.debug(`Removing song from search index: ${songId}`)
 
     const db = getRawDatabase()
     db.query('DELETE FROM songs_fts WHERE song_id = ?').run(songId)
     db.query('DELETE FROM songs_fts_trigram WHERE song_id = ?').run(songId)
 
-    log('debug', `Song removed from search index: ${songId}`)
+    logger.debug(`Song removed from search index: ${songId}`)
   } catch (error) {
-    log('error', `Failed to remove from search index: ${error}`)
+    logger.error(`Failed to remove from search index: ${error}`)
   }
 }
 
@@ -308,7 +304,7 @@ export function removeFromSearchIndex(songId: number): void {
  */
 export function updateSearchIndexByCategory(categoryId: number): void {
   try {
-    log('debug', `Updating search index for category: ${categoryId}`)
+    logger.debug(`Updating search index for category: ${categoryId}`)
 
     const db = getRawDatabase()
     const songsQuery = db.query('SELECT id FROM songs WHERE category_id = ?')
@@ -318,9 +314,9 @@ export function updateSearchIndexByCategory(categoryId: number): void {
       updateSearchIndex(song.id)
     }
 
-    log('debug', `Updated ${songs.length} songs for category: ${categoryId}`)
+    logger.debug(`Updated ${songs.length} songs for category: ${categoryId}`)
   } catch (error) {
-    log('error', `Failed to update search index for category: ${error}`)
+    logger.error(`Failed to update search index for category: ${error}`)
   }
 }
 
@@ -333,7 +329,7 @@ export function batchUpdateSearchIndex(songIds: number[]): void {
 
   try {
     const totalStart = performance.now()
-    log('info', `Batch updating search index for ${songIds.length} songs`)
+    logger.info(`Batch updating search index for ${songIds.length} songs`)
 
     const db = getRawDatabase()
 
@@ -413,8 +409,7 @@ export function batchUpdateSearchIndex(songIds: number[]): void {
       // Clear the search cache since index changed
       clearSearchCache()
 
-      log(
-        'info',
+      logger.info(
         `[PERF] Search index update: ${totalTime.toFixed(2)}ms | Delete: ${deleteTime.toFixed(0)}ms | FTS: ${ftsTime.toFixed(0)}ms`,
       )
     } catch (error) {
@@ -422,7 +417,7 @@ export function batchUpdateSearchIndex(songIds: number[]): void {
       throw error
     }
   } catch (error) {
-    log('error', `Failed to batch update search index: ${error}`)
+    logger.error(`Failed to batch update search index: ${error}`)
   }
 }
 
@@ -433,9 +428,7 @@ export function warmupSearchIndex(): void {
   const startTime = performance.now()
   try {
     const rawDb = getRawDatabase()
-    rawDb.run(
-      "SELECT rowid FROM songs_fts WHERE songs_fts MATCH 'a*' LIMIT 1",
-    )
+    rawDb.run("SELECT rowid FROM songs_fts WHERE songs_fts MATCH 'a*' LIMIT 1")
     rawDb.run(
       "SELECT rowid FROM songs_fts_trigram WHERE songs_fts_trigram MATCH 'aaa' LIMIT 1",
     )
@@ -443,7 +436,7 @@ export function warmupSearchIndex(): void {
     // FTS tables might not exist yet
   }
   const elapsed = performance.now() - startTime
-  log('info', `FTS index warmup completed in ${elapsed.toFixed(1)}ms`)
+  logger.info(`FTS index warmup completed in ${elapsed.toFixed(1)}ms`)
 }
 
 /**
@@ -453,7 +446,7 @@ export function warmupSearchIndex(): void {
  */
 export function rebuildSearchIndex(): void {
   try {
-    log('info', 'Rebuilding search index...')
+    logger.info('Rebuilding search index...')
 
     const db = getRawDatabase()
 
@@ -481,7 +474,7 @@ export function rebuildSearchIndex(): void {
       content: string
     }>
 
-    log('info', `Found ${songs.length} songs to index`)
+    logger.info(`Found ${songs.length} songs to index`)
 
     // Use a transaction for atomicity
     db.run('BEGIN TRANSACTION')
@@ -523,13 +516,13 @@ export function rebuildSearchIndex(): void {
       // Clear the search cache since index changed
       clearSearchCache()
 
-      log('info', `Search index rebuilt: ${songs.length} songs indexed`)
+      logger.info(`Search index rebuilt: ${songs.length} songs indexed`)
     } catch (error) {
       db.run('ROLLBACK')
       throw error
     }
   } catch (error) {
-    log('error', `Failed to rebuild search index: ${error}`)
+    logger.error(`Failed to rebuild search index: ${error}`)
   }
 }
 
@@ -577,8 +570,7 @@ function searchByHymnNumber(
   // Strip leading zeros for a normalized comparison
   const numericValue = Number.parseInt(numericPart, 10).toString()
 
-  log(
-    'debug',
+  logger.debug(
     `Hymn number pre-phase lookup for: "${rawQuery}" → ${numericValue}`,
   )
 
@@ -910,10 +902,7 @@ function highlightWithDiacritics(text: string, searchTerms: string[]): string {
     if (term.length < 2) continue
     const normalized = removeDiacritics(term).toLowerCase()
     const diacriticPattern = buildDiacriticInsensitivePattern(normalized)
-    const pattern = new RegExp(
-      `(${diacriticPattern}[a-zA-ZăâîșțĂÂÎȘȚ]*)`,
-      'gi',
-    )
+    const pattern = new RegExp(`(${diacriticPattern}[a-zA-ZăâîșțĂÂÎȘȚ]*)`, 'gi')
     result = result.replace(pattern, '<mark>$1</mark>')
   }
   return result
@@ -1123,7 +1112,7 @@ export function searchSongs(
   const startTime = performance.now()
 
   try {
-    log('debug', `Searching songs: ${query}`)
+    logger.debug(`Searching songs: ${query}`)
 
     if (!query.trim()) {
       return []
@@ -1133,8 +1122,7 @@ export function searchSongs(
     const cacheKey = getSearchCacheKey(query, categoryIds, filters)
     const cachedResults = getFromSearchCache(cacheKey)
     if (cachedResults) {
-      log(
-        'debug',
+      logger.debug(
         `Cache hit for: "${query}" (${cachedResults.length} results)`,
       )
       return cachedResults.slice(0, limit)
@@ -1176,7 +1164,7 @@ export function searchSongs(
       prePhaseCategoryParams,
     )
     if (hymnRows && hymnRows.length > 0) {
-      log('debug', `Hymn number pre-phase: ${hymnRows.length} results`)
+      logger.debug(`Hymn number pre-phase: ${hymnRows.length} results`)
       const hymnFinalResults: SongSearchResult[] = hymnRows
         .slice(0, limit)
         .map((r) => ({
@@ -1199,28 +1187,25 @@ export function searchSongs(
     // Filter to valid terms (terms that exist in corpus)
     const validTermsStart = performance.now()
     let { validTerms } = getValidTerms(queryTerms)
-    log(
-      'debug',
+    logger.debug(
       `getValidTerms: ${(performance.now() - validTermsStart).toFixed(1)}ms`,
     )
 
     // If ALL terms were filtered out, fall back to original terms
     if (validTerms.length === 0 && queryTerms.length > 0) {
-      log(
-        'debug',
+      logger.debug(
         'All terms filtered as noise, falling back to original terms',
       )
       validTerms = queryTerms
     }
 
-    log(
-      'debug',
+    logger.debug(
       `Query terms: ${queryTerms.join(', ')} | Valid: ${validTerms.join(', ')}`,
     )
 
     // If still no valid terms (shouldn't happen), return empty
     if (validTerms.length === 0) {
-      log('debug', 'No valid search terms found')
+      logger.debug('No valid search terms found')
       return []
     }
 
@@ -1234,7 +1219,7 @@ export function searchSongs(
       return []
     }
 
-    log('debug', `FTS query: ${ftsQuery}`)
+    logger.debug(`FTS query: ${ftsQuery}`)
 
     // Phase 1: Standard FTS5 search for exact/prefix matches
     // Build additional SQL filters
@@ -1298,8 +1283,7 @@ export function searchSongs(
     }>
 
     const phase1Elapsed = performance.now() - startTime
-    log(
-      'debug',
+    logger.debug(
       `Phase 1 (standard): Found ${standardResults.length} results in ${phase1Elapsed.toFixed(1)}ms`,
     )
 
@@ -1345,13 +1329,12 @@ export function searchSongs(
           .all(...trigramQueryParams) as typeof trigramResults
 
         phase2Elapsed = performance.now() - startTime
-        log(
-          'debug',
+        logger.debug(
           `Phase 2 (trigram): Found ${trigramResults.length} results in ${phase2Elapsed.toFixed(1)}ms`,
         )
       } catch (e) {
         // Trigram table might not exist yet, continue without it
-        log('debug', `Trigram search failed (table may not exist): ${e}`)
+        logger.debug(`Trigram search failed (table may not exist): ${e}`)
       }
     }
 
@@ -1392,7 +1375,7 @@ export function searchSongs(
     }
 
     const candidates = Array.from(candidateMap.values())
-    log('debug', `Combined: ${candidates.length} unique candidates`)
+    logger.debug(`Combined: ${candidates.length} unique candidates`)
 
     // Phase 3: Calculate match scores using phrase-based scoring
     // FTS content is already diacritics-free (normalizeForIndex strips diacritics)
@@ -1478,8 +1461,7 @@ export function searchSongs(
     const topResults = scoredResults.slice(0, limit)
 
     const phase3Elapsed = performance.now() - startTime
-    log(
-      'debug',
+    logger.debug(
       `Phase 3: Re-ranked ${candidates.length} candidates in ${(phase3Elapsed - phase2Elapsed).toFixed(1)}ms. Top score: ${topResults[0]?.termScore ?? 0}%`,
     )
 
@@ -1512,14 +1494,13 @@ export function searchSongs(
     setInSearchCache(cacheKey, finalResults)
 
     const elapsed = performance.now() - startTime
-    log(
-      'debug',
+    logger.debug(
       `Search completed: "${query}" → ${finalResults.length} results in ${elapsed.toFixed(1)}ms`,
     )
 
     return finalResults
   } catch (error) {
-    log('error', `Failed to search songs with query "${query}": ${error}`)
+    logger.error(`Failed to search songs with query "${query}": ${error}`)
     return []
   }
 }

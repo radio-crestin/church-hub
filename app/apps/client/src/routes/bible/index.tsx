@@ -1066,45 +1066,45 @@ function BiblePage() {
               }
             >
               <div className="lg:absolute lg:inset-0">
-              <BibleNavigationPanel
-                navigation={navigation}
-                onSelectVerse={handleSelectVerse}
-                onSelectSearchResult={handleSelectSearchResult}
-                onPresentSearched={handlePresentSearched}
-                onNextVerse={handleNextVerse}
-                onPreviousVerse={handlePreviousVerse}
-                onGoBack={handleGoBack}
-                focusTrigger={focusTrigger}
-                onNavigateToBook={(bookId, bookName) => {
-                  // Mark as internal navigation (from within Bible) so back uses browser history
-                  pendingInternalNavRef.current = true
-                  navigate({
-                    to: '/bible/',
-                    search: { book: bookId, bookName },
-                  })
-                }}
-                onNavigateToChapter={(bookId, bookName, chapter, verse) => {
-                  // Mark as internal navigation (from within Bible) so back uses browser history
-                  pendingInternalNavRef.current = true
-                  navigate({
-                    to: '/bible/',
-                    search: {
-                      book: bookId,
-                      bookName,
-                      chapter,
-                      verse,
-                      select: verse !== undefined ? true : undefined,
-                    },
-                  })
-                }}
-                onSearchQueryChange={(query) => {
-                  navigate({
-                    to: '/bible/',
-                    search: query ? { q: query } : {},
-                    replace: true,
-                  })
-                }}
-              />
+                <BibleNavigationPanel
+                  navigation={navigation}
+                  onSelectVerse={handleSelectVerse}
+                  onSelectSearchResult={handleSelectSearchResult}
+                  onPresentSearched={handlePresentSearched}
+                  onNextVerse={handleNextVerse}
+                  onPreviousVerse={handlePreviousVerse}
+                  onGoBack={handleGoBack}
+                  focusTrigger={focusTrigger}
+                  onNavigateToBook={(bookId, bookName) => {
+                    // Mark as internal navigation (from within Bible) so back uses browser history
+                    pendingInternalNavRef.current = true
+                    navigate({
+                      to: '/bible/',
+                      search: { book: bookId, bookName },
+                    })
+                  }}
+                  onNavigateToChapter={(bookId, bookName, chapter, verse) => {
+                    // Mark as internal navigation (from within Bible) so back uses browser history
+                    pendingInternalNavRef.current = true
+                    navigate({
+                      to: '/bible/',
+                      search: {
+                        book: bookId,
+                        bookName,
+                        chapter,
+                        verse,
+                        select: verse !== undefined ? true : undefined,
+                      },
+                    })
+                  }}
+                  onSearchQueryChange={(query) => {
+                    navigate({
+                      to: '/bible/',
+                      search: query ? { q: query } : {},
+                      replace: true,
+                    })
+                  }}
+                />
               </div>
             </div>
 

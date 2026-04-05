@@ -13,24 +13,24 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^1.0.0",
-    "@google/genai": "^1.39.0",
-    "@sentry/bun": "^10.34.0",
+    "@google/genai": "^1.48.0",
+    "@sentry/bun": "^10.47.0",
     "ai": "^4.0.0",
     "audify": "^1.10.1",
     "debug": "^4.4.3",
-    "drizzle-orm": "^0.45.1",
-    "easymidi": "^3.1.0",
-    "google-auth-library": "^10.5.0",
+    "drizzle-orm": "^0.45.2",
+    "easymidi": "^3.2.0",
+    "google-auth-library": "^10.6.2",
     "googleapis": "^169.0.0",
-    "libreoffice-convert": "^1.7.0",
-    "music-metadata": "^11.10.5",
-    "obs-websocket-js": "^5.0.7",
-    "werift": "^0.22.4"
+    "libreoffice-convert": "^1.8.1",
+    "music-metadata": "^11.12.3",
+    "obs-websocket-js": "^5.0.8",
+    "werift": "^0.22.9"
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "better-sqlite3": "^12.6.0",
-    "drizzle-kit": "^0.31.8"
+    "better-sqlite3": "^12.8.0",
+    "drizzle-kit": "^0.31.10"
   },
   "peerDependencies": {
     "typescript": "^5"

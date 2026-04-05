@@ -1,13 +1,11 @@
-import Database from 'bun:sqlite'
-import { describe, expect, test } from 'bun:test'
 import { existsSync } from 'fs'
 import { resolve } from 'path'
 
+import Database from 'bun:sqlite'
+import { describe, expect, test } from 'bun:test'
+
 // Real app database for benchmarking (only available locally)
-const DB_PATH = resolve(
-  import.meta.dir,
-  '../../../../../data/app-v0.1.40.db',
-)
+const DB_PATH = resolve(import.meta.dir, '../../../../../data/app-v0.1.40.db')
 
 const hasDb = existsSync(DB_PATH)
 
@@ -47,21 +45,67 @@ function createFixtureDb(): Database {
   // Insert sample verses
   const verses = [
     [1, 1, 1, 1, 'La inceput, Dumnezeu a facut cerurile si pamantul.'],
-    [2, 1, 1, 2, 'Pamantul era pustiu si gol; peste fata adancului de ape era intuneric.'],
-    [3, 2, 3, 16, 'Fiindca atat de mult a iubit Dumnezeu lumea, ca a dat pe singurul Lui Fiu.'],
-    [4, 2, 1, 1, 'La inceput era Cuvantul, si Cuvantul era cu Dumnezeu, si Cuvantul era Dumnezeu.'],
+    [
+      2,
+      1,
+      1,
+      2,
+      'Pamantul era pustiu si gol; peste fata adancului de ape era intuneric.',
+    ],
+    [
+      3,
+      2,
+      3,
+      16,
+      'Fiindca atat de mult a iubit Dumnezeu lumea, ca a dat pe singurul Lui Fiu.',
+    ],
+    [
+      4,
+      2,
+      1,
+      1,
+      'La inceput era Cuvantul, si Cuvantul era cu Dumnezeu, si Cuvantul era Dumnezeu.',
+    ],
     [5, 2, 14, 6, 'Isus a zis: Eu sunt Calea, Adevarul si Viata.'],
-    [6, 3, 8, 28, 'De altfel, stim ca toate lucrurile lucreaza impreuna spre binele celor ce iubesc pe Dumnezeu.'],
-    [7, 3, 5, 8, 'Dumnezeu isi arata dragostea fata de noi prin faptul ca Isus a murit pentru noi.'],
+    [
+      6,
+      3,
+      8,
+      28,
+      'De altfel, stim ca toate lucrurile lucreaza impreuna spre binele celor ce iubesc pe Dumnezeu.',
+    ],
+    [
+      7,
+      3,
+      5,
+      8,
+      'Dumnezeu isi arata dragostea fata de noi prin faptul ca Isus a murit pentru noi.',
+    ],
     [8, 4, 23, 1, 'Domnul este Pastorul meu: nu voi duce lipsa de nimic.'],
     [9, 2, 11, 35, 'Isus a plans. O zi de tristete si durere.'],
-    [10, 4, 119, 105, 'Cuvantul Tau este o lumina pentru picioarele mele si o lumina pe cararea mea.'],
-    [11, 3, 12, 12, 'Bucurati-va in nadejde. Fiti rabdatori in necaz. Staruiti in rugaciune.'],
+    [
+      10,
+      4,
+      119,
+      105,
+      'Cuvantul Tau este o lumina pentru picioarele mele si o lumina pe cararea mea.',
+    ],
+    [
+      11,
+      3,
+      12,
+      12,
+      'Bucurati-va in nadejde. Fiti rabdatori in necaz. Staruiti in rugaciune.',
+    ],
     [12, 2, 8, 32, 'Veti cunoaste adevarul si adevarul va va face liberi.'],
   ]
 
-  const insertStmt = db.prepare('INSERT INTO bible_verses (id, book_id, chapter, verse, text) VALUES (?, ?, ?, ?, ?)')
-  const insertFts = db.prepare('INSERT INTO bible_verses_fts (rowid, text) VALUES (?, ?)')
+  const insertStmt = db.prepare(
+    'INSERT INTO bible_verses (id, book_id, chapter, verse, text) VALUES (?, ?, ?, ?, ?)',
+  )
+  const insertFts = db.prepare(
+    'INSERT INTO bible_verses_fts (rowid, text) VALUES (?, ?)',
+  )
   for (const v of verses) {
     insertStmt.run(...v)
     insertFts.run(v[0], v[4])
@@ -252,7 +296,9 @@ describe.skipIf(!hasDb)('Bible Search Performance (real DB)', () => {
     for (const q of queries) {
       const { results, elapsed } = searchBible(db, q)
       // biome-ignore lint/suspicious/noConsole: test output
-      console.log(`"${q}" → ${results.length} results in ${elapsed.toFixed(1)}ms`)
+      console.log(
+        `"${q}" → ${results.length} results in ${elapsed.toFixed(1)}ms`,
+      )
       expect(elapsed).toBeLessThan(100)
       expect(results.length).toBeGreaterThan(0)
     }
@@ -266,7 +312,9 @@ describe.skipIf(!hasDb)('Bible Search Performance (real DB)', () => {
     for (const q of queries) {
       const { results, elapsed } = searchBible(db, q)
       // biome-ignore lint/suspicious/noConsole: test output
-      console.log(`"${q}" → ${results.length} results in ${elapsed.toFixed(1)}ms`)
+      console.log(
+        `"${q}" → ${results.length} results in ${elapsed.toFixed(1)}ms`,
+      )
       expect(elapsed).toBeLessThan(200)
     }
     db.close()
@@ -315,11 +363,17 @@ describe.skipIf(!hasDb)('Bible Search Performance (real DB)', () => {
     // biome-ignore lint/suspicious/noConsole: benchmark output
     console.log(`\n  BENCHMARK "O zi Isus":`)
     // biome-ignore lint/suspicious/noConsole: benchmark output
-    console.log(`    OLD (NEAR+all prefix): ${oldElapsed.toFixed(1)}ms (${(oldResults as unknown[]).length} results)`)
+    console.log(
+      `    OLD (NEAR+all prefix): ${oldElapsed.toFixed(1)}ms (${(oldResults as unknown[]).length} results)`,
+    )
     // biome-ignore lint/suspicious/noConsole: benchmark output
-    console.log(`    NEW (last prefix):     ${fixedElapsed.toFixed(1)}ms (${(fixedResults as unknown[]).length} results)`)
+    console.log(
+      `    NEW (last prefix):     ${fixedElapsed.toFixed(1)}ms (${(fixedResults as unknown[]).length} results)`,
+    )
     // biome-ignore lint/suspicious/noConsole: benchmark output
-    console.log(`    Speedup:               ${(oldElapsed / fixedElapsed).toFixed(1)}x`)
+    console.log(
+      `    Speedup:               ${(oldElapsed / fixedElapsed).toFixed(1)}x`,
+    )
 
     expect(fixedElapsed).toBeLessThan(100)
     db.close()

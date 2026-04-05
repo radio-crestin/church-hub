@@ -19,7 +19,7 @@ import {
 } from '../service/presentation'
 import type { PresentationState } from '../types'
 
-const logger = createLogger('PresentationControls')
+const logger = createLogger('app:presentation:controls')
 
 /**
  * Generates a unique, monotonically increasing timestamp.
@@ -125,7 +125,10 @@ export function useStopPresentation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: stopPresentation,
+    mutationFn: () => {
+      logger.info('Stop presentation requested')
+      return stopPresentation()
+    },
     onSuccess: async (data: PresentationState) => {
       // Cancel any in-flight queries to prevent them from overwriting our update
       await queryClient.cancelQueries({ queryKey: presentationStateQueryKey })
@@ -138,7 +141,10 @@ export function useClearSlide() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: clearSlide,
+    mutationFn: () => {
+      logger.info('Clear slide requested')
+      return clearSlide()
+    },
     onSuccess: async (data: PresentationState) => {
       await queryClient.cancelQueries({ queryKey: presentationStateQueryKey })
       setStateFromMutation(queryClient, data)
@@ -150,7 +156,10 @@ export function useShowSlide() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: showSlide,
+    mutationFn: () => {
+      logger.info('Show slide requested')
+      return showSlide()
+    },
     onSuccess: async (data: PresentationState) => {
       await queryClient.cancelQueries({ queryKey: presentationStateQueryKey })
       setStateFromMutation(queryClient, data)
@@ -174,7 +183,10 @@ export function useNavigateQueueSlide() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: navigateQueueSlide,
+    mutationFn: (direction: 'next' | 'prev') => {
+      logger.info(`Navigate queue slide: ${direction}`)
+      return navigateQueueSlide(direction)
+    },
     onSuccess: async (data: PresentationState) => {
       await queryClient.cancelQueries({ queryKey: presentationStateQueryKey })
       updateStateIfNewer(queryClient, data)

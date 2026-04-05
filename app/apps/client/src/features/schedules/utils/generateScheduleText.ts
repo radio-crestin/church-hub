@@ -131,10 +131,7 @@ function generateReferenceSection(items: ScheduleItem[]): string[] {
         }
       }
       lines.push('')
-    } else if (
-      item.itemType === 'slide' &&
-      item.slideType === 'announcement'
-    ) {
+    } else if (item.itemType === 'slide' && item.slideType === 'announcement') {
       const plainText = stripHtml(item.slideContent || '')
       if (plainText) {
         lines.push(plainText)

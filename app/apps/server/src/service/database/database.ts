@@ -6,18 +6,13 @@ import {
   getRawDatabase,
   initializeDatabase,
 } from '../../db/connection'
+import { createLogger } from '../../utils/logger'
 import { getDatabasePath, getDataDir } from '../../utils/paths'
 import { rebuildSearchIndex as rebuildBibleSearchIndex } from '../bible/search'
 import { rebuildScheduleSearchIndex } from '../schedules/search'
 import { rebuildSearchIndex as rebuildSongsSearchIndex } from '../songs/search'
 
-const DEBUG = process.env.DEBUG === 'true'
-
-function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
-  if (level === 'debug' && !DEBUG) return
-  // biome-ignore lint/suspicious/noConsole: logging utility
-  console.log(`[${level.toUpperCase()}] [database] ${message}`)
-}
+const logger = createLogger('database')
 
 export interface DatabaseInfo {
   path: string
@@ -355,8 +350,7 @@ export async function selectiveImportDatabase(
 
     // 2.5. If copyAndMigrate is true, use full database import which triggers migrations
     if (options.copyAndMigrate) {
-      log(
-        'info',
+      logger.info(
         'Using copy and migrate mode - replacing database and running migrations',
       )
       return await importDatabase(sourcePath)
@@ -395,7 +389,7 @@ export async function selectiveImportDatabase(
     }
 
     // 5. Open source database (we only read from it)
-    log('info', `Opening source database: ${sourcePath}`)
+    logger.info(`Opening source database: ${sourcePath}`)
     let sourceDb: Database
     try {
       // Don't use readonly mode as it can cause issues on some platforms
@@ -403,7 +397,7 @@ export async function selectiveImportDatabase(
     } catch (openError) {
       const errorMsg =
         openError instanceof Error ? openError.message : String(openError)
-      log('error', `Failed to open source database: ${errorMsg}`)
+      logger.error(`Failed to open source database: ${errorMsg}`)
       return {
         success: false,
         message: 'Failed to open source database',
@@ -424,10 +418,10 @@ export async function selectiveImportDatabase(
       // Dynamically get all configuration tables (everything not in other categories)
       const configTables = getConfigurationTables(sourceDb)
       tablesToImport.push(...configTables)
-      log('debug', `Configuration tables found: ${configTables.join(', ')}`)
+      logger.debug(`Configuration tables found: ${configTables.join(', ')}`)
     }
 
-    log('info', `Importing tables: ${tablesToImport.join(', ')}`)
+    logger.info(`Importing tables: ${tablesToImport.join(', ')}`)
 
     // 8. Begin transaction and disable foreign keys for performance
     destDb.run('PRAGMA foreign_keys = OFF')
@@ -443,7 +437,7 @@ export async function selectiveImportDatabase(
           .get(tableName)
 
         if (!tableExists) {
-          log('debug', `Table ${tableName} not found in source, skipping`)
+          logger.debug(`Table ${tableName} not found in source, skipping`)
           continue
         }
 
@@ -466,7 +460,7 @@ export async function selectiveImportDatabase(
           .filter((name) => destColumnNames.has(name))
 
         if (columnNames.length === 0) {
-          log('debug', `Table ${tableName} has no common columns, skipping`)
+          logger.debug(`Table ${tableName} has no common columns, skipping`)
           continue
         }
 
@@ -478,20 +472,18 @@ export async function selectiveImportDatabase(
           (c) => !sourceColumnNames.has(c),
         )
         if (removedCols.length > 0) {
-          log(
-            'debug',
+          logger.debug(
             `Table ${tableName}: skipping columns not in dest: ${removedCols.join(', ')}`,
           )
         }
         if (addedCols.length > 0) {
-          log(
-            'debug',
+          logger.debug(
             `Table ${tableName}: dest has new columns (will use defaults): ${addedCols.join(', ')}`,
           )
         }
 
         // Delete existing data in destination
-        log('debug', `Deleting existing data from ${tableName}`)
+        logger.debug(`Deleting existing data from ${tableName}`)
         destDb.run(`DELETE FROM ${tableName}`)
 
         // Read only the common columns from source
@@ -501,7 +493,7 @@ export async function selectiveImportDatabase(
           .all()
 
         if (rows.length === 0) {
-          log('debug', `Table ${tableName} is empty in source`)
+          logger.debug(`Table ${tableName} is empty in source`)
           continue
         }
 
@@ -511,7 +503,7 @@ export async function selectiveImportDatabase(
         const insertStmt = destDb.prepare(insertSql)
 
         // Insert rows in batches
-        log('debug', `Inserting ${rows.length} rows into ${tableName}`)
+        logger.debug(`Inserting ${rows.length} rows into ${tableName}`)
         for (const row of rows) {
           const values = columnNames.map(
             (col) => (row as Record<string, unknown>)[col],
@@ -522,7 +514,7 @@ export async function selectiveImportDatabase(
 
       // 9. Commit transaction
       destDb.run('COMMIT')
-      log('info', 'Transaction committed successfully')
+      logger.info('Transaction committed successfully')
 
       // 10. Re-enable foreign keys
       destDb.run('PRAGMA foreign_keys = ON')
@@ -531,22 +523,22 @@ export async function selectiveImportDatabase(
       sourceDb.close()
 
       // 12. Rebuild FTS indexes for imported categories
-      log('info', 'Rebuilding search indexes for imported data...')
+      logger.info('Rebuilding search indexes for imported data...')
       if (options.songs) {
-        log('debug', 'Rebuilding songs FTS index')
+        logger.debug('Rebuilding songs FTS index')
         rebuildSongsSearchIndex()
       }
       if (options.schedules) {
-        log('debug', 'Rebuilding schedules FTS index')
+        logger.debug('Rebuilding schedules FTS index')
         rebuildScheduleSearchIndex()
       }
       if (options.bible) {
-        log('debug', 'Rebuilding Bible FTS index')
+        logger.debug('Rebuilding Bible FTS index')
         rebuildBibleSearchIndex()
       }
 
       const duration = performance.now() - startTime
-      log('info', `Selective import completed in ${duration.toFixed(2)}ms`)
+      logger.info(`Selective import completed in ${duration.toFixed(2)}ms`)
 
       return {
         success: true,
@@ -566,7 +558,7 @@ export async function selectiveImportDatabase(
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
-    log('error', `Selective import failed: ${message}`)
+    logger.error(`Selective import failed: ${message}`)
     return {
       success: false,
       message: 'Failed to import data',

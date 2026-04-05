@@ -2,6 +2,7 @@ import { fetch as tauriFetch } from '@tauri-apps/plugin-http'
 
 import { getApiUrl, isMobile } from '~/config'
 import { getStoredUserToken } from '~/service/api-url'
+import { createLogger } from '~/utils/logger'
 import type {
   ContentType,
   ContentTypeConfig,
@@ -12,13 +13,7 @@ import type {
   UpsertScreenInput,
 } from '../types'
 
-const DEBUG = import.meta.env.DEV
-
-function log(level: 'debug' | 'info' | 'error', message: string) {
-  if (level === 'debug' && !DEBUG) return
-  // biome-ignore lint/suspicious/noConsole: logging utility
-  console.log(`[${level.toUpperCase()}] [screens-service] ${message}`)
-}
+const logger = createLogger('screens-service')
 
 // Check if we're running in Tauri context
 const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
@@ -45,7 +40,7 @@ function getHeaders(contentType?: string): Record<string, string> {
  * Fetches all screens
  */
 export async function getAllScreens(): Promise<Screen[]> {
-  log('debug', 'Fetching all screens')
+  logger.debug('Fetching all screens')
 
   const response = await fetchFn(`${getApiUrl()}/api/screens`, {
     credentials: 'include',
@@ -64,7 +59,7 @@ export async function getAllScreens(): Promise<Screen[]> {
  * Fetches a screen by ID (with all configs)
  */
 export async function getScreenById(id: number): Promise<ScreenWithConfigs> {
-  log('debug', `Fetching screen: ${id}`)
+  logger.debug(`Fetching screen: ${id}`)
 
   const response = await fetchFn(`${getApiUrl()}/api/screens/${id}`, {
     credentials: 'include',
@@ -83,7 +78,7 @@ export async function getScreenById(id: number): Promise<ScreenWithConfigs> {
  * Creates or updates a screen
  */
 export async function upsertScreen(input: UpsertScreenInput): Promise<Screen> {
-  log('debug', `Upserting screen: ${input.name}`)
+  logger.debug(`Upserting screen: ${input.name}`)
 
   const response = await fetchFn(`${getApiUrl()}/api/screens`, {
     method: 'POST',
@@ -104,7 +99,7 @@ export async function upsertScreen(input: UpsertScreenInput): Promise<Screen> {
  * Deletes a screen
  */
 export async function deleteScreen(id: number): Promise<void> {
-  log('debug', `Deleting screen: ${id}`)
+  logger.debug(`Deleting screen: ${id}`)
 
   const response = await fetchFn(`${getApiUrl()}/api/screens/${id}`, {
     method: 'DELETE',
@@ -125,7 +120,7 @@ export async function updateScreenContentConfig(
   contentType: ContentType,
   config: ContentTypeConfig,
 ): Promise<ContentTypeConfig> {
-  log('debug', `Updating screen content config: ${screenId} / ${contentType}`)
+  logger.debug(`Updating screen content config: ${screenId} / ${contentType}`)
 
   const response = await fetchFn(
     `${getApiUrl()}/api/screens/${screenId}/config/${contentType}`,
@@ -152,7 +147,7 @@ export async function updateScreenNextSlideConfig(
   screenId: number,
   config: NextSlideSectionConfig,
 ): Promise<NextSlideSectionConfig> {
-  log('debug', `Updating screen next slide config: ${screenId}`)
+  logger.debug(`Updating screen next slide config: ${screenId}`)
 
   const response = await fetchFn(
     `${getApiUrl()}/api/screens/${screenId}/next-slide-config`,
@@ -179,7 +174,7 @@ export async function updateScreenGlobalSettings(
   screenId: number,
   settings: ScreenGlobalSettings,
 ): Promise<Screen> {
-  log('debug', `Updating screen global settings: ${screenId}`)
+  logger.debug(`Updating screen global settings: ${screenId}`)
 
   const response = await fetchFn(
     `${getApiUrl()}/api/screens/${screenId}/global-settings`,
@@ -210,7 +205,7 @@ export async function batchUpdateScreenConfig(
   width?: number,
   height?: number,
 ): Promise<ScreenWithConfigs> {
-  log('debug', `Batch updating screen config: ${screenId}`)
+  logger.debug(`Batch updating screen config: ${screenId}`)
 
   const response = await fetchFn(
     `${getApiUrl()}/api/screens/${screenId}/batch-config`,
@@ -245,8 +240,7 @@ export async function upsertSceneOverride(
   contentType: ContentType,
   config: Record<string, unknown>,
 ): Promise<void> {
-  log(
-    'debug',
+  logger.debug(
     `Upserting scene override: screen=${screenId}, scene=${obsSceneName}, type=${contentType}`,
   )
 
@@ -273,8 +267,7 @@ export async function deleteSceneOverride(
   obsSceneName: string,
   contentType: ContentType,
 ): Promise<void> {
-  log(
-    'debug',
+  logger.debug(
     `Deleting scene override: screen=${screenId}, scene=${obsSceneName}, type=${contentType}`,
   )
 
@@ -296,7 +289,7 @@ export async function deleteSceneOverride(
  * Deletes all scene overrides for a screen
  */
 export async function deleteAllSceneOverrides(screenId: number): Promise<void> {
-  log('debug', `Deleting all scene overrides for screen=${screenId}`)
+  logger.debug(`Deleting all scene overrides for screen=${screenId}`)
 
   const response = await fetchFn(
     `${getApiUrl()}/api/screens/${screenId}/scene-overrides`,

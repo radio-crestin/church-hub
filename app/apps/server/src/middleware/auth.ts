@@ -1,14 +1,9 @@
 import type { AuthResult } from './types'
 import { validateSystemToken } from '../service/app-sessions'
 import { getUserByToken, updateUserLastUsed } from '../service/users'
+import { createLogger } from '../utils/logger'
 
-const DEBUG = process.env.DEBUG === 'true'
-
-function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
-  if (level === 'debug' && !DEBUG) return
-  // biome-ignore lint/suspicious/noConsole: Logging
-  console.log(`[auth:${level}] ${message}`)
-}
+const logger = createLogger('auth')
 
 /**
  * Parses cookies from the Cookie header
@@ -39,18 +34,25 @@ function isLocalhost(req: Request): boolean {
       normalized === 'localhost' ||
       normalized === '127.0.0.1' ||
       normalized === '::1' ||
-      normalized.startsWith('127.')
+      normalized === '0.0.0.0' ||
+      normalized.startsWith('127.') ||
+      // Tauri webview uses tauri.localhost as its origin
+      normalized === 'tauri.localhost' ||
+      normalized.endsWith('.localhost')
     )
   }
 
   const host = req.headers.get('Host')
   const origin = req.headers.get('Origin')
 
+  logger.debug(`Auth check — Host: "${host}", Origin: "${origin}"`)
+
+
   // Primary check: Host header (always present for HTTP/1.1+ requests)
   if (host) {
     const hostname = host.split(':')[0]
     if (isLocalhostValue(hostname)) {
-      log('debug', `Localhost detected via Host: ${host}`)
+      logger.debug(`Localhost detected via Host: ${host}`)
       return true
     }
   }
@@ -60,7 +62,7 @@ function isLocalhost(req: Request): boolean {
     try {
       const originUrl = new URL(origin)
       if (isLocalhostValue(originUrl.hostname)) {
-        log('debug', `Localhost detected via Origin: ${origin}`)
+        logger.debug(`Localhost detected via Origin: ${origin}`)
         return true
       }
     } catch {
@@ -70,12 +72,12 @@ function isLocalhost(req: Request): boolean {
 
   // If no Host header (unusual), default to allowing
   if (!host) {
-    log('debug', 'No Host header, defaulting to localhost')
+    logger.debug('No Host header, defaulting to localhost')
     return true
   }
 
   // Host header exists but doesn't match localhost
-  log('debug', `Remote access from Host: ${host}`)
+  logger.debug(`Remote access from Host: ${host}`)
   return false
 }
 
@@ -96,7 +98,7 @@ function extractBearerToken(req: Request): string | null {
 export async function authMiddleware(req: Request): Promise<AuthResult> {
   // 1. Check if localhost - grant full admin access
   if (isLocalhost(req)) {
-    log('debug', 'Localhost access - granting admin privileges')
+    logger.debug('Localhost access - granting admin privileges')
     return {
       response: null,
       context: { authType: 'app' },
@@ -108,13 +110,13 @@ export async function authMiddleware(req: Request): Promise<AuthResult> {
   if (bearerToken) {
     const isValid = await validateSystemToken(bearerToken)
     if (isValid) {
-      log('info', 'System token authenticated - granting app privileges')
+      logger.info('System token authenticated - granting app privileges')
       return {
         response: null,
         context: { authType: 'app' },
       }
     }
-    log('info', 'Invalid system token provided')
+    logger.info('Invalid system token provided')
   }
 
   // 3. Remote access - check user_auth cookie
@@ -122,21 +124,18 @@ export async function authMiddleware(req: Request): Promise<AuthResult> {
   const cookies = parseCookies(cookieHeader)
   const userToken = cookies['user_auth']
 
-  log(
-    'info',
+  logger.info(
     `Remote request - Cookie header: ${cookieHeader ? 'present' : 'missing'}`,
   )
-  log(
-    'info',
+  logger.info(
     `Remote request - user_auth token: ${userToken ? 'found' : 'not found'}`,
   )
 
   if (userToken) {
     const user = await getUserByToken(userToken)
     if (user && user.isActive) {
-      log('info', `Authenticated remote user: ${user.name} (id: ${user.id})`)
-      log(
-        'debug',
+      logger.info(`Authenticated remote user: ${user.name} (id: ${user.id})`)
+      logger.debug(
         `User permissions (${user.permissions.length}): ${user.permissions.join(', ')}`,
       )
       updateUserLastUsed(user.id)
@@ -149,14 +148,13 @@ export async function authMiddleware(req: Request): Promise<AuthResult> {
         },
       }
     }
-    log(
-      'info',
+    logger.info(
       `Invalid or inactive user token: ${userToken.substring(0, 10)}...`,
     )
   }
 
   // 3. No valid auth for remote access
-  log('info', 'Remote access denied: no valid authentication')
+  logger.info('Remote access denied: no valid authentication')
   return {
     response: new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
@@ -171,7 +169,7 @@ export async function authMiddleware(req: Request): Promise<AuthResult> {
  */
 export async function adminOnlyMiddleware(req: Request): Promise<AuthResult> {
   if (isLocalhost(req)) {
-    log('debug', 'Localhost admin access granted')
+    logger.debug('Localhost admin access granted')
     return {
       response: null,
       context: { authType: 'app' },
@@ -182,7 +180,7 @@ export async function adminOnlyMiddleware(req: Request): Promise<AuthResult> {
   if (bearerToken) {
     const isValid = await validateSystemToken(bearerToken)
     if (isValid) {
-      log('debug', 'System token admin access granted')
+      logger.debug('System token admin access granted')
       return {
         response: null,
         context: { authType: 'app' },
@@ -190,7 +188,7 @@ export async function adminOnlyMiddleware(req: Request): Promise<AuthResult> {
     }
   }
 
-  log('debug', 'Admin access denied: not localhost or valid system token')
+  logger.debug('Admin access denied: not localhost or valid system token')
   return {
     response: new Response(JSON.stringify({ error: 'Admin access required' }), {
       status: 403,

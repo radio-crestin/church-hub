@@ -459,9 +459,7 @@ export function SidebarItemSettingsModal({
                     {t('sections.sidebarItem.shortcuts.focusSearchTitle')}
                   </h3>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                    {t(
-                      'sections.sidebarItem.shortcuts.focusSearchDescription',
-                    )}
+                    {t('sections.sidebarItem.shortcuts.focusSearchDescription')}
                   </p>
                 </div>
 

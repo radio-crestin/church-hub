@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { createLogger } from '~/utils/logger'
 import { getApiUrl } from '../../../config'
 import type {
   LivestreamStatus,
@@ -9,13 +10,7 @@ import type {
   StreamStartProgress,
 } from '../types'
 
-const DEBUG = import.meta.env.DEV
-
-function log(level: 'debug' | 'info' | 'error', message: string) {
-  if (level === 'debug' && !DEBUG) return
-  // biome-ignore lint/suspicious/noConsole: logging utility
-  console.log(`[${level.toUpperCase()}] [livestream-ws] ${message}`)
-}
+const logger = createLogger('app:livestream:ws')
 
 type WebSocketStatus = 'connecting' | 'connected' | 'disconnected' | 'error'
 
@@ -88,7 +83,7 @@ export function useLivestreamWebSocket() {
     const apiUrl = getApiUrl()
     const wsUrl = apiUrl.replace(/^http/, 'ws') + '/ws'
 
-    log('debug', `Connecting to ${wsUrl}`)
+    logger.debug(`Connecting to ${wsUrl}`)
     setStatus('connecting')
 
     try {
@@ -96,9 +91,7 @@ export function useLivestreamWebSocket() {
       wsRef.current = ws
 
       ws.onopen = () => {
-        log('info', 'WebSocket connected')
-        // biome-ignore lint/suspicious/noConsole: debug logging
-        console.log('[livestream-ws] WebSocket CONNECTED to', wsUrl)
+        logger.info(`WebSocket connected to ${wsUrl}`)
         setStatus('connected')
 
         pingIntervalRef.current = setInterval(() => {
@@ -113,19 +106,19 @@ export function useLivestreamWebSocket() {
           const data = JSON.parse(event.data) as LivestreamMessage
 
           if (data.type === 'pong') {
-            log('debug', 'Received pong')
+            logger.debug('Received pong')
             return
           }
 
           if (data.type === 'obs_connection_status') {
-            log('debug', 'Received OBS connection status update')
+            logger.debug('Received OBS connection status update')
             queryClient.invalidateQueries({
               queryKey: ['livestream', 'obs', 'status'],
             })
           }
 
           if (data.type === 'obs_streaming_status') {
-            log('debug', 'Received OBS streaming status update')
+            logger.debug('Received OBS streaming status update')
             queryClient.invalidateQueries({
               queryKey: ['livestream', 'obs', 'status'],
             })
@@ -133,7 +126,7 @@ export function useLivestreamWebSocket() {
 
           if (data.type === 'obs_current_scene') {
             const sceneName = data.payload.sceneName
-            log('debug', `Received OBS current scene: ${sceneName}`)
+            logger.debug(`Received OBS current scene: ${sceneName}`)
 
             // Optimistic update - immediately mark this scene as current in cache
             // This ensures LED feedback reacts instantly without waiting for query refetch
@@ -162,7 +155,7 @@ export function useLivestreamWebSocket() {
           }
 
           if (data.type === 'livestream_status') {
-            log('debug', 'Received livestream status update')
+            logger.debug('Received livestream status update')
             setLivestreamStatus(data.payload)
             queryClient.invalidateQueries({
               queryKey: ['livestream', 'broadcast'],
@@ -170,23 +163,17 @@ export function useLivestreamWebSocket() {
           }
 
           if (data.type === 'youtube_auth_status') {
-            log(
-              'info',
+            logger.info(
               `Received YouTube auth status update: isAuthenticated=${data.payload.isAuthenticated}`,
             )
-            // biome-ignore lint/suspicious/noConsole: debug logging
-            console.log(
-              '[livestream-ws] YouTube auth status payload:',
-              data.payload,
-            )
+            logger.debug('YouTube auth status payload:', data.payload)
             queryClient.invalidateQueries({
               queryKey: ['livestream', 'youtube', 'auth'],
             })
           }
 
           if (data.type === 'stream_start_progress') {
-            log(
-              'debug',
+            logger.debug(
               `Stream start progress: ${data.payload.step} (${data.payload.progress}%)`,
             )
             setStreamStartProgress(data.payload)
@@ -197,17 +184,17 @@ export function useLivestreamWebSocket() {
             // Error state stays visible until manually cleared via clearStreamStartProgress
           }
         } catch (error) {
-          log('error', `Failed to parse message: ${error}`)
+          logger.error(`Failed to parse message: ${error}`)
         }
       }
 
       ws.onerror = (error) => {
-        log('error', `WebSocket error: ${error}`)
+        logger.error(`WebSocket error: ${error}`)
         setStatus('error')
       }
 
       ws.onclose = () => {
-        log('info', 'WebSocket disconnected')
+        logger.info('WebSocket disconnected')
         setStatus('disconnected')
 
         if (pingIntervalRef.current) {
@@ -216,12 +203,12 @@ export function useLivestreamWebSocket() {
         }
 
         reconnectTimeoutRef.current = setTimeout(() => {
-          log('debug', 'Attempting reconnect...')
+          logger.debug('Attempting reconnect...')
           connect()
         }, 3000)
       }
     } catch (error) {
-      log('error', `Failed to connect: ${error}`)
+      logger.error(`Failed to connect: ${error}`)
       setStatus('error')
 
       reconnectTimeoutRef.current = setTimeout(() => {

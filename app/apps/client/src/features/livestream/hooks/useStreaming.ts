@@ -1,9 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo } from 'react'
 
+import { createLogger } from '~/utils/logger'
 import { useLivestreamWebSocket } from './useLivestreamWebSocket'
 import { getActiveBroadcast, startStream, stopStream } from '../service'
 import type { BroadcastInfo } from '../types'
+
+const logger = createLogger('app:livestream')
 
 export function useStreaming() {
   const queryClient = useQueryClient()
@@ -12,20 +15,37 @@ export function useStreaming() {
 
   const activeBroadcastQuery = useQuery({
     queryKey: ['livestream', 'broadcast', 'active'],
-    queryFn: getActiveBroadcast,
+    queryFn: async () => {
+      logger.debug('Fetching active broadcast')
+      const broadcast = await getActiveBroadcast()
+      logger.debug(
+        `Active broadcast: ${broadcast ? `${broadcast.broadcastId} (${broadcast.status})` : 'none'}`,
+      )
+      return broadcast
+    },
     staleTime: 10 * 1000,
     refetchInterval: 30 * 1000,
   })
 
   const startMutation = useMutation({
-    mutationFn: startStream,
+    mutationFn: async () => {
+      logger.info('Starting stream')
+      const result = await startStream()
+      logger.info('Stream started', result?.broadcast?.broadcastId)
+      return result
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['livestream', 'obs'] })
     },
   })
 
   const stopMutation = useMutation({
-    mutationFn: stopStream,
+    mutationFn: async () => {
+      logger.info('Stopping stream')
+      const result = await stopStream()
+      logger.info('Stream stopped')
+      return result
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['livestream'] })
     },

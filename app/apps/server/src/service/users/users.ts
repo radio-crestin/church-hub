@@ -12,14 +12,9 @@ import type {
 import { ALL_PERMISSIONS } from './types'
 import { getDatabase } from '../../db'
 import { rolePermissions, roles, userPermissions, users } from '../../db/schema'
+import { createLogger } from '../../utils/logger'
 
-const DEBUG = process.env.DEBUG === 'true'
-
-function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
-  if (level === 'debug' && !DEBUG) return
-  // biome-ignore lint/suspicious/noConsole: logging utility
-  console.log(`[${level.toUpperCase()}] ${message}`)
-}
+const logger = createLogger('users')
 
 /**
  * Generates a secure random user token
@@ -76,7 +71,7 @@ export function getAllRoles(): RoleWithPermissions[] {
       }
     })
   } catch (error) {
-    log('error', `Failed to get roles: ${error}`)
+    logger.error(`Failed to get roles: ${error}`)
     return []
   }
 }
@@ -112,7 +107,7 @@ export function getRoleById(id: number): RoleWithPermissions | null {
           : (role.updatedAt as unknown as number),
     }
   } catch (error) {
-    log('error', `Failed to get role: ${error}`)
+    logger.error(`Failed to get role: ${error}`)
     return null
   }
 }
@@ -159,7 +154,7 @@ export function getUserPermissions(userId: number): Permission[] {
 
     return Array.from(permissionSet)
   } catch (error) {
-    log('error', `Failed to get user permissions: ${error}`)
+    logger.error(`Failed to get user permissions: ${error}`)
     return []
   }
 }
@@ -202,7 +197,7 @@ export async function createUser(
   input: CreateUserInput,
 ): Promise<CreateUserResult | null> {
   try {
-    log('debug', `Creating user: ${input.name}`)
+    logger.debug(`Creating user: ${input.name}`)
 
     const db = getDatabase()
     const token = generateUserToken()
@@ -236,14 +231,14 @@ export async function createUser(
     // Fetch the created user
     const user = getUserById(inserted.id)
     if (!user) {
-      log('error', 'Failed to fetch created user')
+      logger.error('Failed to fetch created user')
       return null
     }
 
-    log('info', `User created successfully: ${input.name} (ID: ${inserted.id})`)
+    logger.info(`User created successfully: ${input.name} (ID: ${inserted.id})`)
     return { user, token }
   } catch (error) {
-    log('error', `Failed to create user: ${error}`)
+    logger.error(`Failed to create user: ${error}`)
     throw error
   }
 }
@@ -253,7 +248,7 @@ export async function createUser(
  */
 export function getAllUsers(): UserWithPermissions[] {
   try {
-    log('debug', 'Getting all users')
+    logger.debug('Getting all users')
 
     const db = getDatabase()
     const userRecords = db
@@ -279,7 +274,7 @@ export function getAllUsers(): UserWithPermissions[] {
       return toUserWithPermissions(user, permissions)
     })
   } catch (error) {
-    log('error', `Failed to get all users: ${error}`)
+    logger.error(`Failed to get all users: ${error}`)
     return []
   }
 }
@@ -289,7 +284,7 @@ export function getAllUsers(): UserWithPermissions[] {
  */
 export function getUserById(id: number): UserWithPermissions | null {
   try {
-    log('debug', `Getting user by ID: ${id}`)
+    logger.debug(`Getting user by ID: ${id}`)
 
     const db = getDatabase()
     const user = db
@@ -311,14 +306,14 @@ export function getUserById(id: number): UserWithPermissions | null {
       .get()
 
     if (!user) {
-      log('debug', `User not found: ${id}`)
+      logger.debug(`User not found: ${id}`)
       return null
     }
 
     const permissions = getUserPermissions(user.id)
     return toUserWithPermissions(user, permissions)
   } catch (error) {
-    log('error', `Failed to get user: ${error}`)
+    logger.error(`Failed to get user: ${error}`)
     return null
   }
 }
@@ -330,7 +325,7 @@ export async function getUserByToken(
   token: string,
 ): Promise<UserWithPermissions | null> {
   try {
-    log('debug', 'Getting user by token')
+    logger.debug('Getting user by token')
 
     const db = getDatabase()
     const tokenHash = await hashToken(token)
@@ -353,14 +348,14 @@ export async function getUserByToken(
       .get()
 
     if (!user) {
-      log('debug', 'User not found for token')
+      logger.debug('User not found for token')
       return null
     }
 
     const permissions = getUserPermissions(user.id)
     return toUserWithPermissions(user, permissions)
   } catch (error) {
-    log('error', `Failed to get user by token: ${error}`)
+    logger.error(`Failed to get user by token: ${error}`)
     return null
   }
 }
@@ -373,7 +368,7 @@ export function updateUser(
   input: UpdateUserInput,
 ): OperationResult {
   try {
-    log('debug', `Updating user: ${id}`)
+    logger.debug(`Updating user: ${id}`)
 
     const db = getDatabase()
 
@@ -396,10 +391,10 @@ export function updateUser(
 
     db.update(users).set(updateData).where(eq(users.id, id)).run()
 
-    log('info', `User updated successfully: ${id}`)
+    logger.info(`User updated successfully: ${id}`)
     return { success: true }
   } catch (error) {
-    log('error', `Failed to update user: ${error}`)
+    logger.error(`Failed to update user: ${error}`)
     return { success: false, error: String(error) }
   }
 }
@@ -409,7 +404,7 @@ export function updateUser(
  */
 export function deleteUser(id: number): OperationResult {
   try {
-    log('debug', `Deleting user: ${id}`)
+    logger.debug(`Deleting user: ${id}`)
 
     const db = getDatabase()
 
@@ -419,10 +414,10 @@ export function deleteUser(id: number): OperationResult {
     // Delete user
     db.delete(users).where(eq(users.id, id)).run()
 
-    log('info', `User deleted successfully: ${id}`)
+    logger.info(`User deleted successfully: ${id}`)
     return { success: true }
   } catch (error) {
-    log('error', `Failed to delete user: ${error}`)
+    logger.error(`Failed to delete user: ${error}`)
     return { success: false, error: String(error) }
   }
 }
@@ -435,7 +430,7 @@ export function updateUserPermissionsDb(
   permissions: Permission[],
 ): OperationResult {
   try {
-    log('debug', `Updating permissions for user: ${userId}`)
+    logger.debug(`Updating permissions for user: ${userId}`)
 
     const db = getDatabase()
 
@@ -458,10 +453,10 @@ export function updateUserPermissionsDb(
       .where(eq(users.id, userId))
       .run()
 
-    log('info', `Permissions updated for user: ${userId}`)
+    logger.info(`Permissions updated for user: ${userId}`)
     return { success: true }
   } catch (error) {
-    log('error', `Failed to update user permissions: ${error}`)
+    logger.error(`Failed to update user permissions: ${error}`)
     return { success: false, error: String(error) }
   }
 }
@@ -478,7 +473,7 @@ export function setUserRole(
   clearCustomPermissions = false,
 ): OperationResult {
   try {
-    log('debug', `Setting role for user: ${userId} to ${roleId}`)
+    logger.debug(`Setting role for user: ${userId} to ${roleId}`)
 
     const db = getDatabase()
 
@@ -496,10 +491,10 @@ export function setUserRole(
       db.delete(userPermissions).where(eq(userPermissions.userId, userId)).run()
     }
 
-    log('info', `Role set for user: ${userId}`)
+    logger.info(`Role set for user: ${userId}`)
     return { success: true }
   } catch (error) {
-    log('error', `Failed to set user role: ${error}`)
+    logger.error(`Failed to set user role: ${error}`)
     return { success: false, error: String(error) }
   }
 }
@@ -512,7 +507,7 @@ export async function regenerateUserToken(
   id: number,
 ): Promise<{ token: string } | null> {
   try {
-    log('debug', `Regenerating token for user: ${id}`)
+    logger.debug(`Regenerating token for user: ${id}`)
 
     const db = getDatabase()
     const token = generateUserToken()
@@ -528,10 +523,10 @@ export async function regenerateUserToken(
       .where(eq(users.id, id))
       .run()
 
-    log('info', `Token regenerated for user: ${id}`)
+    logger.info(`Token regenerated for user: ${id}`)
     return { token }
   } catch (error) {
-    log('error', `Failed to regenerate token: ${error}`)
+    logger.error(`Failed to regenerate token: ${error}`)
     return null
   }
 }
@@ -547,7 +542,7 @@ export function updateUserLastUsed(id: number): void {
       .where(eq(users.id, id))
       .run()
   } catch (error) {
-    log('error', `Failed to update last used: ${error}`)
+    logger.error(`Failed to update last used: ${error}`)
   }
 }
 

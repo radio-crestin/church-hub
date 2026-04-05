@@ -52,8 +52,8 @@ import { EditSlidesAsTextModal } from '~/features/songs/components/EditSlidesAsT
 import {
   useAddBookmark,
   useDeleteSlide,
-  useReorderSlides,
   useRemoveBookmark,
+  useReorderSlides,
   useResetPresentationCount,
   useSong,
   useSongBookmarks,
@@ -140,7 +140,8 @@ function SongPreviewPage() {
 
   const [dividerPosition, setDividerPosition] = useState(40)
   const [showAddToScheduleModal, setShowAddToScheduleModal] = useState(false)
-  const [showAddBookmarksToScheduleModal, setShowAddBookmarksToScheduleModal] = useState(false)
+  const [showAddBookmarksToScheduleModal, setShowAddBookmarksToScheduleModal] =
+    useState(false)
   const [bookmarkSongIds, setBookmarkSongIds] = useState<number[]>([])
   const [showExportFormatModal, setShowExportFormatModal] = useState(false)
   const [showResetCountConfirm, setShowResetCountConfirm] = useState(false)
@@ -291,7 +292,11 @@ function SongPreviewPage() {
     [reorderSlides, numericId],
   )
 
-  const isMutating = upsertSlide.isPending || deleteSlide.isPending || reorderSlides.isPending || upsertSong.isPending
+  const isMutating =
+    upsertSlide.isPending ||
+    deleteSlide.isPending ||
+    reorderSlides.isPending ||
+    upsertSong.isPending
 
   const handleToggleEditMode = useCallback(() => {
     setPendingExit(false)
@@ -319,11 +324,23 @@ function SongPreviewPage() {
     if (!song) return []
     return [...song.slides]
       .sort((a, b) => a.sortOrder - b.sortOrder)
-      .map((s) => ({ id: s.id, content: s.content, sortOrder: s.sortOrder, label: s.label }))
+      .map((s) => ({
+        id: s.id,
+        content: s.content,
+        sortOrder: s.sortOrder,
+        label: s.label,
+      }))
   }, [song])
 
   const handleEditAsTextApply = useCallback(
-    (newSlides: Array<{ id: string | number; content: string; sortOrder: number; label?: string | null }>) => {
+    (
+      newSlides: Array<{
+        id: string | number
+        content: string
+        sortOrder: number
+        label?: string | null
+      }>,
+    ) => {
       if (!song) return
       void upsertSong.mutateAsync({
         id: numericId,
@@ -595,7 +612,11 @@ function SongPreviewPage() {
             }`}
             title={isBookmarked ? t('bookmarks.remove') : t('bookmarks.add')}
           >
-            {isBookmarked ? <BookmarkCheck size={20} /> : <Bookmark size={20} />}
+            {isBookmarked ? (
+              <BookmarkCheck size={20} />
+            ) : (
+              <Bookmark size={20} />
+            )}
           </button>
           <button
             type="button"
@@ -647,22 +668,22 @@ function SongPreviewPage() {
           }
         >
           <div className="p-3 lg:p-4 lg:absolute lg:inset-0">
-          <SongSlidesPanel
-            song={song}
-            presentedSlideIndex={presentedSlideIndex}
-            selectedSlideIndex={selectedSlideIndex}
-            isLoading={isLoading}
-            isEditMode={isEditMode}
-            onToggleEditMode={handleToggleEditMode}
-            onSave={handleSave}
-            onSlideClick={handleSlideClick}
-            isSaving={pendingExit || isMutating}
-            onSlideEdit={handleSlideEdit}
-            onSlideDelete={handleSlideDelete}
-            onSlideAdd={handleSlideAdd}
-            onSlidesReorder={handleSlidesReorder}
-            onEditAsText={() => setShowEditAsTextModal(true)}
-          />
+            <SongSlidesPanel
+              song={song}
+              presentedSlideIndex={presentedSlideIndex}
+              selectedSlideIndex={selectedSlideIndex}
+              isLoading={isLoading}
+              isEditMode={isEditMode}
+              onToggleEditMode={handleToggleEditMode}
+              onSave={handleSave}
+              onSlideClick={handleSlideClick}
+              isSaving={pendingExit || isMutating}
+              onSlideEdit={handleSlideEdit}
+              onSlideDelete={handleSlideDelete}
+              onSlideAdd={handleSlideAdd}
+              onSlidesReorder={handleSlidesReorder}
+              onEditAsText={() => setShowEditAsTextModal(true)}
+            />
           </div>
         </div>
 

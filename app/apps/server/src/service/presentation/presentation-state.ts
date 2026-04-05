@@ -17,8 +17,9 @@ import type {
 } from './types'
 import { getDatabase, getRawDatabase } from '../../db'
 import { presentationState, songSlides, songs } from '../../db/schema'
+import { createLogger } from '../../utils/logger'
 
-const DEBUG = process.env.DEBUG === 'true'
+const logger = createLogger('presentation-state')
 
 // Track last navigation timestamp to prevent race conditions
 let lastNavigationTimestamp = 0
@@ -56,12 +57,6 @@ function getUniqueUpdatedAt(): number {
   return lastUpdatedAtTimestamp
 }
 
-function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
-  if (level === 'debug' && !DEBUG) return
-  // biome-ignore lint/suspicious/noConsole: logging utility
-  console.log(`[${level.toUpperCase()}] [presentation-state] ${message}`)
-}
-
 /**
  * Gets the song ID for a given slide ID
  */
@@ -75,7 +70,7 @@ function getSongIdFromSlide(songSlideId: number): number | null {
       .get()
     return slide?.songId ?? null
   } catch (error) {
-    log('error', `Failed to get song ID from slide: ${error}`)
+    logger.error(`Failed to get song ID from slide: ${error}`)
     return null
   }
 }
@@ -92,8 +87,7 @@ function incrementSongPresentationCount(
   try {
     // Skip if this song was already counted and we're not resuming from hidden
     if (songId === lastCountedSongId && !isResumingFromHidden) {
-      log(
-        'debug',
+      logger.debug(
         `Skipping presentation count increment - same song ${songId}, not resuming`,
       )
       return
@@ -109,8 +103,7 @@ function incrementSongPresentationCount(
       .run()
 
     lastCountedSongId = songId
-    log(
-      'debug',
+    logger.debug(
       `Incremented presentation count for song ${songId} (resuming: ${isResumingFromHidden})`,
     )
 
@@ -119,7 +112,7 @@ function incrementSongPresentationCount(
       onSongPresentedCallback(songId)
     }
   } catch (error) {
-    log('error', `Failed to increment presentation count: ${error}`)
+    logger.error(`Failed to increment presentation count: ${error}`)
   }
 }
 
@@ -158,7 +151,7 @@ function toPresentationState(
  */
 export function getPresentationState(): PresentationState {
   try {
-    log('debug', 'Getting presentation state')
+    logger.debug('Getting presentation state')
 
     const db = getDatabase()
     const record = db
@@ -182,7 +175,7 @@ export function getPresentationState(): PresentationState {
 
     return toPresentationState(record)
   } catch (error) {
-    log('error', `Failed to get presentation state: ${error}`)
+    logger.error(`Failed to get presentation state: ${error}`)
     return {
       currentSongSlideId: null,
       lastSongSlideId: null,
@@ -202,7 +195,7 @@ export function updatePresentationState(
   input: UpdatePresentationStateInput,
 ): PresentationState {
   try {
-    log('debug', 'Updating presentation state')
+    logger.debug('Updating presentation state')
 
     const db = getDatabase()
     const now = getUniqueUpdatedAt()
@@ -270,10 +263,10 @@ export function updatePresentationState(
       }
     }
 
-    log('info', 'Presentation state updated')
+    logger.info('Presentation state updated')
     return getPresentationState()
   } catch (error) {
-    log('error', `Failed to update presentation state: ${error}`)
+    logger.error(`Failed to update presentation state: ${error}`)
     return getPresentationState()
   }
 }
@@ -283,7 +276,7 @@ export function updatePresentationState(
  */
 export function stopPresentation(): PresentationState {
   try {
-    log('debug', 'Stopping presentation')
+    logger.debug('Stopping presentation')
 
     // Reset the last counted song ID so the next presentation counts as new
     lastCountedSongId = null
@@ -294,7 +287,7 @@ export function stopPresentation(): PresentationState {
       temporaryContent: null,
     })
   } catch (error) {
-    log('error', `Failed to stop presentation: ${error}`)
+    logger.error(`Failed to stop presentation: ${error}`)
     return getPresentationState()
   }
 }
@@ -307,7 +300,7 @@ export function stopPresentation(): PresentationState {
  */
 export function clearSlide(): PresentationState {
   try {
-    log('debug', 'Clearing current slide (hiding)')
+    logger.debug('Clearing current slide (hiding)')
 
     const current = getPresentationState()
 
@@ -321,7 +314,7 @@ export function clearSlide(): PresentationState {
       isHidden: true,
     })
   } catch (error) {
-    log('error', `Failed to clear slide: ${error}`)
+    logger.error(`Failed to clear slide: ${error}`)
     return getPresentationState()
   }
 }
@@ -332,13 +325,13 @@ export function clearSlide(): PresentationState {
  */
 export function showSlide(): PresentationState {
   try {
-    log('debug', 'Showing presentation (unhiding)')
+    logger.debug('Showing presentation (unhiding)')
 
     return updatePresentationState({
       isHidden: false,
     })
   } catch (error) {
-    log('error', `Failed to show slide: ${error}`)
+    logger.error(`Failed to show slide: ${error}`)
     return getPresentationState()
   }
 }
@@ -354,7 +347,7 @@ export function presentTemporaryBible(
   input: PresentTemporaryBibleInput,
 ): PresentationState {
   try {
-    log('debug', `Presenting temporary Bible verse: ${input.reference}`)
+    logger.debug(`Presenting temporary Bible verse: ${input.reference}`)
 
     // Reset navigation timestamp when presenting new content
     lastNavigationTimestamp = 0
@@ -387,7 +380,7 @@ export function presentTemporaryBible(
       isPresenting: true,
     })
   } catch (error) {
-    log('error', `Failed to present temporary Bible verse: ${error}`)
+    logger.error(`Failed to present temporary Bible verse: ${error}`)
     return getPresentationState()
   }
 }
@@ -400,7 +393,7 @@ export function presentTemporarySong(
   input: PresentTemporarySongInput,
 ): PresentationState {
   try {
-    log('debug', `Presenting temporary song: ${input.songId}`)
+    logger.debug(`Presenting temporary song: ${input.songId}`)
 
     // Reset navigation timestamp when presenting new content
     lastNavigationTimestamp = 0
@@ -415,7 +408,7 @@ export function presentTemporarySong(
       .get()
 
     if (!song) {
-      log('error', `Song not found: ${input.songId}`)
+      logger.error(`Song not found: ${input.songId}`)
       return getPresentationState()
     }
 
@@ -434,7 +427,7 @@ export function presentTemporarySong(
       .all()
 
     if (slides.length === 0) {
-      log('warning', `Song has no slides: ${input.songId}`)
+      logger.warning(`Song has no slides: ${input.songId}`)
       return getPresentationState()
     }
 
@@ -459,10 +452,13 @@ export function presentTemporarySong(
           const originalSlide = slides.find((os) => os.id === s.id)
           if (originalSlide?.chords) {
             try {
-              chords = typeof originalSlide.chords === 'string'
-                ? JSON.parse(originalSlide.chords)
-                : originalSlide.chords
-            } catch { /* ignore parse errors */ }
+              chords =
+                typeof originalSlide.chords === 'string'
+                  ? JSON.parse(originalSlide.chords)
+                  : originalSlide.chords
+            } catch {
+              /* ignore parse errors */
+            }
           }
           return {
             id: s.id,
@@ -488,8 +484,7 @@ export function presentTemporarySong(
         .where(eq(songs.id, input.songId))
         .run()
       lastCountedSongId = input.songId
-      log(
-        'debug',
+      logger.debug(
         `Incremented presentation count for temporary song ${input.songId}`,
       )
 
@@ -506,7 +501,7 @@ export function presentTemporarySong(
       isPresenting: true,
     })
   } catch (error) {
-    log('error', `Failed to present temporary song: ${error}`)
+    logger.error(`Failed to present temporary song: ${error}`)
     return getPresentationState()
   }
 }
@@ -520,15 +515,13 @@ export function navigateTemporary(
   requestTimestamp: number,
 ): PresentationState {
   try {
-    log(
-      'debug',
+    logger.debug(
       `Navigating temporary content: ${direction}, timestamp: ${requestTimestamp}`,
     )
 
     // Reject stale requests (race condition prevention)
     if (requestTimestamp <= lastNavigationTimestamp) {
-      log(
-        'debug',
+      logger.debug(
         `Ignoring stale navigation request: ${requestTimestamp} <= ${lastNavigationTimestamp}`,
       )
       return getPresentationState()
@@ -540,7 +533,7 @@ export function navigateTemporary(
     const current = getPresentationState()
 
     if (!current.temporaryContent) {
-      log('warning', 'Cannot navigate: no temporary content')
+      logger.warning('Cannot navigate: no temporary content')
       return current
     }
 
@@ -568,13 +561,13 @@ export function navigateTemporary(
 
     // Announcement has no navigation (single slide)
     if (current.temporaryContent.type === 'announcement') {
-      log('debug', 'Announcement has no navigation')
+      logger.debug('Announcement has no navigation')
       return current
     }
 
     return current
   } catch (error) {
-    log('error', `Failed to navigate temporary content: ${error}`)
+    logger.error(`Failed to navigate temporary content: ${error}`)
     return getPresentationState()
   }
 }
@@ -657,7 +650,14 @@ function navigateToNextChapterOrBook(
   if (book && data.chapter < book.chapter_count) {
     // Move to first verse of next chapter (same book)
     const nextChapter = data.chapter + 1
-    return navigateToChapterFirstVerse(rawDb, data, data.bookId, data.bookCode, data.bookName, nextChapter)
+    return navigateToChapterFirstVerse(
+      rawDb,
+      data,
+      data.bookId,
+      data.bookCode,
+      data.bookName,
+      nextChapter,
+    )
   }
 
   // End of book - try first chapter of next book
@@ -673,13 +673,20 @@ function navigateToNextChapterOrBook(
     } | null
 
     if (nextBook) {
-      log('info', `Moving to next book: ${nextBook.book_name}`)
-      return navigateToChapterFirstVerse(rawDb, data, nextBook.id, nextBook.book_code, nextBook.book_name, 1)
+      logger.info(`Moving to next book: ${nextBook.book_name}`)
+      return navigateToChapterFirstVerse(
+        rawDb,
+        data,
+        nextBook.id,
+        nextBook.book_code,
+        nextBook.book_name,
+        1,
+      )
     }
   }
 
   // No next book - end of Bible, hide presentation
-  log('info', 'Reached end of Bible, hiding temporary presentation')
+  logger.info('Reached end of Bible, hiding temporary presentation')
   return updatePresentationState({ temporaryContent: null, isHidden: true })
 }
 
@@ -692,7 +699,14 @@ function navigateToPrevChapterOrBook(
 ): PresentationState {
   if (data.chapter > 1) {
     // Move to last verse of previous chapter (same book)
-    return navigateToChapterLastVerse(rawDb, data, data.bookId, data.bookCode, data.bookName, data.chapter - 1)
+    return navigateToChapterLastVerse(
+      rawDb,
+      data,
+      data.bookId,
+      data.bookCode,
+      data.bookName,
+      data.chapter - 1,
+    )
   }
 
   // Start of book - try last chapter of previous book
@@ -715,8 +729,15 @@ function navigateToPrevChapterOrBook(
     } | null
 
     if (prevBook) {
-      log('info', `Moving to previous book: ${prevBook.book_name}`)
-      return navigateToChapterLastVerse(rawDb, data, prevBook.id, prevBook.book_code, prevBook.book_name, prevBook.chapter_count)
+      logger.info(`Moving to previous book: ${prevBook.book_name}`)
+      return navigateToChapterLastVerse(
+        rawDb,
+        data,
+        prevBook.id,
+        prevBook.book_code,
+        prevBook.book_name,
+        prevBook.chapter_count,
+      )
     }
   }
 
@@ -739,7 +760,11 @@ function navigateToChapterFirstVerse(
     .query(
       `SELECT id, verse, text FROM bible_verses WHERE translation_id = ? AND book_id = ? AND chapter = ? ORDER BY verse ASC LIMIT 1`,
     )
-    .get(data.translationId, bookId, chapter) as { id: number; verse: number; text: string } | null
+    .get(data.translationId, bookId, chapter) as {
+    id: number
+    verse: number
+    text: string
+  } | null
 
   if (!verse) {
     return getPresentationState()
@@ -782,7 +807,11 @@ function navigateToChapterLastVerse(
     .query(
       `SELECT id, verse, text FROM bible_verses WHERE translation_id = ? AND book_id = ? AND chapter = ? ORDER BY verse ASC`,
     )
-    .all(data.translationId, bookId, chapter) as { id: number; verse: number; text: string }[]
+    .all(data.translationId, bookId, chapter) as {
+    id: number
+    verse: number
+    text: string
+  }[]
 
   if (verses.length === 0) {
     return getPresentationState()
@@ -825,7 +854,7 @@ function navigateTemporarySong(
 
   // If at end of song, hide presentation
   if (newIndex >= data.slides.length) {
-    log('info', 'Reached end of song, hiding temporary presentation')
+    logger.info('Reached end of song, hiding temporary presentation')
     return updatePresentationState({
       temporaryContent: null,
       isHidden: true,
@@ -864,7 +893,7 @@ function navigateTemporaryBiblePassage(
 
   // If at end of passage, hide presentation
   if (newIndex >= data.verses.length) {
-    log('info', 'Reached end of Bible passage, hiding temporary presentation')
+    logger.info('Reached end of Bible passage, hiding temporary presentation')
     return updatePresentationState({
       temporaryContent: null,
       isHidden: true,
@@ -903,7 +932,7 @@ function navigateTemporaryVerseteTineri(
 
   // If at end of entries, hide presentation
   if (newIndex >= data.entries.length) {
-    log('info', 'Reached end of versete tineri, hiding temporary presentation')
+    logger.info('Reached end of versete tineri, hiding temporary presentation')
     return updatePresentationState({
       temporaryContent: null,
       isHidden: true,
@@ -931,7 +960,7 @@ function navigateTemporaryVerseteTineri(
  */
 export function clearTemporaryContent(): PresentationState {
   try {
-    log('debug', 'Clearing temporary content')
+    logger.debug('Clearing temporary content')
 
     // Reset the last counted song ID so the next presentation counts as new
     lastCountedSongId = null
@@ -941,7 +970,7 @@ export function clearTemporaryContent(): PresentationState {
       isHidden: true,
     })
   } catch (error) {
-    log('error', `Failed to clear temporary content: ${error}`)
+    logger.error(`Failed to clear temporary content: ${error}`)
     return getPresentationState()
   }
 }
@@ -953,7 +982,7 @@ export function presentTemporaryAnnouncement(
   input: PresentTemporaryAnnouncementInput,
 ): PresentationState {
   try {
-    log('debug', 'Presenting temporary announcement')
+    logger.debug('Presenting temporary announcement')
 
     // Reset navigation timestamp when presenting new content
     lastNavigationTimestamp = 0
@@ -975,7 +1004,7 @@ export function presentTemporaryAnnouncement(
       isPresenting: true,
     })
   } catch (error) {
-    log('error', `Failed to present temporary announcement: ${error}`)
+    logger.error(`Failed to present temporary announcement: ${error}`)
     return getPresentationState()
   }
 }
@@ -987,8 +1016,7 @@ export function presentTemporaryBiblePassage(
   input: PresentTemporaryBiblePassageInput,
 ): PresentationState {
   try {
-    log(
-      'debug',
+    logger.debug(
       `Presenting temporary Bible passage: ${input.bookCode} ${input.startChapter}:${input.startVerse}-${input.endChapter}:${input.endVerse}`,
     )
 
@@ -1037,7 +1065,7 @@ export function presentTemporaryBiblePassage(
       isPresenting: true,
     })
   } catch (error) {
-    log('error', `Failed to present temporary Bible passage: ${error}`)
+    logger.error(`Failed to present temporary Bible passage: ${error}`)
     return getPresentationState()
   }
 }
@@ -1049,8 +1077,7 @@ export function presentTemporaryVerseteTineri(
   input: PresentTemporaryVerseteTineriInput,
 ): PresentationState {
   try {
-    log(
-      'debug',
+    logger.debug(
       `Presenting temporary versete tineri: ${input.entries.length} entries`,
     )
 
@@ -1058,7 +1085,7 @@ export function presentTemporaryVerseteTineri(
     lastNavigationTimestamp = 0
 
     if (input.entries.length === 0) {
-      log('warning', 'Cannot present versete tineri: no entries')
+      logger.warning('Cannot present versete tineri: no entries')
       return getPresentationState()
     }
 
@@ -1089,7 +1116,7 @@ export function presentTemporaryVerseteTineri(
       isPresenting: true,
     })
   } catch (error) {
-    log('error', `Failed to present temporary versete tineri: ${error}`)
+    logger.error(`Failed to present temporary versete tineri: ${error}`)
     return getPresentationState()
   }
 }
@@ -1102,7 +1129,7 @@ export function presentTemporaryScene(
   input: PresentTemporarySceneInput,
 ): PresentationState {
   try {
-    log('debug', `Presenting temporary scene: ${input.obsSceneName}`)
+    logger.debug(`Presenting temporary scene: ${input.obsSceneName}`)
 
     // Reset navigation timestamp when presenting new content
     lastNavigationTimestamp = 0
@@ -1124,7 +1151,7 @@ export function presentTemporaryScene(
       isPresenting: true,
     })
   } catch (error) {
-    log('error', `Failed to present temporary scene: ${error}`)
+    logger.error(`Failed to present temporary scene: ${error}`)
     return getPresentationState()
   }
 }
@@ -1137,8 +1164,7 @@ export function presentTemporaryScreenShare(
   input: PresentTemporaryScreenShareInput,
 ): PresentationState {
   try {
-    log(
-      'debug',
+    logger.debug(
       `Presenting temporary screen share from: ${input.broadcasterId}`,
     )
 
@@ -1159,7 +1185,7 @@ export function presentTemporaryScreenShare(
       isPresenting: true,
     })
   } catch (error) {
-    log('error', `Failed to present temporary screen share: ${error}`)
+    logger.error(`Failed to present temporary screen share: ${error}`)
     return getPresentationState()
   }
 }
@@ -1187,7 +1213,7 @@ export function refreshPresentedSongSlides(
       return null
     }
 
-    log('info', `Refreshing presented song slides for song ${songId}`)
+    logger.info(`Refreshing presented song slides for song ${songId}`)
 
     const db = getDatabase()
 
@@ -1212,7 +1238,7 @@ export function refreshPresentedSongSlides(
       .all()
 
     if (slides.length === 0) {
-      log('warning', `Song has no slides: ${songId}`)
+      logger.warning(`Song has no slides: ${songId}`)
       return null
     }
 
@@ -1242,7 +1268,7 @@ export function refreshPresentedSongSlides(
     const result = updatePresentationState({ temporaryContent })
     return result
   } catch (error) {
-    log('error', `Failed to refresh presented song slides: ${error}`)
+    logger.error(`Failed to refresh presented song slides: ${error}`)
     return null
   }
 }

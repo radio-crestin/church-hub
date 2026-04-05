@@ -1162,7 +1162,6 @@ export function shutdownMIDI() {
   disconnectOutput()
 }
 
+export { DEFAULT_MIDI_CONFIG } from './types'
 // Export types
 export type { MIDIConfig, MIDIDevice, MIDIInputMessage }
-
-export { DEFAULT_MIDI_CONFIG } from './types'

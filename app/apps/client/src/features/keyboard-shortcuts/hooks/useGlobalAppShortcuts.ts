@@ -5,7 +5,7 @@ import { createLogger } from '~/utils/logger'
 import type { GlobalShortcutActionId, GlobalShortcutsConfig } from '../types'
 import { isGlobalRecordingActive } from '../utils'
 
-const logger = createLogger('keyboard-shortcuts:global')
+const logger = createLogger('app:keyboard:global')
 
 // Check if we're running in Tauri mode
 const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window

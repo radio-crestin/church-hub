@@ -22,7 +22,8 @@ async function searchBible(page: Page, query: string) {
       await expect(resultsCountLocator).toBeVisible({ timeout: 15000 })
       return searchInput
     } catch {
-      if (attempt === 2) throw new Error('Bible search returned no results after 3 attempts')
+      if (attempt === 2)
+        throw new Error('Bible search returned no results after 3 attempts')
       // Clear search and retry — FTS index may not be ready yet
       await searchInput.fill('')
       await page.waitForTimeout(3000)
@@ -182,9 +183,7 @@ test.describe('Bible Feature', () => {
     await page.waitForLoadState('networkidle')
 
     // Click on Geneza (Genesis) to navigate to chapters
-    const genesisButton = page
-      .getByRole('button', { name: /geneza/i })
-      .first()
+    const genesisButton = page.getByRole('button', { name: /geneza/i }).first()
     await expect(genesisButton).toBeVisible({ timeout: 5000 })
     await genesisButton.click()
 
@@ -274,7 +273,9 @@ test.describe('Bible Feature', () => {
     // Present the verse via Enter
     await searchInput.press('Enter')
     await page.waitForTimeout(800)
-    await expect(page.locator('button.ring-green-500')).toBeVisible({ timeout: 5000 })
+    await expect(page.locator('button.ring-green-500')).toBeVisible({
+      timeout: 5000,
+    })
 
     // Navigate with ArrowDown to the last verse of Evrei 2 (18 verses)
     // From verse 14, need 4 presses to reach verse 18
@@ -286,7 +287,10 @@ test.describe('Bible Feature', () => {
     // Should be on the last verse now
     const lastV = page.locator('button.ring-green-500')
     await expect(lastV).toBeVisible({ timeout: 5000 })
-    const lastVNum = await lastV.locator('span.font-semibold').first().textContent()
+    const lastVNum = await lastV
+      .locator('span.font-semibold')
+      .first()
+      .textContent()
     expect(parseInt(lastVNum!.trim(), 10)).toBeGreaterThan(14)
 
     // Cross the chapter boundary
@@ -354,7 +358,9 @@ test.describe('Bible Feature', () => {
 
     await searchInput.press('Enter')
     await page.waitForTimeout(800)
-    await expect(page.locator('button.ring-green-500')).toBeVisible({ timeout: 5000 })
+    await expect(page.locator('button.ring-green-500')).toBeVisible({
+      timeout: 5000,
+    })
 
     await page.keyboard.press('ArrowDown')
     await page.waitForTimeout(3000)

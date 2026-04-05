@@ -81,7 +81,10 @@ export function ScheduleItemVerseteTineri({
             {item.verseteTineriEntries.length > 0 ? (
               <div className="space-y-0.5">
                 {item.verseteTineriEntries.map((entry) => (
-                  <div key={entry.id} className="flex items-center gap-2 text-sm">
+                  <div
+                    key={entry.id}
+                    className="flex items-center gap-2 text-sm"
+                  >
                     <span className="font-medium truncate text-gray-900 dark:text-white">
                       {entry.personName}
                     </span>

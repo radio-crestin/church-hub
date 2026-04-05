@@ -22,10 +22,10 @@ export {
   parseReference,
   rebuildSearchIndex,
   searchBible,
-  warmupSearchIndex,
   searchByReference,
   searchVersesByText,
   updateSearchIndex,
+  warmupSearchIndex,
 } from './search'
 // Seed operations
 export {

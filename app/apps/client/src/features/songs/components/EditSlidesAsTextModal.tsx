@@ -79,9 +79,7 @@ function markdownToSlides(text: string): LocalSlide[] {
 
   const result: LocalSlide[] = []
   for (const slideText of slideTexts) {
-    const lines = slideText
-      .split('\n')
-      .filter((line) => line.trim().length > 0)
+    const lines = slideText.split('\n').filter((line) => line.trim().length > 0)
 
     if (lines.length === 0) continue
 

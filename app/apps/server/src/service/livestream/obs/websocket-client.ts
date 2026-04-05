@@ -179,7 +179,13 @@ export class OBSWebSocketClient {
       try {
         await this.connect()
       } catch (error) {
-        log('error', `Reconnect attempt failed: ${error}`)
+        // Connection failures during reconnect are expected when OBS is not running
+        const errMsg = String(error)
+        if (errMsg.includes('Failed to connect')) {
+          log('debug', `OBS not reachable, will retry (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`)
+        } else {
+          log('error', `Reconnect attempt failed: ${error}`)
+        }
         // Error handlers will schedule another reconnect
       }
     }, delay)
@@ -293,7 +299,13 @@ export class OBSWebSocketClient {
             event instanceof ErrorEvent
               ? `${event.message} (type: ${event.type})`
               : `Unknown error (type: ${event?.type || 'none'})`
-          log('error', `WebSocket error: ${errorInfo}`)
+          // Use debug level for connection failures (OBS not running is normal)
+          const isConnectionRefused = errorInfo.includes('Failed to connect')
+          if (isConnectionRefused) {
+            log('debug', `WebSocket connection failed (OBS not running): ${errorInfo}`)
+          } else {
+            log('error', `WebSocket error: ${errorInfo}`)
+          }
           cleanup()
           this.connecting = false
           this.notifyConnectionStatus()

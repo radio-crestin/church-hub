@@ -68,7 +68,7 @@ test.describe('Music Player Feature', () => {
     // Evaluate WebSocket connection status
     const wsConnected = await page.evaluate(() => {
       // Check if React Query has music player state (set via WebSocket)
-      const queryClientEl = document.querySelector('[data-testid="ws-status"]')
+      const _queryClientEl = document.querySelector('[data-testid="ws-status"]')
       // If no explicit test id, just verify the page is functional
       return document.body.innerHTML.length > 0
     })
@@ -81,7 +81,7 @@ test.describe('Music Player Feature', () => {
     await page.waitForLoadState('networkidle')
 
     // Look for play/pause button (it's always present in the player)
-    const playButton = page
+    const _playButton = page
       .getByRole('button', { name: /play|pause|redare/i })
       .first()
 

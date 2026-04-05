@@ -118,19 +118,19 @@ export interface FileRoutesByFullPath {
   '/schedules/$scheduleId': typeof SchedulesScheduleIdRoute
   '/screen/$screenId': typeof ScreenScreenIdRoute
   '/': typeof rootIndexRoute
-  '/bible': typeof BibleIndexRoute
-  '/dashboard': typeof DashboardIndexRoute
-  '/live-translation': typeof LiveTranslationIndexRoute
-  '/livestream': typeof LivestreamIndexRoute
-  '/music': typeof MusicIndexRoute
-  '/present': typeof PresentIndexRoute
-  '/schedules': typeof SchedulesIndexRoute
-  '/settings': typeof SettingsIndexRoute
-  '/song-key': typeof SongKeyIndexRoute
-  '/songs': typeof SongsIndexRoute
+  '/bible/': typeof BibleIndexRoute
+  '/dashboard/': typeof DashboardIndexRoute
+  '/live-translation/': typeof LiveTranslationIndexRoute
+  '/livestream/': typeof LivestreamIndexRoute
+  '/music/': typeof MusicIndexRoute
+  '/present/': typeof PresentIndexRoute
+  '/schedules/': typeof SchedulesIndexRoute
+  '/settings/': typeof SettingsIndexRoute
+  '/song-key/': typeof SongKeyIndexRoute
+  '/songs/': typeof SongsIndexRoute
   '/auth/youtube/callback': typeof AuthYoutubeCallbackRoute
   '/songs/$songId/edit': typeof SongsSongIdEditRoute
-  '/songs/$songId': typeof SongsSongIdIndexRoute
+  '/songs/$songId/': typeof SongsSongIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/custom-page/$pageId': typeof CustomPagePageIdRoute
@@ -178,19 +178,19 @@ export interface FileRouteTypes {
     | '/schedules/$scheduleId'
     | '/screen/$screenId'
     | '/'
-    | '/bible'
-    | '/dashboard'
-    | '/live-translation'
-    | '/livestream'
-    | '/music'
-    | '/present'
-    | '/schedules'
-    | '/settings'
-    | '/song-key'
-    | '/songs'
+    | '/bible/'
+    | '/dashboard/'
+    | '/live-translation/'
+    | '/livestream/'
+    | '/music/'
+    | '/present/'
+    | '/schedules/'
+    | '/settings/'
+    | '/song-key/'
+    | '/songs/'
     | '/auth/youtube/callback'
     | '/songs/$songId/edit'
-    | '/songs/$songId'
+    | '/songs/$songId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/custom-page/$pageId'
@@ -256,70 +256,70 @@ declare module '@tanstack/react-router' {
     '/songs/': {
       id: '/songs/'
       path: '/songs'
-      fullPath: '/songs'
+      fullPath: '/songs/'
       preLoaderRoute: typeof SongsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/song-key/': {
       id: '/song-key/'
       path: '/song-key'
-      fullPath: '/song-key'
+      fullPath: '/song-key/'
       preLoaderRoute: typeof SongKeyIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings/': {
       id: '/settings/'
       path: '/settings'
-      fullPath: '/settings'
+      fullPath: '/settings/'
       preLoaderRoute: typeof SettingsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/schedules/': {
       id: '/schedules/'
       path: '/schedules'
-      fullPath: '/schedules'
+      fullPath: '/schedules/'
       preLoaderRoute: typeof SchedulesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/present/': {
       id: '/present/'
       path: '/present'
-      fullPath: '/present'
+      fullPath: '/present/'
       preLoaderRoute: typeof PresentIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/music/': {
       id: '/music/'
       path: '/music'
-      fullPath: '/music'
+      fullPath: '/music/'
       preLoaderRoute: typeof MusicIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/livestream/': {
       id: '/livestream/'
       path: '/livestream'
-      fullPath: '/livestream'
+      fullPath: '/livestream/'
       preLoaderRoute: typeof LivestreamIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/live-translation/': {
       id: '/live-translation/'
       path: '/live-translation'
-      fullPath: '/live-translation'
+      fullPath: '/live-translation/'
       preLoaderRoute: typeof LiveTranslationIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard/': {
       id: '/dashboard/'
       path: '/dashboard'
-      fullPath: '/dashboard'
+      fullPath: '/dashboard/'
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bible/': {
       id: '/bible/'
       path: '/bible'
-      fullPath: '/bible'
+      fullPath: '/bible/'
       preLoaderRoute: typeof BibleIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -354,7 +354,7 @@ declare module '@tanstack/react-router' {
     '/songs/$songId/': {
       id: '/songs/$songId/'
       path: '/songs/$songId'
-      fullPath: '/songs/$songId'
+      fullPath: '/songs/$songId/'
       preLoaderRoute: typeof SongsSongIdIndexRouteImport
       parentRoute: typeof rootRouteImport
     }

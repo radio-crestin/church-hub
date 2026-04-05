@@ -228,10 +228,7 @@ export function SongSlidesPanel({
     [song.slides],
   )
 
-  const slideIds = useMemo(
-    () => sortedSlides.map((s) => s.id),
-    [sortedSlides],
-  )
+  const slideIds = useMemo(() => sortedSlides.map((s) => s.id), [sortedSlides])
 
   // Expanded slides for view mode
   const expandedSlides = useMemo(
@@ -385,7 +382,9 @@ export function SongSlidesPanel({
               ) : (
                 <Check size={14} />
               )}
-              <span>{isSaving ? t('preview.saving') : t('preview.exitEditMode')}</span>
+              <span>
+                {isSaving ? t('preview.saving') : t('preview.exitEditMode')}
+              </span>
             </button>
           </div>
         )}
@@ -414,9 +413,7 @@ export function SongSlidesPanel({
                     slideNumber={index + 1}
                     isPresented={slide.id === presentedSlideId}
                     onEdit={handleSlideEdit}
-                    onDelete={
-                      onSlideDelete ? handleSlideDelete : undefined
-                    }
+                    onDelete={onSlideDelete ? handleSlideDelete : undefined}
                   />
                 ))}
                 {onSlideAdd && (
@@ -442,8 +439,7 @@ export function SongSlidesPanel({
             {expandedSlides.map((slide, index) => {
               const isPresented = index === presentedSlideIndex
               const isSelected =
-                index === selectedSlideIndex &&
-                presentedSlideIndex === null
+                index === selectedSlideIndex && presentedSlideIndex === null
               const isDuplicate = !isOriginalSlide[index]
               const plainText = stripHtmlTags(slide.content)
 
@@ -456,18 +452,14 @@ export function SongSlidesPanel({
               }
 
               const getNumberClass = () => {
-                if (isPresented)
-                  return 'text-green-700 dark:text-green-300'
-                if (isSelected)
-                  return 'text-indigo-700 dark:text-indigo-300'
+                if (isPresented) return 'text-green-700 dark:text-green-300'
+                if (isSelected) return 'text-indigo-700 dark:text-indigo-300'
                 return 'text-gray-500 dark:text-gray-400'
               }
 
               const getTextClass = () => {
-                if (isPresented)
-                  return 'text-green-900 dark:text-green-100'
-                if (isSelected)
-                  return 'text-indigo-900 dark:text-indigo-100'
+                if (isPresented) return 'text-green-900 dark:text-green-100'
+                if (isSelected) return 'text-indigo-900 dark:text-indigo-100'
                 return 'text-gray-700 dark:text-gray-200'
               }
 
@@ -482,9 +474,7 @@ export function SongSlidesPanel({
                   key={`${slide.id}-${index}`}
                   ref={getRef()}
                   type="button"
-                  onClick={() =>
-                    !isPresented && onSlideClick(slide, index)
-                  }
+                  onClick={() => !isPresented && onSlideClick(slide, index)}
                   className={`w-full text-left px-3 py-2 rounded-lg transition-colors group ${getButtonClass()} ${
                     isDuplicate ? 'opacity-60' : ''
                   }`}

@@ -125,8 +125,8 @@ describe('Schedules API', () => {
   })
 
   test('adding a song to a schedule returns the item with song data', async () => {
-    // Create a test song
-    const testTitle = `__test_schedule_song_${Date.now()}__`
+    // Create a test song - use long unique words to avoid sanitized-title collisions
+    const testTitle = `Zymologica Quixotique ${Date.now()}`
     const songRes = await fetch(`${BASE_URL}/api/songs`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -183,10 +183,11 @@ describe('Schedules API', () => {
   test('adding multiple songs (bookmarks) to a schedule works', async () => {
     // Create test songs with completely unique titles
     const songIds: number[] = []
+    const ts = Date.now()
     const uniqueTitles = [
-      `__alpha_${Date.now()}__`,
-      `__bravo_${Date.now()}__`,
-      `__charlie_${Date.now()}__`,
+      `Xyloquintar Primavox ${ts}`,
+      `Quasifonico Betavolt ${ts}`,
+      `Chronexial Gammaflex ${ts}`,
     ]
     for (const title of uniqueTitles) {
       const res = await fetch(`${BASE_URL}/api/songs`, {
@@ -356,7 +357,7 @@ describe('Presentation API', () => {
 
   test('clearing temporary content sets isHidden to true', async () => {
     // First, create a song to present (use timestamp for unique title)
-    const testTitle = `__test_clear_temp_${Date.now()}__`
+    const testTitle = `Phenoluxar Zetaprism ${Date.now()}`
     const createRes = await fetch(`${BASE_URL}/api/songs`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

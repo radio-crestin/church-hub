@@ -2,17 +2,17 @@ import { Keyboard, Plus } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { getDefaultSidebarItemSettings } from '~/features/sidebar-config/constants'
 import { useSidebarConfig } from '~/features/sidebar-config/hooks/useSidebarConfig'
 import type {
   BuiltInMenuItem,
   BuiltInMenuItemId,
   SidebarItemSettings,
 } from '~/features/sidebar-config/types'
-import { getDefaultSidebarItemSettings } from '~/features/sidebar-config/constants'
+import { ShortcutRecorder } from './ShortcutRecorder'
 import { useAppShortcuts } from '../hooks'
 import type { GlobalShortcutActionId } from '../types'
 import { VALID_ACTION_IDS } from '../utils'
-import { ShortcutRecorder } from './ShortcutRecorder'
 
 interface PageShortcutsSettingsProps {
   /** The built-in page ID (e.g. 'songs', 'bible') */

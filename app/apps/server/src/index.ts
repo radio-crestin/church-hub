@@ -6,9 +6,27 @@ Sentry.init({
   release: `church-hub@${process.env.npm_package_version || '0.1.22'}`,
   environment:
     process.env.NODE_ENV === 'production' ? 'production' : 'development',
+
+  // Capture 100% of errors
+  sampleRate: 1.0,
+
+  // Attach stack traces
+  attachStacktrace: true,
+
+  // Max breadcrumbs for debugging context
+  maxBreadcrumbs: 50,
+
   beforeSend(event) {
     event.tags = { ...event.tags, component: 'server' }
     return event
+  },
+
+  beforeBreadcrumb(breadcrumb) {
+    // Filter out noisy breadcrumbs
+    if (breadcrumb.category === 'console' && breadcrumb.level === 'debug') {
+      return null
+    }
+    return breadcrumb
   },
 })
 
@@ -249,6 +267,7 @@ import {
   warmupSearchIndex as warmupSongsSearchIndex,
 } from './service/songs'
 import { createLogger } from './utils/logger'
+import { logRequest, logResponse } from './utils/request-logger'
 import { proxyToVite, serveStaticFile } from './utils/static-server'
 import {
   broadcastMIDIConnectionStatus,
@@ -527,6 +546,11 @@ async function main() {
     error(error) {
       // biome-ignore lint/suspicious/noConsole: error logging
       console.error('[SERVER ERROR] Fetch handler error:', error)
+
+      Sentry.captureException(error, {
+        tags: { component: 'server', source: 'fetch-error-handler' },
+      })
+
       return new Response(
         JSON.stringify({
           error:
@@ -539,7 +563,11 @@ async function main() {
       )
     },
     async fetch(req: Request, server) {
+      const requestStartTime = performance.now()
+      logRequest(req)
+
       if (req.method === 'OPTIONS') {
+        logResponse(req, 204, requestStartTime)
         return handleCors(req, new Response(null, { status: 204 }))
       }
 
