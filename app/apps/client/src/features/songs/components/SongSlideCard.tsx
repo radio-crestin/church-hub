@@ -18,6 +18,7 @@ import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 
 import type { ChordMapping } from '../types'
+import { localizeChordName } from '../utils/localizeChordName'
 
 interface LocalSlide {
   id: string | number
@@ -178,7 +179,8 @@ export function SongSlideCard({
   onClone,
   onDelete,
 }: SongSlideCardProps) {
-  const { t } = useTranslation('songs')
+  const { t, i18n } = useTranslation('songs')
+  const language = i18n.language?.split('-')[0] || 'en'
   const [showLabelPicker, setShowLabelPicker] = useState(false)
   const [showChordEditor, setShowChordEditor] = useState(false)
   const [selectedWordIndex, setSelectedWordIndex] = useState<number | null>(
@@ -451,7 +453,7 @@ export function SongSlideCard({
                       className="text-[11px] font-bold text-amber-700 dark:text-amber-400 hover:text-red-500 dark:hover:text-red-400 transition-colors leading-tight"
                       title={t('chords.removeChord')}
                     >
-                      {chord}
+                      {localizeChordName(chord, language)}
                     </button>
                   )}
                   {!chord && <div className="h-[15px]" />}
@@ -525,7 +527,7 @@ export function SongSlideCard({
                               onClick={() => handleAssignChord(chord)}
                               className="px-1.5 py-1 text-xs font-medium rounded hover:bg-amber-100 dark:hover:bg-amber-900/30 text-gray-700 dark:text-gray-300 transition-colors"
                             >
-                              {chord}
+                              {localizeChordName(chord, language)}
                             </button>
                           ))}
                         </div>
