@@ -14,11 +14,4 @@ gen
 # Worktree-specific config (copy from sample)
 tauri.worktree.conf.json
 
-# libmpv binaries (downloaded by tauri-plugin-libmpv-api setup-lib)
-/lib/**/*
-!/lib/.gitkeep
-
-# mpv executable (downloaded by setup-libmpv.js)
-/resources/mpv/**/*
-!/resources/mpv/.gitkeep
 

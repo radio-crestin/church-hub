@@ -1,80 +1,18 @@
 import type { MusicPlayerState } from './types'
 import { describe, expect, test } from 'bun:test'
 
-// We test the module behavior by importing and exercising it.
-// Since the mpv-player module uses module-level state, we verify
-// the critical behaviors through the exported API.
+// Tests for the music player module which communicates with the
+// Tauri audio server (rodio) via HTTP instead of spawning mpv.
 
-describe('mpv-player', () => {
-  describe('process isolation', () => {
-    test('mpv should be spawned with detached: true', async () => {
-      // Read the source file and verify the spawn config
-      const sourceFile = await Bun.file(
-        `${import.meta.dir}/mpv-player.ts`,
-      ).text()
-
-      // Verify detached: true is in the spawn call
-      expect(sourceFile).toContain('detached: true')
-      expect(sourceFile).not.toMatch(/detached:\s*false/)
-
-      // Verify unref() is called after spawn
-      expect(sourceFile).toContain('mpvProcess.unref()')
-    })
-  })
-
-  describe('error handling', () => {
-    test('playNext() should have .catch() error handler', async () => {
-      const sourceFile = await Bun.file(
-        `${import.meta.dir}/mpv-player.ts`,
-      ).text()
-
-      // Verify playNext() is called with .catch() in the end-file handler
-      expect(sourceFile).toMatch(/playNext\(\)\.catch/)
-    })
-
-    test('handleMpvEvent should not throw on unknown events', async () => {
-      // The handleMpvEvent function should gracefully handle unknown events
-      const sourceFile = await Bun.file(
-        `${import.meta.dir}/mpv-player.ts`,
-      ).text()
-
-      // Verify handleMpvEvent checks event.event before processing
-      expect(sourceFile).toContain("event.event === 'property-change'")
-      expect(sourceFile).toContain("event.event === 'end-file'")
-      expect(sourceFile).toContain("event.event === 'file-loaded'")
-    })
-
-    test('end-file error should set error state', async () => {
-      const sourceFile = await Bun.file(
-        `${import.meta.dir}/mpv-player.ts`,
-      ).text()
-
-      // Verify end-file with reason 'error' is handled
-      expect(sourceFile).toContain("event.reason === 'error'")
-      // Verify error state is set with a message
-      expect(sourceFile).toMatch(/updateState\(\{[^}]*error:/)
-    })
-
-    test('file-loaded should clear error state', async () => {
-      const sourceFile = await Bun.file(
-        `${import.meta.dir}/mpv-player.ts`,
-      ).text()
-
-      // Verify file-loaded clears the error
-      expect(sourceFile).toContain(
-        'updateState({ isPlaying: true, error: null })',
-      )
-    })
-  })
-
+describe('music-player', () => {
   describe('executeCommand', () => {
-    test('should guard against null mpvProcess', async () => {
+    test('should guard against unavailable audio server', async () => {
       const { executeCommand, isPlayerAvailable } = await import('./mpv-player')
 
-      // Without initialization, mpvProcess is null
+      // Without initialization, audio server is not available
       expect(isPlayerAvailable()).toBe(false)
 
-      // Should not throw when mpvProcess is null
+      // Should not throw when audio server is unavailable
       await expect(executeCommand({ type: 'play' })).resolves.toBeUndefined()
       await expect(
         executeCommand({ type: 'play_index', index: 0 }),
@@ -128,76 +66,48 @@ describe('mpv-player', () => {
     })
   })
 
+  describe('getMpvStatus', () => {
+    test('should always report installed since audio is embedded', async () => {
+      const { getMpvStatus } = await import('./mpv-player')
+
+      const status = getMpvStatus()
+      expect(status.installed).toBe(true)
+    })
+  })
+
   describe('source code invariants', () => {
-    test('shutdown should kill mpv with SIGTERM', async () => {
+    test('should use HTTP to communicate with audio server', async () => {
       const sourceFile = await Bun.file(
         `${import.meta.dir}/mpv-player.ts`,
       ).text()
 
-      expect(sourceFile).toContain("mpvProcess.kill('SIGTERM')")
+      // Verify it uses fetch to communicate with the audio server
+      expect(sourceFile).toContain('AUDIO_SERVER_URL')
+      expect(sourceFile).toContain('audioRequest')
+      // Should NOT spawn processes or use IPC sockets
+      expect(sourceFile).not.toContain('spawn(')
+      expect(sourceFile).not.toContain('net.createConnection')
+      expect(sourceFile).not.toContain('ipcSocket')
     })
 
-    test('IPC socket errors should be handled', async () => {
+    test('should poll state from audio server', async () => {
       const sourceFile = await Bun.file(
         `${import.meta.dir}/mpv-player.ts`,
       ).text()
 
-      // Verify socket error handler exists
-      expect(sourceFile).toContain("ipcSocket.on('error'")
-      expect(sourceFile).toContain("ipcSocket.on('close'")
+      expect(sourceFile).toContain('startStatePolling')
+      expect(sourceFile).toContain('/state')
     })
 
-    test('mpv process error handler should be registered', async () => {
+    test('should persist player settings', async () => {
       const sourceFile = await Bun.file(
         `${import.meta.dir}/mpv-player.ts`,
       ).text()
 
-      expect(sourceFile).toContain("mpvProcess.on('error'")
-      expect(sourceFile).toContain("mpvProcess.on('exit'")
-    })
-
-    test('sendCommand should have retry logic', async () => {
-      const sourceFile = await Bun.file(
-        `${import.meta.dir}/mpv-player.ts`,
-      ).text()
-
-      expect(sourceFile).toContain('IPC_MAX_RETRIES')
-      expect(sourceFile).toContain('IPC_RETRY_DELAY_MS')
-      expect(sourceFile).toMatch(/for\s*\(\s*let\s+attempt/)
-    })
-
-    test('should kill stale mpv processes on initialization', async () => {
-      const sourceFile = await Bun.file(
-        `${import.meta.dir}/mpv-player.ts`,
-      ).text()
-
-      // Verify killStaleMpvProcesses is called in initializeMusicPlayer
-      expect(sourceFile).toContain('killStaleMpvProcesses()')
-      // Verify cleanupStaleSockets is called
-      expect(sourceFile).toContain('cleanupStaleSockets()')
-    })
-
-    test('should register process exit cleanup handler', async () => {
-      const sourceFile = await Bun.file(
-        `${import.meta.dir}/mpv-player.ts`,
-      ).text()
-
-      // Verify process exit handlers are registered
-      expect(sourceFile).toContain("process.on('exit'")
-      expect(sourceFile).toContain("process.on('SIGTERM'")
-      expect(sourceFile).toContain("process.on('SIGINT'")
-      expect(sourceFile).toContain('registerProcessExitCleanup()')
-    })
-
-    test('should use safe process lookup without shell injection risk', async () => {
-      const sourceFile = await Bun.file(
-        `${import.meta.dir}/mpv-player.ts`,
-      ).text()
-
-      // Verify safe process lookup (pgrep via Bun.spawnSync, not shell-based)
-      expect(sourceFile).toContain("Bun.spawnSync(['pgrep'")
-      // Should not use execSync or shell-based execution for process management
-      expect(sourceFile).not.toContain('execSync')
+      expect(sourceFile).toContain('persistPlayerSettings')
+      expect(sourceFile).toContain('SETTING_VOLUME')
+      expect(sourceFile).toContain('SETTING_SHUFFLE')
+      expect(sourceFile).toContain('SETTING_CURRENT_INDEX')
     })
   })
 })

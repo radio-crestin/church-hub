@@ -42,9 +42,7 @@
     ],
     "resources": {
       "../apps/client/dist": "client-dist",
-      "resources/midi-native": "midi-native",
-      "resources/mpv": "mpv",
-      "lib/**/*": "lib"
+      "resources/midi-native": "midi-native"
     },
     "icon": [
       "icons/32x32.png",

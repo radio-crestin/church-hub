@@ -3,6 +3,8 @@ pub mod domain;
 
 // Desktop-only modules
 #[cfg(desktop)]
+pub mod audio;
+#[cfg(desktop)]
 pub mod server;
 #[cfg(desktop)]
 pub mod webview;
@@ -117,9 +119,16 @@ pub fn run() {
         .plugin(tauri_plugin_keep_screen_on::init())
         .plugin(tauri_plugin_screen_brightness::init())
         .plugin(tauri_plugin_process::init());
-    #[cfg(desktop)]
-    let builder = builder.plugin(tauri_plugin_libmpv::init());
     println!("[startup] plugins_core: {:?}", t.elapsed());
+
+    // Start the embedded audio player (rodio) with internal HTTP API
+    #[cfg(desktop)]
+    {
+        let t = std::time::Instant::now();
+        let audio_player = audio::AudioPlayer::new();
+        audio::start_audio_server(audio_player, 3199);
+        println!("[startup] audio_server: {:?}", t.elapsed());
+    }
 
     // Global shortcut plugin is desktop-only
     #[cfg(desktop)]

@@ -1,13 +1,11 @@
 import { AlertTriangle, Shuffle, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-import { MpvInstallGuide } from './MpvInstallGuide'
 import { NowPlaying } from './NowPlaying'
 import { PlayerControls } from './PlayerControls'
 import { ProgressBar } from './ProgressBar'
 import { QueueList } from './QueueList'
 import { VolumeSlider } from './VolumeSlider'
-import { useMpvStatus } from '../hooks/useMpvStatus'
 import type { QueueItem, ServerPlayerState } from '../types'
 
 interface PlayerProps {
@@ -40,9 +38,6 @@ export function Player({
   onToggleShuffle,
 }: PlayerProps) {
   const { t } = useTranslation('music')
-  const { data: mpvStatus } = useMpvStatus()
-
-  const showInstallGuide = mpvStatus && !mpvStatus.installed
 
   return (
     <div className="w-full min-w-0 flex flex-col overflow-hidden lg:flex-1 lg:min-h-0 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
@@ -59,13 +54,6 @@ export function Player({
           />
         </div>
       </div>
-      {showInstallGuide && (
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-          <MpvInstallGuide
-            installInstructions={mpvStatus?.installInstructions}
-          />
-        </div>
-      )}
       {state.error && (
         <div className="mx-3 sm:mx-4 mt-3 flex items-start gap-2 rounded-md bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-700 dark:text-red-400">
           <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />

@@ -39,6 +39,4 @@ tauri-plugin-screen-brightness = { path = "../tauri-plugins/tauri-plugin-screen-
 tauri-plugin-single-instance = "2"
 tauri-plugin-process = "2"
 sentry = "0.46.1"
-
-[target.'cfg(not(any(target_os = "ios", target_os = "android")))'.dependencies]
-tauri-plugin-libmpv = "0.3"
+rodio = { version = "0.20", features = ["symphonia-all"] }

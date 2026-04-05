@@ -118,9 +118,4 @@ export interface ServerPlayerState {
 export interface MpvStatus {
   available: boolean
   installed: boolean
-  installInstructions?: {
-    mac: string
-    windows: string
-    linux: string
-  }
 }

@@ -1,9 +1,3 @@
-import { spawn } from 'node:child_process'
-import * as fs from 'node:fs'
-import * as net from 'node:net'
-import * as os from 'node:os'
-import * as path from 'node:path'
-
 import {
   getNowPlayingQueue,
   getQueueItemAtIndex,
@@ -11,7 +5,6 @@ import {
 } from './now-playing'
 import type {
   CurrentTrack,
-  MpvEvent,
   MusicPlayerCommand,
   MusicPlayerState,
   QueueItemSummary,
@@ -25,17 +18,13 @@ const SETTING_VOLUME = 'music_player_volume'
 const SETTING_SHUFFLE = 'music_player_shuffle'
 const SETTING_CURRENT_INDEX = 'music_player_current_index'
 
-// IPC retry config
-const IPC_MAX_RETRIES = 3
-const IPC_RETRY_DELAY_MS = 200
+// Audio server URL (Tauri's embedded rodio audio server)
+const AUDIO_SERVER_PORT = 3199
+const AUDIO_SERVER_URL = `http://127.0.0.1:${AUDIO_SERVER_PORT}`
 
-let mpvProcess: ReturnType<typeof spawn> | null = null
-let ipcSocket: net.Socket | null = null
-let socketPath: string | null = null
 let stateCallback: ((state: MusicPlayerState) => void) | null = null
 let statePollingInterval: ReturnType<typeof setInterval> | null = null
-let reconnectTimeout: ReturnType<typeof setTimeout> | null = null
-let healthCheckInterval: ReturnType<typeof setInterval> | null = null
+let audioServerAvailable = false
 
 let playerState: MusicPlayerState = {
   isPlaying: false,
@@ -52,14 +41,6 @@ let playerState: MusicPlayerState = {
   updatedAt: Date.now(),
 }
 
-function getSocketPath(): string {
-  const pid = process.pid
-  if (os.platform() === 'win32') {
-    return `\\\\.\\pipe\\mpv-socket-${pid}`
-  }
-  return path.join(os.tmpdir(), `mpv-socket-${pid}`)
-}
-
 function updateState(partial: Partial<MusicPlayerState>): void {
   playerState = {
     ...playerState,
@@ -69,65 +50,25 @@ function updateState(partial: Partial<MusicPlayerState>): void {
   stateCallback?.(playerState)
 }
 
-async function sendCommand(
-  command: unknown[],
-  retries = IPC_MAX_RETRIES,
-): Promise<void> {
-  if (!ipcSocket || ipcSocket.destroyed) {
-    // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
-    console.warn(LOG_PREFIX, 'IPC socket not connected, attempting reconnect')
-    // Try to reconnect before giving up
-    if (mpvProcess && !mpvProcess.killed) {
-      connectToSocket()
-      await new Promise((resolve) => setTimeout(resolve, 500))
+async function audioRequest(
+  method: 'GET' | 'POST',
+  path: string,
+  body?: unknown,
+): Promise<unknown> {
+  try {
+    const options: RequestInit = {
+      method,
+      headers: { 'Content-Type': 'application/json' },
     }
-    if (!ipcSocket || ipcSocket.destroyed) {
-      // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
-      console.error(LOG_PREFIX, 'IPC socket reconnect failed, command dropped')
-      return
+    if (body !== undefined) {
+      options.body = JSON.stringify(body)
     }
-  }
-
-  const message = JSON.stringify({ command }) + '\n'
-
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    try {
-      await new Promise<void>((resolve, reject) => {
-        if (!ipcSocket || ipcSocket.destroyed) {
-          reject(new Error('IPC socket not connected'))
-          return
-        }
-        ipcSocket.write(message, (err) => {
-          if (err) {
-            reject(err)
-          } else {
-            resolve()
-          }
-        })
-      })
-      return
-    } catch (err) {
-      if (attempt < retries) {
-        // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
-        console.warn(
-          LOG_PREFIX,
-          `IPC command failed (attempt ${attempt + 1}/${retries + 1}), retrying:`,
-          err,
-        )
-        // On failure, try reconnecting before next retry
-        if (!ipcSocket || ipcSocket.destroyed) {
-          connectToSocket()
-        }
-        await new Promise((resolve) => setTimeout(resolve, IPC_RETRY_DELAY_MS))
-      } else {
-        // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
-        console.error(
-          LOG_PREFIX,
-          `IPC command failed after ${retries + 1} attempts:`,
-          err,
-        )
-      }
-    }
+    const response = await fetch(`${AUDIO_SERVER_URL}${path}`, options)
+    return await response.json()
+  } catch (error) {
+    // biome-ignore lint/suspicious/noConsole: Server-side logging for audio
+    console.error(LOG_PREFIX, `Audio request ${method} ${path} failed:`, error)
+    return null
   }
 }
 
@@ -162,340 +103,105 @@ function loadPersistedSettings(): {
   return { volume, isShuffled, currentIndex }
 }
 
-function startHealthCheck(): void {
-  if (healthCheckInterval) return
+/**
+ * Poll the audio server for playback state updates.
+ */
+function startStatePolling(): void {
+  if (statePollingInterval) return
 
-  healthCheckInterval = setInterval(() => {
-    if (!mpvProcess || mpvProcess.killed) return
+  statePollingInterval = setInterval(async () => {
+    if (!audioServerAvailable) return
 
-    if (!ipcSocket || ipcSocket.destroyed) {
-      // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
-      console.warn(
-        LOG_PREFIX,
-        'Health check: IPC socket disconnected, reconnecting',
-      )
-      connectToSocket()
-    }
-  }, 5000)
-}
+    try {
+      const result = (await audioRequest('GET', '/state')) as {
+        is_playing: boolean
+        current_time: number
+        duration: number
+        volume: number
+        is_muted: boolean
+        current_file: string | null
+      } | null
 
-function stopHealthCheck(): void {
-  if (healthCheckInterval) {
-    clearInterval(healthCheckInterval)
-    healthCheckInterval = null
-  }
-}
+      if (!result) return
 
-function handleMpvEvent(event: MpvEvent): void {
-  if (event.event === 'property-change') {
-    const { name, data } = event
+      const wasPlaying = playerState.isPlaying
+      const isNowPlaying = result.is_playing
 
-    switch (name) {
-      case 'time-pos':
-        if (typeof data === 'number') {
-          updateState({ currentTime: data })
-        }
-        break
-      case 'duration':
-        if (typeof data === 'number') {
-          updateState({ duration: data })
-        }
-        break
-      case 'pause':
-        // Always update isPlaying regardless of currentIndex
-        updateState({ isPlaying: data === false })
-        if (data !== undefined) {
-          persistPlayerSettings()
-        }
-        break
-      case 'volume':
-        if (typeof data === 'number') {
-          updateState({ volume: data })
-          persistPlayerSettings()
-        }
-        break
-      case 'mute':
-        updateState({ isMuted: data === true })
-        break
-    }
-  } else if (event.event === 'end-file') {
-    if (event.reason === 'eof') {
-      playNext().catch((err) => {
-        // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
-        console.error(LOG_PREFIX, 'Error playing next track:', err)
-      })
-    } else if (event.reason === 'error') {
-      const trackName =
-        playerState.currentTrack?.title ??
-        playerState.currentTrack?.filename ??
-        'unknown'
-      // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
-      console.error(
-        LOG_PREFIX,
-        `Failed to play "${trackName}": file not found or unreadable`,
-      )
       updateState({
-        isPlaying: false,
-        error: `Failed to play "${trackName}": file not found or unreadable`,
+        isPlaying: isNowPlaying,
+        currentTime: result.current_time,
+        duration: result.duration > 0 ? result.duration : playerState.duration,
+        volume: result.volume,
+        isMuted: result.is_muted,
       })
-    }
-  } else if (event.event === 'file-loaded') {
-    updateState({ isPlaying: true, error: null })
-  }
-}
 
-function connectToSocket(): void {
-  if (!socketPath) return
-
-  // Prevent double-connecting
-  if (ipcSocket && !ipcSocket.destroyed) {
-    return
-  }
-
-  ipcSocket = net.createConnection(socketPath)
-
-  let buffer = ''
-
-  ipcSocket.on('connect', () => {
-    // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
-    console.log(LOG_PREFIX, 'Connected to mpv IPC socket')
-
-    sendCommand(['observe_property', 1, 'time-pos'])
-    sendCommand(['observe_property', 2, 'duration'])
-    sendCommand(['observe_property', 3, 'pause'])
-    sendCommand(['observe_property', 4, 'volume'])
-    sendCommand(['observe_property', 5, 'mute'])
-  })
-
-  ipcSocket.on('data', (data) => {
-    buffer += data.toString()
-
-    const lines = buffer.split('\n')
-    buffer = lines.pop() || ''
-
-    for (const line of lines) {
-      if (line.trim()) {
-        try {
-          const event = JSON.parse(line) as MpvEvent
-          handleMpvEvent(event)
-        } catch {
-          // Ignore parse errors
+      // Detect track end: was playing, now not playing, and we have a current track
+      if (wasPlaying && !isNowPlaying && playerState.currentTrack) {
+        // Check if track reached the end (within 0.5s of duration)
+        if (
+          result.duration > 0 &&
+          result.current_time >= result.duration - 0.5
+        ) {
+          playNext().catch((err) => {
+            // biome-ignore lint/suspicious/noConsole: Server-side logging for audio
+            console.error(LOG_PREFIX, 'Error playing next track:', err)
+          })
         }
       }
+    } catch {
+      // Silently ignore polling errors
     }
-  })
-
-  ipcSocket.on('error', (err) => {
-    // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
-    console.error(LOG_PREFIX, 'IPC socket error:', err.message)
-  })
-
-  ipcSocket.on('close', () => {
-    // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
-    console.log(LOG_PREFIX, 'IPC socket closed')
-    ipcSocket = null
-
-    if (mpvProcess && !mpvProcess.killed) {
-      reconnectTimeout = setTimeout(() => {
-        // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
-        console.log(LOG_PREFIX, 'Attempting to reconnect to IPC socket')
-        connectToSocket()
-      }, 1000)
-    }
-  })
+  }, 500)
 }
 
-/**
- * Kill any orphaned mpv processes left from previous server instances.
- * Since mpv is spawned detached+unref, it survives server restarts and accumulates.
- */
-function killStaleMpvProcesses(): void {
-  const platform = os.platform()
-  try {
-    let pids: string[] = []
-
-    if (platform === 'win32') {
-      const result = Bun.spawnSync([
-        'wmic',
-        'process',
-        'where',
-        "name='mpv.exe' and commandline like '%mpv-socket-%'",
-        'get',
-        'processid',
-        '/format:list',
-      ])
-      if (result.exitCode === 0) {
-        const output = result.stdout.toString().trim()
-        pids = output
-          .split('\n')
-          .filter((line) => line.startsWith('ProcessId='))
-          .map((line) => line.split('=')[1]?.trim())
-          .filter(Boolean)
-      }
-      for (const pid of pids) {
-        try {
-          Bun.spawnSync(['taskkill', '/F', '/PID', pid])
-          // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
-          console.log(LOG_PREFIX, `Killed stale mpv process PID ${pid}`)
-        } catch {
-          // Process may have already exited
-        }
-      }
-    } else {
-      // On macOS/Linux, use pgrep to find mpv processes with our socket pattern
-      const result = Bun.spawnSync(['pgrep', '-f', 'mpv.*mpv-socket-'])
-      if (result.exitCode === 0) {
-        const output = result.stdout.toString().trim()
-        pids = output.split('\n').filter(Boolean)
-      }
-      for (const pid of pids) {
-        try {
-          process.kill(Number(pid), 'SIGTERM')
-          // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
-          console.log(LOG_PREFIX, `Killed stale mpv process PID ${pid}`)
-        } catch {
-          // Process may have already exited
-        }
-      }
-    }
-
-    if (pids.length > 0) {
-      // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
-      console.log(LOG_PREFIX, `Cleaned up ${pids.length} stale mpv process(es)`)
-    }
-  } catch {
-    // Silently ignore errors — best-effort cleanup
+function stopStatePolling(): void {
+  if (statePollingInterval) {
+    clearInterval(statePollingInterval)
+    statePollingInterval = null
   }
 }
 
-/**
- * Clean up stale mpv socket files from /tmp that no longer have an associated process.
- */
-function cleanupStaleSockets(): void {
-  if (os.platform() === 'win32') return // Named pipes auto-clean on Windows
-
-  const tmpDir = os.tmpdir()
-  try {
-    const entries = fs.readdirSync(tmpDir)
-    for (const entry of entries) {
-      if (!entry.startsWith('mpv-socket-')) continue
-      const fullPath = path.join(tmpDir, entry)
-      try {
-        fs.unlinkSync(fullPath)
-        // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
-        console.log(LOG_PREFIX, `Cleaned up stale socket: ${entry}`)
-      } catch {
-        // Ignore errors (might be in use by the current process)
+async function waitForAudioServer(
+  maxRetries = 30,
+  delayMs = 500,
+): Promise<boolean> {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const response = await fetch(`${AUDIO_SERVER_URL}/health`)
+      if (response.ok) {
+        return true
       }
+    } catch {
+      // Server not ready yet
     }
-  } catch {
-    // Ignore errors
+    await new Promise((resolve) => setTimeout(resolve, delayMs))
   }
-}
-
-let cleanupRegistered = false
-
-function registerProcessExitCleanup(): void {
-  if (cleanupRegistered) return
-  cleanupRegistered = true
-
-  const cleanup = () => {
-    if (mpvProcess && !mpvProcess.killed) {
-      try {
-        mpvProcess.kill('SIGTERM')
-      } catch {
-        // Ignore errors during cleanup
-      }
-    }
-    if (socketPath && os.platform() !== 'win32' && fs.existsSync(socketPath)) {
-      try {
-        fs.unlinkSync(socketPath)
-      } catch {
-        // Ignore cleanup errors
-      }
-    }
-  }
-
-  process.on('exit', cleanup)
-  process.on('SIGTERM', cleanup)
-  process.on('SIGINT', cleanup)
+  return false
 }
 
 export async function initializeMusicPlayer(): Promise<boolean> {
-  // Kill any orphaned mpv processes from previous server instances
-  killStaleMpvProcesses()
-  // Wait briefly for processes to terminate
-  await new Promise((resolve) => setTimeout(resolve, 200))
-  cleanupStaleSockets()
+  // biome-ignore lint/suspicious/noConsole: Server-side logging for audio
+  console.log(LOG_PREFIX, 'Waiting for audio server...')
 
-  socketPath = getSocketPath()
+  audioServerAvailable = await waitForAudioServer()
 
-  if (os.platform() !== 'win32' && fs.existsSync(socketPath)) {
-    fs.unlinkSync(socketPath)
-  }
-
-  const mpvPath = findMpvPath()
-  if (!mpvPath) {
-    // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
-    console.warn(LOG_PREFIX, 'mpv not found, music player disabled')
+  if (!audioServerAvailable) {
+    // biome-ignore lint/suspicious/noConsole: Server-side logging for audio
+    console.warn(
+      LOG_PREFIX,
+      'Audio server not available, music player disabled',
+    )
     return false
   }
 
-  // Load persisted settings before starting
+  // biome-ignore lint/suspicious/noConsole: Server-side logging for audio
+  console.log(LOG_PREFIX, 'Audio server connected')
+
+  // Load persisted settings
   const persisted = loadPersistedSettings()
 
-  const mpvArgs = [
-    '--idle=yes',
-    '--no-video',
-    '--no-terminal',
-    `--input-ipc-server=${socketPath}`,
-    '--audio-display=no',
-    '--keep-open=no',
-    `--volume=${persisted.volume}`,
-  ]
-
-  mpvProcess = spawn(mpvPath, mpvArgs, {
-    stdio: ['ignore', 'pipe', 'pipe'],
-    detached: true,
-  })
-
-  // Detach mpv from the server's process group so signals (SIGTERM)
-  // don't propagate between them — prevents mpv crashes from killing the server
-  mpvProcess.unref()
-
-  mpvProcess.stdout?.on('data', (data) => {
-    // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
-    console.log(LOG_PREFIX, 'mpv stdout:', data.toString().trim())
-  })
-
-  mpvProcess.stderr?.on('data', (data) => {
-    // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
-    console.error(LOG_PREFIX, 'mpv stderr:', data.toString().trim())
-  })
-
-  mpvProcess.on('exit', (code) => {
-    // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
-    console.log(LOG_PREFIX, 'mpv process exited with code:', code)
-    mpvProcess = null
-    updateState({
-      isPlaying: false,
-      currentTime: 0,
-      duration: 0,
-      currentTrack: null,
-    })
-  })
-
-  mpvProcess.on('error', (err) => {
-    // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
-    console.error(LOG_PREFIX, 'mpv process error:', err)
-    mpvProcess = null
-  })
-
-  await new Promise((resolve) => setTimeout(resolve, 500))
-
-  connectToSocket()
-
-  await new Promise((resolve) => setTimeout(resolve, 500))
+  // Set volume on audio server
+  await audioRequest('POST', '/volume', { level: persisted.volume })
 
   // Restore persisted state
   updateState({
@@ -527,51 +233,26 @@ export async function initializeMusicPlayer(): Promise<boolean> {
     }
   }
 
-  startHealthCheck()
+  // Start polling for state updates
+  startStatePolling()
 
-  // Ensure mpv is killed when the server process exits (prevents zombie accumulation)
-  registerProcessExitCleanup()
-
-  // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
+  // biome-ignore lint/suspicious/noConsole: Server-side logging for audio
   console.log(LOG_PREFIX, 'Music player initialized')
   return true
 }
 
 export function shutdownMusicPlayer(): void {
-  // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
+  // biome-ignore lint/suspicious/noConsole: Server-side logging for audio
   console.log(LOG_PREFIX, 'Shutting down music player')
 
-  stopHealthCheck()
+  stopStatePolling()
 
-  if (statePollingInterval) {
-    clearInterval(statePollingInterval)
-    statePollingInterval = null
-  }
+  // Stop playback on the audio server
+  audioRequest('POST', '/stop').catch(() => {
+    // Ignore errors during shutdown
+  })
 
-  if (reconnectTimeout) {
-    clearTimeout(reconnectTimeout)
-    reconnectTimeout = null
-  }
-
-  if (ipcSocket) {
-    ipcSocket.destroy()
-    ipcSocket = null
-  }
-
-  if (mpvProcess && !mpvProcess.killed) {
-    mpvProcess.kill('SIGTERM')
-    mpvProcess = null
-  }
-
-  if (socketPath && os.platform() !== 'win32' && fs.existsSync(socketPath)) {
-    try {
-      fs.unlinkSync(socketPath)
-    } catch {
-      // Ignore cleanup errors
-    }
-  }
-
-  // Keep the queue in database for persistence across restarts
+  audioServerAvailable = false
 
   playerState = {
     isPlaying: false,
@@ -588,107 +269,18 @@ export function shutdownMusicPlayer(): void {
     updatedAt: Date.now(),
   }
 
-  // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
+  // biome-ignore lint/suspicious/noConsole: Server-side logging for audio
   console.log(LOG_PREFIX, 'Music player shutdown complete')
 }
 
-function findMpvPath(): string | null {
-  const platform = os.platform()
-
-  // First, check for bundled mpv in resources (production mode)
-  if (process.env.TAURI_MODE === 'true') {
-    const execPath = process.execPath
-    let resourcesDir: string
-
-    if (platform === 'darwin') {
-      // macOS: Resources are at Contents/Resources/
-      const contentsDir = path.join(execPath, '..', '..')
-      resourcesDir = path.join(contentsDir, 'Resources')
-    } else {
-      // Windows/Linux: Resources are in the same directory as the executable
-      resourcesDir = path.join(execPath, '..')
-    }
-
-    const bundledMpvPath = path.join(
-      resourcesDir,
-      'mpv',
-      platform === 'win32' ? 'mpv.exe' : 'mpv',
-    )
-
-    if (fs.existsSync(bundledMpvPath)) {
-      // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
-      console.log(LOG_PREFIX, 'Found bundled mpv at:', bundledMpvPath)
-      return bundledMpvPath
-    }
-  }
-
-  // Development mode: check for mpv in tauri/resources/mpv
-  const devMpvPaths = [
-    // Relative to server cwd (apps/server)
-    path.join(
-      process.cwd(),
-      '..',
-      '..',
-      'tauri',
-      'resources',
-      'mpv',
-      'mpv.exe',
-    ),
-    path.join(process.cwd(), '..', '..', 'tauri', 'resources', 'mpv', 'mpv'),
-    // Relative to app root
-    path.join(process.cwd(), 'tauri', 'resources', 'mpv', 'mpv.exe'),
-    path.join(process.cwd(), 'tauri', 'resources', 'mpv', 'mpv'),
-  ]
-
-  for (const p of devMpvPaths) {
-    if (fs.existsSync(p)) {
-      // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
-      console.log(LOG_PREFIX, 'Found dev mpv at:', p)
-      return p
-    }
-  }
-
-  // Check common system paths
-  const commonPaths: Record<string, string[]> = {
-    darwin: ['/opt/homebrew/bin/mpv', '/usr/local/bin/mpv', '/usr/bin/mpv'],
-    linux: ['/usr/bin/mpv', '/usr/local/bin/mpv'],
-    win32: [
-      'C:\\Program Files\\mpv\\mpv.exe',
-      'C:\\Program Files (x86)\\mpv\\mpv.exe',
-    ],
-  }
-
-  const paths = commonPaths[platform] || []
-
-  for (const p of paths) {
-    if (fs.existsSync(p)) {
-      return p
-    }
-  }
-
-  // Try to find mpv in PATH
-  try {
-    const which = platform === 'win32' ? 'where' : 'which'
-    const result = Bun.spawnSync([which, 'mpv'])
-    if (result.exitCode === 0) {
-      return result.stdout.toString().trim().split('\n')[0]
-    }
-  } catch {
-    // Ignore
-  }
-
-  return null
-}
-
 async function loadAndPlayFile(filePath: string): Promise<void> {
-  await sendCommand(['loadfile', filePath, 'replace'])
+  await audioRequest('POST', '/play', { path: filePath })
 }
 
 async function playNext(): Promise<void> {
   const queueLength = getQueueLength()
 
   if (playerState.isShuffled && queueLength > 1) {
-    // Pick a random index that's different from current
     let randomIndex: number
     do {
       randomIndex = Math.floor(Math.random() * queueLength)
@@ -714,7 +306,7 @@ async function playNext(): Promise<void> {
 
 async function playPrevious(): Promise<void> {
   if (playerState.currentTime > 3) {
-    await sendCommand(['seek', 0, 'absolute'])
+    await audioRequest('POST', '/seek', { time: 0 })
     return
   }
 
@@ -722,14 +314,14 @@ async function playPrevious(): Promise<void> {
   if (prevIndex >= 0) {
     await playAtIndex(prevIndex)
   } else {
-    await sendCommand(['seek', 0, 'absolute'])
+    await audioRequest('POST', '/seek', { time: 0 })
   }
 }
 
 async function playAtIndex(index: number): Promise<void> {
   const item = getQueueItemAtIndex(index)
   if (!item) {
-    // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
+    // biome-ignore lint/suspicious/noConsole: Server-side logging for audio
     console.warn(LOG_PREFIX, 'No item at index:', index)
     return
   }
@@ -759,11 +351,11 @@ async function playAtIndex(index: number): Promise<void> {
 export async function executeCommand(
   command: MusicPlayerCommand,
 ): Promise<void> {
-  if (!mpvProcess || mpvProcess.killed) {
-    // biome-ignore lint/suspicious/noConsole: Server-side logging for mpv IPC
+  if (!audioServerAvailable) {
+    // biome-ignore lint/suspicious/noConsole: Server-side logging for audio
     console.warn(
       LOG_PREFIX,
-      `Cannot execute '${command.type}': mpv process not running`,
+      `Cannot execute '${command.type}': audio server not available`,
     )
     return
   }
@@ -773,29 +365,18 @@ export async function executeCommand(
       if (playerState.currentIndex === -1 && getQueueLength() > 0) {
         await playAtIndex(0)
       } else {
-        await sendCommand(['set_property', 'pause', false])
-        // Fallback: if mpv doesn't respond with property-change within 500ms,
-        // force-update state to prevent stuck UI (especially on Windows)
-        setTimeout(() => {
-          if (!playerState.isPlaying && playerState.currentTrack) {
-            updateState({ isPlaying: true })
-          }
-        }, 500)
+        await audioRequest('POST', '/resume')
+        updateState({ isPlaying: true })
       }
       break
 
     case 'pause':
-      await sendCommand(['set_property', 'pause', true])
-      // Fallback: force-update state if mpv property-change is delayed
-      setTimeout(() => {
-        if (playerState.isPlaying) {
-          updateState({ isPlaying: false })
-        }
-      }, 500)
+      await audioRequest('POST', '/pause')
+      updateState({ isPlaying: false })
       break
 
     case 'stop':
-      await sendCommand(['stop'])
+      await audioRequest('POST', '/stop')
       updateState({
         isPlaying: false,
         currentTime: 0,
@@ -806,15 +387,18 @@ export async function executeCommand(
       break
 
     case 'seek':
-      await sendCommand(['seek', command.time, 'absolute'])
+      await audioRequest('POST', '/seek', { time: command.time })
       break
 
     case 'volume':
-      await sendCommand(['set_property', 'volume', command.level])
+      await audioRequest('POST', '/volume', { level: command.level })
+      updateState({ volume: command.level })
+      persistPlayerSettings()
       break
 
     case 'mute':
-      await sendCommand(['set_property', 'mute', command.muted])
+      await audioRequest('POST', '/mute', { muted: command.muted })
+      updateState({ isMuted: command.muted })
       break
 
     case 'next':
@@ -863,40 +447,18 @@ export function setStateCallback(
 }
 
 export function isPlayerAvailable(): boolean {
-  return mpvProcess !== null && !mpvProcess.killed
+  return audioServerAvailable
 }
 
 export interface MpvStatus {
   available: boolean
   installed: boolean
-  installInstructions?: {
-    mac: string
-    windows: string
-    linux: string
-  }
 }
 
 export function getMpvStatus(): MpvStatus {
-  const mpvPath = findMpvPath()
-  const installed = mpvPath !== null
-
-  if (installed) {
-    return {
-      available: isPlayerAvailable(),
-      installed: true,
-    }
-  }
-
   return {
-    available: false,
-    installed: false,
-    installInstructions: {
-      mac: 'brew install mpv',
-      windows:
-        'Download from https://mpv.io/installation/ or use: winget install mpv',
-      linux:
-        'sudo apt install mpv (Ubuntu/Debian) or sudo dnf install mpv (Fedora)',
-    },
+    available: audioServerAvailable,
+    installed: true, // Always "installed" since it's embedded in the binary
   }
 }
 

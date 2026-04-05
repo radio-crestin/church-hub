@@ -33,8 +33,6 @@
     "ios:launch": "xcrun devicectl device process launch --device A0B78F24-E37A-5781-A622-4C1933760D99 com.church-hub",
     "ios:run": "pnpm ios:build && pnpm ios:install && pnpm ios:launch",
     "ios:run:release": "pnpm ios:build:release && pnpm ios:install && pnpm ios:launch",
-    "setup:libmpv": "node scripts/setup-libmpv.js",
-    "postinstall": "npm run setup:libmpv"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.10",
@@ -61,7 +59,6 @@
   },
   "dependencies": {
     "reveal.js": "^5.2.1",
-    "tauri-plugin-libmpv-api": "^0.3",
     "werift": "^0.22.9"
   },
   "trustedDependencies": [
