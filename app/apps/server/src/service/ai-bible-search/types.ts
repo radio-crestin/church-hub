@@ -2,7 +2,7 @@ import type { BibleSearchResult } from '../bible/types'
 
 export interface AIBibleSearchConfig {
   enabled: boolean
-  provider: 'openai' | 'anthropic' | 'custom'
+  provider: 'openai' | 'anthropic' | 'gemini' | 'custom'
   model: string
   apiKey: string
   baseUrl?: string

@@ -1,6 +1,6 @@
-import { createOpenAI } from '@ai-sdk/openai'
 import { generateText } from 'ai'
 
+import { createAiModel } from './create-ai-model'
 import type { AISearchConfig, AISearchResult } from './types'
 import type { SongSearchResult } from '../songs/types'
 
@@ -91,14 +91,11 @@ export async function analyzeAndScoreResults(
     matchingLyrics: extractRelevantLines(c.matchedContent || '', originalQuery),
   }))
 
-  const openai = createOpenAI({
-    apiKey: config.apiKey,
-    baseURL: config.baseUrl || undefined,
-  })
+  const model = createAiModel(config)
 
   try {
     const { text, reasoning } = await generateText({
-      model: openai(config.model || 'gpt-5.2'),
+      model,
       system: ANALYSIS_PROMPT,
       prompt: `User is searching for: "${originalQuery}"
 
@@ -107,11 +104,6 @@ Score each song based on how well its matching lyrics relate to this search.
 Songs (${candidates.length} total):
 ${JSON.stringify(candidatesSummary, null, 2)}`,
       maxTokens: 5000,
-      providerOptions: {
-        openai: {
-          reasoningEffort: 'low',
-        },
-      },
     })
 
     // Log reasoning if available (for debugging)

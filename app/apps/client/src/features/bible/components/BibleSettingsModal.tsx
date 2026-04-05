@@ -198,7 +198,10 @@ export function BibleSettingsModal({
             </div>
 
             {/* AI Search Settings Section */}
-            <AISearchSettings configKey="bible_ai_search_config" />
+            <AISearchSettings
+              configKey="bible_ai_search_config"
+              portalContainer={dialogElement}
+            />
           </div>
         </div>
       </dialog>

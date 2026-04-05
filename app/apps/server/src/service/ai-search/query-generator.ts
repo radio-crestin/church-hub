@@ -1,6 +1,6 @@
-import { createOpenAI } from '@ai-sdk/openai'
 import { generateText } from 'ai'
 
+import { createAiModel } from './create-ai-model'
 import type { AIGeneratedTerms, AISearchConfig } from './types'
 
 const SYSTEM_PROMPT = `You are a search term generator for a church song database (Romanian & English).
@@ -32,13 +32,10 @@ export async function generateSearchTerms(
   userQuery: string,
   config: AISearchConfig,
 ): Promise<AIGeneratedTerms> {
-  const openai = createOpenAI({
-    apiKey: config.apiKey,
-    baseURL: config.baseUrl || undefined,
-  })
+  const model = createAiModel(config)
 
   const { text } = await generateText({
-    model: openai(config.model || 'gpt-5.2'),
+    model,
     system: SYSTEM_PROMPT,
     prompt: `User is searching for songs about: "${userQuery}"
 
@@ -47,11 +44,6 @@ Think carefully about:
 - What words would appear in worship songs about this topic?
 - What synonyms and related biblical terms should be included?`,
     maxTokens: 600,
-    providerOptions: {
-      openai: {
-        reasoningEffort: 'medium',
-      },
-    },
   })
 
   // Parse the JSON response

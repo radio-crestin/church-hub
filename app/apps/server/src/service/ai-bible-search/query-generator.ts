@@ -1,7 +1,7 @@
-import { createOpenAI } from '@ai-sdk/openai'
 import { generateText } from 'ai'
 
 import type { AIBibleSearchConfig, AIGeneratedTerms } from './types'
+import { createAiModel } from '../ai-search/create-ai-model'
 
 const SYSTEM_PROMPT = `You are a Bible verse search term generator. Given a user's search intent, generate 15-25 highly relevant search terms to find matching Bible verses.
 
@@ -38,13 +38,10 @@ export async function generateBibleSearchTerms(
   userQuery: string,
   config: AIBibleSearchConfig,
 ): Promise<AIGeneratedTerms> {
-  const openai = createOpenAI({
-    apiKey: config.apiKey,
-    baseURL: config.baseUrl || undefined,
-  })
+  const model = createAiModel(config)
 
   const { text } = await generateText({
-    model: openai(config.model || 'gpt-5.2'),
+    model,
     system: SYSTEM_PROMPT,
     prompt: `User is searching for Bible verses about: "${userQuery}"
 
@@ -54,11 +51,6 @@ Think carefully about:
 - What synonyms, theological terms, and character names should be included?
 - What books of the Bible commonly address this topic?`,
     maxTokens: 600,
-    providerOptions: {
-      openai: {
-        reasoningEffort: 'medium',
-      },
-    },
   })
 
   // Parse the JSON response

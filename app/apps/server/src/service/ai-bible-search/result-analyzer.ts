@@ -1,7 +1,7 @@
-import { createOpenAI } from '@ai-sdk/openai'
 import { generateText } from 'ai'
 
 import type { AIBibleSearchConfig, AIBibleSearchResult } from './types'
+import { createAiModel } from '../ai-search/create-ai-model'
 import type { BibleSearchResult } from '../bible/types'
 
 const ANALYSIS_PROMPT = `You are analyzing Bible verse search results.
@@ -50,14 +50,11 @@ export async function analyzeBibleResults(
     text: c.text,
   }))
 
-  const openai = createOpenAI({
-    apiKey: config.apiKey,
-    baseURL: config.baseUrl || undefined,
-  })
+  const model = createAiModel(config)
 
   try {
     const { text, reasoning } = await generateText({
-      model: openai(config.model || 'gpt-5.2'),
+      model,
       system: ANALYSIS_PROMPT,
       prompt: `Search query: "${originalQuery}"
 
@@ -67,11 +64,6 @@ Focus on the ACTUAL VERSE CONTENT and its theological meaning.
 Verses to analyze (${candidates.length} total):
 ${JSON.stringify(candidatesSummary, null, 2)}`,
       maxTokens: 6000,
-      providerOptions: {
-        openai: {
-          reasoningEffort: 'low',
-        },
-      },
     })
 
     // Log reasoning if available (for debugging)

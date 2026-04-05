@@ -9,6 +9,7 @@ import type { AISearchConfig, AISearchConfigKey } from '../types'
 const PROVIDERS = [
   { value: 'openai', label: 'OpenAI' },
   { value: 'anthropic', label: 'Anthropic' },
+  { value: 'gemini', label: 'Google Gemini' },
   { value: 'custom', label: 'Custom (OpenAI-compatible)' },
 ]
 
@@ -23,9 +24,13 @@ const DEFAULT_CONFIG: AISearchConfig = {
 
 interface AISearchSettingsProps {
   configKey: AISearchConfigKey
+  portalContainer?: HTMLElement | null
 }
 
-export function AISearchSettings({ configKey }: AISearchSettingsProps) {
+export function AISearchSettings({
+  configKey,
+  portalContainer,
+}: AISearchSettingsProps) {
   const { t } = useTranslation('settings')
   const { config, isLoading, updateConfig, isUpdating } =
     useAISearchSettings(configKey)
@@ -171,6 +176,7 @@ export function AISearchSettings({ configKey }: AISearchSettingsProps) {
               updateField('provider', val as AISearchConfig['provider'])
             }
             allowClear={false}
+            portalContainer={portalContainer}
           />
           <p className="text-gray-600 dark:text-gray-400 text-xs">
             {t(`${i18nPrefix}.provider.description`)}
