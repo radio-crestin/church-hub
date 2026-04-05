@@ -51,60 +51,70 @@ describe('Tooltip', () => {
     expect(screen.queryByText('Help text')).not.toBeInTheDocument()
   })
 
-  test('applies top position styles by default', async () => {
+  test('renders tooltip in a portal on document.body when outside dialog', async () => {
     const user = userEvent.setup()
-    const { container } = render(
-      <Tooltip content="Top tip">
+    render(
+      <Tooltip content="Portal tip">
         <button>Hover</button>
       </Tooltip>,
     )
 
     await user.hover(screen.getByText('Hover'))
 
-    const tooltipWrapper = container.querySelector('.bottom-full')
-    expect(tooltipWrapper).toBeInTheDocument()
+    const tooltip = screen.getByText('Portal tip')
+    expect(tooltip.closest('.fixed')).toBeTruthy()
+    expect(tooltip.closest('.fixed')?.parentElement).toBe(document.body)
   })
 
-  test('applies bottom position styles', async () => {
+  test('renders tooltip inside dialog when used within a dialog element', async () => {
     const user = userEvent.setup()
-    const { container } = render(
-      <Tooltip content="Bottom tip" position="bottom">
-        <button>Hover</button>
-      </Tooltip>,
+    render(
+      <dialog open data-testid="dialog">
+        <Tooltip content="Dialog tip">
+          <button>Hover dialog</button>
+        </Tooltip>
+      </dialog>,
     )
 
-    await user.hover(screen.getByText('Hover'))
+    await user.hover(screen.getByText('Hover dialog'))
 
-    const tooltipWrapper = container.querySelector('.top-full')
-    expect(tooltipWrapper).toBeInTheDocument()
+    const tooltip = screen.getByText('Dialog tip')
+    const dialog = screen.getByTestId('dialog')
+    expect(tooltip.closest('dialog')).toBe(dialog)
   })
 
-  test('applies left position styles', async () => {
+  test('renders tooltip with high z-index to appear above modals', async () => {
     const user = userEvent.setup()
-    const { container } = render(
-      <Tooltip content="Left tip" position="left">
+    render(
+      <Tooltip content="High z tip">
         <button>Hover</button>
       </Tooltip>,
     )
 
     await user.hover(screen.getByText('Hover'))
 
-    const tooltipWrapper = container.querySelector('.right-full')
-    expect(tooltipWrapper).toBeInTheDocument()
+    const tooltip = screen.getByText('High z tip')
+    const portalEl = tooltip.closest('.fixed') as HTMLElement
+    expect(portalEl.style.zIndex).toBe('99999')
   })
 
-  test('applies right position styles', async () => {
+  test('supports all position variants', async () => {
     const user = userEvent.setup()
-    const { container } = render(
-      <Tooltip content="Right tip" position="right">
-        <button>Hover</button>
-      </Tooltip>,
-    )
+    const positions = ['top', 'bottom', 'left', 'right'] as const
 
-    await user.hover(screen.getByText('Hover'))
+    for (const position of positions) {
+      const { unmount } = render(
+        <Tooltip content={`${position} tip`} position={position}>
+          <button>Hover {position}</button>
+        </Tooltip>,
+      )
 
-    const tooltipWrapper = container.querySelector('.left-full')
-    expect(tooltipWrapper).toBeInTheDocument()
+      await user.hover(screen.getByText(`Hover ${position}`))
+      expect(screen.getByText(`${position} tip`)).toBeInTheDocument()
+
+      await user.unhover(screen.getByText(`Hover ${position}`))
+      unmount()
+    }
   })
 
   test('applies custom className', () => {

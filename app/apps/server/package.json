@@ -1,6 +1,9 @@
 {
   "pnpm": {
-    "onlyBuiltDependencies": ["@julusian/midi", "esbuild"]
+    "onlyBuiltDependencies": [
+      "@julusian/midi",
+      "esbuild"
+    ]
   },
   "name": "server",
   "module": "index.ts",
@@ -12,6 +15,8 @@
     "test": "bun test"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.66",
+    "@ai-sdk/google": "^3.0.58",
     "@ai-sdk/openai": "^1.0.0",
     "@google/genai": "^1.48.0",
     "@sentry/bun": "^10.47.0",

@@ -5,7 +5,7 @@ import type { SongSearchResult } from '../songs/types'
  */
 export interface AISearchConfig {
   enabled: boolean
-  provider: 'openai' | 'anthropic' | 'custom'
+  provider: 'openai' | 'anthropic' | 'gemini' | 'custom'
   model: string
   apiKey: string
   baseUrl?: string

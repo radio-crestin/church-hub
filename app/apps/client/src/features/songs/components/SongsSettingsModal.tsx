@@ -1,5 +1,5 @@
 import { X } from 'lucide-react'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { AISearchSettings } from '~/features/ai-search'
@@ -20,6 +20,14 @@ export function SongsSettingsModal({
   const { t } = useTranslation('songs')
   const dialogRef = useRef<HTMLDialogElement>(null)
   const mouseDownTargetRef = useRef<EventTarget | null>(null)
+  const [dialogElement, setDialogElement] = useState<HTMLDialogElement | null>(
+    null,
+  )
+
+  const setDialogRefCallback = (element: HTMLDialogElement | null) => {
+    dialogRef.current = element
+    setDialogElement(element)
+  }
 
   useEffect(() => {
     if (isOpen) {
@@ -57,7 +65,7 @@ export function SongsSettingsModal({
 
   return (
     <dialog
-      ref={dialogRef}
+      ref={setDialogRefCallback}
       className="fixed inset-0 m-auto w-full max-w-4xl p-0 bg-white dark:bg-gray-800 rounded-xl shadow-xl backdrop:bg-black/50"
       onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
@@ -100,7 +108,10 @@ export function SongsSettingsModal({
           </div>
 
           {/* AI Search Settings Section */}
-          <AISearchSettings configKey="songs_ai_search_config" />
+          <AISearchSettings
+            configKey="songs_ai_search_config"
+            portalContainer={dialogElement}
+          />
         </div>
       </div>
     </dialog>
