@@ -1,9 +1,4 @@
-import {
-  AlertCircle,
-  FileText,
-  Loader2,
-  X,
-} from 'lucide-react'
+import { AlertCircle, FileText, Loader2, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 

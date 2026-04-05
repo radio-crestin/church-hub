@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { createLogger } from '~/utils/logger'
+
+const logger = createLogger('app:bible')
+
 export type BibleNavigationLevel = 'books' | 'chapters' | 'verses'
 
 export interface BibleNavigationState {
@@ -106,6 +110,7 @@ export function useBibleNavigation(
   }, [initialTranslationId])
 
   const selectTranslation = useCallback((id: number) => {
+    logger.info(`Select translation: ${id}`)
     setState(() => ({
       ...initialState,
       translationId: id,
@@ -114,6 +119,7 @@ export function useBibleNavigation(
 
   const selectBook = useCallback(
     (bookId: number, bookName: string, clearSearch = true) => {
+      logger.info(`Select book: ${bookName} (id=${bookId})`)
       setState((prev) => ({
         ...prev,
         bookId,
@@ -131,6 +137,7 @@ export function useBibleNavigation(
   )
 
   const selectChapter = useCallback((chapter: number) => {
+    logger.info(`Select chapter: ${chapter}`)
     setState((prev) => ({
       ...prev,
       chapter,
@@ -142,6 +149,7 @@ export function useBibleNavigation(
 
   /** Sets the presented index */
   const presentVerse = useCallback((index: number) => {
+    logger.info(`Present verse at index: ${index}`)
     setState((prev) => ({
       ...prev,
       presentedIndex: index,
@@ -160,6 +168,7 @@ export function useBibleNavigation(
 
   /** Moves to next verse and presents it */
   const nextVerse = useCallback(() => {
+    logger.debug('Navigate to next verse')
     setState((prev) => ({
       ...prev,
       presentedIndex: (prev.presentedIndex ?? prev.searchedIndex ?? -1) + 1,
@@ -169,6 +178,7 @@ export function useBibleNavigation(
 
   /** Moves to previous verse and presents it */
   const previousVerse = useCallback(() => {
+    logger.debug('Navigate to previous verse')
     setState((prev) => ({
       ...prev,
       presentedIndex: Math.max(
@@ -180,6 +190,7 @@ export function useBibleNavigation(
   }, [])
 
   const clearPresentation = useCallback(() => {
+    logger.info('Clear Bible presentation')
     setState((prev) => ({
       ...prev,
       // Keep verse selected (indigo) so user can navigate with arrows and re-present with Enter
@@ -189,6 +200,7 @@ export function useBibleNavigation(
   }, [])
 
   const goBack = useCallback(() => {
+    logger.debug('Go back in Bible navigation')
     setState((prev) => {
       // If we came from search, go back to search (restore search query)
       if (prev.previousSearchQuery) {
@@ -249,6 +261,9 @@ export function useBibleNavigation(
 
   /** Navigate to a specific verse (used on initial sync from presentation) */
   const navigateToVerse = useCallback((params: NavigateToVerseParams) => {
+    logger.info(
+      `Navigate to verse: ${params.bookName} ${params.chapter}:${params.verseIndex} (translation=${params.translationId})`,
+    )
     setState({
       translationId: params.translationId,
       bookId: params.bookId,
@@ -263,6 +278,9 @@ export function useBibleNavigation(
 
   /** Navigate to chapter (used by reference search and verse navigation) */
   const navigateToChapter = useCallback((params: NavigateToChapterParams) => {
+    logger.info(
+      `Navigate to chapter: ${params.bookName} ${params.chapter} (verseIndex=${params.verseIndex}, selectOnly=${params.selectOnly})`,
+    )
     const isSearchNavigation = params.clearSearch === false
     const selectOnly = params.selectOnly === true
     setState((prev) => ({

@@ -2,6 +2,7 @@ import { fetch as tauriFetch } from '@tauri-apps/plugin-http'
 
 import { getApiUrl, isMobile } from '~/config'
 import { getStoredUserToken } from '~/service/api-url'
+import { createLogger } from '~/utils/logger'
 import type {
   PresentationState,
   PresentTemporaryAnnouncementInput,
@@ -12,6 +13,8 @@ import type {
   PresentTemporaryVerseteTineriInput,
   UpdatePresentationStateInput,
 } from '../types'
+
+const logger = createLogger('app:presentation:service')
 
 // Check if we're running in Tauri context
 const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
@@ -39,16 +42,19 @@ function getHeaders(contentType?: string): Record<string, string> {
  * Fetches the current presentation state
  */
 export async function getPresentationState(): Promise<PresentationState> {
+  logger.debug('GET /api/presentation/state')
   const response = await fetchFn(`${getApiUrl()}/api/presentation/state`, {
     credentials: 'include',
     headers: getHeaders(),
   })
 
   if (!response.ok) {
+    logger.error(`Failed to fetch presentation state: ${response.status}`)
     throw new Error('Failed to fetch presentation state')
   }
 
   const result = await response.json()
+  logger.debug('Presentation state fetched', result.data?.updatedAt)
   return result.data
 }
 
@@ -58,6 +64,7 @@ export async function getPresentationState(): Promise<PresentationState> {
 export async function updatePresentationState(
   input: UpdatePresentationStateInput,
 ): Promise<PresentationState> {
+  logger.debug('PUT /api/presentation/state', input)
   const response = await fetchFn(`${getApiUrl()}/api/presentation/state`, {
     method: 'PUT',
     headers: getHeaders('application/json'),
@@ -66,10 +73,12 @@ export async function updatePresentationState(
   })
 
   if (!response.ok) {
+    logger.error(`Failed to update presentation state: ${response.status}`)
     throw new Error('Failed to update presentation state')
   }
 
   const result = await response.json()
+  logger.debug('Presentation state updated', result.data?.updatedAt)
   return result.data
 }
 
@@ -77,6 +86,7 @@ export async function updatePresentationState(
  * Stops the current presentation
  */
 export async function stopPresentation(): Promise<PresentationState> {
+  logger.info('POST /api/presentation/stop')
   const response = await fetchFn(`${getApiUrl()}/api/presentation/stop`, {
     method: 'POST',
     headers: getHeaders(),
@@ -84,10 +94,12 @@ export async function stopPresentation(): Promise<PresentationState> {
   })
 
   if (!response.ok) {
+    logger.error(`Failed to stop presentation: ${response.status}`)
     throw new Error('Failed to stop presentation')
   }
 
   const result = await response.json()
+  logger.debug('Presentation stopped', result.data?.updatedAt)
   return result.data
 }
 
@@ -95,6 +107,7 @@ export async function stopPresentation(): Promise<PresentationState> {
  * Clears/hides the current slide
  */
 export async function clearSlide(): Promise<PresentationState> {
+  logger.info('POST /api/presentation/clear')
   const response = await fetchFn(`${getApiUrl()}/api/presentation/clear`, {
     method: 'POST',
     headers: getHeaders(),
@@ -102,10 +115,12 @@ export async function clearSlide(): Promise<PresentationState> {
   })
 
   if (!response.ok) {
+    logger.error(`Failed to clear slide: ${response.status}`)
     throw new Error('Failed to clear slide')
   }
 
   const result = await response.json()
+  logger.debug('Slide cleared', result.data?.updatedAt)
   return result.data
 }
 
@@ -113,6 +128,7 @@ export async function clearSlide(): Promise<PresentationState> {
  * Shows the last displayed slide
  */
 export async function showSlide(): Promise<PresentationState> {
+  logger.info('POST /api/presentation/show')
   const response = await fetchFn(`${getApiUrl()}/api/presentation/show`, {
     method: 'POST',
     headers: getHeaders(),
@@ -120,10 +136,12 @@ export async function showSlide(): Promise<PresentationState> {
   })
 
   if (!response.ok) {
+    logger.error(`Failed to show slide: ${response.status}`)
     throw new Error('Failed to show slide')
   }
 
   const result = await response.json()
+  logger.debug('Slide shown', result.data?.updatedAt)
   return result.data
 }
 
@@ -133,6 +151,7 @@ export async function showSlide(): Promise<PresentationState> {
 export async function navigateQueueSlide(
   direction: 'next' | 'prev',
 ): Promise<PresentationState> {
+  logger.info(`POST /api/presentation/navigate-queue direction=${direction}`)
   const response = await fetchFn(
     `${getApiUrl()}/api/presentation/navigate-queue`,
     {
@@ -144,10 +163,12 @@ export async function navigateQueueSlide(
   )
 
   if (!response.ok) {
+    logger.error(`Failed to navigate queue: ${response.status}`)
     throw new Error('Failed to navigate queue')
   }
 
   const result = await response.json()
+  logger.debug('Queue navigated', result.data?.updatedAt)
   return result.data
 }
 
@@ -161,6 +182,7 @@ export async function navigateQueueSlide(
 export async function presentTemporaryBible(
   input: PresentTemporaryBibleInput,
 ): Promise<PresentationState> {
+  logger.info('POST /api/presentation/temporary-bible', input.reference)
   const response = await fetchFn(
     `${getApiUrl()}/api/presentation/temporary-bible`,
     {
@@ -172,10 +194,12 @@ export async function presentTemporaryBible(
   )
 
   if (!response.ok) {
+    logger.error(`Failed to present temporary Bible: ${response.status}`)
     throw new Error('Failed to present temporary Bible verse')
   }
 
   const result = await response.json()
+  logger.debug('Temporary Bible presented', result.data?.updatedAt)
   return result.data
 }
 
@@ -185,6 +209,7 @@ export async function presentTemporaryBible(
 export async function presentTemporarySong(
   input: PresentTemporarySongInput,
 ): Promise<PresentationState> {
+  logger.info('POST /api/presentation/temporary-song', input.songId)
   const response = await fetchFn(
     `${getApiUrl()}/api/presentation/temporary-song`,
     {
@@ -196,10 +221,12 @@ export async function presentTemporarySong(
   )
 
   if (!response.ok) {
+    logger.error(`Failed to present temporary song: ${response.status}`)
     throw new Error('Failed to present temporary song')
   }
 
   const result = await response.json()
+  logger.debug('Temporary song presented', result.data?.updatedAt)
   return result.data
 }
 
@@ -211,6 +238,9 @@ export async function navigateTemporary(input: {
   direction: 'next' | 'prev'
   requestTimestamp: number
 }): Promise<PresentationState> {
+  logger.info(
+    `POST /api/presentation/navigate-temporary direction=${input.direction} ts=${input.requestTimestamp}`,
+  )
   const response = await fetchFn(
     `${getApiUrl()}/api/presentation/navigate-temporary`,
     {
@@ -225,10 +255,12 @@ export async function navigateTemporary(input: {
   )
 
   if (!response.ok) {
+    logger.error(`Failed to navigate temporary: ${response.status}`)
     throw new Error('Failed to navigate temporary content')
   }
 
   const result = await response.json()
+  logger.debug('Temporary content navigated', result.data?.updatedAt)
   return result.data
 }
 
@@ -236,6 +268,7 @@ export async function navigateTemporary(input: {
  * Clear temporary content
  */
 export async function clearTemporaryContent(): Promise<PresentationState> {
+  logger.info('POST /api/presentation/clear-temporary')
   const response = await fetchFn(
     `${getApiUrl()}/api/presentation/clear-temporary`,
     {
@@ -246,10 +279,12 @@ export async function clearTemporaryContent(): Promise<PresentationState> {
   )
 
   if (!response.ok) {
+    logger.error(`Failed to clear temporary content: ${response.status}`)
     throw new Error('Failed to clear temporary content')
   }
 
   const result = await response.json()
+  logger.debug('Temporary content cleared', result.data?.updatedAt)
   return result.data
 }
 
@@ -259,6 +294,7 @@ export async function clearTemporaryContent(): Promise<PresentationState> {
 export async function presentTemporaryAnnouncement(
   input: PresentTemporaryAnnouncementInput,
 ): Promise<PresentationState> {
+  logger.info('POST /api/presentation/temporary-announcement')
   const response = await fetchFn(
     `${getApiUrl()}/api/presentation/temporary-announcement`,
     {
@@ -270,10 +306,12 @@ export async function presentTemporaryAnnouncement(
   )
 
   if (!response.ok) {
+    logger.error(`Failed to present temporary announcement: ${response.status}`)
     throw new Error('Failed to present temporary announcement')
   }
 
   const result = await response.json()
+  logger.debug('Temporary announcement presented', result.data?.updatedAt)
   return result.data
 }
 
@@ -283,6 +321,7 @@ export async function presentTemporaryAnnouncement(
 export async function presentTemporaryBiblePassage(
   input: PresentTemporaryBiblePassageInput,
 ): Promise<PresentationState> {
+  logger.info('POST /api/presentation/temporary-bible-passage')
   const response = await fetchFn(
     `${getApiUrl()}/api/presentation/temporary-bible-passage`,
     {
@@ -294,10 +333,14 @@ export async function presentTemporaryBiblePassage(
   )
 
   if (!response.ok) {
+    logger.error(
+      `Failed to present temporary Bible passage: ${response.status}`,
+    )
     throw new Error('Failed to present temporary Bible passage')
   }
 
   const result = await response.json()
+  logger.debug('Temporary Bible passage presented', result.data?.updatedAt)
   return result.data
 }
 
@@ -307,6 +350,7 @@ export async function presentTemporaryBiblePassage(
 export async function presentTemporaryVerseteTineri(
   input: PresentTemporaryVerseteTineriInput,
 ): Promise<PresentationState> {
+  logger.info('POST /api/presentation/temporary-versete-tineri')
   const response = await fetchFn(
     `${getApiUrl()}/api/presentation/temporary-versete-tineri`,
     {
@@ -318,10 +362,14 @@ export async function presentTemporaryVerseteTineri(
   )
 
   if (!response.ok) {
+    logger.error(
+      `Failed to present temporary versete tineri: ${response.status}`,
+    )
     throw new Error('Failed to present temporary versete tineri')
   }
 
   const result = await response.json()
+  logger.debug('Temporary versete tineri presented', result.data?.updatedAt)
   return result.data
 }
 
@@ -331,6 +379,7 @@ export async function presentTemporaryVerseteTineri(
 export async function presentTemporaryScene(
   input: PresentTemporarySceneInput,
 ): Promise<PresentationState> {
+  logger.info('POST /api/presentation/temporary-scene', input.sceneId)
   const response = await fetchFn(
     `${getApiUrl()}/api/presentation/temporary-scene`,
     {
@@ -342,9 +391,11 @@ export async function presentTemporaryScene(
   )
 
   if (!response.ok) {
+    logger.error(`Failed to present temporary scene: ${response.status}`)
     throw new Error('Failed to present temporary scene')
   }
 
   const result = await response.json()
+  logger.debug('Temporary scene presented', result.data?.updatedAt)
   return result.data
 }

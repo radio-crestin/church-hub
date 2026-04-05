@@ -8,14 +8,9 @@ import { formatReference, getVerse, getVerseRange } from './verses'
 import type { Statement } from 'bun:sqlite'
 import { getDatabase, getRawDatabase } from '../../db'
 import { bibleBooks, bibleVerses } from '../../db/schema'
+import { createLogger } from '../../utils/logger'
 
-const DEBUG = process.env.DEBUG === 'true'
-
-function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
-  if (level === 'debug' && !DEBUG) return
-  // biome-ignore lint/suspicious/noConsole: logging utility
-  console.log(`[${level.toUpperCase()}] [bible:search] ${message}`)
-}
+const logger = createLogger('bible:search')
 
 // ============================================================================
 // Prepared Statement Cache - Reuse compiled SQL statements
@@ -261,7 +256,7 @@ export function parseReference(query: string): ParsedReference | null {
   // Look up book code from aliases
   const bookCode = BOOK_ALIASES[bookName]
   if (!bookCode) {
-    log('debug', `Unknown book name: ${bookName}`)
+    logger.debug(`Unknown book name: ${bookName}`)
     return null
   }
 
@@ -310,7 +305,7 @@ export function searchByReference(
   if (!effectiveTranslationId) {
     const defaultTranslation = getDefaultTranslation()
     if (!defaultTranslation) {
-      log('warning', 'No translations available')
+      logger.warning('No translations available')
       return []
     }
     effectiveTranslationId = defaultTranslation.id
@@ -319,8 +314,7 @@ export function searchByReference(
   // Check if book exists in this translation
   const book = getBookByCode(effectiveTranslationId, parsed.bookCode)
   if (!book) {
-    log(
-      'debug',
+    logger.debug(
       `Book ${parsed.bookCode} not found in translation ${effectiveTranslationId}`,
     )
     return []
@@ -417,7 +411,7 @@ function generateHighlightedText(text: string, searchWords: string[]): string {
  */
 export function clearSearchCache(): void {
   searchCache.clear()
-  log('debug', 'Search cache cleared')
+  logger.debug('Search cache cleared')
 }
 
 /**
@@ -426,7 +420,7 @@ export function clearSearchCache(): void {
 export function invalidatePreparedStatements(): void {
   preparedStatements.searchWithTranslation = null
   preparedStatements.searchWithoutTranslation = null
-  log('debug', 'Prepared statements invalidated')
+  logger.debug('Prepared statements invalidated')
 }
 
 /**
@@ -460,7 +454,7 @@ export function searchVersesByText(
   const cacheKey = getCacheKey(sanitizedQuery, translationId, limit)
   const cachedResults = getFromCache(cacheKey)
   if (cachedResults) {
-    log('debug', `Cache hit for: "${query}" (${cachedResults.length} results)`)
+    logger.debug(`Cache hit for: "${query}" (${cachedResults.length} results)`)
     return cachedResults
   }
 
@@ -477,8 +471,7 @@ export function searchVersesByText(
   // Generate fuzzy FTS query
   const ftsQuery = generateFuzzyFtsQuery(words)
 
-  log(
-    'debug',
+  logger.debug(
     `Searching for: "${query}" → normalized: "${sanitizedQuery}" → FTS query: "${ftsQuery}"`,
   )
 
@@ -523,20 +516,19 @@ export function searchVersesByText(
     setInCache(cacheKey, mappedResults)
 
     const elapsed = performance.now() - startTime
-    log(
-      'debug',
+    logger.debug(
       `Search completed: "${query}" → ${mappedResults.length} results in ${elapsed.toFixed(1)}ms`,
     )
 
     return mappedResults
   } catch (error) {
-    log('error', `Search failed: ${error}`)
+    logger.error(`Search failed: ${error}`)
 
     // If prepared statement failed (e.g., after DB reconnection), clear and retry once
     if (String(error).includes('statement')) {
       preparedStatements.searchWithTranslation = null
       preparedStatements.searchWithoutTranslation = null
-      log('warning', 'Cleared prepared statements cache, retrying...')
+      logger.warning('Cleared prepared statements cache, retrying...')
     }
 
     return []
@@ -576,7 +568,7 @@ export function searchBible(input: SearchVersesInput): {
 export function updateSearchIndex(translationId: number): void {
   const rawDb = getRawDatabase()
 
-  log('info', `Updating FTS index for translation ${translationId}`)
+  logger.info(`Updating FTS index for translation ${translationId}`)
 
   // Remove existing entries for this translation
   rawDb.run(
@@ -599,7 +591,7 @@ export function updateSearchIndex(translationId: number): void {
   // Clear cache since index changed
   clearSearchCache()
 
-  log('info', 'FTS index updated')
+  logger.info('FTS index updated')
 }
 
 /**
@@ -617,7 +609,7 @@ export function warmupSearchIndex(): void {
     // FTS table might not exist yet, that's fine
   }
   const elapsed = performance.now() - startTime
-  log('info', `FTS index warmup completed in ${elapsed.toFixed(1)}ms`)
+  logger.info(`FTS index warmup completed in ${elapsed.toFixed(1)}ms`)
 }
 
 /**
@@ -627,7 +619,7 @@ export function warmupSearchIndex(): void {
 export function rebuildSearchIndex(): void {
   const rawDb = getRawDatabase()
 
-  log('info', 'Rebuilding entire Bible FTS index')
+  logger.info('Rebuilding entire Bible FTS index')
 
   // Always drop and recreate the FTS table to ensure the correct tokenizer
   // config is applied (e.g., remove_diacritics 2 for accent-insensitive search)
@@ -642,9 +634,7 @@ export function rebuildSearchIndex(): void {
   `)
 
   // Rebuild from content table
-  rawDb.run(
-    "INSERT INTO bible_verses_fts(bible_verses_fts) VALUES('rebuild')",
-  )
+  rawDb.run("INSERT INTO bible_verses_fts(bible_verses_fts) VALUES('rebuild')")
 
   // Invalidate prepared statements since table was recreated
   invalidatePreparedStatements()
@@ -659,5 +649,5 @@ export function rebuildSearchIndex(): void {
     )
     .get()?.count
 
-  log('info', `FTS index rebuilt: ${count ?? 0} verses indexed`)
+  logger.info(`FTS index rebuilt: ${count ?? 0} verses indexed`)
 }

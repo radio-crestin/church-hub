@@ -33,8 +33,7 @@ export {
   stopRecording,
   stopStreaming,
 } from './streaming'
-export { obsConnection }
-export { broadcastOBSCurrentScene }
+export { broadcastOBSCurrentScene, obsConnection }
 
 export function initializeOBSCallbacks() {
   obsConnection.setCurrentSceneCallback(async (sceneName) => {

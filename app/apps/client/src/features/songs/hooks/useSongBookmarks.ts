@@ -60,8 +60,9 @@ export function useReorderBookmarks() {
     mutationFn: (songIds: number[]) => reorderBookmarks(songIds),
     onMutate: async (songIds: number[]) => {
       await queryClient.cancelQueries({ queryKey: SONG_BOOKMARKS_QUERY_KEY })
-      const previous =
-        queryClient.getQueryData<SongBookmark[]>(SONG_BOOKMARKS_QUERY_KEY)
+      const previous = queryClient.getQueryData<SongBookmark[]>(
+        SONG_BOOKMARKS_QUERY_KEY,
+      )
 
       if (previous) {
         const reordered = songIds

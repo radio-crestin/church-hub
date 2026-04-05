@@ -54,6 +54,36 @@ pub fn run() {
         scope.set_tag("platform", std::env::consts::OS);
     });
 
+    // Set up a custom panic hook that logs to Sentry before aborting
+    let default_panic = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |info| {
+        let msg = if let Some(s) = info.payload().downcast_ref::<&str>() {
+            s.to_string()
+        } else if let Some(s) = info.payload().downcast_ref::<String>() {
+            s.clone()
+        } else {
+            "Unknown panic".to_string()
+        };
+
+        let location = info
+            .location()
+            .map(|l| format!("{}:{}:{}", l.file(), l.line(), l.column()))
+            .unwrap_or_else(|| "unknown".to_string());
+
+        eprintln!("[PANIC] {} at {}", msg, location);
+
+        // Sentry captures panics automatically via the guard, but log explicitly too
+        sentry::capture_message(
+            &format!("Panic: {} at {}", msg, location),
+            sentry::Level::Fatal,
+        );
+
+        // Flush Sentry events before the process exits
+        sentry::Hub::current().client().map(|c| c.flush(Some(std::time::Duration::from_secs(2))));
+
+        default_panic(info);
+    }));
+
     let app_start = Instant::now();
     println!("[startup] === Tauri Starting ===");
 

@@ -8,14 +8,9 @@ import type {
 } from './types'
 import { getDatabase } from '../../db'
 import { songSlides } from '../../db/schema'
+import { createLogger } from '../../utils/logger'
 
-const DEBUG = process.env.DEBUG === 'true'
-
-function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
-  if (level === 'debug' && !DEBUG) return
-  // biome-ignore lint/suspicious/noConsole: logging utility
-  console.log(`[${level.toUpperCase()}] [song-slides] ${message}`)
-}
+const logger = createLogger('song-slides')
 
 /**
  * Converts database slide record to API format
@@ -51,7 +46,7 @@ function toSongSlide(record: typeof songSlides.$inferSelect): SongSlide {
  * Gets all slides for a song
  */
 export function getSlidesBySongId(songId: number): SongSlide[] {
-  log('debug', `Getting slides for song: ${songId}`)
+  logger.debug(`Getting slides for song: ${songId}`)
 
   const db = getDatabase()
   const records = db
@@ -61,7 +56,7 @@ export function getSlidesBySongId(songId: number): SongSlide[] {
     .orderBy(asc(songSlides.sortOrder))
     .all()
 
-  log('debug', `Found ${records.length} slides for song ${songId}`)
+  logger.debug(`Found ${records.length} slides for song ${songId}`)
   return records.map(toSongSlide)
 }
 
@@ -76,7 +71,7 @@ export function getSlidesBySongIds(
     return new Map()
   }
 
-  log('debug', `Getting slides for ${songIds.length} songs in batch`)
+  logger.debug(`Getting slides for ${songIds.length} songs in batch`)
 
   const db = getDatabase()
   const records = db
@@ -102,8 +97,7 @@ export function getSlidesBySongIds(
     }
   }
 
-  log(
-    'debug',
+  logger.debug(
     `Found ${records.length} total slides for ${songIds.length} songs`,
   )
   return slidesBySongId
@@ -114,7 +108,7 @@ export function getSlidesBySongIds(
  */
 export function getSongSlideById(id: number): SongSlide | null {
   try {
-    log('debug', `Getting song slide by ID: ${id}`)
+    logger.debug(`Getting song slide by ID: ${id}`)
 
     const db = getDatabase()
     const record = db
@@ -124,13 +118,13 @@ export function getSongSlideById(id: number): SongSlide | null {
       .get()
 
     if (!record) {
-      log('debug', `Song slide not found: ${id}`)
+      logger.debug(`Song slide not found: ${id}`)
       return null
     }
 
     return toSongSlide(record)
   } catch (error) {
-    log('error', `Failed to get song slide: ${error}`)
+    logger.error(`Failed to get song slide: ${error}`)
     return null
   }
 }
@@ -156,7 +150,7 @@ export function upsertSongSlide(input: UpsertSongSlideInput): SongSlide | null {
     const db = getDatabase()
 
     if (input.id) {
-      log('debug', `Updating song slide: ${input.id}`)
+      logger.debug(`Updating song slide: ${input.id}`)
 
       db.update(songSlides)
         .set({
@@ -168,11 +162,11 @@ export function upsertSongSlide(input: UpsertSongSlideInput): SongSlide | null {
         .where(eq(songSlides.id, input.id))
         .run()
 
-      log('info', `Song slide updated: ${input.id}`)
+      logger.info(`Song slide updated: ${input.id}`)
       return getSongSlideById(input.id)
     }
 
-    log('debug', `Creating song slide for song: ${input.songId}`)
+    logger.debug(`Creating song slide for song: ${input.songId}`)
 
     const sortOrder = input.sortOrder ?? getNextSortOrder(input.songId)
 
@@ -188,10 +182,10 @@ export function upsertSongSlide(input: UpsertSongSlideInput): SongSlide | null {
       .returning({ id: songSlides.id })
       .get()
 
-    log('info', `Song slide created: ${inserted.id}`)
+    logger.info(`Song slide created: ${inserted.id}`)
     return getSongSlideById(inserted.id)
   } catch (error) {
-    log('error', `Failed to upsert song slide: ${error}`)
+    logger.error(`Failed to upsert song slide: ${error}`)
     return null
   }
 }
@@ -201,15 +195,15 @@ export function upsertSongSlide(input: UpsertSongSlideInput): SongSlide | null {
  */
 export function deleteSongSlide(id: number): OperationResult {
   try {
-    log('debug', `Deleting song slide: ${id}`)
+    logger.debug(`Deleting song slide: ${id}`)
 
     const db = getDatabase()
     db.delete(songSlides).where(eq(songSlides.id, id)).run()
 
-    log('info', `Song slide deleted: ${id}`)
+    logger.info(`Song slide deleted: ${id}`)
     return { success: true }
   } catch (error) {
-    log('error', `Failed to delete song slide: ${error}`)
+    logger.error(`Failed to delete song slide: ${error}`)
     return { success: false, error: String(error) }
   }
 }
@@ -219,11 +213,11 @@ export function deleteSongSlide(id: number): OperationResult {
  */
 export function cloneSongSlide(id: number): SongSlide | null {
   try {
-    log('debug', `Cloning song slide: ${id}`)
+    logger.debug(`Cloning song slide: ${id}`)
 
     const original = getSongSlideById(id)
     if (!original) {
-      log('error', `Original slide not found: ${id}`)
+      logger.error(`Original slide not found: ${id}`)
       return null
     }
 
@@ -256,10 +250,10 @@ export function cloneSongSlide(id: number): SongSlide | null {
       .returning({ id: songSlides.id })
       .get()
 
-    log('info', `Song slide cloned: ${id} -> ${inserted.id}`)
+    logger.info(`Song slide cloned: ${id} -> ${inserted.id}`)
     return getSongSlideById(inserted.id)
   } catch (error) {
-    log('error', `Failed to clone song slide: ${error}`)
+    logger.error(`Failed to clone song slide: ${error}`)
     return null
   }
 }
@@ -272,7 +266,7 @@ export function reorderSongSlides(
   input: ReorderSongSlidesInput,
 ): OperationResult {
   try {
-    log('debug', `Reordering slides for song: ${songId}`)
+    logger.debug(`Reordering slides for song: ${songId}`)
 
     if (input.slideIds.length === 0) {
       return { success: true }
@@ -296,10 +290,10 @@ export function reorderSongSlides(
     `),
     )
 
-    log('info', `Slides reordered for song: ${songId} (batch)`)
+    logger.info(`Slides reordered for song: ${songId} (batch)`)
     return { success: true }
   } catch (error) {
-    log('error', `Failed to reorder slides: ${error}`)
+    logger.error(`Failed to reorder slides: ${error}`)
     return { success: false, error: String(error) }
   }
 }

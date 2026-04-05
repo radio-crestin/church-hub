@@ -61,11 +61,12 @@ export function LivePreview() {
   const { data: screen } = useScreen(primaryScreen?.id ?? undefined)
 
   // Use shared presentation content hook
-  const { contentType, contentData, contentKey, isVisible } = usePresentationContent({
-    screen,
-    includeNextSlide: false,
-    getBookName,
-  })
+  const { contentType, contentData, contentKey, isVisible } =
+    usePresentationContent({
+      screen,
+      includeNextSlide: false,
+      getBookName,
+    })
 
   // Handle context menu (right-click) on preview
   const handleContextMenu = useCallback(

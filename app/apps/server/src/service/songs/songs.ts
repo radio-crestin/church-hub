@@ -13,19 +13,14 @@ import type {
 } from './types'
 import { getDatabase, getRawDatabase } from '../../db'
 import { songSlides, songs } from '../../db/schema'
+import { createLogger } from '../../utils/logger'
 import {
   addAminToLastSlide,
   generateExpandedPresentationOrder,
 } from '../presentation/expand-song-slides'
 
-const DEBUG = process.env.DEBUG === 'true'
+const logger = createLogger('songs')
 const SLIDE_BULK_INSERT_CHUNK_SIZE = 1000 // Increased from 500 for better performance
-
-function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
-  if (level === 'debug' && !DEBUG) return
-  // biome-ignore lint/suspicious/noConsole: logging utility
-  console.log(`[${level.toUpperCase()}] [songs] ${message}`)
-}
 
 interface SlideInput {
   content: string
@@ -111,14 +106,14 @@ function toSong(record: typeof songs.$inferSelect): Song {
  */
 export function getAllSongs(): Song[] {
   try {
-    log('debug', 'Getting all songs')
+    logger.debug('Getting all songs')
 
     const db = getDatabase()
     const records = db.select().from(songs).orderBy(asc(songs.title)).all()
 
     return records.map(toSong)
   } catch (error) {
-    log('error', `Failed to get all songs: ${error}`)
+    logger.error(`Failed to get all songs: ${error}`)
     return []
   }
 }
@@ -158,8 +153,7 @@ export function getSongsPaginated(
   try {
     const { categoryIds, presentedOnly, inSchedulesOnly, hasKeyLine, sortBy } =
       filters ?? {}
-    log(
-      'debug',
+    logger.debug(
       `Getting songs paginated: limit=${limit}, offset=${offset}, categoryIds=${categoryIds?.join(',')}, presentedOnly=${presentedOnly}, inSchedulesOnly=${inSchedulesOnly}, hasKeyLine=${hasKeyLine}`,
     )
 
@@ -274,7 +268,7 @@ export function getSongsPaginated(
       hasMore: offset + songsList.length < total,
     }
   } catch (error) {
-    log('error', `Failed to get paginated songs: ${error}`)
+    logger.error(`Failed to get paginated songs: ${error}`)
     return { songs: [], total: 0, hasMore: false }
   }
 }
@@ -284,19 +278,19 @@ export function getSongsPaginated(
  */
 export function getSongById(id: number): Song | null {
   try {
-    log('debug', `Getting song by ID: ${id}`)
+    logger.debug(`Getting song by ID: ${id}`)
 
     const db = getDatabase()
     const record = db.select().from(songs).where(eq(songs.id, id)).get()
 
     if (!record) {
-      log('debug', `Song not found: ${id}`)
+      logger.debug(`Song not found: ${id}`)
       return null
     }
 
     return toSong(record)
   } catch (error) {
-    log('error', `Failed to get song: ${error}`)
+    logger.error(`Failed to get song: ${error}`)
     return null
   }
 }
@@ -311,7 +305,7 @@ export function getSongById(id: number): Song | null {
 export function getSongByTitle(title: string, exact = false): Song | null {
   try {
     const searchTitle = exact ? title : sanitizeSongTitle(title)
-    log('debug', `Getting song by title: ${searchTitle} (exact: ${exact})`)
+    logger.debug(`Getting song by title: ${searchTitle} (exact: ${exact})`)
 
     const db = getDatabase()
     // SQLite title column uses COLLATE NOCASE for case-insensitive comparison
@@ -322,13 +316,13 @@ export function getSongByTitle(title: string, exact = false): Song | null {
       .get()
 
     if (!record) {
-      log('debug', `Song not found with title: ${searchTitle}`)
+      logger.debug(`Song not found with title: ${searchTitle}`)
       return null
     }
 
     return toSong(record)
   } catch (error) {
-    log('error', `Failed to get song by title: ${error}`)
+    logger.error(`Failed to get song by title: ${error}`)
     return null
   }
 }
@@ -341,7 +335,7 @@ export function getSongByTitle(title: string, exact = false): Song | null {
  */
 export function getSongWithSlides(id: number): SongWithSlides | null {
   try {
-    log('debug', `Getting song with slides: ${id}`)
+    logger.debug(`Getting song with slides: ${id}`)
 
     const song = getSongById(id)
     if (!song) {
@@ -367,7 +361,7 @@ export function getSongWithSlides(id: number): SongWithSlides | null {
       category,
     }
   } catch (error) {
-    log('error', `Failed to get song with slides: ${error}`)
+    logger.error(`Failed to get song with slides: ${error}`)
     return null
   }
 }
@@ -383,7 +377,7 @@ export function getAllSongsWithSlides(
   categoryId?: number | null,
 ): SongWithSlides[] {
   try {
-    log('debug', `Getting all songs with slides, categoryId: ${categoryId}`)
+    logger.debug(`Getting all songs with slides, categoryId: ${categoryId}`)
 
     const db = getDatabase()
 
@@ -422,7 +416,7 @@ export function getAllSongsWithSlides(
       }
     })
   } catch (error) {
-    log('error', `Failed to get all songs with slides: ${error}`)
+    logger.error(`Failed to get all songs with slides: ${error}`)
     return []
   }
 }
@@ -440,7 +434,7 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
     let songId: number
 
     if (input.id) {
-      log('debug', `Updating song: ${input.id}`)
+      logger.debug(`Updating song: ${input.id}`)
 
       // Build update object
       const updateData: Record<string, any> = {
@@ -473,9 +467,9 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
       db.update(songs).set(updateData).where(eq(songs.id, input.id)).run()
       songId = input.id
 
-      log('info', `Song updated: ${input.id}`)
+      logger.info(`Song updated: ${input.id}`)
     } else {
-      log('debug', `Creating song: ${title}`)
+      logger.debug(`Creating song: ${title}`)
 
       // Set last_manual_edit only when isManualEdit is true (UI edit)
       const lastManualEdit = input.isManualEdit ? now : null
@@ -505,13 +499,12 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
 
       songId = result.id
 
-      log('info', `Song created: ${songId}`)
+      logger.info(`Song created: ${songId}`)
     }
 
     // Handle slides if provided
     if (input.slides !== undefined) {
-      log(
-        'debug',
+      logger.debug(
         `Processing ${input.slides.length} slides for song ${songId}`,
       )
 
@@ -565,13 +558,13 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
       )
       if (idsToDelete.length > 0) {
         db.delete(songSlides).where(inArray(songSlides.id, idsToDelete)).run()
-        log('debug', `Deleted ${idsToDelete.length} slides`)
+        logger.debug(`Deleted ${idsToDelete.length} slides`)
       }
     }
 
     return getSongWithSlides(songId)
   } catch (error) {
-    log('error', `Failed to upsert song: ${error}`)
+    logger.error(`Failed to upsert song: ${error}`)
     return null
   }
 }
@@ -582,7 +575,7 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
  */
 export function resetSongPresentationCount(id: number): SongWithSlides | null {
   try {
-    log('debug', `Resetting presentation count for song: ${id}`)
+    logger.debug(`Resetting presentation count for song: ${id}`)
 
     const db = getDatabase()
 
@@ -594,10 +587,10 @@ export function resetSongPresentationCount(id: number): SongWithSlides | null {
       .where(eq(songs.id, id))
       .run()
 
-    log('info', `Presentation count reset for song: ${id}`)
+    logger.info(`Presentation count reset for song: ${id}`)
     return getSongWithSlides(id)
   } catch (error) {
-    log('error', `Failed to reset presentation count: ${error}`)
+    logger.error(`Failed to reset presentation count: ${error}`)
     return null
   }
 }
@@ -607,17 +600,17 @@ export function resetSongPresentationCount(id: number): SongWithSlides | null {
  */
 export function deleteSong(id: number): OperationResult {
   try {
-    log('debug', `Deleting song: ${id}`)
+    logger.debug(`Deleting song: ${id}`)
 
     const db = getDatabase()
 
     // Slides are deleted automatically via CASCADE
     db.delete(songs).where(eq(songs.id, id)).run()
 
-    log('info', `Song deleted: ${id}`)
+    logger.info(`Song deleted: ${id}`)
     return { success: true }
   } catch (error) {
-    log('error', `Failed to delete song: ${error}`)
+    logger.error(`Failed to delete song: ${error}`)
     return { success: false, error: String(error) }
   }
 }
@@ -633,17 +626,17 @@ export function deleteSongsByIds(
       return { success: true, deletedCount: 0 }
     }
 
-    log('debug', `Deleting ${ids.length} songs`)
+    logger.debug(`Deleting ${ids.length} songs`)
 
     const db = getDatabase()
 
     // Slides are deleted automatically via CASCADE
     const result = db.delete(songs).where(inArray(songs.id, ids)).run()
 
-    log('info', `Songs deleted: ${result.changes}`)
+    logger.info(`Songs deleted: ${result.changes}`)
     return { success: true, deletedCount: result.changes }
   } catch (error) {
-    log('error', `Failed to delete songs: ${error}`)
+    logger.error(`Failed to delete songs: ${error}`)
     return { success: false, error: String(error), deletedCount: 0 }
   }
 }
@@ -735,7 +728,7 @@ export function batchImportSongs(
   const now = Math.floor(Date.now() / 1000)
 
   const totalStart = performance.now()
-  log('info', `Starting batch import of ${songsInput.length} songs`)
+  logger.info(`Starting batch import of ${songsInput.length} songs`)
 
   try {
     // Use transaction for atomic batch insert
@@ -801,8 +794,7 @@ export function batchImportSongs(
         manuallyEditedSongs.map((s) => s.lower_title),
       )
       const manualEditTime = performance.now() - manualEditStart
-      log(
-        'info',
+      logger.info(
         `[PERF] Preloaded ${manuallyEditedTitles.size} manually edited songs in ${manualEditTime.toFixed(2)}ms`,
       )
     }
@@ -900,8 +892,7 @@ export function batchImportSongs(
                   slides: input.slides || [],
                 })
                 successCount++
-                log(
-                  'info',
+                logger.info(
                   `Song "${input.title}" has different content — imported as "${newTitle}"`,
                 )
               } else {
@@ -920,13 +911,12 @@ export function batchImportSongs(
         failedCount++
         const msg = error instanceof Error ? error.message : String(error)
         errors.push(`Song "${input.title}": ${msg}`)
-        log('error', `Failed to import song ${i + 1}: ${msg}`)
+        logger.error(`Failed to import song ${i + 1}: ${msg}`)
       }
     }
 
     const phase1Time = performance.now() - phase1Start
-    log(
-      'info',
+    logger.info(
       `[PERF] Phase 1 (upsert songs): ${phase1Time.toFixed(2)}ms for ${songsInput.length} songs (${(phase1Time / songsInput.length).toFixed(2)}ms/song)`,
     )
 
@@ -940,7 +930,7 @@ export function batchImportSongs(
     }
 
     const phase2Time = performance.now() - phase2Start
-    log('info', `[PERF] Phase 2 (delete slides): ${phase2Time.toFixed(2)}ms`)
+    logger.info(`[PERF] Phase 2 (delete slides): ${phase2Time.toFixed(2)}ms`)
 
     // Phase 3: Bulk insert all slides at once (super batch)
     const phase3Start = performance.now()
@@ -966,25 +956,22 @@ export function batchImportSongs(
       insertSlidesBulkAll(rawDb, allSlides, now)
     }
     const phase3Time = performance.now() - phase3Start
-    log(
-      'info',
+    logger.info(
       `[PERF] Phase 3 (insert slides): ${phase3Time.toFixed(2)}ms for ${allSlides.length} slides`,
     )
 
     rawDb.exec('COMMIT')
     const totalTime = performance.now() - totalStart
-    log(
-      'info',
+    logger.info(
       `[PERF] Batch import total: ${totalTime.toFixed(2)}ms | Phase1: ${phase1Time.toFixed(0)}ms | Phase2: ${phase2Time.toFixed(0)}ms | Phase3: ${phase3Time.toFixed(0)}ms`,
     )
-    log(
-      'info',
+    logger.info(
       `Batch import completed: ${successCount} success, ${failedCount} failed, ${skippedCount} skipped`,
     )
   } catch (error) {
     rawDb.exec('ROLLBACK')
     const msg = error instanceof Error ? error.message : String(error)
-    log('error', `Batch import transaction failed: ${msg}`)
+    logger.error(`Batch import transaction failed: ${msg}`)
     errors.push(`Transaction failed: ${msg}`)
   }
 

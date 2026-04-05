@@ -9,13 +9,9 @@ import type {
 import { getDatabase, getRawDatabase } from '../../db'
 import { songCategories, songs } from '../../db/schema'
 
-const DEBUG = process.env.DEBUG === 'true'
+import { createLogger } from '../../utils/logger'
 
-function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
-  if (level === 'debug' && !DEBUG) return
-  // biome-ignore lint/suspicious/noConsole: logging utility
-  console.log(`[${level.toUpperCase()}] [song-categories] ${message}`)
-}
+const logger = createLogger('song-categories')
 
 /**
  * Converts database category record to API format
@@ -45,7 +41,7 @@ function toCategory(
  */
 export function getAllCategories(): SongCategory[] {
   try {
-    log('debug', 'Getting all categories')
+    logger.debug('Getting all categories')
 
     const db = getDatabase()
     const records = db
@@ -61,7 +57,7 @@ export function getAllCategories(): SongCategory[] {
 
     return records.map((r) => toCategory(r.category, r.songCount))
   } catch (error) {
-    log('error', `Failed to get all categories: ${error}`)
+    logger.error(`Failed to get all categories: ${error}`)
     return []
   }
 }
@@ -71,7 +67,7 @@ export function getAllCategories(): SongCategory[] {
  */
 export function getCategoryById(id: number): SongCategory | null {
   try {
-    log('debug', `Getting category by ID: ${id}`)
+    logger.debug(`Getting category by ID: ${id}`)
 
     const db = getDatabase()
     const record = db
@@ -86,13 +82,13 @@ export function getCategoryById(id: number): SongCategory | null {
       .get()
 
     if (!record) {
-      log('debug', `Category not found: ${id}`)
+      logger.debug(`Category not found: ${id}`)
       return null
     }
 
     return toCategory(record.category, record.songCount)
   } catch (error) {
-    log('error', `Failed to get category: ${error}`)
+    logger.error(`Failed to get category: ${error}`)
     return null
   }
 }
@@ -109,7 +105,7 @@ export function upsertCategory(
     const rawDb = getRawDatabase()
 
     if (input.id) {
-      log('debug', `Updating category: ${input.id}`)
+      logger.debug(`Updating category: ${input.id}`)
 
       // Build SET clause dynamically
       const setClauses: string[] = ['updated_at = unixepoch()']
@@ -148,11 +144,11 @@ export function upsertCategory(
         | undefined
 
       if (!result) {
-        log('warning', `Category not found for update: ${input.id}`)
+        logger.warning(`Category not found for update: ${input.id}`)
         return null
       }
 
-      log('info', `Category updated: ${input.id}`)
+      logger.info(`Category updated: ${input.id}`)
       return {
         id: result.id,
         name: result.name,
@@ -166,8 +162,7 @@ export function upsertCategory(
     // For new categories, default priority is 1
     const nextPriority = input.priority ?? 1
 
-    log(
-      'debug',
+    logger.debug(
       `Creating category: ${input.name} with priority: ${nextPriority}`,
     )
 
@@ -181,10 +176,10 @@ export function upsertCategory(
       .returning()
       .get()
 
-    log('info', `Category created: ${inserted.id}`)
+    logger.info(`Category created: ${inserted.id}`)
     return toCategory(inserted, 0)
   } catch (error) {
-    log('error', `Failed to upsert category: ${error}`)
+    logger.error(`Failed to upsert category: ${error}`)
     return null
   }
 }
@@ -195,7 +190,7 @@ export function upsertCategory(
  */
 export function deleteCategory(id: number): OperationResult {
   try {
-    log('debug', `Deleting category: ${id}`)
+    logger.debug(`Deleting category: ${id}`)
 
     const db = getDatabase()
 
@@ -207,18 +202,17 @@ export function deleteCategory(id: number): OperationResult {
       .returning({ id: songs.id })
       .all()
 
-    log(
-      'debug',
+    logger.debug(
       `Deleted ${deletedSongs.length} songs belonging to category ${id}`,
     )
 
     // Delete the category
     db.delete(songCategories).where(eq(songCategories.id, id)).run()
 
-    log('info', `Category deleted: ${id}`)
+    logger.info(`Category deleted: ${id}`)
     return { success: true }
   } catch (error) {
-    log('error', `Failed to delete category: ${error}`)
+    logger.error(`Failed to delete category: ${error}`)
     return { success: false, error: String(error) }
   }
 }
@@ -232,7 +226,7 @@ export function deleteUncategorizedSongs(): OperationResult & {
   deletedIds: number[]
 } {
   try {
-    log('debug', 'Deleting uncategorized songs')
+    logger.debug('Deleting uncategorized songs')
 
     const db = getDatabase()
 
@@ -245,10 +239,10 @@ export function deleteUncategorizedSongs(): OperationResult & {
 
     const deletedIds = deletedSongs.map((s) => s.id)
 
-    log('info', `Deleted ${deletedSongs.length} uncategorized songs`)
+    logger.info(`Deleted ${deletedSongs.length} uncategorized songs`)
     return { success: true, deletedCount: deletedSongs.length, deletedIds }
   } catch (error) {
-    log('error', `Failed to delete uncategorized songs: ${error}`)
+    logger.error(`Failed to delete uncategorized songs: ${error}`)
     return {
       success: false,
       error: String(error),
@@ -266,7 +260,7 @@ export function reorderCategories(
   input: ReorderCategoriesInput,
 ): OperationResult {
   try {
-    log('debug', `Reordering ${input.categoryIds.length} categories`)
+    logger.debug(`Reordering ${input.categoryIds.length} categories`)
 
     const rawDb = getRawDatabase()
 
@@ -290,14 +284,14 @@ export function reorderCategories(
       }
 
       rawDb.exec('COMMIT')
-      log('info', 'Categories reordered successfully')
+      logger.info('Categories reordered successfully')
       return { success: true }
     } catch (error) {
       rawDb.exec('ROLLBACK')
       throw error
     }
   } catch (error) {
-    log('error', `Failed to reorder categories: ${error}`)
+    logger.error(`Failed to reorder categories: ${error}`)
     return { success: false, error: String(error) }
   }
 }

@@ -2,6 +2,9 @@ import { ClientOptions, fetch as tauriFetch } from '@tauri-apps/plugin-http'
 
 import { isMobile } from '~/config'
 import { getStoredApiUrl, getStoredUserToken } from '~/service/api-url'
+import { createLogger } from '~/utils/logger'
+
+const logger = createLogger('app:fetcher')
 
 // Check if we're running in Tauri mode
 const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
@@ -53,10 +56,35 @@ export async function fetcher<T>(
     headers['Cookie'] = `user_auth=${userToken}`
   }
 
-  const res = await fetchFn(`${getApiBaseUrl()}${url}`, {
-    ...(options ?? {}),
-    credentials: 'include',
-    headers,
-  })
-  return await res.json()
+  const fullUrl = `${getApiBaseUrl()}${url}`
+  const startTime = performance.now()
+
+  try {
+    const res = await fetchFn(fullUrl, {
+      ...(options ?? {}),
+      credentials: 'include',
+      headers,
+    })
+
+    const duration = performance.now() - startTime
+
+    if (!res.ok) {
+      logger.warn(
+        `API ${options?.method ?? 'GET'} ${url} returned ${res.status} (${duration.toFixed(0)}ms)`,
+      )
+    } else {
+      logger.debug(
+        `API ${options?.method ?? 'GET'} ${url} OK (${duration.toFixed(0)}ms)`,
+      )
+    }
+
+    return await res.json()
+  } catch (error) {
+    const duration = performance.now() - startTime
+    logger.error(
+      `API ${options?.method ?? 'GET'} ${url} failed (${duration.toFixed(0)}ms)`,
+      error,
+    )
+    throw error
+  }
 }

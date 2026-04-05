@@ -4,21 +4,16 @@ import { updateScheduleSearchIndex } from './search'
 import type { Schedule, UpsertScheduleInput } from './types'
 import { getDatabase } from '../../db'
 import { scheduleItems, schedules } from '../../db/schema'
+import { createLogger } from '../../utils/logger'
 
-const DEBUG = process.env.DEBUG === 'true'
-
-function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
-  if (level === 'debug' && !DEBUG) return
-  // biome-ignore lint/suspicious/noConsole: logging utility
-  console.log(`[${level.toUpperCase()}] [schedules] ${message}`)
-}
+const logger = createLogger('schedules')
 
 /**
  * Creates or updates a schedule
  */
 export function upsertSchedule(input: UpsertScheduleInput): Schedule | null {
   try {
-    log('debug', `Upserting schedule: ${input.id ?? 'new'}`)
+    logger.debug(`Upserting schedule: ${input.id ?? 'new'}`)
 
     const db = getDatabase()
     const now = new Date()
@@ -36,7 +31,7 @@ export function upsertSchedule(input: UpsertScheduleInput): Schedule | null {
         .where(eq(schedules.id, input.id))
         .run()
       scheduleId = input.id
-      log('info', `Schedule updated: ${scheduleId}`)
+      logger.info(`Schedule updated: ${scheduleId}`)
     } else {
       // Create new schedule
       const result = db
@@ -50,7 +45,7 @@ export function upsertSchedule(input: UpsertScheduleInput): Schedule | null {
         .returning({ id: schedules.id })
         .get()
       scheduleId = result.id
-      log('info', `Schedule created: ${scheduleId}`)
+      logger.info(`Schedule created: ${scheduleId}`)
     }
 
     // Update search index
@@ -74,7 +69,7 @@ export function upsertSchedule(input: UpsertScheduleInput): Schedule | null {
       .get()
 
     if (!schedule) {
-      log('error', `Failed to retrieve schedule after upsert: ${scheduleId}`)
+      logger.error(`Failed to retrieve schedule after upsert: ${scheduleId}`)
       return null
     }
 
@@ -88,7 +83,7 @@ export function upsertSchedule(input: UpsertScheduleInput): Schedule | null {
       updatedAt: Math.floor(schedule.updatedAt.getTime() / 1000),
     }
   } catch (error) {
-    log('error', `Failed to upsert schedule: ${error}`)
+    logger.error(`Failed to upsert schedule: ${error}`)
     return null
   }
 }

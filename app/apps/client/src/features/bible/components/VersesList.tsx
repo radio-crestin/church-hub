@@ -1,4 +1,10 @@
-import { ArrowLeft, ChevronDown, ChevronUp, Loader2, LocateFixed } from 'lucide-react'
+import {
+  ArrowLeft,
+  ChevronDown,
+  ChevronUp,
+  Loader2,
+  LocateFixed,
+} from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
