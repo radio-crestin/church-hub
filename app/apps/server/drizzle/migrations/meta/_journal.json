@@ -173,12 +173,19 @@
     {
       "idx": 24,
       "version": "6",
+      "when": 1768350000000,
+      "tag": "0024_add_song_bookmarks",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "6",
       "when": 1768400000000,
       "tag": "0025_add_song_bookmark_notes",
       "breakpoints": true
     },
     {
-      "idx": 25,
+      "idx": 26,
       "version": "6",
       "when": 1768500000000,
       "tag": "0026_add_song_slide_chords",

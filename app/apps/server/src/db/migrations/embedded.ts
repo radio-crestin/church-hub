@@ -186,12 +186,19 @@ export const EMBEDDED_JOURNAL = {
     {
       idx: 24,
       version: '6',
+      when: 1768350000000,
+      tag: '0024_add_song_bookmarks',
+      breakpoints: true,
+    },
+    {
+      idx: 25,
+      version: '6',
       when: 1768400000000,
       tag: '0025_add_song_bookmark_notes',
       breakpoints: true,
     },
     {
-      idx: 25,
+      idx: 26,
       version: '6',
       when: 1768500000000,
       tag: '0026_add_song_slide_chords',
@@ -320,6 +327,11 @@ export const EMBEDDED_MIGRATIONS: EmbeddedMigration[] = [
     tag: '0023_add_screen_scene_overrides',
     sql: 'CREATE TABLE IF NOT EXISTS `screen_scene_overrides` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`screen_id` integer NOT NULL REFERENCES `screens`(`id`) ON DELETE cascade,\n\t`obs_scene_name` text NOT NULL,\n\t`content_type` text NOT NULL,\n\t`config` text DEFAULT \'{}\' NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX IF NOT EXISTS `idx_screen_scene_overrides_unique` ON `screen_scene_overrides` (`screen_id`, `obs_scene_name`, `content_type`);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS `idx_screen_scene_overrides_screen_id` ON `screen_scene_overrides` (`screen_id`);\n',
     when: 1768300000000,
+  },
+  {
+    tag: '0024_add_song_bookmarks',
+    sql: 'CREATE TABLE IF NOT EXISTS `song_bookmarks` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`song_id` integer NOT NULL REFERENCES `songs`(`id`) ON DELETE cascade,\n\t`sort_order` integer DEFAULT 0 NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX IF NOT EXISTS `idx_song_bookmarks_song_id` ON `song_bookmarks` (`song_id`);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS `idx_song_bookmarks_sort_order` ON `song_bookmarks` (`sort_order`);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS `idx_song_bookmarks_created_at` ON `song_bookmarks` (`created_at`);\n',
+    when: 1768350000000,
   },
   {
     tag: '0025_add_song_bookmark_notes',
