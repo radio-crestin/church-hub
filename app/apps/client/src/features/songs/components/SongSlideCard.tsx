@@ -14,6 +14,7 @@ import {
   X,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 
 import type { ChordMapping } from '../types'
@@ -184,8 +185,17 @@ export function SongSlideCard({
     null,
   )
   const [chordFilter, setChordFilter] = useState('')
+  const [labelPickerPos, setLabelPickerPos] = useState<{
+    top: number
+    left: number
+  } | null>(null)
+  const [chordPickerPos, setChordPickerPos] = useState<{
+    top: number
+    left: number
+  } | null>(null)
   const chordPickerRef = useRef<HTMLDivElement>(null)
   const labelPickerRef = useRef<HTMLDivElement>(null)
+  const labelBtnRef = useRef<HTMLButtonElement>(null)
 
   const {
     attributes,
@@ -315,10 +325,21 @@ export function SongSlideCard({
           </span>
 
           {/* Label picker */}
-          <div className="relative" ref={labelPickerRef}>
+          <div ref={labelPickerRef}>
             <button
+              ref={labelBtnRef}
               type="button"
-              onClick={() => setShowLabelPicker(!showLabelPicker)}
+              onClick={() => {
+                if (showLabelPicker) {
+                  setShowLabelPicker(false)
+                } else {
+                  const rect = labelBtnRef.current?.getBoundingClientRect()
+                  if (rect) {
+                    setLabelPickerPos({ top: rect.bottom + 4, left: rect.left })
+                  }
+                  setShowLabelPicker(true)
+                }
+              }}
               className={`ml-1 px-1.5 py-0.5 rounded text-xs font-semibold transition-colors ${
                 slide.label
                   ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-800/50'
@@ -328,41 +349,50 @@ export function SongSlideCard({
             >
               {slide.label || <Tag className="w-3 h-3" />}
             </button>
-            {showLabelPicker && (
-              <div className="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-20 p-2 min-w-[120px]">
-                <div className="grid grid-cols-2 gap-1">
-                  {SLIDE_LABELS.map((label) => (
+            {showLabelPicker &&
+              labelPickerPos &&
+              createPortal(
+                <div
+                  className="fixed bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-[100] p-2 min-w-[120px]"
+                  style={{
+                    top: labelPickerPos.top,
+                    left: labelPickerPos.left,
+                  }}
+                >
+                  <div className="grid grid-cols-2 gap-1">
+                    {SLIDE_LABELS.map((label) => (
+                      <button
+                        key={label}
+                        type="button"
+                        onClick={() => {
+                          onLabelChange(slide.label === label ? null : label)
+                          setShowLabelPicker(false)
+                        }}
+                        className={`px-2 py-1 text-xs rounded font-medium transition-colors ${
+                          slide.label === label
+                            ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300'
+                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  {slide.label && (
                     <button
-                      key={label}
                       type="button"
                       onClick={() => {
-                        onLabelChange(slide.label === label ? null : label)
+                        onLabelChange(null)
                         setShowLabelPicker(false)
                       }}
-                      className={`px-2 py-1 text-xs rounded font-medium transition-colors ${
-                        slide.label === label
-                          ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300'
-                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                      }`}
+                      className="w-full mt-1 px-2 py-1 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
                     >
-                      {label}
+                      {t('chords.removeLabel')}
                     </button>
-                  ))}
-                </div>
-                {slide.label && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onLabelChange(null)
-                      setShowLabelPicker(false)
-                    }}
-                    className="w-full mt-1 px-2 py-1 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-                  >
-                    {t('chords.removeLabel')}
-                  </button>
-                )}
-              </div>
-            )}
+                  )}
+                </div>,
+                document.body,
+              )}
           </div>
         </div>
 
@@ -428,9 +458,21 @@ export function SongSlideCard({
                   {/* Clickable word */}
                   <button
                     type="button"
-                    onClick={() => {
-                      setSelectedWordIndex(isSelected ? null : wordIdx)
-                      setChordFilter('')
+                    onClick={(e) => {
+                      if (isSelected) {
+                        setSelectedWordIndex(null)
+                        setChordFilter('')
+                      } else {
+                        const rect = (
+                          e.target as HTMLElement
+                        ).getBoundingClientRect()
+                        setChordPickerPos({
+                          top: rect.bottom + 4,
+                          left: rect.left,
+                        })
+                        setSelectedWordIndex(wordIdx)
+                        setChordFilter('')
+                      }
                     }}
                     className={`px-1 py-0.5 text-sm rounded transition-colors ${
                       isSelected
@@ -443,52 +485,62 @@ export function SongSlideCard({
                     {word}
                   </button>
 
-                  {/* Chord picker dropdown */}
-                  {isSelected && (
-                    <div
-                      ref={chordPickerRef}
-                      className="absolute top-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-30 p-2 min-w-[200px]"
-                    >
-                      <input
-                        type="text"
-                        value={chordFilter}
-                        onChange={(e) => setChordFilter(e.target.value)}
-                        placeholder={t('chords.searchChord')}
-                        className="w-full px-2 py-1 text-sm border border-gray-200 dark:border-gray-600 rounded mb-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-amber-400"
-                        autoFocus
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && filteredChords.length > 0) {
-                            handleAssignChord(filteredChords[0])
-                          }
-                          if (e.key === 'Escape') {
-                            setSelectedWordIndex(null)
-                            setChordFilter('')
-                          }
+                  {/* Chord picker dropdown (portal) */}
+                  {isSelected &&
+                    chordPickerPos &&
+                    createPortal(
+                      <div
+                        ref={chordPickerRef}
+                        className="fixed bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-[100] p-2 min-w-[200px]"
+                        style={{
+                          top: chordPickerPos.top,
+                          left: chordPickerPos.left,
                         }}
-                      />
-                      <div className="grid grid-cols-4 gap-1 max-h-[200px] overflow-y-auto">
-                        {filteredChords.map((chord) => (
+                      >
+                        <input
+                          type="text"
+                          value={chordFilter}
+                          onChange={(e) => setChordFilter(e.target.value)}
+                          placeholder={t('chords.searchChord')}
+                          className="w-full px-2 py-1 text-sm border border-gray-200 dark:border-gray-600 rounded mb-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-amber-400"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (
+                              e.key === 'Enter' &&
+                              filteredChords.length > 0
+                            ) {
+                              handleAssignChord(filteredChords[0])
+                            }
+                            if (e.key === 'Escape') {
+                              setSelectedWordIndex(null)
+                              setChordFilter('')
+                            }
+                          }}
+                        />
+                        <div className="grid grid-cols-4 gap-1 max-h-[200px] overflow-y-auto">
+                          {filteredChords.map((chord) => (
+                            <button
+                              key={chord}
+                              type="button"
+                              onClick={() => handleAssignChord(chord)}
+                              className="px-1.5 py-1 text-xs font-medium rounded hover:bg-amber-100 dark:hover:bg-amber-900/30 text-gray-700 dark:text-gray-300 transition-colors"
+                            >
+                              {chord}
+                            </button>
+                          ))}
+                        </div>
+                        {chordFilter && filteredChords.length === 0 && (
                           <button
-                            key={chord}
                             type="button"
-                            onClick={() => handleAssignChord(chord)}
-                            className="px-1.5 py-1 text-xs font-medium rounded hover:bg-amber-100 dark:hover:bg-amber-900/30 text-gray-700 dark:text-gray-300 transition-colors"
+                            onClick={() => handleAssignChord(chordFilter)}
+                            className="w-full mt-1 px-2 py-1 text-xs font-medium rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-800 transition-colors"
                           >
-                            {chord}
+                            {t('chords.useCustom', { chord: chordFilter })}
                           </button>
-                        ))}
-                      </div>
-                      {chordFilter && filteredChords.length === 0 && (
-                        <button
-                          type="button"
-                          onClick={() => handleAssignChord(chordFilter)}
-                          className="w-full mt-1 px-2 py-1 text-xs font-medium rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-800 transition-colors"
-                        >
-                          {t('chords.useCustom', { chord: chordFilter })}
-                        </button>
-                      )}
-                    </div>
-                  )}
+                        )}
+                      </div>,
+                      document.body,
+                    )}
                 </div>
               )
             })}
