@@ -249,9 +249,8 @@ test.describe('Song Import/Export via UI', () => {
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(2000)
 
-    const searchInput = page.getByPlaceholder(/search|cauta|căuta/i).first()
+    const searchInput = page.getByPlaceholder(/search songs|caută cântări/i).first()
     if (!(await searchInput.isVisible({ timeout: 10000 }).catch(() => false))) {
-      // In CI, the search input might be in a different viewport state — scroll to it
       await searchInput.scrollIntoViewIfNeeded().catch(() => {})
     }
     await expect(searchInput).toBeVisible({ timeout: 10000 })
