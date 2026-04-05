@@ -175,7 +175,8 @@
       "displayKeyLine": "Afișează tonalitatea",
       "displayKeyLineDescription": "Afișează tonalitatea muzicală pe primul slide al cântării",
       "displayChords": "Afișează acorduri",
-      "displayChordsDescription": "Afișează acordurile deasupra versurilor pe ecran"
+      "displayChordsDescription": "Afișează acordurile deasupra versurilor pe ecran",
+      "chordFontSize": "Mărime acorduri"
     },
     "bibleOptions": {
       "title": "Opțiuni Biblie",

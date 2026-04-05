@@ -20,6 +20,8 @@ interface ChordsOverlayProps {
   top: number
   /** Base font size from text style */
   baseFontSize: number
+  /** Configured chord font size in pixels (already scaled) */
+  chordFontSize?: number
   /** Text color */
   color: string
   /** Font family */
@@ -65,6 +67,7 @@ export function ChordsOverlay({
   left,
   top,
   baseFontSize,
+  chordFontSize: chordFontSizeProp,
   color,
   fontFamily,
   alignment,
@@ -102,7 +105,7 @@ export function ChordsOverlay({
     return result
   }, [content, chords])
 
-  const chordFontSize = Math.max(10, baseFontSize * 0.55)
+  const chordFontSize = chordFontSizeProp ?? Math.max(10, baseFontSize * 0.55)
   const lyricsFontSize = baseFontSize
   const lineGap = lyricsFontSize * 0.2
 

@@ -148,6 +148,7 @@ export function ScreenContent({
           left={scaledBounds.x}
           top={scaledBounds.y}
           baseFontSize={mt.style.maxFontSize * fontScale * 0.6}
+          chordFontSize={(songConfig?.chordFontSize ?? 32) * fontScale}
           color={mt.style.color}
           fontFamily={mt.style.fontFamily}
           alignment={mt.style.alignment ?? 'center'}

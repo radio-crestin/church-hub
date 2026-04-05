@@ -740,6 +740,30 @@ export function ScreenEditorSidebar({
                     <p className="text-xs text-gray-500 dark:text-gray-400 ml-6">
                       {t('screens.songOptions.displayChordsDescription')}
                     </p>
+                    {(config as SongContentConfig).displayChords && (
+                      <div className="flex items-center gap-2 ml-6 mt-1">
+                        <label className="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                          {t('screens.songOptions.chordFontSize')}
+                        </label>
+                        <input
+                          type="number"
+                          min={12}
+                          max={120}
+                          value={
+                            (config as SongContentConfig).chordFontSize ?? 32
+                          }
+                          onChange={(e) => {
+                            const songConfig = config as SongContentConfig
+                            onUpdateContentConfig(contentType, {
+                              ...songConfig,
+                              chordFontSize: Number(e.target.value) || 32,
+                            })
+                          }}
+                          className="w-16 px-2 py-1 text-xs border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                        />
+                        <span className="text-xs text-gray-400">px</span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

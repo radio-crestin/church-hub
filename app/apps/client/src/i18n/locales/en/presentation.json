@@ -175,7 +175,8 @@
       "displayKeyLine": "Display key line",
       "displayKeyLineDescription": "Show the musical key on the first slide of the song",
       "displayChords": "Display chords",
-      "displayChordsDescription": "Show chord annotations above lyrics on screen"
+      "displayChordsDescription": "Show chord annotations above lyrics on screen",
+      "chordFontSize": "Chord size"
     },
     "bibleOptions": {
       "title": "Bible Options",
