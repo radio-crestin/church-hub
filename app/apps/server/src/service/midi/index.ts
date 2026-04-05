@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
 
 import {
@@ -15,6 +16,46 @@ import { getMidiNativeModulePath } from '../../utils/paths'
 let easymidi: typeof import('easymidi') | null = null
 let midiAvailable = true
 let midiLoadAttempted = false
+let midiSafetyChecked = false
+let midiSafe = true
+
+/**
+ * Checks if CoreMIDI is available on macOS.
+ * On macOS, MIDI initialization can throw unrecoverable C++ exceptions
+ * (error -304 kMIDINoCurrentSetup) that crash the entire Bun process.
+ * This check uses a subprocess to safely probe MIDI availability.
+ */
+function checkMidiSafety(): boolean {
+  if (midiSafetyChecked) return midiSafe
+  midiSafetyChecked = true
+
+  if (process.platform !== 'darwin') {
+    midiSafe = true
+    return true
+  }
+
+  try {
+    // Spawn a subprocess that attempts to initialize CoreMIDI.
+    // If CoreMIDI is unavailable, this process will crash instead of ours.
+    execFileSync(
+      process.execPath,
+      [
+        '-e',
+        'try { require("easymidi").getInputs(); process.exit(0); } catch { process.exit(1); }',
+      ],
+      { timeout: 5000, stdio: 'pipe' },
+    )
+    midiSafe = true
+    midiLogger.debug('CoreMIDI safety check passed')
+  } catch {
+    midiSafe = false
+    midiLogger.warn(
+      'CoreMIDI is not available on this system — MIDI features disabled to prevent crash',
+    )
+  }
+
+  return midiSafe
+}
 
 /**
  * Attempts to load the MIDI native module from the bundled resources path.
@@ -242,6 +283,15 @@ function createEasymidiWrapper(nativeMidi: {
 function loadMidi(): boolean {
   if (midiLoadAttempted) return midiAvailable
   midiLoadAttempted = true
+
+  // On macOS, check if CoreMIDI is available before loading the native module.
+  // The native MIDI module can throw unrecoverable C++ exceptions that crash
+  // the entire Bun process if CoreMIDI is not properly initialized.
+  if (!checkMidiSafety()) {
+    midiAvailable = false
+    easymidi = null
+    return false
+  }
 
   // First try to load from bundled resources (production builds)
   easymidi = tryLoadBundledMidi()
