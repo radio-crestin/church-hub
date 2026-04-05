@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install system dependencies
         run: |
@@ -31,7 +31,7 @@ jobs:
             xvfb
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 22
 
@@ -41,7 +41,7 @@ jobs:
           bun-version: latest
 
       - name: Cache Bun dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: bun-cache
         with:
           path: ~/.bun/install/cache
@@ -62,7 +62,7 @@ jobs:
         run: bun run test:server
 
       - name: Cache Playwright browsers
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
@@ -90,7 +90,7 @@ jobs:
           CI: true
 
       - name: Upload Playwright report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: failure()
         with:
           name: playwright-report
@@ -98,7 +98,7 @@ jobs:
           retention-days: 7
 
       - name: Upload Playwright traces
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: failure()
         with:
           name: playwright-traces
@@ -110,7 +110,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Extract version from tag
         id: version
@@ -195,7 +195,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Extract version from tag
         id: version
@@ -223,7 +223,7 @@ jobs:
           fi
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 22
 
@@ -233,7 +233,7 @@ jobs:
           bun-version: latest
 
       - name: Cache Bun dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: bun-cache
         with:
           path: |
@@ -261,7 +261,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Cache frontend build
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: frontend-cache
         with:
           path: app/apps/client/dist
@@ -279,7 +279,7 @@ jobs:
         run: mkdir -p app/tauri/bin
 
       - name: Cache sidecar binary
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: sidecar-cache
         with:
           path: app/tauri/bin/church-hub-sidecar-${{ matrix.sidecar_suffix }}
