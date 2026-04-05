@@ -14,10 +14,12 @@ const EMULATOR_PATH = path.resolve(
 )
 const EMULATOR_PORT = 10023
 
-/** Check if the emulator binary exists and is executable on this platform */
+/** Check if the emulator binary exists and can run on this platform */
 export function isEmulatorAvailable(): boolean {
   try {
     fs.accessSync(EMULATOR_PATH, fs.constants.X_OK)
+    // The binary is a macOS executable — skip on other platforms
+    if (process.platform !== 'darwin') return false
     return true
   } catch {
     return false
