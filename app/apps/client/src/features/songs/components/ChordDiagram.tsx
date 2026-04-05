@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { localizeChordName } from '../utils/localizeChordName'
+
 interface ChordDiagramProps {
   chord: string
   onClose: () => void
@@ -344,7 +346,8 @@ function PianoDiagram({ notes }: { notes: number[] }) {
 }
 
 export function ChordDiagram({ chord, onClose }: ChordDiagramProps) {
-  const { t } = useTranslation('songs')
+  const { t, i18n } = useTranslation('songs')
+  const language = i18n.language?.split('-')[0] || 'en'
   const [view, setView] = useState<'guitar' | 'piano'>('guitar')
 
   const guitarFrets = GUITAR_CHORDS[chord]
@@ -362,7 +365,7 @@ export function ChordDiagram({ chord, onClose }: ChordDiagramProps) {
       >
         {/* Chord name */}
         <h3 className="text-2xl font-bold text-center text-gray-900 dark:text-white mb-4">
-          {chord}
+          {localizeChordName(chord, language)}
         </h3>
 
         {/* View toggle */}

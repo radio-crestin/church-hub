@@ -1,4 +1,7 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
+
+import { localizeChordName } from '~/features/songs/utils/localizeChordName'
 
 interface ChordMapping {
   wordIndex: number
@@ -73,6 +76,9 @@ export function ChordsOverlay({
   alignment,
   onChordClick,
 }: ChordsOverlayProps) {
+  const { i18n } = useTranslation()
+  const language = i18n.language?.split('-')[0] || 'en'
+
   const lines = useMemo(() => {
     const plainText = htmlToPlainText(content)
     if (!plainText) return []
@@ -186,7 +192,7 @@ export function ChordsOverlay({
                         cursor: 'pointer',
                       }}
                     >
-                      {chord}
+                      {localizeChordName(chord, language)}
                     </span>
                   )
                 })}
