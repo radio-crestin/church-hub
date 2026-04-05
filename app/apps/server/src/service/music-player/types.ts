@@ -60,17 +60,3 @@ export type MusicPlayerCommand =
   | { type: 'previous' }
   | { type: 'play_index'; index: number }
   | { type: 'shuffle'; enabled: boolean }
-
-export interface MpvPropertyChange {
-  name: string
-  data: unknown
-}
-
-export interface MpvEvent {
-  event: string
-  id?: number
-  name?: string
-  data?: unknown
-  reason?: string
-  error?: string
-}

@@ -24,7 +24,7 @@ test.describe('Music Player Feature', () => {
     await expect(musicTitle).toBeVisible()
   })
 
-  test('mpv player status endpoint returns valid response', async ({
+  test('audio player status endpoint returns valid response', async ({
     request,
   }) => {
     const response = await request.get('/api/music/player/status')

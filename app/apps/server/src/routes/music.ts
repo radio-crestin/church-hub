@@ -34,7 +34,7 @@ export async function handleMusicRoutes(
 ): Promise<Response | null> {
   // ========== PLAYER STATUS ==========
 
-  // GET /api/music/player/status - Get mpv player status
+  // GET /api/music/player/status - Get audio player status
   if (req.method === 'GET' && url.pathname === '/api/music/player/status') {
     const status = getMpvStatus()
     return handleCors(
