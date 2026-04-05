@@ -27,7 +27,7 @@ test.describe('Multi-Screen', () => {
   }) => {
     // Create first screen
     const screen1Res = await request.post('/api/screens', {
-      data: { name: 'E2E Screen Alpha', type: 'display' },
+      data: { name: 'E2E Screen Alpha', type: 'primary' },
     })
     expect(screen1Res.ok()).toBeTruthy()
     const screen1Body = await screen1Res.json()
@@ -36,7 +36,7 @@ test.describe('Multi-Screen', () => {
 
     // Create second screen
     const screen2Res = await request.post('/api/screens', {
-      data: { name: 'E2E Screen Beta', type: 'display' },
+      data: { name: 'E2E Screen Beta', type: 'primary' },
     })
     expect(screen2Res.ok()).toBeTruthy()
     const screen2Body = await screen2Res.json()
@@ -60,10 +60,10 @@ test.describe('Multi-Screen', () => {
     if (createdScreenIds.length < 2) {
       // Create screens if not created yet
       const res1 = await request.post('/api/screens', {
-        data: { name: 'E2E Multi Screen 1', type: 'display' },
+        data: { name: 'E2E Multi Screen 1', type: 'primary' },
       })
       const res2 = await request.post('/api/screens', {
-        data: { name: 'E2E Multi Screen 2', type: 'display' },
+        data: { name: 'E2E Multi Screen 2', type: 'primary' },
       })
       if (res1.ok()) createdScreenIds.push((await res1.json()).data.id)
       if (res2.ok()) createdScreenIds.push((await res2.json()).data.id)
@@ -486,7 +486,7 @@ test.describe('Multi-Screen', () => {
   test('deleting a screen removes it from the list', async ({ request }) => {
     // Create a screen specifically for deletion test
     const createRes = await request.post('/api/screens', {
-      data: { name: 'E2E Screen To Delete', type: 'display' },
+      data: { name: 'E2E Screen To Delete', type: 'primary' },
     })
     expect(createRes.ok()).toBeTruthy()
     const createBody = await createRes.json()

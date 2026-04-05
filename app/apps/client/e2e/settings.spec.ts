@@ -91,8 +91,15 @@ test.describe('Settings Page', () => {
   })
 
   test('debug mode toggle exists and can be toggled', async ({ page }) => {
+    // Scroll to bottom to ensure developer tools section is in view
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+    await page.waitForTimeout(500)
+
     // Find the debug mode section
     const debugLabel = page.locator('text=/debug/i')
+    if (!(await debugLabel.first().isVisible({ timeout: 5000 }).catch(() => false))) {
+      await debugLabel.first().scrollIntoViewIfNeeded().catch(() => {})
+    }
     await expect(debugLabel.first()).toBeVisible({ timeout: 10000 })
 
     // Find the toggle switch (rounded-full button near debug text)

@@ -269,7 +269,7 @@ test.describe('Songs API - CRUD', () => {
       },
     })
 
-    expect([200, 409]).toContain(response.status())
+    expect([200, 201, 409]).toContain(response.status())
     if (response.status() === 409) {
       test.skip(true, 'Duplicate song title detected')
       return
@@ -323,7 +323,7 @@ test.describe('Song Slides API', () => {
         slides: [{ content: 'Original slide', type: 'verse' }],
       },
     })
-    if (createResponse.status() === 200) {
+    if ([200, 201].includes(createResponse.status())) {
       const json = await createResponse.json()
       songId = json.data.id
       slideId = json.data.slides[0].id
@@ -350,7 +350,7 @@ test.describe('Song Slides API', () => {
       },
     })
 
-    expect(response.status()).toBe(200)
+    expect([200, 201]).toContain(response.status())
     const json = await response.json()
     expect(json.data).toHaveProperty('id')
   })
@@ -364,7 +364,7 @@ test.describe('Song Slides API', () => {
     }
 
     const response = await request.post(`/api/song-slides/${slideId}/clone`)
-    expect(response.status()).toBe(200)
+    expect([200, 201]).toContain(response.status())
 
     const json = await response.json()
     expect(json.data).toHaveProperty('id')
@@ -411,8 +411,8 @@ test.describe('Schedules API - CRUD', () => {
       },
     })
 
-    expect([200, 409]).toContain(response.status())
-    if (response.status() !== 200) {
+    expect([200, 201, 409]).toContain(response.status())
+    if (![200, 201].includes(response.status())) {
       test.skip(true, 'Could not create schedule')
       return
     }
@@ -578,8 +578,8 @@ test.describe('Categories API', () => {
     const createResponse = await request.post('/api/categories', {
       data: { name: `E2E Cat ${Date.now()} ${Math.random().toString(36).slice(2)}` },
     })
-    expect([200, 409]).toContain(createResponse.status())
-    if (createResponse.status() !== 200) {
+    expect([200, 201, 409]).toContain(createResponse.status())
+    if (![200, 201].includes(createResponse.status())) {
       test.skip(true, 'Could not create category')
       return
     }

@@ -20,7 +20,7 @@ test.describe('Screen Rendering', () => {
     } else {
       // Create a screen if none exist
       const createRes = await request.post('/api/screens', {
-        data: { name: 'E2E Test Screen', type: 'display' },
+        data: { name: 'E2E Test Screen', type: 'primary' },
       })
       expect(createRes.ok()).toBeTruthy()
       const createBody = await createRes.json()
