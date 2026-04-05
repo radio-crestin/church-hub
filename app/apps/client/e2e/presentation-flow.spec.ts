@@ -19,7 +19,7 @@ test.describe('Presentation Flow', () => {
       screenId = screens[0].id
     } else {
       const createRes = await request.post('/api/screens', {
-        data: { name: 'E2E Flow Test Screen', type: 'display' },
+        data: { name: 'E2E Flow Test Screen', type: 'primary' },
       })
       expect(createRes.ok()).toBeTruthy()
       const createBody = await createRes.json()

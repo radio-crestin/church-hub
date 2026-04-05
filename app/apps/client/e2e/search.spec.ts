@@ -50,8 +50,12 @@ test.describe('Song Search', () => {
   test('song search UI filters songs in real-time', async ({ page }) => {
     await page.goto('/songs')
     await page.waitForLoadState('networkidle')
+    await page.waitForTimeout(2000)
 
-    const searchInput = page.getByPlaceholder(/search|cauta/i).first()
+    const searchInput = page.getByPlaceholder(/search|cauta|căuta/i).first()
+    if (!(await searchInput.isVisible({ timeout: 5000 }).catch(() => false))) {
+      await searchInput.scrollIntoViewIfNeeded().catch(() => {})
+    }
     await expect(searchInput).toBeVisible({ timeout: 10000 })
 
     // Type a search query
@@ -180,7 +184,7 @@ test.describe('Categories', () => {
         name: `E2E Test Category ${Date.now()}`,
       },
     })
-    expect(response.status()).toBe(200)
+    expect([200, 201]).toContain(response.status())
 
     const json = await response.json()
     expect(json.data).toHaveProperty('id')

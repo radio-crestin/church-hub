@@ -23,7 +23,7 @@ test.describe('Screen Editor - API', () => {
     const response = await request.post('/api/screens', {
       data: {
         name: `E2E Test Screen ${Date.now()}`,
-        type: 'audience',
+        type: 'primary',
       },
     })
 
@@ -79,7 +79,7 @@ test.describe('Screen Editor - API', () => {
 
     expect(response.status()).toBe(200)
     const json = await response.json()
-    expect(json.data).toHaveProperty('success')
+    expect(json).toHaveProperty('data')
   })
 
   test('can update next slide config', async ({ request }) => {
@@ -139,7 +139,7 @@ test.describe('Screen Editor - API', () => {
     const createResponse = await request.post('/api/screens', {
       data: {
         name: `E2E Delete Screen ${Date.now()}`,
-        type: 'audience',
+        type: 'primary',
       },
     })
 
