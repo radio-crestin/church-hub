@@ -540,6 +540,7 @@ export interface SongContentConfig {
   clockEnabled?: boolean // Per-slide-type enable, uses global clockConfig for position/style
   displayKeyLine?: boolean // Whether to display the song key line on the first slide (default: true)
   displayChords?: boolean // Whether to display chord annotations above lyrics (default: false)
+  chordFontSize?: number // Font size for chord annotations in px (default: 32)
 }
 
 export type ReferenceWrapperStyle = 'none' | 'parentheses' | 'brackets'
