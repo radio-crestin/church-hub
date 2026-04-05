@@ -1,6 +1,5 @@
 export {
-  type ConversionErrorCode,
-  type ConversionResult,
-  checkLibreOfficeInstalled,
-  convertPptToPptx,
-} from './convertPptToPptx'
+  type ParsedPptResult,
+  type ParsedPptSlide,
+  parsePptFile,
+} from './parsePpt'

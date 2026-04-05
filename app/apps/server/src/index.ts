@@ -98,10 +98,7 @@ import {
   clearHistory,
   getHistory,
 } from './service/bible-history'
-import {
-  checkLibreOfficeInstalled,
-  convertPptToPptx,
-} from './service/conversion'
+import { parsePptFile } from './service/conversion'
 import {
   checkpointAndExport,
   getDatabaseInfo,
@@ -3795,7 +3792,8 @@ async function main() {
       // File Conversion API Endpoints
       // ============================================================
 
-      // GET /api/convert/check-libreoffice - Check if LibreOffice is installed
+      // GET /api/convert/check-libreoffice - Check if PPT conversion is available
+      // PPT conversion is now built-in (pure JS), no external dependencies needed
       if (
         req.method === 'GET' &&
         url.pathname === '/api/convert/check-libreoffice'
@@ -3803,16 +3801,16 @@ async function main() {
         const permError = checkPermission('songs.view')
         if (permError) return permError
 
-        const isInstalled = await checkLibreOfficeInstalled()
         return handleCors(
           req,
-          new Response(JSON.stringify({ data: { installed: isInstalled } }), {
+          new Response(JSON.stringify({ data: { installed: true } }), {
             headers: { 'Content-Type': 'application/json' },
           }),
         )
       }
 
-      // POST /api/convert/ppt-to-pptx - Convert PPT to PPTX
+      // POST /api/convert/ppt-to-pptx - Parse PPT and return slides
+      // Now uses pure JS parsing instead of LibreOffice conversion
       if (
         req.method === 'POST' &&
         url.pathname === '/api/convert/ppt-to-pptx'
@@ -3821,7 +3819,10 @@ async function main() {
         if (permError) return permError
 
         try {
-          const body = (await req.json()) as { data: string }
+          const body = (await req.json()) as {
+            data: string
+            filename?: string
+          }
 
           if (!body.data) {
             return handleCors(
@@ -3836,39 +3837,40 @@ async function main() {
           // Decode base64 to Buffer
           const pptBuffer = Buffer.from(body.data, 'base64')
 
-          // Convert using service
-          const result = await convertPptToPptx(pptBuffer)
+          // Parse PPT directly (no LibreOffice needed)
+          const result = parsePptFile(pptBuffer, body.filename)
 
           if (!result.success) {
-            const status =
-              result.errorCode === 'LIBREOFFICE_NOT_INSTALLED' ? 503 : 500
             return handleCors(
               req,
               new Response(
-                JSON.stringify({
-                  error: result.error,
-                  errorCode: result.errorCode,
-                }),
+                JSON.stringify({ error: result.error }),
                 {
-                  status,
+                  status: 500,
                   headers: { 'Content-Type': 'application/json' },
                 },
               ),
             )
           }
 
-          // Return converted PPTX as base64
-          const pptxBase64 = result.data!.toString('base64')
           return handleCors(
             req,
-            new Response(JSON.stringify({ data: pptxBase64 }), {
-              headers: { 'Content-Type': 'application/json' },
-            }),
+            new Response(
+              JSON.stringify({
+                data: {
+                  title: result.title,
+                  slides: result.slides,
+                },
+              }),
+              {
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
           )
         } catch {
           return handleCors(
             req,
-            new Response(JSON.stringify({ error: 'Conversion failed' }), {
+            new Response(JSON.stringify({ error: 'PPT parsing failed' }), {
               status: 500,
               headers: { 'Content-Type': 'application/json' },
             }),

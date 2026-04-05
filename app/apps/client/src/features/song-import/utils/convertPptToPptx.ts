@@ -1,13 +1,5 @@
 import { getApiUrl } from '~/config'
-
-export type ConversionErrorCode =
-  | 'LIBREOFFICE_NOT_INSTALLED'
-  | 'CONVERSION_FAILED'
-
-export interface ConversionError {
-  error: string
-  errorCode?: ConversionErrorCode
-}
+import type { ParsedPptx } from './parsePptx'
 
 export class LibreOfficeNotInstalledError extends Error {
   constructor() {
@@ -29,19 +21,8 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
 }
 
 /**
- * Converts base64 string to ArrayBuffer
- */
-function base64ToArrayBuffer(base64: string): ArrayBuffer {
-  const binary = atob(base64)
-  const bytes = new Uint8Array(binary.length)
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i)
-  }
-  return bytes.buffer
-}
-
-/**
- * Checks if LibreOffice is installed on the server
+ * Checks if PPT conversion is available on the server.
+ * Since conversion is now built-in (pure JS), this always returns true.
  */
 export async function checkLibreOfficeInstalled(): Promise<boolean> {
   try {
@@ -53,36 +34,58 @@ export async function checkLibreOfficeInstalled(): Promise<boolean> {
   }
 }
 
+interface ParsedPptSlide {
+  slideNumber: number
+  text: string
+  htmlContent: string
+}
+
 /**
- * Converts a PPT file to PPTX format via server-side LibreOffice conversion
+ * Parses a PPT file via server-side pure JS parsing.
+ * No LibreOffice or other native dependencies required.
+ *
  * @param pptData - Binary PPT file data as ArrayBuffer
- * @returns Converted PPTX data as ArrayBuffer
- * @throws LibreOfficeNotInstalledError if LibreOffice is not installed
- * @throws Error for other conversion failures
+ * @param filename - Optional filename for title extraction
+ * @returns Parsed presentation data matching ParsedPptx format
  */
-export async function convertPptToPptx(
+export async function parsePptViaServer(
   pptData: ArrayBuffer,
-): Promise<ArrayBuffer> {
+  filename?: string,
+): Promise<ParsedPptx> {
   const base64Data = arrayBufferToBase64(pptData)
 
   const response = await fetch(`${getApiUrl()}/api/convert/ppt-to-pptx`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ data: base64Data }),
+    body: JSON.stringify({ data: base64Data, filename }),
   })
 
   if (!response.ok) {
-    const errorData = (await response
-      .json()
-      .catch(() => ({}))) as ConversionError
-
-    if (errorData.errorCode === 'LIBREOFFICE_NOT_INSTALLED') {
-      throw new LibreOfficeNotInstalledError()
+    const errorData = (await response.json().catch(() => ({}))) as {
+      error?: string
     }
-
-    throw new Error(errorData.error || 'Conversion failed')
+    throw new Error(errorData.error || 'PPT parsing failed')
   }
 
-  const result = (await response.json()) as { data: string }
-  return base64ToArrayBuffer(result.data)
+  const result = (await response.json()) as {
+    data: { title: string; slides: ParsedPptSlide[] }
+  }
+
+  return {
+    title: result.data.title,
+    slides: result.data.slides,
+  }
+}
+
+/**
+ * @deprecated Use parsePptViaServer instead. Kept for backward compatibility.
+ * Converts a PPT file to PPTX format via server-side conversion.
+ * Now actually parses PPT directly and returns the data as-is.
+ */
+export async function convertPptToPptx(
+  _pptData: ArrayBuffer,
+): Promise<ArrayBuffer> {
+  throw new Error(
+    'convertPptToPptx is deprecated. Use parsePptViaServer instead.',
+  )
 }

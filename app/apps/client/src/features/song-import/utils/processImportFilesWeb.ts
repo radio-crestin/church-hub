@@ -1,7 +1,4 @@
-import {
-  convertPptToPptx,
-  LibreOfficeNotInstalledError,
-} from './convertPptToPptx'
+import { parsePptViaServer } from './convertPptToPptx'
 import { extractFilesFromZip } from './extractPptxFromZip'
 import { parseOpenSongXml } from './parseOpenSong'
 import { parsePptxFile } from './parsePptx'
@@ -108,11 +105,8 @@ export async function processImportFilesWeb(
         try {
           const fileData = await file.arrayBuffer()
 
-          // Convert PPT to PPTX via server
-          const pptxData = await convertPptToPptx(fileData)
-
-          // Parse converted PPTX
-          const parsed = await parsePptxFile(pptxData, file.name)
+          // Parse PPT via server-side pure JS parser
+          const parsed = await parsePptViaServer(fileData, file.name)
           return {
             success: true as const,
             data: {
@@ -122,17 +116,11 @@ export async function processImportFilesWeb(
             },
           }
         } catch (error) {
-          if (error instanceof LibreOfficeNotInstalledError) {
-            return {
-              success: false as const,
-              error: 'LIBREOFFICE_NOT_INSTALLED',
-            }
-          }
           const message =
             error instanceof Error ? error.message : 'Unknown error'
           return {
             success: false as const,
-            error: `Failed to convert ${file.name}: ${message}`,
+            error: `Failed to parse ${file.name}: ${message}`,
           }
         }
       },
@@ -248,11 +236,11 @@ export async function processImportFilesWeb(
           extractResult.pptFiles,
           async (pptFile) => {
             try {
-              // Convert PPT to PPTX via server
-              const pptxData = await convertPptToPptx(pptFile.data)
-
-              // Parse converted PPTX
-              const parsed = await parsePptxFile(pptxData, pptFile.filename)
+              // Parse PPT via server-side pure JS parser
+              const parsed = await parsePptViaServer(
+                pptFile.data,
+                pptFile.filename,
+              )
               return {
                 success: true as const,
                 data: {
@@ -262,17 +250,11 @@ export async function processImportFilesWeb(
                 },
               }
             } catch (error) {
-              if (error instanceof LibreOfficeNotInstalledError) {
-                return {
-                  success: false as const,
-                  error: 'LIBREOFFICE_NOT_INSTALLED',
-                }
-              }
               const message =
                 error instanceof Error ? error.message : 'Unknown error'
               return {
                 success: false as const,
-                error: `Failed to convert ${pptFile.filename}: ${message}`,
+                error: `Failed to parse ${pptFile.filename}: ${message}`,
               }
             }
           },

@@ -27,6 +27,7 @@ import {
   type DuplicateAction,
   DuplicateSongDialog,
 } from './DuplicateSongDialog'
+import { parsePptViaServer } from '../utils/convertPptToPptx'
 import { type ParsedOpenSong, parseOpenSongXml } from '../utils/parseOpenSong'
 import { type ParsedPptx, parsePptxFile } from '../utils/parsePptx'
 
@@ -549,6 +550,22 @@ export function FileDropZoneProvider({ children }: Props) {
         return
       }
 
+      // Handle PPT files (parse via server-side pure JS parser)
+      const pptFile = files.find((f) => f.name.toLowerCase().endsWith('.ppt'))
+      if (pptFile) {
+        try {
+          const pptData = await pptFile.arrayBuffer()
+          const parsed = await parsePptViaServer(pptData, pptFile.name)
+          // @ts-expect-error - path property may be available in Tauri
+          const filePath = pptFile.path as string | undefined
+          await importPptxAsSong(parsed, filePath || null)
+        } catch (error) {
+          // biome-ignore lint/suspicious/noConsole: error logging
+          console.error('[file-import] Failed to parse PPT:', error)
+        }
+        return
+      }
+
       // Handle OpenSong files
       const opensongFile = files.find((f) =>
         f.name.toLowerCase().endsWith('.opensong'),
@@ -606,6 +623,13 @@ export function FileDropZoneProvider({ children }: Props) {
             const parsed = await parsePptxFile(fileData.buffer, filePath)
             await importPptxAsSong(parsed, filePath)
             return // Process only the first valid file
+          }
+
+          if (lowerPath.endsWith('.ppt')) {
+            const fileData = await readFile(filePath)
+            const parsed = await parsePptViaServer(fileData.buffer, filePath)
+            await importPptxAsSong(parsed, filePath)
+            return
           }
 
           if (lowerPath.endsWith('.opensong')) {
