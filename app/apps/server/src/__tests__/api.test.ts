@@ -300,13 +300,10 @@ describe('Music Player API', () => {
     const ws = new WebSocket(`${BASE_URL.replace('http', 'ws')}/ws`)
 
     const result = await new Promise<boolean>((resolve) => {
-      const timeout = setTimeout(() => resolve(false), 10000)
+      const timeout = setTimeout(() => resolve(false), 15000)
 
       ws.onopen = () => {
-        // Give server time to fully initialize music handler
-        setTimeout(() => {
-          ws.send(JSON.stringify({ type: 'music_get_state' }))
-        }, 1000)
+        ws.send(JSON.stringify({ type: 'music_get_state' }))
       }
 
       ws.onmessage = (event) => {

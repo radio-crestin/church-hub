@@ -6,6 +6,7 @@
 import {
   EMULATOR_CONFIG,
   ensureEmulator,
+  isEmulatorAvailable,
   stopEmulator,
 } from './helpers/x32-emulator'
 import { OBSWebSocketMock } from './mocks/obs-websocket-mock'
@@ -320,7 +321,9 @@ describe('Livestream Integration Tests', () => {
     })
   })
 
-  describe('X32 Mixer Emulator', () => {
+  const emulatorDescribe = isEmulatorAvailable() ? describe : describe.skip
+
+  emulatorDescribe('X32 Mixer Emulator', () => {
     const dgram = require('node:dgram') as typeof import('node:dgram')
 
     beforeAll(async () => {
