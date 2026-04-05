@@ -41,6 +41,12 @@ function areStatesEqual(a: SongState, b: SongState): boolean {
     if (a.slides[i].content !== b.slides[i].content) return false
     // Compare by index position (sortOrder after save reflects position)
     if (a.slides[i].sortOrder !== b.slides[i].sortOrder) return false
+    if ((a.slides[i].label ?? null) !== (b.slides[i].label ?? null))
+      return false
+    // Compare chords by JSON serialization
+    const chordsA = JSON.stringify(a.slides[i].chords ?? null)
+    const chordsB = JSON.stringify(b.slides[i].chords ?? null)
+    if (chordsA !== chordsB) return false
   }
 
   if (!areMetadataEqual(a.metadata, b.metadata)) return false
@@ -58,7 +64,9 @@ export function useDirtyState() {
       slides: state.slides.map((s, idx) => ({
         id: s.id,
         content: s.content,
+        chords: s.chords ? [...s.chords] : null,
         sortOrder: idx,
+        label: s.label ?? null,
       })),
       metadata: state.metadata ? { ...state.metadata } : undefined,
     }
@@ -74,7 +82,9 @@ export function useDirtyState() {
       slides: currentState.slides.map((s, idx) => ({
         id: s.id,
         content: s.content,
+        chords: s.chords ? [...s.chords] : null,
         sortOrder: idx,
+        label: s.label ?? null,
       })),
       metadata: currentState.metadata
         ? { ...currentState.metadata }
