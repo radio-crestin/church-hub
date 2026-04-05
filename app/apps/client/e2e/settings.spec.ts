@@ -102,7 +102,7 @@ test.describe('Settings Page', () => {
       await page.waitForTimeout(500)
     }
 
-    const debugLabel = page.locator('text=/debug/i')
+    const debugLabel = page.locator('text=/debug|depanare/i')
     await expect(debugLabel.first()).toBeVisible({ timeout: 10000 })
 
     // Find the toggle switch (rounded-full button near debug text)
