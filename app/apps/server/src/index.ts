@@ -5694,11 +5694,6 @@ async function main() {
     }
   })
 
-  // Initialize Music Player service
-  t = performance.now()
-  await initializeMusicPlayer()
-  logTiming('init_music_player', t)
-
   // Wire up music player state callback to WebSocket broadcast
   setStateCallback((state) => {
     broadcastMusicState(state)
@@ -5707,7 +5702,7 @@ async function main() {
   // Register music state provider for new WebSocket clients
   setMusicStateProvider(() => getPlayerState())
 
-  // Wire up music player WebSocket command handler
+  // Wire up music player WebSocket command handler (register before init so commands work immediately with default state)
   setMusicCommandHandler(async (type, payload) => {
     switch (type) {
       case 'music_play':
@@ -5799,6 +5794,14 @@ async function main() {
         refreshQueueState()
         broadcastMusicState(getPlayerState())
         break
+    }
+  })
+
+  // Initialize Music Player service in background (audio server may take time to become available)
+  initializeMusicPlayer().then((available) => {
+    if (available) {
+      // biome-ignore lint/suspicious/noConsole: Startup timing logs
+      console.log('[startup] Music player initialized successfully')
     }
   })
 

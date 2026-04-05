@@ -5,6 +5,7 @@
  */
 import { type ChildProcess, execFileSync, spawn } from 'node:child_process'
 import dgram from 'node:dgram'
+import fs from 'node:fs'
 import path from 'node:path'
 
 const EMULATOR_PATH = path.resolve(
@@ -12,6 +13,16 @@ const EMULATOR_PATH = path.resolve(
   '../../../../../tools/x32-emulator',
 )
 const EMULATOR_PORT = 10023
+
+/** Check if the emulator binary exists and is executable on this platform */
+export function isEmulatorAvailable(): boolean {
+  try {
+    fs.accessSync(EMULATOR_PATH, fs.constants.X_OK)
+    return true
+  } catch {
+    return false
+  }
+}
 
 let emulatorProcess: ChildProcess | null = null
 let startPromise: Promise<void> | null = null
