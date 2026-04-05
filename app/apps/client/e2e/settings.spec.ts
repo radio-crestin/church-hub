@@ -95,11 +95,14 @@ test.describe('Settings Page', () => {
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
     await page.waitForTimeout(500)
 
-    // Find the debug mode section
-    const debugLabel = page.locator('text=/debug/i')
-    if (!(await debugLabel.first().isVisible({ timeout: 5000 }).catch(() => false))) {
-      await debugLabel.first().scrollIntoViewIfNeeded().catch(() => {})
+    // Find the debug mode section — use the developer section as anchor
+    const devSection = page.locator('text=/developer|dezvoltator/i').first()
+    if (await devSection.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await devSection.scrollIntoViewIfNeeded()
+      await page.waitForTimeout(500)
     }
+
+    const debugLabel = page.locator('text=/debug/i')
     await expect(debugLabel.first()).toBeVisible({ timeout: 10000 })
 
     // Find the toggle switch (rounded-full button near debug text)
