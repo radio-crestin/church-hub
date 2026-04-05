@@ -9,7 +9,6 @@ import { calculateMaxExitAnimationDuration } from '../components/rendering/utils
 import { useSongUpdateTimestamp } from '../context/WebSocketContext'
 import type { ContentType, ScreenConfig, SongContentConfig } from '../types'
 import { addAminToLastSlide } from '../utils/addAminToLastSlide'
-import { addChordsToContent } from '../utils/addChordsToContent'
 import { addKeyLineToFirstSlide } from '../utils/addKeyLineToFirstSlide'
 import { resolveSlideChords } from '../utils/resolveSlideChords'
 
@@ -362,12 +361,8 @@ export function usePresentationContent({
               temp.data.currentSlideIndex,
               temp.data.slides,
             )
-            const shouldShowChords = songConfig?.displayChords ?? false
-            const finalContent = shouldShowChords
-              ? addChordsToContent(slideContent, resolvedChords)
-              : slideContent
             setContentType('song')
-            setContentData({ mainText: finalContent, chords: resolvedChords })
+            setContentData({ mainText: slideContent, chords: resolvedChords })
             setContentKey(
               `song|${temp.data.songId}|${temp.data.currentSlideIndex}`,
             )
@@ -536,18 +531,11 @@ export function usePresentationContent({
 
               // Resolve chords for this slide
               const queueChords = resolveSlideChords(slideIndex, item.slides)
-              const queueSongCfg = screen?.contentConfigs?.song as
-                | SongContentConfig
-                | undefined
-              const showChords = queueSongCfg?.displayChords ?? false
-              const finalSlideContent = showChords
-                ? addChordsToContent(slideContent, queueChords)
-                : slideContent
 
               if (isCancelled) return
               setContentType('song')
               setContentData({
-                mainText: finalSlideContent,
+                mainText: slideContent,
                 chords: queueChords,
               })
               setContentKey(`song|${item.songId}|${slideIndex}`)

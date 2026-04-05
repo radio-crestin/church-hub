@@ -1,8 +1,9 @@
 import { Book, Megaphone, MonitorPlay, Music, User } from 'lucide-react'
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 
 import { ChordDiagram } from '~/features/songs/components/ChordDiagram'
 import { AnimatedText } from './AnimatedText'
+import { ChordsOverlay } from './ChordsOverlay'
 import { ClockText } from './ClockText'
 import { TextContent } from './TextContent'
 import type { ContentData, NextSlideData } from './types'
@@ -55,24 +56,6 @@ export function ScreenContent({
       ? (currentConfig as SongContentConfig | undefined)
       : null
   const displayChordsEnabled = songConfig?.displayChords ?? false
-
-  // Handle clicks on chord annotations in the rendered content
-  const handleContentClick = useCallback(
-    (e: React.MouseEvent) => {
-      if (!displayChordsEnabled) return
-      const target = e.target as HTMLElement
-      // Chord annotations have amber color and bold font, wrapped in specific spans
-      if (
-        target.tagName === 'SPAN' &&
-        target.style.fontWeight === 'bold' &&
-        target.style.color === 'rgb(245, 158, 11)' &&
-        target.textContent
-      ) {
-        setActiveChord(target.textContent.trim())
-      }
-    },
-    [displayChordsEnabled],
-  )
 
   // Cache the previous config when visible so we can use it for exit animations
   const cachedConfigRef = useRef<{
@@ -147,6 +130,31 @@ export function ScreenContent({
     )
     const scaledBounds = scaleBounds(bounds)
     const elementVisible = isVisible && !!contentData?.mainText
+
+    // Render chords overlay instead of plain text when chords are enabled
+    if (
+      displayChordsEnabled &&
+      contentData?.chords &&
+      contentData.chords.length > 0 &&
+      elementVisible
+    ) {
+      return (
+        <ChordsOverlay
+          key="mainText-chords"
+          content={contentData.mainText ?? ''}
+          chords={contentData.chords}
+          width={scaledBounds.width}
+          height={scaledBounds.height}
+          left={scaledBounds.x}
+          top={scaledBounds.y}
+          baseFontSize={mt.style.maxFontSize * fontScale * 0.6}
+          color={mt.style.color}
+          fontFamily={mt.style.fontFamily}
+          alignment={mt.style.alignment ?? 'center'}
+          onChordClick={setActiveChord}
+        />
+      )
+    }
 
     return (
       <AnimatedText
@@ -649,7 +657,6 @@ export function ScreenContent({
         width: containerWidth,
         height: containerHeight,
       }}
-      onClick={handleContentClick}
     >
       {renderMainText()}
       {renderContentText()}

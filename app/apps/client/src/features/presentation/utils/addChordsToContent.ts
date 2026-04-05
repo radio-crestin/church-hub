@@ -5,10 +5,11 @@ interface ChordMapping {
 
 /**
  * Converts slide HTML content + chord mappings into HTML with chord annotations
- * displayed above the corresponding words.
+ * displayed above each line of lyrics.
  *
- * Each word that has a chord gets wrapped in a span with the chord displayed
- * above it using CSS positioning.
+ * Output format: for each line, a chord line is placed above the lyrics line.
+ * Chords are positioned using spaces to align above their corresponding words.
+ * Chords have data-chord attribute for click detection.
  */
 export function addChordsToContent(
   html: string,
@@ -22,8 +23,7 @@ export function addChordsToContent(
     chordMap.set(c.wordIndex, c.chord)
   }
 
-  // Parse HTML to lines of text, preserving structure
-  // We need to work at the text level while preserving HTML tags
+  // Parse HTML to plain text
   const plainText = html
     .replace(/<\/p>\s*<p[^>]*>/gi, '\n')
     .replace(/<br\s*\/?>/gi, '\n')
@@ -45,41 +45,53 @@ export function addChordsToContent(
 
   if (!plainText) return html
 
-  // Split into words (preserving newlines as tokens for tracking)
   const lines = plainText.split('\n')
   let wordIndex = 0
-  const resultLines: string[] = []
+  const resultParts: string[] = []
 
   for (const line of lines) {
     const words = line.split(/\s+/).filter(Boolean)
-    const lineWords: string[] = []
+
+    if (words.length === 0) {
+      // Empty line
+      wordIndex++
+      resultParts.push('')
+      continue
+    }
+
+    // Build chord line: position chords above their words using character offsets
+    let hasChordOnLine = false
+    const wordChords: Array<{ chord: string; charOffset: number }> = []
+    let charPos = 0
 
     for (const word of words) {
       const chord = chordMap.get(wordIndex)
       if (chord) {
-        // Wrap word with chord annotation
-        lineWords.push(
-          `<span style="display:inline-flex;flex-direction:column;align-items:center;margin:0 2px;vertical-align:bottom;">` +
-            `<span style="font-size:0.65em;font-weight:bold;color:#f59e0b;line-height:1.2;min-height:1.2em;">${escapeHtml(chord)}</span>` +
-            `<span>${escapeHtml(word)}</span>` +
-            `</span>`,
-        )
-      } else {
-        lineWords.push(
-          `<span style="display:inline-flex;flex-direction:column;align-items:center;margin:0 2px;vertical-align:bottom;">` +
-            `<span style="font-size:0.65em;line-height:1.2;min-height:1.2em;visibility:hidden;">&nbsp;</span>` +
-            `<span>${escapeHtml(word)}</span>` +
-            `</span>`,
-        )
+        hasChordOnLine = true
+        wordChords.push({ chord, charOffset: charPos })
       }
+      charPos += word.length + 1 // +1 for space
       wordIndex++
     }
-    // Add newline token for word index tracking
+    // Newline token
     wordIndex++
-    resultLines.push(lineWords.join(' '))
+
+    if (hasChordOnLine) {
+      // Build the chord line as positioned spans
+      const chordSpans = wordChords
+        .map(
+          ({ chord }) =>
+            `<span data-chord="${escapeAttr(chord)}" style="cursor:pointer;font-weight:bold;color:#f59e0b;margin-right:0.5em;">${escapeHtml(chord)}</span>`,
+        )
+        .join(' ')
+
+      resultParts.push(chordSpans)
+    }
+
+    resultParts.push(escapeHtml(line))
   }
 
-  return resultLines.join('\n')
+  return resultParts.join('\n')
 }
 
 function escapeHtml(text: string): string {
@@ -88,4 +100,12 @@ function escapeHtml(text: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
+}
+
+function escapeAttr(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
 }
