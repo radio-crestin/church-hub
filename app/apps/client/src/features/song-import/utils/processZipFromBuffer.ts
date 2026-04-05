@@ -1,8 +1,5 @@
 import { yieldToMain } from '~/utils/async-utils'
-import {
-  convertPptToPptx,
-  LibreOfficeNotInstalledError,
-} from './convertPptToPptx'
+import { parsePptViaServer } from './convertPptToPptx'
 import { extractFilesFromZip } from './extractPptxFromZip'
 import { parseOpenSongXml } from './parseOpenSong'
 import { parsePptxFile } from './parsePptx'
@@ -135,8 +132,7 @@ export async function processZipFromBuffer(
       extractResult.pptFiles,
       async (pptFile) => {
         try {
-          const pptxData = await convertPptToPptx(pptFile.data)
-          const parsed = await parsePptxFile(pptxData, pptFile.filename)
+          const parsed = await parsePptViaServer(pptFile.data, pptFile.filename)
           return {
             success: true as const,
             data: {
@@ -146,17 +142,11 @@ export async function processZipFromBuffer(
             },
           }
         } catch (error) {
-          if (error instanceof LibreOfficeNotInstalledError) {
-            return {
-              success: false as const,
-              error: 'LIBREOFFICE_NOT_INSTALLED',
-            }
-          }
           const message =
             error instanceof Error ? error.message : 'Unknown error'
           return {
             success: false as const,
-            error: `Failed to convert ${pptFile.filename}: ${message}`,
+            error: `Failed to parse ${pptFile.filename}: ${message}`,
           }
         }
       },

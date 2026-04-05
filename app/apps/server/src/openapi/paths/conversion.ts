@@ -2,13 +2,13 @@ export const conversionPaths = {
   '/api/convert/check-libreoffice': {
     get: {
       tags: ['Conversion'],
-      summary: 'Check LibreOffice installation',
+      summary: 'Check PPT conversion availability',
       description:
-        'Checks if LibreOffice is installed and available for file conversion',
+        'Checks if PPT file conversion is available. Always returns true since conversion is now built-in (pure JS, no external dependencies).',
       security: [{ bearerAuth: [] }, { cookieAuth: [] }],
       responses: {
         '200': {
-          description: 'Installation status',
+          description: 'Conversion availability status',
           content: {
             'application/json': {
               schema: {
@@ -32,9 +32,9 @@ export const conversionPaths = {
   '/api/convert/ppt-to-pptx': {
     post: {
       tags: ['Conversion'],
-      summary: 'Convert PPT to PPTX',
+      summary: 'Parse PPT file',
       description:
-        'Converts a legacy .ppt file to modern .pptx format using LibreOffice. Requires LibreOffice to be installed on the server.',
+        'Parses a legacy .ppt file and extracts slide text content. Uses built-in pure JS parser — no external dependencies required.',
       security: [{ bearerAuth: [] }, { cookieAuth: [] }],
       requestBody: {
         required: true,
@@ -48,6 +48,11 @@ export const conversionPaths = {
                   type: 'string',
                   description: 'Base64-encoded PPT file data',
                 },
+                filename: {
+                  type: 'string',
+                  description:
+                    'Original filename (used for title extraction fallback)',
+                },
               },
             },
           },
@@ -55,15 +60,28 @@ export const conversionPaths = {
       },
       responses: {
         '200': {
-          description: 'Conversion successful',
+          description: 'Parsing successful',
           content: {
             'application/json': {
               schema: {
                 type: 'object',
                 properties: {
                   data: {
-                    type: 'string',
-                    description: 'Base64-encoded PPTX file data',
+                    type: 'object',
+                    properties: {
+                      title: { type: 'string' },
+                      slides: {
+                        type: 'array',
+                        items: {
+                          type: 'object',
+                          properties: {
+                            slideNumber: { type: 'integer' },
+                            text: { type: 'string' },
+                            htmlContent: { type: 'string' },
+                          },
+                        },
+                      },
+                    },
                   },
                 },
               },
@@ -72,23 +90,6 @@ export const conversionPaths = {
         },
         '400': { $ref: '#/components/responses/BadRequest' },
         '401': { $ref: '#/components/responses/Unauthorized' },
-        '503': {
-          description: 'LibreOffice not installed',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  error: { type: 'string' },
-                  errorCode: {
-                    type: 'string',
-                    enum: ['LIBREOFFICE_NOT_INSTALLED'],
-                  },
-                },
-              },
-            },
-          },
-        },
         '500': { $ref: '#/components/responses/BadRequest' },
       },
     },

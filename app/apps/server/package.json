@@ -30,9 +30,9 @@
     "easymidi": "^3.2.0",
     "google-auth-library": "^10.6.2",
     "googleapis": "^169.0.0",
-    "libreoffice-convert": "^1.8.1",
     "music-metadata": "^11.12.3",
     "obs-websocket-js": "^5.0.8",
+    "ppt-to-text": "^1.0.1",
     "werift": "^0.22.9"
   },
   "devDependencies": {
