@@ -44,9 +44,11 @@ export function isTauri(): boolean {
  * so we need to use the actual server URL (localhost:3000)
  */
 export function getFrontendUrl(): string {
-  // In Tauri mode, always use localhost:3000 (where sidecar serves the app)
+  // In Tauri mode, use 127.0.0.1 (where sidecar serves the app)
+  // Use 127.0.0.1 instead of localhost to avoid IPv6 resolution issues on macOS
   if (isTauri()) {
-    return 'http://localhost:3000'
+    const port = import.meta.env.VITE_SERVER_PORT ?? 3000
+    return `http://127.0.0.1:${port}`
   }
   // In browser mode, use the current origin
   return window.location.origin

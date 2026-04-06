@@ -25,7 +25,8 @@ type PageWindowStates = Record<string, PageWindowState>
  */
 function getFrontendUrl(): string {
   if (isTauri()) {
-    return 'http://localhost:3000'
+    const port = import.meta.env.VITE_SERVER_PORT ?? 3000
+    return `http://127.0.0.1:${port}`
   }
   return window.location.origin
 }
