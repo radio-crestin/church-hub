@@ -141,7 +141,7 @@ export function useLiveTranslation() {
           defaultInputId: number
           defaultOutputId: number
         }) => {
-          setAudioDevices(data.devices)
+          setAudioDevices(Array.isArray(data.devices) ? data.devices : [])
         },
       )
       .catch(() => {})

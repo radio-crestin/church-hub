@@ -85,7 +85,16 @@ export async function handleLiveTranslationRoutes(
     req.method === 'GET' &&
     url.pathname === '/api/live-translation/devices'
   ) {
-    return Response.json(await getAudioDevices())
+    try {
+      return Response.json(await getAudioDevices())
+    } catch {
+      // Audio library not available on this platform — return empty device list
+      return Response.json({
+        devices: [],
+        defaultInputId: -1,
+        defaultOutputId: -1,
+      })
+    }
   }
 
   // GET /api/live-translation/settings
