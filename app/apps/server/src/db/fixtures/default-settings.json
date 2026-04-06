@@ -52,6 +52,18 @@
     "value": "{\"updatedCount\":1927,\"skippedCount\":570,\"replacedCount\":193}"
   },
   {
+    "key": "music_player_current_index",
+    "value": "-1"
+  },
+  {
+    "key": "music_player_shuffle",
+    "value": "false"
+  },
+  {
+    "key": "music_player_volume",
+    "value": "100"
+  },
+  {
     "key": "search_synonyms",
     "value": "{\"groups\":[{\"primary\":\"hristos\",\"synonyms\":[\"cristos\"],\"id\":\"ad2d4f79-43c1-49d8-91f0-9d27fcfc3c05\"}]}"
   },
@@ -61,7 +73,7 @@
   },
   {
     "key": "sidebar_configuration",
-    "value": "{\"version\":2,\"items\":[{\"id\":\"present\",\"type\":\"builtin\",\"builtinId\":\"present\",\"order\":0,\"isVisible\":true,\"settings\":{\"shortcuts\":[\"F4\"],\"focusSearchOnNavigate\":false}},{\"id\":\"songs\",\"type\":\"builtin\",\"builtinId\":\"songs\",\"order\":1,\"isVisible\":true,\"settings\":{\"shortcuts\":[\"F5\"],\"focusSearchOnNavigate\":true}},{\"id\":\"bible\",\"type\":\"builtin\",\"builtinId\":\"bible\",\"order\":2,\"isVisible\":true,\"settings\":{\"shortcuts\":[\"F6\"],\"focusSearchOnNavigate\":true}},{\"id\":\"schedules\",\"type\":\"builtin\",\"builtinId\":\"schedules\",\"order\":3,\"isVisible\":true,\"settings\":{\"shortcuts\":[\"F7\"],\"focusSearchOnNavigate\":false}},{\"id\":\"livestream\",\"type\":\"builtin\",\"builtinId\":\"livestream\",\"order\":4,\"isVisible\":true,\"settings\":{\"shortcuts\":[\"F8\"],\"focusSearchOnNavigate\":false}},{\"id\":\"custom_1767730144882_yd2xnu2\",\"type\":\"custom\",\"title\":\"WhatsApp\",\"url\":\"https://web.whatsapp.com/\",\"iconName\":\"MessageSquare\",\"useIframeEmbedding\":false,\"order\":5,\"isVisible\":true,\"settings\":{\"shortcuts\":[\"F9\"],\"focusSearchOnNavigate\":false,\"nativeWindow\":{\"openInNativeWindow\":true,\"autoOpenOnStartup\":false,\"forceNativeWindow\":true},\"iconColor\":\"green\"},\"iconSource\":\"favicon\"},{\"id\":\"music\",\"type\":\"builtin\",\"builtinId\":\"music\",\"order\":6,\"isVisible\":true,\"settings\":{\"shortcuts\":[\"F10\"],\"focusSearchOnNavigate\":true}},{\"id\":\"song_key\",\"type\":\"builtin\",\"builtinId\":\"song_key\",\"order\":7,\"isVisible\":true,\"settings\":{\"shortcuts\":[],\"focusSearchOnNavigate\":false,\"nativeWindow\":{\"openInNativeWindow\":false,\"autoOpenOnStartup\":false,\"forceNativeWindow\":false}}}]}"
+    "value": "{\"version\":2,\"items\":[{\"id\":\"present\",\"type\":\"builtin\",\"builtinId\":\"present\",\"order\":0,\"isVisible\":true,\"settings\":{\"shortcuts\":[\"F4\"],\"focusSearchOnNavigate\":false}},{\"id\":\"songs\",\"type\":\"builtin\",\"builtinId\":\"songs\",\"order\":1,\"isVisible\":true,\"settings\":{\"shortcuts\":[],\"focusSearchOnNavigate\":true,\"nativeWindow\":{\"openInNativeWindow\":false,\"autoOpenOnStartup\":false,\"forceNativeWindow\":false},\"iconColor\":\"indigo\"}},{\"id\":\"bible\",\"type\":\"builtin\",\"builtinId\":\"bible\",\"order\":2,\"isVisible\":true,\"settings\":{\"shortcuts\":[\"F6\"],\"focusSearchOnNavigate\":true}},{\"id\":\"schedules\",\"type\":\"builtin\",\"builtinId\":\"schedules\",\"order\":3,\"isVisible\":true,\"settings\":{\"shortcuts\":[\"F7\"],\"focusSearchOnNavigate\":false}},{\"id\":\"custom_1767730144882_yd2xnu2\",\"type\":\"custom\",\"title\":\"WhatsApp\",\"url\":\"https://web.whatsapp.com/\",\"iconName\":\"MessageSquare\",\"useIframeEmbedding\":false,\"order\":4,\"isVisible\":true,\"settings\":{\"shortcuts\":[\"F9\"],\"focusSearchOnNavigate\":false,\"nativeWindow\":{\"openInNativeWindow\":true,\"autoOpenOnStartup\":true,\"forceNativeWindow\":true},\"iconColor\":\"green\"},\"iconSource\":\"favicon\"},{\"id\":\"music\",\"type\":\"builtin\",\"builtinId\":\"music\",\"order\":5,\"isVisible\":true,\"settings\":{\"shortcuts\":[],\"focusSearchOnNavigate\":true,\"nativeWindow\":{\"openInNativeWindow\":false,\"autoOpenOnStartup\":false,\"forceNativeWindow\":false},\"iconColor\":\"purple\"}},{\"id\":\"song_key\",\"type\":\"builtin\",\"builtinId\":\"song_key\",\"order\":6,\"isVisible\":true,\"settings\":{\"shortcuts\":[],\"focusSearchOnNavigate\":false,\"nativeWindow\":{\"openInNativeWindow\":false,\"autoOpenOnStartup\":false,\"forceNativeWindow\":false}}},{\"id\":\"live_translation\",\"type\":\"builtin\",\"builtinId\":\"live_translation\",\"order\":7,\"isVisible\":true,\"settings\":{\"shortcuts\":[],\"nativeWindow\":{\"openInNativeWindow\":false,\"autoOpenOnStartup\":false,\"forceNativeWindow\":false},\"iconColor\":\"blue\"}},{\"id\":\"livestream\",\"type\":\"builtin\",\"builtinId\":\"livestream\",\"order\":8,\"isVisible\":true,\"settings\":{\"shortcuts\":[\"F8\"],\"focusSearchOnNavigate\":false}}]}"
   },
   {
     "key": "songs_ai_search_config",
