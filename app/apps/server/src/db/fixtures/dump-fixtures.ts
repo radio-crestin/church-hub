@@ -388,13 +388,23 @@ function sanitizeSettingValue(value: string): string {
   try {
     const parsed = JSON.parse(value)
     if (typeof parsed === 'object' && parsed !== null) {
-      if ('apiKey' in parsed) {
-        parsed.apiKey = null
+      let redacted = false
+      // Redact any key that looks like a secret
+      for (const key of Object.keys(parsed)) {
+        const lower = key.toLowerCase()
+        if (
+          lower.includes('apikey') ||
+          lower.includes('api_key') ||
+          lower.includes('secret') ||
+          lower.includes('token') ||
+          lower.includes('password') ||
+          lower.includes('credential')
+        ) {
+          parsed[key] = null
+          redacted = true
+        }
       }
-      if ('geminiApiKey' in parsed) {
-        parsed.geminiApiKey = null
-      }
-      if ('apiKey' in parsed || 'geminiApiKey' in parsed) {
+      if (redacted) {
         return JSON.stringify(parsed)
       }
     }
