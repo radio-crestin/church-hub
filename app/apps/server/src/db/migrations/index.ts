@@ -8,6 +8,7 @@ import { extractKeylinesFromSlides } from './extract-keylines-from-slides'
 import { migrateShortcuts } from './migrate-shortcuts'
 import { seedSystemRoles } from './seed'
 import { seedBibleTranslations } from './seed-bibles'
+import { seedSampleMusic } from './seed-music'
 import { seedDefaultScreens } from './seed-screens'
 import { seedAppSettings } from './seed-settings'
 import { seedSongCategories } from './seed-song-categories'
@@ -187,6 +188,12 @@ export function runMigrations(
   t = performance.now()
   extractKeylinesFromSlides(rawDb)
   logTiming('extract_keylines_from_slides', t)
+
+  // Seed sample music (only if no music folders exist yet)
+  log('info', 'Seeding sample music...')
+  t = performance.now()
+  seedSampleMusic(rawDb)
+  logTiming('seed_sample_music', t)
 
   return { ftsRecreated: ftsCreated }
 }
