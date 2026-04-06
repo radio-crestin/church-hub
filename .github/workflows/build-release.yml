@@ -185,8 +185,8 @@ jobs:
             sidecar_suffix: aarch64-apple-darwin
             consistent_name: church-hub-macos-arm64.dmg
 
-          # macOS x64 (Intel)
-          - platform: macos-13
+          # macOS x64 (Intel) - cross-compiled from ARM64 runner
+          - platform: macos-latest
             rust_target: x86_64-apple-darwin
             bun_target: bun-darwin-x64
             sidecar_suffix: x86_64-apple-darwin
