@@ -6,6 +6,9 @@ import { createLogger } from '~/utils/logger'
 
 const logger = createLogger('app:fetcher')
 
+// Default timeout for all fetch requests (15 seconds)
+const DEFAULT_FETCH_TIMEOUT_MS = 15_000
+
 // Check if we're running in Tauri mode
 const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 
@@ -41,7 +44,7 @@ function getApiBaseUrl(): string {
 
 export async function fetcher<T>(
   url: string,
-  options?: RequestInit & ClientOptions,
+  options?: RequestInit & ClientOptions & { timeout?: number },
 ): Promise<T> {
   // Get auth token for mobile
   const userToken = isMobile() ? getStoredUserToken() : null
@@ -59,11 +62,21 @@ export async function fetcher<T>(
   const fullUrl = `${getApiBaseUrl()}${url}`
   const startTime = performance.now()
 
+  const timeoutMs = options?.timeout ?? DEFAULT_FETCH_TIMEOUT_MS
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+
+  // Merge caller's signal with our timeout signal
+  if (options?.signal) {
+    options.signal.addEventListener('abort', () => controller.abort())
+  }
+
   try {
     const res = await fetchFn(fullUrl, {
       ...(options ?? {}),
       credentials: 'include',
       headers,
+      signal: controller.signal,
     })
 
     const duration = performance.now() - startTime
@@ -81,10 +94,22 @@ export async function fetcher<T>(
     return await res.json()
   } catch (error) {
     const duration = performance.now() - startTime
+
+    if (controller.signal.aborted && !options?.signal?.aborted) {
+      const timeoutError = new Error(
+        `API ${options?.method ?? 'GET'} ${url} timed out after ${timeoutMs}ms`,
+      )
+      timeoutError.name = 'TimeoutError'
+      logger.error(timeoutError.message)
+      throw timeoutError
+    }
+
     logger.error(
       `API ${options?.method ?? 'GET'} ${url} failed (${duration.toFixed(0)}ms)`,
       error,
     )
     throw error
+  } finally {
+    clearTimeout(timeoutId)
   }
 }
