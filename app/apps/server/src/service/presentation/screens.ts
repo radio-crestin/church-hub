@@ -310,6 +310,22 @@ function parseConfig(json: string): Record<string, unknown> {
   }
 }
 
+export function parseNextSlideConfig(json: string): NextSlideSectionConfig {
+  try {
+    const defaults = getDefaultNextSlideConfig()
+    const parsed = JSON.parse(json) as Partial<NextSlideSectionConfig>
+    return {
+      ...defaults,
+      ...parsed,
+      labelStyle: { ...defaults.labelStyle, ...parsed.labelStyle },
+      contentStyle: { ...defaults.contentStyle, ...parsed.contentStyle },
+      background: { ...defaults.background, ...parsed.background },
+    }
+  } catch {
+    return getDefaultNextSlideConfig()
+  }
+}
+
 // ============================================================================
 // CONVERTERS
 // ============================================================================
@@ -438,9 +454,7 @@ export function getScreenWithConfigs(id: number): ScreenWithConfigs | null {
       .get()
 
     if (nextSlideRecord) {
-      nextSlideConfig = parseConfig(
-        nextSlideRecord.config,
-      ) as NextSlideSectionConfig
+      nextSlideConfig = parseNextSlideConfig(nextSlideRecord.config)
     } else {
       // Create default config - enabled by default only for stage screens
       nextSlideConfig = {
@@ -814,7 +828,7 @@ export function getNextSlideConfig(screenId: number): NextSlideSectionConfig {
       .get()
 
     if (record) {
-      return parseConfig(record.config) as NextSlideSectionConfig
+      return parseNextSlideConfig(record.config)
     }
 
     return getDefaultNextSlideConfig()

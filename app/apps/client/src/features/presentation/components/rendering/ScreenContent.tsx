@@ -416,6 +416,8 @@ export function ScreenContent({
     if (ns.hidden) return null
     // Hide section when there's no next slide data
     if (!nextSlideData) return null
+    // Guard against missing style configs from older database entries
+    if (!ns.labelStyle || !ns.contentStyle) return null
 
     const bounds = calculatePixelBounds(
       ns.constraints,
