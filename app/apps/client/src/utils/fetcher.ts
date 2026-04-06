@@ -33,11 +33,12 @@ function getApiBaseUrl(): string {
     import.meta.env.VITE_SERVER_PORT ??
     3000
 
-  // In Tauri desktop, always use localhost (sidecar runs locally)
+  // In Tauri desktop, always use 127.0.0.1 (sidecar runs locally)
+  // Use 127.0.0.1 instead of localhost to avoid IPv6 resolution issues on macOS
   // In browser, use the same hostname the client used to access the app
   const hostname = isTauri
-    ? 'localhost'
-    : window.location.hostname || 'localhost'
+    ? '127.0.0.1'
+    : window.location.hostname || '127.0.0.1'
 
   return `http://${hostname}:${port}`
 }
