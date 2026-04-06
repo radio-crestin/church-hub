@@ -87,7 +87,8 @@ export async function handleLiveTranslationRoutes(
   ) {
     try {
       return Response.json(await getAudioDevices())
-    } catch {
+    } catch (error) {
+      logger.error('Failed to get audio devices', { error: String(error) })
       // Audio library not available on this platform — return empty device list
       return Response.json({
         devices: [],

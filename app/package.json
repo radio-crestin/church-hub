@@ -22,6 +22,7 @@
     "tauri:build:debug": "tauri build --debug",
     "build:apps": "bun run --filter client build && bun run --filter server compile",
     "tsc:check": "tsc --noEmit --skipLibCheck",
+    "postinstall": "cd apps/server/node_modules/audify && npx prebuild-install -r napi || true",
     "fixtures": "bun run apps/server/src/db/fixtures/dump-fixtures.ts",
     "ios:init": "tauri ios init",
     "ios:dev": "tauri ios dev",
