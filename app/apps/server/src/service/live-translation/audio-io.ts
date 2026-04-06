@@ -13,9 +13,12 @@ let RtAudioFormat: typeof import('audify').RtAudioFormat | null = null
 async function loadAudify() {
   if (RtAudio) return
   try {
-    const audify = await import('audify')
+    // Use require() instead of dynamic import to avoid module cache issues
+    // when the native binary becomes available after initial failure
+    const audify = require('audify') as typeof import('audify')
     RtAudio = audify.RtAudio
     RtAudioFormat = audify.RtAudioFormat
+    logger.info('Audio library (audify) loaded successfully')
   } catch (error) {
     logger.error('Failed to load audify (audio features unavailable)', {
       error: String(error),
