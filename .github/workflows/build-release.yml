@@ -135,6 +135,7 @@ jobs:
           | Platform | Download |
           |----------|----------|
           | **macOS** (Apple Silicon) | [Download .dmg](https://github.com/radio-crestin/church-hub/releases/latest/download/church-hub-macos-arm64.dmg) |
+          | **macOS** (Intel) | [Download .dmg](https://github.com/radio-crestin/church-hub/releases/latest/download/church-hub-macos-x64.dmg) |
           | **Windows** (x64) | [Download .exe](https://github.com/radio-crestin/church-hub/releases/latest/download/church-hub-windows-x64.exe) |
 
           ---
@@ -183,6 +184,13 @@ jobs:
             bun_target: bun-darwin-arm64
             sidecar_suffix: aarch64-apple-darwin
             consistent_name: church-hub-macos-arm64.dmg
+
+          # macOS x64 (Intel)
+          - platform: macos-13
+            rust_target: x86_64-apple-darwin
+            bun_target: bun-darwin-x64
+            sidecar_suffix: x86_64-apple-darwin
+            consistent_name: church-hub-macos-x64.dmg
 
           # Windows x64
           - platform: windows-latest
