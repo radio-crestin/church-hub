@@ -6,6 +6,8 @@
 
 import { fetch as tauriFetch } from '@tauri-apps/plugin-http'
 
+import { isMobile } from '~/config'
+
 const API_URL_STORAGE_KEY = 'church-hub-api-url'
 const USER_AUTH_STORAGE_KEY = 'church-hub-user-auth'
 
@@ -130,8 +132,9 @@ export async function testApiConnection(
   try {
     const { baseUrl, userToken } = parseAuthUrl(url)
 
-    // Use Tauri HTTP plugin in Tauri environment (bypasses WKWebView restrictions on iOS)
-    const fetchFn = isTauri ? tauriFetch : fetch
+    // Use Tauri HTTP plugin only on mobile (bypasses WKWebView restrictions on iOS)
+    // On desktop Tauri, use window.fetch which shares the webview's cookie jar
+    const fetchFn = isTauri && isMobile() ? tauriFetch : fetch
 
     // Test basic connectivity
     const pingResponse = await fetchFn(`${baseUrl}/ping`, {

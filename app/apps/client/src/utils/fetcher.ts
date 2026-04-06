@@ -12,8 +12,9 @@ const DEFAULT_FETCH_TIMEOUT_MS = 15_000
 // Check if we're running in Tauri mode
 const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 
-// Use Tauri fetch in Tauri mode, browser fetch in web mode
-const fetchFn = isTauri ? tauriFetch : window.fetch.bind(window)
+// Use Tauri fetch ONLY on mobile (iOS WKWebView blocks HTTP fetch to non-HTTPS origins)
+// On desktop Tauri, use window.fetch which shares the webview's cookie jar and HTTP context
+const fetchFn = isTauri && isMobile() ? tauriFetch : window.fetch.bind(window)
 
 /**
  * Gets the API base URL
