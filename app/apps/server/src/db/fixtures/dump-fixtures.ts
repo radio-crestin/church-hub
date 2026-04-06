@@ -27,7 +27,7 @@ const FIXTURES_DIR = join(import.meta.dir)
 interface ScreenRow {
   id: number
   name: string
-  type: 'primary' | 'stage' | 'livestream'
+  type: 'primary' | 'stage' | 'livestream' | 'kiosk'
   is_active: number
   open_mode: string
   is_fullscreen: number
@@ -50,7 +50,7 @@ interface NextSlideConfigRow {
 
 interface ScreenFixture {
   name: string
-  type: 'primary' | 'stage' | 'livestream'
+  type: 'primary' | 'stage' | 'livestream' | 'kiosk'
   isActive: boolean
   openMode: string
   isFullscreen: boolean
