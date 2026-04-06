@@ -62,10 +62,10 @@ export function needsApiUrlConfiguration(): boolean {
  * In Tauri mobile mode, uses the stored API URL from localStorage
  */
 function getApiHost(): string {
-  // In Tauri desktop, always use 127.0.0.1 (sidecar runs locally)
-  // Use 127.0.0.1 instead of localhost to avoid IPv6 resolution issues on macOS
+  // In Tauri desktop, use the webview's hostname to stay same-origin
+  // This avoids CORS issues when using window.fetch with credentials
   if (isTauriEnv && !isMobile()) {
-    return '127.0.0.1'
+    return window.location.hostname || 'localhost'
   }
 
   // Check for explicit env override first
