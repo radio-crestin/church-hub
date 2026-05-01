@@ -1,3 +1,4 @@
+import './cfbShim'
 import PPT from 'ppt-to-text'
 
 const DEBUG = process.env.DEBUG === 'true'
