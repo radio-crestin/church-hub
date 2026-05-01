@@ -108,6 +108,12 @@ test.describe('File Drop Import', () => {
   })
 
   test('can import a .ppt file via drag and drop', async ({ page }) => {
+    // PPT (1997-2003 binary format) parsing is significantly slower than
+    // PPTX — especially on CI runners — so the per-test 30s default is too
+    // tight. waitForResponse below allows 60s, the page navigation needs
+    // another ~15s, plus setup. Allow 120s overall.
+    test.setTimeout(120_000)
+
     // Clean up any existing song with the same title
     await deleteMatchingSongs(page.request, 'Se cuvine')
 
