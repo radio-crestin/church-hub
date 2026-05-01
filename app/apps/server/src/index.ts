@@ -3838,7 +3838,7 @@ async function main() {
           const pptBuffer = Buffer.from(body.data, 'base64')
 
           // Parse PPT directly (no LibreOffice needed)
-          const result = parsePptFile(pptBuffer, body.filename)
+          const result = await parsePptFile(pptBuffer, body.filename)
 
           if (!result.success) {
             return handleCors(
