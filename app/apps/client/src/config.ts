@@ -62,10 +62,14 @@ export function needsApiUrlConfiguration(): boolean {
  * In Tauri mobile mode, uses the stored API URL from localStorage
  */
 function getApiHost(): string {
-  // In Tauri desktop, use the webview's hostname to stay same-origin
-  // This avoids CORS issues when using window.fetch with credentials
+  // Tauri desktop loads the frontend from `http://tauri.localhost`, but the
+  // bun sidecar binds to localhost:3000. Using `tauri.localhost` here makes
+  // the browser reject every fetch / WebSocket because the document CSP only
+  // whitelists `http://localhost:*` — see `tauri.conf.json` connect-src.
+  // Force `localhost` so the URL matches CSP. CORS still works because the
+  // server reflects the request Origin and allows credentials.
   if (isTauriEnv && !isMobile()) {
-    return window.location.hostname || 'localhost'
+    return 'localhost'
   }
 
   // Check for explicit env override first

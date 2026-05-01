@@ -26,7 +26,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self' http://localhost:* https://localhost:* https://* http://*; script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:*; img-src 'self' asset: http://asset.localhost https://asset.localhost blob: data: http://localhost:* https://* http://*; media-src 'self' asset: http://asset.localhost https://asset.localhost blob: data:; style-src 'unsafe-inline' 'self' http://localhost:*; connect-src 'self' http://localhost:* ws://localhost:* wss://localhost:* https://* http://* wss://* ws://* ipc: http://ipc.localhost https://ipc.localhost; frame-src 'self' http://localhost:* https://* http://*;",
+      "csp": "default-src 'self' http://localhost:* https://localhost:* http://tauri.localhost:* https://* http://*; script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* http://tauri.localhost:*; img-src 'self' asset: http://asset.localhost https://asset.localhost blob: data: http://localhost:* http://tauri.localhost:* https://* http://*; media-src 'self' asset: http://asset.localhost https://asset.localhost blob: data:; style-src 'unsafe-inline' 'self' http://localhost:* http://tauri.localhost:*; connect-src 'self' http://localhost:* ws://localhost:* wss://localhost:* http://tauri.localhost:* ws://tauri.localhost:* wss://tauri.localhost:* https://* http://* wss://* ws://* ipc: http://ipc.localhost https://ipc.localhost; frame-src 'self' http://localhost:* http://tauri.localhost:* https://* http://*;",
       "assetProtocol": {
         "enable": true,
         "scope": ["$HOME/**", "$DOWNLOADS/**", "$DOCUMENT/**"]
