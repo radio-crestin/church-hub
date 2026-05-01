@@ -34,9 +34,12 @@ function getApiBaseUrl(): string {
     import.meta.env.VITE_SERVER_PORT ??
     3000
 
-  // Use the same hostname the client loaded from to stay same-origin
-  // This avoids CORS issues with credentials: 'include'
-  const hostname = window.location.hostname || 'localhost'
+  // Tauri desktop loads the frontend at `http://tauri.localhost` but the
+  // sidecar binds to localhost — using `tauri.localhost` here makes every
+  // fetch fail the document CSP (`connect-src http://localhost:*`). Force
+  // `localhost` so the URL matches CSP; CORS handles cross-origin allow.
+  const hostname =
+    isTauri && !isMobile() ? 'localhost' : window.location.hostname || 'localhost'
 
   return `http://${hostname}:${port}`
 }

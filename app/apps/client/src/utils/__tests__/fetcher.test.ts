@@ -176,4 +176,36 @@ describe('fetcher', () => {
     const result = await fetcher('/api/missing')
     expect(result).toEqual({ error: 'not found' })
   })
+
+  // Regression: Tauri desktop loads the frontend at `http://tauri.localhost`,
+  // but the bun sidecar binds to localhost:3000. If the fetcher uses
+  // `window.location.hostname` here, every request goes to
+  // `http://tauri.localhost:3000` and fails the document CSP
+  // (`connect-src http://localhost:*`). The webview shows "Access Denied"
+  // because /api/auth/me never returns and the permission provider sees
+  // an empty permission set.
+  it('targets http://localhost:PORT in Tauri desktop, ignoring tauri.localhost', async () => {
+    const tauriWindow = globalThis.window as unknown as {
+      __TAURI_INTERNALS__?: object
+      location: { hostname: string }
+    }
+    tauriWindow.__TAURI_INTERNALS__ = {}
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { hostname: 'tauri.localhost' },
+    })
+
+    try {
+      mockFetchResponse({ data: { isApp: true } })
+      const fetcher = await getFetcher()
+
+      await fetcher('/api/auth/me')
+
+      const calledUrl = fetchSpy.mock.calls[0]?.[0] as string
+      expect(calledUrl).toBe('http://localhost:3000/api/auth/me')
+      expect(calledUrl).not.toContain('tauri.localhost')
+    } finally {
+      delete tauriWindow.__TAURI_INTERNALS__
+    }
+  })
 })
