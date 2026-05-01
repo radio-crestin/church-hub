@@ -1,5 +1,4 @@
-import './cfbShim'
-import PPT from 'ppt-to-text'
+import { installCfbGlobals } from './cfbShim'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -53,13 +52,19 @@ function escapeHtml(text: string): string {
  * @param filename - Optional filename to extract title from
  * @returns ParsedPptResult with slide text or error
  */
-export function parsePptFile(
+export async function parsePptFile(
   pptData: Buffer,
   filename?: string,
-): ParsedPptResult {
+): Promise<ParsedPptResult> {
   log('debug', `Parsing PPT file (${pptData.length} bytes)`)
 
   try {
+    // Install cfb/codepage on globalThis BEFORE loading ppt-to-text — its
+    // module-level code reads `cptable` on first evaluation, so the order
+    // matters. Both calls are idempotent and cached after the first parse.
+    await installCfbGlobals()
+    const { default: PPT } = await import('ppt-to-text')
+
     const pres = PPT.readBuffer(pptData, {})
     const slideTexts: string[] = PPT.utils.to_text(pres)
 

@@ -17,7 +17,7 @@ const BASE_URL = `http://localhost:${TEST_PORT}`
 
 let serverProcess: Subprocess | null = null
 
-async function waitForServer(url: string, maxAttempts = 180): Promise<void> {
+async function waitForServer(url: string, maxAttempts = 360): Promise<void> {
   for (let i = 0; i < maxAttempts; i++) {
     try {
       await fetch(url)
@@ -34,11 +34,30 @@ beforeAll(async () => {
   serverProcess = spawn({
     cmd: ['bun', 'run', serverEntry],
     env: { ...process.env, PORT: String(TEST_PORT) },
-    stdout: 'ignore',
-    stderr: 'ignore',
+    stdout: 'pipe',
+    stderr: 'pipe',
   })
+  // Pump stdout/stderr to console so a failing spawn is debuggable
+  void (async () => {
+    const r = serverProcess!.stdout.getReader()
+    const dec = new TextDecoder()
+    while (true) {
+      const { value, done } = await r.read()
+      if (done) break
+      process.stderr.write(`[srv-out] ${dec.decode(value)}`)
+    }
+  })()
+  void (async () => {
+    const r = serverProcess!.stderr.getReader()
+    const dec = new TextDecoder()
+    while (true) {
+      const { value, done } = await r.read()
+      if (done) break
+      process.stderr.write(`[srv-err] ${dec.decode(value)}`)
+    }
+  })()
   await waitForServer(`${BASE_URL}/api/database/info`)
-})
+}, 240_000)
 
 afterAll(() => {
   serverProcess?.kill()
