@@ -1,3 +1,5 @@
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { expect, test } from '@playwright/test'
 
 test.describe('Database Management - API', () => {
@@ -98,14 +100,17 @@ test.describe('Database Management - API', () => {
   }) => {
     const response = await request.post('/api/database/import', {
       data: {
-        sourcePath: '/tmp/nonexistent-db-file-12345.sqlite',
+        sourcePath: join(tmpdir(), 'nonexistent-db-file-12345.sqlite'),
       },
     })
     expect([400, 500]).toContain(response.status())
   })
 
   test('can export database to temp path', async ({ request }) => {
-    const exportPath = `/tmp/church-hub-e2e-export-${Date.now()}.sqlite`
+    const exportPath = join(
+      tmpdir(),
+      `church-hub-e2e-export-${Date.now()}.sqlite`,
+    )
 
     const response = await request.post('/api/database/export', {
       data: { destinationPath: exportPath },

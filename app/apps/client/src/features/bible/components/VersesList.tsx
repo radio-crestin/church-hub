@@ -5,7 +5,7 @@ import {
   Loader2,
   LocateFixed,
 } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { KeyboardShortcutBadge } from '~/ui/kbd'
@@ -158,34 +158,87 @@ export function VersesList({
     return () => container.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Scroll to highlighted verse or first verse of current chapter
-  useEffect(() => {
-    const scrollToTarget = () => {
-      if (!containerRef.current) return
+  // Scroll to highlighted verse or first verse of current chapter. Runs as a
+  // layout effect so the scroll happens synchronously before paint, then keeps
+  // retrying for ~5s to survive the case where the new chapter's verses arrive
+  // after the first attempt (chapter cross can re-mount the highlighted button
+  // multiple times as the infinite-scroll window updates).
+  useLayoutEffect(() => {
+    const rafIds: number[] = []
+    let timeoutId: ReturnType<typeof setTimeout> | null = null
+    let cancelled = false
 
-      if (scrollTargetIndex !== null && highlightedRef.current) {
-        highlightedRef.current.scrollIntoView({
-          behavior: 'auto',
-          block: 'center',
-        })
-      } else if (currentChapterFirstVerseRef.current) {
-        const verseElement = currentChapterFirstVerseRef.current
-        const chapterContainer = verseElement.closest('.mb-4')
-        if (chapterContainer) {
-          chapterContainer.scrollIntoView({
-            behavior: 'auto',
-            block: 'start',
-          })
-        }
-      }
+    const isInView = (el: HTMLElement) => {
+      const container = containerRef.current
+      if (!container) return false
+      const c = container.getBoundingClientRect()
+      const r = el.getBoundingClientRect()
+      return r.top >= c.top - 1 && r.bottom <= c.bottom + 1
     }
 
-    const rafId = requestAnimationFrame(() => {
-      requestAnimationFrame(scrollToTarget)
-    })
+    // Compute and set scrollTop directly using bounding rects. scrollIntoView()
+    // can silently no-op when the verse list re-mounts mid-chapter-cross, and
+    // offsetTop math fails when an intermediate ancestor (e.g., a chapter
+    // wrapper) is positioned and breaks the offsetParent chain.
+    const scrollElementToCenter = (el: HTMLElement) => {
+      const container = containerRef.current
+      if (!container) return
+      const cRect = container.getBoundingClientRect()
+      const eRect = el.getBoundingClientRect()
+      const delta = eRect.top - cRect.top - cRect.height / 2 + eRect.height / 2
+      container.scrollTop += delta
+    }
 
-    return () => cancelAnimationFrame(rafId)
-  }, [scrollTargetIndex, versesKey, currentChapterKey])
+    const scrollElementToStart = (el: HTMLElement) => {
+      const container = containerRef.current
+      if (!container) return
+      const cRect = container.getBoundingClientRect()
+      const eRect = el.getBoundingClientRect()
+      container.scrollTop += eRect.top - cRect.top
+    }
+
+    const scrollToTarget = () => {
+      if (cancelled || !containerRef.current) return false
+
+      if (scrollTargetIndex !== null && highlightedRef.current) {
+        scrollElementToCenter(highlightedRef.current)
+        return isInView(highlightedRef.current)
+      }
+      if (currentChapterFirstVerseRef.current) {
+        const verseElement = currentChapterFirstVerseRef.current
+        const chapterContainer = verseElement.closest('.mb-4') as HTMLElement | null
+        if (chapterContainer) {
+          scrollElementToStart(chapterContainer)
+          return isInView(verseElement)
+        }
+      }
+      return false
+    }
+
+    // Scroll on every attempt for the full window. We can't stop early on
+    // isInView because subsequent layout shifts (a sibling chapter finishing
+    // its query) can push the verse off-screen again after we declared
+    // success. Total budget ~3s, scrolling roughly every 150ms.
+    const scheduleAttempt = (attemptsLeft: number, delayMs: number) => {
+      const raf = requestAnimationFrame(() => {
+        scrollToTarget()
+        if (cancelled || attemptsLeft <= 0) return
+        timeoutId = setTimeout(
+          () => scheduleAttempt(attemptsLeft - 1, delayMs),
+          delayMs,
+        )
+      })
+      rafIds.push(raf)
+    }
+
+    rafIds.push(requestAnimationFrame(() => scheduleAttempt(20, 150)))
+
+    return () => {
+      cancelled = true
+      for (const id of rafIds) cancelAnimationFrame(id)
+      if (timeoutId !== null) clearTimeout(timeoutId)
+    }
+  }, [scrollTargetIndex, versesKey, currentChapterKey, chapters])
 
   // IntersectionObserver for infinite scroll - load previous chapters
   useEffect(() => {
