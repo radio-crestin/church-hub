@@ -22,6 +22,7 @@ export function FeedbackModal({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [ticketId, setTicketId] = useState<string | null>(null)
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -32,6 +33,7 @@ export function FeedbackModal({
       setMessage('')
       setError(null)
       setSuccess(false)
+      setTicketId(null)
     } else {
       dialog.close()
     }
@@ -65,10 +67,12 @@ export function FeedbackModal({
       })
 
       if (result.success) {
+        setTicketId(result.ticketId ?? null)
         setSuccess(true)
+        // Longer auto-close so the user has time to copy the ticket ID
         setTimeout(() => {
           onClose()
-        }, 2000)
+        }, 5000)
       } else {
         setError(result.error || t('common:feedback.error'))
       }
@@ -126,6 +130,14 @@ export function FeedbackModal({
             <p className="text-gray-700 dark:text-gray-300">
               {t('common:feedback.success')}
             </p>
+            {ticketId && (
+              <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
+                {t('common:feedback.reportId')}{' '}
+                <code className="font-mono text-gray-800 dark:text-gray-200">
+                  {ticketId}
+                </code>
+              </p>
+            )}
           </div>
         ) : (
           <>

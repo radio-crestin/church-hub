@@ -50,7 +50,8 @@
     "githubIssues": "GitHub issues",
     "send": "Trimite",
     "success": "Mulțumim pentru feedback!",
-    "error": "Trimiterea feedback-ului a eșuat. Te rugăm să încerci din nou."
+    "error": "Trimiterea feedback-ului a eșuat. Te rugăm să încerci din nou.",
+    "reportId": "ID referință (menționați-l când reveniți):"
   },
   "contact": {
     "title": "Contactează-ne",
