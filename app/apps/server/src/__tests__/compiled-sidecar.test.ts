@@ -95,9 +95,12 @@ describeFn('Compiled sidecar binary', () => {
     })
 
     // Drain BOTH streams. Leaving stdout unread fills the pipe buffer
-    // (~4 KiB on Windows) and the child blocks on its next console.log,
-    // which is exactly what made this test hang on Windows even though it
-    // passed on macOS/Linux where pipe buffers are larger.
+    // (~4 KiB on Windows) and the child blocks on its next console.log —
+    // exactly what made this test hang on Windows even though it passed
+    // on macOS/Linux where pipe buffers are larger. We buffer the output
+    // in-memory and only surface it via the thrown error on failure;
+    // mirroring to the runner's stdout introduced back-pressure that
+    // stalled the test event loop.
     const drainStream = (
       reader: ReadableStreamDefaultReader<Uint8Array>,
       sink: (chunk: string) => void,
@@ -107,12 +110,7 @@ describeFn('Compiled sidecar binary', () => {
         while (true) {
           const { value, done } = await reader.read()
           if (done) break
-          const text = decoder.decode(value)
-          sink(text)
-          // Mirror to the test runner's streams so CI logs show the
-          // sidecar's output and we can diagnose hangs from the run page.
-          // biome-ignore lint/suspicious/noConsole: diagnostic mirroring
-          process.stdout.write(text)
+          sink(decoder.decode(value))
         }
       })()
     }
