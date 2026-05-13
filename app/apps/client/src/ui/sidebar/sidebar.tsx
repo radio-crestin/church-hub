@@ -350,11 +350,10 @@ export function Sidebar({
                 <MessageSquarePlus size={20} />
                 {feedbackUnreadCount > 0 && (
                   <span
-                    className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold leading-none shadow ring-2 ring-white dark:ring-gray-900"
+                    aria-label="Unread support messages"
+                    className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-gray-900 animate-pulse"
                     data-ph-mask
-                  >
-                    {feedbackUnreadCount > 9 ? '9+' : feedbackUnreadCount}
-                  </span>
+                  />
                 )}
               </span>
               {!isCollapsed && (
