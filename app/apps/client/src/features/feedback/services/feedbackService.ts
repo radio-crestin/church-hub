@@ -17,35 +17,34 @@ interface FeedbackResponse {
   error?: string
 }
 
+function generateReportId(): string {
+  const uuid =
+    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2)
+  return `ch-${uuid.replace(/-/g, '').slice(0, 8)}`
+}
+
 /**
- * Submits feedback through PostHog's conversations/support widget.
+ * Submits feedback to PostHog with a deterministic two-track design:
  *
- * Flow:
- *   1. `posthog.conversations.sendMessage()` opens a ticket in PostHog,
- *      returns a `ticket_id`.
- *   2. We POST `/api/feedback/attach-logs` with the ticket_id so the
- *      server uploads recent server + Tauri log tails under that ID.
- *   3. The ticket_id is the only reference the user needs — maintainers
- *      look it up in PostHog and see both the user's message and the
- *      logs attached to the same ticket.
+ *   - Preferred: `posthog.conversations.sendMessage()` opens a real
+ *     support ticket and returns a `ticket_id`. We use that as the
+ *     report ID.
  *
- * If `posthog.conversations` isn't initialised yet (network race, feature
- * disabled, ad-blocker), we surface a clear error rather than silently
- * dropping the feedback.
+ *   - Fallback: if the conversations feature is unavailable (project
+ *     setting off, posthog-js still loading, ad-blocker), we generate
+ *     our own report ID and fire a `user_feedback` event under it via
+ *     `posthog.capture`. The maintainer queries the ID in PostHog and
+ *     sees both the message and the attached logs.
+ *
+ * Either way we POST `/api/feedback/attach-logs` so the server uploads
+ * server + Tauri log tails under the same ID. Feedback NEVER hard-fails
+ * just because conversations isn't ready.
  */
 export async function submitFeedback(
   data: FeedbackRequest,
 ): Promise<FeedbackResponse> {
-  if (!posthog.conversations?.isAvailable?.()) {
-    return {
-      success: false,
-      error:
-        'Support chat is not available right now. Please check your network connection and try again.',
-    }
-  }
-
-  // Wrap the user message with system info so the maintainer sees it inline
-  // in the ticket, without needing to expand metadata panels.
   const messageBody = [
     data.message.trim(),
     '',
@@ -54,44 +53,59 @@ export async function submitFeedback(
     `App: ${data.appVersion}`,
   ].join('\n')
 
-  let response: Awaited<
-    ReturnType<NonNullable<typeof posthog.conversations>['sendMessage']>
-  >
-  try {
-    response = await posthog.conversations.sendMessage(messageBody, {
-      name: data.name?.trim() || undefined,
-      email: data.email?.trim() || undefined,
-    })
-  } catch (err) {
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : 'Failed to open ticket',
+  let reportId: string | null = null
+
+  // Try PostHog Conversations first.
+  if (posthog?.conversations?.isAvailable?.()) {
+    try {
+      const response = await posthog.conversations.sendMessage(messageBody, {
+        name: data.name?.trim() || undefined,
+        email: data.email?.trim() || undefined,
+      })
+      reportId = response?.ticket_id ?? null
+    } catch {
+      // fall through to the capture fallback
+      reportId = null
     }
   }
 
-  const ticketId = response?.ticket_id
-  if (!ticketId) {
-    return { success: false, error: 'PostHog did not return a ticket ID' }
+  // Fallback path — capture as a regular event so triage still works
+  // even when the conversations feature is off.
+  if (!reportId) {
+    reportId = generateReportId()
+    try {
+      posthog?.capture?.('user_feedback', {
+        report_id: reportId,
+        message: messageBody,
+        os_version: data.osVersion,
+        app_version: data.appVersion,
+        name: data.name?.trim() || undefined,
+        email: data.email?.trim() || undefined,
+        $set_once: {
+          first_feedback_at: new Date().toISOString(),
+        },
+      })
+    } catch {
+      // even capture failed — we still try to attach logs server-side
+    }
   }
 
-  // Best-effort: attach server-side logs to the ticket. A failure here does
-  // not invalidate the ticket itself — the user's message is already in
-  // PostHog. We swallow the error and still surface the ticket_id.
+  // Best-effort log attachment. Doesn't gate success.
   try {
     await fetcher('/api/feedback/attach-logs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        ticketId,
+        ticketId: reportId,
         osVersion: data.osVersion,
         appVersion: data.appVersion,
       }),
     })
   } catch {
-    // ignore — see comment above
+    // ignore — the user's message is already in PostHog
   }
 
-  return { success: true, ticketId }
+  return { success: true, ticketId: reportId }
 }
 
 export async function getSystemInfo(): Promise<{

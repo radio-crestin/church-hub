@@ -46,8 +46,6 @@
   "feedback": {
     "title": "Send Feedback",
     "placeholder": "Describe your problem or suggestion here...",
-    "notice": "Your feedback will be posted publicly on our",
-    "githubIssues": "GitHub issues",
     "send": "Send",
     "success": "Thank you for your feedback!",
     "error": "Failed to send feedback. Please try again.",
