@@ -37,6 +37,28 @@
 - make sure that any api is integrated into openapi and in scalar docs
 - the app must be cross platform (windows, macos and linux)
 
+# Cross-platform compatibility — REQUIRED
+
+Every feature, fix, and build-system change MUST work on macOS, Windows, and Linux. This is non-negotiable for both the Tauri shell (Rust) and the Bun-compiled sidecar.
+
+- Never use `process.execPath` with Node-style flags (`-e`, `--inspect`, etc.) on the compiled sidecar — Bun's standalone ignores them and re-runs the whole binary, which on macOS/Linux/Windows will SIGKILL the parent via the port-cleanup logic. Use a dedicated CLI flag (e.g. `--probe-midi`) handled at the top of `apps/server/src/index.ts`.
+- Path resolution must branch on `process.platform === 'darwin' | 'win32' | 'linux'` and account for the differing bundle layouts:
+  - macOS: `<App>.app/Contents/MacOS/<bin>` with resources at `<App>.app/Contents/Resources/`
+  - Windows / Linux: resources sit next to the executable
+- Native modules (MIDI, audio, etc.) must be tested loadable on all three OSes. The `apps/server/scripts/compile.ts` already copies per-OS prebuilds — don't break that.
+- Spawned subprocesses: prefer `execFileSync(<bin>, [args], { stdio: 'pipe', timeout: <ms> })` with an array of args. Never shell-interpolate a path on Windows.
+- Any new dependency that ships native bindings must have prebuilds for darwin-arm64, darwin-x64, win32-x64, linux-x64.
+- Before shipping: run the CI release-build smoke test (`.github/workflows/release-build.yml`) which launches the bundled artifact on all three runners and asserts `/ping` returns 200. Don't merge a release-affecting change if that job is red on any platform.
+
+# Release-build verification
+
+The macOS v0.1.60 build exited silently 4s after launch — root cause: a darwin-only `checkMidiSafety` spawned `process.execPath -e <code>` which Bun's standalone ignored, re-running the sidecar and killing the parent on port 3000. The lesson: smoke-test the *bundled* artifact, not just `bun dev`. CI must:
+1. Build the production artifact (`tauri:build` on each OS).
+2. Launch the compiled app/sidecar headlessly.
+3. Wait up to N seconds for `/ping` to return 200.
+4. Fail the run if the process exits early or never becomes ready.
+5. Upload stdout/stderr as an artifact for post-mortem.
+
 ## Presentation Rendering
 - Use the shared `usePresentationContent` hook (`apps/client/src/features/presentation/hooks/usePresentationContent.ts`) for all presentation content rendering
 - NEVER create separate rendering engines for LivePreview, ScreenRenderer, or any other presentation display component
