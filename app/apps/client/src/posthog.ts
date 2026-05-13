@@ -81,6 +81,10 @@ export function initPostHog(): void {
     release: `church-hub@${window.__appVersion || '0.0.0'}`,
     environment: window.__envMode || 'development',
   })
+
+  // Boot heartbeat — filter `app_started` + `component:"client"` in the
+  // PostHog dashboard to confirm the client's capture path is healthy.
+  posthog.capture('app_started')
 }
 
 export { posthog }

@@ -59,11 +59,17 @@ if (process.argv.includes('--probe-midi')) {
 
 // PostHog client (errors + events) — initialised on import.
 import {
+  captureAppStarted,
   captureException as captureExceptionPostHog,
   captureFeedbackReport,
   flushPostHog,
   shutdownPostHog,
 } from './utils/posthog'
+
+// Fire the boot heartbeat right after PostHog import. Filtering for
+// `app_started` + `component:"server"` in the PostHog dashboard confirms
+// the sidecar's outbound path is healthy after every release.
+captureAppStarted()
 
 import { execFileSync, execSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
