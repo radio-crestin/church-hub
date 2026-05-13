@@ -21,10 +21,18 @@ let serverProcess: Subprocess | null = null
 
 async function waitForServer(url: string, maxAttempts = 360): Promise<void> {
   for (let i = 0; i < maxAttempts; i++) {
+    // Per-attempt AbortController — without it, a Bun fetch that opens
+    // the TCP connection but never gets a response (seen in Bun 1.3.14
+    // on Linux CI before the server bound) hangs forever and silently
+    // burns the entire beforeAll budget instead of retrying.
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 2000)
     try {
-      await fetch(url)
+      await fetch(url, { signal: controller.signal })
+      clearTimeout(timeoutId)
       return
     } catch {
+      clearTimeout(timeoutId)
       await new Promise((r) => setTimeout(r, 500))
     }
   }

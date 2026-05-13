@@ -40,12 +40,21 @@ let binaryPath = ''
 
 async function waitForServer(url: string, maxAttempts = 240): Promise<void> {
   for (let i = 0; i < maxAttempts; i++) {
+    // Per-attempt AbortController so a Bun fetch that opens the
+    // connection but never gets a response (Bun 1.3.14 + Linux CI) can
+    // be cancelled and retried instead of consuming the whole budget.
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 2000)
     try {
-      const res = await fetch(url)
-      if (res.ok) return
+      const res = await fetch(url, { signal: controller.signal })
+      if (res.ok) {
+        clearTimeout(timeoutId)
+        return
+      }
     } catch {
       // not ready yet
     }
+    clearTimeout(timeoutId)
     if (proc?.exitCode != null) {
       throw new Error(
         `Sidecar exited early with code ${proc.exitCode}.\nStdout:\n${stdoutChunks}\nStderr:\n${stderrChunks}`,
