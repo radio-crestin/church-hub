@@ -472,10 +472,29 @@ async function main() {
 
   // Initialize database (Drizzle ORM wrapper) and run migrations
   let t = performance.now()
-  const { migrationResult } = await initializeDatabase()
+  await initializeDatabase()
   logTiming('database_init', t)
 
-  // Note: Search index rebuild is deferred to after server starts (if ftsRecreated is true)
+  // Always rebuild FTS indexes on startup BEFORE the HTTP server starts
+  // accepting requests. Doing it here (rather than deferred via
+  // setTimeout after Bun.serve, as we used to) guarantees that:
+  //   1. A user who quits mid-rebuild on a previous launch doesn't end
+  //      up with empty FTS tables and silently broken search forever
+  //      (the createFtsTables 'already exist' fast path made that a
+  //      one-way trap).
+  //   2. The first user search after launch hits a populated index, so
+  //      results aren't empty for the first few seconds.
+  // Failure here is logged but non-fatal — the server still boots.
+  t = performance.now()
+  try {
+    rebuildSearchIndex()
+    rebuildScheduleSearchIndex()
+    rebuildBibleSearchIndex()
+  } catch (rebuildError) {
+    // biome-ignore lint/suspicious/noConsole: startup error logging
+    console.error('[startup] FTS rebuild failed:', rebuildError)
+  }
+  logTiming('fts_rebuild', t)
 
   // Warm up FTS indexes so first user search is fast (loads index pages from disk into OS cache)
   t = performance.now()
@@ -5893,22 +5912,6 @@ async function main() {
   console.log(
     `[startup] === Server Ready (total: ${(performance.now() - startupStart).toFixed(1)}ms) ===`,
   )
-
-  // Rebuild search indexes in background if FTS tables were just created (first run)
-  if (migrationResult.ftsRecreated) {
-    // biome-ignore lint/suspicious/noConsole: Startup timing logs
-    console.log('[startup] Starting background search index rebuild...')
-    setTimeout(() => {
-      const rebuildStart = performance.now()
-      rebuildSearchIndex()
-      rebuildScheduleSearchIndex()
-      rebuildBibleSearchIndex()
-      // biome-ignore lint/suspicious/noConsole: Startup timing logs
-      console.log(
-        `[startup] Background search index rebuild complete: ${(performance.now() - rebuildStart).toFixed(1)}ms`,
-      )
-    }, 0)
-  }
 
   // Graceful shutdown
   process.on('SIGINT', async () => {
