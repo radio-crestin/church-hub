@@ -3,65 +3,22 @@ import { fetcher } from '~/utils/fetcher'
 
 const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 
-export type OpenFeedbackChatResult = {
-  method: 'posthog' | 'fallback'
-  distinctId: string | null
-}
-
 /**
- * Opens PostHog's native conversations chat panel and attaches the latest
- * server + Tauri log tails so the maintainer has them ready when the user
- * starts typing.
+ * Best-effort log upload tied to the user's current PostHog
+ * `distinct_id`. The server endpoint `/api/feedback/attach-logs` tails
+ * the last 7 days of server + Tauri logs and captures a
+ * `$feedback_report` event keyed by the same distinct_id the
+ * conversations ticket uses — so when the maintainer opens the ticket
+ * in PostHog, the logs are right there under the same person.
  *
- * Synchronous on purpose: the caller (sidebar Feedback button) needs to
- * decide on the same tick whether to render the fallback ContactModal —
- * any async hop means the user clicks and sees nothing for a frame, which
- * is the exact "click then wait for posthog" experience we're killing.
- *
- * Logs are uploaded under PostHog's current `distinct_id` in the
- * background. The support ticket and the `$feedback_report` log event end
- * up under the same person in the dashboard, no manual correlation.
- *
- * Returns `method: 'fallback'` when conversations isn't loaded (project
- * setting off, ad-blocker, slow first paint) so the sidebar can open the
- * ContactModal immediately instead of swallowing the click.
+ * Fire-and-forget. The user's actual support message
+ * (`posthog.conversations.sendMessage`) is independent of this — losing
+ * the log upload should never block or surface a failure.
  */
-export function openFeedbackChat(): OpenFeedbackChatResult {
-  // Best-effort log shipment in parallel with opening the chat. The user
-  // shouldn't have to wait for it.
+export async function attachFeedbackLogs(): Promise<void> {
   const distinctId = getDistinctId()
-  if (distinctId) {
-    void attachLogs(distinctId)
-  }
+  if (!distinctId) return
 
-  if (posthog?.conversations?.isAvailable?.()) {
-    try {
-      posthog.conversations.show()
-      // Mark messages read only when there's an active ticket — calling
-      // markAsRead() with no current conversation throws
-      // "No ticket ID provided and no active conversation" and bubbles
-      // up as an unhandledrejection.
-      if (posthog.conversations.getCurrentTicketId?.()) {
-        void posthog.conversations.markAsRead?.()
-      }
-      return { method: 'posthog', distinctId }
-    } catch {
-      // fall through to fallback
-    }
-  }
-
-  return { method: 'fallback', distinctId }
-}
-
-function getDistinctId(): string | null {
-  try {
-    return posthog?.get_distinct_id?.() ?? null
-  } catch {
-    return null
-  }
-}
-
-async function attachLogs(distinctId: string): Promise<void> {
   let osVersion = 'Unknown'
   let appVersion = 'Unknown'
   try {
@@ -80,6 +37,14 @@ async function attachLogs(distinctId: string): Promise<void> {
   } catch {
     // Best-effort — the user's message is already in PostHog under the
     // same distinct_id, so the maintainer can still triage.
+  }
+}
+
+function getDistinctId(): string | null {
+  try {
+    return posthog?.get_distinct_id?.() ?? null
+  } catch {
+    return null
   }
 }
 

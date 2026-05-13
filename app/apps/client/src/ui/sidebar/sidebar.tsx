@@ -2,6 +2,7 @@ import { useLocation, useNavigate } from '@tanstack/react-router'
 import {
   ChevronLeft,
   ChevronRight,
+  LifeBuoy,
   MessageSquarePlus,
   Monitor,
   Settings,
@@ -15,7 +16,7 @@ import { SidebarItem } from './sidebar-item'
 import { UpdateNotification } from '../../features/app-update'
 import {
   ContactModal,
-  openFeedbackChat,
+  SendFeedbackModal,
   useFeedbackUnreadCount,
 } from '../../features/feedback'
 import { useKioskSettings } from '../../features/kiosk'
@@ -55,6 +56,7 @@ export function Sidebar({
   const [internalMobileMenuOpen, setInternalMobileMenuOpen] = useState(false)
   const isMobileMenuOpen = externalMobileMenuOpen ?? internalMobileMenuOpen
   const setIsMobileMenuOpen = onMobileMenuChange ?? setInternalMobileMenuOpen
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false)
   const [isContactModalOpen, setIsContactModalOpen] = useState(false)
   const feedbackUnreadCount = useFeedbackUnreadCount()
   const location = useLocation()
@@ -337,19 +339,39 @@ export function Sidebar({
             {/* Update notification - shown above Feedback when update available */}
             <UpdateNotification isCollapsed={isCollapsed} />
 
-            {/* Feedback — opens the embedded PostHog conversations chat,
-                or falls back to ContactModal (email + WhatsApp) when the
-                conversations module isn't loaded. Red dot appears when
-                there are unread support messages. Never rendered on
-                /screen/* — those windows are church projector output. */}
+            {/* Contact — direct line to email + WhatsApp. Always
+                available, unrelated to PostHog. Sits next to Feedback so
+                users have a clear non-chat path to reach support. */}
             {!isScreenRoute && (
               <button
-                onClick={() => {
-                  const result = openFeedbackChat()
-                  if (result.method === 'fallback') {
-                    setIsContactModalOpen(true)
-                  }
-                }}
+                onClick={() => setIsContactModalOpen(true)}
+                className={`relative flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors w-full ${isCollapsed ? 'md:justify-center' : ''}`}
+                title={t('sidebar:navigation.contact')}
+                aria-label={t('sidebar:navigation.contact')}
+              >
+                <span className="relative flex-shrink-0">
+                  <LifeBuoy size={20} />
+                </span>
+                {!isCollapsed && (
+                  <span className="text-sm font-medium md:block">
+                    {t('sidebar:navigation.contact')}
+                  </span>
+                )}
+                <span className="md:hidden text-sm font-medium">
+                  {t('sidebar:navigation.contact')}
+                </span>
+              </button>
+            )}
+
+            {/* Feedback — opens our own send-only modal that uses the
+                PostHog conversations JS API (sendMessage). We don't open
+                PostHog's built-in chat widget because its floating
+                button keeps reappearing. Red dot appears when there are
+                unread support messages. Never rendered on /screen/* —
+                those windows are church projector output. */}
+            {!isScreenRoute && (
+              <button
+                onClick={() => setIsFeedbackModalOpen(true)}
                 className={`relative flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors w-full ${isCollapsed ? 'md:justify-center' : ''}`}
                 title={t('sidebar:navigation.feedback')}
                 aria-label={
@@ -427,14 +449,18 @@ export function Sidebar({
         </div>
       </aside>
 
-      {/* Contact Modal — fallback when PostHog conversations is
-          unavailable (project off, ad-blocker, slow first paint). The
-          sidebar Feedback button opens this immediately so the click
-          never feels swallowed. */}
+      {/* Feedback modal — our own send-only form, talks to PostHog
+          conversations via the JS API. Renders the email/WhatsApp
+          fallback inline when conversations is unavailable. */}
+      <SendFeedbackModal
+        isOpen={isFeedbackModalOpen}
+        onClose={() => setIsFeedbackModalOpen(false)}
+      />
+
+      {/* Contact modal — email + WhatsApp shortcuts. */}
       <ContactModal
         isOpen={isContactModalOpen}
         onClose={() => setIsContactModalOpen(false)}
-        onBack={() => setIsContactModalOpen(false)}
       />
     </>
   )

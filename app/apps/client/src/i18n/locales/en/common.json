@@ -46,10 +46,16 @@
   "feedback": {
     "title": "Send Feedback",
     "placeholder": "Describe your problem or suggestion here...",
+    "emailLabel": "Your email (optional)",
+    "emailPlaceholder": "name@example.com",
     "send": "Send",
+    "sending": "Sending...",
     "success": "Thank you for your feedback!",
+    "successHint": "We'll reply by email if you left one.",
     "error": "Failed to send feedback. Please try again.",
-    "reportId": "Reference ID (mention this when following up):"
+    "reportId": "Reference ID (mention this when following up):",
+    "unavailableTitle": "Couldn't reach support chat",
+    "unavailableBody": "We couldn't connect to our support system. Reach us directly:"
   },
   "contact": {
     "title": "Contact Us",

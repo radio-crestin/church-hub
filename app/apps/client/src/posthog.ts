@@ -104,31 +104,41 @@ export function initPostHog(): void {
   // PostHog dashboard to confirm the client's capture path is healthy.
   posthog.capture('app_started')
 
-  // PostHog conversations auto-injects a floating chat button on every page
-  // by default. We don't want it: the chat must only open when the user
-  // clicks our sidebar Feedback entry. Hide as soon as the extension is
-  // available; the gate keeps polling until conversations loads.
-  hideConversationsWidgetOnceAvailable()
+  // PostHog conversations auto-injects a floating chat button on every
+  // page. We never want that button visible — feedback is opened from
+  // our sidebar via the JS API. Calling `hide()` once isn't enough: the
+  // widget re-shows itself after various internal events, so we keep
+  // the suppression running for the life of the page.
+  keepConversationsWidgetHidden()
 }
 
-function hideConversationsWidgetOnceAvailable(): void {
-  let attempts = 0
-  const tick = () => {
+function keepConversationsWidgetHidden(): void {
+  let loadAttempts = 0
+  const armSuppression = () => {
     if (posthog.conversations?.isAvailable?.()) {
-      try {
-        posthog.conversations.hide()
-      } catch {
-        // ignore
+      const force = () => {
+        try {
+          if (posthog.conversations?.isVisible?.()) {
+            posthog.conversations.hide()
+          }
+        } catch {
+          // ignore
+        }
       }
+      force()
+      // Periodic re-hide. 1s is responsive enough that the floating
+      // button is gone before the user can act on it, and cheap enough
+      // to run forever (boolean check + maybe one hide() call).
+      window.setInterval(force, 1000)
       return
     }
-    attempts += 1
-    // Stop polling after ~30s — if it never loads, the feature is off and
-    // there's nothing to hide.
-    if (attempts > 60) return
-    window.setTimeout(tick, 500)
+    loadAttempts += 1
+    // Conversations is opt-in per project. Stop polling after ~30s if
+    // the module never loads — there's nothing to hide in that case.
+    if (loadAttempts > 60) return
+    window.setTimeout(armSuppression, 500)
   }
-  tick()
+  armSuppression()
 }
 
 export { posthog }
