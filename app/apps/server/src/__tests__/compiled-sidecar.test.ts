@@ -30,6 +30,7 @@ const BASE_URL = `http://localhost:${TEST_PORT}`
 
 let proc: Subprocess | null = null
 let stderrChunks = ''
+let stdoutChunks = ''
 let workDir = ''
 let binaryPath = ''
 
@@ -43,13 +44,13 @@ async function waitForServer(url: string, maxAttempts = 240): Promise<void> {
     }
     if (proc?.exitCode != null) {
       throw new Error(
-        `Sidecar exited early with code ${proc.exitCode}. Stderr:\n${stderrChunks}`,
+        `Sidecar exited early with code ${proc.exitCode}.\nStdout:\n${stdoutChunks}\nStderr:\n${stderrChunks}`,
       )
     }
     await new Promise((r) => setTimeout(r, 500))
   }
   throw new Error(
-    `Compiled sidecar did not respond within ${maxAttempts * 500}ms.\nStderr:\n${stderrChunks}`,
+    `Compiled sidecar did not respond within ${maxAttempts * 500}ms.\nStdout:\n${stdoutChunks}\nStderr:\n${stderrChunks}`,
   )
 }
 
@@ -93,15 +94,34 @@ describeFn('Compiled sidecar binary', () => {
       stderr: 'pipe',
     })
 
-    void (async () => {
-      const reader = proc!.stderr.getReader()
+    // Drain BOTH streams. Leaving stdout unread fills the pipe buffer
+    // (~4 KiB on Windows) and the child blocks on its next console.log,
+    // which is exactly what made this test hang on Windows even though it
+    // passed on macOS/Linux where pipe buffers are larger.
+    const drainStream = (
+      reader: ReadableStreamDefaultReader<Uint8Array>,
+      sink: (chunk: string) => void,
+    ) => {
       const decoder = new TextDecoder()
-      while (true) {
-        const { value, done } = await reader.read()
-        if (done) break
-        stderrChunks += decoder.decode(value)
-      }
-    })()
+      void (async () => {
+        while (true) {
+          const { value, done } = await reader.read()
+          if (done) break
+          const text = decoder.decode(value)
+          sink(text)
+          // Mirror to the test runner's streams so CI logs show the
+          // sidecar's output and we can diagnose hangs from the run page.
+          // biome-ignore lint/suspicious/noConsole: diagnostic mirroring
+          process.stdout.write(text)
+        }
+      })()
+    }
+    drainStream(proc!.stdout.getReader(), (s) => {
+      stdoutChunks += s
+    })
+    drainStream(proc!.stderr.getReader(), (s) => {
+      stderrChunks += s
+    })
 
     await waitForServer(`${BASE_URL}/api/database/info`)
   })

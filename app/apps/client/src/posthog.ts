@@ -62,8 +62,11 @@ export function initPostHog(): void {
 
   posthog.init(token, {
     api_host: apiHost,
-    capture_pageview: false,
-    capture_pageleave: false,
+    // Web analytics needs $pageview + $pageleave to populate page reports
+    // and bounce/session-duration metrics. autocapture stays off — we
+    // don't want every DOM click in a desktop app uploaded as an event.
+    capture_pageview: true,
+    capture_pageleave: true,
     autocapture: false,
     persistence: 'localStorage',
     // Session replay replaces a 3rd-party recorder (Hotjar/FullStory/etc). Privacy:
