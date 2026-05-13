@@ -37,9 +37,13 @@ export function openFeedbackChat(): OpenFeedbackChatResult {
   if (posthog?.conversations?.isAvailable?.()) {
     try {
       posthog.conversations.show()
-      // Mark messages read when the user opens the chat — the unread badge
-      // should clear immediately, not wait for the next poll.
-      void posthog.conversations.markAsRead?.()
+      // Mark messages read only when there's an active ticket — calling
+      // markAsRead() with no current conversation throws
+      // "No ticket ID provided and no active conversation" and bubbles
+      // up as an unhandledrejection.
+      if (posthog.conversations.getCurrentTicketId?.()) {
+        void posthog.conversations.markAsRead?.()
+      }
       return { method: 'posthog', distinctId }
     } catch {
       // fall through to fallback
