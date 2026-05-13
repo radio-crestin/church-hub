@@ -75,7 +75,7 @@ import { execFileSync, execSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import process from 'node:process'
 
-import { closeDatabase, initializeDatabase } from './db'
+import { closeDatabase, getRawDatabase, initializeDatabase } from './db'
 import type { RequestContext } from './middleware'
 import {
   appOnlyAuthMiddleware,
@@ -475,21 +475,58 @@ async function main() {
   await initializeDatabase()
   logTiming('database_init', t)
 
-  // Always rebuild FTS indexes on startup BEFORE the HTTP server starts
-  // accepting requests. Doing it here (rather than deferred via
-  // setTimeout after Bun.serve, as we used to) guarantees that:
-  //   1. A user who quits mid-rebuild on a previous launch doesn't end
-  //      up with empty FTS tables and silently broken search forever
-  //      (the createFtsTables 'already exist' fast path made that a
-  //      one-way trap).
-  //   2. The first user search after launch hits a populated index, so
-  //      results aren't empty for the first few seconds.
-  // Failure here is logged but non-fatal — the server still boots.
+  // Rebuild FTS indexes BEFORE the HTTP server accepts requests so
+  // search never returns empty results during a partial-rebuild window
+  // and a previous-launch crash mid-rebuild can't leave the indexes
+  // permanently broken (the createFtsTables 'already exist' fast path
+  // made that a one-way trap before).
+  //
+  // To stay fast on subsequent boots we skip the full rebuild when the
+  // source-table row count already matches the FTS row count — a sub-
+  // millisecond check that's correct for our content schemas (songs,
+  // schedules: one FTS row per source row; bible_verses: external-
+  // content FTS5 reports source count after a successful rebuild). A
+  // mismatch (fresh install, partial seed, schema drift) still
+  // triggers the full rebuild.
   t = performance.now()
   try {
-    rebuildSearchIndex()
-    rebuildScheduleSearchIndex()
-    rebuildBibleSearchIndex()
+    const rawDb = getRawDatabase()
+    const count = (sql: string): number => {
+      try {
+        return Number(
+          (rawDb.query<{ c: number }, []>(sql).get()?.c ?? 0) as number,
+        )
+      } catch {
+        return -1
+      }
+    }
+    const songsCount = count('SELECT COUNT(*) AS c FROM songs')
+    const songsFtsCount = count('SELECT COUNT(*) AS c FROM songs_fts')
+    if (songsFtsCount !== songsCount) {
+      // biome-ignore lint/suspicious/noConsole: Startup timing logs
+      console.log(
+        `[startup] songs FTS out of sync (${songsFtsCount}/${songsCount}) — rebuilding`,
+      )
+      rebuildSearchIndex()
+    }
+    const schedulesCount = count('SELECT COUNT(*) AS c FROM schedules')
+    const schedulesFtsCount = count('SELECT COUNT(*) AS c FROM schedules_fts')
+    if (schedulesFtsCount !== schedulesCount) {
+      // biome-ignore lint/suspicious/noConsole: Startup timing logs
+      console.log(
+        `[startup] schedules FTS out of sync (${schedulesFtsCount}/${schedulesCount}) — rebuilding`,
+      )
+      rebuildScheduleSearchIndex()
+    }
+    const versesCount = count('SELECT COUNT(*) AS c FROM bible_verses')
+    const versesFtsCount = count('SELECT COUNT(*) AS c FROM bible_verses_fts')
+    if (versesFtsCount !== versesCount) {
+      // biome-ignore lint/suspicious/noConsole: Startup timing logs
+      console.log(
+        `[startup] bible FTS out of sync (${versesFtsCount}/${versesCount}) — rebuilding`,
+      )
+      rebuildBibleSearchIndex()
+    }
   } catch (rebuildError) {
     // biome-ignore lint/suspicious/noConsole: startup error logging
     console.error('[startup] FTS rebuild failed:', rebuildError)
