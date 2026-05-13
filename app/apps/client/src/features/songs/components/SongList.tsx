@@ -748,11 +748,14 @@ export function SongList({
           onChange={handleFiltersChange}
         />
         {/* Category dropdown: icon on mobile, full dropdown on desktop */}
-        <div className="relative">
+        {/* The wrapper itself is md:hidden — leaving an empty div in the
+            flex row at desktop sizes adds a phantom gap-2 between the
+            filter button and the desktop combobox. */}
+        <div className="relative md:hidden">
           <button
             type="button"
             onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-            className={`md:hidden px-2 py-1.5 rounded-lg border transition-colors flex items-center ${
+            className={`px-2 py-1.5 rounded-lg border transition-colors flex items-center ${
               categoryIds.length > 0
                 ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-600 text-indigo-600 dark:text-indigo-400'
                 : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400'
