@@ -50,7 +50,8 @@
     "githubIssues": "GitHub issues",
     "send": "Send",
     "success": "Thank you for your feedback!",
-    "error": "Failed to send feedback. Please try again."
+    "error": "Failed to send feedback. Please try again.",
+    "reportId": "Reference ID (mention this when following up):"
   },
   "contact": {
     "title": "Contact Us",

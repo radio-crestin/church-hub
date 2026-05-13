@@ -60,6 +60,8 @@ if (process.argv.includes('--probe-midi')) {
 // PostHog client (errors + events) — initialised on import.
 import {
   captureException as captureExceptionPostHog,
+  captureFeedbackReport,
+  flushPostHog,
   shutdownPostHog,
 } from './utils/posthog'
 
@@ -170,7 +172,7 @@ import {
   setStateCallback,
   shutdownMusicPlayer,
 } from './service/music-player'
-import { openLogsFolder } from './service/logs'
+import { openLogsFolder, readRecentLogs } from './service/logs'
 import { getExternalInterfaces } from './service/network'
 import {
   addSlideHighlight,
@@ -5594,22 +5596,28 @@ async function main() {
       // Feedback API Endpoint (proxies to Cloudflare worker)
       // ============================================================
 
-      // POST /api/feedback - Submit feedback (creates GitHub issue)
-      if (req.method === 'POST' && url.pathname === '/api/feedback') {
+      // POST /api/feedback/attach-logs - Upload server + Tauri log tails to
+      // PostHog under a ticket_id created by `posthog.conversations.sendMessage`
+      // on the client. The maintainer opens the ticket in PostHog and finds
+      // the logs attached as a separate `$feedback_logs` event keyed by the
+      // same distinct_id (the ticket_id).
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/feedback/attach-logs'
+      ) {
         try {
           const body = (await req.json()) as {
-            message: string
-            osVersion: string
-            appVersion: string
+            ticketId?: string
+            osVersion?: string
+            appVersion?: string
           }
-
-          if (!body.message?.trim()) {
+          if (!body.ticketId || typeof body.ticketId !== 'string') {
             return handleCors(
               req,
               new Response(
                 JSON.stringify({
                   success: false,
-                  error: 'Message is required',
+                  error: 'ticketId is required',
                 }),
                 {
                   status: 400,
@@ -5619,27 +5627,30 @@ async function main() {
             )
           }
 
-          // Proxy to Cloudflare worker backend
-          const backendUrl =
-            process.env.FEEDBACK_BACKEND_URL ||
-            'https://churchub-backend.radiocrestin.ro'
-
-          const response = await fetch(`${backendUrl}/feedback`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(body),
-          })
-
-          const result = await response.json()
+          try {
+            const logs = await readRecentLogs()
+            captureFeedbackReport(body.ticketId, {
+              ticket_id: body.ticketId,
+              os_version: body.osVersion ?? 'unknown',
+              app_version: body.appVersion ?? 'unknown',
+              server_log_tail: logs.serverTail,
+              tauri_log_tail: logs.tauriTail,
+              logs_dir: logs.logsDir,
+            })
+            // Force flush so the logs are durable before we return — the
+            // client may close the modal immediately, and Bun's process can
+            // be terminated by a Tauri restart.
+            await flushPostHog()
+          } catch (logErr) {
+            captureExceptionPostHog(logErr, { source: 'feedback_log_capture' })
+          }
 
           return handleCors(
             req,
-            new Response(JSON.stringify(result), {
-              status: response.status,
-              headers: { 'Content-Type': 'application/json' },
-            }),
+            new Response(
+              JSON.stringify({ success: true, ticketId: body.ticketId }),
+              { headers: { 'Content-Type': 'application/json' } },
+            ),
           )
         } catch {
           return handleCors(
@@ -5647,7 +5658,7 @@ async function main() {
             new Response(
               JSON.stringify({
                 success: false,
-                error: 'Failed to submit feedback',
+                error: 'Failed to attach logs',
               }),
               {
                 status: 500,

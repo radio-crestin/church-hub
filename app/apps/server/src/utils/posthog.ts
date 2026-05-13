@@ -55,6 +55,43 @@ export function captureMessage(
   })
 }
 
+/**
+ * Captures a feedback report under a custom distinctId (the report ID).
+ *
+ * The triage flow: the user-facing feedback message embeds the report ID,
+ * the GitHub issue references it, and the maintainer queries PostHog for
+ * that distinctId to see the captured logs + system info. Keeping the log
+ * payload out of the GitHub issue avoids leaking IP/path/user data into
+ * a public issue tracker.
+ */
+export function captureFeedbackReport(
+  reportId: string,
+  props: Record<string, unknown>,
+): void {
+  client.capture({
+    distinctId: reportId,
+    event: '$feedback_report',
+    properties: {
+      ...baseProps,
+      ...props,
+      report_id: reportId,
+    },
+  })
+}
+
+/**
+ * Forces queued events to flush — call before a tight critical-path response
+ * (e.g. feedback POST) so the user's submission lands in PostHog before the
+ * HTTP response returns. Safe to await; swallows errors.
+ */
+export async function flushPostHog(): Promise<void> {
+  try {
+    await client.flush()
+  } catch {
+    // best-effort
+  }
+}
+
 export async function shutdownPostHog(): Promise<void> {
   try {
     await client.shutdown()

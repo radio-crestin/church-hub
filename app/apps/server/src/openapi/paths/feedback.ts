@@ -1,31 +1,25 @@
 export const feedbackPaths = {
-  '/api/feedback': {
+  '/api/feedback/attach-logs': {
     post: {
       tags: ['Feedback'],
-      summary: 'Submit user feedback',
+      summary: 'Attach server + Tauri logs to a PostHog support ticket',
       description:
-        'Submits user feedback which creates a GitHub issue in the radio-crestin/church-hub repository',
+        "After `posthog.conversations.sendMessage()` opens a ticket on the client, this endpoint uploads the most recent server and Tauri log tails to PostHog under the same ticket_id. Maintainers triage the ticket in PostHog's conversations view and find the logs attached as a `$feedback_report` event keyed by the ticket_id.",
       requestBody: {
         required: true,
         content: {
           'application/json': {
             schema: {
               type: 'object',
-              required: ['message', 'osVersion', 'appVersion'],
+              required: ['ticketId'],
               properties: {
-                message: {
+                ticketId: {
                   type: 'string',
-                  description: 'The feedback message from the user',
-                  minLength: 1,
+                  description:
+                    'The ticket_id returned by posthog.conversations.sendMessage on the client',
                 },
-                osVersion: {
-                  type: 'string',
-                  description: 'Operating system version information',
-                },
-                appVersion: {
-                  type: 'string',
-                  description: 'Application version',
-                },
+                osVersion: { type: 'string' },
+                appVersion: { type: 'string' },
               },
             },
           },
@@ -33,71 +27,21 @@ export const feedbackPaths = {
       },
       responses: {
         '200': {
-          description: 'Feedback submitted successfully',
+          description: 'Logs attached (best-effort; always returns 200 unless the request is malformed)',
           content: {
             'application/json': {
               schema: {
                 type: 'object',
                 properties: {
-                  success: {
-                    type: 'boolean',
-                    example: true,
-                  },
-                  issueUrl: {
-                    type: 'string',
-                    description: 'URL to the created GitHub issue',
-                    example:
-                      'https://github.com/radio-crestin/church-hub/issues/123',
-                  },
-                  issueNumber: {
-                    type: 'integer',
-                    description: 'The GitHub issue number',
-                    example: 123,
-                  },
+                  success: { type: 'boolean', example: true },
+                  ticketId: { type: 'string' },
                 },
               },
             },
           },
         },
         '400': {
-          description: 'Invalid request - missing required fields',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  success: {
-                    type: 'boolean',
-                    example: false,
-                  },
-                  error: {
-                    type: 'string',
-                    example: 'Message is required',
-                  },
-                },
-              },
-            },
-          },
-        },
-        '500': {
-          description: 'Failed to submit feedback',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  success: {
-                    type: 'boolean',
-                    example: false,
-                  },
-                  error: {
-                    type: 'string',
-                    example: 'Failed to submit feedback',
-                  },
-                },
-              },
-            },
-          },
+          description: 'Missing or invalid ticketId',
         },
       },
     },
