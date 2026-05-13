@@ -126,51 +126,52 @@ export function SendFeedbackModal({ isOpen, onClose }: SendFeedbackModalProps) {
     return `https://api.whatsapp.com/send/?phone=40766338046&text=${encodeURIComponent(greeting)}`
   }
 
-  const renderFallback = () => (
-    <>
-      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-        <strong className="text-gray-900 dark:text-white block mb-1">
-          {t('common:feedback.unavailableTitle')}
-        </strong>
-        {t('common:feedback.unavailableBody')}
-      </p>
-      <div className="space-y-3">
-        <a
-          href="mailto:iosif@radiocrestin.ro"
-          className="flex items-center gap-4 p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group"
-        >
-          <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-            <Mail size={20} />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-              {t('common:contact.email')}
-            </p>
-            <p className="text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-              iosif@radiocrestin.ro
-            </p>
-          </div>
-        </a>
-        <a
-          href={getWhatsAppUrl()}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-4 p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group"
-        >
-          <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center text-green-600 dark:text-green-400">
-            <WhatsAppIcon size={20} />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-              {t('common:contact.whatsapp')}
-            </p>
-            <p className="text-gray-900 dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
-              +40 766 338 046
-            </p>
-          </div>
-        </a>
-      </div>
-    </>
+  const renderUnavailableNotice = () => (
+    <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-3 text-sm text-amber-900 dark:text-amber-200">
+      <strong className="block mb-0.5">
+        {t('common:feedback.unavailableTitle')}
+      </strong>
+      {t('common:feedback.unavailableBody')}
+    </div>
+  )
+
+  const renderContactSection = () => (
+    <div className="space-y-3">
+      <a
+        href="mailto:iosif@radiocrestin.ro"
+        className="flex items-center gap-4 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group"
+      >
+        <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+          <Mail size={20} />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+            {t('common:contact.email')}
+          </p>
+          <p className="text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+            iosif@radiocrestin.ro
+          </p>
+        </div>
+      </a>
+      <a
+        href={getWhatsAppUrl()}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-4 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group"
+      >
+        <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center text-green-600 dark:text-green-400">
+          <WhatsAppIcon size={20} />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+            {t('common:contact.whatsapp')}
+          </p>
+          <p className="text-gray-900 dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
+            +40 766 338 046
+          </p>
+        </div>
+      </a>
+    </div>
   )
 
   const renderSuccess = () => (
@@ -272,11 +273,19 @@ export function SendFeedbackModal({ isOpen, onClose }: SendFeedbackModalProps) {
             <X size={20} />
           </button>
         </div>
-        {!conversationsAvailable
-          ? renderFallback()
-          : submitState === 'success'
-            ? renderSuccess()
-            : renderForm()}
+        {submitState === 'success' ? (
+          renderSuccess()
+        ) : (
+          <div className="space-y-5">
+            {conversationsAvailable ? renderForm() : renderUnavailableNotice()}
+            <div className="flex items-center gap-3 text-xs uppercase tracking-wide text-gray-400 dark:text-gray-500">
+              <div className="flex-1 border-t border-gray-200 dark:border-gray-700" />
+              <span>{t('common:contact.title')}</span>
+              <div className="flex-1 border-t border-gray-200 dark:border-gray-700" />
+            </div>
+            {renderContactSection()}
+          </div>
+        )}
       </div>
     </dialog>
   )
