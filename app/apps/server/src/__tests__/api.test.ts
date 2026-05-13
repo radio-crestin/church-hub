@@ -13,7 +13,9 @@ import {
 setDefaultTimeout(120_000)
 
 const TEST_PORT = 3099
-const BASE_URL = `http://localhost:${TEST_PORT}`
+// 127.0.0.1 — "localhost" resolves to ::1 first on Bun + recent Linux,
+// but Bun.serve binds 0.0.0.0 (IPv4 only), making fetch hang.
+const BASE_URL = `http://127.0.0.1:${TEST_PORT}`
 
 let serverProcess: Subprocess | null = null
 
