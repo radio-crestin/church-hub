@@ -210,7 +210,7 @@ export function SendFeedbackModal({ isOpen, onClose }: SendFeedbackModalProps) {
                 <button
                   type="button"
                   onClick={() => setIsContactModalOpen(true)}
-                  className="px-3 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+                  className="px-3 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:border-indigo-300 dark:hover:border-indigo-700 rounded-lg transition-colors"
                 >
                   {t('common:contact.title')}
                 </button>
