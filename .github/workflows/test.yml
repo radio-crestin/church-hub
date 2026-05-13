@@ -11,6 +11,14 @@ on:
 
 env:
   NODE_VERSION: 22
+  # Public PostHog tokens — write-only client-side keys, safe to embed in
+  # the bundle. Forks override via repository secrets. These need to be in
+  # the env when the client builds (Vite inlines VITE_PUBLIC_*) and when
+  # the compiled-sidecar smoke test runs (the bundled binary initialises
+  # posthog-node on import).
+  VITE_PUBLIC_POSTHOG_PROJECT_TOKEN: ${{ secrets.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN || 'phc_x4iC8SNTkLtxooGYmbz6v3nFjYE2v6wXaNgZVHNaxatK' }}
+  VITE_PUBLIC_POSTHOG_HOST: ${{ secrets.VITE_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com' }}
+  VITE_PUBLIC_POSTHOG_CONVERSATIONS_TOKEN: ${{ secrets.VITE_PUBLIC_POSTHOG_CONVERSATIONS_TOKEN || '4GDD07pVU98dgX9qHiFHNswimJuq7gD1hE6nvTHXMBY' }}
 
 jobs:
   unit-tests:

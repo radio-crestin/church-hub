@@ -15,6 +15,15 @@ env:
   CARGO_NET_RETRY: 10
   CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
   RUSTUP_MAX_RETRIES: 10
+  # Public PostHog tokens — write-only client-side keys, safe to embed in
+  # the bundle. Secrets override the defaults so a fork can point to its
+  # own PostHog project without editing the workflow. These MUST be in
+  # the env at build time: Vite inlines VITE_PUBLIC_* into the client
+  # bundle, and the Tauri/Rust build reads them so the shell can ship
+  # startup events from the bundled binary.
+  VITE_PUBLIC_POSTHOG_PROJECT_TOKEN: ${{ secrets.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN || 'phc_x4iC8SNTkLtxooGYmbz6v3nFjYE2v6wXaNgZVHNaxatK' }}
+  VITE_PUBLIC_POSTHOG_HOST: ${{ secrets.VITE_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com' }}
+  VITE_PUBLIC_POSTHOG_CONVERSATIONS_TOKEN: ${{ secrets.VITE_PUBLIC_POSTHOG_CONVERSATIONS_TOKEN || '4GDD07pVU98dgX9qHiFHNswimJuq7gD1hE6nvTHXMBY' }}
 
 jobs:
   test:
