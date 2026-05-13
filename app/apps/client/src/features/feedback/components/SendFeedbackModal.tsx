@@ -1,4 +1,4 @@
-import { CheckCircle2, Mail, X } from 'lucide-react'
+import { CheckCircle2, ChevronDown, ChevronUp, Mail, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -46,6 +46,7 @@ export function SendFeedbackModal({ isOpen, onClose }: SendFeedbackModalProps) {
   const [message, setMessage] = useState('')
   const [email, setEmail] = useState('')
   const [submitState, setSubmitState] = useState<SubmitState>('idle')
+  const [isContactOpen, setIsContactOpen] = useState(false)
 
   // Re-checked on every open — posthog may have finished loading since
   // last open. If it's still down, we render the fallback UI.
@@ -60,6 +61,7 @@ export function SendFeedbackModal({ isOpen, onClose }: SendFeedbackModalProps) {
       setMessage('')
       setEmail('')
       setSubmitState('idle')
+      setIsContactOpen(false)
       // Mark any pending replies read when the user opens the panel —
       // they've acknowledged the red dot. Guard on getCurrentTicketId
       // because markAsRead throws "No ticket ID provided" otherwise.
@@ -276,14 +278,29 @@ export function SendFeedbackModal({ isOpen, onClose }: SendFeedbackModalProps) {
         {submitState === 'success' ? (
           renderSuccess()
         ) : (
-          <div className="space-y-5">
+          <div className="space-y-4">
             {conversationsAvailable ? renderForm() : renderUnavailableNotice()}
-            <div className="flex items-center gap-3 text-xs uppercase tracking-wide text-gray-400 dark:text-gray-500">
-              <div className="flex-1 border-t border-gray-200 dark:border-gray-700" />
-              <span>{t('common:contact.title')}</span>
-              <div className="flex-1 border-t border-gray-200 dark:border-gray-700" />
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
+              <button
+                type="button"
+                onClick={() => setIsContactOpen((v) => !v)}
+                aria-expanded={isContactOpen}
+                aria-controls="feedback-contact-section"
+                className="w-full flex items-center justify-between px-2 py-1.5 rounded-md text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+              >
+                <span>{t('common:contact.title')}</span>
+                {isContactOpen ? (
+                  <ChevronUp size={16} />
+                ) : (
+                  <ChevronDown size={16} />
+                )}
+              </button>
+              {isContactOpen && (
+                <div id="feedback-contact-section" className="mt-3">
+                  {renderContactSection()}
+                </div>
+              )}
             </div>
-            {renderContactSection()}
           </div>
         )}
       </div>
