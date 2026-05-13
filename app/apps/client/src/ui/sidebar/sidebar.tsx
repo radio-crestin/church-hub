@@ -344,9 +344,12 @@ export function Sidebar({
                 those windows are church projector output. */}
             {!isScreenRoute && (
               <button
+                type="button"
                 onClick={() => setIsFeedbackModalOpen(true)}
-                className={`relative flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors w-full ${isCollapsed ? 'md:justify-center' : ''}`}
-                title={t('sidebar:navigation.feedback')}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all w-full text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 ${isCollapsed ? 'md:justify-center' : ''}`}
+                title={
+                  isCollapsed ? t('sidebar:navigation.feedback') : undefined
+                }
                 aria-label={
                   feedbackUnreadCount > 0
                     ? `${t('sidebar:navigation.feedback')} (${feedbackUnreadCount})`
@@ -363,14 +366,14 @@ export function Sidebar({
                     />
                   )}
                 </span>
+                <span className="text-sm font-medium md:hidden">
+                  {t('sidebar:navigation.feedback')}
+                </span>
                 {!isCollapsed && (
-                  <span className="text-sm font-medium md:block">
+                  <span className="text-sm font-medium hidden md:inline flex-1 text-left">
                     {t('sidebar:navigation.feedback')}
                   </span>
                 )}
-                <span className="md:hidden text-sm font-medium">
-                  {t('sidebar:navigation.feedback')}
-                </span>
               </button>
             )}
 
