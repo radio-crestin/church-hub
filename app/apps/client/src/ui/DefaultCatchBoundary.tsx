@@ -8,7 +8,7 @@ import {
 } from '@tanstack/react-router'
 import { useEffect } from 'react'
 
-import { Sentry } from '~/sentry'
+import { posthog } from '~/posthog'
 
 export default function DefaultCatchBoundary({ error }: ErrorComponentProps) {
   const router = useRouter()
@@ -17,14 +17,11 @@ export default function DefaultCatchBoundary({ error }: ErrorComponentProps) {
     select: (state) => state.id === rootRouteId,
   })
 
-  // Capture error to Sentry
   useEffect(() => {
     if (error) {
-      Sentry.captureException(error, {
-        tags: {
-          boundary: 'DefaultCatchBoundary',
-          route: router.state.location.pathname,
-        },
+      posthog.captureException(error, {
+        boundary: 'DefaultCatchBoundary',
+        route: router.state.location.pathname,
       })
     }
   }, [error, router.state.location.pathname])

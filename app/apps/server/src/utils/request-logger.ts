@@ -3,9 +3,8 @@
  * Logs request method, path, duration, status code, and errors.
  * Controlled by DEBUG environment variable.
  */
-import * as Sentry from '@sentry/bun'
-
 import { createLogger } from './logger'
+import { captureException } from './posthog'
 
 const logger = createLogger('http')
 
@@ -29,17 +28,6 @@ export function logRequest(req: Request): () => void {
   if (!isNoisy) {
     logger.debug(`→ ${method} ${path}`)
   }
-
-  // Add Sentry breadcrumb for every request
-  Sentry.addBreadcrumb({
-    category: 'http',
-    message: `${method} ${path}`,
-    level: 'info',
-    data: {
-      method,
-      url: path,
-    },
-  })
 
   return () => {
     // Called after response is sent (not used in current flow, but available)
@@ -79,12 +67,6 @@ export function logResponse(
     logger.warning(
       `Slow request: ${method} ${path} took ${duration.toFixed(0)}ms`,
     )
-    Sentry.addBreadcrumb({
-      category: 'performance',
-      message: `Slow request: ${method} ${path}`,
-      level: 'warning',
-      data: { duration, status },
-    })
   }
 }
 
@@ -107,17 +89,10 @@ export function logApiError(
     `API Error: ${method} ${path} (${duration.toFixed(0)}ms) - ${err.message}`,
   )
 
-  Sentry.captureException(err, {
-    tags: {
-      component: 'server',
-      source: 'api-handler',
-      method,
-      path,
-    },
-    extra: {
-      duration,
-      url: path,
-      method,
-    },
+  captureException(err, {
+    source: 'api-handler',
+    method,
+    path,
+    duration,
   })
 }

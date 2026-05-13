@@ -825,6 +825,20 @@
         "failed": "Failed to rebuild search index: {{error}}"
       }
     },
+    "logs": {
+      "card": {
+        "title": "Application Logs",
+        "description": "Open the folder containing application logs. Attach the latest files when reporting an issue."
+      },
+      "button": {
+        "open": "Open Logs Folder",
+        "opening": "Opening..."
+      },
+      "toast": {
+        "opened": "Logs folder opened",
+        "failed": "Failed to open logs folder: {{error}}"
+      }
+    },
     "about": {
       "title": "About",
       "description": "Application version and update information",

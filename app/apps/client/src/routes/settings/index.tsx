@@ -11,6 +11,7 @@ import {
   SearchIndexRebuild,
 } from '~/features/database-management'
 import { MIDISettingsSection } from '~/features/keyboard-shortcuts'
+import { OpenLogsFolder } from '~/features/logs'
 import { SidebarConfigManager } from '~/features/sidebar-config'
 import { SystemTokenManager } from '~/features/system-token'
 import { UserList } from '~/features/users'
@@ -218,6 +219,9 @@ function RouteComponent() {
 
             {/* Search Index Rebuild (localhost only) */}
             {isLocalhost() && <SearchIndexRebuild />}
+
+            {/* Open Logs Folder (localhost only — host file manager) */}
+            {isLocalhost() && <OpenLogsFolder />}
 
             {/* Database Management (localhost only) */}
             {isLocalhost() && <DatabaseManager />}

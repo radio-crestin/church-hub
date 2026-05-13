@@ -826,6 +826,20 @@
         "failed": "Reconstruirea indexului a eșuat: {{error}}"
       }
     },
+    "logs": {
+      "card": {
+        "title": "Jurnale Aplicație",
+        "description": "Deschide folderul cu jurnalele aplicației. Atașează ultimele fișiere când raportezi o problemă."
+      },
+      "button": {
+        "open": "Deschide Folderul cu Jurnale",
+        "opening": "Se deschide..."
+      },
+      "toast": {
+        "opened": "Folderul cu jurnale a fost deschis",
+        "failed": "Nu s-a putut deschide folderul cu jurnale: {{error}}"
+      }
+    },
     "about": {
       "title": "Despre",
       "description": "Versiunea aplicației și informații despre actualizări",
