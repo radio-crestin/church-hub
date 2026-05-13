@@ -36,15 +36,21 @@ function checkMidiSafety(): boolean {
 
   try {
     // Spawn a subprocess that attempts to initialize CoreMIDI.
-    // If CoreMIDI is unavailable, this process will crash instead of ours.
-    execFileSync(
-      process.execPath,
-      [
-        '-e',
-        'try { require("easymidi").getInputs(); process.exit(0); } catch { process.exit(1); }',
-      ],
-      { timeout: 5000, stdio: 'pipe' },
-    )
+    // If CoreMIDI is unavailable, the SUBPROCESS crashes instead of us.
+    //
+    // We pass `--probe-midi` (handled at the top of index.ts) instead of
+    // `-e <code>`: Bun's compiled standalone binary ignores `-e` and would
+    // otherwise re-launch the full sidecar, which `killProcessOnPort(3000)`
+    // would use to SIGKILL the parent — bricking the macOS release build
+    // on launch. (See the regression in v0.1.60 where the app exited
+    // silently 4s after Tauri started.)
+    execFileSync(process.execPath, ['--probe-midi'], {
+      timeout: 5000,
+      stdio: 'pipe',
+      // Minimal env so the probe can't accidentally trigger production
+      // bootstrap paths (DB init, port binding) if anything keys off env.
+      env: { PATH: process.env.PATH ?? '' },
+    })
     midiSafe = true
     midiLogger.debug('CoreMIDI safety check passed')
   } catch {
