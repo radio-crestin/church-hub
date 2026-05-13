@@ -170,6 +170,11 @@ const config = defineConfig(({ mode }) => {
         'zod',
         'jszip',
         'qrcode',
+        // PostHog ships rrweb (session recording) as a dep; if we don't
+        // pre-bundle it Vite discovers it on first import and triggers a
+        // mid-boot reload that ends up loading React twice — which crashes
+        // TanStackRouterDevtools with "dispatcher.useContext is null".
+        'posthog-js',
       ],
     },
     // See `src/router.tsx` file to assign these defined values to window.
