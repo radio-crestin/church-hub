@@ -1,0 +1,13 @@
+{
+  "name": "ip",
+  "version": "2.1.0-security.1",
+  "description": "Local fork of npm `ip` (v2.0.1) patched for GHSA-2p57-rm9w-gvfp. Maintains the original isPrivate/isPublic API while closing the 0.0.0.0/8 SSRF gap that werift relies on. See `lib/ip.js` for the change vs upstream.",
+  "author": "Fedor Indutny <fedor@indutny.com>",
+  "homepage": "https://github.com/indutny/node-ip",
+  "files": [
+    "lib",
+    "README.md"
+  ],
+  "main": "lib/ip",
+  "license": "MIT"
+}

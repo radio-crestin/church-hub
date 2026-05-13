@@ -119,6 +119,10 @@
         "typescript": "^5",
       },
     },
+    "packages/ip-patched": {
+      "name": "ip",
+      "version": "2.1.0-security.1",
+    },
   },
   "trustedDependencies": [
     "audify",
@@ -129,6 +133,7 @@
     "brace-expansion": "^2.0.3",
     "diff": "^8.0.3",
     "esbuild": "^0.25.0",
+    "ip": "workspace:*",
     "jsondiffpatch": ">=0.7.2",
     "lodash": "^4.17.24",
     "markdown-it": "^14.1.1",
@@ -1100,7 +1105,7 @@
 
     "int64-buffer": ["int64-buffer@1.1.0", "", {}, "sha512-94smTCQOvigN4d/2R/YDjz8YVG0Sufvv2aAh8P5m42gwhCsDAJqnbNOrxJsrADuAFAA69Q/ptGzxvNcNuIJcvw=="],
 
-    "ip": ["ip@2.0.1", "", {}, "sha512-lJUL9imLTNi1ZfXT+DU6rBBdbiKGBuay9B6xGSPVjUeQwaH1RIGqef8RZkUtHioLmSNpPR5M4HVKJGm1j8FWVQ=="],
+    "ip": ["ip@workspace:packages/ip-patched"],
 
     "is-binary-path": ["is-binary-path@2.1.0", "", { "dependencies": { "binary-extensions": "^2.0.0" } }, "sha512-ZMERYes6pDydyuGidse7OsHxtbI7WVeUEozgR/g7rd0xUimYNlvZRE/K2MgZTjWy725IfelLeVcEM97mmtRGXw=="],
 
