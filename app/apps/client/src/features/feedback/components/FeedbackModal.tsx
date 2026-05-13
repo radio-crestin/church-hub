@@ -1,4 +1,4 @@
-import { ExternalLink, Loader2, X } from 'lucide-react'
+import { Loader2, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -148,21 +148,6 @@ export function FeedbackModal({
               className="w-full h-32 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
               disabled={isSubmitting}
             />
-
-            <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-              <p className="text-sm text-blue-700 dark:text-blue-300">
-                {t('common:feedback.notice')}{' '}
-                <a
-                  href="https://github.com/radio-crestin/church-hub/issues"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 font-medium underline hover:no-underline"
-                >
-                  {t('common:feedback.githubIssues')}
-                  <ExternalLink size={14} />
-                </a>
-              </p>
-            </div>
 
             {error && (
               <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
