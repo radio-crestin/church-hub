@@ -2,7 +2,8 @@
   "name": "church-hub",
   "private": true,
   "workspaces": [
-    "apps/*"
+    "apps/*",
+    "packages/*"
   ],
   "scripts": {
     "dev": "tauri dev",
@@ -74,7 +75,8 @@
     "vite": "^7.3.2",
     "seroval": "^1.5.4",
     "minimatch": "^9.0.6",
-    "diff": "^8.0.3"
+    "diff": "^8.0.3",
+    "ip": "workspace:*"
   },
   "dependencies": {
     "reveal.js": "^5.2.1",
