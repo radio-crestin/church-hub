@@ -357,7 +357,12 @@ export function Sidebar({
                 }
               >
                 <span className="relative flex-shrink-0">
-                  <MessageSquarePlus size={20} />
+                  <span className="w-7 h-7 rounded-full flex items-center justify-center bg-gray-100 dark:bg-gray-700">
+                    <MessageSquarePlus
+                      size={16}
+                      className="text-gray-600 dark:text-gray-400"
+                    />
+                  </span>
                   {feedbackUnreadCount > 0 && (
                     <span
                       aria-label="Unread support messages"
