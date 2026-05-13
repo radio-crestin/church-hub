@@ -130,14 +130,18 @@ button {
   background-color: rgb(107 114 128 / 0.7);
 }
 
-/* Custom thin scrollbar */
+/* Custom thin scrollbar — sized to feel like part of the surface (not a
+   chunky OS bar) and tinted to match the indigo accent on hover so it
+   reads as in-design rather than a stray gray rectangle. */
 .scrollbar-thin {
   scrollbar-width: thin;
-  scrollbar-color: rgb(209 213 219) transparent;
+  scrollbar-color: rgb(209 213 219 / 0.5) transparent;
+  transition: scrollbar-color 0.15s ease;
 }
 
 .scrollbar-thin::-webkit-scrollbar {
-  width: 4px;
+  width: 6px;
+  height: 6px;
 }
 
 .scrollbar-thin::-webkit-scrollbar-track {
@@ -145,24 +149,27 @@ button {
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background-color: rgb(209 213 219);
-  border-radius: 2px;
+  background-color: rgb(209 213 219 / 0.5);
+  border-radius: 3px;
+  transition: background-color 0.15s ease;
 }
 
+.scrollbar-thin:hover::-webkit-scrollbar-thumb,
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background-color: rgb(156 163 175);
+  background-color: rgb(99 102 241 / 0.55);
 }
 
 .dark .scrollbar-thin {
-  scrollbar-color: rgb(75 85 99 / 0.6) transparent;
+  scrollbar-color: rgb(75 85 99 / 0.4) transparent;
 }
 
 .dark .scrollbar-thin::-webkit-scrollbar-thumb {
-  background-color: rgb(75 85 99 / 0.6);
+  background-color: rgb(75 85 99 / 0.4);
 }
 
+.dark .scrollbar-thin:hover::-webkit-scrollbar-thumb,
 .dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background-color: rgb(107 114 128 / 0.7);
+  background-color: rgb(129 140 248 / 0.55);
 }
 
 /* Global scrollbar theming - applies to all scrollable elements */
