@@ -108,8 +108,7 @@ export function SendFeedbackModal({ isOpen, onClose }: SendFeedbackModalProps) {
       const userTraits: Record<string, unknown> = {}
       const trimmedEmail = email.trim()
       if (trimmedEmail) userTraits.email = trimmedEmail
-      const hasExistingTicket =
-        !!posthog.conversations.getCurrentTicketId?.()
+      const hasExistingTicket = !!posthog.conversations.getCurrentTicketId?.()
       await posthog.conversations.sendMessage(
         trimmed,
         userTraits,
@@ -225,10 +224,7 @@ export function SendFeedbackModal({ isOpen, onClose }: SendFeedbackModalProps) {
         />
       </div>
       {submitState === 'error' && (
-        <p
-          className="text-sm text-red-600 dark:text-red-400"
-          role="alert"
-        >
+        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
           {t('common:feedback.error')}
         </p>
       )}

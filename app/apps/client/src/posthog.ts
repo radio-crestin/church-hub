@@ -3,7 +3,9 @@ import posthog from 'posthog-js'
 const DEFAULT_TOKEN = 'phc_x4iC8SNTkLtxooGYmbz6v3nFjYE2v6wXaNgZVHNaxatK'
 const DEFAULT_HOST = 'https://eu.i.posthog.com'
 
-function shouldDropEvent(event: { properties?: Record<string, unknown> }): boolean {
+function shouldDropEvent(event: {
+  properties?: Record<string, unknown>
+}): boolean {
   const props = event.properties ?? {}
 
   // posthog-js puts thrown errors into $exception_list / $exception_message.
@@ -25,7 +27,8 @@ function shouldDropEvent(event: { properties?: Record<string, unknown> }): boole
 
   for (const m of messages) {
     if (m.includes('ResizeObserver loop')) return true
-    if (m.includes('Failed to fetch') && '__TAURI_INTERNALS__' in window) return true
+    if (m.includes('Failed to fetch') && '__TAURI_INTERNALS__' in window)
+      return true
   }
 
   return false

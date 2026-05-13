@@ -48,7 +48,10 @@ async function readMultiDayTail(
     const d = new Date(today)
     d.setDate(today.getDate() - i)
     const date = isoDate(d)
-    const tail = await tailFile(join(dir, `${filePrefix}-${date}.log`), maxBytes)
+    const tail = await tailFile(
+      join(dir, `${filePrefix}-${date}.log`),
+      maxBytes,
+    )
     if (tail) {
       parts.push(`=== ${filePrefix} ${date} ===\n${tail}`)
     }
