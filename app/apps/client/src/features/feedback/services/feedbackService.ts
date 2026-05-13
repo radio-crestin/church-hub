@@ -3,109 +3,74 @@ import { fetcher } from '~/utils/fetcher'
 
 const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 
-interface FeedbackRequest {
-  message: string
-  osVersion: string
-  appVersion: string
-  name?: string
-  email?: string
-}
-
-interface FeedbackResponse {
-  success: boolean
-  ticketId?: string
-  error?: string
-}
-
-function generateReportId(): string {
-  const uuid =
-    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-      ? crypto.randomUUID()
-      : Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2)
-  return `ch-${uuid.replace(/-/g, '').slice(0, 8)}`
-}
-
 /**
- * Submits feedback to PostHog with a deterministic two-track design:
+ * Opens PostHog's native conversations chat panel and attaches the latest
+ * server + Tauri log tails so the maintainer has them ready when the user
+ * starts typing.
  *
- *   - Preferred: `posthog.conversations.sendMessage()` opens a real
- *     support ticket and returns a `ticket_id`. We use that as the
- *     report ID.
+ * Logs are uploaded under PostHog's current `distinct_id` — the same ID
+ * the conversations widget uses for the new ticket. In the dashboard, the
+ * support ticket and the `$feedback_report` log event appear under the
+ * same person, no manual correlation needed.
  *
- *   - Fallback: if the conversations feature is unavailable (project
- *     setting off, posthog-js still loading, ad-blocker), we generate
- *     our own report ID and fire a `user_feedback` event under it via
- *     `posthog.capture`. The maintainer queries the ID in PostHog and
- *     sees both the message and the attached logs.
- *
- * Either way we POST `/api/feedback/attach-logs` so the server uploads
- * server + Tauri log tails under the same ID. Feedback NEVER hard-fails
- * just because conversations isn't ready.
+ * If conversations is unavailable (project setting off, ad-blocker, etc.)
+ * we still upload the logs and return the distinct_id so the caller can
+ * surface a graceful fallback message.
  */
-export async function submitFeedback(
-  data: FeedbackRequest,
-): Promise<FeedbackResponse> {
-  const messageBody = [
-    data.message.trim(),
-    '',
-    '---',
-    `OS: ${data.osVersion}`,
-    `App: ${data.appVersion}`,
-  ].join('\n')
-
-  let reportId: string | null = null
-
-  // Try PostHog Conversations first.
-  if (posthog?.conversations?.isAvailable?.()) {
-    try {
-      const response = await posthog.conversations.sendMessage(messageBody, {
-        name: data.name?.trim() || undefined,
-        email: data.email?.trim() || undefined,
-      })
-      reportId = response?.ticket_id ?? null
-    } catch {
-      // fall through to the capture fallback
-      reportId = null
-    }
+export async function openFeedbackChat(): Promise<{
+  opened: boolean
+  distinctId: string | null
+}> {
+  // Best-effort log shipment in parallel with opening the chat. The user
+  // shouldn't have to wait for it.
+  const distinctId = getDistinctId()
+  if (distinctId) {
+    void attachLogs(distinctId)
   }
 
-  // Fallback path — capture as a regular event so triage still works
-  // even when the conversations feature is off.
-  if (!reportId) {
-    reportId = generateReportId()
-    try {
-      posthog?.capture?.('user_feedback', {
-        report_id: reportId,
-        message: messageBody,
-        os_version: data.osVersion,
-        app_version: data.appVersion,
-        name: data.name?.trim() || undefined,
-        email: data.email?.trim() || undefined,
-        $set_once: {
-          first_feedback_at: new Date().toISOString(),
-        },
-      })
-    } catch {
-      // even capture failed — we still try to attach logs server-side
-    }
+  if (!posthog?.conversations?.isAvailable?.()) {
+    return { opened: false, distinctId }
   }
 
-  // Best-effort log attachment. Doesn't gate success.
+  try {
+    posthog.conversations.show()
+    // Mark messages read when the user opens the chat — the unread badge
+    // should clear immediately, not wait for the next poll.
+    void posthog.conversations.markAsRead?.()
+    return { opened: true, distinctId }
+  } catch {
+    return { opened: false, distinctId }
+  }
+}
+
+function getDistinctId(): string | null {
+  try {
+    return posthog?.get_distinct_id?.() ?? null
+  } catch {
+    return null
+  }
+}
+
+async function attachLogs(distinctId: string): Promise<void> {
+  let osVersion = 'Unknown'
+  let appVersion = 'Unknown'
+  try {
+    const sys = await getSystemInfo()
+    osVersion = sys.osVersion
+    appVersion = sys.appVersion
+  } catch {
+    // ignore
+  }
   try {
     await fetcher('/api/feedback/attach-logs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ticketId: reportId,
-        osVersion: data.osVersion,
-        appVersion: data.appVersion,
-      }),
+      body: JSON.stringify({ ticketId: distinctId, osVersion, appVersion }),
     })
   } catch {
-    // ignore — the user's message is already in PostHog
+    // Best-effort — the user's message is already in PostHog under the
+    // same distinct_id, so the maintainer can still triage.
   }
-
-  return { success: true, ticketId: reportId }
 }
 
 export async function getSystemInfo(): Promise<{

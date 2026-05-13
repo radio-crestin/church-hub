@@ -13,7 +13,11 @@ import { useTranslation } from 'react-i18next'
 import { SidebarHeader } from './sidebar-header'
 import { SidebarItem } from './sidebar-item'
 import { UpdateNotification } from '../../features/app-update'
-import { ContactModal, FeedbackModal } from '../../features/feedback'
+import {
+  ContactModal,
+  openFeedbackChat,
+  useFeedbackUnreadCount,
+} from '../../features/feedback'
 import { useKioskSettings } from '../../features/kiosk'
 import { usePresentationState } from '../../features/presentation'
 import {
@@ -51,8 +55,8 @@ export function Sidebar({
   const [internalMobileMenuOpen, setInternalMobileMenuOpen] = useState(false)
   const isMobileMenuOpen = externalMobileMenuOpen ?? internalMobileMenuOpen
   const setIsMobileMenuOpen = onMobileMenuChange ?? setInternalMobileMenuOpen
-  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false)
   const [isContactModalOpen, setIsContactModalOpen] = useState(false)
+  const feedbackUnreadCount = useFeedbackUnreadCount()
   const location = useLocation()
   const navigate = useNavigate()
   const { t } = useTranslation(['sidebar', 'common'])
@@ -328,13 +332,31 @@ export function Sidebar({
             {/* Update notification - shown above Feedback when update available */}
             <UpdateNotification isCollapsed={isCollapsed} />
 
-            {/* Feedback */}
+            {/* Feedback — opens the embedded PostHog conversations chat.
+                Red dot appears when there are unread support messages. */}
             <button
-              onClick={() => setIsFeedbackModalOpen(true)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors w-full ${isCollapsed ? 'md:justify-center' : ''}`}
+              onClick={() => {
+                void openFeedbackChat()
+              }}
+              className={`relative flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors w-full ${isCollapsed ? 'md:justify-center' : ''}`}
               title={t('sidebar:navigation.feedback')}
+              aria-label={
+                feedbackUnreadCount > 0
+                  ? `${t('sidebar:navigation.feedback')} (${feedbackUnreadCount})`
+                  : t('sidebar:navigation.feedback')
+              }
             >
-              <MessageSquarePlus size={20} className="flex-shrink-0" />
+              <span className="relative flex-shrink-0">
+                <MessageSquarePlus size={20} />
+                {feedbackUnreadCount > 0 && (
+                  <span
+                    className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold leading-none shadow ring-2 ring-white dark:ring-gray-900"
+                    data-ph-mask
+                  >
+                    {feedbackUnreadCount > 9 ? '9+' : feedbackUnreadCount}
+                  </span>
+                )}
+              </span>
               {!isCollapsed && (
                 <span className="text-sm font-medium md:block">
                   {t('sidebar:navigation.feedback')}
@@ -393,21 +415,12 @@ export function Sidebar({
         </div>
       </aside>
 
-      {/* Feedback Modal */}
-      <FeedbackModal
-        isOpen={isFeedbackModalOpen}
-        onClose={() => setIsFeedbackModalOpen(false)}
-        onOpenContact={() => setIsContactModalOpen(true)}
-      />
-
-      {/* Contact Modal */}
+      {/* Contact Modal — feedback itself is now handled by PostHog's chat
+          panel, opened from the sidebar Feedback button. */}
       <ContactModal
         isOpen={isContactModalOpen}
         onClose={() => setIsContactModalOpen(false)}
-        onBack={() => {
-          setIsContactModalOpen(false)
-          setIsFeedbackModalOpen(true)
-        }}
+        onBack={() => setIsContactModalOpen(false)}
       />
     </>
   )
