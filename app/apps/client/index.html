@@ -45,24 +45,28 @@
       color: #f9fafb;
       font-family: system-ui, -apple-system, sans-serif;
       z-index: 9999;
+      padding: 24px;
+      text-align: center;
     ">
-      <div id="loading-content" style="display: flex; flex-direction: column; align-items: center; gap: 24px;">
+      <div id="loading-content" style="display: flex; flex-direction: column; align-items: center; gap: 20px; max-width: 380px;">
         <h1 style="margin: 0; font-size: 28px; font-weight: 600;">Church Hub</h1>
-        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
-          <div style="
-            width: 20px;
-            height: 20px;
-            border: 2px solid #4f46e5;
-            border-top-color: transparent;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-          "></div>
-          <pre id="loading-logs" style="margin: 0; color: #9ca3af; font-size: 12px; font-family: ui-monospace, monospace; text-align: center;">Initializing...</pre>
-        </div>
+        <div id="loading-spinner" style="
+          width: 28px;
+          height: 28px;
+          border: 2px solid rgba(79, 70, 229, 0.25);
+          border-top-color: #6366f1;
+          border-radius: 50%;
+          animation: spin 0.9s linear infinite;
+        "></div>
+        <div id="loading-message" style="margin: 0; color: #f3f4f6; font-size: 15px; font-weight: 500;">Starting up</div>
+        <div id="loading-hint" style="margin: 0; color: #9ca3af; font-size: 13px; line-height: 1.5;"></div>
       </div>
       <style>
         @keyframes spin {
           to { transform: rotate(360deg); }
+        }
+        #loading-retry:hover:not([disabled]) {
+          background: #4338ca !important;
         }
       </style>
     </div>
