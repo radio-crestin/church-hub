@@ -104,6 +104,14 @@ export function seedSongs(db: Database): void {
           ? (categoryMap.get(song.categoryName) ?? null)
           : null
 
+        // Fresh-install hygiene: the shipped fixture carries `keyLine`
+        // (tonality) and `presentationCount`/`lastPresentedAt` from the
+        // maintainer's own DB at fixture-dump time. A new church
+        // starting from scratch should see zero plays + no preset
+        // tonality on these songs — they pick their own key and the
+        // usage counters reflect THEIR usage. Existing installs aren't
+        // touched: this branch only runs for songs not yet in the table
+        // (the findSongByTitle guard above).
         const result = insertSong.run(
           song.title,
           categoryId,
@@ -116,10 +124,10 @@ export function seedSongs(db: Database): void {
           song.theme,
           song.altTheme,
           song.hymnNumber,
-          song.keyLine,
+          null, // keyLine — fresh installs start blank
           song.presentationOrder,
-          song.presentationCount,
-          song.lastPresentedAt,
+          0, // presentationCount — fresh installs start at zero
+          null, // lastPresentedAt — fresh installs have no history
           song.lastManualEdit,
         )
 
