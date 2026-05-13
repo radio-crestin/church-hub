@@ -61,6 +61,16 @@ pub fn run() {
     );
     posthog::init(posthog_token, posthog_host, distinct_id);
 
+    // Boot heartbeat — filter `app_started` + `component:"tauri"` in the
+    // PostHog dashboard to confirm the Rust shell's capture path works.
+    posthog::capture_event(
+        "app_started",
+        serde_json::json!({
+            "platform": std::env::consts::OS,
+            "arch": std::env::consts::ARCH,
+        }),
+    );
+
     // Panic hook: log to stderr (preserves existing console output) and ship
     // a blocking PostHog event so it flushes before the process aborts.
     let default_panic = std::panic::take_hook();

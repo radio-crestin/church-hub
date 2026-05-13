@@ -56,6 +56,19 @@ export function captureMessage(
 }
 
 /**
+ * Fired once at server boot so we can verify in the PostHog dashboard
+ * that the sidecar's outbound capture path is wired correctly. Use the
+ * `app_started` event filter and look for `component:"server"` to confirm.
+ */
+export function captureAppStarted(): void {
+  client.capture({
+    distinctId,
+    event: 'app_started',
+    properties: { ...baseProps },
+  })
+}
+
+/**
  * Captures a feedback report under a custom distinctId (the report ID).
  *
  * The triage flow: the user-facing feedback message embeds the report ID,
