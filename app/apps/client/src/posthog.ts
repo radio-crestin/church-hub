@@ -85,6 +85,32 @@ export function initPostHog(): void {
   // Boot heartbeat — filter `app_started` + `component:"client"` in the
   // PostHog dashboard to confirm the client's capture path is healthy.
   posthog.capture('app_started')
+
+  // PostHog conversations auto-injects a floating chat button on every page
+  // by default. We don't want it: the chat must only open when the user
+  // clicks our sidebar Feedback entry. Hide as soon as the extension is
+  // available; the gate keeps polling until conversations loads.
+  hideConversationsWidgetOnceAvailable()
+}
+
+function hideConversationsWidgetOnceAvailable(): void {
+  let attempts = 0
+  const tick = () => {
+    if (posthog.conversations?.isAvailable?.()) {
+      try {
+        posthog.conversations.hide()
+      } catch {
+        // ignore
+      }
+      return
+    }
+    attempts += 1
+    // Stop polling after ~30s — if it never loads, the feature is off and
+    // there's nothing to hide.
+    if (attempts > 60) return
+    window.setTimeout(tick, 500)
+  }
+  tick()
 }
 
 export { posthog }
