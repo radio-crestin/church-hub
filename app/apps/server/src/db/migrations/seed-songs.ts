@@ -70,32 +70,41 @@ export function seedSongs(db: Database): void {
       .all() as Array<{ id: number; name: string }>
     const categoryMap = new Map(categories.map((c) => [c.name, c.id]))
 
+    // Prepared statements + a single transaction collapse ~26k implicit
+    // commits into one. On Windows (NTFS + Defender + bun:sqlite fsync)
+    // the row-at-a-time version takes >120s and blew our CI smoke test;
+    // batched it drops to ~1s. Same speedup applies to a real user's
+    // first launch.
+    const insertSong = db.prepare(
+      `INSERT INTO songs
+        (title, category_id, source_filename, author, copyright, ccli, tempo,
+         time_signature, theme, alt_theme, hymn_number, key_line, presentation_order,
+         presentation_count, last_presented_at, last_manual_edit, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, unixepoch(), unixepoch())`,
+    )
+    const insertSlide = db.prepare(
+      `INSERT INTO song_slides
+        (song_id, content, label, sort_order, created_at, updated_at)
+        VALUES (?, ?, ?, ?, unixepoch(), unixepoch())`,
+    )
+    const findSongByTitle = db.prepare<{ id: number }, [string]>(
+      'SELECT id FROM songs WHERE title = ?',
+    )
+
     let seededCount = 0
+    const seedAll = db.transaction(() => {
+      for (const song of songs) {
+        // Skip if already present (idempotent re-runs)
+        if (findSongByTitle.get(song.title)) {
+          log('debug', `Song already exists: ${song.title}, skipping`)
+          continue
+        }
 
-    for (const song of songs) {
-      // Check if song already exists
-      const existing = db
-        .query('SELECT id FROM songs WHERE title = ?')
-        .get(song.title) as { id: number } | null
+        const categoryId = song.categoryName
+          ? (categoryMap.get(song.categoryName) ?? null)
+          : null
 
-      if (existing) {
-        log('debug', `Song already exists: ${song.title}, skipping`)
-        continue
-      }
-
-      // Resolve category ID from name
-      const categoryId = song.categoryName
-        ? (categoryMap.get(song.categoryName) ?? null)
-        : null
-
-      // Insert song
-      db.run(
-        `INSERT INTO songs
-          (title, category_id, source_filename, author, copyright, ccli, tempo,
-           time_signature, theme, alt_theme, hymn_number, key_line, presentation_order,
-           presentation_count, last_presented_at, last_manual_edit, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, unixepoch(), unixepoch())`,
-        [
+        const result = insertSong.run(
           song.title,
           categoryId,
           song.sourceFilename,
@@ -112,40 +121,23 @@ export function seedSongs(db: Database): void {
           song.presentationCount,
           song.lastPresentedAt,
           song.lastManualEdit,
-        ],
-      )
-
-      // Get the inserted song ID
-      const inserted = db
-        .query('SELECT id FROM songs WHERE title = ?')
-        .get(song.title) as { id: number } | null
-
-      if (!inserted) {
-        throw new Error(
-          `[seed-songs] Failed to insert song '${song.title}'. The songs table may be missing required columns (e.g., last_presented_at). Ensure the addLastPresentedAt migration runs before seedSongs.`,
         )
-      }
 
-      if (song.slides.length > 0) {
-        // Insert slides
-        for (const slide of song.slides) {
-          db.run(
-            `INSERT INTO song_slides
-              (song_id, content, label, sort_order, created_at, updated_at)
-              VALUES (?, ?, ?, ?, unixepoch(), unixepoch())`,
-            [inserted.id, slide.content, slide.label, slide.sortOrder],
+        const songId = Number(result.lastInsertRowid)
+        if (!songId) {
+          throw new Error(
+            `[seed-songs] Failed to insert song '${song.title}'. The songs table may be missing required columns (e.g., last_presented_at). Ensure the addLastPresentedAt migration runs before seedSongs.`,
           )
         }
-        log(
-          'debug',
-          `Seeded song: ${song.title} with ${song.slides.length} slides`,
-        )
-      } else {
-        log('debug', `Seeded song: ${song.title}`)
-      }
 
-      seededCount++
-    }
+        for (const slide of song.slides) {
+          insertSlide.run(songId, slide.content, slide.label, slide.sortOrder)
+        }
+
+        seededCount++
+      }
+    })
+    seedAll()
 
     log('info', `Seeded ${seededCount} song(s) from fixtures`)
   } catch (error) {

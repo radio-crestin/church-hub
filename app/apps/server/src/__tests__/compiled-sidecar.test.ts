@@ -26,7 +26,11 @@ const describeFn = SHOULD_RUN ? describe : describe.skip
 setDefaultTimeout(180_000)
 
 const TEST_PORT = 3098
-const BASE_URL = `http://localhost:${TEST_PORT}`
+// Use 127.0.0.1 (not "localhost") — Bun on Linux CI resolves "localhost"
+// to ::1 first, but Bun.serve binds 0.0.0.0 (IPv4 only), so the fetch
+// silently hangs until the test default timeout. 127.0.0.1 is
+// unambiguous and routes through the bound interface.
+const BASE_URL = `http://127.0.0.1:${TEST_PORT}`
 
 let proc: Subprocess | null = null
 let stderrChunks = ''
