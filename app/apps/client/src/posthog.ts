@@ -31,7 +31,25 @@ function shouldDropEvent(event: { properties?: Record<string, unknown> }): boole
   return false
 }
 
+/**
+ * Routes that must NEVER show PostHog UI. /screen/* is rendered on
+ * projectors and OBS scenes — surfacing the support widget there would
+ * leak our internal chrome onto the church's main screen.
+ *
+ * We don't merely hide the widget on these routes; we skip `posthog.init`
+ * entirely so no token, no replay, no autocapture is set up. A reload
+ * onto a non-screen route gets a fresh init.
+ */
+function isPostHogDisabledRoute(): boolean {
+  if (typeof window === 'undefined') return false
+  return window.location.pathname.startsWith('/screen/')
+}
+
 export function initPostHog(): void {
+  if (isPostHogDisabledRoute()) {
+    return
+  }
+
   const token =
     (import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN as string | undefined) ||
     DEFAULT_TOKEN
