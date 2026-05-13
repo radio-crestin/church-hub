@@ -1,3 +1,4 @@
 export { ContactModal } from './components/ContactModal'
+export { SendFeedbackModal } from './components/SendFeedbackModal'
 export { useFeedbackUnreadCount } from './hooks/useFeedbackUnreadCount'
-export { getSystemInfo, openFeedbackChat } from './services/feedbackService'
+export { attachFeedbackLogs, getSystemInfo } from './services/feedbackService'

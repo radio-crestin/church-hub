@@ -46,10 +46,16 @@
   "feedback": {
     "title": "Trimite Feedback",
     "placeholder": "Descrie problema sau sugestia ta aici...",
+    "emailLabel": "Email-ul tău (opțional)",
+    "emailPlaceholder": "nume@example.com",
     "send": "Trimite",
+    "sending": "Se trimite...",
     "success": "Mulțumim pentru feedback!",
+    "successHint": "Vom răspunde pe email dacă l-ai lăsat.",
     "error": "Trimiterea feedback-ului a eșuat. Te rugăm să încerci din nou.",
-    "reportId": "ID referință (menționați-l când reveniți):"
+    "reportId": "ID referință (menționați-l când reveniți):",
+    "unavailableTitle": "Nu am putut accesa chat-ul de suport",
+    "unavailableBody": "Nu ne-am putut conecta la sistemul de suport. Contactează-ne direct:"
   },
   "contact": {
     "title": "Contactează-ne",
