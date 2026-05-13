@@ -58,6 +58,11 @@ export function Sidebar({
   const [isContactModalOpen, setIsContactModalOpen] = useState(false)
   const feedbackUnreadCount = useFeedbackUnreadCount()
   const location = useLocation()
+  // Defensive: /screen/* renders fullscreen via app-layout and never
+  // mounts the sidebar. If something ever does mount it here (HMR race,
+  // a future layout wrapper), this guard keeps the support surface off
+  // projector windows. Hiding the button is non-negotiable for screens.
+  const isScreenRoute = location.pathname.startsWith('/screen/')
   const navigate = useNavigate()
   const { t } = useTranslation(['sidebar', 'common'])
   const { hasPermission } = usePermissions()
@@ -332,39 +337,47 @@ export function Sidebar({
             {/* Update notification - shown above Feedback when update available */}
             <UpdateNotification isCollapsed={isCollapsed} />
 
-            {/* Feedback — opens the embedded PostHog conversations chat.
-                Red dot appears when there are unread support messages. */}
-            <button
-              onClick={() => {
-                void openFeedbackChat()
-              }}
-              className={`relative flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors w-full ${isCollapsed ? 'md:justify-center' : ''}`}
-              title={t('sidebar:navigation.feedback')}
-              aria-label={
-                feedbackUnreadCount > 0
-                  ? `${t('sidebar:navigation.feedback')} (${feedbackUnreadCount})`
-                  : t('sidebar:navigation.feedback')
-              }
-            >
-              <span className="relative flex-shrink-0">
-                <MessageSquarePlus size={20} />
-                {feedbackUnreadCount > 0 && (
-                  <span
-                    aria-label="Unread support messages"
-                    className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-gray-900 animate-pulse"
-                    data-ph-mask
-                  />
+            {/* Feedback — opens the embedded PostHog conversations chat,
+                or falls back to ContactModal (email + WhatsApp) when the
+                conversations module isn't loaded. Red dot appears when
+                there are unread support messages. Never rendered on
+                /screen/* — those windows are church projector output. */}
+            {!isScreenRoute && (
+              <button
+                onClick={() => {
+                  const result = openFeedbackChat()
+                  if (result.method === 'fallback') {
+                    setIsContactModalOpen(true)
+                  }
+                }}
+                className={`relative flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors w-full ${isCollapsed ? 'md:justify-center' : ''}`}
+                title={t('sidebar:navigation.feedback')}
+                aria-label={
+                  feedbackUnreadCount > 0
+                    ? `${t('sidebar:navigation.feedback')} (${feedbackUnreadCount})`
+                    : t('sidebar:navigation.feedback')
+                }
+              >
+                <span className="relative flex-shrink-0">
+                  <MessageSquarePlus size={20} />
+                  {feedbackUnreadCount > 0 && (
+                    <span
+                      aria-label="Unread support messages"
+                      className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-gray-900 animate-pulse"
+                      data-ph-mask
+                    />
+                  )}
+                </span>
+                {!isCollapsed && (
+                  <span className="text-sm font-medium md:block">
+                    {t('sidebar:navigation.feedback')}
+                  </span>
                 )}
-              </span>
-              {!isCollapsed && (
-                <span className="text-sm font-medium md:block">
+                <span className="md:hidden text-sm font-medium">
                   {t('sidebar:navigation.feedback')}
                 </span>
-              )}
-              <span className="md:hidden text-sm font-medium">
-                {t('sidebar:navigation.feedback')}
-              </span>
-            </button>
+              </button>
+            )}
 
             {/* Settings */}
             {canViewSettings && (
@@ -414,8 +427,10 @@ export function Sidebar({
         </div>
       </aside>
 
-      {/* Contact Modal — feedback itself is now handled by PostHog's chat
-          panel, opened from the sidebar Feedback button. */}
+      {/* Contact Modal — fallback when PostHog conversations is
+          unavailable (project off, ad-blocker, slow first paint). The
+          sidebar Feedback button opens this immediately so the click
+          never feels swallowed. */}
       <ContactModal
         isOpen={isContactModalOpen}
         onClose={() => setIsContactModalOpen(false)}

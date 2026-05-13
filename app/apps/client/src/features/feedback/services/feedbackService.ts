@@ -3,24 +3,30 @@ import { fetcher } from '~/utils/fetcher'
 
 const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 
+export type OpenFeedbackChatResult = {
+  method: 'posthog' | 'fallback'
+  distinctId: string | null
+}
+
 /**
  * Opens PostHog's native conversations chat panel and attaches the latest
  * server + Tauri log tails so the maintainer has them ready when the user
  * starts typing.
  *
- * Logs are uploaded under PostHog's current `distinct_id` — the same ID
- * the conversations widget uses for the new ticket. In the dashboard, the
- * support ticket and the `$feedback_report` log event appear under the
- * same person, no manual correlation needed.
+ * Synchronous on purpose: the caller (sidebar Feedback button) needs to
+ * decide on the same tick whether to render the fallback ContactModal —
+ * any async hop means the user clicks and sees nothing for a frame, which
+ * is the exact "click then wait for posthog" experience we're killing.
  *
- * If conversations is unavailable (project setting off, ad-blocker, etc.)
- * we still upload the logs and return the distinct_id so the caller can
- * surface a graceful fallback message.
+ * Logs are uploaded under PostHog's current `distinct_id` in the
+ * background. The support ticket and the `$feedback_report` log event end
+ * up under the same person in the dashboard, no manual correlation.
+ *
+ * Returns `method: 'fallback'` when conversations isn't loaded (project
+ * setting off, ad-blocker, slow first paint) so the sidebar can open the
+ * ContactModal immediately instead of swallowing the click.
  */
-export async function openFeedbackChat(): Promise<{
-  opened: boolean
-  distinctId: string | null
-}> {
+export function openFeedbackChat(): OpenFeedbackChatResult {
   // Best-effort log shipment in parallel with opening the chat. The user
   // shouldn't have to wait for it.
   const distinctId = getDistinctId()
@@ -28,19 +34,19 @@ export async function openFeedbackChat(): Promise<{
     void attachLogs(distinctId)
   }
 
-  if (!posthog?.conversations?.isAvailable?.()) {
-    return { opened: false, distinctId }
+  if (posthog?.conversations?.isAvailable?.()) {
+    try {
+      posthog.conversations.show()
+      // Mark messages read when the user opens the chat — the unread badge
+      // should clear immediately, not wait for the next poll.
+      void posthog.conversations.markAsRead?.()
+      return { method: 'posthog', distinctId }
+    } catch {
+      // fall through to fallback
+    }
   }
 
-  try {
-    posthog.conversations.show()
-    // Mark messages read when the user opens the chat — the unread badge
-    // should clear immediately, not wait for the next poll.
-    void posthog.conversations.markAsRead?.()
-    return { opened: true, distinctId }
-  } catch {
-    return { opened: false, distinctId }
-  }
+  return { method: 'fallback', distinctId }
 }
 
 function getDistinctId(): string | null {
