@@ -1,9 +1,9 @@
 /**
  * Global error handler for the client application.
  * Captures unhandled errors, promise rejections, and provides
- * structured error reporting to Sentry and the console logger.
+ * structured error reporting to PostHog and the console logger.
  */
-import { Sentry } from '~/sentry'
+import { posthog } from '~/posthog'
 import { createLogger } from './logger'
 
 const logger = createLogger('app:error')
@@ -17,7 +17,7 @@ interface ErrorContext {
 }
 
 /**
- * Report an error with structured context to both Sentry and the logger.
+ * Report an error with structured context to both PostHog and the logger.
  */
 export function captureError(error: unknown, context?: ErrorContext): void {
   const err = error instanceof Error ? error : new Error(String(error))
@@ -27,12 +27,10 @@ export function captureError(error: unknown, context?: ErrorContext): void {
     stack: err.stack,
   })
 
-  Sentry.captureException(err, {
-    tags: {
-      source: context?.source ?? 'unknown',
-      component: context?.component,
-    },
-    extra: context,
+  posthog.captureException(err, {
+    source: context?.source ?? 'unknown',
+    component: context?.component,
+    ...context,
   })
 }
 
@@ -42,13 +40,12 @@ export function captureError(error: unknown, context?: ErrorContext): void {
 export function captureWarning(message: string, context?: ErrorContext): void {
   logger.warn(`${context?.source ?? 'unknown'}: ${message}`, context)
 
-  Sentry.captureMessage(message, {
+  posthog.capture('warning', {
     level: 'warning',
-    tags: {
-      source: context?.source ?? 'unknown',
-      component: context?.component,
-    },
-    extra: context,
+    message,
+    source: context?.source ?? 'unknown',
+    component: context?.component,
+    ...context,
   })
 }
 

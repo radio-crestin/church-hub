@@ -57,37 +57,11 @@ if (process.argv.includes('--probe-midi')) {
   }
 }
 
-// Sentry must be imported and initialized before any other code
-import * as Sentry from '@sentry/bun'
-
-Sentry.init({
-  dsn: 'https://b03cb4a2222d30afae18571fb703c6f4@o4510714091536384.ingest.de.sentry.io/4510714105233488',
-  release: `church-hub@${process.env.npm_package_version || '0.1.22'}`,
-  environment:
-    process.env.NODE_ENV === 'production' ? 'production' : 'development',
-
-  // Capture 100% of errors
-  sampleRate: 1.0,
-
-  // Attach stack traces
-  attachStacktrace: true,
-
-  // Max breadcrumbs for debugging context
-  maxBreadcrumbs: 50,
-
-  beforeSend(event) {
-    event.tags = { ...event.tags, component: 'server' }
-    return event
-  },
-
-  beforeBreadcrumb(breadcrumb) {
-    // Filter out noisy breadcrumbs
-    if (breadcrumb.category === 'console' && breadcrumb.level === 'debug') {
-      return null
-    }
-    return breadcrumb
-  },
-})
+// PostHog client (errors + events) — initialised on import.
+import {
+  captureException as captureExceptionPostHog,
+  shutdownPostHog,
+} from './utils/posthog'
 
 import { execFileSync, execSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
@@ -196,6 +170,7 @@ import {
   setStateCallback,
   shutdownMusicPlayer,
 } from './service/music-player'
+import { openLogsFolder } from './service/logs'
 import { getExternalInterfaces } from './service/network'
 import {
   addSlideHighlight,
@@ -323,6 +298,7 @@ import {
   warmupSearchIndex as warmupSongsSearchIndex,
 } from './service/songs'
 import { createLogger } from './utils/logger'
+import { getLogsDir } from './utils/paths'
 import { logRequest, logResponse } from './utils/request-logger'
 import { proxyToVite, serveStaticFile } from './utils/static-server'
 import {
@@ -585,14 +561,12 @@ async function main() {
   process.on('uncaughtException', (error) => {
     // biome-ignore lint/suspicious/noConsole: error logging
     console.error('[FATAL] Uncaught Exception:', error)
-    Sentry.captureException(error)
+    captureExceptionPostHog(error, { source: 'uncaughtException' })
   })
   process.on('unhandledRejection', (reason) => {
     // biome-ignore lint/suspicious/noConsole: error logging
     console.error('[FATAL] Unhandled Promise Rejection:', reason)
-    Sentry.captureException(
-      reason instanceof Error ? reason : new Error(String(reason)),
-    )
+    captureExceptionPostHog(reason, { source: 'unhandledRejection' })
   })
 
   const server = await serveWithRetry<WebSocketData>({
@@ -603,9 +577,7 @@ async function main() {
       // biome-ignore lint/suspicious/noConsole: error logging
       console.error('[SERVER ERROR] Fetch handler error:', error)
 
-      Sentry.captureException(error, {
-        tags: { component: 'server', source: 'fetch-error-handler' },
-      })
+      captureExceptionPostHog(error, { source: 'fetch-error-handler' })
 
       return new Response(
         JSON.stringify({
@@ -1611,6 +1583,40 @@ async function main() {
         return handleCors(
           req,
           new Response(JSON.stringify({ data: interfaces }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/logs/open - Reveal the logs folder in the OS file manager
+      // (localhost only — opening windows on a server box doesn't make sense)
+      if (req.method === 'POST' && url.pathname === '/api/logs/open') {
+        if (!isStrictLocalhost()) {
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({ error: 'Only accessible from localhost' }),
+              { status: 403, headers: { 'Content-Type': 'application/json' } },
+            ),
+          )
+        }
+        const result = openLogsFolder()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: result }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // GET /api/logs/path - Return the absolute path of the logs folder
+      if (req.method === 'GET' && url.pathname === '/api/logs/path') {
+        const authError = await requireAppAuth()
+        if (authError) return authError
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: { path: getLogsDir() } }), {
             headers: { 'Content-Type': 'application/json' },
           }),
         )
@@ -5893,7 +5899,7 @@ async function main() {
     shutdownMusicPlayer()
     shutdownMIDI()
     closeDatabase()
-    await Sentry.close(2000) // Wait up to 2 seconds to flush pending events
+    await shutdownPostHog()
     process.exit(0)
   })
 
@@ -5902,7 +5908,7 @@ async function main() {
     shutdownMusicPlayer()
     shutdownMIDI()
     closeDatabase()
-    await Sentry.close(2000) // Wait up to 2 seconds to flush pending events
+    await shutdownPostHog()
     process.exit(0)
   })
 }

@@ -4,10 +4,10 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import './styles.css'
 
-// Initialize Sentry early for error tracking
-import { initSentry } from './sentry'
+// Initialize PostHog early for error tracking
+import { initPostHog } from './posthog'
 
-initSentry()
+initPostHog()
 
 // Initialize global error handlers for unhandled errors and rejections
 import { initGlobalErrorHandlers } from './utils/error-handler'

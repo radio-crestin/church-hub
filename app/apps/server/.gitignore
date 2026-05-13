@@ -10,8 +10,10 @@ dist
 coverage
 *.lcov
 
-# logs
-logs
+# runtime log files (leading slash anchors to the gitignore root, so
+# `src/service/logs/` — a real source folder for the logs feature — is
+# not swept up by this rule)
+/logs
 _.log
 report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 

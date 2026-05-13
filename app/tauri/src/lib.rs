@@ -1,5 +1,7 @@
 pub mod commands;
 pub mod domain;
+pub mod logging;
+pub mod posthog;
 
 // Desktop-only modules
 #[cfg(desktop)]
@@ -39,24 +41,28 @@ use tauri::WindowEvent;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    // Initialize Sentry for crash reporting (must be first!)
-    let _sentry_guard = sentry::init(("https://b03cb4a2222d30afae18571fb703c6f4@o4510714091536384.ingest.de.sentry.io/4510714105233488", sentry::ClientOptions {
-        release: sentry::release_name!(),
-        environment: if cfg!(debug_assertions) {
-            Some("development".into())
-        } else {
-            Some("production".into())
-        },
-        ..Default::default()
-    }));
+    // File logging — initialize before anything else so we capture startup
+    // events. Best-effort: a logging failure must never block the app.
+    logging::init();
+    logging::log_line("info", "=== Tauri Starting ===");
 
-    // Set component tag for Sentry events
-    sentry::configure_scope(|scope| {
-        scope.set_tag("component", "tauri");
-        scope.set_tag("platform", std::env::consts::OS);
-    });
+    // PostHog observability — token + host fall back to defaults so the app
+    // still reports without an .env file present.
+    let posthog_token = std::env::var("VITE_PUBLIC_POSTHOG_PROJECT_TOKEN")
+        .unwrap_or_else(|_| "phc_x4iC8SNTkLtxooGYmbz6v3nFjYE2v6wXaNgZVHNaxatK".to_string());
+    let posthog_host = std::env::var("VITE_PUBLIC_POSTHOG_HOST")
+        .unwrap_or_else(|_| "https://eu.i.posthog.com".to_string());
+    let distinct_id = format!(
+        "tauri-{}-{}",
+        std::env::consts::OS,
+        std::env::var("USER")
+            .or_else(|_| std::env::var("USERNAME"))
+            .unwrap_or_else(|_| "unknown".to_string())
+    );
+    posthog::init(posthog_token, posthog_host, distinct_id);
 
-    // Set up a custom panic hook that logs to Sentry before aborting
+    // Panic hook: log to stderr (preserves existing console output) and ship
+    // a blocking PostHog event so it flushes before the process aborts.
     let default_panic = std::panic::take_hook();
     std::panic::set_hook(Box::new(move |info| {
         let msg = if let Some(s) = info.payload().downcast_ref::<&str>() {
@@ -73,15 +79,9 @@ pub fn run() {
             .unwrap_or_else(|| "unknown".to_string());
 
         eprintln!("[PANIC] {} at {}", msg, location);
+        logging::log_line("fatal", &format!("PANIC {} at {}", msg, location));
 
-        // Sentry captures panics automatically via the guard, but log explicitly too
-        sentry::capture_message(
-            &format!("Panic: {} at {}", msg, location),
-            sentry::Level::Fatal,
-        );
-
-        // Flush Sentry events before the process exits
-        sentry::Hub::current().client().map(|c| c.flush(Some(std::time::Duration::from_secs(2))));
+        posthog::capture_panic_blocking(&msg, &location);
 
         default_panic(info);
     }));
@@ -304,6 +304,10 @@ pub fn run() {
             let t = Instant::now();
             if let Err(e) = auto_cleanup_port(server_port) {
                 println!("[port-conflict] Auto-cleanup failed: {}", e);
+                logging::log_line(
+                    "error",
+                    &format!("port {} auto-cleanup failed: {}", server_port, e),
+                );
                 use tauri_plugin_dialog::DialogExt;
                 app.dialog()
                     .message(format!(
@@ -321,6 +325,7 @@ pub fn run() {
             let t = Instant::now();
             if let Err(err) = server::start_server(app.handle(), server_port) {
                 println!("[sidecar] Failed to start the server: {err}");
+                logging::log_line("error", &format!("sidecar spawn failed: {}", err));
             }
             println!("[startup] sidecar_spawn: {:?}", t.elapsed());
 
@@ -328,6 +333,9 @@ pub fn run() {
             let t = Instant::now();
             if let Err(err) = server::wait_for_server_ready(server_port, 30) {
                 println!("[sidecar] {err}");
+                logging::log_line("error", &format!("server not ready: {}", err));
+            } else {
+                logging::log_line("info", "sidecar server ready");
             }
             println!("[startup] server_ready_wait: {:?}", t.elapsed());
         }

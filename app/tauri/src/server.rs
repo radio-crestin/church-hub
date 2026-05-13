@@ -374,6 +374,15 @@ pub fn start_server(app_handle: &AppHandle, server_port: u16) -> Result<(), Stri
     sidecar = sidecar.env("TAURI_MODE", "true");
     sidecar = sidecar.env("PORT", server_port.to_string());
 
+    // Pass PostHog config through to the sidecar so the server reports
+    // to the same project as the Tauri shell and client.
+    let posthog_token = std::env::var("VITE_PUBLIC_POSTHOG_PROJECT_TOKEN")
+        .unwrap_or_else(|_| "phc_x4iC8SNTkLtxooGYmbz6v3nFjYE2v6wXaNgZVHNaxatK".to_string());
+    let posthog_host = std::env::var("VITE_PUBLIC_POSTHOG_HOST")
+        .unwrap_or_else(|_| "https://eu.i.posthog.com".to_string());
+    sidecar = sidecar.env("VITE_PUBLIC_POSTHOG_PROJECT_TOKEN", posthog_token);
+    sidecar = sidecar.env("VITE_PUBLIC_POSTHOG_HOST", posthog_host);
+
     // Pass app version for database versioned backups
     let app_version = app_handle.config().version.clone().unwrap_or_default();
     sidecar = sidecar.env("APP_VERSION", &app_version);
