@@ -65,23 +65,48 @@ const isTauriCheck =
   typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 logClientTiming(`tauri_check (isTauri=${isTauriCheck})`)
 
-// Loading screen helpers
-function updateLoadingStatus(message: string) {
-  const statusEl = document.getElementById('loading-status')
-  if (statusEl) statusEl.textContent = message
+// Loading-screen helpers — the screen markup lives in index.html so it
+// paints before any module loads. These helpers nudge what the user
+// sees while we wait for the sidecar and the first React mount.
+
+function updateLoadingMessage(message: string) {
+  const el = document.getElementById('loading-message')
+  if (el) el.textContent = message
 }
 
-let logsInitialized = false
-function addLoadingLog(message: string) {
-  const logsEl = document.getElementById('loading-logs')
-  if (logsEl) {
-    // Clear the initial "Initializing..." text on first log
-    if (!logsInitialized) {
-      logsEl.textContent = ''
-      logsInitialized = true
-    }
-    logsEl.textContent += `${message}\n`
-    logsEl.scrollTop = logsEl.scrollHeight
+function updateLoadingHint(message: string) {
+  const el = document.getElementById('loading-hint')
+  if (el) el.textContent = message
+}
+
+function setLoadingError(message: string, onRetry: () => void): void {
+  const screen = document.getElementById('loading-screen')
+  if (!screen) return
+  const spinner = document.getElementById('loading-spinner')
+  if (spinner) spinner.style.display = 'none'
+  updateLoadingMessage(message)
+  updateLoadingHint('Tap retry below — or fully quit and reopen Church Hub.')
+  let retry = document.getElementById(
+    'loading-retry',
+  ) as HTMLButtonElement | null
+  if (!retry) {
+    retry = document.createElement('button')
+    retry.id = 'loading-retry'
+    retry.textContent = 'Retry'
+    retry.setAttribute(
+      'style',
+      'margin-top:16px;padding:10px 20px;border:none;border-radius:8px;background:#4f46e5;color:#fff;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;',
+    )
+    const content = document.getElementById('loading-content')
+    content?.appendChild(retry)
+  }
+  retry.onclick = () => {
+    retry?.setAttribute('disabled', 'true')
+    retry?.setAttribute(
+      'style',
+      `${retry?.getAttribute('style') ?? ''}opacity:0.6;cursor:wait;`,
+    )
+    onRetry()
   }
 }
 
@@ -94,46 +119,57 @@ function hideLoadingScreen() {
   }
 }
 
-// Wait for server to be ready
+/**
+ * Wait for the local sidecar to answer /ping. First-launch boots
+ * include the song seed (~1s after our transaction fix) and the FTS
+ * rebuild (~3-5s); the Rust side waits for /ping before it shows the
+ * webview, but Rust can give up early, so the client needs a generous
+ * budget of its own. 30 s = 120 × 250 ms covers worst-case fresh
+ * installs on slow disks without making error recovery glacial.
+ */
 async function waitForServer(
   apiUrl: string,
-  maxAttempts = 60,
+  maxAttempts = isTauriCheck ? 120 : 60,
 ): Promise<boolean> {
   const pingUrl = `${apiUrl}/ping`
   const waitStart = performance.now()
-  // Shorter delay in Tauri mode since Rust already waited for server
-  const retryDelay = isTauriCheck ? 100 : 500
+  const retryDelay = isTauriCheck ? 250 : 500
+
+  let firstAttemptShown = false
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      const attemptStart = performance.now()
-      addLoadingLog(
-        `[${new Date().toLocaleTimeString()}] Checking server... (attempt ${attempt})`,
-      )
-      // Use Tauri fetch on mobile to bypass WKWebView HTTP restrictions
-      const response = await fetchFn(pingUrl, {
-        method: 'GET',
-      })
-
-      if (response.ok) {
-        const totalTime = (performance.now() - waitStart).toFixed(1)
-        const attemptTime = (performance.now() - attemptStart).toFixed(1)
-        addLoadingLog(
-          `[${new Date().toLocaleTimeString()}] Server is ready! (attempt took ${attemptTime}ms, total wait ${totalTime}ms)`,
-        )
-        // biome-ignore lint/suspicious/noConsole: startup timing logging
-        console.log(
-          `[client-startup] waitForServer success: attempt=${attempt}, attemptTime=${attemptTime}ms, totalWait=${totalTime}ms`,
-        )
-        updateLoadingStatus('Server ready, loading app...')
-        return true
+      // Per-attempt AbortController — a stale TCP connection that hangs
+      // shouldn't burn the whole budget on a single fetch.
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 2000)
+      try {
+        const response = await fetchFn(pingUrl, {
+          method: 'GET',
+          signal: controller.signal,
+        })
+        if (response.ok) {
+          const totalTime = (performance.now() - waitStart).toFixed(0)
+          // biome-ignore lint/suspicious/noConsole: startup timing logging
+          console.log(
+            `[client-startup] waitForServer success: attempt=${attempt}, totalWait=${totalTime}ms`,
+          )
+          return true
+        }
+      } finally {
+        clearTimeout(timeoutId)
       }
-    } catch (err) {
-      // biome-ignore lint/suspicious/noConsole: startup timing logging
-      console.log(
-        `[client-startup] waitForServer attempt ${attempt} failed:`,
-        err,
+    } catch {
+      // not ready yet — fall through to retry
+    }
+
+    if (!firstAttemptShown && performance.now() - waitStart > 1500) {
+      // Surface a friendly hint once it's clear this isn't an instant
+      // boot — fresh installs need time to seed + index.
+      updateLoadingHint(
+        'Setting things up for the first time — this only happens once.',
       )
+      firstAttemptShown = true
     }
 
     if (attempt < maxAttempts) {
@@ -141,10 +177,6 @@ async function waitForServer(
     }
   }
 
-  addLoadingLog(
-    `[${new Date().toLocaleTimeString()}] Server failed to start after ${maxAttempts} attempts`,
-  )
-  updateLoadingStatus('Failed to connect to server')
   return false
 }
 
@@ -157,57 +189,35 @@ if (typeof window !== 'undefined') {
   if (isTauri) {
     try {
       logClientTiming('tauri_block_start')
-      addLoadingLog(
-        `[${new Date().toLocaleTimeString()}] Church Hub starting...`,
-      )
-      addLoadingLog(
-        `[${new Date().toLocaleTimeString()}] Initializing Tauri context...`,
-      )
+      updateLoadingMessage('Starting Church Hub')
 
       // On mobile, we connect to a remote server - skip sidecar logic
       if (isMobile()) {
         logClientTiming('mobile_mode')
-        addLoadingLog(
-          `[${new Date().toLocaleTimeString()}] Mobile mode detected`,
-        )
 
         // Check if API URL is configured
         if (needsApiUrlConfiguration()) {
-          addLoadingLog(
-            `[${new Date().toLocaleTimeString()}] API URL not configured - showing setup`,
-          )
           hideLoadingScreen()
         } else {
           const apiUrl = getApiUrl()
           if (apiUrl) {
-            addLoadingLog(
-              `[${new Date().toLocaleTimeString()}] API URL: ${apiUrl}`,
-            )
-            updateLoadingStatus('Connecting to server...')
+            updateLoadingMessage('Connecting to server')
             logClientTiming('before_waitForServer')
 
-            const serverReady = await waitForServer(apiUrl, 10)
+            const serverReady = await waitForServer(apiUrl)
             logClientTiming('after_waitForServer')
 
             if (!serverReady) {
               // biome-ignore lint/suspicious/noConsole: error logging for startup
               console.error('[router] Failed to connect to remote server')
-              addLoadingLog(
-                `[${new Date().toLocaleTimeString()}] Failed to connect to server`,
-              )
-            } else {
-              addLoadingLog(
-                `[${new Date().toLocaleTimeString()}] Connected! Mounting React application...`,
-              )
+              setLoadingError("Couldn't reach the server", () => {
+                window.location.reload()
+              })
             }
           }
         }
       } else {
         // Desktop mode: use local sidecar server
-        // Get local server config from Tauri (just the port)
-        addLoadingLog(
-          `[${new Date().toLocaleTimeString()}] Getting server configuration...`,
-        )
         logClientTiming('before_getServerConfig')
         const serverConfig = await getServerConfig()
         logClientTiming('after_getServerConfig')
@@ -216,36 +226,29 @@ if (typeof window !== 'undefined') {
           window.__serverConfig = {
             serverPort: serverConfig.serverPort,
           }
-          addLoadingLog(
-            `[${new Date().toLocaleTimeString()}] Server port: ${serverConfig.serverPort}`,
-          )
         }
 
-        // Wait for server to be ready
-        // Note: In Tauri mode, Rust already confirmed server is ready before showing webview
-        // So this should succeed on first attempt
-        updateLoadingStatus('Waiting for server...')
+        updateLoadingMessage('Getting things ready')
         const apiUrl = getApiUrl()
-        addLoadingLog(`[${new Date().toLocaleTimeString()}] API URL: ${apiUrl}`)
         logClientTiming('before_waitForServer')
 
-        // In Tauri mode, Rust already waited for server, so use fewer attempts
-        const serverReady = await waitForServer(apiUrl as string, 5) // Only 5 attempts in Tauri (Rust already waited)
+        const serverReady = await waitForServer(apiUrl as string)
         logClientTiming('after_waitForServer')
 
         if (!serverReady) {
           // biome-ignore lint/suspicious/noConsole: error logging for startup
-          console.error('[router] Server failed to start')
-        } else {
-          addLoadingLog(
-            `[${new Date().toLocaleTimeString()}] Mounting React application...`,
-          )
+          console.error('[router] Server failed to start within 30s')
+          setLoadingError("Couldn't reach the local server", () => {
+            window.location.reload()
+          })
         }
       }
     } catch (error) {
       // biome-ignore lint/suspicious/noConsole: error logging for startup
       console.error('[router] Error getting server config:', error)
-      addLoadingLog(`[${new Date().toLocaleTimeString()}] Error: ${error}`)
+      setLoadingError(`Startup error: ${error}`, () => {
+        window.location.reload()
+      })
     }
   } else {
     // Not in Tauri, hide loading screen immediately
