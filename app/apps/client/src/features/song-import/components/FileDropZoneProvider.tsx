@@ -183,6 +183,7 @@ export function FileDropZoneProvider({ children }: Props) {
   const queryClient = useQueryClient()
   const [isDragging, setIsDragging] = useState(false)
   const dragCounterRef = useRef(0)
+  const dragOverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const upsertMutation = useUpsertSong()
 
   // State for duplicate dialog
@@ -494,6 +495,23 @@ export function FileDropZoneProvider({ children }: Props) {
 
   // Use document-level event listeners for reliable drag and drop
   useEffect(() => {
+    const cancelDrag = () => {
+      dragCounterRef.current = 0
+      setIsDragging(false)
+      if (dragOverTimerRef.current) {
+        clearTimeout(dragOverTimerRef.current)
+        dragOverTimerRef.current = null
+      }
+    }
+
+    // Safety net: some browsers/OSes don't fire `dragleave` when the user
+    // releases the drag outside the window or presses Esc. While a drag is
+    // active, `dragover` fires continuously — if it stops, the drag is gone.
+    const armDragOverTimer = () => {
+      if (dragOverTimerRef.current) clearTimeout(dragOverTimerRef.current)
+      dragOverTimerRef.current = setTimeout(cancelDrag, 200)
+    }
+
     const handleDragEnter = (e: DragEvent) => {
       e.preventDefault()
       dragCounterRef.current++
@@ -504,6 +522,7 @@ export function FileDropZoneProvider({ children }: Props) {
         )
         if (hasFile) {
           setIsDragging(true)
+          armDragOverTimer()
         }
       }
     }
@@ -514,6 +533,7 @@ export function FileDropZoneProvider({ children }: Props) {
       if (e.dataTransfer) {
         e.dataTransfer.dropEffect = 'copy'
       }
+      armDragOverTimer()
     }
 
     const handleDragLeave = (e: DragEvent) => {
@@ -522,7 +542,13 @@ export function FileDropZoneProvider({ children }: Props) {
 
       // Only hide when all drag events have left (counter reaches 0)
       if (dragCounterRef.current === 0) {
-        setIsDragging(false)
+        cancelDrag()
+      }
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        cancelDrag()
       }
     }
 
@@ -530,6 +556,10 @@ export function FileDropZoneProvider({ children }: Props) {
       e.preventDefault()
       dragCounterRef.current = 0
       setIsDragging(false)
+      if (dragOverTimerRef.current) {
+        clearTimeout(dragOverTimerRef.current)
+        dragOverTimerRef.current = null
+      }
 
       if (!e.dataTransfer?.files) return
 
@@ -602,12 +632,20 @@ export function FileDropZoneProvider({ children }: Props) {
     document.addEventListener('dragover', handleDragOver)
     document.addEventListener('dragleave', handleDragLeave)
     document.addEventListener('drop', handleDrop)
+    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('blur', cancelDrag)
 
     return () => {
       document.removeEventListener('dragenter', handleDragEnter)
       document.removeEventListener('dragover', handleDragOver)
       document.removeEventListener('dragleave', handleDragLeave)
       document.removeEventListener('drop', handleDrop)
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('blur', cancelDrag)
+      if (dragOverTimerRef.current) {
+        clearTimeout(dragOverTimerRef.current)
+        dragOverTimerRef.current = null
+      }
     }
   }, [importPptxAsSong, handleOpenSongFile, handleChurchProgramFile])
 

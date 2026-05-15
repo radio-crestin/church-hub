@@ -1,243 +1,93 @@
-~~- adauga optiunea de a importa o arhiva zip cu mai multe fisiere in care utilizatorul va avea posibilitatea sa aleaga categoria in care sa fie importate fisierele~~
-~~- adauga optiunea de a importa OpenSong XML~~
-~~- imbunatateste algoritmul de search~~
-~~- importa toate cantarile existente din PPTX~~
-~~- adauga optiunea de a da export in format OpenSong XML~~
-~~- implementeaza OpenBible XML (import, serch, etc)~~
-  ~~- better ui~~
-~~- imbunatateste viteza de import pentru cantarile de pe resurse crestine~~
-~~- implementeaza sistemul de permissioning cu link de autentificare~~
-~~- modifica adauga in coada cu adauga in program~~
-~~- adauga optiunea de a salva coada actuala ca si un program~~
-~~- in butonul adauga, adauga optiunea de a adauga versete biblice~~
-~~- adauga in versete tineri referinte catre versete~~
-~~- fa meniul lateral configurabil din setari (muta butonul de setari in partea de jos)~~
-~~- adauga link catre WhatsApp in sidebar~~
-~~- rezolva problema cu schimbul temei si muta acest meniu in setari~~
-~~- rezolva problema cu selectorii, implementand ceva custom~~
-~~- imbunatateste creare de ecrane, lasand utilizatorul sa aleaga intre (ecran prezentare principal, stage monitor, livestream overlay)~~
-~~- adauga o pagina de editare si configurare a fiecarui tip de ecran~~
-~~- adauga ecrane cu configurari default~~
-~~- apoi implementeaza in ecranul versete biblice sa fie afisat slide-ul urmator pe stage monitor~~
-~~- creaza o pagina numita LiveStream~~
-~~- din aceasta pagina utilizatorul poate crea un nou livestream pe YouTube~~
-~~- aici vor fi afisate scenele si poti schimba rapid intre ele~~
-~~- integreaza un modul de a schimba scenele cu ajutorul unor shortcuts~~
-~~- adauga optiunea de a configura ce sceva sa se selecteze la start, stop~~
-~~- creaza shortcuts pentru start/stop stream, cauta cantari, cauta Versete~~
-~~- creaza un modul pentru a trigger shortcuts folosind midi devices~~
-~~- acest modul trebuie sa permita afisarea state-ului curent in diferite locatii pe acel midi device (de exemplu, scena curenta va aprinde bec-ul unui anumit buton)~~ ~~- needs to be tested~~
-- ~~creaza mecanismul de schimbare scene in functie de tipul de slide afisat (de exemplu cand este un verset biblic tineri, sa se schimbe pe scena SOLO)~~
-~~- creaza un modul de control al mixerului, astfel incat fiecare scena va da mute/unmute la anumite canale audio~~
-~~- creaza o conexiune permanenta in youtube~~
-~~- adauga un ecran de customizare a prezentarii, dimensiune fonturi, culori, fundaluri, etc~~
-~~- adauga in setari un link catre openapi~~
-~~- implementeaza system token api~~
-~~- reorganizeaza pagina de setari si deasemenea asigura-te ca pagina web ascunde setarile disponibile numai in turso~~
-~~- fa build pe windows si testeaza aplicatia~~
-~~- pentru cantari si versete Biblice, nu adauga in queue ci doar afiseaza-le~~
-~~- foloseste numele display-ului in titlu~~
-~~- ascunde window-urile de screen din bara din OS~~
-~~- remove from screens the loading animation..~~
-~~- fix screen url in production~~
-~~- rezolva problema cu youtube login, cel mai probabil va trebui sa facem deploy la propriul server astfel incat aplicatia sa nu aiba nevoie de secret keys~~
-~~- fix livestream font size~~
-~~- implementeaza in livestream sa se puna 2 linii pe aceasi linie daca incape~~
-~~- implementeaza real transparent background, chiar si cand este dark mode~~
-~~- deasemenea, incepe intotdeauna cu coada goala~~
-~~- asigura-te ca paginile web au reconnect cu websocket and when disconnected display an empty screen (with transparent bg or black)~~
-~~- creaza o sectiune pentru a face backup la sqlite db si deasemenea de a vedea path-ul catre db~~
-~~- do not display "YouTube not connected, OBS Disconnected""~~
-~~- cand dau dezactivare la un screen, sa se inchida fereastra respectiva~~
-~~- deasemenea, butonul de full screen nu functioneaza~~
-~~- optimistic scene change~~
-~~- fa listen pe orice port 3000~~
-~~- rezolva problema cu generarea titlului, elimina orice alt caracter in afara de litere si -~~ 
-~~- imbunatateste performanta aplicatiei~~
-~~- debug why the web server is slow when accessed externally~~
-~~- inlocuieste aplicatia de scene monitor cu una care foloseste aplicatia turso si un UI similar cu cel al aplicatiei actuale~~
-  ~~- pentru cantari, va fi ceva similar, fiecare cantare e echivalentul unui verset~~
-  ~~- pentru Biblie va trebui sa afisezi in timp real ce se cauta pe pc-ul principal si sa afisezi lista de versete~~
-~~- adauga wake lock pentru intreaga aplicatie, nu numai pentru kiosk~~
-~~- fix clock position to be the same as other things~~
-~~- imbunatateste search-ul ca sa fie super rapid~~
-~~- adauga optiune de a creste font-ul default al aplicatiei~~
-~~- adauga buton pentru a salva shortcuts pe desktop (atat pentru cantari cat si pentru programe)~~
-- ~~adauga optiunea de a edita programul ca si text~~
-~~- adauga optiunea pentru a deschide opensong xml files~~ 
-~~- si apoi seteaza luminiozitatea la 0 daca conexiunea websocket nu este available 5 minute~~
-~~- implementeaza api-uri pentru search cantari, adaugare de cantari, programe, camera de control, preview, current queue, etc.~~
-~~- in versiunea mobila a site-ului, asigura-te ca totul este scalabil corect~~
-~~- rezolva problema cu scaling-ul din camera de control~~
-~~- elimina slide-urile din pagina programului~~
-~~- rezolva problema cu versete tineri si anunturi~~
-~~- fa configurabil dacă sa fie always on top~~
-~~- (optional) exportă ca și pptx întreg programul său fiecare cantare~~
-~~- cand faci export la cantari, lăsa utilizatorul să aleagă dacă vrea un zip sau un folder~~
-~~- importul din resurse creștine nu trebuie să facă override la cântările modificate~~
-~~- dezactivează tunelul cloudflare pt portul 3000~~
-~~- imbunatateste viteza de import pentru cantarile de pe resurse crestine~~
-~~- când se editează o cantare, modifica importa din text ca să se numească editează ca și text~~
-~~- deasemenea, fă pagina mobile responsive~~
-~~- adauga Amin la fiecare cantare~~
-~~- adauga o iconita pentru fisierele atasate Church Hub~~
-~~- fix drag and drop pentru fisiere si apoi implementeaza export/import din pptx~~
-~~- adauga optiunea de a deschide fisiere pptx direct in ChurchHub~~
-~~- create un README cu screenshots si o descriere a functionalitatilor~~
-~~- fix extracting songs titles~~
-~~- asigura-te ca animatiile functioneaza la afisare/ascundere, deasemenea cand se schimba urmatorul slide~~
-~~- afiseaza ceasul pe toate slide-urile~~
-~~- adauga buton de feedback care va crea un github issue~~
-~~- search-ul pentru cantari nu functioneaza..~~
-~~- importa toate cantarile existente si apoi creaza un backup ca si sqlite si importa-l pe PC-ul de la Adunare~~
-~~- deasemenea, pentru versetele tinerilor lasa posibilitatea sa nu adaugi ":"~~
-~~- rezolva problema cu combinarea versurilor pentru livestream~~ 
-~~- cand utilizatorul este focusat pe search-ul din Biblie, nu functioneaza sa dea bottom/up~~
-~~- implementeaza search in Bible~~
-~~- allow the user to easily download Bibles from https://github.com/seven1m/open-bibles repository and also fix the Bible import format~~
-~~- the button to open the database folder is not working~~
-~~- fix also midi missing library in the release version~~
-~~- fix opensong file opening, as it opens another instance and still is not opening it.. (at least on windows)~~
-~~- make sure that the obs page is reloading with transparent background while the Church Hub software is off~~
-~~- shortcut-urile nu functioneaza pentru OBS scenes~~
-~~- deasemenea, cantarile de pe resurse crestine pptx nu repeta refrenul~~
-~~- fix openapi endpoints and fix authentication layer~~
-~~- instaleaza aplicatia pe windows si pe tableta IOS~~
-~~- testeaza sa vedem daca suntem pregatiti pentru lansare~~
-~~- testeaza midi settings configuration si butoanele nu stau aprinse dupa ce am apasat~~
---- Later ---
-~~- cheia de live nu functioneaza~~
-~~- adauga background la live~~
-~~- ceasul si referinta mai mare~~
-~~- evidentiaza referinta inline~~
-~~- adauga justify alig~~
-~~- search-ul din Biblie nu functioneaza~~
-~~- ESC nu functioneaza cand e focusat pe search~~
-~~- muta camera tineri mai jos~~
-~~- adauga un mic istoric in pagina Bibliei~~
-~~- scade volumul la intro~~
-~~- fa fontul maxim mai mic pe Livestream~~
-~~- adauga timestamp cand se face export la db~~
-~~- fa reconect la midi controller la disconnect~~
-~~- cand este adaugat un program, nu pot cauta si alte cantari~~
-~~- converteste prezentarea unui program la fel ca celelalte~~
-~~- dupa ce ai cautat o cantare si apoi ai deschis-o, intoarcete la aceleasi rezultate~~
-~~- imbunatateste UX-ul pentru cautarea in cantari astfel incat sa poti sa il folosesti doar din tastatura (sa pui sa dai down, apoi enter, apoi enter din nou si prezinti cantarea)~~
-~~- cand nu se gaseste un verset afiseaza un warning si creaza entry-ul~~
-~~- adauga full text search si pentru Biblie~~
-~~- afiseaza urmeaza corect pentru urmatoarea cantare/element din program~~
-~~- elimina din titlul extras numerele (gen 1.)~~
-~~- adauga filtru pentru categoria de cantari si deasemenea, fa loading la cantari cand se face scrolling (infinite scroll)~~
-~~- background diferit la sectiunea urmeaza, ca sa poata fi identificata usor~~
-~~- auto switch-ul nu functioneaza~~
-- cand se selecteaza primul verset se face un loop ciudat
-~~- si sunt foarte multi clienti conectati..~~
-~~- implementeaza background reconnect pentru midi controller~~
-~~- adauga optiunea de a importa doar cantari, Biblia, programe, configurare dintr-un fisier de backups~~
-~~- by default nu selecta prima cantare in search results~~
-~~- midi controller-ul e disabled~~
-~~- cand se salveaza programul este o problema~~
-~~- afiseaza pagina cantarii cand dau click din pagina de progam~~
-~~- cand apesi F5, fa focus pe search chiar daca esti pe pagina~~
-~~- search-ul din Biblie nu e bun~~
-~~- când sunt doar două versuri, nu mai comprima liniile~~
-~~- imbunatateste search-ul..~~
-~~- adauga optiune de a cauta cantari folosind AI~~
-~~- adauga posibilitatea de a face highlight pentru sesiunea curenta~~
-~~- adauga etichete midi controller~~
-~~- incarca o pagina statica in obs pentru a face refresh automat~~
-~~- adauga in program schimbarea scenei~~
-~~- modificarea editarea programului sa aiba la final [ST]~~
-~~- add shortcuts indicators~~
-~~- add update checker~~
-- rezolva problema cu acel profil pvc
-~~- cand dai click pe search, nu afisa~~
-~~- butonul X nu functioneaza~~
-~~- cand dai next, nu afisa~~
-~~- adauga pagina cu muzica dintr-un folder local~~
-~~- creaza optiunea de a adauga live-urile create intr-un playlist pe YouTube~~
-~~- muta setarile in paginile relevante~~
-~~- rezolva problemele cu shortcuts bara~~ 
-~~- adauga shortcuts pentru programe, muzica, whatsapp, Live Stream, Camera de control~~
-~~- testeaza pe windows player-ul audio si intreaga aplicatie~~
-~~- butoanele din camera de control nu functioneaza.. (pare putin cam inutila aceasta pagina..)~~
-~~- implementeaza screen share~~
-~~- afiseaza in timp real modificarile cantarilor~~
-~~- cand faci quick edit, copiaza si edit as text~~
-~~- migreaza toate gamele din conitnutul slide-ului in field-ul dedicat~~
-~~- fa un algoritm care extrage gamele din BCEV Baicoi si le foloseste pentru Resurse crestine (?)~~
-- cand schimb ecranul, midi state is destroyed
-~~- pagina dedicata pentru a seta gamele (nea Mihai)~~
-~~- adauga background as black and not white~~
-~~- salveaza rezultatele tuturor cautarilor (inclusiv cu AI) in ceva cache in DB~~
-~~- cateodata WhatsApp-ul ramane aprins..~~
-~~- regenereaza midi-urile cu instrumentale mai bune~~
-~~- rezolva problema fixtures initiale~~
-~~- load prea mare in timpul cantarii~~
-~~- nu mai oferi autocorrect la game~~
-~~- la search adauga fallback fara filtre~~
-~~- afiseaza in rezultate cand o melodie are gama~~
-~~- adauga automatizare cand este prezentata o cantare, ca sa activezi microfon sala melodie~~
-~~- search-ul in Biblie sa fie manual~~
-~~- ESC va trebui prima data sa ascunda slide-ul~~
-~~- grupeaza istoricul dupa zi, cu limita maxima de zile (infinite scroll up)~~
-~~- fa istoricul scrollable~~
-~~- adauga documentatie la mixer, cu mixere suportate~~ 
-~~- adauga optiunea de a face screen share la o fereastra~~
-~~- rezolva problema cu programele~~
-~~- cand se sterge search-ul din Biblie, intoarce-te la fisierul afisat~~
-~~- am cautat "ca sa ne invete ce sa facem" in Biblie si nu a functiona~~
-~~- cand e afisata o cantare, lasa utilizatorul sa mearga in spate~~
-~~- adauga buton de a deschide cantarea existenta~~
-~~- selectarea unui verset din istoric sa nu fie afisat direct~~
-~~- :Ierusalime cetate impodobita: - amin nu e ok, split ex on sieds~~
-~~- shortcut-urile nu functioneaza F5 si F6~~
-~~- afiseaza versetul complet in istoric~~
-~~- afiseaza Whatsapp intr-o fereastra nativa~~
-~~- nu pot da back cand este o cantare deja selectata~~
-~~- adauga un filtru cu cantari prezentate/unul cu cantarile din programe, e util pentru explorare~~
-~~- cantarea in fereastra noua nu are access~~
-~~- versete tineri nu functinoeaza in program cum trebuie cand este unul dupa altul~~
-~~- salvarea cantarilor afiseaza un dialog,~~
-  ~~- adauga sql lock timeout~~
-~~- adauga buton de edit al cantarii in preview-ul din program~~
-~~- user agent din whatsapp~~
-~~- ignore empty spaces in Bible search~~
-~~- cand am dat pe setari, s-a oprit midi-ul~~
-~~- nici nu se reconecteaza midi-ul automat~~
-~~- continus verses (nu se schimba pagina)~~
-~~- search-ul nu prea functiona~~
-~~- adauga un buton de a adauga rapid gama pe pagina de edit~~
-~~- cand salvezi ca si powerpoint, salveaza si opensong deasemenea~~
-~~- nu a gasit cantarea care trebuie cand am cautat "invata-ma sa faptuiesc"~~
-  ~~- apasand pe F6 nu selecteaza referinta~~
-- asigura-te ca nu ai deadlocks in cautare, deloc
-- dupa ce ai cautat un verset, nu se deschide cum trebuie
-- la crearea programului din text, cand lipseste ceva, nu se adauga cum trebuie
-- adauga optiunea VT fara verset, display just a blank verse
-- drag and drop-ul nu functioneaza in whatsapp
-- search typing component
-- ascunderea din buton nu ascunde versetul
-- adauga favicon in ferestrele native
-- creaza o veriune web cu local sqlite database in browser
-- eventual cu ceva tabele sync'ed with turso (?)
-- adauga un buton pentru a deschide intr-un tab nou
+# TODO
 
+Listă de task-uri extrase din feedback-ul de pe WhatsApp (15.03.2026 – 10.05.2026).
+Fiecare item include contextul original și instrucțiuni concrete de implementare.
 
+---
 
-- check-ul de actualizari nu functioneaza in tauri
-- in procesul de instalare asigura-te ca aplicatia a fost inchisa
-- creaza un quickstart guide pentru utilizatori
+## 🎵 Cântări — Căutare & Indexare
 
-### Optionals
-- adauga video in player si youtube download
-- adauga upvote/downvote la cantari
-- pagina dedicata pentru control sunet camera copii
-- in livestream adauga un preview cu feed-ul live
-- pagina de prezentari
-- slide-uri temporare
-- implementeaza transcription folosind AI
-- test backing up the database in https://turso.tech/blog/turso-offline-sync-public-beta
-- exportul ca si pptx ar trebui sa aiba textul ceva mai mare
-- adauga optiunea de a afisa pe un ecran separat continutul in anumita limba (o versiune a Bibliei diferita, traduceri cu AI ale cantarilor.. si eventual traduceri in timp real)
-- ar fi util ca in timpul instalarii sa se faca un backup la db-ul vechi, si astfel fiecare versiune a aplicatiei sa foloseasca propria copie a DB-ului astfel ca se poate reveni la vechea versiune fara probleme
+- [ ] **Căutarea nu găsește "1. Cand Isus Hristos m-a mantuit"** *(22/03, 10/05)*
+  - Repetat de două ori → bug confirmat de utilizator.
+  - Instrucțiuni: normalizează query-ul de căutare — strip prefix numeric (`^\d+\.\s*`), strip diacritice (ă→a, î→i, â→a, ș→s, ț→t), case-insensitive. Verifică că FTS index conține titlurile cu și fără diacritice. Adaugă test e2e cu input-ul exact "1. Cand Isus Hristos m-a mantuit".
+
+- [ ] **Căutarea nu caută în toate strofele (ex: refrenul nu e indexat)** *(30/04)*
+  - Instrucțiuni: verifică `seed-songs` / pipeline-ul FTS — toate secțiunile (verse, chorus, bridge, refren) trebuie să fie indexate, nu doar versurile principale. Adaugă test cu un query care apare doar în refren.
+
+- [ ] **Cântarea 265 (PDC) nu apare în căutare** *(29/03)*
+  - Iosif a confirmat că PDC-urile sunt în program → e bug de indexare/filtrare.
+  - Instrucțiuni: verifică că toate cântările PDC sunt seed-uite și apar în FTS. Caută în service-ul de seed dacă există filtru care le exclude.
+
+- [ ] **X-ul din Search nu face focus pe input** *(26/03)*
+  - Instrucțiuni: în componenta de search, după click pe X (clear), apelează `inputRef.current?.focus()`.
+
+- [ ] **Input de search permanent în pagina unei cântări** *(26/04)*
+  - Instrucțiuni: adaugă search box sticky în top-ul paginii de detalii cântare, ca utilizatorul să poată căuta fără să se întoarcă la lista de cântări.
+
+---
+
+## 📖 Versete & Biblie
+
+- [ ] **Quick switch pentru afișarea traducerilor** *(12/04)*
+  - Instrucțiuni: shortcut + buton vizibil în prezentare pentru a comuta rapid între traduceri (Cornilescu, NTR, etc.) fără să ieși din slide.
+
+- [ ] **Când caut "Ps 25" focusează automat pe primul verset** *(05/04)*
+  - Instrucțiuni: dacă query-ul nu specifică verset (`Ps 25` vs `Ps 25:3`), selectează automat versetul 1 și scrollează acolo.
+
+- [ ] **In pagina cu programe, partea din stanga trebuie safie scrollable, si cea din dreapta sa ramana fixa** *(05/04)*
+  - Instrucțiuni: la scrollIntoView, folosește `block: 'start'` cu un offset top (ex: 20% din viewport), nu `block: 'center'`.
+
+- [ ] **Când se schimbă versetul, șterge adnotările** *(12/04)*
+  - Instrucțiuni: în handler-ul de change verset, golește state-ul de adnotări (drawing/highlights) înainte de a randa noul verset.
+
+- [ ] **Selecție de versete per subiecte, cu automatic slide** *(19/03)*
+  - Instrucțiuni: feature nou — colecții tematice de versete (mântuire, credință, etc.). User selectează subiectul, aplicația generează slide-uri automat din versetele predefinite (aceasi functionalitate o are si BibleShow)
+
+---
+
+## 🎼 Cântări — Prezentare & Format
+
+- [ ] **Salvează gamele în PowerPoint ca backup** *(15/03)*
+  - Instrucțiuni: feature export — buton "Export to PPTX" pe nivel de cântare/program. Folosește o lib precum `pptxgenjs`. Păstrează formatul (font, poziție, culoare).
+
+- [ ] **Testeaza importul pptx ca sa functioneze cum trebuie, drag and drop deasemenea sa functioneze bine** *(22/03)*
+
+- [ ] **Importul e foarte lent** *(22/03)*
+  - Instrucțiuni: profilează pipeline-ul de import. Posibil: parsing sincron, batch insert lipsă, FTS rebuild după fiecare insert. Soluție: batch upserts + rebuild FTS la final.
+
+- [ ] **Drag and drop nu a funcționat cum trebuie** *(22/03)*
+  - Instrucțiuni: vezi `FileDropZoneProvider.tsx` (există modificare uncommitted). Verifică că acceptă multiple files, toate tipurile suportate, și afișează feedback vizual la drag-over.
+
+- [ ] **Split la versuri să se vadă mai mare** *(03/05)*
+  - Instrucțiuni: pentru cântări lungi, split strofa în 2-3 slide-uri când depășește X linii, astfel încât fontul să poată fi mărit.
+
+---
+
+## 📺 Prezentare & Ecrane
+
+- [ ] **Secțiune prezentări** *(09/04)*
+  - Instrucțiuni: feature nou — secțiune dedicată în sidebar pentru prezentări (slide-uri custom, nu doar cântări/versete). Upload, edit, preview.
+
+---
+
+## 🔊 Audio & MIDI
+
+- [ ] **Schedule automat la pornirea muzicii în funcție de timp** *(15/03)*
+  - Instrucțiuni: feature — programare automată a unei cântări/playlist la o oră fixă. UI cu time picker + selecție track.
+
+- [ ] **Când oprești aplicația, dă kill la player** *(26/03)*
+  - Instrucțiuni: în handler-ul de app shutdown (Tauri `on_window_close` / `before-quit`), oprește toate playere active (audio sidecar, MIDI). Verifică că procesele copil sunt terminate.
+
+- [ ] **Identifică MIDI după nume** *(16/04)*
+  - Instrucțiuni: la conectare device MIDI, match după `device.name` nu doar după port index. Salvează preferințele utilizatorului pe device name.
+
+- [ ] **dp solo se mută pe tineri când e cântare** *(12/04)*
+  - Notă: posibil bug doar când treci direct de pe `[solo]` pe cântare (fără verset intermediar).
+  - Instrucțiuni: verifică tranziția de scene OBS / preset mixer când treci de pe slide solo direct pe cântare.
+
+---
+
+## 📡 Live & Distribuție
+
+- [ ] **La pornirea live-ului: focus pe pagină + dialog post WhatsApp** *(05/04)*
+  - Instrucțiuni: când utilizatorul pornește live-ul, deschide automat un dialog cu link-ul de share + buton "Post on WhatsApp" (deep link `whatsapp://send?text=...`).
