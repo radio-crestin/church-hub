@@ -1372,7 +1372,7 @@ export function SchedulePresenter({
             </div>
           </div>
           {/* Left Panel Content */}
-          <div className="flex-1 overflow-hidden p-3 lg:p-4 pt-2">
+          <div className="flex-1 lg:min-h-0 overflow-hidden p-3 lg:p-4 pt-2">
             <ScheduleItemsPanel
               scheduleId={scheduleId}
               items={items}
