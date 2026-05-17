@@ -61,15 +61,31 @@ setAudioOutputCallback((targetId, pcmData) => {
   broadcastAudioForTarget(targetId, pcmData)
 })
 
+// Last-broadcast snapshot per target — lets us send true deltas to listeners
+// instead of full-entry snapshots, so the listener can append and decide on
+// its own when to roll over to a new line.
+const lastBroadcastByTarget = new Map<string, { entryId: string; text: string }>()
+
 setTranscriptionCallback((entry, action) => {
   broadcastTranslationTranscription(entry, action)
-  // Forward EVERY translation update to WebRTC listeners so words stream in
-  // live instead of arriving in lump-sum at the end. We carry the entry id
-  // + action so the listener can replace the in-progress line (update) or
-  // start a fresh one (add).
-  if (entry.type === 'translation' && entry.targetId) {
-    broadcastTextForTarget(entry.targetId, entry.text, entry.id, action)
+  if (entry.type !== 'translation' || !entry.targetId) return
+
+  const prev = lastBroadcastByTarget.get(entry.targetId)
+  let delta = ''
+  if (!prev || prev.entryId !== entry.id) {
+    // New entry — its full text is the delta
+    delta = entry.text
+  } else if (entry.text.length > prev.text.length) {
+    // Same entry, grew — broadcast only what was added
+    delta = entry.text.slice(prev.text.length)
   }
+  if (delta) {
+    broadcastTextForTarget(entry.targetId, delta, entry.id, action)
+  }
+  lastBroadcastByTarget.set(entry.targetId, {
+    entryId: entry.id,
+    text: entry.text,
+  })
 })
 
 setAudioLevelCallback((level, type, targetId) => {
