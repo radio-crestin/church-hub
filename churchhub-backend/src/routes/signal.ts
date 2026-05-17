@@ -178,8 +178,8 @@ function getListenerPageHtml(secret: string, baseUrl: string): string {
 <title>Live Translation Listener</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f172a;color:#e2e8f0;display:flex;align-items:center;justify-content:center;min-height:100vh}
-.card{background:#1e293b;border-radius:16px;padding:2rem;max-width:400px;width:90%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.4)}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f172a;color:#e2e8f0;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1rem}
+.card{background:#1e293b;border-radius:16px;padding:2rem;max-width:420px;width:100%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.4)}
 h1{font-size:1.25rem;margin-bottom:.5rem}
 .status{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:.8rem;font-weight:600;margin:1rem 0}
 .status.idle{background:#334155;color:#94a3b8}
@@ -196,10 +196,19 @@ h1{font-size:1.25rem;margin-bottom:.5rem}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 .volume{margin:1rem auto;width:200px;height:6px;background:#334155;border-radius:3px;overflow:hidden}
 .volume-bar{height:100%;background:#4ade80;width:0%;transition:width 50ms}
-p.info{font-size:.75rem;color:#64748b;margin-top:1rem}
-.join-btn{margin-top:1rem;padding:14px 32px;background:#2563eb;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;transition:background .2s}
-.join-btn:hover{background:#1d4ed8}
-.join-btn:active{background:#1e40af}
+p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
+.join-btn{margin-top:1rem;padding:14px 32px;background:#2563eb;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;transition:background .2s;width:100%}
+.join-btn:hover:not(:disabled){background:#1d4ed8}
+.join-btn:active:not(:disabled){background:#1e40af}
+.join-btn:disabled{background:#334155;color:#64748b;cursor:not-allowed}
+.lang-section{margin:1rem 0;text-align:left}
+.lang-label{display:block;font-size:.75rem;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem}
+.lang-list{display:flex;flex-direction:column;gap:.5rem}
+.lang-option{display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;background:#334155;border:2px solid transparent;border-radius:10px;cursor:pointer;transition:all .15s;color:#e2e8f0;font-size:.9rem;font-weight:500;text-align:left}
+.lang-option:hover{background:#3f4f6b}
+.lang-option.selected{background:#1e3a5f;border-color:#3b82f6;color:#bfdbfe}
+.lang-option .code{font-size:.7rem;font-weight:700;background:#1e293b;padding:2px 6px;border-radius:4px;letter-spacing:.05em}
+.empty-langs{color:#64748b;font-size:.85rem;padding:1rem;text-align:center;background:#0f172a;border-radius:8px}
 .hidden{display:none}
 </style>
 </head>
@@ -208,6 +217,11 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem}
 <h1>Live Translation</h1>
 <div id="status" class="status idle"><span class="dot"></span><span id="statusText">Tap Join to start listening</span></div>
 <button id="joinBtn" class="join-btn">Join</button>
+<div id="langSection" class="lang-section hidden">
+  <span class="lang-label">Select your language</span>
+  <div id="langList" class="lang-list"></div>
+  <div id="emptyLangs" class="empty-langs hidden">Waiting for the host to publish available languages…</div>
+</div>
 <div id="volumeWrap" class="volume hidden"><div id="volumeBar" class="volume-bar"></div></div>
 <p id="info" class="info hidden"></p>
 </div>
@@ -221,9 +235,84 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem}
   var volumeWrap = document.getElementById('volumeWrap');
   var joinBtn = document.getElementById('joinBtn');
   var infoEl = document.getElementById('info');
+  var langSection = document.getElementById('langSection');
+  var langList = document.getElementById('langList');
+  var emptyLangs = document.getElementById('emptyLangs');
 
   var audioCtx = null;
   var nextPlayTime = 0;
+  var currentDc = null;
+  var selectedTargetId = null;
+  var availableLanguages = [];
+
+  var LANG_NAMES = {
+    ro: 'Română',
+    en: 'English',
+    de: 'Deutsch',
+    fr: 'Français',
+    es: 'Español',
+    it: 'Italiano',
+    hu: 'Magyar',
+    pt: 'Português',
+    ru: 'Русский',
+    uk: 'Українська',
+    pl: 'Polski',
+    nl: 'Nederlands',
+    ar: 'العربية',
+    zh: '中文',
+    ja: '日本語',
+    ko: '한국어'
+  };
+
+  function langName(code) {
+    return LANG_NAMES[code] || String(code || '').toUpperCase();
+  }
+
+  function renderLanguages() {
+    while (langList.firstChild) langList.removeChild(langList.firstChild);
+    if (!availableLanguages.length) {
+      emptyLangs.classList.remove('hidden');
+      return;
+    }
+    emptyLangs.classList.add('hidden');
+
+    if (availableLanguages.length === 1 && !selectedTargetId) {
+      selectedTargetId = availableLanguages[0].targetId;
+      sendLanguageSelection();
+    }
+    if (selectedTargetId && !availableLanguages.find(function(l){return l.targetId === selectedTargetId;})) {
+      selectedTargetId = null;
+    }
+
+    availableLanguages.forEach(function(lang) {
+      var btn = document.createElement('button');
+      btn.className = 'lang-option' + (selectedTargetId === lang.targetId ? ' selected' : '');
+      btn.type = 'button';
+      var codeSpan = document.createElement('span');
+      codeSpan.className = 'code';
+      codeSpan.textContent = String(lang.code || '').toUpperCase();
+      var nameSpan = document.createElement('span');
+      nameSpan.textContent = langName(lang.code);
+      btn.appendChild(codeSpan);
+      btn.appendChild(nameSpan);
+      btn.addEventListener('click', function() {
+        selectedTargetId = lang.targetId;
+        renderLanguages();
+        sendLanguageSelection();
+      });
+      langList.appendChild(btn);
+    });
+  }
+
+  function sendLanguageSelection() {
+    if (!currentDc || currentDc.readyState !== 'open' || !selectedTargetId) return;
+    try {
+      currentDc.send(JSON.stringify({ type: 'select_language', targetId: selectedTargetId }));
+      var lang = availableLanguages.find(function(l){return l.targetId === selectedTargetId;});
+      infoEl.classList.remove('hidden');
+      infoEl.textContent = 'Listening in ' + (lang ? langName(lang.code) : '');
+    } catch(e) {}
+  }
 
   function initAudio() {
     if (!audioCtx) {
@@ -269,11 +358,14 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem}
     initAudio();
     joinBtn.classList.add('hidden');
     volumeWrap.classList.remove('hidden');
+    langSection.classList.remove('hidden');
+    renderLanguages();
     waitForRoom();
   });
 
   function waitForRoom() {
     setStatus('waiting', 'Waiting for host...');
+    infoEl.classList.remove('hidden');
     infoEl.textContent = 'The host has not started the translation yet. Please wait...';
 
     function checkRoom() {
@@ -295,7 +387,7 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem}
 
   function connect() {
     setStatus('connecting', 'Connecting...');
-    infoEl.textContent = 'Audio will play automatically when translation is active.';
+    infoEl.textContent = 'Audio will play automatically once you pick a language.';
 
     var pc = new RTCPeerConnection({
       iceServers: [
@@ -305,12 +397,16 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem}
     });
 
     var dc = pc.createDataChannel('audio');
+    currentDc = dc;
 
     dc.onopen = function() {
       setStatus('connected', 'Connected');
+      // Re-send the previously chosen language if we already have one
+      sendLanguageSelection();
     };
 
     dc.onclose = function() {
+      currentDc = null;
       pc.close();
       waitForRoom();
     };
@@ -320,6 +416,10 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem}
         var msg = JSON.parse(evt.data);
         if (msg.type === 'audio') playPcm(msg.data);
         else if (msg.type === 'ping') dc.send(JSON.stringify({ type: 'pong' }));
+        else if (msg.type === 'available_languages') {
+          availableLanguages = Array.isArray(msg.languages) ? msg.languages : [];
+          renderLanguages();
+        }
         else if (msg.type === 'secret_reset') {
           setStatus('error', 'Link expired');
           pc.close();

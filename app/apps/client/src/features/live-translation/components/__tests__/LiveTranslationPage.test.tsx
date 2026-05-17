@@ -13,7 +13,12 @@ vi.mock('../../hooks/useLiveTranslation', () => ({
     { code: 'ro', name: 'Romanian' },
     { code: 'en', name: 'English' },
   ],
-  VOICES: ['Kore', 'Puck'],
+  GEMINI_VOICES: ['Kore', 'Puck'],
+  OPENAI_VOICES: ['alloy', 'ash'],
+  voicesForEngine: (engine: 'openai' | 'gemini') =>
+    engine === 'gemini' ? ['Kore', 'Puck'] : ['alloy', 'ash'],
+  defaultVoiceForEngine: (engine: 'openai' | 'gemini') =>
+    engine === 'gemini' ? 'Kore' : 'alloy',
 }))
 
 // Mock Combobox to avoid complex dropdown rendering
@@ -39,19 +44,22 @@ vi.mock('~/ui/combobox/Combobox', () => ({
 const baseHookReturn = {
   state: {
     isActive: false,
+    engine: 'openai' as const,
     sourceLanguage: 'ro',
-    targetLanguage: 'en',
     inputAudioLevel: 0,
     outputAudioLevel: 0,
     transcription: [],
+    targets: [],
     startedAt: null,
   },
   settings: {
+    engine: 'openai' as const,
     sourceLanguage: 'ro',
-    targetLanguage: 'en',
-    voiceName: 'Kore',
+    targets: [{ id: 'tgt-en', targetLanguage: 'en', voiceName: 'alloy' }],
+    primaryTargetId: 'tgt-en',
     inputDeviceId: null,
     outputDeviceId: null,
+    openaiApiKey: '',
     geminiApiKey: '',
     outputMode: 'device' as const,
   },
@@ -60,8 +68,13 @@ const baseHookReturn = {
   streamUrl: '',
   streamSecret: '',
   settingsLoaded: true,
-  setApiKey: vi.fn(),
+  canStart: false,
   updateSetting: vi.fn(),
+  setEngine: vi.fn(),
+  addTarget: vi.fn(),
+  removeTarget: vi.fn(),
+  updateTarget: vi.fn(),
+  setPrimaryTarget: vi.fn(),
   startTranslation: vi.fn(),
   stopTranslation: vi.fn(),
   clearTranscription: vi.fn(),
@@ -165,6 +178,7 @@ describe('LiveTranslationPage', () => {
     mockUseLiveTranslation.mockReturnValue({
       ...baseHookReturn,
       apiKey: 'test-key',
+      canStart: true,
     })
 
     render(<LiveTranslationPage />)
@@ -192,8 +206,10 @@ describe('LiveTranslationPage', () => {
   it('renders language bar showing source and target languages', () => {
     render(<LiveTranslationPage />)
 
+    // Source language is rendered with its full name
     expect(screen.getByText('Romanian')).toBeInTheDocument()
-    expect(screen.getByText('English')).toBeInTheDocument()
+    // Target languages render as uppercase code chips
+    expect(screen.getByText('EN')).toBeInTheDocument()
   })
 
   it('renders with mixed input/output device (combo device on Linux/Windows)', async () => {
