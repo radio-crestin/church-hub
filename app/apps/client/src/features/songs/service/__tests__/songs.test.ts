@@ -144,19 +144,6 @@ describe('upsertSong', () => {
     })
   })
 
-  it('handles duplicate title error', async () => {
-    mockFetcher.mockResolvedValue({
-      error: 'DUPLICATE_TITLE',
-      existingSongId: 5,
-      existingSongTitle: 'Existing Song',
-    })
-    const result = await upsertSong({ title: 'Existing Song' })
-    expect(result.success).toBe(false)
-    expect(result.isDuplicate).toBe(true)
-    expect(result.existingSongId).toBe(5)
-    expect(result.existingSongTitle).toBe('Existing Song')
-  })
-
   it('handles generic error', async () => {
     mockFetcher.mockResolvedValue({ error: 'Something went wrong' })
     const result = await upsertSong({ title: 'Test' })

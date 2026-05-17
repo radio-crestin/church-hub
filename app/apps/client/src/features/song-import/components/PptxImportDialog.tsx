@@ -1,9 +1,8 @@
-import { AlertTriangle, FileText, Music, X } from 'lucide-react'
+import { FileText, Music, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useUpsertSong } from '~/features/songs/hooks'
-import { getSongById } from '~/features/songs/service'
 import type { ParsedPptx } from '../utils/parsePptx'
 
 interface PptxImportDialogProps {
@@ -13,11 +12,6 @@ interface PptxImportDialogProps {
   onConfirm: (songId: number) => void
   onCancel: () => void
 }
-
-type DuplicateState =
-  | { kind: 'none' }
-  | { kind: 'identical'; existingSongId: number; existingTitle: string }
-  | { kind: 'different'; existingSongId: number; existingTitle: string }
 
 export function PptxImportDialog({
   isOpen,
@@ -29,7 +23,6 @@ export function PptxImportDialog({
   const { t } = useTranslation(['songs', 'common'])
   const dialogRef = useRef<HTMLDialogElement>(null)
   const [title, setTitle] = useState('')
-  const [duplicate, setDuplicate] = useState<DuplicateState>({ kind: 'none' })
   const upsertMutation = useUpsertSong()
 
   useEffect(() => {
@@ -39,7 +32,6 @@ export function PptxImportDialog({
     if (isOpen) {
       dialog.showModal()
       setTitle(parsedPptx?.title || '')
-      setDuplicate({ kind: 'none' })
     } else {
       dialog.close()
     }
@@ -48,51 +40,8 @@ export function PptxImportDialog({
   const handleImportAsSong = async () => {
     if (!parsedPptx || !title.trim()) return
 
-    const importedSlides = parsedPptx.slides.map((slide, idx) => ({
-      content: slide.htmlContent,
-      sortOrder: idx,
-    }))
-
     const result = await upsertMutation.mutateAsync({
       title: title.trim(),
-      sourceFilename,
-      slides: importedSlides,
-    })
-
-    if (result.success && result.data) {
-      onConfirm(result.data.id)
-      return
-    }
-
-    // Duplicate title detected — compare content to decide warning level
-    if (result.isDuplicate && result.existingSongId) {
-      const existingSong = await getSongById(result.existingSongId)
-      const existingSlides = existingSong?.slides ?? []
-
-      const contentIdentical =
-        existingSlides.length === importedSlides.length &&
-        existingSlides.every((slide, i) => {
-          const importedContent = importedSlides[i]?.content.trim() ?? ''
-          return slide.content.trim() === importedContent
-        })
-
-      setDuplicate({
-        kind: contentIdentical ? 'identical' : 'different',
-        existingSongId: result.existingSongId,
-        existingTitle: result.existingSongTitle ?? title.trim(),
-      })
-    }
-  }
-
-  // Import with auto-numbered title (when content differs)
-  const handleImportWithNewTitle = async () => {
-    if (!parsedPptx || duplicate.kind !== 'different') return
-
-    // Find a free title by appending (2), (3)…
-    let candidate = title.trim()
-    let counter = 2
-    let importResult = await upsertMutation.mutateAsync({
-      title: candidate,
       sourceFilename,
       slides: parsedPptx.slides.map((slide, idx) => ({
         content: slide.htmlContent,
@@ -100,27 +49,13 @@ export function PptxImportDialog({
       })),
     })
 
-    while (importResult.isDuplicate) {
-      candidate = `${title.trim()} (${counter})`
-      counter++
-      importResult = await upsertMutation.mutateAsync({
-        title: candidate,
-        sourceFilename,
-        slides: parsedPptx.slides.map((slide, idx) => ({
-          content: slide.htmlContent,
-          sortOrder: idx,
-        })),
-      })
-    }
-
-    if (importResult.success && importResult.data) {
-      onConfirm(importResult.data.id)
+    if (result.success && result.data) {
+      onConfirm(result.data.id)
     }
   }
 
   const handleClose = () => {
     setTitle('')
-    setDuplicate({ kind: 'none' })
     onCancel()
   }
 
@@ -161,38 +96,11 @@ export function PptxImportDialog({
             <input
               type="text"
               value={title}
-              onChange={(e) => {
-                setTitle(e.target.value)
-                setDuplicate({ kind: 'none' })
-              }}
+              onChange={(e) => setTitle(e.target.value)}
               className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               placeholder={t('songs:editor.titlePlaceholder')}
             />
           </div>
-
-          {/* Duplicate warning: identical content */}
-          {duplicate.kind === 'identical' && (
-            <div className="flex items-start gap-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-              <AlertTriangle className="w-4 h-4 text-yellow-600 dark:text-yellow-400 mt-0.5 shrink-0" />
-              <p className="text-sm text-yellow-800 dark:text-yellow-300">
-                {t('songs:pptxImport.duplicateIdentical', {
-                  title: duplicate.existingTitle,
-                })}
-              </p>
-            </div>
-          )}
-
-          {/* Duplicate warning: different content */}
-          {duplicate.kind === 'different' && (
-            <div className="flex items-start gap-2 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
-              <AlertTriangle className="w-4 h-4 text-orange-600 dark:text-orange-400 mt-0.5 shrink-0" />
-              <p className="text-sm text-orange-800 dark:text-orange-300">
-                {t('songs:pptxImport.duplicateDifferent', {
-                  title: duplicate.existingTitle,
-                })}
-              </p>
-            </div>
-          )}
 
           {/* Preview of slides */}
           <div className="max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
@@ -221,33 +129,15 @@ export function PptxImportDialog({
             {t('common:buttons.cancel')}
           </button>
 
-          {duplicate.kind === 'different' && (
-            <button
-              type="button"
-              onClick={handleImportWithNewTitle}
-              disabled={upsertMutation.isPending}
-              className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Music className="w-4 h-4" />
-              {t('songs:pptxImport.importAsNew')}
-            </button>
-          )}
-
-          {duplicate.kind !== 'different' && (
-            <button
-              type="button"
-              onClick={handleImportAsSong}
-              disabled={
-                !title.trim() ||
-                upsertMutation.isPending ||
-                duplicate.kind === 'identical'
-              }
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Music className="w-4 h-4" />
-              {t('songs:pptxImport.createSong')}
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={handleImportAsSong}
+            disabled={!title.trim() || upsertMutation.isPending}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Music className="w-4 h-4" />
+            {t('songs:pptxImport.createSong')}
+          </button>
         </div>
       </div>
     </dialog>

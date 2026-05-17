@@ -19,39 +19,8 @@ export interface ReplaceSongReferencesResult {
 }
 
 /**
- * Prepares for song replacement by temporarily renaming the old song's title.
- * This allows a new song with the same title to be created.
- * Call this BEFORE creating the new song.
- */
-export function prepareForSongReplacement(oldSongId: number): boolean {
-  try {
-    log(
-      'info',
-      `Preparing for song replacement: temporarily renaming song ${oldSongId}`,
-    )
-
-    const db = getDatabase()
-
-    // Rename the old song's title to something unique to avoid UNIQUE constraint
-    const tempTitle = `__REPLACING__${oldSongId}__${Date.now()}`
-    db.update(songs)
-      .set({ title: tempTitle })
-      .where(eq(songs.id, oldSongId))
-      .run()
-
-    log('debug', `Temporarily renamed song ${oldSongId} to: ${tempTitle}`)
-    return true
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
-    log('error', `Failed to prepare for song replacement: ${message}`)
-    return false
-  }
-}
-
-/**
  * Completes song replacement by updating all references from oldSongId to newSongId,
  * then deleting the old song.
- * Call this AFTER creating the new song.
  */
 export function completeSongReplacement(
   oldSongId: number,
@@ -98,14 +67,4 @@ export function completeSongReplacement(
       error: message,
     }
   }
-}
-
-/**
- * @deprecated Use prepareForSongReplacement + completeSongReplacement instead
- */
-export function replaceSongReferences(
-  oldSongId: number,
-  newSongId: number,
-): ReplaceSongReferencesResult {
-  return completeSongReplacement(oldSongId, newSongId)
 }

@@ -27,7 +27,7 @@ export const songs = sqliteTable(
   'songs',
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
-    title: text('title').notNull().unique(),
+    title: text('title').notNull(),
     categoryId: integer('category_id').references(() => songCategories.id, {
       onDelete: 'set null',
     }),
