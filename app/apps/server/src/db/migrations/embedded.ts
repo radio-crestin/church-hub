@@ -204,6 +204,13 @@ export const EMBEDDED_JOURNAL = {
       tag: '0026_add_song_slide_chords',
       breakpoints: true,
     },
+    {
+      idx: 27,
+      version: '6',
+      when: 1768600000000,
+      tag: '0027_drop_songs_title_unique',
+      breakpoints: true,
+    },
   ],
 } as const
 
@@ -342,5 +349,10 @@ export const EMBEDDED_MIGRATIONS: EmbeddedMigration[] = [
     tag: '0026_add_song_slide_chords',
     sql: 'ALTER TABLE `song_slides` ADD `chords` text;\n',
     when: 1768500000000,
+  },
+  {
+    tag: '0027_drop_songs_title_unique',
+    sql: 'DROP INDEX IF EXISTS `songs_title_unique`;\n',
+    when: 1768600000000,
   },
 ]

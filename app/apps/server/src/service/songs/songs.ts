@@ -296,38 +296,6 @@ export function getSongById(id: number): Song | null {
 }
 
 /**
- * Gets a song by title (case-insensitive)
- * Used for duplicate detection
- * @param title - The title to search for
- * @param exact - If true, matches the exact title without sanitization.
- *                If false (default), sanitizes the title before matching.
- */
-export function getSongByTitle(title: string, exact = false): Song | null {
-  try {
-    const searchTitle = exact ? title : sanitizeSongTitle(title)
-    logger.debug(`Getting song by title: ${searchTitle} (exact: ${exact})`)
-
-    const db = getDatabase()
-    // SQLite title column uses COLLATE NOCASE for case-insensitive comparison
-    const record = db
-      .select()
-      .from(songs)
-      .where(eq(songs.title, searchTitle))
-      .get()
-
-    if (!record) {
-      logger.debug(`Song not found with title: ${searchTitle}`)
-      return null
-    }
-
-    return toSong(record)
-  } catch (error) {
-    logger.error(`Failed to get song by title: ${error}`)
-    return null
-  }
-}
-
-/**
  * Gets a song by ID with all its slides and category
  * Applies presentation transformations:
  * - Adds "Amin!" to the last slide
@@ -422,17 +390,18 @@ export function getAllSongsWithSlides(
 }
 
 /**
- * Creates or updates a song with optional slides
+ * Creates or updates a song with optional slides.
+ * Throws on failure so callers can surface the real error message.
  */
 export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
+  const db = getDatabase()
+  const now = new Date()
+  // Sanitize title - removes special chars but preserves numbers and hyphens
+  const title = sanitizeSongTitle(input.title)
+
+  let songId: number
+
   try {
-    const db = getDatabase()
-    const now = new Date()
-    // Sanitize title - removes special chars but preserves numbers and hyphens
-    const title = sanitizeSongTitle(input.title)
-
-    let songId: number
-
     if (input.id) {
       logger.debug(`Updating song: ${input.id}`)
 
@@ -565,7 +534,7 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
     return getSongWithSlides(songId)
   } catch (error) {
     logger.error(`Failed to upsert song: ${error}`)
-    return null
+    throw error
   }
 }
 
@@ -675,40 +644,9 @@ export function compareSongContent(
 }
 
 /**
- * Finds the next available title by appending "(2)", "(3)", etc.
- * Example: "Song" -> "Song (2)" if "Song (2)" exists -> "Song (3)"
- */
-export function getNextAvailableTitle(baseTitle: string): string {
-  const rawDb = getRawDatabase()
-
-  // Check if base title is taken (case-insensitive)
-  const existingBase = rawDb
-    .query('SELECT title FROM songs WHERE LOWER(title) = LOWER(?) LIMIT 1')
-    .get(baseTitle) as { title: string } | null
-
-  if (!existingBase) {
-    return baseTitle
-  }
-
-  // Try (2), (3), (4)... until we find a free slot
-  let counter = 2
-  while (true) {
-    const candidate = `${baseTitle} (${counter})`
-    const existing = rawDb
-      .query('SELECT title FROM songs WHERE LOWER(title) = LOWER(?) LIMIT 1')
-      .get(candidate) as { title: string } | null
-
-    if (!existing) {
-      return candidate
-    }
-    counter++
-  }
-}
-
-/**
  * Batch imports multiple songs in a single transaction
  * Optimized for high performance with:
- * - UPSERT (INSERT ... ON CONFLICT) for single-statement insert/update
+ * - Manual title-lookup map (no UNIQUE constraint on title)
  * - Bulk slide deletion in single query
  * - Bulk slide insertion in chunks
  * Uses raw SQL for performance
@@ -734,70 +672,69 @@ export function batchImportSongs(
     // Use transaction for atomic batch insert
     rawDb.exec('BEGIN TRANSACTION')
 
-    // Prepare UPSERT statement - combines INSERT and UPDATE in one operation
-    // Uses ON CONFLICT with the UNIQUE constraint on title (COLLATE NOCASE)
-    // RETURNING id gives us the song ID whether inserted or updated
-    const upsertSongStmt = overwriteDuplicates
-      ? rawDb.query(`
-          INSERT INTO songs (
-            title, category_id, source_filename,
-            author, copyright, ccli, tempo, time_signature,
-            theme, alt_theme, hymn_number, key_line, presentation_order,
-            created_at, updated_at
-          )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          ON CONFLICT(title) DO UPDATE SET
-            category_id = excluded.category_id,
-            source_filename = excluded.source_filename,
-            author = excluded.author,
-            copyright = excluded.copyright,
-            ccli = excluded.ccli,
-            tempo = excluded.tempo,
-            time_signature = excluded.time_signature,
-            theme = excluded.theme,
-            alt_theme = excluded.alt_theme,
-            hymn_number = excluded.hymn_number,
-            key_line = excluded.key_line,
-            presentation_order = excluded.presentation_order,
-            updated_at = excluded.updated_at
-          RETURNING id
-        `)
-      : rawDb.query(`
-          INSERT INTO songs (
-            title, category_id, source_filename,
-            author, copyright, ccli, tempo, time_signature,
-            theme, alt_theme, hymn_number, key_line, presentation_order,
-            created_at, updated_at
-          )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          ON CONFLICT(title) DO NOTHING
-          RETURNING id
-        `)
+    // Title uniqueness is no longer enforced at the DB level. Preload existing
+    // titles (lower-cased) so we can decide insert / update / skip per row.
+    const existingByTitle = new Map<
+      string,
+      { id: number; lastManualEdit: number | null }
+    >()
+    const existingLookupStart = performance.now()
+    const existingRows = rawDb
+      .query(
+        'SELECT id, LOWER(title) as lower_title, last_manual_edit FROM songs',
+      )
+      .all() as {
+      id: number
+      lower_title: string
+      last_manual_edit: number | null
+    }[]
+    for (const row of existingRows) {
+      if (!existingByTitle.has(row.lower_title)) {
+        existingByTitle.set(row.lower_title, {
+          id: row.id,
+          lastManualEdit: row.last_manual_edit,
+        })
+      }
+    }
+    logger.info(
+      `[PERF] Preloaded ${existingByTitle.size} existing song titles in ${(performance.now() - existingLookupStart).toFixed(2)}ms`,
+    )
+
+    const insertSongStmt = rawDb.query(`
+      INSERT INTO songs (
+        title, category_id, source_filename,
+        author, copyright, ccli, tempo, time_signature,
+        theme, alt_theme, hymn_number, key_line, presentation_order,
+        created_at, updated_at
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      RETURNING id
+    `)
+
+    const updateSongStmt = rawDb.query(`
+      UPDATE songs SET
+        category_id = ?,
+        source_filename = ?,
+        author = ?,
+        copyright = ?,
+        ccli = ?,
+        tempo = ?,
+        time_signature = ?,
+        theme = ?,
+        alt_theme = ?,
+        hymn_number = ?,
+        key_line = ?,
+        presentation_order = ?,
+        updated_at = ?
+      WHERE id = ?
+    `)
 
     // Collect all song IDs and their slides for batch processing
     const songsWithIds: Array<{
       songId: number
       slides: SlideInput[]
+      isUpdate: boolean
     }> = []
-
-    // OPTIMIZATION: Batch load all manually edited songs at once instead of checking one by one
-    // This reduces N queries to 1 query for the manual edit check
-    let manuallyEditedTitles: Set<string> | null = null
-    if (skipManuallyEdited && overwriteDuplicates) {
-      const manualEditStart = performance.now()
-      const manuallyEditedSongs = rawDb
-        .query(
-          'SELECT LOWER(title) as lower_title FROM songs WHERE last_manual_edit IS NOT NULL',
-        )
-        .all() as { lower_title: string }[]
-      manuallyEditedTitles = new Set(
-        manuallyEditedSongs.map((s) => s.lower_title),
-      )
-      const manualEditTime = performance.now() - manualEditStart
-      logger.info(
-        `[PERF] Preloaded ${manuallyEditedTitles.size} manually edited songs in ${manualEditTime.toFixed(2)}ms`,
-      )
-    }
 
     // Phase 1: Insert/Update all songs and collect IDs
     const phase1Start = performance.now()
@@ -808,15 +745,55 @@ export function batchImportSongs(
         const categoryId = input.categoryId ?? defaultCategoryId ?? null
         // Sanitize title - removes special chars but preserves numbers and hyphens
         const title = sanitizeSongTitle(input.title || '')
+        const existing = existingByTitle.get(title.toLowerCase()) ?? null
 
-        // Check if song was manually edited and should be skipped (O(1) lookup)
-        if (manuallyEditedTitles?.has(title.toLowerCase())) {
+        if (existing && skipManuallyEdited && existing.lastManualEdit) {
           skippedCount++
           errors.push(`Song "${input.title}": manually edited (skipped)`)
           continue
         }
 
-        const result = upsertSongStmt.get(
+        if (existing && overwriteDuplicates) {
+          updateSongStmt.run(
+            categoryId,
+            input.sourceFilename ?? null,
+            input.author ?? null,
+            input.copyright ?? null,
+            input.ccli ?? null,
+            input.tempo ?? null,
+            input.timeSignature ?? null,
+            input.theme ?? null,
+            input.altTheme ?? null,
+            input.hymnNumber ?? null,
+            input.keyLine ?? null,
+            input.presentationOrder ?? null,
+            now,
+            existing.id,
+          )
+          songIds.push(existing.id)
+          songsWithIds.push({
+            songId: existing.id,
+            slides: input.slides || [],
+            isUpdate: true,
+          })
+          successCount++
+          continue
+        }
+
+        if (existing) {
+          // Not overwriting — skip when content matches an existing copy.
+          const importedSlides = (input.slides || []).map((s) => ({
+            content: s.content,
+            sortOrder: s.sortOrder,
+          }))
+          if (compareSongContent(existing.id, importedSlides)) {
+            skippedCount++
+            errors.push(`Song "${input.title}": identical content (skipped)`)
+            continue
+          }
+        }
+
+        const result = insertSongStmt.get(
           title,
           categoryId,
           input.sourceFilename ?? null,
@@ -836,76 +813,23 @@ export function batchImportSongs(
 
         if (result) {
           songIds.push(result.id)
-          songsWithIds.push({ songId: result.id, slides: input.slides || [] })
+          songsWithIds.push({
+            songId: result.id,
+            slides: input.slides || [],
+            isUpdate: false,
+          })
+          // Track the new row so subsequent inputs in the same batch with the
+          // same title still have an anchor for the identical-content check.
+          if (!existingByTitle.has(title.toLowerCase())) {
+            existingByTitle.set(title.toLowerCase(), {
+              id: result.id,
+              lastManualEdit: null,
+            })
+          }
           successCount++
         } else {
-          // DO NOTHING was triggered (duplicate without overwrite) — compare content
-          const existingSong = getSongByTitle(title)
-          if (existingSong) {
-            const importedSlides = (input.slides || []).map((s) => ({
-              content: s.content,
-              sortOrder: s.sortOrder,
-            }))
-            const contentIdentical = compareSongContent(
-              existingSong.id,
-              importedSlides,
-            )
-            if (contentIdentical) {
-              skippedCount++
-              errors.push(`Song "${input.title}": identical content (skipped)`)
-            } else {
-              // Content differs — import with auto-numbered title
-              const newTitle = getNextAvailableTitle(title)
-              const newResult = rawDb
-                .query(`
-                  INSERT INTO songs (
-                    title, category_id, source_filename,
-                    author, copyright, ccli, tempo, time_signature,
-                    theme, alt_theme, hymn_number, key_line, presentation_order,
-                    created_at, updated_at
-                  )
-                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                  RETURNING id
-                `)
-                .get(
-                  newTitle,
-                  input.categoryId ?? defaultCategoryId ?? null,
-                  input.sourceFilename ?? null,
-                  input.author ?? null,
-                  input.copyright ?? null,
-                  input.ccli ?? null,
-                  input.tempo ?? null,
-                  input.timeSignature ?? null,
-                  input.theme ?? null,
-                  input.altTheme ?? null,
-                  input.hymnNumber ?? null,
-                  input.keyLine ?? null,
-                  input.presentationOrder ?? null,
-                  now,
-                  now,
-                ) as { id: number } | null
-
-              if (newResult) {
-                songIds.push(newResult.id)
-                songsWithIds.push({
-                  songId: newResult.id,
-                  slides: input.slides || [],
-                })
-                successCount++
-                logger.info(
-                  `Song "${input.title}" has different content — imported as "${newTitle}"`,
-                )
-              } else {
-                failedCount++
-                errors.push(
-                  `Song "${input.title}": failed to import with new title "${newTitle}"`,
-                )
-              }
-            }
-          } else {
-            failedCount++
-            errors.push(`Song "${input.title}": duplicate title (skipped)`)
-          }
+          failedCount++
+          errors.push(`Song "${input.title}": insert returned no id`)
         }
       } catch (error) {
         failedCount++
@@ -920,13 +844,17 @@ export function batchImportSongs(
       `[PERF] Phase 1 (upsert songs): ${phase1Time.toFixed(2)}ms for ${songsInput.length} songs (${(phase1Time / songsInput.length).toFixed(2)}ms/song)`,
     )
 
-    // Phase 2: Bulk delete old slides for all imported songs (when overwriting)
+    // Phase 2: Bulk delete old slides for updated songs only — freshly inserted
+    // rows have no slides to clear.
     const phase2Start = performance.now()
-    if (overwriteDuplicates && songIds.length > 0) {
-      const placeholders = songIds.map(() => '?').join(',')
+    const updatedSongIds = songsWithIds
+      .filter((s) => s.isUpdate)
+      .map((s) => s.songId)
+    if (updatedSongIds.length > 0) {
+      const placeholders = updatedSongIds.map(() => '?').join(',')
       rawDb
         .query(`DELETE FROM song_slides WHERE song_id IN (${placeholders})`)
-        .run(...songIds)
+        .run(...updatedSongIds)
     }
 
     const phase2Time = performance.now() - phase2Start

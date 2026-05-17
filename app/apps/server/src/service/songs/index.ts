@@ -11,9 +11,7 @@ export {
 } from './categories'
 export {
   completeSongReplacement,
-  prepareForSongReplacement,
   type ReplaceSongReferencesResult,
-  replaceSongReferences,
 } from './replaceSongReferences'
 // Search
 export {
@@ -44,7 +42,6 @@ export {
   getAllSongs,
   getAllSongsWithSlides,
   getSongById,
-  getSongByTitle,
   getSongsPaginated,
   getSongWithSlides,
   type PaginatedSongsResult,

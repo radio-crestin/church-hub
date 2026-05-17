@@ -281,11 +281,9 @@ import {
   getAllCategories,
   getAllSongs,
   getAllSongsWithSlides,
-  getSongByTitle,
   getSongSlideById,
   getSongsPaginated,
   getSongWithSlides,
-  prepareForSongReplacement,
   type ReorderCategoriesInput,
   type ReorderSongSlidesInput,
   rebuildSearchIndex,
@@ -3547,9 +3545,7 @@ async function main() {
       // POST /api/songs - Create/update song
       if (req.method === 'POST' && url.pathname === '/api/songs') {
         try {
-          const body = (await req.json()) as UpsertSongInput & {
-            replaceExistingSongId?: number
-          }
+          const body = (await req.json()) as UpsertSongInput
 
           // Check create or edit permission based on whether it's a new song
           // Allow song_key.edit for keyLine-only updates (id, title, keyLine only)
@@ -3576,54 +3572,6 @@ async function main() {
             )
           }
 
-          // Check for duplicate title (skip if we're replacing an existing song)
-          if (!body.replaceExistingSongId) {
-            // For updates (body.id is set): use exact title matching
-            // For new songs: use sanitized matching to catch duplicates with different formatting
-            const isUpdate = !!body.id
-            const existingSong = getSongByTitle(body.title, isUpdate)
-            // For new songs: any match is a duplicate
-            // For existing songs: match is a duplicate only if it's a different song
-            if (existingSong && (!body.id || existingSong.id !== body.id)) {
-              return handleCors(
-                req,
-                new Response(
-                  JSON.stringify({
-                    error: 'DUPLICATE_TITLE',
-                    existingSongId: existingSong.id,
-                    existingSongTitle: existingSong.title,
-                  }),
-                  {
-                    status: 409,
-                    headers: { 'Content-Type': 'application/json' },
-                  },
-                ),
-              )
-            }
-          }
-
-          // If replacing an existing song, temporarily rename its title first
-          // This avoids the UNIQUE constraint error when creating the new song
-          if (body.replaceExistingSongId) {
-            const prepared = prepareForSongReplacement(
-              body.replaceExistingSongId,
-            )
-            if (!prepared) {
-              return handleCors(
-                req,
-                new Response(
-                  JSON.stringify({
-                    error: 'Failed to prepare song replacement',
-                  }),
-                  {
-                    status: 500,
-                    headers: { 'Content-Type': 'application/json' },
-                  },
-                ),
-              )
-            }
-          }
-
           const song = upsertSong({ ...body, isManualEdit: true })
 
           if (!song) {
@@ -3634,17 +3582,6 @@ async function main() {
                 headers: { 'Content-Type': 'application/json' },
               }),
             )
-          }
-
-          // If replacing an existing song, update references and delete the old song
-          if (body.replaceExistingSongId) {
-            const replaceResult = completeSongReplacement(
-              body.replaceExistingSongId,
-              song.id,
-            )
-            if (replaceResult.success) {
-              removeFromSearchIndex(body.replaceExistingSongId)
-            }
           }
 
           // Update search index
@@ -3666,11 +3603,24 @@ async function main() {
               headers: { 'Content-Type': 'application/json' },
             }),
           )
-        } catch {
+        } catch (error) {
+          // Surface the real reason (SQLite/validation/etc.) so the client
+          // toast shows something actionable instead of a generic 500.
+          if (error instanceof SyntaxError) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+          const message =
+            error instanceof Error ? error.message : String(error)
           return handleCors(
             req,
-            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
-              status: 400,
+            new Response(JSON.stringify({ error: message }), {
+              status: 500,
               headers: { 'Content-Type': 'application/json' },
             }),
           )
