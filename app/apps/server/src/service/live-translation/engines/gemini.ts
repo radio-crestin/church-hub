@@ -15,13 +15,13 @@ const logger = {
     log('live-translation:gemini', 'error', msg, data),
 }
 
-// Verified against the user's Gemini API model list (May 2026):
-//   models/gemini-2.5-flash-native-audio-latest     — audio + audio out
-//   models/gemini-3.1-flash-live-preview            — text out (non-native)
-// `gemini-live-2.5-flash-native-audio` / `gemini-live-2.5-flash-preview` are
-// NOT exposed by the API and connections were closing 1007 within 150 ms.
+// Verified against the user's Gemini API model list (May 2026).
+// The text-out preview (`gemini-3.1-flash-live-preview`) keeps responding
+// with 1011 "Internal error" on bidi connect, so text-only sessions run
+// on the same native-audio model and we just read the output transcript
+// while throwing away the synthesized audio bytes. Costs the same as
+// audio mode for now but is reliable.
 const AUDIO_MODEL = 'gemini-2.5-flash-native-audio-latest'
-const TEXT_MODEL = 'gemini-3.1-flash-live-preview'
 
 class GeminiEngineSession implements EngineSession {
   readonly targetId: string
@@ -45,33 +45,28 @@ class GeminiEngineSession implements EngineSession {
     )
 
     const textOnly = this.cfg.outputModality === 'text_only'
-    // Native-audio models only support AUDIO response modality. Text mode
-    // runs on the non-native preview which supports TEXT response.
-    const model = textOnly ? TEXT_MODEL : AUDIO_MODEL
+    // Single model for both modes (see comment by AUDIO_MODEL). Text-only
+    // discards the audio output and surfaces only the running transcript.
+    const model = AUDIO_MODEL
 
     // Use the server's built-in VAD — far more reliable than manually
     // signaling activityStart/activityEnd, which silently produces no
     // output if forceEnd is never triggered.
-    // Audio mode includes voice config + both transcriptions; text mode
-    // strips audio-only fields. Notably `inputAudioTranscription` is only
-    // requested in audio mode — on the text-output preview it sometimes
-    // causes the server to close the bidi connection immediately.
-    const config = textOnly
-      ? {
-          responseModalities: [Modality.TEXT],
-          systemInstruction: systemPrompt,
-        }
-      : {
-          responseModalities: [Modality.AUDIO],
-          systemInstruction: systemPrompt,
-          speechConfig: {
-            voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: this.cfg.voiceName },
-            },
-          },
-          inputAudioTranscription: {},
-          outputAudioTranscription: {},
-        }
+    // Both modes run on the native-audio model with AUDIO response so we
+    // always get an output transcript. In text-only mode the engine drops
+    // the audio bytes (no onAudioOutput call) — the listener / host UI
+    // just sees text.
+    const config = {
+      responseModalities: [Modality.AUDIO],
+      systemInstruction: systemPrompt,
+      speechConfig: {
+        voiceConfig: {
+          prebuiltVoiceConfig: { voiceName: this.cfg.voiceName },
+        },
+      },
+      inputAudioTranscription: {},
+      outputAudioTranscription: {},
+    }
 
     this.session = await ai.live.connect({
       model,
@@ -169,8 +164,9 @@ class GeminiEngineSession implements EngineSession {
     }
 
     if (content.modelTurn?.parts) {
+      const suppressAudio = this.cfg.outputModality === 'text_only'
       for (const part of content.modelTurn.parts) {
-        if (part.inlineData?.data) {
+        if (part.inlineData?.data && !suppressAudio) {
           const pcm = Buffer.from(part.inlineData.data, 'base64')
           if (!this.speaking) {
             this.speaking = true
@@ -179,7 +175,6 @@ class GeminiEngineSession implements EngineSession {
           this.handlers.onAudioOutput(pcm)
         }
         if (part.text) {
-          // Text-only model: returns plain text parts (no transcription event)
           this.handlers.onTargetText(part.text)
         }
       }
