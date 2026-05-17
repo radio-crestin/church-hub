@@ -132,6 +132,7 @@ class OpenAIEngineSession implements EngineSession {
       JSON.stringify({
         type: 'session.update',
         session: {
+          type: 'realtime',
           model: 'gpt-realtime',
           instructions: systemPrompt,
           output_modalities: textOnly ? ['text'] : ['audio'],
