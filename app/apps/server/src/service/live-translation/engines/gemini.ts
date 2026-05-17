@@ -15,10 +15,13 @@ const logger = {
     log('live-translation:gemini', 'error', msg, data),
 }
 
-// Current (May 2026) GA / live model ids.
-// `gemini-2.5-flash-native-audio-preview-12-2025` was sunset 2026-03-19.
-const AUDIO_MODEL = 'gemini-live-2.5-flash-native-audio'
-const TEXT_MODEL = 'gemini-live-2.5-flash-preview'
+// Verified against the user's Gemini API model list (May 2026):
+//   models/gemini-2.5-flash-native-audio-latest     — audio + audio out
+//   models/gemini-3.1-flash-live-preview            — text out (non-native)
+// `gemini-live-2.5-flash-native-audio` / `gemini-live-2.5-flash-preview` are
+// NOT exposed by the API and connections were closing 1007 within 150 ms.
+const AUDIO_MODEL = 'gemini-2.5-flash-native-audio-latest'
+const TEXT_MODEL = 'gemini-3.1-flash-live-preview'
 
 class GeminiEngineSession implements EngineSession {
   readonly targetId: string
