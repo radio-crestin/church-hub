@@ -209,10 +209,12 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
 .lang-option.selected{background:#1e3a5f;border-color:#3b82f6;color:#bfdbfe}
 .lang-option .code{font-size:.7rem;font-weight:700;background:#1e293b;padding:2px 6px;border-radius:4px;letter-spacing:.05em}
 .empty-langs{color:#64748b;font-size:.85rem;padding:1rem;text-align:center;background:#0f172a;border-radius:8px}
-.transcript{margin-top:1rem;text-align:left;background:#0f172a;border:1px solid #334155;border-radius:10px;max-height:240px;min-height:120px;overflow-y:auto;padding:.75rem 1rem;font-size:.9rem;line-height:1.5;color:#e2e8f0;display:flex;flex-direction:column;gap:.5rem}
-.transcript-empty{color:#64748b;font-style:italic;font-size:.8rem;text-align:center;padding:1.5rem 0}
-.transcript-line{padding:.4rem .6rem;background:#1e293b;border-radius:6px;border-left:3px solid #3b82f6;word-break:break-word}
-.transcript-time{font-size:.65rem;color:#64748b;margin-right:.5rem;font-variant-numeric:tabular-nums}
+.transcript{margin-top:1.25rem;text-align:left;background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:1.25rem 1.25rem;color:#f1f5f9;display:flex;flex-direction:column;gap:.6rem;min-height:9rem;overflow:hidden;position:relative}
+.transcript-empty{color:#64748b;font-style:italic;font-size:.85rem;text-align:center;padding:1.5rem 0}
+.transcript-line{font-size:1.45rem;line-height:1.35;font-weight:600;color:#f8fafc;word-break:break-word;opacity:0;transform:translateY(6px);transition:opacity .35s ease,transform .35s ease,color .8s ease}
+.transcript-line.visible{opacity:1;transform:translateY(0)}
+.transcript-line.previous{font-size:1.05rem;font-weight:500;color:#94a3b8;line-height:1.3}
+@media (max-width:480px){.transcript-line{font-size:1.2rem}.transcript-line.previous{font-size:.95rem}}
 .hidden{display:none}
 </style>
 </head>
@@ -253,13 +255,13 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
   var currentDc = null;
   var selectedTargetId = null;
   var availableLanguages = [];
-  var MAX_TRANSCRIPT_LINES = 30;
-
-  function fmtTime(ms) {
-    var d = new Date(ms);
-    var pad = function(n){return n<10?'0'+n:''+n;};
-    return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
-  }
+  // Two-line teleprompter style: current (large) + previous (smaller, dim).
+  var MAX_TRANSCRIPT_LINES = 2;
+  var lastConnectedAt = 0;
+  var currentStatus = 'idle';
+  // Reload the page if we've been disconnected for this long — a hard refresh
+  // recovers from any stuck state and re-runs the WebRTC handshake cleanly.
+  var DISCONNECT_RELOAD_MS = 45000;
 
   function appendTranscriptLine(text) {
     if (!text) return;
@@ -267,20 +269,23 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
       transcriptEmpty.parentNode.removeChild(transcriptEmpty);
       transcriptEmpty = null;
     }
+    // Demote any currently visible "current" line to "previous"
+    var existing = transcriptEl.querySelectorAll('.transcript-line');
+    for (var i = 0; i < existing.length; i++) {
+      existing[i].classList.add('previous');
+    }
     var line = document.createElement('div');
     line.className = 'transcript-line';
-    var time = document.createElement('span');
-    time.className = 'transcript-time';
-    time.textContent = fmtTime(Date.now());
-    var msg = document.createElement('span');
-    msg.textContent = text;
-    line.appendChild(time);
-    line.appendChild(msg);
+    line.textContent = text;
     transcriptEl.appendChild(line);
+    // Trim to the two most recent lines (current + previous)
     while (transcriptEl.children.length > MAX_TRANSCRIPT_LINES) {
       transcriptEl.removeChild(transcriptEl.firstChild);
     }
-    transcriptEl.scrollTop = transcriptEl.scrollHeight;
+    // Trigger CSS transition next frame
+    requestAnimationFrame(function() {
+      line.classList.add('visible');
+    });
   }
 
   function clearTranscript() {
@@ -400,6 +405,25 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
   function setStatus(cls, text) {
     statusEl.className = 'status ' + cls;
     statusText.textContent = text;
+    currentStatus = cls;
+    if (cls === 'connected') lastConnectedAt = Date.now();
+  }
+
+  // Watchdog: once the user has joined, if we stay non-connected long enough
+  // do a full page reload. Cheaper than diagnosing every WebRTC failure mode.
+  function startReloadWatchdog() {
+    setInterval(function() {
+      if (currentStatus === 'connected') return;
+      if (currentStatus === 'idle') return;
+      if (!lastConnectedAt) {
+        // We've never connected yet; arm the timer relative to "now" once
+        lastConnectedAt = Date.now();
+        return;
+      }
+      if (Date.now() - lastConnectedAt > DISCONNECT_RELOAD_MS) {
+        window.location.reload();
+      }
+    }, 5000);
   }
 
   joinBtn.addEventListener('click', function() {
@@ -410,6 +434,7 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
     transcriptEl.classList.remove('hidden');
     renderLanguages();
     waitForRoom();
+    startReloadWatchdog();
   });
 
   function waitForRoom() {
