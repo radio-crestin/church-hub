@@ -7,13 +7,17 @@ import { type LocalSlide, SongSlideList } from './SongSlideList'
 
 interface SongSlidesSectionProps {
   slides: LocalSlide[]
+  presentedSlideId?: number | null
   onSlidesChange: (slides: LocalSlide[]) => void
+  onPresentSlide?: (slideId: number) => void
   isLoading?: boolean
 }
 
 export function SongSlidesSection({
   slides,
+  presentedSlideId,
   onSlidesChange,
+  onPresentSlide,
   isLoading = false,
 }: SongSlidesSectionProps) {
   const { t } = useTranslation(['songs'])
@@ -43,7 +47,12 @@ export function SongSlidesSection({
               <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
             </div>
           ) : (
-            <SongSlideList slides={slides} onSlidesChange={onSlidesChange} />
+            <SongSlideList
+              slides={slides}
+              presentedSlideId={presentedSlideId}
+              onSlidesChange={onSlidesChange}
+              onPresentSlide={onPresentSlide}
+            />
           )}
         </div>
       </div>

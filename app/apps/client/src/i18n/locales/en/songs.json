@@ -173,7 +173,8 @@
     "moveDown": "Move Down",
     "chorusRepeat": "Auto-inserted chorus",
     "editAsText": "Edit as Text",
-    "slideAdded": "Slide added"
+    "slideAdded": "Slide added",
+    "presentSlide": "Present this slide"
   },
   "metadata": {
     "detailsSection": "Details",
