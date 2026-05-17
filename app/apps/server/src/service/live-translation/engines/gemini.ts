@@ -228,7 +228,8 @@ class GeminiEngineSession implements EngineSession {
     if (!content) return
 
     if (content.inputTranscription?.text) {
-      const text = content.inputTranscription.text.trim()
+      // Preserve whitespace — Gemini emits word-level chunks already spaced.
+      const text = content.inputTranscription.text
       if (text) {
         this.handlers.onSourceText(text)
         this.pendingChars += text.length
@@ -239,7 +240,7 @@ class GeminiEngineSession implements EngineSession {
     }
 
     if (content.outputTranscription?.text) {
-      const text = content.outputTranscription.text.trim()
+      const text = content.outputTranscription.text
       if (text) this.handlers.onTargetText(text)
     }
 
