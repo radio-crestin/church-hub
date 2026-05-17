@@ -8,10 +8,13 @@ import {
   Trash2,
   X,
 } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { usePresentTemporarySong } from '~/features/presentation'
+import {
+  usePresentationState,
+  usePresentTemporarySong,
+} from '~/features/presentation'
 import { AddSongToScheduleModal } from '~/features/schedules'
 import { useToast } from '~/ui/toast'
 import {
@@ -21,6 +24,8 @@ import {
 } from './SongDetailsSection'
 import { type LocalSlide } from './SongSlideList'
 import { SongSlidesSection } from './SongSlidesSection'
+import type { SongSlide } from '../types'
+import { expandSongSlidesWithChoruses } from '../utils/expandSongSlides'
 
 type PendingAction = 'present' | 'addToSchedule' | null
 
@@ -77,6 +82,47 @@ export function SongEditor({
   const [isSavingBeforeAction, setIsSavingBeforeAction] = useState(false)
   const unsavedChangesDialogRef = useRef<HTMLDialogElement>(null)
   const presentTemporarySong = usePresentTemporarySong()
+  const { data: presentationState } = usePresentationState()
+
+  // Build expanded slides locally to map a saved slide id → its first
+  // displayIndex (the server expands the same way from its saved data).
+  const displayIndexBySlideId = useMemo(() => {
+    const expandable: SongSlide[] = slides
+      .filter((s) => typeof s.id === 'number')
+      .map((s) => ({
+        id: s.id as number,
+        songId: songId ?? 0,
+        content: s.content,
+        chords: s.chords ?? null,
+        sortOrder: s.sortOrder,
+        label: s.label ?? null,
+        createdAt: 0,
+        updatedAt: 0,
+      }))
+    const expanded = expandSongSlidesWithChoruses(expandable)
+    const map = new Map<number, number>()
+    for (const es of expanded) {
+      if (!map.has(es.id)) map.set(es.id, es.displayIndex)
+    }
+    return map
+  }, [slides, songId])
+
+  const presentedSlideId = useMemo(() => {
+    if (!songId) return null
+    const temp = presentationState?.temporaryContent
+    if (temp?.type !== 'song' || temp.data.songId !== songId) return null
+    const presentedExpandedIdx = temp.data.currentSlideIndex
+    const presented = temp.data.slides?.[presentedExpandedIdx]
+    return presented?.id ?? null
+  }, [presentationState, songId])
+
+  const handlePresentSlide = useMemo(() => {
+    if (!songId) return undefined
+    return (slideId: number) => {
+      const slideIndex = displayIndexBySlideId.get(slideId) ?? 0
+      void presentTemporarySong.mutateAsync({ songId, slideIndex })
+    }
+  }, [songId, displayIndexBySlideId, presentTemporarySong])
 
   // Handle unsaved changes dialog open/close
   useEffect(() => {
@@ -268,7 +314,9 @@ export function SongEditor({
       {/* Slides Section */}
       <SongSlidesSection
         slides={slides}
+        presentedSlideId={presentedSlideId}
         onSlidesChange={onSlidesChange}
+        onPresentSlide={handlePresentSlide}
         isLoading={isLoading}
       />
 

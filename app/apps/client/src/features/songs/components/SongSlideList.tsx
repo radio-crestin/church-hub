@@ -31,10 +31,17 @@ export interface LocalSlide {
 
 interface SongSlideListProps {
   slides: LocalSlide[]
+  presentedSlideId?: number | null
   onSlidesChange: (slides: LocalSlide[]) => void
+  onPresentSlide?: (slideId: number) => void
 }
 
-export function SongSlideList({ slides, onSlidesChange }: SongSlideListProps) {
+export function SongSlideList({
+  slides,
+  presentedSlideId,
+  onSlidesChange,
+  onPresentSlide,
+}: SongSlideListProps) {
   const { t } = useTranslation('songs')
   const [slideToDelete, setSlideToDelete] = useState<LocalSlide | null>(null)
 
@@ -144,24 +151,38 @@ export function SongSlideList({ slides, onSlidesChange }: SongSlideListProps) {
             strategy={verticalListSortingStrategy}
           >
             <div className="space-y-3">
-              {slides.map((slide, index) => (
-                <SongSlideCard
-                  key={slide.id}
-                  slide={slide}
-                  index={index}
-                  onContentChange={(content) =>
-                    handleSlideContentChange(slide.id, content)
-                  }
-                  onChordsChange={(chords) =>
-                    handleSlideChordsChange(slide.id, chords)
-                  }
-                  onLabelChange={(label) =>
-                    handleSlideLabelChange(slide.id, label)
-                  }
-                  onClone={() => handleCloneSlide(slide)}
-                  onDelete={() => setSlideToDelete(slide)}
-                />
-              ))}
+              {slides.map((slide, index) => {
+                const slideIdNum =
+                  typeof slide.id === 'number' ? slide.id : null
+                const canPresent =
+                  onPresentSlide !== undefined && slideIdNum !== null
+                return (
+                  <SongSlideCard
+                    key={slide.id}
+                    slide={slide}
+                    index={index}
+                    isPresented={
+                      slideIdNum !== null && slideIdNum === presentedSlideId
+                    }
+                    onContentChange={(content) =>
+                      handleSlideContentChange(slide.id, content)
+                    }
+                    onChordsChange={(chords) =>
+                      handleSlideChordsChange(slide.id, chords)
+                    }
+                    onLabelChange={(label) =>
+                      handleSlideLabelChange(slide.id, label)
+                    }
+                    onClone={() => handleCloneSlide(slide)}
+                    onDelete={() => setSlideToDelete(slide)}
+                    onPresent={
+                      canPresent
+                        ? () => onPresentSlide!(slideIdNum!)
+                        : undefined
+                    }
+                  />
+                )
+              })}
             </div>
           </SortableContext>
         </DndContext>

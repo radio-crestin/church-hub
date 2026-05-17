@@ -7,6 +7,7 @@ import {
   Copy,
   GripVertical,
   Music,
+  Play,
   Redo2,
   Tag,
   Trash2,
@@ -31,11 +32,13 @@ interface LocalSlide {
 interface SongSlideCardProps {
   slide: LocalSlide
   index: number
+  isPresented?: boolean
   onContentChange: (content: string) => void
   onChordsChange: (chords: ChordMapping[] | null) => void
   onLabelChange: (label: string | null) => void
   onClone: () => void
   onDelete: () => void
+  onPresent?: () => void
 }
 
 const SLIDE_LABELS = [
@@ -173,11 +176,13 @@ function getWordsFromHtml(html: string): string[] {
 export function SongSlideCard({
   slide,
   index,
+  isPresented = false,
   onContentChange,
   onChordsChange,
   onLabelChange,
   onClone,
   onDelete,
+  onPresent,
 }: SongSlideCardProps) {
   const { t, i18n } = useTranslation('songs')
   const language = i18n.language?.split('-')[0] || 'en'
@@ -307,9 +312,11 @@ export function SongSlideCard({
     <div
       ref={setNodeRef}
       style={style}
-      className={`bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden ${
-        isDragging ? 'opacity-50 shadow-lg' : ''
-      }`}
+      className={`bg-white dark:bg-gray-800 border rounded-lg overflow-hidden ${
+        isPresented
+          ? 'border-green-400 dark:border-green-600 ring-2 ring-green-400/40 dark:ring-green-600/40'
+          : 'border-gray-200 dark:border-gray-700'
+      } ${isDragging ? 'opacity-50 shadow-lg' : ''}`}
     >
       {/* Header with drag handle, label and actions */}
       <div className="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
@@ -399,6 +406,20 @@ export function SongSlideCard({
         </div>
 
         <div className="flex items-center gap-1">
+          {onPresent && (
+            <button
+              type="button"
+              onClick={onPresent}
+              className={`p-1.5 rounded transition-colors ${
+                isPresented
+                  ? 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300'
+                  : 'hover:bg-green-100 dark:hover:bg-green-900/30 text-green-600 dark:text-green-400'
+              }`}
+              title={t('preview.presentSlide', 'Present this slide')}
+            >
+              <Play className="w-4 h-4" />
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setShowChordEditor(!showChordEditor)}

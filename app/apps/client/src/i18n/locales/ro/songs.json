@@ -173,7 +173,8 @@
     "moveDown": "Mută jos",
     "chorusRepeat": "Refren inserat automat",
     "editAsText": "Editează ca text",
-    "slideAdded": "Slide adăugat"
+    "slideAdded": "Slide adăugat",
+    "presentSlide": "Afișează acest slide"
   },
   "metadata": {
     "detailsSection": "Detalii",

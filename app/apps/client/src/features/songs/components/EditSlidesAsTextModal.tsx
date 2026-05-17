@@ -3,97 +3,13 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { LocalSlide } from './SongSlideList'
+import { markdownToSlides, slidesToMarkdown } from '../utils/slidesMarkdown'
 
 interface EditSlidesAsTextModalProps {
   isOpen: boolean
   onClose: () => void
   slides: LocalSlide[]
   onSlidesChange: (slides: LocalSlide[]) => void
-}
-
-function htmlToMarkdown(html: string): string {
-  let text = html
-
-  // Convert bold tags to markdown
-  text = text.replace(/<(strong|b)>(.*?)<\/\1>/gi, '**$2**')
-
-  // Convert italic tags to markdown
-  text = text.replace(/<(em|i)>(.*?)<\/\1>/gi, '*$2*')
-
-  // Convert underline to markdown (using __)
-  text = text.replace(/<u>(.*?)<\/u>/gi, '__$1__')
-
-  // Replace <br>, <br/>, <br /> with newlines
-  text = text.replace(/<br\s*\/?>/gi, '\n')
-
-  // Replace </p><p> with double newlines (paragraph breaks within a slide)
-  text = text.replace(/<\/p>\s*<p>/gi, '\n')
-
-  // Remove opening and closing p tags
-  text = text.replace(/<\/?p>/gi, '')
-
-  // Decode HTML entities
-  const textarea = document.createElement('textarea')
-  textarea.innerHTML = text
-
-  return textarea.value.trim()
-}
-
-function markdownToHtml(markdown: string): string {
-  let html = markdown
-
-  // Escape HTML special characters first (but not our markdown syntax)
-  html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-
-  // Convert bold markdown to HTML (must do before italic to handle **text**)
-  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-
-  // Convert underline markdown to HTML (must do before italic)
-  html = html.replace(/__(.+?)__/g, '<u>$1</u>')
-
-  // Convert italic markdown to HTML
-  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>')
-
-  return html
-}
-
-function slidesToMarkdown(slides: LocalSlide[]): string {
-  // Export slides separated by --- for clarity
-  return slides
-    .map((slide) => htmlToMarkdown(slide.content))
-    .join('\n\n---\n\n')
-}
-
-function markdownToSlides(text: string): LocalSlide[] {
-  if (!text.trim()) return []
-
-  // Normalize separators: replace --- with empty lines, then split by empty lines
-  // This handles both --- and empty lines as slide separators
-  const normalized = text.replace(/\n\s*---\s*\n/g, '\n\n')
-
-  // Split by empty lines (double newlines)
-  const slideTexts = normalized
-    .split(/\n\s*\n/)
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0) // Skip empty slides
-
-  const result: LocalSlide[] = []
-  for (const slideText of slideTexts) {
-    const lines = slideText.split('\n').filter((line) => line.trim().length > 0)
-
-    if (lines.length === 0) continue
-
-    const htmlContent = lines
-      .map((line) => `<p>${markdownToHtml(line)}</p>`)
-      .join('')
-
-    result.push({
-      id: `temp-${Date.now()}-${result.length}`,
-      content: htmlContent || '<p></p>',
-      sortOrder: result.length,
-    })
-  }
-  return result
 }
 
 export function EditSlidesAsTextModal({

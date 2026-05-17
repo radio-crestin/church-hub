@@ -1,42 +1,14 @@
-import {
-  closestCenter,
-  DndContext,
-  type DragEndEvent,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core'
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
-import {
-  Check,
-  FileText,
-  GripVertical,
-  Loader2,
-  Pencil,
-  Plus,
-  Trash2,
-  X,
-} from 'lucide-react'
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import { Check, Loader2, Pencil, Play, X } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { SongSlide, SongWithSlides } from '../types'
 import { expandSongSlidesWithChoruses } from '../utils/expandSongSlides'
+import {
+  type MarkdownSlide,
+  markdownToSlides,
+  slidesToMarkdown,
+} from '../utils/slidesMarkdown'
 
 interface SongSlidesPanelProps {
   song: SongWithSlides
@@ -48,12 +20,32 @@ interface SongSlidesPanelProps {
   onToggleEditMode: () => void
   onSave?: () => void
   onSlideClick: (slide: SongSlide, index: number) => void
-  onSlideEdit?: (slideId: number, content: string) => Promise<void>
-  onSlideDelete?: (slideId: number) => Promise<void>
-  onSlideAdd?: () => Promise<void>
-  onSlidesReorder?: (slideIds: number[]) => Promise<void>
-  onEditAsText?: () => void
+  onApplyText?: (slides: MarkdownSlide[]) => void | Promise<void>
 }
+
+/** Identifies the first line of every non-empty slide block in the text. */
+function computeSlideBlocks(
+  text: string,
+): Array<{ blockIdx: number; line: number }> {
+  const lines = text.split('\n')
+  const blocks: Array<{ blockIdx: number; line: number }> = []
+  let blockIdx = 0
+  let inBlock = false
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i].trim()
+    if (trimmed === '---' || trimmed === '') {
+      inBlock = false
+    } else if (!inBlock) {
+      blocks.push({ blockIdx, line: i })
+      blockIdx++
+      inBlock = true
+    }
+  }
+  return blocks
+}
+
+const TEXTAREA_LINE_HEIGHT_PX = 20
+const TEXTAREA_PADDING_TOP_PX = 8
 
 const SCROLL_OFFSET_TOP = 100
 
@@ -72,127 +64,6 @@ function stripHtmlTags(html: string): string {
   return decodeHtmlEntities(stripped)
 }
 
-function plainTextToHtml(text: string): string {
-  return text
-    .split('\n')
-    .map((line) => {
-      const escaped = line
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-      return `<p>${escaped || '<br>'}</p>`
-    })
-    .join('')
-}
-
-/** Inline editable slide with drag handle for edit mode */
-function EditableSlide({
-  slide,
-  slideNumber,
-  isPresented,
-  onEdit,
-  onDelete,
-}: {
-  slide: SongSlide
-  slideNumber: number
-  isPresented: boolean
-  onEdit: (slideId: number, content: string) => void
-  onDelete?: (slideId: number) => void
-}) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: slide.id })
-
-  const [content, setContent] = useState(() => stripHtmlTags(slide.content))
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const prevContentRef = useRef(slide.content)
-
-  // Sync when external content changes (e.g., after API save)
-  useEffect(() => {
-    if (slide.content !== prevContentRef.current) {
-      setContent(stripHtmlTags(slide.content))
-      prevContentRef.current = slide.content
-    }
-  }, [slide.content])
-
-  // Auto-resize textarea
-  useLayoutEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = '0'
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`
-    }
-  }, [content])
-
-  const handleBlur = useCallback(() => {
-    const currentPlain = stripHtmlTags(slide.content)
-    if (content !== currentPlain) {
-      onEdit(slide.id, plainTextToHtml(content))
-    }
-  }, [content, slide.id, slide.content, onEdit])
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  }
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`flex items-start gap-1.5 px-2 py-2 rounded-lg border transition-colors ${
-        isPresented
-          ? 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700'
-          : 'bg-gray-50 dark:bg-gray-900/30 border-gray-200 dark:border-gray-700'
-      } ${isDragging ? 'opacity-50 shadow-lg z-10' : ''}`}
-    >
-      <button
-        type="button"
-        className="cursor-grab active:cursor-grabbing p-0.5 mt-0.5 shrink-0 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-        {...attributes}
-        {...listeners}
-      >
-        <GripVertical size={14} className="text-gray-400" />
-      </button>
-      <span
-        className={`font-semibold text-sm min-w-[20px] mt-0.5 shrink-0 ${
-          isPresented
-            ? 'text-green-700 dark:text-green-300'
-            : 'text-gray-500 dark:text-gray-400'
-        }`}
-      >
-        {slideNumber}
-      </span>
-      <textarea
-        ref={textareaRef}
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        onBlur={handleBlur}
-        className="flex-1 text-sm bg-transparent resize-none overflow-hidden focus:outline-none leading-relaxed text-gray-900 dark:text-gray-100 min-h-[20px]"
-        spellCheck={false}
-      />
-      {onDelete && (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation()
-            onDelete(slide.id)
-          }}
-          className="p-1 mt-0.5 shrink-0 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-          title="Delete"
-        >
-          <Trash2 size={12} />
-        </button>
-      )}
-    </div>
-  )
-}
-
 export function SongSlidesPanel({
   song,
   presentedSlideIndex,
@@ -203,44 +74,28 @@ export function SongSlidesPanel({
   onToggleEditMode,
   onSave,
   onSlideClick,
-  onSlideEdit,
-  onSlideDelete,
-  onSlideAdd,
-  onSlidesReorder,
-  onEditAsText,
+  onApplyText,
 }: SongSlidesPanelProps) {
   const { t } = useTranslation('songs')
   const highlightedRef = useRef<HTMLButtonElement>(null)
   const selectedRef = useRef<HTMLButtonElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  const [isAdding, setIsAdding] = useState(false)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const [textValue, setTextValue] = useState('')
+  const [scrollTop, setScrollTop] = useState(0)
+  const [presentingIdx, setPresentingIdx] = useState<number | null>(null)
 
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
-  )
-
-  // Sorted original slides for edit mode
+  // Sorted original slides — used to seed the textarea on entering edit mode.
   const sortedSlides = useMemo(
     () => [...song.slides].sort((a, b) => a.sortOrder - b.sortOrder),
     [song.slides],
   )
 
-  const slideIds = useMemo(() => sortedSlides.map((s) => s.id), [sortedSlides])
-
-  // Expanded slides for view mode
+  // Expanded slides for view mode (auto-inserts choruses) and for presenting.
   const expandedSlides = useMemo(
     () => expandSongSlidesWithChoruses(song.slides),
     [song.slides],
   )
-
-  // Presented slide ID for edit mode highlighting
-  const presentedSlideId = useMemo(() => {
-    if (presentedSlideIndex === null) return null
-    return expandedSlides[presentedSlideIndex]?.id ?? null
-  }, [presentedSlideIndex, expandedSlides])
 
   // Track chorus duplicates for view mode
   const isOriginalSlide = useMemo(() => {
@@ -281,43 +136,49 @@ export function SongSlidesPanel({
     }
   }, [selectedSlideIndex, presentedSlideIndex, isEditMode])
 
-  const handleDragEnd = useCallback(
-    (event: DragEndEvent) => {
-      const { active, over } = event
-      if (!over || active.id === over.id || !onSlidesReorder) return
+  const parsedSlides = useMemo(() => markdownToSlides(textValue), [textValue])
 
-      const oldIndex = slideIds.indexOf(active.id as number)
-      const newIndex = slideIds.indexOf(over.id as number)
-      if (oldIndex === -1 || newIndex === -1) return
+  const slideBlocks = useMemo(() => computeSlideBlocks(textValue), [textValue])
 
-      const newOrder = arrayMove(slideIds, oldIndex, newIndex)
-      void onSlidesReorder(newOrder)
-    },
-    [slideIds, onSlidesReorder],
-  )
+  const applyTextValue = useCallback(async () => {
+    if (!onApplyText) return
+    await onApplyText(parsedSlides)
+  }, [onApplyText, parsedSlides])
 
-  const handleAddSlide = useCallback(async () => {
-    if (!onSlideAdd) return
-    setIsAdding(true)
-    try {
-      await onSlideAdd()
-    } finally {
-      setIsAdding(false)
+  const handleSaveClick = useCallback(async () => {
+    await applyTextValue()
+    onSave?.()
+  }, [applyTextValue, onSave])
+
+  // Seed textarea from sorted slides when entering edit mode; clear on exit.
+  useEffect(() => {
+    if (isEditMode) {
+      setTextValue(slidesToMarkdown(sortedSlides))
+      setScrollTop(0)
+      setTimeout(() => textareaRef.current?.focus(), 0)
+    } else {
+      setTextValue('')
+      setScrollTop(0)
     }
-  }, [onSlideAdd])
+    // Only re-seed on the edit-mode boundary, not on every slide edit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditMode])
 
-  const handleSlideEdit = useCallback(
-    (slideId: number, content: string) => {
-      void onSlideEdit?.(slideId, content)
+  const handlePresentBlock = useCallback(
+    async (blockIdx: number) => {
+      setPresentingIdx(blockIdx)
+      try {
+        await applyTextValue()
+        const expanded = expandedSlides[blockIdx]
+        onSlideClick(
+          expanded ?? ({ ...sortedSlides[0], id: -1 } as SongSlide),
+          blockIdx,
+        )
+      } finally {
+        setPresentingIdx(null)
+      }
     },
-    [onSlideEdit],
-  )
-
-  const handleSlideDelete = useCallback(
-    (slideId: number) => {
-      void onSlideDelete?.(slideId)
-    },
-    [onSlideDelete],
+    [applyTextValue, expandedSlides, onSlideClick, sortedSlides],
   )
 
   if (isLoading) {
@@ -345,18 +206,6 @@ export function SongSlidesPanel({
             <Pencil size={14} />
             <span>{t('preview.editMode')}</span>
           </button>
-          {isEditMode && onEditAsText && (
-            <button
-              type="button"
-              onClick={onEditAsText}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm text-gray-700 dark:text-gray-300 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            >
-              <FileText size={14} />
-              <span className="hidden sm:inline">
-                {t('preview.editAsText')}
-              </span>
-            </button>
-          )}
         </div>
         {isEditMode && (
           <div className="flex items-center gap-2">
@@ -370,7 +219,7 @@ export function SongSlidesPanel({
             </button>
             <button
               type="button"
-              onClick={onSave}
+              onClick={handleSaveClick}
               className={`flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-lg border transition-colors ${
                 isSaving
                   ? 'bg-green-200 dark:bg-green-900/60 text-green-700 dark:text-green-300 border-green-300 dark:border-green-600 cursor-wait'
@@ -396,44 +245,70 @@ export function SongSlidesPanel({
         className="flex-1 min-h-0 overflow-hidden lg:overflow-y-auto scrollbar-thin px-0.5 py-0.5"
       >
         {isEditMode ? (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={slideIds}
-              strategy={verticalListSortingStrategy}
-            >
-              <div className="space-y-2">
-                {sortedSlides.map((slide, index) => (
-                  <EditableSlide
-                    key={slide.id}
-                    slide={slide}
-                    slideNumber={index + 1}
-                    isPresented={slide.id === presentedSlideId}
-                    onEdit={handleSlideEdit}
-                    onDelete={onSlideDelete ? handleSlideDelete : undefined}
-                  />
-                ))}
-                {onSlideAdd && (
-                  <button
-                    type="button"
-                    onClick={handleAddSlide}
-                    disabled={isAdding}
-                    className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg border-2 border-dashed transition-colors border-green-300 dark:border-green-700 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 hover:border-green-400 dark:hover:border-green-600 disabled:opacity-50"
-                  >
-                    {isAdding ? (
-                      <Loader2 size={14} className="animate-spin" />
-                    ) : (
-                      <Plus size={14} />
-                    )}
-                    {t('preview.addSlide')}
-                  </button>
-                )}
+          <div className="flex flex-col gap-2 h-full">
+            <div className="relative flex-1 min-h-[200px]">
+              <textarea
+                ref={textareaRef}
+                value={textValue}
+                onChange={(e) => setTextValue(e.target.value)}
+                onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}
+                onBlur={() => {
+                  void applyTextValue()
+                }}
+                placeholder={t('editAsText.placeholder')}
+                spellCheck={false}
+                style={{
+                  lineHeight: `${TEXTAREA_LINE_HEIGHT_PX}px`,
+                  paddingTop: `${TEXTAREA_PADDING_TOP_PX}px`,
+                  paddingBottom: `${TEXTAREA_PADDING_TOP_PX}px`,
+                }}
+                className="absolute inset-0 w-full h-full pl-3 pr-16 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm resize-none whitespace-pre"
+              />
+              {/* Gutter overlay with per-block Play buttons — offset to clear the textarea scrollbar */}
+              <div className="pointer-events-none absolute right-5 top-0 bottom-0 w-11 overflow-hidden">
+                <div
+                  className="relative w-full h-full"
+                  style={{ transform: `translateY(${-scrollTop}px)` }}
+                >
+                  {slideBlocks.map(({ blockIdx, line }) => {
+                    const isLive = presentedSlideIndex === blockIdx
+                    const isLoading = presentingIdx === blockIdx
+                    return (
+                      <button
+                        key={blockIdx}
+                        type="button"
+                        disabled={presentingIdx !== null}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          void handlePresentBlock(blockIdx)
+                        }}
+                        style={{
+                          top: `${TEXTAREA_PADDING_TOP_PX + line * TEXTAREA_LINE_HEIGHT_PX}px`,
+                          height: `${TEXTAREA_LINE_HEIGHT_PX}px`,
+                        }}
+                        className={`pointer-events-auto absolute left-1 right-1 flex items-center justify-center gap-0.5 px-1 text-[10px] font-semibold rounded transition-colors ${
+                          isLive
+                            ? 'bg-green-500 text-white shadow-sm hover:bg-green-600'
+                            : 'bg-white dark:bg-gray-800 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-700 hover:bg-green-50 dark:hover:bg-green-900/30 shadow-sm'
+                        } disabled:opacity-60`}
+                        title={t('preview.presentSlide')}
+                      >
+                        {isLoading ? (
+                          <Loader2 size={10} className="animate-spin" />
+                        ) : (
+                          <Play size={10} />
+                        )}
+                        <span>{blockIdx + 1}</span>
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
-            </SortableContext>
-          </DndContext>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {t('editAsText.formatHelp')}
+            </p>
+          </div>
         ) : (
           <div className="space-y-1">
             {expandedSlides.map((slide, index) => {
