@@ -1253,6 +1253,7 @@ export type TranslationAudioLevelMessage = {
   payload: {
     level: number
     type: 'input' | 'output'
+    targetId?: string
     timestamp: number
   }
 }
@@ -1266,6 +1267,7 @@ export type TranslationTranscriptionMessage = {
 export type TranslationAudioOutputMessage = {
   type: 'translation_audio_output'
   payload: {
+    targetId: string
     data: string // base64 PCM 24kHz
     timestamp: number
   }
@@ -1296,10 +1298,11 @@ export function broadcastTranslationState(state: LiveTranslationState) {
 export function broadcastTranslationAudioLevel(
   level: number,
   type: 'input' | 'output',
+  targetId?: string,
 ) {
   const message = JSON.stringify({
     type: 'translation_audio_level',
-    payload: { level, type, timestamp: Date.now() },
+    payload: { level, type, targetId, timestamp: Date.now() },
   } satisfies TranslationAudioLevelMessage)
 
   for (const [clientId, conn] of clients) {
@@ -1338,10 +1341,14 @@ export function broadcastTranslationTranscription(
 /**
  * Broadcasts translated audio output (PCM 24kHz) as base64
  */
-export function broadcastTranslationAudioOutput(pcmData: Buffer) {
+export function broadcastTranslationAudioOutput(
+  targetId: string,
+  pcmData: Buffer,
+) {
   const message = JSON.stringify({
     type: 'translation_audio_output',
     payload: {
+      targetId,
       data: pcmData.toString('base64'),
       timestamp: Date.now(),
     },
