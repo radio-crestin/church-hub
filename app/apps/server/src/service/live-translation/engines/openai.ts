@@ -139,7 +139,14 @@ class OpenAIEngineSession implements EngineSession {
           audio: {
             input: {
               format: { type: 'audio/pcm', rate: TARGET_SAMPLE_RATE },
-              transcription: { model: 'gpt-realtime-whisper' },
+              transcription: {
+                // gpt-4o-transcribe is the high-accuracy variant; pricier
+                // than gpt-realtime-whisper but produces far cleaner text.
+                model: 'gpt-4o-transcribe',
+                // Hinting the source language drops Whisper's
+                // language-detection error rate to near-zero.
+                language: this.cfg.sourceLanguage,
+              },
               turn_detection: {
                 type: 'server_vad',
                 threshold: 0.5,
@@ -179,14 +186,16 @@ class OpenAIEngineSession implements EngineSession {
       case 'input_audio_buffer.speech_stopped':
         // user stopped — server VAD will commit
         break
-      case 'conversation.item.input_audio_transcription.delta':
+      case 'conversation.item.input_audio_transcription.delta': {
+        // Stream deltas as-is — preserve their leading/trailing whitespace
+        // so concatenation in the orchestrator yields a faithful transcript.
+        const delta = msg.delta as string | undefined
+        if (delta) this.handlers.onSourceText(delta)
+        break
+      }
       case 'conversation.item.input_audio_transcription.completed': {
-        // GA emits both .delta and .completed; merge logic in caller dedupes
-        const text = (
-          (msg.transcript as string | undefined) ||
-          (msg.delta as string | undefined)
-        )?.trim()
-        if (text) this.handlers.onSourceText(text)
+        // .completed carries the full final transcript. Deltas have already
+        // streamed it; skip to avoid double-appending.
         break
       }
       case 'response.output_audio.delta': {
@@ -203,7 +212,7 @@ class OpenAIEngineSession implements EngineSession {
       }
       case 'response.output_audio_transcript.delta':
       case 'response.output_text.delta': {
-        const delta = (msg.delta as string | undefined)?.trim()
+        const delta = msg.delta as string | undefined
         if (delta) this.handlers.onTargetText(delta)
         break
       }

@@ -119,13 +119,18 @@ function appendOrCreateEntry(
       : last.targetId === target?.id)
 
   if (sameBucket && last) {
-    last.text += ' ' + text
+    // Engine deltas already carry their own whitespace; concatenate directly.
+    // (Old behavior injected a space, which mangled sub-word deltas like
+    // "Hel" + "lo" into "Hel lo".)
+    last.text += text
     last.timestamp = Date.now()
     transcriptionCallback?.(last, 'update')
   } else {
     const entry: TranscriptionEntry = {
       id: generateId(),
-      text,
+      // Trim leading whitespace on the first chunk only — engines often
+      // emit a leading space on the first delta of a new segment.
+      text: text.replace(/^\s+/, ''),
       type,
       targetId: target?.id,
       targetLanguage: target?.targetLanguage,
