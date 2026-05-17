@@ -1,3 +1,4 @@
+import { useNavigate } from '@tanstack/react-router'
 import { ExternalLink, X } from 'lucide-react'
 import {
   forwardRef,
@@ -9,7 +10,6 @@ import {
 import { useTranslation } from 'react-i18next'
 
 import type { Song } from '../../songs/types'
-import { openSongWindow } from '../../songs/utils/openSongWindow'
 import { useUpdateSongKeyLine } from '../hooks/useUpdateSongKeyLine'
 
 export interface KeyLineEditDialogHandle {
@@ -20,6 +20,7 @@ export interface KeyLineEditDialogHandle {
 export const KeyLineEditDialog = forwardRef<KeyLineEditDialogHandle>(
   function KeyLineEditDialog(_, ref) {
     const { t } = useTranslation('songKey')
+    const navigate = useNavigate()
     const dialogRef = useRef<HTMLDialogElement>(null)
     const inputRef = useRef<HTMLInputElement>(null)
     const [song, setSong] = useState<Song | null>(null)
@@ -156,24 +157,9 @@ export const KeyLineEditDialog = forwardRef<KeyLineEditDialogHandle>(
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   {t('dialog.songTitle')}
                 </label>
-                <div className="flex items-start justify-between gap-3">
-                  <p className="text-gray-900 dark:text-white font-medium break-words min-w-0 flex-1">
-                    {song.title}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => openSongWindow(song.id, song.title)}
-                    title={t('dialog.openSong')}
-                    aria-label={t('dialog.openSong')}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium
-                      text-indigo-600 dark:text-indigo-400
-                      hover:bg-indigo-50 dark:hover:bg-indigo-900/30
-                      rounded-lg transition-colors shrink-0"
-                  >
-                    <ExternalLink size={16} />
-                    <span>{t('dialog.openSong')}</span>
-                  </button>
-                </div>
+                <p className="text-gray-900 dark:text-white font-medium break-words">
+                  {song.title}
+                </p>
               </div>
             )}
 
@@ -212,7 +198,23 @@ export const KeyLineEditDialog = forwardRef<KeyLineEditDialogHandle>(
           </div>
 
           {/* Footer */}
-          <div className="flex justify-end gap-3 px-4 sm:px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex justify-end items-center gap-3 px-4 sm:px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+            <button
+              type="button"
+              onClick={() => {
+                if (!song) return
+                handleClose()
+                navigate({
+                  to: '/songs/$songId',
+                  params: { songId: String(song.id) },
+                })
+              }}
+              className="flex items-center gap-1.5 px-3 py-2.5 text-base font-medium
+                text-indigo-600 dark:text-indigo-400 hover:underline"
+            >
+              <ExternalLink size={16} />
+              <span>{t('dialog.openSong')}</span>
+            </button>
             <button
               onClick={handleClose}
               className="px-5 py-2.5 text-base font-medium text-gray-700 dark:text-gray-300
