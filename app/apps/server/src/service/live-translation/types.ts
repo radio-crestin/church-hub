@@ -1,5 +1,8 @@
 export type OutputMode = 'device' | 'webrtc' | 'both'
 
+/** Whether engines synthesize a spoken translation or only produce text. */
+export type OutputModality = 'audio_text' | 'text_only'
+
 export type TranslationEngine = 'openai' | 'gemini'
 
 export interface TranslationTarget {
@@ -10,6 +13,7 @@ export interface TranslationTarget {
 
 export interface LiveTranslationConfig {
   engine: TranslationEngine
+  outputModality: OutputModality
   sourceLanguage: string
   targets: TranslationTarget[]
   primaryTargetId?: string
@@ -40,6 +44,7 @@ export interface TargetState {
 export interface LiveTranslationState {
   isActive: boolean
   engine: TranslationEngine
+  outputModality: OutputModality
   sourceLanguage: string
   inputAudioLevel: number
   outputAudioLevel: number
@@ -53,6 +58,7 @@ export interface LiveTranslationState {
 export const DEFAULT_TRANSLATION_STATE: LiveTranslationState = {
   isActive: false,
   engine: 'openai',
+  outputModality: 'audio_text',
   sourceLanguage: 'ro',
   inputAudioLevel: 0,
   outputAudioLevel: 0,

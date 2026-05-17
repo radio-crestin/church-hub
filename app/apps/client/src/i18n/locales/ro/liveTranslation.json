@@ -15,6 +15,12 @@
     "button": "Setări",
     "engine": "Motor",
     "engineDefault": "implicit",
+    "outputModality": "Tip de ieșire",
+    "outputModalityDescription": "Tradu în voce + transcript, sau doar în transcript text (mai ieftin și mai rapid).",
+    "outputModality_audio_text": "Audio + text",
+    "outputModality_audio_text_description": "Sintetizează vocea tradusă și afișează transcriptul.",
+    "outputModality_text_only": "Doar text",
+    "outputModality_text_only_description": "Doar transcript — fără voce sintetizată. Cost și latență mai mici.",
     "apiKey": {
       "openai": "Cheie API OpenAI",
       "gemini": "Cheie API Gemini"

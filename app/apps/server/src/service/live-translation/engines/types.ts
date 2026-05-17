@@ -1,7 +1,8 @@
-import type { TranslationEngine } from '../types'
+import type { OutputModality, TranslationEngine } from '../types'
 
 export interface EngineSessionConfig {
   engine: TranslationEngine
+  outputModality: OutputModality
   apiKey: string
   sourceLanguage: string
   targetLanguage: string

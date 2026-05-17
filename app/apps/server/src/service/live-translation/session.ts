@@ -179,9 +179,11 @@ export async function startTranslation(
     outputMode: currentOutputMode,
   })
 
+  const outputModality = config.outputModality ?? 'audio_text'
   currentState = {
     ...DEFAULT_TRANSLATION_STATE,
     engine: config.engine,
+    outputModality,
     sourceLanguage: config.sourceLanguage,
     primaryTargetId,
     isActive: true,
@@ -197,8 +199,10 @@ export async function startTranslation(
   }
   stateCallback?.(currentState)
 
+  // Device playback only makes sense when the engine actually returns audio
   const useDevice =
-    currentOutputMode === 'device' || currentOutputMode === 'both'
+    outputModality === 'audio_text' &&
+    (currentOutputMode === 'device' || currentOutputMode === 'both')
   if (useDevice) {
     await startAudioPlayback(config.outputDeviceId)
   }
@@ -208,6 +212,7 @@ export async function startTranslation(
       const engine = await createEngineSession(
         {
           engine: config.engine,
+          outputModality,
           apiKey,
           sourceLanguage: config.sourceLanguage,
           targetLanguage: target.targetLanguage,
@@ -313,14 +318,11 @@ export function isTranslationActive(): boolean {
 }
 
 export function updateListenerCounts(counts: Record<string, number>): void {
-  let total = 0
-  const targets = currentState.targets.map((t) => {
-    const c = counts[t.id] ?? 0
-    total += c
-    return { ...t, listenerCount: c }
-  })
+  const targets = currentState.targets.map((t) => ({
+    ...t,
+    listenerCount: counts[t.id] ?? 0,
+  }))
   updateState({ targets })
-  return
 }
 
 export function getActiveTargets(): TranslationTarget[] {

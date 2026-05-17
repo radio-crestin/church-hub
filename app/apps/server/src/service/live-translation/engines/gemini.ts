@@ -60,18 +60,29 @@ class GeminiEngineSession implements EngineSession {
       this.cfg.targetLanguage,
     )
 
+    const textOnly = this.cfg.outputModality === 'text_only'
+    // Audio response requires a native-audio model; text-only can run on the
+    // cheaper/faster live preview that supports TEXT response modality.
+    const model = textOnly
+      ? 'gemini-3.1-flash-live-preview'
+      : 'gemini-2.5-flash-native-audio-preview-12-2025'
+
     this.session = await ai.live.connect({
-      model: 'gemini-2.5-flash-native-audio-preview-12-2025',
+      model,
       config: {
-        responseModalities: [Modality.AUDIO],
+        responseModalities: textOnly ? [Modality.TEXT] : [Modality.AUDIO],
         systemInstruction: systemPrompt,
-        speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: this.cfg.voiceName },
-          },
-        },
+        ...(textOnly
+          ? {}
+          : {
+              speechConfig: {
+                voiceConfig: {
+                  prebuiltVoiceConfig: { voiceName: this.cfg.voiceName },
+                },
+              },
+              outputAudioTranscription: {},
+            }),
         inputAudioTranscription: {},
-        outputAudioTranscription: {},
         realtimeInputConfig: {
           automaticActivityDetection: { disabled: true },
         },
@@ -241,6 +252,10 @@ class GeminiEngineSession implements EngineSession {
             this.handlers.onSpeakingStart()
           }
           this.handlers.onAudioOutput(pcm)
+        }
+        if (part.text) {
+          // Text-only mode: model returns plain text parts (no transcription event)
+          this.handlers.onTargetText(part.text.trim())
         }
       }
     }

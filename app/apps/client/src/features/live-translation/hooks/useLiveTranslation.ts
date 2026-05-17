@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getApiUrl } from '~/config'
 
 export type TranslationEngine = 'openai' | 'gemini'
+export type OutputModality = 'audio_text' | 'text_only'
 
 export interface TranscriptionEntry {
   id: string
@@ -24,6 +25,7 @@ export interface TargetState {
 export interface LiveTranslationState {
   isActive: boolean
   engine: TranslationEngine
+  outputModality: OutputModality
   sourceLanguage: string
   inputAudioLevel: number
   outputAudioLevel: number
@@ -105,6 +107,7 @@ export interface TranslationTarget {
 
 export interface LiveTranslationSettings {
   engine: TranslationEngine
+  outputModality: OutputModality
   sourceLanguage: string
   targets: TranslationTarget[]
   primaryTargetId?: string
@@ -127,6 +130,7 @@ const DEFAULT_TARGET: TranslationTarget = {
 
 const DEFAULT_SETTINGS: LiveTranslationSettings = {
   engine: 'openai',
+  outputModality: 'audio_text',
   sourceLanguage: 'ro',
   targets: [DEFAULT_TARGET],
   openaiApiKey: '',
@@ -139,6 +143,7 @@ const DEFAULT_SETTINGS: LiveTranslationSettings = {
 const DEFAULT_STATE: LiveTranslationState = {
   isActive: false,
   engine: 'openai',
+  outputModality: 'audio_text',
   sourceLanguage: 'ro',
   inputAudioLevel: 0,
   outputAudioLevel: 0,
@@ -170,10 +175,13 @@ export function useLiveTranslation() {
             : [{ ...DEFAULT_TARGET, id: genTargetId() }]
         const engine: TranslationEngine =
           data.engine === 'gemini' ? 'gemini' : 'openai'
+        const outputModality: OutputModality =
+          data.outputModality === 'text_only' ? 'text_only' : 'audio_text'
         const merged: LiveTranslationSettings = {
           ...DEFAULT_SETTINGS,
           ...data,
           engine,
+          outputModality,
           targets,
           primaryTargetId: data.primaryTargetId || targets[0]?.id,
           geminiApiKey: data.geminiApiKey || lsKey,
@@ -381,6 +389,7 @@ export function useLiveTranslation() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         engine: settings.engine,
+        outputModality: settings.outputModality,
         sourceLanguage: settings.sourceLanguage,
         targets: settings.targets,
         primaryTargetId: settings.primaryTargetId,
@@ -402,6 +411,7 @@ export function useLiveTranslation() {
       ...prev,
       isActive: true,
       engine: settings.engine,
+      outputModality: settings.outputModality,
       sourceLanguage: settings.sourceLanguage,
       primaryTargetId: settings.primaryTargetId,
       startedAt: Date.now(),
