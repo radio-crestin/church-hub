@@ -115,8 +115,8 @@ export async function handleMIDIRoutes(
   if (req.method === 'POST' && url.pathname === '/api/midi/connect') {
     try {
       const body = (await req.json()) as {
-        inputDeviceId?: number | null
-        outputDeviceId?: number | null
+        inputDeviceName?: string | null
+        outputDeviceName?: string | null
       }
 
       midiLogger.info('Connect request received', body)
@@ -124,34 +124,28 @@ export async function handleMIDIRoutes(
       let inputConnected = false
       let outputConnected = false
 
-      if (body.inputDeviceId !== undefined) {
-        if (body.inputDeviceId === null) {
+      if (body.inputDeviceName !== undefined) {
+        if (body.inputDeviceName === null) {
           midiLogger.info('Disconnecting input device')
           disconnectInput()
         } else {
-          midiLogger.info(`Connecting to input device ${body.inputDeviceId}`)
-          // Pass startReconnectOnFail=true to start monitoring if device not found
-          inputConnected = connectInput(
-            body.inputDeviceId,
-            undefined,
-            true, // Start reconnection if device not available
+          midiLogger.info(
+            `Connecting to input device "${body.inputDeviceName}"`,
           )
+          inputConnected = connectInput(body.inputDeviceName, true)
           midiLogger.info(`Input connection result: ${inputConnected}`)
         }
       }
 
-      if (body.outputDeviceId !== undefined) {
-        if (body.outputDeviceId === null) {
+      if (body.outputDeviceName !== undefined) {
+        if (body.outputDeviceName === null) {
           midiLogger.info('Disconnecting output device')
           disconnectOutput()
         } else {
-          midiLogger.info(`Connecting to output device ${body.outputDeviceId}`)
-          // Pass startReconnectOnFail=true to start monitoring if device not found
-          outputConnected = await connectOutput(
-            body.outputDeviceId,
-            undefined,
-            true, // Start reconnection if device not available
+          midiLogger.info(
+            `Connecting to output device "${body.outputDeviceName}"`,
           )
+          outputConnected = await connectOutput(body.outputDeviceName, true)
           midiLogger.info(`Output connection result: ${outputConnected}`)
         }
       }

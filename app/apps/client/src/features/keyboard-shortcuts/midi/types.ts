@@ -21,12 +21,16 @@ export interface MIDIMessage {
 }
 
 /**
- * MIDI configuration stored in settings
+ * MIDI configuration stored in settings.
+ *
+ * Devices are identified by name, not index. The OS-assigned index can shift
+ * when devices are plugged/unplugged in a different order, so persisting an
+ * index would silently bind to the wrong controller after a reboot.
  */
 export interface MIDIConfig {
   enabled: boolean
-  inputDeviceId: string | null
-  outputDeviceId: string | null
+  inputDeviceName: string | null
+  outputDeviceName: string | null
 }
 
 /**
@@ -52,6 +56,6 @@ export const MIDI_SHORTCUT_PREFIX = 'midi:'
  */
 export const DEFAULT_MIDI_CONFIG: MIDIConfig = {
   enabled: false,
-  inputDeviceId: null,
-  outputDeviceId: null,
+  inputDeviceName: null,
+  outputDeviceName: null,
 }

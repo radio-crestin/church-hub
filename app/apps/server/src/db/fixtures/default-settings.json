@@ -25,7 +25,7 @@
   },
   {
     "key": "global_keyboard_shortcuts",
-    "value": "{\"actions\":{\"startLive\":{\"shortcuts\":[\"midi:note_on:40\"],\"enabled\":true},\"stopLive\":{\"shortcuts\":[\"midi:note_on:40\"],\"enabled\":true},\"showSlide\":{\"shortcuts\":[],\"enabled\":true},\"nextSlide\":{\"shortcuts\":[],\"enabled\":true},\"prevSlide\":{\"shortcuts\":[],\"enabled\":true}},\"version\":1,\"midi\":{\"enabled\":true,\"inputDeviceId\":\"3\",\"outputDeviceId\":\"4\"}}"
+    "value": "{\"actions\":{\"startLive\":{\"shortcuts\":[\"midi:note_on:40\"],\"enabled\":true},\"stopLive\":{\"shortcuts\":[\"midi:note_on:40\"],\"enabled\":true},\"showSlide\":{\"shortcuts\":[],\"enabled\":true},\"nextSlide\":{\"shortcuts\":[],\"enabled\":true},\"prevSlide\":{\"shortcuts\":[],\"enabled\":true}},\"version\":1,\"midi\":{\"enabled\":true,\"inputDeviceName\":null,\"outputDeviceName\":null}}"
   },
   {
     "key": "kiosk_mode_enabled",

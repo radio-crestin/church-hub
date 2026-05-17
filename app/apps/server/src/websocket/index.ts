@@ -1075,8 +1075,8 @@ export type MIDIConnectionStatusEvent = {
     outputConnected: boolean
     inputDevice: string | null
     outputDevice: string | null
-    inputDeviceId: number | null
-    outputDeviceId: number | null
+    inputDeviceName: string | null
+    outputDeviceName: string | null
     isReconnecting: boolean
     reconnectingInputDevice: string | null
     reconnectingOutputDevice: string | null

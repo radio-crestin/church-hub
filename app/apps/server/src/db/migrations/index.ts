@@ -5,6 +5,7 @@ import { addLastPresentedAt } from './add-last-presented-at'
 import { dropSongKeyColumn } from './drop-song-key-column'
 import { EMBEDDED_MIGRATIONS } from './embedded'
 import { extractKeylinesFromSlides } from './extract-keylines-from-slides'
+import { migrateMidiDeviceByName } from './migrate-midi-device-by-name'
 import { migrateShortcuts } from './migrate-shortcuts'
 import { seedSystemRoles } from './seed'
 import { seedBibleTranslations } from './seed-bibles'
@@ -176,6 +177,12 @@ export function runMigrations(
   t = performance.now()
   migrateShortcuts(rawDb)
   logTiming('migrate_shortcuts', t)
+
+  // Convert legacy MIDI device indices to name-based persistence
+  log('info', 'Running MIDI device-by-name migration...')
+  t = performance.now()
+  migrateMidiDeviceByName(rawDb)
+  logTiming('migrate_midi_device_by_name', t)
 
   // Drop redundant 'key' column from songs table (keyLine is kept)
   log('info', 'Running drop key column migration...')

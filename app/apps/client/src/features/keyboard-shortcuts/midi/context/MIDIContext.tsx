@@ -33,13 +33,13 @@ interface MIDIContextValue {
   // Devices
   inputDevices: MIDIDevice[]
   outputDevices: MIDIDevice[]
-  selectedInputId: string | null
-  selectedOutputId: string | null
+  selectedInputName: string | null
+  selectedOutputName: string | null
 
   // Actions
   requestAccess: () => Promise<boolean>
-  selectInputDevice: (deviceId: string | null) => void
-  selectOutputDevice: (deviceId: string | null) => void
+  selectInputDevice: (deviceName: string | null) => void
+  selectOutputDevice: (deviceName: string | null) => void
   setEnabled: (enabled: boolean) => void
 
   // LED Control
@@ -111,9 +111,11 @@ export function MIDIProvider({
       const result = await response.json()
 
       if (result.data) {
+        // We persist devices by name (indices can shift across reboots), so the
+        // combobox value and the saved-setting value are both the device name.
         const inputs: MIDIDevice[] = result.data.inputs.map(
           (d: { id: number; name: string }) => ({
-            id: String(d.id),
+            id: d.name,
             name: d.name,
             manufacturer: 'Unknown',
             state: 'connected',
@@ -121,7 +123,7 @@ export function MIDIProvider({
         )
         const outputs: MIDIDevice[] = result.data.outputs.map(
           (d: { id: number; name: string }) => ({
-            id: String(d.id),
+            id: d.name,
             name: d.name,
             manufacturer: 'Unknown',
             state: 'connected',
@@ -291,26 +293,21 @@ export function MIDIProvider({
       connectWebSocket()
 
       // Auto-connect to saved devices if we have them
-      const inputId = config.inputDeviceId
-        ? parseInt(config.inputDeviceId, 10)
-        : null
-      const outputId = config.outputDeviceId
-        ? parseInt(config.outputDeviceId, 10)
-        : null
+      const inputName = config.inputDeviceName ?? null
+      const outputName = config.outputDeviceName ?? null
 
-      if (inputId !== null || outputId !== null) {
+      if (inputName !== null || outputName !== null) {
         try {
           const response = await fetch(`${getApiUrl()}/api/midi/connect`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              inputDeviceId: inputId,
-              outputDeviceId: outputId,
+              inputDeviceName: inputName,
+              outputDeviceName: outputName,
             }),
           })
           const _result = await response.json()
         } catch (_error) {}
-      } else {
       }
 
       return true
@@ -326,20 +323,20 @@ export function MIDIProvider({
   }, [
     fetchDevices,
     connectWebSocket,
-    config.inputDeviceId,
-    config.outputDeviceId,
+    config.inputDeviceName,
+    config.outputDeviceName,
   ])
 
   // Connect to devices on server
   const connectToDevices = useCallback(
-    async (inputId: number | null, outputId: number | null) => {
+    async (inputName: string | null, outputName: string | null) => {
       try {
         const response = await fetch(`${getApiUrl()}/api/midi/connect`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            inputDeviceId: inputId,
-            outputDeviceId: outputId,
+            inputDeviceName: inputName,
+            outputDeviceName: outputName,
           }),
         })
 
@@ -356,40 +353,30 @@ export function MIDIProvider({
 
   // Select input device
   const selectInputDevice = useCallback(
-    (deviceId: string | null) => {
-      const numericId = deviceId ? parseInt(deviceId, 10) : null
-
+    (deviceName: string | null) => {
       setConfig((prev) => {
-        const updated = { ...prev, inputDeviceId: deviceId }
+        const updated = { ...prev, inputDeviceName: deviceName }
         onConfigChange?.(updated)
         return updated
       })
 
-      connectToDevices(
-        numericId,
-        config.outputDeviceId ? parseInt(config.outputDeviceId, 10) : null,
-      )
+      connectToDevices(deviceName, config.outputDeviceName)
     },
-    [config.outputDeviceId, connectToDevices, onConfigChange],
+    [config.outputDeviceName, connectToDevices, onConfigChange],
   )
 
   // Select output device
   const selectOutputDevice = useCallback(
-    (deviceId: string | null) => {
-      const numericId = deviceId ? parseInt(deviceId, 10) : null
-
+    (deviceName: string | null) => {
       setConfig((prev) => {
-        const updated = { ...prev, outputDeviceId: deviceId }
+        const updated = { ...prev, outputDeviceName: deviceName }
         onConfigChange?.(updated)
         return updated
       })
 
-      connectToDevices(
-        config.inputDeviceId ? parseInt(config.inputDeviceId, 10) : null,
-        numericId,
-      )
+      connectToDevices(config.inputDeviceName, deviceName)
     },
-    [config.inputDeviceId, connectToDevices, onConfigChange],
+    [config.inputDeviceName, connectToDevices, onConfigChange],
   )
 
   // Set enabled state
@@ -430,20 +417,17 @@ export function MIDIProvider({
 
       // Handle device changes
       if (
-        updates.inputDeviceId !== undefined ||
-        updates.outputDeviceId !== undefined
+        updates.inputDeviceName !== undefined ||
+        updates.outputDeviceName !== undefined
       ) {
-        const inputId = updates.inputDeviceId ?? config.inputDeviceId
-        const outputId = updates.outputDeviceId ?? config.outputDeviceId
-        connectToDevices(
-          inputId ? parseInt(inputId, 10) : null,
-          outputId ? parseInt(outputId, 10) : null,
-        )
+        const inputName = updates.inputDeviceName ?? config.inputDeviceName
+        const outputName = updates.outputDeviceName ?? config.outputDeviceName
+        connectToDevices(inputName, outputName)
       }
     },
     [
-      config.inputDeviceId,
-      config.outputDeviceId,
+      config.inputDeviceName,
+      config.outputDeviceName,
       connectToDevices,
       onConfigChange,
     ],
@@ -552,8 +536,8 @@ export function MIDIProvider({
       reconnectingDeviceName,
       inputDevices,
       outputDevices,
-      selectedInputId: config.inputDeviceId,
-      selectedOutputId: config.outputDeviceId,
+      selectedInputName: config.inputDeviceName,
+      selectedOutputName: config.outputDeviceName,
       requestAccess,
       selectInputDevice,
       selectOutputDevice,
