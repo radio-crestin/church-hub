@@ -508,19 +508,23 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
     setStatus('waiting', 'Waiting for host...');
     infoEl.classList.remove('hidden');
     infoEl.textContent = 'The host has not started the translation yet. Please wait...';
+    console.time('listener:waitForRoom');
 
+    // Fast poll: 500ms while waiting. Each /check is a tiny JSON round-trip
+    // — cheap. The 3 s wait used to be the dominant delay on first connect.
     function checkRoom() {
       fetch(BASE + '/signal/' + SECRET + '/check')
         .then(function(res) { return res.json(); })
         .then(function(data) {
           if (data.active) {
+            console.timeEnd('listener:waitForRoom');
             connect();
           } else {
-            setTimeout(checkRoom, 3000);
+            setTimeout(checkRoom, 500);
           }
         })
         .catch(function() {
-          setTimeout(checkRoom, 5000);
+          setTimeout(checkRoom, 2000);
         });
     }
     checkRoom();
@@ -576,22 +580,33 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
       }
     };
 
+    console.time('listener:iceGather');
+    console.time('listener:postOffer');
+    console.time('listener:waitAnswer');
+    console.time('listener:totalConnect');
     pc.createOffer().then(function(offer) {
       return pc.setLocalDescription(offer);
     }).then(function() {
+      // Bail out of ICE gathering after 1.5 s — STUN candidates land in
+      // <500 ms in practice; waiting longer just stalls first audio.
       return new Promise(function(resolve) {
         if (pc.iceGatheringState === 'complete') return resolve();
+        var done = false;
+        var finish = function(){ if (done) return; done = true; resolve(); };
         pc.onicegatheringstatechange = function() {
-          if (pc.iceGatheringState === 'complete') resolve();
+          if (pc.iceGatheringState === 'complete') finish();
         };
+        setTimeout(finish, 1500);
       });
     }).then(function() {
+      console.timeEnd('listener:iceGather');
       return fetch(BASE + '/signal/' + SECRET + '/offer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ offer: pc.localDescription.sdp })
       });
     }).then(function(res) {
+      console.timeEnd('listener:postOffer');
       if (res.status === 404) { pc.close(); waitForRoom(); return; }
       if (!res.ok) throw new Error('Failed to send offer');
       return res.json();
@@ -599,15 +614,20 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
       if (!data || !data.sessionId) return;
       var sessionId = data.sessionId;
       var attempts = 0;
-      var maxAttempts = 15;
+      // 200 ms × 60 = 12 s budget for the host to come back with its answer.
+      // Local app polls offers every 500 ms and ICE-gathers in <1 s, so the
+      // answer usually lands within 1.5 s.
+      var maxAttempts = 60;
       function pollAnswer() {
         fetch(BASE + '/signal/' + SECRET + '/answer/' + sessionId)
           .then(function(res) { return res.json(); })
           .then(function(data) {
             if (data.answer) {
+              console.timeEnd('listener:waitAnswer');
+              console.timeEnd('listener:totalConnect');
               pc.setRemoteDescription({ type: 'answer', sdp: data.answer });
             } else if (++attempts < maxAttempts) {
-              setTimeout(pollAnswer, 1000);
+              setTimeout(pollAnswer, 200);
             } else {
               pc.close();
               waitForRoom();

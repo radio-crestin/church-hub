@@ -140,7 +140,9 @@ export async function startSignalingRelay(): Promise<void> {
   }
 
   if (pollInterval) clearInterval(pollInterval)
-  pollInterval = setInterval(() => pollForOffers(secret), 2000)
+  // Aggressive 500ms poll — every poll only fetches a small JSON, and faster
+  // polling cuts up to 2s off first-connect latency for new listeners.
+  pollInterval = setInterval(() => pollForOffers(secret), 500)
   logger.info('Signaling relay polling started')
 }
 
@@ -276,9 +278,12 @@ export async function handleListenerOffer(
   await pc.setLocalDescription(answer)
 
   if (pc.iceGatheringState !== 'complete') {
+    // 2.5s upper bound — STUN candidates almost always arrive in <500ms;
+    // waiting 10s on a stale handshake just blocks the listener from
+    // hearing audio. If gathering isn't done by then, ship the partial SDP.
     await pc.iceGatheringStateChange.watch(
       (state) => state === 'complete',
-      10000,
+      2500,
     )
   }
 
