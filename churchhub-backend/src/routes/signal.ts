@@ -214,12 +214,13 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
 .mode-btn:hover{color:#e2e8f0}
 .mode-btn.active{background:#1e3a5f;color:#bfdbfe}
 .mode-btn .icon{font-size:1rem;line-height:1}
-.transcript{margin-top:1.25rem;text-align:left;background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:1.25rem 1.25rem;color:#f1f5f9;display:flex;flex-direction:column;gap:.6rem;min-height:9rem;overflow:hidden;position:relative}
+.transcript{margin-top:1.25rem;text-align:left;background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:1.25rem 1.25rem;color:#f1f5f9;display:flex;flex-direction:column;gap:.6rem;overflow:hidden;position:relative}
 .transcript-empty{color:#64748b;font-style:italic;font-size:.85rem;text-align:center;padding:1.5rem 0}
-.transcript-line{font-size:1.45rem;line-height:1.35;font-weight:600;color:#f8fafc;word-break:break-word;opacity:0;transform:translateY(6px);transition:opacity .35s ease,transform .35s ease,color .8s ease}
+/* Fixed 2-line box: word-wraps to a second visual line, hides overflow.
+   When the text exceeds 2 lines we clear and start over from JS. */
+.transcript-line{font-size:1.45rem;line-height:1.35;font-weight:600;color:#f8fafc;word-break:break-word;opacity:0;transform:translateY(6px);transition:opacity .25s ease,transform .25s ease;height:calc(2 * 1.35em);overflow:hidden}
 .transcript-line.visible{opacity:1;transform:translateY(0)}
-.transcript-line.previous{font-size:1.05rem;font-weight:500;color:#94a3b8;line-height:1.3}
-@media (max-width:480px){.transcript-line{font-size:1.2rem}.transcript-line.previous{font-size:.95rem}}
+@media (max-width:480px){.transcript-line{font-size:1.2rem}}
 .hidden{display:none}
 </style>
 </head>
@@ -267,8 +268,6 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
   var currentDc = null;
   var selectedTargetId = null;
   var availableLanguages = [];
-  // Two-line teleprompter style: current (large) + previous (smaller, dim).
-  var MAX_TRANSCRIPT_LINES = 2;
   var lastConnectedAt = 0;
   var currentStatus = 'idle';
   // Reload the page if we've been disconnected for this long — a hard refresh
@@ -283,19 +282,25 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
     } catch(_) { return 'audio_text'; }
   })();
 
-  // Single-line streaming model:
-  //  - every incoming delta is appended to the current line (which grows /
-  //    wraps within its CSS box)
-  //  - after IDLE_ROLLOVER_MS of no new deltas, the current line is demoted
-  //    to "previous" and the next delta starts a fresh current line.
-  var IDLE_ROLLOVER_MS = 1500;
+  // Fill-then-clear model:
+  //  - every incoming delta is appended to the current line
+  //  - when the line exceeds 2 visual lines (CSS height clip), we wipe it
+  //    and restart with the latest delta
+  //  - long idle pause also clears, so stale text doesn't linger
+  var IDLE_CLEAR_MS = 4000;
   var currentLineEl = null;
   var idleTimer = null;
 
-  function rolloverCurrentLine() {
-    if (currentLineEl) currentLineEl.classList.add('previous');
-    currentLineEl = null;
-    if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+  function ensureLine() {
+    if (currentLineEl) return currentLineEl;
+    var line = document.createElement('div');
+    line.className = 'transcript-line';
+    transcriptEl.appendChild(line);
+    currentLineEl = line;
+    requestAnimationFrame(function() {
+      line.classList.add('visible');
+    });
+    return line;
   }
 
   function appendTranscriptLine(text) {
@@ -304,25 +309,26 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
       transcriptEmpty.parentNode.removeChild(transcriptEmpty);
       transcriptEmpty = null;
     }
+    var line = ensureLine();
+    line.textContent += text;
 
-    if (!currentLineEl) {
-      var line = document.createElement('div');
-      line.className = 'transcript-line';
-      line.textContent = text;
-      transcriptEl.appendChild(line);
-      currentLineEl = line;
-      while (transcriptEl.children.length > MAX_TRANSCRIPT_LINES) {
-        transcriptEl.removeChild(transcriptEl.firstChild);
-      }
-      requestAnimationFrame(function() {
-        line.classList.add('visible');
-      });
-    } else {
-      currentLineEl.textContent += text;
+    // If we just overflowed the 2-line cap, start a fresh page with what
+    // doesn't fit. Use scrollHeight > clientHeight + a px tolerance.
+    if (line.scrollHeight > line.clientHeight + 2) {
+      transcriptEl.removeChild(line);
+      currentLineEl = null;
+      var fresh = ensureLine();
+      fresh.textContent = text;
     }
 
     if (idleTimer) clearTimeout(idleTimer);
-    idleTimer = setTimeout(rolloverCurrentLine, IDLE_ROLLOVER_MS);
+    idleTimer = setTimeout(function() {
+      if (currentLineEl) {
+        transcriptEl.removeChild(currentLineEl);
+        currentLineEl = null;
+      }
+      idleTimer = null;
+    }, IDLE_CLEAR_MS);
   }
 
   function clearTranscript() {
