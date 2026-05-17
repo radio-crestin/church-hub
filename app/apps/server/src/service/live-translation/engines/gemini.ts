@@ -15,35 +15,16 @@ const logger = {
     log('live-translation:gemini', 'error', msg, data),
 }
 
-const SILENCE_THRESHOLD = 0.015
-const SILENCE_GAP_MS = 1500
-const MAX_SPEECH_DURATION_MS = 15000
-const MAX_PENDING_CHARS = 150
-
-function audioLevel(pcm: Buffer): number {
-  if (pcm.length < 2) return 0
-  let sum = 0
-  const samples = Math.floor(pcm.length / 2)
-  for (let i = 0; i < pcm.length - 1; i += 2) {
-    const s = pcm.readInt16LE(i)
-    sum += (s / 32768) ** 2
-  }
-  const rms = Math.sqrt(sum / samples)
-  if (rms < 1e-6) return 0
-  const dbfs = 20 * Math.log10(rms)
-  return Math.max(0, Math.min(1, (dbfs + 60) / 60))
-}
+// Current (May 2026) GA / live model ids.
+// `gemini-2.5-flash-native-audio-preview-12-2025` was sunset 2026-03-19.
+const AUDIO_MODEL = 'gemini-live-2.5-flash-native-audio'
+const TEXT_MODEL = 'gemini-live-2.5-flash-preview'
 
 class GeminiEngineSession implements EngineSession {
   readonly targetId: string
   private session: Awaited<ReturnType<GoogleGenAI['live']['connect']>> | null =
     null
   private speaking = false
-  private activityStarted = false
-  private pendingChars = 0
-  private buffered: Buffer[] = []
-  private silenceTimer: ReturnType<typeof setTimeout> | null = null
-  private maxSpeechTimer: ReturnType<typeof setTimeout> | null = null
   private closed = false
 
   constructor(
@@ -61,12 +42,13 @@ class GeminiEngineSession implements EngineSession {
     )
 
     const textOnly = this.cfg.outputModality === 'text_only'
-    // Audio response requires a native-audio model; text-only can run on the
-    // cheaper/faster live preview that supports TEXT response modality.
-    const model = textOnly
-      ? 'gemini-3.1-flash-live-preview'
-      : 'gemini-2.5-flash-native-audio-preview-12-2025'
+    // Native-audio models only support AUDIO response modality. Text mode
+    // runs on the non-native preview which supports TEXT response.
+    const model = textOnly ? TEXT_MODEL : AUDIO_MODEL
 
+    // Use the server's built-in VAD — far more reliable than manually
+    // signaling activityStart/activityEnd, which silently produces no
+    // output if forceEnd is never triggered.
     this.session = await ai.live.connect({
       model,
       config: {
@@ -83,15 +65,14 @@ class GeminiEngineSession implements EngineSession {
               outputAudioTranscription: {},
             }),
         inputAudioTranscription: {},
-        realtimeInputConfig: {
-          automaticActivityDetection: { disabled: true },
-        },
       },
       callbacks: {
         onopen: () => {
           logger.info('Connected to Gemini Live API', {
             targetId: this.targetId,
             target: this.cfg.targetLanguage,
+            model,
+            modality: this.cfg.outputModality,
           })
         },
         onmessage: (msg) => this.handleMessage(msg),
@@ -116,29 +97,6 @@ class GeminiEngineSession implements EngineSession {
 
   sendAudio(pcm16khz: Buffer): void {
     if (!this.session || this.closed) return
-
-    if (this.speaking) {
-      this.buffered.push(pcm16khz)
-      return
-    }
-
-    if (!this.activityStarted) {
-      try {
-        this.session.sendRealtimeInput({ activityStart: {} })
-        this.activityStarted = true
-      } catch (err) {
-        logger.error('activityStart failed', { error: String(err) })
-      }
-
-      if (this.maxSpeechTimer) clearTimeout(this.maxSpeechTimer)
-      this.maxSpeechTimer = setTimeout(() => {
-        this.maxSpeechTimer = null
-        if (this.activityStarted && !this.speaking) {
-          this.forceEnd()
-        }
-      }, MAX_SPEECH_DURATION_MS)
-    }
-
     try {
       this.session.sendRealtimeInput({
         audio: {
@@ -148,63 +106,6 @@ class GeminiEngineSession implements EngineSession {
       })
     } catch (err) {
       logger.error('audio send failed', { error: String(err) })
-    }
-
-    const level = audioLevel(pcm16khz)
-    if (level > SILENCE_THRESHOLD) {
-      if (this.silenceTimer) {
-        clearTimeout(this.silenceTimer)
-        this.silenceTimer = null
-      }
-    } else if (!this.silenceTimer) {
-      this.silenceTimer = setTimeout(() => {
-        this.silenceTimer = null
-        if (this.activityStarted && !this.speaking) {
-          this.forceEnd()
-        }
-      }, SILENCE_GAP_MS)
-    }
-  }
-
-  private forceEnd(): void {
-    if (!this.session) return
-    if (this.silenceTimer) {
-      clearTimeout(this.silenceTimer)
-      this.silenceTimer = null
-    }
-    if (this.maxSpeechTimer) {
-      clearTimeout(this.maxSpeechTimer)
-      this.maxSpeechTimer = null
-    }
-    try {
-      if (!this.activityStarted) {
-        this.session.sendRealtimeInput({ activityStart: {} })
-      }
-      this.session.sendRealtimeInput({ activityEnd: {} })
-      this.activityStarted = false
-      this.pendingChars = 0
-    } catch (err) {
-      logger.error('forceEnd failed', { error: String(err) })
-    }
-  }
-
-  private flushBuffered(): void {
-    if (!this.session || this.buffered.length === 0) return
-    const chunks = this.buffered.splice(0)
-    try {
-      this.session.sendRealtimeInput({ activityStart: {} })
-      for (const chunk of chunks) {
-        this.session.sendRealtimeInput({
-          audio: {
-            data: chunk.toString('base64'),
-            mimeType: 'audio/pcm;rate=16000',
-          },
-        })
-      }
-      this.session.sendRealtimeInput({ activityEnd: {} })
-      this.activityStarted = false
-    } catch (err) {
-      logger.error('flushBuffered failed', { error: String(err) })
     }
   }
 
@@ -228,15 +129,8 @@ class GeminiEngineSession implements EngineSession {
     if (!content) return
 
     if (content.inputTranscription?.text) {
-      // Preserve whitespace — Gemini emits word-level chunks already spaced.
       const text = content.inputTranscription.text
-      if (text) {
-        this.handlers.onSourceText(text)
-        this.pendingChars += text.length
-        if (this.pendingChars >= MAX_PENDING_CHARS && !this.speaking) {
-          this.forceEnd()
-        }
-      }
+      if (text) this.handlers.onSourceText(text)
     }
 
     if (content.outputTranscription?.text) {
@@ -255,33 +149,21 @@ class GeminiEngineSession implements EngineSession {
           this.handlers.onAudioOutput(pcm)
         }
         if (part.text) {
-          // Text-only mode: model returns plain text parts (no transcription event)
-          this.handlers.onTargetText(part.text.trim())
+          // Text-only model: returns plain text parts (no transcription event)
+          this.handlers.onTargetText(part.text)
         }
       }
     }
 
     if (content.turnComplete || content.interrupted) {
       this.speaking = false
-      this.pendingChars = 0
       this.handlers.onTurnComplete()
-      this.flushBuffered()
     }
   }
 
   async close(): Promise<void> {
     this.closed = true
-    if (this.silenceTimer) {
-      clearTimeout(this.silenceTimer)
-      this.silenceTimer = null
-    }
-    if (this.maxSpeechTimer) {
-      clearTimeout(this.maxSpeechTimer)
-      this.maxSpeechTimer = null
-    }
     this.speaking = false
-    this.activityStarted = false
-    this.buffered.length = 0
     try {
       this.session?.close()
     } catch (err) {
