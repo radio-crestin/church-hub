@@ -14,7 +14,7 @@ import {
   Volume2,
   X,
 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Combobox } from '~/ui/combobox/Combobox'
@@ -51,6 +51,35 @@ export function LiveTranslationPage() {
   const { t } = useTranslation('liveTranslation')
   const [showSettings, setShowSettings] = useState(false)
   const [copied, setCopied] = useState(false)
+  const settingsDialogRef = useRef<HTMLDialogElement>(null)
+  const settingsMouseDownTargetRef = useRef<EventTarget | null>(null)
+
+  useEffect(() => {
+    const dialog = settingsDialogRef.current
+    if (!dialog) return
+    if (showSettings) {
+      if (!dialog.open) dialog.showModal()
+    } else if (dialog.open) {
+      dialog.close()
+    }
+  }, [showSettings])
+
+  const handleSettingsBackdropMouseDown = (
+    e: React.MouseEvent<HTMLDialogElement>,
+  ) => {
+    settingsMouseDownTargetRef.current = e.target
+  }
+
+  const handleSettingsBackdropClick = (
+    e: React.MouseEvent<HTMLDialogElement>,
+  ) => {
+    if (
+      e.target === settingsDialogRef.current &&
+      settingsMouseDownTargetRef.current === settingsDialogRef.current
+    ) {
+      setShowSettings(false)
+    }
+  }
 
   const {
     state,
@@ -190,9 +219,32 @@ export function LiveTranslationPage() {
         </div>
       )}
 
-      {/* Settings Panel */}
-      {showSettings && (
-        <div className="mb-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex-shrink-0 overflow-hidden overflow-y-auto max-h-[70vh]">
+      {/* Settings Modal */}
+      <dialog
+        ref={settingsDialogRef}
+        onClose={() => setShowSettings(false)}
+        onMouseDown={handleSettingsBackdropMouseDown}
+        onClick={handleSettingsBackdropClick}
+        className="m-auto p-0 rounded-xl shadow-2xl backdrop:bg-black/60 bg-white dark:bg-gray-800 w-full max-w-3xl max-h-[85vh] open:flex open:flex-col overflow-hidden"
+      >
+        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <Settings className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+              {t('settings.button')}
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowSettings(false)}
+            className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            aria-label={t('settings.close')}
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="overflow-y-auto flex-1">
+          <div className="bg-white dark:bg-gray-800">
           {/* Engine Selector */}
           <div className="p-4 border-b border-gray-200 dark:border-gray-700">
             <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-900 dark:text-white mb-2">
@@ -507,8 +559,9 @@ export function LiveTranslationPage() {
               </button>
             )}
           </div>
+          </div>
         </div>
-      )}
+      </dialog>
 
       {/* Language Bar + Controls */}
       <div className="flex items-center justify-between mb-3 flex-shrink-0 flex-wrap gap-2">

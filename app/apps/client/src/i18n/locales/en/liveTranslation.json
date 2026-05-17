@@ -13,6 +13,7 @@
   },
   "settings": {
     "button": "Settings",
+    "close": "Close",
     "engine": "Engine",
     "engineDefault": "default",
     "outputModality": "Output type",

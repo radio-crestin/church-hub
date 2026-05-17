@@ -20,6 +20,7 @@ import {
 } from '../service/live-translation/session'
 import {
   broadcastAudioForTarget,
+  broadcastTextForTarget,
   getListenerCount,
   getListenerCountsByTarget,
   getStreamSecret,
@@ -62,6 +63,15 @@ setAudioOutputCallback((targetId, pcmData) => {
 
 setTranscriptionCallback((entry, action) => {
   broadcastTranslationTranscription(entry, action)
+  // Forward translation snippets to WebRTC listeners so they can render a
+  // live transcript even in text-only mode (or alongside audio).
+  if (
+    entry.type === 'translation' &&
+    entry.targetId &&
+    action === 'add'
+  ) {
+    broadcastTextForTarget(entry.targetId, entry.text)
+  }
 })
 
 setAudioLevelCallback((level, type, targetId) => {

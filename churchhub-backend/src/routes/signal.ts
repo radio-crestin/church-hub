@@ -209,6 +209,10 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
 .lang-option.selected{background:#1e3a5f;border-color:#3b82f6;color:#bfdbfe}
 .lang-option .code{font-size:.7rem;font-weight:700;background:#1e293b;padding:2px 6px;border-radius:4px;letter-spacing:.05em}
 .empty-langs{color:#64748b;font-size:.85rem;padding:1rem;text-align:center;background:#0f172a;border-radius:8px}
+.transcript{margin-top:1rem;text-align:left;background:#0f172a;border:1px solid #334155;border-radius:10px;max-height:240px;min-height:120px;overflow-y:auto;padding:.75rem 1rem;font-size:.9rem;line-height:1.5;color:#e2e8f0;display:flex;flex-direction:column;gap:.5rem}
+.transcript-empty{color:#64748b;font-style:italic;font-size:.8rem;text-align:center;padding:1.5rem 0}
+.transcript-line{padding:.4rem .6rem;background:#1e293b;border-radius:6px;border-left:3px solid #3b82f6;word-break:break-word}
+.transcript-time{font-size:.65rem;color:#64748b;margin-right:.5rem;font-variant-numeric:tabular-nums}
 .hidden{display:none}
 </style>
 </head>
@@ -223,6 +227,9 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
   <div id="emptyLangs" class="empty-langs hidden">Waiting for the host to publish available languages…</div>
 </div>
 <div id="volumeWrap" class="volume hidden"><div id="volumeBar" class="volume-bar"></div></div>
+<div id="transcript" class="transcript hidden">
+  <div id="transcriptEmpty" class="transcript-empty">Translated text will appear here…</div>
+</div>
 <p id="info" class="info hidden"></p>
 </div>
 <script>
@@ -238,12 +245,52 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
   var langSection = document.getElementById('langSection');
   var langList = document.getElementById('langList');
   var emptyLangs = document.getElementById('emptyLangs');
+  var transcriptEl = document.getElementById('transcript');
+  var transcriptEmpty = document.getElementById('transcriptEmpty');
 
   var audioCtx = null;
   var nextPlayTime = 0;
   var currentDc = null;
   var selectedTargetId = null;
   var availableLanguages = [];
+  var MAX_TRANSCRIPT_LINES = 30;
+
+  function fmtTime(ms) {
+    var d = new Date(ms);
+    var pad = function(n){return n<10?'0'+n:''+n;};
+    return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+  }
+
+  function appendTranscriptLine(text) {
+    if (!text) return;
+    if (transcriptEmpty && transcriptEmpty.parentNode) {
+      transcriptEmpty.parentNode.removeChild(transcriptEmpty);
+      transcriptEmpty = null;
+    }
+    var line = document.createElement('div');
+    line.className = 'transcript-line';
+    var time = document.createElement('span');
+    time.className = 'transcript-time';
+    time.textContent = fmtTime(Date.now());
+    var msg = document.createElement('span');
+    msg.textContent = text;
+    line.appendChild(time);
+    line.appendChild(msg);
+    transcriptEl.appendChild(line);
+    while (transcriptEl.children.length > MAX_TRANSCRIPT_LINES) {
+      transcriptEl.removeChild(transcriptEl.firstChild);
+    }
+    transcriptEl.scrollTop = transcriptEl.scrollHeight;
+  }
+
+  function clearTranscript() {
+    while (transcriptEl.firstChild) transcriptEl.removeChild(transcriptEl.firstChild);
+    transcriptEmpty = document.createElement('div');
+    transcriptEmpty.id = 'transcriptEmpty';
+    transcriptEmpty.className = 'transcript-empty';
+    transcriptEmpty.textContent = 'Translated text will appear here…';
+    transcriptEl.appendChild(transcriptEmpty);
+  }
 
   var LANG_NAMES = {
     ro: 'Română',
@@ -296,6 +343,7 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
       btn.appendChild(codeSpan);
       btn.appendChild(nameSpan);
       btn.addEventListener('click', function() {
+        if (selectedTargetId !== lang.targetId) clearTranscript();
         selectedTargetId = lang.targetId;
         renderLanguages();
         sendLanguageSelection();
@@ -359,6 +407,7 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
     joinBtn.classList.add('hidden');
     volumeWrap.classList.remove('hidden');
     langSection.classList.remove('hidden');
+    transcriptEl.classList.remove('hidden');
     renderLanguages();
     waitForRoom();
   });
@@ -415,6 +464,7 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
       try {
         var msg = JSON.parse(evt.data);
         if (msg.type === 'audio') playPcm(msg.data);
+        else if (msg.type === 'text') appendTranscriptLine(msg.text);
         else if (msg.type === 'ping') dc.send(JSON.stringify({ type: 'pong' }));
         else if (msg.type === 'available_languages') {
           availableLanguages = Array.isArray(msg.languages) ? msg.languages : [];

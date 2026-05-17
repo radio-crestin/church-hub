@@ -320,6 +320,30 @@ export function broadcastAudioForTarget(
   }
 }
 
+/**
+ * Broadcast a translated text snippet (the live transcript of the target
+ * language) to every listener currently subscribed to that target.
+ */
+export function broadcastTextForTarget(
+  targetId: string,
+  text: string,
+): void {
+  if (listeners.size === 0 || !text) return
+  const message = JSON.stringify({ type: 'text', targetId, text })
+  for (const [id, listener] of listeners) {
+    if (
+      listener.selectedTargetId === targetId &&
+      listener.dc?.readyState === 'open'
+    ) {
+      try {
+        listener.dc.send(message)
+      } catch {
+        cleanupListener(id)
+      }
+    }
+  }
+}
+
 export function getListenerCount(): number {
   return listeners.size
 }
