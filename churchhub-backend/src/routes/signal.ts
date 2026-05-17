@@ -283,50 +283,52 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
     } catch(_) { return 'audio_text'; }
   })();
 
-  // The latest line is identified by its host-side entryId so we can replace
-  // its text as new words stream in (action='update') or roll it down to the
-  // "previous" slot when a new entry arrives (action='add').
-  var currentLineId = null;
+  // Single-line streaming model:
+  //  - every incoming delta is appended to the current line (which grows /
+  //    wraps within its CSS box)
+  //  - after IDLE_ROLLOVER_MS of no new deltas, the current line is demoted
+  //    to "previous" and the next delta starts a fresh current line.
+  var IDLE_ROLLOVER_MS = 1500;
   var currentLineEl = null;
+  var idleTimer = null;
 
-  function appendTranscriptLine(text, entryId, action) {
+  function rolloverCurrentLine() {
+    if (currentLineEl) currentLineEl.classList.add('previous');
+    currentLineEl = null;
+    if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+  }
+
+  function appendTranscriptLine(text) {
     if (!text) return;
     if (transcriptEmpty && transcriptEmpty.parentNode) {
       transcriptEmpty.parentNode.removeChild(transcriptEmpty);
       transcriptEmpty = null;
     }
 
-    // Update the in-progress line (server appended more words to the same
-    // entry) — just rewrite its text, no roll-over.
-    if (action === 'update' && currentLineId === entryId && currentLineEl) {
-      currentLineEl.textContent = text;
-      return;
+    if (!currentLineEl) {
+      var line = document.createElement('div');
+      line.className = 'transcript-line';
+      line.textContent = text;
+      transcriptEl.appendChild(line);
+      currentLineEl = line;
+      while (transcriptEl.children.length > MAX_TRANSCRIPT_LINES) {
+        transcriptEl.removeChild(transcriptEl.firstChild);
+      }
+      requestAnimationFrame(function() {
+        line.classList.add('visible');
+      });
+    } else {
+      currentLineEl.textContent += text;
     }
 
-    // New entry: demote the current line to "previous" and start a fresh one.
-    var existing = transcriptEl.querySelectorAll('.transcript-line');
-    for (var i = 0; i < existing.length; i++) {
-      existing[i].classList.add('previous');
-    }
-    var line = document.createElement('div');
-    line.className = 'transcript-line';
-    line.textContent = text;
-    transcriptEl.appendChild(line);
-    currentLineId = entryId || null;
-    currentLineEl = line;
-
-    while (transcriptEl.children.length > MAX_TRANSCRIPT_LINES) {
-      transcriptEl.removeChild(transcriptEl.firstChild);
-    }
-    requestAnimationFrame(function() {
-      line.classList.add('visible');
-    });
+    if (idleTimer) clearTimeout(idleTimer);
+    idleTimer = setTimeout(rolloverCurrentLine, IDLE_ROLLOVER_MS);
   }
 
   function clearTranscript() {
     while (transcriptEl.firstChild) transcriptEl.removeChild(transcriptEl.firstChild);
-    currentLineId = null;
     currentLineEl = null;
+    if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
     transcriptEmpty = document.createElement('div');
     transcriptEmpty.id = 'transcriptEmpty';
     transcriptEmpty.className = 'transcript-empty';
@@ -560,7 +562,7 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
       try {
         var msg = JSON.parse(evt.data);
         if (msg.type === 'audio') playPcm(msg.data);
-        else if (msg.type === 'text') appendTranscriptLine(msg.text, msg.entryId, msg.action || 'add');
+        else if (msg.type === 'text') appendTranscriptLine(msg.text);
         else if (msg.type === 'ping') dc.send(JSON.stringify({ type: 'pong' }));
         else if (msg.type === 'available_languages') {
           availableLanguages = Array.isArray(msg.languages) ? msg.languages : [];
