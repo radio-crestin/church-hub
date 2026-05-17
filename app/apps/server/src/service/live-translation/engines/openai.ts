@@ -13,8 +13,10 @@ const logger = {
     log('live-translation:openai', 'error', msg, data),
 }
 
+// OpenAI Realtime API went GA on May 12 2026; the legacy
+// `gpt-4o-realtime-preview` + `OpenAI-Beta: realtime=v1` combo is deprecated.
 const OPENAI_REALTIME_URL =
-  'wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview'
+  'wss://api.openai.com/v1/realtime?model=gpt-realtime'
 const INPUT_SAMPLE_RATE = 16000
 const TARGET_SAMPLE_RATE = 24000
 
@@ -54,11 +56,10 @@ class OpenAIEngineSession implements EngineSession {
   }
 
   async start(): Promise<void> {
-    const headers = {
-      Authorization: `Bearer ${this.cfg.apiKey}`,
-      'OpenAI-Beta': 'realtime=v1',
-    }
-    this.ws = new WebSocket(OPENAI_REALTIME_URL, { headers } as unknown as string[])
+    const headers = { Authorization: `Bearer ${this.cfg.apiKey}` }
+    this.ws = new WebSocket(OPENAI_REALTIME_URL, {
+      headers,
+    } as unknown as string[])
 
     await new Promise<void>((resolve, reject) => {
       if (!this.ws) return reject(new Error('ws not initialized'))
@@ -124,21 +125,30 @@ class OpenAIEngineSession implements EngineSession {
       this.cfg.sourceLanguage,
       this.cfg.targetLanguage,
     )
+    // GA session schema (OpenAI Realtime, May 2026) — audio is nested under
+    // session.audio.{input,output}; modalities renamed to output_modalities.
     this.sendRaw(
       JSON.stringify({
         type: 'session.update',
         session: {
-          modalities: ['text', 'audio'],
+          model: 'gpt-realtime',
           instructions: systemPrompt,
-          voice: this.cfg.voiceName,
-          input_audio_format: 'pcm16',
-          output_audio_format: 'pcm16',
-          input_audio_transcription: { model: 'whisper-1' },
-          turn_detection: {
-            type: 'server_vad',
-            threshold: 0.5,
-            prefix_padding_ms: 300,
-            silence_duration_ms: 700,
+          output_modalities: ['audio'],
+          audio: {
+            input: {
+              format: { type: 'audio/pcm', rate: TARGET_SAMPLE_RATE },
+              transcription: { model: 'gpt-realtime-whisper' },
+              turn_detection: {
+                type: 'server_vad',
+                threshold: 0.5,
+                prefix_padding_ms: 300,
+                silence_duration_ms: 700,
+              },
+            },
+            output: {
+              format: { type: 'audio/pcm' },
+              voice: this.cfg.voiceName,
+            },
           },
         },
       }),
@@ -163,12 +173,17 @@ class OpenAIEngineSession implements EngineSession {
       case 'input_audio_buffer.speech_stopped':
         // user stopped — server VAD will commit
         break
+      case 'conversation.item.input_audio_transcription.delta':
       case 'conversation.item.input_audio_transcription.completed': {
-        const text = (msg.transcript as string | undefined)?.trim()
+        // GA emits both .delta and .completed; merge logic in caller dedupes
+        const text = (
+          (msg.transcript as string | undefined) ||
+          (msg.delta as string | undefined)
+        )?.trim()
         if (text) this.handlers.onSourceText(text)
         break
       }
-      case 'response.audio.delta': {
+      case 'response.output_audio.delta': {
         const b64 = msg.delta as string | undefined
         if (b64) {
           const pcm = Buffer.from(b64, 'base64')
@@ -180,12 +195,13 @@ class OpenAIEngineSession implements EngineSession {
         }
         break
       }
-      case 'response.audio_transcript.delta': {
+      case 'response.output_audio_transcript.delta':
+      case 'response.output_text.delta': {
         const delta = (msg.delta as string | undefined)?.trim()
         if (delta) this.handlers.onTargetText(delta)
         break
       }
-      case 'response.audio.done':
+      case 'response.output_audio.done':
       case 'response.done':
         this.speaking = false
         this.handlers.onTurnComplete()
