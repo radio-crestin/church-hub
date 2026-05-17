@@ -25,6 +25,7 @@
     "keyLinePlaceholder": "e.g., Do Major, La minor",
     "cancel": "Cancel",
     "save": "Save",
-    "saving": "Saving..."
+    "saving": "Saving...",
+    "openSong": "Open song"
   }
 }

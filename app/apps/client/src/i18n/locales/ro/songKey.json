@@ -27,6 +27,7 @@
     "keyLinePlaceholder": "ex: Do Major, La minor",
     "cancel": "Anulează",
     "save": "Salvează",
-    "saving": "Se salvează..."
+    "saving": "Se salvează...",
+    "openSong": "Deschide cântarea"
   }
 }
