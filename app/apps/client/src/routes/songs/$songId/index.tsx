@@ -48,18 +48,14 @@ import {
   SongControlPanel,
   SongSlidesPanel,
 } from '~/features/songs/components'
-import { EditSlidesAsTextModal } from '~/features/songs/components/EditSlidesAsTextModal'
 import {
   useAddBookmark,
-  useDeleteSlide,
   useRemoveBookmark,
-  useReorderSlides,
   useResetPresentationCount,
   useSong,
   useSongBookmarks,
   useSongKeyboardShortcuts,
   useSongSlideSelectionKeyboard,
-  useUpsertSlide,
   useUpsertSong,
 } from '~/features/songs/hooks'
 import type { SongSlide } from '~/features/songs/types'
@@ -129,10 +125,7 @@ function SongPreviewPage() {
   const { data: presentationState } = usePresentationState()
   const { saveSong, isPending: isSaving } = useSaveSongToFile()
   const resetPresentationCount = useResetPresentationCount()
-  const upsertSlide = useUpsertSlide()
   const upsertSong = useUpsertSong()
-  const deleteSlide = useDeleteSlide()
-  const reorderSlides = useReorderSlides()
   const addBookmarkMutation = useAddBookmark()
   const removeBookmarkMutation = useRemoveBookmark()
   const { data: bookmarks = [] } = useSongBookmarks()
@@ -145,7 +138,6 @@ function SongPreviewPage() {
   const [bookmarkSongIds, setBookmarkSongIds] = useState<number[]>([])
   const [showExportFormatModal, setShowExportFormatModal] = useState(false)
   const [showResetCountConfirm, setShowResetCountConfirm] = useState(false)
-  const [showEditAsTextModal, setShowEditAsTextModal] = useState(false)
   const [isLargeScreen, setIsLargeScreen] = useState(false)
   const [selectedSlideIndex, setSelectedSlideIndex] = useState(0)
   const [isEditMode, setIsEditMode] = useState(false)
@@ -254,49 +246,7 @@ function SongPreviewPage() {
     navigate({ to: '/songs/$songId/edit', params: { songId } })
   }, [navigate, songId])
 
-  const handleSlideEdit = useCallback(
-    async (slideId: number, content: string) => {
-      await upsertSlide.mutateAsync({
-        id: slideId,
-        songId: numericId,
-        content,
-      })
-    },
-    [upsertSlide, numericId],
-  )
-
-  const handleSlideDelete = useCallback(
-    async (slideId: number) => {
-      await deleteSlide.mutateAsync({
-        slideId,
-        songId: numericId,
-      })
-    },
-    [deleteSlide, numericId],
-  )
-
-  const handleSlideAdd = useCallback(async () => {
-    await upsertSlide.mutateAsync({
-      songId: numericId,
-      content: '<p><br></p>',
-    })
-  }, [upsertSlide, numericId])
-
-  const handleSlidesReorder = useCallback(
-    async (slideIds: number[]) => {
-      await reorderSlides.mutateAsync({
-        songId: numericId,
-        slideIds,
-      })
-    },
-    [reorderSlides, numericId],
-  )
-
-  const isMutating =
-    upsertSlide.isPending ||
-    deleteSlide.isPending ||
-    reorderSlides.isPending ||
-    upsertSong.isPending
+  const isMutating = upsertSong.isPending
 
   const handleToggleEditMode = useCallback(() => {
     setPendingExit(false)
@@ -319,21 +269,8 @@ function SongPreviewPage() {
     }
   }, [pendingExit, isMutating])
 
-  // Convert SongSlide[] to LocalSlide[] for the text modal
-  const editAsTextSlides = useMemo(() => {
-    if (!song) return []
-    return [...song.slides]
-      .sort((a, b) => a.sortOrder - b.sortOrder)
-      .map((s) => ({
-        id: s.id,
-        content: s.content,
-        sortOrder: s.sortOrder,
-        label: s.label,
-      }))
-  }, [song])
-
   const handleEditAsTextApply = useCallback(
-    (
+    async (
       newSlides: Array<{
         id: string | number
         content: string
@@ -342,7 +279,7 @@ function SongPreviewPage() {
       }>,
     ) => {
       if (!song) return
-      void upsertSong.mutateAsync({
+      await upsertSong.mutateAsync({
         id: numericId,
         title: song.title,
         slides: newSlides.map((s, i) => ({
@@ -678,11 +615,7 @@ function SongPreviewPage() {
               onSave={handleSave}
               onSlideClick={handleSlideClick}
               isSaving={pendingExit || isMutating}
-              onSlideEdit={handleSlideEdit}
-              onSlideDelete={handleSlideDelete}
-              onSlideAdd={handleSlideAdd}
-              onSlidesReorder={handleSlidesReorder}
-              onEditAsText={() => setShowEditAsTextModal(true)}
+              onApplyText={handleEditAsTextApply}
             />
           </div>
         </div>
@@ -784,13 +717,6 @@ function SongPreviewPage() {
         confirmLabel={t('resetCountDialog.confirm')}
         onConfirm={handleResetPresentationCount}
         onCancel={() => setShowResetCountConfirm(false)}
-      />
-
-      <EditSlidesAsTextModal
-        isOpen={showEditAsTextModal}
-        onClose={() => setShowEditAsTextModal(false)}
-        slides={editAsTextSlides}
-        onSlidesChange={handleEditAsTextApply}
       />
     </div>
   )
