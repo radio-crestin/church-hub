@@ -322,14 +322,24 @@ export function broadcastAudioForTarget(
 
 /**
  * Broadcast a translated text snippet (the live transcript of the target
- * language) to every listener currently subscribed to that target.
+ * language) to every listener currently subscribed to that target. Carries
+ * an entry id + action so the listener can replace the in-progress line
+ * (action='update') or start a fresh one (action='add').
  */
 export function broadcastTextForTarget(
   targetId: string,
   text: string,
+  entryId: string,
+  action: 'add' | 'update',
 ): void {
   if (listeners.size === 0 || !text) return
-  const message = JSON.stringify({ type: 'text', targetId, text })
+  const message = JSON.stringify({
+    type: 'text',
+    targetId,
+    text,
+    entryId,
+    action,
+  })
   for (const [id, listener] of listeners) {
     if (
       listener.selectedTargetId === targetId &&

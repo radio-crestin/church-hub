@@ -63,14 +63,12 @@ setAudioOutputCallback((targetId, pcmData) => {
 
 setTranscriptionCallback((entry, action) => {
   broadcastTranslationTranscription(entry, action)
-  // Forward translation snippets to WebRTC listeners so they can render a
-  // live transcript even in text-only mode (or alongside audio).
-  if (
-    entry.type === 'translation' &&
-    entry.targetId &&
-    action === 'add'
-  ) {
-    broadcastTextForTarget(entry.targetId, entry.text)
+  // Forward EVERY translation update to WebRTC listeners so words stream in
+  // live instead of arriving in lump-sum at the end. We carry the entry id
+  // + action so the listener can replace the in-progress line (update) or
+  // start a fresh one (add).
+  if (entry.type === 'translation' && entry.targetId) {
+    broadcastTextForTarget(entry.targetId, entry.text, entry.id, action)
   }
 })
 
