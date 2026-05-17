@@ -84,6 +84,14 @@ function updateState(partial: Partial<LiveTranslationState>) {
   stateCallback?.(currentState)
 }
 
+/** Mutate currentState without firing the (large) full-state broadcast. Use
+ *  this for high-frequency or already-narrowly-broadcast updates (audio
+ *  levels, transcription deltas). The dedicated event channel for that
+ *  signal is responsible for notifying clients. */
+function mutateState(partial: Partial<LiveTranslationState>) {
+  currentState = { ...currentState, ...partial }
+}
+
 function generateId(): string {
   return `t-${Date.now()}-${++transcriptionIdCounter}`
 }
@@ -142,13 +150,19 @@ function appendOrCreateEntry(
     }
     transcriptionCallback?.(entry, 'add')
   }
-  updateState({ transcription: currentState.transcription })
+  // No full-state broadcast here — transcriptionCallback already streamed
+  // the granular update to clients. Skipping the wire round-trip for the
+  // whole transcription array keeps deltas truly real-time.
+  mutateState({ transcription: currentState.transcription })
 }
 
 function handleMicInput(pcmBuffer: Buffer): void {
   const level = calculateAudioLevel(pcmBuffer)
   audioLevelCallback?.(level, 'input')
-  updateState({ inputAudioLevel: level })
+  // Audio level fires ~50 Hz — use the dedicated translation_audio_level
+  // event (already broadcast above); don't pile a full-state broadcast
+  // on top of it or transcription deltas get stuck behind a fat queue.
+  mutateState({ inputAudioLevel: level })
   for (const rt of runningTargets.values()) {
     rt.engine.sendAudio(pcmBuffer)
   }
@@ -274,9 +288,10 @@ function handleEngineAudio(target: TranslationTarget, pcm: Buffer): void {
   if (rt) rt.outputLevel = level
   audioLevelCallback?.(level, 'output', target.id)
 
-  // Update primary target's output level on top-level state for back-compat
+  // Update primary target's output level on top-level state for back-compat.
+  // High-frequency — narrow-broadcast only via audioLevelCallback above.
   if (target.id === primaryTargetId) {
-    updateState({ outputAudioLevel: level })
+    mutateState({ outputAudioLevel: level })
   }
 
   audioOutputCallback?.(target.id, pcm)
