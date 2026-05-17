@@ -47,9 +47,9 @@ export function createCorsMiddleware(): MiddlewareHandler<{
  */
 export function isAllowedOrigin(
   origin: string | undefined,
-  allowedOrigins: string
+  allowedOrigins: string | undefined
 ): boolean {
-  if (!origin) return false
+  if (!origin || !allowedOrigins) return false
   const origins = allowedOrigins.split(',').map((o) => o.trim())
   return origins.includes(origin)
 }
