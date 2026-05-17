@@ -134,6 +134,13 @@ type DuplicateCheckResult =
   | { status: 'different'; songId: number }
   | { status: 'none' }
 
+function deriveTitleFromFilename(filename: string | null): string {
+  if (!filename) return ''
+  // Strip any path prefix (handles both / and \ separators) and the extension.
+  const base = filename.split(/[\\/]/).pop() ?? filename
+  return base.replace(/\.[^.]+$/, '').trim()
+}
+
 /**
  * Checks if a song with the given title exists and compares content
  * Returns the duplicate status and existing song ID if found
@@ -204,14 +211,14 @@ export function FileDropZoneProvider({ children }: Props) {
   // Direct import function
   const importPptxAsSong = useCallback(
     async (parsed: ParsedPptx, sourceFilename: string | null) => {
+      // Prefer the filename as the song title — PPTX `parsed.title` is often
+      // just the first slide's text, not what the user named the file.
+      const title = deriveTitleFromFilename(sourceFilename) || parsed.title
       const importedSlides = parsed.slides.map((slide) => ({
         content: slide.htmlContent,
       }))
 
-      const duplicateResult = await checkForDuplicate(
-        parsed.title,
-        importedSlides,
-      )
+      const duplicateResult = await checkForDuplicate(title, importedSlides)
 
       if (duplicateResult.status === 'identical') {
         navigateToSong(duplicateResult.songId)
@@ -221,7 +228,7 @@ export function FileDropZoneProvider({ children }: Props) {
       if (duplicateResult.status === 'different') {
         setPendingImport({
           type: 'pptx',
-          title: parsed.title,
+          title,
           existingId: duplicateResult.songId,
           pptxData: { parsed, sourceFilename },
         })
@@ -231,7 +238,7 @@ export function FileDropZoneProvider({ children }: Props) {
 
       // No duplicate, create new song
       const result = await upsertMutation.mutateAsync({
-        title: parsed.title,
+        title,
         sourceFilename,
         slides: parsed.slides.map((slide, idx) => ({
           content: slide.htmlContent,

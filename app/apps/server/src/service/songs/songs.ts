@@ -1,7 +1,6 @@
 import { asc, eq, inArray } from 'drizzle-orm'
 
 import { getCategoryById } from './categories'
-import { sanitizeSongTitle } from './sanitizeTitle'
 import { getSlidesBySongId } from './song-slides'
 import type {
   BatchImportResult,
@@ -396,8 +395,9 @@ export function getAllSongsWithSlides(
 export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
   const db = getDatabase()
   const now = new Date()
-  // Sanitize title - removes special chars but preserves numbers and hyphens
-  const title = sanitizeSongTitle(input.title)
+  // Preserve the user's title verbatim (trim only). Sanitization stripped
+  // legitimate content like leading hymn numbers and punctuation.
+  const title = input.title.trim() || 'Untitled Song'
 
   let songId: number
 
@@ -743,8 +743,8 @@ export function batchImportSongs(
 
       try {
         const categoryId = input.categoryId ?? defaultCategoryId ?? null
-        // Sanitize title - removes special chars but preserves numbers and hyphens
-        const title = sanitizeSongTitle(input.title || '')
+        // Preserve title verbatim — do not strip numbers or punctuation.
+        const title = (input.title || '').trim() || 'Untitled Song'
         const existing = existingByTitle.get(title.toLowerCase()) ?? null
 
         if (existing && skipManuallyEdited && existing.lastManualEdit) {
