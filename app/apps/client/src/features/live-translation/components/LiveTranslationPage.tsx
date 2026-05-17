@@ -23,6 +23,7 @@ import { TranscriptionDisplay } from './TranscriptionDisplay'
 import {
   LANGUAGES,
   type OutputMode,
+  type OutputModality,
   type TranslationEngine,
   useLiveTranslation,
   voicesForEngine,
@@ -272,6 +273,38 @@ export function LiveTranslationPage() {
             </div>
           </div>
 
+          {/* Output Modality */}
+          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+            <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-1.5">
+              {t('settings.outputModality')}
+            </label>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+              {t('settings.outputModalityDescription')}
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {(['audio_text', 'text_only'] as OutputModality[]).map((mod) => (
+                <button
+                  key={mod}
+                  type="button"
+                  onClick={() => updateSetting('outputModality', mod)}
+                  disabled={state.isActive}
+                  className={`p-3 text-left rounded-lg border-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                    settings.outputModality === mod
+                      ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
+                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                  }`}
+                >
+                  <div className="font-semibold text-sm text-gray-900 dark:text-white">
+                    {t(`settings.outputModality_${mod}`)}
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    {t(`settings.outputModality_${mod}_description`)}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Source Language */}
           <div className="p-4 border-b border-gray-200 dark:border-gray-700">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
@@ -306,7 +339,9 @@ export function LiveTranslationPage() {
                   key={target.id}
                   className="flex flex-col sm:flex-row gap-2 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700"
                 >
-                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div
+                    className={`flex-1 grid grid-cols-1 gap-2 ${settings.outputModality === 'text_only' ? '' : 'sm:grid-cols-2'}`}
+                  >
                     <div>
                       <label className="block text-[10px] uppercase font-semibold text-gray-500 dark:text-gray-400 mb-1">
                         {t('settings.targetLanguage')}
@@ -323,23 +358,26 @@ export function LiveTranslationPage() {
                         allowClear={false}
                       />
                     </div>
-                    <div>
-                      <label className="flex items-center gap-1.5 text-[10px] uppercase font-semibold text-gray-500 dark:text-gray-400 mb-1">
-                        <Volume2 className="w-3 h-3" />
-                        {t('settings.voice')}
-                      </label>
-                      <Combobox
-                        options={voiceOptions}
-                        value={target.voiceName}
-                        onChange={(v) =>
-                          updateTarget(target.id, {
-                            voiceName: (v as string) || voiceOptions[0]?.value || '',
-                          })
-                        }
-                        disabled={state.isActive}
-                        allowClear={false}
-                      />
-                    </div>
+                    {settings.outputModality === 'audio_text' && (
+                      <div>
+                        <label className="flex items-center gap-1.5 text-[10px] uppercase font-semibold text-gray-500 dark:text-gray-400 mb-1">
+                          <Volume2 className="w-3 h-3" />
+                          {t('settings.voice')}
+                        </label>
+                        <Combobox
+                          options={voiceOptions}
+                          value={target.voiceName}
+                          onChange={(v) =>
+                            updateTarget(target.id, {
+                              voiceName:
+                                (v as string) || voiceOptions[0]?.value || '',
+                            })
+                          }
+                          disabled={state.isActive}
+                          allowClear={false}
+                        />
+                      </div>
+                    )}
                   </div>
                   <div className="flex sm:flex-col gap-2 sm:items-end">
                     <button

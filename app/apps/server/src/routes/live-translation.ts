@@ -2,6 +2,12 @@ import type { RequestContext } from '../middleware'
 import { getAudioDevices } from '../service/live-translation/audio-io'
 import { defaultVoiceForEngine } from '../service/live-translation/engines'
 import {
+  defaultSettings,
+  generateTargetId,
+  migrateSettings,
+  type PersistedSettings,
+} from '../service/live-translation/migrate-settings'
+import {
   clearTranscription,
   getTranslationState,
   setAudioLevelCallback,
@@ -25,6 +31,7 @@ import {
 } from '../service/live-translation/stream'
 import type {
   LiveTranslationConfig,
+  OutputModality,
   TranslationEngine,
   TranslationTarget,
 } from '../service/live-translation/types'
@@ -146,107 +153,6 @@ export async function handleLiveTranslationRoutes(
 
 const SETTINGS_KEY = 'live_translation_settings'
 
-interface PersistedSettings {
-  engine: TranslationEngine
-  sourceLanguage: string
-  targets: TranslationTarget[]
-  primaryTargetId?: string
-  geminiApiKey?: string
-  openaiApiKey?: string
-  inputDeviceId?: number | null
-  outputDeviceId?: number | null
-  outputMode?: 'device' | 'webrtc' | 'both'
-}
-
-function generateTargetId(): string {
-  return `tgt-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
-}
-
-function defaultSettings(): PersistedSettings {
-  return {
-    engine: 'openai',
-    sourceLanguage: 'ro',
-    targets: [
-      {
-        id: generateTargetId(),
-        targetLanguage: 'en',
-        voiceName: defaultVoiceForEngine('openai'),
-      },
-    ],
-    geminiApiKey: '',
-    openaiApiKey: '',
-    inputDeviceId: null,
-    outputDeviceId: null,
-    outputMode: 'device',
-  }
-}
-
-/**
- * Migrate legacy single-target settings shape:
- *   { sourceLanguage, targetLanguage, voiceName, geminiApiKey, ... }
- * into the new multi-target shape with targets[].
- */
-function migrateSettings(raw: unknown): PersistedSettings {
-  const obj = (raw as Record<string, unknown>) || {}
-  const defaults = defaultSettings()
-
-  const engine: TranslationEngine =
-    obj.engine === 'gemini' || obj.engine === 'openai'
-      ? obj.engine
-      : defaults.engine
-
-  let targets: TranslationTarget[]
-  if (Array.isArray(obj.targets) && obj.targets.length > 0) {
-    targets = (obj.targets as Array<Record<string, unknown>>).map((t) => ({
-      id: typeof t.id === 'string' ? t.id : generateTargetId(),
-      targetLanguage:
-        typeof t.targetLanguage === 'string' ? t.targetLanguage : 'en',
-      voiceName:
-        typeof t.voiceName === 'string'
-          ? t.voiceName
-          : defaultVoiceForEngine(engine),
-    }))
-  } else {
-    // Legacy shape: single targetLanguage + voiceName
-    targets = [
-      {
-        id: generateTargetId(),
-        targetLanguage:
-          typeof obj.targetLanguage === 'string' ? obj.targetLanguage : 'en',
-        voiceName:
-          typeof obj.voiceName === 'string'
-            ? obj.voiceName
-            : defaultVoiceForEngine(engine),
-      },
-    ]
-  }
-
-  return {
-    engine,
-    sourceLanguage:
-      typeof obj.sourceLanguage === 'string' ? obj.sourceLanguage : 'ro',
-    targets,
-    primaryTargetId:
-      typeof obj.primaryTargetId === 'string'
-        ? obj.primaryTargetId
-        : targets[0]?.id,
-    geminiApiKey:
-      typeof obj.geminiApiKey === 'string' ? obj.geminiApiKey : undefined,
-    openaiApiKey:
-      typeof obj.openaiApiKey === 'string' ? obj.openaiApiKey : undefined,
-    inputDeviceId:
-      typeof obj.inputDeviceId === 'number' ? obj.inputDeviceId : null,
-    outputDeviceId:
-      typeof obj.outputDeviceId === 'number' ? obj.outputDeviceId : null,
-    outputMode:
-      obj.outputMode === 'device' ||
-      obj.outputMode === 'webrtc' ||
-      obj.outputMode === 'both'
-        ? obj.outputMode
-        : defaults.outputMode,
-  }
-}
-
 function loadPersistedSettings(): PersistedSettings {
   const saved = getSetting('app_settings', SETTINGS_KEY)
   if (!saved) return defaultSettings()
@@ -319,8 +225,14 @@ function handleStart(req: Request): Response {
         )
       }
 
+      const outputModality: OutputModality =
+        body.outputModality === 'text_only' || body.outputModality === 'audio_text'
+          ? body.outputModality
+          : saved.outputModality
+
       const config: LiveTranslationConfig = {
         engine,
+        outputModality,
         sourceLanguage: body.sourceLanguage || saved.sourceLanguage,
         targets,
         primaryTargetId:

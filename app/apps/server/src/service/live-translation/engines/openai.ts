@@ -125,6 +125,7 @@ class OpenAIEngineSession implements EngineSession {
       this.cfg.sourceLanguage,
       this.cfg.targetLanguage,
     )
+    const textOnly = this.cfg.outputModality === 'text_only'
     // GA session schema (OpenAI Realtime, May 2026) — audio is nested under
     // session.audio.{input,output}; modalities renamed to output_modalities.
     this.sendRaw(
@@ -133,7 +134,7 @@ class OpenAIEngineSession implements EngineSession {
         session: {
           model: 'gpt-realtime',
           instructions: systemPrompt,
-          output_modalities: ['audio'],
+          output_modalities: textOnly ? ['text'] : ['audio'],
           audio: {
             input: {
               format: { type: 'audio/pcm', rate: TARGET_SAMPLE_RATE },
@@ -145,10 +146,14 @@ class OpenAIEngineSession implements EngineSession {
                 silence_duration_ms: 700,
               },
             },
-            output: {
-              format: { type: 'audio/pcm' },
-              voice: this.cfg.voiceName,
-            },
+            ...(textOnly
+              ? {}
+              : {
+                  output: {
+                    format: { type: 'audio/pcm' },
+                    voice: this.cfg.voiceName,
+                  },
+                }),
           },
         },
       }),

@@ -15,6 +15,12 @@
     "button": "Settings",
     "engine": "Engine",
     "engineDefault": "default",
+    "outputModality": "Output type",
+    "outputModalityDescription": "Translate to spoken audio + transcript, or to a text transcript only (cheaper, faster).",
+    "outputModality_audio_text": "Audio + text",
+    "outputModality_audio_text_description": "Synthesizes a spoken translation and shows the transcript.",
+    "outputModality_text_only": "Text only",
+    "outputModality_text_only_description": "Transcript only — no spoken audio. Lower cost & latency.",
     "apiKey": {
       "openai": "OpenAI API Key",
       "gemini": "Gemini API Key"
