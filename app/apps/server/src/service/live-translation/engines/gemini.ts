@@ -52,23 +52,30 @@ class GeminiEngineSession implements EngineSession {
     // Use the server's built-in VAD — far more reliable than manually
     // signaling activityStart/activityEnd, which silently produces no
     // output if forceEnd is never triggered.
+    // Audio mode includes voice config + both transcriptions; text mode
+    // strips audio-only fields. Notably `inputAudioTranscription` is only
+    // requested in audio mode — on the text-output preview it sometimes
+    // causes the server to close the bidi connection immediately.
+    const config = textOnly
+      ? {
+          responseModalities: [Modality.TEXT],
+          systemInstruction: systemPrompt,
+        }
+      : {
+          responseModalities: [Modality.AUDIO],
+          systemInstruction: systemPrompt,
+          speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: { voiceName: this.cfg.voiceName },
+            },
+          },
+          inputAudioTranscription: {},
+          outputAudioTranscription: {},
+        }
+
     this.session = await ai.live.connect({
       model,
-      config: {
-        responseModalities: textOnly ? [Modality.TEXT] : [Modality.AUDIO],
-        systemInstruction: systemPrompt,
-        ...(textOnly
-          ? {}
-          : {
-              speechConfig: {
-                voiceConfig: {
-                  prebuiltVoiceConfig: { voiceName: this.cfg.voiceName },
-                },
-              },
-              outputAudioTranscription: {},
-            }),
-        inputAudioTranscription: {},
-      },
+      config,
       callbacks: {
         onopen: () => {
           logger.info('Connected to Gemini Live API', {
@@ -80,14 +87,34 @@ class GeminiEngineSession implements EngineSession {
         },
         onmessage: (msg) => this.handleMessage(msg),
         onerror: (err) => {
+          const e = err as ErrorEvent
+          const detail = {
+            message: e?.message,
+            error: e?.error,
+            type: e?.type,
+            stringified: String(err),
+          }
           logger.error('Gemini error', {
             targetId: this.targetId,
-            error: String(err),
+            ...detail,
           })
-          this.handlers.onError(String(err))
+          this.handlers.onError(e?.message || String(err))
         },
-        onclose: () => {
-          logger.info('Gemini session closed', { targetId: this.targetId })
+        onclose: (ev) => {
+          const e = ev as CloseEvent
+          logger.info('Gemini session closed', {
+            targetId: this.targetId,
+            code: e?.code,
+            reason: e?.reason,
+            wasClean: e?.wasClean,
+          })
+          if (e?.code && e.code !== 1000) {
+            // Surface non-clean closes (e.g. 1007 invalid frame, 1011 server
+            // error, 4xx-mapped). Without this the host sees nothing.
+            this.handlers.onError(
+              `Gemini closed: ${e.code} ${e.reason || 'unknown'}`,
+            )
+          }
           this.handlers.onClose()
         },
       },
