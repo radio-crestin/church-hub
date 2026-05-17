@@ -268,7 +268,7 @@ describe('LiveTranslationPage', () => {
 
     render(<LiveTranslationPage />)
 
-    expect(screen.getByText(/input/i)).toBeInTheDocument()
-    expect(screen.getByText(/output/i)).toBeInTheDocument()
+    expect(screen.getByText('Input')).toBeInTheDocument()
+    expect(screen.getByText('Output')).toBeInTheDocument()
   })
 })
