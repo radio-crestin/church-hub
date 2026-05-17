@@ -142,7 +142,7 @@ export function MIDIDeviceSelector() {
             </label>
             <Combobox
               options={inputDeviceOptions}
-              value={midi.selectedInputId}
+              value={midi.selectedInputName}
               onChange={(value) =>
                 midi.selectInputDevice(value as string | null)
               }
@@ -170,7 +170,7 @@ export function MIDIDeviceSelector() {
             </label>
             <Combobox
               options={outputDeviceOptions}
-              value={midi.selectedOutputId}
+              value={midi.selectedOutputName}
               onChange={(value) =>
                 midi.selectOutputDevice(value as string | null)
               }
@@ -189,8 +189,8 @@ export function MIDIDeviceSelector() {
           </div>
 
           {/* Connection status */}
-          {(midi.selectedInputId ||
-            midi.selectedOutputId ||
+          {(midi.selectedInputName ||
+            midi.selectedOutputName ||
             midi.isReconnecting) && (
             <div className="flex items-center gap-2 pt-2">
               {midi.isReconnecting ? (
@@ -211,17 +211,17 @@ export function MIDIDeviceSelector() {
                 <>
                   <div
                     className={`w-2 h-2 rounded-full ${
-                      midi.selectedInputId && midi.selectedOutputId
+                      midi.selectedInputName && midi.selectedOutputName
                         ? 'bg-green-500'
                         : 'bg-yellow-500'
                     }`}
                   />
                   <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {midi.selectedInputId && midi.selectedOutputId
+                    {midi.selectedInputName && midi.selectedOutputName
                       ? t('sections.shortcuts.midi.fullyConnected', {
                           defaultValue: 'Input and output connected',
                         })
-                      : midi.selectedInputId
+                      : midi.selectedInputName
                         ? t('sections.shortcuts.midi.inputOnly', {
                             defaultValue: 'Input connected (no LED feedback)',
                           })

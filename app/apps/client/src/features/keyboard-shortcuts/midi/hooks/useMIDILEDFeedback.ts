@@ -36,7 +36,7 @@ export function useMIDILEDFeedback({
   const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    if (!midi || !midi.isEnabled || !midi.selectedOutputId) {
+    if (!midi || !midi.isEnabled || !midi.selectedOutputName) {
       logger.debug('LED feedback disabled: no MIDI output')
       return
     }
@@ -116,7 +116,7 @@ export function useMIDILEDFeedback({
 
   // Force refresh all LEDs - re-sends current states to override hardware toggle
   const refreshLEDs = useCallback(() => {
-    if (!midi || !midi.isEnabled || !midi.selectedOutputId) return
+    if (!midi || !midi.isEnabled || !midi.selectedOutputName) return
 
     // Re-send all current LED states to override hardware toggle
     previousLEDStatesRef.current.forEach((on, note) => {

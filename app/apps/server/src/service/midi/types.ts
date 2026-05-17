@@ -20,12 +20,17 @@ export interface MIDIInputMessage {
 }
 
 /**
- * MIDI configuration stored in settings
+ * MIDI configuration stored in settings.
+ *
+ * Devices are identified by name, not index. The OS-assigned index can change
+ * when devices are plugged/unplugged in a different order, so persisting an
+ * index would silently bind to the wrong controller after a reboot. Names are
+ * stable per device (or close enough that the user can re-select intentionally).
  */
 export interface MIDIConfig {
   enabled: boolean
-  inputDeviceId: number | null
-  outputDeviceId: number | null
+  inputDeviceName: string | null
+  outputDeviceName: string | null
 }
 
 /**
@@ -33,8 +38,8 @@ export interface MIDIConfig {
  */
 export const DEFAULT_MIDI_CONFIG: MIDIConfig = {
   enabled: false,
-  inputDeviceId: null,
-  outputDeviceId: null,
+  inputDeviceName: null,
+  outputDeviceName: null,
 }
 
 /**
