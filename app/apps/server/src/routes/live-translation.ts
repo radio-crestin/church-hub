@@ -1,5 +1,6 @@
 import type { RequestContext } from '../middleware'
 import { getAudioDevices } from '../service/live-translation/audio-io'
+import { defaultVoiceForEngine } from '../service/live-translation/engines'
 import {
   clearTranscription,
   getTranslationState,
@@ -9,16 +10,24 @@ import {
   setTranscriptionCallback,
   startTranslation,
   stopTranslation,
+  updateListenerCounts,
 } from '../service/live-translation/session'
 import {
-  broadcastAudioToListeners,
+  broadcastAudioForTarget,
   getListenerCount,
+  getListenerCountsByTarget,
   getStreamSecret,
   resetStreamSecret,
+  setAvailableLanguages,
+  setListenerCountsCallback,
   startSignalingRelay,
   stopSignalingRelay,
 } from '../service/live-translation/stream'
-import type { LiveTranslationConfig } from '../service/live-translation/types'
+import type {
+  LiveTranslationConfig,
+  TranslationEngine,
+  TranslationTarget,
+} from '../service/live-translation/types'
 import { getSetting, upsertSetting } from '../service/settings'
 import { log } from '../utils/fileLogger'
 import {
@@ -35,23 +44,25 @@ const logger = {
     log('live-translation-route', 'error', msg, data),
 }
 
-// Register callbacks to broadcast via WebSocket
 setStateCallback((state) => {
   broadcastTranslationState(state)
 })
 
-setAudioOutputCallback((pcmData) => {
-  broadcastTranslationAudioOutput(pcmData)
-  // Also broadcast to WebRTC/stream listeners
-  broadcastAudioToListeners(pcmData)
+setAudioOutputCallback((targetId, pcmData) => {
+  broadcastTranslationAudioOutput(targetId, pcmData)
+  broadcastAudioForTarget(targetId, pcmData)
 })
 
 setTranscriptionCallback((entry, action) => {
   broadcastTranslationTranscription(entry, action)
 })
 
-setAudioLevelCallback((level, type) => {
-  broadcastTranslationAudioLevel(level, type)
+setAudioLevelCallback((level, type, targetId) => {
+  broadcastTranslationAudioLevel(level, type, targetId)
+})
+
+setListenerCountsCallback((counts) => {
+  updateListenerCounts(counts)
 })
 
 export async function handleLiveTranslationRoutes(
@@ -59,28 +70,23 @@ export async function handleLiveTranslationRoutes(
   url: URL,
   _context: RequestContext,
 ): Promise<Response | null> {
-  // GET /api/live-translation/state
   if (req.method === 'GET' && url.pathname === '/api/live-translation/state') {
     return Response.json(getTranslationState())
   }
 
-  // POST /api/live-translation/start
   if (req.method === 'POST' && url.pathname === '/api/live-translation/start') {
     return handleStart(req)
   }
 
-  // POST /api/live-translation/stop
   if (req.method === 'POST' && url.pathname === '/api/live-translation/stop') {
     return handleStop()
   }
 
-  // POST /api/live-translation/clear
   if (req.method === 'POST' && url.pathname === '/api/live-translation/clear') {
     clearTranscription()
     return Response.json({ success: true })
   }
 
-  // GET /api/live-translation/devices
   if (
     req.method === 'GET' &&
     url.pathname === '/api/live-translation/devices'
@@ -89,7 +95,6 @@ export async function handleLiveTranslationRoutes(
       return Response.json(await getAudioDevices())
     } catch (error) {
       logger.error('Failed to get audio devices', { error: String(error) })
-      // Audio library not available on this platform — return empty device list
       return Response.json({
         devices: [],
         defaultInputId: -1,
@@ -98,7 +103,6 @@ export async function handleLiveTranslationRoutes(
     }
   }
 
-  // GET /api/live-translation/settings
   if (
     req.method === 'GET' &&
     url.pathname === '/api/live-translation/settings'
@@ -106,7 +110,6 @@ export async function handleLiveTranslationRoutes(
     return handleGetSettings()
   }
 
-  // PUT /api/live-translation/settings
   if (
     req.method === 'PUT' &&
     url.pathname === '/api/live-translation/settings'
@@ -114,7 +117,6 @@ export async function handleLiveTranslationRoutes(
     return handleSaveSettings(req)
   }
 
-  // GET /api/live-translation/stream-secret
   if (
     req.method === 'GET' &&
     url.pathname === '/api/live-translation/stream-secret'
@@ -122,7 +124,6 @@ export async function handleLiveTranslationRoutes(
     return Response.json({ secret: getStreamSecret() })
   }
 
-  // POST /api/live-translation/stream-secret/reset
   if (
     req.method === 'POST' &&
     url.pathname === '/api/live-translation/stream-secret/reset'
@@ -130,60 +131,225 @@ export async function handleLiveTranslationRoutes(
     return Response.json({ secret: resetStreamSecret() })
   }
 
-  // GET /api/live-translation/stream-info
   if (
     req.method === 'GET' &&
     url.pathname === '/api/live-translation/stream-info'
   ) {
-    return Response.json({ listeners: getListenerCount() })
+    return Response.json({
+      listeners: getListenerCount(),
+      countsByTarget: getListenerCountsByTarget(),
+    })
   }
 
   return null
+}
+
+const SETTINGS_KEY = 'live_translation_settings'
+
+interface PersistedSettings {
+  engine: TranslationEngine
+  sourceLanguage: string
+  targets: TranslationTarget[]
+  primaryTargetId?: string
+  geminiApiKey?: string
+  openaiApiKey?: string
+  inputDeviceId?: number | null
+  outputDeviceId?: number | null
+  outputMode?: 'device' | 'webrtc' | 'both'
+}
+
+function generateTargetId(): string {
+  return `tgt-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
+}
+
+function defaultSettings(): PersistedSettings {
+  return {
+    engine: 'openai',
+    sourceLanguage: 'ro',
+    targets: [
+      {
+        id: generateTargetId(),
+        targetLanguage: 'en',
+        voiceName: defaultVoiceForEngine('openai'),
+      },
+    ],
+    geminiApiKey: '',
+    openaiApiKey: '',
+    inputDeviceId: null,
+    outputDeviceId: null,
+    outputMode: 'device',
+  }
+}
+
+/**
+ * Migrate legacy single-target settings shape:
+ *   { sourceLanguage, targetLanguage, voiceName, geminiApiKey, ... }
+ * into the new multi-target shape with targets[].
+ */
+function migrateSettings(raw: unknown): PersistedSettings {
+  const obj = (raw as Record<string, unknown>) || {}
+  const defaults = defaultSettings()
+
+  const engine: TranslationEngine =
+    obj.engine === 'gemini' || obj.engine === 'openai'
+      ? obj.engine
+      : defaults.engine
+
+  let targets: TranslationTarget[]
+  if (Array.isArray(obj.targets) && obj.targets.length > 0) {
+    targets = (obj.targets as Array<Record<string, unknown>>).map((t) => ({
+      id: typeof t.id === 'string' ? t.id : generateTargetId(),
+      targetLanguage:
+        typeof t.targetLanguage === 'string' ? t.targetLanguage : 'en',
+      voiceName:
+        typeof t.voiceName === 'string'
+          ? t.voiceName
+          : defaultVoiceForEngine(engine),
+    }))
+  } else {
+    // Legacy shape: single targetLanguage + voiceName
+    targets = [
+      {
+        id: generateTargetId(),
+        targetLanguage:
+          typeof obj.targetLanguage === 'string' ? obj.targetLanguage : 'en',
+        voiceName:
+          typeof obj.voiceName === 'string'
+            ? obj.voiceName
+            : defaultVoiceForEngine(engine),
+      },
+    ]
+  }
+
+  return {
+    engine,
+    sourceLanguage:
+      typeof obj.sourceLanguage === 'string' ? obj.sourceLanguage : 'ro',
+    targets,
+    primaryTargetId:
+      typeof obj.primaryTargetId === 'string'
+        ? obj.primaryTargetId
+        : targets[0]?.id,
+    geminiApiKey:
+      typeof obj.geminiApiKey === 'string' ? obj.geminiApiKey : undefined,
+    openaiApiKey:
+      typeof obj.openaiApiKey === 'string' ? obj.openaiApiKey : undefined,
+    inputDeviceId:
+      typeof obj.inputDeviceId === 'number' ? obj.inputDeviceId : null,
+    outputDeviceId:
+      typeof obj.outputDeviceId === 'number' ? obj.outputDeviceId : null,
+    outputMode:
+      obj.outputMode === 'device' ||
+      obj.outputMode === 'webrtc' ||
+      obj.outputMode === 'both'
+        ? obj.outputMode
+        : defaults.outputMode,
+  }
+}
+
+function loadPersistedSettings(): PersistedSettings {
+  const saved = getSetting('app_settings', SETTINGS_KEY)
+  if (!saved) return defaultSettings()
+  try {
+    return migrateSettings(JSON.parse(saved.value))
+  } catch {
+    return defaultSettings()
+  }
+}
+
+function handleGetSettings(): Response {
+  return Response.json(loadPersistedSettings())
+}
+
+function handleSaveSettings(req: Request): Response {
+  const savePromise = (async () => {
+    try {
+      const body = await req.json()
+      const migrated = migrateSettings(body)
+      upsertSetting('app_settings', {
+        key: SETTINGS_KEY,
+        value: JSON.stringify(migrated),
+      })
+      return Response.json({ success: true, settings: migrated })
+    } catch (error) {
+      logger.error('Failed to save settings', { error: String(error) })
+      return Response.json({ error: String(error) }, { status: 500 })
+    }
+  })()
+  return savePromise as unknown as Response
 }
 
 function handleStart(req: Request): Response {
   const startPromise = (async () => {
     try {
       const body = (await req.json()) as Partial<LiveTranslationConfig>
+      const saved = loadPersistedSettings()
 
-      // Use provided key or fall back to saved settings
-      if (!body.geminiApiKey) {
-        const saved = getSetting('app_settings', SETTINGS_KEY)
-        if (saved) {
-          const parsed = JSON.parse(saved.value)
-          body.geminiApiKey = parsed.geminiApiKey
-        }
+      const engine: TranslationEngine =
+        body.engine === 'gemini' || body.engine === 'openai'
+          ? body.engine
+          : saved.engine
+
+      const targets: TranslationTarget[] =
+        Array.isArray(body.targets) && body.targets.length > 0
+          ? body.targets.map((t) => ({
+              id: t.id || generateTargetId(),
+              targetLanguage: t.targetLanguage,
+              voiceName: t.voiceName || defaultVoiceForEngine(engine),
+            }))
+          : saved.targets
+
+      if (!targets || targets.length === 0) {
+        return Response.json(
+          { error: 'At least one target language is required' },
+          { status: 400 },
+        )
       }
 
-      if (!body.geminiApiKey) {
+      const geminiApiKey = body.geminiApiKey || saved.geminiApiKey
+      const openaiApiKey = body.openaiApiKey || saved.openaiApiKey
+
+      const apiKey = engine === 'gemini' ? geminiApiKey : openaiApiKey
+      if (!apiKey) {
         return Response.json(
-          { error: 'Gemini API key is required' },
+          {
+            error: `${engine === 'gemini' ? 'Gemini' : 'OpenAI'} API key is required`,
+          },
           { status: 400 },
         )
       }
 
       const config: LiveTranslationConfig = {
-        sourceLanguage: body.sourceLanguage || 'ro',
-        targetLanguage: body.targetLanguage || 'en',
-        voiceName: body.voiceName || 'Kore',
-        geminiApiKey: body.geminiApiKey,
-        inputDeviceId: body.inputDeviceId,
-        outputDeviceId: body.outputDeviceId,
-        outputMode: body.outputMode ?? 'device',
+        engine,
+        sourceLanguage: body.sourceLanguage || saved.sourceLanguage,
+        targets,
+        primaryTargetId:
+          body.primaryTargetId || saved.primaryTargetId || targets[0]?.id,
+        geminiApiKey,
+        openaiApiKey,
+        inputDeviceId:
+          body.inputDeviceId ?? (saved.inputDeviceId ?? undefined),
+        outputDeviceId:
+          body.outputDeviceId ?? (saved.outputDeviceId ?? undefined),
+        outputMode: body.outputMode ?? saved.outputMode ?? 'device',
       }
+
+      // Publish target languages to listeners BEFORE starting the relay
+      setAvailableLanguages(
+        targets.map((t) => ({ targetId: t.id, code: t.targetLanguage })),
+      )
 
       await startTranslation(config)
 
-      // Start signaling relay if WebRTC output is enabled
-      const useWebrtc =
-        config.outputMode === 'webrtc' || config.outputMode === 'both'
-      if (useWebrtc) {
-        await startSignalingRelay()
-      }
+      // Always start the signaling relay — listeners use a single link
+      // regardless of outputMode. (Device-only output still allows external
+      // listeners to connect to the configured target languages.)
+      await startSignalingRelay()
 
       logger.info('Translation started', {
+        engine: config.engine,
         source: config.sourceLanguage,
-        target: config.targetLanguage,
+        targets: config.targets.map((t) => t.targetLanguage),
         outputMode: config.outputMode,
       })
 
@@ -193,8 +359,6 @@ function handleStart(req: Request): Response {
       return Response.json({ error: String(error) }, { status: 500 })
     }
   })()
-
-  // Return the promise - Bun handles async responses
   return startPromise as unknown as Response
 }
 
@@ -203,6 +367,7 @@ function handleStop(): Response {
     try {
       await stopSignalingRelay()
       await stopTranslation()
+      setAvailableLanguages([])
       logger.info('Translation stopped')
       return Response.json({ success: true })
     } catch (error) {
@@ -210,41 +375,5 @@ function handleStop(): Response {
       return Response.json({ error: String(error) }, { status: 500 })
     }
   })()
-
   return stopPromise as unknown as Response
-}
-
-const SETTINGS_KEY = 'live_translation_settings'
-
-function handleGetSettings(): Response {
-  const setting = getSetting('app_settings', SETTINGS_KEY)
-  if (!setting) {
-    return Response.json({
-      sourceLanguage: 'ro',
-      targetLanguage: 'en',
-      voiceName: 'Kore',
-      inputDeviceId: null,
-      outputDeviceId: null,
-    })
-  }
-  return Response.json(JSON.parse(setting.value))
-}
-
-function handleSaveSettings(req: Request): Response {
-  const savePromise = (async () => {
-    try {
-      const body = await req.json()
-      // Persist all settings including API key (encrypted at rest in DB)
-      upsertSetting('app_settings', {
-        key: SETTINGS_KEY,
-        value: JSON.stringify(body),
-      })
-      return Response.json({ success: true })
-    } catch (error) {
-      logger.error('Failed to save settings', { error: String(error) })
-      return Response.json({ error: String(error) }, { status: 500 })
-    }
-  })()
-
-  return savePromise as unknown as Response
 }
