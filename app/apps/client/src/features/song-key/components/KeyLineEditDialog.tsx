@@ -175,20 +175,14 @@ export const KeyLineEditDialog = forwardRef<KeyLineEditDialogHandle>(
                 inputMode="text"
                 enterKeyHint="done"
                 autoComplete="off"
-                autoCapitalize="words"
+                autoCapitalize="off"
                 autoCorrect="off"
                 spellCheck={false}
                 data-gramm="false"
                 data-gramm_editor="false"
                 data-enable-grammarly="false"
                 value={keyLine}
-                onChange={(e) => {
-                  const value = e.target.value
-                    .split(' ')
-                    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                    .join(' ')
-                  setKeyLine(value)
-                }}
+                onChange={(e) => setKeyLine(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={t('dialog.keyLinePlaceholder')}
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600
