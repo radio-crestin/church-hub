@@ -1,4 +1,4 @@
-import { X } from 'lucide-react'
+import { ExternalLink, X } from 'lucide-react'
 import {
   forwardRef,
   useEffect,
@@ -9,6 +9,7 @@ import {
 import { useTranslation } from 'react-i18next'
 
 import type { Song } from '../../songs/types'
+import { openSongWindow } from '../../songs/utils/openSongWindow'
 import { useUpdateSongKeyLine } from '../hooks/useUpdateSongKeyLine'
 
 export interface KeyLineEditDialogHandle {
@@ -155,9 +156,24 @@ export const KeyLineEditDialog = forwardRef<KeyLineEditDialogHandle>(
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   {t('dialog.songTitle')}
                 </label>
-                <p className="text-gray-900 dark:text-white font-medium break-words">
-                  {song.title}
-                </p>
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-gray-900 dark:text-white font-medium break-words min-w-0 flex-1">
+                    {song.title}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => openSongWindow(song.id, song.title)}
+                    title={t('dialog.openSong')}
+                    aria-label={t('dialog.openSong')}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium
+                      text-indigo-600 dark:text-indigo-400
+                      hover:bg-indigo-50 dark:hover:bg-indigo-900/30
+                      rounded-lg transition-colors shrink-0"
+                  >
+                    <ExternalLink size={16} />
+                    <span>{t('dialog.openSong')}</span>
+                  </button>
+                </div>
               </div>
             )}
 
