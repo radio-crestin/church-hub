@@ -82,7 +82,7 @@ export function AppLayout({ children }: AppLayoutProps) {
               </button>
             </div>
           </header>
-          <div className="p-3 pb-16 sm:p-4 sm:pb-16 md:p-6 md:pb-6 flex-1">
+          <div className="p-3 pb-16 sm:p-4 sm:pb-16 md:p-6 md:pb-6 flex-1 lg:min-h-0">
             {children}
           </div>
         </div>
