@@ -1,5 +1,6 @@
 import type { TranslationEngine } from '../types'
 import { createGeminiSession } from './gemini'
+import { createGeminiPipelineSession } from './gemini-pipeline'
 import { createOpenAISession } from './openai'
 import type { EngineHandlers, EngineSession, EngineSessionConfig } from './types'
 
@@ -10,6 +11,11 @@ export async function createEngineSession(
   handlers: EngineHandlers,
 ): Promise<EngineSession> {
   if (config.engine === 'gemini') {
+    // Text-only Gemini uses a two-stage pipeline (Flash Lite to transcribe,
+    // Flash to translate) because the bidi text-out preview returns 1011.
+    if (config.outputModality === 'text_only') {
+      return createGeminiPipelineSession(config, handlers)
+    }
     return createGeminiSession(config, handlers)
   }
   return createOpenAISession(config, handlers)
