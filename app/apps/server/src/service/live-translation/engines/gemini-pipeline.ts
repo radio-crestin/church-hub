@@ -15,26 +15,19 @@ const logger = {
     log('live-translation:gemini-pipeline', 'error', msg, data),
 }
 
-// Text-only pipeline: cheap models, no live bidi.
-//   Stage 1 — Flash Lite transcribes the captured audio chunk
-//   Stage 2 — Flash translates the transcript and streams the result
-// Falls back through several model id variants per stage so we don't break
-// if Google renames or deprecates one.
-const TRANSCRIBE_MODELS = [
-  'gemini-3.1-flash-lite',
-  'gemini-2.5-flash-lite',
-  'gemini-2.5-flash',
-] as const
-const TRANSLATE_MODELS = [
-  'gemini-3.1-flash',
-  'gemini-2.5-flash',
-] as const
+// Text-only pipeline: locked to 3.1 models for speed.
+//   Stage 1 — gemini-3.1-flash-lite transcribes the captured audio chunk
+//   Stage 2 — gemini-3.1-flash translates the transcript and streams it
+const TRANSCRIBE_MODEL = 'gemini-3.1-flash-lite'
+const TRANSLATE_MODEL = 'gemini-3.1-flash'
 
 const SAMPLE_RATE = 16000
 const SILENCE_THRESHOLD = 0.015
-const SILENCE_GAP_MS = 900
-const MAX_UTTERANCE_MS = 12_000
-const MIN_UTTERANCE_MS = 400
+// Tight VAD for low latency. 500 ms of silence triggers a flush; max 8 s
+// per utterance so a continuous talker still streams chunks regularly.
+const SILENCE_GAP_MS = 500
+const MAX_UTTERANCE_MS = 8_000
+const MIN_UTTERANCE_MS = 200
 
 /** RMS audio level on 16-bit PCM, normalized 0..1 (log scale). */
 function audioLevel(pcm: Buffer): number {
@@ -89,17 +82,12 @@ class GeminiPipelineSession implements EngineSession {
   private closed = false
   private processing = false
   private queue: Promise<void> = Promise.resolve()
-  private transcribeModel: string
-  private translateModel: string
-
   constructor(
     private readonly cfg: EngineSessionConfig,
     private readonly handlers: EngineHandlers,
   ) {
     this.targetId = cfg.targetId
     this.ai = new GoogleGenAI({ apiKey: cfg.apiKey })
-    this.transcribeModel = TRANSCRIBE_MODELS[0]
-    this.translateModel = TRANSLATE_MODELS[0]
   }
 
   start(): Promise<void> {
@@ -107,8 +95,8 @@ class GeminiPipelineSession implements EngineSession {
       targetId: this.targetId,
       source: this.cfg.sourceLanguage,
       target: this.cfg.targetLanguage,
-      transcribeModel: this.transcribeModel,
-      translateModel: this.translateModel,
+      transcribeModel: TRANSCRIBE_MODEL,
+      translateModel: TRANSLATE_MODEL,
     })
     return Promise.resolve()
   }
@@ -216,36 +204,23 @@ class GeminiPipelineSession implements EngineSession {
 
   private async transcribe(wav: Buffer, sourceName: string): Promise<string> {
     const prompt = `Transcribe this ${sourceName} audio verbatim. Output ONLY the transcript — no preface, no quotes, no metadata. If the audio is silence or has no clear speech, output an empty string.`
-    let lastErr: unknown
-    for (const model of TRANSCRIBE_MODELS) {
-      try {
-        const resp = await this.ai.models.generateContent({
-          model,
-          contents: [
+    const resp = await this.ai.models.generateContent({
+      model: TRANSCRIBE_MODEL,
+      contents: [
+        {
+          parts: [
             {
-              parts: [
-                {
-                  inlineData: {
-                    mimeType: 'audio/wav',
-                    data: wav.toString('base64'),
-                  },
-                },
-                { text: prompt },
-              ],
+              inlineData: {
+                mimeType: 'audio/wav',
+                data: wav.toString('base64'),
+              },
             },
+            { text: prompt },
           ],
-        })
-        this.transcribeModel = model
-        return (resp.text || '').trim()
-      } catch (err) {
-        lastErr = err
-        logger.warn('Transcribe model rejected, trying next', {
-          model,
-          error: String(err),
-        })
-      }
-    }
-    throw lastErr
+        },
+      ],
+    })
+    return (resp.text || '').trim()
   }
 
   private async translate(
@@ -254,29 +229,15 @@ class GeminiPipelineSession implements EngineSession {
     targetName: string,
   ): Promise<void> {
     const prompt = `Translate the following ${sourceName} text into ${targetName}. Output ONLY the translation, nothing else — no preface, no quotes, no metadata, no source repeat. Translate word-for-word, preserving names, numbers, dates, and sentence structure.\n\n${sourceText}`
-    let lastErr: unknown
-    for (const model of TRANSLATE_MODELS) {
-      try {
-        const stream = await this.ai.models.generateContentStream({
-          model,
-          contents: [{ parts: [{ text: prompt }] }],
-        })
-        this.translateModel = model
-        for await (const chunk of stream) {
-          if (this.closed) return
-          const piece = chunk.text
-          if (piece) this.handlers.onTargetText(piece)
-        }
-        return
-      } catch (err) {
-        lastErr = err
-        logger.warn('Translate model rejected, trying next', {
-          model,
-          error: String(err),
-        })
-      }
+    const stream = await this.ai.models.generateContentStream({
+      model: TRANSLATE_MODEL,
+      contents: [{ parts: [{ text: prompt }] }],
+    })
+    for await (const chunk of stream) {
+      if (this.closed) return
+      const piece = chunk.text
+      if (piece) this.handlers.onTargetText(piece)
     }
-    throw lastErr
   }
 
   async close(): Promise<void> {
