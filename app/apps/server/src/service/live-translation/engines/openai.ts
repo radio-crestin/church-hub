@@ -151,7 +151,7 @@ class OpenAIEngineSession implements EngineSession {
               ? {}
               : {
                   output: {
-                    format: { type: 'audio/pcm' },
+                    format: { type: 'audio/pcm', rate: TARGET_SAMPLE_RATE },
                     voice: this.cfg.voiceName,
                   },
                 }),
