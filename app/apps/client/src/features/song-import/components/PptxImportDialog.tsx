@@ -5,6 +5,13 @@ import { useTranslation } from 'react-i18next'
 import { useUpsertSong } from '~/features/songs/hooks'
 import type { ParsedPptx } from '../utils/parsePptx'
 
+function deriveTitleFromFilename(filename: string | null): string {
+  if (!filename) return ''
+  // Strip any path prefix (handles both / and \ separators) and the extension.
+  const base = filename.split(/[\\/]/).pop() ?? filename
+  return base.replace(/\.[^.]+$/, '').trim()
+}
+
 interface PptxImportDialogProps {
   isOpen: boolean
   parsedPptx: ParsedPptx | null
@@ -31,11 +38,13 @@ export function PptxImportDialog({
 
     if (isOpen) {
       dialog.showModal()
-      setTitle(parsedPptx?.title || '')
+      setTitle(
+        deriveTitleFromFilename(sourceFilename) || parsedPptx?.title || '',
+      )
     } else {
       dialog.close()
     }
-  }, [isOpen, parsedPptx])
+  }, [isOpen, parsedPptx, sourceFilename])
 
   const handleImportAsSong = async () => {
     if (!parsedPptx || !title.trim()) return
