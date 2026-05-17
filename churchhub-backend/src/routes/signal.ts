@@ -209,6 +209,11 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
 .lang-option.selected{background:#1e3a5f;border-color:#3b82f6;color:#bfdbfe}
 .lang-option .code{font-size:.7rem;font-weight:700;background:#1e293b;padding:2px 6px;border-radius:4px;letter-spacing:.05em}
 .empty-langs{color:#64748b;font-size:.85rem;padding:1rem;text-align:center;background:#0f172a;border-radius:8px}
+.mode-toggle{display:flex;gap:.4rem;margin-top:.75rem;background:#0f172a;border-radius:10px;padding:.25rem}
+.mode-btn{flex:1;background:transparent;border:none;color:#94a3b8;padding:.55rem .5rem;border-radius:8px;cursor:pointer;font-weight:600;font-size:.8rem;transition:background .15s,color .15s;display:flex;align-items:center;justify-content:center;gap:.4rem}
+.mode-btn:hover{color:#e2e8f0}
+.mode-btn.active{background:#1e3a5f;color:#bfdbfe}
+.mode-btn .icon{font-size:1rem;line-height:1}
 .transcript{margin-top:1.25rem;text-align:left;background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:1.25rem 1.25rem;color:#f1f5f9;display:flex;flex-direction:column;gap:.6rem;min-height:9rem;overflow:hidden;position:relative}
 .transcript-empty{color:#64748b;font-style:italic;font-size:.85rem;text-align:center;padding:1.5rem 0}
 .transcript-line{font-size:1.45rem;line-height:1.35;font-weight:600;color:#f8fafc;word-break:break-word;opacity:0;transform:translateY(6px);transition:opacity .35s ease,transform .35s ease,color .8s ease}
@@ -227,6 +232,10 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
   <span class="lang-label">Select your language</span>
   <div id="langList" class="lang-list"></div>
   <div id="emptyLangs" class="empty-langs hidden">Waiting for the host to publish available languages…</div>
+  <div id="modeToggle" class="mode-toggle hidden">
+    <button id="modeAudioText" type="button" class="mode-btn active"><span class="icon">🔊</span><span>Audio + text</span></button>
+    <button id="modeTextOnly" type="button" class="mode-btn"><span class="icon">📝</span><span>Text only</span></button>
+  </div>
 </div>
 <div id="volumeWrap" class="volume hidden"><div id="volumeBar" class="volume-bar"></div></div>
 <div id="transcript" class="transcript hidden">
@@ -249,6 +258,9 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
   var emptyLangs = document.getElementById('emptyLangs');
   var transcriptEl = document.getElementById('transcript');
   var transcriptEmpty = document.getElementById('transcriptEmpty');
+  var modeToggle = document.getElementById('modeToggle');
+  var modeAudioTextBtn = document.getElementById('modeAudioText');
+  var modeTextOnlyBtn = document.getElementById('modeTextOnly');
 
   var audioCtx = null;
   var nextPlayTime = 0;
@@ -262,6 +274,14 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
   // Reload the page if we've been disconnected for this long — a hard refresh
   // recovers from any stuck state and re-runs the WebRTC handshake cleanly.
   var DISCONNECT_RELOAD_MS = 45000;
+  // Listener-side modality preference: persisted across reloads.
+  var PREF_KEY = 'churchhub-listener-mode';
+  var listenerMode = (function() {
+    try {
+      var v = localStorage.getItem(PREF_KEY);
+      return v === 'text_only' ? 'text_only' : 'audio_text';
+    } catch(_) { return 'audio_text'; }
+  })();
 
   function appendTranscriptLine(text) {
     if (!text) return;
@@ -374,7 +394,35 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
     if (audioCtx.state === 'suspended') audioCtx.resume();
   }
 
+  function applyListenerMode() {
+    if (listenerMode === 'text_only') {
+      modeAudioTextBtn.classList.remove('active');
+      modeTextOnlyBtn.classList.add('active');
+      volumeWrap.classList.add('hidden');
+      // Silence anything pending in the audio graph
+      try { if (audioCtx) audioCtx.suspend(); } catch(_) {}
+    } else {
+      modeTextOnlyBtn.classList.remove('active');
+      modeAudioTextBtn.classList.add('active');
+      volumeWrap.classList.remove('hidden');
+      try { if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); } catch(_) {}
+    }
+    try { localStorage.setItem(PREF_KEY, listenerMode); } catch(_) {}
+  }
+
+  modeAudioTextBtn.addEventListener('click', function() {
+    if (listenerMode === 'audio_text') return;
+    listenerMode = 'audio_text';
+    applyListenerMode();
+  });
+  modeTextOnlyBtn.addEventListener('click', function() {
+    if (listenerMode === 'text_only') return;
+    listenerMode = 'text_only';
+    applyListenerMode();
+  });
+
   function playPcm(base64) {
+    if (listenerMode === 'text_only') return;
     if (!audioCtx || audioCtx.state === 'suspended') return;
     var raw = atob(base64);
     var bytes = new Uint8Array(raw.length);
@@ -431,7 +479,9 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
     joinBtn.classList.add('hidden');
     volumeWrap.classList.remove('hidden');
     langSection.classList.remove('hidden');
+    modeToggle.classList.remove('hidden');
     transcriptEl.classList.remove('hidden');
+    applyListenerMode();
     renderLanguages();
     waitForRoom();
     startReloadWatchdog();
