@@ -225,8 +225,9 @@ export function LiveTranslationPage() {
         onClose={() => setShowSettings(false)}
         onMouseDown={handleSettingsBackdropMouseDown}
         onClick={handleSettingsBackdropClick}
-        className="m-auto p-0 rounded-xl shadow-2xl backdrop:bg-black/60 bg-white dark:bg-gray-800 w-full max-w-3xl max-h-[85vh] open:flex open:flex-col overflow-hidden"
+        className="m-auto p-0 rounded-xl shadow-2xl backdrop:bg-black/60 bg-white dark:bg-gray-800 w-full max-w-3xl overflow-hidden"
       >
+        <div className="flex flex-col max-h-[85vh]">
         <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
           <div className="flex items-center gap-2">
             <Settings className="w-4 h-4 text-gray-600 dark:text-gray-300" />
@@ -243,7 +244,7 @@ export function LiveTranslationPage() {
             <X className="w-4 h-4" />
           </button>
         </div>
-        <div className="overflow-y-auto flex-1">
+        <div className="overflow-y-auto flex-1 min-h-0">
           <div className="bg-white dark:bg-gray-800">
           {/* Engine Selector */}
           <div className="p-4 border-b border-gray-200 dark:border-gray-700">
@@ -560,6 +561,7 @@ export function LiveTranslationPage() {
             )}
           </div>
           </div>
+        </div>
         </div>
       </dialog>
 
