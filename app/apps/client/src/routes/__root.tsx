@@ -24,7 +24,10 @@ import {
   ScreenShareProvider,
   WebSocketProvider,
 } from '~/features/presentation/context'
-import { useAutoOpenScreens } from '~/features/presentation/hooks'
+import {
+  useAutoOpenScreens,
+  useReopenScreensOnPresentation,
+} from '~/features/presentation/hooks'
 import { useAutoOpenPageWindows } from '~/features/sidebar-config/hooks'
 import { FileDropZoneProvider } from '~/features/song-import'
 import { I18nProvider } from '~/provider/i18n-provider'
@@ -49,6 +52,16 @@ const isDev = import.meta.env.DEV
  */
 function AutoOpenScreens() {
   useAutoOpenScreens()
+  return null
+}
+
+/**
+ * Re-opens active screen windows the user manually closed when the next
+ * presentation event arrives. Must be inside WebSocketProvider so it can
+ * observe presentationState updates.
+ */
+function AutoReopenScreensOnPresentation() {
+  useReopenScreensOnPresentation()
   return null
 }
 
@@ -140,6 +153,7 @@ function MainLayout() {
                         <ShortcutRecordingProvider>
                           <FileDropZoneProvider>
                             <AutoOpenScreens />
+                            <AutoReopenScreensOnPresentation />
                             <AutoOpenPageWindows />
                             <SidebarNavigationListener />
                             <GlobalAppShortcutManager />

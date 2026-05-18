@@ -437,3 +437,40 @@ export async function openAllActiveScreens(screens: Screen[]): Promise<void> {
     await new Promise((resolve) => setTimeout(resolve, 100))
   }
 }
+
+/**
+ * Reopens active screen windows that the user manually closed (e.g. clicked X).
+ * `screen.isActive` stays true on manual close, so when presentation state
+ * changes we re-check and respawn any missing windows.
+ */
+export async function reopenMissingActiveScreens(
+  screens: Screen[],
+): Promise<void> {
+  if (!isTauri()) return
+
+  try {
+    const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow')
+    const activeScreens = screens.filter((s) => s.isActive)
+
+    for (const screen of activeScreens) {
+      const windowLabel = `display-${screen.id}`
+      const existing = await WebviewWindow.getByLabel(windowLabel)
+      if (existing) continue
+
+      await openDisplayWindow(
+        screen.id,
+        'native',
+        screen.isFullscreen,
+        screen.name,
+        screen.alwaysOnTop,
+      )
+      await new Promise((resolve) => setTimeout(resolve, 100))
+    }
+  } catch (error) {
+    // biome-ignore lint/suspicious/noConsole: Error logging
+    console.error(
+      '[reopenMissingActiveScreens] Failed to reopen screen window(s):',
+      error,
+    )
+  }
+}
