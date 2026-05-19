@@ -113,7 +113,7 @@ export const screenSchemas = {
       closeOnEscape: {
         type: 'boolean',
         description:
-          'If true (default), the screen Tauri window closes on Escape and re-opens on the next presentation. If false, the window stays open showing the clock.',
+          'If true, the screen Tauri window closes on Escape and re-opens on the next presentation. If false (default), the window stays open showing the clock.',
       },
       width: { type: 'integer', description: 'Screen width in pixels' },
       height: { type: 'integer', description: 'Screen height in pixels' },

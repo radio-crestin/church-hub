@@ -42,7 +42,7 @@ export const screens = sqliteTable(
       .default(false),
     closeOnEscape: integer('close_on_escape', { mode: 'boolean' })
       .notNull()
-      .default(true),
+      .default(false),
     width: integer('width').notNull().default(1920),
     height: integer('height').notNull().default(1080),
     globalSettings: text('global_settings').notNull().default('{}'),

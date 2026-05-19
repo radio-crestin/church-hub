@@ -714,26 +714,26 @@
       "addScreen": "Adaugă Ecran",
       "noScreens": "Niciun ecran configurat",
       "window": {
-        "active": "Fereastră Activă",
-        "inactive": "Fereastră Dezactivată",
-        "openTooltip": "Deschide fereastra de afișare",
-        "closeTooltip": "Închide fereastra de afișare"
+        "active": "Afișează într-o fereastră nativă",
+        "inactive": "Afișează într-o fereastră nativă",
+        "openTooltip": "Deschide o fereastră nativă pe acest ecran pentru a afișa conținutul",
+        "closeTooltip": "Închide fereastra nativă a acestui ecran"
       },
       "alwaysOnTop": {
-        "pin": "Activează mereu deasupra",
-        "unpin": "Dezactivează mereu deasupra",
-        "enabled": "Mereu Deasupra",
-        "disabled": "Normal",
+        "pin": "Ține această fereastră deasupra celorlalte",
+        "unpin": "Permite altor ferestre să o acopere",
+        "enabled": "Mereu deasupra",
+        "disabled": "Stivuire normală",
         "pinned": "Fereastra setată mereu deasupra",
         "unpinned": "Fereastra nu mai este mereu deasupra",
         "error": "Nu s-a putut actualiza setarea"
       },
       "closeOnEscape": {
-        "tooltip": "Controlează ce se întâmplă cu fereastra Tauri a acestui ecran la Escape. Conținutul se șterge mereu (apare ceasul) — toggle-ul afectează doar fereastra. ON (default): fereastra se închide la Escape și se redeschide automat la următoarea prezentare. OFF: fereastra rămâne deschisă cu ceasul.",
-        "on": "Se închide pe Escape",
-        "off": "Rămâne pe Escape",
-        "enabled": "Fereastra se va închide la Escape",
-        "disabled": "Fereastra va rămâne deschisă la Escape",
+        "tooltip": "Controlează dacă fereastra nativă a acestui ecran se închide când nu este afișat ceva (după Escape / hide). Conținutul se șterge mereu și apare ceasul — această opțiune controlează doar fereastra în sine. Implicit: fereastra rămâne deschisă.",
+        "on": "Închide fereastra când nu este afișat ceva",
+        "off": "Păstrează fereastra deschisă tot timpul",
+        "enabled": "Fereastra se va închide când nu este afișat ceva",
+        "disabled": "Fereastra va rămâne deschisă tot timpul",
         "error": "Nu s-a putut actualiza setarea"
       },
       "actions": {
