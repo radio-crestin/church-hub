@@ -12,9 +12,9 @@ tag="${1:-}"
 
 src="/tmp/pr-demos"
 shopt -s nullglob
-videos=("$src"/*.webm "$src"/*.mp4)
-if [ "${#videos[@]}" = "0" ]; then
-  echo "no videos in $src — nothing to upload" >&2
+assets=("$src"/*.gif "$src"/*.webm "$src"/*.mp4)
+if [ "${#assets[@]}" = "0" ]; then
+  echo "no demo files (.gif/.webm/.mp4) in $src — nothing to upload" >&2
   exit 0
 fi
 
@@ -27,7 +27,7 @@ else
   gh release create "$tag" --prerelease --title "$tag" --notes "PR demo videos" >/dev/null
 fi
 
-for f in "${videos[@]}"; do
+for f in "${assets[@]}"; do
   name="$(basename "$f")"
   gh release upload "$tag" "$f" --clobber >/dev/null
   url=$(gh release view "$tag" --json assets \
