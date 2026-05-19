@@ -1,10 +1,10 @@
 import {
   AppWindow,
   Copy,
+  DoorClosed,
+  DoorOpen,
   Edit,
   ExternalLink,
-  Eye,
-  EyeOff,
   Loader2,
   MonitorUp,
   Pin,
@@ -308,31 +308,74 @@ export function ScreenManager() {
           {screens.map((screen) => (
             <div
               key={screen.id}
-              className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-3 md:p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+              className="flex flex-col gap-3 p-3 md:p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
             >
-              <div className="flex items-center gap-3 md:gap-4">
-                <div
-                  className={`w-3 h-3 rounded-full flex-shrink-0 ${
-                    screen.isActive ? 'bg-green-500' : 'bg-gray-400'
-                  }`}
-                />
-                <div className="min-w-0">
-                  <h3 className="font-medium text-gray-900 dark:text-white truncate">
-                    {screen.name}
-                  </h3>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span
-                      className={`px-2 py-0.5 text-xs font-medium rounded-full text-white ${SCREEN_TYPE_COLORS[screen.type]}`}
-                    >
-                      {screen.type}
-                    </span>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                      {screen.width}×{screen.height}
-                    </span>
+              {/* Identity row: status + name/type + per-screen actions */}
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+                <div className="flex items-center gap-3 md:gap-4 min-w-0">
+                  <div
+                    className={`w-3 h-3 rounded-full flex-shrink-0 ${
+                      screen.isActive ? 'bg-green-500' : 'bg-gray-400'
+                    }`}
+                  />
+                  <div className="min-w-0">
+                    <h3 className="font-medium text-gray-900 dark:text-white truncate">
+                      {screen.name}
+                    </h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span
+                        className={`px-2 py-0.5 text-xs font-medium rounded-full text-white ${SCREEN_TYPE_COLORS[screen.type]}`}
+                      >
+                        {screen.type}
+                      </span>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                        {screen.width}×{screen.height}
+                      </span>
+                    </div>
                   </div>
                 </div>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setExportScreen(screen)}
+                    title={t('sections.screens.export.title')}
+                  >
+                    <ExternalLink size={16} />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleCopyUrl(screen)}
+                    title={t('sections.screens.actions.copyUrl')}
+                  >
+                    <Copy size={16} />
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleEdit(screen)}
+                    title={t('sections.screens.actions.edit')}
+                  >
+                    <Edit size={16} />
+                    <span className="ml-1">
+                      {t('sections.screens.actions.edit')}
+                    </span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDelete(screen)}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    title={t('sections.screens.actions.delete')}
+                  >
+                    <Trash2 size={16} />
+                  </Button>
+                </div>
               </div>
-              <div className="flex items-center gap-2 flex-wrap">
+
+              {/* Toggle row: behavior controls, indented under the title */}
+              <div className="flex items-center gap-2 flex-wrap md:pl-7 pt-2 border-t border-gray-100 dark:border-gray-700/60">
                 <Button
                   variant={screen.isActive ? 'primary' : 'secondary'}
                   size="sm"
@@ -378,9 +421,9 @@ export function ScreenManager() {
                   title={t('sections.screens.closeOnEscape.tooltip')}
                 >
                   {screen.closeOnEscape ? (
-                    <EyeOff size={16} />
+                    <DoorClosed size={16} />
                   ) : (
-                    <Eye size={16} />
+                    <DoorOpen size={16} />
                   )}
                   <span className="ml-1">
                     {screen.closeOnEscape
@@ -388,45 +431,6 @@ export function ScreenManager() {
                       : t('sections.screens.closeOnEscape.off')}
                   </span>
                 </Button>
-                <div className="hidden md:block h-6 w-px bg-gray-200 dark:bg-gray-700" />
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setExportScreen(screen)}
-                    title={t('sections.screens.export.title')}
-                  >
-                    <ExternalLink size={16} />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleCopyUrl(screen)}
-                    title={t('sections.screens.actions.copyUrl')}
-                  >
-                    <Copy size={16} />
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => handleEdit(screen)}
-                    title={t('sections.screens.actions.edit')}
-                  >
-                    <Edit size={16} />
-                    <span className="ml-1">
-                      {t('sections.screens.actions.edit')}
-                    </span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDelete(screen)}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-                    title={t('sections.screens.actions.delete')}
-                  >
-                    <Trash2 size={16} />
-                  </Button>
-                </div>
               </div>
             </div>
           ))}

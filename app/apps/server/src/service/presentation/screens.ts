@@ -572,7 +572,7 @@ export function upsertScreen(input: UpsertScreenInput): Screen | null {
         openMode,
         isFullscreen: input.isFullscreen === true,
         alwaysOnTop: input.alwaysOnTop === true,
-        closeOnEscape: input.closeOnEscape !== false,
+        closeOnEscape: input.closeOnEscape === true,
         width,
         height,
         globalSettings: globalSettingsJson,
