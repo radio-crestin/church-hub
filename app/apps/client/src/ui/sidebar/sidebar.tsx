@@ -139,10 +139,14 @@ export function Sidebar({
   // Get presentation state to redirect Bible menu to current verse
   const { data: presentationState } = usePresentationState()
 
-  // Filter items by permission (excluding settings and kiosk - they're rendered separately)
+  // Filter items by permission (excluding settings, kiosk and feedback -
+  // they're rendered separately as special-case buttons below)
   const menuItems = resolvedItems.filter((item) => {
-    // Exclude settings and kiosk - they're rendered separately
-    if (item.id === 'settings' || item.id === 'kiosk') {
+    if (
+      item.id === 'settings' ||
+      item.id === 'kiosk' ||
+      item.id === 'feedback'
+    ) {
       return false
     }
     // Custom pages: check dynamic permission
@@ -152,6 +156,12 @@ export function Sidebar({
     // Built-in items: check their permission
     return item.permission ? hasPermission(item.permission) : true
   })
+
+  // Feedback visibility comes from sidebar config so the user can toggle it
+  // in "Sidebar configuration" settings like any other built-in item.
+  const isFeedbackVisible = config?.items.some(
+    (item) => item.id === 'feedback' && item.isVisible,
+  )
 
   // Check if user has permission to view settings
   const canViewSettings = hasPermission('settings.view')
@@ -341,8 +351,9 @@ export function Sidebar({
                 PostHog's built-in chat widget because its floating
                 button keeps reappearing. Red dot appears when there are
                 unread support messages. Never rendered on /screen/* —
-                those windows are church projector output. */}
-            {!isScreenRoute && (
+                those windows are church projector output. Visibility is
+                user-controlled via Sidebar configuration in Settings. */}
+            {!isScreenRoute && isFeedbackVisible && (
               <button
                 type="button"
                 onClick={() => setIsFeedbackModalOpen(true)}

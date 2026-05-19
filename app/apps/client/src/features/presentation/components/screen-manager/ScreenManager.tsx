@@ -3,6 +3,8 @@ import {
   Copy,
   Edit,
   ExternalLink,
+  Eye,
+  EyeOff,
   Loader2,
   MonitorUp,
   Pin,
@@ -221,6 +223,28 @@ export function ScreenManager() {
     }
   }
 
+  const handleToggleCloseOnEscape = async (screen: Screen) => {
+    const newValue = !screen.closeOnEscape
+
+    try {
+      await upsertScreen.mutateAsync({
+        id: screen.id,
+        name: screen.name,
+        type: screen.type,
+        closeOnEscape: newValue,
+      })
+
+      showToast(
+        newValue
+          ? t('sections.screens.closeOnEscape.enabled')
+          : t('sections.screens.closeOnEscape.disabled'),
+        'success',
+      )
+    } catch {
+      showToast(t('sections.screens.closeOnEscape.error'), 'error')
+    }
+  }
+
   const confirmDelete = async () => {
     if (!deleteConfirm) return
 
@@ -345,6 +369,23 @@ export function ScreenManager() {
                     {screen.alwaysOnTop
                       ? t('sections.screens.alwaysOnTop.enabled')
                       : t('sections.screens.alwaysOnTop.disabled')}
+                  </span>
+                </Button>
+                <Button
+                  variant={screen.closeOnEscape ? 'primary' : 'secondary'}
+                  size="sm"
+                  onClick={() => handleToggleCloseOnEscape(screen)}
+                  title={t('sections.screens.closeOnEscape.tooltip')}
+                >
+                  {screen.closeOnEscape ? (
+                    <EyeOff size={16} />
+                  ) : (
+                    <Eye size={16} />
+                  )}
+                  <span className="ml-1">
+                    {screen.closeOnEscape
+                      ? t('sections.screens.closeOnEscape.on')
+                      : t('sections.screens.closeOnEscape.off')}
                   </span>
                 </Button>
                 <div className="hidden md:block h-6 w-px bg-gray-200 dark:bg-gray-700" />

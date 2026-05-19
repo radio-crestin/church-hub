@@ -48,7 +48,11 @@ export function useKeyboardShortcuts() {
           return true
 
         case 'Escape':
-          // Hide presentation (show clock)
+          // Hide presentation (show clock). Window-close behavior for
+          // screens without keepVisibleOnEscape is handled centrally in
+          // useCloseScreensOnHide, which watches isHidden transitions and
+          // works regardless of which Escape handler (global / song / bible
+          // / schedules) actually triggers clearSlide.
           event.preventDefault()
           clearSlide.mutate()
           return true

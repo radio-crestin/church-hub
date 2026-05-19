@@ -660,16 +660,17 @@ export function SongList({
     return Math.max(140, longestLabel.length * 8 + 48)
   }, [categories, t])
 
-  const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [isCategoryOpen, setIsCategoryOpen] = useState(false)
 
   return (
-    <div className="flex flex-col h-full min-h-0">
-      <div className="flex-shrink-0 flex gap-2">
-        <div
-          className={`relative transition-all duration-200 ${isSearchFocused ? 'flex-[3]' : 'flex-[2] md:flex-1'}`}
-        >
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+    <div className="flex flex-col h-full min-h-0 bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+      <div className="flex-shrink-0 pb-3 space-y-2 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search
+            size={16}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+          />
           <input
             ref={searchInputRef}
             type="text"
@@ -693,16 +694,30 @@ export function SongList({
               e.target.select()
               hasSelectedAllRef.current = true
               setSelectedIndex(-1)
-              setIsSearchFocused(true)
             }}
             onBlur={() => {
               hasSelectedAllRef.current = false
-              setIsSearchFocused(false)
             }}
             placeholder={t('search.placeholder')}
-            className={`w-full pl-10 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${
-              searchSongShortcut ? 'pr-20' : 'pr-8'
-            }`}
+              className={`
+              w-full 
+              pl-9 
+              py-2 
+              text-sm 
+              bg-gray-50 dark:bg-gray-700 
+              border border-gray-200 dark:border-gray-600 
+              rounded-lg 
+              focus:ring-2 f
+              ocus:ring-indigo-500 
+              focus:border-indigo-500 
+              text-gray-900 
+              dark:text-white 
+              placeholder-gray-400
+              ${
+                searchSongShortcut ? 'pr-20' : 'pr-9'
+              }
+              `
+          }
           />
           {(showPendingIndicator || aiSearchMutation.isPending) && (
             <div
@@ -834,6 +849,7 @@ export function SongList({
             emptyMeansAll
           />
         </div>
+      </div>
       </div>
 
       {isLoading ? (

@@ -2,16 +2,23 @@
   "permissions": {
     "allow": [
       "Bash(tree:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(npx biome *)",
+      "Bash(npx tsc *)",
+      "Bash(git checkout *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git stash *)",
+      "Bash(grep -E \"\\\\.tsx?$\")"
     ],
     "deny": [],
     "ask": []
   },
-  "remote": {
-    "defaultEnvironmentId": "env_014ryfSMymBc5zTrvwMA45AV"
-  },
   "sandbox": {
     "enabled": false,
     "autoAllowBashIfSandboxed": false
+  },
+  "remote": {
+    "defaultEnvironmentId": "env_014ryfSMymBc5zTrvwMA45AV"
   }
 }

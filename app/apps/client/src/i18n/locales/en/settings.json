@@ -727,6 +727,14 @@
         "unpinned": "Window no longer always on top",
         "error": "Failed to update always on top setting"
       },
+      "closeOnEscape": {
+        "tooltip": "Controls what happens to this screen's Tauri window when Escape is pressed. Content always clears (clock shows) — this toggle only affects the window itself. ON (default): window closes on Escape and auto-reopens on the next presentation. OFF: window stays open showing the clock.",
+        "on": "Close on Escape",
+        "off": "Keep on Escape",
+        "enabled": "Window will close on Escape",
+        "disabled": "Window will stay open on Escape",
+        "error": "Failed to update close-on-escape setting"
+      },
       "actions": {
         "openInNewTab": "Open in new tab",
         "copyUrl": "Copy URL to clipboard",

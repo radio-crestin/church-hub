@@ -40,6 +40,9 @@ export const screens = sqliteTable(
     alwaysOnTop: integer('always_on_top', { mode: 'boolean' })
       .notNull()
       .default(false),
+    closeOnEscape: integer('close_on_escape', { mode: 'boolean' })
+      .notNull()
+      .default(true),
     width: integer('width').notNull().default(1920),
     height: integer('height').notNull().default(1080),
     globalSettings: text('global_settings').notNull().default('{}'),

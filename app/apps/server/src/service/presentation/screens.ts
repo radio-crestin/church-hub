@@ -339,6 +339,7 @@ function toScreen(record: typeof screens.$inferSelect): Screen {
     openMode: (record.openMode as DisplayOpenMode) || 'browser',
     isFullscreen: record.isFullscreen,
     alwaysOnTop: record.alwaysOnTop,
+    closeOnEscape: record.closeOnEscape,
     width: record.width,
     height: record.height,
     globalSettings: parseGlobalSettings(record.globalSettings),
@@ -549,6 +550,9 @@ export function upsertScreen(input: UpsertScreenInput): Screen | null {
       if (input.alwaysOnTop !== undefined) {
         updateData.alwaysOnTop = input.alwaysOnTop
       }
+      if (input.closeOnEscape !== undefined) {
+        updateData.closeOnEscape = input.closeOnEscape
+      }
 
       db.update(screens).set(updateData).where(eq(screens.id, input.id)).run()
 
@@ -568,6 +572,7 @@ export function upsertScreen(input: UpsertScreenInput): Screen | null {
         openMode,
         isFullscreen: input.isFullscreen === true,
         alwaysOnTop: input.alwaysOnTop === true,
+        closeOnEscape: input.closeOnEscape !== false,
         width,
         height,
         globalSettings: globalSettingsJson,

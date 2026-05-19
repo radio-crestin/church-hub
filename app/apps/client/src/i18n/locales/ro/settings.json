@@ -728,6 +728,14 @@
         "unpinned": "Fereastra nu mai este mereu deasupra",
         "error": "Nu s-a putut actualiza setarea"
       },
+      "closeOnEscape": {
+        "tooltip": "Controlează ce se întâmplă cu fereastra Tauri a acestui ecran la Escape. Conținutul se șterge mereu (apare ceasul) — toggle-ul afectează doar fereastra. ON (default): fereastra se închide la Escape și se redeschide automat la următoarea prezentare. OFF: fereastra rămâne deschisă cu ceasul.",
+        "on": "Se închide pe Escape",
+        "off": "Rămâne pe Escape",
+        "enabled": "Fereastra se va închide la Escape",
+        "disabled": "Fereastra va rămâne deschisă la Escape",
+        "error": "Nu s-a putut actualiza setarea"
+      },
       "actions": {
         "openInNewTab": "Deschide în tab nou",
         "copyUrl": "Copiază URL în clipboard",
