@@ -426,6 +426,7 @@ export interface Screen {
   openMode: DisplayOpenMode
   isFullscreen: boolean
   alwaysOnTop: boolean
+  closeOnEscape: boolean
   width: number
   height: number
   globalSettings: ScreenGlobalSettings
@@ -597,6 +598,7 @@ export interface UpsertScreenInput {
   openMode?: DisplayOpenMode
   isFullscreen?: boolean
   alwaysOnTop?: boolean
+  closeOnEscape?: boolean
   width?: number
   height?: number
   globalSettings?: ScreenGlobalSettings

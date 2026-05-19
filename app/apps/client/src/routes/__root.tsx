@@ -26,6 +26,7 @@ import {
 } from '~/features/presentation/context'
 import {
   useAutoOpenScreens,
+  useCloseScreensOnHide,
   useReopenScreensOnPresentation,
 } from '~/features/presentation/hooks'
 import { useAutoOpenPageWindows } from '~/features/sidebar-config/hooks'
@@ -62,6 +63,15 @@ function AutoOpenScreens() {
  */
 function AutoReopenScreensOnPresentation() {
   useReopenScreensOnPresentation()
+  return null
+}
+
+/**
+ * Closes Tauri windows for screens without keepVisibleOnEscape whenever the
+ * presentation becomes hidden (Escape, hide button, MIDI shortcut, etc.).
+ */
+function AutoCloseScreensOnHide() {
+  useCloseScreensOnHide()
   return null
 }
 
@@ -154,6 +164,7 @@ function MainLayout() {
                           <FileDropZoneProvider>
                             <AutoOpenScreens />
                             <AutoReopenScreensOnPresentation />
+                            <AutoCloseScreensOnHide />
                             <AutoOpenPageWindows />
                             <SidebarNavigationListener />
                             <GlobalAppShortcutManager />

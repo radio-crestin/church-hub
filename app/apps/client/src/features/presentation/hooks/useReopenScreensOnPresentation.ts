@@ -11,7 +11,11 @@ import { useScreens } from './useScreens'
 
 const logger = createLogger('app:screen')
 
-function hasContent(state: PresentationState): boolean {
+function shouldReopen(state: PresentationState): boolean {
+  // Don't reopen while the presentation is hidden (e.g. just after Escape).
+  // The user-triggered Escape close stays closed until they actively present
+  // again (Enter / clicking a slide flips isHidden back to false).
+  if (state.isHidden) return false
   return state.currentSongSlideId !== null || state.temporaryContent !== null
 }
 
@@ -35,7 +39,7 @@ export function useReopenScreensOnPresentation(): void {
       return
     }
 
-    if (!hasContent(presentationState)) return
+    if (!shouldReopen(presentationState)) return
 
     reopenMissingActiveScreens(screens).catch((error) => {
       logger.error(

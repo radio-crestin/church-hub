@@ -89,7 +89,9 @@ function getStoredState(displayId: number): WindowState | null {
 }
 
 /**
- * Opens a display window based on the configured mode
+ * Opens a display window based on the configured mode.
+ * Set `focus` to false to open without stealing focus from the control room
+ * (used for auto-open on startup and auto-reopen after Escape).
  */
 export async function openDisplayWindow(
   displayId: number,
@@ -97,10 +99,11 @@ export async function openDisplayWindow(
   defaultFullscreen = false,
   screenName?: string,
   alwaysOnTop = false,
+  focus = true,
 ): Promise<void> {
   // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
   console.log(
-    `[openDisplayWindow] Opening display ${displayId} in ${openMode} mode, isTauri: ${isTauri()}, defaultFullscreen: ${defaultFullscreen}, alwaysOnTop: ${alwaysOnTop}`,
+    `[openDisplayWindow] Opening display ${displayId} in ${openMode} mode, isTauri: ${isTauri()}, defaultFullscreen: ${defaultFullscreen}, alwaysOnTop: ${alwaysOnTop}, focus: ${focus}`,
   )
   const displayUrl = `${getFrontendUrl()}/screen/${displayId}`
   // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
@@ -119,6 +122,7 @@ export async function openDisplayWindow(
       defaultFullscreen,
       screenName,
       alwaysOnTop,
+      focus,
     )
   }
 }
@@ -163,6 +167,7 @@ async function openInNativeWindow(
   defaultFullscreen = false,
   screenName?: string,
   alwaysOnTop = false,
+  focus = true,
 ): Promise<void> {
   // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
   console.log(`[openInNativeWindow] called, isTauri: ${isTauri()}`)
@@ -189,8 +194,12 @@ async function openInNativeWindow(
       console.log('[openInNativeWindow] existingWindow:', existingWindow)
       if (existingWindow) {
         // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
-        console.log('[openInNativeWindow] Window exists, focusing')
-        await existingWindow.setFocus()
+        console.log(
+          `[openInNativeWindow] Window exists, focus=${focus}`,
+        )
+        if (focus) {
+          await existingWindow.setFocus()
+        }
         await existingWindow.setAlwaysOnTop(alwaysOnTop)
         return
       }
@@ -214,7 +223,7 @@ async function openInNativeWindow(
         decorations: true,
         alwaysOnTop,
         skipTaskbar: true,
-        focus: true,
+        focus,
         backgroundColor: '#000000',
       }
       // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
@@ -222,6 +231,22 @@ async function openInNativeWindow(
         '[openInNativeWindow] Creating window with options:',
         windowOptions,
       )
+
+      // When focus=false, save the currently focused window so we can restore
+      // focus after the new window is created (macOS / some WMs auto-focus
+      // new windows regardless of the `focus: false` option).
+      const mainWindowToRefocus = focus
+        ? null
+        : await (async () => {
+            try {
+              const { getCurrentWindow } = await import(
+                '@tauri-apps/api/window'
+              )
+              return getCurrentWindow()
+            } catch {
+              return null
+            }
+          })()
 
       // Create new native window
       const webview = new WebviewWindow(windowLabel, windowOptions)
@@ -293,6 +318,21 @@ async function openInNativeWindow(
         // Track state on move, resize, and other changes
         webview.listen('tauri://move', trackState)
         webview.listen('tauri://resize', trackState)
+
+        // Restore focus to the control room window if it was taken by the
+        // OS when the new display window appeared. Done after fullscreen /
+        // maximize because those can trigger another focus shift.
+        if (mainWindowToRefocus) {
+          try {
+            await mainWindowToRefocus.setFocus()
+          } catch (error) {
+            // biome-ignore lint/suspicious/noConsole: Tauri focus restoration
+            console.warn(
+              '[openInNativeWindow] Failed to restore focus to main window:',
+              error,
+            )
+          }
+        }
       })
 
       webview.once('tauri://error', (e) => {
@@ -425,13 +465,15 @@ export async function openAllActiveScreens(screens: Screen[]): Promise<void> {
   const activeScreens = screens.filter((s) => s.isActive)
 
   for (const screen of activeScreens) {
-    // Always use 'native' mode (matching ScreenManager behavior)
+    // Always use 'native' mode (matching ScreenManager behavior).
+    // focus: false keeps the control room focused during startup.
     await openDisplayWindow(
       screen.id,
       'native',
       screen.isFullscreen,
       screen.name,
       screen.alwaysOnTop,
+      false,
     )
     // Small delay to prevent overwhelming the system
     await new Promise((resolve) => setTimeout(resolve, 100))
@@ -457,12 +499,15 @@ export async function reopenMissingActiveScreens(
       const existing = await WebviewWindow.getByLabel(windowLabel)
       if (existing) continue
 
+      // focus: false so the user keeps interacting with the control room
+      // while a closed display window auto-reopens behind the scenes.
       await openDisplayWindow(
         screen.id,
         'native',
         screen.isFullscreen,
         screen.name,
         screen.alwaysOnTop,
+        false,
       )
       await new Promise((resolve) => setTimeout(resolve, 100))
     }

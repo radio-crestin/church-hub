@@ -1,5 +1,6 @@
 export * from './useAutoClearHighlights'
 export * from './useAutoOpenScreens'
+export * from './useCloseScreensOnHide'
 export * from './useBatchUpdateScreenConfig'
 export * from './useDeleteScreen'
 export * from './useKeyboardShortcuts'
