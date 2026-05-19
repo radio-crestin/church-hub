@@ -713,26 +713,26 @@
       "addScreen": "Add Screen",
       "noScreens": "No screens configured",
       "window": {
-        "active": "Window Active",
-        "inactive": "Window Inactive",
-        "openTooltip": "Open display window",
-        "closeTooltip": "Close display window"
+        "active": "Show in a native window",
+        "inactive": "Show in a native window",
+        "openTooltip": "Open a native display window for this screen",
+        "closeTooltip": "Close the native display window for this screen"
       },
       "alwaysOnTop": {
-        "pin": "Enable always on top",
-        "unpin": "Disable always on top",
-        "enabled": "Always on Top",
-        "disabled": "Not on Top",
+        "pin": "Make this window stay on top of others",
+        "unpin": "Allow other windows to cover this one",
+        "enabled": "Always on top",
+        "disabled": "Normal stacking",
         "pinned": "Window set to always on top",
         "unpinned": "Window no longer always on top",
         "error": "Failed to update always on top setting"
       },
       "closeOnEscape": {
-        "tooltip": "Controls what happens to this screen's Tauri window when Escape is pressed. Content always clears (clock shows) — this toggle only affects the window itself. ON (default): window closes on Escape and auto-reopens on the next presentation. OFF: window stays open showing the clock.",
-        "on": "Close on Escape",
-        "off": "Keep on Escape",
-        "enabled": "Window will close on Escape",
-        "disabled": "Window will stay open on Escape",
+        "tooltip": "Controls whether this screen's native window closes when nothing is being displayed (after Escape / hide). The slide content always clears and the clock shows — this only controls the window itself. Default: window stays open.",
+        "on": "Close window when nothing is displayed",
+        "off": "Keep window open at all times",
+        "enabled": "Window will close when nothing is displayed",
+        "disabled": "Window will stay open at all times",
         "error": "Failed to update close-on-escape setting"
       },
       "actions": {
