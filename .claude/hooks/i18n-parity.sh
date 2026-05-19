@@ -13,10 +13,11 @@ payload="$(cat)"
 file_path="$(printf '%s' "$payload" | /usr/bin/python3 -c 'import json,sys; d=json.loads(sys.stdin.read()); print(d.get("tool_input",{}).get("file_path",""))' 2>/dev/null)"
 
 [ -z "$file_path" ] && exit 0
+[ -z "${CLAUDE_PROJECT_DIR:-}" ] && exit 0
 
-# Only operate on edits inside i18n/locales/<lang>/<ns>.json
+# Only operate on edits inside this repo's i18n/locales/<lang>/<ns>.json
 case "$file_path" in
-  */apps/client/src/i18n/locales/*/*.json) ;;
+  "$CLAUDE_PROJECT_DIR"/app/apps/client/src/i18n/locales/*/*.json) ;;
   *) exit 0 ;;
 esac
 

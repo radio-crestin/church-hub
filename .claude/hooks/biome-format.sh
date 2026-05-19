@@ -9,10 +9,11 @@ payload="$(cat)"
 file_path="$(printf '%s' "$payload" | /usr/bin/python3 -c 'import json,sys; d=json.loads(sys.stdin.read()); print(d.get("tool_input",{}).get("file_path",""))' 2>/dev/null)"
 
 [ -z "$file_path" ] && exit 0
+[ -z "${CLAUDE_PROJECT_DIR:-}" ] && exit 0
 
 # Only operate on files inside the app/ workspace (Biome lives there)
 case "$file_path" in
-  */church-hub/app/*) ;;
+  "$CLAUDE_PROJECT_DIR"/app/*) ;;
   *) exit 0 ;;
 esac
 
@@ -22,8 +23,7 @@ case "$file_path" in
   *) exit 0 ;;
 esac
 
-repo_root="${file_path%%/church-hub/*}/church-hub"
-cd "$repo_root/app" 2>/dev/null || exit 0
+cd "$CLAUDE_PROJECT_DIR/app" 2>/dev/null || exit 0
 
 # Run biome quietly; never propagate non-zero
 bunx --bun biome check --write "$file_path" >/dev/null 2>&1 || true

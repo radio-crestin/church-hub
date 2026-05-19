@@ -16,11 +16,13 @@ if ! compgen -G "$src/*.mp4" > /dev/null; then
   exit 0
 fi
 
-# Create (or reuse) draft release. `gh release create` errors if tag exists.
+# Create (or reuse) a prerelease. NOT --draft: draft asset URLs return 404
+# for non-collaborators, breaking <video> tags for external PR reviewers.
+# --prerelease keeps them out of the "Latest" release while remaining public.
 if gh release view "$tag" >/dev/null 2>&1; then
   echo "release $tag already exists — uploading additional assets"
 else
-  gh release create "$tag" --draft --title "$tag" --notes "PR demo videos" >/dev/null
+  gh release create "$tag" --prerelease --title "$tag" --notes "PR demo videos" >/dev/null
 fi
 
 # Upload each mp4 (--clobber to replace if re-running)
