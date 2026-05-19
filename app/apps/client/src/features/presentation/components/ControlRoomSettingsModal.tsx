@@ -212,7 +212,7 @@ export function ControlRoomSettingsModal({
     <ShortcutRecordingProvider onRecordingChange={handleRecordingChange}>
       <dialog
         ref={dialogRef}
-        className="fixed inset-0 m-auto w-full max-w-4xl p-0 bg-white dark:bg-gray-800 rounded-xl shadow-xl backdrop:bg-black/50"
+        className="fixed inset-0 m-auto w-full max-w-6xl p-0 bg-white dark:bg-gray-800 rounded-xl shadow-xl backdrop:bg-black/50"
         onMouseDown={handleBackdropMouseDown}
         onClick={handleBackdropClick}
       >
