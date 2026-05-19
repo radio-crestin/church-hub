@@ -236,11 +236,21 @@ For each commit, write the motivation/fix/highlights paragraph from `git show <s
 
 The outer link makes the inline GIF clickable — opens the higher-fidelity webm. Derive the Test-plan checkboxes from what the diff actually changes.
 
-### 6. Open or update the PR
+### 6. Push the branch — required before opening/updating the PR
+
+```bash
+git push -u origin "$(git rev-parse --abbrev-ref HEAD)"
+```
+
+Always push before `gh pr create` or before re-running `gh pr edit` on commits the remote doesn't have yet. A PR can only reference commits that exist on origin, and a description that references local-only commits will mismatch CI runs and review comments. This step is part of the skill's contract — do it every time, do not ask for confirmation.
+
+If the branch is in `[gone]` state (remote was deleted), recreate with the same name: `git push -u origin <branch>`.
+
+### 7. Open or update the PR
 
 ```bash
 # New PR
-gh pr create --title "<title>" --body "$(cat /tmp/pr-body.md)"
+gh pr create --title "<title>" --body-file /tmp/pr-body.md
 # Existing PR
 gh pr edit <num> --body-file /tmp/pr-body.md
 ```
@@ -257,7 +267,7 @@ gh api -H 'Accept: application/vnd.github.html+json' \
 
 Should equal the number of GIFs embedded. `data-animated-image=""` is the GitHub renderer's marker that the image is an animated GIF — its presence means the GIF will play in the rendered description.
 
-### 7. Clean up
+### 8. Clean up
 
 ```bash
 rm app/apps/client/e2e/_pr-demos.spec.ts
@@ -267,7 +277,7 @@ The spec was temporary; remove it so the next PR starts fresh.
 
 ## Constraints
 
-- **Never push automatically.** Per CLAUDE.md: "NEVER push to remote unless the user explicitly asks." If the local branch isn't on the remote yet, ask before `git push -u`.
+- **Push before every `gh pr create` / `gh pr edit`** (step 6). This skill's job is to ship a documented PR; that requires the branch to be on origin. The project-wide "ask before pushing" rule is suspended within this skill — you have standing authorization from the user the moment they invoke it.
 - **One test per commit; one video+gif per test.** Commits are the natural review unit.
 - **Embed via `![alt](url.gif)` markdown — NOT `<video>` tags.** GitHub's sanitizer strips `<video>` tags from PR descriptions when the `src` is anything other than a `user-attachments/assets/...` URL.
 - **Don't commit the videos, gifs, or the `_pr-demos.spec.ts`.** Videos live in `/tmp/pr-demos/` and end up as release assets; the spec is deleted in step 7.
