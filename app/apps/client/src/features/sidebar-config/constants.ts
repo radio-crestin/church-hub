@@ -4,6 +4,7 @@ import {
   Globe,
   Headphones,
   KeyRound,
+  MessageSquarePlus,
   Monitor,
   Music,
   Radio,
@@ -50,6 +51,7 @@ export const DEFAULT_ICON_COLORS: Record<BuiltInMenuItemId, IconColor> = {
   music: 'purple',
   song_key: 'yellow',
   live_translation: 'blue',
+  feedback: 'gray',
   kiosk: 'gray',
   settings: 'gray',
 }
@@ -137,6 +139,7 @@ export const PAGES_WITH_SEARCH: Record<BuiltInMenuItemId, boolean> = {
   present: false,
   livestream: false,
   song_key: false,
+  feedback: false,
   kiosk: false,
   settings: false,
 }
@@ -154,6 +157,7 @@ export const DEFAULT_FOCUS_SEARCH: Record<BuiltInMenuItemId, boolean> = {
   present: false,
   livestream: false,
   song_key: false,
+  feedback: false,
   kiosk: false,
   settings: false,
 }
@@ -234,6 +238,13 @@ export const BUILTIN_ITEMS: Record<BuiltInMenuItemId, BuiltInItemDefinition> = {
     icon: Globe,
     labelKey: 'sidebar:navigation.liveTranslation',
     to: '/live-translation',
+    permission: 'settings.view',
+  },
+  feedback: {
+    id: 'feedback',
+    icon: MessageSquarePlus,
+    labelKey: 'sidebar:navigation.feedback',
+    to: '/feedback', // Special marker - opens the SendFeedbackModal, not a route
     permission: 'settings.view',
   },
   kiosk: {
@@ -321,6 +332,14 @@ export const DEFAULT_SIDEBAR_CONFIG: SidebarConfiguration = {
       order: 7,
       isVisible: true,
       settings: getDefaultSidebarItemSettings('live_translation'),
+    },
+    {
+      id: 'feedback',
+      type: 'builtin',
+      builtinId: 'feedback',
+      order: 8,
+      isVisible: true,
+      settings: getDefaultSidebarItemSettings('feedback'),
     },
     // Note: Settings is not configurable - it's fixed at the bottom of the sidebar
     // Note: Kiosk is not configurable - it's dynamically shown when kiosk mode is enabled

@@ -110,6 +110,11 @@ export const screenSchemas = {
       openMode: { $ref: '#/components/schemas/DisplayOpenMode' },
       isFullscreen: { type: 'boolean' },
       alwaysOnTop: { type: 'boolean' },
+      closeOnEscape: {
+        type: 'boolean',
+        description:
+          'If true (default), the screen Tauri window closes on Escape and re-opens on the next presentation. If false, the window stays open showing the clock.',
+      },
       width: { type: 'integer', description: 'Screen width in pixels' },
       height: { type: 'integer', description: 'Screen height in pixels' },
       globalSettings: { $ref: '#/components/schemas/ScreenGlobalSettings' },
@@ -149,6 +154,7 @@ export const screenSchemas = {
       openMode: { $ref: '#/components/schemas/DisplayOpenMode' },
       isFullscreen: { type: 'boolean' },
       alwaysOnTop: { type: 'boolean' },
+      closeOnEscape: { type: 'boolean' },
       width: { type: 'integer' },
       height: { type: 'integer' },
       globalSettings: { $ref: '#/components/schemas/ScreenGlobalSettings' },

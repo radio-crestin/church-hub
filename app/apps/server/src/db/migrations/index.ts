@@ -1,6 +1,7 @@
 import { join } from 'node:path'
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite'
 
+import { addCloseOnEscape } from './add-close-on-escape'
 import { addLastPresentedAt } from './add-last-presented-at'
 import { dropSongKeyColumn } from './drop-song-key-column'
 import { EMBEDDED_MIGRATIONS } from './embedded'
@@ -195,6 +196,13 @@ export function runMigrations(
   t = performance.now()
   extractKeylinesFromSlides(rawDb)
   logTiming('extract_keylines_from_slides', t)
+
+  // Add close_on_escape column to screens table (replaces previous
+  // keep_visible_on_escape column with inverted semantics and default ON).
+  log('info', 'Running add close_on_escape migration...')
+  t = performance.now()
+  addCloseOnEscape(rawDb)
+  logTiming('add_close_on_escape', t)
 
   // Seed sample music (only if no music folders exist yet)
   log('info', 'Seeding sample music...')
