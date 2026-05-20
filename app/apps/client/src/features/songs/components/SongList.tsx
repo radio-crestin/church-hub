@@ -905,9 +905,8 @@ export function SongList({
               }
               value={tagIds}
               onChange={handleTagChange}
-              placeholder={t('tags.filterPlaceholder')}
-              allSelectedLabel={t('tags.filterAll')}
-              emptyMeansAll
+              placeholder={t('tags.filterAll')}
+              allOptionLabel={t('tags.filterAll')}
             />
           </div>
         )}
