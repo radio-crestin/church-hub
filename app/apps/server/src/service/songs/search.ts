@@ -220,7 +220,14 @@ export function normalizeForIndex(text: string): string {
     }
   }
 
-  return expandedWords.join(' ')
+  // Drop single-character tokens — they carry no search signal and worse,
+  // they break title-level phrase / order matching. Example: a title
+  // "Cand Isus Hristos m-a mantuit" used to tokenize as
+  // "cand isus hristos m a mantuit", so a query for the same title could
+  // never match the phrase "cand isus hristos mantuit" exactly (m, a sat
+  // between). Filtering happens after n-expansion so the expansion logic
+  // is unaffected (it already requires length > 2).
+  return expandedWords.filter((w) => w.length > 1).join(' ')
 }
 
 /**
@@ -527,7 +534,16 @@ export function rebuildSearchIndex(): void {
 }
 
 /**
- * Extracts and sanitizes search terms from query text
+ * Extracts and sanitizes search terms from query text.
+ *
+ * Single-character tokens (e.g. "m", "a", "1" from inputs like
+ * "1. Cand Isus Hristos m-a mantuit") are dropped — they carry no
+ * search signal, and worse, they pollute downstream scoring by:
+ *   - matching at unexpected positions ("a" inside "cAnd") and breaking
+ *     in-order detection in calculateTitleScoreNormalized
+ *   - diluting matchPercentage when the title has no such single-char
+ *   - blowing up FTS prefix queries ("m"* matches every m-word)
+ * Index-time tokens are filtered symmetrically in normalizeForIndex.
  */
 export function extractSearchTerms(queryText: string): string[] {
   const sanitized = removeDiacritics(queryText)
@@ -537,7 +553,7 @@ export function extractSearchTerms(queryText: string): string[] {
     .trim()
     .toLowerCase()
 
-  const terms = sanitized.split(/\s+/).filter((t) => t.length > 0)
+  const terms = sanitized.split(/\s+/).filter((t) => t.length > 1)
 
   // Deduplicate terms (e.g. "Isus,Isus" → ["isus", "isus"] → ["isus"])
   return [...new Set(terms)]
@@ -652,7 +668,19 @@ export function getValidTerms(terms: string[]): { validTerms: string[] } {
  * Single-character terms are filtered out to reduce noise
  * (e.g., "m-a mantuit" becomes ["a", "mantuit"] → only ["mantuit"] is used for FTS)
  */
-export function buildSearchQuery(queryText: string): string {
+export function buildSearchQuery(
+  queryText: string,
+  /**
+   * Original (pre-synonym-expansion) terms used to build a tight
+   * `title:"…"` clause. When `queryText` carries synonym-expanded
+   * terms (e.g. `cristos` appended because the user typed `hristos`),
+   * the title-restricted phrase must NOT include the synonyms,
+   * otherwise it never matches any indexed title. Defaults to the
+   * extracted terms of `queryText` for back-compat with callers that
+   * don't expand.
+   */
+  originalTerms?: string[],
+): string {
   const allTerms = extractSearchTerms(queryText)
 
   // Filter out single-character terms to reduce noise in FTS queries
@@ -668,12 +696,31 @@ export function buildSearchQuery(queryText: string): string {
     return `"${effectiveTerms[0]}"*`
   }
 
-  // Simple tiered query - avoids combinatorial explosion
-  const phraseQuery = `"${effectiveTerms.join(' ')}"` // Exact phrase
-  const nearQuery = `NEAR(${effectiveTerms.map((t) => `"${t}"`).join(' ')}, 10)` // Proximity (wider window)
-  const orQuery = effectiveTerms.map((t) => `"${t}"*`).join(' OR ') // Broad match
+  // Tiered query. Order matters because BM25 sums score contributions across
+  // all matched sub-clauses, so the most-specific tier first gives true
+  // title matches a decisive boost.
+  //
+  // The `title:"<joined phrase>"` tier exists because synonym expansion
+  // (e.g. hristos → cristos) widens the broad OR clause until BM25 ranks
+  // exact-title matches below songs that happen to contain many of the
+  // expanded terms in content. Restricting the phrase to the `title`
+  // column rescues queries that ARE the song's title (the most common
+  // form of user search) — but only when the phrase is built from the
+  // user's ORIGINAL terms, not the synonym-expanded set.
+  const titleTerms = (originalTerms ?? effectiveTerms).filter(
+    (t) => t.length > 1,
+  )
+  const clauses: string[] = []
+  if (titleTerms.length > 1) {
+    clauses.push(`(title:"${titleTerms.join(' ')}")`)
+  }
+  clauses.push(`("${effectiveTerms.join(' ')}")`) // Exact phrase, any column
+  clauses.push(
+    `(NEAR(${effectiveTerms.map((t) => `"${t}"`).join(' ')}, 10))`,
+  ) // Proximity
+  clauses.push(`(${effectiveTerms.map((t) => `"${t}"*`).join(' OR ')})`) // Broad
 
-  return `(${phraseQuery}) OR (${nearQuery}) OR (${orQuery})`
+  return clauses.join(' OR ')
 }
 
 /**
@@ -1212,8 +1259,10 @@ export function searchSongs(
     // Expand valid terms with synonyms for broader search
     const expandedTerms = expandTermsWithSynonyms(validTerms)
 
-    // Build FTS query using expanded terms for broader results
-    const ftsQuery = buildSearchQuery(expandedTerms.join(' '))
+    // Build FTS query using expanded terms for broader results, but pass the
+    // pre-expansion terms separately so the title-restricted clause matches
+    // the user's literal title query without diluting on synonym variants.
+    const ftsQuery = buildSearchQuery(expandedTerms.join(' '), validTerms)
 
     if (!ftsQuery) {
       return []

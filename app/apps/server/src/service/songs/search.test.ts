@@ -1,4 +1,5 @@
 import {
+  buildSearchQuery,
   calculateBestPhraseScoreNormalized,
   calculateTitleScoreNormalized,
   extractSearchTerms,
@@ -35,6 +36,24 @@ describe('extractSearchTerms', () => {
     const isusCount = terms.filter((t) => t === 'isus').length
     expect(isusCount).toBe(1)
   })
+
+  test('drops single-character tokens (numeric prefix + "m-a" splits)', () => {
+    // Regression: user-reported query "1. Cand Isus Hristos m-a mantuit"
+    // used to tokenize as ["1","cand","isus","hristos","m","a","mantuit"],
+    // and those single chars then polluted both the FTS query (prefix
+    // expansions like "m"*) and the title-order scoring. Only meaningful
+    // tokens should remain.
+    expect(
+      extractSearchTerms('1. Cand Isus Hristos m-a mantuit'),
+    ).toEqual(['cand', 'isus', 'hristos', 'mantuit'])
+  })
+
+  test('returns empty for input that boils down to single chars only', () => {
+    // Calling code in buildSearchQuery already short-circuits on empty
+    // term lists; this just pins the behaviour.
+    expect(extractSearchTerms('a o')).toEqual([])
+    expect(extractSearchTerms('1 2 3')).toEqual([])
+  })
 })
 
 describe('getValidTerms', () => {
@@ -69,6 +88,54 @@ describe('normalizeForIndex', () => {
     expect(normalized).not.toContain('.')
     expect(normalized).not.toContain(';')
   })
+
+  test('drops single-character tokens so title phrase matching survives "m-a"', () => {
+    // Regression: title "Cand Isus Hristos m-a mantuit" used to tokenize as
+    // "cand isus hristos m a mantuit". A user query for the same title then
+    // could never see the exact phrase in the normalized index because of
+    // the stray "m" and "a" tokens between "hristos" and "mantuit".
+    const normalized = normalizeForIndex('Cand Isus Hristos m-a mantuit')
+    expect(normalized).toBe('Cand Isus Hristos mantuit')
+    expect(normalized.toLowerCase()).toContain('cand isus hristos mantuit')
+  })
+})
+
+describe('buildSearchQuery', () => {
+  test('reported regression: "1. Cand Isus Hristos m-a mantuit" emits a title-restricted phrase tier so the song can outrank synonym noise', () => {
+    // The TODO.md "Căutarea nu găsește …" bug. After normalizeForIndex and
+    // extractSearchTerms drop single chars, the joined phrase becomes
+    // "cand isus hristos mantuit" — and that exact phrase needs to appear
+    // restricted to the `title` column so BM25 lifts the matching song
+    // even when synonym expansion (hristos → cristos) widens the broad OR
+    // tier to 20k+ candidates.
+    const q = buildSearchQuery('1. Cand Isus Hristos m-a mantuit')
+    expect(q).toContain('title:"cand isus hristos mantuit"')
+    // Other tiers still present for fuzzy / content matches
+    expect(q).toContain('NEAR(')
+    expect(q).toContain('"cand"*')
+  })
+
+  test('synonym-expanded query keeps the title-restricted clause on the original terms only', () => {
+    // Caller appends a synonym (e.g. cristos) to queryText, but passes the
+    // pre-expansion terms via the originalTerms arg so the title clause
+    // doesn't require the synonym word to appear in the title.
+    const q = buildSearchQuery('cand isus hristos mantuit cristos', [
+      'cand',
+      'isus',
+      'hristos',
+      'mantuit',
+    ])
+    expect(q).toContain('title:"cand isus hristos mantuit"')
+    expect(q).not.toContain('title:"cand isus hristos mantuit cristos"')
+    // Broad / phrase tiers still use the full expanded set
+    expect(q).toContain('"cristos"*')
+  })
+
+  test('omits title-restricted clause when only one meaningful term', () => {
+    const q = buildSearchQuery('Isus')
+    // single-term path returns just a prefix match, no need for title clause
+    expect(q).toBe('"isus"*')
+  })
 })
 
 describe('scoring - score bounds', () => {
@@ -97,7 +164,9 @@ describe('normalizeForIndex - HTML tag stripping', () => {
     // Should not contain "p" tokens from <p> tags
     expect(normalized).not.toMatch(/\bp\b/)
     expect(normalized).toContain('Sa ne speli de orice pacat')
-    expect(normalized).toContain('A noastra nelegiuire')
+    // "A" (Romanian article) is dropped as a single-char noise token;
+    // the rest of the second clause is preserved.
+    expect(normalized).toContain('noastra nelegiuire')
   })
 })
 
