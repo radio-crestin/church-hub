@@ -6,8 +6,20 @@ import type { LocalSlide } from '../components/SongSlideList'
 interface SongState {
   title: string
   categoryId: number | null
+  tagIds: number[]
   slides: LocalSlide[]
   metadata?: SongMetadata
+}
+
+function areTagIdsEqual(a: number[], b: number[]): boolean {
+  if (a.length !== b.length) return false
+  // Order-insensitive comparison — assignments are a set, not a list.
+  const sortedA = [...a].sort((x, y) => x - y)
+  const sortedB = [...b].sort((x, y) => x - y)
+  for (let i = 0; i < sortedA.length; i++) {
+    if (sortedA[i] !== sortedB[i]) return false
+  }
+  return true
 }
 
 function areMetadataEqual(
@@ -35,6 +47,7 @@ function areMetadataEqual(
 function areStatesEqual(a: SongState, b: SongState): boolean {
   if (a.title !== b.title) return false
   if (a.categoryId !== b.categoryId) return false
+  if (!areTagIdsEqual(a.tagIds, b.tagIds)) return false
   if (a.slides.length !== b.slides.length) return false
 
   for (let i = 0; i < a.slides.length; i++) {
@@ -61,6 +74,7 @@ export function useDirtyState() {
     savedStateRef.current = {
       title: state.title,
       categoryId: state.categoryId,
+      tagIds: [...state.tagIds],
       slides: state.slides.map((s, idx) => ({
         id: s.id,
         content: s.content,
@@ -79,6 +93,7 @@ export function useDirtyState() {
     const normalizedCurrent: SongState = {
       title: currentState.title,
       categoryId: currentState.categoryId,
+      tagIds: currentState.tagIds,
       slides: currentState.slides.map((s, idx) => ({
         id: s.id,
         content: s.content,

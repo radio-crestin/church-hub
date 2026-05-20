@@ -72,6 +72,18 @@
     "create": "Create",
     "name": "Category"
   },
+  "tags": {
+    "name": "Tags",
+    "helper": "Audience tags (e.g. youth, men, sisters, children). A song can have several.",
+    "add": "Add tag",
+    "addFirst": "Add tag",
+    "removeTag": "Remove {{name}}",
+    "searchPlaceholder": "Search or create...",
+    "empty": "No tags yet — type to create one.",
+    "createNamed": "Create \"{{name}}\"",
+    "filterPlaceholder": "All tags",
+    "filterAll": "All tags"
+  },
   "messages": {
     "saving": "Saving song...",
     "saved": "Song saved successfully",

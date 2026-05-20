@@ -32,6 +32,7 @@ export type SongSortBy =
 
 export interface SongFilters {
   categoryIds?: number[]
+  tagIds?: number[]
   presentedOnly?: boolean
   inSchedulesOnly?: boolean
   hasKeyLine?: boolean
@@ -49,6 +50,9 @@ export async function getSongsPaginated(
   params.set('offset', String(offset))
   if (filters?.categoryIds && filters.categoryIds.length > 0) {
     params.set('categoryIds', filters.categoryIds.join(','))
+  }
+  if (filters?.tagIds && filters.tagIds.length > 0) {
+    params.set('tagIds', filters.tagIds.join(','))
   }
   if (filters?.presentedOnly) {
     params.set('presentedOnly', 'true')

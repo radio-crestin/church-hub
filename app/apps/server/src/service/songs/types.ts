@@ -69,6 +69,22 @@ export interface SongCategory {
 }
 
 /**
+ * Song tag API response format
+ *
+ * Tags are an orthogonal classification axis to categories: a song has at
+ * most one category but can have multiple tags (e.g. "youth", "men",
+ * "sisters", "children"). Used for filtering / scheduling by audience.
+ */
+export interface SongTag {
+  id: number
+  name: string
+  sortOrder: number
+  songCount: number
+  createdAt: number
+  updatedAt: number
+}
+
+/**
  * Song API response format
  */
 export interface Song {
@@ -91,6 +107,12 @@ export interface Song {
   lastManualEdit: number | null
   createdAt: number
   updatedAt: number
+  /**
+   * Tag names attached to this song, in display order. Only populated by
+   * endpoints that need it for list rendering (e.g. paginated browse); the
+   * legacy `getAllSongs` path leaves it undefined to avoid the extra join.
+   */
+  tagNames?: string[]
 }
 
 /**
@@ -113,6 +135,7 @@ export interface SongSlide {
 export interface SongWithSlides extends Song {
   slides: SongSlide[]
   category: SongCategory | null
+  tags: SongTag[]
 }
 
 /**
@@ -122,6 +145,22 @@ export interface UpsertCategoryInput {
   id?: number
   name: string
   priority?: number
+}
+
+/**
+ * Input for creating/updating a song tag
+ */
+export interface UpsertTagInput {
+  id?: number
+  name: string
+  sortOrder?: number
+}
+
+/**
+ * Input for reordering song tags
+ */
+export interface ReorderTagsInput {
+  tagIds: number[]
 }
 
 /**
@@ -155,6 +194,12 @@ export interface UpsertSongInput {
   presentationOrder?: string | null
   presentationCount?: number
   slides?: SlideInput[]
+  /**
+   * Tag memberships for this song. When omitted the existing assignments
+   * are left untouched; when provided the set is replaced wholesale (empty
+   * array clears all assignments).
+   */
+  tagIds?: number[]
   /** Whether this is a manual edit from the UI (sets last_manual_edit timestamp) */
   isManualEdit?: boolean
 }

@@ -23,6 +23,7 @@ export {
   reorderCategories,
   upsertCategory,
 } from './categories'
+export { deleteTag, getAllTags, reorderTags, upsertTag } from './tags'
 export {
   cloneSongSlide,
   deleteSongSlide,

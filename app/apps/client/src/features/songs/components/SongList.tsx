@@ -26,6 +26,7 @@ import {
   useSongBookmarks,
   useSongsAISearchSettings,
   useSongsInfinite,
+  useTags,
 } from '../hooks'
 import type { SongFilters, SongSortBy } from '../service'
 import type { AISearchResult, SongSearchResult } from '../types'
@@ -33,6 +34,7 @@ import type { AISearchResult, SongSearchResult } from '../types'
 const SEARCH_DEBOUNCE_MS = 200
 
 const CATEGORY_FILTER_STORAGE_KEY = 'songList.categoryFilter'
+const TAG_FILTER_STORAGE_KEY = 'songList.tagFilter'
 const PRESENTED_ONLY_STORAGE_KEY = 'songList.presentedOnly'
 const IN_SCHEDULES_ONLY_STORAGE_KEY = 'songList.inSchedulesOnly'
 const HAS_KEY_LINE_STORAGE_KEY = 'songList.hasKeyLine'
@@ -72,6 +74,37 @@ export function SongList({
   const searchInputRef = useRef<HTMLInputElement>(null)
   const loadMoreRef = useRef<HTMLDivElement>(null)
   const hasSelectedAllRef = useRef(false)
+
+  // Initialize tag filter from local storage (orthogonal to category)
+  const [tagIds, setTagIds] = useState<number[]>(() => {
+    try {
+      const stored = localStorage.getItem(TAG_FILTER_STORAGE_KEY)
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (Array.isArray(parsed)) {
+          return parsed.filter((id): id is number => typeof id === 'number')
+        }
+      }
+    } catch {
+      // Ignore storage errors
+    }
+    return []
+  })
+
+  const handleTagChange = useCallback(
+    (newTagIds: Array<number | string>) => {
+      const numericIds = newTagIds.filter(
+        (id): id is number => typeof id === 'number',
+      )
+      setTagIds(numericIds)
+      try {
+        localStorage.setItem(TAG_FILTER_STORAGE_KEY, JSON.stringify(numericIds))
+      } catch {
+        // Ignore storage errors
+      }
+    },
+    [],
+  )
 
   // Initialize category filter from local storage or props
   const [categoryIds, setCategoryIds] = useState<number[]>(() => {
@@ -209,12 +242,13 @@ export function SongList({
   const songFilters: SongFilters = useMemo(
     () => ({
       categoryIds: categoryIds.length > 0 ? categoryIds : undefined,
+      tagIds: tagIds.length > 0 ? tagIds : undefined,
       presentedOnly: presentedOnly || undefined,
       inSchedulesOnly: inSchedulesOnly || undefined,
       hasKeyLine: hasKeyLine || undefined,
       sortBy,
     }),
-    [categoryIds, presentedOnly, inSchedulesOnly, hasKeyLine, sortBy],
+    [categoryIds, tagIds, presentedOnly, inSchedulesOnly, hasKeyLine, sortBy],
   )
 
   // Build filters state for the dropdown
@@ -233,16 +267,25 @@ export function SongList({
   const hasActiveFilters = useMemo(
     () =>
       categoryIds.length > 0 ||
+      tagIds.length > 0 ||
       presentedOnly ||
       inSchedulesOnly ||
       hasKeyLine ||
       bookmarkedOnly,
-    [categoryIds, presentedOnly, inSchedulesOnly, hasKeyLine, bookmarkedOnly],
+    [
+      categoryIds,
+      tagIds,
+      presentedOnly,
+      inSchedulesOnly,
+      hasKeyLine,
+      bookmarkedOnly,
+    ],
   )
 
   // Clear all filters
   const handleClearAllFilters = useCallback(() => {
     setCategoryIds([])
+    setTagIds([])
     setPresentedOnly(false)
     setInSchedulesOnly(false)
     setHasKeyLine(false)
@@ -250,6 +293,7 @@ export function SongList({
     setSortBy(undefined)
     try {
       localStorage.setItem(CATEGORY_FILTER_STORAGE_KEY, JSON.stringify([]))
+      localStorage.setItem(TAG_FILTER_STORAGE_KEY, JSON.stringify([]))
       localStorage.setItem(PRESENTED_ONLY_STORAGE_KEY, 'false')
       localStorage.setItem(IN_SCHEDULES_ONLY_STORAGE_KEY, 'false')
       localStorage.setItem(HAS_KEY_LINE_STORAGE_KEY, 'false')
@@ -296,6 +340,7 @@ export function SongList({
   )
 
   const { data: categories } = useCategories()
+  const { data: songTags } = useTags()
   const { data: bookmarks = [] } = useSongBookmarks()
 
   // AI Search
@@ -479,6 +524,7 @@ export function SongList({
       presentationCount?: number
       aiRelevanceScore?: number
       score?: number
+      tagNames?: string[]
     }>
 
     // When bookmarkedOnly is active and not searching, show bookmarks directly
@@ -553,6 +599,7 @@ export function SongList({
         categories?.find((c) => c.id === song.categoryId)?.name ?? null,
       keyLine: song.keyLine,
       presentationCount: song.presentationCount,
+      tagNames: song.tagNames,
     }))
 
     if (bookmarkedOnly) {
@@ -849,6 +896,20 @@ export function SongList({
             emptyMeansAll
           />
         </div>
+        {(songTags?.length ?? 0) > 0 && (
+          <div className="hidden md:block min-w-[140px]">
+            <MultiSelectCombobox
+              options={
+                songTags?.map((tag) => ({ value: tag.id, label: tag.name })) ??
+                []
+              }
+              value={tagIds}
+              onChange={handleTagChange}
+              placeholder={t('tags.filterAll')}
+              allOptionLabel={t('tags.filterAll')}
+            />
+          </div>
+        )}
       </div>
       </div>
 

@@ -277,30 +277,36 @@ import {
   deleteSong,
   deleteSongSlide,
   deleteSongsByIds,
+  deleteTag,
   deleteUncategorizedSongs,
   getAllCategories,
   getAllSongs,
   getAllSongsWithSlides,
+  getAllTags,
   getSongSlideById,
   getSongsPaginated,
   getSongWithSlides,
   type ReorderCategoriesInput,
+  type ReorderTagsInput,
   type ReorderSongSlidesInput,
   rebuildSearchIndex,
   removeFromSearchIndex,
   reorderCategories,
   reorderSongSlides,
+  reorderTags,
   resetSongPresentationCount,
   type SongFilters,
   searchSongs,
   type UpsertCategoryInput,
   type UpsertSongInput,
   type UpsertSongSlideInput,
+  type UpsertTagInput,
   updateSearchIndex,
   updateSearchIndexByCategory,
   upsertCategory,
   upsertSong,
   upsertSongSlide,
+  upsertTag,
   warmupSearchIndex as warmupSongsSearchIndex,
 } from './service/songs'
 import { createLogger } from './utils/logger'
@@ -3451,6 +3457,7 @@ async function main() {
         const limitParam = url.searchParams.get('limit')
         const offsetParam = url.searchParams.get('offset')
         const categoryIdsParam = url.searchParams.get('categoryIds')
+        const tagIdsParam = url.searchParams.get('tagIds')
         const inSchedulesOnlyParam = url.searchParams.get('inSchedulesOnly')
         const hasKeyLineParam = url.searchParams.get('hasKeyLine')
         const sortByParam = url.searchParams.get('sortBy')
@@ -3461,6 +3468,12 @@ async function main() {
           const offset = offsetParam ? parseInt(offsetParam, 10) || 0 : 0
           const categoryIds = categoryIdsParam
             ? categoryIdsParam
+                .split(',')
+                .map((id) => parseInt(id, 10))
+                .filter((id) => !isNaN(id))
+            : undefined
+          const tagIds = tagIdsParam
+            ? tagIdsParam
                 .split(',')
                 .map((id) => parseInt(id, 10))
                 .filter((id) => !isNaN(id))
@@ -3484,6 +3497,7 @@ async function main() {
           const filters: SongFilters = {
             categoryIds:
               categoryIds && categoryIds.length > 0 ? categoryIds : undefined,
+            tagIds: tagIds && tagIds.length > 0 ? tagIds : undefined,
             presentedOnly: presentedOnlyParam === 'true',
             inSchedulesOnly: inSchedulesOnlyParam === 'true',
             hasKeyLine: hasKeyLineParam === 'true',
@@ -5114,6 +5128,151 @@ async function main() {
             }),
           )
         }
+      }
+
+      // ============================================================
+      // Song Tags API Endpoints
+      // ============================================================
+
+      // GET /api/song-tags - List all tags
+      if (req.method === 'GET' && url.pathname === '/api/song-tags') {
+        const permError = checkPermission('songs.view')
+        if (permError) return permError
+
+        const tags = getAllTags()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: tags }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/song-tags - Create/update tag
+      if (req.method === 'POST' && url.pathname === '/api/song-tags') {
+        try {
+          const body = (await req.json()) as UpsertTagInput
+
+          const permError = checkPermission(
+            body.id ? 'songs.edit' : 'songs.create',
+          )
+          if (permError) return permError
+
+          if (!body.name) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Missing name' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const tag = upsertTag(body)
+
+          if (!tag) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Failed to save tag' }), {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: tag }), {
+              status: body.id ? 200 : 201,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // PUT /api/song-tags/reorder - Reorder tags
+      if (req.method === 'PUT' && url.pathname === '/api/song-tags/reorder') {
+        const permError = checkPermission('songs.edit')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as ReorderTagsInput
+
+          if (!body.tagIds || !Array.isArray(body.tagIds)) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({ error: 'Missing tagIds array' }),
+                {
+                  status: 400,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          const result = reorderTags(body)
+
+          if (!result.success) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: result.error }), {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: { success: true } }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // DELETE /api/song-tags/:id - Delete tag (assignments cascade)
+      const deleteTagMatch = url.pathname.match(/^\/api\/song-tags\/(\d+)$/)
+      if (req.method === 'DELETE' && deleteTagMatch?.[1]) {
+        const permError = checkPermission('songs.delete')
+        if (permError) return permError
+
+        const id = parseInt(deleteTagMatch[1], 10)
+        const result = deleteTag(id)
+
+        if (!result.success) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: result.error }), {
+              status: 500,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: { success: true } }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
       }
 
       // ============================================================

@@ -402,6 +402,42 @@
         }
       }
     },
+    "tags": {
+      "title": "Song Tags",
+      "description": "Audience tags orthogonal to categories — a song can have several (e.g. youth, men, sisters, children).",
+      "addTag": "Add Tag",
+      "noTags": "No tags configured",
+      "noTagsDescription": "Add a tag to mark songs by audience (youth, sisters, etc.)",
+      "tagName": "Tag Name",
+      "tagNamePlaceholder": "e.g., Youth, Men, Sisters, Children",
+      "songCount_one": "{{count}} song",
+      "songCount_other": "{{count}} songs",
+      "actions": {
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "modals": {
+        "create": {
+          "title": "Add New Tag",
+          "submit": "Create Tag"
+        },
+        "edit": {
+          "title": "Edit Tag",
+          "submit": "Save Changes"
+        },
+        "delete": {
+          "title": "Delete Tag",
+          "message": "Are you sure you want to delete \"{{name}}\"? Songs with this tag will lose the assignment but won't be deleted.",
+          "confirm": "Delete"
+        }
+      },
+      "toast": {
+        "created": "Tag created successfully",
+        "updated": "Tag updated successfully",
+        "deleted": "Tag deleted successfully",
+        "error": "An error occurred"
+      }
+    },
     "synonyms": {
       "title": "Search Synonyms",
       "description": "Define word synonyms to improve search results. When you search for one word, results with its synonyms will also appear.",

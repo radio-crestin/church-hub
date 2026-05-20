@@ -40,6 +40,7 @@ export function SongEditorModal({
   // 3. Included in handleSave mutation call
   const [title, setTitle] = useState('')
   const [categoryId, setCategoryId] = useState<number | null>(null)
+  const [tagIds, setTagIds] = useState<number[]>([])
   const [slides, setSlides] = useState<LocalSlide[]>([])
   const [metadata, setMetadata] = useState<SongMetadata>(defaultSongMetadata)
   const [isInitialized, setIsInitialized] = useState(false)
@@ -49,6 +50,7 @@ export function SongEditorModal({
     if (song && isOpen) {
       setTitle(song.title)
       setCategoryId(song.categoryId)
+      setTagIds(song.tags.map((tag) => tag.id))
       setSlides(
         song.slides.map((s) => ({
           id: s.id,
@@ -98,6 +100,7 @@ export function SongEditorModal({
       id: songId,
       title: title.trim(),
       categoryId,
+      tagIds,
       slides: slides.map((s, idx) => ({
         id: typeof s.id === 'number' ? s.id : undefined,
         content: s.content,
@@ -121,6 +124,7 @@ export function SongEditorModal({
     if (result.success && result.data) {
       showToast(t('songs:messages.saved'), 'success')
       // Update local state with saved data
+      setTagIds(result.data.tags.map((tag) => tag.id))
       setSlides(
         result.data.slides.map((s) => ({
           id: s.id,
@@ -150,6 +154,7 @@ export function SongEditorModal({
   }, [
     title,
     categoryId,
+    tagIds,
     slides,
     metadata,
     songId,
@@ -240,10 +245,12 @@ export function SongEditorModal({
           <SongDetailsSection
             title={title}
             categoryId={categoryId}
+            tagIds={tagIds}
             metadata={metadata}
             isLoading={showLoading}
             onTitleChange={setTitle}
             onCategoryChange={setCategoryId}
+            onTagsChange={setTagIds}
             onMetadataChange={handleMetadataChange}
             idPrefix="modal-"
           />
