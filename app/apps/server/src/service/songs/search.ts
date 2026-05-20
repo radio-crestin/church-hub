@@ -956,6 +956,24 @@ function buildDiacriticInsensitivePattern(word: string): string {
 // forms ş / ţ that show up in Romanian texts alongside the comma-below
 // canonical forms ș / ț). The `u` regex flag is required to enable it.
 const HL_LETTER = '\\p{L}'
+
+/**
+ * Returns true if the gap between two highlight ranges should be swallowed
+ * into a single merged range — pure whitespace, or a short Romanian clitic
+ * contraction (e.g. "m-a", "te-a", "ne-am", "s-a", "n-am"). Plain words
+ * like "a" or "este" between two matches stay un-merged so we don't blob
+ * everything together.
+ */
+function isMergeableGap(gap: string): boolean {
+  if (gap.length === 0) return true
+  const trimmed = gap.trim()
+  if (trimmed === '') return true
+  return (
+    trimmed.length <= 6 &&
+    trimmed.includes('-') &&
+    /^[\p{L}-]+$/u.test(trimmed)
+  )
+}
 export function highlightWithDiacritics(
   text: string,
   searchTerms: string[],
@@ -993,6 +1011,12 @@ export function highlightWithDiacritics(
     const last = merged[merged.length - 1]
     if (last && r.start <= last.end) {
       last.end = Math.max(last.end, r.end)
+    } else if (last && isMergeableGap(text.slice(last.end, r.start))) {
+      // Two consecutive matches separated only by whitespace, or by a short
+      // Romanian clitic contraction (m-a, te-a, ne-am, s-a, n-am, …),
+      // fuse into a single mark — the user expects the whole phrase
+      // including the connector to be highlighted.
+      last.end = r.end
     } else {
       merged.push({ ...r })
     }
@@ -1126,8 +1150,11 @@ export function createFuzzyHighlightedSnippet(
   // Sort matches by position, then by length (longer matches first)
   matches.sort((a, b) => a.start - b.start || b.length - a.length)
 
-  // Merge overlapping and adjacent matches (separated only by whitespace)
-  // This produces continuous highlights for phrases like "Sa ne speli de orice pacat"
+  // Merge overlapping and adjacent matches. Gaps that are pure whitespace
+  // OR a short Romanian clitic contraction (m-a, te-a, ne-am, s-a, …) are
+  // swallowed into a single range so users see a continuous highlight on
+  // queries like "cand isus hristos m-a mantuit" — the "m-a" sits between
+  // two matched terms and visibly belongs to the same phrase.
   const mergedMatches: Array<{ start: number; end: number }> = []
   for (const match of matches) {
     const adjacent = mergedMatches.find((m) => {
@@ -1136,7 +1163,7 @@ export function createFuzzyHighlightedSnippet(
         match.start >= m.end
           ? plainContent.substring(m.end, match.start)
           : plainContent.substring(match.end, m.start)
-      return gap.length > 0 && gap.trim() === '' // only whitespace between
+      return isMergeableGap(gap)
     })
     if (adjacent) {
       adjacent.start = Math.min(adjacent.start, match.start)

@@ -177,14 +177,12 @@ describe('highlightWithDiacritics - hyphenated word coverage', () => {
     // User-reported: searching "m-am departat de mantuitorul" only
     // highlighted "am departat de mantuitorul" — the "m-" prefix was
     // cut off because "m" is dropped from search tokens as noise.
-    // The highlighter should still cover the whole "m-am".
+    // The whole phrase (including the clitic prefix) lands in one mark.
     const out = highlightWithDiacritics(
       'M-am departat de Mantuitorul',
       ['am', 'departat', 'de', 'mantuitorul'],
     )
-    expect(out).toContain('<mark>M-am</mark>')
-    expect(out).toContain('<mark>departat</mark>')
-    expect(out).toContain('<mark>Mantuitorul</mark>')
+    expect(out).toBe('<mark>M-am departat de Mantuitorul</mark>')
     // Crucially the "M-" prefix is INSIDE the mark, not outside it
     expect(out).not.toMatch(/M-<mark>am<\/mark>/)
   })
@@ -206,21 +204,46 @@ describe('highlightWithDiacritics - hyphenated word coverage', () => {
     expect(out).toBe('<mark>Isus</mark> mantuitor')
   })
 
+  test('swallows a mid-phrase clitic ("m-a") into the merged mark', () => {
+    // User-reported: in "Cand Isus Hristos m-a mantuit", the "m-a"
+    // sits between two matched terms and was left un-marked even
+    // though it visibly belongs to the same phrase. With clitic-gap
+    // merging it should land inside the same <mark> as its neighbours.
+    const out = highlightWithDiacritics(
+      'Cand Isus Hristos m-a mantuit',
+      ['cand', 'isus', 'hristos', 'mantuit'],
+    )
+    expect(out).toContain('<mark>Cand Isus Hristos m-a mantuit</mark>')
+    // Sanity: only ONE pair of mark tags in the output
+    expect(out.match(/<mark>/g)?.length).toBe(1)
+  })
+
+  test('does not swallow plain words between matches ("a" without hyphen stays out)', () => {
+    // "a" is a Romanian particle, not a clitic contraction. The merger
+    // must only bridge across hyphenated connectors so we don't blob
+    // unrelated content together.
+    const out = highlightWithDiacritics('Isus a inviat din morti', [
+      'isus',
+      'inviat',
+    ])
+    expect(out).not.toContain('<mark>Isus a inviat</mark>')
+    expect(out).toContain('<mark>Isus</mark>')
+    expect(out).toContain('<mark>inviat</mark>')
+  })
+
   test('does not nest <mark> tags when a shorter term overlaps a longer one', () => {
     // Pre-existing artefact: searching "m-am departat de mantuitorul"
     // produced "<mark><mark>depărtat</mark></mark>" because the regex
     // for "de" greedily matched the whole "depărtat" already wrapped by
     // the "departat" term. The single-pass + merge implementation must
-    // collapse this.
+    // collapse this into one flat mark.
     const out = highlightWithDiacritics(
       'M-am depărtat de Mântuitorul',
       ['am', 'departat', 'de', 'mantuitorul'],
     )
     expect(out).not.toMatch(/<mark><mark>/)
     expect(out).not.toMatch(/<\/mark><\/mark>/)
-    expect(out).toContain('<mark>M-am</mark>')
-    expect(out).toContain('<mark>depărtat</mark>')
-    expect(out).toContain('<mark>Mântuitorul</mark>')
+    expect(out).toBe('<mark>M-am depărtat de Mântuitorul</mark>')
   })
 })
 
