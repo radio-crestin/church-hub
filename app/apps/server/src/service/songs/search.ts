@@ -921,11 +921,15 @@ function findFuzzyMatchWord(
  * highlights the original text that contains diacritics.
  */
 function buildDiacriticInsensitivePattern(word: string): string {
+  // Romanian s and t exist in two Unicode forms: the canonical comma-below
+  // (ș U+0219, ț U+021B) and the older cedilla (ş U+015F, ţ U+0163). Both
+  // are sprinkled through real texts, so the pattern must accept either
+  // when highlighting a diacritic-stripped search token.
   const diacriticMap: Record<string, string> = {
     a: '[aăâ]',
     i: '[iî]',
-    s: '[sș]',
-    t: '[tț]',
+    s: '[sșş]',
+    t: '[tțţ]',
   }
   return word
     .split('')
@@ -940,19 +944,69 @@ function buildDiacriticInsensitivePattern(word: string): string {
 /**
  * Highlights search terms in text with diacritic-insensitive matching.
  * Operates on original text (with diacritics) so highlighted output preserves them.
+ *
+ * When a term match sits inside a hyphenated word (e.g. "am" inside
+ * "m-am" or "te-aşteptăm"), the highlight is extended across the whole
+ * hyphen-joined chunk. This keeps short Romanian clitic contractions
+ * ("m-am", "te-a", "ne-am", "n-a") visually together in the title even
+ * though the leading single-letter segment is dropped from the search
+ * tokens for ranking purposes.
  */
-function highlightWithDiacritics(text: string, searchTerms: string[]): string {
+// Unicode letter class — covers every diacritic variant (incl. cedilla
+// forms ş / ţ that show up in Romanian texts alongside the comma-below
+// canonical forms ș / ț). The `u` regex flag is required to enable it.
+const HL_LETTER = '\\p{L}'
+export function highlightWithDiacritics(
+  text: string,
+  searchTerms: string[],
+): string {
   if (!searchTerms.length) return text
 
-  let result = text
+  // Collect all match ranges across every term in a single pass, then
+  // merge overlaps before applying <mark> tags. Avoids the nested-mark
+  // artefact that the previous per-term replace loop produced when a
+  // shorter term (e.g. "de") matched inside a word already marked by a
+  // longer term (e.g. "departat" → <mark>de<mark>părtat</mark></mark>).
+  const ranges: Array<{ start: number; end: number }> = []
   for (const term of searchTerms) {
     if (term.length < 2) continue
     const normalized = removeDiacritics(term).toLowerCase()
     const diacriticPattern = buildDiacriticInsensitivePattern(normalized)
-    const pattern = new RegExp(`(${diacriticPattern}[a-zA-ZăâîșțĂÂÎȘȚ]*)`, 'gi')
-    result = result.replace(pattern, '<mark>$1</mark>')
+    const pattern = new RegExp(
+      `(?:${HL_LETTER}+-)*${diacriticPattern}${HL_LETTER}*(?:-${HL_LETTER}+)*`,
+      'giu',
+    )
+    let m: RegExpExecArray | null
+    while ((m = pattern.exec(text)) !== null) {
+      if (m[0].length === 0) {
+        pattern.lastIndex++
+        continue
+      }
+      ranges.push({ start: m.index, end: m.index + m[0].length })
+    }
   }
-  return result
+  if (ranges.length === 0) return text
+
+  ranges.sort((a, b) => a.start - b.start || a.end - b.end)
+  const merged: Array<{ start: number; end: number }> = []
+  for (const r of ranges) {
+    const last = merged[merged.length - 1]
+    if (last && r.start <= last.end) {
+      last.end = Math.max(last.end, r.end)
+    } else {
+      merged.push({ ...r })
+    }
+  }
+
+  let out = ''
+  let cursor = 0
+  for (const r of merged) {
+    out += text.slice(cursor, r.start)
+    out += `<mark>${text.slice(r.start, r.end)}</mark>`
+    cursor = r.end
+  }
+  out += text.slice(cursor)
+  return out
 }
 
 /**
@@ -960,7 +1014,7 @@ function highlightWithDiacritics(text: string, searchTerms: string[]): string {
  * Highlights both exact matches and fuzzy matches (e.g., "Hristos" -> "Cristos")
  * Supports diacritic-insensitive matching (e.g., "in" matches "în")
  */
-function createFuzzyHighlightedSnippet(
+export function createFuzzyHighlightedSnippet(
   content: string,
   queryTerms: string[],
   maxLength: number = 150,
@@ -1036,6 +1090,37 @@ function createFuzzyHighlightedSnippet(
     return plainContent.length > maxLength
       ? `${plainContent.substring(0, maxLength)}...`
       : plainContent
+  }
+
+  // Extend each match to cover the surrounding hyphen-joined word so that
+  // e.g. searching "am" highlights the full "m-am", not just the "am". The
+  // single-letter clitic prefix is dropped from the search tokens but the
+  // user still expects to see the whole Romanian contraction marked.
+  // Uses \p{L} so cedilla diacritics (ş, ţ) match alongside the canonical
+  // comma-below forms (ș, ț).
+  const isLetter = (ch: string | undefined) => !!ch && /\p{L}/u.test(ch)
+  for (const m of matches) {
+    while (m.start > 0) {
+      const prev = plainContent[m.start - 1]
+      if (isLetter(prev)) {
+        m.start--
+      } else if (prev === '-' && isLetter(plainContent[m.start - 2])) {
+        m.start--
+      } else {
+        break
+      }
+    }
+    while (m.end < plainContent.length) {
+      const next = plainContent[m.end]
+      if (isLetter(next)) {
+        m.end++
+      } else if (next === '-' && isLetter(plainContent[m.end + 1])) {
+        m.end++
+      } else {
+        break
+      }
+    }
+    m.length = m.end - m.start
   }
 
   // Sort matches by position, then by length (longer matches first)

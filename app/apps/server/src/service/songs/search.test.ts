@@ -2,8 +2,10 @@ import {
   buildSearchQuery,
   calculateBestPhraseScoreNormalized,
   calculateTitleScoreNormalized,
+  createFuzzyHighlightedSnippet,
   extractSearchTerms,
   getValidTerms,
+  highlightWithDiacritics,
   normalizeForIndex,
 } from './search'
 import { describe, expect, test } from 'bun:test'
@@ -167,6 +169,82 @@ describe('normalizeForIndex - HTML tag stripping', () => {
     // "A" (Romanian article) is dropped as a single-char noise token;
     // the rest of the second clause is preserved.
     expect(normalized).toContain('noastra nelegiuire')
+  })
+})
+
+describe('highlightWithDiacritics - hyphenated word coverage', () => {
+  test('extends highlight backward across a clitic prefix ("m-am")', () => {
+    // User-reported: searching "m-am departat de mantuitorul" only
+    // highlighted "am departat de mantuitorul" — the "m-" prefix was
+    // cut off because "m" is dropped from search tokens as noise.
+    // The highlighter should still cover the whole "m-am".
+    const out = highlightWithDiacritics(
+      'M-am departat de Mantuitorul',
+      ['am', 'departat', 'de', 'mantuitorul'],
+    )
+    expect(out).toContain('<mark>M-am</mark>')
+    expect(out).toContain('<mark>departat</mark>')
+    expect(out).toContain('<mark>Mantuitorul</mark>')
+    // Crucially the "M-" prefix is INSIDE the mark, not outside it
+    expect(out).not.toMatch(/M-<mark>am<\/mark>/)
+  })
+
+  test('extends across hyphen-joined chunks with diacritics ("te-aşteptăm")', () => {
+    const out = highlightWithDiacritics('Isus te-aşteptăm vino', ['asteptam'])
+    expect(out).toContain('<mark>te-aşteptăm</mark>')
+  })
+
+  test('extends forward across a trailing hyphen segment ("Te-aşteptăm" forward case)', () => {
+    // term "te" should sweep up the whole "Te-aşteptăm" forward
+    const out = highlightWithDiacritics('Te-aşteptăm Doamne', ['te'])
+    expect(out).toContain('<mark>Te-aşteptăm</mark>')
+  })
+
+  test('still highlights plain words without altering them', () => {
+    const out = highlightWithDiacritics('Isus mantuitor', ['isus'])
+    expect(out).toContain('<mark>Isus</mark>')
+    expect(out).toBe('<mark>Isus</mark> mantuitor')
+  })
+
+  test('does not nest <mark> tags when a shorter term overlaps a longer one', () => {
+    // Pre-existing artefact: searching "m-am departat de mantuitorul"
+    // produced "<mark><mark>depărtat</mark></mark>" because the regex
+    // for "de" greedily matched the whole "depărtat" already wrapped by
+    // the "departat" term. The single-pass + merge implementation must
+    // collapse this.
+    const out = highlightWithDiacritics(
+      'M-am depărtat de Mântuitorul',
+      ['am', 'departat', 'de', 'mantuitorul'],
+    )
+    expect(out).not.toMatch(/<mark><mark>/)
+    expect(out).not.toMatch(/<\/mark><\/mark>/)
+    expect(out).toContain('<mark>M-am</mark>')
+    expect(out).toContain('<mark>depărtat</mark>')
+    expect(out).toContain('<mark>Mântuitorul</mark>')
+  })
+})
+
+describe('createFuzzyHighlightedSnippet - hyphenated word coverage', () => {
+  test('snippet highlight covers the whole "m-am" chunk, not just "am"', () => {
+    const snippet = createFuzzyHighlightedSnippet(
+      'Cantam: m-am departat de Mantuitorul, dar acum revin.',
+      ['am', 'departat', 'mantuitorul'],
+    )
+    // The existing merge step fuses adjacent matches separated only by
+    // whitespace, so checking the exact "<mark>m-am</mark>" boundary is
+    // wrong here — what matters is that the "m-" prefix is INSIDE a mark.
+    expect(snippet).not.toMatch(/m-<mark>/)
+    // The clitic + adjacent matches should all land inside a single mark
+    expect(snippet).toContain('<mark>m-am departat</mark>')
+  })
+
+  test('snippet without merge: standalone "m-am" sweeps both letters', () => {
+    const snippet = createFuzzyHighlightedSnippet(
+      'Cuvinte m-am altele neutre.',
+      ['am'],
+    )
+    expect(snippet).toContain('<mark>m-am</mark>')
+    expect(snippet).not.toMatch(/m-<mark>am<\/mark>/)
   })
 })
 
