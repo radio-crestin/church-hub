@@ -72,6 +72,18 @@
     "create": "Creează",
     "name": "Categorie"
   },
+  "tags": {
+    "name": "Etichete",
+    "helper": "Etichete suplimentare (ex: tineret, bărbați, surori, copii). O cântare poate avea mai multe etichete.",
+    "add": "Adaugă etichetă",
+    "addFirst": "Adaugă etichetă",
+    "removeTag": "Elimină {{name}}",
+    "searchPlaceholder": "Caută sau creează...",
+    "empty": "Nicio etichetă încă — scrie un nume pentru a o crea.",
+    "createNamed": "Creează „{{name}}\"",
+    "filterPlaceholder": "Toate etichetele",
+    "filterAll": "Toate etichetele"
+  },
   "messages": {
     "saving": "Se salvează cântarea...",
     "saved": "Cântarea a fost salvată cu succes",

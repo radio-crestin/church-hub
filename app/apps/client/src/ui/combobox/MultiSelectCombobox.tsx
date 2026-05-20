@@ -17,6 +17,17 @@ export interface MultiSelectComboboxProps {
   className?: string
   portalContainer?: HTMLElement | null
   emptyMeansAll?: boolean
+  /**
+   * When set, renders an explicit "All" pseudo-item at the top of the
+   * dropdown. Clicking it clears the selection (value becomes []).
+   * Use this — together with leaving `emptyMeansAll` off — when an
+   * empty selection should mean "no filter" while still giving the
+   * user a one-click way to reset from inside the dropdown. Fixes a
+   * sharp edge with single-option lists where the emptyMeansAll
+   * toggle logic loops back to empty and you can never actually
+   * filter to the one option.
+   */
+  allOptionLabel?: string
 }
 
 export function MultiSelectCombobox({
@@ -29,6 +40,7 @@ export function MultiSelectCombobox({
   className = '',
   portalContainer,
   emptyMeansAll = false,
+  allOptionLabel,
 }: MultiSelectComboboxProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState('')
@@ -218,6 +230,32 @@ export function MultiSelectCombobox({
             </div>
 
             <div className="max-h-48 overflow-y-auto">
+              {allOptionLabel && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (value.length > 0) onChange([])
+                  }}
+                  className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left border-b border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                    value.length === 0
+                      ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-medium'
+                      : 'text-gray-900 dark:text-white'
+                  }`}
+                >
+                  <div
+                    className={`w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0 ${
+                      value.length === 0
+                        ? 'border-indigo-600'
+                        : 'border-gray-300 dark:border-gray-500'
+                    }`}
+                  >
+                    {value.length === 0 && (
+                      <div className="w-2 h-2 rounded-full bg-indigo-600" />
+                    )}
+                  </div>
+                  <span className="truncate">{allOptionLabel}</span>
+                </button>
+              )}
               {filteredOptions.length === 0 ? (
                 <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
                   No options found

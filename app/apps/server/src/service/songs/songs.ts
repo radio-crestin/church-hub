@@ -2,6 +2,7 @@ import { asc, eq, inArray } from 'drizzle-orm'
 
 import { getCategoryById } from './categories'
 import { getSlidesBySongId } from './song-slides'
+import { getTagsBySongId, getTagsBySongIds, setSongTags } from './tags'
 import type {
   BatchImportResult,
   BatchImportSongInput,
@@ -132,6 +133,11 @@ export type SongSortBy =
 
 export interface SongFilters {
   categoryIds?: number[]
+  /**
+   * Tag ids — songs that have ANY of the listed tags match.
+   * (Mirrors the OR semantics of `categoryIds` for consistency.)
+   */
+  tagIds?: number[]
   presentedOnly?: boolean
   inSchedulesOnly?: boolean
   hasKeyLine?: boolean
@@ -150,10 +156,16 @@ export function getSongsPaginated(
   filters?: SongFilters,
 ): PaginatedSongsResult {
   try {
-    const { categoryIds, presentedOnly, inSchedulesOnly, hasKeyLine, sortBy } =
-      filters ?? {}
+    const {
+      categoryIds,
+      tagIds,
+      presentedOnly,
+      inSchedulesOnly,
+      hasKeyLine,
+      sortBy,
+    } = filters ?? {}
     logger.debug(
-      `Getting songs paginated: limit=${limit}, offset=${offset}, categoryIds=${categoryIds?.join(',')}, presentedOnly=${presentedOnly}, inSchedulesOnly=${inSchedulesOnly}, hasKeyLine=${hasKeyLine}`,
+      `Getting songs paginated: limit=${limit}, offset=${offset}, categoryIds=${categoryIds?.join(',')}, tagIds=${tagIds?.join(',')}, presentedOnly=${presentedOnly}, inSchedulesOnly=${inSchedulesOnly}, hasKeyLine=${hasKeyLine}`,
     )
 
     const rawDb = getRawDatabase()
@@ -166,6 +178,14 @@ export function getSongsPaginated(
       const placeholders = categoryIds.map(() => '?').join(',')
       conditions.push(`category_id IN (${placeholders})`)
       params.push(...categoryIds)
+    }
+
+    if (tagIds && tagIds.length > 0) {
+      const placeholders = tagIds.map(() => '?').join(',')
+      conditions.push(
+        `id IN (SELECT song_id FROM song_tag_assignments WHERE tag_id IN (${placeholders}))`,
+      )
+      params.push(...tagIds)
     }
 
     if (presentedOnly) {
@@ -239,6 +259,10 @@ export function getSongsPaginated(
       updated_at: number
     }>
 
+    // Bulk-fetch tags for the page (one round-trip, no N+1) so the song list
+    // can render the tag chips without a follow-up request per row.
+    const tagsBySongId = getTagsBySongIds(records.map((r) => r.id))
+
     const songsList: Song[] = records.map((record) => ({
       id: record.id,
       title: record.title,
@@ -259,6 +283,7 @@ export function getSongsPaginated(
       lastManualEdit: record.last_manual_edit,
       createdAt: record.created_at,
       updatedAt: record.updated_at,
+      tagNames: (tagsBySongId.get(record.id) ?? []).map((tag) => tag.name),
     }))
 
     return {
@@ -311,6 +336,7 @@ export function getSongWithSlides(id: number): SongWithSlides | null {
 
     const slides = getSlidesBySongId(id)
     const category = song.categoryId ? getCategoryById(song.categoryId) : null
+    const tags = getTagsBySongId(id)
 
     // Transform slides: add "Amin!" to the last slide
     const transformedSlides = slides.map((slide, index) => ({
@@ -326,6 +352,7 @@ export function getSongWithSlides(id: number): SongWithSlides | null {
       presentationOrder: expandedPresentationOrder || song.presentationOrder,
       slides: transformedSlides,
       category,
+      tags,
     }
   } catch (error) {
     logger.error(`Failed to get song with slides: ${error}`)
@@ -360,6 +387,8 @@ export function getAllSongsWithSlides(
       records = db.select().from(songs).orderBy(asc(songs.title)).all()
     }
 
+    const tagsBySongId = getTagsBySongIds(records.map((r) => r.id))
+
     return records.map((record) => {
       const song = toSong(record)
       const slides = getSlidesBySongId(song.id)
@@ -380,6 +409,7 @@ export function getAllSongsWithSlides(
         presentationOrder: expandedPresentationOrder || song.presentationOrder,
         slides: transformedSlides,
         category,
+        tags: tagsBySongId.get(song.id) ?? [],
       }
     })
   } catch (error) {
@@ -529,6 +559,10 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
         db.delete(songSlides).where(inArray(songSlides.id, idsToDelete)).run()
         logger.debug(`Deleted ${idsToDelete.length} slides`)
       }
+    }
+
+    if (input.tagIds !== undefined) {
+      setSongTags(songId, input.tagIds)
     }
 
     return getSongWithSlides(songId)

@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { CategoryPicker } from './CategoryPicker'
+import { TagPicker } from './TagPicker'
 
 export interface SongMetadata {
   author: string | null
@@ -35,6 +36,7 @@ export const defaultSongMetadata: SongMetadata = {
 interface SongDetailsSectionProps {
   title: string
   categoryId: number | null
+  tagIds: number[]
   metadata: SongMetadata
   isLoading?: boolean
   isNew?: boolean
@@ -42,6 +44,7 @@ interface SongDetailsSectionProps {
   lastManualEdit?: number | null
   onTitleChange: (title: string) => void
   onCategoryChange: (categoryId: number | null) => void
+  onTagsChange: (tagIds: number[]) => void
   onMetadataChange: (field: keyof SongMetadata, value: string | null) => void
   /** Unique prefix for input IDs to avoid conflicts when used in modals */
   idPrefix?: string
@@ -50,6 +53,7 @@ interface SongDetailsSectionProps {
 export function SongDetailsSection({
   title,
   categoryId,
+  tagIds,
   metadata,
   isLoading = false,
   isNew = false,
@@ -57,6 +61,7 @@ export function SongDetailsSection({
   lastManualEdit,
   onTitleChange,
   onCategoryChange,
+  onTagsChange,
   onMetadataChange,
   idPrefix = '',
 }: SongDetailsSectionProps) {
@@ -133,6 +138,21 @@ export function SongDetailsSection({
             <div className="w-full h-10 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
           ) : (
             <CategoryPicker value={categoryId} onChange={onCategoryChange} />
+          )}
+        </div>
+
+        {/* Tags (orthogonal to category — multi-assignable audience labels) */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            {t('tags.name')}
+          </label>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+            {t('tags.helper')}
+          </p>
+          {isLoading ? (
+            <div className="w-full h-10 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
+          ) : (
+            <TagPicker value={tagIds} onChange={onTagsChange} />
           )}
         </div>
 
