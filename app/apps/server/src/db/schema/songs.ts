@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm'
 import {
   index,
   integer,
+  primaryKey,
   sqliteTable,
   text,
   uniqueIndex,
@@ -102,6 +103,41 @@ export const songBookmarks = sqliteTable(
     uniqueIndex('idx_song_bookmarks_song_id').on(table.songId),
     index('idx_song_bookmarks_sort_order').on(table.sortOrder),
     index('idx_song_bookmarks_created_at').on(table.createdAt),
+  ],
+)
+
+export const songTags = sqliteTable(
+  'song_tags',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    name: text('name').notNull().unique(),
+    sortOrder: integer('sort_order').notNull().default(0),
+    createdAt: integer('created_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (table) => [index('idx_song_tags_sort_order').on(table.sortOrder)],
+)
+
+export const songTagAssignments = sqliteTable(
+  'song_tag_assignments',
+  {
+    songId: integer('song_id')
+      .notNull()
+      .references(() => songs.id, { onDelete: 'cascade' }),
+    tagId: integer('tag_id')
+      .notNull()
+      .references(() => songTags.id, { onDelete: 'cascade' }),
+    createdAt: integer('created_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (table) => [
+    primaryKey({ columns: [table.songId, table.tagId] }),
+    index('idx_song_tag_assignments_tag_id').on(table.tagId),
   ],
 )
 

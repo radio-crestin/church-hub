@@ -38,6 +38,7 @@ interface SongEditorProps {
   songId: number | null
   title: string
   categoryId: number | null
+  tagIds: number[]
   slides: LocalSlide[]
   metadata?: SongMetadata
   // Read-only tracking fields
@@ -45,6 +46,7 @@ interface SongEditorProps {
   lastManualEdit?: number | null
   onTitleChange: (title: string) => void
   onCategoryChange: (categoryId: number | null) => void
+  onTagsChange: (tagIds: number[]) => void
   onSlidesChange: (slides: LocalSlide[]) => void
   onMetadataChange?: (field: keyof SongMetadata, value: string | null) => void
   onSave: () => Promise<boolean>
@@ -61,12 +63,14 @@ export function SongEditor({
   songId,
   title,
   categoryId,
+  tagIds,
   slides,
   metadata = defaultSongMetadata,
   presentationCount = 0,
   lastManualEdit,
   onTitleChange,
   onCategoryChange,
+  onTagsChange,
   onSlidesChange,
   onMetadataChange,
   onSave,
@@ -301,6 +305,7 @@ export function SongEditor({
       <SongDetailsSection
         title={title}
         categoryId={categoryId}
+        tagIds={tagIds}
         metadata={metadata}
         isLoading={isLoading}
         isNew={isNew}
@@ -308,6 +313,7 @@ export function SongEditor({
         lastManualEdit={lastManualEdit}
         onTitleChange={onTitleChange}
         onCategoryChange={onCategoryChange}
+        onTagsChange={onTagsChange}
         onMetadataChange={handleMetadataChange}
       />
 

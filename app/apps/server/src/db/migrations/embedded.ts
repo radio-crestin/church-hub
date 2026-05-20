@@ -211,6 +211,13 @@ export const EMBEDDED_JOURNAL = {
       tag: '0027_drop_songs_title_unique',
       breakpoints: true,
     },
+    {
+      idx: 28,
+      version: '6',
+      when: 1768700000000,
+      tag: '0028_add_song_tags',
+      breakpoints: true,
+    },
   ],
 } as const
 
@@ -354,5 +361,10 @@ export const EMBEDDED_MIGRATIONS: EmbeddedMigration[] = [
     tag: '0027_drop_songs_title_unique',
     sql: 'DROP INDEX IF EXISTS `songs_title_unique`;\r\n',
     when: 1768600000000,
+  },
+  {
+    tag: '0028_add_song_tags',
+    sql: 'CREATE TABLE IF NOT EXISTS `song_tags` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`name` text NOT NULL,\n\t`sort_order` integer DEFAULT 0 NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX IF NOT EXISTS `song_tags_name_unique` ON `song_tags` (`name`);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS `idx_song_tags_sort_order` ON `song_tags` (`sort_order`);\n--> statement-breakpoint\nCREATE TABLE IF NOT EXISTS `song_tag_assignments` (\n\t`song_id` integer NOT NULL REFERENCES `songs`(`id`) ON DELETE cascade,\n\t`tag_id` integer NOT NULL REFERENCES `song_tags`(`id`) ON DELETE cascade,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tPRIMARY KEY (`song_id`, `tag_id`)\n);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS `idx_song_tag_assignments_tag_id` ON `song_tag_assignments` (`tag_id`);\n',
+    when: 1768700000000,
   },
 ]

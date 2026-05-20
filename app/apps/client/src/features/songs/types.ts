@@ -12,6 +12,15 @@ export interface SongCategory {
   updatedAt: number
 }
 
+export interface SongTag {
+  id: number
+  name: string
+  sortOrder: number
+  songCount: number
+  createdAt: number
+  updatedAt: number
+}
+
 export interface Song {
   id: number
   title: string
@@ -32,6 +41,11 @@ export interface Song {
   lastManualEdit: number | null
   createdAt: number
   updatedAt: number
+  /**
+   * Tag names attached to this song. Only present on list endpoints that
+   * hydrate it (e.g. paginated browse); legacy endpoints leave it undefined.
+   */
+  tagNames?: string[]
 }
 
 export interface SongSlide {
@@ -48,6 +62,7 @@ export interface SongSlide {
 export interface SongWithSlides extends Song {
   slides: SongSlide[]
   category: SongCategory | null
+  tags: SongTag[]
 }
 
 export interface SlideInput {
@@ -75,6 +90,11 @@ export interface UpsertSongInput {
   presentationOrder?: string | null
   presentationCount?: number
   slides?: SlideInput[]
+  /**
+   * Replaces the song's tag assignments. When omitted the existing
+   * assignments are left untouched; an empty array clears them.
+   */
+  tagIds?: number[]
 }
 
 export interface UpsertSlideInput {
@@ -89,6 +109,12 @@ export interface UpsertCategoryInput {
   id?: number
   name: string
   priority?: number
+}
+
+export interface UpsertTagInput {
+  id?: number
+  name: string
+  sortOrder?: number
 }
 
 export interface SongSearchResult {

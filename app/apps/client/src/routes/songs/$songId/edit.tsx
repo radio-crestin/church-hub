@@ -87,6 +87,7 @@ function SongEditorPage() {
   // Local state for editing
   const [title, setTitle] = useState('')
   const [categoryId, setCategoryId] = useState<number | null>(null)
+  const [tagIds, setTagIds] = useState<number[]>([])
   const [slides, setSlides] = useState<LocalSlide[]>([])
   const [metadata, setMetadata] = useState<SongMetadata>(defaultMetadata)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -96,13 +97,21 @@ function SongEditorPage() {
 
   // Track dirty state for save button and navigation blocking
   const { setSavedState, isDirty } = useDirtyState()
-  const hasUnsavedChanges = isDirty({ title, categoryId, slides, metadata })
+  const hasUnsavedChanges = isDirty({
+    title,
+    categoryId,
+    tagIds,
+    slides,
+    metadata,
+  })
 
   // Initialize local state when song is loaded
   useEffect(() => {
     if (song) {
       setTitle(song.title)
       setCategoryId(song.categoryId)
+      const loadedTagIds = song.tags.map((tag) => tag.id)
+      setTagIds(loadedTagIds)
       const mappedSlides = song.slides.map((s) => ({
         id: s.id,
         content: s.content,
@@ -131,6 +140,7 @@ function SongEditorPage() {
       setSavedState({
         title: song.title,
         categoryId: song.categoryId,
+        tagIds: loadedTagIds,
         slides: mappedSlides,
         metadata: loadedMetadata,
       })
@@ -151,6 +161,7 @@ function SongEditorPage() {
       id: numericId ?? undefined,
       title: title.trim(),
       categoryId,
+      tagIds,
       slides: slides.map((s, idx) => ({
         id: typeof s.id === 'number' ? s.id : undefined,
         content: s.content,
@@ -197,15 +208,19 @@ function SongEditorPage() {
         sourceFilename: result.data.sourceFilename,
       }
 
+      const savedTagIds = result.data.tags.map((tag) => tag.id)
+
       // Sync local state with server response (e.g., trimmed title, assigned IDs)
       setTitle(result.data.title)
       setCategoryId(result.data.categoryId)
+      setTagIds(savedTagIds)
       setSlides(savedSlides)
       setMetadata(savedMetadata)
 
       setSavedState({
         title: result.data.title,
         categoryId: result.data.categoryId,
+        tagIds: savedTagIds,
         slides: savedSlides,
         metadata: savedMetadata,
       })
@@ -220,6 +235,7 @@ function SongEditorPage() {
   }, [
     title,
     categoryId,
+    tagIds,
     slides,
     metadata,
     numericId,
@@ -302,12 +318,14 @@ function SongEditorPage() {
         songId={numericId}
         title={title}
         categoryId={categoryId}
+        tagIds={tagIds}
         slides={slides}
         metadata={metadata}
         presentationCount={song?.presentationCount}
         lastManualEdit={song?.lastManualEdit}
         onTitleChange={setTitle}
         onCategoryChange={setCategoryId}
+        onTagsChange={setTagIds}
         onSlidesChange={setSlides}
         onMetadataChange={handleMetadataChange}
         onSave={handleSave}

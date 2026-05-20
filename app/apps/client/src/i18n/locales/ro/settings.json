@@ -403,6 +403,42 @@
         }
       }
     },
+    "tags": {
+      "title": "Etichete cântări",
+      "description": "Etichete suplimentare alături de categorii — o cântare poate avea mai multe etichete (ex: tineret, bărbați, surori, copii).",
+      "addTag": "Adaugă etichetă",
+      "noTags": "Nicio etichetă configurată",
+      "noTagsDescription": "Adaugă o etichetă pentru a marca cântările după audiență (tineret, surori etc.)",
+      "tagName": "Nume etichetă",
+      "tagNamePlaceholder": "ex: Tineret, Bărbați, Surori, Copii",
+      "songCount_one": "{{count}} cântare",
+      "songCount_other": "{{count}} cântări",
+      "actions": {
+        "edit": "Editează",
+        "delete": "Șterge"
+      },
+      "modals": {
+        "create": {
+          "title": "Adaugă etichetă nouă",
+          "submit": "Creează etichetă"
+        },
+        "edit": {
+          "title": "Editează eticheta",
+          "submit": "Salvează modificările"
+        },
+        "delete": {
+          "title": "Șterge eticheta",
+          "message": "Sigur vrei să ștergi „{{name}}\"? Cântările vor pierde asocierea cu această etichetă, dar nu vor fi șterse.",
+          "confirm": "Șterge"
+        }
+      },
+      "toast": {
+        "created": "Etichetă creată cu succes",
+        "updated": "Etichetă actualizată cu succes",
+        "deleted": "Etichetă ștearsă cu succes",
+        "error": "A apărut o eroare"
+      }
+    },
     "synonyms": {
       "title": "Sinonime Căutare",
       "description": "Definește sinonime pentru cuvinte pentru a îmbunătăți rezultatele căutării. Când cauți un cuvânt, vor apărea și rezultatele cu sinonimele acestuia.",
