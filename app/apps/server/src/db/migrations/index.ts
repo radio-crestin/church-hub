@@ -8,6 +8,7 @@ import { EMBEDDED_MIGRATIONS } from './embedded'
 import { extractKeylinesFromSlides } from './extract-keylines-from-slides'
 import { migrateMidiDeviceByName } from './migrate-midi-device-by-name'
 import { migrateShortcuts } from './migrate-shortcuts'
+import { rebuildFtsForSingleCharFix } from './rebuild-fts-single-char-fix'
 import { seedSystemRoles } from './seed'
 import { seedBibleTranslations } from './seed-bibles'
 import { seedSampleMusic } from './seed-music'
@@ -209,6 +210,14 @@ export function runMigrations(
   t = performance.now()
   seedSampleMusic(rawDb)
   logTiming('seed_sample_music', t)
+
+  // One-shot rebuild of the FTS index after single-char tokens were filtered
+  // out of normalizeForIndex (must run AFTER seed-songs so the rebuild has
+  // something to index). Skipped on subsequent boots via app_settings flag.
+  log('info', 'Running FTS single-char rebuild migration...')
+  t = performance.now()
+  rebuildFtsForSingleCharFix(rawDb)
+  logTiming('rebuild_fts_single_char_fix', t)
 
   return { ftsRecreated: ftsCreated }
 }
