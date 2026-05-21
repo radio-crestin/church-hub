@@ -10,21 +10,19 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
   console.log(`[migrate-fts-single-char:${level}] ${message}`)
 }
 
-const MIGRATION_KEY = 'rebuild_fts_single_char_fix_v1'
+// Bumped from v1 → v2 because the v1 rebuild dropped single-char tokens
+// from the index ("cand isus hristos m a mantuit" → "cand isus hristos
+// mantuit"), which lost linguistic signal for Romanian clitics. The v2
+// rebuild reinstates them — single chars now flow through normalizeForIndex
+// untouched and are filtered defensively only where they cause noise (the
+// broad-OR tier of buildSearchQuery + meaningful-term denominator in the
+// title score). Any dev DB that already ran v1 still needs this re-rebuild.
+const MIGRATION_KEY = 'rebuild_fts_clitic_aware_v2'
 
 /**
- * One-shot rebuild of the FTS index after normalizeForIndex was changed to
- * drop single-character tokens.
- *
- * Existing rows in `songs_fts` were tokenized as e.g. "cand isus hristos m a
- * mantuit" — the `m` and `a` between `Hristos` and `mantuit` made it
- * impossible for `calculateTitleScoreNormalized` to detect the user's exact
- * phrase "cand isus hristos mantuit". Rebuilding regenerates every row with
- * the new tokenization.
- *
- * Safe to skip when no songs have been indexed yet (fresh install hitting
- * seedSongs followed by initial index build will already use the fixed
- * normalizer).
+ * Re-runs rebuildSearchIndex once with the current normalizeForIndex so the
+ * FTS table reflects the source-of-truth tokenisation rules. Skipped on
+ * subsequent boots via the app_settings flag.
  */
 export function rebuildFtsForSingleCharFix(db: Database): void {
   const applied = db

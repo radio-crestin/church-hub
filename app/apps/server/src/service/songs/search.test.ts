@@ -39,22 +39,25 @@ describe('extractSearchTerms', () => {
     expect(isusCount).toBe(1)
   })
 
-  test('drops single-character tokens (numeric prefix + "m-a" splits)', () => {
-    // Regression: user-reported query "1. Cand Isus Hristos m-a mantuit"
-    // used to tokenize as ["1","cand","isus","hristos","m","a","mantuit"],
-    // and those single chars then polluted both the FTS query (prefix
-    // expansions like "m"*) and the title-order scoring. Only meaningful
-    // tokens should remain.
+  test('strips leading hymn-number-style prefix but keeps clitic single chars', () => {
+    // User-reported regression: "1. Cand Isus Hristos m-a mantuit" must
+    // still match the song titled "Cand Isus Hristos m-a mantuit". The
+    // leading "1." is a hymn number that the user remembers — drop it
+    // from the query. The "m" and "a" from "m-a", however, are clitic
+    // tokens that need to survive so the title phrase still matches.
     expect(
       extractSearchTerms('1. Cand Isus Hristos m-a mantuit'),
-    ).toEqual(['cand', 'isus', 'hristos', 'mantuit'])
+    ).toEqual(['cand', 'isus', 'hristos', 'm', 'a', 'mantuit'])
   })
 
-  test('returns empty for input that boils down to single chars only', () => {
-    // Calling code in buildSearchQuery already short-circuits on empty
-    // term lists; this just pins the behaviour.
-    expect(extractSearchTerms('a o')).toEqual([])
-    expect(extractSearchTerms('1 2 3')).toEqual([])
+  test('strips hymn-number prefixes with various separators', () => {
+    expect(extractSearchTerms('265. Cantarea')).toEqual(['cantarea'])
+    expect(extractSearchTerms('34 - Cantarea')).toEqual(['cantarea'])
+    expect(extractSearchTerms('  001  Cantarea')).toEqual(['cantarea'])
+  })
+
+  test('does NOT strip internal numbers', () => {
+    expect(extractSearchTerms('Psalmul 23 si Isus')).toContain('23')
   })
 })
 
@@ -91,51 +94,53 @@ describe('normalizeForIndex', () => {
     expect(normalized).not.toContain(';')
   })
 
-  test('drops single-character tokens so title phrase matching survives "m-a"', () => {
-    // Regression: title "Cand Isus Hristos m-a mantuit" used to tokenize as
-    // "cand isus hristos m a mantuit". A user query for the same title then
-    // could never see the exact phrase in the normalized index because of
-    // the stray "m" and "a" tokens between "hristos" and "mantuit".
+  test('keeps the clitic single-letter tokens so "m-a" becomes "m a" in the index', () => {
+    // Single-character tokens stay in the index alongside meaningful
+    // words. With the matching query (after extractSearchTerms strips
+    // its hymn-number prefix) preserving those same tokens, FTS phrase
+    // matching can land directly on the title.
     const normalized = normalizeForIndex('Cand Isus Hristos m-a mantuit')
-    expect(normalized).toBe('Cand Isus Hristos mantuit')
-    expect(normalized.toLowerCase()).toContain('cand isus hristos mantuit')
+    expect(normalized).toBe('Cand Isus Hristos m a mantuit')
   })
 })
 
 describe('buildSearchQuery', () => {
-  test('reported regression: "1. Cand Isus Hristos m-a mantuit" emits a title-restricted phrase tier so the song can outrank synonym noise', () => {
-    // The TODO.md "Căutarea nu găsește …" bug. After normalizeForIndex and
-    // extractSearchTerms drop single chars, the joined phrase becomes
-    // "cand isus hristos mantuit" — and that exact phrase needs to appear
-    // restricted to the `title` column so BM25 lifts the matching song
-    // even when synonym expansion (hristos → cristos) widens the broad OR
-    // tier to 20k+ candidates.
+  test('reported regression: "1. Cand Isus Hristos m-a mantuit" emits a title-restricted phrase with the clitic tokens preserved', () => {
+    // The TODO.md "Căutarea nu găsește …" bug. extractSearchTerms strips
+    // the leading hymn-number prefix ("1.") but keeps the clitic tokens
+    // (m / a from "m-a"), so the title clause exactly matches the indexed
+    // title "cand isus hristos m a mantuit".
     const q = buildSearchQuery('1. Cand Isus Hristos m-a mantuit')
-    expect(q).toContain('title:"cand isus hristos mantuit"')
-    // Other tiers still present for fuzzy / content matches
+    expect(q).toContain('title:"cand isus hristos m a mantuit"')
+    // Single-character clitic tokens stay in the phrase + NEAR tiers …
+    expect(q).toContain('("cand isus hristos m a mantuit")')
     expect(q).toContain('NEAR(')
+    // … but are excluded from the prefix-broad OR (no "m"* / "a"*).
     expect(q).toContain('"cand"*')
+    expect(q).not.toMatch(/"m"\*/)
+    expect(q).not.toMatch(/"a"\*/)
   })
 
-  test('synonym-expanded query keeps the title-restricted clause on the original terms only', () => {
+  test('synonym-expanded query keeps the title clause on the original terms only', () => {
     // Caller appends a synonym (e.g. cristos) to queryText, but passes the
     // pre-expansion terms via the originalTerms arg so the title clause
     // doesn't require the synonym word to appear in the title.
-    const q = buildSearchQuery('cand isus hristos mantuit cristos', [
+    const q = buildSearchQuery('cand isus hristos m a mantuit cristos', [
       'cand',
       'isus',
       'hristos',
+      'm',
+      'a',
       'mantuit',
     ])
-    expect(q).toContain('title:"cand isus hristos mantuit"')
-    expect(q).not.toContain('title:"cand isus hristos mantuit cristos"')
-    // Broad / phrase tiers still use the full expanded set
+    expect(q).toContain('title:"cand isus hristos m a mantuit"')
+    expect(q).not.toContain('title:"cand isus hristos m a mantuit cristos"')
+    // Broad-OR tier still uses the expanded set (sans single chars)
     expect(q).toContain('"cristos"*')
   })
 
   test('omits title-restricted clause when only one meaningful term', () => {
     const q = buildSearchQuery('Isus')
-    // single-term path returns just a prefix match, no need for title clause
     expect(q).toBe('"isus"*')
   })
 })
@@ -166,108 +171,121 @@ describe('normalizeForIndex - HTML tag stripping', () => {
     // Should not contain "p" tokens from <p> tags
     expect(normalized).not.toMatch(/\bp\b/)
     expect(normalized).toContain('Sa ne speli de orice pacat')
-    // "A" (Romanian article) is dropped as a single-char noise token;
-    // the rest of the second clause is preserved.
-    expect(normalized).toContain('noastra nelegiuire')
+    // The Romanian article "A" survives — single-char tokens are kept in
+    // the index (they carry phrase signal for clitic contractions).
+    expect(normalized).toContain('A noastra nelegiuire')
   })
 })
 
-describe('highlightWithDiacritics - hyphenated word coverage', () => {
-  test('extends highlight backward across a clitic prefix ("m-am")', () => {
-    // User-reported: searching "m-am departat de mantuitorul" only
-    // highlighted "am departat de mantuitorul" — the "m-" prefix was
-    // cut off because "m" is dropped from search tokens as noise.
-    // The whole phrase (including the clitic prefix) lands in one mark.
-    const out = highlightWithDiacritics(
-      'M-am departat de Mantuitorul',
-      ['am', 'departat', 'de', 'mantuitorul'],
+describe('highlightWithDiacritics - literal-substring path (rawQuery)', () => {
+  test('marks exactly the typed phrase as the user incrementally types', () => {
+    // The user's mental model: yellow highlight = literal substring of
+    // what I typed. Title and content snippets must agree on this.
+    const title = 'Cand Isus Hristos m-a mantuit'
+    // …Cand Isus Hristos m
+    expect(highlightWithDiacritics(title, [], 'Cand Isus Hristos m')).toBe(
+      '<mark>Cand Isus Hristos m</mark>-a mantuit',
     )
-    expect(out).toBe('<mark>M-am departat de Mantuitorul</mark>')
-    // Crucially the "M-" prefix is INSIDE the mark, not outside it
-    expect(out).not.toMatch(/M-<mark>am<\/mark>/)
+    // …Cand Isus Hristos m-
+    expect(highlightWithDiacritics(title, [], 'Cand Isus Hristos m-')).toBe(
+      '<mark>Cand Isus Hristos m-</mark>a mantuit',
+    )
+    // …Cand Isus Hristos m-a
+    expect(highlightWithDiacritics(title, [], 'Cand Isus Hristos m-a')).toBe(
+      '<mark>Cand Isus Hristos m-a</mark> mantuit',
+    )
+    // …Cand Isus Hristos m-a mantuit (full phrase)
+    expect(
+      highlightWithDiacritics(title, [], 'Cand Isus Hristos m-a mantuit'),
+    ).toBe('<mark>Cand Isus Hristos m-a mantuit</mark>')
   })
 
-  test('extends across hyphen-joined chunks with diacritics ("te-aşteptăm")', () => {
-    const out = highlightWithDiacritics('Isus te-aşteptăm vino', ['asteptam'])
-    expect(out).toContain('<mark>te-aşteptăm</mark>')
+  test('literal substring is diacritic-insensitive and strips the leading hymn-number prefix', () => {
+    const title = 'Când Isus Hristos m-a mântuit'
+    // Stripped diacritics in the query still pick up the title diacritics
+    expect(highlightWithDiacritics(title, [], 'cand isus hristos m-a')).toBe(
+      '<mark>Când Isus Hristos m-a</mark> mântuit',
+    )
+    // Leading hymn-number prefix is dropped for the highlight too
+    expect(
+      highlightWithDiacritics(title, [], '1. cand isus hristos m-a'),
+    ).toBe('<mark>Când Isus Hristos m-a</mark> mântuit')
   })
 
-  test('extends forward across a trailing hyphen segment ("Te-aşteptăm" forward case)', () => {
-    // term "te" should sweep up the whole "Te-aşteptăm" forward
-    const out = highlightWithDiacritics('Te-aşteptăm Doamne', ['te'])
-    expect(out).toContain('<mark>Te-aşteptăm</mark>')
+  test('"m-am departat de Mântuitorul" marks exactly that phrase', () => {
+    const title = 'M-am depărtat de Mântuitorul ce m-a salvat'
+    const out = highlightWithDiacritics(title, [], 'm-am departat de mantuitorul')
+    // M- prefix is included; trailing "ce m-a salvat" is not touched.
+    expect(out).toBe('<mark>M-am depărtat de Mântuitorul</mark> ce m-a salvat')
   })
+})
 
-  test('still highlights plain words without altering them', () => {
-    const out = highlightWithDiacritics('Isus mantuitor', ['isus'])
-    expect(out).toContain('<mark>Isus</mark>')
-    expect(out).toBe('<mark>Isus</mark> mantuitor')
-  })
-
-  test('swallows a mid-phrase clitic ("m-a") into the merged mark', () => {
-    // User-reported: in "Cand Isus Hristos m-a mantuit", the "m-a"
-    // sits between two matched terms and was left un-marked even
-    // though it visibly belongs to the same phrase. With clitic-gap
-    // merging it should land inside the same <mark> as its neighbours.
+describe('highlightWithDiacritics - per-term fallback', () => {
+  test('falls back to per-term when the typed phrase is not a literal substring', () => {
+    // "isus mantuit" is not contiguous in the title, so per-term marks
+    // each term independently (no clitic gap to bridge across "hristos m-a").
     const out = highlightWithDiacritics(
       'Cand Isus Hristos m-a mantuit',
-      ['cand', 'isus', 'hristos', 'mantuit'],
+      ['isus', 'mantuit'],
+      'isus mantuit',
     )
-    expect(out).toContain('<mark>Cand Isus Hristos m-a mantuit</mark>')
-    // Sanity: only ONE pair of mark tags in the output
-    expect(out.match(/<mark>/g)?.length).toBe(1)
+    expect(out).toContain('<mark>Isus</mark>')
+    expect(out).toContain('<mark>mantuit</mark>')
+    expect(out).not.toContain('<mark>Isus Hristos m-a mantuit</mark>')
   })
 
-  test('does not swallow plain words between matches ("a" without hyphen stays out)', () => {
-    // "a" is a Romanian particle, not a clitic contraction. The merger
-    // must only bridge across hyphenated connectors so we don't blob
-    // unrelated content together.
-    const out = highlightWithDiacritics('Isus a inviat din morti', [
-      'isus',
-      'inviat',
-    ])
-    expect(out).not.toContain('<mark>Isus a inviat</mark>')
-    expect(out).toContain('<mark>Isus</mark>')
-    expect(out).toContain('<mark>inviat</mark>')
+  test('marks individual words and merges adjacent ones (whitespace + clitic gap)', () => {
+    // Per-term path with no rawQuery: ["isus","mantuit"] in adjacent
+    // positions get merged if the gap is whitespace-only or a clitic.
+    const out = highlightWithDiacritics('Isus mantuit', ['isus', 'mantuit'])
+    expect(out).toBe('<mark>Isus mantuit</mark>')
   })
 
   test('does not nest <mark> tags when a shorter term overlaps a longer one', () => {
-    // Pre-existing artefact: searching "m-am departat de mantuitorul"
-    // produced "<mark><mark>depărtat</mark></mark>" because the regex
-    // for "de" greedily matched the whole "depărtat" already wrapped by
-    // the "departat" term. The single-pass + merge implementation must
-    // collapse this into one flat mark.
+    // Pre-existing artefact regression guard.
     const out = highlightWithDiacritics(
       'M-am depărtat de Mântuitorul',
       ['am', 'departat', 'de', 'mantuitorul'],
     )
     expect(out).not.toMatch(/<mark><mark>/)
     expect(out).not.toMatch(/<\/mark><\/mark>/)
-    expect(out).toBe('<mark>M-am depărtat de Mântuitorul</mark>')
+  })
+
+  test('per-term path with single-char clitic ("am") does not extend into "M-"', () => {
+    // The aggressive backward extension was removed — without a
+    // surrounding rawQuery to anchor the literal substring, "am" alone
+    // marks only "am", not "M-am".
+    const out = highlightWithDiacritics('M-am departat', ['am', 'departat'])
+    expect(out).toBe('M-<mark>am departat</mark>')
   })
 })
 
-describe('createFuzzyHighlightedSnippet - hyphenated word coverage', () => {
-  test('snippet highlight covers the whole "m-am" chunk, not just "am"', () => {
+describe('createFuzzyHighlightedSnippet - literal-substring path matches the title', () => {
+  test('marks exactly what the user typed in the snippet (title + snippet stay in sync)', () => {
+    const content =
+      'Cantam: Cand Isus Hristos m-a mantuit, viata mea s-a schimbat.'
+    // User typed "Cand Isus Hristos m" — both highlighters should mark
+    // the same literal slice.
     const snippet = createFuzzyHighlightedSnippet(
-      'Cantam: m-am departat de Mantuitorul, dar acum revin.',
-      ['am', 'departat', 'mantuitorul'],
+      content,
+      ['cand', 'isus', 'hristos', 'm'],
+      150,
+      'Cand Isus Hristos m',
     )
-    // The existing merge step fuses adjacent matches separated only by
-    // whitespace, so checking the exact "<mark>m-am</mark>" boundary is
-    // wrong here — what matters is that the "m-" prefix is INSIDE a mark.
-    expect(snippet).not.toMatch(/m-<mark>/)
-    // The clitic + adjacent matches should all land inside a single mark
-    expect(snippet).toContain('<mark>m-am departat</mark>')
+    expect(snippet).toContain('<mark>Cand Isus Hristos m</mark>')
+    // The trailing "-a mantuit" must NOT be inside the mark — exact literal
+    expect(snippet).not.toContain('<mark>Cand Isus Hristos m-')
   })
 
-  test('snippet without merge: standalone "m-am" sweeps both letters', () => {
+  test('one more character widens the mark by exactly one character', () => {
+    const content = 'Lyrics: Cand Isus Hristos m-a mantuit pe noi.'
     const snippet = createFuzzyHighlightedSnippet(
-      'Cuvinte m-am altele neutre.',
-      ['am'],
+      content,
+      ['cand', 'isus', 'hristos', 'm'],
+      150,
+      'Cand Isus Hristos m-',
     )
-    expect(snippet).toContain('<mark>m-am</mark>')
-    expect(snippet).not.toMatch(/m-<mark>am<\/mark>/)
+    expect(snippet).toContain('<mark>Cand Isus Hristos m-</mark>')
   })
 })
 

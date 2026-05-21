@@ -220,14 +220,12 @@ export function normalizeForIndex(text: string): string {
     }
   }
 
-  // Drop single-character tokens — they carry no search signal and worse,
-  // they break title-level phrase / order matching. Example: a title
-  // "Cand Isus Hristos m-a mantuit" used to tokenize as
-  // "cand isus hristos m a mantuit", so a query for the same title could
-  // never match the phrase "cand isus hristos mantuit" exactly (m, a sat
-  // between). Filtering happens after n-expansion so the expansion logic
-  // is unaffected (it already requires length > 2).
-  return expandedWords.filter((w) => w.length > 1).join(' ')
+  // Single-character tokens stay in the index. They are linguistically
+  // meaningful — the Romanian clitic contractions split into them at
+  // tokenization ("m-a" → "m a") and a user typing the exact title needs
+  // those tokens to land an exact phrase match in FTS. Per-term scoring
+  // protects itself with ordered indexOf in calculateTitleScoreNormalized.
+  return expandedWords.join(' ')
 }
 
 /**
@@ -536,24 +534,28 @@ export function rebuildSearchIndex(): void {
 /**
  * Extracts and sanitizes search terms from query text.
  *
- * Single-character tokens (e.g. "m", "a", "1" from inputs like
- * "1. Cand Isus Hristos m-a mantuit") are dropped — they carry no
- * search signal, and worse, they pollute downstream scoring by:
- *   - matching at unexpected positions ("a" inside "cAnd") and breaking
- *     in-order detection in calculateTitleScoreNormalized
- *   - diluting matchPercentage when the title has no such single-char
- *   - blowing up FTS prefix queries ("m"* matches every m-word)
- * Index-time tokens are filtered symmetrically in normalizeForIndex.
+ * Strips a single leading hymn-number prefix ("1.", "265 -", "34 ") so
+ * that users who type "1. Cand Isus Hristos m-a mantuit" still hit the
+ * canonical title "Cand Isus Hristos m-a mantuit". Single-letter tokens
+ * inside the rest of the query (Romanian clitic contractions m / a /
+ * s / n that come from splitting "m-a", "s-a", "n-am") are preserved —
+ * they carry phrase signal in FTS and are handled defensively in
+ * downstream scoring (ordered indexOf, broad-OR exclusion).
  */
 export function extractSearchTerms(queryText: string): string[] {
-  const sanitized = removeDiacritics(queryText)
+  // Strip leading hymn-number-style prefix: optional digits, an optional
+  // "." or "-", and trailing whitespace. Only at the START of the input
+  // so internal numbers (e.g. song lyrics containing dates) survive.
+  const dehymned = queryText.replace(/^\s*\d+[.\-]?\s+/, '')
+
+  const sanitized = removeDiacritics(dehymned)
     .replace(/['"]/g, '')
     .replace(/[^\p{L}\p{N}\s]/gu, ' ') // Replace ALL non-letter, non-number, non-space chars with space
     .replace(/\s+/g, ' ')
     .trim()
     .toLowerCase()
 
-  const terms = sanitized.split(/\s+/).filter((t) => t.length > 1)
+  const terms = sanitized.split(/\s+/).filter((t) => t.length > 0)
 
   // Deduplicate terms (e.g. "Isus,Isus" → ["isus", "isus"] → ["isus"])
   return [...new Set(terms)]
@@ -681,14 +683,7 @@ export function buildSearchQuery(
    */
   originalTerms?: string[],
 ): string {
-  const allTerms = extractSearchTerms(queryText)
-
-  // Filter out single-character terms to reduce noise in FTS queries
-  // They cause too many false positives (e.g. "a", "m", "s" match almost everything)
-  const terms = allTerms.filter((t) => t.length > 1)
-
-  // If all terms were single-char, fall back to originals to avoid empty query
-  const effectiveTerms = terms.length > 0 ? terms : allTerms
+  const effectiveTerms = extractSearchTerms(queryText)
 
   if (effectiveTerms.length === 0) return ''
 
@@ -696,29 +691,34 @@ export function buildSearchQuery(
     return `"${effectiveTerms[0]}"*`
   }
 
-  // Tiered query. Order matters because BM25 sums score contributions across
-  // all matched sub-clauses, so the most-specific tier first gives true
-  // title matches a decisive boost.
+  // Tiered query. Order matters because BM25 sums score contributions
+  // across all matched sub-clauses, so the most-specific tier first
+  // gives true title matches a decisive boost.
   //
-  // The `title:"<joined phrase>"` tier exists because synonym expansion
-  // (e.g. hristos → cristos) widens the broad OR clause until BM25 ranks
-  // exact-title matches below songs that happen to contain many of the
-  // expanded terms in content. Restricting the phrase to the `title`
-  // column rescues queries that ARE the song's title (the most common
-  // form of user search) — but only when the phrase is built from the
-  // user's ORIGINAL terms, not the synonym-expanded set.
-  const titleTerms = (originalTerms ?? effectiveTerms).filter(
-    (t) => t.length > 1,
-  )
+  // - title:"<original phrase>" : exact title match (incl. clitic
+  //     single-letter tokens like "m a", so "Cand Isus Hristos m-a
+  //     mantuit" indexes/matches identically). Built from the user's
+  //     ORIGINAL terms only — synonyms (e.g. cristos) must not appear
+  //     in the title clause or it never matches a real title.
+  // - "<expanded phrase>" : exact phrase in any column, synonym-aware.
+  // - NEAR(expanded, 10) : proximity fallback.
+  // - prefix OR (multi-char terms only) : broad recall. Single-char
+  //     prefixes like "a"* match every word starting with "a" — they
+  //     are excluded here to avoid drowning specific matches in noise.
+  const titlePhraseTerms = originalTerms ?? effectiveTerms
+  const broadOrTerms = effectiveTerms.filter((t) => t.length > 1)
+
   const clauses: string[] = []
-  if (titleTerms.length > 1) {
-    clauses.push(`(title:"${titleTerms.join(' ')}")`)
+  if (titlePhraseTerms.length > 1) {
+    clauses.push(`(title:"${titlePhraseTerms.join(' ')}")`)
   }
-  clauses.push(`("${effectiveTerms.join(' ')}")`) // Exact phrase, any column
+  clauses.push(`("${effectiveTerms.join(' ')}")`)
   clauses.push(
     `(NEAR(${effectiveTerms.map((t) => `"${t}"`).join(' ')}, 10))`,
-  ) // Proximity
-  clauses.push(`(${effectiveTerms.map((t) => `"${t}"*`).join(' OR ')})`) // Broad
+  )
+  if (broadOrTerms.length > 0) {
+    clauses.push(`(${broadOrTerms.map((t) => `"${t}"*`).join(' OR ')})`)
+  }
 
   return clauses.join(' OR ')
 }
@@ -739,26 +739,48 @@ export function calculateTitleScoreNormalized(
   if (title.startsWith(exactPhrase)) return 100
   if (title.includes(exactPhrase)) return 95
 
+  // Per-term matching with TWO passes:
+  //   1. inOrderCount  — terms found in the same order they appear in the
+  //      query, by searching from lastMatchPos + 1 each step. Single-letter
+  //      tokens (Romanian clitics "m", "a", "s", "n" that come from
+  //      splitting "m-a", "s-a", "n-am") that happen to also appear earlier
+  //      inside another word ("a" in "cAnd") no longer poison the order
+  //      detection — the ordered scan finds the LATER occurrence that
+  //      actually belongs to the clitic position in the title.
+  //   2. matchedCount  — terms that appear anywhere in the title at all.
+  //      Used to reward full coverage even when one term is out of order.
   let matchedCount = 0
-  let lastMatchPos = -1
   let inOrderCount = 0
-
+  let lastEnd = -1
   for (const term of queryTerms) {
-    const pos = title.indexOf(term)
-    if (pos !== -1) {
-      matchedCount++
-      if (pos > lastMatchPos) {
-        inOrderCount++
-        lastMatchPos = pos
-      }
+    if (title.includes(term)) matchedCount++
+    const orderedPos = title.indexOf(term, lastEnd + 1)
+    if (orderedPos !== -1) {
+      inOrderCount++
+      lastEnd = orderedPos + term.length - 1
     }
   }
 
   if (matchedCount === 0) return 0
 
-  const matchPercentage = matchedCount / queryTerms.length
+  // Reward proportional coverage of MEANINGFUL terms — single-character
+  // tokens contribute when matched but never penalise when missing, so a
+  // stray noise char in the query (e.g. user typed "Isus a inviat",
+  // tokens ["isus","a","inviat"]) does not drag the percentage down on a
+  // title that happens to lack the "a".
+  const meaningfulQueryTerms = queryTerms.filter((t) => t.length > 1)
+  const meaningfulMatched = meaningfulQueryTerms.filter((t) =>
+    title.includes(t),
+  ).length
+  const denom = meaningfulQueryTerms.length || queryTerms.length
+  const matchPercentage = meaningfulMatched / denom
+
   const orderBonus = inOrderCount === matchedCount ? 0.2 : 0
-  const allMatchedBonus = matchedCount === queryTerms.length ? 0.2 : 0
+  const allMatchedBonus =
+    meaningfulMatched === meaningfulQueryTerms.length &&
+    meaningfulQueryTerms.length > 0
+      ? 0.2
+      : 0
 
   return Math.round(
     matchPercentage * 54 + allMatchedBonus * 100 + orderBonus * 100,
@@ -959,10 +981,10 @@ const HL_LETTER = '\\p{L}'
 
 /**
  * Returns true if the gap between two highlight ranges should be swallowed
- * into a single merged range — pure whitespace, or a short Romanian clitic
- * contraction (e.g. "m-a", "te-a", "ne-am", "s-a", "n-am"). Plain words
- * like "a" or "este" between two matches stay un-merged so we don't blob
- * everything together.
+ * into a single merged range — pure whitespace, a hyphen, or a short
+ * Romanian clitic contraction (e.g. "m-a", "te-a", "ne-am", "s-a", "n-am").
+ * Plain words like "a" or "este" between two matches stay un-merged so we
+ * don't blob everything together.
  */
 function isMergeableGap(gap: string): boolean {
   if (gap.length === 0) return true
@@ -974,26 +996,81 @@ function isMergeableGap(gap: string): boolean {
     /^[\p{L}-]+$/u.test(trimmed)
   )
 }
+
+/**
+ * Normalises the raw user query into the literal phrase we try to find as a
+ * substring of the text being highlighted. Strips the leading hymn-number
+ * prefix (mirrors extractSearchTerms), removes diacritics, lowercases and
+ * collapses whitespace. Keeps internal hyphens so an incremental typing
+ * pass like "Cand Isus Hristos m" → "m-" → "m-a" naturally widens the
+ * highlight by one character at a time.
+ */
+function cleanQueryForHighlight(rawQuery: string): string {
+  return removeDiacritics(rawQuery)
+    .replace(/^\s*\d+[.\-]?\s+/, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+/**
+ * If the cleaned user query appears verbatim inside the (diacritic-stripped,
+ * lowercased) text, returns the text with that exact span wrapped in a
+ * single <mark>. Returns null otherwise so callers can fall back to per-
+ * term highlighting.
+ */
+function tryExactPhraseHighlight(text: string, rawQuery: string): string | null {
+  const cleaned = cleanQueryForHighlight(rawQuery)
+  if (cleaned.length === 0) return null
+  // removeDiacritics + toLowerCase preserve character count for the
+  // Romanian alphabet (NFD splits "ă" into base + combining mark, the
+  // combining mark is stripped, length stays the same) so we can map
+  // positions 1:1 back to the original text.
+  const normText = removeDiacritics(text).toLowerCase()
+  const pos = normText.indexOf(cleaned)
+  if (pos === -1) return null
+  return (
+    text.slice(0, pos) +
+    `<mark>${text.slice(pos, pos + cleaned.length)}</mark>` +
+    text.slice(pos + cleaned.length)
+  )
+}
+
 export function highlightWithDiacritics(
   text: string,
   searchTerms: string[],
+  rawQuery?: string,
 ): string {
-  if (!searchTerms.length) return text
+  if (!searchTerms.length && !rawQuery) return text
 
-  // Collect all match ranges across every term in a single pass, then
-  // merge overlaps before applying <mark> tags. Avoids the nested-mark
-  // artefact that the previous per-term replace loop produced when a
-  // shorter term (e.g. "de") matched inside a word already marked by a
-  // longer term (e.g. "departat" → <mark>de<mark>părtat</mark></mark>).
+  // 1. Literal substring match against the user's typed query. This is the
+  //    common path while the user types incrementally — "Cand Isus Hristos
+  //    m" → "m-" → "m-a" widens the mark one character at a time, exactly
+  //    matching what they typed. Title and content highlighters share this
+  //    code so the two stay visually in sync.
+  if (rawQuery !== undefined && rawQuery.length > 0) {
+    const exact = tryExactPhraseHighlight(text, rawQuery)
+    if (exact !== null) return exact
+  }
+
+  // 2. Fallback: per-term marking when the query is not a literal substring
+  //    of the text (different word order, partial phrase, typo). Collects
+  //    every term's positions in one pass, then merges adjacent ranges
+  //    across whitespace / hyphen / clitic-contraction gaps to avoid a
+  //    sea of single-word marks.
   const ranges: Array<{ start: number; end: number }> = []
   for (const term of searchTerms) {
-    if (term.length < 2) continue
+    if (term.length === 0) continue
     const normalized = removeDiacritics(term).toLowerCase()
     const diacriticPattern = buildDiacriticInsensitivePattern(normalized)
-    const pattern = new RegExp(
-      `(?:${HL_LETTER}+-)*${diacriticPattern}${HL_LETTER}*(?:-${HL_LETTER}+)*`,
-      'giu',
-    )
+    // Short terms (≤ 2 chars) must be word-bounded — otherwise "a" matches
+    // inside "cAnd" and "m" matches inside half the corpus. Longer terms
+    // can match literally so partial typing like "isu" still highlights
+    // the "Isu" in "Isus" without bleeding past it.
+    const pattern =
+      term.length <= 2
+        ? new RegExp(`\\b${diacriticPattern}\\b`, 'giu')
+        : new RegExp(diacriticPattern, 'giu')
     let m: RegExpExecArray | null
     while ((m = pattern.exec(text)) !== null) {
       if (m[0].length === 0) {
@@ -1012,10 +1089,6 @@ export function highlightWithDiacritics(
     if (last && r.start <= last.end) {
       last.end = Math.max(last.end, r.end)
     } else if (last && isMergeableGap(text.slice(last.end, r.start))) {
-      // Two consecutive matches separated only by whitespace, or by a short
-      // Romanian clitic contraction (m-a, te-a, ne-am, s-a, n-am, …),
-      // fuse into a single mark — the user expects the whole phrase
-      // including the connector to be highlighted.
       last.end = r.end
     } else {
       merged.push({ ...r })
@@ -1042,9 +1115,40 @@ export function createFuzzyHighlightedSnippet(
   content: string,
   queryTerms: string[],
   maxLength: number = 150,
+  rawQuery?: string,
 ): string {
   // Strip HTML tags for cleaner processing
   const plainContent = content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ')
+
+  // 1. Literal substring match against the user's typed query. Matches the
+  //    title highlighter so the two stay visually in sync — when the user
+  //    types "Cand Isus Hristos m" the snippet marks exactly the same span
+  //    as the title, never extending into the trailing "-a" until the user
+  //    actually types those characters.
+  if (rawQuery !== undefined && rawQuery.length > 0) {
+    const cleaned = cleanQueryForHighlight(rawQuery)
+    if (cleaned.length > 0) {
+      const normFull = removeDiacritics(plainContent).toLowerCase()
+      const pos = normFull.indexOf(cleaned)
+      if (pos !== -1) {
+        const matchEnd = pos + cleaned.length
+        const windowStart = Math.max(0, pos - 30)
+        const rawEnd = Math.min(plainContent.length, windowStart + maxLength)
+        // Make sure the matched span is fully inside the window
+        const windowEnd = Math.max(rawEnd, matchEnd)
+        const snippet = plainContent.slice(windowStart, windowEnd)
+        const localStart = pos - windowStart
+        const localEnd = matchEnd - windowStart
+        const marked =
+          snippet.slice(0, localStart) +
+          `<mark>${snippet.slice(localStart, localEnd)}</mark>` +
+          snippet.slice(localEnd)
+        const prefix = windowStart > 0 ? '...' : ''
+        const suffix = windowEnd < plainContent.length ? '...' : ''
+        return `${prefix}${marked}${suffix}`
+      }
+    }
+  }
 
   // Normalize content for diacritic-insensitive matching
   const normalizedContent = removeDiacritics(plainContent).toLowerCase()
@@ -1116,36 +1220,11 @@ export function createFuzzyHighlightedSnippet(
       : plainContent
   }
 
-  // Extend each match to cover the surrounding hyphen-joined word so that
-  // e.g. searching "am" highlights the full "m-am", not just the "am". The
-  // single-letter clitic prefix is dropped from the search tokens but the
-  // user still expects to see the whole Romanian contraction marked.
-  // Uses \p{L} so cedilla diacritics (ş, ţ) match alongside the canonical
-  // comma-below forms (ș, ț).
-  const isLetter = (ch: string | undefined) => !!ch && /\p{L}/u.test(ch)
-  for (const m of matches) {
-    while (m.start > 0) {
-      const prev = plainContent[m.start - 1]
-      if (isLetter(prev)) {
-        m.start--
-      } else if (prev === '-' && isLetter(plainContent[m.start - 2])) {
-        m.start--
-      } else {
-        break
-      }
-    }
-    while (m.end < plainContent.length) {
-      const next = plainContent[m.end]
-      if (isLetter(next)) {
-        m.end++
-      } else if (next === '-' && isLetter(plainContent[m.end + 1])) {
-        m.end++
-      } else {
-        break
-      }
-    }
-    m.length = m.end - m.start
-  }
+  // (No backward / forward hyphen-word extension here — the exact-phrase
+  // path above already covers the literal-typing case, and per-term
+  // marks are merged through hyphen / clitic gaps below, which gives the
+  // same visual result for queries that span an "m-a" without claiming
+  // characters the user never typed.)
 
   // Sort matches by position, then by length (longer matches first)
   matches.sort((a, b) => a.start - b.start || b.length - a.length)
@@ -1551,16 +1630,18 @@ export function searchSongs(
     const PRESENTATION_BOOST_DENOM = Math.log10(101)
 
     const scoredResults = candidates.map((r) => {
-      // Use pre-normalized fts_title (already diacritics-free) for scoring
+      // Score against the user's ORIGINAL (pre-synonym-expansion) terms.
+      // Synonyms broaden FTS recall — they should not be appended to the
+      // queryTerms used for phrase / order detection or the joined exact
+      // phrase will never match a real title.
       const titleScore = calculateTitleScoreNormalized(
         r.fts_title,
-        expandedTerms,
+        validTerms,
       )
 
-      // Use pre-normalized full_content (already diacritics-free) for scoring
       const contentScore = calculateBestPhraseScoreNormalized(
         r.full_content,
-        expandedTerms,
+        validTerms,
       )
 
       // Use best match location as base score (don't penalize content-only matches)
@@ -1630,13 +1711,22 @@ export function searchSongs(
       // Use original content (with diacritics) for snippet highlighting
       // Fall back to FTS content if original is not available
       const contentForSnippet = r.original_content || r.full_content
+      // Pass the raw user query so the highlighter can prefer a literal
+      // substring match (incremental typing produces the same visual mark
+      // in title and snippet, one character at a time).
       const matchedContent = createFuzzyHighlightedSnippet(
         contentForSnippet,
         expandedTerms,
+        undefined,
+        query,
       )
 
       // Highlight original title with diacritic-insensitive matching
-      const highlightedTitle = highlightWithDiacritics(r.title, expandedTerms)
+      const highlightedTitle = highlightWithDiacritics(
+        r.title,
+        expandedTerms,
+        query,
+      )
 
       return {
         id: r.id,
