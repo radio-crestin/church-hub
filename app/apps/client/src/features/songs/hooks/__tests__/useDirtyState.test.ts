@@ -7,6 +7,7 @@ function makeState(overrides: Record<string, unknown> = {}) {
   return {
     title: 'Test Song',
     categoryId: 1,
+    tagIds: [] as number[],
     slides: [
       { id: 1, content: 'Verse 1', sortOrder: 0, label: 'V1', chords: null },
       { id: 2, content: 'Chorus', sortOrder: 1, label: 'C1', chords: null },
@@ -53,6 +54,20 @@ describe('useDirtyState', () => {
     const state = makeState()
     result.current.setSavedState(state)
     expect(result.current.isDirty(makeState({ categoryId: 2 }))).toBe(true)
+  })
+
+  it('isDirty detects tagIds change', () => {
+    const { result } = renderHook(() => useDirtyState())
+    const state = makeState({ tagIds: [1, 2] })
+    result.current.setSavedState(state)
+    expect(result.current.isDirty(makeState({ tagIds: [1, 2, 3] }))).toBe(true)
+  })
+
+  it('isDirty ignores tagIds order (set semantics)', () => {
+    const { result } = renderHook(() => useDirtyState())
+    const state = makeState({ tagIds: [1, 2, 3] })
+    result.current.setSavedState(state)
+    expect(result.current.isDirty(makeState({ tagIds: [3, 1, 2] }))).toBe(false)
   })
 
   it('isDirty detects slide content change', () => {
