@@ -18,6 +18,7 @@ import {
   screensPaths,
   settingsPaths,
   songsPaths,
+  usersPaths,
 } from './paths'
 import {
   bibleSchemas,
@@ -27,6 +28,7 @@ import {
   scheduleSchemas,
   screenSchemas,
   songSchemas,
+  userSchemas,
 } from './schemas'
 
 export const openApiSpec = {
@@ -48,7 +50,8 @@ export const openApiSpec = {
     { name: 'Settings', description: 'Application and user settings' },
     { name: 'Database', description: 'Database management and backup' },
     { name: 'Devices', description: 'Device management and authorization' },
-    { name: 'Authentication', description: 'Device authentication' },
+    { name: 'Authentication', description: 'Device and user authentication' },
+    { name: 'Users', description: 'User accounts and permissions' },
     { name: 'Songs', description: 'Song management' },
     { name: 'Song Slides', description: 'Song slide management' },
     { name: 'Categories', description: 'Song categories' },
@@ -70,6 +73,7 @@ export const openApiSpec = {
     ...databasePaths,
     ...devicesPaths,
     ...authPaths,
+    ...usersPaths,
     ...songsPaths,
     ...categoriesPaths,
     ...biblePaths,
@@ -89,6 +93,7 @@ export const openApiSpec = {
       ...scheduleSchemas,
       ...screenSchemas,
       ...presentationSchemas,
+      ...userSchemas,
     },
     responses,
   },

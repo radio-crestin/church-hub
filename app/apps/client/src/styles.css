@@ -210,3 +210,49 @@ button {
 .dark::-webkit-scrollbar-thumb:hover {
   background-color: rgb(107 114 128 / 0.5);
 }
+
+/* Animated login brand panel ------------------------------------------------ */
+@keyframes login-gradient-pan {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes login-blob {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(24px, -32px) scale(1.12);
+  }
+  66% {
+    transform: translate(-18px, 22px) scale(0.94);
+  }
+}
+
+/* Pans a (200%-sized) gradient back and forth for a slow living background. */
+.login-gradient {
+  background-size: 200% 200%;
+  animation: login-gradient-pan 16s ease-in-out infinite;
+}
+
+.login-blob {
+  animation: login-blob 20s ease-in-out infinite;
+}
+
+.login-blob-slow {
+  animation: login-blob 28s ease-in-out infinite reverse;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-gradient,
+  .login-blob,
+  .login-blob-slow {
+    animation: none;
+  }
+}

@@ -1,17 +1,19 @@
 import { expect, test } from '@playwright/test'
 
 test.describe('User Management', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/settings')
+  test('users page loads with the user management section', async ({
+    page,
+  }) => {
+    await page.goto('/users')
     await page.waitForLoadState('networkidle')
-  })
 
-  test('settings page loads with user list section', async ({ page }) => {
     await expect(page.locator('body')).toBeVisible()
-    const userSection = page.locator(
-      'text=/authorized|users|devices|utilizatori|dispozitive/i',
-    )
-    await expect(userSection.first()).toBeVisible({ timeout: 10000 })
+    // The user-management heading is a real heading (the sidebar nav label is a
+    // span, so matching by heading role avoids the hidden mobile label).
+    const heading = page
+      .getByRole('heading')
+      .filter({ hasText: /authorized|users|utilizatori/i })
+    await expect(heading.first()).toBeVisible({ timeout: 10000 })
   })
 
   test('can view the list of users via API', async ({ request }) => {

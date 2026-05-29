@@ -5,9 +5,21 @@ import { UserPermissions } from './UserPermissions'
 import type { Permission, RoleTemplate, UserWithPermissions } from '../types'
 import { ROLE_TEMPLATES } from '../types'
 
+export interface UserFormData {
+  name: string
+  permissions: Permission[]
+  /**
+   * Password change intent:
+   *  - undefined: leave the password unchanged
+   *  - null: remove the password
+   *  - string: set this password
+   */
+  password?: string | null
+}
+
 interface UserFormProps {
   user?: UserWithPermissions
-  onSubmit: (data: { name: string; permissions: Permission[] }) => void
+  onSubmit: (data: UserFormData) => void
   onCancel: () => void
   isLoading?: boolean
 }
@@ -18,8 +30,10 @@ export function UserForm({
   onCancel,
   isLoading,
 }: UserFormProps) {
-  const { t } = useTranslation('settings')
+  const { t } = useTranslation(['settings', 'users'])
   const [name, setName] = useState(user?.name ?? '')
+  const [password, setPassword] = useState('')
+  const [removePassword, setRemovePassword] = useState(false)
   const [permissions, setPermissions] = useState<Permission[]>(
     user?.permissions ?? [],
   )
@@ -40,7 +54,17 @@ export function UserForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim()) return
-    onSubmit({ name: name.trim(), permissions })
+
+    let passwordChange: string | null | undefined
+    if (removePassword) {
+      passwordChange = null
+    } else if (password.length > 0) {
+      passwordChange = password
+    } else {
+      passwordChange = undefined
+    }
+
+    onSubmit({ name: name.trim(), permissions, password: passwordChange })
   }
 
   const isEditing = !!user
@@ -71,17 +95,57 @@ export function UserForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          {t('sections.users.permissions')}
+        <label
+          htmlFor="user-password"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+        >
+          {t('users:password.label')}{' '}
+          <span className="text-gray-400 font-normal">
+            ({t('users:password.optional')})
+          </span>
         </label>
-        <UserPermissions
-          permissions={permissions}
-          onChange={setPermissions}
-          disabled={isLoading}
-          selectedRole={selectedRole}
-          onRoleChange={setSelectedRole}
+        <input
+          id="user-password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder={
+            isEditing && user?.hasPassword
+              ? t('users:password.changePlaceholder')
+              : t('users:password.setPlaceholder')
+          }
+          disabled={isLoading || removePassword}
+          autoComplete="new-password"
+          className="block w-full px-3 py-2 bg-white dark:bg-gray-800
+            border border-gray-300 dark:border-gray-600 rounded-lg
+            text-gray-900 dark:text-white
+            focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500
+            disabled:opacity-50"
         />
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          {t('users:password.hint')}
+        </p>
+        {isEditing && user?.hasPassword && (
+          <label className="flex items-center gap-2 mt-2 text-sm text-gray-700 dark:text-gray-300">
+            <input
+              type="checkbox"
+              checked={removePassword}
+              onChange={(e) => setRemovePassword(e.target.checked)}
+              disabled={isLoading}
+              className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            {t('users:password.remove')}
+          </label>
+        )}
       </div>
+
+      <UserPermissions
+        permissions={permissions}
+        onChange={setPermissions}
+        disabled={isLoading}
+        selectedRole={selectedRole}
+        onRoleChange={setSelectedRole}
+      />
 
       <div className="flex justify-end gap-3 pt-4">
         <button

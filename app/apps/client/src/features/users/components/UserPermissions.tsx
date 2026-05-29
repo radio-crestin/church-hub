@@ -15,6 +15,7 @@ interface UserPermissionsProps {
 
 const GROUP_ORDER: PermissionGroup[] = [
   'songs',
+  'bible',
   'control_room',
   'programs',
   'queue',
@@ -101,12 +102,15 @@ export function UserPermissions({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Role Template Selection */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
           {t('sections.users.roleTemplate')}
-        </label>
+        </h4>
+        <p className="mb-2.5 text-xs text-gray-500 dark:text-gray-400">
+          {t('sections.users.roleTemplateHint')}
+        </p>
         <div className="grid grid-cols-2 gap-2">
           {(Object.keys(ROLE_TEMPLATES) as RoleTemplate[]).map((role) => (
             <button
@@ -127,7 +131,16 @@ export function UserPermissions({
       </div>
 
       {/* Permission Groups */}
-      <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+      <div>
+        <div className="mb-2 flex items-center justify-between">
+          <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+            {t('sections.users.permissions')}
+          </h4>
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            {permissions.length} {t('sections.users.permissionsSelected')}
+          </span>
+        </div>
+        <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
         {GROUP_ORDER.map((group) => {
           const isExpanded = expandedGroups.has(group)
           const isFullySelected = isGroupFullySelected(group)
@@ -206,12 +219,8 @@ export function UserPermissions({
             </div>
           )
         })}
+        </div>
       </div>
-
-      {/* Selected Count */}
-      <p className="text-sm text-gray-500 dark:text-gray-400 text-right">
-        {permissions.length} {t('sections.users.permissionsSelected')}
-      </p>
     </div>
   )
 }

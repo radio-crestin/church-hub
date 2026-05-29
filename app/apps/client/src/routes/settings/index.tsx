@@ -14,12 +14,12 @@ import { MIDISettingsSection } from '~/features/keyboard-shortcuts'
 import { OpenLogsFolder } from '~/features/logs'
 import { SidebarConfigManager } from '~/features/sidebar-config'
 import { SystemTokenManager } from '~/features/system-token'
-import { UserList } from '~/features/users'
 import { useDebugMode } from '~/hooks/useDebugMode'
 import { useI18n } from '~/provider/i18n-provider'
 import { useTheme } from '~/provider/theme-provider'
 import type { LanguagePreference } from '~/service/locale'
 import type { ThemePreference } from '~/service/theme'
+import { usePermissions } from '~/provider/permissions-provider'
 import { Combobox } from '~/ui/combobox'
 import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
 
@@ -29,6 +29,13 @@ export const Route = createFileRoute('/settings/')({
 
 function RouteComponent() {
   const { t } = useTranslation('settings')
+  const { hasPermission } = usePermissions()
+  // Without edit rights a user may only VIEW Appearance and About; everything
+  // else (which changes app-wide configuration) is hidden and not editable.
+  const canEdit = hasPermission('settings.edit')
+  // Appearance (theme & language) can be changed with full edit OR the granular
+  // appearance permission — so a user can be allowed to set just those.
+  const canEditAppearance = canEdit || hasPermission('settings.edit_appearance')
   const {
     preference: languagePreference,
     setLanguagePreference,
@@ -91,7 +98,7 @@ function RouteComponent() {
                 onChange={(val) =>
                   setLanguagePreference(val as LanguagePreference)
                 }
-                disabled={isLanguageLoading}
+                disabled={isLanguageLoading || !canEditAppearance}
                 allowClear={false}
               />
               <p className="text-gray-600 dark:text-gray-400 text-xs">
@@ -111,7 +118,7 @@ function RouteComponent() {
                 options={themeOptions}
                 value={themePreference}
                 onChange={(val) => setThemePreference(val as ThemePreference)}
-                disabled={isThemeLoading}
+                disabled={isThemeLoading || !canEditAppearance}
                 allowClear={false}
               />
               <p className="text-gray-600 dark:text-gray-400 text-xs">
@@ -122,29 +129,29 @@ function RouteComponent() {
         </div>
 
         {/* Server Connection Section (Mobile only) */}
-        {isMobile() && (
+        {canEdit && isMobile() && (
           <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
             <ApiUrlSettings />
           </div>
         )}
 
         {/* Sidebar Configuration Section */}
-        <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
-          <SidebarConfigManager />
-        </div>
-
-        {/* Authorized Users Section */}
-        <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
-          <UserList />
-        </div>
+        {canEdit && (
+          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
+            <SidebarConfigManager />
+          </div>
+        )}
 
         {/* MIDI Controller Section */}
-        <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
-          <MIDISettingsSection />
-        </div>
+        {canEdit && (
+          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
+            <MIDISettingsSection />
+          </div>
+        )}
 
         {/* Developer Tools Section */}
-        <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
+        {canEdit && (
+          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
             {t('sections.developer.title')}
           </h3>
@@ -229,7 +236,8 @@ function RouteComponent() {
             {/* Factory Reset (localhost only) */}
             {isLocalhost() && <FactoryReset />}
           </div>
-        </div>
+          </div>
+        )}
 
         {/* About Section */}
         <AboutSection />

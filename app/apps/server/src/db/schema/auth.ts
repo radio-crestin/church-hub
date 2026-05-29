@@ -51,6 +51,12 @@ export const users = sqliteTable(
     token: text('token').notNull(),
     tokenHash: text('token_hash').notNull().unique(),
     isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
+    // Marks the built-in owner account that always holds every permission.
+    isSuperAdmin: integer('is_super_admin', { mode: 'boolean' })
+      .notNull()
+      .default(false),
+    // Argon2id hash of the optional login password (null = no password set).
+    passwordHash: text('password_hash'),
     roleId: integer('role_id').references(() => roles.id, {
       onDelete: 'set null',
     }),

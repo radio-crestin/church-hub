@@ -3,6 +3,7 @@ import { asc, desc, eq, sql } from 'drizzle-orm'
 import type {
   CreateUserInput,
   CreateUserResult,
+  LocalUser,
   OperationResult,
   Permission,
   RoleWithPermissions,
@@ -27,6 +28,29 @@ export function generateUserToken(): string {
     .replace(/\//g, '_')
     .replace(/=/g, '')
   return `usr_${base64}`
+}
+
+/**
+ * Hashes a login password using Argon2id (Bun's built-in, no native dep).
+ * Cross-platform across macOS/Windows/Linux.
+ */
+export async function hashPassword(password: string): Promise<string> {
+  return Bun.password.hash(password, { algorithm: 'argon2id' })
+}
+
+/**
+ * Verifies a plaintext password against a stored Argon2id hash.
+ */
+export async function verifyPassword(
+  password: string,
+  hash: string,
+): Promise<boolean> {
+  try {
+    return await Bun.password.verify(password, hash)
+  } catch (error) {
+    logger.error(`Password verification failed: ${error}`)
+    return false
+  }
 }
 
 /**
@@ -171,6 +195,8 @@ function toUserWithPermissions(
     name: user.name,
     token: user.token,
     isActive: user.isActive,
+    isSuperAdmin: user.isSuperAdmin,
+    hasPassword: !!user.passwordHash,
     roleId: user.roleId,
     roleName: user.roleName,
     lastUsedAt:
@@ -202,6 +228,9 @@ export async function createUser(
     const db = getDatabase()
     const token = generateUserToken()
     const tokenHash = await hashToken(token)
+    const passwordHash = input.password
+      ? await hashPassword(input.password)
+      : null
 
     // Insert user with token stored for QR code display
     const inserted = db
@@ -212,6 +241,7 @@ export async function createUser(
         tokenHash,
         isActive: true,
         roleId: input.roleId ?? null,
+        passwordHash,
       })
       .returning({ id: users.id })
       .get()
@@ -258,6 +288,8 @@ export function getAllUsers(): UserWithPermissions[] {
         token: users.token,
         tokenHash: users.tokenHash,
         isActive: users.isActive,
+        isSuperAdmin: users.isSuperAdmin,
+        passwordHash: users.passwordHash,
         roleId: users.roleId,
         lastUsedAt: users.lastUsedAt,
         createdAt: users.createdAt,
@@ -294,6 +326,8 @@ export function getUserById(id: number): UserWithPermissions | null {
         token: users.token,
         tokenHash: users.tokenHash,
         isActive: users.isActive,
+        isSuperAdmin: users.isSuperAdmin,
+        passwordHash: users.passwordHash,
         roleId: users.roleId,
         lastUsedAt: users.lastUsedAt,
         createdAt: users.createdAt,
@@ -336,6 +370,8 @@ export async function getUserByToken(
         token: users.token,
         tokenHash: users.tokenHash,
         isActive: users.isActive,
+        isSuperAdmin: users.isSuperAdmin,
+        passwordHash: users.passwordHash,
         roleId: users.roleId,
         lastUsedAt: users.lastUsedAt,
         createdAt: users.createdAt,
@@ -372,6 +408,23 @@ export function updateUser(
 
     const db = getDatabase()
 
+    // The super admin (owner) must never be deactivated — it would risk
+    // locking everyone out of administration.
+    if (input.isActive === false) {
+      const target = db
+        .select({ isSuperAdmin: users.isSuperAdmin })
+        .from(users)
+        .where(eq(users.id, id))
+        .get()
+      if (target?.isSuperAdmin) {
+        logger.warning(`Refusing to deactivate super admin user: ${id}`)
+        return {
+          success: false,
+          error: 'Cannot deactivate the super admin account',
+        }
+      }
+    }
+
     // Build update object with only provided fields
     const updateData: Partial<typeof users.$inferInsert> = {
       updatedAt: sql`(unixepoch())` as unknown as Date,
@@ -407,6 +460,17 @@ export function deleteUser(id: number): OperationResult {
     logger.debug(`Deleting user: ${id}`)
 
     const db = getDatabase()
+
+    // Never allow deleting the owner account — it would lock everyone out.
+    const target = db
+      .select({ isSuperAdmin: users.isSuperAdmin })
+      .from(users)
+      .where(eq(users.id, id))
+      .get()
+    if (target?.isSuperAdmin) {
+      logger.warning(`Refusing to delete super admin user: ${id}`)
+      return { success: false, error: 'Cannot delete the super admin account' }
+    }
 
     // Delete permissions first (foreign key constraint)
     db.delete(userPermissions).where(eq(userPermissions.userId, id)).run()
@@ -543,6 +607,122 @@ export function updateUserLastUsed(id: number): void {
       .run()
   } catch (error) {
     logger.error(`Failed to update last used: ${error}`)
+  }
+}
+
+/**
+ * Returns the minimal user list for the local login screen.
+ * Only active users are shown. Never exposes tokens or password hashes.
+ */
+export function getLocalUsers(): LocalUser[] {
+  try {
+    const db = getDatabase()
+    const records = db
+      .select({
+        id: users.id,
+        name: users.name,
+        isSuperAdmin: users.isSuperAdmin,
+        passwordHash: users.passwordHash,
+      })
+      .from(users)
+      .where(eq(users.isActive, true))
+      .orderBy(desc(users.isSuperAdmin), asc(users.name))
+      .all()
+
+    return records.map((u) => ({
+      id: u.id,
+      name: u.name,
+      isSuperAdmin: u.isSuperAdmin,
+      hasPassword: !!u.passwordHash,
+    }))
+  } catch (error) {
+    logger.error(`Failed to get local users: ${error}`)
+    return []
+  }
+}
+
+/**
+ * Verifies a login attempt for a user. Returns the user's plaintext token on
+ * success (so the caller can set the auth cookie), or null on failure.
+ *
+ * - If the user has a password, it must match.
+ * - If the user has no password, `allowPasswordless` must be true (only
+ *   granted for localhost requests — the local machine is physically trusted).
+ */
+export async function verifyLogin(
+  userId: number,
+  password: string | undefined,
+  allowPasswordless: boolean,
+): Promise<{ token: string } | null> {
+  try {
+    const db = getDatabase()
+    const user = db
+      .select({
+        token: users.token,
+        isActive: users.isActive,
+        passwordHash: users.passwordHash,
+      })
+      .from(users)
+      .where(eq(users.id, userId))
+      .get()
+
+    if (!user || !user.isActive) {
+      logger.info(`Login rejected: user ${userId} not found or inactive`)
+      return null
+    }
+
+    if (user.passwordHash) {
+      if (!password) {
+        logger.info(`Login rejected: password required for user ${userId}`)
+        return null
+      }
+      const ok = await verifyPassword(password, user.passwordHash)
+      if (!ok) {
+        logger.info(`Login rejected: wrong password for user ${userId}`)
+        return null
+      }
+    } else if (!allowPasswordless) {
+      logger.info(
+        `Login rejected: passwordless login not allowed for remote user ${userId}`,
+      )
+      return null
+    }
+
+    return { token: user.token }
+  } catch (error) {
+    logger.error(`Failed to verify login: ${error}`)
+    return null
+  }
+}
+
+/**
+ * Sets or clears a user's login password.
+ * Pass null/empty to remove the password (passwordless login).
+ */
+export async function setUserPassword(
+  userId: number,
+  password: string | null,
+): Promise<OperationResult> {
+  try {
+    const db = getDatabase()
+    const passwordHash =
+      password && password.length > 0 ? await hashPassword(password) : null
+
+    db.update(users)
+      .set({
+        passwordHash,
+        updatedAt: sql`(unixepoch())` as unknown as Date,
+      })
+      .where(eq(users.id, userId))
+      .run()
+
+    logger.info(
+      `Password ${passwordHash ? 'set' : 'cleared'} for user: ${userId}`,
+    )
+    return { success: true }
+  } catch (error) {
+    logger.error(`Failed to set user password: ${error}`)
+    return { success: false, error: String(error) }
   }
 }
 

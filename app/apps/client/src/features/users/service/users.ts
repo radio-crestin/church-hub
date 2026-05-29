@@ -4,6 +4,7 @@ import type {
   CreateUserInput,
   CreateUserResult,
   CurrentUser,
+  LocalUser,
   Permission,
   RoleWithPermissions,
   UpdateUserInput,
@@ -141,15 +142,96 @@ export async function getAllRoles(): Promise<RoleWithPermissions[]> {
 }
 
 /**
- * Fetches current authenticated user info
+ * Fetches current authenticated user info.
+ * Returns null when no session is active (server reachable but signed out).
  */
 export async function getCurrentUser(): Promise<CurrentUser | null> {
-  try {
-    const response = await fetcher<ApiResponse<CurrentUser>>('/api/auth/me')
-    return response.data
-  } catch {
-    return null
-  }
+  const response = await fetcher<ApiResponse<CurrentUser | null>>(
+    '/api/auth/me',
+  )
+  return response.data ?? null
+}
+
+/**
+ * Fetches the minimal user list for the local login screen.
+ */
+export async function getLocalUsers(): Promise<LocalUser[]> {
+  const response =
+    await fetcher<ApiResponse<LocalUser[]>>('/api/auth/local-users')
+  return response.data
+}
+
+export interface LoginResult {
+  user: CurrentUser | null
+  /** One-time ticket to finalize the session via top-level navigation. */
+  ticket: string
+}
+
+/**
+ * Logs in as a local user, establishing the session cookie.
+ * Throws when credentials are rejected.
+ */
+export async function login(
+  userId: number,
+  password?: string,
+): Promise<LoginResult> {
+  const response = await fetcher<ApiResponse<CurrentUser | null> & {
+    ticket: string
+  }>('/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId, password }),
+  })
+  return { user: response.data ?? null, ticket: response.ticket }
+}
+
+/**
+ * Builds the URL that finalizes a user switch via a top-level navigation. The
+ * 302 response sets the session cookie reliably (works in the Tauri desktop
+ * webview, where a cross-origin `fetch` Set-Cookie may not overwrite the
+ * existing cookie) and redirects back to the current app origin.
+ */
+export function getLoginRedirectUrl(ticket: string): string {
+  const ret = encodeURIComponent(`${window.location.origin}/`)
+  return `${getApiUrl()}/api/auth/login-redirect/${encodeURIComponent(
+    ticket,
+  )}?return=${ret}`
+}
+
+/**
+ * Builds the URL that clears the session via a top-level navigation, so the
+ * cookie is reliably removed in the desktop webview. Redirects back to the app
+ * (which then shows the account picker because no session is active).
+ */
+export function getLogoutRedirectUrl(): string {
+  const ret = encodeURIComponent(`${window.location.origin}/`)
+  return `${getApiUrl()}/api/auth/logout-redirect?return=${ret}`
+}
+
+/**
+ * Logs out, clearing the session cookie.
+ */
+export async function logout(): Promise<void> {
+  await fetcher('/api/auth/logout', { method: 'POST' })
+}
+
+/**
+ * Sets or clears a user's login password (super-admin only).
+ * Pass null to remove the password.
+ */
+export async function setUserPassword(
+  id: number,
+  password: string | null,
+): Promise<UserWithPermissions> {
+  const response = await fetcher<ApiResponse<UserWithPermissions>>(
+    `/api/users/${id}/password`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    },
+  )
+  return response.data
 }
 
 /**

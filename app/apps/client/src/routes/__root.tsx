@@ -9,6 +9,7 @@ import { useEffect } from 'react'
 
 import { isTauri } from '~/config'
 import { MobileConnectionGuard } from '~/features/api-url-config'
+import { LoginGate } from '~/features/auth'
 import {
   GlobalAppShortcutManager,
   KeyboardNavigationProvider,
@@ -158,23 +159,25 @@ function MainLayout() {
               <MobileConnectionGuard>
                 <I18nProvider>
                   <ToastProvider>
-                    <KeyboardNavigationProvider>
-                      <MIDISettingsProvider>
-                        <ShortcutRecordingProvider>
-                          <FileDropZoneProvider>
-                            <AutoOpenScreens />
-                            <AutoReopenScreensOnPresentation />
-                            <AutoCloseScreensOnHide />
-                            <AutoOpenPageWindows />
-                            <SidebarNavigationListener />
-                            <GlobalAppShortcutManager />
-                            <AppLayout>
-                              <Outlet />
-                            </AppLayout>
-                          </FileDropZoneProvider>
-                        </ShortcutRecordingProvider>
-                      </MIDISettingsProvider>
-                    </KeyboardNavigationProvider>
+                    <LoginGate>
+                      <KeyboardNavigationProvider>
+                        <MIDISettingsProvider>
+                          <ShortcutRecordingProvider>
+                            <FileDropZoneProvider>
+                              <AutoOpenScreens />
+                              <AutoReopenScreensOnPresentation />
+                              <AutoCloseScreensOnHide />
+                              <AutoOpenPageWindows />
+                              <SidebarNavigationListener />
+                              <GlobalAppShortcutManager />
+                              <AppLayout>
+                                <Outlet />
+                              </AppLayout>
+                            </FileDropZoneProvider>
+                          </ShortcutRecordingProvider>
+                        </MIDISettingsProvider>
+                      </KeyboardNavigationProvider>
+                    </LoginGate>
                     {isDev ? (
                       <TanStackRouterDevtools position="bottom-right" />
                     ) : null}
