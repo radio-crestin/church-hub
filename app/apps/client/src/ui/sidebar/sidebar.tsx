@@ -5,6 +5,7 @@ import {
   MessageSquarePlus,
   Monitor,
   Settings,
+  Users,
   X,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -17,6 +18,7 @@ import {
   SendFeedbackModal,
   useFeedbackUnreadCount,
 } from '../../features/feedback'
+import { CurrentUserButton } from '../../features/auth'
 import { useKioskSettings } from '../../features/kiosk'
 import { usePresentationState } from '../../features/presentation'
 import {
@@ -63,7 +65,7 @@ export function Sidebar({
   // projector windows. Hiding the button is non-negotiable for screens.
   const isScreenRoute = location.pathname.startsWith('/screen/')
   const navigate = useNavigate()
-  const { t } = useTranslation(['sidebar', 'common'])
+  const { t } = useTranslation(['sidebar', 'common', 'users'])
   const { hasPermission } = usePermissions()
 
   // Get sidebar configuration
@@ -165,6 +167,9 @@ export function Sidebar({
 
   // Check if user has permission to view settings
   const canViewSettings = hasPermission('settings.view')
+
+  // Users management — super admins (and anyone granted users.view) only
+  const canViewUsers = hasPermission('users.view')
 
   // Kiosk is shown when kiosk mode is enabled and user has settings permission
   const showKiosk =
@@ -393,6 +398,24 @@ export function Sidebar({
               </button>
             )}
 
+            {/* Users management */}
+            {canViewUsers && (
+              <SidebarItem
+                pageId="users"
+                icon={Users}
+                label={t('users:page.title')}
+                to="/users"
+                isCollapsed={isCollapsed}
+                isActive={
+                  location.pathname === '/users' ||
+                  location.pathname.startsWith('/users/')
+                }
+                className="md:flex"
+                onClick={(e) => handleSidebarItemClick('/users', e)}
+                iconColor="indigo"
+              />
+            )}
+
             {/* Settings */}
             {canViewSettings && (
               <SidebarItem
@@ -411,6 +434,10 @@ export function Sidebar({
                 iconColor={getItemIconColor('settings')}
               />
             )}
+
+            {/* Current user — opens the account page (profile, permissions,
+                switch user, log out), replacing the current page content. */}
+            <CurrentUserButton isCollapsed={isCollapsed} />
           </div>
         </nav>
 

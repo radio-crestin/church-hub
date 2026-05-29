@@ -3,6 +3,7 @@ import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite'
 
 import { addCloseOnEscape } from './add-close-on-escape'
 import { addLastPresentedAt } from './add-last-presented-at'
+import { addUserAuthFields } from './add-user-auth-fields'
 import { dropSongKeyColumn } from './drop-song-key-column'
 import { EMBEDDED_MIGRATIONS } from './embedded'
 import { extractKeylinesFromSlides } from './extract-keylines-from-slides'
@@ -137,6 +138,14 @@ export function runMigrations(
   t = performance.now()
   seedSystemRoles(rawDb)
   logTiming('seed_roles', t)
+
+  // Add auth columns (is_super_admin, password_hash) and bootstrap the
+  // Super Admin owner account. Must run after seedSystemRoles so the admin
+  // role exists for the new super admin to inherit its permissions.
+  log('info', 'Running user auth fields migration...')
+  t = performance.now()
+  addUserAuthFields(rawDb)
+  logTiming('add_user_auth_fields', t)
 
   // Seed default screens
   log('info', 'Seeding default screens...')

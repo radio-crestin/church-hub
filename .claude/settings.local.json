@@ -9,7 +9,10 @@
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
       "Bash(git stash *)",
-      "Bash(grep -E \"\\\\.tsx?$\")"
+      "Bash(grep -E \"\\\\.tsx?$\")",
+      "Bash(gh pr *)",
+      "Bash(which gh; ls /opt/homebrew/bin/gh /usr/local/bin/gh 2>&1 | head -3)",
+      "Read(//opt/homebrew/bin/**)"
     ],
     "deny": [],
     "ask": []

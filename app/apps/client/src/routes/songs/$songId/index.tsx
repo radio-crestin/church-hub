@@ -63,6 +63,7 @@ import { expandSongSlidesWithChoruses } from '~/features/songs/utils/expandSongS
 import { KeyboardShortcutBadge } from '~/ui/kbd'
 import { ConfirmModal } from '~/ui/modal'
 import { useToast } from '~/ui/toast'
+import { usePermissions } from '~/provider/permissions-provider'
 
 interface SongSearchParams {
   q?: string
@@ -98,6 +99,8 @@ export const Route = createFileRoute('/songs/$songId/')({
 function SongPreviewPage() {
   const { t } = useTranslation('songs')
   const navigate = useNavigate()
+  const { hasPermission } = usePermissions()
+  const canEditSong = hasPermission('songs.edit')
   const { songId } = Route.useParams()
   const {
     q: searchQuery,
@@ -580,14 +583,16 @@ function SongPreviewPage() {
           >
             <CalendarPlus size={20} />
           </button>
-          <button
-            type="button"
-            onClick={handleEdit}
-            className="p-2 text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors inline-flex items-center justify-center"
-            title={t('preview.edit')}
-          >
-            <Pencil size={20} />
-          </button>
+          {canEditSong && (
+            <button
+              type="button"
+              onClick={handleEdit}
+              className="p-2 text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors inline-flex items-center justify-center"
+              title={t('preview.edit')}
+            >
+              <Pencil size={20} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -612,6 +617,7 @@ function SongPreviewPage() {
               isLoading={isLoading}
               isEditMode={isEditMode}
               onToggleEditMode={handleToggleEditMode}
+              canEdit={canEditSong}
               onSave={handleSave}
               onSlideClick={handleSlideClick}
               isSaving={pendingExit || isMutating}

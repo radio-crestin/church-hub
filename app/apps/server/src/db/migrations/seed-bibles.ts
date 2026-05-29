@@ -153,6 +153,15 @@ export function seedBibleTranslations(db: Database): void {
     })
     seedAll()
 
+    // Populate the full-text search index. `bible_verses_fts` is an external-
+    // content FTS5 table (content=bible_verses), so inserting verses above does
+    // NOT index them — the import path indexes explicitly and so must the seed,
+    // otherwise Bible search returns nothing on a fresh install.
+    if (seededCount > 0) {
+      log('info', 'Building Bible full-text search index...')
+      db.run("INSERT INTO bible_verses_fts(bible_verses_fts) VALUES('rebuild')")
+    }
+
     log('info', `Seeded ${seededCount} bible translation(s) from fixtures`)
   } catch (error) {
     const message =

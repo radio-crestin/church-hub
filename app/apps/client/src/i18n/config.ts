@@ -16,6 +16,7 @@ import settingsEN from './locales/en/settings.json'
 import sidebarEN from './locales/en/sidebar.json'
 import songKeyEN from './locales/en/songKey.json'
 import songsEN from './locales/en/songs.json'
+import usersEN from './locales/en/users.json'
 import bibleRO from './locales/ro/bible.json'
 import bibleBooksRO from './locales/ro/bibleBooks.json'
 import commonRO from './locales/ro/common.json'
@@ -29,6 +30,7 @@ import settingsRO from './locales/ro/settings.json'
 import sidebarRO from './locales/ro/sidebar.json'
 import songKeyRO from './locales/ro/songKey.json'
 import songsRO from './locales/ro/songs.json'
+import usersRO from './locales/ro/users.json'
 
 // Define resources type for type safety
 export const resources = {
@@ -45,6 +47,7 @@ export const resources = {
     settings: settingsEN,
     songKey: songKeyEN,
     songs: songsEN,
+    users: usersEN,
     liveTranslation: liveTranslationEN,
   },
   ro: {
@@ -60,6 +63,7 @@ export const resources = {
     settings: settingsRO,
     songKey: songKeyRO,
     songs: songsRO,
+    users: usersRO,
     liveTranslation: liveTranslationRO,
   },
 } as const
@@ -85,6 +89,7 @@ i18n
       'settings',
       'songKey',
       'songs',
+      'users',
       'liveTranslation',
     ], // Available namespaces
 

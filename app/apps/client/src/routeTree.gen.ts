@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UsersIndexRouteImport } from './routes/users/index'
 import { Route as SongsIndexRouteImport } from './routes/songs/index'
 import { Route as SongKeyIndexRouteImport } from './routes/song-key/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings/index'
@@ -19,6 +20,7 @@ import { Route as LivestreamIndexRouteImport } from './routes/livestream/index'
 import { Route as LiveTranslationIndexRouteImport } from './routes/live-translation/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as BibleIndexRouteImport } from './routes/bible/index'
+import { Route as AccountIndexRouteImport } from './routes/account/index'
 import { Route as rootIndexRouteImport } from './routes/(root)/index'
 import { Route as ScreenScreenIdRouteImport } from './routes/screen/$screenId'
 import { Route as SchedulesScheduleIdRouteImport } from './routes/schedules/$scheduleId'
@@ -27,6 +29,11 @@ import { Route as SongsSongIdIndexRouteImport } from './routes/songs/$songId/ind
 import { Route as SongsSongIdEditRouteImport } from './routes/songs/$songId/edit'
 import { Route as AuthYoutubeCallbackRouteImport } from './routes/auth/youtube/callback'
 
+const UsersIndexRoute = UsersIndexRouteImport.update({
+  id: '/users/',
+  path: '/users/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SongsIndexRoute = SongsIndexRouteImport.update({
   id: '/songs/',
   path: '/songs/',
@@ -77,6 +84,11 @@ const BibleIndexRoute = BibleIndexRouteImport.update({
   path: '/bible/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AccountIndexRoute = AccountIndexRouteImport.update({
+  id: '/account/',
+  path: '/account/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const rootIndexRoute = rootIndexRouteImport.update({
   id: '/(root)/',
   path: '/',
@@ -118,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/schedules/$scheduleId': typeof SchedulesScheduleIdRoute
   '/screen/$screenId': typeof ScreenScreenIdRoute
   '/': typeof rootIndexRoute
+  '/account/': typeof AccountIndexRoute
   '/bible/': typeof BibleIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/live-translation/': typeof LiveTranslationIndexRoute
@@ -128,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/settings/': typeof SettingsIndexRoute
   '/song-key/': typeof SongKeyIndexRoute
   '/songs/': typeof SongsIndexRoute
+  '/users/': typeof UsersIndexRoute
   '/auth/youtube/callback': typeof AuthYoutubeCallbackRoute
   '/songs/$songId/edit': typeof SongsSongIdEditRoute
   '/songs/$songId/': typeof SongsSongIdIndexRoute
@@ -137,6 +151,7 @@ export interface FileRoutesByTo {
   '/schedules/$scheduleId': typeof SchedulesScheduleIdRoute
   '/screen/$screenId': typeof ScreenScreenIdRoute
   '/': typeof rootIndexRoute
+  '/account': typeof AccountIndexRoute
   '/bible': typeof BibleIndexRoute
   '/dashboard': typeof DashboardIndexRoute
   '/live-translation': typeof LiveTranslationIndexRoute
@@ -147,6 +162,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsIndexRoute
   '/song-key': typeof SongKeyIndexRoute
   '/songs': typeof SongsIndexRoute
+  '/users': typeof UsersIndexRoute
   '/auth/youtube/callback': typeof AuthYoutubeCallbackRoute
   '/songs/$songId/edit': typeof SongsSongIdEditRoute
   '/songs/$songId': typeof SongsSongIdIndexRoute
@@ -157,6 +173,7 @@ export interface FileRoutesById {
   '/schedules/$scheduleId': typeof SchedulesScheduleIdRoute
   '/screen/$screenId': typeof ScreenScreenIdRoute
   '/(root)/': typeof rootIndexRoute
+  '/account/': typeof AccountIndexRoute
   '/bible/': typeof BibleIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/live-translation/': typeof LiveTranslationIndexRoute
@@ -167,6 +184,7 @@ export interface FileRoutesById {
   '/settings/': typeof SettingsIndexRoute
   '/song-key/': typeof SongKeyIndexRoute
   '/songs/': typeof SongsIndexRoute
+  '/users/': typeof UsersIndexRoute
   '/auth/youtube/callback': typeof AuthYoutubeCallbackRoute
   '/songs/$songId/edit': typeof SongsSongIdEditRoute
   '/songs/$songId/': typeof SongsSongIdIndexRoute
@@ -178,6 +196,7 @@ export interface FileRouteTypes {
     | '/schedules/$scheduleId'
     | '/screen/$screenId'
     | '/'
+    | '/account/'
     | '/bible/'
     | '/dashboard/'
     | '/live-translation/'
@@ -188,6 +207,7 @@ export interface FileRouteTypes {
     | '/settings/'
     | '/song-key/'
     | '/songs/'
+    | '/users/'
     | '/auth/youtube/callback'
     | '/songs/$songId/edit'
     | '/songs/$songId/'
@@ -197,6 +217,7 @@ export interface FileRouteTypes {
     | '/schedules/$scheduleId'
     | '/screen/$screenId'
     | '/'
+    | '/account'
     | '/bible'
     | '/dashboard'
     | '/live-translation'
@@ -207,6 +228,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/song-key'
     | '/songs'
+    | '/users'
     | '/auth/youtube/callback'
     | '/songs/$songId/edit'
     | '/songs/$songId'
@@ -216,6 +238,7 @@ export interface FileRouteTypes {
     | '/schedules/$scheduleId'
     | '/screen/$screenId'
     | '/(root)/'
+    | '/account/'
     | '/bible/'
     | '/dashboard/'
     | '/live-translation/'
@@ -226,6 +249,7 @@ export interface FileRouteTypes {
     | '/settings/'
     | '/song-key/'
     | '/songs/'
+    | '/users/'
     | '/auth/youtube/callback'
     | '/songs/$songId/edit'
     | '/songs/$songId/'
@@ -236,6 +260,7 @@ export interface RootRouteChildren {
   SchedulesScheduleIdRoute: typeof SchedulesScheduleIdRoute
   ScreenScreenIdRoute: typeof ScreenScreenIdRoute
   rootIndexRoute: typeof rootIndexRoute
+  AccountIndexRoute: typeof AccountIndexRoute
   BibleIndexRoute: typeof BibleIndexRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
   LiveTranslationIndexRoute: typeof LiveTranslationIndexRoute
@@ -246,6 +271,7 @@ export interface RootRouteChildren {
   SettingsIndexRoute: typeof SettingsIndexRoute
   SongKeyIndexRoute: typeof SongKeyIndexRoute
   SongsIndexRoute: typeof SongsIndexRoute
+  UsersIndexRoute: typeof UsersIndexRoute
   AuthYoutubeCallbackRoute: typeof AuthYoutubeCallbackRoute
   SongsSongIdEditRoute: typeof SongsSongIdEditRoute
   SongsSongIdIndexRoute: typeof SongsSongIdIndexRoute
@@ -253,6 +279,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/users/': {
+      id: '/users/'
+      path: '/users'
+      fullPath: '/users/'
+      preLoaderRoute: typeof UsersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/songs/': {
       id: '/songs/'
       path: '/songs'
@@ -323,6 +356,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BibleIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/account/': {
+      id: '/account/'
+      path: '/account'
+      fullPath: '/account/'
+      preLoaderRoute: typeof AccountIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/(root)/': {
       id: '/(root)/'
       path: '/'
@@ -380,6 +420,7 @@ const rootRouteChildren: RootRouteChildren = {
   SchedulesScheduleIdRoute: SchedulesScheduleIdRoute,
   ScreenScreenIdRoute: ScreenScreenIdRoute,
   rootIndexRoute: rootIndexRoute,
+  AccountIndexRoute: AccountIndexRoute,
   BibleIndexRoute: BibleIndexRoute,
   DashboardIndexRoute: DashboardIndexRoute,
   LiveTranslationIndexRoute: LiveTranslationIndexRoute,
@@ -390,6 +431,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsIndexRoute: SettingsIndexRoute,
   SongKeyIndexRoute: SongKeyIndexRoute,
   SongsIndexRoute: SongsIndexRoute,
+  UsersIndexRoute: UsersIndexRoute,
   AuthYoutubeCallbackRoute: AuthYoutubeCallbackRoute,
   SongsSongIdEditRoute: SongsSongIdEditRoute,
   SongsSongIdIndexRoute: SongsSongIdIndexRoute,

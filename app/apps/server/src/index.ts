@@ -80,6 +80,8 @@ import type { RequestContext } from './middleware'
 import {
   appOnlyAuthMiddleware,
   combinedAuthMiddleware,
+  isLocalhost,
+  requireAnyPermission,
   requirePermission,
 } from './middleware'
 import { getOpenApiSpec, getScalarDocs } from './openapi'
@@ -96,17 +98,20 @@ import {
   getAllRoles,
   getAllSettings,
   getAllUsers,
+  getLocalUsers,
   getSetting,
   getUserById,
   getUserByToken,
   type Permission,
   regenerateUserToken,
   type SettingsTable,
+  setUserPassword,
   setUserRole,
   type UpdateUserInput,
   updateUser,
   updateUserPermissions,
   upsertSetting,
+  verifyLogin,
 } from './service'
 import { aiBibleSearch } from './service/ai-bible-search'
 import { aiSearchSongs } from './service/ai-search'
@@ -332,6 +337,53 @@ import {
   stopActiveScreenShare,
   type WebSocketData,
 } from './websocket'
+
+/**
+ * Short-lived, single-use login tickets. After a password is verified via
+ * POST /api/auth/login the client receives a ticket and performs a TOP-LEVEL
+ * navigation to /api/auth/login-redirect/:ticket. Setting the session cookie
+ * on a navigation response (302) reliably overwrites the existing cookie in
+ * every webview — unlike a cross-origin `fetch` Set-Cookie, which the Tauri
+ * desktop webview may not apply. This is what makes "switch user" work on
+ * desktop. Tickets expire after 60s and are consumed on use.
+ */
+const LOGIN_TICKET_TTL_MS = 60_000
+const loginTickets = new Map<string, { token: string; expiresAt: number }>()
+
+function createLoginTicket(token: string): string {
+  const ticket = crypto.randomUUID()
+  loginTickets.set(ticket, { token, expiresAt: Date.now() + LOGIN_TICKET_TTL_MS })
+  return ticket
+}
+
+function consumeLoginTicket(ticket: string): string | null {
+  const entry = loginTickets.get(ticket)
+  loginTickets.delete(ticket)
+  if (!entry || entry.expiresAt < Date.now()) return null
+  return entry.token
+}
+
+/**
+ * Validates a post-login return URL. Only same-machine origins are allowed so
+ * the redirect can never be turned into an open redirect.
+ */
+function resolveReturnUrl(returnParam: string | null, fallbackHost: string): string {
+  const fallback = `http://${fallbackHost}/`
+  if (!returnParam) return fallback
+  try {
+    const u = new URL(returnParam)
+    const host = u.hostname.toLowerCase()
+    const allowed =
+      host === 'localhost' ||
+      host === '127.0.0.1' ||
+      host === '::1' ||
+      host === 'tauri.localhost' ||
+      host.endsWith('.localhost')
+    return allowed ? u.toString() : fallback
+  } catch {
+    return fallback
+  }
+}
 
 // Startup timing helper
 const startupStart = performance.now()
@@ -745,7 +797,234 @@ async function main() {
         return handleCors(req, getOpenApiSpec(host))
       }
 
-      // All /api/* routes require authentication (localhost = admin)
+      // ============================================================
+      // Local login endpoints (PUBLIC — reachable before authentication so
+      // the login screen can list users and establish a session).
+      // ============================================================
+
+      // Builds the user_auth Set-Cookie header value.
+      function buildAuthCookie(token: string, maxAgeSeconds: number): string {
+        const host = req.headers.get('host')?.split(':')[0] ?? 'localhost'
+        const parts = [
+          `user_auth=${token}`,
+          'HttpOnly',
+          'SameSite=Lax',
+          `Max-Age=${maxAgeSeconds}`,
+          'Path=/',
+        ]
+        if (host !== 'localhost' && host !== '127.0.0.1') {
+          parts.push(`Domain=${host}`)
+        }
+        return parts.join('; ')
+      }
+
+      // GET /api/auth/local-users - minimal user list for the login picker
+      if (req.method === 'GET' && url.pathname === '/api/auth/local-users') {
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: getLocalUsers() }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/auth/login - verify credentials and set the auth cookie
+      if (req.method === 'POST' && url.pathname === '/api/auth/login') {
+        try {
+          const body = (await req.json()) as {
+            userId?: number
+            password?: string
+          }
+          if (typeof body.userId !== 'number') {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Missing userId' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const result = await verifyLogin(
+            body.userId,
+            body.password,
+            isLocalhost(req),
+          )
+          if (!result) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Invalid credentials' }), {
+                status: 401,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const user = getUserById(body.userId)
+          const currentUser = user
+            ? {
+                id: user.id,
+                name: user.name,
+                isApp: user.isSuperAdmin,
+                permissions: user.isSuperAdmin
+                  ? ALL_PERMISSIONS
+                  : user.permissions,
+              }
+            : null
+
+          // Also issue a one-time ticket so the client can finalize the switch
+          // via a top-level navigation (reliable cookie overwrite on desktop).
+          const ticket = createLoginTicket(result.token)
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: currentUser, ticket }), {
+              headers: {
+                'Content-Type': 'application/json',
+                'Set-Cookie': buildAuthCookie(result.token, 31536000),
+              },
+            }),
+          )
+        } catch (_error) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // GET /api/auth/login-redirect/:ticket - finalize a login via top-level
+      // navigation. Sets the session cookie on a 302 response (overwrites
+      // reliably in every webview) and redirects back to the app.
+      const loginRedirectMatch = url.pathname.match(
+        /^\/api\/auth\/login-redirect\/([^/]+)$/,
+      )
+      if (req.method === 'GET' && loginRedirectMatch?.[1]) {
+        const host = req.headers.get('host')?.split(':')[0] ?? 'localhost'
+        const frontendPort = process.env['PORT'] ?? 3000
+        const fallbackHost = `${host}:${frontendPort}`
+        const token = consumeLoginTicket(decodeURIComponent(loginRedirectMatch[1]))
+        const location = resolveReturnUrl(
+          url.searchParams.get('return'),
+          fallbackHost,
+        )
+
+        if (!token) {
+          // Expired/invalid ticket — just go back to the app (still signed in
+          // as whoever the current cookie is).
+          return handleCors(
+            req,
+            new Response(null, { status: 302, headers: { Location: location } }),
+          )
+        }
+
+        return handleCors(
+          req,
+          new Response(null, {
+            status: 302,
+            headers: {
+              Location: location,
+              'Set-Cookie': buildAuthCookie(token, 31536000),
+            },
+          }),
+        )
+      }
+
+      // POST /api/auth/logout - clear the auth cookie
+      if (req.method === 'POST' && url.pathname === '/api/auth/logout') {
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: { success: true } }), {
+            headers: {
+              'Content-Type': 'application/json',
+              'Set-Cookie': buildAuthCookie('', 0),
+            },
+          }),
+        )
+      }
+
+      // GET /api/auth/logout-redirect - clear the session via top-level
+      // navigation. Like login-redirect, clearing the cookie on a 302 response
+      // reliably applies in the desktop (Tauri) webview where a cross-origin
+      // `fetch` Set-Cookie may not.
+      if (req.method === 'GET' && url.pathname === '/api/auth/logout-redirect') {
+        const host = req.headers.get('host')?.split(':')[0] ?? 'localhost'
+        const frontendPort = process.env['PORT'] ?? 3000
+        const location = resolveReturnUrl(
+          url.searchParams.get('return'),
+          `${host}:${frontendPort}`,
+        )
+        return handleCors(
+          req,
+          new Response(null, {
+            status: 302,
+            headers: {
+              Location: location,
+              'Set-Cookie': buildAuthCookie('', 0),
+            },
+          }),
+        )
+      }
+
+      // GET /api/auth/me - current session (PUBLIC: returns null when signed out
+      // so the client can decide whether to show the login screen)
+      if (req.method === 'GET' && url.pathname === '/api/auth/me') {
+        const authResult = await combinedAuthMiddleware(req)
+
+        // System token (no userId) → generic app/admin identity
+        if (authResult.context?.authType === 'app' && !authResult.context.userId) {
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({
+                data: {
+                  id: 0,
+                  name: 'System',
+                  isApp: true,
+                  permissions: ALL_PERMISSIONS,
+                },
+              }),
+              { headers: { 'Content-Type': 'application/json' } },
+            ),
+          )
+        }
+
+        if (authResult.context?.userId) {
+          const user = getUserById(authResult.context.userId)
+          if (user) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({
+                  data: {
+                    id: user.id,
+                    name: user.name,
+                    isApp: user.isSuperAdmin,
+                    permissions: user.isSuperAdmin
+                      ? ALL_PERMISSIONS
+                      : user.permissions,
+                  },
+                }),
+                { headers: { 'Content-Type': 'application/json' } },
+              ),
+            )
+          }
+        }
+
+        // Not authenticated — report null rather than 401 so the client knows
+        // the server is reachable but a login is required.
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: null }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // All other /api/* routes require authentication
       if (url.pathname.startsWith('/api/')) {
         const authResult = await combinedAuthMiddleware(req)
         if (authResult.response) return handleCors(req, authResult.response)
@@ -761,11 +1040,31 @@ async function main() {
         /^\/api\/settings\/([^/]+)\/([^/]+)$/,
       )
       if (req.method === 'GET' && getSettingMatch?.[1] && getSettingMatch[2]) {
-        const permError = checkPermission('settings.view')
-        if (permError) return permError
-
         const table = getSettingMatch[1] as SettingsTable
         const key = getSettingMatch[2]
+
+        // Per-key permission: some app settings belong to a feature (or to the
+        // shared navigation shell) rather than to general Settings, so gating
+        // them by `settings.view` would wrongly lock out feature-only users.
+        //  - sidebar_configuration: drives the nav shell for EVERY user (e.g.
+        //    whether Feedback is hidden) → readable by any authenticated user.
+        //  - selected/default bible translation: needed to render the Bible
+        //    page → gated by `bible.view`, not `settings.view`.
+        const isSidebarConfig =
+          table === 'app_settings' && key === 'sidebar_configuration'
+        const isBibleSelection =
+          table === 'app_settings' &&
+          (key === 'selected_bible_translations' ||
+            key === 'default_bible_translation')
+        if (isSidebarConfig) {
+          // Readable by any authenticated user.
+        } else if (isBibleSelection) {
+          const permError = checkPermission('bible.view')
+          if (permError) return permError
+        } else {
+          const permError = checkPermission('settings.view')
+          if (permError) return permError
+        }
 
         const setting = getSetting(table, key)
 
@@ -801,9 +1100,6 @@ async function main() {
         req.method === 'POST' &&
         url.pathname.match(/^\/api\/settings\/([^/]+)$/)
       ) {
-        const permError = checkPermission('settings.edit')
-        if (permError) return permError
-
         const tableMatch = url.pathname.match(/^\/api\/settings\/([^/]+)$/)
         const table = tableMatch![1] as SettingsTable
 
@@ -818,6 +1114,38 @@ async function main() {
               }),
             )
           }
+
+          // Choosing which Bible translation to read is part of viewing the
+          // Bible, so it's gated by `bible.view` rather than `settings.edit`.
+          const isBibleSelection =
+            table === 'app_settings' &&
+            (body.key === 'selected_bible_translations' ||
+              body.key === 'default_bible_translation')
+          // Theme/language (Appearance) can be edited with full edit OR the
+          // granular appearance-edit permission, so an operator can be allowed
+          // to change just their look & feel.
+          const isAppearance =
+            table === 'app_settings' &&
+            (body.key === 'theme' || body.key === 'language')
+
+          let permError: Response | null
+          if (isBibleSelection) {
+            permError = checkPermission('bible.view')
+          } else if (isAppearance) {
+            const denied = _context
+              ? requireAnyPermission([
+                  'settings.edit',
+                  'settings.edit_appearance',
+                ])(_context)
+              : new Response(JSON.stringify({ error: 'Unauthorized' }), {
+                  status: 401,
+                  headers: { 'Content-Type': 'application/json' },
+                })
+            permError = denied ? handleCors(req, denied) : null
+          } else {
+            permError = checkPermission('settings.edit')
+          }
+          if (permError) return permError
 
           const result = upsertSetting(table, {
             key: body.key,
@@ -899,12 +1227,12 @@ async function main() {
       // Device Management API Endpoints (Admin only - app auth required)
       // ============================================================
 
-      // Helper function to check app-only auth
+      // Helper function to check app-only auth. Enforced in every environment:
+      // identity comes from the session cookie (super admin) or a system token,
+      // so dev and prod behave the same now that localhost is not auto-admin.
       async function requireAppAuth(): Promise<Response | null> {
-        if (isProd) {
-          const authResult = await appOnlyAuthMiddleware(req)
-          if (authResult.response) return handleCors(req, authResult.response)
-        }
+        const authResult = await appOnlyAuthMiddleware(req)
+        if (authResult.response) return handleCors(req, authResult.response)
         return null
       }
 
@@ -1465,6 +1793,49 @@ async function main() {
         }
       }
 
+      // PUT /api/users/:id/password - Set or clear a user's login password
+      // (super-admin / system token only). Send { password: null } to clear.
+      const setPasswordMatch = url.pathname.match(
+        /^\/api\/users\/(\d+)\/password$/,
+      )
+      if (req.method === 'PUT' && setPasswordMatch?.[1]) {
+        const authError = await requireAppAuth()
+        if (authError) return authError
+
+        const id = parseInt(setPasswordMatch[1], 10)
+
+        try {
+          const body = (await req.json()) as { password: string | null }
+          const result = await setUserPassword(id, body.password ?? null)
+
+          if (!result.success) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: result.error }), {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const updatedUser = getUserById(id)
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: updatedUser }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
       // PUT /api/users/:id/role - Set user role
       const setRoleMatch = url.pathname.match(/^\/api\/users\/(\d+)\/role$/)
       if (req.method === 'PUT' && setRoleMatch?.[1]) {
@@ -1584,61 +1955,6 @@ async function main() {
               headers: { 'Content-Type': 'application/json' },
             },
           ),
-        )
-      }
-
-      // GET /api/auth/me - Get current user's info and permissions
-      if (req.method === 'GET' && url.pathname === '/api/auth/me') {
-        const authResult = await combinedAuthMiddleware(req)
-        if (authResult.response) return handleCors(req, authResult.response)
-
-        if (authResult.context?.authType === 'app') {
-          return handleCors(
-            req,
-            new Response(
-              JSON.stringify({
-                data: {
-                  id: 0,
-                  name: 'Local Admin',
-                  isApp: true,
-                  permissions: ALL_PERMISSIONS,
-                },
-              }),
-              {
-                headers: { 'Content-Type': 'application/json' },
-              },
-            ),
-          )
-        }
-
-        if (authResult.context?.userId) {
-          const user = getUserById(authResult.context.userId)
-          if (user) {
-            return handleCors(
-              req,
-              new Response(
-                JSON.stringify({
-                  data: {
-                    id: user.id,
-                    name: user.name,
-                    isApp: false,
-                    permissions: authResult.context.permissions || [],
-                  },
-                }),
-                {
-                  headers: { 'Content-Type': 'application/json' },
-                },
-              ),
-            )
-          }
-        }
-
-        return handleCors(
-          req,
-          new Response(JSON.stringify({ error: 'Unauthorized' }), {
-            status: 401,
-            headers: { 'Content-Type': 'application/json' },
-          }),
         )
       }
 

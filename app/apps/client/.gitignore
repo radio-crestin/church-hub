@@ -1,0 +1,6 @@
+
+# Playwright auth state
+e2e/.auth/
+
+# e2e isolated test database
+e2e/.test-data/
