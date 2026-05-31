@@ -167,10 +167,13 @@ describe('users/service/users', () => {
       expect(result).toEqual(user)
     })
 
-    it('returns null when fetcher throws', async () => {
+    it('propagates when the fetcher throws (callers detect connection errors)', async () => {
+      // getCurrentUser intentionally does NOT swallow errors. /api/auth/me
+      // returns 200 {data:null} when signed out, so a thrown error means the
+      // server is unreachable. PermissionsProvider relies on the throw to show
+      // a connection error instead of a false "signed out" state.
       mockFetcher.mockRejectedValue(new Error('Unauthorized'))
-      const result = await getCurrentUser()
-      expect(result).toBeNull()
+      await expect(getCurrentUser()).rejects.toThrow('Unauthorized')
     })
   })
 
