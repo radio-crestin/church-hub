@@ -19,6 +19,22 @@ const BASE_URL = `http://127.0.0.1:${TEST_PORT}`
 
 let serverProcess: Subprocess | null = null
 
+// Session cookie for an authenticated Super Admin. The permissions model makes
+// cookie-less localhost read-only, so mutating requests must carry a session.
+let authCookie = ''
+
+// fetch wrapper that attaches the authenticated session cookie. Reads work
+// without it; writes (create/update/delete, presentation control) require it.
+function authedFetch(input: string, init: RequestInit = {}): Promise<Response> {
+  return fetch(input, {
+    ...init,
+    headers: {
+      ...(init.headers as Record<string, string>),
+      Cookie: authCookie,
+    },
+  })
+}
+
 async function waitForServer(url: string, maxAttempts = 360): Promise<void> {
   for (let i = 0; i < maxAttempts; i++) {
     // Per-attempt AbortController — without it, a Bun fetch that opens
@@ -67,6 +83,31 @@ beforeAll(async () => {
     }
   })()
   await waitForServer(`${BASE_URL}/api/database/info`)
+
+  // Log in as the bootstrapped passwordless Super Admin (frictionless on
+  // localhost) and reuse the session cookie for write operations below.
+  const usersRes = await fetch(`${BASE_URL}/api/auth/local-users`)
+  const usersJson = (await usersRes.json()) as {
+    data: { id: number; isSuperAdmin: boolean; hasPassword: boolean }[]
+  }
+  const admin =
+    usersJson.data.find((u) => u.isSuperAdmin && !u.hasPassword) ??
+    usersJson.data.find((u) => u.isSuperAdmin)
+  if (!admin) {
+    throw new Error('No passwordless Super Admin available for tests')
+  }
+  const loginRes = await fetch(`${BASE_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId: admin.id }),
+  })
+  if (!loginRes.ok) {
+    throw new Error(`Test login failed (${loginRes.status})`)
+  }
+  authCookie = (loginRes.headers.get('set-cookie') ?? '').split(';')[0] ?? ''
+  if (!authCookie) {
+    throw new Error('Login did not set a session cookie')
+  }
 }, 240_000)
 
 afterAll(() => {
@@ -156,7 +197,7 @@ describe('Schedules API', () => {
   test('adding a song to a schedule returns the item with song data', async () => {
     // Create a test song - use long unique words to avoid sanitized-title collisions
     const testTitle = `Zymologica Quixotique ${Date.now()}`
-    const songRes = await fetch(`${BASE_URL}/api/songs`, {
+    const songRes = await authedFetch(`${BASE_URL}/api/songs`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -169,7 +210,7 @@ describe('Schedules API', () => {
     const songId = songJson.data.id
 
     // Create a test schedule
-    const scheduleRes = await fetch(`${BASE_URL}/api/schedules`, {
+    const scheduleRes = await authedFetch(`${BASE_URL}/api/schedules`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title: `__test_schedule_${Date.now()}__` }),
@@ -180,7 +221,7 @@ describe('Schedules API', () => {
 
     try {
       // Add song to schedule
-      const addRes = await fetch(
+      const addRes = await authedFetch(
         `${BASE_URL}/api/schedules/${scheduleId}/items`,
         {
           method: 'POST',
@@ -202,10 +243,10 @@ describe('Schedules API', () => {
       expect(getJson.data.items[0].itemType).toBe('song')
       expect(getJson.data.items[0].songId).toBe(songId)
     } finally {
-      await fetch(`${BASE_URL}/api/schedules/${scheduleId}`, {
+      await authedFetch(`${BASE_URL}/api/schedules/${scheduleId}`, {
         method: 'DELETE',
       })
-      await fetch(`${BASE_URL}/api/songs/${songId}`, { method: 'DELETE' })
+      await authedFetch(`${BASE_URL}/api/songs/${songId}`, { method: 'DELETE' })
     }
   })
 
@@ -219,7 +260,7 @@ describe('Schedules API', () => {
       `Chronexial Gammaflex ${ts}`,
     ]
     for (const title of uniqueTitles) {
-      const res = await fetch(`${BASE_URL}/api/songs`, {
+      const res = await authedFetch(`${BASE_URL}/api/songs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -237,7 +278,7 @@ describe('Schedules API', () => {
     }
 
     // Create a test schedule
-    const scheduleRes = await fetch(`${BASE_URL}/api/schedules`, {
+    const scheduleRes = await authedFetch(`${BASE_URL}/api/schedules`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -251,11 +292,14 @@ describe('Schedules API', () => {
     try {
       // Add each song (simulating bookmark batch add)
       for (const songId of songIds) {
-        const addRes = await fetch(`${BASE_URL}/api/schedules/${sid}/items`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ songId }),
-        })
+        const addRes = await authedFetch(
+          `${BASE_URL}/api/schedules/${sid}/items`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ songId }),
+          },
+        )
         expect(addRes.status).toBe(201)
       }
 
@@ -271,9 +315,13 @@ describe('Schedules API', () => {
         expect(getJson.data.items[i].sortOrder).toBe(i)
       }
     } finally {
-      await fetch(`${BASE_URL}/api/schedules/${sid}`, { method: 'DELETE' })
+      await authedFetch(`${BASE_URL}/api/schedules/${sid}`, {
+        method: 'DELETE',
+      })
       for (const songId of songIds) {
-        await fetch(`${BASE_URL}/api/songs/${songId}`, { method: 'DELETE' })
+        await authedFetch(`${BASE_URL}/api/songs/${songId}`, {
+          method: 'DELETE',
+        })
       }
     }
   })
@@ -384,7 +432,7 @@ describe('Presentation API', () => {
   test('clearing temporary content sets isHidden to true', async () => {
     // First, create a song to present (use timestamp for unique title)
     const testTitle = `Phenoluxar Zetaprism ${Date.now()}`
-    const createRes = await fetch(`${BASE_URL}/api/songs`, {
+    const createRes = await authedFetch(`${BASE_URL}/api/songs`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -398,7 +446,7 @@ describe('Presentation API', () => {
 
     try {
       // Present the song as temporary content
-      const presentRes = await fetch(
+      const presentRes = await authedFetch(
         `${BASE_URL}/api/presentation/temporary-song`,
         {
           method: 'POST',
@@ -412,7 +460,7 @@ describe('Presentation API', () => {
       expect(presentJson.data.temporaryContent).not.toBeNull()
 
       // Clear temporary content (this is what ESC triggers)
-      const clearRes = await fetch(
+      const clearRes = await authedFetch(
         `${BASE_URL}/api/presentation/clear-temporary`,
         { method: 'POST' },
       )
@@ -431,7 +479,7 @@ describe('Presentation API', () => {
       expect(stateJson.data.temporaryContent).toBeNull()
     } finally {
       // Clean up: delete the test song
-      await fetch(`${BASE_URL}/api/songs/${songId}`, { method: 'DELETE' })
+      await authedFetch(`${BASE_URL}/api/songs/${songId}`, { method: 'DELETE' })
     }
   })
 })
