@@ -1,3 +1,4 @@
+import { Eye, EyeOff } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -33,6 +34,7 @@ export function UserForm({
   const { t } = useTranslation(['settings', 'users'])
   const [name, setName] = useState(user?.name ?? '')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [removePassword, setRemovePassword] = useState(false)
   const [permissions, setPermissions] = useState<Permission[]>(
     user?.permissions ?? [],
@@ -104,24 +106,42 @@ export function UserForm({
             ({t('users:password.optional')})
           </span>
         </label>
-        <input
-          id="user-password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder={
-            isEditing && user?.hasPassword
-              ? t('users:password.changePlaceholder')
-              : t('users:password.setPlaceholder')
-          }
-          disabled={isLoading || removePassword}
-          autoComplete="new-password"
-          className="block w-full px-3 py-2 bg-white dark:bg-gray-800
-            border border-gray-300 dark:border-gray-600 rounded-lg
-            text-gray-900 dark:text-white
-            focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500
-            disabled:opacity-50"
-        />
+        <div className="relative">
+          <input
+            id="user-password"
+            type={showPassword ? 'text' : 'password'}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder={
+              isEditing && user?.hasPassword
+                ? t('users:password.changePlaceholder')
+                : t('users:password.setPlaceholder')
+            }
+            disabled={isLoading || removePassword}
+            autoComplete="new-password"
+            className="block w-full pl-3 pr-11 py-2 bg-white dark:bg-gray-800
+              border border-gray-300 dark:border-gray-600 rounded-lg
+              text-gray-900 dark:text-white
+              focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500
+              disabled:opacity-50"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((s) => !s)}
+            tabIndex={-1}
+            disabled={isLoading || removePassword}
+            aria-label={
+              showPassword ? t('users:password.hide') : t('users:password.show')
+            }
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+          >
+            {showPassword ? (
+              <EyeOff className="h-4 w-4" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
+          </button>
+        </div>
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
           {t('users:password.hint')}
         </p>

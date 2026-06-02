@@ -179,13 +179,6 @@ test.describe('Users & permissions', () => {
   test('the account page shows the profile and a log out action', async ({
     page,
   }) => {
-    await page.addInitScript(() => {
-      try {
-        sessionStorage.setItem('church-hub-user-selected', '1')
-      } catch {
-        /* ignore */
-      }
-    })
     await page.goto('/account')
     await page.waitForLoadState('networkidle')
 
@@ -202,9 +195,10 @@ test.describe('Users & permissions', () => {
     page,
     request,
   }) => {
+    const switchName = `E2E Switch ${Date.now()}`
     const create = await request.post('/api/users', {
       data: {
-        name: `E2E Switch ${Date.now()}`,
+        name: switchName,
         permissions: ['songs.view'],
         password: PASSWORD,
       },
@@ -212,25 +206,20 @@ test.describe('Users & permissions', () => {
     const userId = (await create.json()).data.user.id as number
 
     try {
-      // Start in the app as super admin (bypass launch picker), open account.
-      await page.addInitScript(() => {
-        try {
-          sessionStorage.setItem('church-hub-user-selected', '1')
-        } catch {
-          /* ignore */
-        }
-      })
+      // Start in the app as super admin and open the account page.
       await page.goto('/account')
       await page.waitForLoadState('networkidle')
 
       // Log out → returns to the account picker (no session).
       await page.getByRole('button', { name: /log out|deconectare/i }).click()
+      // Use the exact unique name so leftover users from earlier failed runs
+      // (the DB persists across runs) don't trigger a strict-mode violation.
       await page
-        .getByRole('button', { name: /E2E Switch/ })
+        .getByRole('button', { name: new RegExp(switchName) })
         .waitFor({ timeout: 10000 })
 
       // Sign in as the other account.
-      await page.getByRole('button', { name: /E2E Switch/ }).click()
+      await page.getByRole('button', { name: new RegExp(switchName) }).click()
       await page.locator('#login-password').fill(PASSWORD)
       await page
         .getByRole('button', { name: /sign in|autentificare/i })
@@ -253,29 +242,84 @@ test.describe('Users & permissions', () => {
     }
   })
 
-  test('opening the app with multiple accounts shows the picker', async ({
+  test('wrong password shows an inline error and stays on the picker', async ({
+    browser,
+    request,
+  }, testInfo) => {
+    const baseURL = testInfo.project.use.baseURL as string
+    const wrongName = `E2E WrongPw ${Date.now()}`
+    const create = await request.post('/api/users', {
+      data: {
+        name: wrongName,
+        permissions: ['songs.view'],
+        password: PASSWORD,
+      },
+    })
+    const userId = (await create.json()).data.user.id as number
+
+    // Clean context (no super-admin session) so the launch picker shows.
+    const ctx = await browser.newContext({
+      baseURL,
+      storageState: { cookies: [], origins: [] },
+    })
+    const page = await ctx.newPage()
+
+    try {
+      await page.goto('/')
+      await page.waitForLoadState('networkidle')
+
+      // Pick the password-protected account and submit a wrong password.
+      // Match the exact name so leftover users from earlier failed runs (DB
+      // persists across runs) don't make this a strict-mode violation.
+      await page.getByRole('button', { name: new RegExp(wrongName) }).click()
+      await page.locator('#login-password').fill('definitely-not-it')
+      await page
+        .getByRole('button', { name: /sign in|autentificare/i })
+        .click()
+
+      // The alert appears and we stay on the password form (no redirect).
+      await expect(page.getByRole('alert')).toBeVisible({ timeout: 5000 })
+      await expect(page.locator('#login-password')).toBeVisible()
+
+      // Still signed out — no session was established.
+      const me = await page.evaluate(() =>
+        fetch('/api/auth/me', { credentials: 'include' }).then((r) => r.json()),
+      )
+      expect(me.data).toBeNull()
+    } finally {
+      await ctx.close()
+      await request.delete(`/api/users/${userId}`)
+    }
+  })
+
+  test('opening the app auto-signs-in as the last user (persisted session)', async ({
     page,
     request,
   }) => {
+    // A second account exists, so the picker WOULD show without a session.
+    // With the persisted super-admin cookie (from storageState), the app must
+    // skip the picker and open directly.
     const create = await request.post('/api/users', {
-      data: { name: `E2E Picker ${Date.now()}`, permissions: ['songs.view'] },
+      data: { name: `E2E Persisted ${Date.now()}`, permissions: ['songs.view'] },
     })
     const userId = (await create.json()).data.user.id as number
 
     try {
-      // Fresh launch (no prior in-window selection): even though a session
-      // cookie exists (storageState), the picker must appear so the operator
-      // chooses an account.
       await page.goto('/')
       await page.waitForLoadState('networkidle')
 
-      // Both accounts are offered to choose from.
+      // No login picker — the persisted session signs the last user in.
       await expect(
-        page.getByRole('button', { name: /E2E Picker/ }),
-      ).toBeVisible({ timeout: 10000 })
+        page.getByRole('heading', { name: /welcome|bun venit/i }),
+      ).toHaveCount(0)
       await expect(
-        page.getByRole('button', { name: /Super Admin/ }),
-      ).toBeVisible()
+        page.getByRole('button', { name: /E2E Persisted/ }),
+      ).toHaveCount(0)
+
+      const me = await page.evaluate(() =>
+        fetch('/api/auth/me', { credentials: 'include' }).then((r) => r.json()),
+      )
+      expect(me.data?.isApp).toBe(true)
     } finally {
       await request.delete(`/api/users/${userId}`)
     }
@@ -295,13 +339,6 @@ test.describe('Users & permissions', () => {
     const ctx = await browser.newContext({
       baseURL,
       storageState: { cookies: [], origins: [] },
-    })
-    await ctx.addInitScript(() => {
-      try {
-        sessionStorage.setItem('church-hub-user-selected', '1')
-      } catch {
-        /* ignore */
-      }
     })
     const page = await ctx.newPage()
 
@@ -400,13 +437,6 @@ test.describe('Users & permissions', () => {
     await request.put(`/api/users/${bId}`, { data: { isActive: false } })
 
     try {
-      await page.addInitScript(() => {
-        try {
-          sessionStorage.setItem('church-hub-user-selected', '1')
-        } catch {
-          /* ignore */
-        }
-      })
       await page.goto('/users')
       await page.waitForLoadState('networkidle')
 
