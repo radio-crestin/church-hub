@@ -4,7 +4,7 @@ export {
   BibleHistoryItem,
   BibleHistoryPanel,
   BibleNavigationPanel,
-  BibleSettingsModal,
+  BibleSettingsPanel,
   BibleTranslationsManager,
   BooksList,
   ChaptersGrid,

@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import 'overlayscrollbars/overlayscrollbars.css'
 
+import { useDividerPosition } from '~/hooks/useDividerPosition'
+import { DIVIDER_KEYS } from '~/service/layout'
 import { AddFolderButton } from './AddFolderButton'
 import { FolderBrowser } from './FolderBrowser'
 import { SearchInput } from './SearchInput'
@@ -11,19 +13,25 @@ import { Player } from './ServerMusicPlayer'
 import { useServerAudioPlayer } from '../hooks'
 import type { MusicFile } from '../types'
 
-const MUSIC_DIVIDER_STORAGE_KEY = 'music-divider-position'
 const DEFAULT_DIVIDER_POSITION = 70 // 70% left, 30% right
+// Comfortable reading width for the player column so its content never stretches
+// too wide when the pane is dragged open. The page height is an extra upper bound
+// (so the player is never taller than it is wide on short windows).
+const PLAYER_MAX_WIDTH = 448
 
 export function MusicPage() {
   const { t } = useTranslation('music')
   const player = useServerAudioPlayer()
   const [searchQuery, setSearchQuery] = useState('')
-  const [dividerPosition, setDividerPosition] = useState(() => {
-    const stored = localStorage.getItem(MUSIC_DIVIDER_STORAGE_KEY)
-    return stored ? Number(stored) : DEFAULT_DIVIDER_POSITION
-  })
+  const [dividerPosition, setDividerPosition] = useDividerPosition(
+    DIVIDER_KEYS.music,
+    DEFAULT_DIVIDER_POSITION,
+  )
   const containerRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
+  // Content row height, used as an upper bound for the player width on short
+  // windows so it is never taller than it is wide.
+  const [containerHeight, setContainerHeight] = useState<number>()
 
   const handlePlayTrack = useCallback(
     (track: MusicFile) => {
@@ -41,41 +49,50 @@ export function MusicPage() {
     [player],
   )
 
-  // Persist divider position to localStorage
+  // Track the content row height so the player's max width can match it
   useEffect(() => {
-    localStorage.setItem(MUSIC_DIVIDER_STORAGE_KEY, String(dividerPosition))
-  }, [dividerPosition])
-
-  // Divider drag handler
-  const handleDividerMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    isDragging.current = true
-    document.body.style.cursor = 'col-resize'
-    document.body.style.userSelect = 'none'
-
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      if (!isDragging.current || !containerRef.current) return
-      const containerRect = containerRef.current.getBoundingClientRect()
-      const newPosition =
-        ((moveEvent.clientX - containerRect.left) / containerRect.width) * 100
-      // Clamp between 40% and 85%
-      setDividerPosition(Math.min(85, Math.max(40, newPosition)))
-    }
-
-    const handleMouseUp = () => {
-      isDragging.current = false
-      document.body.style.cursor = ''
-      document.body.style.userSelect = ''
-      document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseup', handleMouseUp)
-    }
-
-    document.addEventListener('mousemove', handleMouseMove)
-    document.addEventListener('mouseup', handleMouseUp)
+    const el = containerRef.current
+    if (!el) return
+    const update = () => setContainerHeight(el.getBoundingClientRect().height)
+    update()
+    const observer = new ResizeObserver(update)
+    observer.observe(el)
+    return () => observer.disconnect()
   }, [])
 
+  // Divider drag handler
+  const handleDividerMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault()
+      isDragging.current = true
+      document.body.style.cursor = 'col-resize'
+      document.body.style.userSelect = 'none'
+
+      const handleMouseMove = (moveEvent: MouseEvent) => {
+        if (!isDragging.current || !containerRef.current) return
+        const containerRect = containerRef.current.getBoundingClientRect()
+        const newPosition =
+          ((moveEvent.clientX - containerRect.left) / containerRect.width) * 100
+        // Clamp between 40% and 85%
+        setDividerPosition(Math.min(85, Math.max(40, newPosition)))
+      }
+
+      const handleMouseUp = () => {
+        isDragging.current = false
+        document.body.style.cursor = ''
+        document.body.style.userSelect = ''
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+      }
+
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+    },
+    [setDividerPosition],
+  )
+
   return (
-    <div className="flex-1 flex flex-col overflow-x-hidden lg:min-h-0 lg:overflow-hidden">
+    <div className="flex-1 flex flex-col overflow-x-hidden lg:h-full lg:min-h-0 lg:overflow-hidden">
       <div className="flex items-center justify-between mb-4 flex-shrink-0 gap-2">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <Music className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600 dark:text-indigo-400 shrink-0" />
@@ -155,7 +172,10 @@ export function MusicPage() {
         {/* Desktop Player - Hidden on mobile, shown on desktop */}
         <div
           className="hidden lg:flex lg:flex-col overflow-hidden"
-          style={{ width: `calc(${100 - dividerPosition}% - 8px)` }}
+          style={{
+            width: `calc(${100 - dividerPosition}% - 8px)`,
+            maxWidth: `${Math.min(containerHeight ?? PLAYER_MAX_WIDTH, PLAYER_MAX_WIDTH)}px`,
+          }}
         >
           <Player
             state={player.state}

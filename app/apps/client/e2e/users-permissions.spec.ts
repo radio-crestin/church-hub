@@ -176,22 +176,25 @@ test.describe('Users & permissions', () => {
     }
   })
 
-  test('the account page shows the profile and a log out action', async ({
+  test('Settings → Users shows the account profile and a log out action', async ({
     page,
   }) => {
-    await page.goto('/account')
+    // The personal account view (profile + permissions + log out) moved from
+    // the dedicated /account page into the Profile category of Settings.
+    await page.goto('/settings/profile')
     await page.waitForLoadState('networkidle')
 
-    // Profile header for the super admin, full-access note, and log out button.
+    // Super admin has full access — the account section says so — and exposes a
+    // log out button.
     await expect(
-      page.getByRole('heading', { name: /Super Admin/ }),
+      page.getByText(/full access|acces complet/i).first(),
     ).toBeVisible({ timeout: 10000 })
     await expect(
       page.getByRole('button', { name: /log out|deconectare/i }),
     ).toBeVisible()
   })
 
-  test('switching account is done by logging out then back in', async ({
+  test('switching account from the sidebar dropdown signs in immediately', async ({
     page,
     request,
   }) => {
@@ -206,30 +209,29 @@ test.describe('Users & permissions', () => {
     const userId = (await create.json()).data.user.id as number
 
     try {
-      // Start in the app as super admin and open the account page.
-      await page.goto('/account')
+      // Start in the app as super admin.
+      await page.goto('/')
       await page.waitForLoadState('networkidle')
 
-      // Log out → returns to the account picker (no session).
-      await page.getByRole('button', { name: /log out|deconectare/i }).click()
-      // Use the exact unique name so leftover users from earlier failed runs
-      // (the DB persists across runs) don't trigger a strict-mode violation.
-      await page
-        .getByRole('button', { name: new RegExp(switchName) })
-        .waitFor({ timeout: 10000 })
+      // Open the sidebar account dropdown (its trigger is labelled "Account").
+      await page.getByRole('button', { name: /^account$|^cont$/i }).click()
 
-      // Sign in as the other account.
+      // Pick the other account. Match the exact unique name so leftover users
+      // from earlier failed runs (the DB persists across runs) don't trigger a
+      // strict-mode violation. Password-protected → an inline prompt appears.
       await page.getByRole('button', { name: new RegExp(switchName) }).click()
-      await page.locator('#login-password').fill(PASSWORD)
       await page
-        .getByRole('button', { name: /sign in|autentificare/i })
-        .click()
+        .getByPlaceholder(/enter password|introdu parola/i)
+        .fill(PASSWORD)
+      await page.getByRole('button', { name: /sign in|autentificare/i }).click()
 
+      // The switch finalizes via a top-level navigation that reloads the app.
       await page.waitForTimeout(3500)
 
       const me = await page.evaluate(() =>
         fetch('/api/auth/me', { credentials: 'include' }).then((r) => r.json()),
       )
+      // Users management is no longer a sidebar entry for anyone.
       const usersNav = await page
         .getByRole('link', { name: /^Users$|Utilizatori/ })
         .count()
@@ -273,9 +275,7 @@ test.describe('Users & permissions', () => {
       // persists across runs) don't make this a strict-mode violation.
       await page.getByRole('button', { name: new RegExp(wrongName) }).click()
       await page.locator('#login-password').fill('definitely-not-it')
-      await page
-        .getByRole('button', { name: /sign in|autentificare/i })
-        .click()
+      await page.getByRole('button', { name: /sign in|autentificare/i }).click()
 
       // The alert appears and we stay on the password form (no redirect).
       await expect(page.getByRole('alert')).toBeVisible({ timeout: 5000 })
@@ -300,7 +300,10 @@ test.describe('Users & permissions', () => {
     // With the persisted super-admin cookie (from storageState), the app must
     // skip the picker and open directly.
     const create = await request.post('/api/users', {
-      data: { name: `E2E Persisted ${Date.now()}`, permissions: ['songs.view'] },
+      data: {
+        name: `E2E Persisted ${Date.now()}`,
+        permissions: ['songs.view'],
+      },
     })
     const userId = (await create.json()).data.user.id as number
 
@@ -331,7 +334,10 @@ test.describe('Users & permissions', () => {
   }, testInfo) => {
     const baseURL = testInfo.project.use.baseURL as string
     const create = await request.post('/api/users', {
-      data: { name: `E2E Viewer ${Date.now()}`, permissions: ['settings.view'] },
+      data: {
+        name: `E2E Viewer ${Date.now()}`,
+        permissions: ['settings.view'],
+      },
     })
     const userId = (await create.json()).data.user.id as number
 
@@ -360,8 +366,12 @@ test.describe('Users & permissions', () => {
       await expect(
         page.getByRole('heading', { name: /developer|dezvoltator/i }),
       ).toHaveCount(0)
+      await expect(page.getByText(/sidebar|bară laterală/i)).toHaveCount(0)
+      // …and the Users section (gated by users.view) is absent too.
       await expect(
-        page.getByText(/sidebar|bară laterală/i),
+        page.getByRole('heading', {
+          name: /authorized users|utilizatori autorizați/i,
+        }),
       ).toHaveCount(0)
     } finally {
       await ctx.close()
@@ -437,10 +447,11 @@ test.describe('Users & permissions', () => {
     await request.put(`/api/users/${bId}`, { data: { isActive: false } })
 
     try {
-      await page.goto('/users')
+      await page.goto('/settings/users')
       await page.waitForLoadState('networkidle')
 
-      // The super admin is always the first card.
+      // The super admin is always the first card. (User cards use `h3.text-base`;
+      // the personal account header above uses a larger heading, so it's excluded.)
       const names = await page.locator('h3.text-base').allTextContents()
       expect(names[0]).toMatch(/Super Admin/)
 

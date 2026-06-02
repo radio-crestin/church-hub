@@ -1,6 +1,6 @@
 export { BroadcastInfo } from './BroadcastInfo'
 export { LiveStreamPage } from './LiveStreamPage'
-export { LivestreamSettingsModal } from './LivestreamSettingsModal'
+export { LivestreamSettingsPanel } from './LivestreamSettingsPanel'
 export { OBSConnectionStatus } from './OBSConnectionStatus'
 export { SceneCard } from './SceneCard'
 export { SceneGrid } from './SceneGrid'

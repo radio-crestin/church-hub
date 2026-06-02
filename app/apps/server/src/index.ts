@@ -159,6 +159,7 @@ import {
   initializeOBSAutoConnect,
   initializeOBSCallbacks,
 } from './service/livestream/obs'
+import { openLogsFolder, readRecentLogs } from './service/logs'
 import {
   initializeMIDI,
   setAllLEDs,
@@ -183,7 +184,6 @@ import {
   setStateCallback,
   shutdownMusicPlayer,
 } from './service/music-player'
-import { openLogsFolder, readRecentLogs } from './service/logs'
 import { getExternalInterfaces } from './service/network'
 import {
   addSlideHighlight,
@@ -292,8 +292,8 @@ import {
   getSongsPaginated,
   getSongWithSlides,
   type ReorderCategoriesInput,
-  type ReorderTagsInput,
   type ReorderSongSlidesInput,
+  type ReorderTagsInput,
   rebuildSearchIndex,
   removeFromSearchIndex,
   reorderCategories,
@@ -352,7 +352,10 @@ const loginTickets = new Map<string, { token: string; expiresAt: number }>()
 
 function createLoginTicket(token: string): string {
   const ticket = crypto.randomUUID()
-  loginTickets.set(ticket, { token, expiresAt: Date.now() + LOGIN_TICKET_TTL_MS })
+  loginTickets.set(ticket, {
+    token,
+    expiresAt: Date.now() + LOGIN_TICKET_TTL_MS,
+  })
   return ticket
 }
 
@@ -367,7 +370,10 @@ function consumeLoginTicket(ticket: string): string | null {
  * Validates a post-login return URL. Only same-machine origins are allowed so
  * the redirect can never be turned into an open redirect.
  */
-function resolveReturnUrl(returnParam: string | null, fallbackHost: string): string {
+function resolveReturnUrl(
+  returnParam: string | null,
+  fallbackHost: string,
+): string {
   const fallback = `http://${fallbackHost}/`
   if (!returnParam) return fallback
   try {
@@ -906,7 +912,9 @@ async function main() {
         const host = req.headers.get('host')?.split(':')[0] ?? 'localhost'
         const frontendPort = process.env['PORT'] ?? 3000
         const fallbackHost = `${host}:${frontendPort}`
-        const token = consumeLoginTicket(decodeURIComponent(loginRedirectMatch[1]))
+        const token = consumeLoginTicket(
+          decodeURIComponent(loginRedirectMatch[1]),
+        )
         const location = resolveReturnUrl(
           url.searchParams.get('return'),
           fallbackHost,
@@ -917,7 +925,10 @@ async function main() {
           // as whoever the current cookie is).
           return handleCors(
             req,
-            new Response(null, { status: 302, headers: { Location: location } }),
+            new Response(null, {
+              status: 302,
+              headers: { Location: location },
+            }),
           )
         }
 
@@ -950,7 +961,10 @@ async function main() {
       // navigation. Like login-redirect, clearing the cookie on a 302 response
       // reliably applies in the desktop (Tauri) webview where a cross-origin
       // `fetch` Set-Cookie may not.
-      if (req.method === 'GET' && url.pathname === '/api/auth/logout-redirect') {
+      if (
+        req.method === 'GET' &&
+        url.pathname === '/api/auth/logout-redirect'
+      ) {
         const host = req.headers.get('host')?.split(':')[0] ?? 'localhost'
         const frontendPort = process.env['PORT'] ?? 3000
         const location = resolveReturnUrl(
@@ -975,7 +989,10 @@ async function main() {
         const authResult = await combinedAuthMiddleware(req)
 
         // System token (no userId) → generic app/admin identity
-        if (authResult.context?.authType === 'app' && !authResult.context.userId) {
+        if (
+          authResult.context?.authType === 'app' &&
+          !authResult.context.userId
+        ) {
           return handleCors(
             req,
             new Response(
@@ -1056,7 +1073,13 @@ async function main() {
           table === 'app_settings' &&
           (key === 'selected_bible_translations' ||
             key === 'default_bible_translation')
-        if (isSidebarConfig) {
+        // Resizable-divider positions (`divider.*`) are personal layout prefs,
+        // not general Settings — every authenticated user reads their own page
+        // layout, so gating them by `settings.view` would wrongly lock out
+        // feature-only users.
+        const isLayoutDivider =
+          table === 'app_settings' && key.startsWith('divider.')
+        if (isSidebarConfig || isLayoutDivider) {
           // Readable by any authenticated user.
         } else if (isBibleSelection) {
           const permError = checkPermission('bible.view')
@@ -1127,10 +1150,16 @@ async function main() {
           const isAppearance =
             table === 'app_settings' &&
             (body.key === 'theme' || body.key === 'language')
+          // Resizable-divider positions (`divider.*`) are personal layout prefs
+          // any authenticated user may persist — no extra permission required.
+          const isLayoutDivider =
+            table === 'app_settings' && body.key.startsWith('divider.')
 
           let permError: Response | null
           if (isBibleSelection) {
             permError = checkPermission('bible.view')
+          } else if (isLayoutDivider) {
+            permError = null
           } else if (isAppearance) {
             const denied = _context
               ? requireAnyPermission([
@@ -3945,8 +3974,7 @@ async function main() {
               }),
             )
           }
-          const message =
-            error instanceof Error ? error.message : String(error)
+          const message = error instanceof Error ? error.message : String(error)
           return handleCors(
             req,
             new Response(JSON.stringify({ error: message }), {
@@ -4252,13 +4280,10 @@ async function main() {
           if (!result.success) {
             return handleCors(
               req,
-              new Response(
-                JSON.stringify({ error: result.error }),
-                {
-                  status: 500,
-                  headers: { 'Content-Type': 'application/json' },
-                },
-              ),
+              new Response(JSON.stringify({ error: result.error }), {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+              }),
             )
           }
 
@@ -5525,13 +5550,10 @@ async function main() {
           if (!body.tagIds || !Array.isArray(body.tagIds)) {
             return handleCors(
               req,
-              new Response(
-                JSON.stringify({ error: 'Missing tagIds array' }),
-                {
-                  status: 400,
-                  headers: { 'Content-Type': 'application/json' },
-                },
-              ),
+              new Response(JSON.stringify({ error: 'Missing tagIds array' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
             )
           }
 

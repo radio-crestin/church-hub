@@ -10,10 +10,6 @@
     "signIn": "Sign in",
     "back": "Back"
   },
-  "page": {
-    "title": "Users",
-    "description": "Manage who can access this app and what they can do."
-  },
   "password": {
     "label": "Password",
     "optional": "Optional",

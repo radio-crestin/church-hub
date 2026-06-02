@@ -1,4 +1,5 @@
 export {
+  AppShortcutsPanel,
   GlobalAppShortcutManager,
   MIDISettingsSection,
   ShortcutActionRow,

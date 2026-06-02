@@ -233,10 +233,15 @@ export function UserList() {
         </div>
       )}
 
-      {/* Create/Edit Dialog */}
+      {/* Create/Edit Dialog — fixed header (title + close) and a sticky footer
+          (provided by UserForm), with only the form body scrolling between.
+          The flex layout lives on an INNER wrapper, never on the <dialog>
+          itself: a `display:flex` on the element overrides the user-agent
+          `display:none` of a closed dialog, which would leave it visible (and
+          tiny) all the time. */}
       <dialog
         ref={formDialogRef}
-        className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800 max-w-lg w-full max-h-[90vh] overflow-y-auto"
+        className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800 max-w-2xl w-[calc(100%-2rem)] max-h-[90vh] overflow-hidden"
         onClose={() => setModal({ type: 'none' })}
         onClick={(e) => {
           if (e.target === formDialogRef.current) {
@@ -244,16 +249,18 @@ export function UserList() {
           }
         }}
       >
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-4">
+        <div className="flex max-h-[90vh] flex-col overflow-hidden">
+          <div className="flex shrink-0 items-center justify-between gap-4 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
               {modal.type === 'create'
                 ? t('sections.users.modals.create.title')
                 : t('sections.users.modals.edit.title')}
             </h2>
             <button
+              type="button"
               onClick={() => setModal({ type: 'none' })}
-              className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              aria-label={t('sections.users.modals.cancel')}
+              className="-mr-1.5 shrink-0 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-300"
             >
               <X size={20} />
             </button>

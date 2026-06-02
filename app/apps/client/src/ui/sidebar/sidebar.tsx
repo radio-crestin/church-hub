@@ -5,7 +5,6 @@ import {
   MessageSquarePlus,
   Monitor,
   Settings,
-  Users,
   X,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -14,11 +13,11 @@ import { useTranslation } from 'react-i18next'
 import { SidebarHeader } from './sidebar-header'
 import { SidebarItem } from './sidebar-item'
 import { UpdateNotification } from '../../features/app-update'
+import { CurrentUserButton } from '../../features/auth'
 import {
   SendFeedbackModal,
   useFeedbackUnreadCount,
 } from '../../features/feedback'
-import { CurrentUserButton } from '../../features/auth'
 import { useKioskSettings } from '../../features/kiosk'
 import { usePresentationState } from '../../features/presentation'
 import {
@@ -65,7 +64,7 @@ export function Sidebar({
   // projector windows. Hiding the button is non-negotiable for screens.
   const isScreenRoute = location.pathname.startsWith('/screen/')
   const navigate = useNavigate()
-  const { t } = useTranslation(['sidebar', 'common', 'users'])
+  const { t } = useTranslation(['sidebar', 'common'])
   const { hasPermission } = usePermissions()
 
   // Get sidebar configuration
@@ -168,9 +167,6 @@ export function Sidebar({
   // Check if user has permission to view settings
   const canViewSettings = hasPermission('settings.view')
 
-  // Users management — super admins (and anyone granted users.view) only
-  const canViewUsers = hasPermission('users.view')
-
   // Kiosk is shown when kiosk mode is enabled and user has settings permission
   const showKiosk =
     kioskSettings?.enabled === true && hasPermission('settings.view')
@@ -200,7 +196,7 @@ export function Sidebar({
           const { bookId, bookName, chapter, currentVerseIndex } =
             tempContent.data
           navigate({
-            to: '/bible/',
+            to: '/bible',
             search: {
               book: bookId,
               bookName: bookName,
@@ -274,9 +270,9 @@ export function Sidebar({
           fixed md:relative z-50 md:z-auto
           flex flex-col h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800
           transition-all duration-300 ease-in-out
-          w-72 md:w-auto top-0 left-0
+          w-72 top-0 left-0
           safe-area-top safe-area-left safe-area-bottom
-          ${isCollapsed ? 'md:w-20' : 'md:w-64'}
+          ${isCollapsed ? 'md:w-20' : 'md:w-fit md:min-w-56 md:max-w-72'}
           ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         `}
       >
@@ -396,24 +392,6 @@ export function Sidebar({
                   </span>
                 )}
               </button>
-            )}
-
-            {/* Users management */}
-            {canViewUsers && (
-              <SidebarItem
-                pageId="users"
-                icon={Users}
-                label={t('users:page.title')}
-                to="/users"
-                isCollapsed={isCollapsed}
-                isActive={
-                  location.pathname === '/users' ||
-                  location.pathname.startsWith('/users/')
-                }
-                className="md:flex"
-                onClick={(e) => handleSidebarItemClick('/users', e)}
-                iconColor="indigo"
-              />
             )}
 
             {/* Settings */}

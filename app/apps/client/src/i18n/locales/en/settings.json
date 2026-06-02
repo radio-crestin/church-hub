@@ -1,5 +1,26 @@
 {
   "title": "Settings",
+  "nav": {
+    "back": "Back",
+    "groups": {
+      "general": "General",
+      "account": "Account",
+      "content": "Content",
+      "presentation": "Presentation",
+      "controls": "Controls",
+      "advanced": "Advanced"
+    },
+    "items": {
+      "profile": "Profile",
+      "users": "Users",
+      "songs": "Songs",
+      "bible": "Bible",
+      "livestream": "Livestream",
+      "sidebar": "Sidebar",
+      "developer": "Developer",
+      "shortcuts": "Shortcuts"
+    }
+  },
   "sections": {
     "appearance": {
       "title": "Appearance"
@@ -170,6 +191,14 @@
     "shortcuts": {
       "title": "Keyboard Shortcuts",
       "description": "Configure global keyboard shortcuts for quick actions. These shortcuts work from anywhere in the application.",
+      "groups": {
+        "presentation": "Presentation",
+        "presentationDescription": "Control slides from anywhere in the app.",
+        "livestream": "Livestream",
+        "livestreamDescription": "Start and stop the live stream with a key or MIDI button.",
+        "pages": "Pages",
+        "pagesDescription": "Jump to a page and focus its search."
+      },
       "actions": {
         "startLive": {
           "label": "Start Live Stream",

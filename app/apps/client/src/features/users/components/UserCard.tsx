@@ -43,12 +43,24 @@ export function UserCard({
 
   return (
     <div
-      className={`relative border rounded-lg p-4 ${
+      className={`relative border rounded-lg p-4 transition-colors hover:border-indigo-300 dark:hover:border-indigo-500/60 ${
         user.isActive
           ? 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
           : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900'
       }`}
     >
+      {/* Full-card click target → opens the edit modal. It's an overlay button
+          (not a wrapper) so the card's inner content keeps its semantics (the
+          name stays a real heading). It sits above the content (z-10) but below
+          the action column (also z-10, later in the DOM) so those buttons keep
+          working. */}
+      <button
+        type="button"
+        onClick={() => onEdit(user)}
+        aria-label={`${t('sections.users.actions.edit')} — ${user.name}`}
+        className="absolute inset-0 z-10 rounded-lg"
+      />
+
       <div className="flex items-start justify-between">
         {/* Dim only the info column when inactive — NOT the whole card, so the
             actions dropdown stays opaque and isn't trapped under sibling cards
@@ -101,7 +113,7 @@ export function UserCard({
           </p>
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="relative z-10 flex items-center gap-1">
           {/* QR Code button - always visible */}
           <button
             onClick={() => onShowQR(user)}

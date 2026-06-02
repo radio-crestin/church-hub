@@ -1,247 +1,30 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { Bug, ExternalLink, Languages, Palette } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
+import { createFileRoute, Navigate } from '@tanstack/react-router'
 
 import { isLocalhost, isMobile } from '~/config'
-import { ApiUrlSettings } from '~/features/api-url-config'
-import { AboutSection } from '~/features/app-update'
-import {
-  DatabaseManager,
-  FactoryReset,
-  SearchIndexRebuild,
-} from '~/features/database-management'
-import { MIDISettingsSection } from '~/features/keyboard-shortcuts'
-import { OpenLogsFolder } from '~/features/logs'
-import { SidebarConfigManager } from '~/features/sidebar-config'
-import { SystemTokenManager } from '~/features/system-token'
-import { useDebugMode } from '~/hooks/useDebugMode'
-import { useI18n } from '~/provider/i18n-provider'
-import { useTheme } from '~/provider/theme-provider'
-import type { LanguagePreference } from '~/service/locale'
-import type { ThemePreference } from '~/service/theme'
+import { getFirstVisibleLeaf } from '~/features/settings'
 import { usePermissions } from '~/provider/permissions-provider'
-import { Combobox } from '~/ui/combobox'
-import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
 
 export const Route = createFileRoute('/settings/')({
-  component: RouteComponent,
+  component: SettingsIndex,
 })
 
-function RouteComponent() {
-  const { t } = useTranslation('settings')
-  const { hasPermission } = usePermissions()
-  // Without edit rights a user may only VIEW Appearance and About; everything
-  // else (which changes app-wide configuration) is hidden and not editable.
-  const canEdit = hasPermission('settings.edit')
-  // Appearance (theme & language) can be changed with full edit OR the granular
-  // appearance permission — so a user can be allowed to set just those.
-  const canEditAppearance = canEdit || hasPermission('settings.edit_appearance')
-  const {
-    preference: languagePreference,
-    setLanguagePreference,
-    isLoading: isLanguageLoading,
-  } = useI18n()
-  const {
-    preference: themePreference,
-    setThemePreference,
-    isLoading: isThemeLoading,
-  } = useTheme()
+function SettingsIndex() {
+  const { hasPermission, isLoading } = usePermissions()
 
-  const {
-    isDebugMode,
-    setDebugMode,
-    isLoading: isDebugLoading,
-  } = useDebugMode()
+  // On mobile, the index route IS the master category list (rendered by
+  // SettingsLayout); the content pane shows nothing here.
+  if (isMobile()) return null
 
-  const languageOptions: { value: LanguagePreference; label: string }[] = [
-    { value: 'system', label: t('sections.language.options.system') },
-    { value: 'en', label: t('sections.language.options.english') },
-    { value: 'ro', label: t('sections.language.options.romanian') },
-  ]
-
-  const themeOptions: { value: ThemePreference; label: string }[] = [
-    { value: 'system', label: t('sections.theme.options.system') },
-    { value: 'light', label: t('sections.theme.options.light') },
-    { value: 'dark', label: t('sections.theme.options.dark') },
-  ]
-
+  // Desktop: jump straight to the first category the user can access.
+  if (isLoading) return null
   return (
-    <PagePermissionGuard permission="settings.view">
-      <div className="space-y-6 pb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            {t('title')}
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
-            {t('sections.application.description')}
-          </p>
-        </div>
-
-        {/* Appearance Settings Section */}
-        <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800 space-y-6">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              {t('sections.appearance.title')}
-            </h3>
-
-            {/* Language Setting */}
-            <div className="space-y-2 mb-6">
-              <div className="flex items-center gap-2">
-                <Languages className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                <label className="text-sm font-medium text-gray-900 dark:text-white">
-                  {t('sections.language.title')}
-                </label>
-              </div>
-              <Combobox
-                options={languageOptions}
-                value={languagePreference}
-                onChange={(val) =>
-                  setLanguagePreference(val as LanguagePreference)
-                }
-                disabled={isLanguageLoading || !canEditAppearance}
-                allowClear={false}
-              />
-              <p className="text-gray-600 dark:text-gray-400 text-xs">
-                {t('sections.language.description')}
-              </p>
-            </div>
-
-            {/* Theme Setting */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Palette className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                <label className="text-sm font-medium text-gray-900 dark:text-white">
-                  {t('sections.theme.title')}
-                </label>
-              </div>
-              <Combobox
-                options={themeOptions}
-                value={themePreference}
-                onChange={(val) => setThemePreference(val as ThemePreference)}
-                disabled={isThemeLoading || !canEditAppearance}
-                allowClear={false}
-              />
-              <p className="text-gray-600 dark:text-gray-400 text-xs">
-                {t('sections.theme.description')}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Server Connection Section (Mobile only) */}
-        {canEdit && isMobile() && (
-          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
-            <ApiUrlSettings />
-          </div>
-        )}
-
-        {/* Sidebar Configuration Section */}
-        {canEdit && (
-          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
-            <SidebarConfigManager />
-          </div>
-        )}
-
-        {/* MIDI Controller Section */}
-        {canEdit && (
-          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
-            <MIDISettingsSection />
-          </div>
-        )}
-
-        {/* Developer Tools Section */}
-        {canEdit && (
-          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-            {t('sections.developer.title')}
-          </h3>
-          <p className="text-gray-600 dark:text-gray-400 text-sm mb-6">
-            {t('sections.developer.description')}
-          </p>
-
-          <div className="space-y-6">
-            {/* Debug Mode and API Docs Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Debug Mode Card */}
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Bug className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-                        {t('sections.debug.title')}
-                      </h4>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                        {t('sections.debug.description')}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setDebugMode(!isDebugMode)}
-                    disabled={isDebugLoading}
-                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 ${
-                      isDebugMode
-                        ? 'bg-indigo-600'
-                        : 'bg-gray-200 dark:bg-gray-700'
-                    } ${isDebugLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    <span
-                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                        isDebugMode ? 'translate-x-5' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
-                </div>
-              </div>
-
-              {/* API Documentation Card */}
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <ExternalLink className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-                        {t('sections.apiDocs.title')}
-                      </h4>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                        {t('sections.apiDocs.description')}
-                      </p>
-                    </div>
-                  </div>
-                  <a
-                    href="http://localhost:3000/api/docs"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm"
-                  >
-                    {t('sections.apiDocs.link')}
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            {/* System Token (localhost only) */}
-            {isLocalhost() && <SystemTokenManager />}
-
-            {/* Search Index Rebuild (localhost only) */}
-            {isLocalhost() && <SearchIndexRebuild />}
-
-            {/* Open Logs Folder (localhost only — host file manager) */}
-            {isLocalhost() && <OpenLogsFolder />}
-
-            {/* Database Management (localhost only) */}
-            {isLocalhost() && <DatabaseManager />}
-
-            {/* Factory Reset (localhost only) */}
-            {isLocalhost() && <FactoryReset />}
-          </div>
-          </div>
-        )}
-
-        {/* About Section */}
-        <AboutSection />
-      </div>
-    </PagePermissionGuard>
+    <Navigate
+      to={getFirstVisibleLeaf({
+        hasPermission,
+        isMobile: isMobile(),
+        isLocalhost: isLocalhost(),
+      })}
+      replace
+    />
   )
 }
