@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 
 import { SongEditor, UnsavedChangesModal } from '~/features/songs/components'
 import { type LocalSlide } from '~/features/songs/components/SongSlideList'
+import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
 import {
   useDeleteSong,
   useDirtyState,
@@ -308,7 +309,7 @@ function SongEditorPage() {
   const isLoadingData = !isNew && isLoading
 
   return (
-    <>
+    <PagePermissionGuard permission={isNew ? 'songs.create' : 'songs.edit'}>
       <SongEditor
         isNew={isNew}
         isLoading={isLoadingData}
@@ -349,6 +350,6 @@ function SongEditorPage() {
         onDiscard={handleUnsavedDiscard}
         onCancel={handleUnsavedCancel}
       />
-    </>
+    </PagePermissionGuard>
   )
 }

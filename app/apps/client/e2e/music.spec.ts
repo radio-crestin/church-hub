@@ -137,6 +137,54 @@ test.describe('Music Player Feature', () => {
   })
 })
 
+test.describe('Music Player Layout (desktop)', () => {
+  test.use({ viewport: { width: 1440, height: 800 } })
+
+  test('player width is capped and the page stays bounded with an internal queue scroller', async ({
+    page,
+  }) => {
+    await page.goto('/music')
+    await page.waitForLoadState('networkidle')
+    // Wait for the desktop player wrapper (hidden lg:flex lg:flex-col) to render.
+    // There are two players in the DOM (mobile + desktop); only the desktop one
+    // carries the inline width/maxWidth cap we are asserting on.
+    await page.waitForFunction(() => {
+      const w = [
+        ...document.querySelectorAll<HTMLElement>('div[style*="width: calc"]'),
+      ].find((el) => el.className.includes('hidden lg:flex lg:flex-col'))
+      return !!w && w.getBoundingClientRect().width > 0
+    })
+
+    const metrics = await page.evaluate(() => {
+      const wrapper = [
+        ...document.querySelectorAll<HTMLElement>('div[style*="width: calc"]'),
+      ].find((el) => el.className.includes('hidden lg:flex lg:flex-col'))
+      if (!wrapper) return null
+      const rect = wrapper.getBoundingClientRect()
+      const scroller = [
+        ...wrapper.querySelectorAll<HTMLElement>('.lg\\:overflow-y-auto'),
+      ][0]
+      return {
+        width: Math.round(rect.width),
+        height: Math.round(rect.height),
+        bottom: Math.round(rect.bottom),
+        viewportHeight: window.innerHeight,
+        queueOverflowY: scroller ? getComputedStyle(scroller).overflowY : null,
+      }
+    })
+
+    expect(metrics).not.toBeNull()
+    // Content width never grows larger than the page height (square at most)…
+    expect(metrics!.width).toBeLessThanOrEqual(metrics!.height + 1)
+    // …and never wider than the comfortable reading cap (448px).
+    expect(metrics!.width).toBeLessThanOrEqual(449)
+    // The player is bounded to the viewport so the queue scrolls internally
+    // instead of growing the whole page.
+    expect(metrics!.bottom).toBeLessThanOrEqual(metrics!.viewportHeight + 1)
+    expect(metrics!.queueOverflowY).toBe('auto')
+  })
+})
+
 test.describe('Music Player API - Queue Operations', () => {
   test('can get player state via WebSocket', async ({ page }) => {
     await page.goto('/music')

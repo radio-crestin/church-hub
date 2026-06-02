@@ -6,9 +6,8 @@ import {
   MonitorOff,
   MonitorPlay,
   MonitorUp,
-  Settings,
 } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import {
@@ -16,7 +15,6 @@ import {
   useAppShortcuts,
 } from '~/features/keyboard-shortcuts'
 import { ContentTypeButton } from './ContentTypeButton'
-import { ControlRoomSettingsModal } from './ControlRoomSettingsModal'
 import { LivePreview } from './LivePreview'
 import { useScreenShareContext } from '../context'
 import {
@@ -119,9 +117,6 @@ export function ControlRoom() {
     return <ContentTypeButton temporaryContent={temporaryContent} />
   }
 
-  // Settings modal state
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
-
   return (
     <div className="flex flex-col h-full gap-4">
       {/* Navigation Bar */}
@@ -157,17 +152,6 @@ export function ControlRoom() {
               </span>
             </button>
           )}
-          {/* Settings Button */}
-          <button
-            type="button"
-            onClick={() => setIsSettingsOpen(true)}
-            className="flex items-center gap-2 px-2 py-1.5 lg:px-3 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors"
-          >
-            <Settings className="w-4 h-4" />
-            <span className="hidden sm:inline">
-              {t('presentation:controlRoom.settings.button')}
-            </span>
-          </button>
         </div>
       </div>
 
@@ -269,12 +253,6 @@ export function ControlRoom() {
           </div>
         </div>
       </div>
-
-      {/* Settings Modal */}
-      <ControlRoomSettingsModal
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-      />
     </div>
   )
 }

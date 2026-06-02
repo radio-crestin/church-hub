@@ -18,6 +18,8 @@ interface SongSlidesPanelProps {
   isSaving?: boolean
   isEditMode: boolean
   onToggleEditMode: () => void
+  /** Whether the current user may edit (songs.edit). Hides the edit toggle. */
+  canEdit?: boolean
   onSave?: () => void
   onSlideClick: (slide: SongSlide, index: number) => void
   onApplyText?: (slides: MarkdownSlide[]) => void | Promise<void>
@@ -72,6 +74,7 @@ export function SongSlidesPanel({
   isSaving,
   isEditMode,
   onToggleEditMode,
+  canEdit = true,
   onSave,
   onSlideClick,
   onApplyText,
@@ -194,18 +197,20 @@ export function SongSlidesPanel({
       {/* Toolbar */}
       <div className="flex items-center justify-between pb-2 mb-2 border-b border-gray-200 dark:border-gray-700 shrink-0">
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={onToggleEditMode}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-lg border transition-colors ${
-              isEditMode
-                ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-600 hover:bg-amber-200 dark:hover:bg-amber-900/60'
-                : 'text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20'
-            }`}
-          >
-            <Pencil size={14} />
-            <span>{t('preview.editMode')}</span>
-          </button>
+          {canEdit && (
+            <button
+              type="button"
+              onClick={onToggleEditMode}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-lg border transition-colors ${
+                isEditMode
+                  ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-600 hover:bg-amber-200 dark:hover:bg-amber-900/60'
+                  : 'text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+              }`}
+            >
+              <Pencil size={14} />
+              <span>{t('preview.editMode')}</span>
+            </button>
+          )}
         </div>
         {isEditMode && (
           <div className="flex items-center gap-2">

@@ -9,13 +9,12 @@ import type {
   ShortcutActionMeta,
   ShortcutConflict,
 } from '../types'
-import { type SceneShortcutSource, validateGlobalShortcut } from '../utils'
+import { validateGlobalShortcut } from '../utils'
 
 interface ShortcutActionRowProps {
   action: ShortcutActionMeta
   config: ShortcutActionConfig
   allShortcuts: GlobalShortcutsConfig
-  scenes: SceneShortcutSource[]
   onUpdate: (config: ShortcutActionConfig) => void
 }
 
@@ -23,7 +22,6 @@ export function ShortcutActionRow({
   action,
   config,
   allShortcuts,
-  scenes,
   onUpdate,
 }: ShortcutActionRowProps) {
   const { t } = useTranslation('settings')
@@ -33,9 +31,9 @@ export function ShortcutActionRow({
 
   const validateShortcut = useCallback(
     (shortcut: string): ShortcutConflict | null => {
-      return validateGlobalShortcut(shortcut, action.id, allShortcuts, scenes)
+      return validateGlobalShortcut(shortcut, allShortcuts, action.id)
     },
-    [action.id, allShortcuts, scenes],
+    [action.id, allShortcuts],
   )
 
   const getConflictMessage = useCallback(

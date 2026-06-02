@@ -1,0 +1,37 @@
+{
+  "login": {
+    "title": "Welcome",
+    "tagline": "Your presentation hub for every service.",
+    "selectUser": "Select your account to continue",
+    "enterPassword": "Enter your password to continue",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Enter password",
+    "wrongPassword": "Incorrect password. Please try again.",
+    "signIn": "Sign in",
+    "back": "Back"
+  },
+  "password": {
+    "label": "Password",
+    "optional": "Optional",
+    "setPlaceholder": "Set a password (optional)",
+    "changePlaceholder": "Leave blank to keep current password",
+    "hint": "If set, this user must enter the password to sign in.",
+    "show": "Show password",
+    "hide": "Hide password",
+    "hasPassword": "Password protected",
+    "remove": "Remove password",
+    "removed": "Password removed",
+    "updated": "Password updated"
+  },
+  "switchUser": "Switch user",
+  "logout": "Log out",
+  "superAdmin": "Super Admin",
+  "profile": {
+    "title": "Account",
+    "user": "User",
+    "permissions": "Permissions",
+    "fullAccess": "Full access to all features",
+    "noPermissions": "No permissions assigned",
+    "close": "Close"
+  }
+}

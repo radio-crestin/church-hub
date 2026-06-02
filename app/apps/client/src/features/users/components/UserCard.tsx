@@ -1,10 +1,12 @@
 import {
   Edit,
+  Lock,
   MoreVertical,
   Power,
   PowerOff,
   QrCode,
   RefreshCw,
+  ShieldCheck,
   Trash2,
 } from 'lucide-react'
 import { useState } from 'react'
@@ -29,7 +31,7 @@ export function UserCard({
   onRegenerateToken,
   onToggleActive,
 }: UserCardProps) {
-  const { t } = useTranslation('settings')
+  const { t } = useTranslation(['settings', 'users'])
   const [menuOpen, setMenuOpen] = useState(false)
 
   const formatDate = (timestamp: number | null) => {
@@ -41,14 +43,29 @@ export function UserCard({
 
   return (
     <div
-      className={`relative border rounded-lg p-4 ${
+      className={`relative border rounded-lg p-4 transition-colors hover:border-indigo-300 dark:hover:border-indigo-500/60 ${
         user.isActive
           ? 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
-          : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 opacity-60'
+          : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900'
       }`}
     >
+      {/* Full-card click target → opens the edit modal. It's an overlay button
+          (not a wrapper) so the card's inner content keeps its semantics (the
+          name stays a real heading). It sits above the content (z-10) but below
+          the action column (also z-10, later in the DOM) so those buttons keep
+          working. */}
+      <button
+        type="button"
+        onClick={() => onEdit(user)}
+        aria-label={`${t('sections.users.actions.edit')} — ${user.name}`}
+        className="absolute inset-0 z-10 rounded-lg"
+      />
+
       <div className="flex items-start justify-between">
-        <div className="flex-1 min-w-0">
+        {/* Dim only the info column when inactive — NOT the whole card, so the
+            actions dropdown stays opaque and isn't trapped under sibling cards
+            (opacity on the root would create a stacking context). */}
+        <div className={`flex-1 min-w-0 ${user.isActive ? '' : 'opacity-60'}`}>
           <div className="flex items-center gap-2">
             <h3 className="text-base font-medium text-gray-900 dark:text-white truncate">
               {user.name}
@@ -64,6 +81,24 @@ export function UserCard({
                 ? t('sections.users.active')
                 : t('sections.users.inactive')}
             </span>
+            {user.isSuperAdmin && (
+              <span
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400"
+                title={t('users:superAdmin')}
+              >
+                <ShieldCheck size={12} />
+                {t('users:superAdmin')}
+              </span>
+            )}
+            {user.hasPassword && (
+              <span
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
+                title={t('users:password.hasPassword')}
+              >
+                <Lock size={12} />
+                {t('users:password.hasPassword')}
+              </span>
+            )}
           </div>
           {user.roleName && (
             <p className="mt-1 text-sm text-indigo-600 dark:text-indigo-400">
@@ -78,7 +113,7 @@ export function UserCard({
           </p>
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="relative z-10 flex items-center gap-1">
           {/* QR Code button - always visible */}
           <button
             onClick={() => onShowQR(user)}
@@ -139,36 +174,44 @@ export function UserCard({
                   <RefreshCw size={16} />
                   {t('sections.users.actions.regenerateToken')}
                 </button>
-                <button
-                  onClick={() => {
-                    onToggleActive(user)
-                    setMenuOpen(false)
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                >
-                  {user.isActive ? (
-                    <>
-                      <PowerOff size={16} />
-                      {t('sections.users.actions.deactivate')}
-                    </>
-                  ) : (
-                    <>
-                      <Power size={16} />
-                      {t('sections.users.actions.activate')}
-                    </>
-                  )}
-                </button>
-                <div className="border-t border-gray-200 dark:border-gray-700" />
-                <button
-                  onClick={() => {
-                    onDelete(user)
-                    setMenuOpen(false)
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                >
-                  <Trash2 size={16} />
-                  {t('sections.users.actions.delete')}
-                </button>
+                {/* The super admin is always active and cannot be toggled. */}
+                {!user.isSuperAdmin && (
+                  <button
+                    onClick={() => {
+                      onToggleActive(user)
+                      setMenuOpen(false)
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    {user.isActive ? (
+                      <>
+                        <PowerOff size={16} />
+                        {t('sections.users.actions.deactivate')}
+                      </>
+                    ) : (
+                      <>
+                        <Power size={16} />
+                        {t('sections.users.actions.activate')}
+                      </>
+                    )}
+                  </button>
+                )}
+                {/* The super admin (owner) cannot be deleted. */}
+                {!user.isSuperAdmin && (
+                  <>
+                    <div className="border-t border-gray-200 dark:border-gray-700" />
+                    <button
+                      onClick={() => {
+                        onDelete(user)
+                        setMenuOpen(false)
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    >
+                      <Trash2 size={16} />
+                      {t('sections.users.actions.delete')}
+                    </button>
+                  </>
+                )}
               </div>
             </>
           )}

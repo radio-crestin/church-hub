@@ -9,6 +9,12 @@ export type Permission =
   | 'songs.delete'
   | 'songs.add_to_queue'
   | 'songs.present_now'
+  // Bible
+  | 'bible.view'
+  | 'bible.import'
+  | 'bible.delete'
+  | 'bible.add_to_queue'
+  | 'bible.present_now'
   // Control Room
   | 'control_room.view'
   | 'control_room.control'
@@ -27,6 +33,7 @@ export type Permission =
   // Settings
   | 'settings.view'
   | 'settings.edit'
+  | 'settings.edit_appearance'
   // Displays
   | 'displays.view'
   | 'displays.create'
@@ -52,6 +59,12 @@ export const ALL_PERMISSIONS: Permission[] = [
   'songs.delete',
   'songs.add_to_queue',
   'songs.present_now',
+  // Bible
+  'bible.view',
+  'bible.import',
+  'bible.delete',
+  'bible.add_to_queue',
+  'bible.present_now',
   // Control Room
   'control_room.view',
   'control_room.control',
@@ -70,6 +83,7 @@ export const ALL_PERMISSIONS: Permission[] = [
   // Settings
   'settings.view',
   'settings.edit',
+  'settings.edit_appearance',
   // Displays
   'displays.view',
   'displays.create',
@@ -237,6 +251,9 @@ export interface UserWithPermissions {
   name: string
   token: string
   isActive: boolean
+  isSuperAdmin: boolean
+  /** Whether a login password is set (the hash itself is never exposed). */
+  hasPassword: boolean
   roleId: number | null
   roleName: string | null
   lastUsedAt: number | null
@@ -246,12 +263,25 @@ export interface UserWithPermissions {
 }
 
 /**
+ * Minimal user info exposed publicly on the local login screen.
+ * Never includes tokens, permissions, or password hashes.
+ */
+export interface LocalUser {
+  id: number
+  name: string
+  isSuperAdmin: boolean
+  hasPassword: boolean
+}
+
+/**
  * Input for creating a new user
  */
 export interface CreateUserInput {
   name: string
   roleId?: number
   permissions?: Permission[]
+  /** Optional login password. Omitted/empty = passwordless user. */
+  password?: string
 }
 
 /**
@@ -269,6 +299,14 @@ export interface UpdateUserInput {
   name?: string
   isActive?: boolean
   roleId?: number | null
+}
+
+/**
+ * Input for setting/clearing a user's login password.
+ * `password: null` (or empty) removes the password.
+ */
+export interface SetPasswordInput {
+  password: string | null
 }
 
 /**
