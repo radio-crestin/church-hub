@@ -1,5 +1,12 @@
-import { ChevronRight, Loader2, Lock } from 'lucide-react'
-import { useState } from 'react'
+import {
+  AlertCircle,
+  ChevronRight,
+  Eye,
+  EyeOff,
+  Loader2,
+  Lock,
+} from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { type LoginResult, login } from '~/features/users/service'
@@ -50,8 +57,22 @@ export function LoginScreen({ users, onLoggedIn }: LoginScreenProps) {
   const { t } = useTranslation('users')
   const [selected, setSelected] = useState<LocalUser | null>(null)
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const passwordRowRef = useRef<HTMLDivElement>(null)
+
+  // Re-trigger the shake animation on every wrong-password attempt by
+  // forcibly restarting the class (a CSS keyframe only plays once).
+  useEffect(() => {
+    if (!error) return
+    const el = passwordRowRef.current
+    if (!el) return
+    el.classList.remove('animate-shake')
+    // Force a reflow so the animation can play again from the start.
+    void el.offsetWidth
+    el.classList.add('animate-shake')
+  }, [error])
 
   async function doLogin(user: LocalUser, pw?: string) {
     setSubmitting(true)
@@ -68,6 +89,7 @@ export function LoginScreen({ users, onLoggedIn }: LoginScreenProps) {
   function handleSelect(user: LocalUser) {
     setError(false)
     setPassword('')
+    setShowPassword(false)
     if (user.hasPassword) {
       setSelected(user)
     } else {
@@ -135,11 +157,11 @@ export function LoginScreen({ users, onLoggedIn }: LoginScreenProps) {
                   >
                     {t('login.passwordLabel')}
                   </label>
-                  <div className="relative">
+                  <div ref={passwordRowRef} className="relative">
                     <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                     <input
                       id="login-password"
-                      type="password"
+                      type={showPassword ? 'text' : 'password'}
                       autoFocus
                       value={password}
                       onChange={(e) => {
@@ -147,16 +169,33 @@ export function LoginScreen({ users, onLoggedIn }: LoginScreenProps) {
                         setError(false)
                       }}
                       disabled={submitting}
-                      className={`w-full rounded-xl border bg-white py-2.5 pl-10 pr-3 text-gray-900 outline-none transition focus:ring-2 disabled:opacity-60 dark:bg-gray-800 dark:text-white ${
+                      className={`w-full rounded-xl border bg-white py-2.5 pl-10 pr-11 text-gray-900 outline-none transition focus:ring-2 disabled:opacity-60 dark:bg-gray-800 dark:text-white ${
                         error
                           ? 'border-red-400 focus:border-red-500 focus:ring-red-500/30'
                           : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500/30 dark:border-gray-600'
                       }`}
                       placeholder={t('login.passwordPlaceholder')}
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((s) => !s)}
+                      tabIndex={-1}
+                      aria-label={showPassword ? t('password.hide') : t('password.show')}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
                   </div>
                   {error ? (
-                    <p className="mt-2 text-sm text-red-600 dark:text-red-400">
+                    <p
+                      role="alert"
+                      className="mt-2 flex items-center gap-1.5 text-sm font-medium text-red-600 dark:text-red-400"
+                    >
+                      <AlertCircle className="h-4 w-4 shrink-0" />
                       {t('login.wrongPassword')}
                     </p>
                   ) : null}

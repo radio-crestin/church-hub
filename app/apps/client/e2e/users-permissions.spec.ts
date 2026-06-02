@@ -253,6 +253,53 @@ test.describe('Users & permissions', () => {
     }
   })
 
+  test('wrong password shows an inline error and stays on the picker', async ({
+    browser,
+    request,
+  }, testInfo) => {
+    const baseURL = testInfo.project.use.baseURL as string
+    const create = await request.post('/api/users', {
+      data: {
+        name: `E2E WrongPw ${Date.now()}`,
+        permissions: ['songs.view'],
+        password: PASSWORD,
+      },
+    })
+    const userId = (await create.json()).data.user.id as number
+
+    // Clean context (no super-admin session) so the launch picker shows.
+    const ctx = await browser.newContext({
+      baseURL,
+      storageState: { cookies: [], origins: [] },
+    })
+    const page = await ctx.newPage()
+
+    try {
+      await page.goto('/')
+      await page.waitForLoadState('networkidle')
+
+      // Pick the password-protected account and submit a wrong password.
+      await page.getByRole('button', { name: /E2E WrongPw/ }).click()
+      await page.locator('#login-password').fill('definitely-not-it')
+      await page
+        .getByRole('button', { name: /sign in|autentificare/i })
+        .click()
+
+      // The alert appears and we stay on the password form (no redirect).
+      await expect(page.getByRole('alert')).toBeVisible({ timeout: 5000 })
+      await expect(page.locator('#login-password')).toBeVisible()
+
+      // Still signed out — no session was established.
+      const me = await page.evaluate(() =>
+        fetch('/api/auth/me', { credentials: 'include' }).then((r) => r.json()),
+      )
+      expect(me.data).toBeNull()
+    } finally {
+      await ctx.close()
+      await request.delete(`/api/users/${userId}`)
+    }
+  })
+
   test('opening the app with multiple accounts shows the picker', async ({
     page,
     request,
