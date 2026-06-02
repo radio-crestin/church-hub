@@ -44,6 +44,8 @@ import {
 import { SongEditorModal, SongPickerModal } from '~/features/songs/components'
 import { getSongById } from '~/features/songs/service'
 import { expandSongSlidesWithChoruses } from '~/features/songs/utils/expandSongSlides'
+import { useDividerPosition } from '~/hooks/useDividerPosition'
+import { DIVIDER_KEYS } from '~/service/layout'
 import { useToast } from '~/ui/toast'
 import { createLogger } from '~/utils/logger'
 import { AddToScheduleMenu } from './AddToScheduleMenu'
@@ -72,8 +74,6 @@ interface SchedulePresenterProps {
   /** URL param for deep-linking to a specific item */
   urlItemIndex?: number
 }
-
-const DIVIDER_STORAGE_KEY = 'schedule-presenter-divider'
 
 export function SchedulePresenter({
   scheduleId,
@@ -127,10 +127,10 @@ export function SchedulePresenter({
   const addItemMutation = useAddItemToSchedule()
 
   // Layout state
-  const [dividerPosition, setDividerPosition] = useState(() => {
-    const stored = localStorage.getItem(DIVIDER_STORAGE_KEY)
-    return stored ? Number(stored) : 40
-  })
+  const [dividerPosition, setDividerPosition] = useDividerPosition(
+    DIVIDER_KEYS.scheduleList,
+    40,
+  )
   const [isLargeScreen, setIsLargeScreen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
@@ -186,11 +186,6 @@ export function SchedulePresenter({
     window.addEventListener('resize', checkScreenSize)
     return () => window.removeEventListener('resize', checkScreenSize)
   }, [])
-
-  // Persist divider position
-  useEffect(() => {
-    localStorage.setItem(DIVIDER_STORAGE_KEY, String(dividerPosition))
-  }, [dividerPosition])
 
   // Focus title input when editing starts
   useEffect(() => {
@@ -1178,31 +1173,34 @@ export function SchedulePresenter({
   }, [scheduleId, importData, importItems, showToast, t, refetch])
 
   // Divider drag handlers
-  const handleDividerMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    isDragging.current = true
-    document.body.style.cursor = 'col-resize'
-    document.body.style.userSelect = 'none'
+  const handleDividerMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault()
+      isDragging.current = true
+      document.body.style.cursor = 'col-resize'
+      document.body.style.userSelect = 'none'
 
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      if (!isDragging.current || !containerRef.current) return
-      const containerRect = containerRef.current.getBoundingClientRect()
-      const newPosition =
-        ((moveEvent.clientX - containerRect.left) / containerRect.width) * 100
-      setDividerPosition(Math.min(80, Math.max(20, newPosition)))
-    }
+      const handleMouseMove = (moveEvent: MouseEvent) => {
+        if (!isDragging.current || !containerRef.current) return
+        const containerRect = containerRef.current.getBoundingClientRect()
+        const newPosition =
+          ((moveEvent.clientX - containerRect.left) / containerRect.width) * 100
+        setDividerPosition(Math.min(80, Math.max(20, newPosition)))
+      }
 
-    const handleMouseUp = () => {
-      isDragging.current = false
-      document.body.style.cursor = ''
-      document.body.style.userSelect = ''
-      document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseup', handleMouseUp)
-    }
+      const handleMouseUp = () => {
+        isDragging.current = false
+        document.body.style.cursor = ''
+        document.body.style.userSelect = ''
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+      }
 
-    document.addEventListener('mousemove', handleMouseMove)
-    document.addEventListener('mouseup', handleMouseUp)
-  }, [])
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+    },
+    [setDividerPosition],
+  )
 
   if (isLoading || !schedule) {
     return (

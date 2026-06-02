@@ -19,44 +19,50 @@ const GROUP_ORDER: PermissionGroup[] = [
 ]
 
 /**
- * Full-page account view (replaces the current page content). Shows the
- * signed-in user and their permissions, and lets them log out. Switching
- * account is done by logging out and signing back in as someone else.
+ * The signed-in user's own account view — profile, permissions and a log out
+ * action. Rendered as a section inside Settings → Users (it no longer has a
+ * dedicated /account page). Switching account is done from the sidebar account
+ * dropdown.
  */
-export function AccountPage() {
+export function AccountSection() {
   const { t } = useTranslation(['users', 'settings'])
   const { userName, permissions, isApp, isAdmin } = usePermissions()
 
   const hasFullAccess = isApp || isAdmin
+  const displayName = userName ?? t('profile.user')
 
   const handleLogout = () => {
     window.location.href = getLogoutRedirectUrl()
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-6 pb-6">
-      {/* Header */}
-      <div className="flex items-center gap-4 rounded-lg border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-        <UserAvatar
-          name={userName ?? t('profile.user')}
-          isSuperAdmin={isApp}
-          size="lg"
-        />
-        <div className="min-w-0">
-          <h1 className="truncate text-2xl font-bold text-gray-900 dark:text-white">
-            {userName ?? t('profile.user')}
-          </h1>
+    <div className="space-y-5">
+      {/* Header: avatar, name, role and a log out action. */}
+      <div className="flex items-center gap-4">
+        <UserAvatar name={displayName} isSuperAdmin={isApp} size="lg" />
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate text-lg font-semibold text-gray-900 dark:text-white">
+            {displayName}
+          </h3>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             {isApp ? t('superAdmin') : t('profile.user')}
           </p>
         </div>
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-900/40 dark:text-red-400 dark:hover:bg-red-900/20"
+        >
+          <LogOut className="h-4 w-4" />
+          <span className="hidden sm:inline">{t('logout')}</span>
+        </button>
       </div>
 
       {/* Permissions */}
-      <div className="rounded-lg border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-        <h2 className="mb-3 text-lg font-semibold text-gray-900 dark:text-white">
+      <div>
+        <h4 className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
           {t('profile.permissions')}
-        </h2>
+        </h4>
         {hasFullAccess ? (
           <div className="flex items-center gap-2 rounded-lg bg-indigo-50 p-3 text-sm text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300">
             <ShieldCheck className="h-5 w-5 shrink-0" />
@@ -97,16 +103,6 @@ export function AccountPage() {
           </div>
         )}
       </div>
-
-      {/* Log out — to switch account, log out and sign in as someone else. */}
-      <button
-        type="button"
-        onClick={handleLogout}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 font-medium text-white transition-colors hover:bg-red-700 sm:w-auto"
-      >
-        <LogOut className="h-4 w-4" />
-        {t('logout')}
-      </button>
     </div>
   )
 }

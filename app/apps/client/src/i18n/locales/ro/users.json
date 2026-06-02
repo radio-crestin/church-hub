@@ -10,10 +10,6 @@
     "signIn": "Autentificare",
     "back": "Înapoi"
   },
-  "page": {
-    "title": "Utilizatori",
-    "description": "Gestionează cine poate accesa aplicația și ce poate face."
-  },
   "password": {
     "label": "Parolă",
     "optional": "Opțional",

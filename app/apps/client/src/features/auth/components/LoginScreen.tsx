@@ -180,7 +180,9 @@ export function LoginScreen({ users, onLoggedIn }: LoginScreenProps) {
                       type="button"
                       onClick={() => setShowPassword((s) => !s)}
                       tabIndex={-1}
-                      aria-label={showPassword ? t('password.hide') : t('password.show')}
+                      aria-label={
+                        showPassword ? t('password.hide') : t('password.show')
+                      }
                       className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-200"
                     >
                       {showPassword ? (

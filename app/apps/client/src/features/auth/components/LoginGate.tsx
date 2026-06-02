@@ -5,8 +5,8 @@ import { isMobile } from '~/config'
 import {
   getLocalUsers,
   getLoginRedirectUrl,
-  login,
   type LoginResult,
+  login,
 } from '~/features/users/service'
 import type { LocalUser } from '~/features/users/types'
 import { usePermissions } from '~/provider/permissions-provider'

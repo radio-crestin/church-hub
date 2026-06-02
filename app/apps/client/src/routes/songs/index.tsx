@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router'
-import { Eye, GripVertical, Plus, Settings } from 'lucide-react'
+import { Eye, GripVertical, Plus } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -7,13 +7,11 @@ import { useFocusSearchEvent } from '~/features/keyboard-shortcuts/utils'
 import { getSongsLastVisited } from '~/features/navigation'
 import { usePresentationState } from '~/features/presentation'
 import { AddSongToScheduleModal } from '~/features/schedules'
-import {
-  SongBookmarksPanel,
-  SongList,
-  SongsSettingsModal,
-} from '~/features/songs/components'
+import { SongBookmarksPanel, SongList } from '~/features/songs/components'
 import { useSearchHistoryById } from '~/features/songs/hooks'
 import { openSongWindow } from '~/features/songs/utils/openSongWindow'
+import { useDividerPosition } from '~/hooks/useDividerPosition'
+import { DIVIDER_KEYS } from '~/service/layout'
 import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
 
 interface SongsSearchParams {
@@ -65,14 +63,13 @@ function SongsPage() {
   } = useSearch({
     from: '/songs/',
   })
-  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
   const [showAddToScheduleModal, setShowAddToScheduleModal] = useState(false)
   const [bookmarkSongIds, setBookmarkSongIds] = useState<number[]>([])
   const [focusTrigger, setFocusTrigger] = useState(0)
-  const [dividerPosition, setDividerPosition] = useState(() => {
-    const stored = localStorage.getItem('songs-bookmarks-divider')
-    return stored ? Number(stored) : 75
-  })
+  const [dividerPosition, setDividerPosition] = useDividerPosition(
+    DIVIDER_KEYS.songsList,
+    75,
+  )
   const [isLargeScreen, setIsLargeScreen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
@@ -208,32 +205,34 @@ function SongsPage() {
     return () => window.removeEventListener('resize', checkScreenSize)
   }, [])
 
-  const handleDividerMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    isDragging.current = true
-    document.body.style.cursor = 'col-resize'
-    document.body.style.userSelect = 'none'
+  const handleDividerMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault()
+      isDragging.current = true
+      document.body.style.cursor = 'col-resize'
+      document.body.style.userSelect = 'none'
 
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      if (!isDragging.current || !containerRef.current) return
-      const rect = containerRef.current.getBoundingClientRect()
-      const newPos = ((moveEvent.clientX - rect.left) / rect.width) * 100
-      const clamped = Math.min(85, Math.max(50, newPos))
-      setDividerPosition(clamped)
-      localStorage.setItem('songs-bookmarks-divider', String(clamped))
-    }
+      const handleMouseMove = (moveEvent: MouseEvent) => {
+        if (!isDragging.current || !containerRef.current) return
+        const rect = containerRef.current.getBoundingClientRect()
+        const newPos = ((moveEvent.clientX - rect.left) / rect.width) * 100
+        const clamped = Math.min(85, Math.max(50, newPos))
+        setDividerPosition(clamped)
+      }
 
-    const handleMouseUp = () => {
-      isDragging.current = false
-      document.body.style.cursor = ''
-      document.body.style.userSelect = ''
-      document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseup', handleMouseUp)
-    }
+      const handleMouseUp = () => {
+        isDragging.current = false
+        document.body.style.cursor = ''
+        document.body.style.userSelect = ''
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+      }
 
-    document.addEventListener('mousemove', handleMouseMove)
-    document.addEventListener('mouseup', handleMouseUp)
-  }, [])
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+    },
+    [setDividerPosition],
+  )
 
   const handleBookmarkSongClick = useCallback(
     (bookmark: { songId: number }) => {
@@ -298,15 +297,6 @@ function SongsPage() {
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">{t('actions.create')}</span>
             </button>
-            <button
-              type="button"
-              onClick={() => setIsSettingsModalOpen(true)}
-              className="flex items-center gap-2 px-3 py-2 lg:px-3 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors"
-              title={t('settings.title')}
-            >
-              <Settings className="w-4 h-4" />
-              <span className="hidden sm:inline">{t('settings.title')}</span>
-            </button>
           </div>
         </div>
 
@@ -360,11 +350,6 @@ function SongsPage() {
             />
           </div>
         </div>
-
-        <SongsSettingsModal
-          isOpen={isSettingsModalOpen}
-          onClose={() => setIsSettingsModalOpen(false)}
-        />
 
         <AddSongToScheduleModal
           isOpen={showAddToScheduleModal}

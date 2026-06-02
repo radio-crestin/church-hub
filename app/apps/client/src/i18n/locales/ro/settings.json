@@ -1,5 +1,26 @@
 {
   "title": "Setări",
+  "nav": {
+    "back": "Înapoi",
+    "groups": {
+      "general": "General",
+      "account": "Cont",
+      "content": "Conținut",
+      "presentation": "Prezentare",
+      "controls": "Controale",
+      "advanced": "Avansat"
+    },
+    "items": {
+      "profile": "Profil",
+      "users": "Utilizatori",
+      "songs": "Cântări",
+      "bible": "Biblia",
+      "livestream": "Live Stream",
+      "sidebar": "Bara Laterală",
+      "developer": "Dezvoltatori",
+      "shortcuts": "Scurtături"
+    }
+  },
   "sections": {
     "appearance": {
       "title": "Aspect"
@@ -170,6 +191,14 @@
     "shortcuts": {
       "title": "Scurtături de Tastatură",
       "description": "Configurează scurtături globale de tastatură pentru acțiuni rapide. Aceste scurtături funcționează de oriunde în aplicație.",
+      "groups": {
+        "presentation": "Prezentare",
+        "presentationDescription": "Controlează slide-urile din orice ecran al aplicației.",
+        "livestream": "Live Stream",
+        "livestreamDescription": "Pornește și oprește transmisiunea cu o tastă sau buton MIDI.",
+        "pages": "Pagini",
+        "pagesDescription": "Navighează la o pagină și focusează căutarea."
+      },
       "actions": {
         "startLive": {
           "label": "Pornește Transmisiunea",

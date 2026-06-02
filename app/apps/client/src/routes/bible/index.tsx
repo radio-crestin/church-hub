@@ -1,4 +1,9 @@
-import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  Link,
+  useNavigate,
+  useSearch,
+} from '@tanstack/react-router'
 import { Book, GripVertical, Loader2, Settings } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -12,7 +17,6 @@ import {
   BibleControlPanel,
   BibleHistoryPanel,
   BibleNavigationPanel,
-  BibleSettingsModal,
   formatVerseReference,
   getVerseByReference,
   useAddToHistory,
@@ -30,6 +34,8 @@ import {
   usePresentationState,
   usePresentTemporaryBible,
 } from '~/features/presentation'
+import { useDividerPosition } from '~/hooks/useDividerPosition'
+import { DIVIDER_KEYS } from '~/service/layout'
 import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
 
 interface BibleSearchParams {
@@ -115,15 +121,14 @@ function BiblePage() {
   const navigateTemporary = useNavigateTemporary()
   const addToHistory = useAddToHistory()
 
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
-  const [dividerPosition, setDividerPosition] = useState(() => {
-    const stored = localStorage.getItem('bible-left-divider')
-    return stored ? Number(stored) : 30
-  })
-  const [rightDividerPosition, setRightDividerPosition] = useState(() => {
-    const stored = localStorage.getItem('bible-right-divider')
-    return stored ? Number(stored) : 70
-  })
+  const [dividerPosition, setDividerPosition] = useDividerPosition(
+    DIVIDER_KEYS.bibleLeft,
+    30,
+  )
+  const [rightDividerPosition, setRightDividerPosition] = useDividerPosition(
+    DIVIDER_KEYS.bibleRight,
+    70,
+  )
   const [isHistoryCollapsed, setIsHistoryCollapsed] = useState(() => {
     const stored = localStorage.getItem('bible-history-collapsed')
     return stored === 'true'
@@ -925,15 +930,8 @@ function BiblePage() {
   const canNavigateVerses =
     navigation.state.level === 'verses' && verses.length > 0
 
-  // Persist divider positions and collapse state to localStorage
-  useEffect(() => {
-    localStorage.setItem('bible-left-divider', String(dividerPosition))
-  }, [dividerPosition])
-
-  useEffect(() => {
-    localStorage.setItem('bible-right-divider', String(rightDividerPosition))
-  }, [rightDividerPosition])
-
+  // Persist history collapse state to localStorage (divider positions are
+  // persisted to the database via useDividerPosition).
   useEffect(() => {
     localStorage.setItem('bible-history-collapsed', String(isHistoryCollapsed))
   }, [isHistoryCollapsed])
@@ -972,79 +970,75 @@ function BiblePage() {
   }, [])
 
   // Left divider drag handlers (horizontal - between navigation and right panel)
-  const handleDividerMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    isDragging.current = true
-    document.body.style.cursor = 'col-resize'
-    document.body.style.userSelect = 'none'
+  const handleDividerMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault()
+      isDragging.current = true
+      document.body.style.cursor = 'col-resize'
+      document.body.style.userSelect = 'none'
 
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      if (!isDragging.current || !containerRef.current) return
-      const containerRect = containerRef.current.getBoundingClientRect()
-      const newPosition =
-        ((moveEvent.clientX - containerRect.left) / containerRect.width) * 100
-      // Clamp between 20% and 80%
-      setDividerPosition(Math.min(80, Math.max(20, newPosition)))
-    }
+      const handleMouseMove = (moveEvent: MouseEvent) => {
+        if (!isDragging.current || !containerRef.current) return
+        const containerRect = containerRef.current.getBoundingClientRect()
+        const newPosition =
+          ((moveEvent.clientX - containerRect.left) / containerRect.width) * 100
+        // Clamp between 20% and 80%
+        setDividerPosition(Math.min(80, Math.max(20, newPosition)))
+      }
 
-    const handleMouseUp = () => {
-      isDragging.current = false
-      document.body.style.cursor = ''
-      document.body.style.userSelect = ''
-      document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseup', handleMouseUp)
-    }
+      const handleMouseUp = () => {
+        isDragging.current = false
+        document.body.style.cursor = ''
+        document.body.style.userSelect = ''
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+      }
 
-    document.addEventListener('mousemove', handleMouseMove)
-    document.addEventListener('mouseup', handleMouseUp)
-  }, [])
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+    },
+    [setDividerPosition],
+  )
 
   // Right divider drag handlers (horizontal - between control panel and history)
-  const handleRightDividerMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    isRightDragging.current = true
-    document.body.style.cursor = 'col-resize'
-    document.body.style.userSelect = 'none'
+  const handleRightDividerMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault()
+      isRightDragging.current = true
+      document.body.style.cursor = 'col-resize'
+      document.body.style.userSelect = 'none'
 
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      if (!isRightDragging.current || !rightPanelRef.current) return
-      const panelRect = rightPanelRef.current.getBoundingClientRect()
-      const newPosition =
-        ((moveEvent.clientX - panelRect.left) / panelRect.width) * 100
-      // Clamp between 30% and 85%
-      setRightDividerPosition(Math.min(85, Math.max(30, newPosition)))
-    }
+      const handleMouseMove = (moveEvent: MouseEvent) => {
+        if (!isRightDragging.current || !rightPanelRef.current) return
+        const panelRect = rightPanelRef.current.getBoundingClientRect()
+        const newPosition =
+          ((moveEvent.clientX - panelRect.left) / panelRect.width) * 100
+        // Clamp between 30% and 85%
+        setRightDividerPosition(Math.min(85, Math.max(30, newPosition)))
+      }
 
-    const handleMouseUp = () => {
-      isRightDragging.current = false
-      document.body.style.cursor = ''
-      document.body.style.userSelect = ''
-      document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseup', handleMouseUp)
-    }
+      const handleMouseUp = () => {
+        isRightDragging.current = false
+        document.body.style.cursor = ''
+        document.body.style.userSelect = ''
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+      }
 
-    document.addEventListener('mousemove', handleMouseMove)
-    document.addEventListener('mouseup', handleMouseUp)
-  }, [])
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+    },
+    [setRightDividerPosition],
+  )
 
   return (
     <PagePermissionGuard permission="bible.view">
       <div className="flex flex-col h-full lg:overflow-hidden lg:h-[calc(100vh-3rem)] overflow-auto scrollbar-thin">
-        <div className="flex items-center justify-between mb-3 lg:mb-4 flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <Book className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-              {t('title')}
-            </h1>
-          </div>
-          <button
-            type="button"
-            onClick={() => setIsSettingsOpen(true)}
-            className="flex items-center gap-2 px-2 py-1.5 lg:px-3 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors"
-          >
-            <Settings className="w-4 h-4" />
-            <span className="hidden sm:inline">{t('actions.settings')}</span>
-          </button>
+        <div className="flex items-center gap-3 mb-3 lg:mb-4 flex-shrink-0">
+          <Book className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+            {t('title')}
+          </h1>
         </div>
 
         {translationsLoading ? (
@@ -1214,21 +1208,15 @@ function BiblePage() {
             <p className="text-gray-500 dark:text-gray-400 mb-4">
               {t('empty.description')}
             </p>
-            <button
-              type="button"
-              onClick={() => setIsSettingsOpen(true)}
+            <Link
+              to="/settings/bible"
               className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
             >
               <Settings className="w-5 h-5" />
               {t('actions.openSettings')}
-            </button>
+            </Link>
           </div>
         )}
-
-        <BibleSettingsModal
-          isOpen={isSettingsOpen}
-          onClose={() => setIsSettingsOpen(false)}
-        />
       </div>
     </PagePermissionGuard>
   )
