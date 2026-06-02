@@ -1,0 +1,37 @@
+{
+  "login": {
+    "title": "Bun venit",
+    "tagline": "Centrul tău de prezentare pentru fiecare slujbă.",
+    "selectUser": "Selectează contul tău pentru a continua",
+    "enterPassword": "Introdu parola pentru a continua",
+    "passwordLabel": "Parolă",
+    "passwordPlaceholder": "Introdu parola",
+    "wrongPassword": "Parolă incorectă. Încearcă din nou.",
+    "signIn": "Autentificare",
+    "back": "Înapoi"
+  },
+  "password": {
+    "label": "Parolă",
+    "optional": "Opțional",
+    "setPlaceholder": "Setează o parolă (opțional)",
+    "changePlaceholder": "Lasă gol pentru a păstra parola curentă",
+    "hint": "Dacă este setată, utilizatorul trebuie să introducă parola la autentificare.",
+    "show": "Afișează parola",
+    "hide": "Ascunde parola",
+    "hasPassword": "Protejat cu parolă",
+    "remove": "Elimină parola",
+    "removed": "Parolă eliminată",
+    "updated": "Parolă actualizată"
+  },
+  "switchUser": "Schimbă utilizatorul",
+  "logout": "Deconectare",
+  "superAdmin": "Super Admin",
+  "profile": {
+    "title": "Cont",
+    "user": "Utilizator",
+    "permissions": "Permisiuni",
+    "fullAccess": "Acces complet la toate funcțiile",
+    "noPermissions": "Nicio permisiune atribuită",
+    "close": "Închide"
+  }
+}

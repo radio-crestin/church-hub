@@ -39,6 +39,11 @@ export const settingsPaths = {
     post: {
       tags: ['Settings'],
       summary: 'Create or update a setting',
+      description:
+        'Upserts a key/value setting. Keys under the `divider.` namespace ' +
+        '(persisted resizable-divider positions) are personal layout prefs ' +
+        'writable by any authenticated user; other keys require the relevant ' +
+        'settings permission.',
       security: [{ bearerAuth: [] }, { cookieAuth: [] }],
       parameters: [
         {

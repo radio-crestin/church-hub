@@ -72,35 +72,41 @@ describe('parseCookies', () => {
 
 describe('authMiddleware', () => {
   describe('localhost access', () => {
-    it('grants admin access for localhost Host header', async () => {
+    it('grants read-only display access for localhost Host header', async () => {
       const req = createRequest('http://localhost:3000/api/songs', {
         Host: 'localhost:3000',
       })
       const result = await authMiddleware(req)
       expect(result.response).toBeNull()
       expect(result.context).not.toBeNull()
-      expect(result.context!.authType).toBe('app')
+      // localhost no longer auto-grants admin: cookie-less local display
+      // surfaces get a view-only user context, never write/admin access.
+      expect(result.context!.authType).toBe('user')
+      expect(result.context!.permissions).toContain('songs.view')
+      expect(result.context!.permissions).not.toContain('songs.create')
     })
 
-    it('grants admin access for 127.0.0.1 Host header', async () => {
+    it('grants read-only display access for 127.0.0.1 Host header', async () => {
       const req = createRequest('http://127.0.0.1:3000/api/songs', {
         Host: '127.0.0.1:3000',
       })
       const result = await authMiddleware(req)
       expect(result.response).toBeNull()
-      expect(result.context!.authType).toBe('app')
+      expect(result.context!.authType).toBe('user')
+      expect(result.context!.permissions).not.toContain('songs.create')
     })
 
-    it('grants admin access for 127.x.x.x ranges', async () => {
+    it('grants read-only display access for 127.x.x.x ranges', async () => {
       const req = createRequest('http://127.0.0.2:3000/api/songs', {
         Host: '127.0.0.2:3000',
       })
       const result = await authMiddleware(req)
       expect(result.response).toBeNull()
-      expect(result.context!.authType).toBe('app')
+      expect(result.context!.authType).toBe('user')
+      expect(result.context!.permissions).not.toContain('songs.create')
     })
 
-    it('grants admin access when no Host header is present', async () => {
+    it('grants read-only display access when Host resolves to localhost', async () => {
       // Create request without Host header - the constructor auto-adds one
       // so we need to verify the behavior when Host resolves to localhost
       const req = createRequest('http://localhost:3000/api/songs', {
@@ -108,7 +114,8 @@ describe('authMiddleware', () => {
       })
       const result = await authMiddleware(req)
       expect(result.response).toBeNull()
-      expect(result.context!.authType).toBe('app')
+      expect(result.context!.authType).toBe('user')
+      expect(result.context!.permissions).not.toContain('songs.create')
     })
   })
 
@@ -192,7 +199,7 @@ describe('authMiddleware', () => {
       })
       const result = await authMiddleware(req)
       expect(result.response).toBeNull()
-      expect(result.context!.authType).toBe('app')
+      expect(result.context!.authType).toBe('user')
     })
 
     it('detects 127.0.0.1 from Origin header', async () => {
@@ -202,19 +209,21 @@ describe('authMiddleware', () => {
       })
       const result = await authMiddleware(req)
       expect(result.response).toBeNull()
-      expect(result.context!.authType).toBe('app')
+      expect(result.context!.authType).toBe('user')
     })
   })
 })
 
 describe('adminOnlyMiddleware', () => {
-  it('grants access for localhost', async () => {
+  it('denies access for localhost without an admin session', async () => {
     const req = createRequest('http://localhost:3000/api/admin', {
       Host: 'localhost:3000',
     })
     const result = await adminOnlyMiddleware(req)
-    expect(result.response).toBeNull()
-    expect(result.context!.authType).toBe('app')
+    // localhost is no longer auto-admin — only a super-admin session or the
+    // system token reaches admin routes.
+    expect(result.response).not.toBeNull()
+    expect(result.response!.status).toBe(403)
   })
 
   it('grants access for valid system token', async () => {
@@ -233,9 +242,11 @@ describe('adminOnlyMiddleware', () => {
     })
     const result = await adminOnlyMiddleware(req)
     expect(result.response).not.toBeNull()
-    expect(result.response!.status).toBe(403)
+    // Unauthenticated remote requests are rejected at the auth layer (401)
+    // before the admin check runs.
+    expect(result.response!.status).toBe(401)
     const body = await result.response!.json()
-    expect(body.error).toBe('Admin access required')
+    expect(body.error).toBe('Unauthorized')
   })
 
   it('denies access for remote with user cookie (not admin)', async () => {
@@ -255,6 +266,7 @@ describe('adminOnlyMiddleware', () => {
     })
     const result = await adminOnlyMiddleware(req)
     expect(result.response).not.toBeNull()
-    expect(result.response!.status).toBe(403)
+    // Invalid credentials fall through to the 401 unauthenticated response.
+    expect(result.response!.status).toBe(401)
   })
 })

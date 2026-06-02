@@ -1,5 +1,26 @@
 {
   "title": "Setări",
+  "nav": {
+    "back": "Înapoi",
+    "groups": {
+      "general": "General",
+      "account": "Cont",
+      "content": "Conținut",
+      "presentation": "Prezentare",
+      "controls": "Controale",
+      "advanced": "Avansat"
+    },
+    "items": {
+      "profile": "Profil",
+      "users": "Utilizatori",
+      "songs": "Cântări",
+      "bible": "Biblia",
+      "livestream": "Live Stream",
+      "sidebar": "Bara Laterală",
+      "developer": "Dezvoltatori",
+      "shortcuts": "Scurtături"
+    }
+  },
   "sections": {
     "appearance": {
       "title": "Aspect"
@@ -170,6 +191,14 @@
     "shortcuts": {
       "title": "Scurtături de Tastatură",
       "description": "Configurează scurtături globale de tastatură pentru acțiuni rapide. Aceste scurtături funcționează de oriunde în aplicație.",
+      "groups": {
+        "presentation": "Prezentare",
+        "presentationDescription": "Controlează slide-urile din orice ecran al aplicației.",
+        "livestream": "Live Stream",
+        "livestreamDescription": "Pornește și oprește transmisiunea cu o tastă sau buton MIDI.",
+        "pages": "Pagini",
+        "pagesDescription": "Navighează la o pagină și focusează căutarea."
+      },
       "actions": {
         "startLive": {
           "label": "Pornește Transmisiunea",
@@ -229,12 +258,14 @@
       "title": "Utilizatori autorizați",
       "description": "Administrează utilizatorii care pot accesa Church Hub",
       "addUser": "Adaugă utilizator",
+      "searchPlaceholder": "Caută utilizatori…",
+      "noResults": "Niciun utilizator nu corespunde căutării",
       "noUsers": "Niciun utilizator configurat",
       "noUsersDescription": "Adaugă un utilizator pentru a permite acces extern la Church Hub",
       "userName": "Nume utilizator",
       "userNamePlaceholder": "ex., Tableta lui Ion",
-      "permissions": "permisiuni",
-      "permissionsSelected": "permisiuni selectate",
+      "permissions": "Permisiuni",
+      "permissionsSelected": "Permisiuni selectate",
       "status": "Stare",
       "active": "Activ",
       "inactive": "Inactiv",
@@ -242,6 +273,7 @@
       "never": "Niciodată",
       "createdAt": "Creat la",
       "roleTemplate": "Șablon rol",
+      "roleTemplateHint": "Pornește de la un preset, apoi ajustează permisiunile mai jos.",
       "roles": {
         "admin": "Administrator",
         "presenter": "Prezentator",
@@ -251,6 +283,7 @@
       },
       "groups": {
         "songs": "Cântări",
+        "bible": "Biblie",
         "control_room": "Cameră de control",
         "programs": "Programe",
         "queue": "Coadă",
@@ -266,6 +299,11 @@
         "songs.delete": "Ștergere cântări",
         "songs.add_to_queue": "Adăugare cântări în coadă",
         "songs.present_now": "Prezentare cântări imediat",
+        "bible.view": "Vizualizare Biblie",
+        "bible.import": "Import traduceri Biblie",
+        "bible.delete": "Ștergere traduceri Biblie",
+        "bible.add_to_queue": "Adăugare versete în coadă",
+        "bible.present_now": "Prezentare versete imediat",
         "control_room.view": "Vizualizare cameră de control",
         "control_room.control": "Control prezentare",
         "programs.view": "Vizualizare programe",
@@ -280,6 +318,7 @@
         "queue.clear": "Golire coadă",
         "settings.view": "Vizualizare setări",
         "settings.edit": "Editare setări",
+        "settings.edit_appearance": "Editare aspect (temă și limbă)",
         "displays.view": "Vizualizare afișaje",
         "displays.create": "Creare afișaje",
         "displays.edit": "Editare afișaje",

@@ -1,4 +1,6 @@
+export { AppShortcutsPanel } from './AppShortcutsPanel'
 export { GlobalAppShortcutManager } from './GlobalAppShortcutManager'
+export { GlobalShortcutsSettings } from './GlobalShortcutsSettings'
 export { MIDISettingsSection } from './MIDISettingsSection'
 export { PageShortcutsSettings } from './PageShortcutsSettings'
 export { ShortcutActionRow } from './ShortcutActionRow'

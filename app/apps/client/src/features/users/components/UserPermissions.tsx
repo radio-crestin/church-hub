@@ -15,6 +15,7 @@ interface UserPermissionsProps {
 
 const GROUP_ORDER: PermissionGroup[] = [
   'songs',
+  'bible',
   'control_room',
   'programs',
   'queue',
@@ -101,12 +102,15 @@ export function UserPermissions({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Role Template Selection */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
           {t('sections.users.roleTemplate')}
-        </label>
+        </h4>
+        <p className="mb-2.5 text-xs text-gray-500 dark:text-gray-400">
+          {t('sections.users.roleTemplateHint')}
+        </p>
         <div className="grid grid-cols-2 gap-2">
           {(Object.keys(ROLE_TEMPLATES) as RoleTemplate[]).map((role) => (
             <button
@@ -127,91 +131,96 @@ export function UserPermissions({
       </div>
 
       {/* Permission Groups */}
-      <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-        {GROUP_ORDER.map((group) => {
-          const isExpanded = expandedGroups.has(group)
-          const isFullySelected = isGroupFullySelected(group)
-          const isPartiallySelected = isGroupPartiallySelected(group)
-          const selectedCount = getGroupSelectedCount(group)
-          const totalCount = PERMISSION_GROUPS[group].length
+      <div>
+        <div className="mb-2 flex items-center justify-between">
+          <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+            {t('sections.users.permissions')}
+          </h4>
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            {permissions.length} {t('sections.users.permissionsSelected')}
+          </span>
+        </div>
+        <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+          {GROUP_ORDER.map((group) => {
+            const isExpanded = expandedGroups.has(group)
+            const isFullySelected = isGroupFullySelected(group)
+            const isPartiallySelected = isGroupPartiallySelected(group)
+            const selectedCount = getGroupSelectedCount(group)
+            const totalCount = PERMISSION_GROUPS[group].length
 
-          return (
-            <div
-              key={group}
-              className="border-b border-gray-200 dark:border-gray-700 last:border-b-0"
-            >
-              {/* Group Header */}
-              <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800/50">
-                <button
-                  type="button"
-                  onClick={() => toggleGroup(group)}
-                  className="p-0.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
-                >
-                  {isExpanded ? (
-                    <ChevronDown size={16} className="text-gray-500" />
-                  ) : (
-                    <ChevronRight size={16} className="text-gray-500" />
-                  )}
-                </button>
-                <input
-                  type="checkbox"
-                  checked={isFullySelected}
-                  ref={(el) => {
-                    if (el) el.indeterminate = isPartiallySelected
-                  }}
-                  onChange={(e) => handleGroupToggle(group, e.target.checked)}
-                  disabled={disabled}
-                  className="w-4 h-4 text-indigo-600 rounded border-gray-300
+            return (
+              <div
+                key={group}
+                className="border-b border-gray-200 dark:border-gray-700 last:border-b-0"
+              >
+                {/* Group Header */}
+                <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800/50">
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(group)}
+                    className="p-0.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                  >
+                    {isExpanded ? (
+                      <ChevronDown size={16} className="text-gray-500" />
+                    ) : (
+                      <ChevronRight size={16} className="text-gray-500" />
+                    )}
+                  </button>
+                  <input
+                    type="checkbox"
+                    checked={isFullySelected}
+                    ref={(el) => {
+                      if (el) el.indeterminate = isPartiallySelected
+                    }}
+                    onChange={(e) => handleGroupToggle(group, e.target.checked)}
+                    disabled={disabled}
+                    className="w-4 h-4 text-indigo-600 rounded border-gray-300
                     focus:ring-indigo-500 disabled:opacity-50 cursor-pointer
                     disabled:cursor-not-allowed"
-                />
-                <button
-                  type="button"
-                  onClick={() => toggleGroup(group)}
-                  className="flex-1 text-left text-sm font-medium text-gray-900 dark:text-white"
-                >
-                  {t(`sections.users.groups.${group}`)}
-                </button>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  {selectedCount}/{totalCount}
-                </span>
-              </div>
+                  />
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(group)}
+                    className="flex-1 text-left text-sm font-medium text-gray-900 dark:text-white"
+                  >
+                    {t(`sections.users.groups.${group}`)}
+                  </button>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {selectedCount}/{totalCount}
+                  </span>
+                </div>
 
-              {/* Group Permissions */}
-              {isExpanded && (
-                <div className="px-3 py-2 space-y-2 bg-white dark:bg-gray-800">
-                  {PERMISSION_GROUPS[group].map((permission) => (
-                    <label
-                      key={permission}
-                      className="flex items-center gap-3 cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={permissions.includes(permission)}
-                        onChange={(e) =>
-                          handlePermissionChange(permission, e.target.checked)
-                        }
-                        disabled={disabled}
-                        className="w-4 h-4 text-indigo-600 rounded border-gray-300
+                {/* Group Permissions */}
+                {isExpanded && (
+                  <div className="px-3 py-2 space-y-2 bg-white dark:bg-gray-800">
+                    {PERMISSION_GROUPS[group].map((permission) => (
+                      <label
+                        key={permission}
+                        className="flex items-center gap-3 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={permissions.includes(permission)}
+                          onChange={(e) =>
+                            handlePermissionChange(permission, e.target.checked)
+                          }
+                          disabled={disabled}
+                          className="w-4 h-4 text-indigo-600 rounded border-gray-300
                           focus:ring-indigo-500 disabled:opacity-50 cursor-pointer
                           disabled:cursor-not-allowed ml-6"
-                      />
-                      <span className="text-sm text-gray-700 dark:text-gray-300">
-                        {t(`sections.users.permissionLabels.${permission}`)}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              )}
-            </div>
-          )
-        })}
+                        />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">
+                          {t(`sections.users.permissionLabels.${permission}`)}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
       </div>
-
-      {/* Selected Count */}
-      <p className="text-sm text-gray-500 dark:text-gray-400 text-right">
-        {permissions.length} {t('sections.users.permissionsSelected')}
-      </p>
     </div>
   )
 }

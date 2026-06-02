@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next'
 import { SidebarHeader } from './sidebar-header'
 import { SidebarItem } from './sidebar-item'
 import { UpdateNotification } from '../../features/app-update'
+import { CurrentUserButton } from '../../features/auth'
 import {
   SendFeedbackModal,
   useFeedbackUnreadCount,
@@ -195,7 +196,7 @@ export function Sidebar({
           const { bookId, bookName, chapter, currentVerseIndex } =
             tempContent.data
           navigate({
-            to: '/bible/',
+            to: '/bible',
             search: {
               book: bookId,
               bookName: bookName,
@@ -269,9 +270,9 @@ export function Sidebar({
           fixed md:relative z-50 md:z-auto
           flex flex-col h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800
           transition-all duration-300 ease-in-out
-          w-72 md:w-auto top-0 left-0
+          w-72 top-0 left-0
           safe-area-top safe-area-left safe-area-bottom
-          ${isCollapsed ? 'md:w-20' : 'md:w-64'}
+          ${isCollapsed ? 'md:w-20' : 'md:w-fit md:min-w-56 md:max-w-72'}
           ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         `}
       >
@@ -411,6 +412,10 @@ export function Sidebar({
                 iconColor={getItemIconColor('settings')}
               />
             )}
+
+            {/* Current user — opens the account page (profile, permissions,
+                switch user, log out), replacing the current page content. */}
+            <CurrentUserButton isCollapsed={isCollapsed} />
           </div>
         </nav>
 

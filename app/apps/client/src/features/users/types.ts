@@ -33,6 +33,7 @@ export type BuiltInPermission =
   // Settings
   | 'settings.view'
   | 'settings.edit'
+  | 'settings.edit_appearance'
   // Displays
   | 'displays.view'
   | 'displays.create'
@@ -102,6 +103,7 @@ export const ALL_PERMISSIONS: BuiltInPermission[] = [
   // Settings
   'settings.view',
   'settings.edit',
+  'settings.edit_appearance',
   // Displays
   'displays.view',
   'displays.create',
@@ -151,7 +153,11 @@ export const PERMISSION_GROUPS = {
     'queue.reorder',
     'queue.clear',
   ] as Permission[],
-  settings: ['settings.view', 'settings.edit'] as Permission[],
+  settings: [
+    'settings.view',
+    'settings.edit',
+    'settings.edit_appearance',
+  ] as Permission[],
   displays: [
     'displays.view',
     'displays.create',
@@ -244,6 +250,9 @@ export interface UserWithPermissions {
   name: string
   token: string
   isActive: boolean
+  isSuperAdmin: boolean
+  /** Whether a login password is set (the hash is never exposed). */
+  hasPassword: boolean
   roleId: number | null
   roleName: string | null
   lastUsedAt: number | null
@@ -253,12 +262,24 @@ export interface UserWithPermissions {
 }
 
 /**
+ * Minimal user info shown on the local login screen.
+ */
+export interface LocalUser {
+  id: number
+  name: string
+  isSuperAdmin: boolean
+  hasPassword: boolean
+}
+
+/**
  * Input for creating a new user
  */
 export interface CreateUserInput {
   name: string
   roleId?: number
   permissions?: Permission[]
+  /** Optional login password (omit/empty for a passwordless user). */
+  password?: string
 }
 
 /**

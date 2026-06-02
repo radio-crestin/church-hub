@@ -1,9 +1,9 @@
-import { Plus, Users, X } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { Plus, Search, Users, X } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { UserCard } from './UserCard'
-import { UserForm } from './UserForm'
+import { UserForm, type UserFormData } from './UserForm'
 import { UserQRModal } from './UserQRModal'
 import { ConfirmModal } from '../../../ui/modal/ConfirmModal'
 import { useToast } from '../../../ui/toast'
@@ -11,11 +11,12 @@ import {
   useCreateUser,
   useDeleteUser,
   useRegenerateToken,
+  useSetUserPassword,
   useUpdatePermissions,
   useUpdateUser,
   useUsers,
 } from '../hooks'
-import type { Permission, UserWithPermissions } from '../types'
+import type { UserWithPermissions } from '../types'
 
 type ModalState =
   | { type: 'none' }
@@ -33,9 +34,24 @@ export function UserList() {
   const updateUser = useUpdateUser()
   const deleteUser = useDeleteUser()
   const updatePermissions = useUpdatePermissions()
+  const setUserPassword = useSetUserPassword()
   const regenerateToken = useRegenerateToken()
 
   const [modal, setModal] = useState<ModalState>({ type: 'none' })
+  const [search, setSearch] = useState('')
+
+  // Order: super admin first, then active users, then inactive — each group
+  // sorted by name. A search box filters by name within that order.
+  const visibleUsers = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    return (users ?? [])
+      .filter((u) => !q || u.name.toLowerCase().includes(q))
+      .sort((a, b) => {
+        if (a.isSuperAdmin !== b.isSuperAdmin) return a.isSuperAdmin ? -1 : 1
+        if (a.isActive !== b.isActive) return a.isActive ? -1 : 1
+        return a.name.localeCompare(b.name)
+      })
+  }, [users, search])
   const formDialogRef = useRef<HTMLDialogElement>(null)
 
   useEffect(() => {
@@ -49,12 +65,13 @@ export function UserList() {
     }
   }, [modal.type])
 
-  const handleCreate = async (data: {
-    name: string
-    permissions: Permission[]
-  }) => {
+  const handleCreate = async (data: UserFormData) => {
     try {
-      const result = await createUser.mutateAsync(data)
+      const result = await createUser.mutateAsync({
+        name: data.name,
+        permissions: data.permissions,
+        password: data.password || undefined,
+      })
       setModal({ type: 'qr', user: result.user })
       showToast(t('sections.users.toast.created'), 'success')
     } catch {
@@ -62,10 +79,7 @@ export function UserList() {
     }
   }
 
-  const handleEdit = async (data: {
-    name: string
-    permissions: Permission[]
-  }) => {
+  const handleEdit = async (data: UserFormData) => {
     if (modal.type !== 'edit') return
 
     try {
@@ -77,6 +91,13 @@ export function UserList() {
         id: modal.user.id,
         permissions: data.permissions,
       })
+      // Apply a password change only when intended (undefined = leave as-is).
+      if (data.password !== undefined) {
+        await setUserPassword.mutateAsync({
+          id: modal.user.id,
+          password: data.password,
+        })
+      }
       setModal({ type: 'none' })
       showToast(t('sections.users.toast.updated'), 'success')
     } catch {
@@ -162,22 +183,41 @@ export function UserList() {
         </button>
       </div>
 
-      {users && users.length > 0 ? (
-        <div className="grid gap-3">
-          {users.map((user) => (
-            <UserCard
-              key={user.id}
-              user={user}
-              onEdit={(u) => setModal({ type: 'edit', user: u })}
-              onDelete={(u) => setModal({ type: 'delete', user: u })}
-              onShowQR={handleShowQR}
-              onRegenerateToken={(u) =>
-                setModal({ type: 'regenerate', user: u })
-              }
-              onToggleActive={handleToggleActive}
-            />
-          ))}
+      {users && users.length > 0 && (
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t('sections.users.searchPlaceholder')}
+            className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 pr-3 text-sm text-gray-900 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+          />
         </div>
+      )}
+
+      {users && users.length > 0 ? (
+        visibleUsers.length > 0 ? (
+          <div className="grid gap-3">
+            {visibleUsers.map((user) => (
+              <UserCard
+                key={user.id}
+                user={user}
+                onEdit={(u) => setModal({ type: 'edit', user: u })}
+                onDelete={(u) => setModal({ type: 'delete', user: u })}
+                onShowQR={handleShowQR}
+                onRegenerateToken={(u) =>
+                  setModal({ type: 'regenerate', user: u })
+                }
+                onToggleActive={handleToggleActive}
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="text-center py-8 text-sm text-gray-500 dark:text-gray-400">
+            {t('sections.users.noResults')}
+          </p>
+        )
       ) : (
         <div className="text-center py-12 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
           <Users
@@ -193,10 +233,15 @@ export function UserList() {
         </div>
       )}
 
-      {/* Create/Edit Dialog */}
+      {/* Create/Edit Dialog — fixed header (title + close) and a sticky footer
+          (provided by UserForm), with only the form body scrolling between.
+          The flex layout lives on an INNER wrapper, never on the <dialog>
+          itself: a `display:flex` on the element overrides the user-agent
+          `display:none` of a closed dialog, which would leave it visible (and
+          tiny) all the time. */}
       <dialog
         ref={formDialogRef}
-        className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800 max-w-lg w-full max-h-[90vh] overflow-y-auto"
+        className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800 max-w-2xl w-[calc(100%-2rem)] max-h-[90vh] overflow-hidden"
         onClose={() => setModal({ type: 'none' })}
         onClick={(e) => {
           if (e.target === formDialogRef.current) {
@@ -204,16 +249,18 @@ export function UserList() {
           }
         }}
       >
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-4">
+        <div className="flex max-h-[90vh] flex-col overflow-hidden">
+          <div className="flex shrink-0 items-center justify-between gap-4 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
               {modal.type === 'create'
                 ? t('sections.users.modals.create.title')
                 : t('sections.users.modals.edit.title')}
             </h2>
             <button
+              type="button"
               onClick={() => setModal({ type: 'none' })}
-              className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              aria-label={t('sections.users.modals.cancel')}
+              className="-mr-1.5 shrink-0 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-300"
             >
               <X size={20} />
             </button>

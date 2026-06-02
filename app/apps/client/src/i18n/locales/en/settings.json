@@ -1,5 +1,26 @@
 {
   "title": "Settings",
+  "nav": {
+    "back": "Back",
+    "groups": {
+      "general": "General",
+      "account": "Account",
+      "content": "Content",
+      "presentation": "Presentation",
+      "controls": "Controls",
+      "advanced": "Advanced"
+    },
+    "items": {
+      "profile": "Profile",
+      "users": "Users",
+      "songs": "Songs",
+      "bible": "Bible",
+      "livestream": "Livestream",
+      "sidebar": "Sidebar",
+      "developer": "Developer",
+      "shortcuts": "Shortcuts"
+    }
+  },
   "sections": {
     "appearance": {
       "title": "Appearance"
@@ -170,6 +191,14 @@
     "shortcuts": {
       "title": "Keyboard Shortcuts",
       "description": "Configure global keyboard shortcuts for quick actions. These shortcuts work from anywhere in the application.",
+      "groups": {
+        "presentation": "Presentation",
+        "presentationDescription": "Control slides from anywhere in the app.",
+        "livestream": "Livestream",
+        "livestreamDescription": "Start and stop the live stream with a key or MIDI button.",
+        "pages": "Pages",
+        "pagesDescription": "Jump to a page and focus its search."
+      },
       "actions": {
         "startLive": {
           "label": "Start Live Stream",
@@ -229,6 +258,8 @@
       "title": "Authorized Users",
       "description": "Manage users that can access your Church Hub",
       "addUser": "Add User",
+      "searchPlaceholder": "Search users…",
+      "noResults": "No users match your search",
       "noUsers": "No users configured",
       "noUsersDescription": "Add a user to allow external access to your Church Hub",
       "userName": "User Name",
@@ -241,7 +272,8 @@
       "lastUsed": "Last used",
       "never": "Never",
       "createdAt": "Created",
-      "roleTemplate": "Role Template",
+      "roleTemplate": "Role template",
+      "roleTemplateHint": "Start from a preset, then fine-tune the permissions below.",
       "roles": {
         "admin": "Administrator",
         "presenter": "Presenter",
@@ -251,6 +283,7 @@
       },
       "groups": {
         "songs": "Songs",
+        "bible": "Bible",
         "control_room": "Control Room",
         "programs": "Programs",
         "queue": "Queue",
@@ -266,6 +299,11 @@
         "songs.delete": "Delete songs",
         "songs.add_to_queue": "Add songs to queue",
         "songs.present_now": "Present songs immediately",
+        "bible.view": "View Bible",
+        "bible.import": "Import Bible translations",
+        "bible.delete": "Delete Bible translations",
+        "bible.add_to_queue": "Add Bible verses to queue",
+        "bible.present_now": "Present Bible verses immediately",
         "control_room.view": "View control room",
         "control_room.control": "Control presentation",
         "programs.view": "View programs",
@@ -280,6 +318,7 @@
         "queue.clear": "Clear queue",
         "settings.view": "View settings",
         "settings.edit": "Edit settings",
+        "settings.edit_appearance": "Edit appearance (theme & language)",
         "displays.view": "View displays",
         "displays.create": "Create displays",
         "displays.edit": "Edit displays",

@@ -60,6 +60,9 @@ import {
 } from '~/features/songs/hooks'
 import type { SongSlide } from '~/features/songs/types'
 import { expandSongSlidesWithChoruses } from '~/features/songs/utils/expandSongSlides'
+import { useDividerPosition } from '~/hooks/useDividerPosition'
+import { usePermissions } from '~/provider/permissions-provider'
+import { DIVIDER_KEYS } from '~/service/layout'
 import { KeyboardShortcutBadge } from '~/ui/kbd'
 import { ConfirmModal } from '~/ui/modal'
 import { useToast } from '~/ui/toast'
@@ -98,6 +101,8 @@ export const Route = createFileRoute('/songs/$songId/')({
 function SongPreviewPage() {
   const { t } = useTranslation('songs')
   const navigate = useNavigate()
+  const { hasPermission } = usePermissions()
+  const canEditSong = hasPermission('songs.edit')
   const { songId } = Route.useParams()
   const {
     q: searchQuery,
@@ -131,7 +136,10 @@ function SongPreviewPage() {
   const { data: bookmarks = [] } = useSongBookmarks()
   const { showToast } = useToast()
 
-  const [dividerPosition, setDividerPosition] = useState(40)
+  const [dividerPosition, setDividerPosition] = useDividerPosition(
+    DIVIDER_KEYS.songDetailLeft,
+    40,
+  )
   const [showAddToScheduleModal, setShowAddToScheduleModal] = useState(false)
   const [showAddBookmarksToScheduleModal, setShowAddBookmarksToScheduleModal] =
     useState(false)
@@ -141,10 +149,10 @@ function SongPreviewPage() {
   const [isLargeScreen, setIsLargeScreen] = useState(false)
   const [selectedSlideIndex, setSelectedSlideIndex] = useState(0)
   const [isEditMode, setIsEditMode] = useState(false)
-  const [rightDividerPosition, setRightDividerPosition] = useState(() => {
-    const stored = localStorage.getItem('songs-right-divider')
-    return stored ? Number(stored) : 60
-  })
+  const [rightDividerPosition, setRightDividerPosition] = useDividerPosition(
+    DIVIDER_KEYS.songDetailRight,
+    60,
+  )
   const [pendingExit, setPendingExit] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const rightPanelRef = useRef<HTMLDivElement>(null)
@@ -392,58 +400,63 @@ function SongPreviewPage() {
   })
 
   // Divider drag handlers
-  const handleDividerMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    isDragging.current = true
-    document.body.style.cursor = 'col-resize'
-    document.body.style.userSelect = 'none'
+  const handleDividerMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault()
+      isDragging.current = true
+      document.body.style.cursor = 'col-resize'
+      document.body.style.userSelect = 'none'
 
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      if (!isDragging.current || !containerRef.current) return
-      const containerRect = containerRef.current.getBoundingClientRect()
-      const newPosition =
-        ((moveEvent.clientX - containerRect.left) / containerRect.width) * 100
-      setDividerPosition(Math.min(80, Math.max(20, newPosition)))
-    }
+      const handleMouseMove = (moveEvent: MouseEvent) => {
+        if (!isDragging.current || !containerRef.current) return
+        const containerRect = containerRef.current.getBoundingClientRect()
+        const newPosition =
+          ((moveEvent.clientX - containerRect.left) / containerRect.width) * 100
+        setDividerPosition(Math.min(80, Math.max(20, newPosition)))
+      }
 
-    const handleMouseUp = () => {
-      isDragging.current = false
-      document.body.style.cursor = ''
-      document.body.style.userSelect = ''
-      document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseup', handleMouseUp)
-    }
+      const handleMouseUp = () => {
+        isDragging.current = false
+        document.body.style.cursor = ''
+        document.body.style.userSelect = ''
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+      }
 
-    document.addEventListener('mousemove', handleMouseMove)
-    document.addEventListener('mouseup', handleMouseUp)
-  }, [])
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+    },
+    [setDividerPosition],
+  )
 
-  const handleRightDividerMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    isRightDragging.current = true
-    document.body.style.cursor = 'col-resize'
-    document.body.style.userSelect = 'none'
+  const handleRightDividerMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault()
+      isRightDragging.current = true
+      document.body.style.cursor = 'col-resize'
+      document.body.style.userSelect = 'none'
 
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      if (!isRightDragging.current || !rightPanelRef.current) return
-      const rect = rightPanelRef.current.getBoundingClientRect()
-      const newPos = ((moveEvent.clientX - rect.left) / rect.width) * 100
-      const clamped = Math.min(80, Math.max(30, newPos))
-      setRightDividerPosition(clamped)
-      localStorage.setItem('songs-right-divider', String(clamped))
-    }
+      const handleMouseMove = (moveEvent: MouseEvent) => {
+        if (!isRightDragging.current || !rightPanelRef.current) return
+        const rect = rightPanelRef.current.getBoundingClientRect()
+        const newPos = ((moveEvent.clientX - rect.left) / rect.width) * 100
+        const clamped = Math.min(80, Math.max(30, newPos))
+        setRightDividerPosition(clamped)
+      }
 
-    const handleMouseUp = () => {
-      isRightDragging.current = false
-      document.body.style.cursor = ''
-      document.body.style.userSelect = ''
-      document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseup', handleMouseUp)
-    }
+      const handleMouseUp = () => {
+        isRightDragging.current = false
+        document.body.style.cursor = ''
+        document.body.style.userSelect = ''
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+      }
 
-    document.addEventListener('mousemove', handleMouseMove)
-    document.addEventListener('mouseup', handleMouseUp)
-  }, [])
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+    },
+    [setRightDividerPosition],
+  )
 
   const handleBookmarkSongClick = useCallback(
     (bookmark: { songId: number }) => {
@@ -580,14 +593,16 @@ function SongPreviewPage() {
           >
             <CalendarPlus size={20} />
           </button>
-          <button
-            type="button"
-            onClick={handleEdit}
-            className="p-2 text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors inline-flex items-center justify-center"
-            title={t('preview.edit')}
-          >
-            <Pencil size={20} />
-          </button>
+          {canEditSong && (
+            <button
+              type="button"
+              onClick={handleEdit}
+              className="p-2 text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors inline-flex items-center justify-center"
+              title={t('preview.edit')}
+            >
+              <Pencil size={20} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -612,6 +627,7 @@ function SongPreviewPage() {
               isLoading={isLoading}
               isEditMode={isEditMode}
               onToggleEditMode={handleToggleEditMode}
+              canEdit={canEditSong}
               onSave={handleSave}
               onSlideClick={handleSlideClick}
               isSaving={pendingExit || isMutating}

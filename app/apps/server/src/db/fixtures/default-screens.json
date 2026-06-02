@@ -74,22 +74,22 @@
           "constraints": {
             "top": {
               "enabled": true,
-              "value": 3.896713615023475,
+              "value": 1,
               "unit": "%"
             },
             "bottom": {
-              "enabled": false,
-              "value": 0,
+              "enabled": true,
+              "value": 1,
               "unit": "%"
             },
             "left": {
               "enabled": true,
-              "value": 1.7429577464788741,
+              "value": 1,
               "unit": "%"
             },
             "right": {
-              "enabled": false,
-              "value": 0,
+              "enabled": true,
+              "value": 1,
               "unit": "%"
             }
           },
@@ -100,14 +100,14 @@
             "heightUnit": "%"
           },
           "style": {
-            "fontFamily": "system-ui",
-            "maxFontSize": 140,
+            "fontFamily": "Times New Roman",
+            "maxFontSize": 1000,
             "autoScale": true,
             "color": "#ffffff",
-            "bold": true,
+            "bold": false,
             "italic": false,
             "underline": false,
-            "alignment": "left",
+            "alignment": "center",
             "verticalAlignment": "middle",
             "lineHeight": 1.3,
             "shadow": false
@@ -121,7 +121,7 @@
           },
           "animationOut": {
             "type": "fade",
-            "duration": 150,
+            "duration": 0,
             "delay": 0,
             "easing": "ease-in"
           },
@@ -139,7 +139,7 @@
           },
           "slideTransitionIn": {
             "type": "fade",
-            "duration": 100,
+            "duration": 0,
             "delay": 0,
             "easing": "ease-out"
           }
@@ -203,7 +203,7 @@
           "constraints": {
             "top": {
               "enabled": true,
-              "value": 4.954020418809152,
+              "value": 2.8353909465020566,
               "unit": "%"
             },
             "bottom": {
@@ -213,12 +213,12 @@
             },
             "left": {
               "enabled": true,
-              "value": 4.285714285714282,
+              "value": 2.000000000000002,
               "unit": "%"
             },
             "right": {
-              "enabled": false,
-              "value": 0,
+              "enabled": true,
+              "value": 2.000000000000005,
               "unit": "%"
             }
           },
@@ -229,21 +229,21 @@
             "heightUnit": "%"
           },
           "style": {
-            "fontFamily": "system-ui",
-            "maxFontSize": 80,
+            "fontFamily": "Times New Roman",
+            "maxFontSize": 120,
             "autoScale": false,
             "color": "#ffffff",
             "bold": true,
             "italic": false,
             "underline": false,
-            "alignment": "left",
+            "alignment": "center",
             "verticalAlignment": "middle",
             "lineHeight": 1.3,
             "shadow": false
           },
           "animationIn": {
-            "type": "fade",
-            "duration": 400,
+            "type": "none",
+            "duration": 0,
             "delay": 0,
             "easing": "ease-out"
           },
@@ -254,20 +254,20 @@
             "easing": "ease-out"
           },
           "slideTransitionOut": {
-            "type": "fade",
-            "duration": 250,
+            "type": "none",
+            "duration": 0,
             "delay": 0,
             "easing": "ease-in"
           },
           "slideTransitionIn": {
-            "type": "fade",
-            "duration": 250,
+            "type": "none",
+            "duration": 0,
             "delay": 0,
             "easing": "ease-out"
           },
           "animationOut": {
-            "type": "fade",
-            "duration": 400,
+            "type": "none",
+            "duration": 0,
             "delay": 0,
             "easing": "ease-in"
           }
@@ -286,12 +286,12 @@
             },
             "left": {
               "enabled": true,
-              "value": 4.285714285714288,
+              "value": 2,
               "unit": "%"
             },
             "right": {
-              "enabled": false,
-              "value": 0,
+              "enabled": true,
+              "value": 2.000000000000005,
               "unit": "%"
             }
           },
@@ -302,28 +302,30 @@
             "heightUnit": "%"
           },
           "style": {
-            "fontFamily": "system-ui",
-            "maxFontSize": 120,
+            "fontFamily": "Times New Roman",
+            "maxFontSize": 1000,
             "autoScale": true,
             "color": "#ffffff",
-            "bold": true,
+            "bold": false,
             "italic": false,
             "underline": false,
-            "alignment": "left",
+            "alignment": "center",
             "verticalAlignment": "middle",
             "lineHeight": 1.3,
-            "shadow": false
+            "shadow": false,
+            "fitLineToWidth": false,
+            "compressLines": false
           },
           "padding": 20,
           "animationIn": {
-            "type": "fade",
-            "duration": 150,
+            "type": "none",
+            "duration": 0,
             "delay": 0,
             "easing": "ease-out"
           },
           "animationOut": {
-            "type": "fade",
-            "duration": 500,
+            "type": "none",
+            "duration": 0,
             "delay": 0,
             "easing": "ease-in"
           },
@@ -334,14 +336,14 @@
             "easing": "ease-out"
           },
           "slideTransitionIn": {
-            "type": "fade",
-            "duration": 100,
+            "type": "none",
+            "duration": 0,
             "delay": 0,
             "easing": "ease-out"
           },
           "slideTransitionOut": {
-            "type": "fade",
-            "duration": 150,
+            "type": "none",
+            "duration": 0,
             "delay": 0,
             "easing": "ease-in"
           }
@@ -392,8 +394,8 @@
           "format": "24h",
           "showSeconds": false
         },
-        "clockEnabled": true,
-        "includeReferenceInContent": true,
+        "clockEnabled": false,
+        "includeReferenceInContent": false,
         "referenceWrapperStyle": "parentheses"
       },
       "bible_passage": {

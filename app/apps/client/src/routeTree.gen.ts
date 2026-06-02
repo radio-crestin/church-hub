@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SettingsRouteRouteImport } from './routes/settings/route'
 import { Route as SongsIndexRouteImport } from './routes/songs/index'
 import { Route as SongKeyIndexRouteImport } from './routes/song-key/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings/index'
@@ -20,6 +21,20 @@ import { Route as LiveTranslationIndexRouteImport } from './routes/live-translat
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as BibleIndexRouteImport } from './routes/bible/index'
 import { Route as rootIndexRouteImport } from './routes/(root)/index'
+import { Route as SettingsUsersRouteImport } from './routes/settings/users'
+import { Route as SettingsSongsRouteImport } from './routes/settings/songs'
+import { Route as SettingsSidebarRouteImport } from './routes/settings/sidebar'
+import { Route as SettingsShortcutsRouteImport } from './routes/settings/shortcuts'
+import { Route as SettingsScreensRouteImport } from './routes/settings/screens'
+import { Route as SettingsProfileRouteImport } from './routes/settings/profile'
+import { Route as SettingsMidiRouteImport } from './routes/settings/midi'
+import { Route as SettingsLivestreamRouteImport } from './routes/settings/livestream'
+import { Route as SettingsKioskRouteImport } from './routes/settings/kiosk'
+import { Route as SettingsDeveloperRouteImport } from './routes/settings/developer'
+import { Route as SettingsConnectionRouteImport } from './routes/settings/connection'
+import { Route as SettingsBibleRouteImport } from './routes/settings/bible'
+import { Route as SettingsAppearanceRouteImport } from './routes/settings/appearance'
+import { Route as SettingsAboutRouteImport } from './routes/settings/about'
 import { Route as ScreenScreenIdRouteImport } from './routes/screen/$screenId'
 import { Route as SchedulesScheduleIdRouteImport } from './routes/schedules/$scheduleId'
 import { Route as CustomPagePageIdRouteImport } from './routes/custom-page/$pageId'
@@ -27,6 +42,11 @@ import { Route as SongsSongIdIndexRouteImport } from './routes/songs/$songId/ind
 import { Route as SongsSongIdEditRouteImport } from './routes/songs/$songId/edit'
 import { Route as AuthYoutubeCallbackRouteImport } from './routes/auth/youtube/callback'
 
+const SettingsRouteRoute = SettingsRouteRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SongsIndexRoute = SongsIndexRouteImport.update({
   id: '/songs/',
   path: '/songs/',
@@ -38,9 +58,9 @@ const SongKeyIndexRoute = SongKeyIndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsIndexRoute = SettingsIndexRouteImport.update({
-  id: '/settings/',
-  path: '/settings/',
-  getParentRoute: () => rootRouteImport,
+  id: '/',
+  path: '/',
+  getParentRoute: () => SettingsRouteRoute,
 } as any)
 const SchedulesIndexRoute = SchedulesIndexRouteImport.update({
   id: '/schedules/',
@@ -82,6 +102,76 @@ const rootIndexRoute = rootIndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsUsersRoute = SettingsUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
+const SettingsSongsRoute = SettingsSongsRouteImport.update({
+  id: '/songs',
+  path: '/songs',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
+const SettingsSidebarRoute = SettingsSidebarRouteImport.update({
+  id: '/sidebar',
+  path: '/sidebar',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
+const SettingsShortcutsRoute = SettingsShortcutsRouteImport.update({
+  id: '/shortcuts',
+  path: '/shortcuts',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
+const SettingsScreensRoute = SettingsScreensRouteImport.update({
+  id: '/screens',
+  path: '/screens',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
+const SettingsProfileRoute = SettingsProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
+const SettingsMidiRoute = SettingsMidiRouteImport.update({
+  id: '/midi',
+  path: '/midi',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
+const SettingsLivestreamRoute = SettingsLivestreamRouteImport.update({
+  id: '/livestream',
+  path: '/livestream',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
+const SettingsKioskRoute = SettingsKioskRouteImport.update({
+  id: '/kiosk',
+  path: '/kiosk',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
+const SettingsDeveloperRoute = SettingsDeveloperRouteImport.update({
+  id: '/developer',
+  path: '/developer',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
+const SettingsConnectionRoute = SettingsConnectionRouteImport.update({
+  id: '/connection',
+  path: '/connection',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
+const SettingsBibleRoute = SettingsBibleRouteImport.update({
+  id: '/bible',
+  path: '/bible',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
+const SettingsAppearanceRoute = SettingsAppearanceRouteImport.update({
+  id: '/appearance',
+  path: '/appearance',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
+const SettingsAboutRoute = SettingsAboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
 const ScreenScreenIdRoute = ScreenScreenIdRouteImport.update({
   id: '/screen/$screenId',
   path: '/screen/$screenId',
@@ -114,9 +204,24 @@ const AuthYoutubeCallbackRoute = AuthYoutubeCallbackRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
+  '/settings': typeof SettingsRouteRouteWithChildren
   '/custom-page/$pageId': typeof CustomPagePageIdRoute
   '/schedules/$scheduleId': typeof SchedulesScheduleIdRoute
   '/screen/$screenId': typeof ScreenScreenIdRoute
+  '/settings/about': typeof SettingsAboutRoute
+  '/settings/appearance': typeof SettingsAppearanceRoute
+  '/settings/bible': typeof SettingsBibleRoute
+  '/settings/connection': typeof SettingsConnectionRoute
+  '/settings/developer': typeof SettingsDeveloperRoute
+  '/settings/kiosk': typeof SettingsKioskRoute
+  '/settings/livestream': typeof SettingsLivestreamRoute
+  '/settings/midi': typeof SettingsMidiRoute
+  '/settings/profile': typeof SettingsProfileRoute
+  '/settings/screens': typeof SettingsScreensRoute
+  '/settings/shortcuts': typeof SettingsShortcutsRoute
+  '/settings/sidebar': typeof SettingsSidebarRoute
+  '/settings/songs': typeof SettingsSongsRoute
+  '/settings/users': typeof SettingsUsersRoute
   '/': typeof rootIndexRoute
   '/bible/': typeof BibleIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
@@ -136,6 +241,20 @@ export interface FileRoutesByTo {
   '/custom-page/$pageId': typeof CustomPagePageIdRoute
   '/schedules/$scheduleId': typeof SchedulesScheduleIdRoute
   '/screen/$screenId': typeof ScreenScreenIdRoute
+  '/settings/about': typeof SettingsAboutRoute
+  '/settings/appearance': typeof SettingsAppearanceRoute
+  '/settings/bible': typeof SettingsBibleRoute
+  '/settings/connection': typeof SettingsConnectionRoute
+  '/settings/developer': typeof SettingsDeveloperRoute
+  '/settings/kiosk': typeof SettingsKioskRoute
+  '/settings/livestream': typeof SettingsLivestreamRoute
+  '/settings/midi': typeof SettingsMidiRoute
+  '/settings/profile': typeof SettingsProfileRoute
+  '/settings/screens': typeof SettingsScreensRoute
+  '/settings/shortcuts': typeof SettingsShortcutsRoute
+  '/settings/sidebar': typeof SettingsSidebarRoute
+  '/settings/songs': typeof SettingsSongsRoute
+  '/settings/users': typeof SettingsUsersRoute
   '/': typeof rootIndexRoute
   '/bible': typeof BibleIndexRoute
   '/dashboard': typeof DashboardIndexRoute
@@ -153,9 +272,24 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/settings': typeof SettingsRouteRouteWithChildren
   '/custom-page/$pageId': typeof CustomPagePageIdRoute
   '/schedules/$scheduleId': typeof SchedulesScheduleIdRoute
   '/screen/$screenId': typeof ScreenScreenIdRoute
+  '/settings/about': typeof SettingsAboutRoute
+  '/settings/appearance': typeof SettingsAppearanceRoute
+  '/settings/bible': typeof SettingsBibleRoute
+  '/settings/connection': typeof SettingsConnectionRoute
+  '/settings/developer': typeof SettingsDeveloperRoute
+  '/settings/kiosk': typeof SettingsKioskRoute
+  '/settings/livestream': typeof SettingsLivestreamRoute
+  '/settings/midi': typeof SettingsMidiRoute
+  '/settings/profile': typeof SettingsProfileRoute
+  '/settings/screens': typeof SettingsScreensRoute
+  '/settings/shortcuts': typeof SettingsShortcutsRoute
+  '/settings/sidebar': typeof SettingsSidebarRoute
+  '/settings/songs': typeof SettingsSongsRoute
+  '/settings/users': typeof SettingsUsersRoute
   '/(root)/': typeof rootIndexRoute
   '/bible/': typeof BibleIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
@@ -174,9 +308,24 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/settings'
     | '/custom-page/$pageId'
     | '/schedules/$scheduleId'
     | '/screen/$screenId'
+    | '/settings/about'
+    | '/settings/appearance'
+    | '/settings/bible'
+    | '/settings/connection'
+    | '/settings/developer'
+    | '/settings/kiosk'
+    | '/settings/livestream'
+    | '/settings/midi'
+    | '/settings/profile'
+    | '/settings/screens'
+    | '/settings/shortcuts'
+    | '/settings/sidebar'
+    | '/settings/songs'
+    | '/settings/users'
     | '/'
     | '/bible/'
     | '/dashboard/'
@@ -196,6 +345,20 @@ export interface FileRouteTypes {
     | '/custom-page/$pageId'
     | '/schedules/$scheduleId'
     | '/screen/$screenId'
+    | '/settings/about'
+    | '/settings/appearance'
+    | '/settings/bible'
+    | '/settings/connection'
+    | '/settings/developer'
+    | '/settings/kiosk'
+    | '/settings/livestream'
+    | '/settings/midi'
+    | '/settings/profile'
+    | '/settings/screens'
+    | '/settings/shortcuts'
+    | '/settings/sidebar'
+    | '/settings/songs'
+    | '/settings/users'
     | '/'
     | '/bible'
     | '/dashboard'
@@ -212,9 +375,24 @@ export interface FileRouteTypes {
     | '/songs/$songId'
   id:
     | '__root__'
+    | '/settings'
     | '/custom-page/$pageId'
     | '/schedules/$scheduleId'
     | '/screen/$screenId'
+    | '/settings/about'
+    | '/settings/appearance'
+    | '/settings/bible'
+    | '/settings/connection'
+    | '/settings/developer'
+    | '/settings/kiosk'
+    | '/settings/livestream'
+    | '/settings/midi'
+    | '/settings/profile'
+    | '/settings/screens'
+    | '/settings/shortcuts'
+    | '/settings/sidebar'
+    | '/settings/songs'
+    | '/settings/users'
     | '/(root)/'
     | '/bible/'
     | '/dashboard/'
@@ -232,6 +410,7 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
   CustomPagePageIdRoute: typeof CustomPagePageIdRoute
   SchedulesScheduleIdRoute: typeof SchedulesScheduleIdRoute
   ScreenScreenIdRoute: typeof ScreenScreenIdRoute
@@ -243,7 +422,6 @@ export interface RootRouteChildren {
   MusicIndexRoute: typeof MusicIndexRoute
   PresentIndexRoute: typeof PresentIndexRoute
   SchedulesIndexRoute: typeof SchedulesIndexRoute
-  SettingsIndexRoute: typeof SettingsIndexRoute
   SongKeyIndexRoute: typeof SongKeyIndexRoute
   SongsIndexRoute: typeof SongsIndexRoute
   AuthYoutubeCallbackRoute: typeof AuthYoutubeCallbackRoute
@@ -253,6 +431,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/songs/': {
       id: '/songs/'
       path: '/songs'
@@ -269,10 +454,10 @@ declare module '@tanstack/react-router' {
     }
     '/settings/': {
       id: '/settings/'
-      path: '/settings'
+      path: '/'
       fullPath: '/settings/'
       preLoaderRoute: typeof SettingsIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof SettingsRouteRoute
     }
     '/schedules/': {
       id: '/schedules/'
@@ -330,6 +515,104 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings/users': {
+      id: '/settings/users'
+      path: '/users'
+      fullPath: '/settings/users'
+      preLoaderRoute: typeof SettingsUsersRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
+    '/settings/songs': {
+      id: '/settings/songs'
+      path: '/songs'
+      fullPath: '/settings/songs'
+      preLoaderRoute: typeof SettingsSongsRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
+    '/settings/sidebar': {
+      id: '/settings/sidebar'
+      path: '/sidebar'
+      fullPath: '/settings/sidebar'
+      preLoaderRoute: typeof SettingsSidebarRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
+    '/settings/shortcuts': {
+      id: '/settings/shortcuts'
+      path: '/shortcuts'
+      fullPath: '/settings/shortcuts'
+      preLoaderRoute: typeof SettingsShortcutsRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
+    '/settings/screens': {
+      id: '/settings/screens'
+      path: '/screens'
+      fullPath: '/settings/screens'
+      preLoaderRoute: typeof SettingsScreensRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
+    '/settings/profile': {
+      id: '/settings/profile'
+      path: '/profile'
+      fullPath: '/settings/profile'
+      preLoaderRoute: typeof SettingsProfileRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
+    '/settings/midi': {
+      id: '/settings/midi'
+      path: '/midi'
+      fullPath: '/settings/midi'
+      preLoaderRoute: typeof SettingsMidiRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
+    '/settings/livestream': {
+      id: '/settings/livestream'
+      path: '/livestream'
+      fullPath: '/settings/livestream'
+      preLoaderRoute: typeof SettingsLivestreamRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
+    '/settings/kiosk': {
+      id: '/settings/kiosk'
+      path: '/kiosk'
+      fullPath: '/settings/kiosk'
+      preLoaderRoute: typeof SettingsKioskRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
+    '/settings/developer': {
+      id: '/settings/developer'
+      path: '/developer'
+      fullPath: '/settings/developer'
+      preLoaderRoute: typeof SettingsDeveloperRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
+    '/settings/connection': {
+      id: '/settings/connection'
+      path: '/connection'
+      fullPath: '/settings/connection'
+      preLoaderRoute: typeof SettingsConnectionRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
+    '/settings/bible': {
+      id: '/settings/bible'
+      path: '/bible'
+      fullPath: '/settings/bible'
+      preLoaderRoute: typeof SettingsBibleRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
+    '/settings/appearance': {
+      id: '/settings/appearance'
+      path: '/appearance'
+      fullPath: '/settings/appearance'
+      preLoaderRoute: typeof SettingsAppearanceRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
+    '/settings/about': {
+      id: '/settings/about'
+      path: '/about'
+      fullPath: '/settings/about'
+      preLoaderRoute: typeof SettingsAboutRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
     '/screen/$screenId': {
       id: '/screen/$screenId'
       path: '/screen/$screenId'
@@ -375,7 +658,48 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface SettingsRouteRouteChildren {
+  SettingsAboutRoute: typeof SettingsAboutRoute
+  SettingsAppearanceRoute: typeof SettingsAppearanceRoute
+  SettingsBibleRoute: typeof SettingsBibleRoute
+  SettingsConnectionRoute: typeof SettingsConnectionRoute
+  SettingsDeveloperRoute: typeof SettingsDeveloperRoute
+  SettingsKioskRoute: typeof SettingsKioskRoute
+  SettingsLivestreamRoute: typeof SettingsLivestreamRoute
+  SettingsMidiRoute: typeof SettingsMidiRoute
+  SettingsProfileRoute: typeof SettingsProfileRoute
+  SettingsScreensRoute: typeof SettingsScreensRoute
+  SettingsShortcutsRoute: typeof SettingsShortcutsRoute
+  SettingsSidebarRoute: typeof SettingsSidebarRoute
+  SettingsSongsRoute: typeof SettingsSongsRoute
+  SettingsUsersRoute: typeof SettingsUsersRoute
+  SettingsIndexRoute: typeof SettingsIndexRoute
+}
+
+const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
+  SettingsAboutRoute: SettingsAboutRoute,
+  SettingsAppearanceRoute: SettingsAppearanceRoute,
+  SettingsBibleRoute: SettingsBibleRoute,
+  SettingsConnectionRoute: SettingsConnectionRoute,
+  SettingsDeveloperRoute: SettingsDeveloperRoute,
+  SettingsKioskRoute: SettingsKioskRoute,
+  SettingsLivestreamRoute: SettingsLivestreamRoute,
+  SettingsMidiRoute: SettingsMidiRoute,
+  SettingsProfileRoute: SettingsProfileRoute,
+  SettingsScreensRoute: SettingsScreensRoute,
+  SettingsShortcutsRoute: SettingsShortcutsRoute,
+  SettingsSidebarRoute: SettingsSidebarRoute,
+  SettingsSongsRoute: SettingsSongsRoute,
+  SettingsUsersRoute: SettingsUsersRoute,
+  SettingsIndexRoute: SettingsIndexRoute,
+}
+
+const SettingsRouteRouteWithChildren = SettingsRouteRoute._addFileChildren(
+  SettingsRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
+  SettingsRouteRoute: SettingsRouteRouteWithChildren,
   CustomPagePageIdRoute: CustomPagePageIdRoute,
   SchedulesScheduleIdRoute: SchedulesScheduleIdRoute,
   ScreenScreenIdRoute: ScreenScreenIdRoute,
@@ -387,7 +711,6 @@ const rootRouteChildren: RootRouteChildren = {
   MusicIndexRoute: MusicIndexRoute,
   PresentIndexRoute: PresentIndexRoute,
   SchedulesIndexRoute: SchedulesIndexRoute,
-  SettingsIndexRoute: SettingsIndexRoute,
   SongKeyIndexRoute: SongKeyIndexRoute,
   SongsIndexRoute: SongsIndexRoute,
   AuthYoutubeCallbackRoute: AuthYoutubeCallbackRoute,

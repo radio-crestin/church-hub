@@ -1,155 +1,125 @@
 import { expect, test } from '@playwright/test'
 
+// Each settings category is a nested route under /settings. `text` is a
+// bilingual (en/ro) regex matched inside the content pane (scoped via the
+// `settings-panel` test id so sidebar labels don't produce false positives).
+const SETTINGS_LEAVES: { path: string; text: RegExp }[] = [
+  { path: '/settings/appearance', text: /appearance|aspect|language|limb/i },
+  { path: '/settings/sidebar', text: /sidebar|bară|menu|meniu|custom/i },
+  { path: '/settings/profile', text: /log ?out|deconect|account|cont|permis/i },
+  { path: '/settings/users', text: /user|utilizator/i },
+  { path: '/settings/songs', text: /categor|tag|synonym|sinonim|import/i },
+  {
+    path: '/settings/bible',
+    text: /translation|traducer|import|download|descărc/i,
+  },
+  { path: '/settings/screens', text: /screen|ecran|slide|navig|shortcut/i },
+  { path: '/settings/kiosk', text: /kiosk/i },
+  {
+    path: '/settings/livestream',
+    text: /scene|scenă|stream|shortcut|scurtătur/i,
+  },
+  {
+    path: '/settings/shortcuts',
+    text: /presentation|prezentare|slide|shortcut|scurtătur/i,
+  },
+  { path: '/settings/midi', text: /midi/i },
+  {
+    path: '/settings/developer',
+    text: /developer|dezvoltator|debug|depanare/i,
+  },
+  { path: '/settings/about', text: /version|versiune|about|despre|update/i },
+]
+
 test.describe('Settings Page', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/settings')
-    await page.waitForLoadState('networkidle')
-  })
-
-  test('can navigate to settings page', async ({ page }) => {
-    await expect(page).toHaveURL(/.*settings/)
-    // Settings page title should be visible
-    const title = page.locator('h1')
-    await expect(title).toBeVisible({ timeout: 10000 })
-  })
-
-  test('appearance section is visible with language and theme selectors', async ({
+  test('navigating to /settings shows the sidebar and redirects to a leaf', async ({
     page,
   }) => {
-    // Look for the appearance section
-    const appearanceSection = page.locator('text=/appearance|aparent|aspect/i')
-    await expect(appearanceSection.first()).toBeVisible({ timeout: 10000 })
-
-    // Language selector should exist
-    const languageLabel = page.locator('text=/language|limba/i')
-    await expect(languageLabel.first()).toBeVisible({ timeout: 5000 })
-
-    // Theme selector should exist
-    const themeLabel = page.locator('text=/theme|tema/i')
-    await expect(themeLabel.first()).toBeVisible({ timeout: 5000 })
+    await page.goto('/settings')
+    await page.waitForLoadState('networkidle')
+    // The category sidebar renders the "Settings" title.
+    await expect(page.locator('h1')).toBeVisible({ timeout: 10000 })
+    // On desktop the bare /settings redirects to the first accessible category.
+    await expect(page).toHaveURL(/\/settings\/[a-z]+/, { timeout: 10000 })
   })
 
-  test('can change language preference', async ({ page }) => {
-    // Find the language combobox/select and interact with it
-    const languageLabel = page.locator('text=/language|limba/i').first()
-    await expect(languageLabel).toBeVisible({ timeout: 5000 })
-
-    // The combobox should be nearby - find it
-    const comboboxes = page.locator('button[role="combobox"]')
-    const firstCombobox = comboboxes.first()
-
-    if (await firstCombobox.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await firstCombobox.click()
-      await page.waitForTimeout(500)
-
-      // Look for language options in the dropdown
-      const englishOption = page.locator('text=/english|engleza|engleza/i')
-      if (
-        await englishOption
-          .first()
-          .isVisible({ timeout: 3000 })
-          .catch(() => false)
-      ) {
-        await englishOption.first().click()
-        await page.waitForTimeout(1000)
-      }
-    }
-
-    await expect(page.locator('body')).toBeVisible()
+  test('category rail shows the group labels', async ({ page }) => {
+    await page.goto('/settings/appearance')
+    await page.waitForLoadState('networkidle')
+    await expect(page.getByText(/^general$/i).first()).toBeVisible({
+      timeout: 10000,
+    })
+    await expect(page.getByText(/^advanced$|^avansat$/i).first()).toBeVisible()
   })
 
-  test('can change theme preference', async ({ page }) => {
-    // Find theme selector (second combobox typically)
-    const comboboxes = page.locator('button[role="combobox"]')
-    const count = await comboboxes.count()
+  test('every category is always visible (groups never collapse)', async ({
+    page,
+  }) => {
+    await page.goto('/settings/appearance')
+    await page.waitForLoadState('networkidle')
 
-    if (count >= 2) {
-      const themeCombobox = comboboxes.nth(1)
-      await themeCombobox.click()
-      await page.waitForTimeout(500)
-
-      // Look for dark/light theme options
-      const darkOption = page.locator('text=/dark|inchis|intunecat/i')
-      if (
-        await darkOption
-          .first()
-          .isVisible({ timeout: 3000 })
-          .catch(() => false)
-      ) {
-        await darkOption.first().click()
-        await page.waitForTimeout(1000)
-      }
-    }
-
-    await expect(page.locator('body')).toBeVisible()
+    // No collapsing: a deep leaf link (Developer, in the Advanced group) is
+    // always visible without any interaction, and navigates on click.
+    const developerLink = page
+      .getByRole('link', { name: /developer|dezvoltator/i })
+      .first()
+    await expect(developerLink).toBeVisible({ timeout: 5000 })
+    await developerLink.click()
+    await expect(page).toHaveURL(/\/settings\/developer/, { timeout: 10000 })
   })
 
-  test('developer tools section is visible', async ({ page }) => {
-    // Scroll down to find developer tools
-    const devSection = page.locator('text=/developer|dezvoltator/i')
-    await expect(devSection.first()).toBeVisible({ timeout: 10000 })
+  for (const leaf of SETTINGS_LEAVES) {
+    test(`category ${leaf.path} renders its panel`, async ({ page }) => {
+      await page.goto(leaf.path)
+      await page.waitForLoadState('networkidle')
+      await expect(page).toHaveURL(new RegExp(leaf.path.replace(/\//g, '\\/')))
+      const panel = page.getByTestId('settings-panel')
+      await expect(panel).toBeVisible({ timeout: 10000 })
+      await expect(panel).toContainText(leaf.text, { timeout: 10000 })
+    })
+  }
+
+  test('appearance category has language and theme selectors', async ({
+    page,
+  }) => {
+    await page.goto('/settings/appearance')
+    await page.waitForLoadState('networkidle')
+    await expect(page.locator('text=/language|limba/i').first()).toBeVisible({
+      timeout: 5000,
+    })
+    await expect(page.locator('text=/theme|tema/i').first()).toBeVisible({
+      timeout: 5000,
+    })
+    // Two Combobox triggers (language + theme) render as buttons in the panel.
+    const panel = page.getByTestId('settings-panel')
+    expect(await panel.locator('button').count()).toBeGreaterThanOrEqual(2)
   })
 
-  test('debug mode toggle exists and can be toggled', async ({ page }) => {
-    // Scroll to bottom to ensure developer tools section is in view
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
-    await page.waitForTimeout(500)
-
-    // Find the debug mode section — use the developer section as anchor
-    const devSection = page.locator('text=/developer|dezvoltator/i').first()
-    if (await devSection.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await devSection.scrollIntoViewIfNeeded()
-      await page.waitForTimeout(500)
-    }
-
-    const debugLabel = page.locator('text=/debug|depanare/i')
-    await expect(debugLabel.first()).toBeVisible({ timeout: 10000 })
-
-    // Find the toggle switch (rounded-full button near debug text)
-    const toggleButtons = page.locator(
-      'button.rounded-full, button[class*="rounded-full"]',
-    )
-
-    if (
-      await toggleButtons
-        .first()
-        .isVisible({ timeout: 3000 })
-        .catch(() => false)
-    ) {
-      // Click the toggle
-      await toggleButtons.first().click()
-      await page.waitForTimeout(500)
-
-      // Click again to restore
-      await toggleButtons.first().click()
-      await page.waitForTimeout(500)
-    }
-
-    await expect(page.locator('body')).toBeVisible()
+  test('developer category has the debug toggle and API docs link', async ({
+    page,
+  }) => {
+    await page.goto('/settings/developer')
+    await page.waitForLoadState('networkidle')
+    await expect(page.locator('text=/debug|depanare/i').first()).toBeVisible({
+      timeout: 10000,
+    })
+    await expect(page.locator('a[href*="api/docs"]').first()).toBeVisible({
+      timeout: 10000,
+    })
   })
+})
 
-  test('API docs link is present', async ({ page }) => {
-    // Look for API documentation link
-    const apiDocsLink = page.locator('a[href*="api/docs"]')
-    await expect(apiDocsLink.first()).toBeVisible({ timeout: 10000 })
-  })
-
-  test('about section is visible', async ({ page }) => {
-    // Scroll down to find the about section
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
-    await page.waitForTimeout(500)
-
-    // Look for version info or about section
-    const aboutContent = page.locator('text=/version|versiune|about|despre/i')
-    if (
-      await aboutContent
-        .first()
-        .isVisible({ timeout: 5000 })
-        .catch(() => false)
-    ) {
-      await expect(aboutContent.first()).toBeVisible()
-    }
-  })
+test.describe('Feature pages no longer open settings modals', () => {
+  // The per-page gear buttons were removed; settings live only under /settings.
+  for (const path of ['/songs', '/bible', '/present', '/livestream']) {
+    test(`${path} has no settings gear button`, async ({ page }) => {
+      await page.goto(path)
+      await page.waitForLoadState('networkidle')
+      await expect(
+        page.getByRole('button', { name: /^settings$|^setări$/i }),
+      ).toHaveCount(0)
+    })
+  }
 })
 
 test.describe('Settings API', () => {

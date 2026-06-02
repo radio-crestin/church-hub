@@ -17,13 +17,21 @@ import { VALID_ACTION_IDS } from '../utils'
 interface PageShortcutsSettingsProps {
   /** The built-in page ID (e.g. 'songs', 'bible') */
   pageId: BuiltInMenuItemId
+  /** Render the internal "Keyboard Shortcuts" heading (default true). */
+  showHeading?: boolean
+  /** Include the global "Display Selected Slide" section (default true). */
+  includeShowSlide?: boolean
 }
 
 /**
  * Granular shortcut settings for a page (switch, focus search, display slide).
- * Designed to be embedded in page-specific settings modals (Songs, Bible).
+ * Hosted in the consolidated Shortcuts settings page.
  */
-export function PageShortcutsSettings({ pageId }: PageShortcutsSettingsProps) {
+export function PageShortcutsSettings({
+  pageId,
+  showHeading = true,
+  includeShowSlide = true,
+}: PageShortcutsSettingsProps) {
   const { t } = useTranslation('settings')
   const { config, updateConfig } = useSidebarConfig()
   const { shortcuts: globalShortcuts, updateActionShortcuts } =
@@ -217,12 +225,14 @@ export function PageShortcutsSettings({ pageId }: PageShortcutsSettingsProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 mb-2">
-        <Keyboard className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-          {t('sections.sidebarItem.shortcuts.title')}
-        </h3>
-      </div>
+      {showHeading && (
+        <div className="flex items-center gap-2 mb-2">
+          <Keyboard className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            {t('sections.sidebarItem.shortcuts.title')}
+          </h3>
+        </div>
+      )}
 
       {/* Switch to Page Shortcuts */}
       <div className="space-y-2">
@@ -293,38 +303,40 @@ export function PageShortcutsSettings({ pageId }: PageShortcutsSettingsProps) {
       </div>
 
       {/* Display Selected Slide Shortcuts */}
-      <div className="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-        <div>
-          <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-            {t('sections.sidebarItem.shortcuts.showSlideTitle')}
-          </h4>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-            {t('sections.sidebarItem.shortcuts.showSlideDescription')}
-          </p>
-        </div>
+      {includeShowSlide && (
+        <div className="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+          <div>
+            <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+              {t('sections.sidebarItem.shortcuts.showSlideTitle')}
+            </h4>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              {t('sections.sidebarItem.shortcuts.showSlideDescription')}
+            </p>
+          </div>
 
-        <div className="space-y-2">
-          {showSlideShortcuts.map((shortcut, index) => (
-            <ShortcutRecorder
-              key={`show-${index}`}
-              value={shortcut}
-              onChange={(value) => handleUpdateShowSlide(index, value)}
-              onRemove={() => handleRemoveShowSlide(index)}
-              error={getShortcutError(shortcut, index, showSlideShortcuts)}
-              namespace="settings"
-            />
-          ))}
-        </div>
+          <div className="space-y-2">
+            {showSlideShortcuts.map((shortcut, index) => (
+              <ShortcutRecorder
+                key={`show-${index}`}
+                value={shortcut}
+                onChange={(value) => handleUpdateShowSlide(index, value)}
+                onRemove={() => handleRemoveShowSlide(index)}
+                error={getShortcutError(shortcut, index, showSlideShortcuts)}
+                namespace="settings"
+              />
+            ))}
+          </div>
 
-        <button
-          type="button"
-          onClick={handleAddShowSlide}
-          className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
-        >
-          <Plus size={16} />
-          {t('sections.shortcuts.addShortcut')}
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={handleAddShowSlide}
+            className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
+          >
+            <Plus size={16} />
+            {t('sections.shortcuts.addShortcut')}
+          </button>
+        </div>
+      )}
 
       <p className="text-xs text-gray-400 dark:text-gray-500 italic">
         {t('sections.sidebarItem.shortcuts.sameShortcutHint')}
