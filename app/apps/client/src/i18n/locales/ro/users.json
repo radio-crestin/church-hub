@@ -20,6 +20,8 @@
     "setPlaceholder": "Setează o parolă (opțional)",
     "changePlaceholder": "Lasă gol pentru a păstra parola curentă",
     "hint": "Dacă este setată, utilizatorul trebuie să introducă parola la autentificare.",
+    "show": "Afișează parola",
+    "hide": "Ascunde parola",
     "hasPassword": "Protejat cu parolă",
     "remove": "Elimină parola",
     "removed": "Parolă eliminată",

@@ -175,13 +175,22 @@ export async function login(
   userId: number,
   password?: string,
 ): Promise<LoginResult> {
-  const response = await fetcher<ApiResponse<CurrentUser | null> & {
-    ticket: string
-  }>('/api/auth/login', {
+  const response = await fetcher<
+    Partial<ApiResponse<CurrentUser | null>> & {
+      ticket?: string
+      error?: string
+    }
+  >('/api/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ userId, password }),
   })
+  // The server returns `{ data, ticket }` on success and `{ error }` on
+  // failure (e.g. 401 for wrong credentials). The shared fetcher does not
+  // throw on non-ok responses, so we surface failures here ourselves.
+  if (!response.ticket) {
+    throw new Error(response.error ?? 'Invalid credentials')
+  }
   return { user: response.data ?? null, ticket: response.ticket }
 }
 
