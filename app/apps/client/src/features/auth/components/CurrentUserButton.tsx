@@ -12,7 +12,7 @@ interface CurrentUserButtonProps {
   isCollapsed: boolean
 }
 
-const PANEL_WIDTH = 288 // w-72
+const PANEL_MAX_WIDTH = 320 // upper bound so very long names still wrap
 const PANEL_GAP = 8 // mb-2 equivalent
 
 /**
@@ -30,6 +30,7 @@ export function CurrentUserButton({ isCollapsed }: CurrentUserButtonProps) {
   const { userName, isApp, isAuthenticated } = usePermissions()
   const [open, setOpen] = useState(false)
   const triggerRef = useRef<HTMLButtonElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
   const [coords, setCoords] = useState<{ top: number; left: number } | null>(
     null,
   )
@@ -43,17 +44,25 @@ export function CurrentUserButton({ isCollapsed }: CurrentUserButtonProps) {
       const r = el.getBoundingClientRect()
       // Anchor the panel's bottom-left just above the trigger. Clamp into the
       // viewport so the collapsed-sidebar case (very narrow trigger) still
-      // shows the whole panel.
+      // shows the whole panel — using the actual rendered panel width when
+      // available, falling back to the max so the very first paint is sane.
+      const panelEl = panelRef.current
+      const panelWidth = panelEl?.offsetWidth ?? PANEL_MAX_WIDTH
       const left = Math.max(
         8,
-        Math.min(r.left, window.innerWidth - PANEL_WIDTH - 8),
+        Math.min(r.left, window.innerWidth - panelWidth - 8),
       )
       setCoords({ top: r.top - PANEL_GAP, left })
     }
     update()
+    // First paint measured the panel at its fallback width; once it mounts
+    // and reflects its actual content width, recompute so the clamp uses the
+    // real number.
+    const raf = requestAnimationFrame(update)
     window.addEventListener('resize', update)
     window.addEventListener('scroll', update, true)
     return () => {
+      cancelAnimationFrame(raf)
       window.removeEventListener('resize', update)
       window.removeEventListener('scroll', update, true)
     }
@@ -89,10 +98,17 @@ export function CurrentUserButton({ isCollapsed }: CurrentUserButtonProps) {
 
       {/* Dropdown panel — fixed-positioned so it floats above the sidebar
           and ignores the nav's `overflow-y-auto`. `translateY(-100%)` lifts
-          it above the trigger (we anchored `top` to the trigger's top). */}
+          it above the trigger (we anchored `top` to the trigger's top).
+          Width sizes to its content (`w-fit`) but is capped so a very long
+          name still wraps instead of stretching off-screen. */}
       <div
-        className="fixed z-[61] w-72 -translate-y-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xl"
-        style={{ top: coords.top, left: coords.left }}
+        ref={panelRef}
+        className="fixed z-[61] w-fit -translate-y-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xl"
+        style={{
+          top: coords.top,
+          left: coords.left,
+          maxWidth: PANEL_MAX_WIDTH,
+        }}
         role="menu"
       >
         {/* Header */}
