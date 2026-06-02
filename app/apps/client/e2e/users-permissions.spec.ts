@@ -195,9 +195,10 @@ test.describe('Users & permissions', () => {
     page,
     request,
   }) => {
+    const switchName = `E2E Switch ${Date.now()}`
     const create = await request.post('/api/users', {
       data: {
-        name: `E2E Switch ${Date.now()}`,
+        name: switchName,
         permissions: ['songs.view'],
         password: PASSWORD,
       },
@@ -211,12 +212,14 @@ test.describe('Users & permissions', () => {
 
       // Log out → returns to the account picker (no session).
       await page.getByRole('button', { name: /log out|deconectare/i }).click()
+      // Use the exact unique name so leftover users from earlier failed runs
+      // (the DB persists across runs) don't trigger a strict-mode violation.
       await page
-        .getByRole('button', { name: /E2E Switch/ })
+        .getByRole('button', { name: new RegExp(switchName) })
         .waitFor({ timeout: 10000 })
 
       // Sign in as the other account.
-      await page.getByRole('button', { name: /E2E Switch/ }).click()
+      await page.getByRole('button', { name: new RegExp(switchName) }).click()
       await page.locator('#login-password').fill(PASSWORD)
       await page
         .getByRole('button', { name: /sign in|autentificare/i })
@@ -244,9 +247,10 @@ test.describe('Users & permissions', () => {
     request,
   }, testInfo) => {
     const baseURL = testInfo.project.use.baseURL as string
+    const wrongName = `E2E WrongPw ${Date.now()}`
     const create = await request.post('/api/users', {
       data: {
-        name: `E2E WrongPw ${Date.now()}`,
+        name: wrongName,
         permissions: ['songs.view'],
         password: PASSWORD,
       },
@@ -265,7 +269,9 @@ test.describe('Users & permissions', () => {
       await page.waitForLoadState('networkidle')
 
       // Pick the password-protected account and submit a wrong password.
-      await page.getByRole('button', { name: /E2E WrongPw/ }).click()
+      // Match the exact name so leftover users from earlier failed runs (DB
+      // persists across runs) don't make this a strict-mode violation.
+      await page.getByRole('button', { name: new RegExp(wrongName) }).click()
       await page.locator('#login-password').fill('definitely-not-it')
       await page
         .getByRole('button', { name: /sign in|autentificare/i })
