@@ -366,7 +366,13 @@ test.describe('Users & permissions', () => {
       await expect(
         page.getByRole('heading', { name: /developer|dezvoltator/i }),
       ).toHaveCount(0)
-      await expect(page.getByText(/sidebar|bară laterală/i)).toHaveCount(0)
+      // Assert on the Sidebar nav *link* (role=link), not free text: the app
+      // shell's "Collapse sidebar" button and the dev-only TanStack Router
+      // Devtools route tree both contain the word "sidebar" and would otherwise
+      // produce false matches in local dev runs.
+      await expect(
+        page.getByRole('link', { name: /sidebar|bară laterală/i }),
+      ).toHaveCount(0)
       // …and the Users section (gated by users.view) is absent too.
       await expect(
         page.getByRole('heading', {
