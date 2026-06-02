@@ -179,13 +179,6 @@ test.describe('Users & permissions', () => {
   test('the account page shows the profile and a log out action', async ({
     page,
   }) => {
-    await page.addInitScript(() => {
-      try {
-        sessionStorage.setItem('church-hub-user-selected', '1')
-      } catch {
-        /* ignore */
-      }
-    })
     await page.goto('/account')
     await page.waitForLoadState('networkidle')
 
@@ -212,14 +205,7 @@ test.describe('Users & permissions', () => {
     const userId = (await create.json()).data.user.id as number
 
     try {
-      // Start in the app as super admin (bypass launch picker), open account.
-      await page.addInitScript(() => {
-        try {
-          sessionStorage.setItem('church-hub-user-selected', '1')
-        } catch {
-          /* ignore */
-        }
-      })
+      // Start in the app as super admin and open the account page.
       await page.goto('/account')
       await page.waitForLoadState('networkidle')
 
@@ -300,29 +286,34 @@ test.describe('Users & permissions', () => {
     }
   })
 
-  test('opening the app with multiple accounts shows the picker', async ({
+  test('opening the app auto-signs-in as the last user (persisted session)', async ({
     page,
     request,
   }) => {
+    // A second account exists, so the picker WOULD show without a session.
+    // With the persisted super-admin cookie (from storageState), the app must
+    // skip the picker and open directly.
     const create = await request.post('/api/users', {
-      data: { name: `E2E Picker ${Date.now()}`, permissions: ['songs.view'] },
+      data: { name: `E2E Persisted ${Date.now()}`, permissions: ['songs.view'] },
     })
     const userId = (await create.json()).data.user.id as number
 
     try {
-      // Fresh launch (no prior in-window selection): even though a session
-      // cookie exists (storageState), the picker must appear so the operator
-      // chooses an account.
       await page.goto('/')
       await page.waitForLoadState('networkidle')
 
-      // Both accounts are offered to choose from.
+      // No login picker — the persisted session signs the last user in.
       await expect(
-        page.getByRole('button', { name: /E2E Picker/ }),
-      ).toBeVisible({ timeout: 10000 })
+        page.getByRole('heading', { name: /welcome|bun venit/i }),
+      ).toHaveCount(0)
       await expect(
-        page.getByRole('button', { name: /Super Admin/ }),
-      ).toBeVisible()
+        page.getByRole('button', { name: /E2E Persisted/ }),
+      ).toHaveCount(0)
+
+      const me = await page.evaluate(() =>
+        fetch('/api/auth/me', { credentials: 'include' }).then((r) => r.json()),
+      )
+      expect(me.data?.isApp).toBe(true)
     } finally {
       await request.delete(`/api/users/${userId}`)
     }
@@ -342,13 +333,6 @@ test.describe('Users & permissions', () => {
     const ctx = await browser.newContext({
       baseURL,
       storageState: { cookies: [], origins: [] },
-    })
-    await ctx.addInitScript(() => {
-      try {
-        sessionStorage.setItem('church-hub-user-selected', '1')
-      } catch {
-        /* ignore */
-      }
     })
     const page = await ctx.newPage()
 
@@ -447,13 +431,6 @@ test.describe('Users & permissions', () => {
     await request.put(`/api/users/${bId}`, { data: { isActive: false } })
 
     try {
-      await page.addInitScript(() => {
-        try {
-          sessionStorage.setItem('church-hub-user-selected', '1')
-        } catch {
-          /* ignore */
-        }
-      })
       await page.goto('/users')
       await page.waitForLoadState('networkidle')
 
