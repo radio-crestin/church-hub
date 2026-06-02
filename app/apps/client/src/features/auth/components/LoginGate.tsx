@@ -12,12 +12,6 @@ import type { LocalUser } from '~/features/users/types'
 import { usePermissions } from '~/provider/permissions-provider'
 import { LoginScreen } from './LoginScreen'
 
-// Per-window-session marker: set once the operator has explicitly chosen an
-// account for this launch. sessionStorage is cleared when the app window is
-// closed, so a fresh launch shows the picker again; it survives the in-window
-// reload caused by the login redirect, so we don't re-prompt mid-session.
-const SELECTION_FLAG = 'church-hub-user-selected'
-
 function FullScreenSpinner() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -48,16 +42,15 @@ function ConnectionLost() {
 }
 
 /**
- * Gates the app behind a local login. Because the server no longer grants
- * automatic access to localhost, the app must establish a session before any
- * authenticated request fires — so this wraps the app tree and blocks it until
- * a user is signed in.
+ * Gates the app behind a local login. The persisted `user_auth` cookie acts as
+ * an auto-login token — as long as it's valid, the operator is signed back in
+ * as the LAST USER on the next launch and the app opens directly. The picker
+ * only shows when there is no valid session.
  *
  * Behaviour:
- *  - A single passwordless account (fresh install) auto-signs-in — zero friction.
- *  - When there are multiple accounts (or a single password-protected one), the
- *    account picker is shown ONCE per app launch — even if a previous session
- *    is still valid — so whoever opens the app chooses who they are.
+ *  - Persisted session → render the app (last user auto-signed-in).
+ *  - No session + a single passwordless account (fresh install) → silent login.
+ *  - No session + anything else → account picker.
  *
  * On mobile the existing token/connection flow (MobileConnectionGuard) handles
  * auth, so this gate steps aside.
@@ -69,12 +62,13 @@ export function LoginGate({ children }: { children: ReactNode }) {
   const [autoLoginTried, setAutoLoginTried] = useState(false)
   const [autoLoggingIn, setAutoLoggingIn] = useState(false)
 
-  const enabled = !isMobile() && !isLoading && !isConnectionError
+  // Only fetch the user list when we actually need it (picker or sole
+  // auto-login). When a session is already valid we skip straight to the app.
+  const needsList =
+    !isMobile() && !isLoading && !isConnectionError && !isAuthenticated
 
-  // Fetch the user list — needed even when already authenticated, to decide
-  // whether the picker should be shown for this launch.
   useEffect(() => {
-    if (!enabled || users !== null) return
+    if (!needsList || users !== null) return
     let cancelled = false
     getLocalUsers()
       .then((list) => {
@@ -86,14 +80,14 @@ export function LoginGate({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true
     }
-  }, [enabled, users])
+  }, [needsList, users])
 
   // A single passwordless account requires no choice.
   const soleAutoLogin = !!users && users.length === 1 && !users[0].hasPassword
 
   // Auto-login that single passwordless account (fresh install).
   useEffect(() => {
-    if (!enabled || !users || autoLoginTried || isAuthenticated) return
+    if (!needsList || !users || autoLoginTried) return
     if (soleAutoLogin) {
       setAutoLoginTried(true)
       setAutoLoggingIn(true)
@@ -101,29 +95,22 @@ export function LoginGate({ children }: { children: ReactNode }) {
         .then(() => refresh())
         .finally(() => setAutoLoggingIn(false))
     }
-  }, [enabled, users, autoLoginTried, soleAutoLogin, isAuthenticated, refresh])
+  }, [needsList, users, autoLoginTried, soleAutoLogin, refresh])
 
-  // Finalize the chosen account via a top-level navigation (reliable cookie set
-  // in the desktop webview) and remember the choice for this launch.
+  // Finalize the chosen account via a top-level navigation — reliably sets the
+  // session cookie in the desktop webview. The cookie persists for a year, so
+  // the next launch auto-loads the app as this user (no picker).
   const handleSelected = useCallback((result: LoginResult) => {
-    sessionStorage.setItem(SELECTION_FLAG, '1')
     window.location.href = getLoginRedirectUrl(result.ticket)
   }, [])
 
   if (isMobile()) return <>{children}</>
   if (isLoading) return <FullScreenSpinner />
   if (isConnectionError) return <ConnectionLost />
+  // Persisted session = auto-login as the last user. No picker.
+  if (isAuthenticated) return <>{children}</>
   if (users === null || autoLoggingIn) return <FullScreenSpinner />
-
-  // Single passwordless account — never prompt.
-  if (soleAutoLogin) {
-    return isAuthenticated ? <>{children}</> : <FullScreenSpinner />
-  }
-
-  // Multiple accounts (or a single password-protected one): require an explicit
-  // choice once per launch, even if a previous session cookie is still valid.
-  const selectionDone = sessionStorage.getItem(SELECTION_FLAG) === '1'
-  if (selectionDone && isAuthenticated) return <>{children}</>
+  if (soleAutoLogin) return <FullScreenSpinner />
 
   return <LoginScreen users={users} onLoggedIn={handleSelected} />
 }
