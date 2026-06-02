@@ -106,3 +106,4 @@ scripts/convert-midi-to-mp3/soundfonts/
 app/apps/client/test-results/
 app/apps/client/playwright-report/
 app/apps/client/coverage/
+app/test-results/
