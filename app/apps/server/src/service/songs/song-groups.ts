@@ -1,10 +1,12 @@
 import { eq, inArray, sql } from 'drizzle-orm'
 
+import { searchSongs } from './search'
 import type {
   OperationResult,
   SongGroup,
   SongGroupMember,
   SongGroupWithMembers,
+  SongVersionSuggestion,
 } from './types'
 import { getDatabase } from '../../db'
 import { songGroups, songs } from '../../db/schema'
@@ -346,6 +348,148 @@ function touchGroup(groupId: number): void {
     .set({ updatedAt: new Date() })
     .where(eq(songGroups.id, groupId))
     .run()
+}
+
+/**
+ * Normalizes a Romanian song title for similarity comparison: lowercase,
+ * fold diacritics + cedilla→comma variants, strip punctuation, collapse
+ * whitespace. Kept in sync with the client's `normalize` shape so server
+ * and client agree on which titles look "the same".
+ */
+function normalizeTitle(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '') // strip combining marks
+    .replace(/[ţş]/g, (m) => (m === 'ţ' ? 't' : 's')) // legacy cedilla
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+/**
+ * Bigram Jaccard — symmetric, robust to small typos and word reorderings.
+ * Returns 0..1.
+ */
+function bigramSimilarity(a: string, b: string): number {
+  if (!a || !b) return 0
+  if (a === b) return 1
+  const bigrams = (s: string): Set<string> => {
+    const set = new Set<string>()
+    for (let i = 0; i < s.length - 1; i++) set.add(s.slice(i, i + 2))
+    return set
+  }
+  const aSet = bigrams(a)
+  const bSet = bigrams(b)
+  if (aSet.size === 0 || bSet.size === 0) return 0
+  let inter = 0
+  for (const g of aSet) if (bSet.has(g)) inter++
+  return (2 * inter) / (aSet.size + bSet.size)
+}
+
+/**
+ * Surfaces likely versions of `songId` — songs whose title (or, by
+ * extension via FTS, lyrics) looks similar enough to merit a user prompt
+ * "is this the same song?". This is on-demand; the request-time cost is
+ * one FTS query + an in-memory rerank over the top hits.
+ *
+ * Filtered out:
+ *  - the song itself,
+ *  - songs already in the same group,
+ *  - songs with normalized-title bigram similarity below `minScore` (default
+ *    `0.45`, which empirically catches "Doamne Te slavesc" ↔ "Doamne, Te
+ *    slăvesc" without flooding unrelated titles).
+ */
+export function getSimilarSongs(
+  songId: number,
+  limit = 5,
+  minScore = 0.45,
+): SongVersionSuggestion[] {
+  try {
+    const db = getDatabase()
+    const subject = db
+      .select({
+        title: songs.title,
+        songGroupId: songs.songGroupId,
+      })
+      .from(songs)
+      .where(eq(songs.id, songId))
+      .get()
+
+    if (!subject) return []
+
+    const normalizedSubject = normalizeTitle(subject.title)
+    if (!normalizedSubject) return []
+
+    // 1) Pull candidates via the existing FTS endpoint with the title as
+    //    the query. This already understands diacritic folding, hymn
+    //    number lookups, etc., so we piggy-back on it instead of running
+    //    a parallel index.
+    const rawCandidates = searchSongs(subject.title, undefined, 30)
+
+    // 2) Build the exclusion set: self + group members.
+    const exclude = new Set<number>([songId])
+    if (subject.songGroupId) {
+      const groupMembers = db
+        .select({ id: songs.id })
+        .from(songs)
+        .where(eq(songs.songGroupId, subject.songGroupId))
+        .all()
+      for (const m of groupMembers) exclude.add(m.id)
+    }
+
+    // 3) Rerank by normalized-title bigram similarity. The FTS score is a
+    //    decent recall signal but a poor precision signal on title-only
+    //    matches; the bigram pass tightens precision.
+    const rescored = rawCandidates
+      .filter((c) => !exclude.has(c.id))
+      .map((c) => {
+        const sim = bigramSimilarity(normalizedSubject, normalizeTitle(c.title))
+        // Blend FTS rank (0..100 → 0..1) with bigram similarity. Bigram
+        // dominates because two similar titles are the strongest signal a
+        // human looks at first.
+        const blended = 0.75 * sim + 0.25 * (c.score / 100)
+        return {
+          songId: c.id,
+          title: c.title,
+          hymnNumber: null as string | null,
+          author: null as string | null,
+          categoryName: c.categoryName,
+          // Cap to two decimal places to avoid noisy 0.7234... in the UI.
+          score: Math.round(blended * 100) / 100,
+          reason: (sim >= 0.7
+            ? 'title'
+            : c.score >= 70
+              ? 'lyrics'
+              : 'mixed') as SongVersionSuggestion['reason'],
+        }
+      })
+      .filter((c) => c.score >= minScore)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit)
+
+    // 4) Hydrate hymnNumber + author for the surviving candidates (cheap,
+    //    bounded by `limit`).
+    if (rescored.length === 0) return []
+    const ids = rescored.map((r) => r.songId)
+    const extras = db
+      .select({
+        id: songs.id,
+        hymnNumber: songs.hymnNumber,
+        author: songs.author,
+      })
+      .from(songs)
+      .where(inArray(songs.id, ids))
+      .all()
+    const extrasById = new Map(extras.map((e) => [e.id, e]))
+    return rescored.map((r) => {
+      const e = extrasById.get(r.songId)
+      return e ? { ...r, hymnNumber: e.hymnNumber, author: e.author } : r
+    })
+  } catch (error) {
+    logger.error(`getSimilarSongs(${songId}) failed: ${error}`)
+    return []
+  }
 }
 
 /**
