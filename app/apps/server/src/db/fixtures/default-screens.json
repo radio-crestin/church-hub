@@ -2,6 +2,8 @@
   {
     "name": "Main",
     "type": "primary",
+    "closeOnEscape": false,
+    "isPreviewScreen": true,
     "isActive": true,
     "openMode": "browser",
     "isFullscreen": false,
@@ -1040,6 +1042,8 @@
   {
     "name": "Stage",
     "type": "stage",
+    "closeOnEscape": false,
+    "isPreviewScreen": false,
     "isActive": false,
     "openMode": "browser",
     "isFullscreen": false,
@@ -1986,6 +1990,8 @@
   {
     "name": "Live Stream",
     "type": "livestream",
+    "closeOnEscape": false,
+    "isPreviewScreen": false,
     "isActive": false,
     "openMode": "browser",
     "isFullscreen": false,
@@ -2942,6 +2948,8 @@
   {
     "name": "Kiosk",
     "type": "kiosk",
+    "closeOnEscape": false,
+    "isPreviewScreen": false,
     "isActive": false,
     "openMode": "browser",
     "isFullscreen": true,

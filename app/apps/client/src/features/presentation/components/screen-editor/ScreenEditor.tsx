@@ -297,17 +297,17 @@ export function ScreenEditor({
   return (
     <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-950">
       {/* Toolbar */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-        <div className="flex items-center gap-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-3 sm:px-4 py-3 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 truncate max-w-[45vw] sm:max-w-none">
             {state.effectiveScreen.name}
           </h2>
-          <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 capitalize">
+          <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 capitalize flex-shrink-0">
             {state.effectiveScreen.type}
           </span>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4">
           {/* Scene selector (only shown when OBS scenes exist) */}
           {scenes.length > 0 && (
             <div className="flex items-center gap-2">
@@ -316,12 +316,12 @@ export function ScreenEditor({
                 value={state.selectedScene ?? '__default__'}
                 onChange={(value) => {
                   actions.setSelectedScene(
-                    value === '__default__' ? null : value,
+                    value === '__default__' ? null : (value as string),
                   )
                   actions.clearSelection()
                 }}
                 options={sceneOptions}
-                className="w-48"
+                className="w-44 sm:w-56"
                 portalContainer={portalContainer}
               />
             </div>
@@ -339,7 +339,7 @@ export function ScreenEditor({
                 actions.clearSelection()
               }}
               options={CONTENT_TYPE_OPTIONS}
-              className="w-48"
+              className="w-44 sm:w-56"
               portalContainer={portalContainer}
             />
           </div>
@@ -387,8 +387,9 @@ export function ScreenEditor({
         </div>
       </div>
 
-      {/* Main content */}
-      <div className="flex flex-1 overflow-hidden">
+      {/* Main content: stacked on mobile (canvas on top, controls below),
+          side-by-side from md up */}
+      <div className="flex flex-col md:flex-row flex-1 overflow-hidden min-h-0">
         {/* Canvas area */}
         <ScreenEditorCanvas
           screen={state.effectiveScreen}

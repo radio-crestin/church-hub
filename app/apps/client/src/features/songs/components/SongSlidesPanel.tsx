@@ -51,10 +51,22 @@ const TEXTAREA_PADDING_TOP_PX = 8
 
 const SCROLL_OFFSET_TOP = 100
 
+// Decode HTML entities the same way the live preview does, so the slide list
+// shows real characters (e.g. an apostrophe) instead of raw codes like
+// `&#039;`. Setting `textContent` does NOT decode entities, which is why the
+// previous textarea-based approach left `&#039;` visible.
 function decodeHtmlEntities(text: string): string {
-  const textarea = document.createElement('textarea')
-  textarea.textContent = text
-  return textarea.textContent || ''
+  return text
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&apos;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(Number(dec)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) =>
+      String.fromCharCode(Number.parseInt(hex, 16)),
+    )
 }
 
 function stripHtmlTags(html: string): string {
@@ -247,7 +259,7 @@ export function SongSlidesPanel({
       {/* Slides */}
       <div
         ref={containerRef}
-        className="flex-1 min-h-0 overflow-hidden lg:overflow-y-auto scrollbar-thin px-0.5 py-0.5"
+        className="flex-1 min-h-0 overflow-hidden lg:overflow-y-auto scrollbar-thin pl-0.5 pr-2 py-0.5"
       >
         {isEditMode ? (
           <div className="flex flex-col gap-2 h-full">
@@ -355,7 +367,7 @@ export function SongSlidesPanel({
                   ref={getRef()}
                   type="button"
                   onClick={() => !isPresented && onSlideClick(slide, index)}
-                  className={`w-full text-left px-3 py-2 rounded-lg transition-colors group ${getButtonClass()} ${
+                  className={`w-full text-left px-2 py-2 rounded-lg transition-colors group ${getButtonClass()} ${
                     isDuplicate ? 'opacity-60' : ''
                   }`}
                 >

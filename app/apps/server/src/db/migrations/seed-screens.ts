@@ -11,10 +11,12 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
 
 interface ScreenFixture {
   name: string
-  type: 'primary' | 'stage' | 'livestream'
+  type: 'primary' | 'stage' | 'livestream' | 'kiosk'
   isActive: boolean
   openMode: string
   isFullscreen: boolean
+  closeOnEscape?: boolean
+  isPreviewScreen?: boolean
   width: number
   height: number
   globalSettings: Record<string, unknown>
@@ -54,17 +56,21 @@ export function seedDefaultScreens(db: Database): void {
     const screens = defaultScreens as ScreenFixture[]
 
     for (const screen of screens) {
-      // Insert screen
+      // Insert screen. close_on_escape defaults to off (window stays open when
+      // nothing is displayed) and is_preview_screen marks the screen mirrored
+      // in the in-app preview — both come straight from the factory fixture.
       db.run(
         `INSERT INTO screens
-          (name, type, is_active, open_mode, is_fullscreen, width, height, global_settings, sort_order, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, unixepoch(), unixepoch())`,
+          (name, type, is_active, open_mode, is_fullscreen, close_on_escape, is_preview_screen, width, height, global_settings, sort_order, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, unixepoch(), unixepoch())`,
         [
           screen.name,
           screen.type,
           screen.isActive ? 1 : 0,
           screen.openMode,
           screen.isFullscreen ? 1 : 0,
+          screen.closeOnEscape ? 1 : 0,
+          screen.isPreviewScreen ? 1 : 0,
           screen.width,
           screen.height,
           JSON.stringify(screen.globalSettings),
