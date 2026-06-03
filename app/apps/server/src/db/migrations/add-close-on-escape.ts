@@ -10,6 +10,7 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
 
 const MIGRATION_KEY_V1 = 'add_close_on_escape_v1'
 const MIGRATION_KEY_V2 = 'add_close_on_escape_v2_default_off'
+const MIGRATION_KEY_V3 = 'add_close_on_escape_v3_factory_off'
 
 /**
  * Add close_on_escape column to screens table (default false).
@@ -20,23 +21,15 @@ const MIGRATION_KEY_V2 = 'add_close_on_escape_v2_default_off'
  * Migration history:
  *  - v1: introduced close_on_escape with DEFAULT 1. Also migrated from the
  *    earlier `keep_visible_on_escape` column (inverted semantics).
- *  - v2: flipped the default to 0 (stay open). On databases where v1 was
- *    already applied, all existing rows are reset to 0 to match the new
- *    default behavior (the feature was brand new and not yet tuned per
- *    screen).
+ *  - v2: flipped the default to 0 (stay open) and reset existing rows to 0.
+ *  - v3: the legacy column DEFAULT is still 1, so screens re-seeded after v2
+ *    (or created from the old default) came back as 1. The factory default is
+ *    OFF, so do one final one-time alignment — reset every screen to 0 so the
+ *    window stays open when nothing is displayed. After this runs once,
+ *    operators can freely toggle per screen.
  */
 export function addCloseOnEscape(db: Database): void {
-  const v2Applied = db
-    .query<{ count: number }, [string]>(
-      'SELECT COUNT(*) as count FROM app_settings WHERE key = ?',
-    )
-    .get(MIGRATION_KEY_V2)?.count
-
-  if (v2Applied && v2Applied > 0) {
-    log('debug', 'Migration v2 already applied, skipping')
-    return
-  }
-
+  // 1. Ensure the column exists and migrate the legacy column (idempotent).
   const columns = db
     .query<{ name: string }, []>('PRAGMA table_info(screens)')
     .all()
@@ -71,28 +64,24 @@ export function addCloseOnEscape(db: Database): void {
     }
   }
 
-  const v1Applied = db
+  // 2. One-time factory-default alignment: reset every screen to 0 (off).
+  const v3Applied = db
     .query<{ count: number }, [string]>(
       'SELECT COUNT(*) as count FROM app_settings WHERE key = ?',
     )
-    .get(MIGRATION_KEY_V1)?.count
+    .get(MIGRATION_KEY_V3)?.count
 
-  if (v1Applied && v1Applied > 0) {
-    log(
-      'info',
-      'Resetting existing screens to close_on_escape = 0 (v2 default flip)...',
-    )
+  if (!v3Applied || v3Applied === 0) {
+    log('info', 'Resetting all screens to close_on_escape = 0 (factory off)...')
     db.run('UPDATE screens SET close_on_escape = 0')
-  }
 
-  db.run(
-    'INSERT OR REPLACE INTO app_settings (key, value, created_at, updated_at) VALUES (?, ?, unixepoch(), unixepoch())',
-    [MIGRATION_KEY_V1, JSON.stringify({ success: true })],
-  )
-  db.run(
-    'INSERT OR REPLACE INTO app_settings (key, value, created_at, updated_at) VALUES (?, ?, unixepoch(), unixepoch())',
-    [MIGRATION_KEY_V2, JSON.stringify({ success: true })],
-  )
+    for (const key of [MIGRATION_KEY_V1, MIGRATION_KEY_V2, MIGRATION_KEY_V3]) {
+      db.run(
+        'INSERT OR REPLACE INTO app_settings (key, value, created_at, updated_at) VALUES (?, ?, unixepoch(), unixepoch())',
+        [key, JSON.stringify({ success: true })],
+      )
+    }
+  }
 
   log('info', 'close_on_escape migration complete')
 }

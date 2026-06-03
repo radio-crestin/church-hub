@@ -1,4 +1,4 @@
-import { and, asc, eq, sql } from 'drizzle-orm'
+import { and, asc, eq, ne, sql } from 'drizzle-orm'
 
 import type {
   ContentType,
@@ -310,6 +310,23 @@ function parseConfig(json: string): Record<string, unknown> {
   }
 }
 
+/**
+ * Parse a stored content config and merge it over the per-type default so
+ * configs persisted by older app versions (or saved partially) always have the
+ * required top-level fields like `background`. Without this, the editor crashes
+ * reading `config.background.type` on a drifted config (same defensive pattern
+ * as parseNextSlideConfig).
+ */
+export function parseContentConfig(
+  contentType: ContentType,
+  json: string,
+): Record<string, unknown> {
+  return {
+    ...getDefaultContentConfig(contentType),
+    ...parseConfig(json),
+  }
+}
+
 export function parseNextSlideConfig(json: string): NextSlideSectionConfig {
   try {
     const defaults = getDefaultNextSlideConfig()
@@ -340,6 +357,7 @@ function toScreen(record: typeof screens.$inferSelect): Screen {
     isFullscreen: record.isFullscreen,
     alwaysOnTop: record.alwaysOnTop,
     closeOnEscape: record.closeOnEscape,
+    isPreviewScreen: record.isPreviewScreen,
     width: record.width,
     height: record.height,
     globalSettings: parseGlobalSettings(record.globalSettings),
@@ -440,7 +458,7 @@ export function getScreenWithConfigs(id: number): ScreenWithConfigs | null {
     for (const type of contentTypes) {
       const existing = configRecords.find((r) => r.contentType === type)
       if (existing) {
-        configMap[type] = parseConfig(existing.config)
+        configMap[type] = parseContentConfig(type, existing.config)
       } else {
         configMap[type] = getDefaultContentConfig(type)
       }
@@ -553,6 +571,19 @@ export function upsertScreen(input: UpsertScreenInput): Screen | null {
       if (input.closeOnEscape !== undefined) {
         updateData.closeOnEscape = input.closeOnEscape
       }
+      if (input.isPreviewScreen !== undefined) {
+        updateData.isPreviewScreen = input.isPreviewScreen
+        // Enforce a single preview screen: clear the flag on every other screen
+        if (input.isPreviewScreen) {
+          db.update(screens)
+            .set({
+              isPreviewScreen: false,
+              updatedAt: sql`(unixepoch())` as unknown as Date,
+            })
+            .where(ne(screens.id, input.id))
+            .run()
+        }
+      }
 
       db.update(screens).set(updateData).where(eq(screens.id, input.id)).run()
 
@@ -573,6 +604,7 @@ export function upsertScreen(input: UpsertScreenInput): Screen | null {
         isFullscreen: input.isFullscreen === true,
         alwaysOnTop: input.alwaysOnTop === true,
         closeOnEscape: input.closeOnEscape === true,
+        isPreviewScreen: input.isPreviewScreen === true,
         width,
         height,
         globalSettings: globalSettingsJson,
@@ -580,6 +612,18 @@ export function upsertScreen(input: UpsertScreenInput): Screen | null {
       })
       .returning({ id: screens.id })
       .get()
+
+    // Enforce a single preview screen: if this new screen is the preview, clear
+    // the flag on every other screen.
+    if (input.isPreviewScreen === true) {
+      db.update(screens)
+        .set({
+          isPreviewScreen: false,
+          updatedAt: sql`(unixepoch())` as unknown as Date,
+        })
+        .where(ne(screens.id, inserted.id))
+        .run()
+    }
 
     // Create default content configs for all content types
     for (const contentType of contentTypes) {
@@ -768,7 +812,7 @@ export function getContentConfig(
       .get()
 
     if (record) {
-      return parseConfig(record.config)
+      return parseContentConfig(contentType, record.config)
     }
 
     return getDefaultContentConfig(contentType)
