@@ -9,7 +9,7 @@ interface VersionDisplayProps {
 
 export function VersionDisplay({ isCollapsed }: VersionDisplayProps) {
   const { t } = useTranslation('sidebar')
-  const { updateInfo, isLoading, checkNow } = useAppUpdate()
+  const { updateInfo, isLoading, isDevInstance, checkNow } = useAppUpdate()
 
   if (!updateInfo) {
     return null
@@ -27,13 +27,21 @@ export function VersionDisplay({ isCollapsed }: VersionDisplayProps) {
         className={`flex items-center gap-1 ${isCollapsed ? 'flex-col' : ''}`}
       >
         <span title={t('version.current')}>v{currentVersion}</span>
+        {isDevInstance && (
+          <span
+            className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
+            title={t('version.devInstanceHint')}
+          >
+            {t('version.dev')}
+          </span>
+        )}
         {!isCollapsed && hasUpdate && (
           <span className="text-green-600 dark:text-green-400">
             → v{latestVersion}
           </span>
         )}
       </div>
-      {!isCollapsed && (
+      {!isCollapsed && !isDevInstance && (
         <button
           onClick={() => void checkNow()}
           disabled={isLoading}

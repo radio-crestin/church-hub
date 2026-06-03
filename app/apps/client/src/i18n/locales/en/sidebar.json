@@ -28,6 +28,8 @@
     "clickToDownload": "Click to download the latest version",
     "download": "Download Update",
     "downloading": "Opening...",
-    "dismiss": "Dismiss"
+    "dismiss": "Dismiss",
+    "dev": "Dev",
+    "devInstanceHint": "Running a dev instance — update checks are disabled"
   }
 }
