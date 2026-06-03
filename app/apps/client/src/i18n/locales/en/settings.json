@@ -946,7 +946,9 @@
       "downloadUpdate": "Download Update",
       "downloading": "Opening...",
       "upToDate": "You are running the latest version.",
-      "viewReleaseNotes": "View release notes on GitHub"
+      "viewReleaseNotes": "View release notes on GitHub",
+      "devInstance": "Development instance",
+      "devInstanceDescription": "You're running a dev build — update checks are disabled."
     }
   }
 }

@@ -28,6 +28,8 @@
     "clickToDownload": "Apasă pentru a descărca ultima versiune",
     "download": "Descarcă Actualizarea",
     "downloading": "Se deschide...",
-    "dismiss": "Închide"
+    "dismiss": "Închide",
+    "dev": "Dev",
+    "devInstanceHint": "Rulează o instanță de dezvoltare — verificarea actualizărilor este dezactivată"
   }
 }
