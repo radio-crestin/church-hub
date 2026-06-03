@@ -25,6 +25,7 @@ export {
 } from './categories'
 export {
   getGroupForSong,
+  getSimilarSongs,
   getSongGroup,
   linkSongs,
   setPrimarySong,

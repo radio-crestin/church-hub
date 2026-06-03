@@ -1,12 +1,113 @@
 import { Link } from '@tanstack/react-router'
-import { Crown, ExternalLink, Layers, Loader2, Unlink } from 'lucide-react'
-import { useState } from 'react'
+import {
+  Check,
+  Crown,
+  ExternalLink,
+  Layers,
+  Loader2,
+  Sparkles,
+  Unlink,
+  X,
+} from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { LinkVersionsModal } from './LinkVersionsModal'
+import { useLinkSongs } from '../hooks/useLinkSongs'
 import { useSetPrimarySong } from '../hooks/useSetPrimarySong'
+import { useSimilarSongs } from '../hooks/useSimilarSongs'
 import { useSongGroup } from '../hooks/useSongGroup'
 import { useUnlinkSong } from '../hooks/useUnlinkSong'
+import { dismissSuggestion, isDismissed } from '../utils/dismissedSuggestions'
+
+/**
+ * Renders the "Sugestii" sub-section: songs the server flagged as likely
+ * versions, with accept ("aceeași cântare") and dismiss controls. Hidden
+ * entirely when the server returns nothing — so a song with no candidates
+ * doesn't waste vertical space.
+ */
+function SuggestionsSection({
+  songId,
+  canEdit,
+}: {
+  songId: number
+  canEdit: boolean
+}) {
+  const { t } = useTranslation('songs')
+  const { data: suggestions = [], isLoading } = useSimilarSongs(songId)
+  const linkMutation = useLinkSongs()
+  // Forces a re-render after a dismissal so the row disappears immediately
+  // without waiting for the query cache to refresh.
+  const [dismissTick, setDismissTick] = useState(0)
+
+  const visible = useMemo(
+    () => suggestions.filter((s) => !isDismissed(songId, s.songId)),
+    // dismissTick intentionally invalidates the memo after a click.
+    // biome-ignore lint/correctness/useExhaustiveDependencies: re-read localStorage on tick
+    [suggestions, songId, dismissTick],
+  )
+
+  if (!canEdit) return null
+  if (isLoading) return null
+  if (visible.length === 0) return null
+
+  function handleAccept(suggestedId: number) {
+    linkMutation.mutate({ songIdA: songId, songIdB: suggestedId })
+  }
+
+  function handleDismiss(suggestedId: number) {
+    dismissSuggestion(songId, suggestedId)
+    setDismissTick((n) => n + 1)
+  }
+
+  return (
+    <div className="mt-3 border-t border-gray-200 pt-3 dark:border-gray-700">
+      <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+        <Sparkles size={12} />
+        {t('versions.suggestionsTitle')}
+      </div>
+      <ul className="space-y-1">
+        {visible.map((s) => (
+          <li
+            key={s.songId}
+            className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-700/40"
+          >
+            <Link
+              to="/songs/$songId"
+              params={{ songId: String(s.songId) }}
+              className="min-w-0 flex-1"
+            >
+              <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
+                {s.title}
+              </p>
+              <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+                {t(`versions.reason.${s.reason}`)} · {Math.round(s.score * 100)}
+                %{s.categoryName ? ` · ${s.categoryName}` : ''}
+              </p>
+            </Link>
+            <button
+              type="button"
+              onClick={() => handleAccept(s.songId)}
+              disabled={linkMutation.isPending}
+              title={t('versions.suggestionAccept')}
+              className="rounded p-1.5 text-emerald-600 hover:bg-emerald-50 disabled:opacity-50 dark:text-emerald-400 dark:hover:bg-emerald-900/30"
+            >
+              <Check size={14} />
+            </button>
+            <button
+              type="button"
+              onClick={() => handleDismiss(s.songId)}
+              title={t('versions.suggestionDismiss')}
+              className="rounded p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+            >
+              <X size={14} />
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
 
 interface SongVersionsPanelProps {
   songId: number
@@ -70,6 +171,8 @@ export function SongVersionsPanel({
           <Layers size={14} />
           {t('versions.linkButton')}
         </button>
+
+        <SuggestionsSection songId={songId} canEdit={canEdit} />
 
         <LinkVersionsModal
           isOpen={isLinkModalOpen}
@@ -187,6 +290,8 @@ export function SongVersionsPanel({
           )
         })}
       </ul>
+
+      <SuggestionsSection songId={songId} canEdit={canEdit} />
 
       <LinkVersionsModal
         isOpen={isLinkModalOpen}

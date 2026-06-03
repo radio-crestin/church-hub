@@ -143,4 +143,51 @@ test.describe('Song Versions', () => {
       page.getByRole('button', { name: /same song as|aceea[șs]i c[âa]ntare/i }),
     ).toBeVisible({ timeout: 10000 })
   })
+
+  test('GET /api/songs/:id/similar returns a similarly-titled candidate', async ({
+    request,
+  }) => {
+    // Two very-similar titles → the bigram-similarity pass should rank
+    // them as candidates of each other. The fuzzy " " vs "," and missing
+    // diacritic mirror the real-world dirtiness in the user's 30k corpus.
+    const original = await createSong(
+      request,
+      `Doamne Te slavesc fara diacritice ${tag}`,
+    )
+    const alt = await createSong(
+      request,
+      `Doamne, Te slăvesc fără diacritice ${tag}`,
+    )
+
+    const res = await request.get(`/api/songs/${original}/similar?limit=5`)
+    expect(res.ok()).toBeTruthy()
+    const { data } = await res.json()
+    expect(Array.isArray(data)).toBe(true)
+    // The alt title should show up. The other test songs share less title
+    // similarity so it should be near the top.
+    const ids = data.map((s: { songId: number }) => s.songId)
+    expect(ids).toContain(alt)
+  })
+
+  test('similar suggestions exclude existing group members', async ({
+    request,
+  }) => {
+    // Create three similar titles. Group two of them, then ask for
+    // suggestions on the first — it must NOT propose its already-linked
+    // sibling (that would be noise the operator already resolved).
+    const a = await createSong(request, `Iisus Hristos a inviat ${tag}`)
+    const b = await createSong(request, `Iisus Hristos a înviat ${tag}`)
+    const c = await createSong(request, `Iisus Hristos a inviat azi ${tag}`)
+
+    await request.post('/api/song-groups/link', {
+      data: { songIdA: a, songIdB: b },
+    })
+
+    const res = await request.get(`/api/songs/${a}/similar?limit=10`)
+    const { data } = await res.json()
+    const ids = data.map((s: { songId: number }) => s.songId)
+    expect(ids).not.toContain(b) // already a group sibling — filtered out
+    expect(ids).not.toContain(a) // never suggest the song itself
+    expect(ids).toContain(c) // a different similar song — surfaced
+  })
 })
