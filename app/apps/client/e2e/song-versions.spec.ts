@@ -147,9 +147,9 @@ test.describe('Song Versions', () => {
   test('GET /api/songs/:id/similar returns a similarly-titled candidate', async ({
     request,
   }) => {
-    // Two very-similar titles → the bigram-similarity pass should rank
-    // them as candidates of each other. The fuzzy " " vs "," and missing
-    // diacritic mirror the real-world dirtiness in the user's 30k corpus.
+    // Two near-identical titles, only diacritics + punctuation differ. The
+    // ASCII-fold + content-word Jaccard pass should match them perfectly,
+    // mirroring the real dirtiness in the user's 30k corpus.
     const original = await createSong(
       request,
       `Doamne Te slavesc fara diacritice ${tag}`,
@@ -163,10 +163,80 @@ test.describe('Song Versions', () => {
     expect(res.ok()).toBeTruthy()
     const { data } = await res.json()
     expect(Array.isArray(data)).toBe(true)
-    // The alt title should show up. The other test songs share less title
-    // similarity so it should be near the top.
     const ids = data.map((s: { songId: number }) => s.songId)
     expect(ids).toContain(alt)
+  })
+
+  test('filler-word titles do NOT pull in semantically unrelated songs', async ({
+    request,
+  }) => {
+    // Reproduces the false-positive cluster the operator hit on
+    // "Doamne mai vreau Rusalii cu limbi de foc":
+    //  - the duplicate (true positive)  must be surfaced,
+    //  - the filler-word matches (FPs)  must be dropped.
+    const subject = await createSong(
+      request,
+      `Doamne mai vreau Rusalii cu limbi de foc ${tag}`,
+    )
+    const truePositive = await createSong(
+      request,
+      `Doamne mai vreau Rusalii cu limbi de foc ${tag} v2`,
+    )
+    const fp1 = await createSong(request, `Doamne nu mai vreau nimic ${tag}`)
+    const fp2 = await createSong(
+      request,
+      `Doamne vreau si-Ti cer sa fiu ${tag}`,
+    )
+    const fp3 = await createSong(
+      request,
+      `Vreau sa ies Doamne astazi din lume ${tag}`,
+    )
+    const fp4 = await createSong(
+      request,
+      `Chiar mii de limbi de as vrea ${tag}`,
+    )
+
+    const res = await request.get(`/api/songs/${subject}/similar?limit=10`)
+    const { data } = await res.json()
+    const ids: number[] = data.map((s: { songId: number }) => s.songId)
+
+    expect(ids).toContain(truePositive)
+    // None of the filler-word collisions may surface.
+    expect(ids).not.toContain(fp1)
+    expect(ids).not.toContain(fp2)
+    expect(ids).not.toContain(fp3)
+    expect(ids).not.toContain(fp4)
+  })
+
+  test('a rewritten title with near-identical lyrics is still surfaced', async ({
+    request,
+  }) => {
+    // The scoring rule "no title overlap OK if lyrics overlap >= 0.7" is
+    // load-bearing for translated / paraphrased titles. Build two songs
+    // with disjoint titles but identical lyrics, then assert the surface.
+    const lyrics = [
+      { content: 'Slavă Ție-mi cânt cu dor și mulțumire' },
+      { content: 'Cer cu drag iertarea Ta și pace' },
+    ]
+    const a = await request
+      .post('/api/songs', {
+        data: { title: `Cantarea izvor de pace ${tag}`, slides: lyrics },
+      })
+      .then((r) => r.json())
+      .then((j) => j.data.id as number)
+    createdSongIds.push(a)
+    const b = await request
+      .post('/api/songs', {
+        data: { title: `Refren al iertarii ${tag}`, slides: lyrics },
+      })
+      .then((r) => r.json())
+      .then((j) => j.data.id as number)
+    createdSongIds.push(b)
+
+    const res = await request.get(`/api/songs/${a}/similar?limit=5`)
+    const { data } = await res.json()
+    const ids: number[] = data.map((s: { songId: number }) => s.songId)
+    expect(ids).toContain(b)
   })
 
   test('similar suggestions exclude existing group members', async ({

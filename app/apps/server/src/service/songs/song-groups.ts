@@ -9,7 +9,7 @@ import type {
   SongVersionSuggestion,
 } from './types'
 import { getDatabase } from '../../db'
-import { songGroups, songs } from '../../db/schema'
+import { songGroups, songSlides, songs } from '../../db/schema'
 import { createLogger } from '../../utils/logger'
 
 const logger = createLogger('song-groups')
@@ -351,59 +351,269 @@ function touchGroup(groupId: number): void {
 }
 
 /**
- * Normalizes a Romanian song title for similarity comparison: lowercase,
- * fold diacritics + cedilla→comma variants, strip punctuation, collapse
- * whitespace. Kept in sync with the client's `normalize` shape so server
- * and client agree on which titles look "the same".
+ * Romanian function-word + filler vocabulary stripped before computing
+ * title/lyrics overlap. The list is intentionally conservative — we only
+ * drop words that recur across nearly every hymn ("doamne", "iisus" are
+ * deliberately KEPT because they DO carry signal between hymn variants of
+ * the same prayer, just less than a distinctive noun like "rusalii"). The
+ * goal is to suppress filler like "să / și / nu / mai" that previously
+ * inflated bigram similarity on titles like "Doamne mai vreau X" vs
+ * "Doamne nu mai vreau Y".
+ *
+ * Entries are in ASCII form (post-fold), matching `tokenize()`.
  */
-function normalizeTitle(s: string): string {
+const RO_STOPWORDS: ReadonlySet<string> = new Set([
+  // Articles & determiners
+  'o',
+  'un',
+  'una',
+  'unei',
+  'unui',
+  'unele',
+  'unii',
+  'niste',
+  'cel',
+  'cea',
+  'cei',
+  'cele',
+  'asta',
+  'asa',
+  'aceea',
+  'acela',
+  'acesta',
+  'aceasta',
+  'acesti',
+  'aceste',
+  // Prepositions
+  'in',
+  'la',
+  'cu',
+  'de',
+  'pe',
+  'din',
+  'pana',
+  'spre',
+  'sub',
+  'fara',
+  'pentru',
+  'peste',
+  'catre',
+  'prin',
+  'intre',
+  // Conjunctions / connectives
+  'si',
+  'sau',
+  'dar',
+  'iar',
+  'ori',
+  'nici',
+  'ca',
+  'sa',
+  'caci',
+  'deci',
+  // Personal pronouns (full and clitic, ASCII-folded)
+  'eu',
+  'tu',
+  'el',
+  'ea',
+  'noi',
+  'voi',
+  'ei',
+  'ele',
+  'ma',
+  'te',
+  'se',
+  'ne',
+  'va',
+  'mi',
+  'ti',
+  'ii',
+  'le',
+  'mie',
+  'tie',
+  'sie',
+  'mine',
+  'tine',
+  'sine',
+  // Possessives + their connective particles
+  'meu',
+  'mea',
+  'mei',
+  'mele',
+  'tau',
+  'ta',
+  'tai',
+  'tale',
+  'sau',
+  'sa',
+  'sai',
+  'sale',
+  'al',
+  'ai',
+  'ale',
+  'isi',
+  // Auxiliaries / be-forms
+  'a',
+  'am',
+  'ai',
+  'au',
+  'as',
+  'ar',
+  'aveti',
+  'avem',
+  'va',
+  'vor',
+  'voi',
+  'e',
+  'esti',
+  'este',
+  'sunt',
+  'era',
+  'eram',
+  'erau',
+  'fi',
+  'fie',
+  'fii',
+  'fost',
+  // Negation & modal/quantifier fillers
+  'nu',
+  'mai',
+  'doar',
+  'tot',
+  'toata',
+  'toti',
+  'toate',
+  'cam',
+  'chiar',
+  // Interrogatives — rarely the distinctive word of a hymn
+  'ce',
+  'cum',
+  'cand',
+  'unde',
+  'cine',
+  'care',
+])
+
+/**
+ * Lowercase + NFD strip diacritics + cedilla→comma legacy fold +
+ * non-alphanumeric → space + collapse whitespace. This matches what the
+ * Romanian hymn corpus needs to be compared apples-to-apples regardless of
+ * whether the typist used diacritics, old vs new Unicode for ț/ș, or extra
+ * punctuation.
+ */
+function normalize(s: string): string {
   return s
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '') // strip combining marks
-    .replace(/[ţş]/g, (m) => (m === 'ţ' ? 't' : 's')) // legacy cedilla
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[ţş]/g, (m) => (m === 'ţ' ? 't' : 's'))
     .replace(/[^a-z0-9\s]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
 }
 
-/**
- * Bigram Jaccard — symmetric, robust to small typos and word reorderings.
- * Returns 0..1.
- */
-function bigramSimilarity(a: string, b: string): number {
-  if (!a || !b) return 0
-  if (a === b) return 1
-  const bigrams = (s: string): Set<string> => {
-    const set = new Set<string>()
-    for (let i = 0; i < s.length - 1; i++) set.add(s.slice(i, i + 2))
-    return set
-  }
-  const aSet = bigrams(a)
-  const bSet = bigrams(b)
-  if (aSet.size === 0 || bSet.size === 0) return 0
-  let inter = 0
-  for (const g of aSet) if (bSet.has(g)) inter++
-  return (2 * inter) / (aSet.size + bSet.size)
+function tokenize(s: string): string[] {
+  const n = normalize(s)
+  if (!n) return []
+  return n.split(' ').filter((t) => t.length > 0)
 }
 
 /**
- * Surfaces likely versions of `songId` — songs whose title (or, by
- * extension via FTS, lyrics) looks similar enough to merit a user prompt
- * "is this the same song?". This is on-demand; the request-time cost is
- * one FTS query + an in-memory rerank over the top hits.
+ * Drops stopwords + single-character noise from a token list. Returns the
+ * content-word set used for the precision-tight Jaccard pass.
+ */
+function contentWords(toks: readonly string[]): Set<string> {
+  const set = new Set<string>()
+  for (const t of toks) {
+    if (t.length < 2) continue
+    if (RO_STOPWORDS.has(t)) continue
+    set.add(t)
+  }
+  return set
+}
+
+function jaccard(a: ReadonlySet<string>, b: ReadonlySet<string>): number {
+  if (a.size === 0 || b.size === 0) return 0
+  let inter = 0
+  for (const w of a) if (b.has(w)) inter++
+  const union = a.size + b.size - inter
+  return union === 0 ? 0 : inter / union
+}
+
+/**
+ * Computes the version-likelihood score between two songs. Combines:
+ *  - Content-word title Jaccard (60%) — distinctive words after stripping
+ *    Romanian filler; falls back to full-token Jaccard when the title is
+ *    pure filler (e.g. "Doamne miluiește") so identical titles still match.
+ *  - Content-word lyrics Jaccard (40%) — catches versions whose title was
+ *    rewritten but whose lyrics still share most of the vocabulary.
+ *
+ * A hard precision filter then rejects pairs that share NO distinctive
+ * title word AND have lyrics overlap below 0.7 — that combination is the
+ * shape of an accidental match (common Romanian filler in titles, no
+ * content overlap at all).
+ */
+function scoreVersionLikelihood(
+  subjectTitleToks: readonly string[],
+  subjectLyricToks: readonly string[],
+  candidateTitle: string,
+  candidateLyrics: string,
+): { score: number; reason: SongVersionSuggestion['reason'] } {
+  const subjTitleSet = contentWords(subjectTitleToks)
+  const candTitleToks = tokenize(candidateTitle)
+  const candTitleSet = contentWords(candTitleToks)
+
+  // Filler-only titles fall back to full-token Jaccard.
+  const useFallback = subjTitleSet.size === 0 || candTitleSet.size === 0
+  const titleSim = useFallback
+    ? jaccard(new Set(subjectTitleToks), new Set(candTitleToks))
+    : jaccard(subjTitleSet, candTitleSet)
+
+  const subjLyricSet = contentWords(subjectLyricToks)
+  const candLyricSet = contentWords(tokenize(candidateLyrics))
+  const lyricsSim = jaccard(subjLyricSet, candLyricSet)
+
+  // Precision filter — kill matches that share no distinctive title word
+  // unless the lyrics are nearly identical (a rewritten-title version).
+  const hasTitleContentOverlap =
+    !useFallback && [...subjTitleSet].some((w) => candTitleSet.has(w))
+  if (!hasTitleContentOverlap && lyricsSim < 0.7) {
+    return { score: 0, reason: 'mixed' }
+  }
+
+  // Pure-lyrics match: titles share no distinctive word, but the lyrics
+  // are nearly identical → this is a translated / paraphrased title. Give
+  // the lyrics signal full credit instead of diluting it via the blended
+  // formula (which would average in a zero title score).
+  if (!hasTitleContentOverlap) {
+    return { score: lyricsSim, reason: 'lyrics' }
+  }
+
+  const blended = 0.6 * titleSim + 0.4 * lyricsSim
+  const reason: SongVersionSuggestion['reason'] =
+    titleSim >= 0.7 ? 'title' : lyricsSim >= 0.5 ? 'lyrics' : 'mixed'
+  return { score: blended, reason }
+}
+
+/**
+ * Surfaces likely versions of `songId`: songs whose distinctive content
+ * (title + lyrics, after Romanian-aware stopword removal and ASCII fold)
+ * overlaps enough to merit "is this the same song?". On-demand; the
+ * request-time cost is one FTS query + a single batched slides fetch +
+ * an in-memory rerank.
  *
  * Filtered out:
  *  - the song itself,
  *  - songs already in the same group,
- *  - songs with normalized-title bigram similarity below `minScore` (default
- *    `0.45`, which empirically catches "Doamne Te slavesc" ↔ "Doamne, Te
- *    slăvesc" without flooding unrelated titles).
+ *  - songs whose blended score is below `minScore` (default `0.55`,
+ *    chosen so e.g. "Doamne mai vreau Rusalii cu limbi de foc" no longer
+ *    pulls in unrelated "Doamne nu mai vreau nimic" through filler-word
+ *    inflation).
  */
 export function getSimilarSongs(
   songId: number,
   limit = 5,
-  minScore = 0.45,
+  minScore = 0.55,
 ): SongVersionSuggestion[] {
   try {
     const db = getDatabase()
@@ -418,13 +628,9 @@ export function getSimilarSongs(
 
     if (!subject) return []
 
-    const normalizedSubject = normalizeTitle(subject.title)
-    if (!normalizedSubject) return []
-
     // 1) Pull candidates via the existing FTS endpoint with the title as
-    //    the query. This already understands diacritic folding, hymn
-    //    number lookups, etc., so we piggy-back on it instead of running
-    //    a parallel index.
+    //    the query. Cheap, understands diacritic folding + hymn numbers,
+    //    so we get good recall before the precision-tight rerank.
     const rawCandidates = searchSongs(subject.title, undefined, 30)
 
     // 2) Build the exclusion set: self + group members.
@@ -438,39 +644,59 @@ export function getSimilarSongs(
       for (const m of groupMembers) exclude.add(m.id)
     }
 
-    // 3) Rerank by normalized-title bigram similarity. The FTS score is a
-    //    decent recall signal but a poor precision signal on title-only
-    //    matches; the bigram pass tightens precision.
-    const rescored = rawCandidates
-      .filter((c) => !exclude.has(c.id))
+    const survivingCandidates = rawCandidates.filter((c) => !exclude.has(c.id))
+    if (survivingCandidates.length === 0) return []
+
+    // 3) Batch-fetch lyrics: one query for the subject + every candidate.
+    const idsForLyrics = [songId, ...survivingCandidates.map((c) => c.id)]
+    const slidesBySongId = db
+      .select({
+        songId: songSlides.songId,
+        content: songSlides.content,
+      })
+      .from(songSlides)
+      .where(inArray(songSlides.songId, idsForLyrics))
+      .all()
+    const lyricsBySongId = new Map<number, string>()
+    for (const row of slidesBySongId) {
+      const prev = lyricsBySongId.get(row.songId) ?? ''
+      lyricsBySongId.set(
+        row.songId,
+        prev ? `${prev} ${row.content}` : row.content,
+      )
+    }
+
+    // 4) Pre-tokenize the subject's title + lyrics ONCE.
+    const subjectTitleToks = tokenize(subject.title)
+    const subjectLyricToks = tokenize(lyricsBySongId.get(songId) ?? '')
+
+    // 5) Score each candidate.
+    const rescored = survivingCandidates
       .map((c) => {
-        const sim = bigramSimilarity(normalizedSubject, normalizeTitle(c.title))
-        // Blend FTS rank (0..100 → 0..1) with bigram similarity. Bigram
-        // dominates because two similar titles are the strongest signal a
-        // human looks at first.
-        const blended = 0.75 * sim + 0.25 * (c.score / 100)
+        const candLyrics = lyricsBySongId.get(c.id) ?? ''
+        const { score, reason } = scoreVersionLikelihood(
+          subjectTitleToks,
+          subjectLyricToks,
+          c.title,
+          candLyrics,
+        )
         return {
           songId: c.id,
           title: c.title,
           hymnNumber: null as string | null,
           author: null as string | null,
           categoryName: c.categoryName,
-          // Cap to two decimal places to avoid noisy 0.7234... in the UI.
-          score: Math.round(blended * 100) / 100,
-          reason: (sim >= 0.7
-            ? 'title'
-            : c.score >= 70
-              ? 'lyrics'
-              : 'mixed') as SongVersionSuggestion['reason'],
+          score: Math.round(score * 100) / 100,
+          reason,
         }
       })
       .filter((c) => c.score >= minScore)
       .sort((a, b) => b.score - a.score)
       .slice(0, limit)
 
-    // 4) Hydrate hymnNumber + author for the surviving candidates (cheap,
-    //    bounded by `limit`).
     if (rescored.length === 0) return []
+
+    // 6) Hydrate hymnNumber + author for the surviving candidates.
     const ids = rescored.map((r) => r.songId)
     const extras = db
       .select({
