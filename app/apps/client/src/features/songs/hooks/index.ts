@@ -14,10 +14,10 @@ export { useDeleteSlide } from './useDeleteSlide'
 export { useDeleteSong } from './useDeleteSong'
 export { useDeleteTag } from './useDeleteTag'
 export { useDirtyState } from './useDirtyState'
+export { useLinkSongs } from './useLinkSongs'
 export { useReorderCategories } from './useReorderCategories'
-export { useReorderTags } from './useReorderTags'
-export { useTags } from './useTags'
 export { useReorderSlides } from './useReorderSlides'
+export { useReorderTags } from './useReorderTags'
 export { useResetPresentationCount } from './useResetPresentationCount'
 export {
   useDeleteSearchHistory,
@@ -27,6 +27,7 @@ export {
 } from './useSearchHistory'
 export { useSearchKeyboardNavigation } from './useSearchKeyboardNavigation'
 export { useSearchSongs } from './useSearchSongs'
+export { useSetPrimarySong } from './useSetPrimarySong'
 export { useSong } from './useSong'
 export {
   useAddBookmark,
@@ -35,11 +36,14 @@ export {
   useReorderBookmarks,
   useSongBookmarks,
 } from './useSongBookmarks'
+export { useSongGroup } from './useSongGroup'
 export { useSongKeyboardShortcuts } from './useSongKeyboardShortcuts'
 export { useSongSlideSelectionKeyboard } from './useSongSlideSelectionKeyboard'
 export { useSongs } from './useSongs'
 export { useSongsAISearchSettings } from './useSongsAISearchSettings'
 export { useSongsInfinite } from './useSongsInfinite'
+export { useTags } from './useTags'
+export { useUnlinkSong } from './useUnlinkSong'
 export { useUnsavedChangesGuard } from './useUnsavedChangesGuard'
 export { useUpsertCategory } from './useUpsertCategory'
 export { useUpsertSlide } from './useUpsertSlide'

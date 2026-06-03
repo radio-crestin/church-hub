@@ -25,6 +25,12 @@ export interface Song {
   id: number
   title: string
   categoryId: number | null
+  /**
+   * Group this song belongs to (null = standalone / its own canonical
+   * version). Members of the same `songGroupId` are versions of the same
+   * underlying song.
+   */
+  songGroupId: number | null
   sourceFilename: string | null
   author: string | null
   copyright: string | null
@@ -138,4 +144,28 @@ export interface AISearchResponse {
   termsUsed: string[]
   totalCandidates: number
   processingTimeMs: number
+}
+
+/**
+ * A song group groups multiple `Song` rows that are versions of the same
+ * underlying piece (translations, lyric edits, denominational variants).
+ * Members keep their own rows; the group records the relationship.
+ */
+export interface SongGroupMember {
+  songId: number
+  title: string
+  isPrimary: boolean
+  hymnNumber: string | null
+  author: string | null
+  keyLine: string | null
+}
+
+export interface SongGroup {
+  id: number
+  canonicalTitle: string
+  primarySongId: number | null
+  memberSongIds: number[]
+  members: SongGroupMember[]
+  createdAt: number
+  updatedAt: number
 }
