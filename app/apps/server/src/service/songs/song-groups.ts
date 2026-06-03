@@ -67,6 +67,15 @@ export function getGroupForSong(songId: number): SongGroupWithMembers | null {
 
 /**
  * Loads a group with its full member list (titles + a few display fields).
+ *
+ * Self-heals stale groups (≤ 1 member) on the way out. These appear when
+ * a member song gets deleted via `DELETE /api/songs/:id` — the FK on
+ * `songs.song_group_id` is `ON DELETE SET NULL`, so deleting one of two
+ * members detaches the other but leaves the `song_groups` row behind
+ * pointing at a single survivor. That orphan group used to surface in
+ * the panel as "Alte versiuni (1)" with only the current song listed
+ * (i.e. a "group of me alone"), which is confusing. We collapse it to
+ * a standalone song on the spot.
  */
 export function getSongGroupWithMembers(
   groupId: number,
@@ -96,6 +105,14 @@ export function getSongGroupWithMembers(
       .orderBy(songs.title)
       .all()
 
+    if (memberRows.length < 2) {
+      collapseStaleGroup(
+        groupId,
+        memberRows.map((m) => m.id),
+      )
+      return null
+    }
+
     const members: SongGroupMember[] = memberRows.map((m) => ({
       songId: m.id,
       title: m.title,
@@ -116,6 +133,85 @@ export function getSongGroupWithMembers(
   } catch (error) {
     logger.error(`getSongGroupWithMembers(${groupId}) failed: ${error}`)
     return null
+  }
+}
+
+/**
+ * Removes the orphaned `song_groups` row and detaches the lone survivor
+ * (if any). Idempotent — safe to call on a group that's already gone.
+ * Logged at info so it shows up in the post-mortem trail if the operator
+ * starts seeing groups vanish.
+ */
+function collapseStaleGroup(
+  groupId: number,
+  surviving: readonly number[],
+): void {
+  const db = getDatabase()
+  if (surviving.length === 1) {
+    db.update(songs)
+      .set({ songGroupId: null })
+      .where(eq(songs.id, surviving[0]))
+      .run()
+  }
+  db.delete(songGroups).where(eq(songGroups.id, groupId)).run()
+  logger.info(
+    `Auto-collapsed stale group ${groupId} (${surviving.length} surviving member${surviving.length === 1 ? '' : 's'})`,
+  )
+}
+
+/**
+ * Cleans up groups that lost members after `deleteSong` / `deleteSongsByIds`.
+ * Looks at the groups the just-deleted songs belonged to, drops any that
+ * are now empty, and collapses any that have a single survivor. Called
+ * AFTER the row delete (which nulls the FK via `ON DELETE SET NULL`), so
+ * we read the current state of `songs.song_group_id` to know who's left.
+ */
+export function cleanupGroupsAfterSongDelete(
+  affectedGroupIds: readonly number[],
+): void {
+  if (affectedGroupIds.length === 0) return
+  try {
+    const db = getDatabase()
+    for (const groupId of affectedGroupIds) {
+      const remaining = db
+        .select({ id: songs.id })
+        .from(songs)
+        .where(eq(songs.songGroupId, groupId))
+        .all()
+      if (remaining.length < 2) {
+        collapseStaleGroup(
+          groupId,
+          remaining.map((r) => r.id),
+        )
+      }
+    }
+  } catch (error) {
+    logger.error(`cleanupGroupsAfterSongDelete failed: ${error}`)
+  }
+}
+
+/**
+ * Returns the (distinct) group ids the given songs currently belong to.
+ * Used by `deleteSong` / `deleteSongsByIds` to snapshot membership BEFORE
+ * the delete so the post-delete cleanup knows where to look.
+ */
+export function getGroupIdsForSongs(songIds: readonly number[]): number[] {
+  if (songIds.length === 0) return []
+  try {
+    const db = getDatabase()
+    const rows = db
+      .select({ songGroupId: songs.songGroupId })
+      .from(songs)
+      .where(inArray(songs.id, [...songIds]))
+      .all()
+    const set = new Set<number>()
+    for (const r of rows) {
+      if (r.songGroupId != null) set.add(r.songGroupId)
+    }
+    return [...set]
+  } catch (error) {
+    logger.error(`getGroupIdsForSongs failed: ${error}`)
+    return []
   }
 }
 
