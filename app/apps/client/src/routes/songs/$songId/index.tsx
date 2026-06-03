@@ -106,6 +106,10 @@ function SongPreviewPage() {
   const navigate = useNavigate()
   const { hasPermission } = usePermissions()
   const canEditSong = hasPermission('songs.edit')
+  // `songs.create` covers "add a new linked version" — link an unrelated
+  // song or accept a suggestion. View-only operators stay read-only;
+  // editors get the full panel (add + set primary + unlink).
+  const canAddSongVersion = hasPermission('songs.create')
   const { songId } = Route.useParams()
   const {
     q: searchQuery,
@@ -861,6 +865,7 @@ function SongPreviewPage() {
                 <SongVersionsPanel
                   songId={numericId}
                   songTitle={song.title}
+                  canAdd={canAddSongVersion}
                   canEdit={canEditSong}
                   isCollapsed={!versionsOpen}
                   onToggleCollapse={() => setVersionsOpen(!versionsOpen)}
