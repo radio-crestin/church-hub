@@ -14,12 +14,13 @@ export function UpdateNotification({ isCollapsed }: UpdateNotificationProps) {
     updateInfo,
     isDismissed,
     isDownloading,
+    isDevInstance,
     dismissUpdate,
     downloadUpdate,
   } = useAppUpdate()
 
-  // Only show inside Tauri desktop app
-  if (!isTauri() || !updateInfo?.hasUpdate || isDismissed) {
+  // Only show inside the packaged Tauri desktop app — never on a dev instance.
+  if (isDevInstance || !isTauri() || !updateInfo?.hasUpdate || isDismissed) {
     return null
   }
 

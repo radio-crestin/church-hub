@@ -942,7 +942,9 @@
       "downloadUpdate": "Descarcă Actualizarea",
       "downloading": "Se deschide...",
       "upToDate": "Rulezi cea mai recentă versiune.",
-      "viewReleaseNotes": "Vezi notele versiunii pe GitHub"
+      "viewReleaseNotes": "Vezi notele versiunii pe GitHub",
+      "devInstance": "Instanță de dezvoltare",
+      "devInstanceDescription": "Rulezi o versiune de dezvoltare — verificarea actualizărilor este dezactivată."
     }
   }
 }
