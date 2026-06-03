@@ -16,9 +16,9 @@ const ALL_PERMISSIONS = [
   'songs.add_to_queue',
   'songs.present_now',
   // Song versions — linked variants of the same hymn + auto-suggested
-  // matches. The panel is visible to anyone with `songs.view`; these
-  // gate the mutate actions (link, set primary, unlink) separately so
-  // admins can grant "manage versions" without granting full song writes.
+  // matches. Full view+CRUD set, each granted independently so admins
+  // can dial in exactly which operators see / manage versions.
+  'song_versions.view',
   'song_versions.create',
   'song_versions.edit',
   'song_versions.delete',
@@ -57,6 +57,7 @@ const ROLE_TEMPLATES: Record<string, string[]> = {
     'control_room.view',
     'control_room.control',
     'songs.view',
+    'song_versions.view',
     'songs.add_to_queue',
     'songs.present_now',
     'bible.view',
@@ -73,6 +74,7 @@ const ROLE_TEMPLATES: Record<string, string[]> = {
   viewer: [
     'control_room.view',
     'songs.view',
+    'song_versions.view',
     'bible.view',
     'programs.view',
     'queue.view',
@@ -85,6 +87,7 @@ const ROLE_TEMPLATES: Record<string, string[]> = {
     'queue.reorder',
     'queue.clear',
     'songs.view',
+    'song_versions.view',
     'songs.add_to_queue',
     'bible.view',
     'bible.add_to_queue',

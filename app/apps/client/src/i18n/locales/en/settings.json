@@ -299,6 +299,7 @@
         "songs.delete": "Delete songs",
         "songs.add_to_queue": "Add songs to queue",
         "songs.present_now": "Present songs immediately",
+        "song_versions.view": "View song versions",
         "song_versions.create": "Add a song version",
         "song_versions.edit": "Set primary song version",
         "song_versions.delete": "Remove a song from its version group",

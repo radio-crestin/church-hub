@@ -9,27 +9,27 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
 }
 
 /**
- * Backfills the three new `song_versions.*` permissions for users and roles
+ * Backfills the four new `song_versions.*` permissions for users and roles
  * that already had the equivalent `songs.*` rights. Without this migration,
- * an operator who previously had `songs.create` (and was thus able to link
- * versions back when the feature was gated on `songs.create || songs.edit`)
- * would suddenly lose the ability after the gate moves to dedicated perms.
+ * existing operators would silently lose access to the versions panel /
+ * mutate buttons when the gate moves to dedicated perms.
  *
  * Mapping:
+ *  - `songs.view`   → `song_versions.view`
  *  - `songs.create` → `song_versions.create`
  *  - `songs.edit`   → `song_versions.create + song_versions.edit + song_versions.delete`
- *                     (edit historically implied all writes)
+ *                     (edit historically implied all version writes)
  *  - `songs.delete` → `song_versions.delete`
  *
  * Idempotent: `INSERT OR IGNORE` against the unique
  * `(user_id, permission)` / `(role_id, permission)` constraints, so it's
- * safe to re-run on every boot. The "skipped" log shows how many rows
- * were already present.
+ * safe to re-run on every boot.
  */
 export function addSongVersionsPermissions(db: Database): void {
   // The mapping is applied for both roles and users so the seeded role
   // templates AND any per-user overrides stay coherent.
   const writeMappings: Array<{ from: string; grants: string[] }> = [
+    { from: 'songs.view', grants: ['song_versions.view'] },
     { from: 'songs.create', grants: ['song_versions.create'] },
     {
       from: 'songs.edit',

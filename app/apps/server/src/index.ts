@@ -4442,7 +4442,7 @@ async function main() {
       // Query: ?limit=5 (defaults to 5, capped at 20).
       const similarMatch = url.pathname.match(/^\/api\/songs\/(\d+)\/similar$/)
       if (req.method === 'GET' && similarMatch?.[1]) {
-        const permError = checkPermission('songs.view')
+        const permError = checkPermission('song_versions.view')
         if (permError) return permError
 
         const songId = parseInt(similarMatch[1], 10)
@@ -4461,7 +4461,7 @@ async function main() {
       // GET /api/songs/:id/group - Get the group for a song, or null if standalone.
       const songGroupMatch = url.pathname.match(/^\/api\/songs\/(\d+)\/group$/)
       if (req.method === 'GET' && songGroupMatch?.[1]) {
-        const permError = checkPermission('songs.view')
+        const permError = checkPermission('song_versions.view')
         if (permError) return permError
 
         const songId = parseInt(songGroupMatch[1], 10)
@@ -4478,7 +4478,7 @@ async function main() {
       // GET /api/song-groups/:id - Get a group with its members.
       const getGroupMatch = url.pathname.match(/^\/api\/song-groups\/(\d+)$/)
       if (req.method === 'GET' && getGroupMatch?.[1]) {
-        const permError = checkPermission('songs.view')
+        const permError = checkPermission('song_versions.view')
         if (permError) return permError
 
         const groupId = parseInt(getGroupMatch[1], 10)
