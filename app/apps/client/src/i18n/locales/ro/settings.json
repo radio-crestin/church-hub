@@ -299,6 +299,7 @@
         "songs.delete": "Ștergere cântări",
         "songs.add_to_queue": "Adăugare cântări în coadă",
         "songs.present_now": "Prezentare cântări imediat",
+        "song_versions.view": "Vizualizare versiuni ale cântării",
         "song_versions.create": "Adăugare versiune la cântare",
         "song_versions.edit": "Setare versiune principală",
         "song_versions.delete": "Ștergere versiune din grup",
