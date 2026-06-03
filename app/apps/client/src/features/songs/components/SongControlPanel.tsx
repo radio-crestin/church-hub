@@ -166,7 +166,12 @@ export function SongControlPanel({
       </div>
 
       <div className="p-2 lg:p-3 lg:flex-1 lg:min-h-0 flex flex-col">
-        <div className="w-full flex-shrink-0">
+        {/* Preview area grows to fill the column. The LivePreview itself
+            keeps 16:9 (aspect-video) so it never distorts — extra
+            vertical room just lets the preview render at a larger,
+            easier-to-read size when the operator gives the Stage
+            column more width. */}
+        <div className="flex flex-1 min-h-0 w-full items-center justify-center overflow-hidden">
           <LivePreview />
         </div>
 
