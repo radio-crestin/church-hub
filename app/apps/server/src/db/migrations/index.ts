@@ -3,6 +3,8 @@ import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite'
 
 import { addCloseOnEscape } from './add-close-on-escape'
 import { addLastPresentedAt } from './add-last-presented-at'
+import { addPreviewScreen } from './add-preview-screen'
+import { addSongGroups } from './add-song-groups'
 import { addUserAuthFields } from './add-user-auth-fields'
 import { dropSongKeyColumn } from './drop-song-key-column'
 import { EMBEDDED_MIGRATIONS } from './embedded'
@@ -147,6 +149,23 @@ export function runMigrations(
   addUserAuthFields(rawDb)
   logTiming('add_user_auth_fields', t)
 
+  // Add screen behavior columns BEFORE seeding default screens so the seed can
+  // populate them straight from the factory fixture.
+  //
+  // close_on_escape: replaces the previous keep_visible_on_escape column with
+  // inverted semantics; factory screens ship with it OFF (window stays open).
+  log('info', 'Running add close_on_escape migration...')
+  t = performance.now()
+  addCloseOnEscape(rawDb)
+  logTiming('add_close_on_escape', t)
+
+  // is_preview_screen: marks the screen mirrored in the in-app control-room
+  // preview panel. Defaults the main (first primary) screen on existing DBs.
+  log('info', 'Running add is_preview_screen migration...')
+  t = performance.now()
+  addPreviewScreen(rawDb)
+  logTiming('add_preview_screen', t)
+
   // Seed default screens
   log('info', 'Seeding default screens...')
   t = performance.now()
@@ -164,6 +183,13 @@ export function runMigrations(
   t = performance.now()
   addLastPresentedAt(rawDb)
   logTiming('add_last_presented_at', t)
+
+  // Add song_groups table + song_group_id column for the Versions feature.
+  // Must run before seedSongs so newly seeded songs see the column.
+  log('info', 'Running add song_groups migration...')
+  t = performance.now()
+  addSongGroups(rawDb)
+  logTiming('add_song_groups', t)
 
   // Seed songs
   log('info', 'Seeding songs...')
@@ -206,13 +232,6 @@ export function runMigrations(
   t = performance.now()
   extractKeylinesFromSlides(rawDb)
   logTiming('extract_keylines_from_slides', t)
-
-  // Add close_on_escape column to screens table (replaces previous
-  // keep_visible_on_escape column with inverted semantics and default ON).
-  log('info', 'Running add close_on_escape migration...')
-  t = performance.now()
-  addCloseOnEscape(rawDb)
-  logTiming('add_close_on_escape', t)
 
   // Seed sample music (only if no music folders exist yet)
   log('info', 'Seeding sample music...')

@@ -811,6 +811,15 @@
         "disabled": "Fereastra va rămâne deschisă tot timpul",
         "error": "Nu s-a putut actualiza setarea"
       },
+      "previewScreen": {
+        "set": "Oglindește acest ecran în previzualizarea din aplicație",
+        "unset": "Nu mai oglindi acest ecran în previzualizarea din aplicație",
+        "on": "Ecran de previzualizare",
+        "off": "Folosește ca și previzualizare",
+        "enabled": "Acest ecran este acum afișat în previzualizare",
+        "disabled": "Acest ecran nu mai este afișat în previzualizare",
+        "error": "Nu s-a putut actualiza setarea ecranului de previzualizare"
+      },
       "actions": {
         "openInNewTab": "Deschide în tab nou",
         "copyUrl": "Copiază URL în clipboard",

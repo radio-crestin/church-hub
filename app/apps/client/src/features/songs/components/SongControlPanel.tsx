@@ -79,10 +79,16 @@ export function SongControlPanel({
   }
 
   return (
-    <div className="flex flex-col lg:h-full bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-      <div className="flex items-center justify-between p-2 lg:p-3 border-b border-gray-200 dark:border-gray-700">
-        {/* Left side - Content type button and clear highlights */}
-        <div className="flex items-center gap-2">
+    <div className="flex flex-col lg:h-full bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+      {/* Header — `min-w-0` on the left chunk + `shrink-0` on the right
+          guarantees the song title truncates with an ellipsis instead of
+          shoving the LIVE chip into the wall. `gap-3` enforces a visible
+          space between the two sides regardless of title length, and the
+          outer `overflow-hidden` keeps any stray content from punching
+          past the Stage column's edge. */}
+      <div className="flex items-center gap-3 p-2 lg:p-3 border-b border-gray-200 dark:border-gray-700 overflow-hidden">
+        {/* Left side - Content type button + clear highlights */}
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           {state?.temporaryContent && (
             <ContentTypeButton temporaryContent={state.temporaryContent} />
           )}
@@ -91,7 +97,7 @@ export function SongControlPanel({
               type="button"
               onClick={() => clearHighlights.mutate()}
               disabled={clearHighlights.isPending}
-              className="flex items-center gap-1.5 px-2 py-1.5 text-sm text-gray-600 dark:text-gray-400 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+              className="flex items-center gap-1.5 px-2 py-1.5 text-sm text-gray-600 dark:text-gray-400 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors shrink-0"
               title={t('bible:controls.clearHighlights')}
             >
               {clearHighlights.isPending ? (
@@ -102,8 +108,9 @@ export function SongControlPanel({
             </button>
           )}
         </div>
-        {/* Right side - LIVE indicator and controls */}
-        <div className="flex items-center gap-2">
+        {/* Right side - LIVE indicator and controls. Never shrinks so
+            "Ascunde" / "LIVE" stay readable even on a narrow Stage. */}
+        <div className="flex items-center gap-2 shrink-0">
           <div
             className={`flex items-center gap-1.5 px-2 py-1 rounded-md ${
               isLive
@@ -166,6 +173,10 @@ export function SongControlPanel({
       </div>
 
       <div className="p-2 lg:p-3 lg:flex-1 lg:min-h-0 flex flex-col">
+        {/* Preview sits at the top as a fixed 16:9 box (same as the Bible
+            control panel) — it spans the column width and derives its height
+            from the aspect ratio, instead of stretching to the full column
+            height. */}
         <div className="w-full flex-shrink-0">
           <LivePreview />
         </div>

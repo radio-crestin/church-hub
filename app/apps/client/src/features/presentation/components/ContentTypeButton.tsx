@@ -7,8 +7,12 @@ interface ContentTypeButtonProps {
   temporaryContent: TemporaryContent
 }
 
+// `min-w-0` lets the button shrink inside a flex parent so the inner span's
+// `truncate` actually applies an ellipsis instead of pushing the layout
+// wider. Used in the song detail header where a long title used to crowd
+// out the LIVE indicator next to it.
 const baseClassName =
-  'flex items-center gap-2 text-sm text-white px-3 py-1.5 rounded-md truncate transition-colors'
+  'flex items-center gap-2 text-sm text-white px-3 py-1.5 rounded-md transition-colors min-w-0'
 
 export function ContentTypeButton({
   temporaryContent,
@@ -31,7 +35,7 @@ export function ContentTypeButton({
           className={`${baseClassName} bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600`}
         >
           <Music size={16} className="shrink-0" />
-          <span className="truncate">{title}</span>
+          <span className="truncate min-w-0">{title}</span>
         </button>
       )
     }
@@ -52,7 +56,9 @@ export function ContentTypeButton({
           className={`${baseClassName} bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600`}
         >
           <Book size={16} className="shrink-0" />
-          <span className="truncate">{temporaryContent.data.reference}</span>
+          <span className="truncate min-w-0">
+            {temporaryContent.data.reference}
+          </span>
         </button>
       )
     }
@@ -78,7 +84,7 @@ export function ContentTypeButton({
           className={`${baseClassName} bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600`}
         >
           <BookOpen size={16} className="shrink-0" />
-          <span className="truncate">
+          <span className="truncate min-w-0">
             {bookName} {startChapter}:{currentVerse?.verse ?? 1}
           </span>
         </button>

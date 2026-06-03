@@ -17,6 +17,7 @@ import {
   schedulesPaths,
   screensPaths,
   settingsPaths,
+  songGroupsPaths,
   songsPaths,
   usersPaths,
 } from './paths'
@@ -75,6 +76,7 @@ export const openApiSpec = {
     ...authPaths,
     ...usersPaths,
     ...songsPaths,
+    ...songGroupsPaths,
     ...categoriesPaths,
     ...biblePaths,
     ...schedulesPaths,

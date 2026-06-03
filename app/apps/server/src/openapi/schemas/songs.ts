@@ -22,6 +22,12 @@ export const songSchemas = {
       id: { type: 'integer' },
       title: { type: 'string' },
       categoryId: { type: 'integer', nullable: true },
+      songGroupId: {
+        type: 'integer',
+        nullable: true,
+        description:
+          'Group this song belongs to; null = standalone (its own canonical version)',
+      },
       sourceFilename: { type: 'string', nullable: true },
       author: { type: 'string', nullable: true },
       copyright: { type: 'string', nullable: true },
@@ -230,6 +236,75 @@ export const songSchemas = {
         type: 'array',
         items: { type: 'integer' },
         description: 'Ordered array of category IDs (first = highest priority)',
+      },
+    },
+  },
+  SongGroupMember: {
+    type: 'object',
+    properties: {
+      songId: { type: 'integer' },
+      title: { type: 'string' },
+      isPrimary: { type: 'boolean' },
+      hymnNumber: { type: 'string', nullable: true },
+      author: { type: 'string', nullable: true },
+      keyLine: { type: 'string', nullable: true },
+      categoryName: { type: 'string', nullable: true },
+    },
+  },
+  SongGroup: {
+    type: 'object',
+    properties: {
+      id: { type: 'integer' },
+      canonicalTitle: { type: 'string' },
+      primarySongId: { type: 'integer', nullable: true },
+      members: {
+        type: 'array',
+        items: { $ref: '#/components/schemas/SongGroupMember' },
+      },
+      memberSongIds: {
+        type: 'array',
+        items: { type: 'integer' },
+      },
+      createdAt: { type: 'integer', description: 'Unix timestamp' },
+      updatedAt: { type: 'integer', description: 'Unix timestamp' },
+    },
+  },
+  LinkSongsInput: {
+    type: 'object',
+    required: ['songIdA', 'songIdB'],
+    properties: {
+      songIdA: { type: 'integer' },
+      songIdB: { type: 'integer' },
+    },
+  },
+  SetPrimarySongInput: {
+    type: 'object',
+    required: ['songId'],
+    properties: {
+      songId: { type: 'integer' },
+    },
+  },
+  SongVersionSuggestion: {
+    type: 'object',
+    properties: {
+      songId: { type: 'integer' },
+      title: { type: 'string' },
+      hymnNumber: { type: 'string', nullable: true },
+      author: { type: 'string', nullable: true },
+      categoryName: { type: 'string', nullable: true },
+      keyLine: {
+        type: 'string',
+        nullable: true,
+        description: 'The song\'s musical key ("gama melodie"), free-text.',
+      },
+      score: {
+        type: 'number',
+        description: 'Blended title-similarity + FTS rank, 0..1.',
+      },
+      reason: {
+        type: 'string',
+        enum: ['title', 'lyrics', 'mixed'],
+        description: 'Coarse explanation of why the match scored high.',
       },
     },
   },
