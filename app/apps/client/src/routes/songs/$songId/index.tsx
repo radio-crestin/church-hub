@@ -47,6 +47,7 @@ import {
   SongBookmarksPanel,
   SongControlPanel,
   SongSlidesPanel,
+  SongVersionsPanel,
 } from '~/features/songs/components'
 import {
   useAddBookmark,
@@ -657,22 +658,31 @@ function SongPreviewPage() {
               : undefined
           }
         >
-          {/* Control Panel */}
+          {/* Control Panel + Versions */}
           <div
-            className="overflow-hidden h-full"
+            className="h-full overflow-hidden flex flex-col gap-3"
             style={
               isLargeScreen
                 ? { width: `calc(${rightDividerPosition}% - 4px)` }
                 : { flex: 1, minWidth: 0 }
             }
           >
-            <SongControlPanel
-              songId={numericId}
-              onPrevSlide={handlePrevSlide}
-              onNextSlide={handleNextSlide}
-              canNavigatePrev={canNavigatePrev}
-              canNavigateNext={canNavigateNext}
-            />
+            <div className="flex-1 min-h-0">
+              <SongControlPanel
+                songId={numericId}
+                onPrevSlide={handlePrevSlide}
+                onNextSlide={handleNextSlide}
+                canNavigatePrev={canNavigatePrev}
+                canNavigateNext={canNavigateNext}
+              />
+            </div>
+            {song ? (
+              <SongVersionsPanel
+                songId={numericId}
+                songTitle={song.title}
+                canEdit={canEditSong}
+              />
+            ) : null}
           </div>
 
           {/* Vertical Divider */}
