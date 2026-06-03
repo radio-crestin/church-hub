@@ -23,7 +23,13 @@ export {
   reorderCategories,
   upsertCategory,
 } from './categories'
-export { deleteTag, getAllTags, reorderTags, upsertTag } from './tags'
+export {
+  getGroupForSong,
+  getSongGroup,
+  linkSongs,
+  setPrimarySong,
+  unlinkSong,
+} from './song-groups'
 export {
   cloneSongSlide,
   deleteSongSlide,
@@ -44,3 +50,4 @@ export {
   searchSongs,
   upsertSong,
 } from './songs'
+export { deleteTag, getAllTags, reorderTags, upsertTag } from './tags'
