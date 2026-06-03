@@ -4505,8 +4505,13 @@ async function main() {
       // POST /api/song-groups/link - Link two songs as versions of the same piece.
       // Body: { songIdA: number, songIdB: number }
       // Idempotent: if both are already grouped together, returns the existing group.
+      //
+      // Gated on `songs.create` (not `songs.edit`): linking is "add a new
+      // version relationship", semantically the same kind of write as
+      // creating a song. Operators who can add songs but lack edit rights
+      // would otherwise get 403 here even though the UI exposes the action.
       if (req.method === 'POST' && url.pathname === '/api/song-groups/link') {
-        const permError = checkPermission('songs.edit')
+        const permError = checkPermission('songs.create')
         if (permError) return permError
 
         try {
