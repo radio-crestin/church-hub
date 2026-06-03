@@ -10,7 +10,9 @@ interface LinkInput {
 
 /**
  * Links two songs as versions of the same piece. Invalidates the songs
- * list (badge count) and both songs' group queries.
+ * list (badge count), both songs' group queries, and the version
+ * suggestions (so a just-linked song drops out of "Posibile potriviri" —
+ * the server excludes group members from suggestions).
  */
 export function useLinkSongs() {
   const queryClient = useQueryClient()
@@ -21,6 +23,7 @@ export function useLinkSongs() {
       queryClient.invalidateQueries({ queryKey: ['songs'] })
       queryClient.invalidateQueries({ queryKey: ['song-group', songIdA] })
       queryClient.invalidateQueries({ queryKey: ['song-group', songIdB] })
+      queryClient.invalidateQueries({ queryKey: ['song-similar'] })
     },
   })
 }

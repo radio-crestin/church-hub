@@ -158,6 +158,7 @@ export interface SongGroupMember {
   hymnNumber: string | null
   author: string | null
   keyLine: string | null
+  categoryName: string | null
 }
 
 export interface SongGroup {
@@ -181,6 +182,8 @@ export interface SongVersionSuggestion {
   hymnNumber: string | null
   author: string | null
   categoryName: string | null
+  /** The song's musical key ("gama melodie"), free-text. */
+  keyLine: string | null
   /** Blended title-similarity + FTS rank, 0..1. */
   score: number
   reason: 'title' | 'lyrics' | 'mixed'

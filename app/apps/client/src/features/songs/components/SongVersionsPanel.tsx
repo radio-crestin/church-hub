@@ -3,10 +3,12 @@ import {
   Check,
   ChevronDown,
   Crown,
-  ExternalLink,
   Layers,
   Loader2,
+  Music2,
+  Plus,
   Sparkles,
+  Tag,
   Unlink,
   X,
 } from 'lucide-react'
@@ -31,9 +33,13 @@ import { dismissSuggestion, isDismissed } from '../utils/dismissedSuggestions'
 function SuggestionsSection({
   songId,
   canEdit,
+  topBorder = true,
 }: {
   songId: number
   canEdit: boolean
+  /** Draw the separating top border. False when this is the first thing in
+   *  the panel body (no linked versions above it) so there's no stray line. */
+  topBorder?: boolean
 }) {
   const { t } = useTranslation('songs')
   const { showToast } = useToast()
@@ -43,15 +49,22 @@ function SuggestionsSection({
   // before vanishing. Without this the click would feel jarring — the row
   // would disappear with no acknowledgement.
   const [acceptingIds, setAcceptingIds] = useState<Set<number>>(new Set())
+  // Ids that have been linked this session — kept filtered out so a just-
+  // approved song never flashes back in before the server refetch (which
+  // already excludes group members) lands.
+  const [linkedIds, setLinkedIds] = useState<Set<number>>(new Set())
   // Forces a re-render after a dismissal so the row disappears immediately
   // without waiting for the query cache to refresh.
   const [dismissTick, setDismissTick] = useState(0)
 
   const visible = useMemo(
-    () => suggestions.filter((s) => !isDismissed(songId, s.songId)),
-    // dismissTick intentionally invalidates the memo after a click.
-    // biome-ignore lint/correctness/useExhaustiveDependencies: re-read localStorage on tick
-    [suggestions, songId, dismissTick],
+    () =>
+      suggestions.filter(
+        (s) => !isDismissed(songId, s.songId) && !linkedIds.has(s.songId),
+      ),
+    // dismissTick intentionally invalidates the memo after a dismissal so the
+    // re-read of localStorage (isDismissed) takes effect immediately.
+    [suggestions, songId, dismissTick, linkedIds],
   )
 
   if (!canEdit) return null
@@ -68,9 +81,12 @@ function SuggestionsSection({
       // Brief acknowledgement so the user sees the action register; the
       // panel above will refresh its members list automatically.
       showToast(t('versions.linkSuccess', { title: suggestedTitle }), 'success')
-      // The 200ms timeout matches the row's exit transition so the toast
-      // appears and the row fades out simultaneously — feels coherent.
+      // The 220ms timeout matches the row's exit transition so the toast
+      // appears and the row fades out simultaneously — feels coherent. Once
+      // the fade is done, mark it linked so it stays gone regardless of when
+      // the suggestions refetch lands.
       window.setTimeout(() => {
+        setLinkedIds((prev) => new Set(prev).add(suggestedId))
         setAcceptingIds((prev) => {
           const next = new Set(prev)
           next.delete(suggestedId)
@@ -98,7 +114,13 @@ function SuggestionsSection({
   }
 
   return (
-    <div className="mt-3 border-t border-gray-200 pt-3 dark:border-gray-700">
+    <div
+      className={
+        topBorder
+          ? 'mt-3 border-t border-gray-200 pt-3 dark:border-gray-700'
+          : ''
+      }
+    >
       <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
         <Sparkles size={12} />
         {t('versions.suggestionsTitle')}
@@ -123,11 +145,25 @@ function SuggestionsSection({
                 <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
                   {s.title}
                 </p>
-                <p className="truncate text-xs text-gray-500 dark:text-gray-400">
-                  {t(`versions.reason.${s.reason}`)} ·{' '}
-                  {Math.round(s.score * 100)}%
-                  {s.categoryName ? ` · ${s.categoryName}` : ''}
-                </p>
+                <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                  {s.categoryName ? (
+                    <span className="inline-flex items-center gap-1 rounded bg-gray-100 px-1.5 py-0.5 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                      <Tag className="h-3 w-3" />
+                      {s.categoryName}
+                    </span>
+                  ) : null}
+                  {s.keyLine ? (
+                    <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                      <Music2 className="h-3 w-3" />
+                      {s.keyLine}
+                    </span>
+                  ) : null}
+                  <span>
+                    {t('versions.percentSimilar', {
+                      percent: Math.round(s.score * 100),
+                    })}
+                  </span>
+                </div>
               </Link>
               <button
                 type="button"
@@ -251,9 +287,10 @@ export function SongVersionsPanel({
           <button
             type="button"
             onClick={() => setLinkModalOpen(true)}
-            className="shrink-0 text-xs font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+            className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
           >
-            + {t('versions.linkButtonShort')}
+            <Plus size={14} />
+            {t('versions.addButton')}
           </button>
         ) : null}
       </div>
@@ -268,70 +305,85 @@ export function SongVersionsPanel({
             </div>
           ) : !group ? (
             canEdit ? (
-              <>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {t('versions.description')}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setLinkModalOpen(true)}
-                  className="mt-3 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700"
-                >
-                  <Layers size={14} />
-                  {t('versions.linkButton')}
-                </button>
-                <SuggestionsSection songId={songId} canEdit={canEdit} />
-              </>
+              <SuggestionsSection
+                songId={songId}
+                canEdit={canEdit}
+                topBorder={false}
+              />
             ) : null
           ) : (
             <>
               <ul className="space-y-1.5">
                 {group.members.map((member) => {
                   const isCurrent = member.songId === songId
-                  return (
-                    <li
-                      key={member.songId}
-                      className={`flex items-center gap-3 rounded-lg border px-3 py-2 ${
-                        isCurrent
-                          ? 'border-indigo-200 bg-indigo-50/50 dark:border-indigo-500/40 dark:bg-indigo-900/20'
-                          : 'border-gray-200 dark:border-gray-700'
-                      }`}
-                    >
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="truncate text-sm font-medium text-gray-900 dark:text-white">
-                            {member.title}
+                  // Title + primary badge + author/hymn line. For other members
+                  // a transparent stretched Link (below) makes the whole row a
+                  // click target; the title tints via the row's `group` hover.
+                  const info = (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <span className="truncate text-sm font-medium text-gray-900 group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400">
+                          {member.title}
+                        </span>
+                        {member.isPrimary ? (
+                          <span
+                            title={t('versions.primary')}
+                            className="inline-flex items-center gap-0.5 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
+                          >
+                            <Crown size={10} />
+                            {t('versions.primary')}
                           </span>
-                          {member.isPrimary ? (
-                            <span
-                              title={t('versions.primary')}
-                              className="inline-flex items-center gap-0.5 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
-                            >
-                              <Crown size={10} />
-                              {t('versions.primary')}
+                        ) : null}
+                      </div>
+                      {member.author || member.hymnNumber ? (
+                        <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+                          {[member.hymnNumber, member.author]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </p>
+                      ) : null}
+                      {member.categoryName || member.keyLine ? (
+                        <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs">
+                          {member.categoryName ? (
+                            <span className="inline-flex items-center gap-1 rounded bg-gray-100 px-1.5 py-0.5 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                              <Tag className="h-3 w-3" />
+                              {member.categoryName}
+                            </span>
+                          ) : null}
+                          {member.keyLine ? (
+                            <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                              <Music2 className="h-3 w-3" />
+                              {member.keyLine}
                             </span>
                           ) : null}
                         </div>
-                        {member.author || member.hymnNumber ? (
-                          <p className="truncate text-xs text-gray-500 dark:text-gray-400">
-                            {[member.hymnNumber, member.author]
-                              .filter(Boolean)
-                              .join(' · ')}
-                          </p>
-                        ) : null}
-                      </div>
+                      ) : null}
+                    </>
+                  )
+                  return (
+                    <li
+                      key={member.songId}
+                      className={`relative flex items-center gap-3 rounded-lg border px-3 py-2 transition-colors ${
+                        isCurrent
+                          ? 'border-indigo-200 bg-indigo-50/50 dark:border-indigo-500/40 dark:bg-indigo-900/20'
+                          : 'group cursor-pointer border-gray-200 hover:border-indigo-300 hover:bg-gray-50 dark:border-gray-700 dark:hover:border-indigo-500/40 dark:hover:bg-gray-700/40'
+                      }`}
+                    >
+                      {/* Whole-box click target (non-current). Sits beneath the
+                          action buttons (relative z-10) so they stay clickable;
+                          everything else in the row opens the song. */}
+                      {!isCurrent ? (
+                        <Link
+                          to="/songs/$songId"
+                          params={{ songId: String(member.songId) }}
+                          title={t('versions.open')}
+                          aria-label={member.title}
+                          className="absolute inset-0 rounded-lg"
+                        />
+                      ) : null}
+                      <div className="min-w-0 flex-1">{info}</div>
 
-                      <div className="flex shrink-0 items-center gap-1">
-                        {!isCurrent ? (
-                          <Link
-                            to="/songs/$songId"
-                            params={{ songId: String(member.songId) }}
-                            title={t('versions.open')}
-                            className="rounded p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-200"
-                          >
-                            <ExternalLink size={14} />
-                          </Link>
-                        ) : null}
+                      <div className="relative z-10 flex shrink-0 items-center gap-1">
                         {canEdit && !member.isPrimary ? (
                           <button
                             type="button"

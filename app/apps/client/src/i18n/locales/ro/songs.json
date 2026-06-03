@@ -257,7 +257,6 @@
   },
   "versions": {
     "title": "Alte versiuni",
-    "description": "Cântări marcate ca versiuni alternative ale acesteia. Comută între ele, schimbă care e cea principală sau dezleagă o potrivire greșită.",
     "count_one": "{{count}} versiune",
     "count_other": "{{count}} versiuni",
     "badge": "{{count}} versiuni",
@@ -266,11 +265,10 @@
     "open": "Deschide",
     "unlink": "Nu e aceeași cântare",
     "unlinkConfirm": "Scoți această cântare din grupul de versiuni?",
-    "linkButton": "Aceeași cântare ca…",
-    "linkButtonShort": "Leagă versiuni",
+    "addButton": "Adaugă o versiune",
     "linkModalTitle": "Marchează ca aceeași cântare",
     "linkModalDescription": "Alege o altă cântare care e o versiune a „{{title}}”. Vor fi legate ca versiuni ale aceleași piese — nu se șterge nimic, poți reveni oricând.",
-    "linkSearchPlaceholder": "Caută după titlu…",
+    "linkSearchPlaceholder": "Tastează numele cântării pe care dorești să o marchezi ca variantă…",
     "linkSubmit": "Leagă",
     "linkCancel": "Anulează",
     "linkSuccess": "„{{title}}” a fost legată ca versiune",
@@ -286,10 +284,6 @@
     "suggestionsTitle": "Posibile potriviri",
     "suggestionAccept": "Aceeași cântare — leagă-le",
     "suggestionDismiss": "Nu e aceeași — ascunde sugestia",
-    "reason": {
-      "title": "Titlu similar",
-      "lyrics": "Versuri similare",
-      "mixed": "Posibilă versiune"
-    }
+    "percentSimilar": "{{percent}}% similar"
   }
 }

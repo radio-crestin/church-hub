@@ -257,7 +257,6 @@
   },
   "versions": {
     "title": "Other versions",
-    "description": "Songs marked as alternative versions of this one. Switch between them, change which one is primary, or unlink a wrong match.",
     "count_one": "{{count}} version",
     "count_other": "{{count}} versions",
     "badge": "{{count}} versions",
@@ -266,11 +265,10 @@
     "open": "Open",
     "unlink": "Not the same song",
     "unlinkConfirm": "Remove this song from the version group?",
-    "linkButton": "Same song as…",
-    "linkButtonShort": "Link versions",
+    "addButton": "Add a version",
     "linkModalTitle": "Mark as the same song",
     "linkModalDescription": "Pick another song that's a version of \"{{title}}\". They'll be linked as versions of the same piece — nothing is deleted, you can undo at any time.",
-    "linkSearchPlaceholder": "Search by title…",
+    "linkSearchPlaceholder": "Type the name of the song you want to mark as a version…",
     "linkSubmit": "Link",
     "linkCancel": "Cancel",
     "linkSuccess": "Linked \"{{title}}\" as a version",
@@ -286,10 +284,6 @@
     "suggestionsTitle": "Suggested matches",
     "suggestionAccept": "Same song — link them",
     "suggestionDismiss": "Not the same — hide this suggestion",
-    "reason": {
-      "title": "Title match",
-      "lyrics": "Lyrics match",
-      "mixed": "Likely version"
-    }
+    "percentSimilar": "{{percent}}% similar"
   }
 }
