@@ -67,7 +67,11 @@ function SuggestionsSection({
     [suggestions, songId, dismissTick, linkedIds],
   )
 
-  if (!canEdit) return null
+  // Suggestions are visible to *every* logged-in user (read-only viewers
+  // included) — discovering that "this song looks like another one" is a
+  // browse feature, not an edit one. The accept / dismiss buttons below
+  // are still gated by `canEdit` so view-only operators can browse but
+  // not mutate.
   if (isLoading) return null
   if (visible.length === 0) return null
 
@@ -165,23 +169,27 @@ function SuggestionsSection({
                   </span>
                 </div>
               </Link>
-              <button
-                type="button"
-                onClick={() => handleAccept(s.songId, s.title)}
-                disabled={linkMutation.isPending || isAccepting}
-                title={t('versions.suggestionAccept')}
-                className="rounded p-1.5 text-emerald-600 hover:bg-emerald-50 disabled:opacity-50 dark:text-emerald-400 dark:hover:bg-emerald-900/30"
-              >
-                <Check size={14} />
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDismiss(s.songId)}
-                title={t('versions.suggestionDismiss')}
-                className="rounded p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-200"
-              >
-                <X size={14} />
-              </button>
+              {canEdit ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => handleAccept(s.songId, s.title)}
+                    disabled={linkMutation.isPending || isAccepting}
+                    title={t('versions.suggestionAccept')}
+                    className="rounded p-1.5 text-emerald-600 hover:bg-emerald-50 disabled:opacity-50 dark:text-emerald-400 dark:hover:bg-emerald-900/30"
+                  >
+                    <Check size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDismiss(s.songId)}
+                    title={t('versions.suggestionDismiss')}
+                    className="rounded p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                  >
+                    <X size={14} />
+                  </button>
+                </>
+              ) : null}
             </li>
           )
         })}
@@ -304,13 +312,16 @@ export function SongVersionsPanel({
               <Loader2 size={14} className="animate-spin" />
             </div>
           ) : !group ? (
-            canEdit ? (
-              <SuggestionsSection
-                songId={songId}
-                canEdit={canEdit}
-                topBorder={false}
-              />
-            ) : null
+            // Standalone song. View-only operators still get the
+            // suggestions list (read-only) so they can discover that
+            // "this song might have a sibling" without being able to
+            // mutate. Editors get the same list plus the accept/dismiss
+            // buttons that `SuggestionsSection` renders internally.
+            <SuggestionsSection
+              songId={songId}
+              canEdit={canEdit}
+              topBorder={false}
+            />
           ) : (
             <>
               <ul className="space-y-1.5">
