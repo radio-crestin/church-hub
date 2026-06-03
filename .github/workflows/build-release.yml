@@ -125,15 +125,24 @@ jobs:
         id: version
         run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
-      - name: Create draft release
+      # Upsert the GitHub release. Previously this called `gh release
+      # create` unconditionally, which failed (exit 1) when a draft for
+      # the tag already existed — the typical shape when the operator
+      # tags a release through the GitHub UI's "Draft a new release"
+      # flow. The workflow would then halt before `build` and
+      # `sync-version-back` ever ran, and `tauri.conf.json` stayed
+      # stale. Now we check `gh release view` first and either edit
+      # the existing release's title/notes or create a fresh draft.
+      - name: Create or update draft release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: v${{ steps.version.outputs.version }}
         run: |
-          gh release create "v${{ steps.version.outputs.version }}" \
-            --draft \
-            --title "Church Hub v${{ steps.version.outputs.version }}" \
-            --notes "$(cat <<'EOF'
-          # Church Hub v${{ steps.version.outputs.version }}
+          # Build the release notes once into a temp file so the create
+          # and edit branches share the same body — keeps the heredoc in
+          # one place if it changes later.
+          cat > /tmp/release-notes.md <<EOF
+          # Church Hub $TAG
 
           A modern, feature-rich church presentation and livestream management system.
 
@@ -154,7 +163,7 @@ jobs:
           1. Click the download link for your platform above
           2. Run the installer
           3. Launch Church Hub
-          4. Access the web interface at `http://localhost:3000`
+          4. Access the web interface at \`http://localhost:3000\`
 
           ---
 
@@ -162,9 +171,9 @@ jobs:
 
           After installing, if you see **"church-hub.app is damaged and can't be opened"**, run this command in Terminal:
 
-          ```bash
+          \`\`\`bash
           xattr -c /Applications/church-hub.app
-          ```
+          \`\`\`
 
           This removes the quarantine flag from unsigned apps.
 
@@ -179,7 +188,22 @@ jobs:
 
           <sub>Made with love for churches everywhere</sub>
           EOF
-          )"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists — updating its title and notes."
+            # `gh release edit` preserves the existing draft/published
+            # state, so a release the operator manually published from
+            # the UI stays published; one left as draft stays a draft.
+            gh release edit "$TAG" \
+              --title "Church Hub $TAG" \
+              --notes-file /tmp/release-notes.md
+          else
+            echo "Creating new draft release $TAG."
+            gh release create "$TAG" \
+              --draft \
+              --title "Church Hub $TAG" \
+              --notes-file /tmp/release-notes.md
+          fi
 
   build:
     needs: [test, create-release]
