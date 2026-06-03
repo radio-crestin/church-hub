@@ -24,12 +24,43 @@ export const songCategories = sqliteTable(
   (table) => [index('idx_song_categories_name').on(table.name)],
 )
 
+/**
+ * Groups songs that are different versions of the same underlying piece
+ * (different translations, lyric edits, denominational variants, etc.).
+ * Membership is non-destructive: each member keeps its own row in `songs`;
+ * the group merely records the relationship and which member is canonical.
+ */
+export const songGroups = sqliteTable(
+  'song_groups',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    canonicalTitle: text('canonical_title').notNull(),
+    // `primarySongId` is set by application logic. We deliberately do NOT
+    // declare it as a FK here because `songs` references `songGroups` too
+    // and Drizzle's lazy resolver would create a circular dependency in
+    // generated migrations. The service layer enforces validity.
+    primarySongId: integer('primary_song_id'),
+    createdAt: integer('created_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (table) => [index('idx_song_groups_primary').on(table.primarySongId)],
+)
+
 export const songs = sqliteTable(
   'songs',
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
     title: text('title').notNull(),
     categoryId: integer('category_id').references(() => songCategories.id, {
+      onDelete: 'set null',
+    }),
+    // Nullable: a song without a group is its own canonical version. Deleting
+    // the group only detaches members — they keep their lyrics, etc.
+    songGroupId: integer('song_group_id').references(() => songGroups.id, {
       onDelete: 'set null',
     }),
     sourceFilename: text('source_filename'),
@@ -56,6 +87,7 @@ export const songs = sqliteTable(
   (table) => [
     index('idx_songs_title').on(table.title),
     index('idx_songs_category_id').on(table.categoryId),
+    index('idx_songs_song_group_id').on(table.songGroupId),
   ],
 )
 
