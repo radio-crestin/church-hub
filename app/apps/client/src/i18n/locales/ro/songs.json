@@ -127,7 +127,9 @@
     "exportAsText": "Exportă ca text",
     "exportCopied": "Marcajele au fost copiate în clipboard",
     "exportEmpty": "Nimic de exportat",
-    "focusPresentedSong": "Mergi la cântarea afișată"
+    "focusPresentedSong": "Mergi la cântarea afișată",
+    "expand": "Extinde",
+    "collapse": "Restrânge"
   },
   "noSongs": "Nu există cântări încă",
   "noSongsDescription": "Creează prima ta cântare pentru a începe",
@@ -271,8 +273,10 @@
     "linkSearchPlaceholder": "Caută după titlu…",
     "linkSubmit": "Leagă",
     "linkCancel": "Anulează",
-    "linkSuccess": "Cântări legate ca versiuni",
+    "linkSuccess": "„{{title}}” a fost legată ca versiune",
     "linkError": "Nu s-au putut lega cântările: {{error}}",
+    "expand": "Extinde",
+    "collapse": "Restrânge",
     "unlinkSuccess": "Scoasă din versiuni",
     "unlinkError": "Nu s-a putut dezlega: {{error}}",
     "setPrimarySuccess": "Versiunea principală a fost actualizată",

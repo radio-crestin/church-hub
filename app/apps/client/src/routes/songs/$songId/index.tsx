@@ -57,6 +57,7 @@ import {
   useSongBookmarks,
   useSongKeyboardShortcuts,
   useSongSlideSelectionKeyboard,
+  useUndismissedSuggestionCount,
   useUpsertSong,
 } from '~/features/songs/hooks'
 import type { SongSlide } from '~/features/songs/types'
@@ -137,9 +138,12 @@ function SongPreviewPage() {
   const { data: bookmarks = [] } = useSongBookmarks()
   const { showToast } = useToast()
 
+  // Default layout: Slides 30% / Stage (Control Panel) 40% / Accordion 30%.
+  // The Stage gets the biggest slice so the slide preview can breathe, and
+  // Slides + Accordion start equal — the operator can drag from there.
   const [dividerPosition, setDividerPosition] = useDividerPosition(
     DIVIDER_KEYS.songDetailLeft,
-    40,
+    30,
   )
   const [showAddToScheduleModal, setShowAddToScheduleModal] = useState(false)
   const [showAddBookmarksToScheduleModal, setShowAddBookmarksToScheduleModal] =
@@ -150,10 +154,48 @@ function SongPreviewPage() {
   const [isLargeScreen, setIsLargeScreen] = useState(false)
   const [selectedSlideIndex, setSelectedSlideIndex] = useState(0)
   const [isEditMode, setIsEditMode] = useState(false)
+  // Within the right-of-slides area, the Stage takes ~57% so that (combined
+  // with the 30% Slides on the left) it lands at ~40% of the full page and
+  // the Accordion at ~30% — matching Slides exactly.
   const [rightDividerPosition, setRightDividerPosition] = useDividerPosition(
     DIVIDER_KEYS.songDetailRight,
-    60,
+    57,
   )
+  // Right-column accordion state. Persisted across sessions via localStorage
+  // so the operator's last choice (Versions vs Marcaje expanded) carries over
+  // to the next song they open.
+  const [bookmarksOpen, setBookmarksOpenRaw] = useState<boolean>(() => {
+    try {
+      const raw = localStorage.getItem('song-detail:bookmarks-open')
+      return raw === null ? true : raw === 'true'
+    } catch {
+      return true
+    }
+  })
+  const [versionsOpen, setVersionsOpenRaw] = useState<boolean>(() => {
+    try {
+      const raw = localStorage.getItem('song-detail:versions-open')
+      return raw === null ? true : raw === 'true'
+    } catch {
+      return true
+    }
+  })
+  const setBookmarksOpen = useCallback((next: boolean) => {
+    setBookmarksOpenRaw(next)
+    try {
+      localStorage.setItem('song-detail:bookmarks-open', String(next))
+    } catch {
+      // Ignore quota errors — non-critical UI state.
+    }
+  }, [])
+  const setVersionsOpen = useCallback((next: boolean) => {
+    setVersionsOpenRaw(next)
+    try {
+      localStorage.setItem('song-detail:versions-open', String(next))
+    } catch {
+      // Ignore quota errors — non-critical UI state.
+    }
+  }, [])
   const [pendingExit, setPendingExit] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const rightPanelRef = useRef<HTMLDivElement>(null)
@@ -161,6 +203,21 @@ function SongPreviewPage() {
   const isRightDragging = useRef(false)
   const keyLineDialogRef = useRef<KeyLineEditDialogHandle>(null)
   const categoryDialogRef = useRef<CategoryEditDialogHandle>(null)
+
+  // Drives the Versions accordion: the badge for unread suggestions and
+  // the auto-expand on songs that have something new to look at.
+  const undismissedSuggestionCount = useUndismissedSuggestionCount(numericId)
+
+  // Auto-expand the Versions section when a freshly opened song has new
+  // (undismissed) suggestions, so the operator can't miss them. Persists
+  // ONLY across this session — we don't overwrite the user's global
+  // "I collapsed Versions" preference; the next song without suggestions
+  // will fall back to whatever's in localStorage.
+  useEffect(() => {
+    if (numericId && undismissedSuggestionCount > 0) {
+      setVersionsOpenRaw(true)
+    }
+  }, [numericId, undismissedSuggestionCount])
 
   // Get expanded slides count for navigation bounds
   const expandedSlidesCount = useMemo(
@@ -441,7 +498,7 @@ function SongPreviewPage() {
         if (!isRightDragging.current || !rightPanelRef.current) return
         const rect = rightPanelRef.current.getBoundingClientRect()
         const newPos = ((moveEvent.clientX - rect.left) / rect.width) * 100
-        const clamped = Math.min(80, Math.max(30, newPos))
+        const clamped = Math.min(70, Math.max(20, newPos))
         setRightDividerPosition(clamped)
       }
 
@@ -648,7 +705,11 @@ function SongPreviewPage() {
           />
         </div>
 
-        {/* Right Panel - Control Panel + Bookmarks (shows first on mobile) */}
+        {/* Right Panel — Control alone in the middle column, the right
+            column stacks Marcaje + Versiuni as collapsible sections so
+            both stay visible by default and neither is hidden under a
+            tab. The right divider only controls the Control vs accordion
+            split; the accordion sections balance themselves via flex. */}
         <div
           ref={rightPanelRef}
           className="order-1 lg:order-3 lg:min-h-0 lg:flex-1 overflow-hidden shrink-0 flex flex-col lg:flex-row"
@@ -658,31 +719,22 @@ function SongPreviewPage() {
               : undefined
           }
         >
-          {/* Control Panel + Versions */}
+          {/* Control Panel column (now owns the full height of its column). */}
           <div
-            className="h-full overflow-hidden flex flex-col gap-3"
+            className="h-full overflow-hidden"
             style={
               isLargeScreen
                 ? { width: `calc(${rightDividerPosition}% - 4px)` }
                 : { flex: 1, minWidth: 0 }
             }
           >
-            <div className="flex-1 min-h-0">
-              <SongControlPanel
-                songId={numericId}
-                onPrevSlide={handlePrevSlide}
-                onNextSlide={handleNextSlide}
-                canNavigatePrev={canNavigatePrev}
-                canNavigateNext={canNavigateNext}
-              />
-            </div>
-            {song ? (
-              <SongVersionsPanel
-                songId={numericId}
-                songTitle={song.title}
-                canEdit={canEditSong}
-              />
-            ) : null}
+            <SongControlPanel
+              songId={numericId}
+              onPrevSlide={handlePrevSlide}
+              onNextSlide={handleNextSlide}
+              canNavigatePrev={canNavigatePrev}
+              canNavigateNext={canNavigateNext}
+            />
           </div>
 
           {/* Vertical Divider */}
@@ -696,20 +748,46 @@ function SongPreviewPage() {
             />
           </div>
 
-          {/* Bookmarks Panel */}
+          {/* Accordion column — Marcaje on top, Versiuni below.
+              Bookmarks were previously hidden on mobile (the page is
+              too tight); we preserve that. Versions ride along on
+              mobile because they were already visible there before. */}
           <div
-            className="overflow-hidden h-full hidden lg:block"
+            className="overflow-hidden h-full flex flex-col gap-2"
             style={
               isLargeScreen
                 ? { width: `calc(${100 - rightDividerPosition}% - 4px)` }
                 : undefined
             }
           >
-            <SongBookmarksPanel
-              onSelectSong={handleBookmarkSongClick}
-              activeSongId={numericId}
-              onAddAllToSchedule={handleAddAllBookmarksToSchedule}
-            />
+            <div
+              className={`hidden lg:block ${bookmarksOpen ? 'min-h-0 flex-1' : 'flex-none'}`}
+            >
+              <SongBookmarksPanel
+                onSelectSong={handleBookmarkSongClick}
+                activeSongId={numericId}
+                onAddAllToSchedule={handleAddAllBookmarksToSchedule}
+                isCollapsed={!bookmarksOpen}
+                onToggleCollapse={() => setBookmarksOpen(!bookmarksOpen)}
+              />
+            </div>
+
+            {song ? (
+              <div className={versionsOpen ? 'min-h-0 flex-1' : 'flex-none'}>
+                <SongVersionsPanel
+                  songId={numericId}
+                  songTitle={song.title}
+                  canEdit={canEditSong}
+                  isCollapsed={!versionsOpen}
+                  onToggleCollapse={() => setVersionsOpen(!versionsOpen)}
+                  attentionBadge={
+                    undismissedSuggestionCount > 0
+                      ? `+${undismissedSuggestionCount}`
+                      : null
+                  }
+                />
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
