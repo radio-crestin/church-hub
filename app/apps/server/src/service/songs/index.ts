@@ -9,16 +9,6 @@ export {
   reorderCategories,
   upsertCategory,
 } from './categories'
-// Tags
-export {
-  deleteTag,
-  getAllTags,
-  getTagsBySongId,
-  getTagsBySongIds,
-  reorderTags,
-  setSongTags,
-  upsertTag,
-} from './tags'
 export {
   completeSongReplacement,
   type ReplaceSongReferencesResult,
@@ -34,6 +24,16 @@ export {
   updateSearchIndexByCategory,
   warmupSearchIndex,
 } from './search'
+// Song Groups (versions)
+export {
+  getGroupForSong,
+  getSongGroupWithMembers,
+  getVersionCounts,
+  linkSongs,
+  mergeGroups,
+  setPrimarySong,
+  unlinkSong,
+} from './song-groups'
 // Song Slides
 export {
   cloneSongSlide,
@@ -59,16 +59,30 @@ export {
   type SongFilters,
   upsertSong,
 } from './songs'
+// Tags
+export {
+  deleteTag,
+  getAllTags,
+  getTagsBySongId,
+  getTagsBySongIds,
+  reorderTags,
+  setSongTags,
+  upsertTag,
+} from './tags'
 export type {
   BatchImportResult,
   BatchImportSongInput,
   OperationResult,
   ReorderCategoriesInput,
-  ReorderTagsInput,
   ReorderSongSlidesInput,
+  ReorderTagsInput,
   Song,
   SongCategory,
   SongCategoryRecord,
+  SongGroup,
+  SongGroupMember,
+  SongGroupRecord,
+  SongGroupWithMembers,
   SongRecord,
   SongSearchResult,
   SongSlide,
@@ -76,7 +90,8 @@ export type {
   SongTag,
   SongWithSlides,
   UpsertCategoryInput,
-  UpsertTagInput,
+  UpsertSongGroupInput,
   UpsertSongInput,
   UpsertSongSlideInput,
+  UpsertTagInput,
 } from './types'
