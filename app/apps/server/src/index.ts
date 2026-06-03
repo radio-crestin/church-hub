@@ -4506,13 +4506,16 @@ async function main() {
       // Body: { songIdA: number, songIdB: number }
       // Idempotent: if both are already grouped together, returns the existing group.
       //
-      // Gated on `songs.create` (not `songs.edit`): linking is "add a new
-      // version relationship", semantically the same kind of write as
-      // creating a song. Operators who can add songs but lack edit rights
-      // would otherwise get 403 here even though the UI exposes the action.
+      // Accepts either `songs.create` (the natural mapping for "add a new
+      // version relationship") or `songs.edit` — hierarchies aren't enforced
+      // in this app's RBAC, so an editor without create rights would
+      // otherwise hit 403 even though the UI exposes the action.
       if (req.method === 'POST' && url.pathname === '/api/song-groups/link') {
-        const permError = checkPermission('songs.create')
-        if (permError) return permError
+        const createErr = checkPermission('songs.create')
+        if (createErr) {
+          const editErr = checkPermission('songs.edit')
+          if (editErr) return editErr
+        }
 
         try {
           const body = (await req.json()) as {
