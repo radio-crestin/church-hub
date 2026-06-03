@@ -260,4 +260,50 @@ test.describe('Song Versions', () => {
     expect(ids).not.toContain(a) // never suggest the song itself
     expect(ids).toContain(c) // a different similar song — surfaced
   })
+
+  test('a re-titled version (different title, ≥70% identical verses) is surfaced via lyrics recall', async ({
+    request,
+  }) => {
+    // Stronger than the earlier "rewritten title" case: here the two titles
+    // share NO word with each other OR with the verses, so a title-only FTS
+    // pass can never reach the candidate. The match can ONLY come from the
+    // verse-overlap recall — this is the regression guard for matching by
+    // verses. The verses are identical (Jaccard 1.0, well over the 70% bar).
+    //
+    // NB: the run `tag` is deliberately kept OUT of the verses — putting it in
+    // the lyrics AND the subject title would let the title-FTS query match the
+    // candidate's content on the shared tag token, masking the lyrics pass.
+    const verses = [
+      { content: 'Izvorul tainic susura pe coama muntelui de clestar' },
+      { content: 'Privighetoarea ingana un cantec uitat peste valea adanca' },
+    ]
+    const subject = await request
+      .post('/api/songs', {
+        data: {
+          title: `Dimineata aurie de toamna tarzie ${tag}`,
+          slides: verses,
+        },
+      })
+      .then((r) => r.json())
+      .then((j) => j.data.id as number)
+    createdSongIds.push(subject)
+    const reTitled = await request
+      .post('/api/songs', {
+        data: {
+          title: 'Cantarea linistii necuprinse de seara',
+          slides: verses,
+        },
+      })
+      .then((r) => r.json())
+      .then((j) => j.data.id as number)
+    createdSongIds.push(reTitled)
+
+    const res = await request.get(`/api/songs/${subject}/similar?limit=10`)
+    const { data } = await res.json()
+    const hit = data.find((s: { songId: number }) => s.songId === reTitled)
+    expect(hit).toBeTruthy()
+    // It matched on the verses, not the title.
+    expect(hit.reason).toBe('lyrics')
+    expect(hit.score).toBeGreaterThanOrEqual(0.7)
+  })
 })

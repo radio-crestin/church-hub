@@ -8,8 +8,8 @@ import type {
   SongGroupWithMembers,
   SongVersionSuggestion,
 } from './types'
-import { getDatabase } from '../../db'
-import { songGroups, songSlides, songs } from '../../db/schema'
+import { getDatabase, getRawDatabase } from '../../db'
+import { songCategories, songGroups, songSlides, songs } from '../../db/schema'
 import { createLogger } from '../../utils/logger'
 
 const logger = createLogger('song-groups')
@@ -541,6 +541,73 @@ function jaccard(a: ReadonlySet<string>, b: ReadonlySet<string>): number {
 }
 
 /**
+ * Lyrics overlap (Jaccard of content words) at or above this is treated as a
+ * re-titled version even when the titles share no distinctive word. Matches
+ * the operator's "more than 70% of the verses are the same" rule.
+ */
+const LYRICS_MATCH_THRESHOLD = 0.7
+
+/**
+ * A pure-lyrics match (no title overlap) must be backed by at least this many
+ * distinct content words on BOTH sides. Guards against degenerate matches
+ * between trivially short songs — e.g. two different one-line "Aleluia"
+ * choruses would otherwise score 1.0 on a single shared word.
+ */
+const MIN_LYRICS_CONTENT_WORDS = 4
+
+/** Cap on how many distinct lyric terms feed the recall FTS query, so a very
+ * long hymn can't exceed FTS5's expression-size limit. */
+const LYRICS_RECALL_TERM_CAP = 60
+
+/** How many lyrics-recall candidates to pull before the precision rerank. */
+const LYRICS_RECALL_LIMIT = 30
+
+/**
+ * Builds the FTS5 MATCH expression that recalls songs sharing the subject's
+ * *verse* vocabulary, restricted to the `content` (lyrics) column so a shared
+ * category name or title word can't leak in. Terms are the subject's
+ * distinctive lyric words (Romanian stopwords + diacritics already stripped by
+ * `contentWords`), longest-first (longer words are rarer / more selective) and
+ * capped at `LYRICS_RECALL_TERM_CAP`. Returns '' when the subject has no usable
+ * lyric words, in which case the caller skips the lyrics pass.
+ */
+export function buildLyricsRecallMatchQuery(
+  subjectLyricToks: readonly string[],
+): string {
+  const words = [...contentWords(subjectLyricToks)].sort(
+    (a, b) => b.length - a.length,
+  )
+  if (words.length === 0) return ''
+  const terms = words.slice(0, LYRICS_RECALL_TERM_CAP)
+  return `{content} : (${terms.map((t) => `"${t}"`).join(' OR ')})`
+}
+
+/**
+ * Returns up to `LYRICS_RECALL_LIMIT` song ids whose lyrics overlap the
+ * subject's verse vocabulary, ranked by FTS relevance. This is the recall pass
+ * that lets a *re-titled* version (different name, same verses) reach the
+ * precision rerank in `getSimilarSongs`; a title-only FTS query can never find
+ * it. The broad recall is fine — the Jaccard rerank is what enforces the
+ * ">70% of the verses match" bar.
+ */
+function recallByLyrics(subjectLyricToks: readonly string[]): number[] {
+  const match = buildLyricsRecallMatchQuery(subjectLyricToks)
+  if (!match) return []
+  try {
+    const raw = getRawDatabase()
+    const rows = raw
+      .query<{ song_id: number }, [string, number]>(
+        'SELECT song_id FROM songs_fts WHERE songs_fts MATCH ? ORDER BY rank LIMIT ?',
+      )
+      .all(match, LYRICS_RECALL_LIMIT)
+    return rows.map((r) => r.song_id)
+  } catch (error) {
+    logger.error(`recallByLyrics failed: ${error}`)
+    return []
+  }
+}
+
+/**
  * Computes the version-likelihood score between two songs. Combines:
  *  - Content-word title Jaccard (60%) — distinctive words after stripping
  *    Romanian filler; falls back to full-token Jaccard when the title is
@@ -549,11 +616,11 @@ function jaccard(a: ReadonlySet<string>, b: ReadonlySet<string>): number {
  *    rewritten but whose lyrics still share most of the vocabulary.
  *
  * A hard precision filter then rejects pairs that share NO distinctive
- * title word AND have lyrics overlap below 0.7 — that combination is the
- * shape of an accidental match (common Romanian filler in titles, no
- * content overlap at all).
+ * title word AND have lyrics overlap below `LYRICS_MATCH_THRESHOLD` — that
+ * combination is the shape of an accidental match (common Romanian filler in
+ * titles, no content overlap at all).
  */
-function scoreVersionLikelihood(
+export function scoreVersionLikelihood(
   subjectTitleToks: readonly string[],
   subjectLyricToks: readonly string[],
   candidateTitle: string,
@@ -577,7 +644,7 @@ function scoreVersionLikelihood(
   // unless the lyrics are nearly identical (a rewritten-title version).
   const hasTitleContentOverlap =
     !useFallback && [...subjTitleSet].some((w) => candTitleSet.has(w))
-  if (!hasTitleContentOverlap && lyricsSim < 0.7) {
+  if (!hasTitleContentOverlap && lyricsSim < LYRICS_MATCH_THRESHOLD) {
     return { score: 0, reason: 'mixed' }
   }
 
@@ -586,6 +653,14 @@ function scoreVersionLikelihood(
   // the lyrics signal full credit instead of diluting it via the blended
   // formula (which would average in a zero title score).
   if (!hasTitleContentOverlap) {
+    // Require enough distinct verse vocabulary on both sides so two trivially
+    // short songs that share one word (e.g. "Aleluia") can't score as a match.
+    if (
+      subjLyricSet.size < MIN_LYRICS_CONTENT_WORDS ||
+      candLyricSet.size < MIN_LYRICS_CONTENT_WORDS
+    ) {
+      return { score: 0, reason: 'lyrics' }
+    }
     return { score: lyricsSim, reason: 'lyrics' }
   }
 
@@ -599,16 +674,23 @@ function scoreVersionLikelihood(
  * Surfaces likely versions of `songId`: songs whose distinctive content
  * (title + lyrics, after Romanian-aware stopword removal and ASCII fold)
  * overlaps enough to merit "is this the same song?". On-demand; the
- * request-time cost is one FTS query + a single batched slides fetch +
+ * request-time cost is two FTS queries + a couple of batched fetches +
  * an in-memory rerank.
+ *
+ * Candidates come from TWO recall passes that are then merged and reranked:
+ *  1. Title FTS — finds same/similar-titled versions.
+ *  2. Lyrics FTS — finds RE-TITLED versions (different name, same verses).
+ *     Without this pass a version whose title was rewritten would never even
+ *     be considered, because the title query can't reach it.
  *
  * Filtered out:
  *  - the song itself,
  *  - songs already in the same group,
- *  - songs whose blended score is below `minScore` (default `0.55`,
- *    chosen so e.g. "Doamne mai vreau Rusalii cu limbi de foc" no longer
- *    pulls in unrelated "Doamne nu mai vreau nimic" through filler-word
- *    inflation).
+ *  - songs whose score is below `minScore` (default `0.55`, chosen so e.g.
+ *    "Doamne mai vreau Rusalii cu limbi de foc" no longer pulls in unrelated
+ *    "Doamne nu mai vreau nimic" through filler-word inflation). A pure-lyrics
+ *    match scores its raw lyrics Jaccard, so the operator's "verses match more
+ *    than 70%" rule is what surfaces a re-titled version.
  */
 export function getSimilarSongs(
   songId: number,
@@ -628,12 +710,8 @@ export function getSimilarSongs(
 
     if (!subject) return []
 
-    // 1) Pull candidates via the existing FTS endpoint with the title as
-    //    the query. Cheap, understands diacritic folding + hymn numbers,
-    //    so we get good recall before the precision-tight rerank.
-    const rawCandidates = searchSongs(subject.title, undefined, 30)
-
-    // 2) Build the exclusion set: self + group members.
+    // Exclusion set: self + current group siblings (already-resolved versions
+    // — suggesting them again is noise the operator already dealt with).
     const exclude = new Set<number>([songId])
     if (subject.songGroupId) {
       const groupMembers = db
@@ -644,18 +722,70 @@ export function getSimilarSongs(
       for (const m of groupMembers) exclude.add(m.id)
     }
 
-    const survivingCandidates = rawCandidates.filter((c) => !exclude.has(c.id))
-    if (survivingCandidates.length === 0) return []
+    // Subject lyrics — needed for the lyrics-recall query AND the rerank.
+    const subjectSlides = db
+      .select({ content: songSlides.content })
+      .from(songSlides)
+      .where(eq(songSlides.songId, songId))
+      .all()
+    const subjectLyrics = subjectSlides.map((s) => s.content).join(' ')
+    const subjectTitleToks = tokenize(subject.title)
+    const subjectLyricToks = tokenize(subjectLyrics)
 
-    // 3) Batch-fetch lyrics: one query for the subject + every candidate.
-    const idsForLyrics = [songId, ...survivingCandidates.map((c) => c.id)]
+    // 1) Title recall — cheap FTS over title/category/content using the title
+    //    as the query. Understands diacritic folding + hymn numbers.
+    const titleCandidates = searchSongs(subject.title, undefined, 30).filter(
+      (c) => !exclude.has(c.id),
+    )
+
+    // 2) Lyrics recall — FTS over the lyrics column using the subject's verse
+    //    vocabulary. Surfaces re-titled versions the title pass can't reach.
+    const lyricsCandidateIds = recallByLyrics(subjectLyricToks).filter(
+      (id) => !exclude.has(id),
+    )
+
+    // 3) Merge into one candidate set carrying title + category metadata.
+    //    Title candidates already have it; lyrics-only ids need a small fetch.
+    const candidateMeta = new Map<
+      number,
+      { title: string; categoryName: string | null }
+    >()
+    for (const c of titleCandidates) {
+      candidateMeta.set(c.id, { title: c.title, categoryName: c.categoryName })
+    }
+    const missingMetaIds = lyricsCandidateIds.filter(
+      (id) => !candidateMeta.has(id),
+    )
+    if (missingMetaIds.length > 0) {
+      const metaRows = db
+        .select({
+          id: songs.id,
+          title: songs.title,
+          categoryName: songCategories.name,
+        })
+        .from(songs)
+        .leftJoin(songCategories, eq(songs.categoryId, songCategories.id))
+        .where(inArray(songs.id, missingMetaIds))
+        .all()
+      for (const r of metaRows) {
+        candidateMeta.set(r.id, {
+          title: r.title,
+          categoryName: r.categoryName,
+        })
+      }
+    }
+    if (candidateMeta.size === 0) return []
+
+    const candidateIds = [...candidateMeta.keys()]
+
+    // 4) Batch-fetch candidate lyrics (one query for every candidate).
     const slidesBySongId = db
       .select({
         songId: songSlides.songId,
         content: songSlides.content,
       })
       .from(songSlides)
-      .where(inArray(songSlides.songId, idsForLyrics))
+      .where(inArray(songSlides.songId, candidateIds))
       .all()
     const lyricsBySongId = new Map<number, string>()
     for (const row of slidesBySongId) {
@@ -666,30 +796,28 @@ export function getSimilarSongs(
       )
     }
 
-    // 4) Pre-tokenize the subject's title + lyrics ONCE.
-    const subjectTitleToks = tokenize(subject.title)
-    const subjectLyricToks = tokenize(lyricsBySongId.get(songId) ?? '')
-
-    // 5) Score each candidate.
-    const rescored = survivingCandidates
-      .map((c) => {
-        const candLyrics = lyricsBySongId.get(c.id) ?? ''
+    // 5) Score each candidate with the title+lyrics likelihood model.
+    const rescored = candidateIds
+      .map((id) => {
+        const meta = candidateMeta.get(id)
+        if (!meta) return null
         const { score, reason } = scoreVersionLikelihood(
           subjectTitleToks,
           subjectLyricToks,
-          c.title,
-          candLyrics,
+          meta.title,
+          lyricsBySongId.get(id) ?? '',
         )
         return {
-          songId: c.id,
-          title: c.title,
+          songId: id,
+          title: meta.title,
           hymnNumber: null as string | null,
           author: null as string | null,
-          categoryName: c.categoryName,
+          categoryName: meta.categoryName,
           score: Math.round(score * 100) / 100,
           reason,
         }
       })
+      .filter((c): c is NonNullable<typeof c> => c !== null)
       .filter((c) => c.score >= minScore)
       .sort((a, b) => b.score - a.score)
       .slice(0, limit)
