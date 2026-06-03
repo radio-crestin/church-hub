@@ -5,8 +5,14 @@ import { useAppUpdate } from '../hooks/useAppUpdate'
 
 export function AboutSection() {
   const { t } = useTranslation('settings')
-  const { updateInfo, isLoading, isDownloading, checkNow, downloadUpdate } =
-    useAppUpdate()
+  const {
+    updateInfo,
+    isLoading,
+    isDownloading,
+    isDevInstance,
+    checkNow,
+    downloadUpdate,
+  } = useAppUpdate()
 
   return (
     <div className="flex-1 bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
@@ -32,19 +38,33 @@ export function AboutSection() {
               v{updateInfo?.currentVersion || '...'}
             </p>
           </div>
-          <button
-            onClick={() => void checkNow()}
-            disabled={isLoading}
-            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
-            title={t('sections.about.checkForUpdates')}
-          >
-            <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
-            {t('sections.about.checkForUpdates')}
-          </button>
+          {!isDevInstance && (
+            <button
+              onClick={() => void checkNow()}
+              disabled={isLoading}
+              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
+              title={t('sections.about.checkForUpdates')}
+            >
+              <RefreshCw
+                size={16}
+                className={isLoading ? 'animate-spin' : ''}
+              />
+              {t('sections.about.checkForUpdates')}
+            </button>
+          )}
         </div>
 
-        {/* Latest Version / Update Available */}
-        {updateInfo?.hasUpdate ? (
+        {/* Dev instance note / Latest Version / Update Available */}
+        {isDevInstance ? (
+          <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+            <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+              {t('sections.about.devInstance')}
+            </p>
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+              {t('sections.about.devInstanceDescription')}
+            </p>
+          </div>
+        ) : updateInfo?.hasUpdate ? (
           <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
             <div className="flex items-start justify-between gap-4">
               <div>
