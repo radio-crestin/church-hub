@@ -283,6 +283,7 @@
       },
       "groups": {
         "songs": "Songs",
+        "song_versions": "Song versions",
         "bible": "Bible",
         "control_room": "Control Room",
         "programs": "Programs",
