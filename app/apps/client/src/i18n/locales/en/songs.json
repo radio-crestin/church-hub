@@ -127,7 +127,9 @@
     "exportAsText": "Export as text",
     "exportCopied": "Bookmarks copied to clipboard",
     "exportEmpty": "Nothing to export",
-    "focusPresentedSong": "Go to displayed song"
+    "focusPresentedSong": "Go to displayed song",
+    "expand": "Expand",
+    "collapse": "Collapse"
   },
   "noSongs": "No songs yet",
   "noSongsDescription": "Create your first song to get started",
@@ -271,8 +273,10 @@
     "linkSearchPlaceholder": "Search by title…",
     "linkSubmit": "Link",
     "linkCancel": "Cancel",
-    "linkSuccess": "Songs linked as versions",
+    "linkSuccess": "Linked \"{{title}}\" as a version",
     "linkError": "Couldn't link the songs: {{error}}",
+    "expand": "Expand",
+    "collapse": "Collapse",
     "unlinkSuccess": "Removed from versions",
     "unlinkError": "Couldn't unlink: {{error}}",
     "setPrimarySuccess": "Primary version updated",

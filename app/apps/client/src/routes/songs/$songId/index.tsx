@@ -12,7 +12,6 @@ import {
   Download,
   Eye,
   GripVertical,
-  Layers,
   Loader2,
   Music,
   Music2,
@@ -45,7 +44,6 @@ import {
 import {
   CategoryEditDialog,
   type CategoryEditDialogHandle,
-  CollapsibleSection,
   SongBookmarksPanel,
   SongControlPanel,
   SongSlidesPanel,
@@ -57,7 +55,6 @@ import {
   useResetPresentationCount,
   useSong,
   useSongBookmarks,
-  useSongGroup,
   useSongKeyboardShortcuts,
   useSongSlideSelectionKeyboard,
   useUndismissedSuggestionCount,
@@ -141,9 +138,12 @@ function SongPreviewPage() {
   const { data: bookmarks = [] } = useSongBookmarks()
   const { showToast } = useToast()
 
+  // Default layout: Slides 30% / Stage (Control Panel) 40% / Accordion 30%.
+  // The Stage gets the biggest slice so the slide preview can breathe, and
+  // Slides + Accordion start equal — the operator can drag from there.
   const [dividerPosition, setDividerPosition] = useDividerPosition(
     DIVIDER_KEYS.songDetailLeft,
-    40,
+    30,
   )
   const [showAddToScheduleModal, setShowAddToScheduleModal] = useState(false)
   const [showAddBookmarksToScheduleModal, setShowAddBookmarksToScheduleModal] =
@@ -154,13 +154,12 @@ function SongPreviewPage() {
   const [isLargeScreen, setIsLargeScreen] = useState(false)
   const [selectedSlideIndex, setSelectedSlideIndex] = useState(0)
   const [isEditMode, setIsEditMode] = useState(false)
-  // Divider between Control Panel and the accordion column on the right.
-  // Defaults to 40% so the accordion (which carries Marcaje + Versiuni) gets
-  // the larger half — that's where the operator spends most of their time
-  // outside the slides themselves.
+  // Within the right-of-slides area, the Stage takes ~57% so that (combined
+  // with the 30% Slides on the left) it lands at ~40% of the full page and
+  // the Accordion at ~30% — matching Slides exactly.
   const [rightDividerPosition, setRightDividerPosition] = useDividerPosition(
     DIVIDER_KEYS.songDetailRight,
-    40,
+    57,
   )
   // Right-column accordion state. Persisted across sessions via localStorage
   // so the operator's last choice (Versions vs Marcaje expanded) carries over
@@ -205,9 +204,8 @@ function SongPreviewPage() {
   const keyLineDialogRef = useRef<KeyLineEditDialogHandle>(null)
   const categoryDialogRef = useRef<CategoryEditDialogHandle>(null)
 
-  // Versions group + suggestion count drive the right-column accordion
-  // badges and the auto-expand behavior.
-  const { data: songGroup } = useSongGroup(numericId)
+  // Drives the Versions accordion: the badge for unread suggestions and
+  // the auto-expand on songs that have something new to look at.
   const undismissedSuggestionCount = useUndismissedSuggestionCount(numericId)
 
   // Auto-expand the Versions section when a freshly opened song has new
@@ -762,48 +760,33 @@ function SongPreviewPage() {
                 : undefined
             }
           >
-            <CollapsibleSection
-              title={t('bookmarks.title')}
-              icon={
-                <Bookmark className="h-4 w-4 text-amber-500 dark:text-amber-400" />
-              }
-              isOpen={bookmarksOpen}
-              onToggle={() => setBookmarksOpen(!bookmarksOpen)}
-              className="hidden lg:flex"
+            <div
+              className={`hidden lg:block ${bookmarksOpen ? 'min-h-0 flex-1' : 'flex-none'}`}
             >
-              <div className="h-full overflow-hidden">
-                <SongBookmarksPanel
-                  onSelectSong={handleBookmarkSongClick}
-                  activeSongId={numericId}
-                  onAddAllToSchedule={handleAddAllBookmarksToSchedule}
-                />
-              </div>
-            </CollapsibleSection>
+              <SongBookmarksPanel
+                onSelectSong={handleBookmarkSongClick}
+                activeSongId={numericId}
+                onAddAllToSchedule={handleAddAllBookmarksToSchedule}
+                isCollapsed={!bookmarksOpen}
+                onToggleCollapse={() => setBookmarksOpen(!bookmarksOpen)}
+              />
+            </div>
 
             {song ? (
-              <CollapsibleSection
-                title={t('versions.title')}
-                icon={
-                  <Layers className="h-4 w-4 text-indigo-500 dark:text-indigo-400" />
-                }
-                badge={
-                  undismissedSuggestionCount > 0
-                    ? `+${undismissedSuggestionCount}`
-                    : songGroup
-                      ? `${songGroup.members.length}`
-                      : null
-                }
-                badgeTone={undismissedSuggestionCount > 0 ? 'accent' : 'indigo'}
-                isOpen={versionsOpen}
-                onToggle={() => setVersionsOpen(!versionsOpen)}
-              >
+              <div className={versionsOpen ? 'min-h-0 flex-1' : 'flex-none'}>
                 <SongVersionsPanel
                   songId={numericId}
                   songTitle={song.title}
                   canEdit={canEditSong}
-                  embedded
+                  isCollapsed={!versionsOpen}
+                  onToggleCollapse={() => setVersionsOpen(!versionsOpen)}
+                  attentionBadge={
+                    undismissedSuggestionCount > 0
+                      ? `+${undismissedSuggestionCount}`
+                      : null
+                  }
                 />
-              </CollapsibleSection>
+              </div>
             ) : null}
           </div>
         </div>

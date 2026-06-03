@@ -20,6 +20,7 @@ import {
   Bookmark,
   CalendarPlus,
   Check,
+  ChevronDown,
   Download,
   GripVertical,
   Pencil,
@@ -277,12 +278,23 @@ interface SongBookmarksPanelProps {
   onSelectSong: (bookmark: SongBookmark) => void
   onAddAllToSchedule?: (songIds: number[]) => void
   activeSongId?: number
+  /**
+   * When provided, renders a chevron toggle inline with the title so the
+   * panel can act as its own accordion section without a wrapping
+   * CollapsibleSection (which used to introduce a redundant header bar).
+   * The body is hidden when `isCollapsed` is true; the header keeps its
+   * actions visible so the operator still gets at Add/Export/Schedule/Clear.
+   */
+  isCollapsed?: boolean
+  onToggleCollapse?: () => void
 }
 
 export function SongBookmarksPanel({
   onSelectSong,
   onAddAllToSchedule,
   activeSongId,
+  isCollapsed = false,
+  onToggleCollapse,
 }: SongBookmarksPanelProps) {
   const { t } = useTranslation('songs')
   const { data: bookmarks = [], isLoading } = useSongBookmarks()
@@ -480,11 +492,33 @@ export function SongBookmarksPanel({
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden h-full">
-      {/* Header */}
+      {/* Header — when `onToggleCollapse` is wired, the leading chevron lets
+          this panel double as its own accordion section so the parent doesn't
+          have to wrap it in a CollapsibleSection (which used to stack a
+          redundant title bar above this one). Action buttons stay visible
+          even when collapsed so the operator can still Add/Export/Clear. */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          {onToggleCollapse ? (
+            <button
+              type="button"
+              onClick={onToggleCollapse}
+              aria-expanded={!isCollapsed}
+              aria-label={
+                isCollapsed
+                  ? t('bookmarks.expand', 'Expand')
+                  : t('bookmarks.collapse', 'Collapse')
+              }
+              className="-ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded text-gray-500 transition-transform hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+            >
+              <ChevronDown
+                size={14}
+                className={`transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}`}
+              />
+            </button>
+          ) : null}
           <Bookmark className="w-4 h-4 text-amber-500 dark:text-amber-400" />
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
             {t('bookmarks.title')}
           </span>
           {totalCount > 0 && (
@@ -539,114 +573,120 @@ export function SongBookmarksPanel({
         )}
       </div>
 
-      {/* Add Note Input */}
-      {isAddingNote && (
-        <div className="px-3 py-1.5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-          <div className="flex items-center gap-1">
-            <input
-              ref={newNoteInputRef}
-              type="text"
-              value={newNoteContent}
-              onChange={(e) => setNewNoteContent(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleAddNote()
-                if (e.key === 'Escape') {
-                  setIsAddingNote(false)
-                  setNewNoteContent('')
-                }
-              }}
-              placeholder={t('bookmarks.notePlaceholder')}
-              className="flex-1 min-w-0 text-xs bg-gray-50 dark:bg-gray-900 border border-blue-300 dark:border-blue-600 rounded px-2 py-1.5 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-            />
-            <button
-              type="button"
-              onClick={handleAddNote}
-              disabled={!newNoteContent.trim()}
-              className="p-1.5 text-green-600 hover:text-green-700 dark:text-green-400 disabled:opacity-50"
-            >
-              <Check size={14} />
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setIsAddingNote(false)
-                setNewNoteContent('')
-              }}
-              className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-            >
-              <XIcon size={14} />
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Body — hidden in the collapsed accordion state. Kept as a fragment
+          so the panel's outer flex column still measures correctly. */}
+      {isCollapsed ? null : (
+        <>
+          {/* Add Note Input */}
+          {isAddingNote && (
+            <div className="px-3 py-1.5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+              <div className="flex items-center gap-1">
+                <input
+                  ref={newNoteInputRef}
+                  type="text"
+                  value={newNoteContent}
+                  onChange={(e) => setNewNoteContent(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleAddNote()
+                    if (e.key === 'Escape') {
+                      setIsAddingNote(false)
+                      setNewNoteContent('')
+                    }
+                  }}
+                  placeholder={t('bookmarks.notePlaceholder')}
+                  className="flex-1 min-w-0 text-xs bg-gray-50 dark:bg-gray-900 border border-blue-300 dark:border-blue-600 rounded px-2 py-1.5 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddNote}
+                  disabled={!newNoteContent.trim()}
+                  className="p-1.5 text-green-600 hover:text-green-700 dark:text-green-400 disabled:opacity-50"
+                >
+                  <Check size={14} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAddingNote(false)
+                    setNewNoteContent('')
+                  }}
+                  className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <XIcon size={14} />
+                </button>
+              </div>
+            </div>
+          )}
 
-      {/* Search */}
-      {totalCount > 3 && (
-        <div className="px-3 py-1.5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t('bookmarks.searchPlaceholder')}
-              className="w-full pl-8 pr-7 py-1.5 text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-md text-gray-900 dark:text-white placeholder-gray-400 focus:ring-1 focus:ring-amber-500 focus:border-amber-500"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+          {/* Search */}
+          {totalCount > 3 && (
+            <div className="px-3 py-1.5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={t('bookmarks.searchPlaceholder')}
+                  className="w-full pl-8 pr-7 py-1.5 text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-md text-gray-900 dark:text-white placeholder-gray-400 focus:ring-1 focus:ring-amber-500 focus:border-amber-500"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    <XIcon className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto scrollbar-thin min-h-0">
+            {isLoading ? (
+              <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                ...
+              </div>
+            ) : totalCount === 0 ? (
+              <div className="px-4 py-6 text-center">
+                <Bookmark className="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {t('bookmarks.empty')}
+                </p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                  {t('bookmarks.emptyDescription')}
+                </p>
+              </div>
+            ) : filteredItems.length === 0 ? (
+              <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                {t('bookmarks.noResults')}
+              </div>
+            ) : isSearching ? (
+              <div className="p-2 flex flex-col gap-1.5">
+                {filteredItems.map(renderItem)}
+              </div>
+            ) : (
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                modifiers={[restrictToVerticalAxis]}
+                onDragEnd={handleDragEnd}
               >
-                <XIcon className="w-3.5 h-3.5" />
-              </button>
+                <SortableContext
+                  items={unifiedItems.map((item) => item.uniqueId)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="p-2 flex flex-col gap-1.5">
+                    {unifiedItems.map(renderItem)}
+                  </div>
+                </SortableContext>
+              </DndContext>
             )}
           </div>
-        </div>
+        </>
       )}
-
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto scrollbar-thin min-h-0">
-        {isLoading ? (
-          <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
-            ...
-          </div>
-        ) : totalCount === 0 ? (
-          <div className="px-4 py-6 text-center">
-            <Bookmark className="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {t('bookmarks.empty')}
-            </p>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-              {t('bookmarks.emptyDescription')}
-            </p>
-          </div>
-        ) : filteredItems.length === 0 ? (
-          <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
-            {t('bookmarks.noResults')}
-          </div>
-        ) : isSearching ? (
-          <div className="p-2 flex flex-col gap-1.5">
-            {filteredItems.map(renderItem)}
-          </div>
-        ) : (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            modifiers={[restrictToVerticalAxis]}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={unifiedItems.map((item) => item.uniqueId)}
-              strategy={verticalListSortingStrategy}
-            >
-              <div className="p-2 flex flex-col gap-1.5">
-                {unifiedItems.map(renderItem)}
-              </div>
-            </SortableContext>
-          </DndContext>
-        )}
-      </div>
     </div>
   )
 }
