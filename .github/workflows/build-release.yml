@@ -125,15 +125,24 @@ jobs:
         id: version
         run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
-      - name: Create draft release
+      # Upsert the GitHub release. Previously this called `gh release
+      # create` unconditionally, which failed (exit 1) when a draft for
+      # the tag already existed — the typical shape when the operator
+      # tags a release through the GitHub UI's "Draft a new release"
+      # flow. The workflow would then halt before `build` and
+      # `sync-version-back` ever ran, and `tauri.conf.json` stayed
+      # stale. Now we check `gh release view` first and either edit
+      # the existing release's title/notes or create a fresh draft.
+      - name: Create or update draft release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: v${{ steps.version.outputs.version }}
         run: |
-          gh release create "v${{ steps.version.outputs.version }}" \
-            --draft \
-            --title "Church Hub v${{ steps.version.outputs.version }}" \
-            --notes "$(cat <<'EOF'
-          # Church Hub v${{ steps.version.outputs.version }}
+          # Build the release notes once into a temp file so the create
+          # and edit branches share the same body — keeps the heredoc in
+          # one place if it changes later.
+          cat > /tmp/release-notes.md <<EOF
+          # Church Hub $TAG
 
           A modern, feature-rich church presentation and livestream management system.
 
@@ -154,7 +163,7 @@ jobs:
           1. Click the download link for your platform above
           2. Run the installer
           3. Launch Church Hub
-          4. Access the web interface at `http://localhost:3000`
+          4. Access the web interface at \`http://localhost:3000\`
 
           ---
 
@@ -162,9 +171,9 @@ jobs:
 
           After installing, if you see **"church-hub.app is damaged and can't be opened"**, run this command in Terminal:
 
-          ```bash
+          \`\`\`bash
           xattr -c /Applications/church-hub.app
-          ```
+          \`\`\`
 
           This removes the quarantine flag from unsigned apps.
 
@@ -179,7 +188,22 @@ jobs:
 
           <sub>Made with love for churches everywhere</sub>
           EOF
-          )"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists — updating its title and notes."
+            # `gh release edit` preserves the existing draft/published
+            # state, so a release the operator manually published from
+            # the UI stays published; one left as draft stays a draft.
+            gh release edit "$TAG" \
+              --title "Church Hub $TAG" \
+              --notes-file /tmp/release-notes.md
+          else
+            echo "Creating new draft release $TAG."
+            gh release create "$TAG" \
+              --draft \
+              --title "Church Hub $TAG" \
+              --notes-file /tmp/release-notes.md
+          fi
 
   build:
     needs: [test, create-release]
@@ -282,7 +306,11 @@ jobs:
         id: frontend-cache
         with:
           path: app/apps/client/dist
-          key: ${{ runner.os }}-frontend-${{ hashFiles('app/apps/client/src/**', 'app/apps/client/package.json', 'app/apps/client/vite.config.ts', 'app/apps/client/tsconfig.json') }}
+          # `tauri.conf.json` is hashed too: Vite reads the version from it
+          # at build time and embeds `__appVersion` into the bundle, so a
+          # version bump must invalidate any cached dist. Without this,
+          # releases would silently ship the previous version's UI.
+          key: ${{ runner.os }}-frontend-${{ hashFiles('app/apps/client/src/**', 'app/apps/client/package.json', 'app/apps/client/vite.config.ts', 'app/apps/client/tsconfig.json', 'app/tauri/tauri.conf.json') }}
           restore-keys: |
             ${{ runner.os }}-frontend-
 
@@ -399,3 +427,65 @@ jobs:
           tag_name: v${{ steps.version.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # After every successful release, push the tag's version back into
+  # `app/tauri/tauri.conf.json` on `main` so local builds, the OpenAPI
+  # spec, and any other consumer of the file stay aligned with what's
+  # actually shipping. Without this the file drifts (see the manual
+  # `chore: bump version to 0.1.71` catch-up that prompted this).
+  #
+  # `[skip ci]` in the commit message prevents the release workflow from
+  # re-triggering on the auto-commit. The job is a no-op when the file
+  # is already at the tagged version (e.g. when the operator bumped it
+  # manually before tagging).
+  sync-version-back:
+    needs: [build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          # `fetch-depth: 0` so we have the history needed to push
+          # cleanly; the default shallow clone refuses a non-ff push.
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          # Mirror the MSI rule from the build job: strip non-numeric
+          # pre-release suffixes so the embedded version is valid.
+          TAURI_VERSION=$(echo "$VERSION" | sed 's/-[^0-9].*//')
+          echo "tauri_version=$TAURI_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Patch tauri.conf.json + commit
+        env:
+          TAURI_VERSION: ${{ steps.version.outputs.tauri_version }}
+        run: |
+          cd app/tauri
+          # Idempotent — if the operator pre-bumped the file (recommended
+          # workflow via scripts/release.sh) the sed becomes a no-op and
+          # the commit step short-circuits below.
+          sed -i.bak "s/\"version\": \"[^\"]*\"/\"version\": \"$TAURI_VERSION\"/" tauri.conf.json
+          rm -f tauri.conf.json.bak
+
+          if git diff --quiet tauri.conf.json; then
+            echo "tauri.conf.json already at $TAURI_VERSION — nothing to commit."
+            exit 0
+          fi
+
+          # Author the commit as the repo owner so the history reads as a
+          # normal version bump (matches the manual `chore: bump version`
+          # pattern instead of looking like a bot pushed to main).
+          git config user.name "Bogdan Baghiu"
+          git config user.email "bogdantrabajo@gmail.com"
+          git add tauri.conf.json
+          git commit -m "chore: bump version to $TAURI_VERSION [skip ci]"
+          # Rebase guard: if someone landed an unrelated commit on main
+          # between the tag push and now, rebase before pushing.
+          git pull --rebase origin main
+          git push origin HEAD:main
