@@ -121,6 +121,13 @@ interface SongVersionsPanelProps {
    * primary / unlink). Otherwise the panel renders as read-only.
    */
   canEdit: boolean
+  /**
+   * When `true`, render only the inner body (no outer card + heading) so
+   * the panel can be slotted into a `CollapsibleSection` whose chrome and
+   * header replace the panel's. The accordion takes ownership of the
+   * title, the count badge, and the toggle affordance.
+   */
+  embedded?: boolean
 }
 
 /**
@@ -128,10 +135,34 @@ interface SongVersionsPanelProps {
  * song has no group yet, it only shows a "Same song as…" call to action.
  * When grouped, it lists every member with quick actions.
  */
+/**
+ * Inner-body wrapper: keeps spacing consistent whether the panel renders
+ * its own chrome (standalone) or hands chrome over to a parent accordion
+ * (embedded). Scrollable when embedded so a long member list doesn't push
+ * sibling panels out. Hoisted outside the component so it doesn't get a
+ * fresh identity on every render.
+ */
+function PanelBody({
+  embedded,
+  children,
+}: {
+  embedded: boolean
+  children: React.ReactNode
+}) {
+  return embedded ? (
+    <div className="h-full overflow-y-auto p-3">{children}</div>
+  ) : (
+    <section className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+      {children}
+    </section>
+  )
+}
+
 export function SongVersionsPanel({
   songId,
   songTitle,
   canEdit,
+  embedded = false,
 }: SongVersionsPanelProps) {
   const { t } = useTranslation('songs')
   const { data: group, isLoading } = useSongGroup(songId)
@@ -142,11 +173,11 @@ export function SongVersionsPanel({
   // While loading, render a tight placeholder so the page layout doesn't jump.
   if (isLoading) {
     return (
-      <section className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+      <PanelBody embedded={embedded}>
         <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
           <Loader2 size={14} className="animate-spin" />
         </div>
-      </section>
+      </PanelBody>
     )
   }
 
@@ -155,11 +186,13 @@ export function SongVersionsPanel({
   if (!group) {
     if (!canEdit) return null
     return (
-      <section className="rounded-lg border border-dashed border-gray-300 bg-white p-4 dark:border-gray-600 dark:bg-gray-800">
-        <header className="mb-2 flex items-center gap-2 text-gray-700 dark:text-gray-200">
-          <Layers size={16} />
-          <h3 className="text-sm font-semibold">{t('versions.title')}</h3>
-        </header>
+      <PanelBody embedded={embedded}>
+        {!embedded ? (
+          <header className="mb-2 flex items-center gap-2 text-gray-700 dark:text-gray-200">
+            <Layers size={16} />
+            <h3 className="text-sm font-semibold">{t('versions.title')}</h3>
+          </header>
+        ) : null}
         <p className="text-sm text-gray-500 dark:text-gray-400">
           {t('versions.description')}
         </p>
@@ -180,21 +213,36 @@ export function SongVersionsPanel({
           currentSongId={songId}
           currentSongTitle={songTitle}
         />
-      </section>
+      </PanelBody>
     )
   }
 
   return (
-    <section className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-      <header className="mb-3 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
-          <Layers size={16} />
-          <h3 className="text-sm font-semibold">{t('versions.title')}</h3>
-          <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
-            {t('versions.count', { count: group.members.length })}
-          </span>
-        </div>
-        {canEdit ? (
+    <PanelBody embedded={embedded}>
+      {!embedded ? (
+        <header className="mb-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
+            <Layers size={16} />
+            <h3 className="text-sm font-semibold">{t('versions.title')}</h3>
+            <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
+              {t('versions.count', { count: group.members.length })}
+            </span>
+          </div>
+          {canEdit ? (
+            <button
+              type="button"
+              onClick={() => setLinkModalOpen(true)}
+              className="text-xs font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+            >
+              + {t('versions.linkButtonShort')}
+            </button>
+          ) : null}
+        </header>
+      ) : canEdit ? (
+        // Embedded: the accordion owns the title row, but the "link more"
+        // CTA still needs a home — render it as a compact button above the
+        // member list.
+        <div className="mb-2 flex justify-end">
           <button
             type="button"
             onClick={() => setLinkModalOpen(true)}
@@ -202,8 +250,8 @@ export function SongVersionsPanel({
           >
             + {t('versions.linkButtonShort')}
           </button>
-        ) : null}
-      </header>
+        </div>
+      ) : null}
 
       <ul className="space-y-1.5">
         {group.members.map((member) => {
@@ -299,6 +347,6 @@ export function SongVersionsPanel({
         currentSongId={songId}
         currentSongTitle={songTitle}
       />
-    </section>
+    </PanelBody>
   )
 }
