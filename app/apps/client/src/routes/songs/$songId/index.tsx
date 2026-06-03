@@ -106,10 +106,14 @@ function SongPreviewPage() {
   const navigate = useNavigate()
   const { hasPermission } = usePermissions()
   const canEditSong = hasPermission('songs.edit')
-  // `songs.create` covers "add a new linked version" — link an unrelated
-  // song or accept a suggestion. View-only operators stay read-only;
-  // editors get the full panel (add + set primary + unlink).
-  const canAddSongVersion = hasPermission('songs.create')
+  // "Add a new linked version" — link an unrelated song or accept a
+  // suggestion. Allowed for either `songs.create` (the natural mapping
+  // for "add a new relationship") OR `songs.edit` (so editors don't lose
+  // the affordance because they happen to be missing the create perm —
+  // hierarchies aren't enforced in this app's RBAC, so both are checked
+  // explicitly).
+  const canAddSongVersion =
+    hasPermission('songs.create') || hasPermission('songs.edit')
   const { songId } = Route.useParams()
   const {
     q: searchQuery,
