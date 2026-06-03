@@ -283,4 +283,23 @@ export const songSchemas = {
       songId: { type: 'integer' },
     },
   },
+  SongVersionSuggestion: {
+    type: 'object',
+    properties: {
+      songId: { type: 'integer' },
+      title: { type: 'string' },
+      hymnNumber: { type: 'string', nullable: true },
+      author: { type: 'string', nullable: true },
+      categoryName: { type: 'string', nullable: true },
+      score: {
+        type: 'number',
+        description: 'Blended title-similarity + FTS rank, 0..1.',
+      },
+      reason: {
+        type: 'string',
+        enum: ['title', 'lyrics', 'mixed'],
+        description: 'Coarse explanation of why the match scored high.',
+      },
+    },
+  },
 }

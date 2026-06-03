@@ -289,6 +289,7 @@ import {
   getAllSongsWithSlides,
   getAllTags,
   getGroupForSong,
+  getSimilarSongs,
   getSongGroupWithMembers,
   getSongSlideById,
   getSongsPaginated,
@@ -4436,6 +4437,26 @@ async function main() {
       // ============================================================
       // Song Groups (Versions) API Endpoints
       // ============================================================
+
+      // GET /api/songs/:id/similar - Surface candidate version matches.
+      // Query: ?limit=5 (defaults to 5, capped at 20).
+      const similarMatch = url.pathname.match(/^\/api\/songs\/(\d+)\/similar$/)
+      if (req.method === 'GET' && similarMatch?.[1]) {
+        const permError = checkPermission('songs.view')
+        if (permError) return permError
+
+        const songId = parseInt(similarMatch[1], 10)
+        const rawLimit = parseInt(url.searchParams.get('limit') ?? '5', 10)
+        const limit = Math.min(20, Math.max(1, rawLimit || 5))
+        const suggestions = getSimilarSongs(songId, limit)
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: suggestions }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
 
       // GET /api/songs/:id/group - Get the group for a song, or null if standalone.
       const songGroupMatch = url.pathname.match(/^\/api\/songs\/(\d+)\/group$/)

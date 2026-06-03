@@ -339,3 +339,21 @@ export interface UpsertSongGroupInput {
   primarySongId?: number | null
   memberSongIds?: number[]
 }
+
+/**
+ * A candidate that looks like a version of a given song, surfaced on the
+ * song detail page. The user accepts it (links the two) or dismisses it.
+ *
+ *  - `score` is the underlying FTS rank normalized to 0-1.
+ *  - `reason` is a coarse hint ("titlu", "versuri") shown in the UI so the
+ *    operator understands *why* the candidate matched (helps trust).
+ */
+export interface SongVersionSuggestion {
+  songId: number
+  title: string
+  hymnNumber: string | null
+  author: string | null
+  categoryName: string | null
+  score: number
+  reason: 'title' | 'lyrics' | 'mixed'
+}

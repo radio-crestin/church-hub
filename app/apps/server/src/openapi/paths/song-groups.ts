@@ -3,6 +3,50 @@
  * different versions of the same underlying piece.
  */
 export const songGroupsPaths = {
+  '/api/songs/{id}/similar': {
+    get: {
+      tags: ['Song Versions'],
+      summary: 'Suggest songs that look like versions of this one',
+      description:
+        'On-demand similarity ranking. Uses FTS for recall and a bigram-similarity title pass for precision. Filters out the song itself and any existing group members. Returns up to `limit` candidates sorted by descending blended score.',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      parameters: [
+        {
+          name: 'id',
+          in: 'path',
+          required: true,
+          schema: { type: 'integer' },
+        },
+        {
+          name: 'limit',
+          in: 'query',
+          required: false,
+          schema: { type: 'integer', default: 5, minimum: 1, maximum: 20 },
+        },
+      ],
+      responses: {
+        '200': {
+          description: 'Suggestions',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'array',
+                    items: {
+                      $ref: '#/components/schemas/SongVersionSuggestion',
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+      },
+    },
+  },
   '/api/songs/{id}/group': {
     get: {
       tags: ['Song Versions'],

@@ -27,6 +27,7 @@ export {
 // Song Groups (versions)
 export {
   getGroupForSong,
+  getSimilarSongs,
   getSongGroupWithMembers,
   getVersionCounts,
   linkSongs,
@@ -88,6 +89,7 @@ export type {
   SongSlide,
   SongSlideRecord,
   SongTag,
+  SongVersionSuggestion,
   SongWithSlides,
   UpsertCategoryInput,
   UpsertSongGroupInput,
