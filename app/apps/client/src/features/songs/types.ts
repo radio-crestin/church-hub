@@ -169,3 +169,19 @@ export interface SongGroup {
   createdAt: number
   updatedAt: number
 }
+
+/**
+ * A candidate that the server believes is a version of a given song.
+ * Surfaced as a "Sugestii" section on the song detail page so the operator
+ * can accept ("aceeași cântare") or dismiss it.
+ */
+export interface SongVersionSuggestion {
+  songId: number
+  title: string
+  hymnNumber: string | null
+  author: string | null
+  categoryName: string | null
+  /** Blended title-similarity + FTS rank, 0..1. */
+  score: number
+  reason: 'title' | 'lyrics' | 'mixed'
+}

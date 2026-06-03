@@ -278,6 +278,14 @@
     "setPrimarySuccess": "Primary version updated",
     "setPrimaryError": "Couldn't set primary: {{error}}",
     "emptyPicker": "No other songs found",
-    "selfPickerHint": "You can't link a song to itself."
+    "selfPickerHint": "You can't link a song to itself.",
+    "suggestionsTitle": "Suggested matches",
+    "suggestionAccept": "Same song — link them",
+    "suggestionDismiss": "Not the same — hide this suggestion",
+    "reason": {
+      "title": "Title match",
+      "lyrics": "Lyrics match",
+      "mixed": "Likely version"
+    }
   }
 }

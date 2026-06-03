@@ -278,6 +278,14 @@
     "setPrimarySuccess": "Versiunea principală a fost actualizată",
     "setPrimaryError": "Nu s-a putut seta principala: {{error}}",
     "emptyPicker": "Nicio altă cântare găsită",
-    "selfPickerHint": "Nu poți lega o cântare cu ea însăși."
+    "selfPickerHint": "Nu poți lega o cântare cu ea însăși.",
+    "suggestionsTitle": "Posibile potriviri",
+    "suggestionAccept": "Aceeași cântare — leagă-le",
+    "suggestionDismiss": "Nu e aceeași — ascunde sugestia",
+    "reason": {
+      "title": "Titlu similar",
+      "lyrics": "Versuri similare",
+      "mixed": "Posibilă versiune"
+    }
   }
 }

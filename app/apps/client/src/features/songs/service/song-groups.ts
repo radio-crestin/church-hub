@@ -1,5 +1,5 @@
 import { fetcher } from '~/utils/fetcher'
-import type { SongGroup } from '../types'
+import type { SongGroup, SongVersionSuggestion } from '../types'
 
 interface ApiResponse<T> {
   data?: T | null
@@ -17,6 +17,21 @@ export async function getGroupForSong(
     `/api/songs/${songId}/group`,
   )
   return response.data ?? null
+}
+
+/**
+ * Returns up to `limit` songs that the server thinks are versions of the
+ * given song. The user accepts a suggestion (linking the two) or dismisses
+ * it (we persist dismissals locally — see the panel).
+ */
+export async function getSimilarSongs(
+  songId: number,
+  limit = 5,
+): Promise<SongVersionSuggestion[]> {
+  const response = await fetcher<ApiResponse<SongVersionSuggestion[]>>(
+    `/api/songs/${songId}/similar?limit=${limit}`,
+  )
+  return response.data ?? []
 }
 
 export async function getSongGroup(groupId: number): Promise<SongGroup | null> {

@@ -28,6 +28,7 @@ export {
 export { useSearchKeyboardNavigation } from './useSearchKeyboardNavigation'
 export { useSearchSongs } from './useSearchSongs'
 export { useSetPrimarySong } from './useSetPrimarySong'
+export { useSimilarSongs } from './useSimilarSongs'
 export { useSong } from './useSong'
 export {
   useAddBookmark,
