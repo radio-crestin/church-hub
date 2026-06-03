@@ -11,6 +11,7 @@ import {
   CalendarPlus,
   Download,
   Eye,
+  GripHorizontal,
   GripVertical,
   Loader2,
   Music,
@@ -47,6 +48,7 @@ import {
   SongBookmarksPanel,
   SongControlPanel,
   SongSlidesPanel,
+  SongVersionsPanel,
 } from '~/features/songs/components'
 import {
   useAddBookmark,
@@ -56,13 +58,14 @@ import {
   useSongBookmarks,
   useSongKeyboardShortcuts,
   useSongSlideSelectionKeyboard,
+  useUndismissedSuggestionCount,
   useUpsertSong,
 } from '~/features/songs/hooks'
 import type { SongSlide } from '~/features/songs/types'
 import { expandSongSlidesWithChoruses } from '~/features/songs/utils/expandSongSlides'
 import { useDividerPosition } from '~/hooks/useDividerPosition'
 import { usePermissions } from '~/provider/permissions-provider'
-import { DIVIDER_KEYS } from '~/service/layout'
+import { DIVIDER_KEYS, SONG_DETAIL_DEFAULTS } from '~/service/layout'
 import { KeyboardShortcutBadge } from '~/ui/kbd'
 import { ConfirmModal } from '~/ui/modal'
 import { useToast } from '~/ui/toast'
@@ -136,9 +139,12 @@ function SongPreviewPage() {
   const { data: bookmarks = [] } = useSongBookmarks()
   const { showToast } = useToast()
 
+  // Default layout: Slides 30% / Stage (Control Panel) 40% / Accordion 30%.
+  // The Stage gets the biggest slice so the slide preview can breathe, and
+  // Slides + Accordion start equal — the operator can drag from there.
   const [dividerPosition, setDividerPosition] = useDividerPosition(
     DIVIDER_KEYS.songDetailLeft,
-    40,
+    SONG_DETAIL_DEFAULTS.left,
   )
   const [showAddToScheduleModal, setShowAddToScheduleModal] = useState(false)
   const [showAddBookmarksToScheduleModal, setShowAddBookmarksToScheduleModal] =
@@ -149,17 +155,76 @@ function SongPreviewPage() {
   const [isLargeScreen, setIsLargeScreen] = useState(false)
   const [selectedSlideIndex, setSelectedSlideIndex] = useState(0)
   const [isEditMode, setIsEditMode] = useState(false)
+  // Within the right-of-slides area, the Stage takes ~57% so that (combined
+  // with the 30% Slides on the left) it lands at ~40% of the full page and
+  // the Accordion at ~30% — matching Slides exactly.
   const [rightDividerPosition, setRightDividerPosition] = useDividerPosition(
     DIVIDER_KEYS.songDetailRight,
-    60,
+    SONG_DETAIL_DEFAULTS.right,
   )
+  // Vertical split inside the right column between Marcaje (top) and Versiuni
+  // (bottom). Default 50/50; only active when both sections are expanded.
+  const [accordionDividerPosition, setAccordionDividerPosition] =
+    useDividerPosition(DIVIDER_KEYS.songDetailAccordion, 50)
+  // Right-column accordion state. Persisted across sessions via localStorage
+  // so the operator's last choice (Versions vs Marcaje expanded) carries over
+  // to the next song they open.
+  const [bookmarksOpen, setBookmarksOpenRaw] = useState<boolean>(() => {
+    try {
+      const raw = localStorage.getItem('song-detail:bookmarks-open')
+      return raw === null ? true : raw === 'true'
+    } catch {
+      return true
+    }
+  })
+  const [versionsOpen, setVersionsOpenRaw] = useState<boolean>(() => {
+    try {
+      const raw = localStorage.getItem('song-detail:versions-open')
+      return raw === null ? true : raw === 'true'
+    } catch {
+      return true
+    }
+  })
+  const setBookmarksOpen = useCallback((next: boolean) => {
+    setBookmarksOpenRaw(next)
+    try {
+      localStorage.setItem('song-detail:bookmarks-open', String(next))
+    } catch {
+      // Ignore quota errors — non-critical UI state.
+    }
+  }, [])
+  const setVersionsOpen = useCallback((next: boolean) => {
+    setVersionsOpenRaw(next)
+    try {
+      localStorage.setItem('song-detail:versions-open', String(next))
+    } catch {
+      // Ignore quota errors — non-critical UI state.
+    }
+  }, [])
   const [pendingExit, setPendingExit] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const rightPanelRef = useRef<HTMLDivElement>(null)
+  const accordionColumnRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
   const isRightDragging = useRef(false)
+  const isAccordionDragging = useRef(false)
   const keyLineDialogRef = useRef<KeyLineEditDialogHandle>(null)
   const categoryDialogRef = useRef<CategoryEditDialogHandle>(null)
+
+  // Drives the Versions accordion: the badge for unread suggestions and
+  // the auto-expand on songs that have something new to look at.
+  const undismissedSuggestionCount = useUndismissedSuggestionCount(numericId)
+
+  // Auto-expand the Versions section when a freshly opened song has new
+  // (undismissed) suggestions, so the operator can't miss them. Persists
+  // ONLY across this session — we don't overwrite the user's global
+  // "I collapsed Versions" preference; the next song without suggestions
+  // will fall back to whatever's in localStorage.
+  useEffect(() => {
+    if (numericId && undismissedSuggestionCount > 0) {
+      setVersionsOpenRaw(true)
+    }
+  }, [numericId, undismissedSuggestionCount])
 
   // Get expanded slides count for navigation bounds
   const expandedSlidesCount = useMemo(
@@ -440,7 +505,7 @@ function SongPreviewPage() {
         if (!isRightDragging.current || !rightPanelRef.current) return
         const rect = rightPanelRef.current.getBoundingClientRect()
         const newPos = ((moveEvent.clientX - rect.left) / rect.width) * 100
-        const clamped = Math.min(80, Math.max(30, newPos))
+        const clamped = Math.min(70, Math.max(20, newPos))
         setRightDividerPosition(clamped)
       }
 
@@ -456,6 +521,36 @@ function SongPreviewPage() {
       document.addEventListener('mouseup', handleMouseUp)
     },
     [setRightDividerPosition],
+  )
+
+  // Vertical (row) resize between the Marcaje and Versiuni sections of the
+  // right column. Position is the % height given to Marcaje (the top section).
+  const handleAccordionDividerMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault()
+      isAccordionDragging.current = true
+      document.body.style.cursor = 'row-resize'
+      document.body.style.userSelect = 'none'
+
+      const handleMouseMove = (moveEvent: MouseEvent) => {
+        if (!isAccordionDragging.current || !accordionColumnRef.current) return
+        const rect = accordionColumnRef.current.getBoundingClientRect()
+        const newPos = ((moveEvent.clientY - rect.top) / rect.height) * 100
+        setAccordionDividerPosition(Math.min(80, Math.max(20, newPos)))
+      }
+
+      const handleMouseUp = () => {
+        isAccordionDragging.current = false
+        document.body.style.cursor = ''
+        document.body.style.userSelect = ''
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+      }
+
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+    },
+    [setAccordionDividerPosition],
   )
 
   const handleBookmarkSongClick = useCallback(
@@ -486,6 +581,13 @@ function SongPreviewPage() {
     presentedSlideIndex !== null && presentedSlideIndex > 0
   // Allow navigating next even on last slide - server will end presentation
   const canNavigateNext = presentedSlideIndex !== null
+
+  // The Marcaje↔Versiuni divider only makes sense when both sections are
+  // expanded and visible (Marcaje is hidden below `lg`). Otherwise the column
+  // falls back to its flex behaviour (the open section grows, collapsed ones
+  // shrink to their header).
+  const accordionSplitActive =
+    isLargeScreen && bookmarksOpen && versionsOpen && Boolean(song)
 
   return (
     <div className="flex flex-col h-full lg:overflow-hidden lg:h-[calc(100vh-3rem)] overflow-auto scrollbar-thin">
@@ -647,7 +749,11 @@ function SongPreviewPage() {
           />
         </div>
 
-        {/* Right Panel - Control Panel + Bookmarks (shows first on mobile) */}
+        {/* Right Panel — Control alone in the middle column, the right
+            column stacks Marcaje + Versiuni as collapsible sections so
+            both stay visible by default and neither is hidden under a
+            tab. The right divider only controls the Control vs accordion
+            split; the accordion sections balance themselves via flex. */}
         <div
           ref={rightPanelRef}
           className="order-1 lg:order-3 lg:min-h-0 lg:flex-1 overflow-hidden shrink-0 flex flex-col lg:flex-row"
@@ -657,9 +763,9 @@ function SongPreviewPage() {
               : undefined
           }
         >
-          {/* Control Panel */}
+          {/* Control Panel column (now owns the full height of its column). */}
           <div
-            className="overflow-hidden h-full"
+            className="h-full overflow-hidden"
             style={
               isLargeScreen
                 ? { width: `calc(${rightDividerPosition}% - 4px)` }
@@ -686,20 +792,86 @@ function SongPreviewPage() {
             />
           </div>
 
-          {/* Bookmarks Panel */}
+          {/* Accordion column — Marcaje on top, Versiuni below.
+              Bookmarks were previously hidden on mobile (the page is
+              too tight); we preserve that. Versions ride along on
+              mobile because they were already visible there before. */}
           <div
-            className="overflow-hidden h-full hidden lg:block"
+            ref={accordionColumnRef}
+            className={`overflow-hidden h-full flex flex-col ${accordionSplitActive ? '' : 'gap-2'}`}
             style={
               isLargeScreen
                 ? { width: `calc(${100 - rightDividerPosition}% - 4px)` }
                 : undefined
             }
           >
-            <SongBookmarksPanel
-              onSelectSong={handleBookmarkSongClick}
-              activeSongId={numericId}
-              onAddAllToSchedule={handleAddAllBookmarksToSchedule}
-            />
+            <div
+              className={`hidden lg:block min-h-0 ${
+                accordionSplitActive
+                  ? ''
+                  : bookmarksOpen
+                    ? 'flex-1'
+                    : 'flex-none'
+              }`}
+              style={
+                accordionSplitActive
+                  ? { height: `calc(${accordionDividerPosition}% - 4px)` }
+                  : undefined
+              }
+            >
+              <SongBookmarksPanel
+                onSelectSong={handleBookmarkSongClick}
+                activeSongId={numericId}
+                onAddAllToSchedule={handleAddAllBookmarksToSchedule}
+                isCollapsed={!bookmarksOpen}
+                onToggleCollapse={() => setBookmarksOpen(!bookmarksOpen)}
+              />
+            </div>
+
+            {/* Draggable Marcaje ↔ Versiuni divider (only when both expanded) */}
+            {accordionSplitActive ? (
+              <div
+                className="hidden lg:flex flex-col items-center justify-center h-2 cursor-row-resize hover:bg-indigo-100 dark:hover:bg-indigo-900/30 rounded transition-colors group"
+                onMouseDown={handleAccordionDividerMouseDown}
+              >
+                <GripHorizontal
+                  size={16}
+                  className="text-gray-400 group-hover:text-indigo-500 transition-colors"
+                />
+              </div>
+            ) : null}
+
+            {song ? (
+              <div
+                className={`min-h-0 ${
+                  accordionSplitActive
+                    ? ''
+                    : versionsOpen
+                      ? 'flex-1'
+                      : 'flex-none'
+                }`}
+                style={
+                  accordionSplitActive
+                    ? {
+                        height: `calc(${100 - accordionDividerPosition}% - 4px)`,
+                      }
+                    : undefined
+                }
+              >
+                <SongVersionsPanel
+                  songId={numericId}
+                  songTitle={song.title}
+                  canEdit={canEditSong}
+                  isCollapsed={!versionsOpen}
+                  onToggleCollapse={() => setVersionsOpen(!versionsOpen)}
+                  attentionBadge={
+                    undismissedSuggestionCount > 0
+                      ? `+${undismissedSuggestionCount}`
+                      : null
+                  }
+                />
+              </div>
+            ) : null}
           </div>
         </div>
       </div>

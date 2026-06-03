@@ -1,17 +1,15 @@
-import { getSetting, upsertSetting } from '../settings/settings'
-
 /**
  * Keys for persisted resizable-divider positions.
  *
- * All keys live under the `divider.` namespace so the server treats them as
- * personal layout preferences that any authenticated user can read/write,
- * rather than gating them behind `settings.edit` (see the settings routes in
- * apps/server/src/index.ts).
+ * Each key doubles as the `localStorage` key under which the divider's position
+ * (a percentage) is stored — see `useDividerPosition`. Positions are a personal,
+ * per-device UI preference: they live only in this machine's localStorage and
+ * are never synced through the database.
  */
 export const DIVIDER_KEYS = {
-  songsList: 'divider.songs_list',
   songDetailLeft: 'divider.song_detail_left',
   songDetailRight: 'divider.song_detail_right',
+  songDetailAccordion: 'divider.song_detail_accordion',
   bibleLeft: 'divider.bible_left',
   bibleRight: 'divider.bible_right',
   music: 'divider.music',
@@ -19,25 +17,17 @@ export const DIVIDER_KEYS = {
 } as const
 
 /**
- * Reads a divider position (a percentage) from the database.
- * Returns `fallback` when the setting is missing or not a finite number.
+ * Default positions (percentages) for the song-detail horizontal layout. These
+ * are the single source of truth for where the Marcaje column begins, so the
+ * songs-list page can mirror that exact edge (see `useMarcajeBoundary`).
+ *
+ *  - `left`  — Slides column width, as a % of the whole page.
+ *  - `right` — Stage (Control Panel) width, as a % of the right-of-slides area.
+ *
+ * With the defaults the Marcaje column starts at
+ * `left + (100 - left) * right / 100` = 30 + 70·0.57 ≈ 70% of the page.
  */
-export async function getDividerPosition(
-  key: string,
-  fallback: number,
-): Promise<number> {
-  const setting = await getSetting('app_settings', key)
-  if (!setting) return fallback
-  const parsed = Number(setting.value)
-  return Number.isFinite(parsed) ? parsed : fallback
-}
-
-/**
- * Persists a divider position (a percentage) to the database.
- */
-export async function saveDividerPosition(
-  key: string,
-  value: number,
-): Promise<boolean> {
-  return upsertSetting('app_settings', { key, value: String(value) })
-}
+export const SONG_DETAIL_DEFAULTS = {
+  left: 30,
+  right: 57,
+} as const

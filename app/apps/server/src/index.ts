@@ -288,9 +288,13 @@ import {
   getAllSongs,
   getAllSongsWithSlides,
   getAllTags,
+  getGroupForSong,
+  getSimilarSongs,
+  getSongGroupWithMembers,
   getSongSlideById,
   getSongsPaginated,
   getSongWithSlides,
+  linkSongs,
   type ReorderCategoriesInput,
   type ReorderSongSlidesInput,
   type ReorderTagsInput,
@@ -302,10 +306,12 @@ import {
   resetSongPresentationCount,
   type SongFilters,
   searchSongs,
+  setPrimarySong,
   type UpsertCategoryInput,
   type UpsertSongInput,
   type UpsertSongSlideInput,
   type UpsertTagInput,
+  unlinkSong,
   updateSearchIndex,
   updateSearchIndexByCategory,
   upsertCategory,
@@ -4419,6 +4425,205 @@ async function main() {
 
         // Remove from search index
         removeFromSearchIndex(id)
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: { success: true } }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // ============================================================
+      // Song Groups (Versions) API Endpoints
+      // ============================================================
+
+      // GET /api/songs/:id/similar - Surface candidate version matches.
+      // Query: ?limit=5 (defaults to 5, capped at 20).
+      const similarMatch = url.pathname.match(/^\/api\/songs\/(\d+)\/similar$/)
+      if (req.method === 'GET' && similarMatch?.[1]) {
+        const permError = checkPermission('songs.view')
+        if (permError) return permError
+
+        const songId = parseInt(similarMatch[1], 10)
+        const rawLimit = parseInt(url.searchParams.get('limit') ?? '5', 10)
+        const limit = Math.min(20, Math.max(1, rawLimit || 5))
+        const suggestions = getSimilarSongs(songId, limit)
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: suggestions }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // GET /api/songs/:id/group - Get the group for a song, or null if standalone.
+      const songGroupMatch = url.pathname.match(/^\/api\/songs\/(\d+)\/group$/)
+      if (req.method === 'GET' && songGroupMatch?.[1]) {
+        const permError = checkPermission('songs.view')
+        if (permError) return permError
+
+        const songId = parseInt(songGroupMatch[1], 10)
+        const group = getGroupForSong(songId)
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: group }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // GET /api/song-groups/:id - Get a group with its members.
+      const getGroupMatch = url.pathname.match(/^\/api\/song-groups\/(\d+)$/)
+      if (req.method === 'GET' && getGroupMatch?.[1]) {
+        const permError = checkPermission('songs.view')
+        if (permError) return permError
+
+        const groupId = parseInt(getGroupMatch[1], 10)
+        const group = getSongGroupWithMembers(groupId)
+
+        if (!group) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Group not found' }), {
+              status: 404,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: group }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/song-groups/link - Link two songs as versions of the same piece.
+      // Body: { songIdA: number, songIdB: number }
+      // Idempotent: if both are already grouped together, returns the existing group.
+      if (req.method === 'POST' && url.pathname === '/api/song-groups/link') {
+        const permError = checkPermission('songs.edit')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as {
+            songIdA?: number
+            songIdB?: number
+          }
+
+          if (
+            typeof body.songIdA !== 'number' ||
+            typeof body.songIdB !== 'number'
+          ) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({
+                  error: 'songIdA and songIdB are required numbers',
+                }),
+                {
+                  status: 400,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          const groupId = linkSongs(body.songIdA, body.songIdB)
+          const group = getSongGroupWithMembers(groupId)
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: group }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch (error) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: String(error) }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // POST /api/song-groups/:id/primary - Set the primary member of a group.
+      // Body: { songId: number }
+      const setPrimaryMatch = url.pathname.match(
+        /^\/api\/song-groups\/(\d+)\/primary$/,
+      )
+      if (req.method === 'POST' && setPrimaryMatch?.[1]) {
+        const permError = checkPermission('songs.edit')
+        if (permError) return permError
+
+        try {
+          const groupId = parseInt(setPrimaryMatch[1], 10)
+          const body = (await req.json()) as { songId?: number }
+
+          if (typeof body.songId !== 'number') {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'songId is required' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const result = setPrimarySong(groupId, body.songId)
+          if (!result.success) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: result.error }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const group = getSongGroupWithMembers(groupId)
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: group }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch (error) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: String(error) }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // DELETE /api/songs/:id/group - Remove a song from its group ("Not the same song").
+      // Collapses the group if only one member would remain.
+      const unlinkMatch = url.pathname.match(/^\/api\/songs\/(\d+)\/group$/)
+      if (req.method === 'DELETE' && unlinkMatch?.[1]) {
+        const permError = checkPermission('songs.edit')
+        if (permError) return permError
+
+        const songId = parseInt(unlinkMatch[1], 10)
+        const result = unlinkSong(songId)
+
+        if (!result.success) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: result.error }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
 
         return handleCors(
           req,

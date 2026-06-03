@@ -43,6 +43,11 @@ export const screens = sqliteTable(
     closeOnEscape: integer('close_on_escape', { mode: 'boolean' })
       .notNull()
       .default(false),
+    // When true, this screen is mirrored in the in-app control-room preview.
+    // At most one screen is the preview screen at a time (enforced in service).
+    isPreviewScreen: integer('is_preview_screen', { mode: 'boolean' })
+      .notNull()
+      .default(false),
     width: integer('width').notNull().default(1920),
     height: integer('height').notNull().default(1080),
     globalSettings: text('global_settings').notNull().default('{}'),

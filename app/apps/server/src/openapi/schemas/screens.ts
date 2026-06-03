@@ -13,6 +13,7 @@ export const screenSchemas = {
       'bible_passage',
       'announcement',
       'versete_tineri',
+      'screen_share',
       'empty',
     ],
     description: 'Type of content being rendered',
@@ -115,6 +116,11 @@ export const screenSchemas = {
         description:
           'If true, the screen Tauri window closes on Escape and re-opens on the next presentation. If false (default), the window stays open showing the clock.',
       },
+      isPreviewScreen: {
+        type: 'boolean',
+        description:
+          'If true, this screen is mirrored in the in-app control-room preview panel. At most one screen is the preview screen at a time.',
+      },
       width: { type: 'integer', description: 'Screen width in pixels' },
       height: { type: 'integer', description: 'Screen height in pixels' },
       globalSettings: { $ref: '#/components/schemas/ScreenGlobalSettings' },
@@ -155,6 +161,7 @@ export const screenSchemas = {
       isFullscreen: { type: 'boolean' },
       alwaysOnTop: { type: 'boolean' },
       closeOnEscape: { type: 'boolean' },
+      isPreviewScreen: { type: 'boolean' },
       width: { type: 'integer' },
       height: { type: 'integer' },
       globalSettings: { $ref: '#/components/schemas/ScreenGlobalSettings' },

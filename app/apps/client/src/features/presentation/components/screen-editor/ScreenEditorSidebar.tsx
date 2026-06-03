@@ -10,7 +10,7 @@ import {
   Settings,
   Type,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '~/ui/button/Button'
@@ -44,6 +44,7 @@ import type {
   SongContentConfig,
   TextStyle,
 } from '../../types'
+import { getDefaultBackground } from '../../utils/defaultConfigs'
 
 interface ScreenEditorSidebarProps {
   screen: ScreenWithConfigs
@@ -183,7 +184,20 @@ export function ScreenEditorSidebar({
   portalContainer,
 }: ScreenEditorSidebarProps) {
   const { t } = useTranslation('presentation')
-  const config = screen.contentConfigs[contentType]
+  // Normalize the active content config so the Background controls (and any
+  // other field access) never crash on a config that drifted to lack a
+  // `background` — e.g. configs saved by older app versions or partial OBS
+  // scene overrides merged in client-side. Falls back to a sensible default.
+  const config = useMemo(() => {
+    const raw = screen.contentConfigs[contentType] as
+      | ContentTypeConfig
+      | undefined
+    if (raw && raw.background) return raw
+    return {
+      ...(raw ?? {}),
+      background: getDefaultBackground(),
+    } as ContentTypeConfig
+  }, [screen.contentConfigs, contentType])
 
   // Helper to update a nested property in the config
   const updateConfig = (path: string[], value: unknown) => {
@@ -322,7 +336,7 @@ export function ScreenEditorSidebar({
   }
 
   return (
-    <div className="w-80 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 overflow-y-auto">
+    <div className="w-full flex-1 min-h-0 md:flex-none md:w-80 md:flex-shrink-0 bg-white dark:bg-gray-900 border-t md:border-t-0 md:border-l border-gray-200 dark:border-gray-800 overflow-y-auto">
       {selectedElement && selectedConfig ? (
         // Element-specific configuration
         <>

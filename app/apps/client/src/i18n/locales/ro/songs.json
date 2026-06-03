@@ -127,7 +127,9 @@
     "exportAsText": "Exportă ca text",
     "exportCopied": "Marcajele au fost copiate în clipboard",
     "exportEmpty": "Nimic de exportat",
-    "focusPresentedSong": "Mergi la cântarea afișată"
+    "focusPresentedSong": "Mergi la cântarea afișată",
+    "expand": "Extinde",
+    "collapse": "Restrânge"
   },
   "noSongs": "Nu există cântări încă",
   "noSongsDescription": "Creează prima ta cântare pentru a începe",
@@ -252,5 +254,36 @@
     "title": "Resetează contorul de prezentări",
     "message": "Ești sigur că vrei să resetezi contorul de prezentări la 0?",
     "confirm": "Resetează"
+  },
+  "versions": {
+    "title": "Alte versiuni",
+    "count_one": "{{count}} versiune",
+    "count_other": "{{count}} versiuni",
+    "badge": "{{count}} versiuni",
+    "primary": "Principală",
+    "setAsPrimary": "Setează ca principală",
+    "open": "Deschide",
+    "unlink": "Nu e aceeași cântare",
+    "unlinkConfirm": "Scoți această cântare din grupul de versiuni?",
+    "addButton": "Adaugă o versiune",
+    "linkModalTitle": "Marchează ca aceeași cântare",
+    "linkModalDescription": "Alege o altă cântare care e o versiune a „{{title}}”. Vor fi legate ca versiuni ale aceleași piese — nu se șterge nimic, poți reveni oricând.",
+    "linkSearchPlaceholder": "Tastează numele cântării pe care dorești să o marchezi ca variantă…",
+    "linkSubmit": "Leagă",
+    "linkCancel": "Anulează",
+    "linkSuccess": "„{{title}}” a fost legată ca versiune",
+    "linkError": "Nu s-au putut lega cântările: {{error}}",
+    "expand": "Extinde",
+    "collapse": "Restrânge",
+    "unlinkSuccess": "Scoasă din versiuni",
+    "unlinkError": "Nu s-a putut dezlega: {{error}}",
+    "setPrimarySuccess": "Versiunea principală a fost actualizată",
+    "setPrimaryError": "Nu s-a putut seta principala: {{error}}",
+    "emptyPicker": "Nicio altă cântare găsită",
+    "selfPickerHint": "Nu poți lega o cântare cu ea însăși.",
+    "suggestionsTitle": "Posibile potriviri",
+    "suggestionAccept": "Aceeași cântare — leagă-le",
+    "suggestionDismiss": "Nu e aceeași — ascunde sugestia",
+    "percentSimilar": "{{percent}}% similar"
   }
 }

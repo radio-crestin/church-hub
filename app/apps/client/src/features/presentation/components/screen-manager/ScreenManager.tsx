@@ -5,6 +5,8 @@ import {
   DoorOpen,
   Edit,
   ExternalLink,
+  Eye,
+  EyeOff,
   Loader2,
   MonitorUp,
   Pin,
@@ -245,6 +247,31 @@ export function ScreenManager() {
     }
   }
 
+  // Toggle whether this screen is mirrored in the in-app preview panel.
+  // The backend enforces a single preview screen, so turning one on turns the
+  // others off automatically.
+  const handleTogglePreviewScreen = async (screen: Screen) => {
+    const newValue = !screen.isPreviewScreen
+
+    try {
+      await upsertScreen.mutateAsync({
+        id: screen.id,
+        name: screen.name,
+        type: screen.type,
+        isPreviewScreen: newValue,
+      })
+
+      showToast(
+        newValue
+          ? t('sections.screens.previewScreen.enabled')
+          : t('sections.screens.previewScreen.disabled'),
+        'success',
+      )
+    } catch {
+      showToast(t('sections.screens.previewScreen.error'), 'error')
+    }
+  }
+
   const confirmDelete = async () => {
     if (!deleteConfirm) return
 
@@ -429,6 +456,27 @@ export function ScreenManager() {
                     {screen.closeOnEscape
                       ? t('sections.screens.closeOnEscape.on')
                       : t('sections.screens.closeOnEscape.off')}
+                  </span>
+                </Button>
+                <Button
+                  variant={screen.isPreviewScreen ? 'primary' : 'secondary'}
+                  size="sm"
+                  onClick={() => handleTogglePreviewScreen(screen)}
+                  title={
+                    screen.isPreviewScreen
+                      ? t('sections.screens.previewScreen.unset')
+                      : t('sections.screens.previewScreen.set')
+                  }
+                >
+                  {screen.isPreviewScreen ? (
+                    <Eye size={16} />
+                  ) : (
+                    <EyeOff size={16} />
+                  )}
+                  <span className="ml-1">
+                    {screen.isPreviewScreen
+                      ? t('sections.screens.previewScreen.on')
+                      : t('sections.screens.previewScreen.off')}
                   </span>
                 </Button>
               </div>

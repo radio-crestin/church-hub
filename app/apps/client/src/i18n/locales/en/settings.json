@@ -810,6 +810,15 @@
         "disabled": "Window will stay open at all times",
         "error": "Failed to update close-on-escape setting"
       },
+      "previewScreen": {
+        "set": "Mirror this screen in the in-app preview",
+        "unset": "Stop mirroring this screen in the in-app preview",
+        "on": "Preview screen",
+        "off": "Use as preview",
+        "enabled": "This screen is now shown in the preview",
+        "disabled": "This screen is no longer shown in the preview",
+        "error": "Failed to update preview screen setting"
+      },
       "actions": {
         "openInNewTab": "Open in new tab",
         "copyUrl": "Copy URL to clipboard",

@@ -661,18 +661,36 @@ export function SongList({
     onSelect: handleSelectSong,
   })
 
-  // Set initial selection based on initialSelectedSongId and scroll into view
+  // Set initial selection based on initialSelectedSongId and scroll into view.
+  //
+  // The ref guard fires the scroll *once per requested id*, not on every
+  // `displaySongs` update. Without it, infinite-scroll's `fetchNextPage()`
+  // appends a new page → `displaySongs` reference changes → this effect
+  // re-runs → `scrollIntoView` snaps the viewport back up to the originally
+  // selected song, briefly blanking the area below and erasing the
+  // operator's scroll position. Reported as: "scroll-ul merge din nou sus
+  // și se pune în alb când ajung la final și se încarcă pagina următoare."
+  const lastScrolledToSongIdRef = useRef<number | null>(null)
   useEffect(() => {
-    if (initialSelectedSongId && displaySongs.length > 0) {
-      const index = displaySongs.findIndex(
-        (song) => song.id === initialSelectedSongId,
-      )
-      if (index >= 0) {
-        setSelectedIndex(index)
-        const el = itemRefs.current.get(index)
-        el?.scrollIntoView({ block: 'center' })
-      }
+    if (!initialSelectedSongId) {
+      // Cleared selection — forget so a future re-selection of the same
+      // id still scrolls back into view.
+      lastScrolledToSongIdRef.current = null
+      return
     }
+    if (lastScrolledToSongIdRef.current === initialSelectedSongId) return
+    if (displaySongs.length === 0) return
+
+    const index = displaySongs.findIndex(
+      (song) => song.id === initialSelectedSongId,
+    )
+    // Not loaded yet — let the effect retry when the next page arrives.
+    if (index < 0) return
+
+    setSelectedIndex(index)
+    const el = itemRefs.current.get(index)
+    el?.scrollIntoView({ block: 'center' })
+    lastScrolledToSongIdRef.current = initialSelectedSongId
   }, [initialSelectedSongId, displaySongs, setSelectedIndex, itemRefs])
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {

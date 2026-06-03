@@ -1,9 +1,11 @@
 import { Link, Outlet, useLocation } from '@tanstack/react-router'
 import { ArrowLeft } from 'lucide-react'
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
 import { SettingsSidebar } from './SettingsSidebar'
+import { setLastSettingsSection } from '../lastSection'
 
 /**
  * The settings page shell: a left category accordion + a content pane (Outlet)
@@ -15,6 +17,12 @@ export function SettingsLayout() {
   const { t } = useTranslation('settings')
   const { pathname } = useLocation()
   const isIndex = pathname === '/settings' || pathname === '/settings/'
+
+  // Remember the section the operator has open so re-entering Settings (after
+  // visiting another sidebar page) reopens it instead of the first section.
+  useEffect(() => {
+    if (!isIndex) setLastSettingsSection(pathname)
+  }, [pathname, isIndex])
 
   return (
     <PagePermissionGuard permission="settings.view">

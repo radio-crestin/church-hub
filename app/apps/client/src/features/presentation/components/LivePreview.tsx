@@ -47,9 +47,13 @@ export function LivePreview() {
     clickedHighlightId?: string
   }>({ visible: false, x: 0, y: 0 })
 
-  // Find first primary screen (regardless of window open state)
-  const primaryScreen = useMemo(() => {
+  // Pick which screen to mirror in the preview:
+  // 1. the screen explicitly flagged as the preview screen, if any
+  // 2. otherwise fall back to the first primary screen (by sort order)
+  const previewScreen = useMemo(() => {
     if (!screens) return null
+    const flagged = screens.find((s) => s.isPreviewScreen)
+    if (flagged) return flagged
     return (
       screens
         .filter((s) => s.type === 'primary')
@@ -57,8 +61,8 @@ export function LivePreview() {
     )
   }, [screens])
 
-  // Get full config for the primary screen (use undefined if no primary screen exists)
-  const { data: screen } = useScreen(primaryScreen?.id ?? undefined)
+  // Get full config for the preview screen (use undefined if none exists)
+  const { data: screen } = useScreen(previewScreen?.id ?? undefined)
 
   // Use shared presentation content hook
   const { contentType, contentData, contentKey, isVisible } =

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
-import { parseNextSlideConfig } from './screens'
+import { parseContentConfig, parseNextSlideConfig } from './screens'
 import { describe, expect, it } from 'bun:test'
 
 // Load fixture data to test against real screen configs
@@ -146,5 +146,46 @@ describe('parseNextSlideConfig', () => {
     expect(result.labelText).toBe('Urmeaza:')
     expect(result.background.color).toBe('#1a1a1a')
     expect(result.background.opacity).toBe(0.8)
+  })
+})
+
+describe('parseContentConfig', () => {
+  it('fills in a default background when missing (old DB format)', () => {
+    // Simulates a content config persisted before `background` existed — this
+    // was the root cause of the editor crashing on `config.background.type`.
+    const result = parseContentConfig('song', JSON.stringify({ mainText: {} }))
+    expect(result.background).toBeDefined()
+    expect((result.background as { type: string }).type).toBe('color')
+  })
+
+  it('returns a complete default for invalid JSON', () => {
+    const result = parseContentConfig('bible', 'not json')
+    expect(result.background).toBeDefined()
+    expect((result.background as { type: string }).type).toBe('color')
+    expect(result.referenceText).toBeDefined()
+    expect(result.contentText).toBeDefined()
+  })
+
+  it('preserves a stored background while filling missing fields', () => {
+    const stored = {
+      background: { type: 'image', imageUrl: 'bg.png', opacity: 0.5 },
+    }
+    const result = parseContentConfig('song', JSON.stringify(stored))
+    const bg = result.background as {
+      type: string
+      imageUrl: string
+      opacity: number
+    }
+    expect(bg.type).toBe('image')
+    expect(bg.imageUrl).toBe('bg.png')
+    expect(bg.opacity).toBe(0.5)
+    // Default top-level fields are still filled in
+    expect(result.mainText).toBeDefined()
+  })
+
+  it('provides a default config for screen_share (missing from getDefaultContentConfigs map)', () => {
+    const result = parseContentConfig('screen_share', '{}')
+    expect(result.background).toBeDefined()
+    expect(result.videoElement).toBeDefined()
   })
 })
