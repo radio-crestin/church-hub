@@ -212,16 +212,22 @@ interface SongVersionsPanelProps {
    */
   songTitle: string
   /**
-   * Lets the operator add new versions: link an unrelated song, accept a
-   * suggestion, dismiss a suggestion. Mapped to `songs.create` at the
-   * route level — an operator who can add songs can also link them.
+   * Lets the operator add new versions: the "+ Adaugă o versiune" CTA,
+   * the ✓ accept suggestion button, and the ✗ dismiss suggestion button.
+   * Mapped to `song_versions.create` at the route level.
    */
   canAdd: boolean
   /**
-   * Lets the operator modify existing group membership: set the primary,
-   * remove a member ("Nu e aceeași cântare"). Mapped to `songs.edit`.
+   * Lets the operator change which member is the primary version of the
+   * group. Mapped to `song_versions.edit`.
    */
   canEdit: boolean
+  /**
+   * Lets the operator unlink a member ("Nu e aceeași cântare"). Mapped
+   * to `song_versions.delete` — semantically a removal, not a content
+   * edit.
+   */
+  canDelete: boolean
   /**
    * When provided, renders a chevron toggle inline with the title so the
    * panel can act as its own accordion section (no wrapping
@@ -254,6 +260,7 @@ export function SongVersionsPanel({
   songTitle,
   canAdd,
   canEdit,
+  canDelete,
   isCollapsed = false,
   onToggleCollapse,
   attentionBadge,
@@ -425,7 +432,7 @@ export function SongVersionsPanel({
                             <Crown size={14} />
                           </button>
                         ) : null}
-                        {canEdit ? (
+                        {canDelete ? (
                           <button
                             type="button"
                             onClick={() => {
