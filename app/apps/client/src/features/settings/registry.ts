@@ -212,6 +212,23 @@ export function getFirstVisibleLeaf(ctx: SettingsVisibilityContext): string {
   return '/settings/about'
 }
 
+/**
+ * Whether `pathname` is a settings leaf the user is currently allowed to see.
+ * Used to validate a remembered section before redirecting to it (permissions
+ * may have changed since it was stored).
+ */
+export function isVisibleLeafPath(
+  pathname: string,
+  ctx: SettingsVisibilityContext,
+): boolean {
+  for (const group of SETTINGS_GROUPS) {
+    for (const item of group.items) {
+      if (item.to === pathname && isItemVisible(item, ctx)) return true
+    }
+  }
+  return false
+}
+
 /** Which group owns a given pathname (for default-expand). */
 export function findGroupForPath(
   pathname: string,
