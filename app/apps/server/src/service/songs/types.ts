@@ -24,6 +24,7 @@ export interface SongRecord {
   id: number
   title: string
   category_id: number | null
+  song_group_id: number | null
   source_filename: string | null
   author: string | null
   copyright: string | null
@@ -91,6 +92,12 @@ export interface Song {
   id: number
   title: string
   categoryId: number | null
+  /**
+   * Group this song belongs to (null = standalone / its own canonical
+   * version). Members of the same `songGroupId` are considered alternative
+   * versions of the same underlying song.
+   */
+  songGroupId: number | null
   sourceFilename: string | null
   author: string | null
   copyright: string | null
@@ -287,4 +294,48 @@ export interface BatchImportResult {
   skippedCount: number
   songIds: number[]
   errors: string[]
+}
+
+/**
+ * A song group groups multiple `Song` rows that are versions of the same
+ * underlying piece. Membership is non-destructive: every member keeps its
+ * own row in `songs`; the group just records the relationship.
+ */
+export interface SongGroupRecord {
+  id: number
+  canonical_title: string
+  primary_song_id: number | null
+  created_at: number
+  updated_at: number
+}
+
+export interface SongGroup {
+  id: number
+  canonicalTitle: string
+  primarySongId: number | null
+  memberSongIds: number[]
+  createdAt: number
+  updatedAt: number
+}
+
+/**
+ * Compact view of a single member used in version pickers / lists.
+ */
+export interface SongGroupMember {
+  songId: number
+  title: string
+  isPrimary: boolean
+  hymnNumber: string | null
+  author: string | null
+  keyLine: string | null
+}
+
+export interface SongGroupWithMembers extends SongGroup {
+  members: SongGroupMember[]
+}
+
+export interface UpsertSongGroupInput {
+  canonicalTitle: string
+  primarySongId?: number | null
+  memberSongIds?: number[]
 }

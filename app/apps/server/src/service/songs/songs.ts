@@ -78,6 +78,7 @@ function toSong(record: typeof songs.$inferSelect): Song {
     id: record.id,
     title: record.title,
     categoryId: record.categoryId,
+    songGroupId: record.songGroupId,
     sourceFilename: record.sourceFilename,
     author: record.author,
     copyright: record.copyright,
@@ -241,6 +242,7 @@ export function getSongsPaginated(
       id: number
       title: string
       category_id: number | null
+      song_group_id: number | null
       source_filename: string | null
       author: string | null
       copyright: string | null
@@ -267,6 +269,7 @@ export function getSongsPaginated(
       id: record.id,
       title: record.title,
       categoryId: record.category_id,
+      songGroupId: record.song_group_id,
       sourceFilename: record.source_filename,
       author: record.author,
       copyright: record.copyright,
