@@ -252,5 +252,32 @@
     "title": "Resetează contorul de prezentări",
     "message": "Ești sigur că vrei să resetezi contorul de prezentări la 0?",
     "confirm": "Resetează"
+  },
+  "versions": {
+    "title": "Alte versiuni",
+    "description": "Cântări marcate ca versiuni alternative ale acesteia. Comută între ele, schimbă care e cea principală sau dezleagă o potrivire greșită.",
+    "count_one": "{{count}} versiune",
+    "count_other": "{{count}} versiuni",
+    "badge": "{{count}} versiuni",
+    "primary": "Principală",
+    "setAsPrimary": "Setează ca principală",
+    "open": "Deschide",
+    "unlink": "Nu e aceeași cântare",
+    "unlinkConfirm": "Scoți această cântare din grupul de versiuni?",
+    "linkButton": "Aceeași cântare ca…",
+    "linkButtonShort": "Leagă versiuni",
+    "linkModalTitle": "Marchează ca aceeași cântare",
+    "linkModalDescription": "Alege o altă cântare care e o versiune a „{{title}}”. Vor fi legate ca versiuni ale aceleași piese — nu se șterge nimic, poți reveni oricând.",
+    "linkSearchPlaceholder": "Caută după titlu…",
+    "linkSubmit": "Leagă",
+    "linkCancel": "Anulează",
+    "linkSuccess": "Cântări legate ca versiuni",
+    "linkError": "Nu s-au putut lega cântările: {{error}}",
+    "unlinkSuccess": "Scoasă din versiuni",
+    "unlinkError": "Nu s-a putut dezlega: {{error}}",
+    "setPrimarySuccess": "Versiunea principală a fost actualizată",
+    "setPrimaryError": "Nu s-a putut seta principala: {{error}}",
+    "emptyPicker": "Nicio altă cântare găsită",
+    "selfPickerHint": "Nu poți lega o cântare cu ea însăși."
   }
 }

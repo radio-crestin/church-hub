@@ -252,5 +252,32 @@
     "title": "Reset Presentation Count",
     "message": "Are you sure you want to reset the presentation count to 0?",
     "confirm": "Reset"
+  },
+  "versions": {
+    "title": "Other versions",
+    "description": "Songs marked as alternative versions of this one. Switch between them, change which one is primary, or unlink a wrong match.",
+    "count_one": "{{count}} version",
+    "count_other": "{{count}} versions",
+    "badge": "{{count}} versions",
+    "primary": "Primary",
+    "setAsPrimary": "Set as primary",
+    "open": "Open",
+    "unlink": "Not the same song",
+    "unlinkConfirm": "Remove this song from the version group?",
+    "linkButton": "Same song as…",
+    "linkButtonShort": "Link versions",
+    "linkModalTitle": "Mark as the same song",
+    "linkModalDescription": "Pick another song that's a version of \"{{title}}\". They'll be linked as versions of the same piece — nothing is deleted, you can undo at any time.",
+    "linkSearchPlaceholder": "Search by title…",
+    "linkSubmit": "Link",
+    "linkCancel": "Cancel",
+    "linkSuccess": "Songs linked as versions",
+    "linkError": "Couldn't link the songs: {{error}}",
+    "unlinkSuccess": "Removed from versions",
+    "unlinkError": "Couldn't unlink: {{error}}",
+    "setPrimarySuccess": "Primary version updated",
+    "setPrimaryError": "Couldn't set primary: {{error}}",
+    "emptyPicker": "No other songs found",
+    "selfPickerHint": "You can't link a song to itself."
   }
 }
