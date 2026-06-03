@@ -3,6 +3,7 @@ export {
   SettingsLeafGuard,
   SettingsSection,
 } from './components'
+export { getLastSettingsSection, setLastSettingsSection } from './lastSection'
 export type {
   SettingsNavGroupDef,
   SettingsNavItemDef,
@@ -11,5 +12,6 @@ export type {
 export {
   getFirstVisibleLeaf,
   getVisibleGroups,
+  isVisibleLeafPath,
   SETTINGS_GROUPS,
 } from './registry'

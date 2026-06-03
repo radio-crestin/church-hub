@@ -2,7 +2,11 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useEffect } from 'react'
 
 import { isLocalhost, isMobile } from '~/config'
-import { getFirstVisibleLeaf } from '~/features/settings'
+import {
+  getFirstVisibleLeaf,
+  getLastSettingsSection,
+  isVisibleLeafPath,
+} from '~/features/settings'
 import { usePermissions } from '~/provider/permissions-provider'
 
 export const Route = createFileRoute('/settings/')({
@@ -13,17 +17,24 @@ function SettingsIndex() {
   const { hasPermission, isLoading } = usePermissions()
   const navigate = useNavigate()
 
-  // First category the user can access. `getFirstVisibleLeaf` is deterministic
-  // and returns a stable string (Appearance is always first + always visible),
-  // so this drives a one-shot redirect rather than a per-render <Navigate> —
-  // the latter re-issued navigation on every re-render of this index route and
-  // tripped React's "Maximum update depth exceeded" guard during the
+  // Reopen the section the operator last had open (if it's still visible),
+  // otherwise fall back to the first category the user can access.
+  // `getFirstVisibleLeaf` is deterministic and returns a stable string
+  // (Appearance is always first + always visible), so this drives a one-shot
+  // redirect rather than a per-render <Navigate> — the latter re-issued
+  // navigation on every re-render of this index route and tripped React's
+  // "Maximum update depth exceeded" guard during the
   // /settings → /settings/appearance transition.
-  const target = getFirstVisibleLeaf({
+  const ctx = {
     hasPermission,
     isMobile: isMobile(),
     isLocalhost: isLocalhost(),
-  })
+  }
+  const remembered = getLastSettingsSection()
+  const target =
+    remembered && isVisibleLeafPath(remembered, ctx)
+      ? remembered
+      : getFirstVisibleLeaf(ctx)
 
   useEffect(() => {
     // On mobile the index route IS the master category list (rendered by
