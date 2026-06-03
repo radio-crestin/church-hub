@@ -10,8 +10,7 @@ import { AddSongToScheduleModal } from '~/features/schedules'
 import { SongBookmarksPanel, SongList } from '~/features/songs/components'
 import { useSearchHistoryById } from '~/features/songs/hooks'
 import { openSongWindow } from '~/features/songs/utils/openSongWindow'
-import { useDividerPosition } from '~/hooks/useDividerPosition'
-import { DIVIDER_KEYS } from '~/service/layout'
+import { useMarcajeBoundary } from '~/hooks/useMarcajeBoundary'
 import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
 
 interface SongsSearchParams {
@@ -66,10 +65,11 @@ function SongsPage() {
   const [showAddToScheduleModal, setShowAddToScheduleModal] = useState(false)
   const [bookmarkSongIds, setBookmarkSongIds] = useState<number[]>([])
   const [focusTrigger, setFocusTrigger] = useState(0)
-  const [dividerPosition, setDividerPosition] = useDividerPosition(
-    DIVIDER_KEYS.songsList,
-    75,
-  )
+  // The List | Marcaje split mirrors the song-detail page exactly: the Marcaje
+  // panel starts at the same horizontal position there as here, and dragging
+  // this divider moves the song page's Stage|Marcaje divider in lock-step (the
+  // song-detail Slides + Stage dividers are the shared source of truth).
+  const [dividerPosition, setDividerPosition] = useMarcajeBoundary()
   const [isLargeScreen, setIsLargeScreen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
