@@ -14,28 +14,31 @@ import { createLogger } from '../../utils/logger'
 
 const logger = createLogger('song-groups')
 
+// Shape of a `songGroups` row as Drizzle's `db.select()` returns it: keyed by
+// the schema's camelCase field names (NOT the snake_case SQL columns), with
+// timestamp-mode columns hydrated to `Date`.
 interface GroupRow {
   id: number
-  canonical_title: string
-  primary_song_id: number | null
-  created_at: number | Date
-  updated_at: number | Date
+  canonicalTitle: string
+  primarySongId: number | null
+  createdAt: number | Date
+  updatedAt: number | Date
 }
 
 function toGroup(row: GroupRow, memberSongIds: number[]): SongGroup {
   return {
     id: row.id,
-    canonicalTitle: row.canonical_title,
-    primarySongId: row.primary_song_id,
+    canonicalTitle: row.canonicalTitle,
+    primarySongId: row.primarySongId,
     memberSongIds,
     createdAt:
-      row.created_at instanceof Date
-        ? Math.floor(row.created_at.getTime() / 1000)
-        : (row.created_at as number),
+      row.createdAt instanceof Date
+        ? Math.floor(row.createdAt.getTime() / 1000)
+        : (row.createdAt as number),
     updatedAt:
-      row.updated_at instanceof Date
-        ? Math.floor(row.updated_at.getTime() / 1000)
-        : (row.updated_at as number),
+      row.updatedAt instanceof Date
+        ? Math.floor(row.updatedAt.getTime() / 1000)
+        : (row.updatedAt as number),
   }
 }
 
@@ -94,7 +97,7 @@ export function getSongGroupWithMembers(
     const members: SongGroupMember[] = memberRows.map((m) => ({
       songId: m.id,
       title: m.title,
-      isPrimary: groupRow.primary_song_id === m.id,
+      isPrimary: groupRow.primarySongId === m.id,
       hymnNumber: m.hymnNumber ?? null,
       author: m.author ?? null,
       keyLine: m.keyLine ?? null,
