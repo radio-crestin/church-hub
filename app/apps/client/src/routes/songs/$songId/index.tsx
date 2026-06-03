@@ -11,6 +11,7 @@ import {
   CalendarPlus,
   Download,
   Eye,
+  GripHorizontal,
   GripVertical,
   Loader2,
   Music,
@@ -64,7 +65,7 @@ import type { SongSlide } from '~/features/songs/types'
 import { expandSongSlidesWithChoruses } from '~/features/songs/utils/expandSongSlides'
 import { useDividerPosition } from '~/hooks/useDividerPosition'
 import { usePermissions } from '~/provider/permissions-provider'
-import { DIVIDER_KEYS } from '~/service/layout'
+import { DIVIDER_KEYS, SONG_DETAIL_DEFAULTS } from '~/service/layout'
 import { KeyboardShortcutBadge } from '~/ui/kbd'
 import { ConfirmModal } from '~/ui/modal'
 import { useToast } from '~/ui/toast'
@@ -143,7 +144,7 @@ function SongPreviewPage() {
   // Slides + Accordion start equal — the operator can drag from there.
   const [dividerPosition, setDividerPosition] = useDividerPosition(
     DIVIDER_KEYS.songDetailLeft,
-    30,
+    SONG_DETAIL_DEFAULTS.left,
   )
   const [showAddToScheduleModal, setShowAddToScheduleModal] = useState(false)
   const [showAddBookmarksToScheduleModal, setShowAddBookmarksToScheduleModal] =
@@ -159,8 +160,12 @@ function SongPreviewPage() {
   // the Accordion at ~30% — matching Slides exactly.
   const [rightDividerPosition, setRightDividerPosition] = useDividerPosition(
     DIVIDER_KEYS.songDetailRight,
-    57,
+    SONG_DETAIL_DEFAULTS.right,
   )
+  // Vertical split inside the right column between Marcaje (top) and Versiuni
+  // (bottom). Default 50/50; only active when both sections are expanded.
+  const [accordionDividerPosition, setAccordionDividerPosition] =
+    useDividerPosition(DIVIDER_KEYS.songDetailAccordion, 50)
   // Right-column accordion state. Persisted across sessions via localStorage
   // so the operator's last choice (Versions vs Marcaje expanded) carries over
   // to the next song they open.
@@ -199,8 +204,10 @@ function SongPreviewPage() {
   const [pendingExit, setPendingExit] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const rightPanelRef = useRef<HTMLDivElement>(null)
+  const accordionColumnRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
   const isRightDragging = useRef(false)
+  const isAccordionDragging = useRef(false)
   const keyLineDialogRef = useRef<KeyLineEditDialogHandle>(null)
   const categoryDialogRef = useRef<CategoryEditDialogHandle>(null)
 
@@ -516,6 +523,36 @@ function SongPreviewPage() {
     [setRightDividerPosition],
   )
 
+  // Vertical (row) resize between the Marcaje and Versiuni sections of the
+  // right column. Position is the % height given to Marcaje (the top section).
+  const handleAccordionDividerMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault()
+      isAccordionDragging.current = true
+      document.body.style.cursor = 'row-resize'
+      document.body.style.userSelect = 'none'
+
+      const handleMouseMove = (moveEvent: MouseEvent) => {
+        if (!isAccordionDragging.current || !accordionColumnRef.current) return
+        const rect = accordionColumnRef.current.getBoundingClientRect()
+        const newPos = ((moveEvent.clientY - rect.top) / rect.height) * 100
+        setAccordionDividerPosition(Math.min(80, Math.max(20, newPos)))
+      }
+
+      const handleMouseUp = () => {
+        isAccordionDragging.current = false
+        document.body.style.cursor = ''
+        document.body.style.userSelect = ''
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+      }
+
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+    },
+    [setAccordionDividerPosition],
+  )
+
   const handleBookmarkSongClick = useCallback(
     (bookmark: { songId: number }) => {
       navigate({
@@ -544,6 +581,13 @@ function SongPreviewPage() {
     presentedSlideIndex !== null && presentedSlideIndex > 0
   // Allow navigating next even on last slide - server will end presentation
   const canNavigateNext = presentedSlideIndex !== null
+
+  // The Marcaje↔Versiuni divider only makes sense when both sections are
+  // expanded and visible (Marcaje is hidden below `lg`). Otherwise the column
+  // falls back to its flex behaviour (the open section grows, collapsed ones
+  // shrink to their header).
+  const accordionSplitActive =
+    isLargeScreen && bookmarksOpen && versionsOpen && Boolean(song)
 
   return (
     <div className="flex flex-col h-full lg:overflow-hidden lg:h-[calc(100vh-3rem)] overflow-auto scrollbar-thin">
@@ -753,7 +797,8 @@ function SongPreviewPage() {
               too tight); we preserve that. Versions ride along on
               mobile because they were already visible there before. */}
           <div
-            className="overflow-hidden h-full flex flex-col gap-2"
+            ref={accordionColumnRef}
+            className={`overflow-hidden h-full flex flex-col ${accordionSplitActive ? '' : 'gap-2'}`}
             style={
               isLargeScreen
                 ? { width: `calc(${100 - rightDividerPosition}% - 4px)` }
@@ -761,7 +806,18 @@ function SongPreviewPage() {
             }
           >
             <div
-              className={`hidden lg:block ${bookmarksOpen ? 'min-h-0 flex-1' : 'flex-none'}`}
+              className={`hidden lg:block min-h-0 ${
+                accordionSplitActive
+                  ? ''
+                  : bookmarksOpen
+                    ? 'flex-1'
+                    : 'flex-none'
+              }`}
+              style={
+                accordionSplitActive
+                  ? { height: `calc(${accordionDividerPosition}% - 4px)` }
+                  : undefined
+              }
             >
               <SongBookmarksPanel
                 onSelectSong={handleBookmarkSongClick}
@@ -772,8 +828,36 @@ function SongPreviewPage() {
               />
             </div>
 
+            {/* Draggable Marcaje ↔ Versiuni divider (only when both expanded) */}
+            {accordionSplitActive ? (
+              <div
+                className="hidden lg:flex flex-col items-center justify-center h-2 cursor-row-resize hover:bg-indigo-100 dark:hover:bg-indigo-900/30 rounded transition-colors group"
+                onMouseDown={handleAccordionDividerMouseDown}
+              >
+                <GripHorizontal
+                  size={16}
+                  className="text-gray-400 group-hover:text-indigo-500 transition-colors"
+                />
+              </div>
+            ) : null}
+
             {song ? (
-              <div className={versionsOpen ? 'min-h-0 flex-1' : 'flex-none'}>
+              <div
+                className={`min-h-0 ${
+                  accordionSplitActive
+                    ? ''
+                    : versionsOpen
+                      ? 'flex-1'
+                      : 'flex-none'
+                }`}
+                style={
+                  accordionSplitActive
+                    ? {
+                        height: `calc(${100 - accordionDividerPosition}% - 4px)`,
+                      }
+                    : undefined
+                }
+              >
                 <SongVersionsPanel
                   songId={numericId}
                   songTitle={song.title}

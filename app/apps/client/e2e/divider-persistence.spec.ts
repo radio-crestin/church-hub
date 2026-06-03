@@ -1,145 +1,219 @@
 import { expect, test } from '@playwright/test'
 
 /**
- * Resizable dividers persist their position to the database (under the
- * `divider.*` settings namespace) so the layout a user configures survives a
- * reload — and, because it lives in the DB rather than only localStorage, a
- * fresh browser/device too.
+ * Resizable dividers persist their position to `localStorage` (keyed by
+ * `divider.*`), so the layout each operator configures survives a reload and
+ * an app restart — and stays local to THIS machine. Divider positions are a
+ * personal, per-PC UI preference; they are deliberately NOT synced through the
+ * database, so moving a divider on one computer never changes another's layout.
  *
- * We exercise this on the Songs list divider (a plain 50–85% width split with
- * no extra layout caps, so the on-screen position maps cleanly to the stored
- * percentage). The dividers on Bible, the Song detail page and Music share the
- * exact same `useDividerPosition` hook.
+ * We exercise:
+ *   1. the Songs-list Marcaje edge — which has no key of its own: it MIRRORS
+ *      the Song detail page by deriving its position from the shared Slides +
+ *      Stage dividers, and writes a drag back into the Stage divider so the two
+ *      pages stay identical;
+ *   2. the Marcaje↔Versiuni vertical divider on the Song detail page (the
+ *      feature this spec was extended for).
  */
 
-const SONGS_DIVIDER_KEY = 'divider.songs_list'
-const SETTINGS_URL = '/api/settings/app_settings'
+// The songs-list Marcaje edge mirrors these two song-detail dividers — it has
+// no `divider.songs_list` key of its own. Edge = left + (100-left)*right/100.
+const SONG_DETAIL_LEFT_KEY = 'divider.song_detail_left'
+const SONG_DETAIL_RIGHT_KEY = 'divider.song_detail_right'
+const LEGACY_SONGS_DIVIDER_KEY = 'divider.songs_list'
+const ACCORDION_DIVIDER_KEY = 'divider.song_detail_accordion'
 
-// The divider only renders on large (lg) screens.
+// Dividers only render on large (lg) screens.
 test.use({ viewport: { width: 1440, height: 900 } })
 
-/** Position of the divider handle as a percentage of its container's width. */
-async function readDividerPercent(page: import('@playwright/test').Page) {
+type Page = import('@playwright/test').Page
+
+/** Reads a stored divider percentage straight out of localStorage. */
+function readStored(page: Page, key: string): Promise<number | null> {
+  return page.evaluate((k) => {
+    const raw = window.localStorage.getItem(k)
+    if (raw === null) return null
+    const n = Number(raw)
+    return Number.isFinite(n) ? n : null
+  }, key)
+}
+
+/** Horizontal position of a `.cursor-col-resize` handle, as a % of its container. */
+async function readColResizePercent(page: Page) {
   return page.evaluate(() => {
     const handle = document.querySelector<HTMLElement>('.cursor-col-resize')
     const container = handle?.parentElement
     if (!handle || !container) return null
-    const handleRect = handle.getBoundingClientRect()
-    const containerRect = container.getBoundingClientRect()
-    const handleCenter = handleRect.left + handleRect.width / 2
-    return ((handleCenter - containerRect.left) / containerRect.width) * 100
+    const h = handle.getBoundingClientRect()
+    const c = container.getBoundingClientRect()
+    return ((h.left + h.width / 2 - c.left) / c.width) * 100
   })
 }
 
-// These tests share the dev database and several touch the same
-// `divider.songs_list` key, so run them in order to avoid clobbering each
-// other's seeded values.
+// These tests share the dev database/localStorage, so run them in order.
 test.describe.configure({ mode: 'serial' })
 
-test.describe('Resizable divider persistence', () => {
-  test('a divider.* setting is writable and readable via the settings API', async ({
-    request,
-  }) => {
-    // Use a dedicated probe key so this test never interferes with the live
-    // key the Songs page reads.
-    const probeKey = 'divider.e2e_probe'
-    const writeRes = await request.post(SETTINGS_URL, {
-      data: { key: probeKey, value: '63' },
-    })
-    expect(writeRes.ok()).toBeTruthy()
-
-    const readRes = await request.get(`${SETTINGS_URL}/${probeKey}`)
-    expect(readRes.ok()).toBeTruthy()
-    const { data } = (await readRes.json()) as {
-      data: { key: string; value: string } | null
-    }
-    expect(data?.value).toBe('63')
-  })
-
-  test('the divider restores its position from the database on load', async ({
+test.describe('Resizable divider persistence (localStorage, per-PC)', () => {
+  test('the songs-list Marcaje edge mirrors the shared song-detail layout', async ({
     page,
-    request,
   }) => {
-    // Seed a non-default position straight into the DB.
-    await request.post(SETTINGS_URL, {
-      data: { key: SONGS_DIVIDER_KEY, value: '58' },
-    })
-
     await page.goto('/songs')
-    // Drop the localStorage cache so the restored value can ONLY come from the
-    // database, then reload to prove the DB drives the layout.
+    // The list page has no key of its own — it derives the Marcaje edge from
+    // the song-detail Slides (left) + Stage (right) dividers:
+    //   edge = left + (100 - left) * right / 100.
+    // Seed left=30, right=20 -> edge = 30 + 70*0.20 = 44%.
     await page.evaluate(
-      (key) => window.localStorage.removeItem(key),
-      SONGS_DIVIDER_KEY,
+      (keys) => {
+        window.localStorage.setItem(keys.left, '30')
+        window.localStorage.setItem(keys.right, '20')
+        window.localStorage.removeItem(keys.legacy)
+      },
+      {
+        left: SONG_DETAIL_LEFT_KEY,
+        right: SONG_DETAIL_RIGHT_KEY,
+        legacy: LEGACY_SONGS_DIVIDER_KEY,
+      },
     )
     await page.reload()
     await page.locator('.cursor-col-resize').first().waitFor()
 
-    // The position starts at the 75% default (localStorage was cleared) and
-    // should settle near the seeded 58% once the async DB fetch resolves.
     await expect
       .poll(
         async () => {
-          const p = await readDividerPercent(page)
-          return p !== null && p > 54 && p < 62
+          const p = await readColResizePercent(page)
+          return p !== null && p > 40 && p < 48 // ~44%
         },
         { timeout: 5000 },
       )
       .toBe(true)
   })
 
-  test('dragging the divider writes the new position to the database', async ({
+  test('dragging the songs-list divider rewrites the shared song-detail Stage divider', async ({
     page,
-    request,
   }) => {
-    // Start from a known seed so the drag has somewhere to move from.
-    await request.post(SETTINGS_URL, {
-      data: { key: SONGS_DIVIDER_KEY, value: '75' },
-    })
-
     await page.goto('/songs')
+    // Default-ish layout: left=30, right=57 -> edge ~70%.
+    await page.evaluate(
+      (keys) => {
+        window.localStorage.setItem(keys.left, '30')
+        window.localStorage.setItem(keys.right, '57')
+        window.localStorage.removeItem(keys.legacy)
+      },
+      {
+        left: SONG_DETAIL_LEFT_KEY,
+        right: SONG_DETAIL_RIGHT_KEY,
+        legacy: LEGACY_SONGS_DIVIDER_KEY,
+      },
+    )
+    await page.reload()
+
     const handle = page.locator('.cursor-col-resize').first()
     await handle.waitFor()
 
-    const before = await readDividerPercent(page)
+    const before = await readColResizePercent(page)
     expect(before).not.toBeNull()
 
-    // Drag the handle towards the left (shrinking the song-list pane).
     const box = await handle.boundingBox()
     expect(box).not.toBeNull()
     const container = await page.evaluate(() => {
       const el =
         document.querySelector<HTMLElement>('.cursor-col-resize')?.parentElement
       const r = el?.getBoundingClientRect()
-      return r ? { left: r.left, width: r.width, top: r.top } : null
+      return r ? { left: r.left, width: r.width } : null
     })
     expect(container).not.toBeNull()
 
-    const startX = box!.x + box!.width / 2
     const startY = box!.y + box!.height / 2
+    // Drag the Marcaje edge left (smaller List) -> the shared Stage divider shrinks.
     const targetX = container!.left + container!.width * 0.55
 
-    await page.mouse.move(startX, startY)
+    // hover() does real hit-testing on the 8px-wide handle before pressing —
+    // a manual mouse.move() to computed coords can land on the inner grip icon
+    // and miss the divider's onMouseDown entirely, so the drag never engages.
+    await handle.hover()
     await page.mouse.down()
-    await page.mouse.move(targetX, startY, { steps: 12 })
+    await page.mouse.move(targetX, startY, { steps: 20 })
+    await page.waitForTimeout(50)
     await page.mouse.up()
 
-    // Position should have changed on screen…
-    const after = await readDividerPercent(page)
-    expect(Math.abs((after ?? 0) - (before ?? 0))).toBeGreaterThan(5)
+    // The drag is written back to the SHARED Stage divider (now smaller) — this
+    // is the real contract and the most robust signal that the drag took.
+    await expect
+      .poll(() => readStored(page, SONG_DETAIL_RIGHT_KEY), { timeout: 3000 })
+      .toBeLessThan(57)
 
-    // …and the debounced DB write should land with the new value.
+    // …and it moved on screen too.
     await expect
       .poll(
         async () => {
-          const res = await request.get(`${SETTINGS_URL}/${SONGS_DIVIDER_KEY}`)
-          const body = (await res.json()) as {
-            data: { value: string } | null
-          }
-          return body.data ? Number(body.data.value) : null
+          const after = await readColResizePercent(page)
+          return Math.abs((after ?? 0) - (before ?? 0))
         },
-        { timeout: 5000 },
+        { timeout: 2000 },
       )
-      .toBeLessThan(70)
+      .toBeGreaterThan(5)
+    // …and the legacy per-list key is never resurrected.
+    expect(await readStored(page, LEGACY_SONGS_DIVIDER_KEY)).toBeNull()
+  })
+
+  test('the Marcaje↔Versiuni divider persists its split to localStorage across a reload', async ({
+    page,
+    request,
+  }) => {
+    // A real song is needed for the Versiuni section (and thus the divider).
+    const create = await request.post('/api/songs', {
+      data: {
+        title: `E2E Divider ${Date.now()}`,
+        slides: [{ content: 'verse 1' }],
+      },
+    })
+    expect([200, 201]).toContain(create.status())
+    const songId = (await create.json()).data.id as number
+
+    try {
+      await page.goto(`/songs/${songId}`)
+      // Start from a clean default so the drag has a known origin.
+      await page.evaluate(
+        (k) => window.localStorage.removeItem(k),
+        ACCORDION_DIVIDER_KEY,
+      )
+      await page.reload()
+
+      // The divider only renders with both sections expanded (the default) on
+      // a large screen — exactly our setup.
+      const handle = page.locator('.cursor-row-resize').first()
+      await handle.waitFor({ timeout: 10000 })
+
+      const box = await handle.boundingBox()
+      expect(box).not.toBeNull()
+
+      // Drag the handle UP to give Marcaje a smaller share. hover() hit-tests
+      // the thin handle before pressing (a manual mouse.move to computed coords
+      // can land on the inner grip icon and miss the divider's onMouseDown).
+      const startX = box!.x + box!.width / 2
+      const startY = box!.y + box!.height / 2
+      await handle.hover()
+      await page.mouse.down()
+      await page.mouse.move(startX, startY - 120, { steps: 16 })
+      await page.waitForTimeout(50)
+      await page.mouse.up()
+
+      // localStorage now holds the new split (default was 50; dragging up shrinks it).
+      await expect
+        .poll(() => readStored(page, ACCORDION_DIVIDER_KEY), { timeout: 2000 })
+        .toBeLessThan(50)
+      const stored = await readStored(page, ACCORDION_DIVIDER_KEY)
+      expect(stored).not.toBeNull()
+
+      // Reload: the value is untouched and the divider comes back where we left it.
+      await page.reload()
+      await page
+        .locator('.cursor-row-resize')
+        .first()
+        .waitFor({ timeout: 10000 })
+      expect(await readStored(page, ACCORDION_DIVIDER_KEY)).toBe(stored)
+    } finally {
+      await request.delete(`/api/songs/${songId}`).catch(() => undefined)
+    }
   })
 })

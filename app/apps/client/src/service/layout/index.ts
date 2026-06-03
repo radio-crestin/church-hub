@@ -1,5 +1,1 @@
-export {
-  DIVIDER_KEYS,
-  getDividerPosition,
-  saveDividerPosition,
-} from './dividers'
+export { DIVIDER_KEYS, SONG_DETAIL_DEFAULTS } from './dividers'
