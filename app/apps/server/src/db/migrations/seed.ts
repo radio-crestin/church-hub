@@ -15,6 +15,13 @@ const ALL_PERMISSIONS = [
   'songs.delete',
   'songs.add_to_queue',
   'songs.present_now',
+  // Song versions — linked variants of the same hymn + auto-suggested
+  // matches. The panel is visible to anyone with `songs.view`; these
+  // gate the mutate actions (link, set primary, unlink) separately so
+  // admins can grant "manage versions" without granting full song writes.
+  'song_versions.create',
+  'song_versions.edit',
+  'song_versions.delete',
   'bible.view',
   'bible.import',
   'bible.delete',

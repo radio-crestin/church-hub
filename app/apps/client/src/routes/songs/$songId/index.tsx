@@ -106,14 +106,14 @@ function SongPreviewPage() {
   const navigate = useNavigate()
   const { hasPermission } = usePermissions()
   const canEditSong = hasPermission('songs.edit')
-  // "Add a new linked version" — link an unrelated song or accept a
-  // suggestion. Allowed for either `songs.create` (the natural mapping
-  // for "add a new relationship") OR `songs.edit` (so editors don't lose
-  // the affordance because they happen to be missing the create perm —
-  // hierarchies aren't enforced in this app's RBAC, so both are checked
-  // explicitly).
-  const canAddSongVersion =
-    hasPermission('songs.create') || hasPermission('songs.edit')
+  // Dedicated song-versions perms — split so an admin can grant "manage
+  // versions" independently of the song's CRUD rights. The boot-time
+  // migration `add-song-versions-permissions` backfills these onto users
+  // and roles that already had the equivalent `songs.{create|edit|delete}`,
+  // so this gate is backward-compatible.
+  const canAddSongVersion = hasPermission('song_versions.create')
+  const canEditSongVersion = hasPermission('song_versions.edit')
+  const canDeleteSongVersion = hasPermission('song_versions.delete')
   const { songId } = Route.useParams()
   const {
     q: searchQuery,
@@ -870,7 +870,8 @@ function SongPreviewPage() {
                   songId={numericId}
                   songTitle={song.title}
                   canAdd={canAddSongVersion}
-                  canEdit={canEditSong}
+                  canEdit={canEditSongVersion}
+                  canDelete={canDeleteSongVersion}
                   isCollapsed={!versionsOpen}
                   onToggleCollapse={() => setVersionsOpen(!versionsOpen)}
                   attentionBadge={

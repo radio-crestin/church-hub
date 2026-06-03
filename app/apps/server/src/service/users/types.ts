@@ -9,6 +9,14 @@ export type Permission =
   | 'songs.delete'
   | 'songs.add_to_queue'
   | 'songs.present_now'
+  // Song versions ("Versiuni ale cântării" — linked variants of the same
+  // hymn, plus auto-suggested matches). View is intentionally tied to
+  // `songs.view` (whoever can see a song can see its variants); these
+  // gate the mutate actions so admins can grant "manage versions" without
+  // granting the song write perms.
+  | 'song_versions.create'
+  | 'song_versions.edit'
+  | 'song_versions.delete'
   // Bible
   | 'bible.view'
   | 'bible.import'
@@ -59,6 +67,10 @@ export const ALL_PERMISSIONS: Permission[] = [
   'songs.delete',
   'songs.add_to_queue',
   'songs.present_now',
+  // Song versions (view inherits from songs.view; only mutate perms)
+  'song_versions.create',
+  'song_versions.edit',
+  'song_versions.delete',
   // Bible
   'bible.view',
   'bible.import',
