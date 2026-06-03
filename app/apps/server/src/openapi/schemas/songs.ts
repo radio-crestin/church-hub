@@ -248,6 +248,7 @@ export const songSchemas = {
       hymnNumber: { type: 'string', nullable: true },
       author: { type: 'string', nullable: true },
       keyLine: { type: 'string', nullable: true },
+      categoryName: { type: 'string', nullable: true },
     },
   },
   SongGroup: {
@@ -291,6 +292,11 @@ export const songSchemas = {
       hymnNumber: { type: 'string', nullable: true },
       author: { type: 'string', nullable: true },
       categoryName: { type: 'string', nullable: true },
+      keyLine: {
+        type: 'string',
+        nullable: true,
+        description: 'The song\'s musical key ("gama melodie"), free-text.',
+      },
       score: {
         type: 'number',
         description: 'Blended title-similarity + FTS rank, 0..1.',

@@ -88,8 +88,10 @@ export function getSongGroupWithMembers(
         hymnNumber: songs.hymnNumber,
         author: songs.author,
         keyLine: songs.keyLine,
+        categoryName: songCategories.name,
       })
       .from(songs)
+      .leftJoin(songCategories, eq(songs.categoryId, songCategories.id))
       .where(eq(songs.songGroupId, groupId))
       .orderBy(songs.title)
       .all()
@@ -101,6 +103,7 @@ export function getSongGroupWithMembers(
       hymnNumber: m.hymnNumber ?? null,
       author: m.author ?? null,
       keyLine: m.keyLine ?? null,
+      categoryName: m.categoryName ?? null,
     }))
 
     return {
@@ -816,6 +819,7 @@ export function getSimilarSongs(
           hymnNumber: null as string | null,
           author: null as string | null,
           categoryName: meta.categoryName,
+          keyLine: null as string | null,
           score: Math.round(score * 100) / 100,
           reason,
         }
@@ -827,13 +831,15 @@ export function getSimilarSongs(
 
     if (rescored.length === 0) return []
 
-    // 6) Hydrate hymnNumber + author for the surviving candidates.
+    // 6) Hydrate hymnNumber + author + keyLine ("gama melodie") for the
+    //    surviving candidates so the UI can show a key + category tag per row.
     const ids = rescored.map((r) => r.songId)
     const extras = db
       .select({
         id: songs.id,
         hymnNumber: songs.hymnNumber,
         author: songs.author,
+        keyLine: songs.keyLine,
       })
       .from(songs)
       .where(inArray(songs.id, ids))
@@ -841,7 +847,14 @@ export function getSimilarSongs(
     const extrasById = new Map(extras.map((e) => [e.id, e]))
     return rescored.map((r) => {
       const e = extrasById.get(r.songId)
-      return e ? { ...r, hymnNumber: e.hymnNumber, author: e.author } : r
+      return e
+        ? {
+            ...r,
+            hymnNumber: e.hymnNumber,
+            author: e.author,
+            keyLine: e.keyLine,
+          }
+        : r
     })
   } catch (error) {
     logger.error(`getSimilarSongs(${songId}) failed: ${error}`)

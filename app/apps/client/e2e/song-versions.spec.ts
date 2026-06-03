@@ -128,7 +128,7 @@ test.describe('Song Versions', () => {
     ).toBeNull()
   })
 
-  test('the song detail page shows the "Same song as…" call to action when standalone', async ({
+  test('the song detail page shows the "Add a version" call to action when standalone', async ({
     page,
     request,
   }) => {
@@ -137,10 +137,11 @@ test.describe('Song Versions', () => {
     await page.goto(`/songs/${a}`)
     await page.waitForLoadState('networkidle')
 
-    // Standalone song with edit permission → the panel exposes the link
-    // button. Match by visible text (i18n could be EN or RO).
+    // Standalone song with edit permission → the versions panel header exposes
+    // the "Add a version" CTA that opens the link modal. Match by visible text
+    // (i18n could be EN or RO).
     await expect(
-      page.getByRole('button', { name: /same song as|aceea[șs]i c[âa]ntare/i }),
+      page.getByRole('button', { name: /add a version|adaug[ăa] o versiune/i }),
     ).toBeVisible({ timeout: 10000 })
   })
 
