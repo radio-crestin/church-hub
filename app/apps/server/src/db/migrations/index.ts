@@ -3,6 +3,7 @@ import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite'
 
 import { addCloseOnEscape } from './add-close-on-escape'
 import { addLastPresentedAt } from './add-last-presented-at'
+import { addSongGroups } from './add-song-groups'
 import { addUserAuthFields } from './add-user-auth-fields'
 import { dropSongKeyColumn } from './drop-song-key-column'
 import { EMBEDDED_MIGRATIONS } from './embedded'
@@ -164,6 +165,13 @@ export function runMigrations(
   t = performance.now()
   addLastPresentedAt(rawDb)
   logTiming('add_last_presented_at', t)
+
+  // Add song_groups table + song_group_id column for the Versions feature.
+  // Must run before seedSongs so newly seeded songs see the column.
+  log('info', 'Running add song_groups migration...')
+  t = performance.now()
+  addSongGroups(rawDb)
+  logTiming('add_song_groups', t)
 
   // Seed songs
   log('info', 'Seeding songs...')
