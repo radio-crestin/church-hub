@@ -916,15 +916,19 @@ async function startRealServer(): Promise<void> {
 
         // Build cookie with domain for cross-port sharing
         // Note: Domain attribute allows cookie to be sent to all ports on the same host
+        const isLocal = host === 'localhost' || host === '127.0.0.1'
         const cookieParts = [
           `user_auth=${token}`,
           'HttpOnly',
-          'SameSite=Lax',
+          // See buildAuthCookie below: desktop is cross-site (tauri.localhost ↔
+          // localhost), so the localhost cookie must be `None; Secure` to be
+          // stored and sent; remote same-origin servers keep `Lax`.
+          ...(isLocal ? ['SameSite=None', 'Secure'] : ['SameSite=Lax']),
           'Max-Age=31536000',
           'Path=/',
         ]
         // Only add Domain for non-localhost (IP addresses need explicit domain)
-        if (host !== 'localhost' && host !== '127.0.0.1') {
+        if (!isLocal) {
           cookieParts.push(`Domain=${host}`)
         }
 
@@ -957,14 +961,23 @@ async function startRealServer(): Promise<void> {
       // Builds the user_auth Set-Cookie header value.
       function buildAuthCookie(token: string, maxAgeSeconds: number): string {
         const host = req.headers.get('host')?.split(':')[0] ?? 'localhost'
+        const isLocal = host === 'localhost' || host === '127.0.0.1'
         const parts = [
           `user_auth=${token}`,
           'HttpOnly',
-          'SameSite=Lax',
+          // On desktop the UI is served from `tauri.localhost` while this sidecar
+          // is `localhost` — a cross-site pair. A `SameSite=Lax` cookie is never
+          // sent on those cross-site requests (and Chromium even refuses to store
+          // a cross-site `Set-Cookie` from a fetch unless it's `None; Secure`), so
+          // login could never stick. `localhost` is a secure context even over
+          // plain http, so `None; Secure` is honored and the session works.
+          // Remote/LAN servers serve the UI and API same-origin, where `Lax` is
+          // correct and `Secure` would be rejected over plain http.
+          ...(isLocal ? ['SameSite=None', 'Secure'] : ['SameSite=Lax']),
           `Max-Age=${maxAgeSeconds}`,
           'Path=/',
         ]
-        if (host !== 'localhost' && host !== '127.0.0.1') {
+        if (!isLocal) {
           parts.push(`Domain=${host}`)
         }
         return parts.join('; ')
