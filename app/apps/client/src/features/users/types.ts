@@ -9,6 +9,11 @@ export type BuiltInPermission =
   | 'songs.delete'
   | 'songs.add_to_queue'
   | 'songs.present_now'
+  // Song versions ("Versiuni ale cântării" — linked variants + auto-suggestions)
+  | 'song_versions.view'
+  | 'song_versions.create'
+  | 'song_versions.edit'
+  | 'song_versions.delete'
   // Bible
   | 'bible.view'
   | 'bible.import'
@@ -79,6 +84,11 @@ export const ALL_PERMISSIONS: BuiltInPermission[] = [
   'songs.delete',
   'songs.add_to_queue',
   'songs.present_now',
+  // Song versions
+  'song_versions.view',
+  'song_versions.create',
+  'song_versions.edit',
+  'song_versions.delete',
   // Bible
   'bible.view',
   'bible.import',
@@ -130,6 +140,12 @@ export const PERMISSION_GROUPS = {
     'songs.delete',
     'songs.add_to_queue',
     'songs.present_now',
+  ] as Permission[],
+  song_versions: [
+    'song_versions.view',
+    'song_versions.create',
+    'song_versions.edit',
+    'song_versions.delete',
   ] as Permission[],
   bible: [
     'bible.view',
@@ -194,6 +210,7 @@ export const ROLE_TEMPLATES: Record<RoleTemplate, Permission[]> = {
     'control_room.view',
     'control_room.control',
     'songs.view',
+    'song_versions.view',
     'songs.add_to_queue',
     'songs.present_now',
     'bible.view',
@@ -210,6 +227,7 @@ export const ROLE_TEMPLATES: Record<RoleTemplate, Permission[]> = {
   viewer: [
     'control_room.view',
     'songs.view',
+    'song_versions.view',
     'bible.view',
     'programs.view',
     'queue.view',
@@ -222,6 +240,7 @@ export const ROLE_TEMPLATES: Record<RoleTemplate, Permission[]> = {
     'queue.reorder',
     'queue.clear',
     'songs.view',
+    'song_versions.view',
     'songs.add_to_queue',
     'programs.view',
     'programs.import_to_queue',

@@ -32,11 +32,17 @@ import { dismissSuggestion, isDismissed } from '../utils/dismissedSuggestions'
  */
 function SuggestionsSection({
   songId,
-  canEdit,
+  canAdd,
   topBorder = true,
 }: {
   songId: number
-  canEdit: boolean
+  /**
+   * Lets the operator turn a suggestion into a linked version (the ✓ accept
+   * and ✗ dismiss buttons). Mapped to `songs.create` at the route level —
+   * an operator who can add songs to the corpus can also link suggested
+   * ones; view-only operators see the suggestions but no buttons.
+   */
+  canAdd: boolean
   /** Draw the separating top border. False when this is the first thing in
    *  the panel body (no linked versions above it) so there's no stray line. */
   topBorder?: boolean
@@ -67,7 +73,11 @@ function SuggestionsSection({
     [suggestions, songId, dismissTick, linkedIds],
   )
 
-  if (!canEdit) return null
+  // Suggestions are visible to *every* logged-in user (read-only viewers
+  // included) — discovering that "this song looks like another one" is a
+  // browse feature, not an edit one. The accept / dismiss buttons below
+  // are still gated by `canAdd` so view-only operators can browse but
+  // not mutate.
   if (isLoading) return null
   if (visible.length === 0) return null
 
@@ -165,23 +175,27 @@ function SuggestionsSection({
                   </span>
                 </div>
               </Link>
-              <button
-                type="button"
-                onClick={() => handleAccept(s.songId, s.title)}
-                disabled={linkMutation.isPending || isAccepting}
-                title={t('versions.suggestionAccept')}
-                className="rounded p-1.5 text-emerald-600 hover:bg-emerald-50 disabled:opacity-50 dark:text-emerald-400 dark:hover:bg-emerald-900/30"
-              >
-                <Check size={14} />
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDismiss(s.songId)}
-                title={t('versions.suggestionDismiss')}
-                className="rounded p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-200"
-              >
-                <X size={14} />
-              </button>
+              {canAdd ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => handleAccept(s.songId, s.title)}
+                    disabled={linkMutation.isPending || isAccepting}
+                    title={t('versions.suggestionAccept')}
+                    className="rounded p-1.5 text-emerald-600 hover:bg-emerald-50 disabled:opacity-50 dark:text-emerald-400 dark:hover:bg-emerald-900/30"
+                  >
+                    <Check size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDismiss(s.songId)}
+                    title={t('versions.suggestionDismiss')}
+                    className="rounded p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                  >
+                    <X size={14} />
+                  </button>
+                </>
+              ) : null}
             </li>
           )
         })}
@@ -198,10 +212,22 @@ interface SongVersionsPanelProps {
    */
   songTitle: string
   /**
-   * When `true`, the user has permission to mutate the group (link / set
-   * primary / unlink). Otherwise the panel renders as read-only.
+   * Lets the operator add new versions: the "+ Adaugă o versiune" CTA,
+   * the ✓ accept suggestion button, and the ✗ dismiss suggestion button.
+   * Mapped to `song_versions.create` at the route level.
+   */
+  canAdd: boolean
+  /**
+   * Lets the operator change which member is the primary version of the
+   * group. Mapped to `song_versions.edit`.
    */
   canEdit: boolean
+  /**
+   * Lets the operator unlink a member ("Nu e aceeași cântare"). Mapped
+   * to `song_versions.delete` — semantically a removal, not a content
+   * edit.
+   */
+  canDelete: boolean
   /**
    * When provided, renders a chevron toggle inline with the title so the
    * panel can act as its own accordion section (no wrapping
@@ -220,9 +246,10 @@ interface SongVersionsPanelProps {
 }
 
 /**
- * Read+write panel for the "Other versions" section of a song. When the
- * song has no group yet, it only shows a "Same song as…" call to action.
- * When grouped, it lists every member with quick actions.
+ * Read+write panel for the "Versiuni ale cântării" section of a song. When
+ * the song has no group yet, it just shows the suggestions list (with a
+ * "Same song as…" CTA in the header when `canAdd` is true). When grouped,
+ * it lists every member with quick actions.
  *
  * Always renders its own chrome + header so it visually mirrors
  * `SongBookmarksPanel` when both sit stacked in the right-column accordion.
@@ -231,7 +258,9 @@ interface SongVersionsPanelProps {
 export function SongVersionsPanel({
   songId,
   songTitle,
+  canAdd,
   canEdit,
+  canDelete,
   isCollapsed = false,
   onToggleCollapse,
   attentionBadge,
@@ -283,7 +312,7 @@ export function SongVersionsPanel({
             </span>
           ) : null}
         </div>
-        {canEdit && !isLoading ? (
+        {canAdd && !isLoading ? (
           <button
             type="button"
             onClick={() => setLinkModalOpen(true)}
@@ -304,13 +333,16 @@ export function SongVersionsPanel({
               <Loader2 size={14} className="animate-spin" />
             </div>
           ) : !group ? (
-            canEdit ? (
-              <SuggestionsSection
-                songId={songId}
-                canEdit={canEdit}
-                topBorder={false}
-              />
-            ) : null
+            // Standalone song. View-only operators still get the
+            // suggestions list (read-only) so they can discover that
+            // "this song might have a sibling" without being able to
+            // mutate. Editors get the same list plus the accept/dismiss
+            // buttons that `SuggestionsSection` renders internally.
+            <SuggestionsSection
+              songId={songId}
+              canAdd={canAdd}
+              topBorder={false}
+            />
           ) : (
             <>
               <ul className="space-y-1.5">
@@ -400,7 +432,7 @@ export function SongVersionsPanel({
                             <Crown size={14} />
                           </button>
                         ) : null}
-                        {canEdit ? (
+                        {canDelete ? (
                           <button
                             type="button"
                             onClick={() => {
@@ -420,7 +452,7 @@ export function SongVersionsPanel({
                   )
                 })}
               </ul>
-              <SuggestionsSection songId={songId} canEdit={canEdit} />
+              <SuggestionsSection songId={songId} canAdd={canAdd} />
             </>
           )}
         </div>

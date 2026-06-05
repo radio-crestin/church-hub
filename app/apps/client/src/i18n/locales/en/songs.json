@@ -256,7 +256,7 @@
     "confirm": "Reset"
   },
   "versions": {
-    "title": "Other versions",
+    "title": "Song versions",
     "count_one": "{{count}} version",
     "count_other": "{{count}} versions",
     "badge": "{{count}} versions",
