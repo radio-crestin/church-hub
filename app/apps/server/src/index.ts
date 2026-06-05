@@ -57,11 +57,13 @@ if (process.argv.includes('--probe-midi')) {
   }
 }
 
+import { logToFile } from './utils/fileLogger'
 // PostHog client (errors + events) — initialised on import.
 import {
   captureAppStarted,
   captureException as captureExceptionPostHog,
   captureFeedbackReport,
+  captureMessage as captureMessageServer,
   flushPostHog,
   shutdownPostHog,
 } from './utils/posthog'
@@ -320,8 +322,16 @@ import {
   upsertTag,
   warmupSearchIndex as warmupSongsSearchIndex,
 } from './service/songs'
+import {
+  type BootPhase,
+  getBootHealth,
+  setBootFailed,
+  setBootPhase,
+  setBootReady,
+} from './utils/bootState'
 import { createLogger } from './utils/logger'
 import { getLogsDir } from './utils/paths'
+import { reportError } from './utils/reportError'
 import { logRequest, logResponse } from './utils/request-logger'
 import { proxyToVite, serveStaticFile } from './utils/static-server'
 import {
@@ -439,6 +449,74 @@ async function serveWithRetry<T>(
 }
 
 /**
+ * A minimal HTTP server that binds the real port BEFORE the heavy boot work
+ * (migrations, FTS rebuild, seeding) runs. It exists so two things are true
+ * from the very first moment the sidecar process is alive:
+ *
+ *  1. The desktop shell's `/ping` health check answers immediately, so the
+ *     Tauri window paints instead of waiting on a 30s timeout.
+ *  2. The client can poll `/health` to render real boot progress — and, if a
+ *     migration throws, read the actual failure instead of spinning forever.
+ *
+ * Every non-health request gets a 503 with the current phase so any code that
+ * races ahead of readiness fails loudly rather than hitting a half-built DB.
+ * The handle is handed back so `main()` can stop it before the real server
+ * binds the same port.
+ */
+function startBootServer(port: number | string): ReturnType<typeof Bun.serve> {
+  const healthResponse = () =>
+    new Response(JSON.stringify(getBootHealth()), {
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+    })
+
+  return Bun.serve({
+    port,
+    hostname: '0.0.0.0',
+    reusePort: true,
+    fetch(req) {
+      const url = new URL(req.url)
+      if (req.method === 'OPTIONS') {
+        return new Response(null, {
+          status: 204,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, OPTIONS',
+            'Access-Control-Allow-Headers': '*',
+          },
+        })
+      }
+      if (url.pathname === '/health' || url.pathname === '/api/health') {
+        return healthResponse()
+      }
+      if (url.pathname === '/ping' || url.pathname === '/api/ping') {
+        return new Response(JSON.stringify({ data: 'pong' }), {
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          },
+        })
+      }
+      // Everything else: the server isn't ready to do real work yet.
+      const health = getBootHealth()
+      return new Response(
+        JSON.stringify({ error: 'Server starting', ...health }),
+        {
+          status: 503,
+          headers: {
+            'Content-Type': 'application/json',
+            'Retry-After': '1',
+            'Access-Control-Allow-Origin': '*',
+          },
+        },
+      )
+    },
+  })
+}
+
+/**
  * Waits for a port to become available, retrying up to maxRetries times.
  * Handles ghost PIDs on Windows where the process is gone but the binding lingers.
  */
@@ -538,11 +616,58 @@ async function main() {
   killProcessOnPort(serverPort)
   await waitForPortAvailable(serverPort)
 
-  // Initialize database (Drizzle ORM wrapper) and run migrations
-  let t = performance.now()
-  await initializeDatabase()
-  logTiming('database_init', t)
+  // Bind the port immediately with a minimal boot server so the shell's
+  // /ping check answers right away (no blank-screen wait) and the client can
+  // poll /health for real boot progress while the heavy init below runs. If
+  // any init step throws, the boot server stays up reporting the failure via
+  // /health instead of the process dying silently into an endless spinner.
+  const bootServer = startBootServer(serverPort)
+  // biome-ignore lint/suspicious/noConsole: Startup logging
+  console.log(
+    `[startup] Boot server listening on ${serverPort} — serving /health while initializing`,
+  )
 
+  let t = performance.now()
+  let bootPhase: BootPhase = 'starting'
+  try {
+    // Initialize database (Drizzle ORM wrapper) and run migrations
+    bootPhase = 'migrating'
+    setBootPhase('migrating')
+    t = performance.now()
+    await initializeDatabase()
+    logTiming('database_init', t)
+
+    bootPhase = 'indexing'
+    setBootPhase('indexing')
+    await runFtsRebuild()
+
+    bootPhase = 'finalizing'
+    setBootPhase('finalizing')
+    await runFinalizeBoot()
+  } catch (bootErr) {
+    // Surface the failure to PostHog + log file and keep the boot server up so
+    // the client reads the real reason from /health (with a report action)
+    // rather than spinning forever. Do NOT exit: a hard exit would leave the
+    // shell with a connection-refused loop and no diagnostics.
+    setBootFailed(bootPhase, bootErr)
+    return
+  }
+
+  // Heavy init done — hand the port off from the boot server to the real one.
+  // Await the stop so the socket is fully released before we rebind (serveWithRetry
+  // also retries EADDRINUSE as a belt-and-braces guard against a lingering bind).
+  await bootServer.stop(true)
+
+  await startRealServer()
+}
+
+/**
+ * Rebuilds the full-text search indexes when they're out of sync with their
+ * source tables. Extracted from {@link main} so boot failures can be attributed
+ * to the `indexing` phase. Individual rebuild errors are non-fatal (logged) so a
+ * single corrupt index doesn't block the whole server from coming up.
+ */
+async function runFtsRebuild(): Promise<void> {
   // Rebuild FTS indexes BEFORE the HTTP server accepts requests so
   // search never returns empty results during a partial-rebuild window
   // and a previous-launch crash mid-rebuild can't leave the indexes
@@ -556,7 +681,7 @@ async function main() {
   // content FTS5 reports source count after a successful rebuild). A
   // mismatch (fresh install, partial seed, schema drift) still
   // triggers the full rebuild.
-  t = performance.now()
+  let t = performance.now()
   try {
     const rawDb = getRawDatabase()
     const count = (sql: string): number => {
@@ -600,9 +725,16 @@ async function main() {
     console.error('[startup] FTS rebuild failed:', rebuildError)
   }
   logTiming('fts_rebuild', t)
+}
 
+/**
+ * Final pre-serve work: warm the FTS caches, reset presentation state, ensure a
+ * fallback Bible exists, mint the system token and wire OBS callbacks. Extracted
+ * from {@link main} so a throw here is attributed to the `finalizing` phase.
+ */
+async function runFinalizeBoot(): Promise<void> {
   // Warm up FTS indexes so first user search is fast (loads index pages from disk into OS cache)
-  t = performance.now()
+  let t = performance.now()
   warmupBibleSearchIndex()
   warmupSongsSearchIndex()
   logTiming('fts_warmup', t)
@@ -639,7 +771,14 @@ async function main() {
   t = performance.now()
   initializeOBSCallbacks()
   logTiming('init_obs_callbacks', t)
+}
 
+/**
+ * Binds the full application server (all API routes, WebSocket, MIDI/OBS/music
+ * wiring) on the real port and flips boot state to `ready`. Runs only after the
+ * boot server has been stopped, so there's no double-bind on the port.
+ */
+async function startRealServer(): Promise<void> {
   // Note: MIDI initialization is deferred to after server starts
 
   const isProd = process.env.NODE_ENV === 'production'
@@ -665,7 +804,7 @@ async function main() {
   // biome-ignore lint/suspicious/noConsole: Startup logging
   console.log('[server] Starting with simple auth (localhost = admin)')
 
-  t = performance.now()
+  let t = performance.now()
 
   const logger = createLogger('BibleAPI')
 
@@ -689,16 +828,17 @@ async function main() {
     return res
   }
 
-  // Global error handlers to catch unhandled errors
+  // Global error handlers to catch unhandled errors. reportError writes to
+  // BOTH the on-disk log and PostHog so a fatal is never console-only.
   process.on('uncaughtException', (error) => {
     // biome-ignore lint/suspicious/noConsole: error logging
     console.error('[FATAL] Uncaught Exception:', error)
-    captureExceptionPostHog(error, { source: 'uncaughtException' })
+    reportError(error, 'uncaughtException')
   })
   process.on('unhandledRejection', (reason) => {
     // biome-ignore lint/suspicious/noConsole: error logging
     console.error('[FATAL] Unhandled Promise Rejection:', reason)
-    captureExceptionPostHog(reason, { source: 'unhandledRejection' })
+    reportError(reason, 'unhandledRejection')
   })
 
   const server = await serveWithRetry<WebSocketData>({
@@ -709,7 +849,7 @@ async function main() {
       // biome-ignore lint/suspicious/noConsole: error logging
       console.error('[SERVER ERROR] Fetch handler error:', error)
 
-      captureExceptionPostHog(error, { source: 'fetch-error-handler' })
+      reportError(error, 'fetch-error-handler')
 
       return new Response(
         JSON.stringify({
@@ -776,15 +916,19 @@ async function main() {
 
         // Build cookie with domain for cross-port sharing
         // Note: Domain attribute allows cookie to be sent to all ports on the same host
+        const isLocal = host === 'localhost' || host === '127.0.0.1'
         const cookieParts = [
           `user_auth=${token}`,
           'HttpOnly',
-          'SameSite=Lax',
+          // See buildAuthCookie below: desktop is cross-site (tauri.localhost ↔
+          // localhost), so the localhost cookie must be `None; Secure` to be
+          // stored and sent; remote same-origin servers keep `Lax`.
+          ...(isLocal ? ['SameSite=None', 'Secure'] : ['SameSite=Lax']),
           'Max-Age=31536000',
           'Path=/',
         ]
         // Only add Domain for non-localhost (IP addresses need explicit domain)
-        if (host !== 'localhost' && host !== '127.0.0.1') {
+        if (!isLocal) {
           cookieParts.push(`Domain=${host}`)
         }
 
@@ -817,14 +961,23 @@ async function main() {
       // Builds the user_auth Set-Cookie header value.
       function buildAuthCookie(token: string, maxAgeSeconds: number): string {
         const host = req.headers.get('host')?.split(':')[0] ?? 'localhost'
+        const isLocal = host === 'localhost' || host === '127.0.0.1'
         const parts = [
           `user_auth=${token}`,
           'HttpOnly',
-          'SameSite=Lax',
+          // On desktop the UI is served from `tauri.localhost` while this sidecar
+          // is `localhost` — a cross-site pair. A `SameSite=Lax` cookie is never
+          // sent on those cross-site requests (and Chromium even refuses to store
+          // a cross-site `Set-Cookie` from a fetch unless it's `None; Secure`), so
+          // login could never stick. `localhost` is a secure context even over
+          // plain http, so `None; Secure` is honored and the session works.
+          // Remote/LAN servers serve the UI and API same-origin, where `Lax` is
+          // correct and `Secure` would be rejected over plain http.
+          ...(isLocal ? ['SameSite=None', 'Secure'] : ['SameSite=Lax']),
           `Max-Age=${maxAgeSeconds}`,
           'Path=/',
         ]
-        if (host !== 'localhost' && host !== '127.0.0.1') {
+        if (!isLocal) {
           parts.push(`Domain=${host}`)
         }
         return parts.join('; ')
@@ -1047,6 +1200,67 @@ async function main() {
         )
       }
 
+      // POST /api/client-errors (PUBLIC) — ingest browser/client errors so they
+      // land in the SAME on-disk log as the server + Tauri (the client can't
+      // write to disk itself). Public + pre-auth on purpose: client errors can
+      // happen before login or when auth itself is broken. The browser already
+      // sends $exception to PostHog directly; here we also emit a lightweight
+      // `client_error` event as redundancy (PostHog may be blocked/offline in
+      // the webview, and it's disabled on /screen/* routes).
+      if (req.method === 'POST' && url.pathname === '/api/client-errors') {
+        try {
+          const body = (await req.json()) as {
+            errors?: Array<{
+              message?: string
+              stack?: string
+              level?: string
+              source?: string
+              context?: Record<string, unknown>
+            }>
+          }
+          const errors = Array.isArray(body?.errors)
+            ? body.errors.slice(0, 50)
+            : []
+          const trunc = (s: unknown, max: number): string =>
+            typeof s === 'string' ? s.slice(0, max) : ''
+          for (const e of errors) {
+            const message = trunc(e?.message, 2000) || 'unknown client error'
+            const level = e?.level === 'warning' ? 'warn' : 'error'
+            const data = {
+              stack: trunc(e?.stack, 8000) || undefined,
+              client_source: trunc(e?.source, 200) || undefined,
+              ...(e?.context ?? {}),
+            }
+            logToFile('client', level, message, data)
+            captureMessageServer(
+              message,
+              level === 'warn' ? 'warning' : 'error',
+              { source: 'client', ...data },
+            )
+          }
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({ data: { received: errors.length } }),
+              {
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({ error: 'Invalid client error body' }),
+              {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        }
+      }
+
       // All other /api/* routes require authentication
       if (url.pathname.startsWith('/api/')) {
         const authResult = await combinedAuthMiddleware(req)
@@ -1055,6 +1269,18 @@ async function main() {
       }
       if (url.pathname === '/ping' || url.pathname === '/api/ping') {
         return handleCors(req, new Response(JSON.stringify({ data: 'pong' })))
+      }
+
+      // Boot health — mirrors the boot server's /health so the client polls one
+      // stable endpoint across the boot→ready handoff. On the real server this
+      // always reports `ready:true`.
+      if (url.pathname === '/health' || url.pathname === '/api/health') {
+        return handleCors(
+          req,
+          new Response(JSON.stringify(getBootHealth()), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
       }
 
       // Settings API endpoints
@@ -6596,6 +6822,10 @@ async function main() {
       console.log('[startup] Music player initialized successfully')
     }
   })
+
+  // Flip boot state to ready — /health now reports `ready:true` and the client
+  // transitions from the boot progress screen into the app.
+  setBootReady()
 
   // biome-ignore lint/suspicious/noConsole: Startup timing logs
   console.log(

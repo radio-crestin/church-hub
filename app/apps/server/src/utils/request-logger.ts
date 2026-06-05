@@ -4,10 +4,9 @@
  * Controlled by DEBUG environment variable.
  */
 import { createLogger } from './logger'
-import { captureException } from './posthog'
+import { reportError } from './reportError'
 
 const logger = createLogger('http')
-
 
 /**
  * Log an incoming HTTP request and return a function to log the response.
@@ -89,10 +88,7 @@ export function logApiError(
     `API Error: ${method} ${path} (${duration.toFixed(0)}ms) - ${err.message}`,
   )
 
-  captureException(err, {
-    source: 'api-handler',
-    method,
-    path,
-    duration,
-  })
+  // reportError persists to the on-disk log AND PostHog (previously this was
+  // PostHog-only, so API errors never reached the log file users attach).
+  reportError(err, 'api-handler', { method, path, duration })
 }

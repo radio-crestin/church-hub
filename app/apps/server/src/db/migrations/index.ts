@@ -21,6 +21,7 @@ import { seedAppSettings } from './seed-settings'
 import { seedSongCategories } from './seed-song-categories'
 import { seedSongs } from './seed-songs'
 import type { Database } from 'bun:sqlite'
+import { reportError } from '../../utils/reportError'
 import { createFtsTables } from '../fts'
 
 // Resolve migrations folder relative to this file (only used in dev mode)
@@ -104,51 +105,56 @@ function runEmbeddedMigrations(rawDb: Database): void {
  * Runs all database migrations using Drizzle
  * Also handles FTS tables and seed data which Drizzle cannot manage
  */
+/**
+ * Runs one migration/seed step with timing AND error attribution. On failure
+ * the step name is reported to BOTH the on-disk log and PostHog (so a field
+ * failure tells us exactly which migration broke), then rethrown so the boot
+ * sequence still fails loudly — bootState reports the overall boot failure.
+ */
+function runStep(key: string, label: string, fn: () => void): void {
+  log('info', `${label}...`)
+  const start = performance.now()
+  try {
+    fn()
+  } catch (error) {
+    reportError(error, 'migration', { migration: key })
+    throw error
+  }
+  // biome-ignore lint/suspicious/noConsole: Startup timing logs
+  console.log(`[startup] ${key}: ${(performance.now() - start).toFixed(1)}ms`)
+}
+
 export function runMigrations(
-  drizzleDb: BunSQLiteDatabase,
+  _drizzleDb: BunSQLiteDatabase,
   rawDb: Database,
 ): MigrationResult {
-  const logTiming = (label: string, start: number) => {
-    // biome-ignore lint/suspicious/noConsole: Startup timing logs
-    console.log(
-      `[startup] ${label}: ${(performance.now() - start).toFixed(1)}ms`,
-    )
-  }
-
-  log('info', 'Running Drizzle migrations...')
-
   // Always use embedded migrations for consistency between dev and production
-  // This ensures the same migration tracking (hash-based) regardless of environment
-  let t = performance.now()
-  runEmbeddedMigrations(rawDb)
-  logTiming('drizzle_migrations', t)
-
+  // (same hash-based tracking regardless of environment).
+  runStep('drizzle_migrations', 'Running Drizzle migrations', () =>
+    runEmbeddedMigrations(rawDb),
+  )
   log('info', 'Drizzle migrations complete')
 
   // Create FTS virtual tables (Drizzle cannot manage these)
-  log('info', 'Creating FTS tables...')
-  t = performance.now()
-  const ftsCreated = createFtsTables()
-  logTiming('fts_tables', t)
+  let ftsCreated = false
+  runStep('fts_tables', 'Creating FTS tables', () => {
+    ftsCreated = createFtsTables()
+  })
 
   // Initialize presentation_state singleton row
-  t = performance.now()
-  initializePresentationState(rawDb)
-  logTiming('init_presentation_state', t)
+  runStep('init_presentation_state', 'Initializing presentation state', () =>
+    initializePresentationState(rawDb),
+  )
 
   // Seed system roles and permissions
-  log('info', 'Seeding system roles...')
-  t = performance.now()
-  seedSystemRoles(rawDb)
-  logTiming('seed_roles', t)
+  runStep('seed_roles', 'Seeding system roles', () => seedSystemRoles(rawDb))
 
   // Add auth columns (is_super_admin, password_hash) and bootstrap the
   // Super Admin owner account. Must run after seedSystemRoles so the admin
   // role exists for the new super admin to inherit its permissions.
-  log('info', 'Running user auth fields migration...')
-  t = performance.now()
-  addUserAuthFields(rawDb)
-  logTiming('add_user_auth_fields', t)
+  runStep('add_user_auth_fields', 'Running user auth fields migration', () =>
+    addUserAuthFields(rawDb),
+  )
 
   // Backfill the new song_versions.* permissions onto roles + users that
   // already had the matching songs.{create|edit|delete}. Without this,
@@ -156,108 +162,98 @@ export function runMigrations(
   // the affordance when the gate moves to dedicated perms. Must run
   // after seedSystemRoles so the admin role's freshly-seeded ALL_PERMISSIONS
   // already includes the new keys.
-  log('info', 'Running add song_versions permissions migration...')
-  t = performance.now()
-  addSongVersionsPermissions(rawDb)
-  logTiming('add_song_versions_permissions', t)
+  runStep(
+    'add_song_versions_permissions',
+    'Running add song_versions permissions migration',
+    () => addSongVersionsPermissions(rawDb),
+  )
 
   // Add screen behavior columns BEFORE seeding default screens so the seed can
-  // populate them straight from the factory fixture.
-  //
-  // close_on_escape: replaces the previous keep_visible_on_escape column with
-  // inverted semantics; factory screens ship with it OFF (window stays open).
-  log('info', 'Running add close_on_escape migration...')
-  t = performance.now()
-  addCloseOnEscape(rawDb)
-  logTiming('add_close_on_escape', t)
+  // populate them straight from the factory fixture. close_on_escape replaces
+  // the previous keep_visible_on_escape column with inverted semantics.
+  runStep('add_close_on_escape', 'Running add close_on_escape migration', () =>
+    addCloseOnEscape(rawDb),
+  )
 
   // is_preview_screen: marks the screen mirrored in the in-app control-room
   // preview panel. Defaults the main (first primary) screen on existing DBs.
-  log('info', 'Running add is_preview_screen migration...')
-  t = performance.now()
-  addPreviewScreen(rawDb)
-  logTiming('add_preview_screen', t)
+  runStep('add_preview_screen', 'Running add is_preview_screen migration', () =>
+    addPreviewScreen(rawDb),
+  )
 
   // Seed default screens
-  log('info', 'Seeding default screens...')
-  t = performance.now()
-  seedDefaultScreens(rawDb)
-  logTiming('seed_screens', t)
+  runStep('seed_screens', 'Seeding default screens', () =>
+    seedDefaultScreens(rawDb),
+  )
 
   // Seed song categories (before songs, as songs reference categories)
-  log('info', 'Seeding song categories...')
-  t = performance.now()
-  seedSongCategories(rawDb)
-  logTiming('seed_song_categories', t)
+  runStep('seed_song_categories', 'Seeding song categories', () =>
+    seedSongCategories(rawDb),
+  )
 
   // Add last_presented_at column to songs table (must run before seedSongs)
-  log('info', 'Running add last_presented_at migration...')
-  t = performance.now()
-  addLastPresentedAt(rawDb)
-  logTiming('add_last_presented_at', t)
+  runStep(
+    'add_last_presented_at',
+    'Running add last_presented_at migration',
+    () => addLastPresentedAt(rawDb),
+  )
 
   // Add song_groups table + song_group_id column for the Versions feature.
   // Must run before seedSongs so newly seeded songs see the column.
-  log('info', 'Running add song_groups migration...')
-  t = performance.now()
-  addSongGroups(rawDb)
-  logTiming('add_song_groups', t)
+  runStep('add_song_groups', 'Running add song_groups migration', () =>
+    addSongGroups(rawDb),
+  )
 
   // Seed songs
-  log('info', 'Seeding songs...')
-  t = performance.now()
-  seedSongs(rawDb)
-  logTiming('seed_songs', t)
+  runStep('seed_songs', 'Seeding songs', () => seedSongs(rawDb))
 
   // Seed bible translations metadata
-  log('info', 'Seeding bible translations...')
-  t = performance.now()
-  seedBibleTranslations(rawDb)
-  logTiming('seed_bible_translations', t)
+  runStep('seed_bible_translations', 'Seeding bible translations', () =>
+    seedBibleTranslations(rawDb),
+  )
 
   // Seed app settings (sidebar config, search synonyms, appearance, etc.)
-  log('info', 'Seeding app settings...')
-  t = performance.now()
-  seedAppSettings(rawDb)
-  logTiming('seed_app_settings', t)
+  runStep('seed_app_settings', 'Seeding app settings', () =>
+    seedAppSettings(rawDb),
+  )
 
   // Clean up legacy shortcuts (searchSong, searchBible removed from codebase)
-  log('info', 'Running shortcuts cleanup migration...')
-  t = performance.now()
-  migrateShortcuts(rawDb)
-  logTiming('migrate_shortcuts', t)
+  runStep('migrate_shortcuts', 'Running shortcuts cleanup migration', () =>
+    migrateShortcuts(rawDb),
+  )
 
   // Convert legacy MIDI device indices to name-based persistence
-  log('info', 'Running MIDI device-by-name migration...')
-  t = performance.now()
-  migrateMidiDeviceByName(rawDb)
-  logTiming('migrate_midi_device_by_name', t)
+  runStep(
+    'migrate_midi_device_by_name',
+    'Running MIDI device-by-name migration',
+    () => migrateMidiDeviceByName(rawDb),
+  )
 
   // Drop redundant 'key' column from songs table (keyLine is kept)
-  log('info', 'Running drop key column migration...')
-  t = performance.now()
-  dropSongKeyColumn(rawDb)
-  logTiming('drop_song_key_column', t)
+  runStep('drop_song_key_column', 'Running drop key column migration', () =>
+    dropSongKeyColumn(rawDb),
+  )
 
   // Extract keylines from first slide last paragraphs to keyLine field
-  log('info', 'Running extract keylines migration...')
-  t = performance.now()
-  extractKeylinesFromSlides(rawDb)
-  logTiming('extract_keylines_from_slides', t)
+  runStep(
+    'extract_keylines_from_slides',
+    'Running extract keylines migration',
+    () => extractKeylinesFromSlides(rawDb),
+  )
 
   // Seed sample music (only if no music folders exist yet)
-  log('info', 'Seeding sample music...')
-  t = performance.now()
-  seedSampleMusic(rawDb)
-  logTiming('seed_sample_music', t)
+  runStep('seed_sample_music', 'Seeding sample music', () =>
+    seedSampleMusic(rawDb),
+  )
 
   // One-shot rebuild of the FTS index after single-char tokens were filtered
   // out of normalizeForIndex (must run AFTER seed-songs so the rebuild has
   // something to index). Skipped on subsequent boots via app_settings flag.
-  log('info', 'Running FTS single-char rebuild migration...')
-  t = performance.now()
-  rebuildFtsForSingleCharFix(rawDb)
-  logTiming('rebuild_fts_single_char_fix', t)
+  runStep(
+    'rebuild_fts_single_char_fix',
+    'Running FTS single-char rebuild migration',
+    () => rebuildFtsForSingleCharFix(rawDb),
+  )
 
   return { ftsRecreated: ftsCreated }
 }

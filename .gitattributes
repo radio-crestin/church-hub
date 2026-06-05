@@ -1,0 +1,12 @@
+# Cross-platform line endings.
+#
+# On Windows, core.autocrlf=true checks text files out with CRLF. For the DB
+# migration sources and the file generated from them, that CRLF leaks into the
+# generated `embedded.ts` (every \n becomes \r\n) the next time the sidecar is
+# compiled, producing a spurious cross-platform diff. Force LF for these so the
+# generated output is byte-identical on macOS, Windows and Linux.
+app/apps/server/drizzle/migrations/*.sql text eol=lf
+app/apps/server/src/db/migrations/embedded.ts text eol=lf
+
+# Native modules are binary — never apply text/EOL conversion to them.
+*.node binary
