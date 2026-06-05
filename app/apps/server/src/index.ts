@@ -75,6 +75,14 @@ import { execFileSync, execSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import process from 'node:process'
 
+import {
+  type BootPhase,
+  getBootHealth,
+  setBootFailed,
+  setBootPhase,
+  setBootReady,
+} from './utils/bootState'
+
 import { closeDatabase, getRawDatabase, initializeDatabase } from './db'
 import type { RequestContext } from './middleware'
 import {
@@ -439,6 +447,76 @@ async function serveWithRetry<T>(
 }
 
 /**
+ * A minimal HTTP server that binds the real port BEFORE the heavy boot work
+ * (migrations, FTS rebuild, seeding) runs. It exists so two things are true
+ * from the very first moment the sidecar process is alive:
+ *
+ *  1. The desktop shell's `/ping` health check answers immediately, so the
+ *     Tauri window paints instead of waiting on a 30s timeout.
+ *  2. The client can poll `/health` to render real boot progress — and, if a
+ *     migration throws, read the actual failure instead of spinning forever.
+ *
+ * Every non-health request gets a 503 with the current phase so any code that
+ * races ahead of readiness fails loudly rather than hitting a half-built DB.
+ * The handle is handed back so `main()` can stop it before the real server
+ * binds the same port.
+ */
+function startBootServer(
+  port: number | string,
+): ReturnType<typeof Bun.serve> {
+  const healthResponse = () =>
+    new Response(JSON.stringify(getBootHealth()), {
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+    })
+
+  return Bun.serve({
+    port,
+    hostname: '0.0.0.0',
+    reusePort: true,
+    fetch(req) {
+      const url = new URL(req.url)
+      if (req.method === 'OPTIONS') {
+        return new Response(null, {
+          status: 204,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, OPTIONS',
+            'Access-Control-Allow-Headers': '*',
+          },
+        })
+      }
+      if (url.pathname === '/health' || url.pathname === '/api/health') {
+        return healthResponse()
+      }
+      if (url.pathname === '/ping' || url.pathname === '/api/ping') {
+        return new Response(JSON.stringify({ data: 'pong' }), {
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          },
+        })
+      }
+      // Everything else: the server isn't ready to do real work yet.
+      const health = getBootHealth()
+      return new Response(
+        JSON.stringify({ error: 'Server starting', ...health }),
+        {
+          status: 503,
+          headers: {
+            'Content-Type': 'application/json',
+            'Retry-After': '1',
+            'Access-Control-Allow-Origin': '*',
+          },
+        },
+      )
+    },
+  })
+}
+
+/**
  * Waits for a port to become available, retrying up to maxRetries times.
  * Handles ghost PIDs on Windows where the process is gone but the binding lingers.
  */
@@ -538,11 +616,58 @@ async function main() {
   killProcessOnPort(serverPort)
   await waitForPortAvailable(serverPort)
 
-  // Initialize database (Drizzle ORM wrapper) and run migrations
-  let t = performance.now()
-  await initializeDatabase()
-  logTiming('database_init', t)
+  // Bind the port immediately with a minimal boot server so the shell's
+  // /ping check answers right away (no blank-screen wait) and the client can
+  // poll /health for real boot progress while the heavy init below runs. If
+  // any init step throws, the boot server stays up reporting the failure via
+  // /health instead of the process dying silently into an endless spinner.
+  const bootServer = startBootServer(serverPort)
+  // biome-ignore lint/suspicious/noConsole: Startup logging
+  console.log(
+    `[startup] Boot server listening on ${serverPort} — serving /health while initializing`,
+  )
 
+  let t = performance.now()
+  let bootPhase: BootPhase = 'starting'
+  try {
+    // Initialize database (Drizzle ORM wrapper) and run migrations
+    bootPhase = 'migrating'
+    setBootPhase('migrating')
+    t = performance.now()
+    await initializeDatabase()
+    logTiming('database_init', t)
+
+    bootPhase = 'indexing'
+    setBootPhase('indexing')
+    await runFtsRebuild()
+
+    bootPhase = 'finalizing'
+    setBootPhase('finalizing')
+    await runFinalizeBoot()
+  } catch (bootErr) {
+    // Surface the failure to PostHog + log file and keep the boot server up so
+    // the client reads the real reason from /health (with a report action)
+    // rather than spinning forever. Do NOT exit: a hard exit would leave the
+    // shell with a connection-refused loop and no diagnostics.
+    setBootFailed(bootPhase, bootErr)
+    return
+  }
+
+  // Heavy init done — hand the port off from the boot server to the real one.
+  // Await the stop so the socket is fully released before we rebind (serveWithRetry
+  // also retries EADDRINUSE as a belt-and-braces guard against a lingering bind).
+  await bootServer.stop(true)
+
+  await startRealServer()
+}
+
+/**
+ * Rebuilds the full-text search indexes when they're out of sync with their
+ * source tables. Extracted from {@link main} so boot failures can be attributed
+ * to the `indexing` phase. Individual rebuild errors are non-fatal (logged) so a
+ * single corrupt index doesn't block the whole server from coming up.
+ */
+async function runFtsRebuild(): Promise<void> {
   // Rebuild FTS indexes BEFORE the HTTP server accepts requests so
   // search never returns empty results during a partial-rebuild window
   // and a previous-launch crash mid-rebuild can't leave the indexes
@@ -556,7 +681,7 @@ async function main() {
   // content FTS5 reports source count after a successful rebuild). A
   // mismatch (fresh install, partial seed, schema drift) still
   // triggers the full rebuild.
-  t = performance.now()
+  let t = performance.now()
   try {
     const rawDb = getRawDatabase()
     const count = (sql: string): number => {
@@ -600,9 +725,16 @@ async function main() {
     console.error('[startup] FTS rebuild failed:', rebuildError)
   }
   logTiming('fts_rebuild', t)
+}
 
+/**
+ * Final pre-serve work: warm the FTS caches, reset presentation state, ensure a
+ * fallback Bible exists, mint the system token and wire OBS callbacks. Extracted
+ * from {@link main} so a throw here is attributed to the `finalizing` phase.
+ */
+async function runFinalizeBoot(): Promise<void> {
   // Warm up FTS indexes so first user search is fast (loads index pages from disk into OS cache)
-  t = performance.now()
+  let t = performance.now()
   warmupBibleSearchIndex()
   warmupSongsSearchIndex()
   logTiming('fts_warmup', t)
@@ -639,7 +771,14 @@ async function main() {
   t = performance.now()
   initializeOBSCallbacks()
   logTiming('init_obs_callbacks', t)
+}
 
+/**
+ * Binds the full application server (all API routes, WebSocket, MIDI/OBS/music
+ * wiring) on the real port and flips boot state to `ready`. Runs only after the
+ * boot server has been stopped, so there's no double-bind on the port.
+ */
+async function startRealServer(): Promise<void> {
   // Note: MIDI initialization is deferred to after server starts
 
   const isProd = process.env.NODE_ENV === 'production'
@@ -665,7 +804,7 @@ async function main() {
   // biome-ignore lint/suspicious/noConsole: Startup logging
   console.log('[server] Starting with simple auth (localhost = admin)')
 
-  t = performance.now()
+  let t = performance.now()
 
   const logger = createLogger('BibleAPI')
 
@@ -1055,6 +1194,18 @@ async function main() {
       }
       if (url.pathname === '/ping' || url.pathname === '/api/ping') {
         return handleCors(req, new Response(JSON.stringify({ data: 'pong' })))
+      }
+
+      // Boot health — mirrors the boot server's /health so the client polls one
+      // stable endpoint across the boot→ready handoff. On the real server this
+      // always reports `ready:true`.
+      if (url.pathname === '/health' || url.pathname === '/api/health') {
+        return handleCors(
+          req,
+          new Response(JSON.stringify(getBootHealth()), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
       }
 
       // Settings API endpoints
@@ -6596,6 +6747,10 @@ async function main() {
       console.log('[startup] Music player initialized successfully')
     }
   })
+
+  // Flip boot state to ready — /health now reports `ready:true` and the client
+  // transitions from the boot progress screen into the app.
+  setBootReady()
 
   // biome-ignore lint/suspicious/noConsole: Startup timing logs
   console.log(
