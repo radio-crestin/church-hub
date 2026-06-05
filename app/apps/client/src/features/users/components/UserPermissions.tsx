@@ -15,6 +15,9 @@ interface UserPermissionsProps {
 
 const GROUP_ORDER: PermissionGroup[] = [
   'songs',
+  // "Versiuni ale cântării" — slots right under Songs since it shares
+  // their context (same panel column on the song detail page).
+  'song_versions',
   'bible',
   'control_room',
   'programs',
