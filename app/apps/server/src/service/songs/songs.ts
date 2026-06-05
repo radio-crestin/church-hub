@@ -1,6 +1,10 @@
 import { asc, eq, inArray } from 'drizzle-orm'
 
 import { getCategoryById } from './categories'
+import {
+  cleanupGroupsAfterSongDelete,
+  getGroupIdsForSongs,
+} from './song-groups'
 import { getSlidesBySongId } from './song-slides'
 import { getTagsBySongId, getTagsBySongIds, setSongTags } from './tags'
 import type {
@@ -610,8 +614,18 @@ export function deleteSong(id: number): OperationResult {
 
     const db = getDatabase()
 
+    // Snapshot the group ids BEFORE the row is gone — the FK is
+    // `ON DELETE SET NULL`, so after the delete we can't ask "which group
+    // did this song belong to?" any more.
+    const affectedGroupIds = getGroupIdsForSongs([id])
+
     // Slides are deleted automatically via CASCADE
     db.delete(songs).where(eq(songs.id, id)).run()
+
+    // Collapse any group that's now down to ≤ 1 member. Without this the
+    // operator's "Other versions" panel would surface a "group of me alone"
+    // (count 1, no other songs to compare against).
+    cleanupGroupsAfterSongDelete(affectedGroupIds)
 
     logger.info(`Song deleted: ${id}`)
     return { success: true }
@@ -636,8 +650,13 @@ export function deleteSongsByIds(
 
     const db = getDatabase()
 
+    // Snapshot membership BEFORE the delete; see `deleteSong` for why.
+    const affectedGroupIds = getGroupIdsForSongs(ids)
+
     // Slides are deleted automatically via CASCADE
     const result = db.delete(songs).where(inArray(songs.id, ids)).run()
+
+    cleanupGroupsAfterSongDelete(affectedGroupIds)
 
     logger.info(`Songs deleted: ${result.changes}`)
     return { success: true, deletedCount: result.changes }

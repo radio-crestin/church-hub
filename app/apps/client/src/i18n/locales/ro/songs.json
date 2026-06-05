@@ -256,7 +256,7 @@
     "confirm": "Resetează"
   },
   "versions": {
-    "title": "Alte versiuni",
+    "title": "Versiuni ale cântării",
     "count_one": "{{count}} versiune",
     "count_other": "{{count}} versiuni",
     "badge": "{{count}} versiuni",

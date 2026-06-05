@@ -5,6 +5,7 @@ import { addCloseOnEscape } from './add-close-on-escape'
 import { addLastPresentedAt } from './add-last-presented-at'
 import { addPreviewScreen } from './add-preview-screen'
 import { addSongGroups } from './add-song-groups'
+import { addSongVersionsPermissions } from './add-song-versions-permissions'
 import { addUserAuthFields } from './add-user-auth-fields'
 import { dropSongKeyColumn } from './drop-song-key-column'
 import { EMBEDDED_MIGRATIONS } from './embedded'
@@ -148,6 +149,17 @@ export function runMigrations(
   t = performance.now()
   addUserAuthFields(rawDb)
   logTiming('add_user_auth_fields', t)
+
+  // Backfill the new song_versions.* permissions onto roles + users that
+  // already had the matching songs.{create|edit|delete}. Without this,
+  // operators who used to be able to link versions would silently lose
+  // the affordance when the gate moves to dedicated perms. Must run
+  // after seedSystemRoles so the admin role's freshly-seeded ALL_PERMISSIONS
+  // already includes the new keys.
+  log('info', 'Running add song_versions permissions migration...')
+  t = performance.now()
+  addSongVersionsPermissions(rawDb)
+  logTiming('add_song_versions_permissions', t)
 
   // Add screen behavior columns BEFORE seeding default screens so the seed can
   // populate them straight from the factory fixture.
