@@ -73,9 +73,9 @@ describe('bootState', () => {
     // the boot phase so a field failure is attributable.
     expect(captured.exceptions).toHaveLength(1)
     expect(captured.exceptions[0]?.err).toBe(err)
-    expect((captured.exceptions[0]?.extra as { boot_phase: string }).boot_phase).toBe(
-      'migrating',
-    )
+    expect(
+      (captured.exceptions[0]?.extra as { boot_phase: string }).boot_phase,
+    ).toBe('migrating')
     expect(captured.messages).toHaveLength(1)
     expect(captured.messages[0]?.level).toBe('error')
   })

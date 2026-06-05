@@ -21,11 +21,15 @@ try {
 import { getApiUrl, isMobile, needsApiUrlConfiguration } from './config'
 import { ApiUrlSetup } from './features/api-url-config'
 import { routeTree } from './routeTree.gen'
+import DefaultCatchBoundary from './ui/DefaultCatchBoundary'
+import { ErrorBoundary } from './ui/error-boundary'
 import { getServerConfig } from './utils/tauri-commands'
 
 const router = createRouter({
   routeTree,
   defaultPreload: 'intent',
+  // Catch + report render errors thrown inside route components.
+  defaultErrorComponent: DefaultCatchBoundary,
 })
 
 declare module '@tanstack/react-router' {
@@ -462,7 +466,13 @@ function App() {
     )
   }
 
-  return <RouterProvider router={router} />
+  // ErrorBoundary is the outermost safety net — it catches render crashes the
+  // router's defaultErrorComponent can't (e.g. failures in providers/layout).
+  return (
+    <ErrorBoundary>
+      <RouterProvider router={router} />
+    </ErrorBoundary>
+  )
 }
 
 let reactMounted = false

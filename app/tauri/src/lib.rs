@@ -2,6 +2,7 @@ pub mod commands;
 pub mod domain;
 pub mod logging;
 pub mod posthog;
+pub mod report;
 
 // Desktop-only modules
 #[cfg(desktop)]
@@ -274,6 +275,7 @@ pub fn run() {
         let app_state = AppState {
             server: Arc::new(Mutex::new(None)),
             server_port,
+            shutting_down: Arc::new(std::sync::atomic::AtomicBool::new(false)),
         };
         app.manage(app_state);
 
@@ -314,9 +316,10 @@ pub fn run() {
             let t = Instant::now();
             if let Err(e) = auto_cleanup_port(server_port) {
                 println!("[port-conflict] Auto-cleanup failed: {}", e);
-                logging::log_line(
-                    "error",
+                report::error(
+                    "port-cleanup",
                     &format!("port {} auto-cleanup failed: {}", server_port, e),
+                    serde_json::json!({ "port": server_port }),
                 );
                 use tauri_plugin_dialog::DialogExt;
                 app.dialog()
@@ -335,7 +338,11 @@ pub fn run() {
             let t = Instant::now();
             if let Err(err) = server::start_server(app.handle(), server_port) {
                 println!("[sidecar] Failed to start the server: {err}");
-                logging::log_line("error", &format!("sidecar spawn failed: {}", err));
+                report::error(
+                    "sidecar-spawn",
+                    &format!("sidecar spawn failed: {}", err),
+                    serde_json::json!({ "port": server_port }),
+                );
             }
             println!("[startup] sidecar_spawn: {:?}", t.elapsed());
 
@@ -343,7 +350,11 @@ pub fn run() {
             let t = Instant::now();
             if let Err(err) = server::wait_for_server_ready(server_port, 30) {
                 println!("[sidecar] {err}");
-                logging::log_line("error", &format!("server not ready: {}", err));
+                report::error(
+                    "server-ready-timeout",
+                    &format!("server not ready: {}", err),
+                    serde_json::json!({ "port": server_port }),
+                );
             } else {
                 logging::log_line("info", "sidecar server ready");
             }

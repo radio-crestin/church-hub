@@ -14,8 +14,9 @@
  * hard failure, the actual error instead of a generic timeout. Failures are
  * mirrored to PostHog and the on-disk log so we hear about them in the field.
  */
-import { captureException, captureMessage } from './posthog'
+
 import { logToFile } from './fileLogger'
+import { captureException, captureMessage } from './posthog'
 
 export type BootPhase =
   | 'starting'
@@ -90,10 +91,14 @@ export function setBootFailed(phase: BootPhase, error: unknown): void {
   })
 
   captureException(err, { source: 'server-boot', boot_phase: phase, elapsedMs })
-  captureMessage(`Server boot failed during ${phase}: ${err.message}`, 'error', {
-    boot_phase: phase,
-    elapsedMs,
-  })
+  captureMessage(
+    `Server boot failed during ${phase}: ${err.message}`,
+    'error',
+    {
+      boot_phase: phase,
+      elapsedMs,
+    },
+  )
 }
 
 export function isBootReady(): boolean {

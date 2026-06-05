@@ -8,7 +8,7 @@ import {
 } from '@tanstack/react-router'
 import { useEffect } from 'react'
 
-import { posthog } from '~/posthog'
+import { captureError } from '~/utils/error-handler'
 
 export default function DefaultCatchBoundary({ error }: ErrorComponentProps) {
   const router = useRouter()
@@ -19,8 +19,12 @@ export default function DefaultCatchBoundary({ error }: ErrorComponentProps) {
 
   useEffect(() => {
     if (error) {
-      posthog.captureException(error, {
-        boundary: 'DefaultCatchBoundary',
+      // captureError fans out to PostHog + the console logger + the on-disk
+      // server log (via /api/client-errors), so a route render crash is
+      // recorded everywhere instead of PostHog-only.
+      captureError(error, {
+        source: 'react-router-boundary',
+        component: 'DefaultCatchBoundary',
         route: router.state.location.pathname,
       })
     }
