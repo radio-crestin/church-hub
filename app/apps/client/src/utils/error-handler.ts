@@ -4,6 +4,7 @@
  * structured error reporting to PostHog and the console logger.
  */
 import { posthog } from '~/posthog'
+import { forwardErrorToServer } from './forwardErrorToServer'
 import { createLogger } from './logger'
 
 const logger = createLogger('app:error')
@@ -32,6 +33,16 @@ export function captureError(error: unknown, context?: ErrorContext): void {
     component: context?.component,
     ...context,
   })
+
+  // Also persist to the local on-disk log via the server (the browser can't
+  // write to disk; PostHog is blocked on /screen/* and offline).
+  forwardErrorToServer({
+    message: err.message,
+    stack: err.stack,
+    level: 'error',
+    source: context?.source ?? 'unknown',
+    context,
+  })
 }
 
 /**
@@ -46,6 +57,13 @@ export function captureWarning(message: string, context?: ErrorContext): void {
     source: context?.source ?? 'unknown',
     component: context?.component,
     ...context,
+  })
+
+  forwardErrorToServer({
+    message,
+    level: 'warning',
+    source: context?.source ?? 'unknown',
+    context,
   })
 }
 
