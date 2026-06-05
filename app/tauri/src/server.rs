@@ -399,10 +399,18 @@ pub fn start_server(app_handle: &AppHandle, server_port: u16) -> Result<(), Stri
     let (mut rx, child) = sidecar.spawn().map_err(|err| err.to_string())?;
     println!("[startup] sidecar_process_spawn: {:?}", t.elapsed());
 
-    if let Some(app_state) = app_handle.try_state::<AppState>() {
+    let shutting_down = if let Some(app_state) = app_handle.try_state::<AppState>() {
+        // A new sidecar is starting — clear any stale shutdown flag left by a
+        // restart so its eventual exit isn't misread as an intentional stop.
+        app_state
+            .shutting_down
+            .store(false, std::sync::atomic::Ordering::SeqCst);
         let mut server_lock = app_state.server.lock();
         *server_lock = Some(child);
-    }
+        Some(app_state.shutting_down.clone())
+    } else {
+        None
+    };
 
     let app_handle_clone = app_handle.clone();
 
@@ -417,16 +425,53 @@ pub fn start_server(app_handle: &AppHandle, server_port: u16) -> Result<(), Stri
                 }
                 CommandEvent::Stderr(data) => {
                     if let Ok(text) = String::from_utf8(data) {
-                        eprintln!("[sidecar] stderr: {}", text.trim());
+                        let line = text.trim();
+                        eprintln!("[sidecar] stderr: {line}");
+                        // Mirror sidecar stderr into the Tauri log so a crash
+                        // BEFORE the sidecar's own logger is ready is still
+                        // captured on disk for post-mortem.
+                        crate::logging::log_line(
+                            "ERROR",
+                            &format!("[sidecar-stderr] {line}"),
+                        );
                     }
                 }
-                CommandEvent::Terminated(code) => {
-                    println!("[sidecar] Server terminated with code {code:?}");
+                CommandEvent::Error(err) => {
+                    crate::report::error(
+                        "sidecar-process",
+                        &format!("Sidecar process error: {err}"),
+                        serde_json::json!({}),
+                    );
+                }
+                CommandEvent::Terminated(payload) => {
+                    println!("[sidecar] Server terminated: {payload:?}");
 
                     // Clear server reference
                     if let Some(app_state) = app_handle_clone.try_state::<AppState>() {
                         let mut server_lock = app_state.server.lock();
                         *server_lock = None;
+                    }
+
+                    let intentional = shutting_down
+                        .as_ref()
+                        .map(|f| f.load(std::sync::atomic::Ordering::SeqCst))
+                        .unwrap_or(false);
+                    if intentional {
+                        crate::logging::log_line(
+                            "INFO",
+                            &format!("[sidecar] terminated (intentional): {payload:?}"),
+                        );
+                    } else {
+                        // Unexpected sidecar death — the whole desktop app
+                        // depends on it, so this is a hard error.
+                        crate::report::error(
+                            "sidecar-terminated",
+                            "Sidecar process exited unexpectedly",
+                            serde_json::json!({
+                                "code": payload.code,
+                                "signal": payload.signal,
+                            }),
+                        );
                     }
                 }
                 _ => {}
@@ -439,6 +484,11 @@ pub fn start_server(app_handle: &AppHandle, server_port: u16) -> Result<(), Stri
 pub fn shutdown_server(app_handle: &AppHandle) -> Result<(), String> {
     println!("[sidecar] Shutting down server...");
     if let Some(app_state) = app_handle.try_state::<AppState>() {
+        // Flag the deliberate stop BEFORE the kill so the process-event loop
+        // logs the resulting Terminated as intentional, not an unexpected crash.
+        app_state
+            .shutting_down
+            .store(true, std::sync::atomic::Ordering::SeqCst);
         let mut server_lock = app_state.server.lock();
         if server_lock.is_none() {
             println!("[sidecar] Server is not running. Shutdown not needed.");
@@ -452,7 +502,9 @@ pub fn shutdown_server(app_handle: &AppHandle) -> Result<(), String> {
                     return Ok(());
                 }
                 Err(err) => {
-                    println!("[sidecar] Failed to terminate server.");
+                    let msg = format!("Failed to terminate sidecar: {err}");
+                    println!("[sidecar] {msg}");
+                    crate::report::error("sidecar-shutdown", &msg, serde_json::json!({}));
                     return Err(err.to_string());
                 }
             }

@@ -57,11 +57,13 @@ if (process.argv.includes('--probe-midi')) {
   }
 }
 
+import { logToFile } from './utils/fileLogger'
 // PostHog client (errors + events) — initialised on import.
 import {
   captureAppStarted,
   captureException as captureExceptionPostHog,
   captureFeedbackReport,
+  captureMessage as captureMessageServer,
   flushPostHog,
   shutdownPostHog,
 } from './utils/posthog'
@@ -74,14 +76,6 @@ captureAppStarted()
 import { execFileSync, execSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import process from 'node:process'
-
-import {
-  type BootPhase,
-  getBootHealth,
-  setBootFailed,
-  setBootPhase,
-  setBootReady,
-} from './utils/bootState'
 
 import { closeDatabase, getRawDatabase, initializeDatabase } from './db'
 import type { RequestContext } from './middleware'
@@ -328,8 +322,16 @@ import {
   upsertTag,
   warmupSearchIndex as warmupSongsSearchIndex,
 } from './service/songs'
+import {
+  type BootPhase,
+  getBootHealth,
+  setBootFailed,
+  setBootPhase,
+  setBootReady,
+} from './utils/bootState'
 import { createLogger } from './utils/logger'
 import { getLogsDir } from './utils/paths'
+import { reportError } from './utils/reportError'
 import { logRequest, logResponse } from './utils/request-logger'
 import { proxyToVite, serveStaticFile } from './utils/static-server'
 import {
@@ -461,9 +463,7 @@ async function serveWithRetry<T>(
  * The handle is handed back so `main()` can stop it before the real server
  * binds the same port.
  */
-function startBootServer(
-  port: number | string,
-): ReturnType<typeof Bun.serve> {
+function startBootServer(port: number | string): ReturnType<typeof Bun.serve> {
   const healthResponse = () =>
     new Response(JSON.stringify(getBootHealth()), {
       headers: {
@@ -828,16 +828,17 @@ async function startRealServer(): Promise<void> {
     return res
   }
 
-  // Global error handlers to catch unhandled errors
+  // Global error handlers to catch unhandled errors. reportError writes to
+  // BOTH the on-disk log and PostHog so a fatal is never console-only.
   process.on('uncaughtException', (error) => {
     // biome-ignore lint/suspicious/noConsole: error logging
     console.error('[FATAL] Uncaught Exception:', error)
-    captureExceptionPostHog(error, { source: 'uncaughtException' })
+    reportError(error, 'uncaughtException')
   })
   process.on('unhandledRejection', (reason) => {
     // biome-ignore lint/suspicious/noConsole: error logging
     console.error('[FATAL] Unhandled Promise Rejection:', reason)
-    captureExceptionPostHog(reason, { source: 'unhandledRejection' })
+    reportError(reason, 'unhandledRejection')
   })
 
   const server = await serveWithRetry<WebSocketData>({
@@ -848,7 +849,7 @@ async function startRealServer(): Promise<void> {
       // biome-ignore lint/suspicious/noConsole: error logging
       console.error('[SERVER ERROR] Fetch handler error:', error)
 
-      captureExceptionPostHog(error, { source: 'fetch-error-handler' })
+      reportError(error, 'fetch-error-handler')
 
       return new Response(
         JSON.stringify({
@@ -1184,6 +1185,67 @@ async function startRealServer(): Promise<void> {
             headers: { 'Content-Type': 'application/json' },
           }),
         )
+      }
+
+      // POST /api/client-errors (PUBLIC) — ingest browser/client errors so they
+      // land in the SAME on-disk log as the server + Tauri (the client can't
+      // write to disk itself). Public + pre-auth on purpose: client errors can
+      // happen before login or when auth itself is broken. The browser already
+      // sends $exception to PostHog directly; here we also emit a lightweight
+      // `client_error` event as redundancy (PostHog may be blocked/offline in
+      // the webview, and it's disabled on /screen/* routes).
+      if (req.method === 'POST' && url.pathname === '/api/client-errors') {
+        try {
+          const body = (await req.json()) as {
+            errors?: Array<{
+              message?: string
+              stack?: string
+              level?: string
+              source?: string
+              context?: Record<string, unknown>
+            }>
+          }
+          const errors = Array.isArray(body?.errors)
+            ? body.errors.slice(0, 50)
+            : []
+          const trunc = (s: unknown, max: number): string =>
+            typeof s === 'string' ? s.slice(0, max) : ''
+          for (const e of errors) {
+            const message = trunc(e?.message, 2000) || 'unknown client error'
+            const level = e?.level === 'warning' ? 'warn' : 'error'
+            const data = {
+              stack: trunc(e?.stack, 8000) || undefined,
+              client_source: trunc(e?.source, 200) || undefined,
+              ...(e?.context ?? {}),
+            }
+            logToFile('client', level, message, data)
+            captureMessageServer(
+              message,
+              level === 'warn' ? 'warning' : 'error',
+              { source: 'client', ...data },
+            )
+          }
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({ data: { received: errors.length } }),
+              {
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({ error: 'Invalid client error body' }),
+              {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        }
       }
 
       // All other /api/* routes require authentication

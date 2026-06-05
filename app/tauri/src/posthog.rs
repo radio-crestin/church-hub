@@ -63,6 +63,22 @@ pub fn capture_event(event: &str, props: Value) {
     });
 }
 
+/// Non-blocking exception capture for recoverable errors (sidecar crash,
+/// shutdown failure, port-cleanup failure, etc.). Sends a PostHog `$exception`
+/// event so these show up alongside server/client exceptions in the dashboard.
+pub fn capture_exception(exc_type: &str, message: &str, level: &str, props: Value) {
+    let mut properties = props;
+    if !properties.is_object() {
+        properties = json!({});
+    }
+    if let Some(map) = properties.as_object_mut() {
+        map.insert("$exception_type".to_string(), json!(exc_type));
+        map.insert("$exception_message".to_string(), json!(message));
+        map.insert("$exception_level".to_string(), json!(level));
+    }
+    capture_event("$exception", properties);
+}
+
 /// Synchronous capture used inside panic hooks — must complete before abort.
 pub fn capture_panic_blocking(message: &str, location: &str) {
     let Some(cfg) = CONFIG.get() else { return };
