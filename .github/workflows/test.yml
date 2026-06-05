@@ -18,6 +18,8 @@ on:
 permissions:
   contents: read
   pull-requests: read
+  # The /test gate reacts to the triggering PR comment (issue-comment APIs)
+  issues: write
   statuses: write
   checks: write
 
