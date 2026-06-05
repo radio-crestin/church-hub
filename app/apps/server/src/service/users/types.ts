@@ -9,6 +9,14 @@ export type Permission =
   | 'songs.delete'
   | 'songs.add_to_queue'
   | 'songs.present_now'
+  // Song versions ("Versiuni ale cântării" — linked variants of the same
+  // hymn, plus auto-suggested matches). Full view+CRUD set: admins can
+  // grant each independently so an operator who can see a song doesn't
+  // automatically see its variants, and vice versa.
+  | 'song_versions.view'
+  | 'song_versions.create'
+  | 'song_versions.edit'
+  | 'song_versions.delete'
   // Bible
   | 'bible.view'
   | 'bible.import'
@@ -59,6 +67,11 @@ export const ALL_PERMISSIONS: Permission[] = [
   'songs.delete',
   'songs.add_to_queue',
   'songs.present_now',
+  // Song versions — full view+CRUD set, each granted independently
+  'song_versions.view',
+  'song_versions.create',
+  'song_versions.edit',
+  'song_versions.delete',
   // Bible
   'bible.view',
   'bible.import',

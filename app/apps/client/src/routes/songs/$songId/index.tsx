@@ -106,6 +106,15 @@ function SongPreviewPage() {
   const navigate = useNavigate()
   const { hasPermission } = usePermissions()
   const canEditSong = hasPermission('songs.edit')
+  // Dedicated song-versions perms — split so an admin can grant view +
+  // CRUD on versions independently of the song's CRUD rights. The boot-time
+  // migration `add-song-versions-permissions` backfills these onto users
+  // and roles that already had the equivalent `songs.{view|create|edit|delete}`,
+  // so this gate is backward-compatible.
+  const canViewSongVersions = hasPermission('song_versions.view')
+  const canAddSongVersion = hasPermission('song_versions.create')
+  const canEditSongVersion = hasPermission('song_versions.edit')
+  const canDeleteSongVersion = hasPermission('song_versions.delete')
   const { songId } = Route.useParams()
   const {
     q: searchQuery,
@@ -586,8 +595,16 @@ function SongPreviewPage() {
   // expanded and visible (Marcaje is hidden below `lg`). Otherwise the column
   // falls back to its flex behaviour (the open section grows, collapsed ones
   // shrink to their header).
+  // Split is only meaningful when both sections are actually rendered.
+  // `canViewSongVersions` gates the Versiuni section, so when the operator
+  // lacks it we collapse the layout to a single-section column (no divider,
+  // Marcaje takes the whole height).
   const accordionSplitActive =
-    isLargeScreen && bookmarksOpen && versionsOpen && Boolean(song)
+    isLargeScreen &&
+    bookmarksOpen &&
+    versionsOpen &&
+    Boolean(song) &&
+    canViewSongVersions
 
   return (
     <div className="flex flex-col h-full lg:overflow-hidden lg:h-[calc(100vh-3rem)] overflow-auto scrollbar-thin">
@@ -841,7 +858,7 @@ function SongPreviewPage() {
               </div>
             ) : null}
 
-            {song ? (
+            {song && canViewSongVersions ? (
               <div
                 className={`min-h-0 ${
                   accordionSplitActive
@@ -861,7 +878,9 @@ function SongPreviewPage() {
                 <SongVersionsPanel
                   songId={numericId}
                   songTitle={song.title}
-                  canEdit={canEditSong}
+                  canAdd={canAddSongVersion}
+                  canEdit={canEditSongVersion}
+                  canDelete={canDeleteSongVersion}
                   isCollapsed={!versionsOpen}
                   onToggleCollapse={() => setVersionsOpen(!versionsOpen)}
                   attentionBadge={
