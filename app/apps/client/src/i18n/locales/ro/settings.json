@@ -402,8 +402,11 @@
       "songCount_other": "{{count}} cântări",
       "actions": {
         "edit": "Editează",
-        "delete": "Șterge"
+        "delete": "Șterge",
+        "hide": "Ascunde",
+        "show": "Arată"
       },
+      "hiddenBadge": "Ascunsă",
       "modals": {
         "create": {
           "title": "Adaugă Categorie Nouă",
@@ -424,6 +427,8 @@
         "updated": "Categorie actualizată cu succes",
         "deleted": "Categorie ștearsă cu succes",
         "reordered": "Ordinea categoriilor actualizată",
+        "hidden": "Categorie ascunsă",
+        "shown": "Categorie afișată",
         "error": "A apărut o eroare"
       },
       "uncategorized": {

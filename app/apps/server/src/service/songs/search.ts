@@ -1,3 +1,4 @@
+import { getHiddenCategoryIds } from './categories'
 import type { SongSearchResult } from './types'
 import { getRawDatabase } from '../../db'
 import { getSetting } from '../settings'
@@ -713,9 +714,7 @@ export function buildSearchQuery(
     clauses.push(`(title:"${titlePhraseTerms.join(' ')}")`)
   }
   clauses.push(`("${effectiveTerms.join(' ')}")`)
-  clauses.push(
-    `(NEAR(${effectiveTerms.map((t) => `"${t}"`).join(' ')}, 10))`,
-  )
+  clauses.push(`(NEAR(${effectiveTerms.map((t) => `"${t}"`).join(' ')}, 10))`)
   if (broadOrTerms.length > 0) {
     clauses.push(`(${broadOrTerms.map((t) => `"${t}"*`).join(' OR ')})`)
   }
@@ -991,9 +990,7 @@ function isMergeableGap(gap: string): boolean {
   const trimmed = gap.trim()
   if (trimmed === '') return true
   return (
-    trimmed.length <= 6 &&
-    trimmed.includes('-') &&
-    /^[\p{L}-]+$/u.test(trimmed)
+    trimmed.length <= 6 && trimmed.includes('-') && /^[\p{L}-]+$/u.test(trimmed)
   )
 }
 
@@ -1019,7 +1016,10 @@ function cleanQueryForHighlight(rawQuery: string): string {
  * single <mark>. Returns null otherwise so callers can fall back to per-
  * term highlighting.
  */
-function tryExactPhraseHighlight(text: string, rawQuery: string): string | null {
+function tryExactPhraseHighlight(
+  text: string,
+  rawQuery: string,
+): string | null {
   const cleaned = cleanQueryForHighlight(rawQuery)
   if (cleaned.length === 0) return null
   // removeDiacritics + toLowerCase preserve character count for the
@@ -1368,6 +1368,12 @@ export function searchSongs(
 
     const db = getRawDatabase()
 
+    // Songs in a hidden category must never surface in search. Exclude them
+    // from every result path below (hymn pre-phase + main phase).
+    const hiddenCategoryIds = new Set(getHiddenCategoryIds())
+    const isVisible = (r: { categoryId: number | null }): boolean =>
+      r.categoryId == null || !hiddenCategoryIds.has(r.categoryId)
+
     // Build extra filter conditions early for hymn number pre-phase
     const prePhaseExtraConditions: string[] = []
     const prePhaseCategoryParams: number[] = []
@@ -1404,7 +1410,6 @@ export function searchSongs(
     if (hymnRows && hymnRows.length > 0) {
       logger.debug(`Hymn number pre-phase: ${hymnRows.length} results`)
       const hymnFinalResults: SongSearchResult[] = hymnRows
-        .slice(0, limit)
         .map((r) => ({
           id: r.id,
           title: r.title,
@@ -1416,6 +1421,8 @@ export function searchSongs(
           presentationCount: r.presentation_count,
           score: 100,
         }))
+        .filter(isVisible)
+        .slice(0, limit)
       setInSearchCache(cacheKey, hymnFinalResults)
       return hymnFinalResults
     }
@@ -1634,10 +1641,7 @@ export function searchSongs(
       // Synonyms broaden FTS recall — they should not be appended to the
       // queryTerms used for phrase / order detection or the joined exact
       // phrase will never match a real title.
-      const titleScore = calculateTitleScoreNormalized(
-        r.fts_title,
-        validTerms,
-      )
+      const titleScore = calculateTitleScoreNormalized(r.fts_title, validTerms)
 
       const contentScore = calculateBestPhraseScoreNormalized(
         r.full_content,
@@ -1740,16 +1744,18 @@ export function searchSongs(
         score: Math.min(100, Math.round(r.boostedScore)),
       }
     })
+    // Drop any songs whose category is hidden.
+    const visibleResults = finalResults.filter(isVisible)
 
     // Cache results for future queries
-    setInSearchCache(cacheKey, finalResults)
+    setInSearchCache(cacheKey, visibleResults)
 
     const elapsed = performance.now() - startTime
     logger.debug(
-      `Search completed: "${query}" → ${finalResults.length} results in ${elapsed.toFixed(1)}ms`,
+      `Search completed: "${query}" → ${visibleResults.length} results in ${elapsed.toFixed(1)}ms`,
     )
 
-    return finalResults
+    return visibleResults
   } catch (error) {
     logger.error(`Failed to search songs with query "${query}": ${error}`)
     return []

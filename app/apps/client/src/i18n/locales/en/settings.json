@@ -401,8 +401,11 @@
       "songCount_other": "{{count}} songs",
       "actions": {
         "edit": "Edit",
-        "delete": "Delete"
+        "delete": "Delete",
+        "hide": "Hide",
+        "show": "Show"
       },
+      "hiddenBadge": "Hidden",
       "modals": {
         "create": {
           "title": "Add New Category",
@@ -423,6 +426,8 @@
         "updated": "Category updated successfully",
         "deleted": "Category deleted successfully",
         "reordered": "Category order updated",
+        "hidden": "Category hidden",
+        "shown": "Category shown",
         "error": "An error occurred"
       },
       "uncategorized": {

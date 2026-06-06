@@ -1,6 +1,7 @@
 import { join } from 'node:path'
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite'
 
+import { addCategoryHiddenFlag } from './add-category-hidden-flag'
 import { addCloseOnEscape } from './add-close-on-escape'
 import { addLastPresentedAt } from './add-last-presented-at'
 import { addLogsPermissions } from './add-logs-permissions'
@@ -190,6 +191,14 @@ export function runMigrations(
   // preview panel. Defaults the main (first primary) screen on existing DBs.
   runStep('add_preview_screen', 'Running add is_preview_screen migration', () =>
     addPreviewScreen(rawDb),
+  )
+
+  // is_hidden on song_categories: lets an admin hide a category (and its songs)
+  // from the song browser without deleting anything.
+  runStep(
+    'add_category_hidden_flag',
+    'Running add category is_hidden migration',
+    () => addCategoryHiddenFlag(rawDb),
   )
 
   // Seed default screens
