@@ -290,6 +290,7 @@ import {
   getAllSongs,
   getAllSongsWithSlides,
   getAllTags,
+  getCategoryById,
   getGroupForSong,
   getSimilarSongs,
   getSongGroupWithMembers,
@@ -5882,6 +5883,10 @@ async function startRealServer(): Promise<void> {
             )
           }
 
+          // Capture the current name BEFORE updating so we only pay for the
+          // (expensive) FTS re-index when the name actually changes.
+          const previousName = body.id ? getCategoryById(body.id)?.name : null
+
           const category = upsertCategory(body)
 
           if (!category) {
@@ -5897,11 +5902,15 @@ async function startRealServer(): Promise<void> {
             )
           }
 
-          // Re-index songs when updating category name, and drop the search
-          // results cache — its key doesn't encode category name or hidden
-          // state, so a stale entry could otherwise resurface a hidden song.
+          // Re-index songs ONLY when the category name actually changed (the
+          // FTS index stores category_name). A hide/show toggle leaves names
+          // and content untouched, so we skip the costly per-song re-index and
+          // just drop the search results cache (its key encodes neither the
+          // category name nor the hidden state).
           if (body.id) {
-            updateSearchIndexByCategory(body.id)
+            if (previousName != null && category.name !== previousName) {
+              updateSearchIndexByCategory(body.id)
+            }
             clearSearchCache()
           }
 
