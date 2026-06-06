@@ -1,7 +1,8 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { Check, LogOut, ShieldCheck } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-import { getLogoutRedirectUrl } from '~/features/users/service'
+import { performLogout } from '~/features/users/service'
 import { PERMISSION_GROUPS, type PermissionGroup } from '~/features/users/types'
 import { usePermissions } from '~/provider/permissions-provider'
 import { captureActivity } from '~/utils/activity-logger'
@@ -28,14 +29,19 @@ const GROUP_ORDER: PermissionGroup[] = [
  */
 export function AccountSection() {
   const { t } = useTranslation(['users', 'settings'])
-  const { userName, permissions, isApp, isAdmin } = usePermissions()
+  const { userName, permissions, isApp, isAdmin, refresh } = usePermissions()
+  const queryClient = useQueryClient()
 
   const hasFullAccess = isApp || isAdmin
   const displayName = userName ?? t('profile.user')
 
-  const handleLogout = () => {
+  // Logout via fetch + context refresh (no page navigation, which is
+  // unreliable in the packaged desktop webview).
+  const handleLogout = async () => {
     captureActivity('logout', { source: 'settings-account' })
-    window.location.href = getLogoutRedirectUrl()
+    await performLogout()
+    queryClient.clear()
+    await refresh()
   }
 
   return (
