@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { getLogoutRedirectUrl } from '~/features/users/service'
 import { PERMISSION_GROUPS, type PermissionGroup } from '~/features/users/types'
 import { usePermissions } from '~/provider/permissions-provider'
+import { captureActivity } from '~/utils/activity-logger'
 import { UserAvatar } from './UserAvatar'
 
 const GROUP_ORDER: PermissionGroup[] = [
@@ -14,6 +15,7 @@ const GROUP_ORDER: PermissionGroup[] = [
   'queue',
   'song_key',
   'settings',
+  'logs',
   'displays',
   'users',
 ]
@@ -32,6 +34,7 @@ export function AccountSection() {
   const displayName = userName ?? t('profile.user')
 
   const handleLogout = () => {
+    captureActivity('logout', { source: 'settings-account' })
     window.location.href = getLogoutRedirectUrl()
   }
 

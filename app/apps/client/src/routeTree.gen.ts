@@ -28,6 +28,7 @@ import { Route as SettingsShortcutsRouteImport } from './routes/settings/shortcu
 import { Route as SettingsScreensRouteImport } from './routes/settings/screens'
 import { Route as SettingsProfileRouteImport } from './routes/settings/profile'
 import { Route as SettingsMidiRouteImport } from './routes/settings/midi'
+import { Route as SettingsLogsRouteImport } from './routes/settings/logs'
 import { Route as SettingsLivestreamRouteImport } from './routes/settings/livestream'
 import { Route as SettingsKioskRouteImport } from './routes/settings/kiosk'
 import { Route as SettingsDeveloperRouteImport } from './routes/settings/developer'
@@ -137,6 +138,11 @@ const SettingsMidiRoute = SettingsMidiRouteImport.update({
   path: '/midi',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
+const SettingsLogsRoute = SettingsLogsRouteImport.update({
+  id: '/logs',
+  path: '/logs',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
 const SettingsLivestreamRoute = SettingsLivestreamRouteImport.update({
   id: '/livestream',
   path: '/livestream',
@@ -215,6 +221,7 @@ export interface FileRoutesByFullPath {
   '/settings/developer': typeof SettingsDeveloperRoute
   '/settings/kiosk': typeof SettingsKioskRoute
   '/settings/livestream': typeof SettingsLivestreamRoute
+  '/settings/logs': typeof SettingsLogsRoute
   '/settings/midi': typeof SettingsMidiRoute
   '/settings/profile': typeof SettingsProfileRoute
   '/settings/screens': typeof SettingsScreensRoute
@@ -248,6 +255,7 @@ export interface FileRoutesByTo {
   '/settings/developer': typeof SettingsDeveloperRoute
   '/settings/kiosk': typeof SettingsKioskRoute
   '/settings/livestream': typeof SettingsLivestreamRoute
+  '/settings/logs': typeof SettingsLogsRoute
   '/settings/midi': typeof SettingsMidiRoute
   '/settings/profile': typeof SettingsProfileRoute
   '/settings/screens': typeof SettingsScreensRoute
@@ -283,6 +291,7 @@ export interface FileRoutesById {
   '/settings/developer': typeof SettingsDeveloperRoute
   '/settings/kiosk': typeof SettingsKioskRoute
   '/settings/livestream': typeof SettingsLivestreamRoute
+  '/settings/logs': typeof SettingsLogsRoute
   '/settings/midi': typeof SettingsMidiRoute
   '/settings/profile': typeof SettingsProfileRoute
   '/settings/screens': typeof SettingsScreensRoute
@@ -319,6 +328,7 @@ export interface FileRouteTypes {
     | '/settings/developer'
     | '/settings/kiosk'
     | '/settings/livestream'
+    | '/settings/logs'
     | '/settings/midi'
     | '/settings/profile'
     | '/settings/screens'
@@ -352,6 +362,7 @@ export interface FileRouteTypes {
     | '/settings/developer'
     | '/settings/kiosk'
     | '/settings/livestream'
+    | '/settings/logs'
     | '/settings/midi'
     | '/settings/profile'
     | '/settings/screens'
@@ -386,6 +397,7 @@ export interface FileRouteTypes {
     | '/settings/developer'
     | '/settings/kiosk'
     | '/settings/livestream'
+    | '/settings/logs'
     | '/settings/midi'
     | '/settings/profile'
     | '/settings/screens'
@@ -564,6 +576,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsMidiRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
+    '/settings/logs': {
+      id: '/settings/logs'
+      path: '/logs'
+      fullPath: '/settings/logs'
+      preLoaderRoute: typeof SettingsLogsRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
     '/settings/livestream': {
       id: '/settings/livestream'
       path: '/livestream'
@@ -666,6 +685,7 @@ interface SettingsRouteRouteChildren {
   SettingsDeveloperRoute: typeof SettingsDeveloperRoute
   SettingsKioskRoute: typeof SettingsKioskRoute
   SettingsLivestreamRoute: typeof SettingsLivestreamRoute
+  SettingsLogsRoute: typeof SettingsLogsRoute
   SettingsMidiRoute: typeof SettingsMidiRoute
   SettingsProfileRoute: typeof SettingsProfileRoute
   SettingsScreensRoute: typeof SettingsScreensRoute
@@ -684,6 +704,7 @@ const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
   SettingsDeveloperRoute: SettingsDeveloperRoute,
   SettingsKioskRoute: SettingsKioskRoute,
   SettingsLivestreamRoute: SettingsLivestreamRoute,
+  SettingsLogsRoute: SettingsLogsRoute,
   SettingsMidiRoute: SettingsMidiRoute,
   SettingsProfileRoute: SettingsProfileRoute,
   SettingsScreensRoute: SettingsScreensRoute,

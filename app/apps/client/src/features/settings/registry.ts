@@ -8,6 +8,7 @@ import {
   Palette,
   PanelLeft,
   Radio,
+  ScrollText,
   Sliders,
   Tv,
   User,
@@ -169,6 +170,13 @@ export const SETTINGS_GROUPS: SettingsNavGroupDef[] = [
     id: 'advanced',
     labelKey: 'nav.groups.advanced',
     items: [
+      {
+        id: 'logs',
+        labelKey: 'nav.items.logs',
+        icon: ScrollText,
+        to: '/settings/logs',
+        visible: (ctx) => ctx.hasPermission('logs.view'),
+      },
       {
         id: 'developer',
         labelKey: 'nav.items.developer',

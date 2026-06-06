@@ -3,6 +3,7 @@ import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite'
 
 import { addCloseOnEscape } from './add-close-on-escape'
 import { addLastPresentedAt } from './add-last-presented-at'
+import { addLogsPermissions } from './add-logs-permissions'
 import { addPreviewScreen } from './add-preview-screen'
 import { addSongGroups } from './add-song-groups'
 import { addSongVersionsPermissions } from './add-song-versions-permissions'
@@ -166,6 +167,16 @@ export function runMigrations(
     'add_song_versions_permissions',
     'Running add song_versions permissions migration',
     () => addSongVersionsPermissions(rawDb),
+  )
+
+  // Backfill the new logs.view permission onto roles + users that already had
+  // settings.edit, so settings editors keep the log access they had via the
+  // Developer settings before the dedicated Logs section existed. Must run
+  // after seedSystemRoles so the admin role already has logs.* from the seed.
+  runStep(
+    'add_logs_permissions',
+    'Running add logs permissions migration',
+    () => addLogsPermissions(rawDb),
   )
 
   // Add screen behavior columns BEFORE seeding default screens so the seed can

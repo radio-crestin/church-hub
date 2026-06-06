@@ -98,6 +98,59 @@ export const logsPaths = {
       },
     },
   },
+  '/api/client-activity': {
+    post: {
+      tags: ['Logs'],
+      summary: 'Ingest client-side user activity into the local log',
+      description:
+        'Accepts a batch of user activity events (navigation, login/logout, key actions) and writes them to the on-disk log under the `activity` category, so the Logs viewer shows what the operator did. Public and pre-auth on purpose. At most 100 events per request; fields are truncated.',
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['events'],
+              properties: {
+                events: {
+                  type: 'array',
+                  maxItems: 100,
+                  items: {
+                    type: 'object',
+                    properties: {
+                      action: { type: 'string' },
+                      message: { type: 'string' },
+                      source: { type: 'string' },
+                      context: { type: 'object', additionalProperties: true },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        '200': {
+          description: 'Activity recorded',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'object',
+                    properties: { received: { type: 'integer' } },
+                  },
+                },
+              },
+            },
+          },
+        },
+        '400': { description: 'Invalid activity body' },
+      },
+    },
+  },
   '/api/logs/path': {
     get: {
       tags: ['Logs'],
@@ -123,6 +176,92 @@ export const logsPaths = {
             },
           },
         },
+      },
+    },
+  },
+  '/api/logs/content': {
+    get: {
+      tags: ['Logs'],
+      summary: 'Read recent application logs',
+      description:
+        'Returns the tail of the recent server and Tauri log files for the in-app Logs viewer. Requires the `logs.view` permission.',
+      parameters: [
+        {
+          name: 'days',
+          in: 'query',
+          required: false,
+          schema: { type: 'integer', minimum: 1, maximum: 14, default: 3 },
+          description: 'How many days back to include (clamped to 1–14).',
+        },
+        {
+          name: 'maxBytes',
+          in: 'query',
+          required: false,
+          schema: {
+            type: 'integer',
+            minimum: 1,
+            maximum: 1048576,
+            default: 262144,
+          },
+          description:
+            'Maximum bytes read per file per day (clamped to ≤ 1 MiB).',
+        },
+      ],
+      responses: {
+        '200': {
+          description: 'Recent log tails',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'object',
+                    properties: {
+                      serverTail: { type: 'string' },
+                      tauriTail: { type: 'string' },
+                      logsDir: { type: 'string' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        '403': { description: 'Missing logs.view permission' },
+      },
+    },
+  },
+  '/api/logs/clear': {
+    post: {
+      tags: ['Logs'],
+      summary: 'Clear application logs',
+      description:
+        'Empties every local `.log` file (server + Tauri daily logs). Requires the `logs.clear` permission.',
+      responses: {
+        '200': {
+          description: 'Logs cleared',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'object',
+                    properties: {
+                      cleared: {
+                        type: 'integer',
+                        description: 'Number of log files emptied',
+                      },
+                      logsDir: { type: 'string' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        '403': { description: 'Missing logs.clear permission' },
       },
     },
   },

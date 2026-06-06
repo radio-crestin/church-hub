@@ -19,6 +19,7 @@ import {
 } from '~/features/users/service'
 import type { LocalUser } from '~/features/users/types'
 import { usePermissions } from '~/provider/permissions-provider'
+import { captureActivity } from '~/utils/activity-logger'
 import { UserAvatar } from './UserAvatar'
 
 interface CurrentUserButtonProps {
@@ -134,6 +135,7 @@ export function CurrentUserButton({ isCollapsed }: CurrentUserButtonProps) {
   const roleLabel = isApp ? t('superAdmin') : t('profile.user')
 
   function handleLogout() {
+    captureActivity('logout', { source: 'sidebar-account-menu', userId })
     window.location.href = getLogoutRedirectUrl()
   }
 
@@ -144,6 +146,10 @@ export function CurrentUserButton({ isCollapsed }: CurrentUserButtonProps) {
     setError(false)
     try {
       const result = await login(user.id, pw)
+      captureActivity('account-switch', {
+        source: 'sidebar-account-menu',
+        toUserId: user.id,
+      })
       window.location.href = getLoginRedirectUrl(result.ticket)
     } catch {
       setError(true)
