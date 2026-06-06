@@ -55,6 +55,24 @@ export function CategoryManager() {
     }
   }
 
+  const handleToggleHidden = async (category: SongCategory) => {
+    const result = await upsertCategory.mutateAsync({
+      id: category.id,
+      name: category.name,
+      isHidden: category.isHidden === 1 ? 0 : 1,
+    })
+    if (result.success) {
+      showToast(
+        category.isHidden === 1
+          ? t('sections.categories.toast.shown')
+          : t('sections.categories.toast.hidden'),
+        'success',
+      )
+    } else {
+      showToast(t('sections.categories.toast.error'), 'error')
+    }
+  }
+
   const handleDelete = async () => {
     if (modal.type !== 'delete') return
 
@@ -115,6 +133,7 @@ export function CategoryManager() {
               category={category}
               onEdit={() => setModal({ type: 'edit', category })}
               onDelete={() => setModal({ type: 'delete', category })}
+              onToggleHidden={() => handleToggleHidden(category)}
             />
           ))}
         </div>

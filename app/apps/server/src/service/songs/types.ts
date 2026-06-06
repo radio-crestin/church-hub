@@ -13,6 +13,7 @@ export interface SongCategoryRecord {
   id: number
   name: string
   priority: number
+  is_hidden: number
   created_at: number
   updated_at: number
 }
@@ -65,6 +66,8 @@ export interface SongCategory {
   name: string
   priority: number
   songCount: number
+  /** 1 = hidden from the song browser (filters + list + search). */
+  isHidden: number
   createdAt: number
   updatedAt: number
 }
@@ -152,6 +155,8 @@ export interface UpsertCategoryInput {
   id?: number
   name: string
   priority?: number
+  /** 1 = hide the category (and its songs); 0 = show. */
+  isHidden?: number
 }
 
 /**

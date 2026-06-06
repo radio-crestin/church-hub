@@ -5897,9 +5897,12 @@ async function startRealServer(): Promise<void> {
             )
           }
 
-          // Re-index songs when updating category name
+          // Re-index songs when updating category name, and drop the search
+          // results cache — its key doesn't encode category name or hidden
+          // state, so a stale entry could otherwise resurface a hidden song.
           if (body.id) {
             updateSearchIndexByCategory(body.id)
+            clearSearchCache()
           }
 
           return handleCors(

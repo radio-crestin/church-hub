@@ -14,6 +14,9 @@ export const songCategories = sqliteTable(
     id: integer('id').primaryKey({ autoIncrement: true }),
     name: text('name').notNull().unique(),
     priority: integer('priority').notNull().default(1),
+    // 1 = hidden: the category and its songs are dropped from the song browser
+    // (filters + list + search) but kept in the DB so it can be re-shown.
+    isHidden: integer('is_hidden').notNull().default(0),
     createdAt: integer('created_at', { mode: 'timestamp' })
       .notNull()
       .default(sql`(unixepoch())`),

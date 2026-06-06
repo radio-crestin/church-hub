@@ -11,6 +11,9 @@ export function useUpsertCategory() {
     onSuccess: (result) => {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: ['categories'] })
+        // Hiding/showing a category changes which songs are listed, so the song
+        // browser must refetch too.
+        queryClient.invalidateQueries({ queryKey: ['songs'] })
       }
     },
   })
