@@ -146,9 +146,8 @@ export async function getAllRoles(): Promise<RoleWithPermissions[]> {
  * Returns null when no session is active (server reachable but signed out).
  */
 export async function getCurrentUser(): Promise<CurrentUser | null> {
-  const response = await fetcher<ApiResponse<CurrentUser | null>>(
-    '/api/auth/me',
-  )
+  const response =
+    await fetcher<ApiResponse<CurrentUser | null>>('/api/auth/me')
   return response.data ?? null
 }
 
@@ -156,8 +155,9 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
  * Fetches the minimal user list for the local login screen.
  */
 export async function getLocalUsers(): Promise<LocalUser[]> {
-  const response =
-    await fetcher<ApiResponse<LocalUser[]>>('/api/auth/local-users')
+  const response = await fetcher<ApiResponse<LocalUser[]>>(
+    '/api/auth/local-users',
+  )
   return response.data
 }
 
@@ -222,6 +222,36 @@ export function getLogoutRedirectUrl(): string {
  */
 export async function logout(): Promise<void> {
   await fetcher('/api/auth/logout', { method: 'POST' })
+}
+
+/**
+ * sessionStorage flag set by {@link performLogout} so the login gate shows the
+ * account picker instead of instantly auto-signing a sole passwordless account
+ * back in. Read + cleared at runtime by the gate's auto-login effect (logout
+ * refreshes the auth context rather than reloading the page, so a mount-time
+ * read would miss it).
+ */
+export const LOGGED_OUT_FLAG = 'church-hub:logged-out'
+
+/**
+ * Performs a deliberate logout: marks the intent then clears the session cookie
+ * via the fetch logout. Callers should then `refresh()` the permissions context
+ * (a pure re-read of /api/auth/me) rather than navigating/reloading — top-level
+ * navigation to the sidecar origin is unreliable in the packaged desktop
+ * webview (app on `tauri.localhost`, API on `localhost`), which is what made
+ * the old redirect-based logout do nothing.
+ */
+export async function performLogout(): Promise<void> {
+  try {
+    sessionStorage.setItem(LOGGED_OUT_FLAG, '1')
+  } catch {
+    // sessionStorage unavailable — non-fatal, normal logout still proceeds.
+  }
+  try {
+    await logout()
+  } catch {
+    // Best-effort: the caller refreshes regardless so the gate re-checks.
+  }
 }
 
 /**
