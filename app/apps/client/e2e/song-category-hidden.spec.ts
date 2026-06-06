@@ -88,4 +88,63 @@ test.describe('Song category hide/show', () => {
       await request.delete(`/api/categories/${catId}`).catch(() => {})
     }
   })
+
+  test('a hidden category song is excluded from version "possible matches"', async ({
+    request,
+  }) => {
+    const stamp = `${Date.now()}`
+    // Identical lyrics + near-identical titles so the candidate scores as a
+    // strong version match. The candidate lives in the category we will hide.
+    const lyrics = [
+      { content: `Slava Domnului in veci match ${stamp}`, type: 'verse' },
+      { content: `Cantam impreuna o cantare noua ${stamp}`, type: 'chorus' },
+    ]
+
+    const catRes = await request.post('/api/categories', {
+      data: { name: `E2E Match Cat ${stamp}`, priority: 1 },
+    })
+    const catId = (await catRes.json()).data.id as number
+
+    const subjectRes = await request.post('/api/songs', {
+      data: { title: `E2E Match Alpha ${stamp}`, slides: lyrics },
+    })
+    const subjectId = (await subjectRes.json()).data.id as number
+
+    const candidateRes = await request.post('/api/songs', {
+      data: {
+        title: `E2E Match Beta ${stamp}`,
+        categoryId: catId,
+        slides: lyrics,
+      },
+    })
+    const candidateId = (await candidateRes.json()).data.id as number
+
+    const similarHasCandidate = async (): Promise<boolean> => {
+      const r = await request.get(`/api/songs/${subjectId}/similar?limit=20`)
+      const { data } = await r.json()
+      return data.some((s: { songId: number }) => s.songId === candidateId)
+    }
+
+    try {
+      // Precondition: the candidate is suggested as a possible match.
+      expect(await similarHasCandidate()).toBe(true)
+
+      // Hiding the candidate's category drops it from the suggestions.
+      const hideRes = await request.post('/api/categories', {
+        data: { id: catId, name: `E2E Match Cat ${stamp}`, isHidden: 1 },
+      })
+      expect(hideRes.ok()).toBeTruthy()
+      expect(await similarHasCandidate()).toBe(false)
+
+      // Showing it again brings the match back.
+      await request.post('/api/categories', {
+        data: { id: catId, name: `E2E Match Cat ${stamp}`, isHidden: 0 },
+      })
+      expect(await similarHasCandidate()).toBe(true)
+    } finally {
+      await request.delete(`/api/songs/${subjectId}`).catch(() => {})
+      await request.delete(`/api/songs/${candidateId}`).catch(() => {})
+      await request.delete(`/api/categories/${catId}`).catch(() => {})
+    }
+  })
 })

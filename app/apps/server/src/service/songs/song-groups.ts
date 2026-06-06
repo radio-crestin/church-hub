@@ -1,5 +1,6 @@
 import { eq, inArray, sql } from 'drizzle-orm'
 
+import { getHiddenCategoryIds } from './categories'
 import { searchSongs } from './search'
 import type {
   OperationResult,
@@ -822,6 +823,18 @@ export function getSimilarSongs(
         .where(eq(songs.songGroupId, subject.songGroupId))
         .all()
       for (const m of groupMembers) exclude.add(m.id)
+    }
+
+    // Never suggest songs from a hidden category — a hidden category is meant
+    // to disappear from the song browser AND from version "possible matches".
+    const hiddenCategoryIds = getHiddenCategoryIds()
+    if (hiddenCategoryIds.length > 0) {
+      const hiddenSongs = db
+        .select({ id: songs.id })
+        .from(songs)
+        .where(inArray(songs.categoryId, hiddenCategoryIds))
+        .all()
+      for (const s of hiddenSongs) exclude.add(s.id)
     }
 
     // Subject lyrics — needed for the lyrics-recall query AND the rerank.
