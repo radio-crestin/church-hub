@@ -46,6 +46,10 @@ export function useSongSlideSelectionKeyboard({
           return true
 
         case 'Enter':
+        // F5 is what a presenter remote's "present/start" button sends — start
+        // presenting the currently-focused slide (first verse, last, whatever
+        // is selected), same as Enter.
+        case 'F5':
           event.preventDefault()
           onPresentSlide()
           return true
