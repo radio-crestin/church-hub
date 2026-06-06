@@ -24,6 +24,7 @@ const GROUP_ORDER: PermissionGroup[] = [
   'queue',
   'song_key',
   'settings',
+  'logs',
   'displays',
   'users',
 ]

@@ -55,6 +55,9 @@ export type Permission =
   // Song Key Configuration
   | 'song_key.view'
   | 'song_key.edit'
+  // Application Logs (view the local log files / clear them)
+  | 'logs.view'
+  | 'logs.clear'
 
 /**
  * All available permissions as an array
@@ -110,6 +113,9 @@ export const ALL_PERMISSIONS: Permission[] = [
   // Song Key Configuration
   'song_key.view',
   'song_key.edit',
+  // Application Logs
+  'logs.view',
+  'logs.clear',
 ]
 
 /**
@@ -153,6 +159,7 @@ export const PERMISSION_GROUPS = {
     'users.delete',
   ] as Permission[],
   song_key: ['song_key.view', 'song_key.edit'] as Permission[],
+  logs: ['logs.view', 'logs.clear'] as Permission[],
 } as const
 
 export type PermissionGroup = keyof typeof PERMISSION_GROUPS

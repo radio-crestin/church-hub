@@ -18,6 +18,7 @@
       "livestream": "Live Stream",
       "sidebar": "Bara Laterală",
       "developer": "Dezvoltatori",
+      "logs": "Jurnale",
       "shortcuts": "Scurtături"
     }
   },
@@ -291,7 +292,8 @@
         "settings": "Setări",
         "displays": "Afișaje",
         "users": "Administrare utilizatori",
-        "song_key": "Gama cântări"
+        "song_key": "Gama cântări",
+        "logs": "Jurnale"
       },
       "permissionLabels": {
         "songs.view": "Vizualizare cântări",
@@ -333,7 +335,9 @@
         "users.edit": "Editare utilizatori",
         "users.delete": "Ștergere utilizatori",
         "song_key.view": "Vizualizare gama cântări",
-        "song_key.edit": "Editare gama cântări"
+        "song_key.edit": "Editare gama cântări",
+        "logs.view": "Vizualizare jurnale aplicație",
+        "logs.clear": "Ștergere jurnale aplicație"
       },
       "actions": {
         "edit": "Editează",
@@ -924,6 +928,8 @@
       }
     },
     "logs": {
+      "title": "Jurnale Aplicație",
+      "description": "Vizualizează fișierele de jurnal locale ale aplicației și șterge-le. Util pentru diagnosticarea problemelor și erorilor.",
       "card": {
         "title": "Jurnale Aplicație",
         "description": "Deschide folderul cu jurnalele aplicației. Atașează ultimele fișiere când raportezi o problemă."
@@ -932,9 +938,36 @@
         "open": "Deschide Folderul cu Jurnale",
         "opening": "Se deschide..."
       },
+      "viewer": {
+        "empty": "Nu există jurnale de afișat.",
+        "refresh": "Reîmprospătează",
+        "refreshing": "Se reîmprospătează...",
+        "serverHeading": "Jurnale server",
+        "tauriHeading": "Jurnale aplicație (Tauri)"
+      },
+      "clear": {
+        "card": {
+          "title": "Șterge jurnalele",
+          "description": "Golește definitiv toate fișierele de jurnal locale de pe acest dispozitiv."
+        },
+        "button": {
+          "clear": "Șterge jurnalele",
+          "clearing": "Se șterge..."
+        },
+        "confirm": {
+          "title": "Ștergi toate jurnalele?",
+          "message": "Aceasta golește fiecare fișier de jurnal local de pe acest dispozitiv.",
+          "warning": "Această acțiune nu poate fi anulată.",
+          "cancel": "Anulează",
+          "confirm": "Șterge jurnalele"
+        }
+      },
       "toast": {
         "opened": "Folderul cu jurnale a fost deschis",
-        "failed": "Nu s-a putut deschide folderul cu jurnale: {{error}}"
+        "failed": "Nu s-a putut deschide folderul cu jurnale: {{error}}",
+        "cleared": "Jurnalele au fost șterse",
+        "clearFailed": "Nu s-au putut șterge jurnalele: {{error}}",
+        "loadFailed": "Nu s-au putut încărca jurnalele: {{error}}"
       }
     },
     "about": {

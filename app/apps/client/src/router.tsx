@@ -23,6 +23,7 @@ import { ApiUrlSetup } from './features/api-url-config'
 import { routeTree } from './routeTree.gen'
 import DefaultCatchBoundary from './ui/DefaultCatchBoundary'
 import { ErrorBoundary } from './ui/error-boundary'
+import { captureActivity } from './utils/activity-logger'
 import { getServerConfig } from './utils/tauri-commands'
 
 const router = createRouter({
@@ -36,6 +37,18 @@ declare module '@tanstack/react-router' {
   interface Register {
     router: typeof router
   }
+}
+
+// Record navigation so the activity log shows which pages/options the operator
+// opened — a breadcrumb trail that makes errors far easier to interpret.
+// Best-effort: never let logging break navigation.
+try {
+  router.subscribe('onResolved', (event) => {
+    const path = event.toLocation?.pathname
+    if (path) captureActivity('navigate', { source: 'router', path })
+  })
+} catch {
+  // Non-fatal — navigation logging is best-effort.
 }
 
 // Check if we're running in Tauri context

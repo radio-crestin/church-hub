@@ -49,6 +49,9 @@ const ALL_PERMISSIONS = [
   'users.create',
   'users.edit',
   'users.delete',
+  // Application logs — view the local log files / clear them.
+  'logs.view',
+  'logs.clear',
 ]
 
 const ROLE_TEMPLATES: Record<string, string[]> = {
