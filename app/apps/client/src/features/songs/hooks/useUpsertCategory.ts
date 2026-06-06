@@ -44,6 +44,9 @@ export function useUpsertCategory() {
       // Hiding/showing a category changes which songs are listed, so the song
       // browser must refetch too.
       queryClient.invalidateQueries({ queryKey: ['songs'] })
+      // …and the version "possible matches" must drop/restore that category's
+      // songs as well.
+      queryClient.invalidateQueries({ queryKey: ['song-similar'] })
     },
   })
 }
