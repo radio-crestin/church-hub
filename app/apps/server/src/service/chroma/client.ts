@@ -20,7 +20,9 @@ export async function getChromaClient(): Promise<ChromaClient> {
   }
   if (!client || clientPort !== port) {
     const { ChromaClient: Client } = await import('chromadb')
-    client = new Client({ host: 'localhost', port, ssl: false })
+    // 127.0.0.1 explicitly — the child binds IPv4; `localhost` may resolve
+    // to ::1 depending on the resolver and miss the server.
+    client = new Client({ host: '127.0.0.1', port, ssl: false })
     clientPort = port
     collections.clear()
   }

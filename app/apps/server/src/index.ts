@@ -112,8 +112,20 @@ if (process.argv.includes('--chroma-server')) {
       binding = require(pkg) as { cli: (args: string[]) => void }
     }
 
-    // Blocks for the lifetime of the Chroma server.
-    binding.cli(['chroma', 'run', '--path', chromaPath, '--port', chromaPort])
+    // Blocks for the lifetime of the Chroma server. Host is pinned to
+    // explicit IPv4 — `localhost` can resolve to ::1 here while the parent's
+    // fetch resolves 127.0.0.1 (or vice versa), yielding flaky
+    // ChromaConnectionErrors against a perfectly healthy server.
+    binding.cli([
+      'chroma',
+      'run',
+      '--path',
+      chromaPath,
+      '--port',
+      chromaPort,
+      '--host',
+      '127.0.0.1',
+    ])
     process.exit(0)
   } catch (chromaError) {
     // biome-ignore lint/suspicious/noConsole: child process startup error

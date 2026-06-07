@@ -184,7 +184,9 @@ export async function startChromaServer(): Promise<number> {
       throw new Error('Chroma server process died during startup')
     }
     try {
-      const res = await fetch(`http://localhost:${port}/api/v2/heartbeat`, {
+      // 127.0.0.1 explicitly — the child binds IPv4 (see --chroma-server
+      // handler); `localhost` may resolve to ::1 and miss it.
+      const res = await fetch(`http://127.0.0.1:${port}/api/v2/heartbeat`, {
         signal: AbortSignal.timeout(1_000),
       })
       if (res.ok) {
