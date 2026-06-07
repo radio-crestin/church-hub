@@ -25,6 +25,7 @@ import { Route as SettingsUsersRouteImport } from './routes/settings/users'
 import { Route as SettingsSongsRouteImport } from './routes/settings/songs'
 import { Route as SettingsSidebarRouteImport } from './routes/settings/sidebar'
 import { Route as SettingsShortcutsRouteImport } from './routes/settings/shortcuts'
+import { Route as SettingsSearchEngineRouteImport } from './routes/settings/search-engine'
 import { Route as SettingsScreensRouteImport } from './routes/settings/screens'
 import { Route as SettingsProfileRouteImport } from './routes/settings/profile'
 import { Route as SettingsMidiRouteImport } from './routes/settings/midi'
@@ -120,6 +121,11 @@ const SettingsSidebarRoute = SettingsSidebarRouteImport.update({
 const SettingsShortcutsRoute = SettingsShortcutsRouteImport.update({
   id: '/shortcuts',
   path: '/shortcuts',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
+const SettingsSearchEngineRoute = SettingsSearchEngineRouteImport.update({
+  id: '/search-engine',
+  path: '/search-engine',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
 const SettingsScreensRoute = SettingsScreensRouteImport.update({
@@ -218,6 +224,7 @@ export interface FileRoutesByFullPath {
   '/settings/midi': typeof SettingsMidiRoute
   '/settings/profile': typeof SettingsProfileRoute
   '/settings/screens': typeof SettingsScreensRoute
+  '/settings/search-engine': typeof SettingsSearchEngineRoute
   '/settings/shortcuts': typeof SettingsShortcutsRoute
   '/settings/sidebar': typeof SettingsSidebarRoute
   '/settings/songs': typeof SettingsSongsRoute
@@ -251,6 +258,7 @@ export interface FileRoutesByTo {
   '/settings/midi': typeof SettingsMidiRoute
   '/settings/profile': typeof SettingsProfileRoute
   '/settings/screens': typeof SettingsScreensRoute
+  '/settings/search-engine': typeof SettingsSearchEngineRoute
   '/settings/shortcuts': typeof SettingsShortcutsRoute
   '/settings/sidebar': typeof SettingsSidebarRoute
   '/settings/songs': typeof SettingsSongsRoute
@@ -286,6 +294,7 @@ export interface FileRoutesById {
   '/settings/midi': typeof SettingsMidiRoute
   '/settings/profile': typeof SettingsProfileRoute
   '/settings/screens': typeof SettingsScreensRoute
+  '/settings/search-engine': typeof SettingsSearchEngineRoute
   '/settings/shortcuts': typeof SettingsShortcutsRoute
   '/settings/sidebar': typeof SettingsSidebarRoute
   '/settings/songs': typeof SettingsSongsRoute
@@ -322,6 +331,7 @@ export interface FileRouteTypes {
     | '/settings/midi'
     | '/settings/profile'
     | '/settings/screens'
+    | '/settings/search-engine'
     | '/settings/shortcuts'
     | '/settings/sidebar'
     | '/settings/songs'
@@ -355,6 +365,7 @@ export interface FileRouteTypes {
     | '/settings/midi'
     | '/settings/profile'
     | '/settings/screens'
+    | '/settings/search-engine'
     | '/settings/shortcuts'
     | '/settings/sidebar'
     | '/settings/songs'
@@ -389,6 +400,7 @@ export interface FileRouteTypes {
     | '/settings/midi'
     | '/settings/profile'
     | '/settings/screens'
+    | '/settings/search-engine'
     | '/settings/shortcuts'
     | '/settings/sidebar'
     | '/settings/songs'
@@ -543,6 +555,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsShortcutsRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
+    '/settings/search-engine': {
+      id: '/settings/search-engine'
+      path: '/search-engine'
+      fullPath: '/settings/search-engine'
+      preLoaderRoute: typeof SettingsSearchEngineRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
     '/settings/screens': {
       id: '/settings/screens'
       path: '/screens'
@@ -669,6 +688,7 @@ interface SettingsRouteRouteChildren {
   SettingsMidiRoute: typeof SettingsMidiRoute
   SettingsProfileRoute: typeof SettingsProfileRoute
   SettingsScreensRoute: typeof SettingsScreensRoute
+  SettingsSearchEngineRoute: typeof SettingsSearchEngineRoute
   SettingsShortcutsRoute: typeof SettingsShortcutsRoute
   SettingsSidebarRoute: typeof SettingsSidebarRoute
   SettingsSongsRoute: typeof SettingsSongsRoute
@@ -687,6 +707,7 @@ const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
   SettingsMidiRoute: SettingsMidiRoute,
   SettingsProfileRoute: SettingsProfileRoute,
   SettingsScreensRoute: SettingsScreensRoute,
+  SettingsSearchEngineRoute: SettingsSearchEngineRoute,
   SettingsShortcutsRoute: SettingsShortcutsRoute,
   SettingsSidebarRoute: SettingsSidebarRoute,
   SettingsSongsRoute: SettingsSongsRoute,

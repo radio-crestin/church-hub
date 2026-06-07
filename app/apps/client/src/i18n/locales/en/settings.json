@@ -18,7 +18,8 @@
       "livestream": "Livestream",
       "sidebar": "Sidebar",
       "developer": "Developer",
-      "shortcuts": "Shortcuts"
+      "shortcuts": "Shortcuts",
+      "searchEngine": "Search Engine"
     }
   },
   "sections": {
@@ -949,6 +950,43 @@
       "viewReleaseNotes": "View release notes on GitHub",
       "devInstance": "Development instance",
       "devInstanceDescription": "You're running a dev build — update checks are disabled."
+    },
+    "searchEngine": {
+      "title": "Search Engine",
+      "description": "Choose which engine powers song, Bible and schedule search. ChromaDB is experimental — SQLite stays the source of truth.",
+      "engineLabel": "Active engine",
+      "engineDescription": "Chroma engines fall back to SQLite until the index has finished syncing.",
+      "engines": {
+        "sqlite": "SQLite (full-text, default)",
+        "chroma-semantic": "ChromaDB — semantic (by meaning)",
+        "chroma-keyword": "ChromaDB — keyword"
+      },
+      "fallbackNotice": "ChromaDB is not ready yet — searches are served by SQLite for now.",
+      "chromaStatus": {
+        "title": "ChromaDB index",
+        "description": "Local vector index synced from the database"
+      },
+      "states": {
+        "disabled": "Disabled",
+        "stopped": "Stopped",
+        "starting": "Starting…",
+        "syncing": "Syncing…",
+        "ready": "Ready",
+        "error": "Error"
+      },
+      "syncing": "Syncing {{step}}…",
+      "counts": {
+        "songs": "Song documents",
+        "bible": "Bible verses",
+        "schedules": "Schedules"
+      },
+      "resync": "Re-sync",
+      "toast": {
+        "engineChanged": "Search engine updated",
+        "engineChangeFailed": "Failed to update search engine",
+        "resyncStarted": "ChromaDB re-sync started",
+        "resyncFailed": "Failed to start re-sync"
+      }
     }
   }
 }

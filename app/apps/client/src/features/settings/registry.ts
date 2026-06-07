@@ -8,6 +8,7 @@ import {
   Palette,
   PanelLeft,
   Radio,
+  Search,
   Sliders,
   Tv,
   User,
@@ -169,6 +170,13 @@ export const SETTINGS_GROUPS: SettingsNavGroupDef[] = [
     id: 'advanced',
     labelKey: 'nav.groups.advanced',
     items: [
+      {
+        id: 'search-engine',
+        labelKey: 'nav.items.searchEngine',
+        icon: Search,
+        to: '/settings/search-engine',
+        visible: canEdit,
+      },
       {
         id: 'developer',
         labelKey: 'nav.items.developer',

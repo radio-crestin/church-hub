@@ -18,7 +18,8 @@
       "livestream": "Live Stream",
       "sidebar": "Bara Laterală",
       "developer": "Dezvoltatori",
-      "shortcuts": "Scurtături"
+      "shortcuts": "Scurtături",
+      "searchEngine": "Motor de căutare"
     }
   },
   "sections": {
@@ -950,6 +951,43 @@
       "viewReleaseNotes": "Vezi notele versiunii pe GitHub",
       "devInstance": "Instanță de dezvoltare",
       "devInstanceDescription": "Rulezi o versiune de dezvoltare — verificarea actualizărilor este dezactivată."
+    },
+    "searchEngine": {
+      "title": "Motor de căutare",
+      "description": "Alege ce motor stă la baza căutării de cântece, versete și programe. ChromaDB este experimental — SQLite rămâne sursa de adevăr.",
+      "engineLabel": "Motor activ",
+      "engineDescription": "Motoarele Chroma folosesc SQLite până când indexul termină sincronizarea.",
+      "engines": {
+        "sqlite": "SQLite (text integral, implicit)",
+        "chroma-semantic": "ChromaDB — semantic (după înțeles)",
+        "chroma-keyword": "ChromaDB — cuvinte cheie"
+      },
+      "fallbackNotice": "ChromaDB nu este încă pregătit — căutările sunt servite momentan de SQLite.",
+      "chromaStatus": {
+        "title": "Index ChromaDB",
+        "description": "Index vectorial local sincronizat din baza de date"
+      },
+      "states": {
+        "disabled": "Dezactivat",
+        "stopped": "Oprit",
+        "starting": "Pornește…",
+        "syncing": "Se sincronizează…",
+        "ready": "Pregătit",
+        "error": "Eroare"
+      },
+      "syncing": "Se sincronizează {{step}}…",
+      "counts": {
+        "songs": "Documente cântece",
+        "bible": "Versete biblice",
+        "schedules": "Programe"
+      },
+      "resync": "Resincronizează",
+      "toast": {
+        "engineChanged": "Motorul de căutare a fost actualizat",
+        "engineChangeFailed": "Actualizarea motorului de căutare a eșuat",
+        "resyncStarted": "Resincronizarea ChromaDB a început",
+        "resyncFailed": "Pornirea resincronizării a eșuat"
+      }
     }
   }
 }
