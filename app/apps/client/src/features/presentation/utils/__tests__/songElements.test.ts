@@ -42,19 +42,43 @@ describe('resolveAmen', () => {
 })
 
 describe('resolveSongSlideContentType', () => {
-  it('uses the first-slide layout for the first slide', () => {
-    expect(resolveSongSlideContentType(true, false)).toBe('song_first_slide')
+  it('uses the first-slide layout for a first slide that has a gama', () => {
+    expect(resolveSongSlideContentType(true, false, true, false)).toBe(
+      'song_first_slide',
+    )
   })
 
-  it('uses the last-slide layout for the last slide', () => {
-    expect(resolveSongSlideContentType(false, true)).toBe('song_last_slide')
+  it('falls back to song for a first slide WITHOUT a gama', () => {
+    expect(resolveSongSlideContentType(true, false, false, false)).toBe('song')
+  })
+
+  it('uses the last-slide layout for a last slide that has an amin', () => {
+    expect(resolveSongSlideContentType(false, true, false, true)).toBe(
+      'song_last_slide',
+    )
+  })
+
+  it('falls back to song for a last slide WITHOUT an amin', () => {
+    expect(resolveSongSlideContentType(false, true, false, false)).toBe('song')
   })
 
   it('uses the plain song layout for middle slides', () => {
-    expect(resolveSongSlideContentType(false, false)).toBe('song')
+    expect(resolveSongSlideContentType(false, false, false, false)).toBe('song')
   })
 
-  it('falls back to song for a single-slide song (both first and last)', () => {
-    expect(resolveSongSlideContentType(true, true)).toBe('song')
+  it('falls back to song for a single-slide song showing both gama and amin', () => {
+    expect(resolveSongSlideContentType(true, true, true, true)).toBe('song')
+  })
+
+  it('uses the first-slide layout for a single slide with only a gama', () => {
+    expect(resolveSongSlideContentType(true, true, true, false)).toBe(
+      'song_first_slide',
+    )
+  })
+
+  it('uses the last-slide layout for a single slide with only an amin', () => {
+    expect(resolveSongSlideContentType(true, true, false, true)).toBe(
+      'song_last_slide',
+    )
   })
 })

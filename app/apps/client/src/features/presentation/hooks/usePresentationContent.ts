@@ -358,25 +358,34 @@ export function usePresentationContent({
             // Key ("gama") and "Amin" are now their own positionable/styleable
             // elements (see ScreenContent renderSongKey/renderAmen), so we emit
             // them as separate fields instead of injecting into the slide text.
+            const songKeyValue = resolveSongKey(
+              isFirstSlide,
+              temp.data.keyLine,
+              songConfig,
+            )
+            const amenValue = resolveAmen(isLastSlide, slideContent)
             // Resolve chords for this slide
             const resolvedChords = resolveSlideChords(
               temp.data.currentSlideIndex,
               temp.data.slides,
             )
-            // First slide → "Gama - Strofă" (song_first_slide), last slide →
-            // "Strofă - Amin" (song_last_slide), middle slides → `song`.
+            // First slide WITH a gama → "Gama - Strofă" (song_first_slide), last
+            // slide WITH an amin → "Strofă - Amin" (song_last_slide); otherwise
+            // the plain `song` layout so the strofa isn't shifted for an absent
+            // element.
             setContentType(
-              resolveSongSlideContentType(isFirstSlide, isLastSlide),
+              resolveSongSlideContentType(
+                isFirstSlide,
+                isLastSlide,
+                !!songKeyValue,
+                !!amenValue,
+              ),
             )
             setContentData({
               mainText: slideContent,
               chords: resolvedChords,
-              songKey: resolveSongKey(
-                isFirstSlide,
-                temp.data.keyLine,
-                songConfig,
-              ),
-              amen: resolveAmen(isLastSlide, slideContent),
+              songKey: songKeyValue,
+              amen: amenValue,
             })
             setContentKey(
               `song|${temp.data.songId}|${temp.data.currentSlideIndex}`,
@@ -539,20 +548,32 @@ export function usePresentationContent({
                 | SongContentConfig
                 | undefined
               // Key + Amin are emitted as separate elements (see above).
+              const songKeyValue = resolveSongKey(
+                isFirstSlide,
+                item.keyLine,
+                songCfg,
+              )
+              const amenValue = resolveAmen(isLastSlide, slideContent)
               // Resolve chords for this slide
               const queueChords = resolveSlideChords(slideIndex, item.slides)
 
               if (isCancelled) return
-              // First slide → "Gama - Strofă" (song_first_slide), last slide →
-              // "Strofă - Amin" (song_last_slide), middle slides → `song`.
+              // First slide WITH a gama → "Gama - Strofă" (song_first_slide),
+              // last slide WITH an amin → "Strofă - Amin" (song_last_slide);
+              // otherwise the plain `song` layout.
               setContentType(
-                resolveSongSlideContentType(isFirstSlide, isLastSlide),
+                resolveSongSlideContentType(
+                  isFirstSlide,
+                  isLastSlide,
+                  !!songKeyValue,
+                  !!amenValue,
+                ),
               )
               setContentData({
                 mainText: slideContent,
                 chords: queueChords,
-                songKey: resolveSongKey(isFirstSlide, item.keyLine, songCfg),
-                amen: resolveAmen(isLastSlide, slideContent),
+                songKey: songKeyValue,
+                amen: amenValue,
               })
               setContentKey(`song|${item.songId}|${slideIndex}`)
 
