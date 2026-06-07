@@ -90,3 +90,30 @@ export function getMidiNativeModulePath(): string | null {
   }
   return null
 }
+
+/**
+ * Gets the ChromaDB persistence directory (<data-dir>/chroma)
+ */
+export function getChromaDataDir(): string {
+  return process.env.CHROMA_DATA_PATH || join(getDataDir(), 'chroma')
+}
+
+/**
+ * Gets the cache directory for local embedding models (<data-dir>/models)
+ * Used by transformers.js so the MiniLM model is downloaded once and reused.
+ */
+export function getModelsCacheDir(): string {
+  return join(getDataDir(), 'models')
+}
+
+/**
+ * Gets the path to the Chroma native binding (.node) in production
+ * In development, returns null (use standard node_modules resolution)
+ */
+export function getChromaNativeModulePath(): string | null {
+  const resourcesDir = getResourcesDir()
+  if (resourcesDir) {
+    return join(resourcesDir, 'chroma-native', 'chromadb-js-bindings.node')
+  }
+  return null
+}

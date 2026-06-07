@@ -83,6 +83,7 @@
     "werift": "^0.22.9"
   },
   "trustedDependencies": [
-    "audify"
+    "audify",
+    "onnxruntime-node"
   ]
 }
