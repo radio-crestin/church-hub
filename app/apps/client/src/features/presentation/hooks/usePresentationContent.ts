@@ -359,7 +359,9 @@ export function usePresentationContent({
               temp.data.currentSlideIndex,
               temp.data.slides,
             )
-            setContentType('song')
+            // The first slide uses the dedicated "Gama - Strofă"
+            // (song_first_slide) layout; every following slide uses `song`.
+            setContentType(isFirstSlide ? 'song_first_slide' : 'song')
             setContentData({
               mainText: slideContent,
               chords: resolvedChords,
@@ -535,7 +537,9 @@ export function usePresentationContent({
               const queueChords = resolveSlideChords(slideIndex, item.slides)
 
               if (isCancelled) return
-              setContentType('song')
+              // First slide → "Gama - Strofă" (song_first_slide) layout; the
+              // rest of the song uses `song`.
+              setContentType(isFirstSlide ? 'song_first_slide' : 'song')
               setContentData({
                 mainText: slideContent,
                 chords: queueChords,

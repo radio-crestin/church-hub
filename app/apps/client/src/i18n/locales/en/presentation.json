@@ -31,6 +31,7 @@
     },
     "contentTypes": {
       "song": "Song",
+      "song_first_slide": "Song (first slide)",
       "bible": "Bible Verse",
       "bible_passage": "Bible Passage",
       "announcement": "Announcement",

@@ -170,6 +170,39 @@ function getDefaultSongConfig() {
   }
 }
 
+// Layout for a song's FIRST slide only ("Gama - Strofă"): two elements — the
+// song key (gama) and the slide lyrics (strofa) — positioned/styled separately
+// from the rest of the song's slides (which keep the `song` config). Defaults
+// mirror the `song` config so there is no visual jump until the operator
+// repositions them. Chord/keyline display stay on the `song` config (single
+// source), so this layout has no displayChords/displayKeyLine of its own.
+function getDefaultSongFirstSlideConfig() {
+  return {
+    background: getDefaultBackground(),
+    mainText: {
+      constraints: constraints(10, 5),
+      size: sizeWithUnits(90, 80),
+      style: getDefaultTextStyle({ maxFontSize: 120 }),
+      padding: 20,
+      animationIn: getDefaultAnimation('in'),
+      animationOut: getDefaultAnimation('out'),
+    },
+    songKey: {
+      constraints: constraints(2, 5),
+      size: sizeWithUnits(40, 6),
+      style: getDefaultTextStyle({
+        maxFontSize: 32,
+        autoScale: false,
+        alignment: 'left',
+        bold: true,
+      }),
+      animationIn: getDefaultAnimation('in'),
+      animationOut: getDefaultAnimation('out'),
+    },
+    clockEnabled: false,
+  }
+}
+
 function getDefaultBibleConfig() {
   return {
     background: getDefaultBackground(),
@@ -276,6 +309,8 @@ function getDefaultContentConfig(
   switch (contentType) {
     case 'song':
       return getDefaultSongConfig()
+    case 'song_first_slide':
+      return getDefaultSongFirstSlideConfig()
     case 'bible':
     case 'bible_passage':
       return getDefaultBibleConfig()

@@ -47,6 +47,10 @@ const SAMPLE_CONTENT: Record<
     songKey: 'G',
     amen: 'Amin!',
   },
+  song_first_slide: {
+    main: 'Aleluia, Aleluia!\nMărire Domnului!\nAleluia, Aleluia!\nSlăvit să fie El!',
+    songKey: 'G',
+  },
   bible: {
     reference: 'Ioan 3:16',
     main: 'Fiindcă atât de mult a iubit Dumnezeu lumea, că a dat pe singurul Lui Fiu, pentru ca oricine crede în El să nu piară, ci să aibă viață veșnică.',
@@ -705,8 +709,16 @@ export function ScreenEditorCanvas({
       )
     }
 
-    // Song key "gama" (song, first slide)
-    if (config && 'songKey' in config && config.songKey) {
+    // Song key "gama" — only configurable in the "Gama - Strofă" (first slide)
+    // layout. The `song` config still carries a vestigial songKey for backward
+    // compatibility, but it never renders at runtime, so hide it from the Song
+    // tab to avoid the operator editing an element that has no effect.
+    if (
+      config &&
+      'songKey' in config &&
+      config.songKey &&
+      contentType === 'song_first_slide'
+    ) {
       const sk = config.songKey
       const bounds = calculatePixelBounds(
         sk.constraints,

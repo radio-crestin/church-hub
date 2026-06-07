@@ -74,3 +74,70 @@ test.describe('Song screen elements (songKey + amen)', () => {
     }
   })
 })
+
+/**
+ * "Gama - Strofă" (song_first_slide) is a dedicated content type whose config
+ * applies only to a song's FIRST slide: two separately positionable elements —
+ * the song key (gama) and the slide lyrics (strofa) — like the Bible
+ * reference/verse pair. It defaults into every screen and round-trips through
+ * the config API independently from the `song` config.
+ */
+test.describe('Song first slide layout (gama + strofa)', () => {
+  test('a new screen includes a song_first_slide config with mainText + songKey defaults', async ({
+    request,
+  }) => {
+    const screenId = await createScreen(request)
+    try {
+      const { data } = await (
+        await request.get(`/api/screens/${screenId}`)
+      ).json()
+      const cfg = data.contentConfigs.song_first_slide
+      expect(cfg, 'song_first_slide config present').toBeTruthy()
+      for (const key of ['mainText', 'songKey'] as const) {
+        expect(cfg[key], `${key} default present`).toBeTruthy()
+        expect(cfg[key]).toHaveProperty('constraints')
+        expect(cfg[key]).toHaveProperty('size')
+        expect(cfg[key].style).toHaveProperty('color')
+        expect(cfg[key].style).toHaveProperty('fontFamily')
+      }
+      // No amen on the first slide.
+      expect(cfg.amen).toBeUndefined()
+    } finally {
+      await request.delete(`/api/screens/${screenId}`)
+    }
+  })
+
+  test('song_first_slide position + style round-trips independently of song', async ({
+    request,
+  }) => {
+    const screenId = await createScreen(request)
+    try {
+      const { data } = await (
+        await request.get(`/api/screens/${screenId}`)
+      ).json()
+      const cfg = data.contentConfigs.song_first_slide
+
+      // Operator repositions/styles the gama + strofa for the first slide.
+      cfg.songKey.style.color = '#123456'
+      cfg.songKey.constraints.top.value = 7
+      cfg.mainText.style.color = '#abcdef'
+
+      const put = await request.put(
+        `/api/screens/${screenId}/config/song_first_slide`,
+        { data: { config: cfg } },
+      )
+      expect(put.status()).toBe(200)
+
+      const reread = (
+        await (await request.get(`/api/screens/${screenId}`)).json()
+      ).data.contentConfigs
+      expect(reread.song_first_slide.songKey.style.color).toBe('#123456')
+      expect(reread.song_first_slide.songKey.constraints.top.value).toBe(7)
+      expect(reread.song_first_slide.mainText.style.color).toBe('#abcdef')
+      // The plain `song` config is untouched by the first-slide edit.
+      expect(reread.song.mainText.style.color).not.toBe('#abcdef')
+    } finally {
+      await request.delete(`/api/screens/${screenId}`)
+    }
+  })
+})
