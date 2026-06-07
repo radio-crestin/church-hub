@@ -25,15 +25,94 @@ import { useUnlinkSong } from '../hooks/useUnlinkSong'
 import { dismissSuggestion, isDismissed } from '../utils/dismissedSuggestions'
 
 /**
+ * Row chrome for the currently-opened song — an indigo tint + ring so the
+ * "you are here" row pops out of the list without screaming. Shared by the
+ * grouped member row and the standalone (suggestions-only) state.
+ */
+const currentRowClasses =
+  'border-indigo-300 bg-indigo-50/70 ring-1 ring-indigo-200/60 dark:border-indigo-500/50 dark:bg-indigo-900/25 dark:ring-indigo-500/20'
+
+/**
+ * Title + badges + author/hymn + category/key chips for one version row.
+ * Shared between the grouped member rows and the current-song row shown in
+ * the suggestions-only state, so both render identically.
+ */
+function VersionRowInfo({
+  title,
+  hymnNumber,
+  author,
+  keyLine,
+  categoryName,
+  isPrimary = false,
+  isCurrent = false,
+}: {
+  title: string
+  hymnNumber: string | null
+  author: string | null
+  keyLine: string | null
+  categoryName: string | null
+  isPrimary?: boolean
+  isCurrent?: boolean
+}) {
+  const { t } = useTranslation('songs')
+  return (
+    <>
+      <div className="flex items-center gap-2">
+        <span className="truncate text-sm font-medium text-gray-900 group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400">
+          {title}
+        </span>
+        {isCurrent ? (
+          <span className="inline-flex items-center rounded bg-indigo-600 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-white dark:bg-indigo-500">
+            {t('versions.currentBadge')}
+          </span>
+        ) : null}
+        {isPrimary ? (
+          <span
+            title={t('versions.primary')}
+            className="inline-flex items-center gap-0.5 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
+          >
+            <Crown size={10} />
+            {t('versions.primary')}
+          </span>
+        ) : null}
+      </div>
+      {author || hymnNumber ? (
+        <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+          {[hymnNumber, author].filter(Boolean).join(' · ')}
+        </p>
+      ) : null}
+      {categoryName || keyLine ? (
+        <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs">
+          {categoryName ? (
+            <span className="inline-flex items-center gap-1 rounded bg-gray-100 px-1.5 py-0.5 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+              <Tag className="h-3 w-3" />
+              {categoryName}
+            </span>
+          ) : null}
+          {keyLine ? (
+            <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+              <Music2 className="h-3 w-3" />
+              {keyLine}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+    </>
+  )
+}
+
+/**
  * Renders the "Sugestii" sub-section: songs the server flagged as likely
- * versions, with accept ("aceeași cântare") and dismiss controls. Hidden
- * entirely when the server returns nothing — so a song with no candidates
- * doesn't waste vertical space.
+ * versions (highest similarity first), with accept ("aceeași cântare") and
+ * dismiss controls. When the server returns nothing it's hidden — unless
+ * `showEmptyState` asks for the subtle "no other versions" line (used in
+ * the standalone state, where the section is the whole panel body).
  */
 function SuggestionsSection({
   songId,
   canAdd,
   topBorder = true,
+  showEmptyState = false,
 }: {
   songId: number
   /**
@@ -46,6 +125,9 @@ function SuggestionsSection({
   /** Draw the separating top border. False when this is the first thing in
    *  the panel body (no linked versions above it) so there's no stray line. */
   topBorder?: boolean
+  /** Render a subtle "no other versions found" line instead of vanishing
+   *  when there are no suggestions. */
+  showEmptyState?: boolean
 }) {
   const { t } = useTranslation('songs')
   const { showToast } = useToast()
@@ -65,9 +147,13 @@ function SuggestionsSection({
 
   const visible = useMemo(
     () =>
-      suggestions.filter(
-        (s) => !isDismissed(songId, s.songId) && !linkedIds.has(s.songId),
-      ),
+      suggestions
+        .filter(
+          (s) => !isDismissed(songId, s.songId) && !linkedIds.has(s.songId),
+        )
+        // Best match first — the percentage shown on each row is the score,
+        // so the list must read top-down from most to least similar.
+        .sort((a, b) => b.score - a.score),
     // dismissTick intentionally invalidates the memo after a dismissal so the
     // re-read of localStorage (isDismissed) takes effect immediately.
     [suggestions, songId, dismissTick, linkedIds],
@@ -79,7 +165,17 @@ function SuggestionsSection({
   // are still gated by `canAdd` so view-only operators can browse but
   // not mutate.
   if (isLoading) return null
-  if (visible.length === 0) return null
+  if (visible.length === 0) {
+    if (!showEmptyState) return null
+    return (
+      <p
+        data-testid="versions-empty-state"
+        className="mt-3 px-1 text-xs italic text-gray-400 dark:text-gray-500"
+      >
+        {t('versions.noSuggestions')}
+      </p>
+    )
+  }
 
   async function handleAccept(suggestedId: number, suggestedTitle: string) {
     setAcceptingIds((prev) => new Set(prev).add(suggestedId))
@@ -141,6 +237,7 @@ function SuggestionsSection({
           return (
             <li
               key={s.songId}
+              data-testid="version-suggestion-row"
               className={`flex items-center gap-2 rounded-md px-2 py-1.5 transition-all duration-200 ${
                 isAccepting
                   ? 'translate-x-2 opacity-0'
@@ -212,6 +309,17 @@ interface SongVersionsPanelProps {
    */
   songTitle: string
   /**
+   * Display details for the currently-opened song, used to render its row
+   * at the top of the panel when the song is standalone (no group yet).
+   * Optional so callers without the detail payload degrade to title-only.
+   */
+  currentSong?: {
+    hymnNumber: string | null
+    author: string | null
+    keyLine: string | null
+    categoryName: string | null
+  }
+  /**
    * Lets the operator add new versions: the "+ Adaugă o versiune" CTA,
    * the ✓ accept suggestion button, and the ✗ dismiss suggestion button.
    * Mapped to `song_versions.create` at the route level.
@@ -246,10 +354,12 @@ interface SongVersionsPanelProps {
 }
 
 /**
- * Read+write panel for the "Versiuni ale cântării" section of a song. When
- * the song has no group yet, it just shows the suggestions list (with a
- * "Same song as…" CTA in the header when `canAdd` is true). When grouped,
- * it lists every member with quick actions.
+ * Read+write panel for the "Versiuni ale cântării" section of a song. The
+ * currently-opened song always leads the list, highlighted. When the song
+ * has no group yet, it's followed by the suggestions list, best match
+ * first (with a "Same song as…" CTA in the header when `canAdd` is true),
+ * or a subtle empty line when nothing matches. When grouped, every member
+ * is listed with quick actions.
  *
  * Always renders its own chrome + header so it visually mirrors
  * `SongBookmarksPanel` when both sit stacked in the right-column accordion.
@@ -258,6 +368,7 @@ interface SongVersionsPanelProps {
 export function SongVersionsPanel({
   songId,
   songTitle,
+  currentSong,
   canAdd,
   canEdit,
   canDelete,
@@ -272,6 +383,17 @@ export function SongVersionsPanel({
   const [isLinkModalOpen, setLinkModalOpen] = useState(false)
 
   const memberCount = group?.members.length ?? 0
+
+  // The opened song always leads the list ("you are here"); the rest keep
+  // the server's title order. Stable sort, so only the current song moves.
+  const sortedMembers = useMemo(() => {
+    if (!group) return []
+    return [...group.members].sort((a, b) => {
+      if (a.songId === songId) return -1
+      if (b.songId === songId) return 1
+      return 0
+    })
+  }, [group, songId])
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
@@ -333,71 +455,48 @@ export function SongVersionsPanel({
               <Loader2 size={14} className="animate-spin" />
             </div>
           ) : !group ? (
-            // Standalone song. View-only operators still get the
-            // suggestions list (read-only) so they can discover that
+            // Standalone song: the opened song leads (highlighted, "you are
+            // here"), then the suggestions. View-only operators still get
+            // the suggestions list (read-only) so they can discover that
             // "this song might have a sibling" without being able to
             // mutate. Editors get the same list plus the accept/dismiss
             // buttons that `SuggestionsSection` renders internally.
-            <SuggestionsSection
-              songId={songId}
-              canAdd={canAdd}
-              topBorder={false}
-            />
+            <>
+              <div
+                data-testid="version-current-row"
+                className={`relative flex items-center gap-3 rounded-lg border px-3 py-2 ${currentRowClasses}`}
+              >
+                <div className="min-w-0 flex-1">
+                  <VersionRowInfo
+                    title={songTitle}
+                    hymnNumber={currentSong?.hymnNumber ?? null}
+                    author={currentSong?.author ?? null}
+                    keyLine={currentSong?.keyLine ?? null}
+                    categoryName={currentSong?.categoryName ?? null}
+                    isCurrent
+                  />
+                </div>
+              </div>
+              <SuggestionsSection
+                songId={songId}
+                canAdd={canAdd}
+                showEmptyState
+              />
+            </>
           ) : (
             <>
               <ul className="space-y-1.5">
-                {group.members.map((member) => {
+                {sortedMembers.map((member) => {
                   const isCurrent = member.songId === songId
-                  // Title + primary badge + author/hymn line. For other members
-                  // a transparent stretched Link (below) makes the whole row a
-                  // click target; the title tints via the row's `group` hover.
-                  const info = (
-                    <>
-                      <div className="flex items-center gap-2">
-                        <span className="truncate text-sm font-medium text-gray-900 group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400">
-                          {member.title}
-                        </span>
-                        {member.isPrimary ? (
-                          <span
-                            title={t('versions.primary')}
-                            className="inline-flex items-center gap-0.5 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
-                          >
-                            <Crown size={10} />
-                            {t('versions.primary')}
-                          </span>
-                        ) : null}
-                      </div>
-                      {member.author || member.hymnNumber ? (
-                        <p className="truncate text-xs text-gray-500 dark:text-gray-400">
-                          {[member.hymnNumber, member.author]
-                            .filter(Boolean)
-                            .join(' · ')}
-                        </p>
-                      ) : null}
-                      {member.categoryName || member.keyLine ? (
-                        <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs">
-                          {member.categoryName ? (
-                            <span className="inline-flex items-center gap-1 rounded bg-gray-100 px-1.5 py-0.5 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                              <Tag className="h-3 w-3" />
-                              {member.categoryName}
-                            </span>
-                          ) : null}
-                          {member.keyLine ? (
-                            <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
-                              <Music2 className="h-3 w-3" />
-                              {member.keyLine}
-                            </span>
-                          ) : null}
-                        </div>
-                      ) : null}
-                    </>
-                  )
                   return (
                     <li
                       key={member.songId}
+                      data-testid={
+                        isCurrent ? 'version-current-row' : 'version-member-row'
+                      }
                       className={`relative flex items-center gap-3 rounded-lg border px-3 py-2 transition-colors ${
                         isCurrent
-                          ? 'border-indigo-200 bg-indigo-50/50 dark:border-indigo-500/40 dark:bg-indigo-900/20'
+                          ? currentRowClasses
                           : 'group cursor-pointer border-gray-200 hover:border-indigo-300 hover:bg-gray-50 dark:border-gray-700 dark:hover:border-indigo-500/40 dark:hover:bg-gray-700/40'
                       }`}
                     >
@@ -413,7 +512,20 @@ export function SongVersionsPanel({
                           className="absolute inset-0 rounded-lg"
                         />
                       ) : null}
-                      <div className="min-w-0 flex-1">{info}</div>
+                      {/* Title + badges + author/hymn line. For other members
+                          the stretched Link above makes the whole row a click
+                          target; the title tints via the row's `group` hover. */}
+                      <div className="min-w-0 flex-1">
+                        <VersionRowInfo
+                          title={member.title}
+                          hymnNumber={member.hymnNumber}
+                          author={member.author}
+                          keyLine={member.keyLine}
+                          categoryName={member.categoryName}
+                          isPrimary={member.isPrimary}
+                          isCurrent={isCurrent}
+                        />
+                      </div>
 
                       <div className="relative z-10 flex shrink-0 items-center gap-1">
                         {canEdit && !member.isPrimary ? (

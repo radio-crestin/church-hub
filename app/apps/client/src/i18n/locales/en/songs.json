@@ -284,6 +284,8 @@
     "suggestionsTitle": "Suggested matches",
     "suggestionAccept": "Same song — link them",
     "suggestionDismiss": "Not the same — hide this suggestion",
-    "percentSimilar": "{{percent}}% similar"
+    "percentSimilar": "{{percent}}% similar",
+    "currentBadge": "Current",
+    "noSuggestions": "No other versions of this song were found."
   }
 }
