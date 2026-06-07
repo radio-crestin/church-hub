@@ -338,6 +338,7 @@ export type ScreenType = 'primary' | 'stage' | 'livestream' | 'kiosk'
  */
 export type ContentType =
   | 'song'
+  | 'song_first_slide'
   | 'bible'
   | 'bible_passage'
   | 'announcement'
@@ -545,6 +546,21 @@ export interface SongContentConfig {
   chordFontSize?: number // Font size for chord annotations in px (default: 32)
 }
 
+/**
+ * Layout for a song's FIRST slide only ("Gama - Strofă"). Two separately
+ * positionable elements — the song key (gama) and the slide lyrics (strofa) —
+ * like the Bible reference/verse pair. Applies only to the first slide of a
+ * song; every following slide uses {@link SongContentConfig}. Chord/keyline
+ * display stay on the `song` config (single source), so they are not repeated
+ * here.
+ */
+export interface SongFirstSlideContentConfig {
+  background: ScreenBackgroundConfig
+  mainText: TextElementConfig // the lyrics of the first slide ("strofa")
+  songKey?: ReferenceTextConfig // the song key ("gama")
+  clockEnabled?: boolean // Per-slide-type enable, uses global clockConfig for position/style
+}
+
 export type ReferenceWrapperStyle = 'none' | 'parentheses' | 'brackets'
 
 export interface BibleContentConfig {
@@ -599,6 +615,7 @@ export interface ScreenShareContentConfig {
  */
 export type ContentTypeConfig =
   | SongContentConfig
+  | SongFirstSlideContentConfig
   | BibleContentConfig
   | AnnouncementContentConfig
   | VerseteTineriContentConfig
@@ -610,6 +627,7 @@ export type ContentTypeConfig =
  */
 export interface ContentConfigMap {
   song: SongContentConfig
+  song_first_slide: SongFirstSlideContentConfig
   bible: BibleContentConfig
   bible_passage: BibleContentConfig
   announcement: AnnouncementContentConfig

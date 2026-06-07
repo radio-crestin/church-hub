@@ -15,6 +15,7 @@ export const screenTypes = ['primary', 'stage', 'livestream', 'kiosk'] as const
 // Content types that can be rendered on screens
 export const contentTypes = [
   'song',
+  'song_first_slide',
   'bible',
   'bible_passage',
   'announcement',

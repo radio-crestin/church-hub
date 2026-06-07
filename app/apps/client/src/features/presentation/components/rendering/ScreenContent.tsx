@@ -50,10 +50,12 @@ export function ScreenContent({
 
   const currentConfig = screen.contentConfigs[contentType]
 
-  // Check if chords display is enabled
+  // Check if chords display is enabled. Chord settings live on the `song`
+  // config as a single source of truth, so the first slide ("song_first_slide")
+  // reads them from `song` too — the operator only toggles chords in one place.
   const songConfig =
-    contentType === 'song'
-      ? (currentConfig as SongContentConfig | undefined)
+    contentType === 'song' || contentType === 'song_first_slide'
+      ? (screen.contentConfigs.song as SongContentConfig | undefined)
       : null
   const displayChordsEnabled = songConfig?.displayChords ?? false
 

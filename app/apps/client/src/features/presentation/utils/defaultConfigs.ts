@@ -14,6 +14,7 @@ import type {
   ScreenType,
   SizeWithUnits,
   SongContentConfig,
+  SongFirstSlideContentConfig,
   TextStyle,
   VerseteTineriContentConfig,
 } from '../types'
@@ -167,6 +168,41 @@ export function getDefaultSongConfig(): SongContentConfig {
     },
     clockEnabled: false,
     displayKeyLine: true,
+  }
+}
+
+// ============================================================================
+// SONG FIRST SLIDE CONTENT CONFIG ("Gama - Strofă")
+// ============================================================================
+
+// First-slide-only layout: the song key (gama) + the first slide's lyrics
+// (strofa), positioned/styled separately from the rest of the song. Defaults
+// mirror the `song` config so there is no jump until the operator repositions
+// them. Chord/keyline display stay on the `song` config (single source).
+export function getDefaultSongFirstSlideConfig(): SongFirstSlideContentConfig {
+  return {
+    background: getDefaultBackground(),
+    mainText: {
+      constraints: constraints(10, 5),
+      size: sizeWithUnits(90, 80),
+      style: getDefaultTextStyle({ maxFontSize: 120 }),
+      padding: 20,
+      animationIn: getDefaultAnimationIn(),
+      animationOut: getDefaultAnimationOut(),
+    },
+    songKey: {
+      constraints: constraints(2, 5),
+      size: sizeWithUnits(40, 6),
+      style: getDefaultTextStyle({
+        maxFontSize: 32,
+        autoScale: false,
+        alignment: 'left',
+        bold: true,
+      }),
+      animationIn: getDefaultAnimationIn(),
+      animationOut: getDefaultAnimationOut(),
+    },
+    clockEnabled: false,
   }
 }
 
@@ -336,6 +372,7 @@ export function getDefaultContentConfigs(
 
   // Base configs
   const songConfig = getDefaultSongConfig()
+  const songFirstSlideConfig = getDefaultSongFirstSlideConfig()
   const bibleConfig = getDefaultBibleConfig()
   const announcementConfig = getDefaultAnnouncementConfig()
   const verseteTineriConfig = getDefaultVerseteTineriConfig()
@@ -344,6 +381,7 @@ export function getDefaultContentConfigs(
   // Adjust for stage screens (content gets 78% height)
   if (isStage) {
     songConfig.mainText.size.height = 65
+    songFirstSlideConfig.mainText.size.height = 65
     bibleConfig.contentText.size.height = 63
     announcementConfig.mainText.size.height = 65
     verseteTineriConfig.contentText.size.height = 57
@@ -366,6 +404,14 @@ export function getDefaultContentConfigs(
     songConfig.mainText.animationOut.type = 'slide-down'
     songConfig.mainText.animationOut.duration = 150
 
+    songFirstSlideConfig.background = transparentBg
+    addShadow(songFirstSlideConfig.mainText)
+    songFirstSlideConfig.mainText.animationIn.type = 'slide-up'
+    songFirstSlideConfig.mainText.animationIn.duration = 200
+    songFirstSlideConfig.mainText.animationOut.type = 'slide-down'
+    songFirstSlideConfig.mainText.animationOut.duration = 150
+    if (songFirstSlideConfig.songKey) addShadow(songFirstSlideConfig.songKey)
+
     bibleConfig.background = transparentBg
     addShadow(bibleConfig.referenceText)
     addShadow(bibleConfig.contentText)
@@ -384,6 +430,7 @@ export function getDefaultContentConfigs(
 
   return {
     song: songConfig,
+    song_first_slide: songFirstSlideConfig,
     bible: bibleConfig,
     bible_passage: bibleConfig, // Same as bible
     announcement: announcementConfig,

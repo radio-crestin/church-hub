@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { Monitor, RotateCcw, Save, X, ZoomIn, ZoomOut } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { Button } from '~/ui/button/Button'
 import { Combobox } from '~/ui/combobox/Combobox'
@@ -24,15 +25,24 @@ interface ScreenEditorProps {
   onClose: () => void
 }
 
-const CONTENT_TYPE_OPTIONS: { value: ContentType; label: string }[] = [
-  { value: 'song', label: 'Song' },
-  { value: 'bible', label: 'Bible Verse' },
-  { value: 'bible_passage', label: 'Bible Passage' },
-  { value: 'announcement', label: 'Announcement' },
-  { value: 'versete_tineri', label: 'Versete Tineri' },
-  { value: 'empty', label: 'Empty / Clock' },
-  { value: 'screen_share', label: 'Screen Share' },
+const CONTENT_TYPE_VALUES: ContentType[] = [
+  'song',
+  'song_first_slide',
+  'bible',
+  'bible_passage',
+  'announcement',
+  'versete_tineri',
+  'empty',
+  'screen_share',
 ]
+
+const getContentTypeOptions = (
+  t: (key: string) => string,
+): { value: ContentType; label: string }[] =>
+  CONTENT_TYPE_VALUES.map((value) => ({
+    value,
+    label: t(`screens.contentTypes.${value}`),
+  }))
 
 export function ScreenEditor({
   screen: initialScreen,
@@ -40,6 +50,8 @@ export function ScreenEditor({
   onClose,
 }: ScreenEditorProps) {
   const [state, actions] = useEditorState()
+  const { t } = useTranslation('presentation')
+  const contentTypeOptions = useMemo(() => getContentTypeOptions(t), [t])
   const { send } = useWebSocket()
   const queryClient = useQueryClient()
   const lastEmitRef = useRef<number>(0)
@@ -358,7 +370,7 @@ export function ScreenEditor({
                 actions.setSelectedContentType(value as ContentType)
                 actions.clearSelection()
               }}
-              options={CONTENT_TYPE_OPTIONS}
+              options={contentTypeOptions}
               className="w-44 sm:w-56"
               portalContainer={portalContainer}
             />
