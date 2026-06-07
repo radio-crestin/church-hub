@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  extractTrailingAmin,
   resolveAmen,
   resolveSongKey,
+  resolveSongSlideBody,
   resolveSongSlideContentType,
 } from '../songElements'
 
@@ -80,5 +82,72 @@ describe('resolveSongSlideContentType', () => {
     expect(resolveSongSlideContentType(true, true, false, true)).toBe(
       'song_last_slide',
     )
+  })
+})
+
+describe('extractTrailingAmin', () => {
+  it('extracts a standalone trailing "Amin!" paragraph', () => {
+    expect(
+      extractTrailingAmin('<p>Slăvit să fie El</p><p>Amin!</p>'),
+    ).toEqual({ mainText: '<p>Slăvit să fie El</p>', amen: 'Amin!' })
+  })
+
+  it('extracts a trailing <br>-separated amin inside the last paragraph', () => {
+    expect(extractTrailingAmin('<p>Slăvit<br>Amin!</p>')).toEqual({
+      mainText: '<p>Slăvit</p>',
+      amen: 'Amin!',
+    })
+  })
+
+  it('extracts a multi-word amin line and keeps its text', () => {
+    expect(
+      extractTrailingAmin('<p>versul</p><p>Amin, Amin!</p>'),
+    ).toEqual({ mainText: '<p>versul</p>', amen: 'Amin, Amin!' })
+  })
+
+  it('ignores trailing empty paragraphs before the amin', () => {
+    expect(
+      extractTrailingAmin('<p>versul</p><p>Amin!</p><p><br></p>'),
+    ).toEqual({ mainText: '<p>versul</p>', amen: 'Amin!' })
+  })
+
+  it('handles a slide whose only line is an amin', () => {
+    expect(extractTrailingAmin('<p>Amin!</p>')).toEqual({
+      mainText: '',
+      amen: 'Amin!',
+    })
+  })
+
+  it('returns null when the last line is not a standalone amin', () => {
+    expect(extractTrailingAmin('<p>line1</p><p>line2</p>')).toBeNull()
+    expect(extractTrailingAmin('<p>versul</p><p>Slăvit, Amin</p>')).toBeNull()
+  })
+})
+
+describe('resolveSongSlideBody', () => {
+  it('leaves non-last slides untouched', () => {
+    expect(resolveSongSlideBody(false, '<p>versul</p>')).toEqual({
+      mainText: '<p>versul</p>',
+      amen: undefined,
+    })
+  })
+
+  it('pulls a trailing amin line into the amin element', () => {
+    expect(
+      resolveSongSlideBody(true, '<p>Slăvit să fie El</p><p>Amin!</p>'),
+    ).toEqual({ mainText: '<p>Slăvit să fie El</p>', amen: 'Amin!' })
+  })
+
+  it('adds a standard "Amin!" when the last slide has no amin', () => {
+    expect(resolveSongSlideBody(true, '<p>Slăvit să fie El</p>')).toEqual({
+      mainText: '<p>Slăvit să fie El</p>',
+      amen: 'Amin!',
+    })
+  })
+
+  it('keeps an inline (non-trailing) amin in the lyrics without an element', () => {
+    expect(
+      resolveSongSlideBody(true, '<p>Amin slăvit</p><p>versul final</p>'),
+    ).toEqual({ mainText: '<p>Amin slăvit</p><p>versul final</p>', amen: undefined })
   })
 })

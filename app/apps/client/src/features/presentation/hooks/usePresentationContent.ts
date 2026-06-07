@@ -10,8 +10,8 @@ import { useSongUpdateTimestamp } from '../context/WebSocketContext'
 import type { ContentType, ScreenConfig, SongContentConfig } from '../types'
 import { resolveSlideChords } from '../utils/resolveSlideChords'
 import {
-  resolveAmen,
   resolveSongKey,
+  resolveSongSlideBody,
   resolveSongSlideContentType,
 } from '../utils/songElements'
 
@@ -358,12 +358,15 @@ export function usePresentationContent({
             // Key ("gama") and "Amin" are now their own positionable/styleable
             // elements (see ScreenContent renderSongKey/renderAmen), so we emit
             // them as separate fields instead of injecting into the slide text.
+            // A standalone trailing "amin" line is pulled out of the lyrics into
+            // the amin element (so it isn't shown twice).
             const songKeyValue = resolveSongKey(
               isFirstSlide,
               temp.data.keyLine,
               songConfig,
             )
-            const amenValue = resolveAmen(isLastSlide, slideContent)
+            const { mainText: songMainText, amen: amenValue } =
+              resolveSongSlideBody(isLastSlide, slideContent)
             // Resolve chords for this slide
             const resolvedChords = resolveSlideChords(
               temp.data.currentSlideIndex,
@@ -382,7 +385,7 @@ export function usePresentationContent({
               ),
             )
             setContentData({
-              mainText: slideContent,
+              mainText: songMainText,
               chords: resolvedChords,
               songKey: songKeyValue,
               amen: amenValue,
@@ -547,13 +550,15 @@ export function usePresentationContent({
               const songCfg = screen?.contentConfigs?.song as
                 | SongContentConfig
                 | undefined
-              // Key + Amin are emitted as separate elements (see above).
+              // Key + Amin are emitted as separate elements (see above). A
+              // standalone trailing "amin" line is pulled out of the lyrics.
               const songKeyValue = resolveSongKey(
                 isFirstSlide,
                 item.keyLine,
                 songCfg,
               )
-              const amenValue = resolveAmen(isLastSlide, slideContent)
+              const { mainText: songMainText, amen: amenValue } =
+                resolveSongSlideBody(isLastSlide, slideContent)
               // Resolve chords for this slide
               const queueChords = resolveSlideChords(slideIndex, item.slides)
 
@@ -570,7 +575,7 @@ export function usePresentationContent({
                 ),
               )
               setContentData({
-                mainText: slideContent,
+                mainText: songMainText,
                 chords: queueChords,
                 songKey: songKeyValue,
                 amen: amenValue,
