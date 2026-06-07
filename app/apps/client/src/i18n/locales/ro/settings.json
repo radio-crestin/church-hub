@@ -945,10 +945,18 @@
       },
       "viewer": {
         "empty": "Nu există jurnale de afișat.",
+        "noMatches": "Niciun jurnal nu corespunde filtrelor.",
+        "search": "Caută în jurnale…",
         "refresh": "Reîmprospătează",
         "refreshing": "Se reîmprospătează...",
         "serverHeading": "Jurnale server",
-        "tauriHeading": "Jurnale aplicație (Tauri)"
+        "tauriHeading": "Jurnale aplicație (Tauri)",
+        "levels": {
+          "error": "Erori",
+          "warning": "Avertismente",
+          "info": "Info",
+          "debug": "Depanare"
+        }
       },
       "clear": {
         "card": {

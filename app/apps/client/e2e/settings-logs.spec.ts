@@ -179,5 +179,22 @@ test.describe('Settings · Logs', () => {
     await expect(
       page.getByText(/server logs|jurnale server/i).first(),
     ).toBeVisible()
+
+    // Level filter chips and the search box are present.
+    await expect(
+      page.getByRole('button', { name: /errors|erori/i }),
+    ).toBeVisible()
+    await expect(
+      page.getByRole('button', { name: /warnings|avertismente/i }),
+    ).toBeVisible()
+    await expect(
+      page.getByPlaceholder(/search logs|caută în jurnale/i),
+    ).toBeVisible()
+
+    // Toggling a level off updates its pressed state (filter is interactive).
+    const errorsChip = page.getByRole('button', { name: /errors|erori/i })
+    await expect(errorsChip).toHaveAttribute('aria-pressed', 'true')
+    await errorsChip.click()
+    await expect(errorsChip).toHaveAttribute('aria-pressed', 'false')
   })
 })
