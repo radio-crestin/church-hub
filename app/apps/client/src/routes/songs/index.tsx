@@ -12,6 +12,7 @@ import { useSearchHistoryById } from '~/features/songs/hooks'
 import { openSongWindow } from '~/features/songs/utils/openSongWindow'
 import { useMarcajeBoundary } from '~/hooks/useMarcajeBoundary'
 import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
+import { PermissionGate } from '~/ui/PermissionGate'
 
 interface SongsSearchParams {
   q?: string
@@ -287,16 +288,20 @@ function SongsPage() {
                 </span>
               </button>
             )}
-            <button
-              type="button"
-              onClick={() =>
-                navigate({ to: '/songs/$songId', params: { songId: 'new' } })
-              }
-              className="flex items-center gap-2 px-3 py-2 lg:px-3 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">{t('actions.create')}</span>
-            </button>
+            {/* Creating songs requires songs.create — hide the button entirely
+                for users without it (the /songs/new route is guarded too). */}
+            <PermissionGate permission="songs.create">
+              <button
+                type="button"
+                onClick={() =>
+                  navigate({ to: '/songs/$songId', params: { songId: 'new' } })
+                }
+                className="flex items-center gap-2 px-3 py-2 lg:px-3 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                <span className="hidden sm:inline">{t('actions.create')}</span>
+              </button>
+            </PermissionGate>
           </div>
         </div>
 
