@@ -6,7 +6,6 @@ import {
 } from '~/features/keyboard-shortcuts'
 import {
   useClearSlide,
-  useClearTemporaryContent,
   useNavigateTemporary,
   usePresentationState,
   useShowSlide,
@@ -20,23 +19,11 @@ export function useKeyboardShortcuts() {
   const { data: state } = usePresentationState()
   const navigateTemporary = useNavigateTemporary()
   const clearSlide = useClearSlide()
-  const clearTemporary = useClearTemporaryContent()
   const showSlide = useShowSlide()
 
   // Determine if we have content to navigate (song slides or temporary content)
-  const hasTemporaryContent = !!state?.temporaryContent
-  const hasNavigableContent = !!state?.currentSongSlideId || hasTemporaryContent
-
-  // Full close for the presenter remote's "black screen" button: drop the
-  // temporary content entirely (same end state as advancing past the last
-  // slide) so the presentation truly CLOSES, not just blanks with a restore.
-  const closePresentation = useCallback(() => {
-    if (hasTemporaryContent) {
-      clearTemporary.mutate()
-    } else {
-      clearSlide.mutate()
-    }
-  }, [hasTemporaryContent, clearTemporary, clearSlide])
+  const hasNavigableContent =
+    !!state?.currentSongSlideId || !!state?.temporaryContent
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent): boolean => {
@@ -74,12 +61,12 @@ export function useKeyboardShortcuts() {
         case 'B':
         case '.':
           // A presenter remote's "black screen" button typically sends "b" or
-          // ".". Fully CLOSE the live presentation (same end state as going
-          // past the last slide). Only when something is live, so we never
-          // swallow a stray keypress.
+          // ".". Behave exactly like Escape — hide the presentation (show the
+          // clock) — but ONLY while something is being presented. When nothing
+          // is live it does nothing (and we don't swallow the keypress).
           if (!hasNavigableContent) return false
           event.preventDefault()
-          closePresentation()
+          clearSlide.mutate()
           return true
 
         case 'F5':
@@ -99,13 +86,7 @@ export function useKeyboardShortcuts() {
           return false
       }
     },
-    [
-      hasNavigableContent,
-      navigateTemporary,
-      clearSlide,
-      closePresentation,
-      showSlide,
-    ],
+    [hasNavigableContent, navigateTemporary, clearSlide, showSlide],
   )
 
   // Register with PRESENTATION priority (lowest) - page-specific handlers take precedence
