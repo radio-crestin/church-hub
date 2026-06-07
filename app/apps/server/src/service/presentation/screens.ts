@@ -203,6 +203,37 @@ function getDefaultSongFirstSlideConfig() {
   }
 }
 
+// Layout for a song's LAST slide only ("Strofă - Amin"): two elements — the
+// slide lyrics (strofa) and the "Amin" — positioned/styled separately from the
+// rest of the song's slides (which keep the `song` config). Defaults mirror the
+// `song` config so there is no visual jump until the operator repositions them.
+function getDefaultSongLastSlideConfig() {
+  return {
+    background: getDefaultBackground(),
+    mainText: {
+      constraints: constraints(10, 5),
+      size: sizeWithUnits(90, 80),
+      style: getDefaultTextStyle({ maxFontSize: 120 }),
+      padding: 20,
+      animationIn: getDefaultAnimation('in'),
+      animationOut: getDefaultAnimation('out'),
+    },
+    amen: {
+      constraints: constraints(85, 5),
+      size: sizeWithUnits(90, 10),
+      style: getDefaultTextStyle({
+        maxFontSize: 48,
+        autoScale: false,
+        alignment: 'center',
+        italic: true,
+      }),
+      animationIn: getDefaultAnimation('in'),
+      animationOut: getDefaultAnimation('out'),
+    },
+    clockEnabled: false,
+  }
+}
+
 function getDefaultBibleConfig() {
   return {
     background: getDefaultBackground(),
@@ -311,6 +342,8 @@ function getDefaultContentConfig(
       return getDefaultSongConfig()
     case 'song_first_slide':
       return getDefaultSongFirstSlideConfig()
+    case 'song_last_slide':
+      return getDefaultSongLastSlideConfig()
     case 'bible':
     case 'bible_passage':
       return getDefaultBibleConfig()

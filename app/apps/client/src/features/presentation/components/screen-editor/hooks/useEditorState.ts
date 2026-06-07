@@ -32,6 +32,7 @@ type PreviewTextsMap = Record<ContentType, PreviewTexts>
 const createEmptyPreviewTexts = (): PreviewTextsMap => ({
   song: {},
   song_first_slide: {},
+  song_last_slide: {},
   bible: {},
   bible_passage: {},
   announcement: {},

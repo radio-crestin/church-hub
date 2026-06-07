@@ -141,3 +141,70 @@ test.describe('Song first slide layout (gama + strofa)', () => {
     }
   })
 })
+
+/**
+ * "Strofă - Amin" (song_last_slide) is a dedicated content type whose config
+ * applies only to a song's LAST slide: two separately positionable elements —
+ * the slide lyrics (strofa) and the "Amin" — like the Bible reference/verse
+ * pair. It defaults into every screen and round-trips through the config API
+ * independently from the `song` config.
+ */
+test.describe('Song last slide layout (strofa + amin)', () => {
+  test('a new screen includes a song_last_slide config with mainText + amen defaults', async ({
+    request,
+  }) => {
+    const screenId = await createScreen(request)
+    try {
+      const { data } = await (
+        await request.get(`/api/screens/${screenId}`)
+      ).json()
+      const cfg = data.contentConfigs.song_last_slide
+      expect(cfg, 'song_last_slide config present').toBeTruthy()
+      for (const key of ['mainText', 'amen'] as const) {
+        expect(cfg[key], `${key} default present`).toBeTruthy()
+        expect(cfg[key]).toHaveProperty('constraints')
+        expect(cfg[key]).toHaveProperty('size')
+        expect(cfg[key].style).toHaveProperty('color')
+        expect(cfg[key].style).toHaveProperty('fontFamily')
+      }
+      // No songKey (gama) on the last slide.
+      expect(cfg.songKey).toBeUndefined()
+    } finally {
+      await request.delete(`/api/screens/${screenId}`)
+    }
+  })
+
+  test('song_last_slide position + style round-trips independently of song', async ({
+    request,
+  }) => {
+    const screenId = await createScreen(request)
+    try {
+      const { data } = await (
+        await request.get(`/api/screens/${screenId}`)
+      ).json()
+      const cfg = data.contentConfigs.song_last_slide
+
+      // Operator repositions/styles + hides the amen for the last slide.
+      cfg.amen.style.color = '#654321'
+      cfg.amen.constraints.top.value = 90
+      cfg.mainText.style.color = '#fedcba'
+
+      const put = await request.put(
+        `/api/screens/${screenId}/config/song_last_slide`,
+        { data: { config: cfg } },
+      )
+      expect(put.status()).toBe(200)
+
+      const reread = (
+        await (await request.get(`/api/screens/${screenId}`)).json()
+      ).data.contentConfigs
+      expect(reread.song_last_slide.amen.style.color).toBe('#654321')
+      expect(reread.song_last_slide.amen.constraints.top.value).toBe(90)
+      expect(reread.song_last_slide.mainText.style.color).toBe('#fedcba')
+      // The plain `song` config is untouched by the last-slide edit.
+      expect(reread.song.mainText.style.color).not.toBe('#fedcba')
+    } finally {
+      await request.delete(`/api/screens/${screenId}`)
+    }
+  })
+})

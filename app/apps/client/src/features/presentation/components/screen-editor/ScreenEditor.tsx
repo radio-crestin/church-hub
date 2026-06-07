@@ -28,6 +28,7 @@ interface ScreenEditorProps {
 const CONTENT_TYPE_VALUES: ContentType[] = [
   'song',
   'song_first_slide',
+  'song_last_slide',
   'bible',
   'bible_passage',
   'announcement',
