@@ -284,6 +284,8 @@
     "suggestionsTitle": "Posibile potriviri",
     "suggestionAccept": "Aceeași cântare — leagă-le",
     "suggestionDismiss": "Nu e aceeași — ascunde sugestia",
-    "percentSimilar": "{{percent}}% similar"
+    "percentSimilar": "{{percent}}% similar",
+    "currentBadge": "Curentă",
+    "noSuggestions": "Nu s-au găsit alte versiuni ale acestei cântări."
   }
 }

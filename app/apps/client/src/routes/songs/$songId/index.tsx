@@ -878,6 +878,12 @@ function SongPreviewPage() {
                 <SongVersionsPanel
                   songId={numericId}
                   songTitle={song.title}
+                  currentSong={{
+                    hymnNumber: song.hymnNumber,
+                    author: song.author,
+                    keyLine: song.keyLine,
+                    categoryName: song.category?.name ?? null,
+                  }}
                   canAdd={canAddSongVersion}
                   canEdit={canEditSongVersion}
                   canDelete={canDeleteSongVersion}
