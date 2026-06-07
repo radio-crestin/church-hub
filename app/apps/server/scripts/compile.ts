@@ -3,7 +3,7 @@
 /**
  * Compile the packages/server to use as a sidecar in Tauri
  */
-import { copyFileSync, existsSync, mkdirSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs'
 import path from 'node:path'
 import { $ } from 'bun'
 
@@ -45,6 +45,22 @@ const MIDI_PREBUILD_NAMES: Record<string, Record<string, string>> = {
   win32: {
     x64: 'midi-win32-x64',
     arm64: 'midi-win32-arm64',
+  },
+} as const
+
+// Maps OS/arch to the chromadb-js-bindings NAPI package (ships the Rust
+// Chroma server; loaded by the --chroma-server child via require()).
+const CHROMA_BINDING_PACKAGES: Record<string, Record<string, string>> = {
+  darwin: {
+    x64: 'chromadb-js-bindings-darwin-x64',
+    arm64: 'chromadb-js-bindings-darwin-arm64',
+  },
+  linux: {
+    x64: 'chromadb-js-bindings-linux-x64-gnu',
+    arm64: 'chromadb-js-bindings-linux-arm64-gnu',
+  },
+  win32: {
+    x64: 'chromadb-js-bindings-win32-x64-msvc',
   },
 } as const
 
@@ -103,6 +119,54 @@ function copyMidiPrebuilds(os: string, arch: string): void {
   )
 }
 
+/**
+ * Copies the Chroma NAPI binding (.node) for the current platform to the
+ * resources folder as chroma-native/chromadb-js-bindings.node — loaded by
+ * the --chroma-server child process in production.
+ */
+function copyChromaBinding(os: string, arch: string): void {
+  const packageName = CHROMA_BINDING_PACKAGES[os]?.[arch]
+  if (!packageName) {
+    console.log(
+      `\x1b[33mNo Chroma binding available for ${os}/${arch} — Chroma search will be disabled\x1b[0m`,
+    )
+    return
+  }
+
+  const packageDir = path.join(
+    __dirname,
+    '..',
+    '..',
+    '..',
+    'node_modules',
+    packageName,
+  )
+  // The .node file is named after the platform tag, e.g.
+  // chromadb-js-bindings.darwin-arm64.node — find it instead of hardcoding.
+  const nodeFile = existsSync(packageDir)
+    ? readdirSync(packageDir).find((f) => f.endsWith('.node'))
+    : undefined
+
+  if (!nodeFile) {
+    console.log(
+      `\x1b[33mChroma binding .node not found in ${packageDir} — Chroma search will be disabled\x1b[0m`,
+    )
+    return
+  }
+
+  const destDir = path.join(RESOURCES_DIR, 'chroma-native')
+  if (!existsSync(destDir)) {
+    mkdirSync(destDir, { recursive: true })
+  }
+
+  const sourceFile = path.join(packageDir, nodeFile)
+  const destFile = path.join(destDir, 'chromadb-js-bindings.node')
+  copyFileSync(sourceFile, destFile)
+  console.log(
+    `\x1b[32mCopied Chroma binding:\x1b[0m ${sourceFile} -> ${destFile}`,
+  )
+}
+
 async function main() {
   const os = process.platform as keyof typeof BINARIES_POSTFIX
   const arch = process.arch as keyof typeof ARCHITECTURES
@@ -127,6 +191,10 @@ async function main() {
   // Copy MIDI native modules to resources folder
   console.log('\x1b[34mCopying MIDI native modules...\x1b[0m')
   copyMidiPrebuilds(os, arch)
+
+  // Copy Chroma server binding to resources folder
+  console.log('\x1b[34mCopying Chroma binding...\x1b[0m')
+  copyChromaBinding(os, arch)
 
   console.log('\x1b[34mCompiling server with Bun...\x1b[0m')
   await $`bun build --compile --production --minify --minify-syntax --target bun --bundle ./src/index.ts --outfile ${outfile}`
