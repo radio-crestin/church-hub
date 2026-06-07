@@ -139,6 +139,33 @@ function getDefaultSongConfig() {
       animationIn: getDefaultAnimation('in'),
       animationOut: getDefaultAnimation('out'),
     },
+    // Song key ("gama") — shown on the FIRST slide. Separately positionable /
+    // styleable element (like the Bible reference). Top-left by default.
+    songKey: {
+      constraints: constraints(2, 5),
+      size: sizeWithUnits(40, 6),
+      style: getDefaultTextStyle({
+        maxFontSize: 32,
+        autoScale: false,
+        alignment: 'left',
+        bold: true,
+      }),
+      animationIn: getDefaultAnimation('in'),
+      animationOut: getDefaultAnimation('out'),
+    },
+    // "Amin" — shown on the LAST slide. Bottom band, centered, by default.
+    amen: {
+      constraints: constraints(85, 5),
+      size: sizeWithUnits(90, 10),
+      style: getDefaultTextStyle({
+        maxFontSize: 48,
+        autoScale: false,
+        alignment: 'center',
+        italic: true,
+      }),
+      animationIn: getDefaultAnimation('in'),
+      animationOut: getDefaultAnimation('out'),
+    },
     clockEnabled: false,
   }
 }

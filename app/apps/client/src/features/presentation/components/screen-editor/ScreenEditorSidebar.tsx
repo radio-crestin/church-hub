@@ -255,6 +255,38 @@ export function ScreenEditorSidebar({
               refConfig.slideTransitionIn ?? DEFAULT_SLIDE_TRANSITION_IN,
           },
         }
+      case 'songKey': {
+        if (!('songKey' in config) || !config.songKey) return null
+        const skConfig = config.songKey as ReferenceTextConfig
+        return {
+          path: ['songKey'],
+          config: {
+            ...skConfig,
+            animationIn: skConfig.animationIn ?? DEFAULT_ANIMATION_IN,
+            animationOut: skConfig.animationOut ?? DEFAULT_ANIMATION_OUT,
+            slideTransitionOut:
+              skConfig.slideTransitionOut ?? DEFAULT_SLIDE_TRANSITION_OUT,
+            slideTransitionIn:
+              skConfig.slideTransitionIn ?? DEFAULT_SLIDE_TRANSITION_IN,
+          },
+        }
+      }
+      case 'amen': {
+        if (!('amen' in config) || !config.amen) return null
+        const amenConfig = config.amen as ReferenceTextConfig
+        return {
+          path: ['amen'],
+          config: {
+            ...amenConfig,
+            animationIn: amenConfig.animationIn ?? DEFAULT_ANIMATION_IN,
+            animationOut: amenConfig.animationOut ?? DEFAULT_ANIMATION_OUT,
+            slideTransitionOut:
+              amenConfig.slideTransitionOut ?? DEFAULT_SLIDE_TRANSITION_OUT,
+            slideTransitionIn:
+              amenConfig.slideTransitionIn ?? DEFAULT_SLIDE_TRANSITION_IN,
+          },
+        }
+      }
       case 'personLabel':
         if (!('personLabel' in config)) return null
         // Ensure animation configs exist for backwards compatibility
@@ -342,7 +374,11 @@ export function ScreenEditorSidebar({
         <>
           <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-200 capitalize">
-              {selectedElement.type.replace(/([A-Z])/g, ' $1').trim()}
+              {selectedElement.type === 'songKey'
+                ? t('screens.elements.songKey')
+                : selectedElement.type === 'amen'
+                  ? t('screens.elements.amen')
+                  : selectedElement.type.replace(/([A-Z])/g, ' $1').trim()}
             </h3>
           </div>
 

@@ -291,6 +291,84 @@ export function ScreenContent({
     )
   }
 
+  // Render the song key ("gama") — shown on the first slide. contentData.songKey
+  // is only populated on the first slide, so visibility is gated automatically.
+  const renderSongKey = () => {
+    if (!config || !('songKey' in config) || !config.songKey) return null
+    const sk = config.songKey
+    if (sk.hidden) return null
+
+    const bounds = calculatePixelBounds(
+      sk.constraints,
+      sk.size,
+      canvasWidth,
+      canvasHeight,
+    )
+    const scaledBounds = scaleBounds(bounds)
+    const elementVisible = isVisible && !!contentData?.songKey
+
+    return (
+      <AnimatedText
+        key="songKey"
+        content={contentData?.songKey ?? ''}
+        contentKey={`songKey-${contentKey}`}
+        isVisible={elementVisible}
+        style={{
+          ...sk.style,
+          maxFontSize: sk.style.maxFontSize * fontScale,
+        }}
+        width={scaledBounds.width}
+        height={scaledBounds.height}
+        left={scaledBounds.x}
+        top={scaledBounds.y}
+        isHtml={false}
+        animationIn={sk.animationIn}
+        animationOut={sk.animationOut}
+        slideTransitionIn={sk.slideTransitionIn}
+        slideTransitionOut={sk.slideTransitionOut}
+      />
+    )
+  }
+
+  // Render the "Amin" element — shown on the last slide. contentData.amen is
+  // only populated on the last slide, so visibility is gated automatically.
+  const renderAmen = () => {
+    if (!config || !('amen' in config) || !config.amen) return null
+    const am = config.amen
+    if (am.hidden) return null
+
+    const bounds = calculatePixelBounds(
+      am.constraints,
+      am.size,
+      canvasWidth,
+      canvasHeight,
+    )
+    const scaledBounds = scaleBounds(bounds)
+    const elementVisible = isVisible && !!contentData?.amen
+
+    return (
+      <AnimatedText
+        key="amen"
+        content={contentData?.amen ?? ''}
+        contentKey={`amen-${contentKey}`}
+        isVisible={elementVisible}
+        style={{
+          ...am.style,
+          maxFontSize: am.style.maxFontSize * fontScale,
+        }}
+        width={scaledBounds.width}
+        height={scaledBounds.height}
+        left={scaledBounds.x}
+        top={scaledBounds.y}
+        isHtml={false}
+        animationIn={am.animationIn}
+        animationOut={am.animationOut}
+        slideTransitionIn={am.slideTransitionIn}
+        slideTransitionOut={am.slideTransitionOut}
+      />
+    )
+  }
+
   // Render person label
   const renderPersonLabel = () => {
     if (!config || !('personLabel' in config)) return null
@@ -664,6 +742,8 @@ export function ScreenContent({
       {renderMainText()}
       {renderContentText()}
       {renderReferenceText()}
+      {renderSongKey()}
+      {renderAmen()}
       {renderPersonLabel()}
       {renderClock()}
       {renderNextSlideSection()}

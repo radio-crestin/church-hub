@@ -8,9 +8,8 @@ import { usePresentationState } from './usePresentationState'
 import { calculateMaxExitAnimationDuration } from '../components/rendering/utils/styleUtils'
 import { useSongUpdateTimestamp } from '../context/WebSocketContext'
 import type { ContentType, ScreenConfig, SongContentConfig } from '../types'
-import { addAminToLastSlide } from '../utils/addAminToLastSlide'
-import { addKeyLineToFirstSlide } from '../utils/addKeyLineToFirstSlide'
 import { resolveSlideChords } from '../utils/resolveSlideChords'
+import { resolveAmen, resolveSongKey } from '../utils/songElements'
 
 const logger = createLogger('app:presentation:content')
 
@@ -85,6 +84,8 @@ export interface ContentData {
   personLabel?: string
   secondaryContentText?: string
   chords?: ChordMapping[] | null
+  songKey?: string // Song key ("gama"), populated only on the first slide
+  amen?: string // "Amin", populated only on the last slide
 }
 
 export interface NextSlideData {
@@ -346,24 +347,29 @@ export function usePresentationContent({
             const isFirstSlide = temp.data.currentSlideIndex === 0
             const isLastSlide =
               temp.data.currentSlideIndex === temp.data.slides.length - 1
-            let slideContent = currentSlide.content
+            const slideContent = currentSlide.content
             const songConfig = screen?.contentConfigs?.song as
               | SongContentConfig
               | undefined
-            const shouldShowKeyLine = songConfig?.displayKeyLine ?? true
-            slideContent = addKeyLineToFirstSlide(
-              slideContent,
-              isFirstSlide,
-              shouldShowKeyLine ? temp.data.keyLine : null,
-            )
-            slideContent = addAminToLastSlide(slideContent, isLastSlide)
+            // Key ("gama") and "Amin" are now their own positionable/styleable
+            // elements (see ScreenContent renderSongKey/renderAmen), so we emit
+            // them as separate fields instead of injecting into the slide text.
             // Resolve chords for this slide
             const resolvedChords = resolveSlideChords(
               temp.data.currentSlideIndex,
               temp.data.slides,
             )
             setContentType('song')
-            setContentData({ mainText: slideContent, chords: resolvedChords })
+            setContentData({
+              mainText: slideContent,
+              chords: resolvedChords,
+              songKey: resolveSongKey(
+                isFirstSlide,
+                temp.data.keyLine,
+                songConfig,
+              ),
+              amen: resolveAmen(isLastSlide, slideContent),
+            })
             setContentKey(
               `song|${temp.data.songId}|${temp.data.currentSlideIndex}`,
             )
@@ -520,18 +526,11 @@ export function usePresentationContent({
               const slide = item.slides[slideIndex]
               const isFirstSlide = slideIndex === 0
               const isLastSlide = slideIndex === item.slides.length - 1
-              let slideContent = slide.content
+              const slideContent = slide.content
               const songCfg = screen?.contentConfigs?.song as
                 | SongContentConfig
                 | undefined
-              const showKeyLine = songCfg?.displayKeyLine ?? true
-              slideContent = addKeyLineToFirstSlide(
-                slideContent,
-                isFirstSlide,
-                showKeyLine ? item.keyLine : null,
-              )
-              slideContent = addAminToLastSlide(slideContent, isLastSlide)
-
+              // Key + Amin are emitted as separate elements (see above).
               // Resolve chords for this slide
               const queueChords = resolveSlideChords(slideIndex, item.slides)
 
@@ -540,6 +539,8 @@ export function usePresentationContent({
               setContentData({
                 mainText: slideContent,
                 chords: queueChords,
+                songKey: resolveSongKey(isFirstSlide, item.keyLine, songCfg),
+                amen: resolveAmen(isLastSlide, slideContent),
               })
               setContentKey(`song|${item.songId}|${slideIndex}`)
 
