@@ -20,7 +20,7 @@ function FullScreenSpinner() {
   )
 }
 
-function ConnectionLost() {
+function ConnectionLost({ onRetry }: { onRetry?: () => void }) {
   const { t } = useTranslation('common')
   const { refresh } = usePermissions()
   return (
@@ -32,7 +32,7 @@ function ConnectionLost() {
         {t('errors.connectionLost')}
       </p>
       <button
-        onClick={() => refresh()}
+        onClick={() => (onRetry ? onRetry() : refresh())}
         className="rounded-md bg-indigo-600 px-4 py-2 text-white transition-colors hover:bg-indigo-700"
       >
         {t('buttons.retry')}
@@ -59,6 +59,7 @@ export function LoginGate({ children }: { children: ReactNode }) {
   const { isAuthenticated, isLoading, isConnectionError, refresh } =
     usePermissions()
   const [users, setUsers] = useState<LocalUser[] | null>(null)
+  const [listError, setListError] = useState(false)
   const [autoLoginTried, setAutoLoginTried] = useState(false)
   const [autoLoggingIn, setAutoLoggingIn] = useState(false)
 
@@ -75,7 +76,8 @@ export function LoginGate({ children }: { children: ReactNode }) {
         if (!cancelled) setUsers(list)
       })
       .catch(() => {
-        if (!cancelled) setUsers([])
+        // Surface the failure instead of rendering an empty account picker.
+        if (!cancelled) setListError(true)
       })
     return () => {
       cancelled = true
@@ -107,6 +109,16 @@ export function LoginGate({ children }: { children: ReactNode }) {
   if (isMobile()) return <>{children}</>
   if (isLoading) return <FullScreenSpinner />
   if (isConnectionError) return <ConnectionLost />
+  if (listError)
+    return (
+      <ConnectionLost
+        onRetry={() => {
+          setListError(false)
+          setUsers(null) // re-triggers the user-list fetch
+          refresh()
+        }}
+      />
+    )
   // Persisted session = auto-login as the last user. No picker.
   if (isAuthenticated) return <>{children}</>
   if (users === null || autoLoggingIn) return <FullScreenSpinner />

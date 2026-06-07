@@ -212,6 +212,7 @@ export function SongSlidesPanel({
           {canEdit && (
             <button
               type="button"
+              data-testid="toggle-slides-edit-mode"
               onClick={onToggleEditMode}
               className={`flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-lg border transition-colors ${
                 isEditMode
@@ -236,6 +237,7 @@ export function SongSlidesPanel({
             </button>
             <button
               type="button"
+              data-testid="save-slides-edit-mode"
               onClick={handleSaveClick}
               className={`flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-lg border transition-colors ${
                 isSaving

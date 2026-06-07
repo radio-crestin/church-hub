@@ -224,36 +224,51 @@ export function LoginScreen({ users, onLoggedIn }: LoginScreenProps) {
                   </button>
                 </div>
               </form>
+            ) : users.length === 0 ? (
+              <p className="rounded-xl border border-dashed border-gray-300 p-5 text-center text-sm text-gray-500 dark:border-gray-600 dark:text-gray-400">
+                {t('login.noAccounts')}
+              </p>
             ) : (
-              <ul className="space-y-2.5">
-                {users.map((user) => (
-                  <li key={user.id}>
-                    <button
-                      type="button"
-                      onClick={() => handleSelect(user)}
-                      disabled={submitting}
-                      className="group flex w-full items-center gap-3.5 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md disabled:opacity-60 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-indigo-500/60"
-                    >
-                      <UserAvatar
-                        name={user.name}
-                        isSuperAdmin={user.isSuperAdmin}
-                      />
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate font-semibold text-gray-900 dark:text-white">
-                          {user.name}
+              <>
+                {error ? (
+                  <p
+                    role="alert"
+                    className="mb-3 flex items-center gap-1.5 text-sm font-medium text-red-600 dark:text-red-400"
+                  >
+                    <AlertCircle className="h-4 w-4 shrink-0" />
+                    {t('login.failed')}
+                  </p>
+                ) : null}
+                <ul className="space-y-2.5">
+                  {users.map((user) => (
+                    <li key={user.id}>
+                      <button
+                        type="button"
+                        onClick={() => handleSelect(user)}
+                        disabled={submitting}
+                        className="group flex w-full items-center gap-3.5 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md disabled:opacity-60 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-indigo-500/60"
+                      >
+                        <UserAvatar
+                          name={user.name}
+                          isSuperAdmin={user.isSuperAdmin}
+                        />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate font-semibold text-gray-900 dark:text-white">
+                            {user.name}
+                          </span>
+                          <span className="block truncate text-xs text-gray-500 dark:text-gray-400">
+                            {roleLabel(user)}
+                          </span>
                         </span>
-                        <span className="block truncate text-xs text-gray-500 dark:text-gray-400">
-                          {roleLabel(user)}
-                        </span>
-                      </span>
-                      {user.hasPassword ? (
-                        <Lock className="h-4 w-4 shrink-0 text-gray-400" />
-                      ) : null}
-                      <ChevronRight className="h-5 w-5 shrink-0 text-gray-300 transition-transform group-hover:translate-x-0.5 group-hover:text-indigo-400 dark:text-gray-600" />
-                    </button>
-                  </li>
-                ))}
-              </ul>
+                        {user.hasPassword ? (
+                          <Lock className="h-4 w-4 shrink-0 text-gray-400" />
+                        ) : null}
+                        <ChevronRight className="h-5 w-5 shrink-0 text-gray-300 transition-transform group-hover:translate-x-0.5 group-hover:text-indigo-400 dark:text-gray-600" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </>
             )}
           </div>
         </div>
