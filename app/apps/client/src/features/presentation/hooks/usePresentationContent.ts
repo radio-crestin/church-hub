@@ -9,7 +9,11 @@ import { calculateMaxExitAnimationDuration } from '../components/rendering/utils
 import { useSongUpdateTimestamp } from '../context/WebSocketContext'
 import type { ContentType, ScreenConfig, SongContentConfig } from '../types'
 import { resolveSlideChords } from '../utils/resolveSlideChords'
-import { resolveAmen, resolveSongKey } from '../utils/songElements'
+import {
+  resolveAmen,
+  resolveSongKey,
+  resolveSongSlideContentType,
+} from '../utils/songElements'
 
 const logger = createLogger('app:presentation:content')
 
@@ -359,9 +363,11 @@ export function usePresentationContent({
               temp.data.currentSlideIndex,
               temp.data.slides,
             )
-            // The first slide uses the dedicated "Gama - Strofă"
-            // (song_first_slide) layout; every following slide uses `song`.
-            setContentType(isFirstSlide ? 'song_first_slide' : 'song')
+            // First slide → "Gama - Strofă" (song_first_slide), last slide →
+            // "Strofă - Amin" (song_last_slide), middle slides → `song`.
+            setContentType(
+              resolveSongSlideContentType(isFirstSlide, isLastSlide),
+            )
             setContentData({
               mainText: slideContent,
               chords: resolvedChords,
@@ -537,9 +543,11 @@ export function usePresentationContent({
               const queueChords = resolveSlideChords(slideIndex, item.slides)
 
               if (isCancelled) return
-              // First slide → "Gama - Strofă" (song_first_slide) layout; the
-              // rest of the song uses `song`.
-              setContentType(isFirstSlide ? 'song_first_slide' : 'song')
+              // First slide → "Gama - Strofă" (song_first_slide), last slide →
+              // "Strofă - Amin" (song_last_slide), middle slides → `song`.
+              setContentType(
+                resolveSongSlideContentType(isFirstSlide, isLastSlide),
+              )
               setContentData({
                 mainText: slideContent,
                 chords: queueChords,

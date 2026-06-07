@@ -15,6 +15,7 @@ import type {
   SizeWithUnits,
   SongContentConfig,
   SongFirstSlideContentConfig,
+  SongLastSlideContentConfig,
   TextStyle,
   VerseteTineriContentConfig,
 } from '../types'
@@ -207,6 +208,40 @@ export function getDefaultSongFirstSlideConfig(): SongFirstSlideContentConfig {
 }
 
 // ============================================================================
+// SONG LAST SLIDE CONTENT CONFIG ("Strofă - Amin")
+// ============================================================================
+
+// Last-slide-only layout: the last slide's lyrics (strofa) + the "Amin",
+// positioned/styled separately from the rest of the song. Defaults mirror the
+// `song` config so there is no jump until the operator repositions them.
+export function getDefaultSongLastSlideConfig(): SongLastSlideContentConfig {
+  return {
+    background: getDefaultBackground(),
+    mainText: {
+      constraints: constraints(10, 5),
+      size: sizeWithUnits(90, 80),
+      style: getDefaultTextStyle({ maxFontSize: 120 }),
+      padding: 20,
+      animationIn: getDefaultAnimationIn(),
+      animationOut: getDefaultAnimationOut(),
+    },
+    amen: {
+      constraints: constraints(85, 5),
+      size: sizeWithUnits(90, 10),
+      style: getDefaultTextStyle({
+        maxFontSize: 48,
+        autoScale: false,
+        alignment: 'center',
+        italic: true,
+      }),
+      animationIn: getDefaultAnimationIn(),
+      animationOut: getDefaultAnimationOut(),
+    },
+    clockEnabled: false,
+  }
+}
+
+// ============================================================================
 // BIBLE CONTENT CONFIG
 // ============================================================================
 
@@ -373,6 +408,7 @@ export function getDefaultContentConfigs(
   // Base configs
   const songConfig = getDefaultSongConfig()
   const songFirstSlideConfig = getDefaultSongFirstSlideConfig()
+  const songLastSlideConfig = getDefaultSongLastSlideConfig()
   const bibleConfig = getDefaultBibleConfig()
   const announcementConfig = getDefaultAnnouncementConfig()
   const verseteTineriConfig = getDefaultVerseteTineriConfig()
@@ -382,6 +418,7 @@ export function getDefaultContentConfigs(
   if (isStage) {
     songConfig.mainText.size.height = 65
     songFirstSlideConfig.mainText.size.height = 65
+    songLastSlideConfig.mainText.size.height = 65
     bibleConfig.contentText.size.height = 63
     announcementConfig.mainText.size.height = 65
     verseteTineriConfig.contentText.size.height = 57
@@ -412,6 +449,14 @@ export function getDefaultContentConfigs(
     songFirstSlideConfig.mainText.animationOut.duration = 150
     if (songFirstSlideConfig.songKey) addShadow(songFirstSlideConfig.songKey)
 
+    songLastSlideConfig.background = transparentBg
+    addShadow(songLastSlideConfig.mainText)
+    songLastSlideConfig.mainText.animationIn.type = 'slide-up'
+    songLastSlideConfig.mainText.animationIn.duration = 200
+    songLastSlideConfig.mainText.animationOut.type = 'slide-down'
+    songLastSlideConfig.mainText.animationOut.duration = 150
+    if (songLastSlideConfig.amen) addShadow(songLastSlideConfig.amen)
+
     bibleConfig.background = transparentBg
     addShadow(bibleConfig.referenceText)
     addShadow(bibleConfig.contentText)
@@ -431,6 +476,7 @@ export function getDefaultContentConfigs(
   return {
     song: songConfig,
     song_first_slide: songFirstSlideConfig,
+    song_last_slide: songLastSlideConfig,
     bible: bibleConfig,
     bible_passage: bibleConfig, // Same as bible
     announcement: announcementConfig,

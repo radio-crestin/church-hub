@@ -94,15 +94,9 @@ export function getSceneForContentType(
   const db = getDatabase()
   const scenes = db.select().from(obsScenes).orderBy(obsScenes.sortOrder).all()
 
-  // A song's first slide ("Gama - Strofă") is its own content type for screen
-  // layout purposes, but for OBS scene automation it is still a song slide —
-  // reuse whatever scene is configured for `song`.
-  const lookupType: ContentType =
-    contentType === 'song_first_slide' ? 'song' : contentType
-
   for (const scene of scenes) {
     const contentTypes = parseContentTypes(scene.contentTypes)
-    if (contentTypes.includes(lookupType)) {
+    if (contentTypes.includes(contentType)) {
       const currentScene = obsConnection.getCurrentScene()
       return {
         id: scene.id,

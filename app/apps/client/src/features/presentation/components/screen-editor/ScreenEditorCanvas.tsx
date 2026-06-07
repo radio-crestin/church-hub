@@ -51,6 +51,10 @@ const SAMPLE_CONTENT: Record<
     main: 'Aleluia, Aleluia!\nMărire Domnului!\nAleluia, Aleluia!\nSlăvit să fie El!',
     songKey: 'G',
   },
+  song_last_slide: {
+    main: 'Aleluia, Aleluia!\nMărire Domnului!\nAleluia, Aleluia!\nSlăvit să fie El!',
+    amen: 'Amin!',
+  },
   bible: {
     reference: 'Ioan 3:16',
     main: 'Fiindcă atât de mult a iubit Dumnezeu lumea, că a dat pe singurul Lui Fiu, pentru ca oricine crede în El să nu piară, ci să aibă viață veșnică.',
@@ -757,8 +761,16 @@ export function ScreenEditorCanvas({
       )
     }
 
-    // Amin (song, last slide)
-    if (config && 'amen' in config && config.amen) {
+    // Amin — only configurable in the "Strofă - Amin" (last slide) layout. The
+    // `song` config still carries a vestigial amen for backward compatibility,
+    // but it never renders at runtime on a multi-slide song, so hide it from the
+    // Song tab to avoid editing an element that has no effect.
+    if (
+      config &&
+      'amen' in config &&
+      config.amen &&
+      contentType === 'song_last_slide'
+    ) {
       const am = config.amen
       const bounds = calculatePixelBounds(
         am.constraints,

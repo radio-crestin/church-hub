@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
-import { resolveAmen, resolveSongKey } from '../songElements'
+import {
+  resolveAmen,
+  resolveSongKey,
+  resolveSongSlideContentType,
+} from '../songElements'
 
 describe('resolveSongKey', () => {
   it('returns the key only on the first slide', () => {
@@ -34,5 +38,23 @@ describe('resolveAmen', () => {
     expect(resolveAmen(true, 'Amin, Amin!')).toBeUndefined()
     expect(resolveAmen(true, '<p>amin</p>')).toBeUndefined()
     expect(resolveAmen(true, 'AMIN')).toBeUndefined()
+  })
+})
+
+describe('resolveSongSlideContentType', () => {
+  it('uses the first-slide layout for the first slide', () => {
+    expect(resolveSongSlideContentType(true, false)).toBe('song_first_slide')
+  })
+
+  it('uses the last-slide layout for the last slide', () => {
+    expect(resolveSongSlideContentType(false, true)).toBe('song_last_slide')
+  })
+
+  it('uses the plain song layout for middle slides', () => {
+    expect(resolveSongSlideContentType(false, false)).toBe('song')
+  })
+
+  it('falls back to song for a single-slide song (both first and last)', () => {
+    expect(resolveSongSlideContentType(true, true)).toBe('song')
   })
 })

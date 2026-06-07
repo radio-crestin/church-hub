@@ -32,6 +32,7 @@
     "contentTypes": {
       "song": "Cântec",
       "song_first_slide": "Gama - Strofă",
+      "song_last_slide": "Strofă - Amin",
       "bible": "Verset Biblic",
       "bible_passage": "Pasaj Biblic",
       "announcement": "Anunț",

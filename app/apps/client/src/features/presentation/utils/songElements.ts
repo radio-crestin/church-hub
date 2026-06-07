@@ -1,4 +1,24 @@
-import type { SongContentConfig } from '../types'
+import type { ContentType, SongContentConfig } from '../types'
+
+/**
+ * Picks the screen content type for a given song slide:
+ *  - the FIRST slide uses the dedicated "Gama - Strofă" (`song_first_slide`)
+ *    layout (gama + strofa),
+ *  - the LAST slide uses "Strofă - Amin" (`song_last_slide`) layout
+ *    (strofa + amin),
+ *  - every middle slide uses `song`.
+ * A single-slide song is both first and last; it falls back to `song`, whose
+ * config keeps both the gama and the amin elements so neither is lost.
+ */
+export function resolveSongSlideContentType(
+  isFirstSlide: boolean,
+  isLastSlide: boolean,
+): ContentType {
+  if (isFirstSlide && isLastSlide) return 'song'
+  if (isFirstSlide) return 'song_first_slide'
+  if (isLastSlide) return 'song_last_slide'
+  return 'song'
+}
 
 /**
  * Value for the song-key ("gama") element. It only appears on the FIRST slide,

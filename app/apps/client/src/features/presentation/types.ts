@@ -339,6 +339,7 @@ export type ScreenType = 'primary' | 'stage' | 'livestream' | 'kiosk'
 export type ContentType =
   | 'song'
   | 'song_first_slide'
+  | 'song_last_slide'
   | 'bible'
   | 'bible_passage'
   | 'announcement'
@@ -561,6 +562,20 @@ export interface SongFirstSlideContentConfig {
   clockEnabled?: boolean // Per-slide-type enable, uses global clockConfig for position/style
 }
 
+/**
+ * Layout for a song's LAST slide only ("Strofă - Amin"). Two separately
+ * positionable elements — the slide lyrics (strofa) and the "Amin" — like the
+ * Bible reference/verse pair. Applies only to the last slide of a song; every
+ * preceding slide uses {@link SongContentConfig}. Chord display stays on the
+ * `song` config (single source), so it is not repeated here.
+ */
+export interface SongLastSlideContentConfig {
+  background: ScreenBackgroundConfig
+  mainText: TextElementConfig // the lyrics of the last slide ("strofa")
+  amen?: ReferenceTextConfig // the "Amin" element
+  clockEnabled?: boolean // Per-slide-type enable, uses global clockConfig for position/style
+}
+
 export type ReferenceWrapperStyle = 'none' | 'parentheses' | 'brackets'
 
 export interface BibleContentConfig {
@@ -616,6 +631,7 @@ export interface ScreenShareContentConfig {
 export type ContentTypeConfig =
   | SongContentConfig
   | SongFirstSlideContentConfig
+  | SongLastSlideContentConfig
   | BibleContentConfig
   | AnnouncementContentConfig
   | VerseteTineriContentConfig
@@ -628,6 +644,7 @@ export type ContentTypeConfig =
 export interface ContentConfigMap {
   song: SongContentConfig
   song_first_slide: SongFirstSlideContentConfig
+  song_last_slide: SongLastSlideContentConfig
   bible: BibleContentConfig
   bible_passage: BibleContentConfig
   announcement: AnnouncementContentConfig
