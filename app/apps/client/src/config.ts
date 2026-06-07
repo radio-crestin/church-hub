@@ -96,6 +96,13 @@ export function getApiUrl(): string | null {
     return storedUrl // Returns null if not configured
   }
 
+  // Plain browser: the page is served by the API server itself (it proxies
+  // Vite in dev and serves the built client in prod), so the page origin IS
+  // the API origin — correct for any port without compile-time env.
+  if (!isTauriEnv && typeof window !== 'undefined') {
+    return window.location.origin
+  }
+
   return `http://${getApiHost()}:${API_PORT}`
 }
 
@@ -111,6 +118,12 @@ export function getWsUrl(): string | null {
 
     // Convert http(s):// to ws(s)://
     return storedUrl.replace(/^http/, 'ws')
+  }
+
+  // Plain browser: derive from the page origin (http → ws, https → wss),
+  // same reasoning as getApiUrl.
+  if (!isTauriEnv && typeof window !== 'undefined') {
+    return window.location.origin.replace(/^http/, 'ws')
   }
 
   return `ws://${getApiHost()}:${API_PORT}`
