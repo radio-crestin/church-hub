@@ -944,10 +944,18 @@
       },
       "viewer": {
         "empty": "No logs to display.",
+        "noMatches": "No logs match your filters.",
+        "search": "Search logs…",
         "refresh": "Refresh",
         "refreshing": "Refreshing...",
         "serverHeading": "Server logs",
-        "tauriHeading": "App (Tauri) logs"
+        "tauriHeading": "App (Tauri) logs",
+        "levels": {
+          "error": "Errors",
+          "warning": "Warnings",
+          "info": "Info",
+          "debug": "Debug"
+        }
       },
       "clear": {
         "card": {
