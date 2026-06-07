@@ -2,6 +2,7 @@ import { Loader2, Search, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { ClearSearchButton } from '~/ui/search'
 import { useLinkSongs } from '../hooks/useLinkSongs'
 import { useSearchSongs } from '../hooks/useSearchSongs'
 
@@ -32,6 +33,7 @@ export function LinkVersionsModal({
 }: LinkVersionsModalProps) {
   const { t } = useTranslation('songs')
   const dialogRef = useRef<HTMLDialogElement>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
   const [query, setQuery] = useState('')
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const linkMutation = useLinkSongs()
@@ -114,16 +116,28 @@ export function LinkVersionsModal({
               className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
             />
             <input
+              ref={searchInputRef}
               autoFocus
-              type="search"
+              type="text"
               value={query}
               onChange={(e) => {
                 setQuery(e.target.value)
                 setSelectedId(null)
               }}
               placeholder={t('versions.linkSearchPlaceholder')}
-              className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 pr-3 text-sm text-gray-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              className={`w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 text-sm text-gray-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 dark:border-gray-600 dark:bg-gray-700 dark:text-white ${
+                query ? 'pr-9' : 'pr-3'
+              }`}
             />
+            {query && (
+              <ClearSearchButton
+                inputRef={searchInputRef}
+                onClear={() => {
+                  setQuery('')
+                  setSelectedId(null)
+                }}
+              />
+            )}
           </div>
         </div>
 

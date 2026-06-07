@@ -442,22 +442,33 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
     if (input.id) {
       logger.debug(`Updating song: ${input.id}`)
 
-      // Build update object
+      // Build update object. Only touch fields explicitly provided so
+      // partial payloads (slides-only "edit as text", keyLine-only edits
+      // from the song-key page) don't wipe the other metadata. Sending an
+      // explicit null still clears a field.
+      const optionalFields = [
+        'categoryId',
+        'sourceFilename',
+        'author',
+        'copyright',
+        'ccli',
+        'tempo',
+        'timeSignature',
+        'theme',
+        'altTheme',
+        'hymnNumber',
+        'keyLine',
+        'presentationOrder',
+      ] as const
+
       const updateData: Record<string, any> = {
         title,
-        categoryId: input.categoryId ?? null,
-        sourceFilename: input.sourceFilename ?? null,
-        author: input.author ?? null,
-        copyright: input.copyright ?? null,
-        ccli: input.ccli ?? null,
-        tempo: input.tempo ?? null,
-        timeSignature: input.timeSignature ?? null,
-        theme: input.theme ?? null,
-        altTheme: input.altTheme ?? null,
-        hymnNumber: input.hymnNumber ?? null,
-        keyLine: input.keyLine ?? null,
-        presentationOrder: input.presentationOrder ?? null,
         updatedAt: now,
+      }
+      for (const field of optionalFields) {
+        if (input[field] !== undefined) {
+          updateData[field] = input[field]
+        }
       }
 
       // Update presentationCount if explicitly provided

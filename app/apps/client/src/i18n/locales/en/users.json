@@ -8,7 +8,9 @@
     "passwordPlaceholder": "Enter password",
     "wrongPassword": "Incorrect password. Please try again.",
     "signIn": "Sign in",
-    "back": "Back"
+    "back": "Back",
+    "noAccounts": "No accounts found. Restart Church Hub or contact your administrator.",
+    "failed": "Sign-in failed. Check the connection and try again."
   },
   "password": {
     "label": "Password",
