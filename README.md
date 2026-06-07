@@ -36,7 +36,7 @@ Built with modern web technologies and powered by Tauri, Church Hub runs as a na
 <table align="center">
   <tr>
     <td align="center">
-      <a href="https://github.com/radio-crestin/church-hub/releases/latest/download/church-hub-windows-x64.exe">
+      <a href="https://github.com/radio-crestin/church-hub/releases/latest">
         <img src="https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Windows"/>
         <br/>
         <sub><b>Windows (x64)</b></sub>
@@ -45,7 +45,7 @@ Built with modern web technologies and powered by Tauri, Church Hub runs as a na
       </a>
     </td>
     <td align="center">
-      <a href="https://github.com/radio-crestin/church-hub/releases/latest/download/church-hub-macos-arm64.dmg">
+      <a href="https://github.com/radio-crestin/church-hub/releases/latest">
         <img src="https://img.shields.io/badge/macOS-000000?style=for-the-badge&logo=apple&logoColor=white" alt="macOS"/>
         <br/>
         <sub><b>macOS (Apple Silicon)</b></sub>
