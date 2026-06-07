@@ -19,6 +19,9 @@
       "description": "Import from an existing schedule"
     }
   },
+  "search": {
+    "clear": "Clear search"
+  },
   "buttons": {
     "goBack": "Go back",
     "startOver": "Start Over",
