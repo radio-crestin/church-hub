@@ -269,6 +269,19 @@ pub fn run() {
         println!("[startup] tauri_builder: {:?}", builder_start.elapsed());
         let setup_start = Instant::now();
 
+        // In dev the server runs on the port from `build.devUrl` (worktree
+        // configs override it, e.g. 3002) — hardcoding 3000 here would make
+        // `get_server_config` point the webview at the wrong server. In
+        // release the sidecar always binds 3000.
+        #[cfg(debug_assertions)]
+        let server_port: u16 = app
+            .config()
+            .build
+            .dev_url
+            .as_ref()
+            .and_then(|url| url.port())
+            .unwrap_or(3000);
+        #[cfg(not(debug_assertions))]
         let server_port: u16 = 3000;
 
         let t = Instant::now();
