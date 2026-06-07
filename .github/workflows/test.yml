@@ -17,8 +17,10 @@ on:
 
 permissions:
   contents: read
-  pull-requests: read
-  # The /test gate reacts to the triggering PR comment (issue-comment APIs)
+  # The /test gate reacts to the triggering PR comment. Reactions on a PR
+  # comment require `pull-requests: write` (issues: write alone 403s with
+  # "Resource not accessible by integration").
+  pull-requests: write
   issues: write
   statuses: write
   checks: write
@@ -67,6 +69,8 @@ jobs:
 
       - name: Acknowledge comment with reaction
         if: github.event_name == 'issue_comment'
+        # The reaction is a nicety — never fail the whole CI run over it.
+        continue-on-error: true
         uses: actions/github-script@v7
         with:
           script: |
