@@ -17,8 +17,11 @@ on:
 
 permissions:
   contents: read
-  pull-requests: read
-  # The /test gate reacts to the triggering PR comment (issue-comment APIs)
+  # The /test gate reacts to the triggering PR comment. Reacting to a
+  # comment that belongs to a PR is authorized via the pull-requests
+  # permission — issues: write alone 403s with "Resource not accessible
+  # by integration" — so both need write.
+  pull-requests: write
   issues: write
   statuses: write
   checks: write
