@@ -302,6 +302,15 @@ export function ScreenContent({
     if (!config || !('songKey' in config) || !config.songKey) return null
     const sk = config.songKey
     if (sk.hidden) return null
+    // Only mount when this slide actually has a key value. The plain `song`
+    // config still carries a vestigial `songKey`, so without this guard the
+    // element would stay mounted when navigating to a slide that has no gama
+    // (e.g. slide 1 → slide 2) and play a lingering fade-out of the old key —
+    // an intermediate "first-slide" frame. Gating on the value unmounts it
+    // cleanly there, while still rendering it on the first slide and on a
+    // single-slide song (where the value is present), and still fading it out
+    // on screen hide (where the value persists and only `isVisible` changes).
+    if (!contentData?.songKey) return null
 
     const bounds = calculatePixelBounds(
       sk.constraints,
@@ -341,6 +350,10 @@ export function ScreenContent({
     if (!config || !('amen' in config) || !config.amen) return null
     const am = config.amen
     if (am.hidden) return null
+    // Only mount when this slide actually has an amin value — see renderSongKey
+    // above. Without this guard the vestigial `song.amen` element lingers with a
+    // fade-out when navigating away from the last slide.
+    if (!contentData?.amen) return null
 
     const bounds = calculatePixelBounds(
       am.constraints,
