@@ -2,6 +2,8 @@ import { Check, ChevronDown, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
+import { ClearSearchButton } from '../search'
+
 export interface MultiSelectOption {
   value: number | string
   label: string
@@ -218,15 +220,27 @@ export function MultiSelectCombobox({
             }}
           >
             <div className="p-2 border-b border-gray-200 dark:border-gray-700">
-              <input
-                ref={inputRef}
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Search..."
-                className="w-full px-2 py-1 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-              />
+              <div className="relative">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Search..."
+                  className={`w-full pl-2 py-1 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 ${
+                    search ? 'pr-7' : 'pr-2'
+                  }`}
+                />
+                {search && (
+                  <ClearSearchButton
+                    inputRef={inputRef}
+                    onClear={() => setSearch('')}
+                    size={14}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  />
+                )}
+              </div>
             </div>
 
             <div className="max-h-48 overflow-y-auto">
