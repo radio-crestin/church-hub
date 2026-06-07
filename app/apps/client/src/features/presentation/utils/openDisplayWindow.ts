@@ -317,34 +317,47 @@ async function openInNativeWindow(
         webview.listen('tauri://move', trackState)
         webview.listen('tauri://resize', trackState)
 
-        // Restore focus to the control room window if it was taken by the OS
-        // when the new display window appeared. Operators present from the main
-        // window (keyboard / presenter remote), so it must keep focus — the
-        // screen that "appears and disappears" should never steal it.
+        // Keep keyboard focus on the control window so the operator can keep
+        // navigating verses (keyboard / presenter remote) while the screen
+        // shows — the projector window must not steal focus.
         //
-        // Done after fullscreen / maximize because those trigger another focus
-        // shift, and re-asserted on a short delay: macOS/Windows can hand focus
-        // back to the freshly-created window a beat AFTER our first attempt
-        // (especially once the fullscreen transition settles), so a single
-        // setFocus loses that race.
+        // BUT only when the screen has its own monitor. setFocus() also RAISES
+        // the control window; on a single monitor that would cover the
+        // projection and the song would seem to "not display". With one
+        // monitor we leave the screen in front (visible) instead. With a
+        // second monitor the projection is on the other screen, so refocusing
+        // the control window is harmless and keyboard input keeps working.
         if (mainWindowToRefocus) {
-          const reclaimFocus = async () => {
+          const isMultiMonitor = await (async () => {
             try {
-              await mainWindowToRefocus.setFocus()
-            } catch (error) {
-              // biome-ignore lint/suspicious/noConsole: Tauri focus restoration
-              console.warn(
-                '[openInNativeWindow] Failed to restore focus to main window:',
-                error,
+              const { availableMonitors } = await import(
+                '@tauri-apps/api/window'
               )
+              return (await availableMonitors()).length > 1
+            } catch {
+              return false
             }
-          }
-          await reclaimFocus()
-          // The OS can hand focus back to the new window again once it finishes
-          // appearing and the fullscreen transition animates (≈1s on macOS), so
-          // re-assert a few more times across that window.
-          for (const delay of [200, 500, 900]) {
-            setTimeout(reclaimFocus, delay)
+          })()
+
+          if (isMultiMonitor) {
+            const reclaimFocus = async () => {
+              try {
+                await mainWindowToRefocus.setFocus()
+              } catch (error) {
+                // biome-ignore lint/suspicious/noConsole: Tauri focus restoration
+                console.warn(
+                  '[openInNativeWindow] Failed to restore focus to main window:',
+                  error,
+                )
+              }
+            }
+            await reclaimFocus()
+            // The OS can hand focus back to the new window again once it
+            // finishes appearing / the fullscreen transition animates
+            // (≈1s on macOS), so re-assert a few more times across that window.
+            for (const delay of [200, 500, 900]) {
+              setTimeout(reclaimFocus, delay)
+            }
           }
         }
       })
