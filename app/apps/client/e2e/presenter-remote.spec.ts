@@ -37,16 +37,16 @@ test.describe('Presenter remote', () => {
     return (await res.json()).data.id as number
   }
 
-  test('F5 presents focused; forward advances and closes past last; black closes', async ({
+  test('F5 presents focused; forward advances and hides past last; black hides like Escape', async ({
     page,
     request,
   }) => {
     const songId = await makeSong(request, `E2E Remote ${Date.now()}`, 2)
 
+    const rawState = async () =>
+      (await (await request.get('/api/presentation/state')).json()).data
     const songTemp = async (): Promise<SongTemp | null> => {
-      const { data } = await (
-        await request.get('/api/presentation/state')
-      ).json()
+      const data = await rawState()
       const tc = data?.temporaryContent
       return tc?.type === 'song' && tc.data.songId === songId ? tc.data : null
     }
@@ -71,12 +71,13 @@ test.describe('Presenter remote', () => {
       await page.keyboard.press('PageDown')
       await expect.poll(slideIndex, { timeout: 10000 }).toBe(1)
 
-      // Forward past the last slide → presentation CLOSES.
+      // Forward past the last slide → presentation is hidden (content cleared).
       await page.keyboard.press('PageDown')
       await expect.poll(songTemp, { timeout: 10000 }).toBeNull()
       await page.waitForTimeout(1500)
 
-      // Present again, then the black button ("b") closes it.
+      // Present again, then the black button ("b") hides it like Escape:
+      // isHidden becomes true but the temporary content is kept (restorable).
       await page.evaluate(() =>
         (document.activeElement as HTMLElement | null)?.blur(),
       )
@@ -85,7 +86,11 @@ test.describe('Presenter remote', () => {
       await page.waitForTimeout(1500)
 
       await page.keyboard.press('b')
-      await expect.poll(songTemp, { timeout: 10000 }).toBeNull()
+      await expect
+        .poll(async () => (await rawState())?.isHidden, { timeout: 10000 })
+        .toBe(true)
+      // Content is kept (Escape-style blank, not a full close).
+      expect(await songTemp()).not.toBeNull()
     } finally {
       await request.delete(`/api/songs/${songId}`).catch(() => {})
     }
