@@ -1,10 +1,11 @@
-import { ArrowLeft, Search, Sparkles, X } from 'lucide-react'
+import { ArrowLeft, Search, Sparkles } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useSidebarItemShortcuts } from '~/features/sidebar-config'
 import { useDebouncedValue } from '~/hooks/useDebouncedValue'
 import { KeyboardShortcutBadge } from '~/ui/kbd'
+import { ClearSearchButton } from '~/ui/search'
 import { BooksList } from './BooksList'
 import { ChaptersGrid } from './ChaptersGrid'
 import { VersesList } from './VersesList'
@@ -570,13 +571,10 @@ export function BibleNavigationPanel({
               </div>
             )}
             {localQuery ? (
-              <button
-                type="button"
-                onClick={handleClearSearch}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-              >
-                <X size={16} />
-              </button>
+              <ClearSearchButton
+                inputRef={searchInputRef}
+                onClear={handleClearSearch}
+              />
             ) : searchBibleShortcut ? (
               <div className="absolute right-3 top-1/2 -translate-y-1/2">
                 <KeyboardShortcutBadge shortcut={searchBibleShortcut} />

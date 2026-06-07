@@ -1,7 +1,8 @@
-import { Download, History, Search, Trash2, X } from 'lucide-react'
+import { Download, History, Search, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { ClearSearchButton } from '~/ui/search'
 import { BibleHistoryItem } from './BibleHistoryItem'
 import { useBibleHistory, useClearHistory } from '../hooks'
 import type { BibleHistoryItem as BibleHistoryItemType } from '../types'
@@ -284,13 +285,12 @@ export function BibleHistoryPanel({ onSelectVerse }: BibleHistoryPanelProps) {
               className="w-full pl-8 pr-7 py-1.5 text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-md text-gray-900 dark:text-white placeholder-gray-400 focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
             />
             {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
+              <ClearSearchButton
+                inputRef={searchInputRef}
+                onClear={() => setSearchQuery('')}
+                size={14}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
+              />
             )}
           </div>
         </div>

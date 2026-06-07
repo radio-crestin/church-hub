@@ -8,7 +8,9 @@
     "passwordPlaceholder": "Introdu parola",
     "wrongPassword": "Parolă incorectă. Încearcă din nou.",
     "signIn": "Autentificare",
-    "back": "Înapoi"
+    "back": "Înapoi",
+    "noAccounts": "Nu s-a găsit niciun cont. Repornește Church Hub sau contactează administratorul.",
+    "failed": "Autentificarea a eșuat. Verifică conexiunea și încearcă din nou."
   },
   "password": {
     "label": "Parolă",

@@ -1,7 +1,8 @@
 import { CalendarDays, Search } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { ClearSearchButton } from '~/ui/search'
 import { ScheduleCard } from './ScheduleCard'
 import { useSchedules, useSearchSchedules } from '../hooks'
 import type { Schedule, ScheduleSearchResult } from '../types'
@@ -19,6 +20,7 @@ export function ScheduleList({
 }: ScheduleListProps) {
   const { t } = useTranslation('schedules')
   const [searchQuery, setSearchQuery] = useState('')
+  const searchInputRef = useRef<HTMLInputElement>(null)
   const { data: schedules, isLoading: schedulesLoading } = useSchedules()
   const { data: searchResults, isLoading: searchLoading } =
     useSearchSchedules(searchQuery)
@@ -52,12 +54,21 @@ export function ScheduleList({
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
         <input
+          ref={searchInputRef}
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder={t('search.placeholder')}
-          className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+          className={`w-full pl-10 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${
+            searchQuery ? 'pr-9' : 'pr-4'
+          }`}
         />
+        {searchQuery && (
+          <ClearSearchButton
+            inputRef={searchInputRef}
+            onClear={() => setSearchQuery('')}
+          />
+        )}
       </div>
 
       {isLoading ? (

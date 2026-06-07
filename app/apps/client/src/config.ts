@@ -4,7 +4,18 @@
 
 import { getStoredApiUrl } from './service/api-url'
 
-const API_PORT = import.meta.env.VITE_API_PORT || '3000'
+/**
+ * API port resolution (same precedence as utils/fetcher.ts):
+ * 1. runtime port reported by the Tauri shell (covers worktree dev on 3002)
+ * 2. build-time VITE_API_PORT
+ * 3. default 3000
+ */
+function getApiPort(): string | number {
+  if (typeof window !== 'undefined' && window.__serverConfig?.serverPort) {
+    return window.__serverConfig.serverPort
+  }
+  return import.meta.env.VITE_API_PORT || '3000'
+}
 
 // Check if we're running in Tauri mode
 const isTauriEnv =
@@ -103,7 +114,7 @@ export function getApiUrl(): string | null {
     return window.location.origin
   }
 
-  return `http://${getApiHost()}:${API_PORT}`
+  return `http://${getApiHost()}:${getApiPort()}`
 }
 
 /**
@@ -126,7 +137,7 @@ export function getWsUrl(): string | null {
     return window.location.origin.replace(/^http/, 'ws')
   }
 
-  return `ws://${getApiHost()}:${API_PORT}`
+  return `ws://${getApiHost()}:${getApiPort()}`
 }
 
 /**
