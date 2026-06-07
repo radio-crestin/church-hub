@@ -161,9 +161,19 @@ export function LogsViewer({
         </p>
       ) : (
         <>
-          {/* Level filter chips + search */}
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex flex-wrap gap-1.5">
+          {/* Full-width search, with the level filters arranged below it. */}
+          <div className="space-y-2">
+            <div className="relative w-full">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={t('sections.logs.viewer.search')}
+                className="w-full rounded-md border border-gray-300 bg-white py-2 pl-9 pr-3 text-sm text-gray-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5">
               {FILTER_LEVELS.map((level) => (
                 <button
                   key={level}
@@ -182,16 +192,6 @@ export function LogsViewer({
                   )}
                 </button>
               ))}
-            </div>
-            <div className="relative ml-auto min-w-[180px] flex-1 sm:max-w-xs">
-              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder={t('sections.logs.viewer.search')}
-                className="w-full rounded-md border border-gray-300 bg-white py-1.5 pl-8 pr-3 text-sm text-gray-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-              />
             </div>
           </div>
 
