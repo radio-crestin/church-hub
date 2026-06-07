@@ -11,9 +11,7 @@
 // `-e` and runs the full server, hence this dedicated flag.
 if (process.argv.includes('--probe-midi')) {
   try {
-    // biome-ignore lint/correctness/noNodejsModules: probe must be self-contained
     const probeFs = require('node:fs') as typeof import('node:fs')
-    // biome-ignore lint/correctness/noNodejsModules: probe must be self-contained
     const probePath = require('node:path') as typeof import('node:path')
 
     let probeMidiPath: string | null = null
@@ -53,6 +51,73 @@ if (process.argv.includes('--probe-midi')) {
     }
     process.exit(0)
   } catch {
+    process.exit(1)
+  }
+}
+
+// --chroma-server: runs the embedded Chroma (Rust) server via its NAPI
+// binding. The parent server re-invokes itself with this flag (same pattern
+// as --probe-midi above — Bun's compiled standalone has no `-e`) so Chroma
+// lives in a supervised child process instead of a separately shipped binary.
+// MUST exit on any path: falling through would boot a second full server and
+// SIGKILL the parent via killProcessOnPort (the v0.1.60 failure mode).
+if (process.argv.includes('--chroma-server')) {
+  try {
+    const argv = process.argv
+    const chromaPath = argv[argv.indexOf('--chroma-path') + 1]
+    const chromaPort = argv[argv.indexOf('--chroma-port') + 1]
+    if (
+      argv.indexOf('--chroma-path') === -1 ||
+      argv.indexOf('--chroma-port') === -1 ||
+      !chromaPath ||
+      !chromaPort
+    ) {
+      // biome-ignore lint/suspicious/noConsole: child process startup error
+      console.error('[chroma-server] missing --chroma-path/--chroma-port')
+      process.exit(1)
+    }
+
+    // Self-contained binding resolution (mirrors service/chroma/bindings.ts;
+    // kept inline like the probe above so this path has no module deps).
+    const chromaFs = require('node:fs') as typeof import('node:fs')
+    const chromaPathMod = require('node:path') as typeof import('node:path')
+
+    let binding: { cli: (args: string[]) => void } | null = null
+    if (process.env.TAURI_MODE === 'true') {
+      // Production: .node bundled under resources/chroma-native/
+      const resourcesDir =
+        process.platform === 'darwin'
+          ? chromaPathMod.join(process.execPath, '..', '..', 'Resources')
+          : chromaPathMod.join(process.execPath, '..')
+      const bundled = chromaPathMod.join(
+        resourcesDir,
+        'chroma-native',
+        'chromadb-js-bindings.node',
+      )
+      if (chromaFs.existsSync(bundled)) {
+        binding = require(bundled)
+      }
+    }
+    if (!binding) {
+      // Development: resolve the platform package from node_modules.
+      // (chromadb's own cli.mjs has a broken win32 branch — resolve ourselves.)
+      const arch = process.arch
+      const platform = process.platform
+      const pkg =
+        platform === 'darwin'
+          ? `chromadb-js-bindings-darwin-${arch}`
+          : platform === 'win32'
+            ? 'chromadb-js-bindings-win32-x64-msvc'
+            : `chromadb-js-bindings-linux-${arch}-gnu`
+      binding = require(pkg) as { cli: (args: string[]) => void }
+    }
+
+    // Blocks for the lifetime of the Chroma server.
+    binding.cli(['chroma', 'run', '--path', chromaPath, '--port', chromaPort])
+    process.exit(0)
+  } catch (chromaError) {
+    // biome-ignore lint/suspicious/noConsole: child process startup error
+    console.error('[chroma-server] failed to start:', chromaError)
     process.exit(1)
   }
 }
@@ -138,6 +203,7 @@ import {
   rebuildSearchIndex as rebuildBibleSearchIndex,
   type SearchVersesInput,
   searchBible,
+  searchByReference,
   warmupSearchIndex as warmupBibleSearchIndex,
 } from './service/bible'
 import {
@@ -146,6 +212,18 @@ import {
   clearHistory,
   getHistory,
 } from './service/bible-history'
+import {
+  getChromaStatus,
+  getEffectiveSearchEngine,
+  initializeChroma,
+  resyncChroma,
+  runSearchBenchmark,
+  searchBibleChroma,
+  searchSchedulesChroma,
+  searchSongsChroma,
+  setSearchEngine,
+  stopChromaServer,
+} from './service/chroma'
 import { parsePptFile } from './service/conversion'
 import {
   checkpointAndExport,
@@ -659,6 +737,11 @@ async function main() {
   await bootServer.stop(true)
 
   await startRealServer()
+
+  // Start the ChromaDB engine (child server process + SQLite→Chroma sync)
+  // in the background — never blocks boot; chroma-backed search falls back
+  // to SQLite until the engine reports ready.
+  void initializeChroma()
 }
 
 /**
@@ -1693,6 +1776,10 @@ async function startRealServer(): Promise<void> {
           )
         }
 
+        // Chroma data is derived from SQLite — rebuild it from the imported
+        // database in the background (progress via /api/search/chroma-status).
+        void resyncChroma().catch(() => {})
+
         return handleCors(
           req,
           new Response(JSON.stringify({ data: result }), {
@@ -1740,6 +1827,9 @@ async function startRealServer(): Promise<void> {
             }),
           )
         }
+
+        // Rebuild the derived Chroma data to match the reset database.
+        void resyncChroma().catch(() => {})
 
         return handleCors(
           req,
@@ -1805,6 +1895,9 @@ async function startRealServer(): Promise<void> {
             rebuildBibleSearchIndex()
             rebuiltIndexes.push('bible')
           }
+
+          // Also rebuild the derived Chroma index in the background.
+          void resyncChroma().catch(() => {})
 
           const duration = performance.now() - startTime
 
@@ -2277,12 +2370,19 @@ async function startRealServer(): Promise<void> {
         if (permError) return permError
 
         const query = url.searchParams.get('q') || ''
-        const results = searchSchedules(query)
+        const { effective: scheduleEngine } = getEffectiveSearchEngine()
+        const results =
+          scheduleEngine === 'sqlite'
+            ? searchSchedules(query)
+            : await searchSchedulesChroma(query, scheduleEngine)
         return handleCors(
           req,
-          new Response(JSON.stringify({ data: results }), {
-            headers: { 'Content-Type': 'application/json' },
-          }),
+          new Response(
+            JSON.stringify({ data: results, engine: scheduleEngine }),
+            {
+              headers: { 'Content-Type': 'application/json' },
+            },
+          ),
         )
       }
 
@@ -3662,16 +3762,26 @@ async function startRealServer(): Promise<void> {
           url.searchParams.get('inSchedulesOnly') === 'true' || undefined
         const hasKeyLine =
           url.searchParams.get('hasKeyLine') === 'true' || undefined
-        const results = searchSongs(
-          query,
-          categoryIds && categoryIds.length > 0 ? categoryIds : undefined,
-          50,
-          { presentedOnly, inSchedulesOnly, hasKeyLine },
-        )
+        const { effective: songEngine } = getEffectiveSearchEngine()
+        const results =
+          songEngine === 'sqlite'
+            ? searchSongs(
+                query,
+                categoryIds && categoryIds.length > 0 ? categoryIds : undefined,
+                50,
+                { presentedOnly, inSchedulesOnly, hasKeyLine },
+              )
+            : await searchSongsChroma(
+                query,
+                songEngine,
+                categoryIds && categoryIds.length > 0 ? categoryIds : undefined,
+                50,
+                { presentedOnly, inSchedulesOnly, hasKeyLine },
+              )
 
         return handleCors(
           req,
-          new Response(JSON.stringify({ data: results }), {
+          new Response(JSON.stringify({ data: results, engine: songEngine }), {
             headers: {
               'Content-Type': 'application/json',
               'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -3718,6 +3828,133 @@ async function startRealServer(): Promise<void> {
         } catch (error) {
           const message =
             error instanceof Error ? error.message : 'AI search failed'
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: message }), {
+              status: 500,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // ============================================================
+      // Search Engine API (ChromaDB experiment)
+      // ============================================================
+
+      // GET /api/search/engine - Current engine + chroma status
+      if (req.method === 'GET' && url.pathname === '/api/search/engine') {
+        const permError = checkPermission('songs.view')
+        if (permError) return permError
+
+        const engineInfo = getEffectiveSearchEngine()
+        return handleCors(
+          req,
+          new Response(
+            JSON.stringify({
+              data: { ...engineInfo, chroma: getChromaStatus() },
+            }),
+            { headers: { 'Content-Type': 'application/json' } },
+          ),
+        )
+      }
+
+      // PUT /api/search/engine - Switch search engine
+      if (req.method === 'PUT' && url.pathname === '/api/search/engine') {
+        const permError = checkPermission('settings.edit')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as { engine?: string }
+          const engine = setSearchEngine(body.engine ?? '')
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({
+                data: { ...getEffectiveSearchEngine(), engine },
+              }),
+              { headers: { 'Content-Type': 'application/json' } },
+            ),
+          )
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : 'Invalid engine'
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: message }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // GET /api/search/chroma-status - Chroma server + sync status
+      if (
+        req.method === 'GET' &&
+        url.pathname === '/api/search/chroma-status'
+      ) {
+        const permError = checkPermission('songs.view')
+        if (permError) return permError
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: getChromaStatus() }), {
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+            },
+          }),
+        )
+      }
+
+      // POST /api/search/chroma-resync - Wipe Chroma and rebuild from SQLite
+      // (maintenance op — strict-localhost only, like /api/database/*)
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/search/chroma-resync'
+      ) {
+        if (!isStrictLocalhost()) {
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({ error: 'Only accessible from localhost' }),
+              { status: 403, headers: { 'Content-Type': 'application/json' } },
+            ),
+          )
+        }
+
+        // Fire-and-forget — progress is observable via chroma-status.
+        void resyncChroma().catch(() => {})
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: { started: true } }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/search/benchmark - Compare SQLite FTS vs Chroma engines
+      if (req.method === 'POST' && url.pathname === '/api/search/benchmark') {
+        const permError = checkPermission('songs.view')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json().catch(() => ({}))) as {
+            domain?: 'songs' | 'bible'
+            queries?: string[]
+            iterations?: number
+          }
+          const report = await runSearchBenchmark(body)
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: report }, null, 2), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : 'Benchmark failed'
           return handleCors(
             req,
             new Response(JSON.stringify({ error: message }), {
@@ -5624,7 +5861,30 @@ async function startRealServer(): Promise<void> {
             limit: limitParam ? parseInt(limitParam, 10) : 50,
           }
 
-          const result = searchBible(input)
+          // Reference lookups ("Gen 3:16") always go through SQLite — only
+          // free-text search is engine-switchable.
+          const { effective: bibleEngine } = getEffectiveSearchEngine()
+          let result: ReturnType<typeof searchBible>
+          if (bibleEngine === 'sqlite') {
+            result = searchBible(input)
+          } else {
+            const referenceResults = searchByReference(
+              input.query,
+              input.translationId,
+            )
+            result =
+              referenceResults.length > 0
+                ? { type: 'reference', results: referenceResults }
+                : {
+                    type: 'text',
+                    results: await searchBibleChroma(
+                      input.query,
+                      bibleEngine,
+                      input.translationId,
+                      input.limit,
+                    ),
+                  }
+          }
 
           return handleCors(
             req,
@@ -5634,6 +5894,7 @@ async function startRealServer(): Promise<void> {
                   type: result.type,
                   results: result.results,
                 },
+                engine: bibleEngine,
               }),
               {
                 headers: { 'Content-Type': 'application/json' },
@@ -6837,6 +7098,7 @@ async function startRealServer(): Promise<void> {
     clearHistory()
     shutdownMusicPlayer()
     shutdownMIDI()
+    await stopChromaServer()
     closeDatabase()
     await shutdownPostHog()
     process.exit(0)
@@ -6846,6 +7108,7 @@ async function startRealServer(): Promise<void> {
     clearHistory()
     shutdownMusicPlayer()
     shutdownMIDI()
+    await stopChromaServer()
     closeDatabase()
     await shutdownPostHog()
     process.exit(0)

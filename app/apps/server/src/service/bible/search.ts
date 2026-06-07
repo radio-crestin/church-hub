@@ -130,6 +130,14 @@ function getFromCache(key: string): BibleSearchResult[] | null {
   return entry.results
 }
 
+/**
+ * Clears the search results cache (used by the search benchmark so timings
+ * measure the engine, not the LRU).
+ */
+export function clearBibleSearchCache(): void {
+  searchCache.clear()
+}
+
 function setInCache(key: string, results: BibleSearchResult[]): void {
   // Evict oldest entries if cache is full
   if (searchCache.size >= CACHE_MAX_SIZE) {

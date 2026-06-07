@@ -16,6 +16,7 @@ import {
   presentationPaths,
   schedulesPaths,
   screensPaths,
+  searchPaths,
   settingsPaths,
   songGroupsPaths,
   songsPaths,
@@ -66,6 +67,11 @@ export const openApiSpec = {
     { name: 'Conversion', description: 'File format conversion utilities' },
     { name: 'Feedback', description: 'User feedback submission' },
     { name: 'Logs', description: 'Application logs access' },
+    {
+      name: 'Search',
+      description:
+        'Search engine selection, ChromaDB sync status and benchmarking',
+    },
   ],
   paths: {
     ...healthPaths,
@@ -81,6 +87,7 @@ export const openApiSpec = {
     ...biblePaths,
     ...schedulesPaths,
     ...screensPaths,
+    ...searchPaths,
     ...presentationPaths,
     ...conversionPaths,
     ...feedbackPaths,

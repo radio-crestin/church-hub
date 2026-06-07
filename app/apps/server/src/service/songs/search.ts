@@ -1,5 +1,8 @@
 import type { SongSearchResult } from './types'
 import { getRawDatabase } from '../../db'
+// Direct module import (not the barrel) to avoid an import cycle with the
+// chroma benchmark, which imports searchSongs from this file.
+import { queueChromaSongRemove, queueChromaSongSync } from '../chroma/sync'
 import { getSetting } from '../settings'
 
 /**
@@ -280,6 +283,9 @@ export function updateSearchIndex(songId: number): void {
       VALUES (?, ?, ?)
     `).run(songId, normalizedTitle, normalizedContent)
 
+    // Mirror the update into ChromaDB (async, fire-and-forget)
+    queueChromaSongSync(songId)
+
     logger.debug(`Search index updated for song: ${songId}`)
   } catch (error) {
     logger.error(`Failed to update search index: ${error}`)
@@ -296,6 +302,9 @@ export function removeFromSearchIndex(songId: number): void {
     const db = getRawDatabase()
     db.query('DELETE FROM songs_fts WHERE song_id = ?').run(songId)
     db.query('DELETE FROM songs_fts_trigram WHERE song_id = ?').run(songId)
+
+    // Mirror the removal into ChromaDB (async, fire-and-forget)
+    queueChromaSongRemove(songId)
 
     logger.debug(`Song removed from search index: ${songId}`)
   } catch (error) {
@@ -413,6 +422,11 @@ export function batchUpdateSearchIndex(songIds: number[]): void {
 
       // Clear the search cache since index changed
       clearSearchCache()
+
+      // Mirror the updates into ChromaDB (async, coalesced per song)
+      for (const songId of songIds) {
+        queueChromaSongSync(songId)
+      }
 
       logger.info(
         `[PERF] Search index update: ${totalTime.toFixed(2)}ms | Delete: ${deleteTime.toFixed(0)}ms | FTS: ${ftsTime.toFixed(0)}ms`,
@@ -713,9 +727,7 @@ export function buildSearchQuery(
     clauses.push(`(title:"${titlePhraseTerms.join(' ')}")`)
   }
   clauses.push(`("${effectiveTerms.join(' ')}")`)
-  clauses.push(
-    `(NEAR(${effectiveTerms.map((t) => `"${t}"`).join(' ')}, 10))`,
-  )
+  clauses.push(`(NEAR(${effectiveTerms.map((t) => `"${t}"`).join(' ')}, 10))`)
   if (broadOrTerms.length > 0) {
     clauses.push(`(${broadOrTerms.map((t) => `"${t}"*`).join(' OR ')})`)
   }
@@ -974,11 +986,6 @@ function buildDiacriticInsensitivePattern(word: string): string {
  * though the leading single-letter segment is dropped from the search
  * tokens for ranking purposes.
  */
-// Unicode letter class — covers every diacritic variant (incl. cedilla
-// forms ş / ţ that show up in Romanian texts alongside the comma-below
-// canonical forms ș / ț). The `u` regex flag is required to enable it.
-const HL_LETTER = '\\p{L}'
-
 /**
  * Returns true if the gap between two highlight ranges should be swallowed
  * into a single merged range — pure whitespace, a hyphen, or a short
@@ -991,9 +998,7 @@ function isMergeableGap(gap: string): boolean {
   const trimmed = gap.trim()
   if (trimmed === '') return true
   return (
-    trimmed.length <= 6 &&
-    trimmed.includes('-') &&
-    /^[\p{L}-]+$/u.test(trimmed)
+    trimmed.length <= 6 && trimmed.includes('-') && /^[\p{L}-]+$/u.test(trimmed)
   )
 }
 
@@ -1019,7 +1024,10 @@ function cleanQueryForHighlight(rawQuery: string): string {
  * single <mark>. Returns null otherwise so callers can fall back to per-
  * term highlighting.
  */
-function tryExactPhraseHighlight(text: string, rawQuery: string): string | null {
+function tryExactPhraseHighlight(
+  text: string,
+  rawQuery: string,
+): string | null {
   const cleaned = cleanQueryForHighlight(rawQuery)
   if (cleaned.length === 0) return null
   // removeDiacritics + toLowerCase preserve character count for the
@@ -1634,10 +1642,7 @@ export function searchSongs(
       // Synonyms broaden FTS recall — they should not be appended to the
       // queryTerms used for phrase / order detection or the joined exact
       // phrase will never match a real title.
-      const titleScore = calculateTitleScoreNormalized(
-        r.fts_title,
-        validTerms,
-      )
+      const titleScore = calculateTitleScoreNormalized(r.fts_title, validTerms)
 
       const contentScore = calculateBestPhraseScoreNormalized(
         r.full_content,

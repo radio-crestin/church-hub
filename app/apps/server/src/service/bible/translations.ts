@@ -3,6 +3,7 @@ import { asc, count, eq } from 'drizzle-orm'
 import type { BibleTranslation, OperationResult } from './types'
 import { getDatabase, getRawDatabase } from '../../db'
 import { bibleBooks, bibleTranslations, bibleVerses } from '../../db/schema'
+import { queueChromaBibleTranslationRemove } from '../chroma/sync'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -184,6 +185,9 @@ export function deleteTranslation(id: number): OperationResult {
       db.delete(bibleTranslations).where(eq(bibleTranslations.id, id)).run()
 
       rawDb.exec('COMMIT')
+
+      // Mirror the removal into ChromaDB (async, fire-and-forget)
+      queueChromaBibleTranslationRemove(id)
 
       log('info', `Successfully deleted translation ID: ${id}`)
 

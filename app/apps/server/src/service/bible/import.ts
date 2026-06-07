@@ -2,6 +2,7 @@ import { parseHolyBibleXml } from './import-holy-bible-xml'
 import { parseOsisXml } from './import-osis'
 import type { CreateTranslationInput, ImportResult, ParsedBible } from './types'
 import { getRawDatabase } from '../../db'
+import { queueChromaBibleTranslationSync } from '../chroma/sync'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -192,6 +193,9 @@ export function importBibleTranslation(
 
       // Commit transaction
       db.exec('COMMIT')
+
+      // Mirror the new translation into ChromaDB (async, fire-and-forget)
+      queueChromaBibleTranslationSync(translationId)
 
       log(
         'info',

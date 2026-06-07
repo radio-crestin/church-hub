@@ -3,6 +3,12 @@ import { and, asc, eq } from 'drizzle-orm'
 import type { ScheduleSearchResult } from './types'
 import { getDatabase, getRawDatabase } from '../../db'
 import { scheduleItems, schedules, songs } from '../../db/schema'
+// Direct module import (not the barrel) to avoid an import cycle with the
+// chroma search, which returns this file's ScheduleSearchResult shape.
+import {
+  queueChromaScheduleRemove,
+  queueChromaScheduleSync,
+} from '../chroma/sync'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -77,6 +83,9 @@ export function updateScheduleSearchIndex(scheduleId: number): void {
       combinedContent,
     )
 
+    // Mirror the update into ChromaDB (async, fire-and-forget)
+    queueChromaScheduleSync(scheduleId)
+
     log('debug', `Search index updated for schedule: ${scheduleId}`)
   } catch (error) {
     log('error', `Failed to update search index: ${error}`)
@@ -93,6 +102,9 @@ export function removeFromScheduleSearchIndex(scheduleId: number): void {
 
     const rawDb = getRawDatabase()
     rawDb.run('DELETE FROM schedules_fts WHERE schedule_id = ?', scheduleId)
+
+    // Mirror the removal into ChromaDB (async, fire-and-forget)
+    queueChromaScheduleRemove(scheduleId)
 
     log('debug', `Schedule removed from search index: ${scheduleId}`)
   } catch (error) {
