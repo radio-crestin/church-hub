@@ -20,7 +20,8 @@ const fetchFn = isTauri && isMobile() ? tauriFetch : window.fetch.bind(window)
  * Gets the API base URL
  * - On mobile: use the stored API URL from localStorage
  * - In Tauri desktop: use localhost with the sidecar port
- * - In browser: use the same hostname the client accessed from
+ * - In browser: use the page's own origin (the API server is what serves
+ *   the page — it proxies Vite in dev and serves the built client in prod)
  */
 function getApiBaseUrl(): string {
   // On mobile, use stored API URL
@@ -29,19 +30,22 @@ function getApiBaseUrl(): string {
     if (storedUrl) return storedUrl
   }
 
-  const port =
-    window.__serverConfig?.serverPort ??
-    import.meta.env.VITE_SERVER_PORT ??
-    3000
+  // Plain browser: the page origin IS the API origin, whatever the port —
+  // main app on 3000, worktrees on 3002 — no compile-time env needed.
+  if (!isTauri) {
+    return window.location.origin
+  }
 
   // Tauri desktop loads the frontend at `http://tauri.localhost` but the
   // sidecar binds to localhost — using `tauri.localhost` here makes every
   // fetch fail the document CSP (`connect-src http://localhost:*`). Force
   // `localhost` so the URL matches CSP; CORS handles cross-origin allow.
-  const hostname =
-    isTauri && !isMobile() ? 'localhost' : window.location.hostname || 'localhost'
+  const port =
+    window.__serverConfig?.serverPort ??
+    import.meta.env.VITE_SERVER_PORT ??
+    3000
 
-  return `http://${hostname}:${port}`
+  return `http://localhost:${port}`
 }
 
 export async function fetcher<T>(
