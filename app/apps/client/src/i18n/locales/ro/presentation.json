@@ -50,6 +50,10 @@
     "visibility": {
       "hideElement": "Ascunde elementul"
     },
+    "elements": {
+      "songKey": "Gama",
+      "amen": "Amin"
+    },
     "position": {
       "x": "Poziție X",
       "y": "Poziție Y",

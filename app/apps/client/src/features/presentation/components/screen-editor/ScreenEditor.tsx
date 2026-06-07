@@ -246,6 +246,26 @@ export function ScreenEditor({
           ...(updates.constraints && { constraints: updates.constraints }),
           ...(updates.size && { size: updates.size }),
         }
+      } else if (
+        elementType === 'songKey' &&
+        'songKey' in newConfig &&
+        newConfig.songKey
+      ) {
+        newConfig.songKey = {
+          ...newConfig.songKey,
+          ...(updates.constraints && { constraints: updates.constraints }),
+          ...(updates.size && { size: updates.size }),
+        }
+      } else if (
+        elementType === 'amen' &&
+        'amen' in newConfig &&
+        newConfig.amen
+      ) {
+        newConfig.amen = {
+          ...newConfig.amen,
+          ...(updates.constraints && { constraints: updates.constraints }),
+          ...(updates.size && { size: updates.size }),
+        }
       } else if (elementType === 'personLabel' && 'personLabel' in newConfig) {
         newConfig.personLabel = {
           ...newConfig.personLabel,

@@ -50,6 +50,10 @@
     "visibility": {
       "hideElement": "Hide element"
     },
+    "elements": {
+      "songKey": "Song key",
+      "amen": "Amen"
+    },
     "position": {
       "x": "X Position",
       "y": "Y Position",

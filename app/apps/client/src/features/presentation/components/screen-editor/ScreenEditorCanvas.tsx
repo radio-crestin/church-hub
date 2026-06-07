@@ -34,10 +34,18 @@ interface ScreenEditorCanvasProps {
 // Sample content for preview
 const SAMPLE_CONTENT: Record<
   ContentType,
-  { main?: string; reference?: string; person?: string }
+  {
+    main?: string
+    reference?: string
+    person?: string
+    songKey?: string
+    amen?: string
+  }
 > = {
   song: {
     main: 'Aleluia, Aleluia!\nMărire Domnului!\nAleluia, Aleluia!\nSlăvit să fie El!',
+    songKey: 'G',
+    amen: 'Amin!',
   },
   bible: {
     reference: 'Ioan 3:16',
@@ -690,6 +698,86 @@ export function ScreenEditorCanvas({
           <TextContent
             content={sample?.reference ?? 'Reference'}
             style={{ ...rt.style, maxFontSize: rt.style.maxFontSize * scale }}
+            containerWidth={bounds.width * scale}
+            containerHeight={bounds.height * scale}
+          />
+        </DraggableElement>,
+      )
+    }
+
+    // Song key "gama" (song, first slide)
+    if (config && 'songKey' in config && config.songKey) {
+      const sk = config.songKey
+      const bounds = calculatePixelBounds(
+        sk.constraints,
+        sk.size,
+        canvasWidth,
+        canvasHeight,
+      )
+
+      els.push(
+        <DraggableElement
+          key="songKey"
+          x={bounds.x * scale}
+          y={bounds.y * scale}
+          width={bounds.width * scale}
+          height={bounds.height * scale}
+          constraints={sk.constraints}
+          size={sk.size}
+          isSelected={selectedElement?.type === 'songKey'}
+          isHidden={sk.hidden}
+          onClick={() => onSelectElement({ type: 'songKey' })}
+          onConstraintChange={handleConstraintChange('songKey')}
+          onSizeChange={handleSizeChange('songKey')}
+          canvasWidth={displaySize.width}
+          canvasHeight={displaySize.height}
+          screenWidth={canvasWidth}
+          screenHeight={canvasHeight}
+          canvasRef={canvasRef}
+        >
+          <TextContent
+            content={sample?.songKey ?? 'G'}
+            style={{ ...sk.style, maxFontSize: sk.style.maxFontSize * scale }}
+            containerWidth={bounds.width * scale}
+            containerHeight={bounds.height * scale}
+          />
+        </DraggableElement>,
+      )
+    }
+
+    // Amin (song, last slide)
+    if (config && 'amen' in config && config.amen) {
+      const am = config.amen
+      const bounds = calculatePixelBounds(
+        am.constraints,
+        am.size,
+        canvasWidth,
+        canvasHeight,
+      )
+
+      els.push(
+        <DraggableElement
+          key="amen"
+          x={bounds.x * scale}
+          y={bounds.y * scale}
+          width={bounds.width * scale}
+          height={bounds.height * scale}
+          constraints={am.constraints}
+          size={am.size}
+          isSelected={selectedElement?.type === 'amen'}
+          isHidden={am.hidden}
+          onClick={() => onSelectElement({ type: 'amen' })}
+          onConstraintChange={handleConstraintChange('amen')}
+          onSizeChange={handleSizeChange('amen')}
+          canvasWidth={displaySize.width}
+          canvasHeight={displaySize.height}
+          screenWidth={canvasWidth}
+          screenHeight={canvasHeight}
+          canvasRef={canvasRef}
+        >
+          <TextContent
+            content={sample?.amen ?? 'Amin!'}
+            style={{ ...am.style, maxFontSize: am.style.maxFontSize * scale }}
             containerWidth={bounds.width * scale}
             containerHeight={bounds.height * scale}
           />

@@ -12,6 +12,8 @@ export type SelectedElement =
   | { type: 'mainText' }
   | { type: 'contentText' }
   | { type: 'referenceText' }
+  | { type: 'songKey' }
+  | { type: 'amen' }
   | { type: 'personLabel' }
   | { type: 'clock' }
   | { type: 'nextSlide' }

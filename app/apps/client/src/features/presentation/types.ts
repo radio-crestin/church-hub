@@ -537,6 +537,8 @@ export interface PersonLabelConfig {
 export interface SongContentConfig {
   background: ScreenBackgroundConfig
   mainText: TextElementConfig
+  songKey?: ReferenceTextConfig // Song key ("gama") element, shown on the first slide
+  amen?: ReferenceTextConfig // "Amin" element, shown on the last slide
   clockEnabled?: boolean // Per-slide-type enable, uses global clockConfig for position/style
   displayKeyLine?: boolean // Whether to display the song key line on the first slide (default: true)
   displayChords?: boolean // Whether to display chord annotations above lyrics (default: false)
