@@ -127,13 +127,23 @@ export function extractTrailingAmin(
  * the amin element ([[extractTrailingAmin]]); otherwise the lyrics are kept
  * as-is and a standard "Amin!" element is added only when the slide has no
  * "amin" at all (see [[resolveAmen]]).
+ *
+ * `customAmin` is the operator's configured amin label (`song_last_slide.amen.text`).
+ * When set it replaces the shown amin text — both the extracted line and the
+ * default "Amin!" — so the screen shows exactly what was configured.
  */
 export function resolveSongSlideBody(
   isLastSlide: boolean,
   slideContent: string,
+  customAmin?: string,
 ): { mainText: string; amen: string | undefined } {
   if (!isLastSlide) return { mainText: slideContent, amen: undefined }
+  const custom = customAmin?.trim() || undefined
   const extracted = extractTrailingAmin(slideContent)
-  if (extracted) return extracted
-  return { mainText: slideContent, amen: resolveAmen(isLastSlide, slideContent) }
+  if (extracted) {
+    return { mainText: extracted.mainText, amen: custom ?? extracted.amen }
+  }
+  // Suppress when an amin appears inline (mid-lyrics) and isn't a trailing line.
+  if (/amin/i.test(slideContent)) return { mainText: slideContent, amen: undefined }
+  return { mainText: slideContent, amen: custom ?? 'Amin!' }
 }

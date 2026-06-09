@@ -184,9 +184,10 @@ test.describe('Song last slide layout (strofa + amin)', () => {
       ).json()
       const cfg = data.contentConfigs.song_last_slide
 
-      // Operator repositions/styles + hides the amen for the last slide.
+      // Operator repositions/styles the amen and sets a custom amin label.
       cfg.amen.style.color = '#654321'
       cfg.amen.constraints.top.value = 90
+      cfg.amen.text = 'Slăvit să fie El!'
       cfg.mainText.style.color = '#fedcba'
 
       const put = await request.put(
@@ -200,6 +201,7 @@ test.describe('Song last slide layout (strofa + amin)', () => {
       ).data.contentConfigs
       expect(reread.song_last_slide.amen.style.color).toBe('#654321')
       expect(reread.song_last_slide.amen.constraints.top.value).toBe(90)
+      expect(reread.song_last_slide.amen.text).toBe('Slăvit să fie El!')
       expect(reread.song_last_slide.mainText.style.color).toBe('#fedcba')
       // The plain `song` config is untouched by the last-slide edit.
       expect(reread.song.mainText.style.color).not.toBe('#fedcba')

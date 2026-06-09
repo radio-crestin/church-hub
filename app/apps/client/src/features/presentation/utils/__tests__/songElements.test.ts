@@ -150,4 +150,22 @@ describe('resolveSongSlideBody', () => {
       resolveSongSlideBody(true, '<p>Amin slăvit</p><p>versul final</p>'),
     ).toEqual({ mainText: '<p>Amin slăvit</p><p>versul final</p>', amen: undefined })
   })
+
+  it('uses a custom amin label instead of the default "Amin!"', () => {
+    expect(
+      resolveSongSlideBody(true, '<p>Slăvit să fie El</p>', 'Slăvit!'),
+    ).toEqual({ mainText: '<p>Slăvit să fie El</p>', amen: 'Slăvit!' })
+  })
+
+  it('a custom amin label overrides an extracted trailing amin line', () => {
+    expect(
+      resolveSongSlideBody(true, '<p>Slăvit să fie El</p><p>Amin!</p>', 'Amin.'),
+    ).toEqual({ mainText: '<p>Slăvit să fie El</p>', amen: 'Amin.' })
+  })
+
+  it('ignores a blank custom amin label (falls back to default)', () => {
+    expect(
+      resolveSongSlideBody(true, '<p>Slăvit să fie El</p>', '   '),
+    ).toEqual({ mainText: '<p>Slăvit să fie El</p>', amen: 'Amin!' })
+  })
 })
