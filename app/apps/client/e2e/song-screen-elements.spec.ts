@@ -76,7 +76,7 @@ test.describe('Song screen elements (songKey + amen)', () => {
 })
 
 /**
- * "Gama - Strofă" (song_first_slide) is a dedicated content type whose config
+ * "Cântec - Primul Slide" (song_first_slide) is a dedicated content type whose config
  * applies only to a song's FIRST slide: two separately positionable elements —
  * the song key (gama) and the slide lyrics (strofa) — like the Bible
  * reference/verse pair. It defaults into every screen and round-trips through
@@ -143,7 +143,7 @@ test.describe('Song first slide layout (gama + strofa)', () => {
 })
 
 /**
- * "Strofă - Amin" (song_last_slide) is a dedicated content type whose config
+ * "Cântec - Ultimul Slide" (song_last_slide) is a dedicated content type whose config
  * applies only to a song's LAST slide: two separately positionable elements —
  * the slide lyrics (strofa) and the "Amin" — like the Bible reference/verse
  * pair. It defaults into every screen and round-trips through the config API

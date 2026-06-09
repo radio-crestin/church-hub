@@ -2,11 +2,11 @@ import type { ContentType, SongContentConfig } from '../types'
 
 /**
  * Picks the screen content type for a given song slide:
- *  - the FIRST slide uses the dedicated "Gama - Strofă" (`song_first_slide`)
+ *  - the FIRST slide uses the dedicated "Cântec - Primul Slide" (`song_first_slide`)
  *    layout (gama + strofa) — but ONLY when the slide actually shows a gama
  *    (`hasKey`); without a key it falls back to the plain `song` layout so the
  *    strofa isn't shifted to make room for an absent element,
- *  - the LAST slide uses "Strofă - Amin" (`song_last_slide`) layout
+ *  - the LAST slide uses "Cântec - Ultimul Slide" (`song_last_slide`) layout
  *    (strofa + amin) — but ONLY when the slide actually shows an amin
  *    (`hasAmen`); otherwise it falls back to `song`,
  *  - every middle slide uses `song`.

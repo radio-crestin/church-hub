@@ -170,7 +170,7 @@ function getDefaultSongConfig() {
   }
 }
 
-// Layout for a song's FIRST slide only ("Gama - Strofă"): two elements — the
+// Layout for a song's FIRST slide only ("Cântec - Primul Slide"): two elements — the
 // song key (gama) and the slide lyrics (strofa) — positioned/styled separately
 // from the rest of the song's slides (which keep the `song` config). Defaults
 // mirror the `song` config so there is no visual jump until the operator
@@ -203,7 +203,7 @@ function getDefaultSongFirstSlideConfig() {
   }
 }
 
-// Layout for a song's LAST slide only ("Strofă - Amin"): two elements — the
+// Layout for a song's LAST slide only ("Cântec - Ultimul Slide"): two elements — the
 // slide lyrics (strofa) and the "Amin" — positioned/styled separately from the
 // rest of the song's slides (which keep the `song` config). Defaults mirror the
 // `song` config so there is no visual jump until the operator repositions them.

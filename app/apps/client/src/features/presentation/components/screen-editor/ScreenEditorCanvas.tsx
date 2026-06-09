@@ -713,7 +713,7 @@ export function ScreenEditorCanvas({
       )
     }
 
-    // Song key "gama" — only configurable in the "Gama - Strofă" (first slide)
+    // Song key "gama" — only configurable in the "Cântec - Primul Slide" (first slide)
     // layout. The `song` config still carries a vestigial songKey for backward
     // compatibility, but it never renders at runtime, so hide it from the Song
     // tab to avoid the operator editing an element that has no effect.
@@ -761,7 +761,7 @@ export function ScreenEditorCanvas({
       )
     }
 
-    // Amin — only configurable in the "Strofă - Amin" (last slide) layout. The
+    // Amin — only configurable in the "Cântec - Ultimul Slide" (last slide) layout. The
     // `song` config still carries a vestigial amen for backward compatibility,
     // but it never renders at runtime on a multi-slide song, so hide it from the
     // Song tab to avoid editing an element that has no effect.

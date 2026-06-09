@@ -548,7 +548,7 @@ export interface SongContentConfig {
 }
 
 /**
- * Layout for a song's FIRST slide only ("Gama - Strofă"). Two separately
+ * Layout for a song's FIRST slide only ("Cântec - Primul Slide"). Two separately
  * positionable elements — the song key (gama) and the slide lyrics (strofa) —
  * like the Bible reference/verse pair. Applies only to the first slide of a
  * song; every following slide uses {@link SongContentConfig}. Chord/keyline
@@ -563,7 +563,7 @@ export interface SongFirstSlideContentConfig {
 }
 
 /**
- * Layout for a song's LAST slide only ("Strofă - Amin"). Two separately
+ * Layout for a song's LAST slide only ("Cântec - Ultimul Slide"). Two separately
  * positionable elements — the slide lyrics (strofa) and the "Amin" — like the
  * Bible reference/verse pair. Applies only to the last slide of a song; every
  * preceding slide uses {@link SongContentConfig}. Chord display stays on the
