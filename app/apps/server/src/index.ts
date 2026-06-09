@@ -81,6 +81,7 @@ import { closeDatabase, getRawDatabase, initializeDatabase } from './db'
 import type { RequestContext } from './middleware'
 import {
   appOnlyAuthMiddleware,
+  buildUserAuthCookie,
   combinedAuthMiddleware,
   isLocalhost,
   requireAnyPermission,
@@ -928,30 +929,13 @@ async function startRealServer(): Promise<void> {
         const frontendPort = process.env['PORT'] ?? 3000
         const frontendUrl = `http://${host}:${frontendPort}/`
 
-        // Build cookie with domain for cross-port sharing
-        // Note: Domain attribute allows cookie to be sent to all ports on the same host
-        const isLocal = host === 'localhost' || host === '127.0.0.1'
-        const cookieParts = [
-          `user_auth=${token}`,
-          'HttpOnly',
-          // See buildAuthCookie below: desktop is cross-site (tauri.localhost ↔
-          // localhost), so the localhost cookie must be `None; Secure` to be
-          // stored and sent; remote same-origin servers keep `Lax`.
-          ...(isLocal ? ['SameSite=None', 'Secure'] : ['SameSite=Lax']),
-          'Max-Age=31536000',
-          'Path=/',
-        ]
-        // Only add Domain for non-localhost (IP addresses need explicit domain)
-        if (!isLocal) {
-          cookieParts.push(`Domain=${host}`)
-        }
-
-        // Redirect to frontend app with cookie set
+        // Redirect to frontend app with cookie set. Cookie attributes are
+        // engine-aware — see buildUserAuthCookie.
         const response = new Response(null, {
           status: 302,
           headers: {
             Location: frontendUrl,
-            'Set-Cookie': cookieParts.join('; '),
+            'Set-Cookie': buildUserAuthCookie(req, token, 31536000),
           },
         })
 
@@ -972,30 +956,11 @@ async function startRealServer(): Promise<void> {
       // the login screen can list users and establish a session).
       // ============================================================
 
-      // Builds the user_auth Set-Cookie header value.
-      function buildAuthCookie(token: string, maxAgeSeconds: number): string {
-        const host = req.headers.get('host')?.split(':')[0] ?? 'localhost'
-        const isLocal = host === 'localhost' || host === '127.0.0.1'
-        const parts = [
-          `user_auth=${token}`,
-          'HttpOnly',
-          // On desktop the UI is served from `tauri.localhost` while this sidecar
-          // is `localhost` — a cross-site pair. A `SameSite=Lax` cookie is never
-          // sent on those cross-site requests (and Chromium even refuses to store
-          // a cross-site `Set-Cookie` from a fetch unless it's `None; Secure`), so
-          // login could never stick. `localhost` is a secure context even over
-          // plain http, so `None; Secure` is honored and the session works.
-          // Remote/LAN servers serve the UI and API same-origin, where `Lax` is
-          // correct and `Secure` would be rejected over plain http.
-          ...(isLocal ? ['SameSite=None', 'Secure'] : ['SameSite=Lax']),
-          `Max-Age=${maxAgeSeconds}`,
-          'Path=/',
-        ]
-        if (!isLocal) {
-          parts.push(`Domain=${host}`)
-        }
-        return parts.join('; ')
-      }
+      // Builds the user_auth Set-Cookie header value. Attributes are
+      // engine-aware (WebKit drops `Secure` over plain http) — see
+      // buildUserAuthCookie in middleware/auth.ts.
+      const buildAuthCookie = (token: string, maxAgeSeconds: number): string =>
+        buildUserAuthCookie(req, token, maxAgeSeconds)
 
       // GET /api/auth/local-users - minimal user list for the login picker
       if (req.method === 'GET' && url.pathname === '/api/auth/local-users') {

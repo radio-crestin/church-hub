@@ -33,6 +33,7 @@ import {
 import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { ClearSearchButton } from '~/ui/search'
 import {
   useAddBookmarkNote,
   useBookmarkNotes,
@@ -307,6 +308,7 @@ export function SongBookmarksPanel({
   const removeNoteMutation = useRemoveBookmarkNote()
   const exportMutation = useExportBookmarksAsText()
   const [searchQuery, setSearchQuery] = useState('')
+  const searchInputRef = useRef<HTMLInputElement>(null)
   const [isAddingNote, setIsAddingNote] = useState(false)
   const [newNoteContent, setNewNoteContent] = useState('')
   const newNoteInputRef = useRef<HTMLInputElement>(null)
@@ -624,6 +626,7 @@ export function SongBookmarksPanel({
               <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                 <input
+                  ref={searchInputRef}
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -631,13 +634,12 @@ export function SongBookmarksPanel({
                   className="w-full pl-8 pr-7 py-1.5 text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-md text-gray-900 dark:text-white placeholder-gray-400 focus:ring-1 focus:ring-amber-500 focus:border-amber-500"
                 />
                 {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery('')}
+                  <ClearSearchButton
+                    inputRef={searchInputRef}
+                    onClear={() => setSearchQuery('')}
+                    size={14}
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                  >
-                    <XIcon className="w-3.5 h-3.5" />
-                  </button>
+                  />
                 )}
               </div>
             </div>

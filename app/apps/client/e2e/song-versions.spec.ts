@@ -262,6 +262,132 @@ test.describe('Song Versions', () => {
     expect(ids).toContain(c) // a different similar song — surfaced
   })
 
+  test('the opened song leads the grouped versions list, highlighted with a badge', async ({
+    page,
+    request,
+  }) => {
+    // "ZZZ…" sorts after "AAA…", so plain title order would put the sibling
+    // first — the panel must still pin the opened song to the top.
+    const a = await createSong(request, `ZZZ E2E Pinned Top ${tag}`)
+    const b = await createSong(request, `AAA E2E Pinned Top ${tag}`)
+    await request.post('/api/song-groups/link', {
+      data: { songIdA: a, songIdB: b },
+    })
+
+    await page.goto(`/songs/${a}`)
+    const current = page.getByTestId('version-current-row')
+    await expect(current).toBeVisible({ timeout: 10000 })
+    await expect(current).toContainText(`ZZZ E2E Pinned Top ${tag}`)
+    // The "you are here" badge (EN or RO build).
+    await expect(current).toContainText(/current|curent/i)
+    // …and it renders above every other member row.
+    const rows = page.locator(
+      '[data-testid="version-current-row"], [data-testid="version-member-row"]',
+    )
+    await expect(rows.first()).toHaveAttribute(
+      'data-testid',
+      'version-current-row',
+    )
+    await expect(
+      page.getByTestId('version-member-row').first(),
+    ).toContainText(`AAA E2E Pinned Top ${tag}`)
+  })
+
+  test('a standalone song shows its own highlighted row first, then suggestions sorted by score', async ({
+    page,
+    request,
+  }) => {
+    const sharedVerse = `Strofa unica de test pentru sortare ${tag}`
+    const subject = await request
+      .post('/api/songs', {
+        data: {
+          title: `Sortare scor mare ${tag}`,
+          slides: [{ content: sharedVerse }],
+        },
+      })
+      .then((r) => r.json())
+      .then((j) => j.data.id as number)
+    createdSongIds.push(subject)
+    // Near-duplicate: same title + identical verse → top score.
+    const high = await request
+      .post('/api/songs', {
+        data: {
+          title: `Sortare scor mare ${tag} v2`,
+          slides: [{ content: sharedVerse }],
+        },
+      })
+      .then((r) => r.json())
+      .then((j) => j.data.id as number)
+    createdSongIds.push(high)
+    // Same title but only half the verses overlap → clearly lower score.
+    const low = await request
+      .post('/api/songs', {
+        data: {
+          title: `Sortare scor mare ${tag} extra`,
+          slides: [
+            { content: `Strofa unica de test ${tag}` },
+            { content: 'Complet alte cuvinte adaugate aici acum' },
+          ],
+        },
+      })
+      .then((r) => r.json())
+      .then((j) => j.data.id as number)
+    createdSongIds.push(low)
+
+    await page.goto(`/songs/${subject}`)
+
+    // The opened song leads, highlighted with the badge.
+    const current = page.getByTestId('version-current-row')
+    await expect(current).toBeVisible({ timeout: 10000 })
+    await expect(current).toContainText(`Sortare scor mare ${tag}`)
+    await expect(current).toContainText(/current|curent/i)
+
+    // Both crafted candidates are suggested, best match first.
+    const suggestionRows = page.getByTestId('version-suggestion-row')
+    await expect(suggestionRows).toHaveCount(2, { timeout: 10000 })
+    await expect(suggestionRows.nth(0)).toContainText(
+      `Sortare scor mare ${tag} v2`,
+    )
+    await expect(suggestionRows.nth(1)).toContainText(
+      `Sortare scor mare ${tag} extra`,
+    )
+
+    // The visible percentages must read top-down from most to least similar.
+    const texts = await suggestionRows.allInnerTexts()
+    const percents = texts.map((t) => Number(/(\d+)\s*%/.exec(t)?.[1] ?? -1))
+    expect(percents.every((p) => p >= 0)).toBe(true)
+    for (let i = 1; i < percents.length; i++) {
+      expect(percents[i]).toBeLessThanOrEqual(percents[i - 1])
+    }
+  })
+
+  test('a standalone song with no matches shows the subtle empty state', async ({
+    page,
+    request,
+  }) => {
+    const lonely = await request
+      .post('/api/songs', {
+        data: {
+          title: `Xyzzqw plugh frobnitz ${tag}`,
+          slides: [{ content: `Qwertzuiop asdfghjkl yxcvbnm ${tag}` }],
+        },
+      })
+      .then((r) => r.json())
+      .then((j) => j.data.id as number)
+    createdSongIds.push(lonely)
+
+    await page.goto(`/songs/${lonely}`)
+
+    // Current song still leads the panel…
+    const current = page.getByTestId('version-current-row')
+    await expect(current).toBeVisible({ timeout: 10000 })
+    await expect(current).toContainText(`Xyzzqw plugh frobnitz ${tag}`)
+    // …followed by the subtle "no other versions" line instead of a void.
+    await expect(page.getByTestId('versions-empty-state')).toBeVisible({
+      timeout: 10000,
+    })
+  })
+
   test('a re-titled version (different title, ≥70% identical verses) is surfaced via lyrics recall', async ({
     request,
   }) => {

@@ -22,6 +22,54 @@ const READ_ONLY_LOCALHOST_PERMISSIONS: Permission[] = ALL_PERMISSIONS.filter(
 )
 
 /**
+ * Builds the `user_auth` Set-Cookie header value with attributes that
+ * actually persist in every engine we target:
+ *
+ * - On desktop the UI is cross-site with this server (`tauri.localhost` /
+ *   `tauri:` ↔ `localhost`), so the localhost cookie needs `SameSite=None`
+ *   to be sent on those requests.
+ * - Chromium (Windows WebView2, Chrome, Edge, CI) refuses `SameSite=None`
+ *   without `Secure`, and treats plain-http localhost as trustworthy, so it
+ *   gets `None; Secure`.
+ * - WebKit (macOS WKWebView, Linux webkitgtk, Safari) is the inverse: it
+ *   REJECTS `Secure` cookies delivered over plain http — with NO localhost
+ *   exemption — but accepts `SameSite=None` without `Secure`. Sending
+ *   `Secure` to WebKit means the cookie is silently dropped and login never
+ *   sticks (the account picker just reloads).
+ * - Remote/LAN servers serve UI and API same-origin, where `Lax` is correct
+ *   and `Secure` would equally be rejected over plain http.
+ */
+export function buildUserAuthCookie(
+  req: Request,
+  token: string,
+  maxAgeSeconds: number,
+): string {
+  const host = req.headers.get('host')?.split(':')[0] ?? 'localhost'
+  const isLocal = host === 'localhost' || host === '127.0.0.1'
+  const ua = req.headers.get('user-agent') ?? ''
+  // Every Chromium UA advertises both AppleWebKit and Chrome/Chromium;
+  // genuine WebKit (Safari, WKWebView, webkitgtk) advertises only the former.
+  const isNonChromiumWebKit =
+    ua.includes('AppleWebKit') &&
+    !ua.includes('Chrome') &&
+    !ua.includes('Chromium')
+
+  const parts = [`user_auth=${token}`, 'HttpOnly']
+  if (isLocal) {
+    parts.push('SameSite=None')
+    if (!isNonChromiumWebKit) parts.push('Secure')
+  } else {
+    parts.push('SameSite=Lax')
+  }
+  parts.push(`Max-Age=${maxAgeSeconds}`, 'Path=/')
+  // Only add Domain for non-localhost (IP addresses need explicit domain)
+  if (!isLocal) {
+    parts.push(`Domain=${host}`)
+  }
+  return parts.join('; ')
+}
+
+/**
  * Parses cookies from the Cookie header
  */
 export function parseCookies(cookieHeader: string): Record<string, string> {
@@ -68,7 +116,6 @@ export function isLocalhost(req: Request): boolean {
   const origin = req.headers.get('Origin')
 
   logger.debug(`Auth check — Host: "${host}", Origin: "${origin}"`)
-
 
   // Primary check: Host header (always present for HTTP/1.1+ requests)
   if (host) {

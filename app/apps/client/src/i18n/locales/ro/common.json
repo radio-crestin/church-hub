@@ -19,6 +19,9 @@
       "description": "Importă dintr-un program existent"
     }
   },
+  "search": {
+    "clear": "Șterge căutarea"
+  },
   "buttons": {
     "goBack": "Înapoi",
     "startOver": "Începe din nou",

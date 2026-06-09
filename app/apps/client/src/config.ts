@@ -4,7 +4,18 @@
 
 import { getStoredApiUrl } from './service/api-url'
 
-const API_PORT = import.meta.env.VITE_API_PORT || '3000'
+/**
+ * API port resolution (same precedence as utils/fetcher.ts):
+ * 1. runtime port reported by the Tauri shell (covers worktree dev on 3002)
+ * 2. build-time VITE_API_PORT
+ * 3. default 3000
+ */
+function getApiPort(): string | number {
+  if (typeof window !== 'undefined' && window.__serverConfig?.serverPort) {
+    return window.__serverConfig.serverPort
+  }
+  return import.meta.env.VITE_API_PORT || '3000'
+}
 
 // Check if we're running in Tauri mode
 const isTauriEnv =
@@ -96,7 +107,14 @@ export function getApiUrl(): string | null {
     return storedUrl // Returns null if not configured
   }
 
-  return `http://${getApiHost()}:${API_PORT}`
+  // Plain browser: the page is served by the API server itself (it proxies
+  // Vite in dev and serves the built client in prod), so the page origin IS
+  // the API origin — correct for any port without compile-time env.
+  if (!isTauriEnv && typeof window !== 'undefined') {
+    return window.location.origin
+  }
+
+  return `http://${getApiHost()}:${getApiPort()}`
 }
 
 /**
@@ -113,7 +131,13 @@ export function getWsUrl(): string | null {
     return storedUrl.replace(/^http/, 'ws')
   }
 
-  return `ws://${getApiHost()}:${API_PORT}`
+  // Plain browser: derive from the page origin (http → ws, https → wss),
+  // same reasoning as getApiUrl.
+  if (!isTauriEnv && typeof window !== 'undefined') {
+    return window.location.origin.replace(/^http/, 'ws')
+  }
+
+  return `ws://${getApiHost()}:${getApiPort()}`
 }
 
 /**

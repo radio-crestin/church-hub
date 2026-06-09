@@ -1,8 +1,9 @@
-import { Search, X } from 'lucide-react'
+import { Search } from 'lucide-react'
+import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { Button } from '~/ui/button'
 import { Input } from '~/ui/input'
+import { ClearSearchButton } from '~/ui/search'
 
 interface SearchInputProps {
   value: string
@@ -16,11 +17,13 @@ export function SearchInput({
   placeholder,
 }: SearchInputProps) {
   const { t } = useTranslation('music')
+  const inputRef = useRef<HTMLInputElement>(null)
 
   return (
     <div className="relative">
       <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
       <Input
+        ref={inputRef}
         type="text"
         placeholder={placeholder ?? t('files.search')}
         value={value}
@@ -28,14 +31,7 @@ export function SearchInput({
         className="pl-10 pr-10"
       />
       {value && (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
-          onClick={() => onChange('')}
-        >
-          <X className="h-4 w-4" />
-        </Button>
+        <ClearSearchButton inputRef={inputRef} onClear={() => onChange('')} />
       )}
     </div>
   )
