@@ -31,8 +31,8 @@
     },
     "contentTypes": {
       "song": "Cântec",
-      "song_first_slide": "Gama - Strofă",
-      "song_last_slide": "Strofă - Amin",
+      "song_first_slide": "Cântec - Primul Slide",
+      "song_last_slide": "Cântec - Ultimul Slide",
       "bible": "Verset Biblic",
       "bible_passage": "Pasaj Biblic",
       "announcement": "Anunț",

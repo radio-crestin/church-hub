@@ -372,8 +372,8 @@ export function usePresentationContent({
               temp.data.currentSlideIndex,
               temp.data.slides,
             )
-            // First slide WITH a gama → "Gama - Strofă" (song_first_slide), last
-            // slide WITH an amin → "Strofă - Amin" (song_last_slide); otherwise
+            // First slide WITH a gama → "Cântec - Primul Slide" (song_first_slide), last
+            // slide WITH an amin → "Cântec - Ultimul Slide" (song_last_slide); otherwise
             // the plain `song` layout so the strofa isn't shifted for an absent
             // element.
             setContentType(
@@ -563,8 +563,8 @@ export function usePresentationContent({
               const queueChords = resolveSlideChords(slideIndex, item.slides)
 
               if (isCancelled) return
-              // First slide WITH a gama → "Gama - Strofă" (song_first_slide),
-              // last slide WITH an amin → "Strofă - Amin" (song_last_slide);
+              // First slide WITH a gama → "Cântec - Primul Slide" (song_first_slide),
+              // last slide WITH an amin → "Cântec - Ultimul Slide" (song_last_slide);
               // otherwise the plain `song` layout.
               setContentType(
                 resolveSongSlideContentType(

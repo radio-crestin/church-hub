@@ -173,7 +173,7 @@ export function getDefaultSongConfig(): SongContentConfig {
 }
 
 // ============================================================================
-// SONG FIRST SLIDE CONTENT CONFIG ("Gama - Strofă")
+// SONG FIRST SLIDE CONTENT CONFIG ("Cântec - Primul Slide")
 // ============================================================================
 
 // First-slide-only layout: the song key (gama) + the first slide's lyrics
@@ -208,7 +208,7 @@ export function getDefaultSongFirstSlideConfig(): SongFirstSlideContentConfig {
 }
 
 // ============================================================================
-// SONG LAST SLIDE CONTENT CONFIG ("Strofă - Amin")
+// SONG LAST SLIDE CONTENT CONFIG ("Cântec - Ultimul Slide")
 // ============================================================================
 
 // Last-slide-only layout: the last slide's lyrics (strofa) + the "Amin",
