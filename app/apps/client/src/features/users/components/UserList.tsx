@@ -6,6 +6,7 @@ import { UserCard } from './UserCard'
 import { UserForm, type UserFormData } from './UserForm'
 import { UserQRModal } from './UserQRModal'
 import { ConfirmModal } from '../../../ui/modal/ConfirmModal'
+import { ClearSearchButton } from '../../../ui/search'
 import { useToast } from '../../../ui/toast'
 import {
   useCreateUser,
@@ -39,6 +40,7 @@ export function UserList() {
 
   const [modal, setModal] = useState<ModalState>({ type: 'none' })
   const [search, setSearch] = useState('')
+  const searchInputRef = useRef<HTMLInputElement>(null)
 
   // Order: super admin first, then active users, then inactive — each group
   // sorted by name. A search box filters by name within that order.
@@ -187,12 +189,21 @@ export function UserList() {
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
+            ref={searchInputRef}
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('sections.users.searchPlaceholder')}
-            className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 pr-3 text-sm text-gray-900 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+            className={`w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 text-sm text-gray-900 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white ${
+              search ? 'pr-9' : 'pr-3'
+            }`}
           />
+          {search && (
+            <ClearSearchButton
+              inputRef={searchInputRef}
+              onClear={() => setSearch('')}
+            />
+          )}
         </div>
       )}
 

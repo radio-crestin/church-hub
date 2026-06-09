@@ -14,6 +14,7 @@ import { useSidebarItemShortcuts } from '~/features/sidebar-config'
 import { useDebouncedValue } from '~/hooks/useDebouncedValue'
 import { MultiSelectCombobox } from '~/ui/combobox'
 import { KeyboardShortcutBadge } from '~/ui/kbd'
+import { ClearSearchButton } from '~/ui/search'
 import { SongCard } from './SongCard'
 import type { SongFiltersState } from './SongFiltersDropdown'
 import { SongFiltersDropdown } from './SongFiltersDropdown'
@@ -703,6 +704,11 @@ export function SongList({
     onSearchChange?.(value)
   }
 
+  const handleClearSearch = () => {
+    setLocalQuery('')
+    onSearchChange?.('')
+  }
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     // First handle navigation keys (Arrow Up/Down, Enter when item selected)
     handleNavigationKeyDown(e)
@@ -782,15 +788,11 @@ export function SongList({
               text-gray-900 
               dark:text-white 
               placeholder-gray-400
-              ${searchSongShortcut ? 'pr-20' : 'pr-9'}
+              ${searchSongShortcut && !localQuery ? 'pr-20' : 'pr-9'}
               `}
             />
             {(showPendingIndicator || aiSearchMutation.isPending) && (
-              <div
-                className={`absolute top-1/2 transform -translate-y-1/2 flex items-center gap-1 ${
-                  searchSongShortcut ? 'right-14' : 'right-3'
-                }`}
-              >
+              <div className="absolute top-1/2 transform -translate-y-1/2 flex items-center gap-1 right-9">
                 {aiSearchMutation.isPending ? (
                   <>
                     <Sparkles className="w-4 h-4 text-indigo-500 animate-pulse" />
@@ -803,11 +805,16 @@ export function SongList({
                 )}
               </div>
             )}
-            {searchSongShortcut && (
+            {localQuery ? (
+              <ClearSearchButton
+                inputRef={searchInputRef}
+                onClear={handleClearSearch}
+              />
+            ) : searchSongShortcut ? (
               <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                 <KeyboardShortcutBadge shortcut={searchSongShortcut} />
               </div>
-            )}
+            ) : null}
           </div>
           {aiSearchAvailable && (
             <button

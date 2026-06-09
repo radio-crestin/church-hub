@@ -1,0 +1,7 @@
+[install]
+# Pin the classic hoisted node_modules layout. Bun 1.3+ defaults workspaces
+# to the "isolated" (pnpm-style) linker, which stops hoisting workspace
+# binaries (vite, etc.) into the root node_modules/.bin — breaking dev
+# scripts like `cd apps/client && vite dev` and any tooling that resolves
+# binaries from the workspace root.
+linker = "hoisted"
