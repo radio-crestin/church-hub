@@ -134,10 +134,15 @@ export async function authMiddleware(req: Request): Promise<AuthResult> {
     logger.info('Invalid system token provided')
   }
 
-  // 2. user_auth cookie — resolve the logged-in user
+  // 2. user_auth — resolve the logged-in user. Normally carried by the
+  //    `user_auth` cookie, but the packaged desktop app on macOS (WKWebView)
+  //    can't store the cross-site `Secure` cookie over http://localhost, so the
+  //    client sends the same token in an `X-User-Auth` header instead. Accept
+  //    either.
   const cookieHeader = req.headers.get('Cookie') || ''
   const cookies = parseCookies(cookieHeader)
-  const userToken = cookies['user_auth']
+  const userToken =
+    cookies['user_auth'] || req.headers.get('X-User-Auth') || undefined
 
   if (userToken) {
     const user = await getUserByToken(userToken)

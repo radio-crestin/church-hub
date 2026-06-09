@@ -1,5 +1,19 @@
-import { getApiUrl } from '~/config'
+import { getApiUrl, isMobile, isTauri } from '~/config'
+import {
+  clearStoredUserToken,
+  setStoredUserToken,
+} from '~/service/api-url'
 import { fetcher } from '../../../utils/fetcher'
+
+/**
+ * The packaged desktop app (macOS WKWebView) can't store the cross-site
+ * `Secure` session cookie, so it authenticates by persisting the user token and
+ * sending it as an `X-User-Auth` header instead. This only applies to desktop
+ * Tauri — mobile pairs via an auth URL, and the browser uses the cookie.
+ */
+function isDesktopTauri(): boolean {
+  return isTauri() && !isMobile()
+}
 import type {
   CreateUserInput,
   CreateUserResult,
@@ -165,6 +179,8 @@ export interface LoginResult {
   user: CurrentUser | null
   /** One-time ticket to finalize the session via top-level navigation. */
   ticket: string
+  /** The user auth token (localhost only) — persisted on desktop Tauri. */
+  token?: string
 }
 
 /**
@@ -178,6 +194,7 @@ export async function login(
   const response = await fetcher<
     Partial<ApiResponse<CurrentUser | null>> & {
       ticket?: string
+      token?: string
       error?: string
     }
   >('/api/auth/login', {
@@ -185,13 +202,23 @@ export async function login(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ userId, password }),
   })
-  // The server returns `{ data, ticket }` on success and `{ error }` on
+  // The server returns `{ data, ticket, token }` on success and `{ error }` on
   // failure (e.g. 401 for wrong credentials). The shared fetcher does not
   // throw on non-ok responses, so we surface failures here ourselves.
   if (!response.ticket) {
     throw new Error(response.error ?? 'Invalid credentials')
   }
-  return { user: response.data ?? null, ticket: response.ticket }
+  // On desktop Tauri persist the token so subsequent requests (including the
+  // immediate `refresh()` → /api/auth/me) authenticate via the X-User-Auth
+  // header instead of the cookie the WKWebView can't store.
+  if (response.token && isDesktopTauri()) {
+    setStoredUserToken(response.token)
+  }
+  return {
+    user: response.data ?? null,
+    ticket: response.ticket,
+    token: response.token,
+  }
 }
 
 /**
@@ -251,6 +278,11 @@ export async function performLogout(): Promise<void> {
     await logout()
   } catch {
     // Best-effort: the caller refreshes regardless so the gate re-checks.
+  }
+  // Drop the persisted desktop token so the next /api/auth/me is unauthenticated
+  // and the gate shows the account picker.
+  if (isDesktopTauri()) {
+    clearStoredUserToken()
   }
 }
 

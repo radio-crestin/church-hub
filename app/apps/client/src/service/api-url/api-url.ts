@@ -67,6 +67,33 @@ export function getStoredUserToken(): string | null {
 }
 
 /**
+ * Persists the user auth token (used by the desktop app to send it as an
+ * `X-User-Auth` header, since the cross-site `Secure` cookie can't be stored by
+ * macOS WKWebView over http://localhost).
+ */
+export function setStoredUserToken(token: string): void {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.setItem(USER_AUTH_STORAGE_KEY, token)
+  } catch {
+    // Silently fail - storage errors are not critical
+  }
+}
+
+/**
+ * Clears the stored user auth token (on logout). Leaves the stored API URL
+ * (mobile pairing) intact.
+ */
+export function clearStoredUserToken(): void {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.removeItem(USER_AUTH_STORAGE_KEY)
+  } catch {
+    // Silently fail - storage errors are not critical
+  }
+}
+
+/**
  * Saves the API URL and optional user token to localStorage
  * Also sets the user_auth cookie if a token is provided
  */
