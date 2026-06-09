@@ -28,11 +28,18 @@ function getHeaders(contentType?: string): Record<string, string> {
   if (contentType) {
     headers['Content-Type'] = contentType
   }
-  // Add auth cookie header for mobile (Tauri HTTP plugin needs explicit Cookie header)
-  if (isMobile()) {
+  // Mobile sends the auth token as a Cookie (Tauri HTTP plugin); desktop Tauri
+  // sends it as X-User-Auth (window.fetch forbids Cookie, and macOS WKWebView
+  // won't store the cross-site Secure cookie). Browser uses the same-origin
+  // cookie, so no header is needed.
+  if (isTauri) {
     const userToken = getStoredUserToken()
     if (userToken) {
-      headers['Cookie'] = `user_auth=${userToken}`
+      if (isMobile()) {
+        headers['Cookie'] = `user_auth=${userToken}`
+      } else {
+        headers['X-User-Auth'] = userToken
+      }
     }
   }
   return headers

@@ -822,7 +822,7 @@ async function startRealServer(): Promise<void> {
     // Must explicitly list all allowed headers
     res.headers.set(
       'Access-Control-Allow-Headers',
-      'Content-Type, Authorization, Cookie, Accept, Origin, X-Requested-With, Cache-Control, Pragma',
+      'Content-Type, Authorization, Cookie, X-User-Auth, Accept, Origin, X-Requested-With, Cache-Control, Pragma',
     )
     res.headers.set('Access-Control-Allow-Credentials', 'true')
     res.headers.set('Access-Control-Max-Age', '86400')
@@ -1065,9 +1065,16 @@ async function startRealServer(): Promise<void> {
           // via a top-level navigation (reliable cookie overwrite on desktop).
           const ticket = createLoginTicket(result.token)
 
+          // On localhost (the packaged desktop app) the cross-site `Secure`
+          // cookie can't be stored by macOS WKWebView, so also return the token
+          // in the body; the desktop client persists it and sends it back as an
+          // `X-User-Auth` header. Remote/LAN clients (same-origin cookie works)
+          // never receive it.
+          const token = isLocalhost(req) ? result.token : undefined
+
           return handleCors(
             req,
-            new Response(JSON.stringify({ data: currentUser, ticket }), {
+            new Response(JSON.stringify({ data: currentUser, ticket, token }), {
               headers: {
                 'Content-Type': 'application/json',
                 'Set-Cookie': buildAuthCookie(result.token, 31536000),
