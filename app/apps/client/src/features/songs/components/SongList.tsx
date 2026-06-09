@@ -338,6 +338,13 @@ export function SongList({
   )
 
   const { data: categories } = useCategories()
+  // Hidden categories are dropped from the filter UI (their songs are already
+  // excluded from the list server-side). `categories` (all) is still used for
+  // resolving a song's category name.
+  const visibleCategories = useMemo(
+    () => categories?.filter((c) => c.isHidden !== 1),
+    [categories],
+  )
   const { data: songTags } = useTags()
   const { data: bookmarks = [] } = useSongBookmarks()
 
@@ -718,7 +725,7 @@ export function SongList({
     const allCategoriesLabel = t('search.allCategories')
     const labels = [
       allCategoriesLabel,
-      ...(categories?.map((c) => c.name) ?? []),
+      ...(visibleCategories?.map((c) => c.name) ?? []),
     ]
     const longestLabel = labels.reduce(
       (longest, label) => (label.length > longest.length ? label : longest),
@@ -726,7 +733,7 @@ export function SongList({
     )
     // Approximate width: ~8px per character + 48px for padding/icons
     return Math.max(140, longestLabel.length * 8 + 48)
-  }, [categories, t])
+  }, [visibleCategories, t])
 
   const [isCategoryOpen, setIsCategoryOpen] = useState(false)
 
@@ -861,7 +868,7 @@ export function SongList({
                   style={{ minWidth: 200, maxWidth: 'calc(100vw - 24px)' }}
                 >
                   <div className="p-1 max-h-64 overflow-y-auto">
-                    {categories?.map((category) => {
+                    {visibleCategories?.map((category) => {
                       const isSelected = categoryIds.includes(category.id)
                       return (
                         <button
@@ -903,7 +910,7 @@ export function SongList({
           >
             <MultiSelectCombobox
               options={
-                categories?.map((category) => ({
+                visibleCategories?.map((category) => ({
                   value: category.id,
                   label: category.name,
                 })) ?? []

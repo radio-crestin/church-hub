@@ -367,6 +367,8 @@ export type ScreenType = 'primary' | 'stage' | 'livestream' | 'kiosk'
  */
 export type ContentType =
   | 'song'
+  | 'song_first_slide'
+  | 'song_last_slide'
   | 'bible'
   | 'bible_passage'
   | 'announcement'

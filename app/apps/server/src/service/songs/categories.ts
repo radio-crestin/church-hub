@@ -8,7 +8,6 @@ import type {
 } from './types'
 import { getDatabase, getRawDatabase } from '../../db'
 import { songCategories, songs } from '../../db/schema'
-
 import { createLogger } from '../../utils/logger'
 
 const logger = createLogger('song-categories')
@@ -25,6 +24,7 @@ function toCategory(
     name: record.name,
     priority: record.priority,
     songCount,
+    isHidden: record.isHidden,
     createdAt:
       record.createdAt instanceof Date
         ? Math.floor(record.createdAt.getTime() / 1000)
@@ -58,6 +58,25 @@ export function getAllCategories(): SongCategory[] {
     return records.map((r) => toCategory(r.category, r.songCount))
   } catch (error) {
     logger.error(`Failed to get all categories: ${error}`)
+    return []
+  }
+}
+
+/**
+ * Returns the IDs of all hidden categories. Used to exclude their songs from
+ * the song browser (list + search).
+ */
+export function getHiddenCategoryIds(): number[] {
+  try {
+    const db = getDatabase()
+    const rows = db
+      .select({ id: songCategories.id })
+      .from(songCategories)
+      .where(eq(songCategories.isHidden, 1))
+      .all()
+    return rows.map((r) => r.id)
+  } catch (error) {
+    logger.error(`Failed to get hidden category IDs: ${error}`)
     return []
   }
 }
@@ -115,6 +134,9 @@ export function upsertCategory(
       if (input.priority !== undefined) {
         setClauses.push(`priority = ${input.priority}`)
       }
+      if (input.isHidden !== undefined) {
+        setClauses.push(`is_hidden = ${input.isHidden ? 1 : 0}`)
+      }
 
       // Single efficient query: UPDATE with RETURNING + subquery for song count
       const result = rawDb
@@ -127,6 +149,7 @@ export function upsertCategory(
           id,
           name,
           priority,
+          is_hidden as isHidden,
           created_at as createdAt,
           updated_at as updatedAt,
           (SELECT COUNT(*) FROM songs WHERE category_id = ?) as songCount
@@ -137,6 +160,7 @@ export function upsertCategory(
             id: number
             name: string
             priority: number
+            isHidden: number
             createdAt: number
             updatedAt: number
             songCount: number
@@ -154,6 +178,7 @@ export function upsertCategory(
         name: result.name,
         priority: result.priority,
         songCount: result.songCount,
+        isHidden: result.isHidden,
         createdAt: result.createdAt,
         updatedAt: result.updatedAt,
       }

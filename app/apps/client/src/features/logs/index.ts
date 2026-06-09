@@ -1,2 +1,5 @@
+export { ClearLogs } from './components/ClearLogs'
+export { LogsPanel } from './components/LogsPanel'
+export { LogsViewer } from './components/LogsViewer'
 export { OpenLogsFolder } from './components/OpenLogsFolder'
-export { openLogsFolder } from './service'
+export { clearLogs, getLogsContent, openLogsFolder } from './service'

@@ -207,6 +207,13 @@ export function getSongsPaginated(
       conditions.push(`key_line IS NOT NULL AND key_line != ''`)
     }
 
+    // Always exclude songs whose category is hidden (uncategorized songs stay
+    // visible). Hiding a category removes its songs from the browser without
+    // deleting them.
+    conditions.push(
+      `(category_id IS NULL OR category_id NOT IN (SELECT id FROM song_categories WHERE is_hidden = 1))`,
+    )
+
     const whereClause =
       conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
 

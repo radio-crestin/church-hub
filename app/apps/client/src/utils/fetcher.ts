@@ -52,17 +52,24 @@ export async function fetcher<T>(
   url: string,
   options?: RequestInit & ClientOptions & { timeout?: number },
 ): Promise<T> {
-  // Get auth token for mobile
-  const userToken = isMobile() ? getStoredUserToken() : null
+  // Auth token for Tauri (mobile + desktop). In a browser the same-origin
+  // cookie is used, so no explicit header is needed.
+  const userToken = isTauri ? getStoredUserToken() : null
 
-  // Build headers with auth token if on mobile
   const headers: Record<string, string> = {
     ...((options?.headers as Record<string, string>) ?? {}),
   }
 
-  // Add auth cookie header for mobile (Tauri HTTP plugin needs explicit Cookie header)
+  // Mobile uses the Tauri HTTP plugin, which can set the `Cookie` header.
+  // Desktop uses `window.fetch`, which forbids the `Cookie` header — and macOS
+  // WKWebView won't store the cross-site `Secure` cookie anyway — so send the
+  // token in `X-User-Auth` (read as a fallback by the server auth middleware).
   if (userToken) {
-    headers['Cookie'] = `user_auth=${userToken}`
+    if (isMobile()) {
+      headers['Cookie'] = `user_auth=${userToken}`
+    } else {
+      headers['X-User-Auth'] = userToken
+    }
   }
 
   const fullUrl = `${getApiBaseUrl()}${url}`

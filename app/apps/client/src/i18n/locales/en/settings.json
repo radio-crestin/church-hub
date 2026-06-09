@@ -18,6 +18,7 @@
       "livestream": "Livestream",
       "sidebar": "Sidebar",
       "developer": "Developer",
+      "logs": "Logs",
       "shortcuts": "Shortcuts"
     }
   },
@@ -291,7 +292,8 @@
         "settings": "Settings",
         "displays": "Displays",
         "users": "User Management",
-        "song_key": "Song Keys"
+        "song_key": "Song Keys",
+        "logs": "Logs"
       },
       "permissionLabels": {
         "songs.view": "View songs",
@@ -333,7 +335,9 @@
         "users.edit": "Edit users",
         "users.delete": "Delete users",
         "song_key.view": "View song keys",
-        "song_key.edit": "Edit song keys"
+        "song_key.edit": "Edit song keys",
+        "logs.view": "View application logs",
+        "logs.clear": "Clear application logs"
       },
       "actions": {
         "edit": "Edit",
@@ -397,8 +401,11 @@
       "songCount_other": "{{count}} songs",
       "actions": {
         "edit": "Edit",
-        "delete": "Delete"
+        "delete": "Delete",
+        "hide": "Hide",
+        "show": "Show"
       },
+      "hiddenBadge": "Hidden",
       "modals": {
         "create": {
           "title": "Add New Category",
@@ -419,6 +426,8 @@
         "updated": "Category updated successfully",
         "deleted": "Category deleted successfully",
         "reordered": "Category order updated",
+        "hidden": "Category hidden",
+        "shown": "Category shown",
         "error": "An error occurred"
       },
       "uncategorized": {
@@ -923,6 +932,8 @@
       }
     },
     "logs": {
+      "title": "Application Logs",
+      "description": "View the app's local log files and clear them. Useful for diagnosing issues and errors.",
       "card": {
         "title": "Application Logs",
         "description": "Open the folder containing application logs. Attach the latest files when reporting an issue."
@@ -931,9 +942,44 @@
         "open": "Open Logs Folder",
         "opening": "Opening..."
       },
+      "viewer": {
+        "empty": "No logs to display.",
+        "noMatches": "No logs match your filters.",
+        "search": "Search logs…",
+        "refresh": "Refresh",
+        "refreshing": "Refreshing...",
+        "serverHeading": "Server logs",
+        "tauriHeading": "App (Tauri) logs",
+        "levels": {
+          "error": "Errors",
+          "warning": "Warnings",
+          "info": "Info",
+          "debug": "Debug"
+        }
+      },
+      "clear": {
+        "card": {
+          "title": "Clear logs",
+          "description": "Permanently empty all local log files on this device."
+        },
+        "button": {
+          "clear": "Clear logs",
+          "clearing": "Clearing..."
+        },
+        "confirm": {
+          "title": "Clear all logs?",
+          "message": "This empties every local log file on this device.",
+          "warning": "This action cannot be undone.",
+          "cancel": "Cancel",
+          "confirm": "Clear logs"
+        }
+      },
       "toast": {
         "opened": "Logs folder opened",
-        "failed": "Failed to open logs folder: {{error}}"
+        "failed": "Failed to open logs folder: {{error}}",
+        "cleared": "Logs cleared",
+        "clearFailed": "Failed to clear logs: {{error}}",
+        "loadFailed": "Failed to load logs: {{error}}"
       }
     },
     "about": {

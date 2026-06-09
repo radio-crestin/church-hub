@@ -1,9 +1,11 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { Check, LogOut, ShieldCheck } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-import { getLogoutRedirectUrl } from '~/features/users/service'
+import { performLogout } from '~/features/users/service'
 import { PERMISSION_GROUPS, type PermissionGroup } from '~/features/users/types'
 import { usePermissions } from '~/provider/permissions-provider'
+import { captureActivity } from '~/utils/activity-logger'
 import { UserAvatar } from './UserAvatar'
 
 const GROUP_ORDER: PermissionGroup[] = [
@@ -14,6 +16,7 @@ const GROUP_ORDER: PermissionGroup[] = [
   'queue',
   'song_key',
   'settings',
+  'logs',
   'displays',
   'users',
 ]
@@ -26,13 +29,19 @@ const GROUP_ORDER: PermissionGroup[] = [
  */
 export function AccountSection() {
   const { t } = useTranslation(['users', 'settings'])
-  const { userName, permissions, isApp, isAdmin } = usePermissions()
+  const { userName, permissions, isApp, isAdmin, refresh } = usePermissions()
+  const queryClient = useQueryClient()
 
   const hasFullAccess = isApp || isAdmin
   const displayName = userName ?? t('profile.user')
 
-  const handleLogout = () => {
-    window.location.href = getLogoutRedirectUrl()
+  // Logout via fetch + context refresh (no page navigation, which is
+  // unreliable in the packaged desktop webview).
+  const handleLogout = async () => {
+    captureActivity('logout', { source: 'settings-account' })
+    await performLogout()
+    queryClient.clear()
+    await refresh()
   }
 
   return (

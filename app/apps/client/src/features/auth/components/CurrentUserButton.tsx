@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query'
 import {
   AlertCircle,
   ChevronsUpDown,
@@ -11,14 +12,10 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 
-import {
-  getLocalUsers,
-  getLoginRedirectUrl,
-  getLogoutRedirectUrl,
-  login,
-} from '~/features/users/service'
+import { getLocalUsers, login, performLogout } from '~/features/users/service'
 import type { LocalUser } from '~/features/users/types'
 import { usePermissions } from '~/provider/permissions-provider'
+import { captureActivity } from '~/utils/activity-logger'
 import { UserAvatar } from './UserAvatar'
 
 interface CurrentUserButtonProps {
@@ -45,7 +42,8 @@ const PANEL_GAP = 8 // space between the trigger and the panel
  */
 export function CurrentUserButton({ isCollapsed }: CurrentUserButtonProps) {
   const { t } = useTranslation('users')
-  const { userId, userName, isApp, isAuthenticated } = usePermissions()
+  const { userId, userName, isApp, isAuthenticated, refresh } = usePermissions()
+  const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
@@ -133,18 +131,33 @@ export function CurrentUserButton({ isCollapsed }: CurrentUserButtonProps) {
   const displayName = userName ?? t('profile.user')
   const roleLabel = isApp ? t('superAdmin') : t('profile.user')
 
-  function handleLogout() {
-    window.location.href = getLogoutRedirectUrl()
+  // Logout via fetch + a context refresh (re-read /api/auth/me) rather than a
+  // top-level navigation to the sidecar, which the packaged desktop webview
+  // blocks (app on `tauri.localhost`, API on `localhost`) — that's what made
+  // the old redirect-based logout do nothing.
+  async function handleLogout() {
+    captureActivity('logout', { source: 'sidebar-account-menu', userId })
+    await performLogout()
+    queryClient.clear()
+    await refresh()
+    setOpen(false)
   }
 
-  // Finalize a switch with a top-level navigation — the 302 reliably sets the
-  // session cookie in the desktop webview and reloads the app as the new user.
+  // Switch account via fetch + context refresh — `login()` already set the
+  // session cookie via its fetch response, so a plain `refresh()` renders the
+  // app as the new user. No page navigation/reload (unreliable on desktop).
   async function switchTo(user: LocalUser, pw?: string) {
     setSubmitting(true)
     setError(false)
     try {
-      const result = await login(user.id, pw)
-      window.location.href = getLoginRedirectUrl(result.ticket)
+      await login(user.id, pw)
+      captureActivity('account-switch', {
+        source: 'sidebar-account-menu',
+        toUserId: user.id,
+      })
+      queryClient.clear()
+      await refresh()
+      setOpen(false)
     } catch {
       setError(true)
       setSubmitting(false)

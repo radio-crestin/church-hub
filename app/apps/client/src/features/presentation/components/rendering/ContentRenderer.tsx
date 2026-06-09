@@ -48,7 +48,9 @@ export function ContentRenderer({
     'clockEnabled' in cfg && cfg.clockEnabled && clockConfig
 
   switch (contentType) {
-    case 'song': {
+    case 'song':
+    case 'song_first_slide':
+    case 'song_last_slide': {
       const songConfig = config as SongContentConfig
       return (
         <SongRenderer

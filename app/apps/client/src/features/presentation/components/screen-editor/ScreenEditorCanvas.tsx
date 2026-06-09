@@ -34,10 +34,26 @@ interface ScreenEditorCanvasProps {
 // Sample content for preview
 const SAMPLE_CONTENT: Record<
   ContentType,
-  { main?: string; reference?: string; person?: string }
+  {
+    main?: string
+    reference?: string
+    person?: string
+    songKey?: string
+    amen?: string
+  }
 > = {
   song: {
     main: 'Aleluia, Aleluia!\nMărire Domnului!\nAleluia, Aleluia!\nSlăvit să fie El!',
+    songKey: 'G',
+    amen: 'Amin!',
+  },
+  song_first_slide: {
+    main: 'Aleluia, Aleluia!\nMărire Domnului!\nAleluia, Aleluia!\nSlăvit să fie El!',
+    songKey: 'G',
+  },
+  song_last_slide: {
+    main: 'Aleluia, Aleluia!\nMărire Domnului!\nAleluia, Aleluia!\nSlăvit să fie El!',
+    amen: 'Amin!',
   },
   bible: {
     reference: 'Ioan 3:16',
@@ -690,6 +706,102 @@ export function ScreenEditorCanvas({
           <TextContent
             content={sample?.reference ?? 'Reference'}
             style={{ ...rt.style, maxFontSize: rt.style.maxFontSize * scale }}
+            containerWidth={bounds.width * scale}
+            containerHeight={bounds.height * scale}
+          />
+        </DraggableElement>,
+      )
+    }
+
+    // Song key "gama" — only configurable in the "Cântec - Primul Slide" (first slide)
+    // layout. The `song` config still carries a vestigial songKey for backward
+    // compatibility, but it never renders at runtime, so hide it from the Song
+    // tab to avoid the operator editing an element that has no effect.
+    if (
+      config &&
+      'songKey' in config &&
+      config.songKey &&
+      contentType === 'song_first_slide'
+    ) {
+      const sk = config.songKey
+      const bounds = calculatePixelBounds(
+        sk.constraints,
+        sk.size,
+        canvasWidth,
+        canvasHeight,
+      )
+
+      els.push(
+        <DraggableElement
+          key="songKey"
+          x={bounds.x * scale}
+          y={bounds.y * scale}
+          width={bounds.width * scale}
+          height={bounds.height * scale}
+          constraints={sk.constraints}
+          size={sk.size}
+          isSelected={selectedElement?.type === 'songKey'}
+          isHidden={sk.hidden}
+          onClick={() => onSelectElement({ type: 'songKey' })}
+          onConstraintChange={handleConstraintChange('songKey')}
+          onSizeChange={handleSizeChange('songKey')}
+          canvasWidth={displaySize.width}
+          canvasHeight={displaySize.height}
+          screenWidth={canvasWidth}
+          screenHeight={canvasHeight}
+          canvasRef={canvasRef}
+        >
+          <TextContent
+            content={sample?.songKey ?? 'G'}
+            style={{ ...sk.style, maxFontSize: sk.style.maxFontSize * scale }}
+            containerWidth={bounds.width * scale}
+            containerHeight={bounds.height * scale}
+          />
+        </DraggableElement>,
+      )
+    }
+
+    // Amin — only configurable in the "Cântec - Ultimul Slide" (last slide) layout. The
+    // `song` config still carries a vestigial amen for backward compatibility,
+    // but it never renders at runtime on a multi-slide song, so hide it from the
+    // Song tab to avoid editing an element that has no effect.
+    if (
+      config &&
+      'amen' in config &&
+      config.amen &&
+      contentType === 'song_last_slide'
+    ) {
+      const am = config.amen
+      const bounds = calculatePixelBounds(
+        am.constraints,
+        am.size,
+        canvasWidth,
+        canvasHeight,
+      )
+
+      els.push(
+        <DraggableElement
+          key="amen"
+          x={bounds.x * scale}
+          y={bounds.y * scale}
+          width={bounds.width * scale}
+          height={bounds.height * scale}
+          constraints={am.constraints}
+          size={am.size}
+          isSelected={selectedElement?.type === 'amen'}
+          isHidden={am.hidden}
+          onClick={() => onSelectElement({ type: 'amen' })}
+          onConstraintChange={handleConstraintChange('amen')}
+          onSizeChange={handleSizeChange('amen')}
+          canvasWidth={displaySize.width}
+          canvasHeight={displaySize.height}
+          screenWidth={canvasWidth}
+          screenHeight={canvasHeight}
+          canvasRef={canvasRef}
+        >
+          <TextContent
+            content={am.text || 'Amin!'}
+            style={{ ...am.style, maxFontSize: am.style.maxFontSize * scale }}
             containerWidth={bounds.width * scale}
             containerHeight={bounds.height * scale}
           />

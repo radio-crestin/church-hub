@@ -2,12 +2,7 @@ import { type ReactNode, useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { isMobile } from '~/config'
-import {
-  getLocalUsers,
-  getLoginRedirectUrl,
-  type LoginResult,
-  login,
-} from '~/features/users/service'
+import { getLocalUsers, LOGGED_OUT_FLAG, login } from '~/features/users/service'
 import type { LocalUser } from '~/features/users/types'
 import { usePermissions } from '~/provider/permissions-provider'
 import { LoginScreen } from './LoginScreen'
@@ -62,6 +57,11 @@ export function LoginGate({ children }: { children: ReactNode }) {
   const [listError, setListError] = useState(false)
   const [autoLoginTried, setAutoLoginTried] = useState(false)
   const [autoLoggingIn, setAutoLoggingIn] = useState(false)
+  // Set when a deliberate logout is detected (LOGGED_OUT_FLAG), so we show the
+  // picker instead of instantly auto-signing a sole passwordless account back
+  // in. Checked at runtime in the auto-login effect (logout refreshes the
+  // context rather than reloading, so a mount-time read would miss it).
+  const [skipSoleAutoLogin, setSkipSoleAutoLogin] = useState(false)
 
   // Only fetch the user list when we actually need it (picker or sole
   // auto-login). When a session is already valid we skip straight to the app.
@@ -84,13 +84,25 @@ export function LoginGate({ children }: { children: ReactNode }) {
     }
   }, [needsList, users])
 
-  // A single passwordless account requires no choice.
-  const soleAutoLogin = !!users && users.length === 1 && !users[0].hasPassword
+  // A single passwordless account requires no choice — unless the user just
+  // logged out on purpose, in which case we show the picker so they stay out.
+  const soleAutoLogin =
+    !!users && users.length === 1 && !users[0].hasPassword && !skipSoleAutoLogin
 
   // Auto-login that single passwordless account (fresh install).
   useEffect(() => {
     if (!needsList || !users || autoLoginTried) return
     if (soleAutoLogin) {
+      // A deliberate logout suppresses this one auto-login so the user stays out.
+      try {
+        if (sessionStorage.getItem(LOGGED_OUT_FLAG) === '1') {
+          sessionStorage.removeItem(LOGGED_OUT_FLAG)
+          setSkipSoleAutoLogin(true)
+          return
+        }
+      } catch {
+        // sessionStorage unavailable — fall through to normal auto-login.
+      }
       setAutoLoginTried(true)
       setAutoLoggingIn(true)
       login(users[0].id)
@@ -99,12 +111,14 @@ export function LoginGate({ children }: { children: ReactNode }) {
     }
   }, [needsList, users, autoLoginTried, soleAutoLogin, refresh])
 
-  // Finalize the chosen account via a top-level navigation — reliably sets the
-  // session cookie in the desktop webview. The cookie persists for a year, so
-  // the next launch auto-loads the app as this user (no picker).
-  const handleSelected = useCallback((result: LoginResult) => {
-    window.location.href = getLoginRedirectUrl(result.ticket)
-  }, [])
+  // LoginScreen already called `login()`, which set the session cookie via its
+  // fetch response (it round-trips cross-site in the desktop webview). A pure
+  // context `refresh()` re-reads /api/auth/me and renders the app as the chosen
+  // user — no page navigation/reload, which is unreliable in the packaged
+  // desktop webview (app on `tauri.localhost`, sidecar on `localhost`).
+  const handleSelected = useCallback(() => {
+    void refresh()
+  }, [refresh])
 
   if (isMobile()) return <>{children}</>
   if (isLoading) return <FullScreenSpinner />

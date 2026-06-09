@@ -139,6 +139,97 @@ function getDefaultSongConfig() {
       animationIn: getDefaultAnimation('in'),
       animationOut: getDefaultAnimation('out'),
     },
+    // Song key ("gama") — shown on the FIRST slide. Separately positionable /
+    // styleable element (like the Bible reference). Top-left by default.
+    songKey: {
+      constraints: constraints(2, 5),
+      size: sizeWithUnits(40, 6),
+      style: getDefaultTextStyle({
+        maxFontSize: 32,
+        autoScale: false,
+        alignment: 'left',
+        bold: true,
+      }),
+      animationIn: getDefaultAnimation('in'),
+      animationOut: getDefaultAnimation('out'),
+    },
+    // "Amin" — shown on the LAST slide. Bottom band, centered, by default.
+    amen: {
+      constraints: constraints(85, 5),
+      size: sizeWithUnits(90, 10),
+      style: getDefaultTextStyle({
+        maxFontSize: 48,
+        autoScale: false,
+        alignment: 'center',
+        italic: true,
+      }),
+      animationIn: getDefaultAnimation('in'),
+      animationOut: getDefaultAnimation('out'),
+    },
+    clockEnabled: false,
+  }
+}
+
+// Layout for a song's FIRST slide only ("Cântec - Primul Slide"): two elements — the
+// song key (gama) and the slide lyrics (strofa) — positioned/styled separately
+// from the rest of the song's slides (which keep the `song` config). Defaults
+// mirror the `song` config so there is no visual jump until the operator
+// repositions them. Chord/keyline display stay on the `song` config (single
+// source), so this layout has no displayChords/displayKeyLine of its own.
+function getDefaultSongFirstSlideConfig() {
+  return {
+    background: getDefaultBackground(),
+    mainText: {
+      constraints: constraints(10, 5),
+      size: sizeWithUnits(90, 80),
+      style: getDefaultTextStyle({ maxFontSize: 120 }),
+      padding: 20,
+      animationIn: getDefaultAnimation('in'),
+      animationOut: getDefaultAnimation('out'),
+    },
+    songKey: {
+      constraints: constraints(2, 5),
+      size: sizeWithUnits(40, 6),
+      style: getDefaultTextStyle({
+        maxFontSize: 32,
+        autoScale: false,
+        alignment: 'left',
+        bold: true,
+      }),
+      animationIn: getDefaultAnimation('in'),
+      animationOut: getDefaultAnimation('out'),
+    },
+    clockEnabled: false,
+  }
+}
+
+// Layout for a song's LAST slide only ("Cântec - Ultimul Slide"): two elements — the
+// slide lyrics (strofa) and the "Amin" — positioned/styled separately from the
+// rest of the song's slides (which keep the `song` config). Defaults mirror the
+// `song` config so there is no visual jump until the operator repositions them.
+function getDefaultSongLastSlideConfig() {
+  return {
+    background: getDefaultBackground(),
+    mainText: {
+      constraints: constraints(10, 5),
+      size: sizeWithUnits(90, 80),
+      style: getDefaultTextStyle({ maxFontSize: 120 }),
+      padding: 20,
+      animationIn: getDefaultAnimation('in'),
+      animationOut: getDefaultAnimation('out'),
+    },
+    amen: {
+      constraints: constraints(85, 5),
+      size: sizeWithUnits(90, 10),
+      style: getDefaultTextStyle({
+        maxFontSize: 48,
+        autoScale: false,
+        alignment: 'center',
+        italic: true,
+      }),
+      animationIn: getDefaultAnimation('in'),
+      animationOut: getDefaultAnimation('out'),
+    },
     clockEnabled: false,
   }
 }
@@ -249,6 +340,10 @@ function getDefaultContentConfig(
   switch (contentType) {
     case 'song':
       return getDefaultSongConfig()
+    case 'song_first_slide':
+      return getDefaultSongFirstSlideConfig()
+    case 'song_last_slide':
+      return getDefaultSongLastSlideConfig()
     case 'bible':
     case 'bible_passage':
       return getDefaultBibleConfig()

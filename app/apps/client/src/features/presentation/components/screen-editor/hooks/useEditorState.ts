@@ -12,6 +12,8 @@ export type SelectedElement =
   | { type: 'mainText' }
   | { type: 'contentText' }
   | { type: 'referenceText' }
+  | { type: 'songKey' }
+  | { type: 'amen' }
   | { type: 'personLabel' }
   | { type: 'clock' }
   | { type: 'nextSlide' }
@@ -29,6 +31,8 @@ type PreviewTextsMap = Record<ContentType, PreviewTexts>
 
 const createEmptyPreviewTexts = (): PreviewTextsMap => ({
   song: {},
+  song_first_slide: {},
+  song_last_slide: {},
   bible: {},
   bible_passage: {},
   announcement: {},

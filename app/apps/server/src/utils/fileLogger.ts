@@ -83,3 +83,13 @@ export const wsLogger = {
   error: (message: string, data?: unknown) =>
     log('websocket', 'error', message, data),
 }
+
+// Auth-specific logger (login / logout / account switch — who did what and
+// when, plus failed attempts). Persisted to the daily log so the Logs viewer
+// and bug reports show the authentication trail.
+export const authLogger = {
+  info: (message: string, data?: unknown) => log('auth', 'info', message, data),
+  warn: (message: string, data?: unknown) => log('auth', 'warn', message, data),
+  error: (message: string, data?: unknown) =>
+    log('auth', 'error', message, data),
+}
