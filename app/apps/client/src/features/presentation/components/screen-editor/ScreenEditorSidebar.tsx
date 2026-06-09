@@ -255,6 +255,38 @@ export function ScreenEditorSidebar({
               refConfig.slideTransitionIn ?? DEFAULT_SLIDE_TRANSITION_IN,
           },
         }
+      case 'songKey': {
+        if (!('songKey' in config) || !config.songKey) return null
+        const skConfig = config.songKey as ReferenceTextConfig
+        return {
+          path: ['songKey'],
+          config: {
+            ...skConfig,
+            animationIn: skConfig.animationIn ?? DEFAULT_ANIMATION_IN,
+            animationOut: skConfig.animationOut ?? DEFAULT_ANIMATION_OUT,
+            slideTransitionOut:
+              skConfig.slideTransitionOut ?? DEFAULT_SLIDE_TRANSITION_OUT,
+            slideTransitionIn:
+              skConfig.slideTransitionIn ?? DEFAULT_SLIDE_TRANSITION_IN,
+          },
+        }
+      }
+      case 'amen': {
+        if (!('amen' in config) || !config.amen) return null
+        const amenConfig = config.amen as ReferenceTextConfig
+        return {
+          path: ['amen'],
+          config: {
+            ...amenConfig,
+            animationIn: amenConfig.animationIn ?? DEFAULT_ANIMATION_IN,
+            animationOut: amenConfig.animationOut ?? DEFAULT_ANIMATION_OUT,
+            slideTransitionOut:
+              amenConfig.slideTransitionOut ?? DEFAULT_SLIDE_TRANSITION_OUT,
+            slideTransitionIn:
+              amenConfig.slideTransitionIn ?? DEFAULT_SLIDE_TRANSITION_IN,
+          },
+        }
+      }
       case 'personLabel':
         if (!('personLabel' in config)) return null
         // Ensure animation configs exist for backwards compatibility
@@ -342,7 +374,11 @@ export function ScreenEditorSidebar({
         <>
           <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-200 capitalize">
-              {selectedElement.type.replace(/([A-Z])/g, ' $1').trim()}
+              {selectedElement.type === 'songKey'
+                ? t('screens.elements.songKey')
+                : selectedElement.type === 'amen'
+                  ? t('screens.elements.amen')
+                  : selectedElement.type.replace(/([A-Z])/g, ' $1').trim()}
             </h3>
           </div>
 
@@ -1861,7 +1897,14 @@ export function ScreenEditorSidebar({
                     className="w-full h-24 px-3 py-2 text-sm border rounded-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder={t('screens.editor.previewTextPlaceholder')}
                     value={(() => {
-                      if (!selectedElement || !previewTexts) return ''
+                      if (!selectedElement) return ''
+                      // The "Amin" element has no underlying song data, so its
+                      // text is a saved config value (the operator's custom
+                      // label, default "Amin!"), not a preview-only override.
+                      if (selectedElement.type === 'amen') {
+                        return ('amen' in config && config.amen?.text) || ''
+                      }
+                      if (!previewTexts) return ''
                       switch (selectedElement.type) {
                         case 'mainText':
                         case 'contentText':
@@ -1875,7 +1918,14 @@ export function ScreenEditorSidebar({
                       }
                     })()}
                     onChange={(e) => {
-                      if (!selectedElement || !onSetPreviewText) return
+                      if (!selectedElement) return
+                      // Persist the custom "Amin" text to the config (it drives
+                      // both the editor preview and the projected output).
+                      if (selectedElement.type === 'amen') {
+                        updateConfig(['amen', 'text'], e.target.value || undefined)
+                        return
+                      }
+                      if (!onSetPreviewText) return
                       switch (selectedElement.type) {
                         case 'mainText':
                         case 'contentText':

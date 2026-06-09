@@ -11,6 +11,8 @@ export interface ContentData {
   contentText?: string
   personLabel?: string
   chords?: ChordMapping[] | null
+  songKey?: string // Song key ("gama"), populated only on the first slide
+  amen?: string // "Amin", populated only on the last slide
 }
 
 export interface VerseteTineriSummaryEntry {

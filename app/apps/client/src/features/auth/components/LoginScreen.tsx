@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next'
 
 import { type LoginResult, login } from '~/features/users/service'
 import type { LocalUser } from '~/features/users/types'
+import { captureActivity } from '~/utils/activity-logger'
 import { UserAvatar } from './UserAvatar'
 
 interface LoginScreenProps {
@@ -79,6 +80,7 @@ export function LoginScreen({ users, onLoggedIn }: LoginScreenProps) {
     setError(false)
     try {
       const result = await login(user.id, pw)
+      captureActivity('login', { source: 'login-screen', userId: user.id })
       await onLoggedIn(result)
     } catch {
       setError(true)

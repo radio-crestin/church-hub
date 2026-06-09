@@ -50,10 +50,15 @@ export function ScreenContent({
 
   const currentConfig = screen.contentConfigs[contentType]
 
-  // Check if chords display is enabled
+  // Check if chords display is enabled. Chord settings live on the `song`
+  // config as a single source of truth, so the dedicated first/last slide
+  // layouts ("song_first_slide" / "song_last_slide") read them from `song` too —
+  // the operator only toggles chords in one place.
   const songConfig =
-    contentType === 'song'
-      ? (currentConfig as SongContentConfig | undefined)
+    contentType === 'song' ||
+    contentType === 'song_first_slide' ||
+    contentType === 'song_last_slide'
+      ? (screen.contentConfigs.song as SongContentConfig | undefined)
       : null
   const displayChordsEnabled = songConfig?.displayChords ?? false
 
@@ -287,6 +292,97 @@ export function ScreenContent({
         slideTransitionOut={
           'slideTransitionOut' in rt ? rt.slideTransitionOut : undefined
         }
+      />
+    )
+  }
+
+  // Render the song key ("gama") — shown on the first slide. contentData.songKey
+  // is only populated on the first slide, so visibility is gated automatically.
+  const renderSongKey = () => {
+    if (!config || !('songKey' in config) || !config.songKey) return null
+    const sk = config.songKey
+    if (sk.hidden) return null
+    // Only mount when this slide actually has a key value. The plain `song`
+    // config still carries a vestigial `songKey`, so without this guard the
+    // element would stay mounted when navigating to a slide that has no gama
+    // (e.g. slide 1 → slide 2) and play a lingering fade-out of the old key —
+    // an intermediate "first-slide" frame. Gating on the value unmounts it
+    // cleanly there, while still rendering it on the first slide and on a
+    // single-slide song (where the value is present), and still fading it out
+    // on screen hide (where the value persists and only `isVisible` changes).
+    if (!contentData?.songKey) return null
+
+    const bounds = calculatePixelBounds(
+      sk.constraints,
+      sk.size,
+      canvasWidth,
+      canvasHeight,
+    )
+    const scaledBounds = scaleBounds(bounds)
+    const elementVisible = isVisible && !!contentData?.songKey
+
+    return (
+      <AnimatedText
+        key="songKey"
+        content={contentData?.songKey ?? ''}
+        contentKey={`songKey-${contentKey}`}
+        isVisible={elementVisible}
+        style={{
+          ...sk.style,
+          maxFontSize: sk.style.maxFontSize * fontScale,
+        }}
+        width={scaledBounds.width}
+        height={scaledBounds.height}
+        left={scaledBounds.x}
+        top={scaledBounds.y}
+        isHtml={false}
+        animationIn={sk.animationIn}
+        animationOut={sk.animationOut}
+        slideTransitionIn={sk.slideTransitionIn}
+        slideTransitionOut={sk.slideTransitionOut}
+      />
+    )
+  }
+
+  // Render the "Amin" element — shown on the last slide. contentData.amen is
+  // only populated on the last slide, so visibility is gated automatically.
+  const renderAmen = () => {
+    if (!config || !('amen' in config) || !config.amen) return null
+    const am = config.amen
+    if (am.hidden) return null
+    // Only mount when this slide actually has an amin value — see renderSongKey
+    // above. Without this guard the vestigial `song.amen` element lingers with a
+    // fade-out when navigating away from the last slide.
+    if (!contentData?.amen) return null
+
+    const bounds = calculatePixelBounds(
+      am.constraints,
+      am.size,
+      canvasWidth,
+      canvasHeight,
+    )
+    const scaledBounds = scaleBounds(bounds)
+    const elementVisible = isVisible && !!contentData?.amen
+
+    return (
+      <AnimatedText
+        key="amen"
+        content={contentData?.amen ?? ''}
+        contentKey={`amen-${contentKey}`}
+        isVisible={elementVisible}
+        style={{
+          ...am.style,
+          maxFontSize: am.style.maxFontSize * fontScale,
+        }}
+        width={scaledBounds.width}
+        height={scaledBounds.height}
+        left={scaledBounds.x}
+        top={scaledBounds.y}
+        isHtml={false}
+        animationIn={am.animationIn}
+        animationOut={am.animationOut}
+        slideTransitionIn={am.slideTransitionIn}
+        slideTransitionOut={am.slideTransitionOut}
       />
     )
   }
@@ -664,6 +760,8 @@ export function ScreenContent({
       {renderMainText()}
       {renderContentText()}
       {renderReferenceText()}
+      {renderSongKey()}
+      {renderAmen()}
       {renderPersonLabel()}
       {renderClock()}
       {renderNextSlideSection()}

@@ -338,6 +338,8 @@ export type ScreenType = 'primary' | 'stage' | 'livestream' | 'kiosk'
  */
 export type ContentType =
   | 'song'
+  | 'song_first_slide'
+  | 'song_last_slide'
   | 'bible'
   | 'bible_passage'
   | 'announcement'
@@ -513,6 +515,12 @@ export interface ReferenceTextConfig {
   slideTransitionIn?: AnimationConfig // Animation for new content entering during slide change
   slideTransitionOut?: AnimationConfig // Animation for old content leaving during slide change
   hidden?: boolean
+  /**
+   * Custom label text. Used by the "Amin" element so the operator can replace
+   * the default "Amin!" with their own text. Empty/undefined keeps the default
+   * (or a standalone trailing "amin" line extracted from the slide).
+   */
+  text?: string
 }
 
 /**
@@ -537,10 +545,41 @@ export interface PersonLabelConfig {
 export interface SongContentConfig {
   background: ScreenBackgroundConfig
   mainText: TextElementConfig
+  songKey?: ReferenceTextConfig // Song key ("gama") element, shown on the first slide
+  amen?: ReferenceTextConfig // "Amin" element, shown on the last slide
   clockEnabled?: boolean // Per-slide-type enable, uses global clockConfig for position/style
   displayKeyLine?: boolean // Whether to display the song key line on the first slide (default: true)
   displayChords?: boolean // Whether to display chord annotations above lyrics (default: false)
   chordFontSize?: number // Font size for chord annotations in px (default: 32)
+}
+
+/**
+ * Layout for a song's FIRST slide only ("Cântec - Primul Slide"). Two separately
+ * positionable elements — the song key (gama) and the slide lyrics (strofa) —
+ * like the Bible reference/verse pair. Applies only to the first slide of a
+ * song; every following slide uses {@link SongContentConfig}. Chord/keyline
+ * display stay on the `song` config (single source), so they are not repeated
+ * here.
+ */
+export interface SongFirstSlideContentConfig {
+  background: ScreenBackgroundConfig
+  mainText: TextElementConfig // the lyrics of the first slide ("strofa")
+  songKey?: ReferenceTextConfig // the song key ("gama")
+  clockEnabled?: boolean // Per-slide-type enable, uses global clockConfig for position/style
+}
+
+/**
+ * Layout for a song's LAST slide only ("Cântec - Ultimul Slide"). Two separately
+ * positionable elements — the slide lyrics (strofa) and the "Amin" — like the
+ * Bible reference/verse pair. Applies only to the last slide of a song; every
+ * preceding slide uses {@link SongContentConfig}. Chord display stays on the
+ * `song` config (single source), so it is not repeated here.
+ */
+export interface SongLastSlideContentConfig {
+  background: ScreenBackgroundConfig
+  mainText: TextElementConfig // the lyrics of the last slide ("strofa")
+  amen?: ReferenceTextConfig // the "Amin" element
+  clockEnabled?: boolean // Per-slide-type enable, uses global clockConfig for position/style
 }
 
 export type ReferenceWrapperStyle = 'none' | 'parentheses' | 'brackets'
@@ -597,6 +636,8 @@ export interface ScreenShareContentConfig {
  */
 export type ContentTypeConfig =
   | SongContentConfig
+  | SongFirstSlideContentConfig
+  | SongLastSlideContentConfig
   | BibleContentConfig
   | AnnouncementContentConfig
   | VerseteTineriContentConfig
@@ -608,6 +649,8 @@ export type ContentTypeConfig =
  */
 export interface ContentConfigMap {
   song: SongContentConfig
+  song_first_slide: SongFirstSlideContentConfig
+  song_last_slide: SongLastSlideContentConfig
   bible: BibleContentConfig
   bible_passage: BibleContentConfig
   announcement: AnnouncementContentConfig

@@ -1,8 +1,10 @@
 import { join } from 'node:path'
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite'
 
+import { addCategoryHiddenFlag } from './add-category-hidden-flag'
 import { addCloseOnEscape } from './add-close-on-escape'
 import { addLastPresentedAt } from './add-last-presented-at'
+import { addLogsPermissions } from './add-logs-permissions'
 import { addPreviewScreen } from './add-preview-screen'
 import { addSongGroups } from './add-song-groups'
 import { addSongVersionsPermissions } from './add-song-versions-permissions'
@@ -168,6 +170,16 @@ export function runMigrations(
     () => addSongVersionsPermissions(rawDb),
   )
 
+  // Backfill the new logs.view permission onto roles + users that already had
+  // settings.edit, so settings editors keep the log access they had via the
+  // Developer settings before the dedicated Logs section existed. Must run
+  // after seedSystemRoles so the admin role already has logs.* from the seed.
+  runStep(
+    'add_logs_permissions',
+    'Running add logs permissions migration',
+    () => addLogsPermissions(rawDb),
+  )
+
   // Add screen behavior columns BEFORE seeding default screens so the seed can
   // populate them straight from the factory fixture. close_on_escape replaces
   // the previous keep_visible_on_escape column with inverted semantics.
@@ -179,6 +191,14 @@ export function runMigrations(
   // preview panel. Defaults the main (first primary) screen on existing DBs.
   runStep('add_preview_screen', 'Running add is_preview_screen migration', () =>
     addPreviewScreen(rawDb),
+  )
+
+  // is_hidden on song_categories: lets an admin hide a category (and its songs)
+  // from the song browser without deleting anything.
+  runStep(
+    'add_category_hidden_flag',
+    'Running add category is_hidden migration',
+    () => addCategoryHiddenFlag(rawDb),
   )
 
   // Seed default screens

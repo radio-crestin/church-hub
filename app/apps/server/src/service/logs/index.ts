@@ -1,2 +1,3 @@
+export { type ClearLogsResult, clearLogs } from './clearLogs'
 export { openLogsFolder } from './openLogsFolder'
-export { readRecentLogs, type RecentLogs } from './readRecentLogs'
+export { type RecentLogs, readRecentLogs } from './readRecentLogs'

@@ -31,6 +31,8 @@
     },
     "contentTypes": {
       "song": "Song",
+      "song_first_slide": "Song (first slide)",
+      "song_last_slide": "Song (last slide)",
       "bible": "Bible Verse",
       "bible_passage": "Bible Passage",
       "announcement": "Announcement",
@@ -49,6 +51,10 @@
     },
     "visibility": {
       "hideElement": "Hide element"
+    },
+    "elements": {
+      "songKey": "Song key",
+      "amen": "Amen"
     },
     "position": {
       "x": "X Position",

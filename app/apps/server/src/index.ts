@@ -57,7 +57,7 @@ if (process.argv.includes('--probe-midi')) {
   }
 }
 
-import { logToFile } from './utils/fileLogger'
+import { authLogger, logToFile } from './utils/fileLogger'
 // PostHog client (errors + events) — initialised on import.
 import {
   captureAppStarted,
@@ -162,7 +162,7 @@ import {
   initializeOBSAutoConnect,
   initializeOBSCallbacks,
 } from './service/livestream/obs'
-import { openLogsFolder, readRecentLogs } from './service/logs'
+import { clearLogs, openLogsFolder, readRecentLogs } from './service/logs'
 import {
   initializeMIDI,
   setAllLEDs,
@@ -291,6 +291,7 @@ import {
   getAllSongs,
   getAllSongsWithSlides,
   getAllTags,
+  getCategoryById,
   getGroupForSong,
   getSimilarSongs,
   getSongGroupWithMembers,
@@ -822,10 +823,23 @@ async function startRealServer(): Promise<void> {
     // Must explicitly list all allowed headers
     res.headers.set(
       'Access-Control-Allow-Headers',
-      'Content-Type, Authorization, Cookie, Accept, Origin, X-Requested-With, Cache-Control, Pragma',
+      'Content-Type, Authorization, Cookie, X-User-Auth, Accept, Origin, X-Requested-With, Cache-Control, Pragma',
     )
     res.headers.set('Access-Control-Allow-Credentials', 'true')
     res.headers.set('Access-Control-Max-Age', '86400')
+
+    // Persist every failed response (4xx/5xx) to the on-disk log so the Logs
+    // viewer and bug reports surface what went wrong (permission denials,
+    // validation errors, server crashes) — not just unhandled exceptions.
+    if (res.status >= 400) {
+      const { pathname } = new URL(req.url)
+      logToFile(
+        'http',
+        res.status >= 500 ? 'error' : 'warn',
+        `${req.method} ${pathname} → ${res.status}`,
+      )
+    }
+
     return res
   }
 
@@ -981,6 +995,10 @@ async function startRealServer(): Promise<void> {
             isLocalhost(req),
           )
           if (!result) {
+            authLogger.warn('Login failed: invalid credentials', {
+              userId: body.userId,
+              localhost: isLocalhost(req),
+            })
             return handleCors(
               req,
               new Response(JSON.stringify({ error: 'Invalid credentials' }), {
@@ -1002,13 +1020,26 @@ async function startRealServer(): Promise<void> {
               }
             : null
 
+          authLogger.info('Login success', {
+            userId: user?.id ?? body.userId,
+            userName: user?.name,
+            localhost: isLocalhost(req),
+          })
+
           // Also issue a one-time ticket so the client can finalize the switch
           // via a top-level navigation (reliable cookie overwrite on desktop).
           const ticket = createLoginTicket(result.token)
 
+          // On localhost (the packaged desktop app) the cross-site `Secure`
+          // cookie can't be stored by macOS WKWebView, so also return the token
+          // in the body; the desktop client persists it and sends it back as an
+          // `X-User-Auth` header. Remote/LAN clients (same-origin cookie works)
+          // never receive it.
+          const token = isLocalhost(req) ? result.token : undefined
+
           return handleCors(
             req,
-            new Response(JSON.stringify({ data: currentUser, ticket }), {
+            new Response(JSON.stringify({ data: currentUser, ticket, token }), {
               headers: {
                 'Content-Type': 'application/json',
                 'Set-Cookie': buildAuthCookie(result.token, 31536000),
@@ -1047,6 +1078,7 @@ async function startRealServer(): Promise<void> {
         if (!token) {
           // Expired/invalid ticket — just go back to the app (still signed in
           // as whoever the current cookie is).
+          authLogger.warn('Account switch failed: expired/invalid ticket')
           return handleCors(
             req,
             new Response(null, {
@@ -1055,6 +1087,12 @@ async function startRealServer(): Promise<void> {
             }),
           )
         }
+
+        const switchedUser = await getUserByToken(token)
+        authLogger.info('Account switch', {
+          userId: switchedUser?.id ?? null,
+          userName: switchedUser?.name ?? null,
+        })
 
         return handleCors(
           req,
@@ -1070,6 +1108,16 @@ async function startRealServer(): Promise<void> {
 
       // POST /api/auth/logout - clear the auth cookie
       if (req.method === 'POST' && url.pathname === '/api/auth/logout') {
+        // Resolve who is logging out (from the current cookie) before clearing,
+        // so the auth trail records the user.
+        const logoutAuth = await combinedAuthMiddleware(req)
+        const logoutUser = logoutAuth.context?.userId
+          ? getUserById(logoutAuth.context.userId)
+          : null
+        authLogger.info('Logout', {
+          userId: logoutUser?.id ?? null,
+          userName: logoutUser?.name ?? null,
+        })
         return handleCors(
           req,
           new Response(JSON.stringify({ data: { success: true } }), {
@@ -1222,6 +1270,54 @@ async function startRealServer(): Promise<void> {
                 headers: { 'Content-Type': 'application/json' },
               },
             ),
+          )
+        }
+      }
+
+      // POST /api/client-activity (PUBLIC) — ingest client-side user activity
+      // (navigation, login/logout clicks, key actions) into the SAME on-disk
+      // log under the `activity` category, so the Logs viewer shows what the
+      // operator did leading up to an error. Public + pre-auth on purpose:
+      // activity (e.g. the login screen) happens before a session exists.
+      if (req.method === 'POST' && url.pathname === '/api/client-activity') {
+        try {
+          const body = (await req.json()) as {
+            events?: Array<{
+              action?: string
+              message?: string
+              source?: string
+              context?: Record<string, unknown>
+            }>
+          }
+          const events = Array.isArray(body?.events)
+            ? body.events.slice(0, 100)
+            : []
+          const trunc = (s: unknown, max: number): string =>
+            typeof s === 'string' ? s.slice(0, max) : ''
+          for (const e of events) {
+            const action = trunc(e?.action, 200) || 'action'
+            const message = trunc(e?.message, 2000) || action
+            const data = {
+              action,
+              client_source: trunc(e?.source, 200) || undefined,
+              ...(e?.context ?? {}),
+            }
+            logToFile('activity', 'info', message, data)
+          }
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({ data: { received: events.length } }),
+              { headers: { 'Content-Type': 'application/json' } },
+            ),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid activity body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
           )
         }
       }
@@ -2227,6 +2323,53 @@ async function startRealServer(): Promise<void> {
         return handleCors(
           req,
           new Response(JSON.stringify({ data: { path: getLogsDir() } }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // GET /api/logs/content - Read the recent server + Tauri log tails for the
+      // in-app Logs viewer. Gated by logs.view (permission-based, so a granted
+      // remote operator can view them too).
+      if (req.method === 'GET' && url.pathname === '/api/logs/content') {
+        const permError = checkPermission('logs.view')
+        if (permError) return permError
+
+        // Viewer-friendly caps, clamped so a crafted query can't read the whole
+        // disk into memory.
+        const daysParam = Number(url.searchParams.get('days'))
+        const bytesParam = Number(url.searchParams.get('maxBytes'))
+        const daysBack =
+          Number.isFinite(daysParam) && daysParam > 0
+            ? Math.min(Math.floor(daysParam), 14)
+            : 3
+        const maxBytes =
+          Number.isFinite(bytesParam) && bytesParam > 0
+            ? Math.min(Math.floor(bytesParam), 1024 * 1024)
+            : 256 * 1024
+
+        const logs = await readRecentLogs(maxBytes, daysBack)
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: logs }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/logs/clear - Empty all local log files. Gated by logs.clear.
+      if (req.method === 'POST' && url.pathname === '/api/logs/clear') {
+        const permError = checkPermission('logs.clear')
+        if (permError) return permError
+
+        const result = clearLogs()
+        authLogger.info('Logs cleared', {
+          cleared: result.cleared,
+          by: _context?.userId ?? null,
+        })
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: result }), {
             headers: { 'Content-Type': 'application/json' },
           }),
         )
@@ -5712,6 +5855,10 @@ async function startRealServer(): Promise<void> {
             )
           }
 
+          // Capture the current name BEFORE updating so we only pay for the
+          // (expensive) FTS re-index when the name actually changes.
+          const previousName = body.id ? getCategoryById(body.id)?.name : null
+
           const category = upsertCategory(body)
 
           if (!category) {
@@ -5727,9 +5874,16 @@ async function startRealServer(): Promise<void> {
             )
           }
 
-          // Re-index songs when updating category name
+          // Re-index songs ONLY when the category name actually changed (the
+          // FTS index stores category_name). A hide/show toggle leaves names
+          // and content untouched, so we skip the costly per-song re-index and
+          // just drop the search results cache (its key encodes neither the
+          // category name nor the hidden state).
           if (body.id) {
-            updateSearchIndexByCategory(body.id)
+            if (previousName != null && category.name !== previousName) {
+              updateSearchIndexByCategory(body.id)
+            }
+            clearSearchCache()
           }
 
           return handleCors(

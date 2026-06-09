@@ -57,6 +57,25 @@ export function useKeyboardShortcuts() {
           clearSlide.mutate()
           return true
 
+        case 'b':
+        case 'B':
+        case '.':
+          // A presenter remote's "black screen" button typically sends "b" or
+          // ".". Behave exactly like Escape — hide the presentation (show the
+          // clock) — but ONLY while something is being presented. When nothing
+          // is live it does nothing (and we don't swallow the keypress).
+          if (!hasNavigableContent) return false
+          event.preventDefault()
+          clearSlide.mutate()
+          return true
+
+        case 'F5':
+          // Presenter-remote "present/start" button. On the song page (higher
+          // priority) this presents the focused slide; here we just swallow it
+          // so the desktop webview never reloads on F5 elsewhere.
+          event.preventDefault()
+          return true
+
         case 'Enter':
           // Show presentation (unhide)
           event.preventDefault()

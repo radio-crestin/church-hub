@@ -9,6 +9,8 @@ export const screenSchemas = {
     type: 'string',
     enum: [
       'song',
+      'song_first_slide',
+      'song_last_slide',
       'bible',
       'bible_passage',
       'announcement',

@@ -7,10 +7,18 @@ import { createLogger } from '~/utils/logger'
 import { usePresentationState } from './usePresentationState'
 import { calculateMaxExitAnimationDuration } from '../components/rendering/utils/styleUtils'
 import { useSongUpdateTimestamp } from '../context/WebSocketContext'
-import type { ContentType, ScreenConfig, SongContentConfig } from '../types'
-import { addAminToLastSlide } from '../utils/addAminToLastSlide'
-import { addKeyLineToFirstSlide } from '../utils/addKeyLineToFirstSlide'
+import type {
+  ContentType,
+  ScreenConfig,
+  SongContentConfig,
+  SongLastSlideContentConfig,
+} from '../types'
 import { resolveSlideChords } from '../utils/resolveSlideChords'
+import {
+  resolveSongKey,
+  resolveSongSlideBody,
+  resolveSongSlideContentType,
+} from '../utils/songElements'
 
 const logger = createLogger('app:presentation:content')
 
@@ -85,6 +93,8 @@ export interface ContentData {
   personLabel?: string
   secondaryContentText?: string
   chords?: ChordMapping[] | null
+  songKey?: string // Song key ("gama"), populated only on the first slide
+  amen?: string // "Amin", populated only on the last slide
 }
 
 export interface NextSlideData {
@@ -346,24 +356,52 @@ export function usePresentationContent({
             const isFirstSlide = temp.data.currentSlideIndex === 0
             const isLastSlide =
               temp.data.currentSlideIndex === temp.data.slides.length - 1
-            let slideContent = currentSlide.content
+            const slideContent = currentSlide.content
             const songConfig = screen?.contentConfigs?.song as
               | SongContentConfig
               | undefined
-            const shouldShowKeyLine = songConfig?.displayKeyLine ?? true
-            slideContent = addKeyLineToFirstSlide(
-              slideContent,
+            // Key ("gama") and "Amin" are now their own positionable/styleable
+            // elements (see ScreenContent renderSongKey/renderAmen), so we emit
+            // them as separate fields instead of injecting into the slide text.
+            // A standalone trailing "amin" line is pulled out of the lyrics into
+            // the amin element (so it isn't shown twice).
+            const songKeyValue = resolveSongKey(
               isFirstSlide,
-              shouldShowKeyLine ? temp.data.keyLine : null,
+              temp.data.keyLine,
+              songConfig,
             )
-            slideContent = addAminToLastSlide(slideContent, isLastSlide)
+            // Operator's custom "Amin" label (from the "Strofă - Amin" tab).
+            const customAmin =
+              (
+                screen?.contentConfigs?.song_last_slide as
+                  | SongLastSlideContentConfig
+                  | undefined
+              )?.amen?.text ?? songConfig?.amen?.text
+            const { mainText: songMainText, amen: amenValue } =
+              resolveSongSlideBody(isLastSlide, slideContent, customAmin)
             // Resolve chords for this slide
             const resolvedChords = resolveSlideChords(
               temp.data.currentSlideIndex,
               temp.data.slides,
             )
-            setContentType('song')
-            setContentData({ mainText: slideContent, chords: resolvedChords })
+            // First slide WITH a gama → "Cântec - Primul Slide" (song_first_slide), last
+            // slide WITH an amin → "Cântec - Ultimul Slide" (song_last_slide); otherwise
+            // the plain `song` layout so the strofa isn't shifted for an absent
+            // element.
+            setContentType(
+              resolveSongSlideContentType(
+                isFirstSlide,
+                isLastSlide,
+                !!songKeyValue,
+                !!amenValue,
+              ),
+            )
+            setContentData({
+              mainText: songMainText,
+              chords: resolvedChords,
+              songKey: songKeyValue,
+              amen: amenValue,
+            })
             setContentKey(
               `song|${temp.data.songId}|${temp.data.currentSlideIndex}`,
             )
@@ -520,26 +558,46 @@ export function usePresentationContent({
               const slide = item.slides[slideIndex]
               const isFirstSlide = slideIndex === 0
               const isLastSlide = slideIndex === item.slides.length - 1
-              let slideContent = slide.content
+              const slideContent = slide.content
               const songCfg = screen?.contentConfigs?.song as
                 | SongContentConfig
                 | undefined
-              const showKeyLine = songCfg?.displayKeyLine ?? true
-              slideContent = addKeyLineToFirstSlide(
-                slideContent,
+              // Key + Amin are emitted as separate elements (see above). A
+              // standalone trailing "amin" line is pulled out of the lyrics.
+              const songKeyValue = resolveSongKey(
                 isFirstSlide,
-                showKeyLine ? item.keyLine : null,
+                item.keyLine,
+                songCfg,
               )
-              slideContent = addAminToLastSlide(slideContent, isLastSlide)
-
+              // Operator's custom "Amin" label (from the "Strofă - Amin" tab).
+              const customAmin =
+                (
+                  screen?.contentConfigs?.song_last_slide as
+                    | SongLastSlideContentConfig
+                    | undefined
+                )?.amen?.text ?? songCfg?.amen?.text
+              const { mainText: songMainText, amen: amenValue } =
+                resolveSongSlideBody(isLastSlide, slideContent, customAmin)
               // Resolve chords for this slide
               const queueChords = resolveSlideChords(slideIndex, item.slides)
 
               if (isCancelled) return
-              setContentType('song')
+              // First slide WITH a gama → "Cântec - Primul Slide" (song_first_slide),
+              // last slide WITH an amin → "Cântec - Ultimul Slide" (song_last_slide);
+              // otherwise the plain `song` layout.
+              setContentType(
+                resolveSongSlideContentType(
+                  isFirstSlide,
+                  isLastSlide,
+                  !!songKeyValue,
+                  !!amenValue,
+                ),
+              )
               setContentData({
-                mainText: slideContent,
+                mainText: songMainText,
                 chords: queueChords,
+                songKey: songKeyValue,
+                amen: amenValue,
               })
               setContentKey(`song|${item.songId}|${slideIndex}`)
 
