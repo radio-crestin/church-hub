@@ -515,6 +515,12 @@ export interface ReferenceTextConfig {
   slideTransitionIn?: AnimationConfig // Animation for new content entering during slide change
   slideTransitionOut?: AnimationConfig // Animation for old content leaving during slide change
   hidden?: boolean
+  /**
+   * Custom label text. Used by the "Amin" element so the operator can replace
+   * the default "Amin!" with their own text. Empty/undefined keeps the default
+   * (or a standalone trailing "amin" line extracted from the slide).
+   */
+  text?: string
 }
 
 /**

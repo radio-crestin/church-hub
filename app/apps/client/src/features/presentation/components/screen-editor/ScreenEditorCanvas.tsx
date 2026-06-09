@@ -800,7 +800,7 @@ export function ScreenEditorCanvas({
           canvasRef={canvasRef}
         >
           <TextContent
-            content={sample?.amen ?? 'Amin!'}
+            content={am.text || 'Amin!'}
             style={{ ...am.style, maxFontSize: am.style.maxFontSize * scale }}
             containerWidth={bounds.width * scale}
             containerHeight={bounds.height * scale}

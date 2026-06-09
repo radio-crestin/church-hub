@@ -1897,7 +1897,14 @@ export function ScreenEditorSidebar({
                     className="w-full h-24 px-3 py-2 text-sm border rounded-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder={t('screens.editor.previewTextPlaceholder')}
                     value={(() => {
-                      if (!selectedElement || !previewTexts) return ''
+                      if (!selectedElement) return ''
+                      // The "Amin" element has no underlying song data, so its
+                      // text is a saved config value (the operator's custom
+                      // label, default "Amin!"), not a preview-only override.
+                      if (selectedElement.type === 'amen') {
+                        return ('amen' in config && config.amen?.text) || ''
+                      }
+                      if (!previewTexts) return ''
                       switch (selectedElement.type) {
                         case 'mainText':
                         case 'contentText':
@@ -1911,7 +1918,14 @@ export function ScreenEditorSidebar({
                       }
                     })()}
                     onChange={(e) => {
-                      if (!selectedElement || !onSetPreviewText) return
+                      if (!selectedElement) return
+                      // Persist the custom "Amin" text to the config (it drives
+                      // both the editor preview and the projected output).
+                      if (selectedElement.type === 'amen') {
+                        updateConfig(['amen', 'text'], e.target.value || undefined)
+                        return
+                      }
+                      if (!onSetPreviewText) return
                       switch (selectedElement.type) {
                         case 'mainText':
                         case 'contentText':

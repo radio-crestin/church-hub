@@ -7,7 +7,12 @@ import { createLogger } from '~/utils/logger'
 import { usePresentationState } from './usePresentationState'
 import { calculateMaxExitAnimationDuration } from '../components/rendering/utils/styleUtils'
 import { useSongUpdateTimestamp } from '../context/WebSocketContext'
-import type { ContentType, ScreenConfig, SongContentConfig } from '../types'
+import type {
+  ContentType,
+  ScreenConfig,
+  SongContentConfig,
+  SongLastSlideContentConfig,
+} from '../types'
 import { resolveSlideChords } from '../utils/resolveSlideChords'
 import {
   resolveSongKey,
@@ -365,8 +370,15 @@ export function usePresentationContent({
               temp.data.keyLine,
               songConfig,
             )
+            // Operator's custom "Amin" label (from the "Strofă - Amin" tab).
+            const customAmin =
+              (
+                screen?.contentConfigs?.song_last_slide as
+                  | SongLastSlideContentConfig
+                  | undefined
+              )?.amen?.text ?? songConfig?.amen?.text
             const { mainText: songMainText, amen: amenValue } =
-              resolveSongSlideBody(isLastSlide, slideContent)
+              resolveSongSlideBody(isLastSlide, slideContent, customAmin)
             // Resolve chords for this slide
             const resolvedChords = resolveSlideChords(
               temp.data.currentSlideIndex,
@@ -557,8 +569,15 @@ export function usePresentationContent({
                 item.keyLine,
                 songCfg,
               )
+              // Operator's custom "Amin" label (from the "Strofă - Amin" tab).
+              const customAmin =
+                (
+                  screen?.contentConfigs?.song_last_slide as
+                    | SongLastSlideContentConfig
+                    | undefined
+                )?.amen?.text ?? songCfg?.amen?.text
               const { mainText: songMainText, amen: amenValue } =
-                resolveSongSlideBody(isLastSlide, slideContent)
+                resolveSongSlideBody(isLastSlide, slideContent, customAmin)
               // Resolve chords for this slide
               const queueChords = resolveSlideChords(slideIndex, item.slides)
 
