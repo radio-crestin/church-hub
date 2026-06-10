@@ -542,12 +542,19 @@ export function SongList({
   // buildAlphabetSections). Null when not in alphabet mode.
   const alphabetGrouping = useMemo(() => {
     if (!alphabetMode) return null
+    // Resolve category names via a Map — a per-song `.find()` over the category
+    // list is O(songs × categories), which is painful across 25k+ songs.
+    const categoryNameById = new Map(
+      (categories ?? []).map((c) => [c.id, c.name]),
+    )
     const mapped = (alphabetData?.songs ?? []).map((song) => ({
       id: song.id,
       title: song.title,
       categoryId: song.categoryId,
       categoryName:
-        categories?.find((c) => c.id === song.categoryId)?.name ?? null,
+        song.categoryId != null
+          ? (categoryNameById.get(song.categoryId) ?? null)
+          : null,
       keyLine: song.keyLine,
       presentationCount: song.presentationCount,
       tagNames: song.tagNames,
@@ -1078,6 +1085,7 @@ export function SongList({
               songs={displaySongs}
               sections={alphabetGrouping.sections}
               availableLetters={alphabetGrouping.availableLetters}
+              selectedIndex={selectedIndex}
               renderSong={renderSong}
             />
           ) : (

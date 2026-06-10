@@ -11,6 +11,11 @@ import {
 // a single large request is cheaper than walking ~N paginated pages.
 const ALPHABET_FETCH_LIMIT = 100000
 
+// The payload is large (tens of thousands of songs), so we keep it fresh for a
+// few minutes instead of refetching on every remount/focus. Song mutations
+// invalidate the ['songs'] prefix, which refreshes this query when needed.
+const ALPHABET_STALE_TIME = 5 * 60 * 1000
+
 /**
  * Loads the full, alphabetically sorted song list for the fast-scroll rail.
  *
@@ -33,6 +38,6 @@ export function useAllSongsAlphabetical(
         signal,
       ),
     enabled,
-    staleTime: 0,
+    staleTime: ALPHABET_STALE_TIME,
   })
 }

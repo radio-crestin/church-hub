@@ -1,6 +1,14 @@
 import { getSongIndexLetter } from './getSongIndexLetter'
 import { letterRank } from '../constants/alphabet'
 
+// A single reusable collator — `localeCompare` builds a fresh collator on every
+// call, which is catastrophic when sorting tens of thousands of titles. One
+// shared Intl.Collator is orders of magnitude faster.
+const TITLE_COLLATOR = new Intl.Collator('ro', {
+  sensitivity: 'base',
+  numeric: true,
+})
+
 export interface AlphabetSection {
   /** The bucket letter (A–Z or "#"). */
   letter: string
@@ -39,10 +47,7 @@ export function buildAlphabetSections<T extends { title: string }>(
   withLetter.sort((a, b) => {
     const rankDelta = letterRank(a.letter) - letterRank(b.letter)
     if (rankDelta !== 0) return rankDelta
-    return a.song.title.localeCompare(b.song.title, 'ro', {
-      sensitivity: 'base',
-      numeric: true,
-    })
+    return TITLE_COLLATOR.compare(a.song.title, b.song.title)
   })
 
   const sortedSongs = withLetter.map((entry) => entry.song)
