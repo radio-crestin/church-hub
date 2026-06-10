@@ -8,9 +8,11 @@ import {
 
 const PAGE_SIZE = 50
 
-export function useSongsInfinite(filters?: SongFilters) {
+export function useSongsInfinite(filters?: SongFilters, enabled = true) {
   // Note: Prefetching is handled by the IntersectionObserver in SongList.tsx
-  // which triggers fetchNextPage() with a 200px rootMargin for preloading
+  // which triggers fetchNextPage() with a 200px rootMargin for preloading.
+  // `enabled` is turned off in alphabet fast-scroll mode, where the full list
+  // is loaded in one request instead (see useAllSongsAlphabetical).
   return useInfiniteQuery<PaginatedSongsResult>({
     queryKey: ['songs', 'infinite', filters],
     queryFn: ({ pageParam, signal }) =>
@@ -19,5 +21,6 @@ export function useSongsInfinite(filters?: SongFilters) {
       lastPage.hasMore ? (lastPageParam as number) + PAGE_SIZE : undefined,
     initialPageParam: 0,
     staleTime: 0,
+    enabled,
   })
 }
