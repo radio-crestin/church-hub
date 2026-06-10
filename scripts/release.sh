@@ -103,9 +103,18 @@ else
   sed -i -E "s/(\"version\"[[:space:]]*:[[:space:]]*)\"[^\"]*\"/\1\"$NEW\"/" "$CONF_FILE"
 fi
 
+# Regenerate the changelog (CHANGELOG.md + bundled changelog.json) from git
+# history. Runs *after* the version bump but *before* the tag, so the top
+# entry captures the new version and the shipping build bundles its own notes.
+echo "Regenerating changelog..."
+bun "$REPO_ROOT/app/scripts/generate-changelog.ts"
+
 # Commit, tag, push. The tag push triggers CI which builds + releases +
 # auto-syncs (no-op here because we already committed).
-git -C "$REPO_ROOT" add app/tauri/tauri.conf.json
+git -C "$REPO_ROOT" add \
+  app/tauri/tauri.conf.json \
+  CHANGELOG.md \
+  app/apps/client/src/features/release-notes/changelog.generated.json
 git -C "$REPO_ROOT" commit -m "chore: bump version to $NEW"
 git -C "$REPO_ROOT" tag "v$NEW"
 git -C "$REPO_ROOT" push origin main

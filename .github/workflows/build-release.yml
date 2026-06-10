@@ -138,13 +138,37 @@ jobs:
           TAG: v${{ steps.version.outputs.version }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          # Build the release notes once into a temp file so the create
-          # and edit branches share the same body — keeps the heredoc in
-          # one place if it changes later.
-          cat > /tmp/release-notes.md <<EOF
+          # Extract this version's auto-generated section from the committed
+          # CHANGELOG.md (produced by scripts/release.sh before the tag). The
+          # awk grabs everything between this version's "## vX.Y.Z" heading and
+          # the next version heading. Falls back to a generic line if the tag
+          # wasn't cut via release.sh (e.g. a manual UI tag).
+          awk -v ver="## v$VERSION" '
+            $0 ~ "^"ver"( |$)" { capture=1; next }
+            capture && /^## v/ { exit }
+            capture { print }
+          ' CHANGELOG.md > /tmp/changelog-section.md 2>/dev/null || true
+          if [ ! -s /tmp/changelog-section.md ]; then
+            echo "_See the commit history for details._" > /tmp/changelog-section.md
+          fi
+
+          # Build the release notes once into a temp file so the create and
+          # edit branches share the same body. The changelog section is cat'd
+          # in as a literal file (never shell-expanded) so commit messages
+          # containing backticks or $ can't break the heredoc.
+          {
+          cat <<EOF
           # Church Hub $TAG
 
           A modern, feature-rich church presentation and livestream management system.
+
+          ---
+
+          ## What's Changed
+
+          EOF
+          cat /tmp/changelog-section.md
+          cat <<EOF
 
           ---
 
@@ -188,6 +212,7 @@ jobs:
 
           <sub>Made with love for churches everywhere</sub>
           EOF
+          } > /tmp/release-notes.md
 
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "Release $TAG already exists — updating its title and notes."
