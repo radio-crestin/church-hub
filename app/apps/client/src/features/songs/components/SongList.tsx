@@ -1,12 +1,4 @@
-import {
-  Clock,
-  FolderOpen,
-  Loader2,
-  Music,
-  Search,
-  Sparkles,
-  X,
-} from 'lucide-react'
+import { Clock, FolderOpen, Music, Search, Sparkles, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -19,6 +11,7 @@ import { AlphabetSongScroller } from './AlphabetSongScroller'
 import { SongCard } from './SongCard'
 import type { SongFiltersState } from './SongFiltersDropdown'
 import { SongFiltersDropdown } from './SongFiltersDropdown'
+import { VirtualSongList } from './VirtualSongList'
 import {
   useAISearchSongs,
   useAllSongsAlphabetical,
@@ -76,7 +69,6 @@ export function SongList({
 }: SongListProps) {
   const { t } = useTranslation('songs')
   const searchInputRef = useRef<HTMLInputElement>(null)
-  const loadMoreRef = useRef<HTMLDivElement>(null)
   const hasSelectedAllRef = useRef(false)
 
   // Initialize tag filter from local storage (orthogonal to category)
@@ -502,34 +494,10 @@ export function SongList({
       : songsLoading
   const showPendingIndicator = isPending && localQuery.length > 0
 
-  // Intersection Observer for infinite scroll
-  useEffect(() => {
-    // Only use infinite scroll in browse mode (non-search)
-    if (hasSearchQuery || !hasNextPage || isFetchingNextPage) return
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        // When the load more element is 200px away from viewport, trigger fetch
-        if (entries[0].isIntersecting) {
-          fetchNextPage()
-        }
-      },
-      {
-        rootMargin: '200px', // Preload before reaching the end
-      },
-    )
-
-    const currentRef = loadMoreRef.current
-    if (currentRef) {
-      observer.observe(currentRef)
-    }
-
-    return () => {
-      if (currentRef) {
-        observer.unobserve(currentRef)
-      }
-    }
-  }, [hasSearchQuery, hasNextPage, isFetchingNextPage, fetchNextPage])
+  // Infinite scroll is virtualizer-driven inside VirtualSongList; it only
+  // applies in plain browse mode (no search / AI / bookmarks filter).
+  const browseInfiniteScroll =
+    !hasSearchQuery && !isAISearchActive && !bookmarkedOnly
 
   // Set of bookmarked song IDs for efficient filtering
   const bookmarkedSongIds = useMemo(
@@ -742,13 +710,7 @@ export function SongList({
         showCategoryInTitle={duplicateTitles.has(song.title.toLowerCase())}
       />
     ),
-    [
-      itemRefs,
-      onSongClick,
-      onSongMiddleClick,
-      selectedIndex,
-      duplicateTitles,
-    ],
+    [itemRefs, onSongClick, onSongMiddleClick, selectedIndex, duplicateTitles],
   )
 
   // Set initial selection based on initialSelectedSongId and scroll into view.
@@ -1089,20 +1051,14 @@ export function SongList({
               renderSong={renderSong}
             />
           ) : (
-            <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin -mr-1.5 pr-1.5">
-              <div className="grid gap-3">
-                {displaySongs.map((song, index) => renderSong(song, index))}
-
-                {/* Infinite scroll trigger element */}
-                {!hasSearchQuery && hasNextPage && (
-                  <div ref={loadMoreRef} className="py-4 flex justify-center">
-                    {isFetchingNextPage && (
-                      <Loader2 className="w-6 h-6 text-indigo-500 animate-spin" />
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
+            <VirtualSongList
+              songs={displaySongs}
+              selectedIndex={selectedIndex}
+              renderSong={renderSong}
+              hasNextPage={browseInfiniteScroll && hasNextPage}
+              isFetchingNextPage={browseInfiniteScroll && isFetchingNextPage}
+              onLoadMore={fetchNextPage}
+            />
           )}
         </div>
       )}
