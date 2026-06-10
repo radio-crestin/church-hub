@@ -1,0 +1,6 @@
+export { compareVersions } from './compareVersions'
+export { fetchGithubReleaseNotes } from './fetchGithubReleaseNotes'
+export { getBundledReleaseNotes } from './getBundledReleaseNotes'
+export { getReleaseNotes } from './getReleaseNotes'
+export { mergeReleaseNotes } from './mergeReleaseNotes'
+export { parseReleaseBody } from './parseReleaseBody'
