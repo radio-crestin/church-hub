@@ -138,13 +138,37 @@ jobs:
           TAG: v${{ steps.version.outputs.version }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          # Build the release notes once into a temp file so the create
-          # and edit branches share the same body — keeps the heredoc in
-          # one place if it changes later.
-          cat > /tmp/release-notes.md <<EOF
+          # Extract this version's auto-generated section from the committed
+          # CHANGELOG.md (produced by scripts/release.sh before the tag). The
+          # awk grabs everything between this version's "## vX.Y.Z" heading and
+          # the next version heading. Falls back to a generic line if the tag
+          # wasn't cut via release.sh (e.g. a manual UI tag).
+          awk -v ver="## v$VERSION" '
+            $0 ~ "^"ver"( |$)" { capture=1; next }
+            capture && /^## v/ { exit }
+            capture { print }
+          ' CHANGELOG.md > /tmp/changelog-section.md 2>/dev/null || true
+          if [ ! -s /tmp/changelog-section.md ]; then
+            echo "_See the commit history for details._" > /tmp/changelog-section.md
+          fi
+
+          # Build the release notes once into a temp file so the create and
+          # edit branches share the same body. The changelog section is cat'd
+          # in as a literal file (never shell-expanded) so commit messages
+          # containing backticks or $ can't break the heredoc.
+          {
+          cat <<EOF
           # Church Hub $TAG
 
           A modern, feature-rich church presentation and livestream management system.
+
+          ---
+
+          ## What's Changed
+
+          EOF
+          cat /tmp/changelog-section.md
+          cat <<EOF
 
           ---
 
@@ -188,6 +212,7 @@ jobs:
 
           <sub>Made with love for churches everywhere</sub>
           EOF
+          } > /tmp/release-notes.md
 
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "Release $TAG already exists — updating its title and notes."
@@ -432,3 +457,61 @@ jobs:
           tag_name: v${{ steps.version.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Keep `main` in lock-step with whatever was just released. Without this,
+  # `app/tauri/tauri.conf.json` on `main` drifts behind the tag (the build job
+  # only patches the version inside the CI checkout, never commits it back), so
+  # local/dev builds report an old version and the in-app "you're up to date"
+  # check is wrong. Runs for every release — whether the tag was cut via
+  # scripts/release.sh (then this is a no-op) or straight from the GitHub UI.
+  sync-version-back:
+    needs: [build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Sync version and changelog into main
+        shell: bash
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          # Match the build job: strip non-numeric pre-release identifiers.
+          TAURI_VERSION=$(echo "$VERSION" | sed 's/-[^0-9].*//')
+          echo "Syncing main to version $TAURI_VERSION"
+
+          # tauri.conf.json is the single source of truth for the displayed
+          # version (Tauri's getVersion() + Vite's __appVersion both read it).
+          sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"$TAURI_VERSION\"/" \
+            app/tauri/tauri.conf.json
+
+          # Regenerate the changelog so the bundled, offline release notes on
+          # main include the version that was just released.
+          bun app/scripts/generate-changelog.ts
+
+      - name: Commit and push if changed
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "main already in sync — nothing to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            app/tauri/tauri.conf.json \
+            CHANGELOG.md \
+            app/apps/client/src/features/release-notes/changelog.generated.json
+          # [skip ci] so the push to main doesn't retrigger the test workflow.
+          git commit -m "chore: sync version to v${GITHUB_REF#refs/tags/v} [skip ci]"
+          git push origin main
