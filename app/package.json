@@ -21,6 +21,7 @@
     "test:all": "bun run test && bun run test:e2e",
     "tauri:build": "tauri build",
     "tauri:build:debug": "tauri build --debug",
+    "tauri:build:release": "bun scripts/build-with-tag.ts",
     "build:apps": "bun run --filter client build && bun run --filter server compile",
     "tsc:check": "tsc --noEmit --skipLibCheck",
     "postinstall": "cd apps/server/node_modules/audify && npx prebuild-install -r napi || true",
