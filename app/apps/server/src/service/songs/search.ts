@@ -48,6 +48,11 @@ function getSearchCacheKey(
     inSchedulesOnly?: boolean
     hasKeyLine?: boolean
   },
+  // The limit is part of the key: callers ask for different caps (e.g. the
+  // unlimited UI search vs the 30/150 internal callers), and a cache hit slices
+  // to `limit` — so without this a bounded caller could truncate a later
+  // unlimited request from the cache.
+  limitKey = 'default',
 ): string {
   const categoryKey = categoryIds?.sort().join(',') ?? 'all'
   const filterKey = [
@@ -57,7 +62,7 @@ function getSearchCacheKey(
   ]
     .filter(Boolean)
     .join('')
-  return `${query.toLowerCase().trim()}:${categoryKey}:${filterKey}`
+  return `${query.toLowerCase().trim()}:${categoryKey}:${filterKey}:${limitKey}`
 }
 
 function getFromSearchCache(key: string): SongSearchResult[] | null {
@@ -1334,7 +1339,9 @@ function buildTrigramQuery(terms: string[]): string {
  *
  * @param query - Search query string
  * @param categoryIds - Optional category IDs to filter results (array)
- * @param limit - Maximum number of results to return (default: 50)
+ * @param rawLimit - Max results. Default 50; a positive value is clamped to
+ *   [1, 200]; pass `0` (or any non-positive value) for NO LIMIT — every match
+ *   is returned (the song list UI is virtualized, so large sets render fine).
  */
 export function searchSongs(
   query: string,
@@ -1346,7 +1353,13 @@ export function searchSongs(
     hasKeyLine?: boolean
   },
 ): SongSearchResult[] {
-  const limit = Math.min(Math.max(1, rawLimit), 200)
+  // rawLimit <= 0 ⇒ unlimited: every match is returned, ranked. Exact (FTS)
+  // matches are uncapped; the fuzzy trigram phase stays bounded so it can only
+  // supplement, never flood. Bounded callers keep their [1, 200] clamp.
+  const unlimited = rawLimit <= 0
+  const limit = unlimited
+    ? Number.POSITIVE_INFINITY
+    : Math.min(Math.max(1, rawLimit), 200)
   const startTime = performance.now()
 
   try {
@@ -1357,7 +1370,12 @@ export function searchSongs(
     }
 
     // Check cache first (before any processing)
-    const cacheKey = getSearchCacheKey(query, categoryIds, filters)
+    const cacheKey = getSearchCacheKey(
+      query,
+      categoryIds,
+      filters,
+      unlimited ? 'all' : String(limit),
+    )
     const cachedResults = getFromSearchCache(cacheKey)
     if (cachedResults) {
       logger.debug(
@@ -1512,7 +1530,7 @@ export function searchSongs(
       LEFT JOIN song_categories sc ON s.category_id = sc.id
       WHERE songs_fts MATCH ? ${extraFilter}
       ORDER BY rank
-      LIMIT 300
+      ${unlimited ? '' : 'LIMIT 300'}
     `,
       )
       .all(...standardQueryParams) as Array<{
