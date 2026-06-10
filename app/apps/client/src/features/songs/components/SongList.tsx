@@ -15,11 +15,13 @@ import { useDebouncedValue } from '~/hooks/useDebouncedValue'
 import { MultiSelectCombobox } from '~/ui/combobox'
 import { KeyboardShortcutBadge } from '~/ui/kbd'
 import { ClearSearchButton } from '~/ui/search'
+import { AlphabetSongScroller } from './AlphabetSongScroller'
 import { SongCard } from './SongCard'
 import type { SongFiltersState } from './SongFiltersDropdown'
 import { SongFiltersDropdown } from './SongFiltersDropdown'
 import {
   useAISearchSongs,
+  useAllSongsAlphabetical,
   useCategories,
   useSaveSearchHistory,
   useSearchKeyboardNavigation,
@@ -31,6 +33,7 @@ import {
 } from '../hooks'
 import type { SongFilters, SongSortBy } from '../service'
 import type { AISearchResult, SongSearchResult } from '../types'
+import { buildAlphabetSections } from '../utils/buildAlphabetSections'
 
 const SEARCH_DEBOUNCE_MS = 200
 
@@ -313,6 +316,13 @@ export function SongList({
     isPending,
   } = useDebouncedValue(localQuery, SEARCH_DEBOUNCE_MS)
 
+  // Alphabet fast-scroll is the natural companion of the A–Z sort: it only
+  // engages while browsing the full list in title order (no search / bookmarks
+  // filter). When it does, the infinite query is disabled and the whole list is
+  // loaded at once via useAllSongsAlphabetical so any letter is reachable.
+  const alphabetEligible =
+    sortBy === 'title' && debouncedQuery.length === 0 && !bookmarkedOnly
+
   // Infinite query for browse mode (non-search)
   const {
     data: songsData,
@@ -320,7 +330,7 @@ export function SongList({
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
-  } = useSongsInfinite(songFilters)
+  } = useSongsInfinite(songFilters, !alphabetEligible)
 
   // Search query for search mode
   const {
@@ -479,7 +489,17 @@ export function SongList({
 
   const isSearching = localQuery.length > 0
   const hasSearchQuery = debouncedQuery.length > 0
-  const isLoading = hasSearchQuery ? searchLoading || isFetching : songsLoading
+
+  // Alphabet mode also requires that no AI search is showing its own results.
+  const alphabetMode = alphabetEligible && !isAISearchActive
+  const { data: alphabetData, isLoading: alphabetLoading } =
+    useAllSongsAlphabetical(songFilters, alphabetMode)
+
+  const isLoading = alphabetMode
+    ? alphabetLoading
+    : hasSearchQuery
+      ? searchLoading || isFetching
+      : songsLoading
   const showPendingIndicator = isPending && localQuery.length > 0
 
   // Intersection Observer for infinite scroll
@@ -517,7 +537,32 @@ export function SongList({
     [bookmarks],
   )
 
+  // Group the fully-loaded list into diacritic-aware A–Z sections for the rail.
+  // Server order is binary-collated, so we re-sort client-side here (see
+  // buildAlphabetSections). Null when not in alphabet mode.
+  const alphabetGrouping = useMemo(() => {
+    if (!alphabetMode) return null
+    const mapped = (alphabetData?.songs ?? []).map((song) => ({
+      id: song.id,
+      title: song.title,
+      categoryId: song.categoryId,
+      categoryName:
+        categories?.find((c) => c.id === song.categoryId)?.name ?? null,
+      keyLine: song.keyLine,
+      presentationCount: song.presentationCount,
+      tagNames: song.tagNames,
+    }))
+    return buildAlphabetSections(mapped)
+  }, [alphabetMode, alphabetData, categories])
+
   const { displaySongs, totalCount } = useMemo(() => {
+    // Alphabet mode renders the fully-loaded, re-sorted list so the flat index
+    // stays aligned with the rail sections and keyboard navigation.
+    if (alphabetMode) {
+      const sorted = alphabetGrouping?.sortedSongs ?? []
+      return { displaySongs: sorted, totalCount: sorted.length }
+    }
+
     let allSongs: Array<{
       id: number
       title: string
@@ -620,6 +665,8 @@ export function SongList({
       totalCount: total,
     }
   }, [
+    alphabetMode,
+    alphabetGrouping,
     hasSearchQuery,
     searchResults,
     songsData,
@@ -665,6 +712,37 @@ export function SongList({
     itemCount: displaySongs.length,
     onSelect: handleSelectSong,
   })
+
+  // Single source of truth for a song card, shared by the flat browse grid and
+  // the alphabet scroller so keyboard selection, middle-click and itemRefs
+  // behave identically in both. `index` is the flat index into displaySongs.
+  const renderSong = useCallback(
+    (song: (typeof displaySongs)[number], index: number) => (
+      <SongCard
+        key={song.id}
+        ref={(el) => {
+          if (el) itemRefs.current.set(index, el)
+          else itemRefs.current.delete(index)
+        }}
+        song={song}
+        onClick={() => onSongClick(song.id)}
+        onMiddleClick={
+          onSongMiddleClick
+            ? () => onSongMiddleClick(song.id, song.title)
+            : undefined
+        }
+        isSelected={selectedIndex === index}
+        showCategoryInTitle={duplicateTitles.has(song.title.toLowerCase())}
+      />
+    ),
+    [
+      itemRefs,
+      onSongClick,
+      onSongMiddleClick,
+      selectedIndex,
+      duplicateTitles,
+    ],
+  )
 
   // Set initial selection based on initialSelectedSongId and scroll into view.
   //
@@ -995,42 +1073,29 @@ export function SongList({
               </span>
             )}
           </p>
-          <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin -mr-1.5 pr-1.5">
-            <div className="grid gap-3">
-              {displaySongs.map((song, index) => (
-                <SongCard
-                  key={song.id}
-                  ref={(el) => {
-                    if (el) {
-                      itemRefs.current.set(index, el)
-                    } else {
-                      itemRefs.current.delete(index)
-                    }
-                  }}
-                  song={song}
-                  onClick={() => onSongClick(song.id)}
-                  onMiddleClick={
-                    onSongMiddleClick
-                      ? () => onSongMiddleClick(song.id, song.title)
-                      : undefined
-                  }
-                  isSelected={selectedIndex === index}
-                  showCategoryInTitle={duplicateTitles.has(
-                    song.title.toLowerCase(),
-                  )}
-                />
-              ))}
+          {alphabetMode && alphabetGrouping ? (
+            <AlphabetSongScroller
+              songs={displaySongs}
+              sections={alphabetGrouping.sections}
+              availableLetters={alphabetGrouping.availableLetters}
+              renderSong={renderSong}
+            />
+          ) : (
+            <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin -mr-1.5 pr-1.5">
+              <div className="grid gap-3">
+                {displaySongs.map((song, index) => renderSong(song, index))}
 
-              {/* Infinite scroll trigger element */}
-              {!hasSearchQuery && hasNextPage && (
-                <div ref={loadMoreRef} className="py-4 flex justify-center">
-                  {isFetchingNextPage && (
-                    <Loader2 className="w-6 h-6 text-indigo-500 animate-spin" />
-                  )}
-                </div>
-              )}
+                {/* Infinite scroll trigger element */}
+                {!hasSearchQuery && hasNextPage && (
+                  <div ref={loadMoreRef} className="py-4 flex justify-center">
+                    {isFetchingNextPage && (
+                      <Loader2 className="w-6 h-6 text-indigo-500 animate-spin" />
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
     </div>
