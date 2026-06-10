@@ -1512,7 +1512,7 @@ export function searchSongs(
       LEFT JOIN song_categories sc ON s.category_id = sc.id
       WHERE songs_fts MATCH ? ${extraFilter}
       ORDER BY rank
-      LIMIT 100
+      LIMIT 300
     `,
       )
       .all(...standardQueryParams) as Array<{
@@ -1570,7 +1570,7 @@ export function searchSongs(
           LEFT JOIN song_categories sc ON s.category_id = sc.id
           WHERE songs_fts_trigram MATCH ? ${extraFilter}
           ORDER BY rank
-          LIMIT 50
+          LIMIT 150
         `,
           )
           .all(...trigramQueryParams) as typeof trigramResults

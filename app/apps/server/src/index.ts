@@ -3773,7 +3773,9 @@ async function startRealServer(): Promise<void> {
         const results = searchSongs(
           query,
           categoryIds && categoryIds.length > 0 ? categoryIds : undefined,
-          50,
+          // Return up to the service ceiling (200) instead of 50 — the song
+          // list is virtualized now, so a large result set renders cheaply.
+          200,
           { presentedOnly, inSchedulesOnly, hasKeyLine },
         )
 
