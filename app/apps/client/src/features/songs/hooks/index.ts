@@ -1,4 +1,6 @@
 export { useAISearchSongs } from './useAISearchSongs'
+export { useAllSongsAlphabetical } from './useAllSongsAlphabetical'
+export { useAlphabetScroll } from './useAlphabetScroll'
 export {
   useAddBookmarkNote,
   useBookmarkNotes,

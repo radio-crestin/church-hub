@@ -1,3 +1,5 @@
+export { AlphabetIndex } from './AlphabetIndex'
+export { AlphabetSongScroller } from './AlphabetSongScroller'
 export type { CategoryEditDialogHandle } from './CategoryEditDialog'
 export { CategoryEditDialog } from './CategoryEditDialog'
 export { CategoryManager } from './CategoryManager'
