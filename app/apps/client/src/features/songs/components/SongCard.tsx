@@ -34,6 +34,7 @@ export const SongCard = forwardRef<HTMLButtonElement, SongCardProps>(
       <button
         ref={ref}
         type="button"
+        data-testid="song-card"
         onClick={(e) => {
           // CMD+click (Mac) or Ctrl+click (Windows/Linux) opens in new window
           if ((e.metaKey || e.ctrlKey) && onMiddleClick) {
