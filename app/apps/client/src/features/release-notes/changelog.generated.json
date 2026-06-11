@@ -1,5 +1,167 @@
 [
   {
+    "version": "0.1.77",
+    "date": "2026-06-11T14:00:19+02:00",
+    "features": [
+      {
+        "scope": "build",
+        "message": "add tauri:build:release that stamps the latest git tag"
+      },
+      {
+        "scope": "release-notes",
+        "message": "show per-version release notes in Settings > About"
+      },
+      {
+        "scope": "songs/search",
+        "message": "remove the result cap — return every match"
+      },
+      {
+        "scope": "songs/search",
+        "message": "return up to 200 matches instead of 50"
+      },
+      {
+        "scope": "songs",
+        "message": "wire alphabet fast-scroll into the song list"
+      },
+      {
+        "scope": "songs",
+        "message": "alphabet fast-scroll rail UI & interaction"
+      },
+      {
+        "scope": "songs",
+        "message": "alphabet grouping & nearest-letter logic"
+      },
+      {
+        "scope": "screens",
+        "message": "custom \"Amin\" text for the song last-slide layout"
+      },
+      {
+        "scope": "screens",
+        "message": "add \"Strofă - Amin\" (song_last_slide) last-slide layout"
+      },
+      {
+        "scope": "screens",
+        "message": "add \"Gama - Strofă\" (song_first_slide) first-slide layout"
+      },
+      {
+        "scope": "screens",
+        "message": "configurable song key (gama) + amen elements"
+      },
+      {
+        "scope": "songs/versions",
+        "message": "pin the opened song first with a Current badge, sort suggestions by score, add empty state"
+      },
+      {
+        "scope": "songs",
+        "message": "gate the New Song button behind songs.create"
+      },
+      {
+        "scope": "presentation",
+        "message": "presenter black button hides like Escape (only while live)"
+      },
+      {
+        "scope": "logs",
+        "message": "colorize log viewer + level filters + search"
+      },
+      {
+        "scope": "presentation",
+        "message": "presenter-remote (clicker) control"
+      },
+      {
+        "scope": "songs",
+        "message": "exclude hidden-category songs from version possible-matches"
+      },
+      {
+        "scope": "songs",
+        "message": "hide/show song categories without deleting them"
+      },
+      {
+        "scope": "logs",
+        "message": "in-app Logs settings viewer + permissions + richer activity logging"
+      }
+    ],
+    "bugFixes": [
+      {
+        "scope": "release",
+        "message": "sync tauri.conf.json to the latest released version"
+      },
+      {
+        "scope": "screen-editor",
+        "message": "expose songKey in the canvas preview sample"
+      },
+      {
+        "scope": "songs",
+        "message": "allow song editors to add tags with songs.edit"
+      },
+      {
+        "scope": "auth",
+        "message": "authenticate desktop via X-User-Auth header (macOS multi-user login/switch)"
+      },
+      {
+        "scope": "screens",
+        "message": "move a last-slide trailing \"amin\" line into the amin element"
+      },
+      {
+        "scope": "screens",
+        "message": "song first/last layouts only when gama/amin present + no transition flash"
+      },
+      {
+        "scope": "client",
+        "message": "derive API/WS base from the page origin in plain browsers"
+      },
+      {
+        "scope": "dev",
+        "message": "set VITE_API_PORT in the worktree sample so the client calls port 3002"
+      },
+      {
+        "scope": "presentation",
+        "message": "only reclaim control-window focus with a second monitor"
+      },
+      {
+        "scope": "presentation",
+        "message": "keep control-window focus when a screen opens on present"
+      },
+      {
+        "scope": "auth",
+        "message": "login/switch/logout via context refresh, not page navigation"
+      }
+    ],
+    "changes": [
+      {
+        "scope": "release-notes",
+        "message": "add changelog generator and generated CHANGELOG"
+      },
+      {
+        "scope": "songs/search",
+        "message": "restore the 50-result cap"
+      },
+      {
+        "scope": "songs",
+        "message": "virtualize the browse / search / bookmarks list too"
+      },
+      {
+        "scope": "songs",
+        "message": "virtualize alphabet fast-scroll for huge libraries"
+      },
+      {
+        "scope": "skills",
+        "message": "add detailed-pr skill for auto-generated Staff-Engineer PR descriptions"
+      },
+      {
+        "scope": null,
+        "message": "Change song first and last slide to correct words"
+      },
+      {
+        "scope": "logs",
+        "message": "full-width search with level filters arranged below it"
+      },
+      {
+        "scope": "songs",
+        "message": "make category hide/show instant"
+      }
+    ]
+  },
+  {
     "version": "0.1.76",
     "date": "2026-06-07T15:23:18+03:00",
     "features": [
