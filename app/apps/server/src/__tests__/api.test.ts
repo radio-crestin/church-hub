@@ -44,13 +44,23 @@ async function waitForServer(url: string, maxAttempts = 360): Promise<void> {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 2000)
     try {
-      await fetch(url, { signal: controller.signal })
-      clearTimeout(timeoutId)
-      return
+      const res = await fetch(url, { signal: controller.signal })
+      // Only a 200 means the REAL server is up. The boot server binds the
+      // port first and answers every non-health route with a 503 while
+      // migrations/FTS rebuild run, then hands the port off to the real
+      // server (a brief window where the socket refuses connections). If we
+      // returned on any response, we'd resolve against that 503 and the very
+      // next request would race the boot→real handoff and hit ECONNREFUSED.
+      // Requiring res.ok keeps us retrying through both the 503s and the gap.
+      if (res.ok) {
+        clearTimeout(timeoutId)
+        return
+      }
     } catch {
-      clearTimeout(timeoutId)
-      await new Promise((r) => setTimeout(r, 500))
+      // not ready yet — fall through to the retry delay
     }
+    clearTimeout(timeoutId)
+    await new Promise((r) => setTimeout(r, 500))
   }
   throw new Error(`Server did not start within ${maxAttempts * 500}ms`)
 }
