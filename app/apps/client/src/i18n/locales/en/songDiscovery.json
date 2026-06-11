@@ -1,0 +1,77 @@
+{
+  "title": "Discover new songs",
+  "description": "Find songs from external sources that aren't in your library yet, review them, and import only what you want.",
+  "button": {
+    "discover": "Discover",
+    "searching": "Searching"
+  },
+  "back": "Back to songs",
+  "selectPrompt": "Select a song on the left to review and edit it before importing.",
+  "allPresent": "Your library already contains every song from this source.",
+  "allDone": "You've reviewed all the new songs. Refresh the catalog to check for more.",
+  "emptyStaging": "No new songs to review.",
+  "error": {
+    "failed": "Couldn't load the catalog. Check your connection and try again.",
+    "retry": "Try again"
+  },
+  "untitled": "(untitled)",
+  "editorHint": "Edits here apply only to the imported copy. Nothing is saved until you import.",
+  "source": {
+    "label": "Source",
+    "fetch": "Fetch catalog",
+    "refresh": "Refresh catalog"
+  },
+  "sources": {
+    "resurseCrestine": "Resurse Crestine"
+  },
+  "status": {
+    "fetching": "Downloading and parsing the catalog…",
+    "matching": "Comparing against your library…",
+    "analyzing": "Analyzing songs against your library…",
+    "analyzeMeta": "{{analyzed}} of {{total}} analyzed · {{found}} new found",
+    "filesMeta": "{{current}} / {{total}} songs",
+    "phase": {
+      "downloading": "Downloading the catalog…",
+      "extracting": "Extracting the archive…",
+      "converting": "Converting files…",
+      "parsing": "Reading the songs…",
+      "saving": "Saving…"
+    }
+  },
+  "stats": {
+    "online": "online",
+    "new": "new",
+    "selected": "selected"
+  },
+  "verdict": {
+    "new": "New",
+    "similar": "Similar exists",
+    "exact-title": "Already in library",
+    "exact-filename": "Already in library"
+  },
+  "similar": {
+    "title": "Similar in your library ({{count}})"
+  },
+  "actions": {
+    "approve": "Import",
+    "skip": "Skip"
+  },
+  "toolbar": {
+    "summary": "{{total}} new · {{approved}} selected",
+    "approveAllNew": "Select all",
+    "importApproved": "Import selected ({{count}})"
+  },
+  "toast": {
+    "imported": "Imported {{count}} song(s)",
+    "importFailed": "Import failed: {{error}}",
+    "newSongs": "{{count}} new song(s) available to import",
+    "view": "View"
+  },
+  "settings": {
+    "title": "Background check for new songs",
+    "description": "Periodically check the external source in the background and notify you when new songs are available to import.",
+    "enableLabel": "Check for new songs automatically",
+    "checkNow": "Check now",
+    "newCount": "{{count}} new song(s) found"
+  }
+}

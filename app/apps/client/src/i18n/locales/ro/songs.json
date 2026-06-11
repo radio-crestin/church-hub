@@ -2,6 +2,7 @@
   "title": "Cântări",
   "actions": {
     "create": "Cântare nouă",
+    "discover": "Descoperă",
     "save": "Salvează",
     "delete": "Șterge",
     "back": "Înapoi la cântări",

@@ -1,0 +1,77 @@
+{
+  "title": "Descoperă cântări noi",
+  "description": "Găsește cântări din surse externe care nu sunt încă în biblioteca ta, verifică-le și importă doar ce dorești.",
+  "button": {
+    "discover": "Descoperă",
+    "searching": "Caut"
+  },
+  "back": "Înapoi la cântări",
+  "selectPrompt": "Selectează o cântare din stânga pentru a o verifica și edita înainte de import.",
+  "allPresent": "Biblioteca ta conține deja toate cântările din această sursă.",
+  "allDone": "Ai verificat toate cântările noi. Reîmprospătează catalogul ca să cauți altele.",
+  "emptyStaging": "Nu sunt cântări noi de verificat.",
+  "error": {
+    "failed": "Catalogul nu a putut fi încărcat. Verifică conexiunea și încearcă din nou.",
+    "retry": "Încearcă din nou"
+  },
+  "untitled": "(fără titlu)",
+  "editorHint": "Modificările de aici se aplică doar copiei importate. Nimic nu se salvează până la import.",
+  "source": {
+    "label": "Sursă",
+    "fetch": "Descarcă catalogul",
+    "refresh": "Reîmprospătează catalogul"
+  },
+  "sources": {
+    "resurseCrestine": "Resurse Creștine"
+  },
+  "status": {
+    "fetching": "Se descarcă și se prelucrează catalogul…",
+    "matching": "Se compară cu biblioteca ta…",
+    "analyzing": "Se analizează cântările față de biblioteca ta…",
+    "analyzeMeta": "{{analyzed}} din {{total}} analizate · {{found}} noi găsite",
+    "filesMeta": "{{current}} / {{total}} cântări",
+    "phase": {
+      "downloading": "Se descarcă catalogul…",
+      "extracting": "Se extrage arhiva…",
+      "converting": "Se convertesc fișierele…",
+      "parsing": "Se citesc cântările…",
+      "saving": "Se salvează…"
+    }
+  },
+  "stats": {
+    "online": "online",
+    "new": "noi",
+    "selected": "selectate"
+  },
+  "verdict": {
+    "new": "Nouă",
+    "similar": "Există ceva similar",
+    "exact-title": "Deja în bibliotecă",
+    "exact-filename": "Deja în bibliotecă"
+  },
+  "similar": {
+    "title": "Similare în biblioteca ta ({{count}})"
+  },
+  "actions": {
+    "approve": "Importă",
+    "skip": "Omite"
+  },
+  "toolbar": {
+    "summary": "{{total}} noi · {{approved}} selectate",
+    "approveAllNew": "Selectează tot",
+    "importApproved": "Importă selecția ({{count}})"
+  },
+  "toast": {
+    "imported": "Au fost importate {{count}} cântări",
+    "importFailed": "Importul a eșuat: {{error}}",
+    "newSongs": "{{count}} cântări noi disponibile pentru import",
+    "view": "Vezi"
+  },
+  "settings": {
+    "title": "Verificare în fundal pentru cântări noi",
+    "description": "Verifică periodic sursa externă în fundal și te anunță când sunt cântări noi disponibile pentru import.",
+    "enableLabel": "Verifică automat cântările noi",
+    "checkNow": "Verifică acum",
+    "newCount": "{{count}} cântări noi găsite"
+  }
+}

@@ -2,6 +2,7 @@
   "title": "Songs",
   "actions": {
     "create": "New Song",
+    "discover": "Discover",
     "save": "Save",
     "delete": "Delete",
     "back": "Back to Songs",
