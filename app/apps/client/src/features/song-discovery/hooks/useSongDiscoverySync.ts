@@ -163,6 +163,12 @@ export function useSongDiscoverySync(
   useEffect(() => {
     if (!enabledExternally || !enabled) return
 
+    // Skip the heavy background catalog check under automated browsers (e2e):
+    // every test runs in a fresh context (empty localStorage), so this would
+    // re-download + re-parse the multi-MB catalog on every test, hammering the
+    // server and the main thread. Tests drive the discovery screen directly.
+    if (typeof navigator !== 'undefined' && navigator.webdriver) return
+
     // Run on every program open regardless of the daily gap — the HEAD check
     // makes an unchanged catalog nearly free, and it lets the Discover button
     // show its "searching" animation right away.
