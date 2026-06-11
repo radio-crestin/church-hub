@@ -18,8 +18,11 @@ test.describe('Keyboard Shortcuts - Song Navigation', () => {
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(1000)
 
-    // Click a slide to start presentation
-    const slides = page.locator('button.rounded-lg')
+    // Click a slide to start presentation. Exclude disabled buttons: the
+    // always-mounted (but closed) ServerConnectionModal contributes a hidden,
+    // disabled "Reconnect" button that also matches `button.rounded-lg` and
+    // would otherwise pollute the slide set and be picked by `.nth()`.
+    const slides = page.locator('button.rounded-lg:not([disabled])')
     if (
       !(await slides
         .first()
@@ -64,7 +67,10 @@ test.describe('Keyboard Shortcuts - Song Navigation', () => {
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(1000)
 
-    const slides = page.locator('button.rounded-lg')
+    // Exclude disabled buttons so the hidden ServerConnectionModal "Reconnect"
+    // button doesn't inflate the slide count or get selected by `.nth(1)` —
+    // clicking that disabled button is what flaked this test in CI.
+    const slides = page.locator('button.rounded-lg:not([disabled])')
     const slideCount = await slides.count()
 
     if (slideCount < 2) {
