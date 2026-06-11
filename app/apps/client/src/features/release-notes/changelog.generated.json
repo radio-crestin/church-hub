@@ -1,7 +1,7 @@
 [
   {
     "version": "0.1.77",
-    "date": "2026-06-11T14:00:19+02:00",
+    "date": "2026-06-11T22:48:36+02:00",
     "features": [
       {
         "scope": "build",
@@ -81,6 +81,14 @@
       }
     ],
     "bugFixes": [
+      {
+        "scope": "e2e",
+        "message": "exclude disabled buttons from song-slide selector"
+      },
+      {
+        "scope": "test",
+        "message": "wait for the real server, not the boot 503, in api.test.ts"
+      },
       {
         "scope": "release",
         "message": "sync tauri.conf.json to the latest released version"
