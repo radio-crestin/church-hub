@@ -1,5 +1,6 @@
 import { AISearchSettings } from '~/features/ai-search'
 import { SynonymManager } from '~/features/search'
+import { DiscoverySyncSettings } from '~/features/song-discovery'
 import { ImportExportManager } from '~/features/song-export'
 import { CategoryManager } from './CategoryManager'
 import { TagManager } from './TagManager'
@@ -23,6 +24,9 @@ export function SongsSettingsPanel() {
       </div>
       <div className={cardClass}>
         <ImportExportManager />
+      </div>
+      <div className={cardClass}>
+        <DiscoverySyncSettings />
       </div>
       <div className={cardClass}>
         <SynonymManager />
