@@ -825,6 +825,53 @@ export function getSimilarSongs(
       for (const m of groupMembers) exclude.add(m.id)
     }
 
+    // Subject lyrics — needed for the lyrics-recall query AND the rerank.
+    const subjectSlides = db
+      .select({ content: songSlides.content })
+      .from(songSlides)
+      .where(eq(songSlides.songId, songId))
+      .all()
+    const subjectLyrics = subjectSlides.map((s) => s.content).join(' ')
+
+    return getSimilarSongsForContent(subject.title, subjectLyrics, {
+      limit,
+      minScore,
+      excludeSongIds: [...exclude],
+    })
+  } catch (error) {
+    logger.error(`getSimilarSongs(${songId}) failed: ${error}`)
+    return []
+  }
+}
+
+/**
+ * The content-based core of `getSimilarSongs`: given a raw title + lyrics
+ * (NOT a persisted song id), surfaces likely existing-library versions.
+ *
+ * This is what lets the song-discovery flow ask "does the library already
+ * have something like this external song?" BEFORE importing it — the
+ * candidate isn't in the DB yet, so there's no `songId` to pass. The two
+ * recall passes + Jaccard rerank are identical to the by-id path.
+ *
+ * `excludeSongIds` lets the caller drop already-resolved members (e.g. the
+ * subject's own group siblings). Songs in hidden categories are always
+ * excluded — they're meant to vanish from version suggestions too.
+ */
+export function getSimilarSongsForContent(
+  title: string,
+  lyrics: string,
+  opts: {
+    limit?: number
+    minScore?: number
+    excludeSongIds?: readonly number[]
+  } = {},
+): SongVersionSuggestion[] {
+  const { limit = 5, minScore = 0.55, excludeSongIds = [] } = opts
+  try {
+    const db = getDatabase()
+
+    const exclude = new Set<number>(excludeSongIds)
+
     // Never suggest songs from a hidden category — a hidden category is meant
     // to disappear from the song browser AND from version "possible matches".
     const hiddenCategoryIds = getHiddenCategoryIds()
@@ -837,19 +884,12 @@ export function getSimilarSongs(
       for (const s of hiddenSongs) exclude.add(s.id)
     }
 
-    // Subject lyrics — needed for the lyrics-recall query AND the rerank.
-    const subjectSlides = db
-      .select({ content: songSlides.content })
-      .from(songSlides)
-      .where(eq(songSlides.songId, songId))
-      .all()
-    const subjectLyrics = subjectSlides.map((s) => s.content).join(' ')
-    const subjectTitleToks = tokenize(subject.title)
-    const subjectLyricToks = tokenize(subjectLyrics)
+    const subjectTitleToks = tokenize(title)
+    const subjectLyricToks = tokenize(lyrics)
 
     // 1) Title recall — cheap FTS over title/category/content using the title
     //    as the query. Understands diacritic folding + hymn numbers.
-    const titleCandidates = searchSongs(subject.title, undefined, 30).filter(
+    const titleCandidates = searchSongs(title, undefined, 30).filter(
       (c) => !exclude.has(c.id),
     )
 
@@ -966,7 +1006,7 @@ export function getSimilarSongs(
         : r
     })
   } catch (error) {
-    logger.error(`getSimilarSongs(${songId}) failed: ${error}`)
+    logger.error(`getSimilarSongsForContent("${title}") failed: ${error}`)
     return []
   }
 }
