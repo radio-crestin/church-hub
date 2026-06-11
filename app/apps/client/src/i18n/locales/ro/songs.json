@@ -45,6 +45,10 @@
     "sortMostPlayed": "Cele mai redate",
     "sortTitle": "Titlu (A-Z)"
   },
+  "alphabetScroll": {
+    "label": "Sari la literă",
+    "jumpTo": "Sari la cântările care încep cu {{letter}}"
+  },
   "picker": {
     "selectSong": "Selectează Cântare"
   },

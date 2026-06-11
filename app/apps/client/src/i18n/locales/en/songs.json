@@ -45,6 +45,10 @@
     "sortMostPlayed": "Most played",
     "sortTitle": "Title (A-Z)"
   },
+  "alphabetScroll": {
+    "label": "Jump to letter",
+    "jumpTo": "Jump to songs starting with {{letter}}"
+  },
   "picker": {
     "selectSong": "Select Song"
   },
