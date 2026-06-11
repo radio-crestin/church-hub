@@ -28,6 +28,8 @@
 
 ### 🐛 Bug Fixes
 
+- **e2e**: exclude disabled buttons from song-slide selector
+- **test**: wait for the real server, not the boot 503, in api.test.ts
 - **release**: sync tauri.conf.json to the latest released version
 - **screen-editor**: expose songKey in the canvas preview sample
 - **songs**: allow song editors to add tags with songs.edit
