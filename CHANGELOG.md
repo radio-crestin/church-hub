@@ -2,6 +2,57 @@
 
 > Auto-generated from git history by `app/scripts/generate-changelog.ts`. Do not edit by hand.
 
+## v0.1.77 — 2026-06-11
+
+### 🚀 Features
+
+- **build**: add tauri:build:release that stamps the latest git tag
+- **release-notes**: show per-version release notes in Settings > About
+- **songs/search**: remove the result cap — return every match
+- **songs/search**: return up to 200 matches instead of 50
+- **songs**: wire alphabet fast-scroll into the song list
+- **songs**: alphabet fast-scroll rail UI & interaction
+- **songs**: alphabet grouping & nearest-letter logic
+- **screens**: custom "Amin" text for the song last-slide layout
+- **screens**: add "Strofă - Amin" (song_last_slide) last-slide layout
+- **screens**: add "Gama - Strofă" (song_first_slide) first-slide layout
+- **screens**: configurable song key (gama) + amen elements
+- **songs/versions**: pin the opened song first with a Current badge, sort suggestions by score, add empty state
+- **songs**: gate the New Song button behind songs.create
+- **presentation**: presenter black button hides like Escape (only while live)
+- **logs**: colorize log viewer + level filters + search
+- **presentation**: presenter-remote (clicker) control
+- **songs**: exclude hidden-category songs from version possible-matches
+- **songs**: hide/show song categories without deleting them
+- **logs**: in-app Logs settings viewer + permissions + richer activity logging
+
+### 🐛 Bug Fixes
+
+- **e2e**: exclude disabled buttons from song-slide selector
+- **test**: wait for the real server, not the boot 503, in api.test.ts
+- **release**: sync tauri.conf.json to the latest released version
+- **screen-editor**: expose songKey in the canvas preview sample
+- **songs**: allow song editors to add tags with songs.edit
+- **auth**: authenticate desktop via X-User-Auth header (macOS multi-user login/switch)
+- **screens**: move a last-slide trailing "amin" line into the amin element
+- **screens**: song first/last layouts only when gama/amin present + no transition flash
+- **client**: derive API/WS base from the page origin in plain browsers
+- **dev**: set VITE_API_PORT in the worktree sample so the client calls port 3002
+- **presentation**: only reclaim control-window focus with a second monitor
+- **presentation**: keep control-window focus when a screen opens on present
+- **auth**: login/switch/logout via context refresh, not page navigation
+
+### 🔧 Changes
+
+- **release-notes**: add changelog generator and generated CHANGELOG
+- **songs/search**: restore the 50-result cap
+- **songs**: virtualize the browse / search / bookmarks list too
+- **songs**: virtualize alphabet fast-scroll for huge libraries
+- **skills**: add detailed-pr skill for auto-generated Staff-Engineer PR descriptions
+- Change song first and last slide to correct words
+- **logs**: full-width search with level filters arranged below it
+- **songs**: make category hide/show instant
+
 ## v0.1.76 — 2026-06-07
 
 ### 🚀 Features
