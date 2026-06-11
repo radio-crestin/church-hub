@@ -7,9 +7,11 @@ import { expect, test } from '@playwright/test'
  * /songs/discover staging UI end-to-end, with the external download mocked.
  */
 
+// Must start with "<song" (no XML declaration) — the importer's OpenSong
+// detection (isOpenSongContent) requires it, and the real Resurse Crestine
+// files are shaped this way.
 function openSongXml(title: string, lyrics: string): string {
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<song>
+  return `<song>
   <title>${title}</title>
   <lyrics>[V1]
  ${lyrics}
@@ -105,7 +107,11 @@ test.describe('Song Discovery — match API', () => {
 test.describe('Song Discovery — staging UI', () => {
   const createdSongIds: number[] = []
   const ts = Date.now()
-  const newTitle = `UI New Discovery Song ${ts}`
+  // sanitizeSongTitle strips digits, so a numeric timestamp would vanish from
+  // the displayed/saved title. Encode the timestamp as letters for a unique,
+  // sanitize-stable title token; the numeric ts is fine for filenames.
+  const alphaId = String(ts).replace(/\d/g, (d) => 'abcdefghij'[Number(d)])
+  const newTitle = `UI New Discovery Song ${alphaId}`
 
   test.afterAll(async ({ request }) => {
     for (const id of createdSongIds) {
