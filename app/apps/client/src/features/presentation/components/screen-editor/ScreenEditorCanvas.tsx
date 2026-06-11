@@ -516,6 +516,10 @@ export function ScreenEditorCanvas({
       main: previewTexts?.main || defaultSample?.main,
       reference: previewTexts?.reference || defaultSample?.reference,
       person: previewTexts?.person || defaultSample?.person,
+      // The song key is data-driven (not a user-editable preview text), so it
+      // comes from the sample defaults only. Exposing it here lets the
+      // first-slide preview render `sample.songKey` (see the songKey element).
+      songKey: defaultSample?.songKey,
     }),
     [contentType, previewTexts, defaultSample],
   )

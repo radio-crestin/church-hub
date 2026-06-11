@@ -6044,9 +6044,12 @@ async function startRealServer(): Promise<void> {
         try {
           const body = (await req.json()) as UpsertTagInput
 
-          const permError = checkPermission(
-            body.id ? 'songs.edit' : 'songs.create',
-          )
+          // Creating and renaming tags is part of editing a song's metadata:
+          // the TagPicker lets a song editor add a new tag inline while editing.
+          // There is no separate tag permission, so both create and update are
+          // gated by songs.edit rather than songs.create — otherwise a user who
+          // can edit songs still can't attach a brand-new tag.
+          const permError = checkPermission('songs.edit')
           if (permError) return permError
 
           if (!body.name) {
