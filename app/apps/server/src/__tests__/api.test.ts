@@ -327,6 +327,180 @@ describe('Schedules API', () => {
   })
 })
 
+describe('Song Discovery Match', () => {
+  test('classifies external candidates by filename, title, similarity and novelty', async () => {
+    // Seed a distinctive library song with a source filename + lyrics so all
+    // four dedup verdicts can be exercised against it.
+    const ts = Date.now()
+    const seededTitle = `Izvorul Mantuirii Cantec ${ts}`
+    const seededFilename = `discovery-seed-${ts}.xml`
+    const seededLyrics =
+      'Izvorul mantuirii curge limpede peste inima mea cant de bucurie negraita'
+    const songRes = await authedFetch(`${BASE_URL}/api/songs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: seededTitle,
+        sourceFilename: seededFilename,
+        slides: [{ content: `<p>${seededLyrics}</p>`, sortOrder: 0 }],
+      }),
+    })
+    expect(songRes.ok).toBe(true)
+    const songId = (await songRes.json()).data.id
+
+    try {
+      const res = await authedFetch(`${BASE_URL}/api/songs/discovery/match`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          candidates: [
+            {
+              tempId: 'by-filename',
+              title: `Totally Different Title ${ts}`,
+              lyrics: 'unrelated words here',
+              sourceFilename: seededFilename,
+            },
+            {
+              tempId: 'by-title',
+              title: seededTitle,
+              lyrics: 'different lyrics but identical title',
+              sourceFilename: `other-${ts}.xml`,
+            },
+            {
+              // Re-titled version: different (number-free) title, identical
+              // lyrics → pure-lyrics match path. A shared timestamp token in
+              // the title would leak title overlap and dilute the score.
+              tempId: 'by-similarity',
+              title: 'Cantarea Izvorului Celui Viu',
+              lyrics: seededLyrics,
+              sourceFilename: `sim-${ts}.xml`,
+            },
+            {
+              tempId: 'brand-new',
+              title: `Zymologica Quixotique Novum ${ts}`,
+              lyrics: 'zymologica quixotique novum verba singularia',
+              sourceFilename: `new-${ts}.xml`,
+            },
+          ],
+        }),
+      })
+      expect(res.status).toBe(200)
+      const json = await res.json()
+      expect(Array.isArray(json.data)).toBe(true)
+
+      const byTempId: Record<
+        string,
+        { verdict: string; exactSongId: number | null }
+      > = Object.fromEntries(json.data.map((r: any) => [r.tempId, r]))
+
+      expect(byTempId['by-filename'].verdict).toBe('exact-filename')
+      expect(byTempId['by-filename'].exactSongId).toBe(songId)
+      expect(byTempId['by-title'].verdict).toBe('exact-title')
+      expect(byTempId['by-title'].exactSongId).toBe(songId)
+      expect(byTempId['by-similarity'].verdict).toBe('similar')
+      expect(byTempId['brand-new'].verdict).toBe('new')
+    } finally {
+      await authedFetch(`${BASE_URL}/api/songs/${songId}`, { method: 'DELETE' })
+    }
+  })
+
+  test('rejects batches larger than 500 candidates', async () => {
+    const candidates = Array.from({ length: 501 }, (_, i) => ({
+      tempId: `c${i}`,
+      title: `T${i}`,
+      lyrics: 'x',
+      sourceFilename: null,
+    }))
+    const res = await authedFetch(`${BASE_URL}/api/songs/discovery/match`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ candidates }),
+    })
+    expect(res.status).toBe(400)
+  })
+
+  test('count endpoint reports how many candidates are new', async () => {
+    const ts = Date.now()
+    const seededTitle = `Count Seed Song ${ts}`
+    const seededFilename = `count-seed-${ts}.xml`
+    const seedRes = await authedFetch(`${BASE_URL}/api/songs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: seededTitle,
+        sourceFilename: seededFilename,
+        slides: [{ content: '<p>count seed content</p>', sortOrder: 0 }],
+      }),
+    })
+    expect(seedRes.ok).toBe(true)
+    const songId = (await seedRes.json()).data.id
+
+    try {
+      const res = await authedFetch(`${BASE_URL}/api/songs/discovery/count`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          candidates: [
+            // matches by filename → not new
+            { title: `Renamed ${ts}`, sourceFilename: seededFilename },
+            // matches by title → not new
+            { title: seededTitle, sourceFilename: `x-${ts}.xml` },
+            // genuinely new
+            {
+              title: `Zenith Novel Discovery ${ts}`,
+              sourceFilename: `n-${ts}.xml`,
+            },
+          ],
+        }),
+      })
+      expect(res.status).toBe(200)
+      const json = await res.json()
+      expect(json.data.newCount).toBe(1)
+    } finally {
+      await authedFetch(`${BASE_URL}/api/songs/${songId}`, { method: 'DELETE' })
+    }
+  })
+
+  test('title match is case-insensitive (regression)', async () => {
+    const ts = Date.now()
+    // Seed with mixed case; the candidate uses lower case — they must still be
+    // recognized as the same song (the importer keys on LOWER(title)).
+    const seedRes = await authedFetch(`${BASE_URL}/api/songs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: `Am Primit Darul Ceresc ${ts}`,
+        sourceFilename: `ci-seed-${ts}.xml`,
+        slides: [{ content: '<p>continut</p>', sortOrder: 0 }],
+      }),
+    })
+    expect(seedRes.ok).toBe(true)
+    const songId = (await seedRes.json()).data.id
+
+    try {
+      const res = await authedFetch(`${BASE_URL}/api/songs/discovery/match`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          candidates: [
+            {
+              tempId: 'lower-case',
+              title: `am primit darul ceresc ${ts}`,
+              lyrics: 'continut',
+              sourceFilename: `other-${ts}.xml`,
+            },
+          ],
+        }),
+      })
+      expect(res.status).toBe(200)
+      const json = await res.json()
+      expect(json.data[0].verdict).toBe('exact-title')
+    } finally {
+      await authedFetch(`${BASE_URL}/api/songs/${songId}`, { method: 'DELETE' })
+    }
+  })
+})
+
 describe('Bible API', () => {
   test('GET /api/bible/translations returns 200 with data array', async () => {
     const res = await fetch(`${BASE_URL}/api/bible/translations`)
