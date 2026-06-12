@@ -52,6 +52,14 @@
   "similar": {
     "title": "Similare în biblioteca ta ({{count}})"
   },
+  "diff": {
+    "show": "Compară",
+    "hide": "Ascunde",
+    "loading": "Se încarcă cântarea din bibliotecă…",
+    "identical": "Versurile sunt identice.",
+    "inLibrary": "în biblioteca ta",
+    "inCatalog": "în catalog"
+  },
   "actions": {
     "approve": "Importă",
     "skip": "Omite"

@@ -52,6 +52,14 @@
   "similar": {
     "title": "Similar in your library ({{count}})"
   },
+  "diff": {
+    "show": "Compare",
+    "hide": "Hide",
+    "loading": "Loading the library song…",
+    "identical": "The lyrics are identical.",
+    "inLibrary": "in your library",
+    "inCatalog": "in the catalog"
+  },
   "actions": {
     "approve": "Import",
     "skip": "Skip"

@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import {
@@ -8,6 +9,7 @@ import type { LocalSlide } from '~/features/songs/components/SongSlideList'
 import { SongSlidesSection } from '~/features/songs/components/SongSlidesSection'
 import { SimilarInLibraryPanel } from './SimilarInLibraryPanel'
 import type { CandidateDraft, StagingItem } from '../types'
+import { slidesToLines } from '../utils/lyricsDiff'
 
 interface CandidateEditorPanelProps {
   item: StagingItem
@@ -32,9 +34,18 @@ export function CandidateEditorPanel({
     onDraftChange(item.tempId, { ...draft, ...changes })
   }
 
+  // The candidate's current (edited) lyric lines, for the similar-songs diff.
+  const candidateLines = useMemo(
+    () => slidesToLines(draft.slides),
+    [draft.slides],
+  )
+
   return (
     <div className="space-y-4">
-      <SimilarInLibraryPanel similar={item.similar} />
+      <SimilarInLibraryPanel
+        similar={item.similar}
+        candidateLines={candidateLines}
+      />
 
       <SongDetailsSection
         title={draft.title}
