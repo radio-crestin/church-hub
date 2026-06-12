@@ -1,8 +1,8 @@
 {
-  "title": "Descoperă cântări noi",
-  "description": "Găsește cântări din surse externe care nu sunt încă în biblioteca ta, verifică-le și importă doar ce dorești.",
+  "title": "Descarcă ultimele cântări de pe Resurse Creștine",
+  "description": "Aduce cele mai noi cântări de pe Resurse Creștine care nu sunt încă în biblioteca ta, le verifică și importă doar ce dorești.",
   "button": {
-    "discover": "Descoperă",
+    "discover": "Descarcă cântări",
     "searching": "Caut"
   },
   "back": "Înapoi la cântări",

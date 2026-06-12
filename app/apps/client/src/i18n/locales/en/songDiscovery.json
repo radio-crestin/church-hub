@@ -1,8 +1,8 @@
 {
-  "title": "Discover new songs",
-  "description": "Find songs from external sources that aren't in your library yet, review them, and import only what you want.",
+  "title": "Download the latest songs from Resurse Crestine",
+  "description": "Brings the newest songs from Resurse Crestine that aren't in your library yet, lets you review them, and import only what you want.",
   "button": {
-    "discover": "Discover",
+    "discover": "Download songs",
     "searching": "Searching"
   },
   "back": "Back to songs",
