@@ -308,4 +308,45 @@ export const songSchemas = {
       },
     },
   },
+  DiscoveryCandidateInput: {
+    type: 'object',
+    required: ['tempId', 'title', 'lyrics'],
+    properties: {
+      tempId: {
+        type: 'string',
+        description:
+          'Client-assigned correlation id, echoed back in the result.',
+      },
+      title: { type: 'string' },
+      lyrics: {
+        type: 'string',
+        description: 'Joined slide text — drives the fuzzy similarity pass.',
+      },
+      sourceFilename: { type: 'string', nullable: true },
+    },
+  },
+  DiscoveryMatchResult: {
+    type: 'object',
+    properties: {
+      tempId: { type: 'string' },
+      verdict: {
+        type: 'string',
+        enum: ['exact-filename', 'exact-title', 'similar', 'new'],
+        description:
+          'How the candidate relates to the library: an exact filename/title duplicate, a fuzzy version match, or genuinely new.',
+      },
+      exactSongId: {
+        type: 'integer',
+        nullable: true,
+        description:
+          'The matched library song id for exact-filename / exact-title verdicts.',
+      },
+      similar: {
+        type: 'array',
+        description:
+          'Fuzzy version matches (empty unless verdict is "similar").',
+        items: { $ref: '#/components/schemas/SongVersionSuggestion' },
+      },
+    },
+  },
 }

@@ -343,6 +343,113 @@ export const songsPaths = {
       },
     },
   },
+  '/api/songs/discovery/match': {
+    post: {
+      tags: ['Songs'],
+      summary: 'Match external candidates against the library',
+      description:
+        'Classifies external (not-yet-imported) songs against the local library so the discovery flow can show only the ones the user lacks. Per candidate the verdict is one of exact-filename, exact-title, similar, or new. Batched: send at most 500 candidates per request.',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['candidates'],
+              properties: {
+                candidates: {
+                  type: 'array',
+                  maxItems: 500,
+                  items: {
+                    $ref: '#/components/schemas/DiscoveryCandidateInput',
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        '200': {
+          description: 'Per-candidate match verdicts',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'array',
+                    items: {
+                      $ref: '#/components/schemas/DiscoveryMatchResult',
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        '400': { $ref: '#/components/responses/BadRequest' },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+      },
+    },
+  },
+  '/api/songs/discovery/count': {
+    post: {
+      tags: ['Songs'],
+      summary: 'Count new external candidates',
+      description:
+        'Cheap "how many of these are new?" count for the background discovery check (sidebar badge + toast). Uses filename + normalized-title exact matching only — no fuzzy/FTS — so it stays fast over a multi-thousand-song catalog. Send at most 5000 candidates per request.',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['candidates'],
+              properties: {
+                candidates: {
+                  type: 'array',
+                  maxItems: 5000,
+                  items: {
+                    type: 'object',
+                    required: ['title'],
+                    properties: {
+                      title: { type: 'string' },
+                      sourceFilename: { type: 'string', nullable: true },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        '200': {
+          description: 'Count of candidates not already in the library',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'object',
+                    properties: {
+                      newCount: { type: 'integer' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        '400': { $ref: '#/components/responses/BadRequest' },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+      },
+    },
+  },
   '/api/songs/{id}': {
     get: {
       tags: ['Songs'],

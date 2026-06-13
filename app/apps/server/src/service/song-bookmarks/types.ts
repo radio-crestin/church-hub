@@ -4,6 +4,7 @@ export interface SongBookmark {
   songTitle: string
   songCategoryName: string | null
   songKeyLine: string | null
+  songTagNames: string[]
   sortOrder: number
   createdAt: number
 }

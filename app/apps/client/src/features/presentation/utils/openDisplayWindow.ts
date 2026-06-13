@@ -546,3 +546,41 @@ export async function reopenMissingActiveScreens(
     )
   }
 }
+
+/**
+ * Brings keyboard focus back to the control (main) window after presenting, so
+ * the operator can keep advancing slides/verses from the keyboard without
+ * clicking back into the app. macOS / some WMs hand focus to the projector
+ * window when it appears or its content changes; this re-claims it.
+ *
+ * MULTI-MONITOR ONLY — on a single screen, raising the control window would
+ * cover the projection (it shares the monitor with it), so we leave focus on
+ * the projector there. On a second monitor the projection is elsewhere, so
+ * refocusing control is invisible to the audience and keeps the keyboard live.
+ * (Mirrors the same guard in `openInNativeWindow`.) A few re-asserts win the
+ * focus race against a window that finishes appearing slightly later.
+ */
+export async function reclaimControlWindowFocus(): Promise<void> {
+  if (!isTauri()) return
+  try {
+    const { getCurrentWindow, availableMonitors } = await import(
+      '@tauri-apps/api/window'
+    )
+    if ((await availableMonitors()).length <= 1) return
+
+    const control = getCurrentWindow()
+    const reclaim = async () => {
+      try {
+        await control.setFocus()
+      } catch {
+        // best-effort; the window may be mid-transition
+      }
+    }
+    await reclaim()
+    for (const delay of [200, 500]) {
+      setTimeout(reclaim, delay)
+    }
+  } catch {
+    // best-effort focus restoration; never throw into the presentation flow
+  }
+}

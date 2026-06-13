@@ -9,6 +9,8 @@ export {
   reorderCategories,
   upsertCategory,
 } from './categories'
+// Discovery (external-source import)
+export { countNewCandidates, matchCandidatesAgainstLibrary } from './discovery'
 export {
   completeSongReplacement,
   type ReplaceSongReferencesResult,
@@ -28,6 +30,7 @@ export {
 export {
   getGroupForSong,
   getSimilarSongs,
+  getSimilarSongsForContent,
   getSongGroupWithMembers,
   getVersionCounts,
   linkSongs,
@@ -73,6 +76,9 @@ export {
 export type {
   BatchImportResult,
   BatchImportSongInput,
+  DiscoveryCandidateInput,
+  DiscoveryMatchResult,
+  DiscoveryMatchVerdict,
   OperationResult,
   ReorderCategoriesInput,
   ReorderSongSlidesInput,

@@ -218,6 +218,13 @@ export const EMBEDDED_JOURNAL = {
       tag: '0028_add_song_tags',
       breakpoints: true,
     },
+    {
+      idx: 29,
+      version: '6',
+      when: 1768800000000,
+      tag: '0029_add_songs_source_filename_index',
+      breakpoints: true,
+    },
   ],
 } as const
 
@@ -259,22 +266,22 @@ export const EMBEDDED_MIGRATIONS: EmbeddedMigration[] = [
   },
   {
     tag: '0007_add_scene_shortcuts',
-    sql: 'ALTER TABLE `obs_scenes` ADD COLUMN `shortcuts` text NOT NULL DEFAULT \'[]\';\r\n',
+    sql: 'ALTER TABLE `obs_scenes` ADD COLUMN `shortcuts` text NOT NULL DEFAULT \'[]\';\n',
     when: 1766500000000,
   },
   {
     tag: '0008_add_broadcast_templates',
-    sql: 'CREATE TABLE `broadcast_templates` (\r\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\r\n\t`name` text NOT NULL,\r\n\t`title` text NOT NULL,\r\n\t`description` text DEFAULT \'\' NOT NULL,\r\n\t`privacy_status` text DEFAULT \'unlisted\' NOT NULL,\r\n\t`stream_key_id` text,\r\n\t`playlist_id` text,\r\n\t`category` text,\r\n\t`used_at` integer NOT NULL,\r\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL\r\n);\r\n--> statement-breakpoint\r\nCREATE INDEX `idx_broadcast_templates_used_at` ON `broadcast_templates` (`used_at`);\r\n',
+    sql: 'CREATE TABLE `broadcast_templates` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`name` text NOT NULL,\n\t`title` text NOT NULL,\n\t`description` text DEFAULT \'\' NOT NULL,\n\t`privacy_status` text DEFAULT \'unlisted\' NOT NULL,\n\t`stream_key_id` text,\n\t`playlist_id` text,\n\t`category` text,\n\t`used_at` integer NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE INDEX `idx_broadcast_templates_used_at` ON `broadcast_templates` (`used_at`);\n',
     when: 1766600000000,
   },
   {
     tag: '0009_add_selected_broadcast_config',
-    sql: 'ALTER TABLE `youtube_config` ADD COLUMN `selected_broadcast_id` text;\r\n--> statement-breakpoint\r\nALTER TABLE `youtube_config` ADD COLUMN `broadcast_mode` text DEFAULT \'create\' NOT NULL;\r\n',
+    sql: 'ALTER TABLE `youtube_config` ADD COLUMN `selected_broadcast_id` text;\n--> statement-breakpoint\nALTER TABLE `youtube_config` ADD COLUMN `broadcast_mode` text DEFAULT \'create\' NOT NULL;\n',
     when: 1766700000000,
   },
   {
     tag: '0010_add_stop_scene_name',
-    sql: 'ALTER TABLE `youtube_config` ADD COLUMN `stop_scene_name` text;\r\n',
+    sql: 'ALTER TABLE `youtube_config` ADD COLUMN `stop_scene_name` text;\n',
     when: 1766800000000,
   },
   {
@@ -289,7 +296,7 @@ export const EMBEDDED_MIGRATIONS: EmbeddedMigration[] = [
   },
   {
     tag: '0013_add_temporary_content',
-    sql: 'ALTER TABLE `presentation_state` ADD COLUMN `temporary_content` text;\r\n',
+    sql: 'ALTER TABLE `presentation_state` ADD COLUMN `temporary_content` text;\n',
     when: 1767100000000,
   },
   {
@@ -299,17 +306,17 @@ export const EMBEDDED_MIGRATIONS: EmbeddedMigration[] = [
   },
   {
     tag: '0015_add_schedule_bible_passage_versete_tineri',
-    sql: '-- Add bible_passage support to schedule_items table\r\nALTER TABLE schedule_items ADD COLUMN bible_passage_reference TEXT;\r\n--> statement-breakpoint\r\nALTER TABLE schedule_items ADD COLUMN bible_passage_translation TEXT;\r\n--> statement-breakpoint\r\n\r\n-- Create schedule_bible_passage_verses table for nested verses in bible_passage items\r\nCREATE TABLE IF NOT EXISTS schedule_bible_passage_verses (\r\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\r\n  schedule_item_id INTEGER NOT NULL REFERENCES schedule_items(id) ON DELETE CASCADE,\r\n  verse_id INTEGER NOT NULL REFERENCES bible_verses(id) ON DELETE CASCADE,\r\n  reference TEXT NOT NULL,\r\n  text TEXT NOT NULL,\r\n  sort_order INTEGER NOT NULL DEFAULT 0,\r\n  created_at INTEGER NOT NULL DEFAULT (unixepoch())\r\n);\r\n--> statement-breakpoint\r\nCREATE INDEX IF NOT EXISTS idx_schedule_bible_passage_verses_item_id ON schedule_bible_passage_verses(schedule_item_id);\r\n--> statement-breakpoint\r\nCREATE INDEX IF NOT EXISTS idx_schedule_bible_passage_verses_sort_order ON schedule_bible_passage_verses(sort_order);\r\n--> statement-breakpoint\r\n\r\n-- Create schedule_versete_tineri_entries table for nested entries in versete_tineri slides\r\nCREATE TABLE IF NOT EXISTS schedule_versete_tineri_entries (\r\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\r\n  schedule_item_id INTEGER NOT NULL REFERENCES schedule_items(id) ON DELETE CASCADE,\r\n  person_name TEXT NOT NULL,\r\n  translation_id INTEGER NOT NULL,\r\n  book_code TEXT NOT NULL,\r\n  book_name TEXT NOT NULL,\r\n  reference TEXT NOT NULL,\r\n  text TEXT NOT NULL,\r\n  start_chapter INTEGER NOT NULL,\r\n  start_verse INTEGER NOT NULL,\r\n  end_chapter INTEGER NOT NULL,\r\n  end_verse INTEGER NOT NULL,\r\n  sort_order INTEGER NOT NULL DEFAULT 0,\r\n  created_at INTEGER NOT NULL DEFAULT (unixepoch())\r\n);\r\n--> statement-breakpoint\r\nCREATE INDEX IF NOT EXISTS idx_schedule_versete_tineri_entries_item_id ON schedule_versete_tineri_entries(schedule_item_id);\r\n--> statement-breakpoint\r\nCREATE INDEX IF NOT EXISTS idx_schedule_versete_tineri_entries_sort_order ON schedule_versete_tineri_entries(sort_order);\r\n',
+    sql: '-- Add bible_passage support to schedule_items table\nALTER TABLE schedule_items ADD COLUMN bible_passage_reference TEXT;\n--> statement-breakpoint\nALTER TABLE schedule_items ADD COLUMN bible_passage_translation TEXT;\n--> statement-breakpoint\n\n-- Create schedule_bible_passage_verses table for nested verses in bible_passage items\nCREATE TABLE IF NOT EXISTS schedule_bible_passage_verses (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  schedule_item_id INTEGER NOT NULL REFERENCES schedule_items(id) ON DELETE CASCADE,\n  verse_id INTEGER NOT NULL REFERENCES bible_verses(id) ON DELETE CASCADE,\n  reference TEXT NOT NULL,\n  text TEXT NOT NULL,\n  sort_order INTEGER NOT NULL DEFAULT 0,\n  created_at INTEGER NOT NULL DEFAULT (unixepoch())\n);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS idx_schedule_bible_passage_verses_item_id ON schedule_bible_passage_verses(schedule_item_id);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS idx_schedule_bible_passage_verses_sort_order ON schedule_bible_passage_verses(sort_order);\n--> statement-breakpoint\n\n-- Create schedule_versete_tineri_entries table for nested entries in versete_tineri slides\nCREATE TABLE IF NOT EXISTS schedule_versete_tineri_entries (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  schedule_item_id INTEGER NOT NULL REFERENCES schedule_items(id) ON DELETE CASCADE,\n  person_name TEXT NOT NULL,\n  translation_id INTEGER NOT NULL,\n  book_code TEXT NOT NULL,\n  book_name TEXT NOT NULL,\n  reference TEXT NOT NULL,\n  text TEXT NOT NULL,\n  start_chapter INTEGER NOT NULL,\n  start_verse INTEGER NOT NULL,\n  end_chapter INTEGER NOT NULL,\n  end_verse INTEGER NOT NULL,\n  sort_order INTEGER NOT NULL DEFAULT 0,\n  created_at INTEGER NOT NULL DEFAULT (unixepoch())\n);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS idx_schedule_versete_tineri_entries_item_id ON schedule_versete_tineri_entries(schedule_item_id);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS idx_schedule_versete_tineri_entries_sort_order ON schedule_versete_tineri_entries(sort_order);\n',
     when: 1767300000000,
   },
   {
     tag: '0016_add_always_on_top_to_screens',
-    sql: 'ALTER TABLE `screens` ADD COLUMN `always_on_top` integer NOT NULL DEFAULT 0;\r\n',
+    sql: 'ALTER TABLE `screens` ADD COLUMN `always_on_top` integer NOT NULL DEFAULT 0;\n',
     when: 1767400000000,
   },
   {
     tag: '0017_add_bible_history',
-    sql: 'CREATE TABLE `bible_history` (\r\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\r\n\t`verse_id` integer NOT NULL,\r\n\t`reference` text NOT NULL,\r\n\t`text` text NOT NULL,\r\n\t`translation_abbreviation` text NOT NULL,\r\n\t`book_name` text NOT NULL,\r\n\t`translation_id` integer NOT NULL,\r\n\t`book_id` integer NOT NULL,\r\n\t`chapter` integer NOT NULL,\r\n\t`verse` integer NOT NULL,\r\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL\r\n);\r\n--> statement-breakpoint\r\nCREATE INDEX `idx_bible_history_created_at` ON `bible_history` (`created_at`);\r\n',
+    sql: 'CREATE TABLE `bible_history` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`verse_id` integer NOT NULL,\n\t`reference` text NOT NULL,\n\t`text` text NOT NULL,\n\t`translation_abbreviation` text NOT NULL,\n\t`book_name` text NOT NULL,\n\t`translation_id` integer NOT NULL,\n\t`book_id` integer NOT NULL,\n\t`chapter` integer NOT NULL,\n\t`verse` integer NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE INDEX `idx_bible_history_created_at` ON `bible_history` (`created_at`);\n',
     when: 1767500000000,
   },
   {
@@ -319,22 +326,22 @@ export const EMBEDDED_MIGRATIONS: EmbeddedMigration[] = [
   },
   {
     tag: '0019_add_obs_scene_name_to_schedule_items',
-    sql: '-- Add obs_scene_name column to schedule_items table for scene type slides\r\nALTER TABLE `schedule_items` ADD COLUMN `obs_scene_name` TEXT;\r\n',
+    sql: '-- Add obs_scene_name column to schedule_items table for scene type slides\nALTER TABLE `schedule_items` ADD COLUMN `obs_scene_name` TEXT;\n',
     when: 1767900000000,
   },
   {
     tag: '0020_add_music_tables',
-    sql: '-- Add music tables for audio file management and playlists\r\nCREATE TABLE `music_folders` (\r\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\r\n\t`path` text NOT NULL,\r\n\t`name` text NOT NULL,\r\n\t`is_recursive` integer DEFAULT true NOT NULL,\r\n\t`last_sync_at` integer,\r\n\t`file_count` integer DEFAULT 0 NOT NULL,\r\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\r\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\r\n);\r\n--> statement-breakpoint\r\nCREATE UNIQUE INDEX `music_folders_path_unique` ON `music_folders` (`path`);\r\n--> statement-breakpoint\r\nCREATE INDEX `idx_music_folders_path` ON `music_folders` (`path`);\r\n--> statement-breakpoint\r\nCREATE TABLE `music_files` (\r\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\r\n\t`folder_id` integer NOT NULL,\r\n\t`path` text NOT NULL,\r\n\t`filename` text NOT NULL,\r\n\t`title` text,\r\n\t`artist` text,\r\n\t`album` text,\r\n\t`genre` text,\r\n\t`year` integer,\r\n\t`track_number` integer,\r\n\t`duration` real,\r\n\t`format` text NOT NULL,\r\n\t`file_size` integer,\r\n\t`last_modified` integer,\r\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\r\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL,\r\n\tFOREIGN KEY (`folder_id`) REFERENCES `music_folders`(`id`) ON UPDATE no action ON DELETE cascade\r\n);\r\n--> statement-breakpoint\r\nCREATE UNIQUE INDEX `music_files_path_unique` ON `music_files` (`path`);\r\n--> statement-breakpoint\r\nCREATE INDEX `idx_music_files_folder_id` ON `music_files` (`folder_id`);\r\n--> statement-breakpoint\r\nCREATE INDEX `idx_music_files_path` ON `music_files` (`path`);\r\n--> statement-breakpoint\r\nCREATE INDEX `idx_music_files_title` ON `music_files` (`title`);\r\n--> statement-breakpoint\r\nCREATE INDEX `idx_music_files_artist` ON `music_files` (`artist`);\r\n--> statement-breakpoint\r\nCREATE INDEX `idx_music_files_album` ON `music_files` (`album`);\r\n--> statement-breakpoint\r\nCREATE TABLE `music_playlists` (\r\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\r\n\t`name` text NOT NULL,\r\n\t`description` text,\r\n\t`item_count` integer DEFAULT 0 NOT NULL,\r\n\t`total_duration` real DEFAULT 0 NOT NULL,\r\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\r\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\r\n);\r\n--> statement-breakpoint\r\nCREATE INDEX `idx_music_playlists_name` ON `music_playlists` (`name`);\r\n--> statement-breakpoint\r\nCREATE TABLE `music_playlist_items` (\r\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\r\n\t`playlist_id` integer NOT NULL,\r\n\t`file_id` integer NOT NULL,\r\n\t`sort_order` integer DEFAULT 0 NOT NULL,\r\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\r\n\tFOREIGN KEY (`playlist_id`) REFERENCES `music_playlists`(`id`) ON UPDATE no action ON DELETE cascade,\r\n\tFOREIGN KEY (`file_id`) REFERENCES `music_files`(`id`) ON UPDATE no action ON DELETE cascade\r\n);\r\n--> statement-breakpoint\r\nCREATE INDEX `idx_music_playlist_items_playlist_sort` ON `music_playlist_items` (`playlist_id`, `sort_order`);\r\n--> statement-breakpoint\r\nCREATE INDEX `idx_music_playlist_items_file_id` ON `music_playlist_items` (`file_id`);\r\n',
+    sql: '-- Add music tables for audio file management and playlists\nCREATE TABLE `music_folders` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`path` text NOT NULL,\n\t`name` text NOT NULL,\n\t`is_recursive` integer DEFAULT true NOT NULL,\n\t`last_sync_at` integer,\n\t`file_count` integer DEFAULT 0 NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX `music_folders_path_unique` ON `music_folders` (`path`);\n--> statement-breakpoint\nCREATE INDEX `idx_music_folders_path` ON `music_folders` (`path`);\n--> statement-breakpoint\nCREATE TABLE `music_files` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`folder_id` integer NOT NULL,\n\t`path` text NOT NULL,\n\t`filename` text NOT NULL,\n\t`title` text,\n\t`artist` text,\n\t`album` text,\n\t`genre` text,\n\t`year` integer,\n\t`track_number` integer,\n\t`duration` real,\n\t`format` text NOT NULL,\n\t`file_size` integer,\n\t`last_modified` integer,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tFOREIGN KEY (`folder_id`) REFERENCES `music_folders`(`id`) ON UPDATE no action ON DELETE cascade\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX `music_files_path_unique` ON `music_files` (`path`);\n--> statement-breakpoint\nCREATE INDEX `idx_music_files_folder_id` ON `music_files` (`folder_id`);\n--> statement-breakpoint\nCREATE INDEX `idx_music_files_path` ON `music_files` (`path`);\n--> statement-breakpoint\nCREATE INDEX `idx_music_files_title` ON `music_files` (`title`);\n--> statement-breakpoint\nCREATE INDEX `idx_music_files_artist` ON `music_files` (`artist`);\n--> statement-breakpoint\nCREATE INDEX `idx_music_files_album` ON `music_files` (`album`);\n--> statement-breakpoint\nCREATE TABLE `music_playlists` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`name` text NOT NULL,\n\t`description` text,\n\t`item_count` integer DEFAULT 0 NOT NULL,\n\t`total_duration` real DEFAULT 0 NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE INDEX `idx_music_playlists_name` ON `music_playlists` (`name`);\n--> statement-breakpoint\nCREATE TABLE `music_playlist_items` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`playlist_id` integer NOT NULL,\n\t`file_id` integer NOT NULL,\n\t`sort_order` integer DEFAULT 0 NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tFOREIGN KEY (`playlist_id`) REFERENCES `music_playlists`(`id`) ON UPDATE no action ON DELETE cascade,\n\tFOREIGN KEY (`file_id`) REFERENCES `music_files`(`id`) ON UPDATE no action ON DELETE cascade\n);\n--> statement-breakpoint\nCREATE INDEX `idx_music_playlist_items_playlist_sort` ON `music_playlist_items` (`playlist_id`, `sort_order`);\n--> statement-breakpoint\nCREATE INDEX `idx_music_playlist_items_file_id` ON `music_playlist_items` (`file_id`);\n',
     when: 1768000000000,
   },
   {
     tag: '0021_add_music_now_playing',
-    sql: '-- Add music_now_playing table for current playback queue\r\nCREATE TABLE `music_now_playing` (\r\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\r\n\t`file_id` integer NOT NULL,\r\n\t`sort_order` integer DEFAULT 0 NOT NULL,\r\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\r\n\tFOREIGN KEY (`file_id`) REFERENCES `music_files`(`id`) ON UPDATE no action ON DELETE cascade\r\n);\r\n--> statement-breakpoint\r\nCREATE INDEX `idx_music_now_playing_sort_order` ON `music_now_playing` (`sort_order`);\r\n--> statement-breakpoint\r\nCREATE INDEX `idx_music_now_playing_file_id` ON `music_now_playing` (`file_id`);\r\n',
+    sql: '-- Add music_now_playing table for current playback queue\nCREATE TABLE `music_now_playing` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`file_id` integer NOT NULL,\n\t`sort_order` integer DEFAULT 0 NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tFOREIGN KEY (`file_id`) REFERENCES `music_files`(`id`) ON UPDATE no action ON DELETE cascade\n);\n--> statement-breakpoint\nCREATE INDEX `idx_music_now_playing_sort_order` ON `music_now_playing` (`sort_order`);\n--> statement-breakpoint\nCREATE INDEX `idx_music_now_playing_file_id` ON `music_now_playing` (`file_id`);\n',
     when: 1768100000000,
   },
   {
     tag: '0022_add_song_search_history',
-    sql: '-- Add song_search_history table for saving AI search results\r\nCREATE TABLE `song_search_history` (\r\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\r\n\t`query` text NOT NULL,\r\n\t`url_path` text NOT NULL,\r\n\t`search_type` text DEFAULT \'regular\' NOT NULL,\r\n\t`category_ids` text,\r\n\t`ai_results` text,\r\n\t`result_count` integer,\r\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL\r\n);\r\n--> statement-breakpoint\r\nCREATE INDEX `idx_song_search_history_created_at` ON `song_search_history` (`created_at`);\r\n--> statement-breakpoint\r\nCREATE INDEX `idx_song_search_history_search_type` ON `song_search_history` (`search_type`);\r\n',
+    sql: '-- Add song_search_history table for saving AI search results\nCREATE TABLE `song_search_history` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`query` text NOT NULL,\n\t`url_path` text NOT NULL,\n\t`search_type` text DEFAULT \'regular\' NOT NULL,\n\t`category_ids` text,\n\t`ai_results` text,\n\t`result_count` integer,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE INDEX `idx_song_search_history_created_at` ON `song_search_history` (`created_at`);\n--> statement-breakpoint\nCREATE INDEX `idx_song_search_history_search_type` ON `song_search_history` (`search_type`);\n',
     when: 1768200000000,
   },
   {
@@ -364,7 +371,12 @@ export const EMBEDDED_MIGRATIONS: EmbeddedMigration[] = [
   },
   {
     tag: '0028_add_song_tags',
-    sql: 'CREATE TABLE IF NOT EXISTS `song_tags` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`name` text NOT NULL,\n\t`sort_order` integer DEFAULT 0 NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX IF NOT EXISTS `song_tags_name_unique` ON `song_tags` (`name`);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS `idx_song_tags_sort_order` ON `song_tags` (`sort_order`);\n--> statement-breakpoint\nCREATE TABLE IF NOT EXISTS `song_tag_assignments` (\n\t`song_id` integer NOT NULL REFERENCES `songs`(`id`) ON DELETE cascade,\n\t`tag_id` integer NOT NULL REFERENCES `song_tags`(`id`) ON DELETE cascade,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\n\tPRIMARY KEY (`song_id`, `tag_id`)\n);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS `idx_song_tag_assignments_tag_id` ON `song_tag_assignments` (`tag_id`);\n',
+    sql: 'CREATE TABLE IF NOT EXISTS `song_tags` (\r\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\r\n\t`name` text NOT NULL,\r\n\t`sort_order` integer DEFAULT 0 NOT NULL,\r\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\r\n\t`updated_at` integer DEFAULT (unixepoch()) NOT NULL\r\n);\r\n--> statement-breakpoint\r\nCREATE UNIQUE INDEX IF NOT EXISTS `song_tags_name_unique` ON `song_tags` (`name`);\r\n--> statement-breakpoint\r\nCREATE INDEX IF NOT EXISTS `idx_song_tags_sort_order` ON `song_tags` (`sort_order`);\r\n--> statement-breakpoint\r\nCREATE TABLE IF NOT EXISTS `song_tag_assignments` (\r\n\t`song_id` integer NOT NULL REFERENCES `songs`(`id`) ON DELETE cascade,\r\n\t`tag_id` integer NOT NULL REFERENCES `song_tags`(`id`) ON DELETE cascade,\r\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL,\r\n\tPRIMARY KEY (`song_id`, `tag_id`)\r\n);\r\n--> statement-breakpoint\r\nCREATE INDEX IF NOT EXISTS `idx_song_tag_assignments_tag_id` ON `song_tag_assignments` (`tag_id`);\r\n',
     when: 1768700000000,
+  },
+  {
+    tag: '0029_add_songs_source_filename_index',
+    sql: 'CREATE INDEX IF NOT EXISTS `idx_songs_source_filename` ON `songs` (`source_filename`);\n',
+    when: 1768800000000,
   },
 ]
