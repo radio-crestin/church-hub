@@ -286,3 +286,139 @@ button {
     animation: none;
   }
 }
+
+/* Discover button: one living gradient shared by the border + the star icon,
+   so the colours visibly drift across both in sync. --------------------- */
+@keyframes discover-gradient-pan {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.discover-gradient {
+  background-image: linear-gradient(
+    110deg,
+    #6366f1,
+    #8b5cf6,
+    #d946ef,
+    #ec4899,
+    #8b5cf6,
+    #6366f1
+  );
+  background-size: 300% 300%;
+  animation: discover-gradient-pan 5s linear infinite;
+}
+
+/* Speeds the drift up while the background catalog check is running. */
+.discover-gradient-active {
+  animation-duration: 1.8s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .discover-gradient {
+    animation: none;
+  }
+}
+
+/* "Searching" ellipsis that fills up one dot at a time (. / .. / ...) then
+   resets — a livelier loading cue than a static "…". Dots toggle opacity (not
+   display) so the button width never jumps. */
+@keyframes discover-dot-1 {
+  0%,
+  74.9% {
+    opacity: 1;
+  }
+  75%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes discover-dot-2 {
+  0%,
+  24.9% {
+    opacity: 0;
+  }
+  25%,
+  74.9% {
+    opacity: 1;
+  }
+  75%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes discover-dot-3 {
+  0%,
+  49.9% {
+    opacity: 0;
+  }
+  50%,
+  74.9% {
+    opacity: 1;
+  }
+  75%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.discover-dots span:nth-child(1) {
+  animation: discover-dot-1 1.5s linear infinite;
+}
+.discover-dots span:nth-child(2) {
+  animation: discover-dot-2 1.5s linear infinite;
+}
+.discover-dots span:nth-child(3) {
+  animation: discover-dot-3 1.5s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .discover-dots span {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* Progress bar life: a highlight sweeps across the fill so the bar reads as
+   "working" even between the (chunked) value updates. */
+@keyframes discover-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(250%);
+  }
+}
+
+.discover-shimmer {
+  animation: discover-shimmer 1.4s linear infinite;
+}
+
+/* Indeterminate bar (unknown total): a chunk slides back and forth. */
+@keyframes discover-indeterminate {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(320%);
+  }
+}
+
+.discover-indeterminate {
+  animation: discover-indeterminate 1.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .discover-shimmer,
+  .discover-indeterminate {
+    animation: none;
+  }
+}

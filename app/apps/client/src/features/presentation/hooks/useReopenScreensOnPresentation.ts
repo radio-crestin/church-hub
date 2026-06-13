@@ -1,13 +1,14 @@
 import { useEffect, useRef } from 'react'
 
+import { usePresentationState } from './usePresentationState'
+import { useScreens } from './useScreens'
 import { createLogger } from '../../../utils/logger'
 import type { PresentationState } from '../types'
 import {
   isTauri,
+  reclaimControlWindowFocus,
   reopenMissingActiveScreens,
 } from '../utils/openDisplayWindow'
-import { usePresentationState } from './usePresentationState'
-import { useScreens } from './useScreens'
 
 const logger = createLogger('app:screen')
 
@@ -41,11 +42,17 @@ export function useReopenScreensOnPresentation(): void {
 
     if (!shouldReopen(presentationState)) return
 
-    reopenMissingActiveScreens(screens).catch((error) => {
-      logger.error(
-        'Failed to reopen screen windows on presentation change:',
-        error,
-      )
-    })
+    reopenMissingActiveScreens(screens)
+      .catch((error) => {
+        logger.error(
+          'Failed to reopen screen windows on presentation change:',
+          error,
+        )
+      })
+      // Keep the keyboard live in the control window after presenting (the
+      // projector can grab focus when it appears / updates). Multi-monitor only.
+      .finally(() => {
+        void reclaimControlWindowFocus()
+      })
   }, [presentationState, screens])
 }

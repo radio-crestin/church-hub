@@ -40,6 +40,8 @@ interface SidebarItemProps {
   customIconUrl?: string
   /** Favicon background color (hex) */
   faviconBgColor?: string
+  /** Count badge shown on the icon (e.g. new songs available). 0/undefined hides it. */
+  badgeCount?: number
 }
 
 export function SidebarItem({
@@ -59,6 +61,7 @@ export function SidebarItem({
   iconColor,
   customIconUrl,
   faviconBgColor,
+  badgeCount,
 }: SidebarItemProps) {
   /**
    * Handle middle-click to open page in native window or new tab
@@ -198,9 +201,21 @@ export function SidebarItem({
     return <Icon size={20} className="flex-shrink-0" />
   }
 
+  const hasBadge = typeof badgeCount === 'number' && badgeCount > 0
+
   const content = (
     <>
-      {renderIcon()}
+      <span className="relative flex-shrink-0">
+        {renderIcon()}
+        {hasBadge && (
+          <span
+            aria-label={`${badgeCount} new`}
+            className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-indigo-600 text-white text-[10px] font-semibold flex items-center justify-center ring-2 ring-white dark:ring-gray-900"
+          >
+            {badgeCount > 99 ? '99+' : badgeCount}
+          </span>
+        )}
+      </span>
       {/* Mobile: always show label, Desktop: respect isCollapsed */}
       <span className="text-sm font-medium md:hidden">{label}</span>
       {!isCollapsed && (

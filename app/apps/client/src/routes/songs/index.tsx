@@ -7,6 +7,7 @@ import { useFocusSearchEvent } from '~/features/keyboard-shortcuts/utils'
 import { getSongsLastVisited } from '~/features/navigation'
 import { usePresentationState } from '~/features/presentation'
 import { AddSongToScheduleModal } from '~/features/schedules'
+import { DiscoverButton } from '~/features/song-discovery'
 import { SongBookmarksPanel, SongList } from '~/features/songs/components'
 import { useSearchHistoryById } from '~/features/songs/hooks'
 import { openSongWindow } from '~/features/songs/utils/openSongWindow'
@@ -288,6 +289,13 @@ function SongsPage() {
                 </span>
               </button>
             )}
+            {/* Discovering + importing from external sources is a create
+                operation — same gate as the create button, same route guard.
+                The button animates while the background catalog check runs and
+                shows a count once new songs are found. */}
+            <PermissionGate permission="songs.create">
+              <DiscoverButton />
+            </PermissionGate>
             {/* Creating songs requires songs.create — hide the button entirely
                 for users without it (the /songs/new route is guarded too). */}
             <PermissionGate permission="songs.create">

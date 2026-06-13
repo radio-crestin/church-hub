@@ -21,6 +21,7 @@ import { Route as LiveTranslationIndexRouteImport } from './routes/live-translat
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as BibleIndexRouteImport } from './routes/bible/index'
 import { Route as rootIndexRouteImport } from './routes/(root)/index'
+import { Route as SongsDiscoverRouteImport } from './routes/songs/discover'
 import { Route as SettingsUsersRouteImport } from './routes/settings/users'
 import { Route as SettingsSongsRouteImport } from './routes/settings/songs'
 import { Route as SettingsSidebarRouteImport } from './routes/settings/sidebar'
@@ -101,6 +102,11 @@ const BibleIndexRoute = BibleIndexRouteImport.update({
 const rootIndexRoute = rootIndexRouteImport.update({
   id: '/(root)/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SongsDiscoverRoute = SongsDiscoverRouteImport.update({
+  id: '/songs/discover',
+  path: '/songs/discover',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsUsersRoute = SettingsUsersRouteImport.update({
@@ -229,6 +235,7 @@ export interface FileRoutesByFullPath {
   '/settings/sidebar': typeof SettingsSidebarRoute
   '/settings/songs': typeof SettingsSongsRoute
   '/settings/users': typeof SettingsUsersRoute
+  '/songs/discover': typeof SongsDiscoverRoute
   '/': typeof rootIndexRoute
   '/bible/': typeof BibleIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
@@ -263,6 +270,7 @@ export interface FileRoutesByTo {
   '/settings/sidebar': typeof SettingsSidebarRoute
   '/settings/songs': typeof SettingsSongsRoute
   '/settings/users': typeof SettingsUsersRoute
+  '/songs/discover': typeof SongsDiscoverRoute
   '/': typeof rootIndexRoute
   '/bible': typeof BibleIndexRoute
   '/dashboard': typeof DashboardIndexRoute
@@ -299,6 +307,7 @@ export interface FileRoutesById {
   '/settings/sidebar': typeof SettingsSidebarRoute
   '/settings/songs': typeof SettingsSongsRoute
   '/settings/users': typeof SettingsUsersRoute
+  '/songs/discover': typeof SongsDiscoverRoute
   '/(root)/': typeof rootIndexRoute
   '/bible/': typeof BibleIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
@@ -336,6 +345,7 @@ export interface FileRouteTypes {
     | '/settings/sidebar'
     | '/settings/songs'
     | '/settings/users'
+    | '/songs/discover'
     | '/'
     | '/bible/'
     | '/dashboard/'
@@ -370,6 +380,7 @@ export interface FileRouteTypes {
     | '/settings/sidebar'
     | '/settings/songs'
     | '/settings/users'
+    | '/songs/discover'
     | '/'
     | '/bible'
     | '/dashboard'
@@ -405,6 +416,7 @@ export interface FileRouteTypes {
     | '/settings/sidebar'
     | '/settings/songs'
     | '/settings/users'
+    | '/songs/discover'
     | '/(root)/'
     | '/bible/'
     | '/dashboard/'
@@ -426,6 +438,7 @@ export interface RootRouteChildren {
   CustomPagePageIdRoute: typeof CustomPagePageIdRoute
   SchedulesScheduleIdRoute: typeof SchedulesScheduleIdRoute
   ScreenScreenIdRoute: typeof ScreenScreenIdRoute
+  SongsDiscoverRoute: typeof SongsDiscoverRoute
   rootIndexRoute: typeof rootIndexRoute
   BibleIndexRoute: typeof BibleIndexRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
@@ -525,6 +538,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof rootIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/songs/discover': {
+      id: '/songs/discover'
+      path: '/songs/discover'
+      fullPath: '/songs/discover'
+      preLoaderRoute: typeof SongsDiscoverRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings/users': {
@@ -724,6 +744,7 @@ const rootRouteChildren: RootRouteChildren = {
   CustomPagePageIdRoute: CustomPagePageIdRoute,
   SchedulesScheduleIdRoute: SchedulesScheduleIdRoute,
   ScreenScreenIdRoute: ScreenScreenIdRoute,
+  SongsDiscoverRoute: SongsDiscoverRoute,
   rootIndexRoute: rootIndexRoute,
   BibleIndexRoute: BibleIndexRoute,
   DashboardIndexRoute: DashboardIndexRoute,

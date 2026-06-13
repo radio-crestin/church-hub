@@ -130,6 +130,18 @@ function SortableBookmarkItem({
             )}
           </div>
         )}
+        {bookmark.songTagNames?.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1 mt-1">
+            {bookmark.songTagNames.map((name) => (
+              <span
+                key={name}
+                className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium leading-none bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded"
+              >
+                {name}
+              </span>
+            ))}
+          </div>
+        )}
       </button>
 
       <button
@@ -357,7 +369,8 @@ export function SongBookmarksPanel({
       return (
         b?.songTitle.toLowerCase().includes(q) ||
         b?.songCategoryName?.toLowerCase().includes(q) ||
-        b?.songKeyLine?.toLowerCase().includes(q)
+        b?.songKeyLine?.toLowerCase().includes(q) ||
+        b?.songTagNames?.some((name) => name.toLowerCase().includes(q))
       )
     })
   }, [unifiedItems, searchQuery])

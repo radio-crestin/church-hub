@@ -31,6 +31,7 @@ import {
   useReopenScreensOnPresentation,
 } from '~/features/presentation/hooks'
 import { useAutoOpenPageWindows } from '~/features/sidebar-config/hooks'
+import { SongDiscoveryProvider } from '~/features/song-discovery'
 import { FileDropZoneProvider } from '~/features/song-import'
 import { I18nProvider } from '~/provider/i18n-provider'
 import { PermissionsProvider } from '~/provider/permissions-provider'
@@ -170,9 +171,11 @@ function MainLayout() {
                               <AutoOpenPageWindows />
                               <SidebarNavigationListener />
                               <GlobalAppShortcutManager />
-                              <AppLayout>
-                                <Outlet />
-                              </AppLayout>
+                              <SongDiscoveryProvider>
+                                <AppLayout>
+                                  <Outlet />
+                                </AppLayout>
+                              </SongDiscoveryProvider>
                             </FileDropZoneProvider>
                           </ShortcutRecordingProvider>
                         </MIDISettingsProvider>

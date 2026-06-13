@@ -3,6 +3,7 @@ import { eq, sql } from 'drizzle-orm'
 import type { SongBookmark } from './types'
 import { getDatabase } from '../../db'
 import { songBookmarks, songCategories, songs } from '../../db/schema'
+import { getTagsBySongIds } from '../songs/tags'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -19,6 +20,10 @@ export function addBookmark(
     log('debug', `Adding bookmark for song ${songId}`)
 
     const db = getDatabase()
+
+    const songTagNames = (getTagsBySongIds([songId]).get(songId) ?? []).map(
+      (t) => t.name,
+    )
 
     // Check if already bookmarked
     const existing = db
@@ -47,6 +52,7 @@ export function addBookmark(
           songTitle: song?.title ?? '',
           songCategoryName: song?.categoryName ?? null,
           songKeyLine: song?.keyLine ?? null,
+          songTagNames,
           sortOrder: existing.sortOrder,
           createdAt: existing.createdAt.getTime(),
         },
@@ -88,6 +94,7 @@ export function addBookmark(
         songTitle: song?.title ?? '',
         songCategoryName: song?.categoryName ?? null,
         songKeyLine: song?.keyLine ?? null,
+        songTagNames,
         sortOrder: inserted.sortOrder,
         createdAt: inserted.createdAt.getTime(),
       },

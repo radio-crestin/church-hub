@@ -3,6 +3,7 @@ import { asc, eq } from 'drizzle-orm'
 import type { SongBookmark } from './types'
 import { getDatabase } from '../../db'
 import { songBookmarks, songCategories, songs } from '../../db/schema'
+import { getTagsBySongIds } from '../songs/tags'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -35,12 +36,16 @@ export function getBookmarks(): SongBookmark[] {
 
     log('debug', `Found ${records.length} bookmarks`)
 
+    // Bulk-fetch tags for all bookmarked songs in a single query (no N+1).
+    const tagsBySongId = getTagsBySongIds(records.map((r) => r.songId))
+
     return records.map((r) => ({
       id: r.id,
       songId: r.songId,
       songTitle: r.songTitle,
       songCategoryName: r.songCategoryName,
       songKeyLine: r.songKeyLine,
+      songTagNames: (tagsBySongId.get(r.songId) ?? []).map((t) => t.name),
       sortOrder: r.sortOrder,
       createdAt: r.createdAt.getTime(),
     }))

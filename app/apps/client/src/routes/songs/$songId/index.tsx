@@ -16,6 +16,8 @@ import {
   Loader2,
   Music,
   Music2,
+  PanelRightClose,
+  PanelRightOpen,
   Pencil,
   Tag,
 } from 'lucide-react'
@@ -206,6 +208,26 @@ function SongPreviewPage() {
     setVersionsOpenRaw(next)
     try {
       localStorage.setItem('song-detail:versions-open', String(next))
+    } catch {
+      // Ignore quota errors — non-critical UI state.
+    }
+  }, [])
+  // Whether the entire right column (Marcaje + Versiuni) is shown. When hidden
+  // the Control panel takes the full width of its area, leaving only a slim
+  // rail to bring the column back. Desktop-only; persisted across sessions.
+  const [accordionColumnVisible, setAccordionColumnVisibleRaw] =
+    useState<boolean>(() => {
+      try {
+        const raw = localStorage.getItem('song-detail:accordion-column-visible')
+        return raw === null ? true : raw === 'true'
+      } catch {
+        return true
+      }
+    })
+  const setAccordionColumnVisible = useCallback((next: boolean) => {
+    setAccordionColumnVisibleRaw(next)
+    try {
+      localStorage.setItem('song-detail:accordion-column-visible', String(next))
     } catch {
       // Ignore quota errors — non-critical UI state.
     }
@@ -601,10 +623,16 @@ function SongPreviewPage() {
   // Marcaje takes the whole height).
   const accordionSplitActive =
     isLargeScreen &&
+    accordionColumnVisible &&
     bookmarksOpen &&
     versionsOpen &&
     Boolean(song) &&
     canViewSongVersions
+
+  // The right column can be hidden entirely on desktop to give the Slides and
+  // Stage columns more room. On mobile it always renders (Versiuni is the only
+  // visible section there).
+  const showAccordionColumn = !isLargeScreen || accordionColumnVisible
 
   return (
     <div className="flex flex-col h-full lg:overflow-hidden lg:h-[calc(100vh-3rem)] overflow-auto scrollbar-thin">
@@ -780,12 +808,14 @@ function SongPreviewPage() {
               : undefined
           }
         >
-          {/* Control Panel column (now owns the full height of its column). */}
+          {/* Control Panel column (now owns the full height of its column).
+              When the right column is hidden it grows to fill the row, leaving
+              only the slim rail below for bringing the column back. */}
           <div
             className="h-full overflow-hidden"
             style={
-              isLargeScreen
-                ? { width: `calc(${rightDividerPosition}% - 4px)` }
+              isLargeScreen && accordionColumnVisible
+                ? { width: `calc(${rightDividerPosition}% - 12px)` }
                 : { flex: 1, minWidth: 0 }
             }
           >
@@ -798,27 +828,57 @@ function SongPreviewPage() {
             />
           </div>
 
-          {/* Vertical Divider */}
-          <div
-            className="hidden lg:flex items-center justify-center w-2 cursor-col-resize hover:bg-indigo-100 dark:hover:bg-indigo-900/30 rounded transition-colors group"
-            onMouseDown={handleRightDividerMouseDown}
-          >
-            <GripVertical
-              size={16}
-              className="text-gray-400 group-hover:text-indigo-500 transition-colors"
-            />
+          {/* Boundary bar — hosts the show/hide toggle for the whole right
+              column plus the drag grip that resizes it. Desktop only; the bar
+              stays put when collapsed so the rail toggle is always reachable. */}
+          <div className="hidden lg:flex w-6 shrink-0 flex-col items-center">
+            <button
+              type="button"
+              onClick={() => setAccordionColumnVisible(!accordionColumnVisible)}
+              aria-expanded={accordionColumnVisible}
+              aria-label={
+                accordionColumnVisible
+                  ? t('layout.hidePanel')
+                  : t('layout.showPanel')
+              }
+              title={
+                accordionColumnVisible
+                  ? t('layout.hidePanel')
+                  : t('layout.showPanel')
+              }
+              className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded text-gray-400 transition-colors hover:bg-indigo-100 hover:text-indigo-500 dark:hover:bg-indigo-900/30"
+            >
+              {accordionColumnVisible ? (
+                <PanelRightClose size={16} />
+              ) : (
+                <PanelRightOpen size={16} />
+              )}
+            </button>
+            {accordionColumnVisible ? (
+              <div
+                className="group mt-1 flex flex-1 w-full cursor-col-resize items-center justify-center rounded transition-colors hover:bg-indigo-100 dark:hover:bg-indigo-900/30"
+                onMouseDown={handleRightDividerMouseDown}
+              >
+                <GripVertical
+                  size={16}
+                  className="text-gray-400 group-hover:text-indigo-500 transition-colors"
+                />
+              </div>
+            ) : null}
           </div>
 
           {/* Accordion column — Marcaje on top, Versiuni below.
               Bookmarks were previously hidden on mobile (the page is
               too tight); we preserve that. Versions ride along on
-              mobile because they were already visible there before. */}
+              mobile because they were already visible there before.
+              Hidden entirely on desktop when the operator collapses it. */}
+          {showAccordionColumn ? (
           <div
             ref={accordionColumnRef}
             className={`overflow-hidden h-full flex flex-col ${accordionSplitActive ? '' : 'gap-2'}`}
             style={
               isLargeScreen
-                ? { width: `calc(${100 - rightDividerPosition}% - 4px)` }
+                ? { width: `calc(${100 - rightDividerPosition}% - 12px)` }
                 : undefined
             }
           >
@@ -898,6 +958,7 @@ function SongPreviewPage() {
               </div>
             ) : null}
           </div>
+          ) : null}
         </div>
       </div>
 

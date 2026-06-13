@@ -281,6 +281,8 @@ import {
   clearSearchCache,
   cloneSongSlide,
   completeSongReplacement,
+  countNewCandidates,
+  type DiscoveryCandidateInput,
   deleteCategory,
   deleteSong,
   deleteSongSlide,
@@ -299,6 +301,7 @@ import {
   getSongsPaginated,
   getSongWithSlides,
   linkSongs,
+  matchCandidatesAgainstLibrary,
   type ReorderCategoriesInput,
   type ReorderSongSlidesInput,
   type ReorderTagsInput,
@@ -4450,9 +4453,214 @@ async function startRealServer(): Promise<void> {
         }
       }
 
+      // POST /api/songs/discovery/match - Classify external (not-yet-imported)
+      // songs against the local library so the discovery screen shows only the
+      // ones the user lacks. Per candidate: exact-filename → exact-title →
+      // fuzzy-similar → new. Batched (client chunks ≤500) to avoid per-song
+      // round-trips over a multi-thousand-song catalog.
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/songs/discovery/match'
+      ) {
+        const permError = checkPermission('songs.create')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as {
+            candidates: DiscoveryCandidateInput[]
+          }
+
+          if (!body.candidates || !Array.isArray(body.candidates)) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({ error: 'Missing candidates array' }),
+                {
+                  status: 400,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          if (body.candidates.length > 500) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({
+                  error: 'Too many candidates (max 500 per request)',
+                }),
+                {
+                  status: 400,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          const results = matchCandidatesAgainstLibrary(body.candidates)
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: results }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // POST /api/songs/discovery/count - Cheap "how many are new?" count for the
+      // background discovery check (sidebar badge + toast). Filename + title only,
+      // no FTS — so it stays fast even over a multi-thousand-song catalog.
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/songs/discovery/count'
+      ) {
+        const permError = checkPermission('songs.create')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as {
+            candidates: { title: string; sourceFilename: string | null }[]
+          }
+
+          if (!body.candidates || !Array.isArray(body.candidates)) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({ error: 'Missing candidates array' }),
+                {
+                  status: 400,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          if (body.candidates.length > 5000) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({
+                  error: 'Too many candidates (max 5000 per request)',
+                }),
+                {
+                  status: 400,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          const newCount = countNewCandidates(body.candidates)
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: { newCount } }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
       // ============================================================
       // Proxy Download Endpoint (for CORS bypass)
       // ============================================================
+
+      // GET /api/proxy/head - Cheap change-check for a whitelisted external file.
+      // Issues a HEAD and returns last-modified / etag / content-length so the
+      // background discovery sync can skip re-downloading an unchanged catalog.
+      if (req.method === 'GET' && url.pathname === '/api/proxy/head') {
+        const permError = checkPermission('songs.create')
+        if (permError) return permError
+
+        const targetUrl = url.searchParams.get('url')
+        if (!targetUrl) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Missing url parameter' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        const allowedDomains = [
+          'download.resursecrestine.ro',
+          'resursecrestine.ro',
+        ]
+        let parsedHeadUrl: URL
+        try {
+          parsedHeadUrl = new URL(targetUrl)
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid URL' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+        if (!allowedDomains.includes(parsedHeadUrl.hostname)) {
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({ error: 'Domain not allowed for proxy head' }),
+              {
+                status: 403,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        }
+
+        try {
+          const headResponse = await fetch(targetUrl, {
+            method: 'HEAD',
+            redirect: 'follow',
+          })
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({
+                data: {
+                  lastModified: headResponse.headers.get('last-modified'),
+                  etag: headResponse.headers.get('etag'),
+                  contentLength: headResponse.headers.get('content-length'),
+                },
+              }),
+              { headers: { 'Content-Type': 'application/json' } },
+            ),
+          )
+        } catch (error) {
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({ error: `Head request failed: ${error}` }),
+              {
+                status: 502,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        }
+      }
 
       // GET /api/proxy/download - Proxy download from external URL
       if (req.method === 'GET' && url.pathname === '/api/proxy/download') {
@@ -4504,15 +4712,30 @@ async function startRealServer(): Promise<void> {
         }
 
         try {
-          // biome-ignore lint/suspicious/noConsole: logging
-          console.log(`[INFO] [proxy] Downloading from ${targetUrl}`)
           const proxyStart = performance.now()
+
+          // Forward the client's Range header so the client can download in small
+          // chunks (bytes=start-end). Chunked download is what makes progress
+          // reliable: in-runtime streaming of a single big body proved unreliable
+          // (the client sat at 0% while the body buffered), but each ranged chunk
+          // is a small, complete request that returns fast — so the bar advances
+          // chunk by chunk regardless of streaming support.
+          const rangeHeader = req.headers.get('Range')
+          // biome-ignore lint/suspicious/noConsole: logging
+          console.log(
+            `[INFO] [proxy] Downloading from ${targetUrl}${rangeHeader ? ` (${rangeHeader})` : ''}`,
+          )
 
           const response = await fetch(targetUrl, {
             method: 'GET',
             redirect: 'follow',
+            // 60s per chunk is plenty (a chunk is a couple of MB); also guards a
+            // dead upstream so the request can't hang forever.
+            signal: AbortSignal.timeout(60_000),
+            headers: rangeHeader ? { Range: rangeHeader } : undefined,
           })
 
+          // 200 (full) and 206 (partial) are both success.
           if (!response.ok) {
             return handleCors(
               req,
@@ -4528,25 +4751,41 @@ async function startRealServer(): Promise<void> {
             )
           }
 
+          // Buffer the (small) chunk and return it as a complete response. For a
+          // ranged request this is ~a couple of MB and returns near-instantly.
           const data = await response.arrayBuffer()
-          const proxyTime = performance.now() - proxyStart
+
+          const proxyHeaders: Record<string, string> = {
+            'Content-Type':
+              response.headers.get('Content-Type') ||
+              'application/octet-stream',
+            'Content-Length': data.byteLength.toString(),
+            'Accept-Ranges': 'bytes',
+            'Access-Control-Expose-Headers':
+              'Content-Length, X-Content-Length, Content-Range, Accept-Ranges',
+          }
+          // Pass through Content-Range so the client can read the TOTAL size from
+          // "bytes start-end/total" even on a partial response.
+          const contentRange = response.headers.get('Content-Range')
+          if (contentRange) proxyHeaders['Content-Range'] = contentRange
+          // Mirror the full size into a custom header the runtime keeps. On a
+          // non-ranged 200 this is the total; on a 206 the client prefers
+          // Content-Range's total.
+          const fullLength = response.headers.get('Content-Length')
+          if (!contentRange && fullLength) {
+            proxyHeaders['X-Content-Length'] = fullLength
+          }
 
           // biome-ignore lint/suspicious/noConsole: logging
           console.log(
-            `[INFO] [proxy] [PERF] Download completed: ${proxyTime.toFixed(0)}ms, ${(data.byteLength / 1024 / 1024).toFixed(2)}MB`,
+            `[INFO] [proxy] Sent ${(data.byteLength / 1024 / 1024).toFixed(2)}MB (status ${response.status}) in ${(performance.now() - proxyStart).toFixed(0)}ms`,
           )
 
-          // Return the file with appropriate headers
           return handleCors(
             req,
             new Response(data, {
-              status: 200,
-              headers: {
-                'Content-Type':
-                  response.headers.get('Content-Type') ||
-                  'application/octet-stream',
-                'Content-Length': data.byteLength.toString(),
-              },
+              status: response.status,
+              headers: proxyHeaders,
             }),
           )
         } catch (error) {

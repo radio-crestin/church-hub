@@ -1,7 +1,12 @@
 {
   "title": "Cântări",
+  "layout": {
+    "hidePanel": "Ascunde panoul lateral",
+    "showPanel": "Afișează panoul lateral"
+  },
   "actions": {
     "create": "Cântare nouă",
+    "discover": "Descoperă",
     "save": "Salvează",
     "delete": "Șterge",
     "back": "Înapoi la cântări",
@@ -192,7 +197,9 @@
     "chorusRepeat": "Refren inserat automat",
     "editAsText": "Editează ca text",
     "slideAdded": "Slide adăugat",
-    "presentSlide": "Afișează acest slide"
+    "presentSlide": "Afișează acest slide",
+    "increaseFontSize": "Mărește textul",
+    "decreaseFontSize": "Micșorează textul"
   },
   "metadata": {
     "detailsSection": "Detalii",

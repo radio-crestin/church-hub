@@ -302,6 +302,42 @@ export interface BatchImportResult {
 }
 
 /**
+ * One external (not-yet-imported) song the song-discovery flow asks the
+ * library about. `lyrics` is the joined slide text — enough to drive the
+ * FTS/Jaccard similarity pass without shipping the full slide structure.
+ */
+export interface DiscoveryCandidateInput {
+  /** Client-assigned correlation id, echoed back in the result. */
+  tempId: string
+  title: string
+  lyrics: string
+  sourceFilename: string | null
+}
+
+/**
+ * How an external candidate relates to the local library:
+ *  - `exact-filename`: a song with the same `source_filename` already exists.
+ *  - `exact-title`:    a song with the same normalized title already exists.
+ *  - `similar`:        no exact match, but ≥1 fuzzy version match was found.
+ *  - `new`:            nothing comparable in the library — safe to import.
+ */
+export type DiscoveryMatchVerdict =
+  | 'exact-filename'
+  | 'exact-title'
+  | 'similar'
+  | 'new'
+
+/** Per-candidate verdict returned by `matchCandidatesAgainstLibrary`. */
+export interface DiscoveryMatchResult {
+  tempId: string
+  verdict: DiscoveryMatchVerdict
+  /** The matched library song id for exact-filename / exact-title verdicts. */
+  exactSongId: number | null
+  /** Fuzzy version matches (empty unless verdict is `similar`). */
+  similar: SongVersionSuggestion[]
+}
+
+/**
  * A song group groups multiple `Song` rows that are versions of the same
  * underlying piece. Membership is non-destructive: every member keeps its
  * own row in `songs`; the group just records the relationship.

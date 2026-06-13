@@ -15,6 +15,7 @@ import releaseNotesEN from './locales/en/releaseNotes.json'
 import schedulesEN from './locales/en/schedules.json'
 import settingsEN from './locales/en/settings.json'
 import sidebarEN from './locales/en/sidebar.json'
+import songDiscoveryEN from './locales/en/songDiscovery.json'
 import songKeyEN from './locales/en/songKey.json'
 import songsEN from './locales/en/songs.json'
 import usersEN from './locales/en/users.json'
@@ -30,6 +31,7 @@ import releaseNotesRO from './locales/ro/releaseNotes.json'
 import schedulesRO from './locales/ro/schedules.json'
 import settingsRO from './locales/ro/settings.json'
 import sidebarRO from './locales/ro/sidebar.json'
+import songDiscoveryRO from './locales/ro/songDiscovery.json'
 import songKeyRO from './locales/ro/songKey.json'
 import songsRO from './locales/ro/songs.json'
 import usersRO from './locales/ro/users.json'
@@ -48,6 +50,7 @@ export const resources = {
     schedules: schedulesEN,
     sidebar: sidebarEN,
     settings: settingsEN,
+    songDiscovery: songDiscoveryEN,
     songKey: songKeyEN,
     songs: songsEN,
     users: usersEN,
@@ -65,6 +68,7 @@ export const resources = {
     schedules: schedulesRO,
     sidebar: sidebarRO,
     settings: settingsRO,
+    songDiscovery: songDiscoveryRO,
     songKey: songKeyRO,
     songs: songsRO,
     users: usersRO,
@@ -92,6 +96,7 @@ i18n
       'schedules',
       'sidebar',
       'settings',
+      'songDiscovery',
       'songKey',
       'songs',
       'users',

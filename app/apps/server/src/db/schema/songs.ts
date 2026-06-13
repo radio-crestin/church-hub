@@ -91,6 +91,10 @@ export const songs = sqliteTable(
     index('idx_songs_title').on(table.title),
     index('idx_songs_category_id').on(table.categoryId),
     index('idx_songs_song_group_id').on(table.songGroupId),
+    // Backs the exact-filename dedup pass in the song-discovery flow
+    // (matchCandidatesAgainstLibrary), which probes source_filename per
+    // external candidate before falling back to title/fuzzy matching.
+    index('idx_songs_source_filename').on(table.sourceFilename),
   ],
 )
 
