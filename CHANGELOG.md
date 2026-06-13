@@ -2,6 +2,16 @@
 
 > Auto-generated from git history by `app/scripts/generate-changelog.ts`. Do not edit by hand.
 
+## v0.1.78 — 2026-06-14
+
+### 🚀 Features
+
+- **songs**: discover & import new songs from external sources
+
+### 🔧 Changes
+
+- sync version to v0.1.77 [skip ci]
+
 ## v0.1.77 — 2026-06-11
 
 ### 🚀 Features
