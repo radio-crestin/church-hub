@@ -8,6 +8,10 @@
 
 - **songs**: discover & import new songs from external sources
 
+### 🐛 Bug Fixes
+
+- **e2e**: update discovery heading selector after screen rename
+
 ### 🔧 Changes
 
 - sync version to v0.1.77 [skip ci]

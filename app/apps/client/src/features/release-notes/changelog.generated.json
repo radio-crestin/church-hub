@@ -1,14 +1,19 @@
 [
   {
     "version": "0.1.78",
-    "date": "2026-06-14T00:41:37+02:00",
+    "date": "2026-06-14T01:02:18+02:00",
     "features": [
       {
         "scope": "songs",
         "message": "discover & import new songs from external sources"
       }
     ],
-    "bugFixes": [],
+    "bugFixes": [
+      {
+        "scope": "e2e",
+        "message": "update discovery heading selector after screen rename"
+      }
+    ],
     "changes": [
       {
         "scope": null,
