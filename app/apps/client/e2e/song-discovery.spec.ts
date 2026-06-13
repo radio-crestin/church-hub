@@ -182,7 +182,9 @@ test.describe('Song Discovery — staging UI', () => {
     // The screen auto-fetches on open (reusing the mocked download) — no click.
     await page.goto('/songs/discover')
     await expect(
-      page.getByRole('heading', { name: /Discover new songs|Descoperă/ }),
+      page.getByRole('heading', {
+        name: /Download the latest songs|Descarcă ultimele cântări/,
+      }),
     ).toBeVisible()
 
     // Wait for the diff to stream in and surface the new song.
