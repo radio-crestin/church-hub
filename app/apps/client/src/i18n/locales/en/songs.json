@@ -1,5 +1,9 @@
 {
   "title": "Songs",
+  "layout": {
+    "hidePanel": "Hide side panel",
+    "showPanel": "Show side panel"
+  },
   "actions": {
     "create": "New Song",
     "discover": "Discover",

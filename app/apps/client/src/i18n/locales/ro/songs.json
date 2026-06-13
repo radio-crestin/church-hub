@@ -1,5 +1,9 @@
 {
   "title": "Cântări",
+  "layout": {
+    "hidePanel": "Ascunde panoul lateral",
+    "showPanel": "Afișează panoul lateral"
+  },
   "actions": {
     "create": "Cântare nouă",
     "discover": "Descoperă",
