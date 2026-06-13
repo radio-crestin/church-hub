@@ -1,5 +1,22 @@
 [
   {
+    "version": "0.1.78",
+    "date": "2026-06-14T00:41:37+02:00",
+    "features": [
+      {
+        "scope": "songs",
+        "message": "discover & import new songs from external sources"
+      }
+    ],
+    "bugFixes": [],
+    "changes": [
+      {
+        "scope": null,
+        "message": "sync version to v0.1.77 [skip ci]"
+      }
+    ]
+  },
+  {
     "version": "0.1.77",
     "date": "2026-06-11T22:48:36+02:00",
     "features": [
