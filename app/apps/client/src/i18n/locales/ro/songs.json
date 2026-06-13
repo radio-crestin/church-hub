@@ -197,7 +197,9 @@
     "chorusRepeat": "Refren inserat automat",
     "editAsText": "Editează ca text",
     "slideAdded": "Slide adăugat",
-    "presentSlide": "Afișează acest slide"
+    "presentSlide": "Afișează acest slide",
+    "increaseFontSize": "Mărește textul",
+    "decreaseFontSize": "Micșorează textul"
   },
   "metadata": {
     "detailsSection": "Detalii",

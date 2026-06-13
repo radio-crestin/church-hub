@@ -1,7 +1,16 @@
-import { Check, Loader2, Pencil, Play, X } from 'lucide-react'
+import {
+  AArrowDown,
+  AArrowUp,
+  Check,
+  Loader2,
+  Pencil,
+  Play,
+  X,
+} from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useDividerPosition } from '../../../hooks/useDividerPosition'
 import type { SongSlide, SongWithSlides } from '../types'
 import { expandSongSlidesWithChoruses } from '../utils/expandSongSlides'
 import {
@@ -51,6 +60,22 @@ const TEXTAREA_PADDING_TOP_PX = 8
 
 const SCROLL_OFFSET_TOP = 100
 
+// Reader-controlled font size for the view-mode lyrics list. The base matches
+// Tailwind's `text-sm` (0.875rem); the operator can scale it up/down so the
+// whole-song view stays legible at any panel width. Persisted per-device.
+const SLIDE_FONT_BASE_REM = 0.875
+const SLIDE_FONT_MIN_SCALE = 0.8
+const SLIDE_FONT_MAX_SCALE = 2.2
+const SLIDE_FONT_STEP = 0.1
+const SLIDE_FONT_SCALE_KEY = 'song-slides-font-scale'
+
+function clampFontScale(scale: number): number {
+  return Math.min(
+    SLIDE_FONT_MAX_SCALE,
+    Math.max(SLIDE_FONT_MIN_SCALE, Math.round(scale * 100) / 100),
+  )
+}
+
 // Decode HTML entities the same way the live preview does, so the slide list
 // shows real characters (e.g. an apostrophe) instead of raw codes like
 // `&#039;`. Setting `textContent` does NOT decode entities, which is why the
@@ -92,6 +117,26 @@ export function SongSlidesPanel({
   onApplyText,
 }: SongSlidesPanelProps) {
   const { t } = useTranslation('songs')
+  const [fontScaleRaw, setFontScale] = useDividerPosition(
+    SLIDE_FONT_SCALE_KEY,
+    1,
+  )
+  const fontScale = clampFontScale(fontScaleRaw)
+  const slideTextStyle = useMemo(
+    () => ({
+      fontSize: `${SLIDE_FONT_BASE_REM * fontScale}rem`,
+      lineHeight: 1.4,
+    }),
+    [fontScale],
+  )
+  const decreaseFontSize = useCallback(
+    () => setFontScale(clampFontScale(fontScale - SLIDE_FONT_STEP)),
+    [fontScale, setFontScale],
+  )
+  const increaseFontSize = useCallback(
+    () => setFontScale(clampFontScale(fontScale + SLIDE_FONT_STEP)),
+    [fontScale, setFontScale],
+  )
   const highlightedRef = useRef<HTMLButtonElement>(null)
   const selectedRef = useRef<HTMLButtonElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -223,6 +268,30 @@ export function SongSlidesPanel({
               <Pencil size={14} />
               <span>{t('preview.editMode')}</span>
             </button>
+          )}
+          {!isEditMode && (
+            <div className="flex items-center gap-0.5">
+              <button
+                type="button"
+                onClick={decreaseFontSize}
+                disabled={fontScale <= SLIDE_FONT_MIN_SCALE}
+                title={t('preview.decreaseFontSize')}
+                aria-label={t('preview.decreaseFontSize')}
+                className="flex items-center justify-center p-1.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <AArrowDown size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={increaseFontSize}
+                disabled={fontScale >= SLIDE_FONT_MAX_SCALE}
+                title={t('preview.increaseFontSize')}
+                aria-label={t('preview.increaseFontSize')}
+                className="flex items-center justify-center p-1.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <AArrowUp size={18} />
+              </button>
+            </div>
           )}
         </div>
         {isEditMode && (
@@ -375,12 +444,14 @@ export function SongSlidesPanel({
                 >
                   <div className="flex items-start gap-2">
                     <span
-                      className={`font-semibold text-sm min-w-[24px] ${getNumberClass()}`}
+                      style={slideTextStyle}
+                      className={`font-semibold min-w-[24px] ${getNumberClass()}`}
                     >
                       {index + 1}
                     </span>
                     <span
-                      className={`text-sm whitespace-pre-line flex-1 ${getTextClass()}`}
+                      style={slideTextStyle}
+                      className={`whitespace-pre-line flex-1 ${getTextClass()}`}
                     >
                       {plainText}
                     </span>

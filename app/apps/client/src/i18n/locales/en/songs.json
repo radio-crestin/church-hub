@@ -197,7 +197,9 @@
     "chorusRepeat": "Auto-inserted chorus",
     "editAsText": "Edit as Text",
     "slideAdded": "Slide added",
-    "presentSlide": "Present this slide"
+    "presentSlide": "Present this slide",
+    "increaseFontSize": "Increase text size",
+    "decreaseFontSize": "Decrease text size"
   },
   "metadata": {
     "detailsSection": "Details",
