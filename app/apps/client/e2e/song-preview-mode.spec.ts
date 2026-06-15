@@ -61,13 +61,25 @@ test.describe('Song Preview Mode', () => {
     await page.waitForTimeout(800)
     await expect(slide0).toHaveClass(/ring-green-500/)
 
-    // Hiding with Preview ON keeps the text in the small stage: the slide goes
-    // back to staged (indigo) and can be re-projected.
+    // While THIS song is live, clicking another verse drives the projection too
+    // (like the arrows), not just the small stage.
+    let liveSlide = slide0
+    const slide1 = page.locator('[data-testid="song-slide-1"]')
+    if (await slide1.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await slide1.click()
+      await page.waitForTimeout(800)
+      await expect(slide1).toHaveClass(/ring-green-500/)
+      await expect(slide0).not.toHaveClass(/ring-green-500/)
+      liveSlide = slide1
+    }
+
+    // Hiding with Preview ON keeps the text in the small stage: the last live
+    // slide goes back to staged (indigo) and can be re-projected.
     const hideBtn = page.getByRole('button', { name: /ascunde|hide/i }).first()
     await expect(hideBtn).toBeVisible({ timeout: 3000 })
     await hideBtn.click()
     await page.waitForTimeout(600)
-    await expect(slide0).toHaveClass(/ring-indigo-500/)
+    await expect(liveSlide).toHaveClass(/ring-indigo-500/)
     await expect(projectBtn).toBeVisible()
 
     // Clean up: turn Preview mode back off.

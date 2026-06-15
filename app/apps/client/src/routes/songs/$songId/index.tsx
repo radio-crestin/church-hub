@@ -342,6 +342,12 @@ function SongPreviewPage() {
       ? presentationState.temporaryContent.data.currentSlideIndex
       : null
 
+  // Whether THIS song is the one currently being projected (live and visible).
+  // While it is, a click drives the live projection (like the arrows); when a
+  // different song is live (or nothing is), a click only stages locally.
+  const isThisSongLive =
+    presentedSlideIndex !== null && !(presentationState?.isHidden ?? true)
+
   // Default the staged slide whenever Preview mode turns on (or the song
   // changes while it's on) so the small stage immediately shows text: the live
   // slide if any, otherwise the selected one. Turning Preview off clears it.
@@ -358,17 +364,21 @@ function SongPreviewPage() {
 
   const handleSlideClick = useCallback(
     async (_slide: SongSlide, index: number) => {
-      // Preview mode: a single click only stages the slide locally.
-      if (previewMode) {
+      // Preview mode: a single click only stages the slide locally — UNLESS
+      // this song is the one currently being projected, in which case the click
+      // also drives the live projection (so clicks behave like the arrows once
+      // you're live on this song). A different song stays untouched on screen.
+      if (previewMode && !isThisSongLive) {
         setStagedSlideIndex(index)
         return
       }
+      setStagedSlideIndex(null)
       await presentTemporarySong.mutateAsync({
         songId: numericId,
         slideIndex: index,
       })
     },
-    [previewMode, numericId, presentTemporarySong],
+    [previewMode, isThisSongLive, numericId, presentTemporarySong],
   )
 
   // Preview mode: double-click projects the slide immediately. Keep the stage
