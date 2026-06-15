@@ -99,17 +99,18 @@ export function SongControlPanel({
 
   return (
     <div className="flex flex-col lg:h-full bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-      {/* Header — split into two rows so the controls breathe instead of
-          crowding onto one line in a narrow Stage column:
-            • Status row:   content-type chip + clear-highlights · LIVE chip
-            • Controls row: Preview-mode toggle · primary action
-          The primary action is a single slot: Afișează (project a staged
-          slide), Ascunde (hide the live one), or a disabled Afișează when
-          Preview is off and nothing is live — they're mutually exclusive, so
-          only one ever shows. */}
-      <div className="flex flex-col gap-2 p-2 lg:p-3 border-b border-gray-200 dark:border-gray-700 overflow-hidden">
-        {/* Status row */}
-        <div className="flex items-center gap-3">
+      {/* Header — two logical groups so the controls breathe instead of
+          crowding together:
+            • Status group:   content-type chip + clear-highlights · LIVE chip
+            • Controls group: Preview-mode toggle · primary action
+          On large screens both sit on one line separated by a divider; on
+          small screens they stack into two rows. The primary action is a
+          single slot: Afișează (project a staged slide), Ascunde (hide the live
+          one), or a disabled Afișează when Preview is off and nothing is live —
+          they're mutually exclusive, so only one ever shows. */}
+      <div className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-3 p-2 lg:p-3 border-b border-gray-200 dark:border-gray-700 overflow-hidden">
+        {/* Status group */}
+        <div className="flex items-center gap-2 min-w-0 lg:flex-1">
           <div className="flex items-center gap-2 min-w-0 flex-1">
             {state?.temporaryContent && (
               <ContentTypeButton temporaryContent={state.temporaryContent} />
@@ -156,8 +157,15 @@ export function SongControlPanel({
           </div>
         </div>
 
-        {/* Controls row */}
-        <div className="flex items-center justify-between gap-2">
+        {/* Divider between the two groups — large screens only, where both
+            groups share a single line. */}
+        <div
+          aria-hidden="true"
+          className="hidden lg:block w-px self-stretch bg-gray-200 dark:bg-gray-700"
+        />
+
+        {/* Controls group */}
+        <div className="flex items-center justify-between gap-3 lg:justify-end shrink-0">
           {/* Preview mode toggle — when ON, clicking a verse stages it here
               first (Afișează / double-click projects). */}
           <label
