@@ -5,6 +5,7 @@ import {
   Eye,
   EyeOff,
   Loader2,
+  MonitorUp,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
@@ -20,7 +21,9 @@ import {
   useClearSlideHighlights,
   useSlideHighlights,
 } from '~/features/presentation/hooks/useSlideHighlights'
+import type { TemporaryContent } from '~/features/presentation/types'
 import { KeyboardShortcutBadge } from '~/ui/kbd'
+import { Switch } from '~/ui/switch/Switch'
 
 interface SongControlPanelProps {
   songId: number
@@ -28,6 +31,16 @@ interface SongControlPanelProps {
   onNextSlide: () => void
   canNavigatePrev: boolean
   canNavigateNext: boolean
+  /** Preview mode: stage a slide locally before projecting it. */
+  previewMode: boolean
+  onTogglePreviewMode: () => void
+  /** Staged content shown in the local stage while not yet projected. */
+  previewContent: TemporaryContent | null
+  /** Whether there is a staged slide that can be projected. */
+  canProject: boolean
+  /** Projects the staged slide (Afișează / Project). */
+  onProject: () => void
+  isProjecting?: boolean
 }
 
 export function SongControlPanel({
@@ -36,6 +49,12 @@ export function SongControlPanel({
   onNextSlide,
   canNavigatePrev,
   canNavigateNext,
+  previewMode,
+  onTogglePreviewMode,
+  previewContent,
+  canProject,
+  onProject,
+  isProjecting = false,
 }: SongControlPanelProps) {
   const { t } = useTranslation(['songs', 'bible'])
 
@@ -111,6 +130,21 @@ export function SongControlPanel({
         {/* Right side - LIVE indicator and controls. Never shrinks so
             "Ascunde" / "LIVE" stay readable even on a narrow Stage. */}
         <div className="flex items-center gap-2 shrink-0">
+          {/* Preview mode toggle — when ON, clicking a verse stages it here
+              first (Afișează / double-click projects). */}
+          <label
+            className="flex items-center gap-1.5 cursor-pointer select-none"
+            title={t('preview.previewModeHint')}
+          >
+            <Switch
+              id="song-preview-mode"
+              checked={previewMode}
+              onCheckedChange={onTogglePreviewMode}
+            />
+            <span className="hidden md:inline text-xs font-medium text-gray-600 dark:text-gray-400">
+              {t('preview.previewMode')}
+            </span>
+          </label>
           <div
             className={`flex items-center gap-1.5 px-2 py-1 rounded-md ${
               isLive
@@ -135,6 +169,23 @@ export function SongControlPanel({
               LIVE
             </span>
           </div>
+          {previewMode && canProject && (
+            <button
+              type="button"
+              data-testid="song-project-staged"
+              onClick={onProject}
+              disabled={isProjecting}
+              className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 text-sm text-white bg-green-600 hover:bg-green-700 rounded-lg disabled:opacity-50 transition-colors"
+              title={t('preview.projectHint')}
+            >
+              {isProjecting ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : (
+                <MonitorUp size={18} />
+              )}
+              <span className="hidden sm:inline">{t('preview.project')}</span>
+            </button>
+          )}
           {isLive ? (
             <button
               type="button"
@@ -178,7 +229,7 @@ export function SongControlPanel({
             from the aspect ratio, instead of stretching to the full column
             height. */}
         <div className="w-full flex-shrink-0">
-          <LivePreview />
+          <LivePreview previewContent={previewContent} />
         </div>
 
         <div className="flex items-center justify-center gap-3 pt-3 flex-shrink-0">

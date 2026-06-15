@@ -28,6 +28,7 @@ import {
   clearSectionLastVisited,
   setSongsLastVisited,
 } from '~/features/navigation'
+import type { TemporaryContent } from '~/features/presentation'
 import {
   useClearTemporaryContent,
   useNavigateTemporary,
@@ -54,6 +55,7 @@ import {
 } from '~/features/songs/components'
 import {
   useAddBookmark,
+  usePreviewMode,
   useRemoveBookmark,
   useResetPresentationCount,
   useSong,
@@ -166,6 +168,11 @@ function SongPreviewPage() {
   const [isLargeScreen, setIsLargeScreen] = useState(false)
   const [selectedSlideIndex, setSelectedSlideIndex] = useState(0)
   const [isEditMode, setIsEditMode] = useState(false)
+  // Preview mode (persisted globally): when ON, clicking a verse stages it in
+  // the local stage instead of projecting. `stagedSlideIndex` is the slide
+  // staged (indigo) but not yet projected.
+  const { previewMode, togglePreviewMode } = usePreviewMode()
+  const [stagedSlideIndex, setStagedSlideIndex] = useState<number | null>(null)
   // Within the right-of-slides area, the Stage takes ~57% so that (combined
   // with the 30% Slides on the left) it lands at ~40% of the full page and
   // the Accordion at ~30% — matching Slides exactly.
@@ -257,11 +264,51 @@ function SongPreviewPage() {
     }
   }, [numericId, undismissedSuggestionCount])
 
-  // Get expanded slides count for navigation bounds
-  const expandedSlidesCount = useMemo(
-    () => (song ? expandSongSlidesWithChoruses(song.slides).length : 0),
+  // Expanded slides (with auto-inserted choruses) — used for navigation bounds
+  // and to build the staged preview content faithfully (same shape the server
+  // produces for a presented temporary song).
+  const expandedSlides = useMemo(
+    () => (song ? expandSongSlidesWithChoruses(song.slides) : []),
     [song],
   )
+  const expandedSlidesCount = expandedSlides.length
+
+  // Reset any staged slide when switching songs or turning Preview mode off.
+  useEffect(() => {
+    setStagedSlideIndex(null)
+  }, [numericId])
+  useEffect(() => {
+    if (!previewMode) setStagedSlideIndex(null)
+  }, [previewMode])
+
+  // The locally staged slide, shaped as temporary song content for the shared
+  // presentation hook. Drives the stage (LivePreview) without projecting.
+  const stagedPreviewContent = useMemo<TemporaryContent | null>(() => {
+    if (
+      !previewMode ||
+      stagedSlideIndex === null ||
+      !song ||
+      stagedSlideIndex < 0 ||
+      stagedSlideIndex >= expandedSlides.length
+    ) {
+      return null
+    }
+    return {
+      type: 'song',
+      data: {
+        songId: song.id,
+        title: song.title,
+        keyLine: song.keyLine,
+        slides: expandedSlides.map((s, idx) => ({
+          id: s.id,
+          content: s.content,
+          chords: s.chords,
+          sortOrder: idx,
+        })),
+        currentSlideIndex: stagedSlideIndex,
+      },
+    }
+  }, [previewMode, stagedSlideIndex, song, expandedSlides])
 
   // Handle song not found - redirect to search with toast
   useEffect(() => {
@@ -305,13 +352,41 @@ function SongPreviewPage() {
 
   const handleSlideClick = useCallback(
     async (_slide: SongSlide, index: number) => {
+      // Preview mode: a single click only stages the slide locally.
+      if (previewMode) {
+        setStagedSlideIndex(index)
+        return
+      }
       await presentTemporarySong.mutateAsync({
         songId: numericId,
         slideIndex: index,
       })
     },
+    [previewMode, numericId, presentTemporarySong],
+  )
+
+  // Preview mode: double-click projects the slide immediately. Keep the stage
+  // showing it until the projection lands, then clear (live now mirrors it).
+  const handleSlideProject = useCallback(
+    async (_slide: SongSlide, index: number) => {
+      await presentTemporarySong.mutateAsync({
+        songId: numericId,
+        slideIndex: index,
+      })
+      setStagedSlideIndex(null)
+    },
     [numericId, presentTemporarySong],
   )
+
+  // Project the currently staged slide (Afișează button).
+  const handleProjectStaged = useCallback(async () => {
+    if (stagedSlideIndex === null) return
+    await presentTemporarySong.mutateAsync({
+      songId: numericId,
+      slideIndex: stagedSlideIndex,
+    })
+    setStagedSlideIndex(null)
+  }, [stagedSlideIndex, numericId, presentTemporarySong])
 
   const handleGoBack = useCallback(() => {
     // Clear last visited so returning from another page shows the list
@@ -779,6 +854,9 @@ function SongPreviewPage() {
               onSlideClick={handleSlideClick}
               isSaving={pendingExit || isMutating}
               onApplyText={handleEditAsTextApply}
+              previewMode={previewMode}
+              stagedSlideIndex={stagedSlideIndex}
+              onSlideDoubleClick={handleSlideProject}
             />
           </div>
         </div>
@@ -825,6 +903,12 @@ function SongPreviewPage() {
               onNextSlide={handleNextSlide}
               canNavigatePrev={canNavigatePrev}
               canNavigateNext={canNavigateNext}
+              previewMode={previewMode}
+              onTogglePreviewMode={togglePreviewMode}
+              previewContent={stagedPreviewContent}
+              canProject={previewMode && stagedSlideIndex !== null}
+              onProject={handleProjectStaged}
+              isProjecting={presentTemporarySong.isPending}
             />
           </div>
 
@@ -873,91 +957,91 @@ function SongPreviewPage() {
               mobile because they were already visible there before.
               Hidden entirely on desktop when the operator collapses it. */}
           {showAccordionColumn ? (
-          <div
-            ref={accordionColumnRef}
-            className={`overflow-hidden h-full flex flex-col ${accordionSplitActive ? '' : 'gap-2'}`}
-            style={
-              isLargeScreen
-                ? { width: `calc(${100 - rightDividerPosition}% - 12px)` }
-                : undefined
-            }
-          >
             <div
-              className={`hidden lg:block min-h-0 ${
-                accordionSplitActive
-                  ? ''
-                  : bookmarksOpen
-                    ? 'flex-1'
-                    : 'flex-none'
-              }`}
+              ref={accordionColumnRef}
+              className={`overflow-hidden h-full flex flex-col ${accordionSplitActive ? '' : 'gap-2'}`}
               style={
-                accordionSplitActive
-                  ? { height: `calc(${accordionDividerPosition}% - 4px)` }
+                isLargeScreen
+                  ? { width: `calc(${100 - rightDividerPosition}% - 12px)` }
                   : undefined
               }
             >
-              <SongBookmarksPanel
-                onSelectSong={handleBookmarkSongClick}
-                activeSongId={numericId}
-                onAddAllToSchedule={handleAddAllBookmarksToSchedule}
-                isCollapsed={!bookmarksOpen}
-                onToggleCollapse={() => setBookmarksOpen(!bookmarksOpen)}
-              />
-            </div>
-
-            {/* Draggable Marcaje ↔ Versiuni divider (only when both expanded) */}
-            {accordionSplitActive ? (
               <div
-                className="hidden lg:flex flex-col items-center justify-center h-2 cursor-row-resize hover:bg-indigo-100 dark:hover:bg-indigo-900/30 rounded transition-colors group"
-                onMouseDown={handleAccordionDividerMouseDown}
-              >
-                <GripHorizontal
-                  size={16}
-                  className="text-gray-400 group-hover:text-indigo-500 transition-colors"
-                />
-              </div>
-            ) : null}
-
-            {song && canViewSongVersions ? (
-              <div
-                className={`min-h-0 ${
+                className={`hidden lg:block min-h-0 ${
                   accordionSplitActive
                     ? ''
-                    : versionsOpen
+                    : bookmarksOpen
                       ? 'flex-1'
                       : 'flex-none'
                 }`}
                 style={
                   accordionSplitActive
-                    ? {
-                        height: `calc(${100 - accordionDividerPosition}% - 4px)`,
-                      }
+                    ? { height: `calc(${accordionDividerPosition}% - 4px)` }
                     : undefined
                 }
               >
-                <SongVersionsPanel
-                  songId={numericId}
-                  songTitle={song.title}
-                  currentSong={{
-                    hymnNumber: song.hymnNumber,
-                    author: song.author,
-                    keyLine: song.keyLine,
-                    categoryName: song.category?.name ?? null,
-                  }}
-                  canAdd={canAddSongVersion}
-                  canEdit={canEditSongVersion}
-                  canDelete={canDeleteSongVersion}
-                  isCollapsed={!versionsOpen}
-                  onToggleCollapse={() => setVersionsOpen(!versionsOpen)}
-                  attentionBadge={
-                    undismissedSuggestionCount > 0
-                      ? `+${undismissedSuggestionCount}`
-                      : null
-                  }
+                <SongBookmarksPanel
+                  onSelectSong={handleBookmarkSongClick}
+                  activeSongId={numericId}
+                  onAddAllToSchedule={handleAddAllBookmarksToSchedule}
+                  isCollapsed={!bookmarksOpen}
+                  onToggleCollapse={() => setBookmarksOpen(!bookmarksOpen)}
                 />
               </div>
-            ) : null}
-          </div>
+
+              {/* Draggable Marcaje ↔ Versiuni divider (only when both expanded) */}
+              {accordionSplitActive ? (
+                <div
+                  className="hidden lg:flex flex-col items-center justify-center h-2 cursor-row-resize hover:bg-indigo-100 dark:hover:bg-indigo-900/30 rounded transition-colors group"
+                  onMouseDown={handleAccordionDividerMouseDown}
+                >
+                  <GripHorizontal
+                    size={16}
+                    className="text-gray-400 group-hover:text-indigo-500 transition-colors"
+                  />
+                </div>
+              ) : null}
+
+              {song && canViewSongVersions ? (
+                <div
+                  className={`min-h-0 ${
+                    accordionSplitActive
+                      ? ''
+                      : versionsOpen
+                        ? 'flex-1'
+                        : 'flex-none'
+                  }`}
+                  style={
+                    accordionSplitActive
+                      ? {
+                          height: `calc(${100 - accordionDividerPosition}% - 4px)`,
+                        }
+                      : undefined
+                  }
+                >
+                  <SongVersionsPanel
+                    songId={numericId}
+                    songTitle={song.title}
+                    currentSong={{
+                      hymnNumber: song.hymnNumber,
+                      author: song.author,
+                      keyLine: song.keyLine,
+                      categoryName: song.category?.name ?? null,
+                    }}
+                    canAdd={canAddSongVersion}
+                    canEdit={canEditSongVersion}
+                    canDelete={canDeleteSongVersion}
+                    isCollapsed={!versionsOpen}
+                    onToggleCollapse={() => setVersionsOpen(!versionsOpen)}
+                    attentionBadge={
+                      undismissedSuggestionCount > 0
+                        ? `+${undismissedSuggestionCount}`
+                        : null
+                    }
+                  />
+                </div>
+              ) : null}
+            </div>
           ) : null}
         </div>
       </div>
