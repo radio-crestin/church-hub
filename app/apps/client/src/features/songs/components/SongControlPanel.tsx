@@ -12,7 +12,6 @@ import { useTranslation } from 'react-i18next'
 import {
   ContentTypeButton,
   LivePreview,
-  useClearTemporaryContent,
   useNavigateTemporary,
   usePresentationState,
   useWebSocket,
@@ -41,6 +40,10 @@ interface SongControlPanelProps {
   /** Projects the staged slide (Afișează / Project). */
   onProject: () => void
   isProjecting?: boolean
+  /** Hides the projection (Ascunde). Owned by the route so Preview mode can
+   *  retain the staged text in the local stage after hiding. */
+  onHide: () => void
+  isHiding?: boolean
 }
 
 export function SongControlPanel({
@@ -55,13 +58,14 @@ export function SongControlPanel({
   canProject,
   onProject,
   isProjecting = false,
+  onHide,
+  isHiding = false,
 }: SongControlPanelProps) {
   const { t } = useTranslation(['songs', 'bible'])
 
   useWebSocket()
 
   const { data: state } = usePresentationState()
-  const clearTemporary = useClearTemporaryContent()
   const navigateTemporary = useNavigateTemporary()
 
   // Highlight management
@@ -76,10 +80,6 @@ export function SongControlPanel({
 
   const isHidden = state?.isHidden ?? true
   const isLive = !isHidden && isTemporarySongActive
-
-  const handleHide = async () => {
-    await clearTemporary.mutateAsync()
-  }
 
   const handlePrev = async () => {
     if (isTemporarySongActive) {
@@ -189,12 +189,12 @@ export function SongControlPanel({
           {isLive ? (
             <button
               type="button"
-              onClick={handleHide}
-              disabled={clearTemporary.isPending}
+              onClick={onHide}
+              disabled={isHiding}
               className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
               title={`${t('bible:controls.hide')} (Esc)`}
             >
-              {clearTemporary.isPending ? (
+              {isHiding ? (
                 <Loader2 size={18} className="animate-spin" />
               ) : (
                 <EyeOff size={18} />
@@ -208,7 +208,7 @@ export function SongControlPanel({
                 className="hidden sm:inline-block"
               />
             </button>
-          ) : (
+          ) : previewMode ? null : (
             <button
               type="button"
               disabled
@@ -237,9 +237,7 @@ export function SongControlPanel({
             type="button"
             onClick={handlePrev}
             disabled={
-              !canNavigatePrev ||
-              navigateTemporary.isPending ||
-              clearTemporary.isPending
+              !canNavigatePrev || navigateTemporary.isPending || isHiding
             }
             className="flex items-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
             title={t('bible:controls.prev')}
@@ -252,9 +250,7 @@ export function SongControlPanel({
             type="button"
             onClick={handleNext}
             disabled={
-              !canNavigateNext ||
-              navigateTemporary.isPending ||
-              clearTemporary.isPending
+              !canNavigateNext || navigateTemporary.isPending || isHiding
             }
             className="flex items-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
             title={t('bible:controls.next')}

@@ -273,14 +273,6 @@ function SongPreviewPage() {
   )
   const expandedSlidesCount = expandedSlides.length
 
-  // Reset any staged slide when switching songs or turning Preview mode off.
-  useEffect(() => {
-    setStagedSlideIndex(null)
-  }, [numericId])
-  useEffect(() => {
-    if (!previewMode) setStagedSlideIndex(null)
-  }, [previewMode])
-
   // The locally staged slide, shaped as temporary song content for the shared
   // presentation hook. Drives the stage (LivePreview) without projecting.
   const stagedPreviewContent = useMemo<TemporaryContent | null>(() => {
@@ -350,6 +342,20 @@ function SongPreviewPage() {
       ? presentationState.temporaryContent.data.currentSlideIndex
       : null
 
+  // Default the staged slide whenever Preview mode turns on (or the song
+  // changes while it's on) so the small stage immediately shows text: the live
+  // slide if any, otherwise the selected one. Turning Preview off clears it.
+  // Deliberately keyed only on previewMode/numericId (not the indices) so this
+  // doesn't re-stage on every navigation — those are read as current values.
+  useEffect(() => {
+    if (!previewMode) {
+      setStagedSlideIndex(null)
+      return
+    }
+    setStagedSlideIndex(presentedSlideIndex ?? selectedSlideIndex)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [previewMode, numericId])
+
   const handleSlideClick = useCallback(
     async (_slide: SongSlide, index: number) => {
       // Preview mode: a single click only stages the slide locally.
@@ -418,8 +424,13 @@ function SongPreviewPage() {
   }, [presentedSlideIndex, navigateTemporary])
 
   const handleHidePresentation = useCallback(async () => {
+    // With Preview mode on, keep the (previously) live slide staged so the
+    // operator's small stage retains the text after the projection is hidden.
+    if (previewMode && presentedSlideIndex !== null) {
+      setStagedSlideIndex(presentedSlideIndex)
+    }
     await clearTemporary.mutateAsync()
-  }, [clearTemporary])
+  }, [previewMode, presentedSlideIndex, clearTemporary])
 
   const handleEdit = useCallback(() => {
     navigate({ to: '/songs/$songId/edit', params: { songId } })
@@ -906,9 +917,15 @@ function SongPreviewPage() {
               previewMode={previewMode}
               onTogglePreviewMode={togglePreviewMode}
               previewContent={stagedPreviewContent}
-              canProject={previewMode && stagedSlideIndex !== null}
+              canProject={
+                previewMode &&
+                stagedSlideIndex !== null &&
+                stagedSlideIndex !== presentedSlideIndex
+              }
               onProject={handleProjectStaged}
               isProjecting={presentTemporarySong.isPending}
+              onHide={handleHidePresentation}
+              isHiding={clearTemporary.isPending}
             />
           </div>
 
