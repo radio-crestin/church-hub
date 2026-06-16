@@ -5,13 +5,13 @@ import {
   Eye,
   EyeOff,
   Loader2,
+  MonitorUp,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import {
   ContentTypeButton,
   LivePreview,
-  useClearTemporaryContent,
   useNavigateTemporary,
   usePresentationState,
   useWebSocket,
@@ -20,7 +20,9 @@ import {
   useClearSlideHighlights,
   useSlideHighlights,
 } from '~/features/presentation/hooks/useSlideHighlights'
+import type { TemporaryContent } from '~/features/presentation/types'
 import { KeyboardShortcutBadge } from '~/ui/kbd'
+import { Switch } from '~/ui/switch/Switch'
 
 interface SongControlPanelProps {
   songId: number
@@ -28,6 +30,20 @@ interface SongControlPanelProps {
   onNextSlide: () => void
   canNavigatePrev: boolean
   canNavigateNext: boolean
+  /** Preview mode: stage a slide locally before projecting it. */
+  previewMode: boolean
+  onTogglePreviewMode: () => void
+  /** Staged content shown in the local stage while not yet projected. */
+  previewContent: TemporaryContent | null
+  /** Whether there is a staged slide that can be projected. */
+  canProject: boolean
+  /** Projects the staged slide (Afișează / Project). */
+  onProject: () => void
+  isProjecting?: boolean
+  /** Hides the projection (Ascunde). Owned by the route so Preview mode can
+   *  retain the staged text in the local stage after hiding. */
+  onHide: () => void
+  isHiding?: boolean
 }
 
 export function SongControlPanel({
@@ -36,13 +52,20 @@ export function SongControlPanel({
   onNextSlide,
   canNavigatePrev,
   canNavigateNext,
+  previewMode,
+  onTogglePreviewMode,
+  previewContent,
+  canProject,
+  onProject,
+  isProjecting = false,
+  onHide,
+  isHiding = false,
 }: SongControlPanelProps) {
   const { t } = useTranslation(['songs', 'bible'])
 
   useWebSocket()
 
   const { data: state } = usePresentationState()
-  const clearTemporary = useClearTemporaryContent()
   const navigateTemporary = useNavigateTemporary()
 
   // Highlight management
@@ -57,10 +80,6 @@ export function SongControlPanel({
 
   const isHidden = state?.isHidden ?? true
   const isLive = !isHidden && isTemporarySongActive
-
-  const handleHide = async () => {
-    await clearTemporary.mutateAsync()
-  }
 
   const handlePrev = async () => {
     if (isTemporarySongActive) {
@@ -80,39 +99,40 @@ export function SongControlPanel({
 
   return (
     <div className="flex flex-col lg:h-full bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-      {/* Header — `min-w-0` on the left chunk + `shrink-0` on the right
-          guarantees the song title truncates with an ellipsis instead of
-          shoving the LIVE chip into the wall. `gap-3` enforces a visible
-          space between the two sides regardless of title length, and the
-          outer `overflow-hidden` keeps any stray content from punching
-          past the Stage column's edge. */}
-      <div className="flex items-center gap-3 p-2 lg:p-3 border-b border-gray-200 dark:border-gray-700 overflow-hidden">
-        {/* Left side - Content type button + clear highlights */}
-        <div className="flex items-center gap-2 min-w-0 flex-1">
-          {state?.temporaryContent && (
-            <ContentTypeButton temporaryContent={state.temporaryContent} />
-          )}
-          {hasHighlights && (
-            <button
-              type="button"
-              onClick={() => clearHighlights.mutate()}
-              disabled={clearHighlights.isPending}
-              className="flex items-center gap-1.5 px-2 py-1.5 text-sm text-gray-600 dark:text-gray-400 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors shrink-0"
-              title={t('bible:controls.clearHighlights')}
-            >
-              {clearHighlights.isPending ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                <Eraser size={16} />
-              )}
-            </button>
-          )}
-        </div>
-        {/* Right side - LIVE indicator and controls. Never shrinks so
-            "Ascunde" / "LIVE" stay readable even on a narrow Stage. */}
-        <div className="flex items-center gap-2 shrink-0">
+      {/* Header — two logical groups so the controls breathe instead of
+          crowding together:
+            • Status group:   content-type chip + clear-highlights · LIVE chip
+            • Controls group: Preview-mode toggle · primary action
+          On large screens both sit on one line separated by a divider; on
+          small screens they stack into two rows. The primary action is a
+          single slot: Afișează (project a staged slide), Ascunde (hide the live
+          one), or a disabled Afișează when Preview is off and nothing is live —
+          they're mutually exclusive, so only one ever shows. */}
+      <div className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-3 p-2 lg:p-3 border-b border-gray-200 dark:border-gray-700 overflow-hidden">
+        {/* Status group */}
+        <div className="flex items-center gap-2 min-w-0 lg:flex-1">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            {state?.temporaryContent && (
+              <ContentTypeButton temporaryContent={state.temporaryContent} />
+            )}
+            {hasHighlights && (
+              <button
+                type="button"
+                onClick={() => clearHighlights.mutate()}
+                disabled={clearHighlights.isPending}
+                className="flex items-center gap-1.5 px-2 py-1.5 text-sm text-gray-600 dark:text-gray-400 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors shrink-0"
+                title={t('bible:controls.clearHighlights')}
+              >
+                {clearHighlights.isPending ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Eraser size={16} />
+                )}
+              </button>
+            )}
+          </div>
           <div
-            className={`flex items-center gap-1.5 px-2 py-1 rounded-md ${
+            className={`flex items-center gap-1.5 px-2 py-1 rounded-md shrink-0 ${
               isLive
                 ? 'bg-red-100 dark:bg-red-900/30'
                 : 'bg-gray-100 dark:bg-gray-700'
@@ -135,38 +155,79 @@ export function SongControlPanel({
               LIVE
             </span>
           </div>
+        </div>
+
+        {/* Divider between the two groups — large screens only, where both
+            groups share a single line. */}
+        <div
+          aria-hidden="true"
+          className="hidden lg:block w-px self-stretch bg-gray-200 dark:bg-gray-700"
+        />
+
+        {/* Controls group */}
+        <div className="flex items-center justify-between gap-3 lg:justify-end shrink-0">
+          {/* Preview mode toggle — when ON, clicking a verse stages it here
+              first (Afișează / double-click projects). */}
+          <label
+            className="flex items-center gap-2 cursor-pointer select-none shrink-0"
+            title={t('preview.previewModeHint')}
+          >
+            <Switch
+              id="song-preview-mode"
+              checked={previewMode}
+              onCheckedChange={onTogglePreviewMode}
+            />
+            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              {t('preview.previewMode')}
+            </span>
+          </label>
+
           {isLive ? (
             <button
               type="button"
-              onClick={handleHide}
-              disabled={clearTemporary.isPending}
-              className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+              onClick={onHide}
+              disabled={isHiding}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors shrink-0"
               title={`${t('bible:controls.hide')} (Esc)`}
             >
-              {clearTemporary.isPending ? (
+              {isHiding ? (
                 <Loader2 size={18} className="animate-spin" />
               ) : (
                 <EyeOff size={18} />
               )}
-              <span className="hidden sm:inline">
-                {t('bible:controls.hide')}
-              </span>
+              <span>{t('bible:controls.hide')}</span>
               <KeyboardShortcutBadge
                 shortcut="Escape"
                 variant="muted"
                 className="hidden sm:inline-block"
               />
             </button>
+          ) : previewMode ? (
+            canProject ? (
+              <button
+                type="button"
+                data-testid="song-project-staged"
+                onClick={onProject}
+                disabled={isProjecting}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg disabled:opacity-50 transition-colors shrink-0"
+                title={t('preview.projectHint')}
+              >
+                {isProjecting ? (
+                  <Loader2 size={18} className="animate-spin" />
+                ) : (
+                  <MonitorUp size={18} />
+                )}
+                <span>{t('preview.project')}</span>
+              </button>
+            ) : null
           ) : (
             <button
               type="button"
               disabled
-              className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 text-sm text-gray-400 dark:text-gray-500 rounded-lg border border-gray-300 dark:border-gray-600 opacity-50 cursor-not-allowed"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-400 dark:text-gray-500 rounded-lg border border-gray-300 dark:border-gray-600 opacity-50 cursor-not-allowed shrink-0"
             >
               <Eye size={18} />
-              <span className="hidden sm:inline">
-                {t('bible:controls.show')}
-              </span>
+              <span>{t('bible:controls.show')}</span>
             </button>
           )}
         </div>
@@ -178,7 +239,7 @@ export function SongControlPanel({
             from the aspect ratio, instead of stretching to the full column
             height. */}
         <div className="w-full flex-shrink-0">
-          <LivePreview />
+          <LivePreview previewContent={previewContent} />
         </div>
 
         <div className="flex items-center justify-center gap-3 pt-3 flex-shrink-0">
@@ -186,9 +247,7 @@ export function SongControlPanel({
             type="button"
             onClick={handlePrev}
             disabled={
-              !canNavigatePrev ||
-              navigateTemporary.isPending ||
-              clearTemporary.isPending
+              !canNavigatePrev || navigateTemporary.isPending || isHiding
             }
             className="flex items-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
             title={t('bible:controls.prev')}
@@ -201,9 +260,7 @@ export function SongControlPanel({
             type="button"
             onClick={handleNext}
             disabled={
-              !canNavigateNext ||
-              navigateTemporary.isPending ||
-              clearTemporary.isPending
+              !canNavigateNext || navigateTemporary.isPending || isHiding
             }
             className="flex items-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
             title={t('bible:controls.next')}

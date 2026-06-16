@@ -12,6 +12,8 @@ import type {
   ScreenConfig,
   SongContentConfig,
   SongLastSlideContentConfig,
+  TemporaryContent,
+  TemporarySongContent,
 } from '../types'
 import { resolveSlideChords } from '../utils/resolveSlideChords'
 import {
@@ -116,6 +118,14 @@ interface UsePresentationContentOptions {
   } | null>
   /** Function to get localized book name */
   getBookName?: (bookCode: string) => string | undefined
+  /**
+   * Local "preview" override. When provided, the hook renders this content
+   * instead of the server presentation state, bypassing projection entirely.
+   * Used by the song-detail stage (LivePreview) for Preview mode: an operator
+   * stages a slide locally before projecting it. ScreenRenderer never passes
+   * this, so external screens are unaffected.
+   */
+  previewContent?: TemporaryContent | null
 }
 
 interface UsePresentationContentResult {
@@ -127,6 +137,81 @@ interface UsePresentationContentResult {
   isExitAnimating: boolean
   nextSlideData: NextSlideData | undefined
   presentationState: ReturnType<typeof usePresentationState>['data']
+}
+
+/**
+ * Builds the renderable content for a single song slide from temporary song
+ * content. Pure: returns the content pieces (or null if the slide is missing)
+ * without touching React state. Shared by the live temporary-song path and the
+ * local Preview-mode override so both render identically.
+ */
+function buildSongSlideContent(
+  data: TemporarySongContent,
+  screen: ScreenConfig | null | undefined,
+  includeNextSlide: boolean,
+): {
+  contentType: ContentType
+  contentData: ContentData
+  contentKey: string
+  nextSlide: NextSlideData | undefined
+} | null {
+  const currentSlide = data.slides[data.currentSlideIndex]
+  if (!currentSlide) return null
+
+  const isFirstSlide = data.currentSlideIndex === 0
+  const isLastSlide = data.currentSlideIndex === data.slides.length - 1
+  const slideContent = currentSlide.content
+  const songConfig = screen?.contentConfigs?.song as
+    | SongContentConfig
+    | undefined
+  // Key ("gama") and "Amin" are separate positionable/styleable elements, so
+  // they are emitted as their own fields instead of injected into the lyrics.
+  const songKeyValue = resolveSongKey(isFirstSlide, data.keyLine, songConfig)
+  // Operator's custom "Amin" label (from the "Strofă - Amin" tab).
+  const customAmin =
+    (
+      screen?.contentConfigs?.song_last_slide as
+        | SongLastSlideContentConfig
+        | undefined
+    )?.amen?.text ?? songConfig?.amen?.text
+  const { mainText: songMainText, amen: amenValue } = resolveSongSlideBody(
+    isLastSlide,
+    slideContent,
+    customAmin,
+  )
+  const resolvedChords = resolveSlideChords(data.currentSlideIndex, data.slides)
+
+  let nextSlide: NextSlideData | undefined
+  if (includeNextSlide) {
+    const next = data.slides[data.currentSlideIndex + 1]
+    if (next) {
+      nextSlide = { contentType: 'song', preview: next.content }
+    } else if (data.nextItemPreview) {
+      nextSlide = {
+        contentType: data.nextItemPreview.contentType,
+        preview: data.nextItemPreview.preview,
+      }
+    }
+  }
+
+  return {
+    // First slide WITH a gama → song_first_slide, last slide WITH an amin →
+    // song_last_slide; otherwise the plain `song` layout.
+    contentType: resolveSongSlideContentType(
+      isFirstSlide,
+      isLastSlide,
+      !!songKeyValue,
+      !!amenValue,
+    ),
+    contentData: {
+      mainText: songMainText,
+      chords: resolvedChords,
+      songKey: songKeyValue,
+      amen: amenValue,
+    },
+    contentKey: `song|${data.songId}|${data.currentSlideIndex}`,
+    nextSlide,
+  }
 }
 
 /**
@@ -143,6 +228,7 @@ export function usePresentationContent({
   includeNextSlide = false,
   getNextVerse,
   getBookName,
+  previewContent = null,
 }: UsePresentationContentOptions): UsePresentationContentResult {
   const { data: presentationState } = usePresentationState()
   const songUpdateTimestamp = useSongUpdateTimestamp()
@@ -164,6 +250,10 @@ export function usePresentationContent({
   // Synchronous flag to prevent visibility flicker during the render cycle
   // where isHidden becomes true but isExitAnimating hasn't been set yet
   const exitAnimatingSyncRef = useRef(false)
+  // Tracks whether the previous render was showing a local preview override, so
+  // we can clear the stage when preview is dismissed while the real projection
+  // is hidden (no visible -> hidden transition to drive the exit animation).
+  const prevPreviewRef = useRef<TemporaryContent | null>(previewContent)
 
   // Keep track of current content type for exit animation calculation
   if (contentType !== 'empty') {
@@ -190,6 +280,15 @@ export function usePresentationContent({
   useEffect(() => {
     const wasHidden = prevHiddenRef.current
     const isHidden = presentationState?.isHidden
+
+    // While a local preview override drives the stage, the real isHidden state
+    // is irrelevant — skip the exit-animation machinery so toggling the real
+    // projection (or it being hidden) never clears the staged content. Keep the
+    // ref in sync so resuming normal mode doesn't see a phantom transition.
+    if (previewContent) {
+      prevHiddenRef.current = isHidden
+      return
+    }
 
     logger.debug(
       `Exit animation effect: wasHidden=${wasHidden}, isHidden=${isHidden}, isExitAnimating=${isExitAnimating}, updatedAt=${presentationState?.updatedAt}`,
@@ -259,7 +358,7 @@ export function usePresentationContent({
         clearTimeout(exitTimeoutRef.current)
       }
     }
-  }, [presentationState?.isHidden, screen])
+  }, [presentationState?.isHidden, screen, previewContent])
 
   // Fetch content based on presentation state
   useEffect(() => {
@@ -271,6 +370,50 @@ export function usePresentationContent({
       logger.debug(
         `fetchContent called: isHidden=${presentationState?.isHidden}, isExitAnimating=${isExitAnimating}, updatedAt=${presentationState?.updatedAt}`,
       )
+
+      // Preview-mode override: render the locally staged content and skip ALL
+      // server-state logic, so the slide shows only in the operator's stage and
+      // is never projected. ScreenRenderer never passes previewContent.
+      const wasPreview = prevPreviewRef.current
+      prevPreviewRef.current = previewContent
+      if (previewContent) {
+        if (isCancelled) return
+        const built =
+          previewContent.type === 'song'
+            ? buildSongSlideContent(
+                previewContent.data,
+                screen,
+                includeNextSlide,
+              )
+            : null
+        if (built) {
+          setContentType(built.contentType)
+          setContentData(built.contentData)
+          // Distinct key prefix so promoting the staged slide to live (same
+          // song/index) still reads as a content change for transitions.
+          setContentKey(`preview|${built.contentKey}`)
+          setNextSlideData(includeNextSlide ? built.nextSlide : undefined)
+        } else {
+          setContentData({})
+          setContentKey('')
+          setContentType('empty')
+          setNextSlideData(undefined)
+        }
+        return
+      }
+
+      // Preview was just dismissed while the real projection is hidden — there's
+      // no visible→hidden transition to drive the exit animation, so clear the
+      // stale staged content now. (When the real state is visible, the normal
+      // path below repaints it.)
+      if (wasPreview && presentationState?.isHidden) {
+        if (isCancelled) return
+        setContentData({})
+        setContentKey('')
+        setContentType('empty')
+        setNextSlideData(undefined)
+        return
+      }
 
       if (!presentationState) {
         logger.debug('No presentation state, setting empty content')
@@ -351,79 +494,17 @@ export function usePresentationContent({
         }
 
         if (temp.type === 'song') {
-          const currentSlide = temp.data.slides[temp.data.currentSlideIndex]
-          if (currentSlide && !isCancelled) {
-            const isFirstSlide = temp.data.currentSlideIndex === 0
-            const isLastSlide =
-              temp.data.currentSlideIndex === temp.data.slides.length - 1
-            const slideContent = currentSlide.content
-            const songConfig = screen?.contentConfigs?.song as
-              | SongContentConfig
-              | undefined
-            // Key ("gama") and "Amin" are now their own positionable/styleable
-            // elements (see ScreenContent renderSongKey/renderAmen), so we emit
-            // them as separate fields instead of injecting into the slide text.
-            // A standalone trailing "amin" line is pulled out of the lyrics into
-            // the amin element (so it isn't shown twice).
-            const songKeyValue = resolveSongKey(
-              isFirstSlide,
-              temp.data.keyLine,
-              songConfig,
-            )
-            // Operator's custom "Amin" label (from the "Strofă - Amin" tab).
-            const customAmin =
-              (
-                screen?.contentConfigs?.song_last_slide as
-                  | SongLastSlideContentConfig
-                  | undefined
-              )?.amen?.text ?? songConfig?.amen?.text
-            const { mainText: songMainText, amen: amenValue } =
-              resolveSongSlideBody(isLastSlide, slideContent, customAmin)
-            // Resolve chords for this slide
-            const resolvedChords = resolveSlideChords(
-              temp.data.currentSlideIndex,
-              temp.data.slides,
-            )
-            // First slide WITH a gama → "Cântec - Primul Slide" (song_first_slide), last
-            // slide WITH an amin → "Cântec - Ultimul Slide" (song_last_slide); otherwise
-            // the plain `song` layout so the strofa isn't shifted for an absent
-            // element.
-            setContentType(
-              resolveSongSlideContentType(
-                isFirstSlide,
-                isLastSlide,
-                !!songKeyValue,
-                !!amenValue,
-              ),
-            )
-            setContentData({
-              mainText: songMainText,
-              chords: resolvedChords,
-              songKey: songKeyValue,
-              amen: amenValue,
-            })
-            setContentKey(
-              `song|${temp.data.songId}|${temp.data.currentSlideIndex}`,
-            )
-
-            // Show next slide preview if enabled
-            if (includeNextSlide) {
-              const nextSlide =
-                temp.data.slides[temp.data.currentSlideIndex + 1]
-              if (nextSlide) {
-                setNextSlideData({
-                  contentType: 'song',
-                  preview: nextSlide.content,
-                })
-              } else if (temp.data.nextItemPreview) {
-                setNextSlideData({
-                  contentType: temp.data.nextItemPreview.contentType,
-                  preview: temp.data.nextItemPreview.preview,
-                })
-              } else {
-                setNextSlideData(undefined)
-              }
-            }
+          const built = buildSongSlideContent(
+            temp.data,
+            screen,
+            includeNextSlide,
+          )
+          if (built) {
+            if (isCancelled) return
+            setContentType(built.contentType)
+            setContentData(built.contentData)
+            setContentKey(built.contentKey)
+            if (includeNextSlide) setNextSlideData(built.nextSlide)
             return
           }
         }
@@ -729,17 +810,21 @@ export function usePresentationContent({
     includeNextSlide,
     getNextVerse,
     getBookName,
+    previewContent,
   ])
 
   // Calculate visibility
   // isVisible stays true during exit animation so CSS transitions can complete smoothly.
   // Content becomes invisible only after the exit animation finishes and state is cleared.
   const hasContent = Object.keys(contentData).length > 0
-  const isVisible =
-    (!presentationState?.isHidden ||
-      isExitAnimating ||
-      exitAnimatingSyncRef.current) &&
-    hasContent
+  const isVisible = previewContent
+    ? // Staged preview is always shown locally regardless of the real
+      // projection's hidden state.
+      hasContent
+    : (!presentationState?.isHidden ||
+        isExitAnimating ||
+        exitAnimatingSyncRef.current) &&
+      hasContent
 
   logger.debug(
     `Render state: isVisible=${isVisible}, hasContent=${hasContent}, isHidden=${presentationState?.isHidden}, isExitAnimating=${isExitAnimating}, contentType=${contentType}, updatedAt=${presentationState?.updatedAt}`,

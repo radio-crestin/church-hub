@@ -32,6 +32,12 @@ interface SongSlidesPanelProps {
   onSave?: () => void
   onSlideClick: (slide: SongSlide, index: number) => void
   onApplyText?: (slides: MarkdownSlide[]) => void | Promise<void>
+  /** Preview mode: a single click stages instead of projecting. */
+  previewMode?: boolean
+  /** Index of the slide staged for preview (indigo, not yet projected). */
+  stagedSlideIndex?: number | null
+  /** Double-click handler (preview mode): projects the slide immediately. */
+  onSlideDoubleClick?: (slide: SongSlide, index: number) => void
 }
 
 /** Identifies the first line of every non-empty slide block in the text. */
@@ -115,6 +121,9 @@ export function SongSlidesPanel({
   onSave,
   onSlideClick,
   onApplyText,
+  previewMode = false,
+  stagedSlideIndex = null,
+  onSlideDoubleClick,
 }: SongSlidesPanelProps) {
   const { t } = useTranslation('songs')
   const [fontScaleRaw, setFontScale] = useDividerPosition(
@@ -401,34 +410,45 @@ export function SongSlidesPanel({
           <div className="space-y-1">
             {expandedSlides.map((slide, index) => {
               const isPresented = index === presentedSlideIndex
+              // In preview mode the indigo highlight marks the staged slide
+              // (which can coexist with a different live/green slide). Outside
+              // preview mode it marks the keyboard-selected slide.
+              const isStaged =
+                previewMode &&
+                stagedSlideIndex !== null &&
+                index === stagedSlideIndex &&
+                !isPresented
               const isSelected =
-                index === selectedSlideIndex && presentedSlideIndex === null
+                !previewMode &&
+                index === selectedSlideIndex &&
+                presentedSlideIndex === null
+              const isHighlighted = isStaged || isSelected
               const isDuplicate = !isOriginalSlide[index]
               const plainText = stripHtmlTags(slide.content)
 
               const getButtonClass = () => {
                 if (isPresented)
                   return 'bg-green-100 dark:bg-green-900/50 ring-2 ring-green-500'
-                if (isSelected)
+                if (isHighlighted)
                   return 'bg-indigo-100 dark:bg-indigo-900/50 ring-2 ring-indigo-500'
                 return 'hover:bg-gray-100 dark:hover:bg-gray-700'
               }
 
               const getNumberClass = () => {
                 if (isPresented) return 'text-green-700 dark:text-green-300'
-                if (isSelected) return 'text-indigo-700 dark:text-indigo-300'
+                if (isHighlighted) return 'text-indigo-700 dark:text-indigo-300'
                 return 'text-gray-500 dark:text-gray-400'
               }
 
               const getTextClass = () => {
                 if (isPresented) return 'text-green-900 dark:text-green-100'
-                if (isSelected) return 'text-indigo-900 dark:text-indigo-100'
+                if (isHighlighted) return 'text-indigo-900 dark:text-indigo-100'
                 return 'text-gray-700 dark:text-gray-200'
               }
 
               const getRef = () => {
                 if (isPresented) return highlightedRef
-                if (isSelected) return selectedRef
+                if (isHighlighted) return selectedRef
                 return null
               }
 
@@ -437,7 +457,13 @@ export function SongSlidesPanel({
                   key={`${slide.id}-${index}`}
                   ref={getRef()}
                   type="button"
+                  data-testid={`song-slide-${index}`}
                   onClick={() => !isPresented && onSlideClick(slide, index)}
+                  onDoubleClick={() =>
+                    previewMode &&
+                    !isPresented &&
+                    onSlideDoubleClick?.(slide, index)
+                  }
                   className={`w-full text-left px-2 py-2 rounded-lg transition-colors group ${getButtonClass()} ${
                     isDuplicate ? 'opacity-60' : ''
                   }`}
