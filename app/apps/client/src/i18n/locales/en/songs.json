@@ -199,7 +199,11 @@
     "slideAdded": "Slide added",
     "presentSlide": "Present this slide",
     "increaseFontSize": "Increase text size",
-    "decreaseFontSize": "Decrease text size"
+    "decreaseFontSize": "Decrease text size",
+    "previewMode": "Preview",
+    "previewModeHint": "Preview mode: stage a slide before projecting it",
+    "project": "Project",
+    "projectHint": "Project the staged slide"
   },
   "metadata": {
     "detailsSection": "Details",

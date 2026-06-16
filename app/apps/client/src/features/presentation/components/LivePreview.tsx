@@ -13,7 +13,7 @@ import {
   useSlideHighlights,
 } from '../hooks/useSlideHighlights'
 import { useTextSelection } from '../hooks/useTextSelection'
-import type { TextStyleRange } from '../types'
+import type { TemporaryContent, TextStyleRange } from '../types'
 
 // Default highlight color
 const DEFAULT_HIGHLIGHT_COLOR = '#FFFF00'
@@ -21,7 +21,16 @@ const DEFAULT_HIGHLIGHT_COLOR = '#FFFF00'
 // Stable empty array to prevent unnecessary re-renders when no highlights exist
 const EMPTY_STYLE_RANGES: TextStyleRange[] = []
 
-export function LivePreview() {
+interface LivePreviewProps {
+  /**
+   * Local preview override (Preview mode). When set, the stage shows this
+   * staged content instead of the live projection, without affecting external
+   * screens. Omitted everywhere except the song-detail control panel.
+   */
+  previewContent?: TemporaryContent | null
+}
+
+export function LivePreview({ previewContent = null }: LivePreviewProps) {
   // Note: WebSocket connection is established by parent ControlRoom component
   // Don't call useWebSocket() here as it causes re-renders from debug info state updates
 
@@ -70,6 +79,7 @@ export function LivePreview() {
       screen,
       includeNextSlide: false,
       getBookName,
+      previewContent,
     })
 
   // Handle context menu (right-click) on preview

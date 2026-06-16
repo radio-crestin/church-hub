@@ -1,3 +1,5 @@
+import type { ChordMapping } from '~/features/songs/types'
+
 /**
  * Display open mode - browser tab or native Tauri window
  */
@@ -87,6 +89,12 @@ export interface TemporarySongSlide {
   id: number
   content: string
   sortOrder: number
+  /**
+   * Chord annotations for the slide. The server already includes these on
+   * presented temporary songs (see presentation-state); typing it here lets
+   * the client build a faithful staged preview (Preview mode) with chords.
+   */
+  chords?: ChordMapping[] | null
 }
 
 /**

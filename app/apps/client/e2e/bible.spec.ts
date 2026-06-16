@@ -34,7 +34,19 @@ async function searchBible(page: Page, query: string) {
 }
 
 test.describe('Bible Feature', () => {
+  // These tests drive the SINGLE global presentation state on the server (the
+  // /bible page mirrors every `presentation_state` broadcast, by design — so
+  // multiple operator devices stay in sync). Run serially so the chapter-
+  // boundary navigation tests don't get their presented verse stomped by a
+  // sibling test presenting a different book/verse on a parallel worker.
+  // Matches the existing pattern in presenter-remote / settings-logs /
+  // divider-persistence specs.
+  test.describe.configure({ mode: 'serial' })
+
   test.beforeEach(async ({ page }) => {
+    // Reset the shared global presentation state so a previous serial test's
+    // presented verse can't leak into this one and corrupt the /bible sync.
+    await page.request.post('/api/presentation/clear-temporary').catch(() => {})
     await page.goto('/')
   })
 
@@ -244,6 +256,10 @@ test.describe('Bible Feature', () => {
   test('search mid-chapter then navigate to boundary does not snap back', async ({
     page,
   }) => {
+    // This test makes many sequential server round-trips (search, present, four
+    // arrow steps, a boundary cross). Each is a WebSocket/HTTP round-trip that
+    // can be slow while the server is busy, so triple the default timeout.
+    test.slow()
     // Exact reproduction of user bug: search "Evrei 2:14" → present → navigate
     // with arrows through several verses to end of chapter → cross boundary.
     // The VersesList should follow to chapter 3:1, not snap back to 2:14.
@@ -277,35 +293,43 @@ test.describe('Bible Feature', () => {
       timeout: 5000,
     })
 
-    // Navigate with ArrowDown to the last verse of Evrei 2 (18 verses)
-    // From verse 14, need 4 presses to reach verse 18
-    for (let i = 0; i < 4; i++) {
+    // Navigate with ArrowDown to the last verse of Evrei 2 (18 verses), from
+    // verse 14. Poll for each verse to settle before the next press: each step
+    // is an async present round-trip, so a fixed sleep can drop or double a
+    // step under load. Stepping with an auto-retrying assertion is deterministic.
+    for (let target = 15; target <= 18; target++) {
       await page.keyboard.press('ArrowDown')
-      await page.waitForTimeout(300)
+      await expect(
+        page.locator('button.ring-green-500 span.font-semibold').first(),
+      ).toHaveText(String(target), { timeout: 15000 })
     }
 
-    // Should be on the last verse now
-    const lastV = page.locator('button.ring-green-500')
-    await expect(lastV).toBeVisible({ timeout: 5000 })
-    const lastVNum = await lastV
-      .locator('span.font-semibold')
+    // Should be on the last verse now (> 14)
+    const lastVNum = await page
+      .locator('button.ring-green-500 span.font-semibold')
       .first()
       .textContent()
     expect(parseInt(lastVNum!.trim(), 10)).toBeGreaterThan(14)
 
+    // Let the last verse's present round-trip fully drain before crossing: the
+    // rapid stepping above leaves broadcasts in flight, and pressing ArrowDown
+    // to cross while the local navigation index hasn't settled on the last
+    // verse would just re-advance within the chapter instead of crossing.
+    await page.waitForTimeout(1500)
+
     // Cross the chapter boundary
     await page.keyboard.press('ArrowDown')
-    await page.waitForTimeout(3000)
 
-    // Should be on chapter 3, verse 1 - NOT snapped back to verse 14
+    // Should settle on chapter 3, verse 1 — NOT snapped back to verse 14. The
+    // cross is an async server round-trip (navigate-temporary -> broadcast ->
+    // sync effect -> next-chapter load); poll with an auto-retrying assertion
+    // instead of a one-shot read after a fixed wait so we don't sample an
+    // intermediate state mid-settle.
     const newHighlight = page.locator('button.ring-green-500')
-    await expect(newHighlight).toBeVisible({ timeout: 10000 })
-
-    const finalVerse = await newHighlight
-      .locator('span.font-semibold')
-      .first()
-      .textContent()
-    expect(finalVerse?.trim()).toBe('1')
+    await expect(newHighlight.locator('span.font-semibold').first()).toHaveText(
+      '1',
+      { timeout: 15000 },
+    )
 
     // CRITICAL: Verify the highlighted verse is scrolled into view
     // (the bug might show correct highlight but wrong scroll position)
@@ -316,14 +340,13 @@ test.describe('Bible Feature', () => {
     expect(box!.y).toBeGreaterThanOrEqual(0)
     expect(box!.y).toBeLessThan(viewport.height)
 
-    // Wait extra time and re-check - the bug might cause a delayed snap-back
+    // Re-check after a moment that it does not delayed-snap-back.
     await page.waitForTimeout(2000)
     const afterWait = page.locator('button.ring-green-500')
-    const afterVerseNum = await afterWait
-      .locator('span.font-semibold')
-      .first()
-      .textContent()
-    expect(afterVerseNum?.trim()).toBe('1')
+    await expect(afterWait.locator('span.font-semibold').first()).toHaveText(
+      '1',
+      { timeout: 5000 },
+    )
 
     // Re-verify scroll position after the wait
     const afterBox = await afterWait.boundingBox()
@@ -363,15 +386,12 @@ test.describe('Bible Feature', () => {
     })
 
     await page.keyboard.press('ArrowDown')
-    await page.waitForTimeout(3000)
 
-    const newHighlight = page.locator('button.ring-green-500')
-    await expect(newHighlight).toBeVisible({ timeout: 10000 })
-    const newVerseNum = await newHighlight
-      .locator('span.font-semibold')
-      .first()
-      .textContent()
-    expect(newVerseNum?.trim()).toBe('1')
+    // Poll for the settled verse 1 (async boundary cross) instead of a one-shot
+    // read after a fixed wait.
+    await expect(
+      page.locator('button.ring-green-500 span.font-semibold').first(),
+    ).toHaveText('1', { timeout: 10000 })
   })
 
   test('arrow key navigation across chapter boundary does not snap back', async ({
@@ -417,17 +437,15 @@ test.describe('Bible Feature', () => {
 
     // Press ArrowDown to cross into next chapter
     await page.keyboard.press('ArrowDown')
-    await page.waitForTimeout(3000)
 
-    // The green highlight should now show verse 1 of the NEXT chapter
-    const newHighlight = page.locator('button.ring-green-500')
-    await expect(newHighlight).toBeVisible({ timeout: 10000 })
-
-    const newVerseNum = await newHighlight
-      .locator('span.font-semibold')
-      .first()
-      .textContent()
-    expect(newVerseNum?.trim()).toBe('1')
+    // The green highlight settles on verse 1 of the NEXT chapter via an async
+    // server round-trip (navigate-temporary -> broadcast -> sync effect ->
+    // next-chapter load). Poll with an auto-retrying assertion instead of a
+    // one-shot read so we don't sample an intermediate state (the old last
+    // verse, or a transient mid-settle value) before it reconciles.
+    await expect(
+      page.locator('button.ring-green-500 span.font-semibold').first(),
+    ).toHaveText('1', { timeout: 10000 })
 
     // Verify a chapter header with "3" is visible
     const stickyHeaders = page.locator('.sticky span.font-bold')
@@ -473,19 +491,22 @@ test.describe('Bible Feature', () => {
       .textContent()
     expect(verseNum?.trim()).toBe('1')
 
-    // Press ArrowUp to cross back into previous chapter
+    // Press ArrowUp to cross back into the previous chapter
     await page.keyboard.press('ArrowUp')
-    await page.waitForTimeout(3000)
 
-    // Should be on the last verse of chapter 2, not stuck on 3:1
-    const newHighlight = page.locator('button.ring-green-500')
-    await expect(newHighlight).toBeVisible({ timeout: 10000 })
-
-    const newVerseNum = await newHighlight
-      .locator('span.font-semibold')
-      .first()
-      .textContent()
-    const num = parseInt(newVerseNum!.trim(), 10)
-    expect(num).toBeGreaterThan(1)
+    // Should settle on the last verse of chapter 2 (number > 1), not stuck on
+    // 3:1. Poll instead of a one-shot read after a fixed wait.
+    await expect
+      .poll(
+        async () => {
+          const text = await page
+            .locator('button.ring-green-500 span.font-semibold')
+            .first()
+            .textContent()
+          return parseInt(text?.trim() ?? '0', 10)
+        },
+        { timeout: 10000 },
+      )
+      .toBeGreaterThan(1)
   })
 })

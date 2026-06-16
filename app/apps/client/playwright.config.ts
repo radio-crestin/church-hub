@@ -38,7 +38,13 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: isCI,
   retries: isCI ? 2 : 0,
-  workers: isCI ? 1 : undefined,
+  // Single worker locally too (CI already does this). The server holds ONE
+  // global presentation state broadcast to every client, so tests that present
+  // content (bible verses, songs, presenter remote) cross-talk when run on
+  // parallel workers — a verse presented by one spec stomps the presented state
+  // another spec's /bible page is mirroring. Serial execution makes the suite
+  // deterministic. Override with `--workers=N` for faster (but racy) local runs.
+  workers: 1,
   reporter: isCI ? 'github' : 'html',
   timeout: 30000,
   use: {

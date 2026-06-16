@@ -199,7 +199,11 @@
     "slideAdded": "Slide adăugat",
     "presentSlide": "Afișează acest slide",
     "increaseFontSize": "Mărește textul",
-    "decreaseFontSize": "Micșorează textul"
+    "decreaseFontSize": "Micșorează textul",
+    "previewMode": "Previzualizare",
+    "previewModeHint": "Mod previzualizare: pregătește un slide înainte de a-l afișa",
+    "project": "Afișează",
+    "projectHint": "Afișează slide-ul pregătit"
   },
   "metadata": {
     "detailsSection": "Detalii",
