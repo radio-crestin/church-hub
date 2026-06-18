@@ -153,6 +153,9 @@ class GeminiEngineSession implements EngineSession {
     }
 
     if (content.modelTurn?.parts) {
+      // responseModalities is AUDIO, so model turn parts carry the synthesized
+      // audio. The translated *text* arrives via outputTranscription above —
+      // do NOT also read part.text here or the line gets duplicated.
       for (const part of content.modelTurn.parts) {
         if (part.inlineData?.data) {
           const pcm = Buffer.from(part.inlineData.data, 'base64')
@@ -161,9 +164,6 @@ class GeminiEngineSession implements EngineSession {
             this.handlers.onSpeakingStart()
           }
           this.handlers.onAudioOutput(pcm)
-        }
-        if (part.text) {
-          this.handlers.onTargetText(part.text)
         }
       }
     }
