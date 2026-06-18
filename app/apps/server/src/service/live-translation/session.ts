@@ -127,30 +127,57 @@ function joinTranscriptDelta(prev: string, delta: string): string {
   return `${prev} ${delta}`
 }
 
-function appendOrCreateEntry(
+// Tracks the in-progress transcription entry per "segment" so streamed updates
+// modify one line and each finished utterance becomes a new line. Key:
+// 'source' for the shared source transcript, `translation:<targetId>` per target.
+const openSegmentEntryId = new Map<string, string>()
+
+function segmentKey(type: 'source' | 'translation', targetId?: string): string {
+  return type === 'source' ? 'source' : `translation:${targetId ?? ''}`
+}
+
+/**
+ * Add or update a transcription line.
+ *
+ * The Gemini 3.x live models deliver the full utterance text (often re-sending
+ * a growing snapshot) rather than pure deltas, so naive `+=` produced garbled,
+ * duplicated text. We therefore: replace when the new text is a longer snapshot
+ * of the current line, ignore exact/shorter duplicates, and only word-join when
+ * it is a genuine delta. `closeTranscriptSegments` (called on turn end) ends the
+ * current utterance so the next text starts a fresh line.
+ */
+function upsertTranscript(
   text: string,
   type: 'source' | 'translation',
   target?: TranslationTarget,
 ): void {
-  const last = currentState.transcription[currentState.transcription.length - 1]
+  const trimmed = text.trim()
+  if (!trimmed) return
 
-  const sameBucket =
-    last &&
-    last.type === type &&
-    (type === 'source'
-      ? !target || last.targetId === target.id || !last.targetId
-      : last.targetId === target?.id)
+  const key = segmentKey(type, target?.id)
+  const openId = openSegmentEntryId.get(key)
+  const existing = openId
+    ? currentState.transcription.find((e) => e.id === openId)
+    : undefined
 
-  if (sameBucket && last) {
-    last.text = joinTranscriptDelta(last.text, text)
-    last.timestamp = Date.now()
-    transcriptionCallback?.(last, 'update')
+  if (existing) {
+    const prev = existing.text
+    if (trimmed === prev) return
+    let next: string
+    if (trimmed.startsWith(prev)) {
+      next = trimmed // growing snapshot of the same utterance
+    } else if (prev.startsWith(trimmed)) {
+      return // older / shorter snapshot of what we already have
+    } else {
+      next = joinTranscriptDelta(prev, trimmed) // genuine delta
+    }
+    existing.text = next
+    existing.timestamp = Date.now()
+    transcriptionCallback?.(existing, 'update')
   } else {
     const entry: TranscriptionEntry = {
       id: generateId(),
-      // Trim leading whitespace on the first chunk only — engines often
-      // emit a leading space on the first delta of a new segment.
-      text: text.replace(/^\s+/, ''),
+      text: trimmed,
       type,
       targetId: target?.id,
       targetLanguage: target?.targetLanguage,
@@ -160,12 +187,18 @@ function appendOrCreateEntry(
     if (currentState.transcription.length > 200) {
       currentState.transcription = currentState.transcription.slice(-200)
     }
+    openSegmentEntryId.set(key, entry.id)
     transcriptionCallback?.(entry, 'add')
   }
-  // No full-state broadcast here — transcriptionCallback already streamed
-  // the granular update to clients. Skipping the wire round-trip for the
-  // whole transcription array keeps deltas truly real-time.
+  // transcriptionCallback already streamed the granular update; skip the
+  // full-state broadcast to keep updates real-time.
   mutateState({ transcription: currentState.transcription })
+}
+
+/** End the current utterance(s) so subsequent text starts on a new line. */
+function closeTranscriptSegments(targetId?: string): void {
+  if (targetId) openSegmentEntryId.delete(`translation:${targetId}`)
+  openSegmentEntryId.delete('source')
 }
 
 function handleMicInput(pcmBuffer: Buffer): void {
@@ -239,14 +272,19 @@ export async function startTranslation(
         },
         {
           onAudioOutput: (pcm) => handleEngineAudio(target, pcm),
-          onSourceText: (text) => appendOrCreateEntry(text, 'source', target),
-          onTargetText: (text) =>
-            appendOrCreateEntry(text, 'translation', target),
+          onSourceText: (text) => {
+            // Every target's engine transcribes the SAME source audio, so only
+            // take the source transcript from the primary engine — otherwise
+            // the source line is duplicated once per target.
+            if (target.id === primaryTargetId) upsertTranscript(text, 'source')
+          },
+          onTargetText: (text) => upsertTranscript(text, 'translation', target),
           onSpeakingStart: () => {
             // handled per-engine (used to pause input)
           },
           onTurnComplete: () => {
-            // ignore — output level decay handled by audio chunks
+            // End the current utterance so the next text starts a new line.
+            closeTranscriptSegments(target.id)
           },
           onError: (err) => {
             logger.error('Engine error', {
@@ -322,6 +360,7 @@ export async function stopTranslation(): Promise<void> {
     }
   }
   runningTargets.clear()
+  openSegmentEntryId.clear()
 
   currentState = { ...DEFAULT_TRANSLATION_STATE }
   stateCallback?.(currentState)
@@ -329,6 +368,7 @@ export async function stopTranslation(): Promise<void> {
 
 export function clearTranscription(): void {
   currentState.transcription = []
+  openSegmentEntryId.clear()
   updateState({ transcription: [] })
 }
 
