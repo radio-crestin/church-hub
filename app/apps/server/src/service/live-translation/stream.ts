@@ -17,10 +17,27 @@ const logger = {
 const SETTINGS_KEY = 'live_translation_stream_secret'
 const SIGNALING_BASE_URL = 'https://churchub-backend.radiocrestin.ro'
 
-const ICE_SERVERS = [
+const ICE_SERVERS: Array<{
+  urls: string
+  username?: string
+  credential?: string
+}> = [
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
 ]
+
+// STUN alone can't traverse the symmetric NAT used by most mobile/cellular
+// networks, so phone listeners get stuck on "Connecting". Provide TURN servers
+// as JSON in LIVE_TRANSLATION_TURN to fix that, e.g.
+//   LIVE_TRANSLATION_TURN='[{"urls":"turn:turn.example.com:3478","username":"u","credential":"p"}]'
+if (process.env.LIVE_TRANSLATION_TURN) {
+  try {
+    const turn = JSON.parse(process.env.LIVE_TRANSLATION_TURN)
+    if (Array.isArray(turn)) ICE_SERVERS.push(...turn)
+  } catch {
+    logger.warn('LIVE_TRANSLATION_TURN is not valid JSON; ignoring')
+  }
+}
 
 interface AvailableLanguage {
   targetId: string
@@ -41,9 +58,8 @@ let pingInterval: ReturnType<typeof setInterval> | null = null
 let pollInterval: ReturnType<typeof setInterval> | null = null
 let listenerIdCounter = 0
 let availableLanguages: AvailableLanguage[] = []
-let listenerCountsCallback:
-  | ((counts: Record<string, number>) => void)
-  | null = null
+let listenerCountsCallback: ((counts: Record<string, number>) => void) | null =
+  null
 
 function generateSecret(): string {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
