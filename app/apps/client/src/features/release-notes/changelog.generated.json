@@ -1,5 +1,21 @@
 [
   {
+    "version": "0.1.79",
+    "date": "2026-06-16T08:36:32+02:00",
+    "features": [],
+    "bugFixes": [],
+    "changes": [
+      {
+        "scope": null,
+        "message": "Preview mode — stage slides before projecting"
+      },
+      {
+        "scope": null,
+        "message": "sync version to v0.1.78 [skip ci]"
+      }
+    ]
+  },
+  {
     "version": "0.1.78",
     "date": "2026-06-14T01:02:18+02:00",
     "features": [

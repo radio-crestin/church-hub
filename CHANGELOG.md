@@ -2,6 +2,13 @@
 
 > Auto-generated from git history by `app/scripts/generate-changelog.ts`. Do not edit by hand.
 
+## v0.1.79 — 2026-06-16
+
+### 🔧 Changes
+
+- Preview mode — stage slides before projecting
+- sync version to v0.1.78 [skip ci]
+
 ## v0.1.78 — 2026-06-14
 
 ### 🚀 Features
