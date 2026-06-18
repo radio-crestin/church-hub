@@ -108,6 +108,25 @@ export function calculateAudioLevel(pcmBuffer: Buffer): number {
   return Math.max(0, Math.min(1, (dbfs - minDb) / -minDb))
 }
 
+/**
+ * Join a streaming transcription delta onto the running text. The Gemini
+ * live-translate model emits transcription in word/phrase fragments that do
+ * NOT carry surrounding spaces (unlike the previous engines), so concatenating
+ * directly ran words together. Insert a space between word fragments, but not
+ * when either side already provides whitespace, not before punctuation that
+ * attaches to the preceding word, and not after an opening bracket/quote.
+ */
+function joinTranscriptDelta(prev: string, delta: string): string {
+  if (!prev) return delta.replace(/^\s+/, '')
+  if (!delta) return prev
+  if (/\s$/.test(prev) || /^\s/.test(delta)) return prev + delta
+  // Punctuation that hugs the preceding word — no leading space.
+  if (/^[.,!?;:)\]}%…»"']/.test(delta)) return prev + delta
+  // Opening punctuation at the end of prev — no trailing space.
+  if (/[([{«¿¡]$/.test(prev)) return prev + delta
+  return `${prev} ${delta}`
+}
+
 function appendOrCreateEntry(
   text: string,
   type: 'source' | 'translation',
@@ -123,10 +142,7 @@ function appendOrCreateEntry(
       : last.targetId === target?.id)
 
   if (sameBucket && last) {
-    // Engine deltas already carry their own whitespace; concatenate directly.
-    // (Old behavior injected a space, which mangled sub-word deltas like
-    // "Hel" + "lo" into "Hel lo".)
-    last.text += text
+    last.text = joinTranscriptDelta(last.text, text)
     last.timestamp = Date.now()
     transcriptionCallback?.(last, 'update')
   } else {
@@ -181,7 +197,7 @@ export async function startTranslation(
     throw new Error('Gemini API key is required')
   }
 
-  currentOutputMode = config.outputMode ?? 'device'
+  currentOutputMode = config.outputMode ?? 'webrtc'
   primaryTargetId = config.primaryTargetId ?? config.targets[0]?.id
 
   logger.info('Starting live translation session', {

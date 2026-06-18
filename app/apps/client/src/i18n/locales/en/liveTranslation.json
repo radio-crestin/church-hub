@@ -14,6 +14,7 @@
   "settings": {
     "button": "Settings",
     "close": "Close",
+    "save": "Save",
     "apiKey": "Gemini API Key",
     "apiKeyPlaceholder": "Enter your Gemini API key",
     "apiKeyDescription": "Required for Gemini 3.5 Live Translate. Your key is stored securely on the server.",
@@ -35,7 +36,7 @@
     "defaultDevice": "System default",
     "outputMode": "Local audio output",
     "outputModeDevice": "Local speaker",
-    "outputModeWebrtc": "Off",
+    "outputModeWebrtc": "Stream only",
     "outputModeBoth": "Speaker + stream",
     "outputModeDescription": "Choose how translated audio is played on this device. Listeners always receive their language via the shared link.",
     "streamUrl": "Listener link",

@@ -61,6 +61,7 @@ const baseHookReturn = {
   settingsLoaded: true,
   canStart: false,
   updateSetting: vi.fn(),
+  saveNow: vi.fn(),
   addTarget: vi.fn(),
   removeTarget: vi.fn(),
   updateTarget: vi.fn(),

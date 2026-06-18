@@ -247,7 +247,7 @@ function handleStart(req: Request): Response {
         inputDeviceId: body.inputDeviceId ?? saved.inputDeviceId ?? undefined,
         outputDeviceId:
           body.outputDeviceId ?? saved.outputDeviceId ?? undefined,
-        outputMode: body.outputMode ?? saved.outputMode ?? 'device',
+        outputMode: body.outputMode ?? saved.outputMode ?? 'webrtc',
       }
 
       // Publish target languages to listeners BEFORE starting the relay

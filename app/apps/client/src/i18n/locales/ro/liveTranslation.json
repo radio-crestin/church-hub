@@ -14,6 +14,7 @@
   "settings": {
     "button": "Setări",
     "close": "Închide",
+    "save": "Salvează",
     "apiKey": "Cheie API Gemini",
     "apiKeyPlaceholder": "Introduceți cheia API Gemini",
     "apiKeyDescription": "Necesară pentru Gemini 3.5 Live Translate. Cheia este stocată în siguranță pe server.",
@@ -35,7 +36,7 @@
     "defaultDevice": "Implicit sistem",
     "outputMode": "Redare audio locală",
     "outputModeDevice": "Difuzor local",
-    "outputModeWebrtc": "Dezactivat",
+    "outputModeWebrtc": "Doar stream",
     "outputModeBoth": "Difuzor + stream",
     "outputModeDescription": "Alegeți cum se redă traducerea pe acest dispozitiv. Ascultătorii primesc întotdeauna limba lor prin link-ul partajat.",
     "streamUrl": "Link ascultător",
