@@ -12,6 +12,7 @@ import {
   devicesPaths,
   feedbackPaths,
   healthPaths,
+  liveTranslationPaths,
   logsPaths,
   presentationPaths,
   schedulesPaths,
@@ -25,6 +26,7 @@ import {
   bibleSchemas,
   commonSchemas,
   deviceSchemas,
+  liveTranslationSchemas,
   presentationSchemas,
   scheduleSchemas,
   screenSchemas,
@@ -66,6 +68,10 @@ export const openApiSpec = {
     { name: 'Conversion', description: 'File format conversion utilities' },
     { name: 'Feedback', description: 'User feedback submission' },
     { name: 'Logs', description: 'Application logs access' },
+    {
+      name: 'Live Translation',
+      description: 'Real-time speech translation control and streaming',
+    },
   ],
   paths: {
     ...healthPaths,
@@ -84,6 +90,7 @@ export const openApiSpec = {
     ...presentationPaths,
     ...conversionPaths,
     ...feedbackPaths,
+    ...liveTranslationPaths,
   },
   components: {
     securitySchemes,
@@ -96,6 +103,7 @@ export const openApiSpec = {
       ...screenSchemas,
       ...presentationSchemas,
       ...userSchemas,
+      ...liveTranslationSchemas,
     },
     responses,
   },

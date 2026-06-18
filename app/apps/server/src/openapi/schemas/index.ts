@@ -1,6 +1,7 @@
 export { bibleSchemas } from './bible'
 export { commonSchemas } from './common'
 export { deviceSchemas } from './devices'
+export { liveTranslationSchemas } from './live-translation'
 export { presentationSchemas } from './presentation'
 export { scheduleSchemas } from './schedules'
 export { screenSchemas } from './screens'
