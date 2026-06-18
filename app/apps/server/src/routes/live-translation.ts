@@ -11,6 +11,7 @@ import {
   getTranslationState,
   setAudioLevelCallback,
   setAudioOutputCallback,
+  setOnAbortCallback,
   setStateCallback,
   setTranscriptionCallback,
   startTranslation,
@@ -94,6 +95,13 @@ setAudioLevelCallback((level, type, targetId) => {
 
 setListenerCountsCallback((counts) => {
   updateListenerCounts(counts)
+})
+
+// When the session aborts itself (all engines failed), also tear down the
+// signaling relay. The session keeps the error on screen for the host.
+setOnAbortCallback(() => {
+  void stopSignalingRelay()
+  setAvailableLanguages([])
 })
 
 export async function handleLiveTranslationRoutes(

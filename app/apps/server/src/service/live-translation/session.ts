@@ -43,6 +43,7 @@ interface RunningTarget {
   target: TranslationTarget
   engine: EngineSession
   outputLevel: number
+  dead?: boolean
 }
 
 const runningTargets = new Map<string, RunningTarget>()
@@ -54,7 +55,14 @@ let audioLevelCallback: AudioLevelCallback | null = null
 let transcriptionIdCounter = 0
 let currentOutputMode: OutputMode = 'device'
 let primaryTargetId: string | undefined
+// Every target's engine transcribes the same source audio; we take the source
+// transcript from just one of them. Use the first running target (always
+// valid) rather than the primary, whose id could be stale.
+let sourceEmitterTargetId: string | undefined
 let capturing = false
+let stopping = false
+let lastEngineError: string | undefined
+let onAbortCallback: (() => void) | null = null
 
 export function setStateCallback(cb: StateCallback) {
   stateCallback = cb
@@ -70,6 +78,11 @@ export function setTranscriptionCallback(cb: TranscriptionCallback) {
 
 export function setAudioLevelCallback(cb: AudioLevelCallback) {
   audioLevelCallback = cb
+}
+
+/** Called when the session aborts itself because all engines failed. */
+export function setOnAbortCallback(cb: () => void) {
+  onAbortCallback = cb
 }
 
 export function getTranslationState(): LiveTranslationState {
@@ -232,6 +245,8 @@ export async function startTranslation(
 
   currentOutputMode = config.outputMode ?? 'webrtc'
   primaryTargetId = config.primaryTargetId ?? config.targets[0]?.id
+  sourceEmitterTargetId = config.targets[0]?.id
+  lastEngineError = undefined
 
   logger.info('Starting live translation session', {
     source: config.sourceLanguage,
@@ -274,9 +289,11 @@ export async function startTranslation(
           onAudioOutput: (pcm) => handleEngineAudio(target, pcm),
           onSourceText: (text) => {
             // Every target's engine transcribes the SAME source audio, so only
-            // take the source transcript from the primary engine — otherwise
-            // the source line is duplicated once per target.
-            if (target.id === primaryTargetId) upsertTranscript(text, 'source')
+            // take the source transcript from one of them (the first target,
+            // always valid) — otherwise the source line is duplicated per target.
+            if (target.id === sourceEmitterTargetId) {
+              upsertTranscript(text, 'source')
+            }
           },
           onTargetText: (text) => upsertTranscript(text, 'translation', target),
           onSpeakingStart: () => {
@@ -291,10 +308,25 @@ export async function startTranslation(
               targetId: target.id,
               error: err,
             })
+            lastEngineError = err
             updateState({ error: err })
           },
           onClose: () => {
             logger.info('Engine closed', { targetId: target.id })
+            // An engine closing on its own (not because we're stopping) means
+            // it failed — bad key, depleted billing, dropped network. If none
+            // are left alive, abort the session but KEEP the error on screen.
+            if (stopping) return
+            const rt = runningTargets.get(target.id)
+            if (rt) rt.dead = true
+            const anyAlive = Array.from(runningTargets.values()).some(
+              (r) => !r.dead,
+            )
+            if (!anyAlive) {
+              void abortWithError(
+                lastEngineError || 'Translation engine disconnected.',
+              )
+            }
           },
         },
       )
@@ -345,6 +377,7 @@ export async function stopTranslation(): Promise<void> {
   if (runningTargets.size === 0 && !capturing) return
 
   logger.info('Stopping live translation session')
+  stopping = true
 
   if (capturing) {
     stopAudioCapture()
@@ -361,9 +394,55 @@ export async function stopTranslation(): Promise<void> {
   }
   runningTargets.clear()
   openSegmentEntryId.clear()
+  lastEngineError = undefined
+  stopping = false
 
   currentState = { ...DEFAULT_TRANSLATION_STATE }
   stateCallback?.(currentState)
+}
+
+/**
+ * Tear down a session whose engines all died unexpectedly (bad key, depleted
+ * billing, dropped network). Unlike stopTranslation, this KEEPS the error and
+ * transcript visible so the host can see why it stopped, rather than wiping the
+ * screen to a clean idle state.
+ */
+async function abortWithError(message: string): Promise<void> {
+  if (stopping) return
+  stopping = true
+  logger.warn('All translation engines failed — aborting session', {
+    error: message,
+  })
+
+  if (capturing) {
+    stopAudioCapture()
+    capturing = false
+  }
+  stopAudioPlayback()
+
+  for (const rt of runningTargets.values()) {
+    try {
+      await rt.engine.close()
+    } catch {
+      // already closing
+    }
+  }
+  runningTargets.clear()
+  openSegmentEntryId.clear()
+  stopping = false
+
+  // Preserve the existing state (incl. transcript) but mark inactive and keep
+  // the error so it stays on the host's screen.
+  currentState = {
+    ...currentState,
+    isActive: false,
+    startedAt: null,
+    inputAudioLevel: 0,
+    outputAudioLevel: 0,
+    error: message,
+  }
+  stateCallback?.(currentState)
+  onAbortCallback?.()
 }
 
 export function clearTranscription(): void {
