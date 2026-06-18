@@ -103,20 +103,21 @@ test.describe('Live Translation Page', () => {
     await page.goto('/live-translation')
     await page.waitForLoadState('networkidle')
 
-    // Open the settings dialog (header toggle button labelled "Settings")
-    await page.getByRole('button', { name: 'Settings' }).first().click()
+    // Open the settings dialog. The first button in <main> is the settings
+    // toggle; use a structural selector so the test is locale-independent
+    // (the app renders in Romanian or English depending on the user).
+    await page.getByRole('main').getByRole('button').first().click()
 
-    // The single Gemini API key field is present
-    await expect(
-      page.getByPlaceholder('Enter your Gemini API key'),
-    ).toBeVisible()
+    const dialog = page.getByRole('dialog')
+    await expect(dialog).toBeVisible()
 
-    // Removed multi-engine controls must be gone
+    // Exactly one API key field remains — the Gemini key. The OpenAI key
+    // field was removed along with the engine selector.
+    await expect(dialog.locator('input[type="password"]')).toHaveCount(1)
+
+    // The removed OpenAI engine option and its key link must be gone
+    // (these strings were hardcoded, so the assertion is locale-independent).
     await expect(page.getByText('OpenAI Realtime')).toHaveCount(0)
-    await expect(page.getByText('Output type')).toHaveCount(0)
-    await expect(page.getByText('Voice', { exact: true })).toHaveCount(0)
-
-    // Target languages are still configurable
-    await expect(page.getByText('Add another language')).toBeVisible()
+    await expect(page.locator('a[href*="platform.openai.com"]')).toHaveCount(0)
   })
 })
