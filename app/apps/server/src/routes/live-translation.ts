@@ -1,6 +1,5 @@
 import type { RequestContext } from '../middleware'
 import { getAudioDevices } from '../service/live-translation/audio-io'
-import { defaultVoiceForEngine } from '../service/live-translation/engines'
 import {
   defaultSettings,
   generateTargetId,
@@ -12,6 +11,7 @@ import {
   getTranslationState,
   setAudioLevelCallback,
   setAudioOutputCallback,
+  setOnAbortCallback,
   setStateCallback,
   setTranscriptionCallback,
   startTranslation,
@@ -32,8 +32,6 @@ import {
 } from '../service/live-translation/stream'
 import type {
   LiveTranslationConfig,
-  OutputModality,
-  TranslationEngine,
   TranslationTarget,
 } from '../service/live-translation/types'
 import { getSetting, upsertSetting } from '../service/settings'
@@ -64,7 +62,10 @@ setAudioOutputCallback((targetId, pcmData) => {
 // Last-broadcast snapshot per target — lets us send true deltas to listeners
 // instead of full-entry snapshots, so the listener can append and decide on
 // its own when to roll over to a new line.
-const lastBroadcastByTarget = new Map<string, { entryId: string; text: string }>()
+const lastBroadcastByTarget = new Map<
+  string,
+  { entryId: string; text: string }
+>()
 
 setTranscriptionCallback((entry, action) => {
   broadcastTranslationTranscription(entry, action)
@@ -94,6 +95,13 @@ setAudioLevelCallback((level, type, targetId) => {
 
 setListenerCountsCallback((counts) => {
   updateListenerCounts(counts)
+})
+
+// When the session aborts itself (all engines failed), also tear down the
+// signaling relay. The session keeps the error on screen for the host.
+setOnAbortCallback(() => {
+  void stopSignalingRelay()
+  setAvailableLanguages([])
 })
 
 export async function handleLiveTranslationRoutes(
@@ -215,17 +223,11 @@ function handleStart(req: Request): Response {
       const body = (await req.json()) as Partial<LiveTranslationConfig>
       const saved = loadPersistedSettings()
 
-      const engine: TranslationEngine =
-        body.engine === 'gemini' || body.engine === 'openai'
-          ? body.engine
-          : saved.engine
-
       const targets: TranslationTarget[] =
         Array.isArray(body.targets) && body.targets.length > 0
           ? body.targets.map((t) => ({
               id: t.id || generateTargetId(),
               targetLanguage: t.targetLanguage,
-              voiceName: t.voiceName || defaultVoiceForEngine(engine),
             }))
           : saved.targets
 
@@ -237,37 +239,23 @@ function handleStart(req: Request): Response {
       }
 
       const geminiApiKey = body.geminiApiKey || saved.geminiApiKey
-      const openaiApiKey = body.openaiApiKey || saved.openaiApiKey
-
-      const apiKey = engine === 'gemini' ? geminiApiKey : openaiApiKey
-      if (!apiKey) {
+      if (!geminiApiKey) {
         return Response.json(
-          {
-            error: `${engine === 'gemini' ? 'Gemini' : 'OpenAI'} API key is required`,
-          },
+          { error: 'Gemini API key is required' },
           { status: 400 },
         )
       }
 
-      const outputModality: OutputModality =
-        body.outputModality === 'text_only' || body.outputModality === 'audio_text'
-          ? body.outputModality
-          : saved.outputModality
-
       const config: LiveTranslationConfig = {
-        engine,
-        outputModality,
         sourceLanguage: body.sourceLanguage || saved.sourceLanguage,
         targets,
         primaryTargetId:
           body.primaryTargetId || saved.primaryTargetId || targets[0]?.id,
         geminiApiKey,
-        openaiApiKey,
-        inputDeviceId:
-          body.inputDeviceId ?? (saved.inputDeviceId ?? undefined),
+        inputDeviceId: body.inputDeviceId ?? saved.inputDeviceId ?? undefined,
         outputDeviceId:
-          body.outputDeviceId ?? (saved.outputDeviceId ?? undefined),
-        outputMode: body.outputMode ?? saved.outputMode ?? 'device',
+          body.outputDeviceId ?? saved.outputDeviceId ?? undefined,
+        outputMode: body.outputMode ?? saved.outputMode ?? 'webrtc',
       }
 
       // Publish target languages to listeners BEFORE starting the relay
@@ -283,7 +271,6 @@ function handleStart(req: Request): Response {
       await startSignalingRelay()
 
       logger.info('Translation started', {
-        engine: config.engine,
         source: config.sourceLanguage,
         targets: config.targets.map((t) => t.targetLanguage),
         outputMode: config.outputMode,

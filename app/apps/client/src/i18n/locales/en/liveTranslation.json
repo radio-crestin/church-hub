@@ -14,26 +14,10 @@
   "settings": {
     "button": "Settings",
     "close": "Close",
-    "engine": "Engine",
-    "engineDefault": "default",
-    "outputModality": "Output type",
-    "outputModalityDescription": "Translate to spoken audio + transcript, or to a text transcript only (cheaper, faster).",
-    "outputModality_audio_text": "Audio + text",
-    "outputModality_audio_text_description": "Synthesizes a spoken translation and shows the transcript.",
-    "outputModality_text_only": "Text only",
-    "outputModality_text_only_description": "Transcript only — no spoken audio. Lower cost & latency.",
-    "apiKey": {
-      "openai": "OpenAI API Key",
-      "gemini": "Gemini API Key"
-    },
-    "apiKeyPlaceholder": {
-      "openai": "sk-...",
-      "gemini": "Enter your Gemini API key"
-    },
-    "apiKeyDescription": {
-      "openai": "Required for the OpenAI Realtime API (GPT-4o Realtime). Your key is stored securely on the server.",
-      "gemini": "Required for Gemini 2.5 Flash native-audio translation. Your key is stored securely on the server."
-    },
+    "save": "Save",
+    "apiKey": "Gemini API Key",
+    "apiKeyPlaceholder": "Enter your Gemini API key",
+    "apiKeyDescription": "Required for Gemini 3.5 Live Translate. Your key is stored securely on the server.",
     "apiKeyConfigured": "API key configured and saved.",
     "howToGetKey": "How to get your API key:",
     "getApiKey": "Open provider site",
@@ -47,13 +31,12 @@
     "makePrimary": "Make primary",
     "primaryTargetTooltip": "Audio played to your local speaker uses the primary language",
     "swapLanguages": "Swap languages",
-    "voice": "Voice",
     "inputDevice": "Input device",
     "outputDevice": "Output device",
     "defaultDevice": "System default",
     "outputMode": "Local audio output",
     "outputModeDevice": "Local speaker",
-    "outputModeWebrtc": "Off",
+    "outputModeWebrtc": "Stream only",
     "outputModeBoth": "Speaker + stream",
     "outputModeDescription": "Choose how translated audio is played on this device. Listeners always receive their language via the shared link.",
     "streamUrl": "Listener link",

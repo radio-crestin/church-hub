@@ -14,26 +14,10 @@
   "settings": {
     "button": "Setări",
     "close": "Închide",
-    "engine": "Motor",
-    "engineDefault": "implicit",
-    "outputModality": "Tip de ieșire",
-    "outputModalityDescription": "Tradu în voce + transcript, sau doar în transcript text (mai ieftin și mai rapid).",
-    "outputModality_audio_text": "Audio + text",
-    "outputModality_audio_text_description": "Sintetizează vocea tradusă și afișează transcriptul.",
-    "outputModality_text_only": "Doar text",
-    "outputModality_text_only_description": "Doar transcript — fără voce sintetizată. Cost și latență mai mici.",
-    "apiKey": {
-      "openai": "Cheie API OpenAI",
-      "gemini": "Cheie API Gemini"
-    },
-    "apiKeyPlaceholder": {
-      "openai": "sk-...",
-      "gemini": "Introduceți cheia API Gemini"
-    },
-    "apiKeyDescription": {
-      "openai": "Necesară pentru OpenAI Realtime API (GPT-4o Realtime). Cheia este stocată în siguranță pe server.",
-      "gemini": "Necesară pentru traducerea audio nativă Gemini 2.5 Flash. Cheia este stocată în siguranță pe server."
-    },
+    "save": "Salvează",
+    "apiKey": "Cheie API Gemini",
+    "apiKeyPlaceholder": "Introduceți cheia API Gemini",
+    "apiKeyDescription": "Necesară pentru Gemini 3.5 Live Translate. Cheia este stocată în siguranță pe server.",
     "apiKeyConfigured": "Cheia API este configurată și salvată.",
     "howToGetKey": "Cum obțineți cheia API:",
     "getApiKey": "Deschide site-ul furnizorului",
@@ -47,13 +31,12 @@
     "makePrimary": "Setează ca principală",
     "primaryTargetTooltip": "Sunetul redat pe difuzorul local folosește limba principală",
     "swapLanguages": "Schimbă limbile",
-    "voice": "Voce",
     "inputDevice": "Dispozitiv de intrare",
     "outputDevice": "Dispozitiv de ieșire",
     "defaultDevice": "Implicit sistem",
     "outputMode": "Redare audio locală",
     "outputModeDevice": "Difuzor local",
-    "outputModeWebrtc": "Dezactivat",
+    "outputModeWebrtc": "Doar stream",
     "outputModeBoth": "Difuzor + stream",
     "outputModeDescription": "Alegeți cum se redă traducerea pe acest dispozitiv. Ascultătorii primesc întotdeauna limba lor prin link-ul partajat.",
     "streamUrl": "Link ascultător",

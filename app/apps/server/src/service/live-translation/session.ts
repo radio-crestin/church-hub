@@ -5,10 +5,7 @@ import {
   stopAudioCapture,
   stopAudioPlayback,
 } from './audio-io'
-import {
-  createEngineSession,
-  type EngineSession,
-} from './engines'
+import { createEngineSession, type EngineSession } from './engines'
 import type {
   LiveTranslationConfig,
   LiveTranslationState,
@@ -46,6 +43,7 @@ interface RunningTarget {
   target: TranslationTarget
   engine: EngineSession
   outputLevel: number
+  dead?: boolean
 }
 
 const runningTargets = new Map<string, RunningTarget>()
@@ -57,7 +55,14 @@ let audioLevelCallback: AudioLevelCallback | null = null
 let transcriptionIdCounter = 0
 let currentOutputMode: OutputMode = 'device'
 let primaryTargetId: string | undefined
+// Every target's engine transcribes the same source audio; we take the source
+// transcript from just one of them. Use the first running target (always
+// valid) rather than the primary, whose id could be stale.
+let sourceEmitterTargetId: string | undefined
 let capturing = false
+let stopping = false
+let lastEngineError: string | undefined
+let onAbortCallback: (() => void) | null = null
 
 export function setStateCallback(cb: StateCallback) {
   stateCallback = cb
@@ -73,6 +78,11 @@ export function setTranscriptionCallback(cb: TranscriptionCallback) {
 
 export function setAudioLevelCallback(cb: AudioLevelCallback) {
   audioLevelCallback = cb
+}
+
+/** Called when the session aborts itself because all engines failed. */
+export function setOnAbortCallback(cb: () => void) {
+  onAbortCallback = cb
 }
 
 export function getTranslationState(): LiveTranslationState {
@@ -111,34 +121,76 @@ export function calculateAudioLevel(pcmBuffer: Buffer): number {
   return Math.max(0, Math.min(1, (dbfs - minDb) / -minDb))
 }
 
-function appendOrCreateEntry(
+/**
+ * Join a streaming transcription delta onto the running text. The Gemini
+ * live-translate model emits transcription in word/phrase fragments that do
+ * NOT carry surrounding spaces (unlike the previous engines), so concatenating
+ * directly ran words together. Insert a space between word fragments, but not
+ * when either side already provides whitespace, not before punctuation that
+ * attaches to the preceding word, and not after an opening bracket/quote.
+ */
+function joinTranscriptDelta(prev: string, delta: string): string {
+  if (!prev) return delta.replace(/^\s+/, '')
+  if (!delta) return prev
+  if (/\s$/.test(prev) || /^\s/.test(delta)) return prev + delta
+  // Punctuation that hugs the preceding word — no leading space.
+  if (/^[.,!?;:)\]}%…»"']/.test(delta)) return prev + delta
+  // Opening punctuation at the end of prev — no trailing space.
+  if (/[([{«¿¡]$/.test(prev)) return prev + delta
+  return `${prev} ${delta}`
+}
+
+// Tracks the in-progress transcription entry per "segment" so streamed updates
+// modify one line and each finished utterance becomes a new line. Key:
+// 'source' for the shared source transcript, `translation:<targetId>` per target.
+const openSegmentEntryId = new Map<string, string>()
+
+function segmentKey(type: 'source' | 'translation', targetId?: string): string {
+  return type === 'source' ? 'source' : `translation:${targetId ?? ''}`
+}
+
+/**
+ * Add or update a transcription line.
+ *
+ * The Gemini 3.x live models deliver the full utterance text (often re-sending
+ * a growing snapshot) rather than pure deltas, so naive `+=` produced garbled,
+ * duplicated text. We therefore: replace when the new text is a longer snapshot
+ * of the current line, ignore exact/shorter duplicates, and only word-join when
+ * it is a genuine delta. `closeTranscriptSegments` (called on turn end) ends the
+ * current utterance so the next text starts a fresh line.
+ */
+function upsertTranscript(
   text: string,
   type: 'source' | 'translation',
   target?: TranslationTarget,
 ): void {
-  const last =
-    currentState.transcription[currentState.transcription.length - 1]
+  const trimmed = text.trim()
+  if (!trimmed) return
 
-  const sameBucket =
-    last &&
-    last.type === type &&
-    (type === 'source'
-      ? !target || last.targetId === target.id || !last.targetId
-      : last.targetId === target?.id)
+  const key = segmentKey(type, target?.id)
+  const openId = openSegmentEntryId.get(key)
+  const existing = openId
+    ? currentState.transcription.find((e) => e.id === openId)
+    : undefined
 
-  if (sameBucket && last) {
-    // Engine deltas already carry their own whitespace; concatenate directly.
-    // (Old behavior injected a space, which mangled sub-word deltas like
-    // "Hel" + "lo" into "Hel lo".)
-    last.text += text
-    last.timestamp = Date.now()
-    transcriptionCallback?.(last, 'update')
+  if (existing) {
+    const prev = existing.text
+    if (trimmed === prev) return
+    let next: string
+    if (trimmed.startsWith(prev)) {
+      next = trimmed // growing snapshot of the same utterance
+    } else if (prev.startsWith(trimmed)) {
+      return // older / shorter snapshot of what we already have
+    } else {
+      next = joinTranscriptDelta(prev, trimmed) // genuine delta
+    }
+    existing.text = next
+    existing.timestamp = Date.now()
+    transcriptionCallback?.(existing, 'update')
   } else {
     const entry: TranscriptionEntry = {
       id: generateId(),
-      // Trim leading whitespace on the first chunk only — engines often
-      // emit a leading space on the first delta of a new segment.
-      text: text.replace(/^\s+/, ''),
+      text: trimmed,
       type,
       targetId: target?.id,
       targetLanguage: target?.targetLanguage,
@@ -148,12 +200,18 @@ function appendOrCreateEntry(
     if (currentState.transcription.length > 200) {
       currentState.transcription = currentState.transcription.slice(-200)
     }
+    openSegmentEntryId.set(key, entry.id)
     transcriptionCallback?.(entry, 'add')
   }
-  // No full-state broadcast here — transcriptionCallback already streamed
-  // the granular update to clients. Skipping the wire round-trip for the
-  // whole transcription array keeps deltas truly real-time.
+  // transcriptionCallback already streamed the granular update; skip the
+  // full-state broadcast to keep updates real-time.
   mutateState({ transcription: currentState.transcription })
+}
+
+/** End the current utterance(s) so subsequent text starts on a new line. */
+function closeTranscriptSegments(targetId?: string): void {
+  if (targetId) openSegmentEntryId.delete(`translation:${targetId}`)
+  openSegmentEntryId.delete('source')
 }
 
 function handleMicInput(pcmBuffer: Buffer): void {
@@ -180,29 +238,24 @@ export async function startTranslation(
     throw new Error('At least one target language is required')
   }
 
-  const apiKey =
-    config.engine === 'gemini' ? config.geminiApiKey : config.openaiApiKey
+  const apiKey = config.geminiApiKey
   if (!apiKey) {
-    throw new Error(
-      `${config.engine === 'gemini' ? 'Gemini' : 'OpenAI'} API key is required`,
-    )
+    throw new Error('Gemini API key is required')
   }
 
-  currentOutputMode = config.outputMode ?? 'device'
+  currentOutputMode = config.outputMode ?? 'webrtc'
   primaryTargetId = config.primaryTargetId ?? config.targets[0]?.id
+  sourceEmitterTargetId = config.targets[0]?.id
+  lastEngineError = undefined
 
   logger.info('Starting live translation session', {
-    engine: config.engine,
     source: config.sourceLanguage,
     targets: config.targets.map((t) => t.targetLanguage),
     outputMode: currentOutputMode,
   })
 
-  const outputModality = config.outputModality ?? 'audio_text'
   currentState = {
     ...DEFAULT_TRANSLATION_STATE,
-    engine: config.engine,
-    outputModality,
     sourceLanguage: config.sourceLanguage,
     primaryTargetId,
     isActive: true,
@@ -210,7 +263,6 @@ export async function startTranslation(
     targets: config.targets.map((t) => ({
       id: t.id,
       targetLanguage: t.targetLanguage,
-      voiceName: t.voiceName,
       outputAudioLevel: 0,
       listenerCount: 0,
     })),
@@ -218,10 +270,8 @@ export async function startTranslation(
   }
   stateCallback?.(currentState)
 
-  // Device playback only makes sense when the engine actually returns audio
   const useDevice =
-    outputModality === 'audio_text' &&
-    (currentOutputMode === 'device' || currentOutputMode === 'both')
+    currentOutputMode === 'device' || currentOutputMode === 'both'
   if (useDevice) {
     await startAudioPlayback(config.outputDeviceId)
   }
@@ -230,34 +280,53 @@ export async function startTranslation(
     try {
       const engine = await createEngineSession(
         {
-          engine: config.engine,
-          outputModality,
           apiKey,
           sourceLanguage: config.sourceLanguage,
           targetLanguage: target.targetLanguage,
-          voiceName: target.voiceName,
           targetId: target.id,
         },
         {
           onAudioOutput: (pcm) => handleEngineAudio(target, pcm),
-          onSourceText: (text) => appendOrCreateEntry(text, 'source', target),
-          onTargetText: (text) =>
-            appendOrCreateEntry(text, 'translation', target),
+          onSourceText: (text) => {
+            // Every target's engine transcribes the SAME source audio, so only
+            // take the source transcript from one of them (the first target,
+            // always valid) — otherwise the source line is duplicated per target.
+            if (target.id === sourceEmitterTargetId) {
+              upsertTranscript(text, 'source')
+            }
+          },
+          onTargetText: (text) => upsertTranscript(text, 'translation', target),
           onSpeakingStart: () => {
             // handled per-engine (used to pause input)
           },
           onTurnComplete: () => {
-            // ignore — output level decay handled by audio chunks
+            // End the current utterance so the next text starts a new line.
+            closeTranscriptSegments(target.id)
           },
           onError: (err) => {
             logger.error('Engine error', {
               targetId: target.id,
               error: err,
             })
+            lastEngineError = err
             updateState({ error: err })
           },
           onClose: () => {
             logger.info('Engine closed', { targetId: target.id })
+            // An engine closing on its own (not because we're stopping) means
+            // it failed — bad key, depleted billing, dropped network. If none
+            // are left alive, abort the session but KEEP the error on screen.
+            if (stopping) return
+            const rt = runningTargets.get(target.id)
+            if (rt) rt.dead = true
+            const anyAlive = Array.from(runningTargets.values()).some(
+              (r) => !r.dead,
+            )
+            if (!anyAlive) {
+              void abortWithError(
+                lastEngineError || 'Translation engine disconnected.',
+              )
+            }
           },
         },
       )
@@ -308,6 +377,7 @@ export async function stopTranslation(): Promise<void> {
   if (runningTargets.size === 0 && !capturing) return
 
   logger.info('Stopping live translation session')
+  stopping = true
 
   if (capturing) {
     stopAudioCapture()
@@ -323,13 +393,61 @@ export async function stopTranslation(): Promise<void> {
     }
   }
   runningTargets.clear()
+  openSegmentEntryId.clear()
+  lastEngineError = undefined
+  stopping = false
 
   currentState = { ...DEFAULT_TRANSLATION_STATE }
   stateCallback?.(currentState)
 }
 
+/**
+ * Tear down a session whose engines all died unexpectedly (bad key, depleted
+ * billing, dropped network). Unlike stopTranslation, this KEEPS the error and
+ * transcript visible so the host can see why it stopped, rather than wiping the
+ * screen to a clean idle state.
+ */
+async function abortWithError(message: string): Promise<void> {
+  if (stopping) return
+  stopping = true
+  logger.warn('All translation engines failed — aborting session', {
+    error: message,
+  })
+
+  if (capturing) {
+    stopAudioCapture()
+    capturing = false
+  }
+  stopAudioPlayback()
+
+  for (const rt of runningTargets.values()) {
+    try {
+      await rt.engine.close()
+    } catch {
+      // already closing
+    }
+  }
+  runningTargets.clear()
+  openSegmentEntryId.clear()
+  stopping = false
+
+  // Preserve the existing state (incl. transcript) but mark inactive and keep
+  // the error so it stays on the host's screen.
+  currentState = {
+    ...currentState,
+    isActive: false,
+    startedAt: null,
+    inputAudioLevel: 0,
+    outputAudioLevel: 0,
+    error: message,
+  }
+  stateCallback?.(currentState)
+  onAbortCallback?.()
+}
+
 export function clearTranscription(): void {
   currentState.transcription = []
+  openSegmentEntryId.clear()
   updateState({ transcription: [] })
 }
 

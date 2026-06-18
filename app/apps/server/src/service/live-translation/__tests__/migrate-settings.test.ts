@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'bun:test'
-
 import { migrateSettings } from '../migrate-settings'
 
 describe('migrateSettings', () => {
@@ -9,12 +8,10 @@ describe('migrateSettings', () => {
     const c = migrateSettings({})
 
     for (const out of [a, b, c]) {
-      expect(out.engine).toBe('openai')
-      expect(out.outputModality).toBe('audio_text')
       expect(out.sourceLanguage).toBe('ro')
       expect(out.targets).toHaveLength(1)
       expect(out.targets[0]!.targetLanguage).toBe('en')
-      expect(out.outputMode).toBe('device')
+      expect(out.outputMode).toBe('webrtc')
       expect(out.primaryTargetId).toBe(out.targets[0]!.id)
     }
   })
@@ -23,7 +20,6 @@ describe('migrateSettings', () => {
     const legacy = {
       sourceLanguage: 'ro',
       targetLanguage: 'hu',
-      voiceName: 'Kore',
       geminiApiKey: 'gem-key',
       inputDeviceId: 3,
       outputDeviceId: 4,
@@ -33,10 +29,8 @@ describe('migrateSettings', () => {
 
     expect(out.targets).toHaveLength(1)
     expect(out.targets[0]!.targetLanguage).toBe('hu')
-    expect(out.targets[0]!.voiceName).toBe('Kore')
     expect(out.targets[0]!.id).toMatch(/^tgt-/)
     expect(out.geminiApiKey).toBe('gem-key')
-    expect(out.openaiApiKey).toBeUndefined()
     expect(out.inputDeviceId).toBe(3)
     expect(out.outputDeviceId).toBe(4)
     expect(out.outputMode).toBe('both')
@@ -44,49 +38,69 @@ describe('migrateSettings', () => {
     expect(out.primaryTargetId).toBe(out.targets[0]!.id)
   })
 
+  it('drops legacy engine/voice/modality/openai fields cleanly', () => {
+    const legacy = {
+      engine: 'openai',
+      outputModality: 'text_only',
+      openaiApiKey: 'oai-key',
+      geminiApiKey: 'gem-key',
+      sourceLanguage: 'ro',
+      targets: [{ id: 'tgt-en', targetLanguage: 'en', voiceName: 'alloy' }],
+      primaryTargetId: 'tgt-en',
+    }
+    const out = migrateSettings(legacy)
+    const record = out as unknown as Record<string, unknown>
+
+    // Removed feature fields must not survive
+    expect(record.engine).toBeUndefined()
+    expect(record.outputModality).toBeUndefined()
+    expect(record.openaiApiKey).toBeUndefined()
+    expect(
+      (out.targets[0] as unknown as Record<string, unknown>).voiceName,
+    ).toBeUndefined()
+
+    // Everything still relevant is preserved
+    expect(out.targets).toHaveLength(1)
+    expect(out.targets[0]!.id).toBe('tgt-en')
+    expect(out.targets[0]!.targetLanguage).toBe('en')
+    expect(out.geminiApiKey).toBe('gem-key')
+    expect(out.primaryTargetId).toBe('tgt-en')
+  })
+
   it('preserves existing multi-target shape', () => {
     const persisted = {
-      engine: 'gemini' as const,
-      outputModality: 'text_only' as const,
       sourceLanguage: 'ro',
       targets: [
-        { id: 'tgt-en', targetLanguage: 'en', voiceName: 'alloy' },
-        { id: 'tgt-de', targetLanguage: 'de', voiceName: 'echo' },
+        { id: 'tgt-en', targetLanguage: 'en' },
+        { id: 'tgt-de', targetLanguage: 'de' },
       ],
       primaryTargetId: 'tgt-de',
-      openaiApiKey: 'oai-key',
+      geminiApiKey: 'gem-key',
     }
     const out = migrateSettings(persisted)
 
-    expect(out.engine).toBe('gemini')
-    expect(out.outputModality).toBe('text_only')
     expect(out.targets).toHaveLength(2)
     expect(out.targets[0]!.id).toBe('tgt-en')
     expect(out.targets[1]!.targetLanguage).toBe('de')
     expect(out.primaryTargetId).toBe('tgt-de')
-    expect(out.openaiApiKey).toBe('oai-key')
-  })
-
-  it('coerces unknown engine to default openai', () => {
-    const out = migrateSettings({ engine: 'mistral' })
-    expect(out.engine).toBe('openai')
-  })
-
-  it('coerces unknown outputModality to default audio_text', () => {
-    const out = migrateSettings({ outputModality: 'bananas' })
-    expect(out.outputModality).toBe('audio_text')
+    expect(out.geminiApiKey).toBe('gem-key')
   })
 
   it('synthesizes target id when missing', () => {
     const out = migrateSettings({
-      targets: [{ targetLanguage: 'en', voiceName: 'alloy' }],
+      targets: [{ targetLanguage: 'en' }],
     })
     expect(out.targets[0]!.id).toMatch(/^tgt-/)
     expect(out.primaryTargetId).toBe(out.targets[0]!.id)
   })
 
-  it('coerces unknown outputMode to default device', () => {
+  it('coerces unknown outputMode to the default', () => {
     const out = migrateSettings({ outputMode: 'multicast' })
+    expect(out.outputMode).toBe('webrtc')
+  })
+
+  it('preserves an explicit device outputMode', () => {
+    const out = migrateSettings({ outputMode: 'device' })
     expect(out.outputMode).toBe('device')
   })
 })

@@ -1,18 +1,10 @@
-import { defaultVoiceForEngine } from './engines'
-import type {
-  OutputModality,
-  TranslationEngine,
-  TranslationTarget,
-} from './types'
+import type { TranslationTarget } from './types'
 
 export interface PersistedSettings {
-  engine: TranslationEngine
-  outputModality: OutputModality
   sourceLanguage: string
   targets: TranslationTarget[]
   primaryTargetId?: string
   geminiApiKey?: string
-  openaiApiKey?: string
   inputDeviceId?: number | null
   outputDeviceId?: number | null
   outputMode?: 'device' | 'webrtc' | 'both'
@@ -24,38 +16,32 @@ export function generateTargetId(): string {
 
 export function defaultSettings(): PersistedSettings {
   return {
-    engine: 'openai',
-    outputModality: 'audio_text',
     sourceLanguage: 'ro',
     targets: [
       {
         id: generateTargetId(),
         targetLanguage: 'en',
-        voiceName: defaultVoiceForEngine('openai'),
       },
     ],
     geminiApiKey: '',
-    openaiApiKey: '',
     inputDeviceId: null,
     outputDeviceId: null,
-    outputMode: 'device',
+    outputMode: 'webrtc',
   }
 }
 
 /**
- * Migrate legacy single-target settings shape
- *   { sourceLanguage, targetLanguage, voiceName, geminiApiKey, ... }
- * into the multi-target shape with targets[]. Also fills in defaults for
- * fields added later (engine, outputModality).
+ * Normalise persisted settings into the current shape. Handles:
+ *  - the legacy single-target shape ({ sourceLanguage, targetLanguage, ... })
+ *    by wrapping it into targets[]
+ *  - legacy fields from the old multi-engine feature (engine, outputModality,
+ *    openaiApiKey, per-target voiceName), which are simply dropped — the
+ *    feature now runs on a single Gemini live-translate model with no voice
+ *    or engine selection.
  */
 export function migrateSettings(raw: unknown): PersistedSettings {
   const obj = (raw as Record<string, unknown>) || {}
   const defaults = defaultSettings()
-
-  const engine: TranslationEngine =
-    obj.engine === 'gemini' || obj.engine === 'openai'
-      ? obj.engine
-      : defaults.engine
 
   let targets: TranslationTarget[]
   if (Array.isArray(obj.targets) && obj.targets.length > 0) {
@@ -63,10 +49,6 @@ export function migrateSettings(raw: unknown): PersistedSettings {
       id: typeof t.id === 'string' ? t.id : generateTargetId(),
       targetLanguage:
         typeof t.targetLanguage === 'string' ? t.targetLanguage : 'en',
-      voiceName:
-        typeof t.voiceName === 'string'
-          ? t.voiceName
-          : defaultVoiceForEngine(engine),
     }))
   } else {
     targets = [
@@ -74,20 +56,11 @@ export function migrateSettings(raw: unknown): PersistedSettings {
         id: generateTargetId(),
         targetLanguage:
           typeof obj.targetLanguage === 'string' ? obj.targetLanguage : 'en',
-        voiceName:
-          typeof obj.voiceName === 'string'
-            ? obj.voiceName
-            : defaultVoiceForEngine(engine),
       },
     ]
   }
 
-  const outputModality: OutputModality =
-    obj.outputModality === 'text_only' ? 'text_only' : 'audio_text'
-
   return {
-    engine,
-    outputModality,
     sourceLanguage:
       typeof obj.sourceLanguage === 'string' ? obj.sourceLanguage : 'ro',
     targets,
@@ -97,8 +70,6 @@ export function migrateSettings(raw: unknown): PersistedSettings {
         : targets[0]?.id,
     geminiApiKey:
       typeof obj.geminiApiKey === 'string' ? obj.geminiApiKey : undefined,
-    openaiApiKey:
-      typeof obj.openaiApiKey === 'string' ? obj.openaiApiKey : undefined,
     inputDeviceId:
       typeof obj.inputDeviceId === 'number' ? obj.inputDeviceId : null,
     outputDeviceId:

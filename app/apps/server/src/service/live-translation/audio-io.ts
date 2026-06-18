@@ -1,4 +1,7 @@
+import { existsSync } from 'node:fs'
+
 import { log } from '../../utils/fileLogger'
+import { getAudifyNativeModulePath } from '../../utils/paths'
 
 const logger = {
   debug: (msg: string, data?: unknown) => log('audio-io', 'debug', msg, data),
@@ -7,14 +10,52 @@ const logger = {
   error: (msg: string, data?: unknown) => log('audio-io', 'error', msg, data),
 }
 
+// audify's RtAudioFormat is a plain JS enum defined in its index.js (not in the
+// native binary). When we load the bundled .node directly in production that
+// enum isn't present, so we mirror the values audify uses here.
+const RTAUDIO_FORMAT = {
+  RTAUDIO_SINT8: 0x1,
+  RTAUDIO_SINT16: 0x2,
+  RTAUDIO_SINT24: 0x4,
+  RTAUDIO_SINT32: 0x8,
+  RTAUDIO_FLOAT32: 0x10,
+  RTAUDIO_FLOAT64: 0x20,
+} as const
+
 let RtAudio: typeof import('audify').RtAudio | null = null
 let RtAudioFormat: typeof import('audify').RtAudioFormat | null = null
 
 async function loadAudify() {
   if (RtAudio) return
+
+  // Production (Tauri sidecar): Bun's compiled binary can't bundle native
+  // modules, so audify.node is shipped as a resource (see compile.ts) and
+  // loaded directly. The raw binding exposes RtAudio; RtAudioFormat is the
+  // JS enum mirrored above.
+  const bundledPath = getAudifyNativeModulePath()
+  if (bundledPath && existsSync(bundledPath)) {
+    try {
+      const rawAudify = require(bundledPath) as {
+        RtAudio: typeof import('audify').RtAudio
+      }
+      RtAudio = rawAudify.RtAudio
+      RtAudioFormat =
+        RTAUDIO_FORMAT as unknown as typeof import('audify').RtAudioFormat
+      logger.info(
+        `Loaded audify native module from bundled path: ${bundledPath}`,
+      )
+      return
+    } catch (error) {
+      logger.warn('Failed to load bundled audify module, falling back', {
+        error: String(error),
+      })
+    }
+  }
+
+  // Development / unbundled: resolve audify from node_modules.
+  // Use require() instead of dynamic import to avoid module cache issues
+  // when the native binary becomes available after an initial failure.
   try {
-    // Use require() instead of dynamic import to avoid module cache issues
-    // when the native binary becomes available after initial failure
     const audify = require('audify') as typeof import('audify')
     RtAudio = audify.RtAudio
     RtAudioFormat = audify.RtAudioFormat

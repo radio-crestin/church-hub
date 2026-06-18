@@ -90,3 +90,16 @@ export function getMidiNativeModulePath(): string | null {
   }
   return null
 }
+
+/**
+ * Gets the path to the audify native audio module
+ * In production, looks in the bundled resources
+ * In development, returns null (use standard node_modules resolution)
+ */
+export function getAudifyNativeModulePath(): string | null {
+  const resourcesDir = getResourcesDir()
+  if (resourcesDir) {
+    return join(resourcesDir, 'audify-native', 'audify.node')
+  }
+  return null
+}

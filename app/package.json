@@ -1,10 +1,7 @@
 {
   "name": "church-hub",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "workspaces": ["apps/*", "packages/*"],
   "scripts": {
     "dev": "tauri dev",
     "dev:worktree": "tauri dev --config tauri/tauri.worktree.conf.json",
@@ -24,7 +21,7 @@
     "tauri:build:release": "bun scripts/build-with-tag.ts",
     "build:apps": "bun run --filter client build && bun run --filter server compile",
     "tsc:check": "tsc --noEmit --skipLibCheck",
-    "postinstall": "cd apps/server/node_modules/audify && npx prebuild-install -r napi || true",
+    "postinstall": "node scripts/ensure-audify.js",
     "fixtures": "bun run apps/server/src/db/fixtures/dump-fixtures.ts",
     "ios:init": "tauri ios init",
     "ios:dev": "tauri ios dev",
@@ -56,9 +53,7 @@
     }
   },
   "lint-staged": {
-    "src/**/*.{js,ts,jsx,tsx}": [
-      "biome check --write"
-    ]
+    "src/**/*.{js,ts,jsx,tsx}": ["biome check --write"]
   },
   "overrides": {
     "jsondiffpatch": ">=0.7.2",
@@ -83,7 +78,5 @@
     "reveal.js": "^5.2.1",
     "werift": "^0.22.9"
   },
-  "trustedDependencies": [
-    "audify"
-  ]
+  "trustedDependencies": ["audify"]
 }
