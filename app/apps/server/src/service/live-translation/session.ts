@@ -5,10 +5,7 @@ import {
   stopAudioCapture,
   stopAudioPlayback,
 } from './audio-io'
-import {
-  createEngineSession,
-  type EngineSession,
-} from './engines'
+import { createEngineSession, type EngineSession } from './engines'
 import type {
   LiveTranslationConfig,
   LiveTranslationState,
@@ -116,8 +113,7 @@ function appendOrCreateEntry(
   type: 'source' | 'translation',
   target?: TranslationTarget,
 ): void {
-  const last =
-    currentState.transcription[currentState.transcription.length - 1]
+  const last = currentState.transcription[currentState.transcription.length - 1]
 
   const sameBucket =
     last &&
@@ -180,29 +176,22 @@ export async function startTranslation(
     throw new Error('At least one target language is required')
   }
 
-  const apiKey =
-    config.engine === 'gemini' ? config.geminiApiKey : config.openaiApiKey
+  const apiKey = config.geminiApiKey
   if (!apiKey) {
-    throw new Error(
-      `${config.engine === 'gemini' ? 'Gemini' : 'OpenAI'} API key is required`,
-    )
+    throw new Error('Gemini API key is required')
   }
 
   currentOutputMode = config.outputMode ?? 'device'
   primaryTargetId = config.primaryTargetId ?? config.targets[0]?.id
 
   logger.info('Starting live translation session', {
-    engine: config.engine,
     source: config.sourceLanguage,
     targets: config.targets.map((t) => t.targetLanguage),
     outputMode: currentOutputMode,
   })
 
-  const outputModality = config.outputModality ?? 'audio_text'
   currentState = {
     ...DEFAULT_TRANSLATION_STATE,
-    engine: config.engine,
-    outputModality,
     sourceLanguage: config.sourceLanguage,
     primaryTargetId,
     isActive: true,
@@ -210,7 +199,6 @@ export async function startTranslation(
     targets: config.targets.map((t) => ({
       id: t.id,
       targetLanguage: t.targetLanguage,
-      voiceName: t.voiceName,
       outputAudioLevel: 0,
       listenerCount: 0,
     })),
@@ -218,10 +206,8 @@ export async function startTranslation(
   }
   stateCallback?.(currentState)
 
-  // Device playback only makes sense when the engine actually returns audio
   const useDevice =
-    outputModality === 'audio_text' &&
-    (currentOutputMode === 'device' || currentOutputMode === 'both')
+    currentOutputMode === 'device' || currentOutputMode === 'both'
   if (useDevice) {
     await startAudioPlayback(config.outputDeviceId)
   }
@@ -230,12 +216,9 @@ export async function startTranslation(
     try {
       const engine = await createEngineSession(
         {
-          engine: config.engine,
-          outputModality,
           apiKey,
           sourceLanguage: config.sourceLanguage,
           targetLanguage: target.targetLanguage,
-          voiceName: target.voiceName,
           targetId: target.id,
         },
         {

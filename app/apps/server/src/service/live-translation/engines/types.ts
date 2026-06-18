@@ -1,12 +1,7 @@
-import type { OutputModality, TranslationEngine } from '../types'
-
 export interface EngineSessionConfig {
-  engine: TranslationEngine
-  outputModality: OutputModality
   apiKey: string
   sourceLanguage: string
   targetLanguage: string
-  voiceName: string
   targetId: string
 }
 

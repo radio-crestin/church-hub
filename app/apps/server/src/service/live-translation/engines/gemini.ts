@@ -1,8 +1,12 @@
 import { GoogleGenAI, Modality } from '@google/genai'
 
+import type {
+  EngineHandlers,
+  EngineSession,
+  EngineSessionConfig,
+} from './types'
 import { log } from '../../../utils/fileLogger'
-import { buildSystemPrompt } from '../types'
-import type { EngineHandlers, EngineSession, EngineSessionConfig } from './types'
+import { toBcp47 } from '../types'
 
 const logger = {
   debug: (msg: string, data?: unknown) =>
@@ -15,13 +19,11 @@ const logger = {
     log('live-translation:gemini', 'error', msg, data),
 }
 
-// Verified against the user's Gemini API model list (May 2026).
-// The text-out preview (`gemini-3.1-flash-live-preview`) keeps responding
-// with 1011 "Internal error" on bidi connect, so text-only sessions run
-// on the same native-audio model and we just read the output transcript
-// while throwing away the synthesized audio bytes. Costs the same as
-// audio mode for now but is reliable.
-const AUDIO_MODEL = 'gemini-2.5-flash-native-audio-latest'
+// Purpose-built speech-to-speech translation model. It translates the input
+// audio natively (via translationConfig) and preserves the speaker's own
+// voice — no system prompt and no voice selection are needed.
+// https://ai.google.dev/gemini-api/docs/live-api/live-translate
+const MODEL = 'gemini-3.5-live-translate-preview'
 
 class GeminiEngineSession implements EngineSession {
   readonly targetId: string
@@ -39,45 +41,32 @@ class GeminiEngineSession implements EngineSession {
 
   async start(): Promise<void> {
     const ai = new GoogleGenAI({ apiKey: this.cfg.apiKey })
-    const systemPrompt = buildSystemPrompt(
-      this.cfg.sourceLanguage,
-      this.cfg.targetLanguage,
-    )
+    const targetLanguageCode = toBcp47(this.cfg.targetLanguage)
 
-    const textOnly = this.cfg.outputModality === 'text_only'
-    // Single model for both modes (see comment by AUDIO_MODEL). Text-only
-    // discards the audio output and surfaces only the running transcript.
-    const model = AUDIO_MODEL
-
-    // Use the server's built-in VAD — far more reliable than manually
-    // signaling activityStart/activityEnd, which silently produces no
-    // output if forceEnd is never triggered.
-    // Both modes run on the native-audio model with AUDIO response so we
-    // always get an output transcript. In text-only mode the engine drops
-    // the audio bytes (no onAudioOutput call) — the listener / host UI
-    // just sees text.
+    // The live-translate model requires an AUDIO response. We additionally
+    // enable input/output transcription so the host UI and listeners get the
+    // source + translated text alongside the synthesized audio.
     const config = {
       responseModalities: [Modality.AUDIO],
-      systemInstruction: systemPrompt,
-      speechConfig: {
-        voiceConfig: {
-          prebuiltVoiceConfig: { voiceName: this.cfg.voiceName },
-        },
+      translationConfig: {
+        targetLanguageCode,
+        // Don't re-emit audio that's already in the target language (e.g. the
+        // app's own translated playback being picked up by the mic).
+        echoTargetLanguage: false,
       },
       inputAudioTranscription: {},
       outputAudioTranscription: {},
     }
 
     this.session = await ai.live.connect({
-      model,
+      model: MODEL,
       config,
       callbacks: {
         onopen: () => {
-          logger.info('Connected to Gemini Live API', {
+          logger.info('Connected to Gemini Live Translate', {
             targetId: this.targetId,
-            target: this.cfg.targetLanguage,
-            model,
-            modality: this.cfg.outputModality,
+            target: targetLanguageCode,
+            model: MODEL,
           })
         },
         onmessage: (msg) => this.handleMessage(msg),
@@ -164,9 +153,8 @@ class GeminiEngineSession implements EngineSession {
     }
 
     if (content.modelTurn?.parts) {
-      const suppressAudio = this.cfg.outputModality === 'text_only'
       for (const part of content.modelTurn.parts) {
-        if (part.inlineData?.data && !suppressAudio) {
+        if (part.inlineData?.data) {
           const pcm = Buffer.from(part.inlineData.data, 'base64')
           if (!this.speaking) {
             this.speaking = true
