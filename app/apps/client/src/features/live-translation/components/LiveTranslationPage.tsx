@@ -270,6 +270,7 @@ export function LiveTranslationPage() {
                 </label>
                 <Combobox
                   options={languageOptions}
+                  portalContainer={settingsDialogRef.current}
                   value={settings.sourceLanguage}
                   onChange={(v) =>
                     updateSetting('sourceLanguage', (v as string) || 'ro')
@@ -303,6 +304,7 @@ export function LiveTranslationPage() {
                         </label>
                         <Combobox
                           options={languageOptions}
+                          portalContainer={settingsDialogRef.current}
                           value={target.targetLanguage}
                           onChange={(v) =>
                             updateTarget(target.id, {
@@ -370,6 +372,7 @@ export function LiveTranslationPage() {
                     </label>
                     <Combobox
                       options={inputDeviceOptions}
+                      portalContainer={settingsDialogRef.current}
                       value={settings.inputDeviceId}
                       onChange={(v) =>
                         updateSetting('inputDeviceId', v as number | null)
@@ -386,6 +389,7 @@ export function LiveTranslationPage() {
                     </label>
                     <Combobox
                       options={outputDeviceOptions}
+                      portalContainer={settingsDialogRef.current}
                       value={settings.outputDeviceId}
                       onChange={(v) =>
                         updateSetting('outputDeviceId', v as number | null)
