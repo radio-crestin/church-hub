@@ -96,4 +96,27 @@ test.describe('Live Translation Page', () => {
     const bodyHtml = await page.locator('body').innerHTML()
     expect(bodyHtml.length).toBeGreaterThan(100)
   })
+
+  test('settings expose only the Gemini key (no engine/voice/modality)', async ({
+    page,
+  }) => {
+    await page.goto('/live-translation')
+    await page.waitForLoadState('networkidle')
+
+    // Open the settings dialog (header toggle button labelled "Settings")
+    await page.getByRole('button', { name: 'Settings' }).first().click()
+
+    // The single Gemini API key field is present
+    await expect(
+      page.getByPlaceholder('Enter your Gemini API key'),
+    ).toBeVisible()
+
+    // Removed multi-engine controls must be gone
+    await expect(page.getByText('OpenAI Realtime')).toHaveCount(0)
+    await expect(page.getByText('Output type')).toHaveCount(0)
+    await expect(page.getByText('Voice', { exact: true })).toHaveCount(0)
+
+    // Target languages are still configurable
+    await expect(page.getByText('Add another language')).toBeVisible()
+  })
 })
