@@ -103,6 +103,45 @@ function copyMidiPrebuilds(os: string, arch: string): void {
   )
 }
 
+/**
+ * Copies the audify native audio module for the current platform to the
+ * resources folder. audify installs its binary at build/Release/audify.node
+ * (fetched by prebuild-install for the host platform), and Bun's compiled
+ * binary cannot bundle native modules — so it must be shipped as a resource
+ * and loaded at runtime (see getAudifyNativeModulePath / audio-io.ts).
+ */
+function copyAudifyPrebuild(): void {
+  const sourceFile = path.join(
+    __dirname,
+    '..',
+    '..',
+    '..',
+    'node_modules',
+    'audify',
+    'build',
+    'Release',
+    'audify.node',
+  )
+
+  if (!existsSync(sourceFile)) {
+    console.log(
+      `\x1b[33maudify native module not found at ${sourceFile} (run install first)\x1b[0m`,
+    )
+    return
+  }
+
+  const destDir = path.join(RESOURCES_DIR, 'audify-native')
+  if (!existsSync(destDir)) {
+    mkdirSync(destDir, { recursive: true })
+  }
+
+  const destFile = path.join(destDir, 'audify.node')
+  copyFileSync(sourceFile, destFile)
+  console.log(
+    `\x1b[32mCopied audify native module:\x1b[0m ${sourceFile} -> ${destFile}`,
+  )
+}
+
 async function main() {
   const os = process.platform as keyof typeof BINARIES_POSTFIX
   const arch = process.arch as keyof typeof ARCHITECTURES
@@ -127,6 +166,10 @@ async function main() {
   // Copy MIDI native modules to resources folder
   console.log('\x1b[34mCopying MIDI native modules...\x1b[0m')
   copyMidiPrebuilds(os, arch)
+
+  // Copy audify native audio module to resources folder
+  console.log('\x1b[34mCopying audify native audio module...\x1b[0m')
+  copyAudifyPrebuild()
 
   console.log('\x1b[34mCompiling server with Bun...\x1b[0m')
   await $`bun build --compile --production --minify --minify-syntax --target bun --bundle ./src/index.ts --outfile ${outfile}`
