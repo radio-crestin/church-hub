@@ -17,26 +17,71 @@ const logger = {
 const SETTINGS_KEY = 'live_translation_stream_secret'
 const SIGNALING_BASE_URL = 'https://churchub-backend.radiocrestin.ro'
 
-const ICE_SERVERS: Array<{
-  urls: string
+// A fetched ICE server may carry `urls` as an array (Cloudflare TURN does);
+// werift only accepts a single `urls` string, so we flatten before use.
+type FetchedIceServer = {
+  urls: string | string[]
   username?: string
   credential?: string
-}> = [
+}
+type IceServer = { urls: string; username?: string; credential?: string }
+
+function flattenIceServers(servers: FetchedIceServer[]): IceServer[] {
+  const out: IceServer[] = []
+  for (const s of servers) {
+    const urls = Array.isArray(s.urls) ? s.urls : [s.urls]
+    for (const u of urls) {
+      out.push({ urls: u, username: s.username, credential: s.credential })
+    }
+  }
+  return out
+}
+
+const ICE_SERVERS: IceServer[] = [
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
 ]
 
 // STUN alone can't traverse the symmetric NAT used by most mobile/cellular
-// networks, so phone listeners get stuck on "Connecting". Provide TURN servers
-// as JSON in LIVE_TRANSLATION_TURN to fix that, e.g.
+// networks, so phone listeners get stuck on "Connecting". A local override can
+// be supplied as JSON in LIVE_TRANSLATION_TURN, e.g.
 //   LIVE_TRANSLATION_TURN='[{"urls":"turn:turn.example.com:3478","username":"u","credential":"p"}]'
 if (process.env.LIVE_TRANSLATION_TURN) {
   try {
     const turn = JSON.parse(process.env.LIVE_TRANSLATION_TURN)
-    if (Array.isArray(turn)) ICE_SERVERS.push(...turn)
+    if (Array.isArray(turn)) ICE_SERVERS.push(...flattenIceServers(turn))
   } catch {
     logger.warn('LIVE_TRANSLATION_TURN is not valid JSON; ignoring')
   }
+}
+
+let cachedIce: { servers: IceServer[]; at: number } | null = null
+const ICE_CACHE_MS = 20 * 60 * 1000
+
+/**
+ * ICE servers for listener peer connections. Prefer the signaling backend's
+ * /signal/ice — it mints short-lived Cloudflare TURN credentials that listeners
+ * use too, so both ends share the same relay (essential for cellular/symmetric
+ * NAT). Falls back to local STUN (+ LIVE_TRANSLATION_TURN) if unreachable.
+ */
+async function getIceServers(): Promise<IceServer[]> {
+  if (cachedIce && Date.now() - cachedIce.at < ICE_CACHE_MS) {
+    return cachedIce.servers
+  }
+  try {
+    const res = await fetch(`${SIGNALING_BASE_URL}/signal/ice`)
+    if (res.ok) {
+      const data = (await res.json()) as { iceServers?: FetchedIceServer[] }
+      if (Array.isArray(data.iceServers) && data.iceServers.length > 0) {
+        const servers = flattenIceServers(data.iceServers)
+        cachedIce = { servers, at: Date.now() }
+        return servers
+      }
+    }
+  } catch {
+    // fall through to local defaults
+  }
+  return ICE_SERVERS
 }
 
 interface AvailableLanguage {
@@ -220,8 +265,9 @@ export async function handleListenerOffer(
   offerSdp: string,
 ): Promise<{ answer: string; listenerId: string }> {
   const listenerId = `listener-${++listenerIdCounter}`
+  const iceServers = await getIceServers()
   const pc = new RTCPeerConnection({
-    iceServers: ICE_SERVERS,
+    iceServers,
     bundlePolicy: 'max-bundle',
   })
 

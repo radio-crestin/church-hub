@@ -9,10 +9,14 @@ export interface Bindings {
   ALLOWED_ORIGINS: string
   GITHUB_TOKEN: string
   SIGNALING_KV: KVNamespace
-  // Optional JSON array of RTCIceServer for the listener page, e.g.
+  // Optional static JSON array of RTCIceServer, e.g.
   // [{"urls":"turn:turn.example.com:3478","username":"u","credential":"p"}]
-  // Required for listeners on cellular / symmetric-NAT networks (STUN isn't enough).
   TURN_SERVERS?: string
+  // Cloudflare Realtime TURN key. When both are set, the worker mints
+  // short-lived TURN credentials per request (the secret never leaves the
+  // server). Create a key at Dashboard → Realtime → TURN.
+  TURN_KEY_ID?: string
+  TURN_API_TOKEN?: string
 }
 
 export interface OAuthState {
