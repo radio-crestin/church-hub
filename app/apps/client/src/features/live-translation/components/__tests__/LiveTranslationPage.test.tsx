@@ -13,12 +13,6 @@ vi.mock('../../hooks/useLiveTranslation', () => ({
     { code: 'ro', name: 'Romanian' },
     { code: 'en', name: 'English' },
   ],
-  GEMINI_VOICES: ['Kore', 'Puck'],
-  OPENAI_VOICES: ['alloy', 'ash'],
-  voicesForEngine: (engine: 'openai' | 'gemini') =>
-    engine === 'gemini' ? ['Kore', 'Puck'] : ['alloy', 'ash'],
-  defaultVoiceForEngine: (engine: 'openai' | 'gemini') =>
-    engine === 'gemini' ? 'Kore' : 'alloy',
 }))
 
 // Mock Combobox to avoid complex dropdown rendering
@@ -44,7 +38,6 @@ vi.mock('~/ui/combobox/Combobox', () => ({
 const baseHookReturn = {
   state: {
     isActive: false,
-    engine: 'openai' as const,
     sourceLanguage: 'ro',
     inputAudioLevel: 0,
     outputAudioLevel: 0,
@@ -53,13 +46,11 @@ const baseHookReturn = {
     startedAt: null,
   },
   settings: {
-    engine: 'openai' as const,
     sourceLanguage: 'ro',
-    targets: [{ id: 'tgt-en', targetLanguage: 'en', voiceName: 'alloy' }],
+    targets: [{ id: 'tgt-en', targetLanguage: 'en' }],
     primaryTargetId: 'tgt-en',
     inputDeviceId: null,
     outputDeviceId: null,
-    openaiApiKey: '',
     geminiApiKey: '',
     outputMode: 'device' as const,
   },
@@ -70,7 +61,6 @@ const baseHookReturn = {
   settingsLoaded: true,
   canStart: false,
   updateSetting: vi.fn(),
-  setEngine: vi.fn(),
   addTarget: vi.fn(),
   removeTarget: vi.fn(),
   updateTarget: vi.fn(),

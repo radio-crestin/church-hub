@@ -2,9 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { getApiUrl } from '~/config'
 
-export type TranslationEngine = 'openai' | 'gemini'
-export type OutputModality = 'audio_text' | 'text_only'
-
 export interface TranscriptionEntry {
   id: string
   text: string
@@ -17,15 +14,12 @@ export interface TranscriptionEntry {
 export interface TargetState {
   id: string
   targetLanguage: string
-  voiceName: string
   outputAudioLevel: number
   listenerCount: number
 }
 
 export interface LiveTranslationState {
   isActive: boolean
-  engine: TranslationEngine
-  outputModality: OutputModality
   sourceLanguage: string
   inputAudioLevel: number
   outputAudioLevel: number
@@ -65,53 +59,19 @@ const LANGUAGES = [
   { code: 'ko', name: 'Korean' },
 ] as const
 
-const GEMINI_VOICES = [
-  'Kore',
-  'Puck',
-  'Charon',
-  'Fenrir',
-  'Aoede',
-  'Leda',
-  'Orus',
-  'Zephyr',
-] as const
-
-const OPENAI_VOICES = [
-  'alloy',
-  'ash',
-  'ballad',
-  'coral',
-  'echo',
-  'sage',
-  'shimmer',
-  'verse',
-] as const
-
-export { LANGUAGES, GEMINI_VOICES, OPENAI_VOICES }
-
-export function voicesForEngine(engine: TranslationEngine): readonly string[] {
-  return engine === 'gemini' ? GEMINI_VOICES : OPENAI_VOICES
-}
-
-export function defaultVoiceForEngine(engine: TranslationEngine): string {
-  return engine === 'gemini' ? 'Kore' : 'alloy'
-}
+export { LANGUAGES }
 
 export type OutputMode = 'device' | 'webrtc' | 'both'
 
 export interface TranslationTarget {
   id: string
   targetLanguage: string
-  voiceName: string
 }
 
 export interface LiveTranslationSettings {
-  engine: TranslationEngine
-  outputModality: OutputModality
   sourceLanguage: string
   targets: TranslationTarget[]
   primaryTargetId?: string
-  openaiApiKey: string
   geminiApiKey: string
   inputDeviceId: number | null
   outputDeviceId: number | null
@@ -125,15 +85,11 @@ function genTargetId(): string {
 const DEFAULT_TARGET: TranslationTarget = {
   id: 'placeholder',
   targetLanguage: 'en',
-  voiceName: 'alloy',
 }
 
 const DEFAULT_SETTINGS: LiveTranslationSettings = {
-  engine: 'openai',
-  outputModality: 'audio_text',
   sourceLanguage: 'ro',
   targets: [DEFAULT_TARGET],
-  openaiApiKey: '',
   geminiApiKey: '',
   inputDeviceId: null,
   outputDeviceId: null,
@@ -142,8 +98,6 @@ const DEFAULT_SETTINGS: LiveTranslationSettings = {
 
 const DEFAULT_STATE: LiveTranslationState = {
   isActive: false,
-  engine: 'openai',
-  outputModality: 'audio_text',
   sourceLanguage: 'ro',
   inputAudioLevel: 0,
   outputAudioLevel: 0,
@@ -173,19 +127,12 @@ export function useLiveTranslation() {
           Array.isArray(data.targets) && data.targets.length > 0
             ? data.targets
             : [{ ...DEFAULT_TARGET, id: genTargetId() }]
-        const engine: TranslationEngine =
-          data.engine === 'gemini' ? 'gemini' : 'openai'
-        const outputModality: OutputModality =
-          data.outputModality === 'text_only' ? 'text_only' : 'audio_text'
         const merged: LiveTranslationSettings = {
           ...DEFAULT_SETTINGS,
           ...data,
-          engine,
-          outputModality,
           targets,
           primaryTargetId: data.primaryTargetId || targets[0]?.id,
           geminiApiKey: data.geminiApiKey || lsKey,
-          openaiApiKey: data.openaiApiKey || '',
         }
         setSettings(merged)
         setSettingsLoaded(true)
@@ -250,26 +197,6 @@ export function useLiveTranslation() {
     [saveSettings],
   )
 
-  const setEngine = useCallback(
-    (engine: TranslationEngine) => {
-      setSettings((prev) => {
-        const wasDefaultVoice = (t: TranslationTarget) =>
-          (prev.engine === 'gemini' ? GEMINI_VOICES : OPENAI_VOICES).includes(
-            t.voiceName as never,
-          )
-        // Migrate voices that are not valid in the new engine
-        const newDefaultVoice = defaultVoiceForEngine(engine)
-        const targets = prev.targets.map((t) =>
-          wasDefaultVoice(t) ? { ...t, voiceName: newDefaultVoice } : t,
-        )
-        const next = { ...prev, engine, targets }
-        saveSettings(next)
-        return next
-      })
-    },
-    [saveSettings],
-  )
-
   const addTarget = useCallback(
     (targetLanguage = 'en') => {
       setSettings((prev) => {
@@ -279,7 +206,6 @@ export function useLiveTranslation() {
         const newTarget: TranslationTarget = {
           id: genTargetId(),
           targetLanguage,
-          voiceName: defaultVoiceForEngine(prev.engine),
         }
         const next = { ...prev, targets: [...prev.targets, newTarget] }
         saveSettings(next)
@@ -374,10 +300,7 @@ export function useLiveTranslation() {
       window.removeEventListener('live-translation-message', handleMessage)
   }, [])
 
-  const apiKey =
-    settings.engine === 'gemini'
-      ? settings.geminiApiKey
-      : settings.openaiApiKey
+  const apiKey = settings.geminiApiKey
 
   const canStart =
     apiKey.length > 0 && settings.targets.length > 0 && !state.isActive
@@ -388,12 +311,9 @@ export function useLiveTranslation() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        engine: settings.engine,
-        outputModality: settings.outputModality,
         sourceLanguage: settings.sourceLanguage,
         targets: settings.targets,
         primaryTargetId: settings.primaryTargetId,
-        openaiApiKey: settings.openaiApiKey,
         geminiApiKey: settings.geminiApiKey,
         inputDeviceId: settings.inputDeviceId,
         outputDeviceId: settings.outputDeviceId,
@@ -410,8 +330,6 @@ export function useLiveTranslation() {
     setState((prev) => ({
       ...prev,
       isActive: true,
-      engine: settings.engine,
-      outputModality: settings.outputModality,
       sourceLanguage: settings.sourceLanguage,
       primaryTargetId: settings.primaryTargetId,
       startedAt: Date.now(),
@@ -420,7 +338,6 @@ export function useLiveTranslation() {
       targets: settings.targets.map((t) => ({
         id: t.id,
         targetLanguage: t.targetLanguage,
-        voiceName: t.voiceName,
         outputAudioLevel: 0,
         listenerCount: 0,
       })),
@@ -476,7 +393,6 @@ export function useLiveTranslation() {
     streamSecret,
     canStart,
     updateSetting,
-    setEngine,
     addTarget,
     removeTarget,
     updateTarget,
