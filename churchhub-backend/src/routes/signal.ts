@@ -149,10 +149,6 @@ signal.get('/signal/:secret/answer/:sessionId', async (c) => {
 })
 
 /**
- * GET /listen/:secret
- * Serve the standalone listener HTML page.
- */
-/**
  * GET /signal/:secret/check
  * Listener checks if the room is active (host connected).
  */
@@ -162,6 +158,10 @@ signal.get('/signal/:secret/check', async (c) => {
   return c.json({ active: !!room })
 })
 
+/**
+ * GET /listen/:secret
+ * Serve the standalone listener HTML page.
+ */
 signal.get('/listen/:secret', async (c) => {
   const secret = c.req.param('secret')
   const baseUrl = new URL(c.req.url).origin
@@ -197,515 +197,458 @@ function getListenerPageHtml(
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Live Translation Listener</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>Live Translation</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f172a;color:#e2e8f0;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1rem}
-.card{background:#1e293b;border-radius:16px;padding:2rem;max-width:420px;width:100%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.4)}
-h1{font-size:1.25rem;margin-bottom:.5rem}
-.status{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:.8rem;font-weight:600;margin:1rem 0}
-.status.idle{background:#334155;color:#94a3b8}
-.status.waiting{background:#1e3a5f;color:#60a5fa}
-.status.connecting{background:#1e3a5f;color:#60a5fa}
-.status.connected{background:#14532d;color:#4ade80}
-.status.error{background:#7f1d1d;color:#f87171}
-.dot{width:8px;height:8px;border-radius:50%;animation:pulse 1.5s infinite}
-.idle .dot{background:#94a3b8;animation:none}
-.waiting .dot{background:#60a5fa}
-.connecting .dot{background:#60a5fa}
-.connected .dot{background:#4ade80}
-.error .dot{background:#f87171;animation:none}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.volume{margin:1rem auto;width:200px;height:6px;background:#334155;border-radius:3px;overflow:hidden}
-.volume-bar{height:100%;background:#4ade80;width:0%;transition:width 50ms}
-p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
-.join-btn{margin-top:1rem;padding:14px 32px;background:#2563eb;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;transition:background .2s;width:100%}
-.join-btn:hover:not(:disabled){background:#1d4ed8}
-.join-btn:active:not(:disabled){background:#1e40af}
-.join-btn:disabled{background:#334155;color:#64748b;cursor:not-allowed}
-.lang-section{margin:1rem 0;text-align:left}
-.lang-label{display:block;font-size:.75rem;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem}
-.lang-list{display:flex;flex-direction:column;gap:.5rem}
-.lang-option{display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;background:#334155;border:2px solid transparent;border-radius:10px;cursor:pointer;transition:all .15s;color:#e2e8f0;font-size:.9rem;font-weight:500;text-align:left}
-.lang-option:hover{background:#3f4f6b}
-.lang-option.selected{background:#1e3a5f;border-color:#3b82f6;color:#bfdbfe}
-.lang-option .code{font-size:.7rem;font-weight:700;background:#1e293b;padding:2px 6px;border-radius:4px;letter-spacing:.05em}
-.empty-langs{color:#64748b;font-size:.85rem;padding:1rem;text-align:center;background:#0f172a;border-radius:8px}
-.mode-toggle{display:flex;gap:.4rem;margin-top:.75rem;background:#0f172a;border-radius:10px;padding:.25rem}
-.mode-btn{flex:1;background:transparent;border:none;color:#94a3b8;padding:.55rem .5rem;border-radius:8px;cursor:pointer;font-weight:600;font-size:.8rem;transition:background .15s,color .15s;display:flex;align-items:center;justify-content:center;gap:.4rem}
-.mode-btn:hover{color:#e2e8f0}
-.mode-btn.active{background:#1e3a5f;color:#bfdbfe}
-.mode-btn .icon{font-size:1rem;line-height:1}
-.transcript{margin-top:1.25rem;text-align:left;background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:1.25rem 1.25rem;color:#f1f5f9;display:flex;flex-direction:column;gap:.6rem;overflow:hidden;position:relative}
-.transcript-empty{color:#64748b;font-style:italic;font-size:.85rem;text-align:center;padding:1.5rem 0}
-/* Fixed 2-line box: word-wraps to a second visual line, hides overflow.
-   When the text exceeds 2 lines we clear and start over from JS. */
-.transcript-line{font-size:1.45rem;line-height:1.35;font-weight:600;color:#f8fafc;word-break:break-word;opacity:0;transform:translateY(6px);transition:opacity .25s ease,transform .25s ease;height:calc(2 * 1.35em);overflow:hidden}
-.transcript-line.visible{opacity:1;transform:translateY(0)}
-@media (max-width:480px){.transcript-line{font-size:1.2rem}}
-.hidden{display:none}
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: #000;
+    color: #fafafa;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    overflow: hidden;
+  }
+
+  /* Transcript: large captions, bottom-anchored, oldest lines fade out */
+  .transcript {
+    position: fixed; inset: 0; bottom: 0;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    overflow: hidden;
+    padding: 8vh 1.25rem calc(8.5rem + env(safe-area-inset-bottom));
+  }
+  .lines { width: 100%; max-width: 42rem; margin: 0 auto; }
+  .lines p {
+    font-size: 1.7rem; line-height: 1.38; font-weight: 500;
+    margin: 0 0 1.05rem; color: #fafafa; word-wrap: break-word; overflow-wrap: break-word;
+    opacity: .32; transform: translateY(4px);
+    transition: opacity .3s ease, transform .3s ease;
+  }
+  .lines p.in { transform: translateY(0); }
+  .lines p:nth-last-child(4) { opacity: .4; }
+  .lines p:nth-last-child(3) { opacity: .55; }
+  .lines p:nth-last-child(2) { opacity: .78; }
+  .lines p:last-child { opacity: 1; }
+  @media (max-width: 480px) { .lines p { font-size: 1.35rem; } }
+  .placeholder { color: #52525b; font-size: 1.1rem; font-weight: 500; }
+
+  /* Bottom dock */
+  .dock {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    display: flex; flex-direction: column; align-items: center;
+    pointer-events: none;
+  }
+  .dock-grad {
+    position: absolute; inset: 0; top: auto; height: 9rem;
+    background: linear-gradient(to top, #000 30%, transparent);
+  }
+  .dock-inner {
+    position: relative; width: 100%; max-width: 30rem;
+    padding: 0 .75rem;
+    padding-bottom: calc(.75rem + env(safe-area-inset-bottom));
+    pointer-events: none;
+  }
+
+  .pill {
+    pointer-events: auto;
+    display: flex; align-items: center; gap: .25rem;
+    background: rgba(24,24,27,.72); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 9999px; height: 3.5rem; padding: 0 .45rem 0 1.1rem;
+  }
+  .pill-info { flex: 1; min-width: 0; }
+  .pill-title { margin: 0; font-size: .82rem; font-weight: 600; color: #fafafa; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pill-status { margin: .12rem 0 0; font-size: .72rem; color: #a1a1aa; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: .35rem; }
+  .dot { width: .45rem; height: .45rem; border-radius: 50%; background: #71717a; flex-shrink: 0; }
+  .s-connected .dot { background: #22c55e; }
+  .s-connecting .dot, .s-waiting .dot { background: #3b82f6; animation: pulse 1.4s ease-in-out infinite; }
+  .s-error .dot { background: #ef4444; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+
+  .pill-btn {
+    pointer-events: auto;
+    display: inline-flex; align-items: center; gap: .35rem;
+    border: none; background: transparent; color: #e4e4e7;
+    cursor: pointer; font-family: inherit; font-size: .85rem; font-weight: 600;
+    border-radius: 9999px; transition: background .15s, color .15s, transform .1s;
+  }
+  .pill-btn:active { transform: scale(.95); }
+  .lang-btn { height: 2.6rem; padding: 0 .5rem 0 .85rem; max-width: 9rem; }
+  .lang-btn:hover { background: rgba(255,255,255,.06); }
+  .lang-btn span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lang-btn svg { flex-shrink: 0; }
+  .audio-btn { width: 2.7rem; height: 2.7rem; padding: 0; justify-content: center; color: #a1a1aa; }
+  .audio-btn:hover { background: rgba(255,255,255,.06); color: #fafafa; }
+  .audio-btn.on { background: #2563eb; color: #fff; }
+  .audio-btn.on:hover { background: #1d4ed8; }
+
+  /* Language chooser panel (above the pill) */
+  .lang-panel {
+    pointer-events: auto;
+    margin-bottom: .55rem;
+    background: rgba(24,24,27,.94); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 1.1rem; padding: .4rem; max-height: 52vh; overflow-y: auto;
+  }
+  .lang-head { font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; color: #71717a; font-weight: 700; padding: .5rem .75rem .35rem; }
+  .lang-opt {
+    display: flex; align-items: center; gap: .7rem; width: 100%;
+    padding: .75rem .8rem; border: none; background: transparent; cursor: pointer;
+    color: #e4e4e7; font-family: inherit; font-size: .95rem; font-weight: 500;
+    border-radius: .7rem; text-align: left; transition: background .12s;
+  }
+  .lang-opt:hover { background: rgba(255,255,255,.05); }
+  .lang-opt.selected { background: rgba(37,99,235,.22); color: #fff; }
+  .lang-opt .code { font-size: .65rem; font-weight: 700; letter-spacing: .04em; padding: .2rem .45rem; border-radius: .4rem; background: rgba(255,255,255,.08); color: #a1a1aa; }
+  .lang-opt.selected .code { background: rgba(255,255,255,.18); color: #fff; }
+  .lang-empty { padding: .9rem .8rem; color: #71717a; font-size: .85rem; }
+
+  .powered { text-align: center; color: #3f3f46; font-size: .68rem; font-weight: 500; margin: .55rem 0 0; pointer-events: auto; }
+
+  .reconnect {
+    position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+    margin-top: calc(.75rem + env(safe-area-inset-top));
+    display: flex; align-items: center; gap: .5rem;
+    background: rgba(24,24,27,.92); backdrop-filter: blur(10px);
+    color: #a1a1aa; border-radius: 9999px; padding: .35rem .9rem;
+    font-size: .68rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    z-index: 30; transition: opacity .25s, transform .25s;
+  }
+  .spinner { width: .85rem; height: .85rem; border: 2px solid rgba(255,255,255,.2); border-top-color: #a1a1aa; border-radius: 50%; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .hidden { display: none !important; }
 </style>
 </head>
 <body>
-<div class="card">
-<h1>Live Translation</h1>
-<div id="status" class="status idle"><span class="dot"></span><span id="statusText">Tap Join to start listening</span></div>
-<button id="joinBtn" class="join-btn">Join</button>
-<div id="langSection" class="lang-section hidden">
-  <span class="lang-label">Select your language</span>
-  <div id="langList" class="lang-list"></div>
-  <div id="emptyLangs" class="empty-langs hidden">Waiting for the host to publish available languages…</div>
-  <div id="modeToggle" class="mode-toggle hidden">
-    <button id="modeAudioText" type="button" class="mode-btn active"><span class="icon">🔊</span><span>Audio + text</span></button>
-    <button id="modeTextOnly" type="button" class="mode-btn"><span class="icon">📝</span><span>Text only</span></button>
+<div id="reconnecting" class="reconnect hidden"><span class="spinner"></span><span>Reconnecting</span></div>
+
+<main id="transcript" class="transcript">
+  <div id="lines" class="lines">
+    <div id="placeholder" class="placeholder">Waiting for the host to start…</div>
+  </div>
+</main>
+
+<div class="dock">
+  <div class="dock-grad"></div>
+  <div class="dock-inner">
+    <div id="langPanel" class="lang-panel hidden"></div>
+    <div class="pill">
+      <div class="pill-info">
+        <p class="pill-title">Live Translation</p>
+        <p id="status" class="pill-status s-connecting"><span class="dot"></span><span id="statusText">Connecting…</span></p>
+      </div>
+      <button id="langBtn" class="pill-btn lang-btn" type="button" aria-haspopup="true">
+        <span id="langBtnLabel">Language</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <button id="audioBtn" class="pill-btn audio-btn" type="button" aria-pressed="false" title="Turn audio on">
+        <svg id="audioOffIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><line x1="22" y1="9" x2="16" y2="15"/><line x1="16" y1="9" x2="22" y2="15"/></svg>
+        <svg id="audioOnIcon" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a9 9 0 0 1 0 14"/></svg>
+      </button>
+    </div>
+    <p class="powered">Powered by Church Hub</p>
   </div>
 </div>
-<div id="volumeWrap" class="volume hidden"><div id="volumeBar" class="volume-bar"></div></div>
-<div id="transcript" class="transcript hidden">
-  <div id="transcriptEmpty" class="transcript-empty">Translated text will appear here…</div>
-</div>
-<p id="info" class="info hidden"></p>
-<button id="leaveBtn" class="join-btn hidden" style="background:#7f1d1d">Leave</button>
-</div>
+
 <script>
 (function(){
   var SECRET = ${JSON.stringify(secret)};
   var BASE = ${JSON.stringify(baseUrl)};
+  var ICE_SERVERS = ${iceServersJson};
+
   var statusEl = document.getElementById('status');
   var statusText = document.getElementById('statusText');
-  var volumeBar = document.getElementById('volumeBar');
-  var volumeWrap = document.getElementById('volumeWrap');
-  var joinBtn = document.getElementById('joinBtn');
-  var leaveBtn = document.getElementById('leaveBtn');
-  var infoEl = document.getElementById('info');
-  var langSection = document.getElementById('langSection');
-  var langList = document.getElementById('langList');
-  var emptyLangs = document.getElementById('emptyLangs');
-  var transcriptEl = document.getElementById('transcript');
-  var transcriptEmpty = document.getElementById('transcriptEmpty');
-  var modeToggle = document.getElementById('modeToggle');
-  var modeAudioTextBtn = document.getElementById('modeAudioText');
-  var modeTextOnlyBtn = document.getElementById('modeTextOnly');
+  var reconnectEl = document.getElementById('reconnecting');
+  var linesEl = document.getElementById('lines');
+  var placeholder = document.getElementById('placeholder');
+  var langPanel = document.getElementById('langPanel');
+  var langBtn = document.getElementById('langBtn');
+  var langBtnLabel = document.getElementById('langBtnLabel');
+  var audioBtn = document.getElementById('audioBtn');
+  var audioOnIcon = document.getElementById('audioOnIcon');
+  var audioOffIcon = document.getElementById('audioOffIcon');
 
   var audioCtx = null;
   var nextPlayTime = 0;
+  var currentPc = null;
   var currentDc = null;
   var selectedTargetId = null;
   var availableLanguages = [];
   var lastConnectedAt = 0;
-  var currentStatus = 'idle';
-  var stopped = false;
-  var currentPc = null;
-  var ICE_SERVERS = ${iceServersJson};
-  // Reload the page if we've been disconnected for this long — a hard refresh
-  // recovers from any stuck state and re-runs the WebRTC handshake cleanly.
+  var currentStatus = 'connecting';
   var DISCONNECT_RELOAD_MS = 45000;
-  // Listener-side modality preference: persisted across reloads.
-  var PREF_KEY = 'churchhub-listener-mode';
-  var listenerMode = (function() {
-    try {
-      var v = localStorage.getItem(PREF_KEY);
-      return v === 'text_only' ? 'text_only' : 'audio_text';
-    } catch(_) { return 'audio_text'; }
-  })();
 
-  // Fill-then-clear model:
-  //  - every incoming delta is appended to the current line
-  //  - when the line exceeds 2 visual lines (CSS height clip), we wipe it
-  //    and restart with the latest delta
-  //  - long idle pause also clears, so stale text doesn't linger
-  var IDLE_CLEAR_MS = 4000;
-  var currentLineEl = null;
-  var idleTimer = null;
-
-  function ensureLine() {
-    if (currentLineEl) return currentLineEl;
-    var line = document.createElement('div');
-    line.className = 'transcript-line';
-    transcriptEl.appendChild(line);
-    currentLineEl = line;
-    requestAnimationFrame(function() {
-      line.classList.add('visible');
-    });
-    return line;
-  }
-
-  function appendTranscriptLine(text) {
-    if (!text) return;
-    if (transcriptEmpty && transcriptEmpty.parentNode) {
-      transcriptEmpty.parentNode.removeChild(transcriptEmpty);
-      transcriptEmpty = null;
-    }
-    var line = ensureLine();
-    line.textContent += text;
-
-    // If we just overflowed the 2-line cap, start a fresh page with what
-    // doesn't fit. Use scrollHeight > clientHeight + a px tolerance.
-    if (line.scrollHeight > line.clientHeight + 2) {
-      transcriptEl.removeChild(line);
-      currentLineEl = null;
-      var fresh = ensureLine();
-      fresh.textContent = text;
-    }
-
-    if (idleTimer) clearTimeout(idleTimer);
-    idleTimer = setTimeout(function() {
-      if (currentLineEl) {
-        transcriptEl.removeChild(currentLineEl);
-        currentLineEl = null;
-      }
-      idleTimer = null;
-    }, IDLE_CLEAR_MS);
-  }
-
-  function clearTranscript() {
-    while (transcriptEl.firstChild) transcriptEl.removeChild(transcriptEl.firstChild);
-    currentLineEl = null;
-    if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
-    transcriptEmpty = document.createElement('div');
-    transcriptEmpty.id = 'transcriptEmpty';
-    transcriptEmpty.className = 'transcript-empty';
-    transcriptEmpty.textContent = 'Translated text will appear here…';
-    transcriptEl.appendChild(transcriptEmpty);
-  }
+  // Audio is OFF by default; text streams regardless. The choice is persisted,
+  // but a fresh visitor always starts muted.
+  var AUDIO_PREF = 'churchhub-audio';
+  var audioEnabled = (function(){ try { return localStorage.getItem(AUDIO_PREF) === 'on'; } catch(_) { return false; } })();
 
   var LANG_NAMES = {
-    ro: 'Română',
-    en: 'English',
-    de: 'Deutsch',
-    fr: 'Français',
-    es: 'Español',
-    it: 'Italiano',
-    hu: 'Magyar',
-    pt: 'Português',
-    ru: 'Русский',
-    uk: 'Українська',
-    pl: 'Polski',
-    nl: 'Nederlands',
-    ar: 'العربية',
-    zh: '中文',
-    ja: '日本語',
-    ko: '한국어'
+    ro:'Română', en:'English', de:'Deutsch', fr:'Français', es:'Español',
+    it:'Italiano', hu:'Magyar', pt:'Português', ru:'Русский', uk:'Українська',
+    pl:'Polski', nl:'Nederlands', ar:'العربية', zh:'中文', ja:'日本語', ko:'한국어'
   };
+  function langName(code){ return LANG_NAMES[code] || String(code || '').toUpperCase(); }
 
-  function langName(code) {
-    return LANG_NAMES[code] || String(code || '').toUpperCase();
+  // ---- Status -------------------------------------------------------------
+  function setStatus(cls, text){
+    statusEl.className = 'pill-status s-' + cls;
+    statusText.textContent = text;
+    currentStatus = cls;
+    if (cls === 'connected') lastConnectedAt = Date.now();
+    var reconnecting = (cls === 'connecting' || cls === 'waiting' || cls === 'error');
+    reconnectEl.classList.toggle('hidden', !(reconnecting && lastConnectedAt > 0));
   }
 
-  function renderLanguages() {
-    while (langList.firstChild) langList.removeChild(langList.firstChild);
+  // ---- Transcript (one line per utterance, oldest fade out) ---------------
+  var MAX_LINES = 12;
+  var lineEls = {};
+  var lineOrder = [];
+
+  function hidePlaceholder(){
+    if (placeholder && placeholder.parentNode) { placeholder.parentNode.removeChild(placeholder); placeholder = null; }
+  }
+  function scrollToNewest(){ document.getElementById('transcript').scrollTop = 1e9; }
+
+  function pushText(entryId, text, action){
+    if (!text) return;
+    hidePlaceholder();
+    var el = lineEls[entryId];
+    if (action === 'add' || !el) {
+      el = document.createElement('p');
+      el.textContent = text;
+      linesEl.appendChild(el);
+      lineEls[entryId] = el;
+      lineOrder.push(entryId);
+      requestAnimationFrame(function(){ el.classList.add('in'); });
+      while (lineOrder.length > MAX_LINES) {
+        var oldId = lineOrder.shift();
+        if (lineEls[oldId]) { try { linesEl.removeChild(lineEls[oldId]); } catch(_){} delete lineEls[oldId]; }
+      }
+    } else {
+      el.textContent += text;
+    }
+    scrollToNewest();
+  }
+
+  function clearTranscript(){
+    while (linesEl.firstChild) linesEl.removeChild(linesEl.firstChild);
+    lineEls = {}; lineOrder = [];
+    placeholder = document.createElement('div');
+    placeholder.className = 'placeholder';
+    placeholder.textContent = 'Translated text will appear here…';
+    linesEl.appendChild(placeholder);
+  }
+
+  // ---- Languages ----------------------------------------------------------
+  function updateLangButton(){
+    var lang = availableLanguages.find(function(l){ return l.targetId === selectedTargetId; });
+    langBtnLabel.textContent = lang ? langName(lang.code) : 'Language';
+  }
+
+  function renderLanguages(){
+    while (langPanel.firstChild) langPanel.removeChild(langPanel.firstChild);
+    var head = document.createElement('div');
+    head.className = 'lang-head';
+    head.textContent = 'Select your language';
+    langPanel.appendChild(head);
+
     if (!availableLanguages.length) {
-      emptyLangs.classList.remove('hidden');
+      var empty = document.createElement('div');
+      empty.className = 'lang-empty';
+      empty.textContent = 'Waiting for the host to publish languages…';
+      langPanel.appendChild(empty);
+      updateLangButton();
       return;
     }
-    emptyLangs.classList.add('hidden');
 
     if (availableLanguages.length === 1 && !selectedTargetId) {
       selectedTargetId = availableLanguages[0].targetId;
       sendLanguageSelection();
     }
-    if (selectedTargetId && !availableLanguages.find(function(l){return l.targetId === selectedTargetId;})) {
+    if (selectedTargetId && !availableLanguages.find(function(l){ return l.targetId === selectedTargetId; })) {
       selectedTargetId = null;
     }
 
-    availableLanguages.forEach(function(lang) {
+    availableLanguages.forEach(function(lang){
       var btn = document.createElement('button');
-      btn.className = 'lang-option' + (selectedTargetId === lang.targetId ? ' selected' : '');
       btn.type = 'button';
-      var codeSpan = document.createElement('span');
-      codeSpan.className = 'code';
-      codeSpan.textContent = String(lang.code || '').toUpperCase();
-      var nameSpan = document.createElement('span');
-      nameSpan.textContent = langName(lang.code);
-      btn.appendChild(codeSpan);
-      btn.appendChild(nameSpan);
-      btn.addEventListener('click', function() {
+      btn.className = 'lang-opt' + (selectedTargetId === lang.targetId ? ' selected' : '');
+      var code = document.createElement('span');
+      code.className = 'code';
+      code.textContent = String(lang.code || '').toUpperCase();
+      var name = document.createElement('span');
+      name.textContent = langName(lang.code);
+      btn.appendChild(code); btn.appendChild(name);
+      btn.addEventListener('click', function(){
         if (selectedTargetId !== lang.targetId) clearTranscript();
         selectedTargetId = lang.targetId;
         renderLanguages();
         sendLanguageSelection();
+        langPanel.classList.add('hidden');
       });
-      langList.appendChild(btn);
+      langPanel.appendChild(btn);
     });
+    updateLangButton();
   }
 
-  function sendLanguageSelection() {
+  function sendLanguageSelection(){
     if (!currentDc || currentDc.readyState !== 'open' || !selectedTargetId) return;
-    try {
-      currentDc.send(JSON.stringify({ type: 'select_language', targetId: selectedTargetId }));
-      var lang = availableLanguages.find(function(l){return l.targetId === selectedTargetId;});
-      infoEl.classList.remove('hidden');
-      infoEl.textContent = 'Listening in ' + (lang ? langName(lang.code) : '');
-    } catch(e) {}
+    try { currentDc.send(JSON.stringify({ type: 'select_language', targetId: selectedTargetId })); } catch(e) {}
   }
 
-  function initAudio() {
+  langBtn.addEventListener('click', function(){ langPanel.classList.toggle('hidden'); });
+  document.addEventListener('click', function(e){
+    if (langPanel.classList.contains('hidden')) return;
+    if (!langPanel.contains(e.target) && !langBtn.contains(e.target)) langPanel.classList.add('hidden');
+  });
+
+  // ---- Audio (off by default) --------------------------------------------
+  function initAudio(){
     if (!audioCtx) {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+      try { audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 }); } catch(_) { return; }
     }
     if (audioCtx.state === 'suspended') audioCtx.resume();
   }
-
-  function applyListenerMode() {
-    if (listenerMode === 'text_only') {
-      modeAudioTextBtn.classList.remove('active');
-      modeTextOnlyBtn.classList.add('active');
-      volumeWrap.classList.add('hidden');
-      // Silence anything pending in the audio graph
-      try { if (audioCtx) audioCtx.suspend(); } catch(_) {}
-    } else {
-      modeTextOnlyBtn.classList.remove('active');
-      modeAudioTextBtn.classList.add('active');
-      volumeWrap.classList.remove('hidden');
-      try { if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); } catch(_) {}
-    }
-    try { localStorage.setItem(PREF_KEY, listenerMode); } catch(_) {}
+  function applyAudioState(){
+    audioBtn.classList.toggle('on', audioEnabled);
+    audioBtn.setAttribute('aria-pressed', audioEnabled ? 'true' : 'false');
+    audioBtn.title = audioEnabled ? 'Turn audio off' : 'Turn audio on';
+    audioOnIcon.classList.toggle('hidden', !audioEnabled);
+    audioOffIcon.classList.toggle('hidden', audioEnabled);
   }
+  function setAudio(on){
+    audioEnabled = on;
+    try { localStorage.setItem(AUDIO_PREF, on ? 'on' : 'off'); } catch(_) {}
+    applyAudioState();
+    if (on) initAudio();
+    else { try { if (audioCtx) audioCtx.suspend(); } catch(_) {} }
+  }
+  audioBtn.addEventListener('click', function(){ setAudio(!audioEnabled); });
+  // A persisted "on" needs a user gesture after load to actually resume audio.
+  document.addEventListener('pointerdown', function(){
+    if (audioEnabled && audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  }, { passive: true });
 
-  modeAudioTextBtn.addEventListener('click', function() {
-    if (listenerMode === 'audio_text') return;
-    listenerMode = 'audio_text';
-    applyListenerMode();
-  });
-  modeTextOnlyBtn.addEventListener('click', function() {
-    if (listenerMode === 'text_only') return;
-    listenerMode = 'text_only';
-    applyListenerMode();
-  });
-
-  function playPcm(base64) {
-    if (listenerMode === 'text_only') return;
-    if (!audioCtx || audioCtx.state === 'suspended') return;
+  function playPcm(base64){
+    if (!audioEnabled) return;
+    if (!audioCtx || audioCtx.state !== 'running') return;
     var raw = atob(base64);
     var bytes = new Uint8Array(raw.length);
     for (var i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
     var int16 = new Int16Array(bytes.buffer);
     var float32 = new Float32Array(int16.length);
-    for (var i = 0; i < int16.length; i++) float32[i] = int16[i] / 32768;
-
+    for (var j = 0; j < int16.length; j++) float32[j] = int16[j] / 32768;
     var buffer = audioCtx.createBuffer(1, float32.length, 24000);
     buffer.getChannelData(0).set(float32);
     var source = audioCtx.createBufferSource();
     source.buffer = buffer;
     source.connect(audioCtx.destination);
-
     var now = audioCtx.currentTime;
     if (nextPlayTime < now) nextPlayTime = now;
     source.start(nextPlayTime);
     nextPlayTime += buffer.duration;
-
-    var sum = 0;
-    for (var i = 0; i < float32.length; i++) sum += float32[i] * float32[i];
-    var rms = Math.sqrt(sum / float32.length);
-    var level = Math.min(100, Math.max(0, (20 * Math.log10(Math.max(rms, 0.000001)) + 60) / 60 * 100));
-    volumeBar.style.width = level + '%';
-    setTimeout(function() { volumeBar.style.width = '0%'; }, 200);
   }
 
-  function setStatus(cls, text) {
-    statusEl.className = 'status ' + cls;
-    statusText.textContent = text;
-    currentStatus = cls;
-    if (cls === 'connected') lastConnectedAt = Date.now();
-  }
-
-  // Watchdog: once the user has joined, if we stay non-connected long enough
-  // do a full page reload. Cheaper than diagnosing every WebRTC failure mode.
-  function startReloadWatchdog() {
-    setInterval(function() {
-      if (currentStatus === 'connected') return;
-      if (currentStatus === 'idle') return;
-      if (!lastConnectedAt) {
-        // We've never connected yet; arm the timer relative to "now" once
-        lastConnectedAt = Date.now();
-        return;
-      }
-      if (Date.now() - lastConnectedAt > DISCONNECT_RELOAD_MS) {
-        window.location.reload();
-      }
-    }, 5000);
-  }
-
-  joinBtn.addEventListener('click', function() {
-    stopped = false;
-    initAudio();
-    joinBtn.classList.add('hidden');
-    leaveBtn.classList.remove('hidden');
-    volumeWrap.classList.remove('hidden');
-    langSection.classList.remove('hidden');
-    modeToggle.classList.remove('hidden');
-    transcriptEl.classList.remove('hidden');
-    applyListenerMode();
-    renderLanguages();
-    waitForRoom();
-    startReloadWatchdog();
-  });
-
-  // Leave: tear down the connection and audio, return to the Join screen.
-  function leave() {
-    stopped = true;
-    try { if (currentDc) currentDc.close(); } catch(e) {}
-    try { if (currentPc) currentPc.close(); } catch(e) {}
-    currentDc = null;
-    currentPc = null;
-    try { if (audioCtx) { audioCtx.close(); audioCtx = null; } } catch(e) {}
-    lastConnectedAt = 0;
-    leaveBtn.classList.add('hidden');
-    volumeWrap.classList.add('hidden');
-    langSection.classList.add('hidden');
-    modeToggle.classList.add('hidden');
-    transcriptEl.classList.add('hidden');
-    infoEl.classList.add('hidden');
-    joinBtn.classList.remove('hidden');
-    setStatus('idle', 'Tap Join to start listening');
-  }
-  leaveBtn.addEventListener('click', leave);
-
-  function waitForRoom() {
-    if (stopped) return;
-    setStatus('waiting', 'Waiting for host...');
-    infoEl.classList.remove('hidden');
-    infoEl.textContent = 'The host has not started the translation yet. Please wait...';
-    console.time('listener:waitForRoom');
-
-    // Fast poll: 500ms while waiting. Each /check is a tiny JSON round-trip
-    // — cheap. The 3 s wait used to be the dominant delay on first connect.
-    function checkRoom() {
-      if (stopped) return;
+  // ---- WebRTC connection --------------------------------------------------
+  function waitForRoom(){
+    setStatus('waiting', 'Waiting for host…');
+    function checkRoom(){
       fetch(BASE + '/signal/' + SECRET + '/check')
-        .then(function(res) { return res.json(); })
-        .then(function(data) {
-          if (data.active) {
-            console.timeEnd('listener:waitForRoom');
-            connect();
-          } else {
-            setTimeout(checkRoom, 500);
-          }
-        })
-        .catch(function() {
-          setTimeout(checkRoom, 2000);
-        });
+        .then(function(res){ return res.json(); })
+        .then(function(data){ if (data.active) connect(); else setTimeout(checkRoom, 500); })
+        .catch(function(){ setTimeout(checkRoom, 2000); });
     }
     checkRoom();
   }
 
-  function connect() {
-    if (stopped) return;
-    setStatus('connecting', 'Connecting...');
-    infoEl.textContent = 'Audio will play automatically once you pick a language.';
+  function connect(){
+    setStatus('connecting', 'Connecting…');
 
     var pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
     currentPc = pc;
-
     var dc = pc.createDataChannel('audio');
     currentDc = dc;
 
-    dc.onopen = function() {
-      setStatus('connected', 'Connected');
-      // Re-send the previously chosen language if we already have one
+    dc.onopen = function(){
+      setStatus('connected', 'Live');
       sendLanguageSelection();
     };
-
-    dc.onclose = function() {
-      currentDc = null;
-      pc.close();
-      waitForRoom();
-    };
-
-    dc.onmessage = function(evt) {
+    dc.onclose = function(){ currentDc = null; pc.close(); waitForRoom(); };
+    dc.onmessage = function(evt){
       try {
         var msg = JSON.parse(evt.data);
         if (msg.type === 'audio') playPcm(msg.data);
-        else if (msg.type === 'text') appendTranscriptLine(msg.text);
+        else if (msg.type === 'text') pushText(msg.entryId, msg.text, msg.action);
         else if (msg.type === 'ping') dc.send(JSON.stringify({ type: 'pong' }));
         else if (msg.type === 'available_languages') {
           availableLanguages = Array.isArray(msg.languages) ? msg.languages : [];
           renderLanguages();
         }
-        else if (msg.type === 'secret_reset') {
-          setStatus('error', 'Link expired');
-          pc.close();
-        }
+        else if (msg.type === 'secret_reset') { setStatus('error', 'Link expired'); pc.close(); }
       } catch(e) {}
     };
 
-    pc.oniceconnectionstatechange = function() {
+    pc.oniceconnectionstatechange = function(){
       var s = pc.iceConnectionState;
-      if (s === 'checking') setStatus('connecting', 'Connecting...');
-      else if (s === 'disconnected') setStatus('connecting', 'Reconnecting...');
-      else if (s === 'failed') setStatus('error', 'Could not connect - your network may be blocking it. Retrying...');
-      if (s === 'disconnected' || s === 'failed') {
-        pc.close();
-        if (!stopped) waitForRoom();
-      }
+      if (s === 'checking') setStatus('connecting', 'Connecting…');
+      else if (s === 'disconnected') setStatus('connecting', 'Reconnecting…');
+      else if (s === 'failed') setStatus('error', 'Could not connect - network may be blocking it');
+      if (s === 'disconnected' || s === 'failed') { pc.close(); waitForRoom(); }
     };
 
-    console.time('listener:iceGather');
-    console.time('listener:postOffer');
-    console.time('listener:waitAnswer');
-    console.time('listener:totalConnect');
-    pc.createOffer().then(function(offer) {
+    pc.createOffer().then(function(offer){
       return pc.setLocalDescription(offer);
-    }).then(function() {
-      // Bail out of ICE gathering after 1.5 s — STUN candidates land in
-      // <500 ms in practice; waiting longer just stalls first audio.
-      return new Promise(function(resolve) {
+    }).then(function(){
+      // STUN candidates arrive fast; cap the wait so first text isn't delayed.
+      return new Promise(function(resolve){
         if (pc.iceGatheringState === 'complete') return resolve();
         var done = false;
         var finish = function(){ if (done) return; done = true; resolve(); };
-        pc.onicegatheringstatechange = function() {
-          if (pc.iceGatheringState === 'complete') finish();
-        };
+        pc.onicegatheringstatechange = function(){ if (pc.iceGatheringState === 'complete') finish(); };
         setTimeout(finish, 1500);
       });
-    }).then(function() {
-      console.timeEnd('listener:iceGather');
+    }).then(function(){
       return fetch(BASE + '/signal/' + SECRET + '/offer', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ offer: pc.localDescription.sdp })
       });
-    }).then(function(res) {
-      console.timeEnd('listener:postOffer');
+    }).then(function(res){
       if (res.status === 404) { pc.close(); waitForRoom(); return; }
-      if (!res.ok) throw new Error('Failed to send offer');
+      if (!res.ok) throw new Error('offer failed');
       return res.json();
-    }).then(function(data) {
+    }).then(function(data){
       if (!data || !data.sessionId) return;
-      var sessionId = data.sessionId;
-      var attempts = 0;
-      // 200 ms × 60 = 12 s budget for the host to come back with its answer.
-      // Local app polls offers every 500 ms and ICE-gathers in <1 s, so the
-      // answer usually lands within 1.5 s.
-      var maxAttempts = 60;
-      function pollAnswer() {
+      var sessionId = data.sessionId, attempts = 0, maxAttempts = 60;
+      function pollAnswer(){
         fetch(BASE + '/signal/' + SECRET + '/answer/' + sessionId)
-          .then(function(res) { return res.json(); })
-          .then(function(data) {
-            if (data.answer) {
-              console.timeEnd('listener:waitAnswer');
-              console.timeEnd('listener:totalConnect');
-              pc.setRemoteDescription({ type: 'answer', sdp: data.answer });
-            } else if (++attempts < maxAttempts) {
-              setTimeout(pollAnswer, 200);
-            } else {
-              pc.close();
-              waitForRoom();
-            }
+          .then(function(res){ return res.json(); })
+          .then(function(data){
+            if (data.answer) pc.setRemoteDescription({ type: 'answer', sdp: data.answer });
+            else if (++attempts < maxAttempts) setTimeout(pollAnswer, 200);
+            else { pc.close(); waitForRoom(); }
           })
-          .catch(function() {
-            pc.close();
-            waitForRoom();
-          });
+          .catch(function(){ pc.close(); waitForRoom(); });
       }
       pollAnswer();
-    }).catch(function(err) {
-      console.error(err);
-      pc.close();
-      waitForRoom();
-    });
+    }).catch(function(){ pc.close(); waitForRoom(); });
   }
+
+  // Watchdog: a hard reload recovers from any stuck WebRTC state.
+  function startReloadWatchdog(){
+    setInterval(function(){
+      if (currentStatus === 'connected') return;
+      if (!lastConnectedAt) { lastConnectedAt = Date.now(); return; }
+      if (Date.now() - lastConnectedAt > DISCONNECT_RELOAD_MS) window.location.reload();
+    }, 5000);
+  }
+
+  // ---- Start (auto-connect, text streams immediately) ---------------------
+  applyAudioState();
+  if (audioEnabled) initAudio();
+  renderLanguages();
+  waitForRoom();
+  startReloadWatchdog();
 })();
 </script>
 </body>
