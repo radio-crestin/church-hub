@@ -2,7 +2,7 @@
 
 > Auto-generated from git history by `app/scripts/generate-changelog.ts`. Do not edit by hand.
 
-## v0.1.79 — 2026-06-16
+## v0.1.79 — 2026-06-18
 
 ### 🔧 Changes
 
