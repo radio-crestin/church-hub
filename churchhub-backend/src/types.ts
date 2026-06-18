@@ -9,6 +9,10 @@ export interface Bindings {
   ALLOWED_ORIGINS: string
   GITHUB_TOKEN: string
   SIGNALING_KV: KVNamespace
+  // Optional JSON array of RTCIceServer for the listener page, e.g.
+  // [{"urls":"turn:turn.example.com:3478","username":"u","credential":"p"}]
+  // Required for listeners on cellular / symmetric-NAT networks (STUN isn't enough).
+  TURN_SERVERS?: string
 }
 
 export interface OAuthState {

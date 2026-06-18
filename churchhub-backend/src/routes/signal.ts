@@ -166,10 +166,33 @@ signal.get('/listen/:secret', async (c) => {
   const secret = c.req.param('secret')
   const baseUrl = new URL(c.req.url).origin
 
-  return c.html(getListenerPageHtml(secret, baseUrl))
+  // STUN is always available; TURN (needed for cellular/symmetric-NAT phones)
+  // is added from the optional TURN_SERVERS env var.
+  const iceServers: Array<{
+    urls: string
+    username?: string
+    credential?: string
+  }> = [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+  ]
+  if (c.env.TURN_SERVERS) {
+    try {
+      const turn = JSON.parse(c.env.TURN_SERVERS)
+      if (Array.isArray(turn)) iceServers.push(...turn)
+    } catch {
+      // ignore malformed env
+    }
+  }
+
+  return c.html(getListenerPageHtml(secret, baseUrl, JSON.stringify(iceServers)))
 })
 
-function getListenerPageHtml(secret: string, baseUrl: string): string {
+function getListenerPageHtml(
+  secret: string,
+  baseUrl: string,
+  iceServersJson: string,
+): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -243,6 +266,7 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
   <div id="transcriptEmpty" class="transcript-empty">Translated text will appear here…</div>
 </div>
 <p id="info" class="info hidden"></p>
+<button id="leaveBtn" class="join-btn hidden" style="background:#7f1d1d">Leave</button>
 </div>
 <script>
 (function(){
@@ -253,6 +277,7 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
   var volumeBar = document.getElementById('volumeBar');
   var volumeWrap = document.getElementById('volumeWrap');
   var joinBtn = document.getElementById('joinBtn');
+  var leaveBtn = document.getElementById('leaveBtn');
   var infoEl = document.getElementById('info');
   var langSection = document.getElementById('langSection');
   var langList = document.getElementById('langList');
@@ -270,6 +295,9 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
   var availableLanguages = [];
   var lastConnectedAt = 0;
   var currentStatus = 'idle';
+  var stopped = false;
+  var currentPc = null;
+  var ICE_SERVERS = ${iceServersJson};
   // Reload the page if we've been disconnected for this long — a hard refresh
   // recovers from any stuck state and re-runs the WebRTC handshake cleanly.
   var DISCONNECT_RELOAD_MS = 45000;
@@ -500,8 +528,10 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
   }
 
   joinBtn.addEventListener('click', function() {
+    stopped = false;
     initAudio();
     joinBtn.classList.add('hidden');
+    leaveBtn.classList.remove('hidden');
     volumeWrap.classList.remove('hidden');
     langSection.classList.remove('hidden');
     modeToggle.classList.remove('hidden');
@@ -512,7 +542,28 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
     startReloadWatchdog();
   });
 
+  // Leave: tear down the connection and audio, return to the Join screen.
+  function leave() {
+    stopped = true;
+    try { if (currentDc) currentDc.close(); } catch(e) {}
+    try { if (currentPc) currentPc.close(); } catch(e) {}
+    currentDc = null;
+    currentPc = null;
+    try { if (audioCtx) { audioCtx.close(); audioCtx = null; } } catch(e) {}
+    lastConnectedAt = 0;
+    leaveBtn.classList.add('hidden');
+    volumeWrap.classList.add('hidden');
+    langSection.classList.add('hidden');
+    modeToggle.classList.add('hidden');
+    transcriptEl.classList.add('hidden');
+    infoEl.classList.add('hidden');
+    joinBtn.classList.remove('hidden');
+    setStatus('idle', 'Tap Join to start listening');
+  }
+  leaveBtn.addEventListener('click', leave);
+
   function waitForRoom() {
+    if (stopped) return;
     setStatus('waiting', 'Waiting for host...');
     infoEl.classList.remove('hidden');
     infoEl.textContent = 'The host has not started the translation yet. Please wait...';
@@ -521,6 +572,7 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
     // Fast poll: 500ms while waiting. Each /check is a tiny JSON round-trip
     // — cheap. The 3 s wait used to be the dominant delay on first connect.
     function checkRoom() {
+      if (stopped) return;
       fetch(BASE + '/signal/' + SECRET + '/check')
         .then(function(res) { return res.json(); })
         .then(function(data) {
@@ -539,15 +591,12 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
   }
 
   function connect() {
+    if (stopped) return;
     setStatus('connecting', 'Connecting...');
     infoEl.textContent = 'Audio will play automatically once you pick a language.';
 
-    var pc = new RTCPeerConnection({
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' }
-      ]
-    });
+    var pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+    currentPc = pc;
 
     var dc = pc.createDataChannel('audio');
     currentDc = dc;
@@ -582,9 +631,13 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
     };
 
     pc.oniceconnectionstatechange = function() {
-      if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') {
+      var s = pc.iceConnectionState;
+      if (s === 'checking') setStatus('connecting', 'Connecting...');
+      else if (s === 'disconnected') setStatus('connecting', 'Reconnecting...');
+      else if (s === 'failed') setStatus('error', 'Could not connect - your network may be blocking it. Retrying...');
+      if (s === 'disconnected' || s === 'failed') {
         pc.close();
-        waitForRoom();
+        if (!stopped) waitForRoom();
       }
     };
 
