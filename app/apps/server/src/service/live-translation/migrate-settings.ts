@@ -26,7 +26,7 @@ export function defaultSettings(): PersistedSettings {
     geminiApiKey: '',
     inputDeviceId: null,
     outputDeviceId: null,
-    outputMode: 'device',
+    outputMode: 'webrtc',
   }
 }
 

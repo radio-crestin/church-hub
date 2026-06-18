@@ -11,7 +11,7 @@ describe('migrateSettings', () => {
       expect(out.sourceLanguage).toBe('ro')
       expect(out.targets).toHaveLength(1)
       expect(out.targets[0]!.targetLanguage).toBe('en')
-      expect(out.outputMode).toBe('device')
+      expect(out.outputMode).toBe('webrtc')
       expect(out.primaryTargetId).toBe(out.targets[0]!.id)
     }
   })
@@ -94,8 +94,13 @@ describe('migrateSettings', () => {
     expect(out.primaryTargetId).toBe(out.targets[0]!.id)
   })
 
-  it('coerces unknown outputMode to default device', () => {
+  it('coerces unknown outputMode to the default', () => {
     const out = migrateSettings({ outputMode: 'multicast' })
+    expect(out.outputMode).toBe('webrtc')
+  })
+
+  it('preserves an explicit device outputMode', () => {
+    const out = migrateSettings({ outputMode: 'device' })
     expect(out.outputMode).toBe('device')
   })
 })

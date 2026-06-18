@@ -93,7 +93,7 @@ const DEFAULT_SETTINGS: LiveTranslationSettings = {
   geminiApiKey: '',
   inputDeviceId: null,
   outputDeviceId: null,
-  outputMode: 'device',
+  outputMode: 'webrtc',
 }
 
 const DEFAULT_STATE: LiveTranslationState = {
@@ -182,6 +182,17 @@ export function useLiveTranslation() {
     },
     [baseUrl],
   )
+
+  // Flush the current settings to the server immediately (used by the explicit
+  // Save button), bypassing the debounced auto-save.
+  const saveNow = useCallback(async () => {
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+    await fetch(`${baseUrl}/api/live-translation/settings`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings),
+    }).catch(() => {})
+  }, [baseUrl, settings])
 
   const updateSetting = useCallback(
     <K extends keyof LiveTranslationSettings>(
@@ -393,6 +404,7 @@ export function useLiveTranslation() {
     streamSecret,
     canStart,
     updateSetting,
+    saveNow,
     addTarget,
     removeTarget,
     updateTarget,

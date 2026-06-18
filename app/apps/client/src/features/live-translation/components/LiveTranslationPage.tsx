@@ -69,6 +69,7 @@ export function LiveTranslationPage() {
     streamUrl,
     canStart,
     updateSetting,
+    saveNow,
     addTarget,
     removeTarget,
     updateTarget,
@@ -235,7 +236,7 @@ export function LiveTranslationPage() {
                       value={apiKey}
                       onChange={(e) => apiKeyHandler(e.target.value)}
                       placeholder={t('settings.apiKeyPlaceholder')}
-                      className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                      className="w-full px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                     />
                     {!apiKey && (
                       <div className="mt-2.5 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-lg">
@@ -406,7 +407,7 @@ export function LiveTranslationPage() {
                   {t('settings.outputModeDescription')}
                 </p>
                 <div className="flex gap-2 mb-3">
-                  {(['device', 'webrtc', 'both'] as OutputMode[]).map(
+                  {(['webrtc', 'device', 'both'] as OutputMode[]).map(
                     (mode) => (
                       <button
                         key={mode}
@@ -427,6 +428,42 @@ export function LiveTranslationPage() {
                   )}
                 </div>
 
+                {/* When streaming, surface the listener link right here */}
+                {streamUrl &&
+                  (settings.outputMode === 'webrtc' ||
+                    settings.outputMode === 'both') && (
+                    <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/40 rounded-lg">
+                      <div className="text-xs font-semibold text-blue-900 dark:text-blue-300 mb-1.5">
+                        {t('settings.streamUrl')}
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          readOnly
+                          value={streamUrl}
+                          onClick={(e) =>
+                            (e.target as HTMLInputElement).select()
+                          }
+                          className="flex-1 min-w-0 px-3 py-2 text-xs text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 border border-blue-300 dark:border-blue-700 rounded-lg font-mono select-all"
+                        />
+                        <button
+                          type="button"
+                          onClick={copyLink}
+                          className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                        >
+                          {copied ? (
+                            <Check className="w-3.5 h-3.5" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5" />
+                          )}
+                          {copied
+                            ? t('settings.copiedUrl')
+                            : t('settings.copyUrl')}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                 {streamUrl && (
                   <button
                     type="button"
@@ -443,6 +480,28 @@ export function LiveTranslationPage() {
                 )}
               </div>
             </div>
+          </div>
+
+          {/* Footer — explicit Save (settings also auto-save on change) */}
+          <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
+            <button
+              type="button"
+              onClick={() => setShowSettings(false)}
+              className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors"
+            >
+              {t('settings.close')}
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                await saveNow()
+                setShowSettings(false)
+              }}
+              className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+            >
+              <Check className="w-4 h-4" />
+              {t('settings.save')}
+            </button>
           </div>
         </div>
       </dialog>
