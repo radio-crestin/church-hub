@@ -7,6 +7,63 @@ const OFFER_TTL = 60 // seconds - CF KV minimum is 60
 const ANSWER_TTL = 60
 const ROOM_TTL = 3600 // 1 hour - room registration
 
+type IceServer = {
+  urls: string | string[]
+  username?: string
+  credential?: string
+}
+
+/**
+ * Build the ICE server list shared by the listener page and the host:
+ *  - public STUN (always),
+ *  - an optional static TURN_SERVERS override,
+ *  - and, when a Cloudflare Realtime TURN key is configured, short-lived TURN
+ *    credentials minted per request. The TURN secret never leaves the server;
+ *    clients only receive a temporary username/credential.
+ */
+async function getIceServers(env: Bindings): Promise<IceServer[]> {
+  const iceServers: IceServer[] = [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+  ]
+
+  if (env.TURN_SERVERS) {
+    try {
+      const turn = JSON.parse(env.TURN_SERVERS)
+      if (Array.isArray(turn)) iceServers.push(...turn)
+    } catch {
+      // ignore malformed env
+    }
+  }
+
+  if (env.TURN_KEY_ID && env.TURN_API_TOKEN) {
+    try {
+      const res = await fetch(
+        `https://rtc.live.cloudflare.com/v1/turn/keys/${env.TURN_KEY_ID}/credentials/generate`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${env.TURN_API_TOKEN}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ ttl: 86400 }),
+        },
+      )
+      if (res.ok) {
+        const data = (await res.json()) as {
+          iceServers?: IceServer | IceServer[]
+        }
+        if (Array.isArray(data.iceServers)) iceServers.push(...data.iceServers)
+        else if (data.iceServers) iceServers.push(data.iceServers)
+      }
+    } catch {
+      // network error — fall back to STUN (+ static TURN if configured)
+    }
+  }
+
+  return iceServers
+}
+
 /**
  * POST /signal/register
  * Local app registers a room with its secret.
@@ -165,27 +222,18 @@ signal.get('/signal/:secret/check', async (c) => {
 signal.get('/listen/:secret', async (c) => {
   const secret = c.req.param('secret')
   const baseUrl = new URL(c.req.url).origin
-
-  // STUN is always available; TURN (needed for cellular/symmetric-NAT phones)
-  // is added from the optional TURN_SERVERS env var.
-  const iceServers: Array<{
-    urls: string
-    username?: string
-    credential?: string
-  }> = [
-    { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' },
-  ]
-  if (c.env.TURN_SERVERS) {
-    try {
-      const turn = JSON.parse(c.env.TURN_SERVERS)
-      if (Array.isArray(turn)) iceServers.push(...turn)
-    } catch {
-      // ignore malformed env
-    }
-  }
-
+  const iceServers = await getIceServers(c.env)
   return c.html(getListenerPageHtml(secret, baseUrl, JSON.stringify(iceServers)))
+})
+
+/**
+ * GET /signal/ice
+ * ICE servers (STUN + short-lived TURN) for the host app, so the host and
+ * listeners use the same relay.
+ */
+signal.get('/signal/ice', async (c) => {
+  const iceServers = await getIceServers(c.env)
+  return c.json({ iceServers })
 })
 
 function getListenerPageHtml(
