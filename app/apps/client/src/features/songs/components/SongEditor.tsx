@@ -84,7 +84,10 @@ export function SongEditor({
   const { t } = useTranslation(['songs', 'queue'])
   const navigate = useNavigate()
   const { showToast } = useToast()
-  const [view, setView] = useState<EditorView>('form')
+  // Existing songs open straight into the PowerPoint-style slide editor (the
+  // primary "Edit" action). New songs start in the form so the title, category
+  // and metadata can be filled in first.
+  const [view, setView] = useState<EditorView>(isNew ? 'form' : 'stage')
   const [showAddToScheduleModal, setShowAddToScheduleModal] = useState(false)
   const [showUnsavedChangesModal, setShowUnsavedChangesModal] = useState(false)
   const [pendingAction, setPendingAction] = useState<PendingAction>(null)

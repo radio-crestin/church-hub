@@ -30,10 +30,9 @@ test.describe('Song stage editor (PowerPoint-style)', () => {
       await page.goto(`/songs/${created.id}/edit`)
       await page.waitForLoadState('networkidle')
 
-      // Switch to the PowerPoint-style stage view.
-      await page.getByTestId('song-view-stage').click()
-
-      // Filmstrip shows one true-to-projection thumbnail per slide.
+      // Editing an existing song opens straight into the PowerPoint-style stage
+      // view — no extra toggle click needed. The filmstrip shows one
+      // true-to-projection thumbnail per slide.
       await expect(page.getByTestId('stage-thumbnail')).toHaveCount(2, {
         timeout: 10000,
       })
@@ -70,6 +69,34 @@ test.describe('Song stage editor (PowerPoint-style)', () => {
     }
   })
 
+  test('opens in stage view but can switch to the form', async ({
+    page,
+    request,
+  }) => {
+    const title = `E2E Stage Toggle ${Date.now()}`
+    const createResponse = await request.post('/api/songs', {
+      data: { title, slides: [{ content: 'Only slide', sortOrder: 0 }] },
+    })
+    expect(createResponse.status()).toBe(201)
+    const { data: created } = await createResponse.json()
+
+    try {
+      await page.goto(`/songs/${created.id}/edit`)
+      await page.waitForLoadState('networkidle')
+
+      // Default = stage view: the editable canvas is shown without any toggle.
+      await expect(page.getByTestId('slide-canvas-editable')).toBeVisible({
+        timeout: 10000,
+      })
+
+      // The Form toggle still switches to the metadata/form editor.
+      await page.getByTestId('song-view-form').click()
+      await expect(page.getByTestId('slide-canvas-editable')).toBeHidden()
+    } finally {
+      await request.delete(`/api/songs/${created.id}`)
+    }
+  })
+
   test('adds a slide from the filmstrip', async ({ page, request }) => {
     const title = `E2E Stage Add ${Date.now()}`
     const createResponse = await request.post('/api/songs', {
@@ -85,7 +112,7 @@ test.describe('Song stage editor (PowerPoint-style)', () => {
       await page.goto(`/songs/${created.id}/edit`)
       await page.waitForLoadState('networkidle')
 
-      await page.getByTestId('song-view-stage').click()
+      // Opens directly in stage view with the single slide.
       await expect(page.getByTestId('stage-thumbnail')).toHaveCount(1, {
         timeout: 10000,
       })
