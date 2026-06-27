@@ -2,8 +2,10 @@ import { useNavigate } from '@tanstack/react-router'
 import {
   ArrowLeft,
   CalendarPlus,
+  LayoutList,
   Loader2,
   Play,
+  Projector,
   Save,
   Trash2,
   X,
@@ -24,10 +26,12 @@ import {
 } from './SongDetailsSection'
 import { type LocalSlide } from './SongSlideList'
 import { SongSlidesSection } from './SongSlidesSection'
+import { SongStageEditor } from './stage-editor'
 import type { SongSlide } from '../types'
 import { expandSongSlidesWithChoruses } from '../utils/expandSongSlides'
 
 type PendingAction = 'present' | 'addToSchedule' | null
+type EditorView = 'form' | 'stage'
 
 interface SongEditorProps {
   isNew: boolean
@@ -80,6 +84,7 @@ export function SongEditor({
   const { t } = useTranslation(['songs', 'queue'])
   const navigate = useNavigate()
   const { showToast } = useToast()
+  const [view, setView] = useState<EditorView>('form')
   const [showAddToScheduleModal, setShowAddToScheduleModal] = useState(false)
   const [showUnsavedChangesModal, setShowUnsavedChangesModal] = useState(false)
   const [pendingAction, setPendingAction] = useState<PendingAction>(null)
@@ -301,30 +306,73 @@ export function SongEditor({
         </div>
       </div>
 
-      {/* Song Details */}
-      <SongDetailsSection
-        title={title}
-        categoryId={categoryId}
-        tagIds={tagIds}
-        metadata={metadata}
-        isLoading={isLoading}
-        isNew={isNew}
-        presentationCount={presentationCount}
-        lastManualEdit={lastManualEdit}
-        onTitleChange={onTitleChange}
-        onCategoryChange={onCategoryChange}
-        onTagsChange={onTagsChange}
-        onMetadataChange={handleMetadataChange}
-      />
+      {/* View toggle: form editor vs PowerPoint-style stage editor */}
+      <div className="inline-flex rounded-lg border border-gray-200 dark:border-gray-700 p-0.5 bg-gray-50 dark:bg-gray-800/50">
+        <button
+          type="button"
+          data-testid="song-view-form"
+          onClick={() => setView('form')}
+          className={`inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+            view === 'form'
+              ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+          }`}
+        >
+          <LayoutList size={16} />
+          {t('songs:editor.viewForm')}
+        </button>
+        <button
+          type="button"
+          data-testid="song-view-stage"
+          onClick={() => setView('stage')}
+          className={`inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+            view === 'stage'
+              ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+          }`}
+        >
+          <Projector size={16} />
+          {t('songs:editor.viewStage')}
+        </button>
+      </div>
 
-      {/* Slides Section */}
-      <SongSlidesSection
-        slides={slides}
-        presentedSlideId={presentedSlideId}
-        onSlidesChange={onSlidesChange}
-        onPresentSlide={handlePresentSlide}
-        isLoading={isLoading}
-      />
+      {view === 'form' ? (
+        <>
+          {/* Song Details */}
+          <SongDetailsSection
+            title={title}
+            categoryId={categoryId}
+            tagIds={tagIds}
+            metadata={metadata}
+            isLoading={isLoading}
+            isNew={isNew}
+            presentationCount={presentationCount}
+            lastManualEdit={lastManualEdit}
+            onTitleChange={onTitleChange}
+            onCategoryChange={onCategoryChange}
+            onTagsChange={onTagsChange}
+            onMetadataChange={handleMetadataChange}
+          />
+
+          {/* Slides Section */}
+          <SongSlidesSection
+            slides={slides}
+            presentedSlideId={presentedSlideId}
+            onSlidesChange={onSlidesChange}
+            onPresentSlide={handlePresentSlide}
+            isLoading={isLoading}
+          />
+        </>
+      ) : (
+        <SongStageEditor
+          slides={slides}
+          title={title}
+          keyLine={metadata.keyLine}
+          songId={songId}
+          presentedSlideId={presentedSlideId}
+          onSlidesChange={onSlidesChange}
+        />
+      )}
 
       {songId && (
         <AddSongToScheduleModal

@@ -28,7 +28,16 @@
     "noSlides": "Nu există slide-uri încă",
     "saveFirst": "Salvează cântarea pentru a adăuga slide-uri",
     "undo": "Anulează",
-    "redo": "Refă"
+    "redo": "Refă",
+    "viewForm": "Formular",
+    "viewStage": "Slide-uri"
+  },
+  "stageEditor": {
+    "editHint": "Apasă pe versuri pentru a le edita direct pe slide",
+    "emptySlidePlaceholder": "Apasă pentru a adăuga versuri",
+    "dragToReorder": "Trage pentru a reordona",
+    "cloneSlide": "Duplică slide-ul",
+    "deleteSlide": "Șterge slide-ul"
   },
   "search": {
     "placeholder": "Caută cântări...",

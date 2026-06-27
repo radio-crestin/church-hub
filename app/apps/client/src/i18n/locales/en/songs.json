@@ -28,7 +28,16 @@
     "noSlides": "No slides yet",
     "saveFirst": "Save the song to add slides",
     "undo": "Undo",
-    "redo": "Redo"
+    "redo": "Redo",
+    "viewForm": "Form",
+    "viewStage": "Slides"
+  },
+  "stageEditor": {
+    "editHint": "Click the lyrics to edit them directly on the slide",
+    "emptySlidePlaceholder": "Click to add lyrics",
+    "dragToReorder": "Drag to reorder",
+    "cloneSlide": "Duplicate slide",
+    "deleteSlide": "Delete slide"
   },
   "search": {
     "placeholder": "Search songs...",

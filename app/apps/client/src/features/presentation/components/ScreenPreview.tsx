@@ -12,6 +12,12 @@ interface ScreenPreviewProps {
   contentKey?: string
   isVisible?: boolean
   styleRanges?: TextStyleRange[]
+  /** Stage editor: make the main lyrics element editable in place */
+  editableMainText?: boolean
+  /** Placeholder shown on an empty editable slide */
+  editPlaceholder?: string
+  /** Called with the edited plain text (newline-separated lines) */
+  onMainTextEdit?: (plainText: string) => void
 }
 
 export function ScreenPreview({
@@ -21,6 +27,9 @@ export function ScreenPreview({
   contentKey,
   isVisible = true,
   styleRanges,
+  editableMainText,
+  editPlaceholder,
+  onMainTextEdit,
 }: ScreenPreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [displaySize, setDisplaySize] = useState({ width: 400, height: 225 })
@@ -64,6 +73,9 @@ export function ScreenPreview({
         containerHeight={displaySize.height}
         isVisible={isVisible}
         styleRanges={styleRanges}
+        editableMainText={editableMainText}
+        editPlaceholder={editPlaceholder}
+        onMainTextEdit={onMainTextEdit}
       />
     </div>
   )
