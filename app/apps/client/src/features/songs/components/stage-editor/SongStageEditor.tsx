@@ -105,16 +105,14 @@ export function SongStageEditor({
   )
   const [slideToDelete, setSlideToDelete] = useState<LocalSlide | null>(null)
 
-  // In Navigate mode (read-only canvas) the canvas FOLLOWS the live projected
-  // slide, so advancing the presentation (buttons or keyboard) visibly moves the
-  // slide on screen. In Edit mode it shows the slide selected for editing.
-  const followLive = !editable && presentedSlideId != null
+  // The canvas always shows the SELECTED slide (the one "you're on"), in both
+  // modes — projecting a different slide doesn't move it, and switching to Edit
+  // keeps you on this slide. Projection is separate (green button / Present).
   const activeIndex = useMemo(() => {
-    const targetId = followLive ? presentedSlideId : activeId
-    const idx = slides.findIndex((s) => s.id === targetId)
+    const idx = slides.findIndex((s) => s.id === activeId)
     if (idx >= 0) return idx
     return slides.length > 0 ? 0 : -1
-  }, [slides, activeId, followLive, presentedSlideId])
+  }, [slides, activeId])
 
   const effectiveIndex = activeIndex < 0 ? 0 : activeIndex
   const effectiveSongId = songId ?? 0
@@ -138,17 +136,11 @@ export function SongStageEditor({
     [effectiveSongId, title, keyLine, slides, effectiveIndex],
   )
 
+  // Clicking a slide only selects it (shows it on the canvas) — it never
+  // projects. Projection happens via the per-slide green button or Present.
   const handleSelect = useCallback(
-    (index: number) => {
-      // Navigate mode: clicking a slide projects it to the screen (the canvas
-      // then follows it). Edit mode: clicking selects it for editing.
-      if (!editable) {
-        onProjectSlide?.(index)
-        return
-      }
-      setActiveId(slides[index]?.id ?? null)
-    },
-    [editable, slides, onProjectSlide],
+    (index: number) => setActiveId(slides[index]?.id ?? null),
+    [slides],
   )
 
   const handleEditText = useCallback(
@@ -250,7 +242,7 @@ export function SongStageEditor({
           onClone={handleClone}
           onDelete={setSlideToDelete}
           onAdd={handleAdd}
-          onProject={editable ? onProjectSlide : undefined}
+          onProject={onProjectSlide}
         />
       </div>
 

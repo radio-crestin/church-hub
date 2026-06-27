@@ -210,11 +210,11 @@ test.describe('Song editing layout preference', () => {
     }
   })
 
-  test('navigate mode: clicking a slide projects it and the canvas follows', async ({
+  test('navigate mode: clicking selects (no project); the green button projects', async ({
     page,
     request,
   }) => {
-    const title = `E2E Nav Follow ${Date.now()}`
+    const title = `E2E Nav Select ${Date.now()}`
     const createResponse = await request.post('/api/songs', {
       data: {
         title,
@@ -238,21 +238,60 @@ test.describe('Song editing layout preference', () => {
       const thumbs = page.getByTestId('stage-thumbnail')
       await expect(thumbs).toHaveCount(3, { timeout: 10000 })
 
-      // Navigate mode (default): clicking the 2nd slide projects it; the canvas
-      // follows it (its thumbnail becomes the active/current one).
+      // Navigate mode (default): clicking the 2nd slide only SELECTS it (it
+      // becomes current) and does NOT project — nothing goes live.
       await thumbs.nth(1).click()
-      await expect(page.getByTestId('stage-next')).toBeEnabled({
-        timeout: 10000,
-      })
       await expect(thumbs.nth(1)).toHaveAttribute('aria-current', 'true')
+      await expect(page.getByTestId('stage-next')).toBeDisabled()
 
-      // Advancing the presentation moves the followed slide to the 3rd.
-      await page.getByTestId('stage-next').click()
-      await expect(thumbs.nth(2)).toHaveAttribute('aria-current', 'true', {
+      // The per-slide green project button IS available in Navigate mode and
+      // projects the slide (presentation starts).
+      await page.getByTestId('thumb-project').nth(1).click()
+      await expect(page.getByTestId('stage-next')).toBeEnabled({
         timeout: 10000,
       })
 
       await page.getByTestId('stage-hide').click()
+    } finally {
+      await request.delete(`/api/songs/${created.id}`)
+    }
+  })
+
+  test('switching to Edit keeps the slide you are on (not the first)', async ({
+    page,
+    request,
+  }) => {
+    const title = `E2E Edit Current ${Date.now()}`
+    const createResponse = await request.post('/api/songs', {
+      data: {
+        title,
+        slides: [
+          { content: 'One', sortOrder: 0 },
+          { content: 'Two', sortOrder: 1 },
+          { content: 'Three', sortOrder: 2 },
+        ],
+      },
+    })
+    expect(createResponse.status()).toBe(201)
+    const { data: created } = await createResponse.json()
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${created.id}`)
+      await page.waitForLoadState('networkidle')
+
+      // In Navigate mode, select the 2nd slide, then switch to Edit.
+      await expect(page.getByTestId('stage-thumbnail')).toHaveCount(3, {
+        timeout: 10000,
+      })
+      await page.getByTestId('stage-thumbnail').nth(1).click()
+      await page.getByTestId('stage-edit-toggle').click()
+
+      // Editing opens on the slide we were on (the 2nd), not the first.
+      const editable = page.getByTestId('slide-canvas-editable')
+      await expect(editable).toContainText('Two', { timeout: 10000 })
     } finally {
       await request.delete(`/api/songs/${created.id}`)
     }
