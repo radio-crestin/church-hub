@@ -210,6 +210,54 @@ test.describe('Song editing layout preference', () => {
     }
   })
 
+  test('navigate mode: clicking a slide projects it and the canvas follows', async ({
+    page,
+    request,
+  }) => {
+    const title = `E2E Nav Follow ${Date.now()}`
+    const createResponse = await request.post('/api/songs', {
+      data: {
+        title,
+        slides: [
+          { content: 'One', sortOrder: 0 },
+          { content: 'Two', sortOrder: 1 },
+          { content: 'Three', sortOrder: 2 },
+        ],
+      },
+    })
+    expect(createResponse.status()).toBe(201)
+    const { data: created } = await createResponse.json()
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${created.id}`)
+      await page.waitForLoadState('networkidle')
+
+      const thumbs = page.getByTestId('stage-thumbnail')
+      await expect(thumbs).toHaveCount(3, { timeout: 10000 })
+
+      // Navigate mode (default): clicking the 2nd slide projects it; the canvas
+      // follows it (its thumbnail becomes the active/current one).
+      await thumbs.nth(1).click()
+      await expect(page.getByTestId('stage-next')).toBeEnabled({
+        timeout: 10000,
+      })
+      await expect(thumbs.nth(1)).toHaveAttribute('aria-current', 'true')
+
+      // Advancing the presentation moves the followed slide to the 3rd.
+      await page.getByTestId('stage-next').click()
+      await expect(thumbs.nth(2)).toHaveAttribute('aria-current', 'true', {
+        timeout: 10000,
+      })
+
+      await page.getByTestId('stage-hide').click()
+    } finally {
+      await request.delete(`/api/songs/${created.id}`)
+    }
+  })
+
   test('normal layout keeps the classic song page', async ({
     page,
     request,

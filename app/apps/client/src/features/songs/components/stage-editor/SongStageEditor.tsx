@@ -98,11 +98,16 @@ export function SongStageEditor({
   )
   const [slideToDelete, setSlideToDelete] = useState<LocalSlide | null>(null)
 
+  // In Navigate mode (read-only canvas) the canvas FOLLOWS the live projected
+  // slide, so advancing the presentation (buttons or keyboard) visibly moves the
+  // slide on screen. In Edit mode it shows the slide selected for editing.
+  const followLive = !editable && presentedSlideId != null
   const activeIndex = useMemo(() => {
-    const idx = slides.findIndex((s) => s.id === activeId)
+    const targetId = followLive ? presentedSlideId : activeId
+    const idx = slides.findIndex((s) => s.id === targetId)
     if (idx >= 0) return idx
     return slides.length > 0 ? 0 : -1
-  }, [slides, activeId])
+  }, [slides, activeId, followLive, presentedSlideId])
 
   const effectiveIndex = activeIndex < 0 ? 0 : activeIndex
   const effectiveSongId = songId ?? 0
@@ -127,8 +132,16 @@ export function SongStageEditor({
   )
 
   const handleSelect = useCallback(
-    (index: number) => setActiveId(slides[index]?.id ?? null),
-    [slides],
+    (index: number) => {
+      // Navigate mode: clicking a slide projects it to the screen (the canvas
+      // then follows it). Edit mode: clicking selects it for editing.
+      if (!editable) {
+        onProjectSlide?.(index)
+        return
+      }
+      setActiveId(slides[index]?.id ?? null)
+    },
+    [editable, slides, onProjectSlide],
   )
 
   const handleEditText = useCallback(
@@ -226,7 +239,7 @@ export function SongStageEditor({
           onClone={handleClone}
           onDelete={setSlideToDelete}
           onAdd={handleAdd}
-          onProject={onProjectSlide}
+          onProject={editable ? onProjectSlide : undefined}
         />
       </div>
 
