@@ -66,6 +66,57 @@ test.describe('Song editing layout preference', () => {
     }
   })
 
+  test('powerpoint layout has working prev/next presentation controls', async ({
+    page,
+    request,
+  }) => {
+    const title = `E2E Layout Nav ${Date.now()}`
+    const createResponse = await request.post('/api/songs', {
+      data: {
+        title,
+        slides: [
+          { content: 'First slide', sortOrder: 0 },
+          { content: 'Second slide', sortOrder: 1 },
+          { content: 'Third slide', sortOrder: 2 },
+        ],
+      },
+    })
+    expect(createResponse.status()).toBe(201)
+    const { data: created } = await createResponse.json()
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${created.id}`)
+      await page.waitForLoadState('networkidle')
+
+      const prev = page.getByTestId('stage-prev')
+      const next = page.getByTestId('stage-next')
+
+      // Before presenting, both navigation buttons are visible but disabled.
+      await expect(next).toBeVisible({ timeout: 10000 })
+      await expect(prev).toBeDisabled()
+      await expect(next).toBeDisabled()
+
+      // Start presenting from the first slide.
+      await page.getByTestId('stage-present').click()
+
+      // Now Next is enabled and Prev stays disabled (we're on slide 0).
+      await expect(next).toBeEnabled({ timeout: 10000 })
+      await expect(prev).toBeDisabled()
+
+      // Advancing enables Prev (we moved off the first slide).
+      await next.click()
+      await expect(prev).toBeEnabled({ timeout: 10000 })
+
+      // Hide to stop the presentation.
+      await page.getByTestId('stage-hide').click()
+    } finally {
+      await request.delete(`/api/songs/${created.id}`)
+    }
+  })
+
   test('normal layout keeps the classic song page', async ({
     page,
     request,
