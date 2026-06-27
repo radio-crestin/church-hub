@@ -152,9 +152,7 @@ export function SlideThumbnail({
               e.stopPropagation()
               onProject()
             }}
-            className={`absolute bottom-1 left-1 p-1 rounded text-white transition-colors ${
-              isPresented ? 'bg-green-600' : 'bg-black/60 hover:bg-green-600'
-            }`}
+            className="absolute bottom-1 left-1 p-1 rounded text-white bg-green-600 hover:bg-green-700 transition-colors"
             title={t('stageEditor.projectSlide')}
           >
             <MonitorPlay size={12} />
@@ -170,7 +168,7 @@ export function SlideThumbnail({
               e.stopPropagation()
               onClone()
             }}
-            className="p-1 rounded bg-black/60 text-white hover:bg-black/80"
+            className="p-1 rounded bg-blue-600 text-white hover:bg-blue-700"
             title={t('stageEditor.cloneSlide')}
           >
             <Copy size={12} />
@@ -182,7 +180,7 @@ export function SlideThumbnail({
               e.stopPropagation()
               onDelete()
             }}
-            className="p-1 rounded bg-black/60 text-white hover:bg-red-600"
+            className="p-1 rounded bg-red-600 text-white hover:bg-red-700"
             title={t('stageEditor.deleteSlide')}
           >
             <Trash2 size={12} />
