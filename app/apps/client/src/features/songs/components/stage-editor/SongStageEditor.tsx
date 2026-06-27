@@ -23,6 +23,11 @@ interface SongStageEditorProps {
   editable?: boolean
   /** Project a slide to the screen by its index, without moving the editor. */
   onProjectSlide?: (index: number) => void
+  /** Rendered under the canvas column only (e.g. presentation nav buttons). */
+  canvasFooter?: React.ReactNode
+  /** Fill the parent's height (filmstrip runs to the bottom). Needs a bounded
+   * parent — used on the song page, not on the scrolling /edit form. */
+  fillHeight?: boolean
   onSlidesChange: (slides: LocalSlide[]) => void
 }
 
@@ -43,6 +48,8 @@ export function SongStageEditor({
   presentedSlideId,
   editable = true,
   onProjectSlide,
+  canvasFooter,
+  fillHeight = false,
   onSlidesChange,
 }: SongStageEditorProps) {
   const { t } = useTranslation('songs')
@@ -219,11 +226,15 @@ export function SongStageEditor({
   return (
     <div
       ref={containerRef}
-      className="flex flex-col lg:flex-row gap-3 lg:gap-1"
+      className={`flex flex-col lg:flex-row gap-3 lg:gap-1 ${
+        fillHeight ? 'lg:h-full lg:min-h-0' : ''
+      }`}
     >
       {/* Filmstrip (column 1, resizable) */}
       <div
-        className="order-2 lg:order-1 lg:max-h-[70vh] lg:overflow-y-auto lg:pr-1"
+        className={`order-2 lg:order-1 lg:overflow-y-auto lg:pr-1 ${
+          fillHeight ? 'lg:h-full lg:min-h-0' : 'lg:max-h-[70vh]'
+        }`}
         style={isLargeScreen ? { width: `${dividerPosition}%` } : undefined}
       >
         <SlideFilmstrip
@@ -245,7 +256,9 @@ export function SongStageEditor({
 
       {/* Draggable divider */}
       <div
-        className="hidden lg:flex lg:order-2 items-center justify-center w-2 cursor-col-resize hover:bg-indigo-100 dark:hover:bg-indigo-900/30 rounded transition-colors group shrink-0"
+        className={`hidden lg:flex lg:order-2 items-center justify-center w-2 cursor-col-resize hover:bg-indigo-100 dark:hover:bg-indigo-900/30 rounded transition-colors group shrink-0 ${
+          fillHeight ? 'lg:h-full' : ''
+        }`}
         onMouseDown={handleDividerMouseDown}
       >
         <GripVertical
@@ -254,14 +267,21 @@ export function SongStageEditor({
         />
       </div>
 
-      {/* Canvas */}
-      <div className="order-1 lg:order-3 lg:flex-1 lg:min-w-0">
-        <StageCanvas
-          screen={screen}
-          previewContent={previewContent}
-          canEdit={editable && activeIndex >= 0}
-          onEditText={handleEditText}
-        />
+      {/* Canvas column (canvas + footer under it only) */}
+      <div
+        className={`order-1 lg:order-3 lg:flex-1 lg:min-w-0 flex flex-col ${
+          fillHeight ? 'lg:min-h-0 lg:overflow-y-auto' : ''
+        }`}
+      >
+        <div className="shrink-0">
+          <StageCanvas
+            screen={screen}
+            previewContent={previewContent}
+            canEdit={editable && activeIndex >= 0}
+            onEditText={handleEditText}
+          />
+        </div>
+        {canvasFooter}
       </div>
 
       <ConfirmModal

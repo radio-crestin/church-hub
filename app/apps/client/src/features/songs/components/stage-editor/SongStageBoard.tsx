@@ -241,7 +241,7 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto">
+      <div className="flex-1 min-h-0">
         <SongStageEditor
           slides={slides}
           title={song.title}
@@ -251,31 +251,34 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
           editable={editMode}
           onProjectSlide={handleProjectSlide}
           onSlidesChange={setSlides}
+          fillHeight
+          canvasFooter={
+            /* Presentation navigation sits under the canvas only, not the
+               filmstrip — advance/retreat the live slide. */
+            <div className="flex items-center justify-center gap-3 pt-3 shrink-0">
+              <button
+                type="button"
+                onClick={handlePrev}
+                disabled={!canNavigatePrev || navigateTemporary.isPending}
+                className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
+                data-testid="stage-prev"
+              >
+                <ChevronLeft size={20} />
+                <span className="text-sm">{t('bible:controls.prev')}</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleNext}
+                disabled={!canNavigateNext || navigateTemporary.isPending}
+                className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
+                data-testid="stage-next"
+              >
+                <span className="text-sm">{t('bible:controls.next')}</span>
+                <ChevronRight size={20} />
+              </button>
+            </div>
+          }
         />
-      </div>
-
-      {/* Bottom presentation navigation — advance/retreat the live slide. */}
-      <div className="flex items-center justify-center gap-3 pt-3 shrink-0">
-        <button
-          type="button"
-          onClick={handlePrev}
-          disabled={!canNavigatePrev || navigateTemporary.isPending}
-          className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
-          data-testid="stage-prev"
-        >
-          <ChevronLeft size={20} />
-          <span className="text-sm">{t('bible:controls.prev')}</span>
-        </button>
-        <button
-          type="button"
-          onClick={handleNext}
-          disabled={!canNavigateNext || navigateTemporary.isPending}
-          className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
-          data-testid="stage-next"
-        >
-          <span className="text-sm">{t('bible:controls.next')}</span>
-          <ChevronRight size={20} />
-        </button>
       </div>
     </div>
   )
