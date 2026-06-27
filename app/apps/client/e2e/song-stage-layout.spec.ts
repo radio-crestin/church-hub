@@ -33,11 +33,15 @@ test.describe('Song editing layout preference', () => {
       await page.goto(`/songs/${created.id}`)
       await page.waitForLoadState('networkidle')
 
-      // The song PAGE itself shows the editable stage canvas (no /edit, no tab).
+      // The song PAGE itself is the stage editor (no /edit, no tab). It opens in
+      // Navigate mode; switch on editing to type on the slide.
+      await expect(page.getByTestId('stage-thumbnail')).toHaveCount(2, {
+        timeout: 10000,
+      })
+      await page.getByTestId('stage-edit-toggle').click()
       const editable = page.getByTestId('slide-canvas-editable')
       await expect(editable).toBeVisible({ timeout: 10000 })
       await expect(editable).toContainText('Verse one')
-      await expect(page.getByTestId('stage-thumbnail')).toHaveCount(2)
 
       // Edit lyrics in place — the change autosaves.
       await editable.click()
@@ -110,6 +114,11 @@ test.describe('Song editing layout preference', () => {
       await next.click()
       await expect(prev).toBeEnabled({ timeout: 10000 })
 
+      // The buttons keep working after switching to Edit mode.
+      await page.getByTestId('stage-edit-toggle').click()
+      await expect(next).toBeEnabled()
+      await expect(prev).toBeEnabled()
+
       // Hide to stop the presentation.
       await page.getByTestId('stage-hide').click()
     } finally {
@@ -135,18 +144,19 @@ test.describe('Song editing layout preference', () => {
       await page.goto(`/songs/${created.id}`)
       await page.waitForLoadState('networkidle')
 
-      // Default: editing on → the canvas is editable.
-      await expect(page.getByTestId('slide-canvas-editable')).toBeVisible({
+      // Default: Navigate mode → the canvas is read-only (not editable).
+      await expect(page.getByTestId('stage-edit-toggle')).toBeVisible({
         timeout: 10000,
       })
-
-      // Turn editing off → the canvas becomes read-only.
-      await page.getByTestId('stage-edit-toggle').click()
       await expect(page.getByTestId('slide-canvas-editable')).toHaveCount(0)
 
-      // Turn it back on → editable again.
+      // Turn editing on → the canvas becomes editable.
       await page.getByTestId('stage-edit-toggle').click()
       await expect(page.getByTestId('slide-canvas-editable')).toBeVisible()
+
+      // Turn it back off → read-only again.
+      await page.getByTestId('stage-edit-toggle').click()
+      await expect(page.getByTestId('slide-canvas-editable')).toHaveCount(0)
     } finally {
       await request.delete(`/api/songs/${created.id}`)
     }
@@ -176,7 +186,11 @@ test.describe('Song editing layout preference', () => {
       await page.goto(`/songs/${created.id}`)
       await page.waitForLoadState('networkidle')
 
-      // Editing the first slide on the canvas.
+      // Turn editing on and edit the first slide on the canvas.
+      await expect(page.getByTestId('stage-edit-toggle')).toBeVisible({
+        timeout: 10000,
+      })
+      await page.getByTestId('stage-edit-toggle').click()
       const editable = page.getByTestId('slide-canvas-editable')
       await expect(editable).toContainText('Slide A', { timeout: 10000 })
 

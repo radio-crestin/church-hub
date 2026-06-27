@@ -32,7 +32,13 @@ export function StageCanvas({
 
   return (
     <div className="w-full">
-      <div className="relative w-full aspect-video rounded-xl overflow-hidden shadow-lg bg-black">
+      {/* In navigate mode (canEdit off) the canvas is a read-only presentation
+          surface — disable text selection so words can't be highlighted. */}
+      <div
+        className={`relative w-full aspect-video rounded-xl overflow-hidden shadow-lg bg-black ${
+          canEdit ? '' : 'select-none'
+        }`}
+      >
         <ScreenPreview
           screen={screen}
           contentType={contentType}
@@ -44,9 +50,11 @@ export function StageCanvas({
           onMainTextEdit={onEditText}
         />
       </div>
-      <p className="mt-2 text-center text-xs text-gray-400 dark:text-gray-500">
-        {t('stageEditor.editHint')}
-      </p>
+      {canEdit && (
+        <p className="mt-2 text-center text-xs text-gray-400 dark:text-gray-500">
+          {t('stageEditor.editHint')}
+        </p>
+      )}
     </div>
   )
 }

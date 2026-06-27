@@ -1,11 +1,12 @@
 import { type DragEndEvent } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
-import { Loader2 } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+import { GripVertical, Loader2 } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { TemporaryContent } from '~/features/presentation'
 import { usePreviewScreen } from '~/features/presentation'
+import { useDividerPosition } from '~/hooks/useDividerPosition'
 import { ConfirmModal } from '~/ui/modal'
 import { SlideFilmstrip } from './SlideFilmstrip'
 import { StageCanvas } from './StageCanvas'
@@ -46,6 +47,50 @@ export function SongStageEditor({
 }: SongStageEditorProps) {
   const { t } = useTranslation('songs')
   const { screen, isLoading } = usePreviewScreen()
+
+  // Resizable split between the filmstrip (column 1) and the canvas, persisted
+  // per device. Only applied on large screens; on mobile the two stack.
+  const containerRef = useRef<HTMLDivElement>(null)
+  const isDragging = useRef(false)
+  const [isLargeScreen, setIsLargeScreen] = useState(false)
+  const [dividerPosition, setDividerPosition] = useDividerPosition(
+    'song-stage:filmstrip',
+    24,
+  )
+
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)')
+    const update = () => setIsLargeScreen(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
+
+  const handleDividerMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault()
+      isDragging.current = true
+      document.body.style.cursor = 'col-resize'
+      document.body.style.userSelect = 'none'
+
+      const handleMouseMove = (moveEvent: MouseEvent) => {
+        if (!isDragging.current || !containerRef.current) return
+        const rect = containerRef.current.getBoundingClientRect()
+        const next = ((moveEvent.clientX - rect.left) / rect.width) * 100
+        setDividerPosition(Math.min(50, Math.max(14, next)))
+      }
+      const handleMouseUp = () => {
+        isDragging.current = false
+        document.body.style.cursor = ''
+        document.body.style.userSelect = ''
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+      }
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+    },
+    [setDividerPosition],
+  )
 
   // Track the active slide by id so the selection survives reordering/deletion.
   const [activeId, setActiveId] = useState<LocalSlide['id'] | null>(
@@ -159,9 +204,15 @@ export function SongStageEditor({
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[16rem_1fr] gap-6">
-      {/* Filmstrip */}
-      <div className="lg:max-h-[70vh] lg:overflow-y-auto lg:pr-2 order-2 lg:order-1">
+    <div
+      ref={containerRef}
+      className="flex flex-col lg:flex-row gap-3 lg:gap-1"
+    >
+      {/* Filmstrip (column 1, resizable) */}
+      <div
+        className="order-2 lg:order-1 lg:max-h-[70vh] lg:overflow-y-auto lg:pr-1"
+        style={isLargeScreen ? { width: `${dividerPosition}%` } : undefined}
+      >
         <SlideFilmstrip
           screen={screen}
           songId={effectiveSongId}
@@ -179,8 +230,19 @@ export function SongStageEditor({
         />
       </div>
 
+      {/* Draggable divider */}
+      <div
+        className="hidden lg:flex lg:order-2 items-center justify-center w-2 cursor-col-resize hover:bg-indigo-100 dark:hover:bg-indigo-900/30 rounded transition-colors group shrink-0"
+        onMouseDown={handleDividerMouseDown}
+      >
+        <GripVertical
+          size={16}
+          className="text-gray-400 group-hover:text-indigo-500 transition-colors"
+        />
+      </div>
+
       {/* Canvas */}
-      <div className="order-1 lg:order-2">
+      <div className="order-1 lg:order-3 lg:flex-1 lg:min-w-0">
         <StageCanvas
           screen={screen}
           previewContent={previewContent}

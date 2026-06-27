@@ -67,9 +67,10 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
   const [savedSerialized, setSavedSerialized] = useState(() =>
     serialize(mapSlides(song)),
   )
-  // Edit on → the canvas is editable; edit off → read-only, so Next (button or
-  // keyboard) drives the live presentation instead of moving the text caret.
-  const [editMode, setEditMode] = useState(true)
+  // Navigate is the default: the canvas is read-only so Next/Prev (button or
+  // keyboard) drive the live presentation. Toggle on to edit the lyrics; the
+  // Next/Prev buttons keep working in both modes.
+  const [editMode, setEditMode] = useState(false)
 
   // Re-seed the draft only when navigating to a different song, never on the
   // refetch that follows an autosave (that would clobber in-progress edits).
