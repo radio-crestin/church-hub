@@ -4,6 +4,8 @@ import {
   ChevronRight,
   EyeOff,
   Loader2,
+  Pencil,
+  PencilOff,
   Play,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -17,7 +19,8 @@ import {
 } from '~/features/presentation'
 import { SongStageEditor } from './SongStageEditor'
 import { useUpsertSong } from '../../hooks'
-import type { SongWithSlides } from '../../types'
+import type { SongSlide, SongWithSlides } from '../../types'
+import { expandSongSlidesWithChoruses } from '../../utils/expandSongSlides'
 import { type LocalSlide } from '../SongSlideList'
 
 interface SongStageBoardProps {
@@ -64,6 +67,9 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
   const [savedSerialized, setSavedSerialized] = useState(() =>
     serialize(mapSlides(song)),
   )
+  // Edit on → the canvas is editable; edit off → read-only, so Next (button or
+  // keyboard) drives the live presentation instead of moving the text caret.
+  const [editMode, setEditMode] = useState(true)
 
   // Re-seed the draft only when navigating to a different song, never on the
   // refetch that follows an autosave (that would clobber in-progress edits).
@@ -139,6 +145,35 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
     void clearTemporary.mutateAsync()
   }, [clearTemporary])
 
+  // Map each slide's position to its expanded display index (the server inserts
+  // choruses after verses), so a thumbnail can be projected at the right index.
+  const displayIndexByPosition = useMemo(() => {
+    const expandable: SongSlide[] = slides.map((s, i) => ({
+      id: typeof s.id === 'number' ? s.id : -(i + 1),
+      songId: song.id,
+      content: s.content,
+      chords: s.chords ?? null,
+      sortOrder: i,
+      label: s.label ?? null,
+      createdAt: 0,
+      updatedAt: 0,
+    }))
+    const map = new Map<number, number>()
+    for (const es of expandSongSlidesWithChoruses(expandable)) {
+      if (!map.has(es.originalIndex)) map.set(es.originalIndex, es.displayIndex)
+    }
+    return map
+  }, [slides, song.id])
+
+  // Project a slide to the screen without moving the slide being edited.
+  const handleProjectSlide = useCallback(
+    (index: number) => {
+      const slideIndex = displayIndexByPosition.get(index) ?? index
+      void presentSong.mutateAsync({ songId: song.id, slideIndex })
+    },
+    [displayIndexByPosition, presentSong, song.id],
+  )
+
   return (
     <div className="flex flex-1 flex-col min-h-0">
       {/* Toolbar: save status + present */}
@@ -159,6 +194,27 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
           )}
         </div>
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setEditMode((on) => !on)}
+            aria-pressed={editMode}
+            className={`inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+              editMode
+                ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300'
+                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'
+            }`}
+            data-testid="stage-edit-toggle"
+            title={
+              editMode
+                ? t('stageEditor.editModeOn')
+                : t('stageEditor.editModeOff')
+            }
+          >
+            {editMode ? <Pencil size={16} /> : <PencilOff size={16} />}
+            {editMode
+              ? t('stageEditor.editModeOn')
+              : t('stageEditor.editModeOff')}
+          </button>
           {isPresenting && (
             <button
               type="button"
@@ -191,6 +247,8 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
           keyLine={song.keyLine}
           songId={song.id}
           presentedSlideId={presentedSlideId}
+          editable={editMode}
+          onProjectSlide={handleProjectSlide}
           onSlidesChange={setSlides}
         />
       </div>

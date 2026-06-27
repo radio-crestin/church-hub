@@ -32,6 +32,8 @@ interface SlideFilmstripProps {
   onClone: (slide: LocalSlide) => void
   onDelete: (slide: LocalSlide) => void
   onAdd: () => void
+  /** Project a slide to the screen by index, without moving the editor. */
+  onProject?: (index: number) => void
 }
 
 /**
@@ -51,6 +53,7 @@ export function SlideFilmstrip({
   onClone,
   onDelete,
   onAdd,
+  onProject,
 }: SlideFilmstripProps) {
   const { t } = useTranslation('songs')
 
@@ -89,6 +92,7 @@ export function SlideFilmstrip({
                 onSelect={() => onSelect(index)}
                 onClone={() => onClone(slide)}
                 onDelete={() => onDelete(slide)}
+                onProject={onProject ? () => onProject(index) : undefined}
               />
             ))}
           </div>

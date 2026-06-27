@@ -18,6 +18,10 @@ interface SongStageEditorProps {
   keyLine: string | null
   songId: number | null
   presentedSlideId?: number | null
+  /** When false the canvas is read-only (presentation/navigation mode). */
+  editable?: boolean
+  /** Project a slide to the screen by its index, without moving the editor. */
+  onProjectSlide?: (index: number) => void
   onSlidesChange: (slides: LocalSlide[]) => void
 }
 
@@ -36,6 +40,8 @@ export function SongStageEditor({
   keyLine,
   songId,
   presentedSlideId,
+  editable = true,
+  onProjectSlide,
   onSlidesChange,
 }: SongStageEditorProps) {
   const { t } = useTranslation('songs')
@@ -169,6 +175,7 @@ export function SongStageEditor({
           onClone={handleClone}
           onDelete={setSlideToDelete}
           onAdd={handleAdd}
+          onProject={onProjectSlide}
         />
       </div>
 
@@ -177,7 +184,7 @@ export function SongStageEditor({
         <StageCanvas
           screen={screen}
           previewContent={previewContent}
-          canEdit={activeIndex >= 0}
+          canEdit={editable && activeIndex >= 0}
           onEditText={handleEditText}
         />
       </div>

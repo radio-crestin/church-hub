@@ -117,6 +117,85 @@ test.describe('Song editing layout preference', () => {
     }
   })
 
+  test('edit-mode toggle switches the canvas between editable and read-only', async ({
+    page,
+    request,
+  }) => {
+    const title = `E2E Edit Toggle ${Date.now()}`
+    const createResponse = await request.post('/api/songs', {
+      data: { title, slides: [{ content: 'A slide', sortOrder: 0 }] },
+    })
+    expect(createResponse.status()).toBe(201)
+    const { data: created } = await createResponse.json()
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${created.id}`)
+      await page.waitForLoadState('networkidle')
+
+      // Default: editing on → the canvas is editable.
+      await expect(page.getByTestId('slide-canvas-editable')).toBeVisible({
+        timeout: 10000,
+      })
+
+      // Turn editing off → the canvas becomes read-only.
+      await page.getByTestId('stage-edit-toggle').click()
+      await expect(page.getByTestId('slide-canvas-editable')).toHaveCount(0)
+
+      // Turn it back on → editable again.
+      await page.getByTestId('stage-edit-toggle').click()
+      await expect(page.getByTestId('slide-canvas-editable')).toBeVisible()
+    } finally {
+      await request.delete(`/api/songs/${created.id}`)
+    }
+  })
+
+  test('projecting a slide does not move the edited slide', async ({
+    page,
+    request,
+  }) => {
+    const title = `E2E Project ${Date.now()}`
+    const createResponse = await request.post('/api/songs', {
+      data: {
+        title,
+        slides: [
+          { content: 'Slide A', sortOrder: 0 },
+          { content: 'Slide B', sortOrder: 1 },
+        ],
+      },
+    })
+    expect(createResponse.status()).toBe(201)
+    const { data: created } = await createResponse.json()
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${created.id}`)
+      await page.waitForLoadState('networkidle')
+
+      // Editing the first slide on the canvas.
+      const editable = page.getByTestId('slide-canvas-editable')
+      await expect(editable).toContainText('Slide A', { timeout: 10000 })
+
+      // Project the SECOND slide from its thumbnail button.
+      await page.getByTestId('thumb-project').nth(1).click()
+
+      // The presentation starts (Next becomes enabled)...
+      await expect(page.getByTestId('stage-next')).toBeEnabled({
+        timeout: 10000,
+      })
+      // ...but the slide under edit on the canvas is unchanged.
+      await expect(editable).toContainText('Slide A')
+
+      await page.getByTestId('stage-hide').click()
+    } finally {
+      await request.delete(`/api/songs/${created.id}`)
+    }
+  })
+
   test('normal layout keeps the classic song page', async ({
     page,
     request,

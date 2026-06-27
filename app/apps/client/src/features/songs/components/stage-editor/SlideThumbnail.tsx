@@ -1,6 +1,6 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Copy, GripVertical, Trash2 } from 'lucide-react'
+import { Copy, GripVertical, MonitorPlay, Trash2 } from 'lucide-react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -23,6 +23,8 @@ interface SlideThumbnailProps {
   onSelect: () => void
   onClone: () => void
   onDelete: () => void
+  /** Project this slide to the screen, without changing the edited slide. */
+  onProject?: () => void
 }
 
 /**
@@ -42,6 +44,7 @@ export function SlideThumbnail({
   onSelect,
   onClone,
   onDelete,
+  onProject,
 }: SlideThumbnailProps) {
   const { t } = useTranslation('songs')
   const slide = slides[index]
@@ -137,6 +140,25 @@ export function SlideThumbnail({
         )}
         {isPresented && (
           <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-green-500 ring-2 ring-white/70" />
+        )}
+
+        {/* Project this slide to the screen — independent of the edited slide */}
+        {onProject && (
+          <span
+            role="button"
+            tabIndex={-1}
+            data-testid="thumb-project"
+            onClick={(e) => {
+              e.stopPropagation()
+              onProject()
+            }}
+            className={`absolute bottom-1 left-1 p-1 rounded text-white transition-colors ${
+              isPresented ? 'bg-green-600' : 'bg-black/60 hover:bg-green-600'
+            }`}
+            title={t('stageEditor.projectSlide')}
+          >
+            <MonitorPlay size={12} />
+          </span>
         )}
 
         {/* Hover controls */}

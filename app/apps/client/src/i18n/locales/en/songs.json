@@ -43,6 +43,9 @@
     "unsaved": "Unsaved changes",
     "present": "Present",
     "hide": "Hide",
+    "editModeOn": "Editing",
+    "editModeOff": "Navigate",
+    "projectSlide": "Show this slide on screen",
     "toggleLayout": "Toggle PowerPoint layout"
   },
   "editorLayout": {

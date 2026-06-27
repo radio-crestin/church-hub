@@ -43,6 +43,9 @@
     "unsaved": "Modificări nesalvate",
     "present": "Prezintă",
     "hide": "Ascunde",
+    "editModeOn": "Editare",
+    "editModeOff": "Navigare",
+    "projectSlide": "Afișează acest slide pe ecran",
     "toggleLayout": "Comută layout PowerPoint"
   },
   "editorLayout": {
