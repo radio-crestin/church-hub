@@ -27,6 +27,7 @@ import {
 import { type LocalSlide } from './SongSlideList'
 import { SongSlidesSection } from './SongSlidesSection'
 import { SongStageEditor } from './stage-editor'
+import { useSongEditorLayout } from '../hooks'
 import type { SongSlide } from '../types'
 import { expandSongSlidesWithChoruses } from '../utils/expandSongSlides'
 
@@ -84,10 +85,13 @@ export function SongEditor({
   const { t } = useTranslation(['songs', 'queue'])
   const navigate = useNavigate()
   const { showToast } = useToast()
-  // Existing songs open straight into the PowerPoint-style slide editor (the
-  // primary "Edit" action). New songs start in the form so the title, category
-  // and metadata can be filled in first.
-  const [view, setView] = useState<EditorView>(isNew ? 'form' : 'stage')
+  const [editorLayout] = useSongEditorLayout()
+  // New songs always start in the form (title/category/metadata first). For
+  // existing songs the entry view follows the operator's layout preference:
+  // PowerPoint layout opens straight into the slide editor, normal keeps the form.
+  const [view, setView] = useState<EditorView>(
+    isNew ? 'form' : editorLayout === 'powerpoint' ? 'stage' : 'form',
+  )
   const [showAddToScheduleModal, setShowAddToScheduleModal] = useState(false)
   const [showUnsavedChangesModal, setShowUnsavedChangesModal] = useState(false)
   const [pendingAction, setPendingAction] = useState<PendingAction>(null)

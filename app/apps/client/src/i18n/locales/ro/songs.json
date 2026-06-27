@@ -37,7 +37,20 @@
     "emptySlidePlaceholder": "Apasă pentru a adăuga versuri",
     "dragToReorder": "Trage pentru a reordona",
     "cloneSlide": "Duplică slide-ul",
-    "deleteSlide": "Șterge slide-ul"
+    "deleteSlide": "Șterge slide-ul",
+    "saving": "Se salvează…",
+    "saved": "Salvat",
+    "unsaved": "Modificări nesalvate",
+    "present": "Prezintă",
+    "toggleLayout": "Comută layout PowerPoint"
+  },
+  "editorLayout": {
+    "title": "Layout editare",
+    "description": "Alege cum editezi cântările pe acest dispozitiv.",
+    "normal": "Layout normal",
+    "normalDesc": "Editezi slide-urile în panoul cântării, ca acum.",
+    "powerpoint": "Layout PowerPoint",
+    "powerpointDesc": "Editezi slide-urile direct pe pagina cântării, stil PowerPoint."
   },
   "search": {
     "placeholder": "Caută cântări...",

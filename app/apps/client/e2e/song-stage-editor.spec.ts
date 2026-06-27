@@ -8,6 +8,14 @@ import { expect, test } from '@playwright/test'
  * and adding slides from the filmstrip.
  */
 test.describe('Song stage editor (PowerPoint-style)', () => {
+  // The /edit page opens in the stage view only when the PowerPoint layout
+  // preference is on; enable it for this device before each test.
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      window.localStorage.setItem('song-editor-layout', 'powerpoint')
+    })
+  })
+
   test('edits lyrics in place on the slide canvas and persists them', async ({
     page,
     request,

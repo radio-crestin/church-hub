@@ -37,7 +37,20 @@
     "emptySlidePlaceholder": "Click to add lyrics",
     "dragToReorder": "Drag to reorder",
     "cloneSlide": "Duplicate slide",
-    "deleteSlide": "Delete slide"
+    "deleteSlide": "Delete slide",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "unsaved": "Unsaved changes",
+    "present": "Present",
+    "toggleLayout": "Toggle PowerPoint layout"
+  },
+  "editorLayout": {
+    "title": "Editing layout",
+    "description": "Choose how you edit songs on this device.",
+    "normal": "Normal layout",
+    "normalDesc": "Edit slides in the song panel, as today.",
+    "powerpoint": "PowerPoint layout",
+    "powerpointDesc": "Edit slides directly on the song page, PowerPoint-style."
   },
   "search": {
     "placeholder": "Search songs...",
