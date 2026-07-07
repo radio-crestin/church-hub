@@ -612,6 +612,39 @@ test.describe('Song editing layout preference', () => {
     }
   })
 
+  test('the Edit page shows only the form (no Form/Slides tabs)', async ({
+    page,
+    request,
+  }) => {
+    const title = `E2E EditForm ${Date.now()}`
+    const createResponse = await request.post('/api/songs', {
+      data: { title, slides: [{ content: 'Verse', sortOrder: 0 }] },
+    })
+    expect(createResponse.status()).toBe(201)
+    const { data: created } = await createResponse.json()
+
+    try {
+      // Even with the PowerPoint layout preference ON, the /edit page is
+      // form-only now — no view switcher, no in-page stage editor.
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${created.id}/edit`)
+      await page.waitForLoadState('networkidle')
+
+      // The form (song title heading) is shown...
+      await expect(page.getByRole('heading', { name: title })).toBeVisible({
+        timeout: 10000,
+      })
+      // ...and the Form/Slides tab switcher + stage editor are gone.
+      await expect(page.getByTestId('song-view-form')).toHaveCount(0)
+      await expect(page.getByTestId('song-view-stage')).toHaveCount(0)
+      await expect(page.getByTestId('stage-thumbnail')).toHaveCount(0)
+    } finally {
+      await request.delete(`/api/songs/${created.id}`)
+    }
+  })
+
   test('normal layout keeps the classic song page', async ({
     page,
     request,
