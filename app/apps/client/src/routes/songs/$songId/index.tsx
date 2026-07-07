@@ -11,7 +11,6 @@ import {
   CalendarPlus,
   Download,
   Eye,
-  GripHorizontal,
   GripVertical,
   Loader2,
   Music,
@@ -49,11 +48,10 @@ import {
 import {
   CategoryEditDialog,
   type CategoryEditDialogHandle,
-  SongBookmarksPanel,
+  SongAccordionColumn,
   SongControlPanel,
   SongSlidesPanel,
   SongStageBoard,
-  SongVersionsPanel,
 } from '~/features/songs/components'
 import {
   useAddBookmark,
@@ -184,10 +182,12 @@ function SongPreviewPage() {
     DIVIDER_KEYS.songDetailRight,
     SONG_DETAIL_DEFAULTS.right,
   )
-  // Vertical split inside the right column between Marcaje (top) and Versiuni
-  // (bottom). Default 50/50; only active when both sections are expanded.
-  const [accordionDividerPosition, setAccordionDividerPosition] =
-    useDividerPosition(DIVIDER_KEYS.songDetailAccordion, 50)
+  // PowerPoint layout: the Stage board takes ~74% and the Marcaje/Versiuni
+  // column the rest. Only applied on large screens; they stack on mobile.
+  const [ppDividerPosition, setPpDividerPosition] = useDividerPosition(
+    DIVIDER_KEYS.songDetailPowerpoint,
+    74,
+  )
   // Right-column accordion state. Persisted across sessions via localStorage
   // so the operator's last choice (Versions vs Marcaje expanded) carries over
   // to the next song they open.
@@ -246,10 +246,10 @@ function SongPreviewPage() {
   const [pendingExit, setPendingExit] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const rightPanelRef = useRef<HTMLDivElement>(null)
-  const accordionColumnRef = useRef<HTMLDivElement>(null)
+  const ppContainerRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
   const isRightDragging = useRef(false)
-  const isAccordionDragging = useRef(false)
+  const isPpDragging = useRef(false)
   const keyLineDialogRef = useRef<KeyLineEditDialogHandle>(null)
   const categoryDialogRef = useRef<CategoryEditDialogHandle>(null)
 
@@ -577,12 +577,17 @@ function SongPreviewPage() {
     numericId,
   ])
 
+  // In PowerPoint mode the stage board owns keyboard navigation (arrows must
+  // move the canvas selection too), so the classic-page handlers stand down to
+  // avoid double navigation on the shared keyboard registry.
+  const classicKeyboard = editorLayout !== 'powerpoint'
+
   // Keyboard shortcuts for when a slide is presented
   useSongKeyboardShortcuts({
     onNextSlide: handleNextSlide,
     onPreviousSlide: handlePrevSlide,
     onHidePresentation: handleHidePresentation,
-    enabled: presentedSlideIndex !== null,
+    enabled: classicKeyboard && presentedSlideIndex !== null,
   })
 
   // Keyboard navigation for slide selection when nothing is presented
@@ -592,7 +597,7 @@ function SongPreviewPage() {
     onSelectSlide: setSelectedSlideIndex,
     onPresentSlide: handlePresentSelectedSlide,
     onGoBack: handleGoBack,
-    enabled: presentedSlideIndex === null,
+    enabled: classicKeyboard && presentedSlideIndex === null,
   })
 
   // Divider drag handlers
@@ -654,24 +659,23 @@ function SongPreviewPage() {
     [setRightDividerPosition],
   )
 
-  // Vertical (row) resize between the Marcaje and Versiuni sections of the
-  // right column. Position is the % height given to Marcaje (the top section).
-  const handleAccordionDividerMouseDown = useCallback(
+  // PowerPoint layout: resize between the Stage board and the accordion column.
+  const handlePpDividerMouseDown = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault()
-      isAccordionDragging.current = true
-      document.body.style.cursor = 'row-resize'
+      isPpDragging.current = true
+      document.body.style.cursor = 'col-resize'
       document.body.style.userSelect = 'none'
 
       const handleMouseMove = (moveEvent: MouseEvent) => {
-        if (!isAccordionDragging.current || !accordionColumnRef.current) return
-        const rect = accordionColumnRef.current.getBoundingClientRect()
-        const newPos = ((moveEvent.clientY - rect.top) / rect.height) * 100
-        setAccordionDividerPosition(Math.min(80, Math.max(20, newPos)))
+        if (!isPpDragging.current || !ppContainerRef.current) return
+        const rect = ppContainerRef.current.getBoundingClientRect()
+        const newPos = ((moveEvent.clientX - rect.left) / rect.width) * 100
+        setPpDividerPosition(Math.min(85, Math.max(50, newPos)))
       }
 
       const handleMouseUp = () => {
-        isAccordionDragging.current = false
+        isPpDragging.current = false
         document.body.style.cursor = ''
         document.body.style.userSelect = ''
         document.removeEventListener('mousemove', handleMouseMove)
@@ -681,7 +685,7 @@ function SongPreviewPage() {
       document.addEventListener('mousemove', handleMouseMove)
       document.addEventListener('mouseup', handleMouseUp)
     },
-    [setAccordionDividerPosition],
+    [setPpDividerPosition],
   )
 
   const handleBookmarkSongClick = useCallback(
@@ -712,22 +716,6 @@ function SongPreviewPage() {
     presentedSlideIndex !== null && presentedSlideIndex > 0
   // Allow navigating next even on last slide - server will end presentation
   const canNavigateNext = presentedSlideIndex !== null
-
-  // The Marcaje↔Versiuni divider only makes sense when both sections are
-  // expanded and visible (Marcaje is hidden below `lg`). Otherwise the column
-  // falls back to its flex behaviour (the open section grows, collapsed ones
-  // shrink to their header).
-  // Split is only meaningful when both sections are actually rendered.
-  // `canViewSongVersions` gates the Versiuni section, so when the operator
-  // lacks it we collapse the layout to a single-section column (no divider,
-  // Marcaje takes the whole height).
-  const accordionSplitActive =
-    isLargeScreen &&
-    accordionColumnVisible &&
-    bookmarksOpen &&
-    versionsOpen &&
-    Boolean(song) &&
-    canViewSongVersions
 
   // The right column can be hidden entirely on desktop to give the Slides and
   // Stage columns more room. On mobile it always renders (Versiuni is the only
@@ -873,9 +861,89 @@ function SongPreviewPage() {
       </div>
 
       {editorLayout === 'powerpoint' && song && canEditSong ? (
-        /* PowerPoint layout: edit slides directly on the song page. */
-        <div className="flex flex-1 min-h-0">
-          <SongStageBoard song={song} />
+        /* PowerPoint layout: edit slides directly on the song page, with the
+           same collapsible Marcaje/Versiuni column as the classic layout. */
+        <div
+          ref={ppContainerRef}
+          className="flex flex-col lg:flex-row flex-1 min-h-0 gap-3 lg:gap-1"
+        >
+          <div
+            className="order-1 flex min-w-0 min-h-0"
+            style={
+              isLargeScreen && showAccordionColumn
+                ? { width: `calc(${ppDividerPosition}% - 8px)` }
+                : { flex: 1, minWidth: 0 }
+            }
+          >
+            <SongStageBoard song={song} />
+          </div>
+
+          {/* Boundary bar — show/hide toggle for the column plus the drag grip
+              that resizes it. Desktop only. */}
+          <div className="hidden lg:flex lg:order-2 w-6 shrink-0 flex-col items-center">
+            <button
+              type="button"
+              onClick={() => setAccordionColumnVisible(!accordionColumnVisible)}
+              aria-expanded={accordionColumnVisible}
+              aria-label={
+                accordionColumnVisible
+                  ? t('layout.hidePanel')
+                  : t('layout.showPanel')
+              }
+              title={
+                accordionColumnVisible
+                  ? t('layout.hidePanel')
+                  : t('layout.showPanel')
+              }
+              data-testid="pp-accordion-toggle"
+              className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded text-gray-400 transition-colors hover:bg-indigo-100 hover:text-indigo-500 dark:hover:bg-indigo-900/30"
+            >
+              {accordionColumnVisible ? (
+                <PanelRightClose size={16} />
+              ) : (
+                <PanelRightOpen size={16} />
+              )}
+            </button>
+            {accordionColumnVisible ? (
+              <div
+                className="group mt-1 flex flex-1 w-full cursor-col-resize items-center justify-center rounded transition-colors hover:bg-indigo-100 dark:hover:bg-indigo-900/30"
+                onMouseDown={handlePpDividerMouseDown}
+              >
+                <GripVertical
+                  size={16}
+                  className="text-gray-400 group-hover:text-indigo-500 transition-colors"
+                />
+              </div>
+            ) : null}
+          </div>
+
+          {showAccordionColumn ? (
+            <SongAccordionColumn
+              isLargeScreen={isLargeScreen}
+              song={song}
+              bookmarksOpen={bookmarksOpen}
+              versionsOpen={versionsOpen}
+              onToggleBookmarks={() => setBookmarksOpen(!bookmarksOpen)}
+              onToggleVersions={() => setVersionsOpen(!versionsOpen)}
+              onSelectBookmarkSong={handleBookmarkSongClick}
+              onAddAllBookmarksToSchedule={handleAddAllBookmarksToSchedule}
+              canViewSongVersions={canViewSongVersions}
+              canAddSongVersion={canAddSongVersion}
+              canEditSongVersion={canEditSongVersion}
+              canDeleteSongVersion={canDeleteSongVersion}
+              attentionBadge={
+                undismissedSuggestionCount > 0
+                  ? `+${undismissedSuggestionCount}`
+                  : null
+              }
+              className="order-3"
+              style={
+                isLargeScreen
+                  ? { width: `calc(${100 - ppDividerPosition}% - 12px)` }
+                  : undefined
+              }
+            />
+          ) : null}
         </div>
       ) : (
         <div
@@ -1009,97 +1077,34 @@ function SongPreviewPage() {
               ) : null}
             </div>
 
-            {/* Accordion column — Marcaje on top, Versiuni below.
-              Bookmarks were previously hidden on mobile (the page is
-              too tight); we preserve that. Versions ride along on
-              mobile because they were already visible there before.
-              Hidden entirely on desktop when the operator collapses it. */}
+            {/* Accordion column — Marcaje on top, Versiuni below. Bookmarks are
+              hidden on mobile (the page is too tight); Versions ride along on
+              mobile. Hidden entirely on desktop when the operator collapses it. */}
             {showAccordionColumn ? (
-              <div
-                ref={accordionColumnRef}
-                className={`overflow-hidden h-full flex flex-col ${accordionSplitActive ? '' : 'gap-2'}`}
+              <SongAccordionColumn
+                isLargeScreen={isLargeScreen}
+                song={song}
+                bookmarksOpen={bookmarksOpen}
+                versionsOpen={versionsOpen}
+                onToggleBookmarks={() => setBookmarksOpen(!bookmarksOpen)}
+                onToggleVersions={() => setVersionsOpen(!versionsOpen)}
+                onSelectBookmarkSong={handleBookmarkSongClick}
+                onAddAllBookmarksToSchedule={handleAddAllBookmarksToSchedule}
+                canViewSongVersions={canViewSongVersions}
+                canAddSongVersion={canAddSongVersion}
+                canEditSongVersion={canEditSongVersion}
+                canDeleteSongVersion={canDeleteSongVersion}
+                attentionBadge={
+                  undismissedSuggestionCount > 0
+                    ? `+${undismissedSuggestionCount}`
+                    : null
+                }
                 style={
                   isLargeScreen
                     ? { width: `calc(${100 - rightDividerPosition}% - 12px)` }
                     : undefined
                 }
-              >
-                <div
-                  className={`hidden lg:block min-h-0 ${
-                    accordionSplitActive
-                      ? ''
-                      : bookmarksOpen
-                        ? 'flex-1'
-                        : 'flex-none'
-                  }`}
-                  style={
-                    accordionSplitActive
-                      ? { height: `calc(${accordionDividerPosition}% - 4px)` }
-                      : undefined
-                  }
-                >
-                  <SongBookmarksPanel
-                    onSelectSong={handleBookmarkSongClick}
-                    activeSongId={numericId}
-                    onAddAllToSchedule={handleAddAllBookmarksToSchedule}
-                    isCollapsed={!bookmarksOpen}
-                    onToggleCollapse={() => setBookmarksOpen(!bookmarksOpen)}
-                  />
-                </div>
-
-                {/* Draggable Marcaje ↔ Versiuni divider (only when both expanded) */}
-                {accordionSplitActive ? (
-                  <div
-                    className="hidden lg:flex flex-col items-center justify-center h-2 cursor-row-resize hover:bg-indigo-100 dark:hover:bg-indigo-900/30 rounded transition-colors group"
-                    onMouseDown={handleAccordionDividerMouseDown}
-                  >
-                    <GripHorizontal
-                      size={16}
-                      className="text-gray-400 group-hover:text-indigo-500 transition-colors"
-                    />
-                  </div>
-                ) : null}
-
-                {song && canViewSongVersions ? (
-                  <div
-                    className={`min-h-0 ${
-                      accordionSplitActive
-                        ? ''
-                        : versionsOpen
-                          ? 'flex-1'
-                          : 'flex-none'
-                    }`}
-                    style={
-                      accordionSplitActive
-                        ? {
-                            height: `calc(${100 - accordionDividerPosition}% - 4px)`,
-                          }
-                        : undefined
-                    }
-                  >
-                    <SongVersionsPanel
-                      songId={numericId}
-                      songTitle={song.title}
-                      currentSong={{
-                        hymnNumber: song.hymnNumber,
-                        author: song.author,
-                        keyLine: song.keyLine,
-                        categoryName: song.category?.name ?? null,
-                      }}
-                      canAdd={canAddSongVersion}
-                      canEdit={canEditSongVersion}
-                      canDelete={canDeleteSongVersion}
-                      isCollapsed={!versionsOpen}
-                      onToggleCollapse={() => setVersionsOpen(!versionsOpen)}
-                      attentionBadge={
-                        undismissedSuggestionCount > 0
-                          ? `+${undismissedSuggestionCount}`
-                          : null
-                      }
-                    />
-                  </div>
-                ) : null}
-              </div>
+              />
             ) : null}
           </div>
         </div>
