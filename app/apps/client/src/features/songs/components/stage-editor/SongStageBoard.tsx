@@ -4,8 +4,6 @@ import {
   ChevronRight,
   EyeOff,
   Loader2,
-  Pencil,
-  PencilOff,
   Play,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -18,7 +16,7 @@ import {
   usePresentTemporarySong,
 } from '~/features/presentation'
 import { SongStageEditor } from './SongStageEditor'
-import { useUpsertSong } from '../../hooks'
+import { useSongKeyboardShortcuts, useUpsertSong } from '../../hooks'
 import type { SongSlide, SongWithSlides } from '../../types'
 import { expandSongSlidesWithChoruses } from '../../utils/expandSongSlides'
 import { type LocalSlide } from '../SongSlideList'
@@ -67,10 +65,6 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
   const [savedSerialized, setSavedSerialized] = useState(() =>
     serialize(mapSlides(song)),
   )
-  // Navigate is the default: the canvas is read-only so Next/Prev (button or
-  // keyboard) drive the live presentation. Toggle on to edit the lyrics; the
-  // Next/Prev buttons keep working in both modes.
-  const [editMode, setEditMode] = useState(false)
 
   // Re-seed the draft only when navigating to a different song, never on the
   // refetch that follows an autosave (that would clobber in-progress edits).
@@ -124,37 +118,60 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
   }, [presentationState, song.id])
 
   const isPresenting = presentedSlideIndex !== null
-  const canNavigatePrev = isPresenting && presentedSlideIndex > 0
-  // Next is allowed even on the last slide — the server ends the presentation.
-  const canNavigateNext = isPresenting
+  // When presenting, Prev/Next drive the live show (Next is allowed on the last
+  // slide — the server ends the presentation). When NOT presenting they browse
+  // the slides on the canvas, so keep them usable as long as there's more than
+  // one slide (the editor clamps at the ends).
+  const canNavigatePrev = isPresenting
+    ? presentedSlideIndex > 0
+    : slides.length > 1
+  const canNavigateNext = isPresenting || slides.length > 1
 
-  // Bumped after each live navigation (Present/Next/Prev). The stage editor
-  // watches this to snap its canvas selection to the newly-presented slide, so
-  // the stage stays in sync with the output screen. Projecting a single slide
-  // (green thumbnail button) deliberately does NOT bump it — it must not move
-  // the slide being edited.
-  const [navSeq, setNavSeq] = useState(0)
+  // Bumped on each navigation (Present/Next/Prev). The stage editor watches this
+  // to move its canvas selection — snapping to the live slide while presenting,
+  // or stepping by `navDir` when nothing is projected. Projecting a single slide
+  // (green thumbnail button) deliberately does NOT bump it, so it never moves
+  // the slide being edited. `navDir` records the last direction (+1/-1).
+  const [nav, setNav] = useState({ seq: 0, dir: 1 })
+  const bumpNav = useCallback(
+    (dir: number) => setNav((n) => ({ seq: n.seq + 1, dir })),
+    [],
+  )
 
   const handlePresent = useCallback(async () => {
     await presentSong.mutateAsync({ songId: song.id, slideIndex: 0 })
-    setNavSeq((n) => n + 1)
-  }, [presentSong, song.id])
+    bumpNav(1)
+  }, [presentSong, song.id, bumpNav])
 
   const handlePrev = useCallback(async () => {
     if (!canNavigatePrev) return
-    await navigateTemporary.mutateAsync({ direction: 'prev' })
-    setNavSeq((n) => n + 1)
-  }, [canNavigatePrev, navigateTemporary])
+    if (isPresenting) await navigateTemporary.mutateAsync({ direction: 'prev' })
+    bumpNav(-1)
+  }, [canNavigatePrev, isPresenting, navigateTemporary, bumpNav])
 
   const handleNext = useCallback(async () => {
     if (!canNavigateNext) return
-    await navigateTemporary.mutateAsync({ direction: 'next' })
-    setNavSeq((n) => n + 1)
-  }, [canNavigateNext, navigateTemporary])
+    if (isPresenting) await navigateTemporary.mutateAsync({ direction: 'next' })
+    bumpNav(1)
+  }, [canNavigateNext, isPresenting, navigateTemporary, bumpNav])
 
   const handleHide = useCallback(() => {
     void clearTemporary.mutateAsync()
   }, [clearTemporary])
+
+  // Arrow keys drive the same handlers as the Next/Prev buttons so keyboard
+  // navigation stays in sync with the canvas. Registered under a dedicated id
+  // (the classic song page disables its own handler in PowerPoint mode).
+  // Escape only hides when something is actually live.
+  const handleEscape = useCallback(() => {
+    if (isPresenting) handleHide()
+  }, [isPresenting, handleHide])
+  useSongKeyboardShortcuts({
+    id: 'song-stage-nav',
+    onNextSlide: handleNext,
+    onPreviousSlide: handlePrev,
+    onHidePresentation: handleEscape,
+  })
 
   // Map each slide's position to its expanded display index (the server inserts
   // choruses after verses), so a thumbnail can be projected at the right index.
@@ -205,27 +222,6 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
           )}
         </div>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setEditMode((on) => !on)}
-            aria-pressed={editMode}
-            className={`inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-              editMode
-                ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'
-            }`}
-            data-testid="stage-edit-toggle"
-            title={
-              editMode
-                ? t('stageEditor.editModeOn')
-                : t('stageEditor.editModeOff')
-            }
-          >
-            {editMode ? <Pencil size={16} /> : <PencilOff size={16} />}
-            {editMode
-              ? t('stageEditor.editModeOn')
-              : t('stageEditor.editModeOff')}
-          </button>
           {isPresenting && (
             <button
               type="button"
@@ -258,8 +254,10 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
           keyLine={song.keyLine}
           songId={song.id}
           presentedSlideId={presentedSlideId}
-          navSeq={navSeq}
-          editable={editMode}
+          navSeq={nav.seq}
+          navDir={nav.dir}
+          isPresenting={isPresenting}
+          clickToEdit
           onProjectSlide={handleProjectSlide}
           onSlidesChange={setSlides}
           fillHeight

@@ -19,11 +19,21 @@ interface SongStageEditorProps {
   keyLine: string | null
   songId: number | null
   presentedSlideId?: number | null
-  /** Bumped by the parent on each live navigation (Present/Next/Prev) so the
-   * canvas selection can follow the projected slide. */
+  /** Bumped by the parent on each navigation (Present/Next/Prev, button or
+   * keyboard). The canvas selection reacts to a change in this counter. */
   navSeq?: number
+  /** Direction of the last navigation: +1 for Next, -1 for Prev. Used to step
+   * the selection when nothing is being projected. */
+  navDir?: number
+  /** Whether this song is currently live. When true a navigation snaps the
+   * selection to the projected slide; when false it steps it by `navDir`. */
+  isPresenting?: boolean
   /** When false the canvas is read-only (presentation/navigation mode). */
   editable?: boolean
+  /** PowerPoint-style implicit editing: click the stage to edit, and leave edit
+   * mode automatically on any slide change. Off = the canvas is always editable
+   * (the classic /edit form). */
+  clickToEdit?: boolean
   /** Project a slide to the screen by its index, without moving the editor. */
   onProjectSlide?: (index: number) => void
   /** Rendered under the canvas column only (e.g. presentation nav buttons). */
@@ -50,7 +60,10 @@ export function SongStageEditor({
   songId,
   presentedSlideId,
   navSeq = 0,
+  navDir = 1,
+  isPresenting = false,
   editable = true,
+  clickToEdit = false,
   onProjectSlide,
   canvasFooter,
   fillHeight = false,
@@ -109,17 +122,33 @@ export function SongStageEditor({
   )
   const [slideToDelete, setSlideToDelete] = useState<LocalSlide | null>(null)
 
-  // Navigating the live show (Present / Next / Prev) must move the stage with
-  // it: snap the selection to the newly-presented slide so the canvas stays in
-  // sync with the output screen. We key off `navSeq` (bumped by the board only
-  // on navigation) rather than the presented id itself, so that projecting a
-  // single slide via the green button still leaves the edited slide untouched.
-  const presentedSlideIdRef = useRef(presentedSlideId)
-  presentedSlideIdRef.current = presentedSlideId
+  // Navigation (Next/Prev/Present, button or keyboard) moves the canvas: the
+  // parent bumps `navSeq` and the selection reacts. While presenting we snap to
+  // the live projected slide so the stage stays in sync with the output screen;
+  // when nothing is live we step the selection by `navDir` so Next/Prev browse
+  // the slides on the canvas. We key off `navSeq` (only bumped on navigation),
+  // NOT the projected id, so projecting a single slide via the green button
+  // still leaves the edited slide untouched.
+  const navStateRef = useRef({ slides, presentedSlideId, isPresenting, navDir })
+  navStateRef.current = { slides, presentedSlideId, isPresenting, navDir }
   useEffect(() => {
     if (navSeq === 0) return
-    const id = presentedSlideIdRef.current
-    if (id != null) setActiveId(id)
+    const {
+      slides: sl,
+      presentedSlideId: pid,
+      isPresenting: live,
+      navDir: dir,
+    } = navStateRef.current
+    if (live) {
+      if (pid != null) setActiveId(pid)
+      return
+    }
+    setActiveId((prev) => {
+      const idx = sl.findIndex((s) => s.id === prev)
+      const base = idx < 0 ? 0 : idx
+      const target = Math.min(Math.max(base + dir, 0), sl.length - 1)
+      return sl[target]?.id ?? prev
+    })
   }, [navSeq])
 
   // The canvas always shows the SELECTED slide (the one "you're on"), in both
@@ -287,6 +316,7 @@ export function SongStageEditor({
             screen={screen}
             previewContent={previewContent}
             canEdit={editable && activeIndex >= 0}
+            clickToEdit={clickToEdit}
             onEditText={handleEditText}
           />
         </div>
