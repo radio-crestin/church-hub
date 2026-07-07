@@ -521,6 +521,97 @@ test.describe('Song editing layout preference', () => {
     }
   })
 
+  test('the Present button reads "from start"', async ({ page, request }) => {
+    const title = `E2E Present Label ${Date.now()}`
+    const createResponse = await request.post('/api/songs', {
+      data: { title, slides: [{ content: 'Only slide', sortOrder: 0 }] },
+    })
+    expect(createResponse.status()).toBe(201)
+    const { data: created } = await createResponse.json()
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${created.id}`)
+      await page.waitForLoadState('networkidle')
+
+      // The label makes explicit that presenting starts from the first slide.
+      await expect(page.getByTestId('stage-present')).toContainText(
+        /from start|început/i,
+        { timeout: 10000 },
+      )
+    } finally {
+      await request.delete(`/api/songs/${created.id}`)
+    }
+  })
+
+  test('session clock starts on present and continues across songs', async ({
+    page,
+    request,
+  }) => {
+    const mkSong = async (name: string) => {
+      const res = await request.post('/api/songs', {
+        data: {
+          title: name,
+          slides: [
+            { content: 'Slide 1', sortOrder: 0 },
+            { content: 'Slide 2', sortOrder: 1 },
+          ],
+        },
+      })
+      expect(res.status()).toBe(201)
+      return (await res.json()).data
+    }
+    const songA = await mkSong(`E2E Timer A ${Date.now()}`)
+    const songB = await mkSong(`E2E Timer B ${Date.now()}`)
+
+    const timer = page.getByTestId('stage-timer')
+    const readSeconds = async () => {
+      const txt = (await timer.textContent())?.trim() ?? '0:00'
+      const p = txt.split(':').map(Number)
+      return p.length === 3 ? p[0] * 3600 + p[1] * 60 + p[2] : p[0] * 60 + p[1]
+    }
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${songA.id}`)
+      await page.waitForLoadState('networkidle')
+
+      // No clock until something is projected.
+      await expect(timer).toHaveCount(0)
+
+      // Present → the clock appears and starts ticking up.
+      await page.getByTestId('stage-present').click()
+      await expect(timer).toBeVisible({ timeout: 10000 })
+      await expect(timer).toHaveText(/\d+:\d\d/)
+      await expect.poll(readSeconds, { timeout: 5000 }).toBeGreaterThanOrEqual(1)
+      const beforeSwitch = await readSeconds()
+
+      // Open another song WITHOUT hiding — the same session keeps running
+      // (survives the stage board remount), and presenting the 2nd continues it.
+      await page.goto(`/songs/${songB.id}`)
+      await page.waitForLoadState('networkidle')
+      await expect(timer).toBeVisible({ timeout: 10000 })
+      await expect
+        .poll(readSeconds, { timeout: 5000 })
+        .toBeGreaterThanOrEqual(beforeSwitch)
+
+      await page.getByTestId('stage-present').click()
+      await expect(timer).toBeVisible()
+      await expect(await readSeconds()).toBeGreaterThanOrEqual(beforeSwitch)
+
+      // Hiding ends the session → the clock disappears.
+      await page.getByTestId('stage-hide').click()
+      await expect(timer).toHaveCount(0)
+    } finally {
+      await request.delete(`/api/songs/${songA.id}`)
+      await request.delete(`/api/songs/${songB.id}`)
+    }
+  })
+
   test('normal layout keeps the classic song page', async ({
     page,
     request,

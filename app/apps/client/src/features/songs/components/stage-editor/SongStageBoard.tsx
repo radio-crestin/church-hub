@@ -16,6 +16,7 @@ import {
   usePresentTemporarySong,
 } from '~/features/presentation'
 import { SongStageEditor } from './SongStageEditor'
+import { StageTimer } from './StageTimer'
 import { useSongKeyboardShortcuts, useUpsertSong } from '../../hooks'
 import type { SongSlide, SongWithSlides } from '../../types'
 import { expandSongSlidesWithChoruses } from '../../utils/expandSongSlides'
@@ -263,8 +264,9 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
           fillHeight
           canvasFooter={
             /* Presentation navigation sits under the canvas only, not the
-               filmstrip — advance/retreat the live slide. */
-            <div className="flex items-center justify-center gap-3 pt-3 shrink-0">
+               filmstrip — advance/retreat the live slide. The session clock is
+               pinned bottom-right of the canvas column. */
+            <div className="relative flex items-center justify-center gap-3 pt-3 shrink-0">
               <button
                 type="button"
                 onClick={handlePrev}
@@ -285,6 +287,9 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
                 <span className="text-sm">{t('bible:controls.next')}</span>
                 <ChevronRight size={20} />
               </button>
+              <div className="absolute right-0 top-1/2 -translate-y-1/2">
+                <StageTimer />
+              </div>
             </div>
           }
         />
