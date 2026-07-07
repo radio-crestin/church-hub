@@ -253,20 +253,12 @@ function SongPreviewPage() {
   const keyLineDialogRef = useRef<KeyLineEditDialogHandle>(null)
   const categoryDialogRef = useRef<CategoryEditDialogHandle>(null)
 
-  // Drives the Versions accordion: the badge for unread suggestions and
-  // the auto-expand on songs that have something new to look at.
+  // Feeds the Versions accordion's "+N" attention badge for unread suggestions.
+  // We deliberately do NOT auto-expand the section on songs that have new
+  // suggestions: the operator's collapsed/expanded choice is a persisted
+  // preference that must carry across song navigation — the badge alone flags
+  // that there's something new to look at, without fighting their choice.
   const undismissedSuggestionCount = useUndismissedSuggestionCount(numericId)
-
-  // Auto-expand the Versions section when a freshly opened song has new
-  // (undismissed) suggestions, so the operator can't miss them. Persists
-  // ONLY across this session — we don't overwrite the user's global
-  // "I collapsed Versions" preference; the next song without suggestions
-  // will fall back to whatever's in localStorage.
-  useEffect(() => {
-    if (numericId && undismissedSuggestionCount > 0) {
-      setVersionsOpenRaw(true)
-    }
-  }, [numericId, undismissedSuggestionCount])
 
   // Expanded slides (with auto-inserted choruses) — used for navigation bounds
   // and to build the staged preview content faithfully (same shape the server
