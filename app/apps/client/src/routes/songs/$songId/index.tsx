@@ -768,6 +768,7 @@ function SongPreviewPage() {
               <button
                 type="button"
                 onClick={handleOpenKeyLineDialog}
+                data-testid="song-key-button"
                 className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 rounded hover:bg-amber-200 dark:hover:bg-amber-800/40 transition-colors"
                 title={t('actions.setKeyLine')}
               >
