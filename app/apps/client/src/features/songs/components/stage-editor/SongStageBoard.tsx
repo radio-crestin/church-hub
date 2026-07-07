@@ -128,18 +128,28 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
   // Next is allowed even on the last slide — the server ends the presentation.
   const canNavigateNext = isPresenting
 
-  const handlePresent = useCallback(() => {
-    void presentSong.mutateAsync({ songId: song.id, slideIndex: 0 })
+  // Bumped after each live navigation (Present/Next/Prev). The stage editor
+  // watches this to snap its canvas selection to the newly-presented slide, so
+  // the stage stays in sync with the output screen. Projecting a single slide
+  // (green thumbnail button) deliberately does NOT bump it — it must not move
+  // the slide being edited.
+  const [navSeq, setNavSeq] = useState(0)
+
+  const handlePresent = useCallback(async () => {
+    await presentSong.mutateAsync({ songId: song.id, slideIndex: 0 })
+    setNavSeq((n) => n + 1)
   }, [presentSong, song.id])
 
-  const handlePrev = useCallback(() => {
-    if (canNavigatePrev)
-      void navigateTemporary.mutateAsync({ direction: 'prev' })
+  const handlePrev = useCallback(async () => {
+    if (!canNavigatePrev) return
+    await navigateTemporary.mutateAsync({ direction: 'prev' })
+    setNavSeq((n) => n + 1)
   }, [canNavigatePrev, navigateTemporary])
 
-  const handleNext = useCallback(() => {
-    if (canNavigateNext)
-      void navigateTemporary.mutateAsync({ direction: 'next' })
+  const handleNext = useCallback(async () => {
+    if (!canNavigateNext) return
+    await navigateTemporary.mutateAsync({ direction: 'next' })
+    setNavSeq((n) => n + 1)
   }, [canNavigateNext, navigateTemporary])
 
   const handleHide = useCallback(() => {
@@ -248,6 +258,7 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
           keyLine={song.keyLine}
           songId={song.id}
           presentedSlideId={presentedSlideId}
+          navSeq={navSeq}
           editable={editMode}
           onProjectSlide={handleProjectSlide}
           onSlidesChange={setSlides}

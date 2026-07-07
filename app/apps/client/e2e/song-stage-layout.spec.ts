@@ -126,6 +126,60 @@ test.describe('Song editing layout preference', () => {
     }
   })
 
+  test('the stage canvas follows the live slide when navigating Next/Prev', async ({
+    page,
+    request,
+  }) => {
+    const title = `E2E Nav Sync ${Date.now()}`
+    const createResponse = await request.post('/api/songs', {
+      data: {
+        title,
+        slides: [
+          { content: 'First slide', sortOrder: 0 },
+          { content: 'Second slide', sortOrder: 1 },
+          { content: 'Third slide', sortOrder: 2 },
+        ],
+      },
+    })
+    expect(createResponse.status()).toBe(201)
+    const { data: created } = await createResponse.json()
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${created.id}`)
+      await page.waitForLoadState('networkidle')
+
+      const thumbs = page.getByTestId('stage-thumbnail')
+      await expect(thumbs).toHaveCount(3, { timeout: 10000 })
+      const next = page.getByTestId('stage-next')
+      const prev = page.getByTestId('stage-prev')
+
+      // Present from the first slide — the canvas selection sits on slide 0.
+      await page.getByTestId('stage-present').click()
+      await expect(next).toBeEnabled({ timeout: 10000 })
+      await expect(thumbs.nth(0)).toHaveAttribute('aria-current', 'true')
+
+      // Advancing the live presentation MUST move the stage with it: the canvas
+      // selection follows to slide 1, then slide 2 (regression: it stayed on 0).
+      await next.click()
+      await expect(thumbs.nth(1)).toHaveAttribute('aria-current', 'true')
+      await expect(thumbs.nth(0)).toHaveAttribute('aria-current', 'false')
+
+      await next.click()
+      await expect(thumbs.nth(2)).toHaveAttribute('aria-current', 'true')
+
+      // Retreating syncs back the other way too.
+      await prev.click()
+      await expect(thumbs.nth(1)).toHaveAttribute('aria-current', 'true')
+
+      await page.getByTestId('stage-hide').click()
+    } finally {
+      await request.delete(`/api/songs/${created.id}`)
+    }
+  })
+
   test('edit-mode toggle switches the canvas between editable and read-only', async ({
     page,
     request,
