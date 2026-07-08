@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useToast } from '~/ui/toast'
 import { upsertSong } from '../service'
 import type { UpsertSongInput } from '../types'
+import { SONG_BOOKMARKS_QUERY_KEY } from './useSongBookmarks'
 
 export function useUpsertSong() {
   const queryClient = useQueryClient()
@@ -16,6 +17,9 @@ export function useUpsertSong() {
       if (result.success && result.data) {
         queryClient.invalidateQueries({ queryKey: ['songs'] })
         queryClient.invalidateQueries({ queryKey: ['song', result.data.id] })
+        // Bookmarks cache each song's title/keyLine — refresh so an edited,
+        // bookmarked song doesn't keep showing stale details.
+        queryClient.invalidateQueries({ queryKey: SONG_BOOKMARKS_QUERY_KEY })
         return
       }
       // Server returned { error } — surface it so the user knows the save failed.

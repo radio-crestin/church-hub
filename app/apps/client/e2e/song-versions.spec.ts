@@ -57,6 +57,44 @@ test.describe('Song Versions', () => {
     expect(group.primarySongId).toBe(a)
   })
 
+  test('the Versiuni panel stays collapsed across song navigation', async ({
+    page,
+    request,
+  }) => {
+    // Two songs with the same title/content are mutual version *suggestions*
+    // (FTS), which is the "has something new" path that used to force the
+    // Versiuni section back open on every navigation.
+    const sharedTitle = `E2E Sim ${tag}`
+    const a = await createSong(request, sharedTitle)
+    const b = await createSong(request, sharedTitle)
+
+    await page.setViewportSize({ width: 1400, height: 900 })
+    await page.goto(`/songs/${a}`)
+    await page.waitForLoadState('networkidle')
+
+    // The section opens expanded by default and shows the mutual suggestion.
+    const toggle = page.getByTestId('versions-collapse-toggle')
+    await expect(toggle).toBeVisible({ timeout: 10000 })
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true')
+    await expect(
+      page.getByTestId('version-suggestion-row').first(),
+    ).toBeVisible({ timeout: 10000 })
+
+    // Collapse it (persisted preference).
+    await toggle.click()
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false')
+
+    // Opening the other (also-suggested) song must keep it collapsed — the
+    // operator's choice wins; the "+N" badge alone flags the new suggestions.
+    await page.goto(`/songs/${b}`)
+    await page.waitForLoadState('networkidle')
+    await expect(page.getByTestId('versions-collapse-toggle')).toHaveAttribute(
+      'aria-expanded',
+      'false',
+      { timeout: 10000 },
+    )
+  })
+
   test('GET /api/songs/:id/group returns the same group from either member', async ({
     request,
   }) => {

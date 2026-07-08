@@ -10,6 +10,9 @@ interface UseSongKeyboardShortcutsOptions {
   onPreviousSlide: () => void
   onHidePresentation: () => void
   enabled?: boolean
+  /** Registry id — override so two independent consumers (e.g. the classic
+   * song page and the PowerPoint stage board) don't clobber each other. */
+  id?: string
 }
 
 /**
@@ -21,6 +24,7 @@ export function useSongKeyboardShortcuts({
   onPreviousSlide,
   onHidePresentation,
   enabled = true,
+  id = 'song-presentation',
 }: UseSongKeyboardShortcutsOptions) {
   const handleKeyDown = useCallback(
     (event: KeyboardEvent): boolean => {
@@ -60,10 +64,5 @@ export function useSongKeyboardShortcuts({
   )
 
   // Register with PAGE priority (higher than global presentation shortcuts)
-  useKeyboardNavigationHandler(
-    'song-presentation',
-    KEYBOARD_PRIORITY.PAGE,
-    handleKeyDown,
-    enabled,
-  )
+  useKeyboardNavigationHandler(id, KEYBOARD_PRIORITY.PAGE, handleKeyDown, enabled)
 }
