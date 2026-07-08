@@ -1,5 +1,21 @@
 [
   {
+    "version": "0.1.80",
+    "date": "2026-07-08T08:06:12+02:00",
+    "features": [],
+    "bugFixes": [],
+    "changes": [
+      {
+        "scope": null,
+        "message": "PowerPoint-style stage editing on the song page"
+      },
+      {
+        "scope": null,
+        "message": "sync version to v0.1.79 [skip ci]"
+      }
+    ]
+  },
+  {
     "version": "0.1.79",
     "date": "2026-06-18T18:06:29+02:00",
     "features": [],

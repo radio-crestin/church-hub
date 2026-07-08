@@ -2,6 +2,13 @@
 
 > Auto-generated from git history by `app/scripts/generate-changelog.ts`. Do not edit by hand.
 
+## v0.1.80 — 2026-07-08
+
+### 🔧 Changes
+
+- PowerPoint-style stage editing on the song page
+- sync version to v0.1.79 [skip ci]
+
 ## v0.1.79 — 2026-06-18
 
 ### 🔧 Changes
