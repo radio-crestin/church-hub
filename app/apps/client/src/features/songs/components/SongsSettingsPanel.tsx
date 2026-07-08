@@ -3,6 +3,7 @@ import { SynonymManager } from '~/features/search'
 import { DiscoverySyncSettings } from '~/features/song-discovery'
 import { ImportExportManager } from '~/features/song-export'
 import { CategoryManager } from './CategoryManager'
+import { SongEditorLayoutSetting } from './SongEditorLayoutSetting'
 import { TagManager } from './TagManager'
 
 const cardClass =
@@ -16,6 +17,9 @@ const cardClass =
 export function SongsSettingsPanel() {
   return (
     <div className="space-y-6">
+      <div className={cardClass}>
+        <SongEditorLayoutSetting />
+      </div>
       <div className={cardClass}>
         <CategoryManager />
       </div>

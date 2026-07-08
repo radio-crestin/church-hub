@@ -411,6 +411,7 @@ export function SongVersionsPanel({
                   ? t('versions.expand', 'Expand')
                   : t('versions.collapse', 'Collapse')
               }
+              data-testid="versions-collapse-toggle"
               className="-ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded text-gray-500 transition-transform hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
             >
               <ChevronDown

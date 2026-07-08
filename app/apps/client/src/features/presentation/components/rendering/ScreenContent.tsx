@@ -5,6 +5,7 @@ import { ChordDiagram } from '~/features/songs/components/ChordDiagram'
 import { AnimatedText } from './AnimatedText'
 import { ChordsOverlay } from './ChordsOverlay'
 import { ClockText } from './ClockText'
+import { EditableMainText } from './EditableMainText'
 import { TextContent } from './TextContent'
 import type { ContentData, NextSlideData } from './types'
 import {
@@ -33,6 +34,15 @@ interface ScreenContentProps {
   styleRanges?: TextStyleRange[]
   /** Identity-based key that changes only on slide navigation, not content edits */
   contentKey?: string
+  /**
+   * When true, the main lyrics element becomes editable in place (PowerPoint-style
+   * slide editing). Only the stage editor sets this; projection is unaffected.
+   */
+  editableMainText?: boolean
+  /** Placeholder shown on an empty editable slide */
+  editPlaceholder?: string
+  /** Called with the edited plain text (newline-separated lines) */
+  onMainTextEdit?: (plainText: string) => void
 }
 
 export function ScreenContent({
@@ -45,6 +55,9 @@ export function ScreenContent({
   nextSlideData,
   styleRanges,
   contentKey: externalContentKey,
+  editableMainText = false,
+  editPlaceholder,
+  onMainTextEdit,
 }: ScreenContentProps) {
   const [activeChord, setActiveChord] = useState<string | null>(null)
 
@@ -135,6 +148,29 @@ export function ScreenContent({
     )
     const scaledBounds = scaleBounds(bounds)
     const elementVisible = isVisible && !!contentData?.mainText
+
+    // Stage editor: edit lyrics directly on the slide. Takes precedence over the
+    // chord overlay (chords stay intact in the data, just not shown while editing)
+    // so the operator always edits the raw text at the projected size/position.
+    if (editableMainText && onMainTextEdit) {
+      return (
+        <EditableMainText
+          key="mainText-edit"
+          content={contentData?.mainText ?? ''}
+          style={{
+            ...mt.style,
+            maxFontSize: mt.style.maxFontSize * fontScale,
+          }}
+          width={scaledBounds.width}
+          height={scaledBounds.height}
+          left={scaledBounds.x}
+          top={scaledBounds.y}
+          editKey={contentKey}
+          placeholder={editPlaceholder}
+          onEdit={onMainTextEdit}
+        />
+      )
+    }
 
     // Render chords overlay instead of plain text when chords are enabled
     if (

@@ -40,6 +40,11 @@ export {
   useReorderBookmarks,
   useSongBookmarks,
 } from './useSongBookmarks'
+export {
+  type SongEditorLayout,
+  setSongEditorLayout,
+  useSongEditorLayout,
+} from './useSongEditorLayout'
 export { useSongGroup } from './useSongGroup'
 export { useSongKeyboardShortcuts } from './useSongKeyboardShortcuts'
 export { useSongSlideSelectionKeyboard } from './useSongSlideSelectionKeyboard'

@@ -1,6 +1,9 @@
 import { memo, useLayoutEffect, useMemo, useRef } from 'react'
 
 import { type AnimationConfig, useSlideAnimation } from './useSlideAnimation'
+import { calculateFontSize } from './utils/calculateFontSize'
+import { getTextStyles } from './utils/getTextStyles'
+import { normalizeText } from './utils/normalizeText'
 import { compressLines } from './utils/textProcessing'
 import type {
   TextStyle,
@@ -8,123 +11,6 @@ import type {
   AnimationConfig as TypesAnimationConfig,
 } from '../../types'
 import { applyStylesToText } from '../../utils/applyStylesToText'
-
-/**
- * Decodes HTML entities and normalizes text
- */
-function normalizeText(html: string, isHtml: boolean): string {
-  if (!isHtml) return html
-
-  return html
-    .replace(/<\/p>\s*<p[^>]*>/gi, '\n')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<(p|div|h[1-6])[^>]*>/gi, '')
-    .replace(/<\/(p|div|h[1-6])>/gi, '\n')
-    .replace(/<[^>]*>/g, '')
-    .replace(/&quot;/g, '"')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&apos;/g, "'")
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(Number(dec)))
-    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) =>
-      String.fromCharCode(parseInt(hex, 16)),
-    )
-    .replace(/\n{3,}/g, '\n\n')
-    .trim()
-}
-
-/**
- * Calculate font size to fit text in container using binary search.
- * Sets the element to target width and finds the largest font that fits in height.
- */
-function calculateFontSize(
-  element: HTMLElement,
-  text: string,
-  maxWidth: number,
-  maxHeight: number,
-  maxFontSize: number,
-  minFontSize: number,
-): number {
-  if (!text || maxWidth <= 0 || maxHeight <= 0) {
-    return maxFontSize
-  }
-
-  // Save original styles
-  const originalStyles = {
-    fontSize: element.style.fontSize,
-    width: element.style.width,
-    height: element.style.height,
-    overflow: element.style.overflow,
-    whiteSpace: element.style.whiteSpace,
-    visibility: element.style.visibility,
-    wordWrap: element.style.wordWrap,
-  }
-
-  // Set up for measurement - use target width so text wraps correctly
-  element.style.width = `${maxWidth}px`
-  element.style.height = 'auto'
-  element.style.overflow = 'visible'
-  element.style.whiteSpace = 'pre-wrap'
-  element.style.wordWrap = 'break-word'
-  element.style.visibility = 'hidden'
-  element.textContent = text
-
-  // Binary search for the largest font size that fits
-  let low = minFontSize
-  let high = maxFontSize
-  let bestFit = minFontSize
-
-  while (low <= high) {
-    const mid = Math.floor((low + high) / 2)
-    element.style.fontSize = `${mid}px`
-
-    // Measure height at this font size
-    const contentHeight = element.scrollHeight
-
-    if (contentHeight <= maxHeight) {
-      // This font size fits, try larger
-      bestFit = mid
-      low = mid + 1
-    } else {
-      // Too big, try smaller
-      high = mid - 1
-    }
-  }
-
-  // Restore original styles
-  element.style.fontSize = originalStyles.fontSize
-  element.style.width = originalStyles.width
-  element.style.height = originalStyles.height
-  element.style.overflow = originalStyles.overflow
-  element.style.whiteSpace = originalStyles.whiteSpace
-  element.style.wordWrap = originalStyles.wordWrap
-  element.style.visibility = originalStyles.visibility
-
-  return bestFit
-}
-
-/**
- * Convert TextStyle to CSS properties
- */
-function getTextStyles(style: TextStyle): React.CSSProperties {
-  const css: React.CSSProperties = {
-    fontFamily: style.fontFamily,
-    color: style.color,
-    fontWeight: style.bold ? 'bold' : 'normal',
-    fontStyle: style.italic ? 'italic' : 'normal',
-    textDecoration: style.underline ? 'underline' : 'none',
-    textAlign: style.alignment ?? 'center',
-    lineHeight: style.lineHeight ?? 1.3,
-  }
-
-  if (style.shadow) {
-    css.textShadow = `2px 2px 4px rgba(0, 0, 0, 0.5)`
-  }
-
-  return css
-}
 
 // Convert types animation config to hook animation config
 function toAnimationConfig(

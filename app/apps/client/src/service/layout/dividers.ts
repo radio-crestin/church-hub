@@ -10,6 +10,8 @@ export const DIVIDER_KEYS = {
   songDetailLeft: 'divider.song_detail_left',
   songDetailRight: 'divider.song_detail_right',
   songDetailAccordion: 'divider.song_detail_accordion',
+  /** PowerPoint layout: Stage board (left) vs the Marcaje/Versiuni column. */
+  songDetailPowerpoint: 'divider.song_detail_powerpoint',
   bibleLeft: 'divider.bible_left',
   bibleRight: 'divider.bible_right',
   music: 'divider.music',

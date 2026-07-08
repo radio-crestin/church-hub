@@ -226,6 +226,7 @@ export const KeyLineEditDialog = forwardRef<KeyLineEditDialogHandle>(
             <button
               onClick={handleSave}
               disabled={updateMutation.isPending}
+              data-testid="key-line-save"
               className="px-5 py-2.5 text-base font-medium text-white bg-indigo-600 rounded-lg
                 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-w-[90px]"
             >

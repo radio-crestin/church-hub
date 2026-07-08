@@ -92,6 +92,7 @@ function SortableBookmarkItem({
     <div
       ref={setNodeRef}
       style={style}
+      data-testid="bookmark-item"
       className={`flex items-center gap-1 rounded-lg border transition-colors ${
         isDragging
           ? 'opacity-80 shadow-lg border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20'
@@ -124,7 +125,10 @@ function SortableBookmarkItem({
               </span>
             )}
             {bookmark.songKeyLine && (
-              <span className="text-xs text-amber-600 dark:text-amber-400 shrink-0">
+              <span
+                className="text-xs text-amber-600 dark:text-amber-400 shrink-0"
+                data-testid="bookmark-key-line"
+              >
                 {bookmark.songKeyLine}
               </span>
             )}

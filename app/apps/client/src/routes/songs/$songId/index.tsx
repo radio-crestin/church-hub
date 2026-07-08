@@ -11,7 +11,6 @@ import {
   CalendarPlus,
   Download,
   Eye,
-  GripHorizontal,
   GripVertical,
   Loader2,
   Music,
@@ -19,6 +18,7 @@ import {
   PanelRightClose,
   PanelRightOpen,
   Pencil,
+  Projector,
   Tag,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -48,10 +48,10 @@ import {
 import {
   CategoryEditDialog,
   type CategoryEditDialogHandle,
-  SongBookmarksPanel,
+  SongAccordionColumn,
   SongControlPanel,
   SongSlidesPanel,
-  SongVersionsPanel,
+  SongStageBoard,
 } from '~/features/songs/components'
 import {
   useAddBookmark,
@@ -60,6 +60,7 @@ import {
   useResetPresentationCount,
   useSong,
   useSongBookmarks,
+  useSongEditorLayout,
   useSongKeyboardShortcuts,
   useSongSlideSelectionKeyboard,
   useUndismissedSuggestionCount,
@@ -110,6 +111,7 @@ function SongPreviewPage() {
   const navigate = useNavigate()
   const { hasPermission } = usePermissions()
   const canEditSong = hasPermission('songs.edit')
+  const [editorLayout, setEditorLayout] = useSongEditorLayout()
   // Dedicated song-versions perms — split so an admin can grant view +
   // CRUD on versions independently of the song's CRUD rights. The boot-time
   // migration `add-song-versions-permissions` backfills these onto users
@@ -180,10 +182,12 @@ function SongPreviewPage() {
     DIVIDER_KEYS.songDetailRight,
     SONG_DETAIL_DEFAULTS.right,
   )
-  // Vertical split inside the right column between Marcaje (top) and Versiuni
-  // (bottom). Default 50/50; only active when both sections are expanded.
-  const [accordionDividerPosition, setAccordionDividerPosition] =
-    useDividerPosition(DIVIDER_KEYS.songDetailAccordion, 50)
+  // PowerPoint layout: the Stage board takes ~74% and the Marcaje/Versiuni
+  // column the rest. Only applied on large screens; they stack on mobile.
+  const [ppDividerPosition, setPpDividerPosition] = useDividerPosition(
+    DIVIDER_KEYS.songDetailPowerpoint,
+    74,
+  )
   // Right-column accordion state. Persisted across sessions via localStorage
   // so the operator's last choice (Versions vs Marcaje expanded) carries over
   // to the next song they open.
@@ -242,27 +246,19 @@ function SongPreviewPage() {
   const [pendingExit, setPendingExit] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const rightPanelRef = useRef<HTMLDivElement>(null)
-  const accordionColumnRef = useRef<HTMLDivElement>(null)
+  const ppContainerRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
   const isRightDragging = useRef(false)
-  const isAccordionDragging = useRef(false)
+  const isPpDragging = useRef(false)
   const keyLineDialogRef = useRef<KeyLineEditDialogHandle>(null)
   const categoryDialogRef = useRef<CategoryEditDialogHandle>(null)
 
-  // Drives the Versions accordion: the badge for unread suggestions and
-  // the auto-expand on songs that have something new to look at.
+  // Feeds the Versions accordion's "+N" attention badge for unread suggestions.
+  // We deliberately do NOT auto-expand the section on songs that have new
+  // suggestions: the operator's collapsed/expanded choice is a persisted
+  // preference that must carry across song navigation — the badge alone flags
+  // that there's something new to look at, without fighting their choice.
   const undismissedSuggestionCount = useUndismissedSuggestionCount(numericId)
-
-  // Auto-expand the Versions section when a freshly opened song has new
-  // (undismissed) suggestions, so the operator can't miss them. Persists
-  // ONLY across this session — we don't overwrite the user's global
-  // "I collapsed Versions" preference; the next song without suggestions
-  // will fall back to whatever's in localStorage.
-  useEffect(() => {
-    if (numericId && undismissedSuggestionCount > 0) {
-      setVersionsOpenRaw(true)
-    }
-  }, [numericId, undismissedSuggestionCount])
 
   // Expanded slides (with auto-inserted choruses) — used for navigation bounds
   // and to build the staged preview content faithfully (same shape the server
@@ -573,12 +569,17 @@ function SongPreviewPage() {
     numericId,
   ])
 
+  // In PowerPoint mode the stage board owns keyboard navigation (arrows must
+  // move the canvas selection too), so the classic-page handlers stand down to
+  // avoid double navigation on the shared keyboard registry.
+  const classicKeyboard = editorLayout !== 'powerpoint'
+
   // Keyboard shortcuts for when a slide is presented
   useSongKeyboardShortcuts({
     onNextSlide: handleNextSlide,
     onPreviousSlide: handlePrevSlide,
     onHidePresentation: handleHidePresentation,
-    enabled: presentedSlideIndex !== null,
+    enabled: classicKeyboard && presentedSlideIndex !== null,
   })
 
   // Keyboard navigation for slide selection when nothing is presented
@@ -588,7 +589,7 @@ function SongPreviewPage() {
     onSelectSlide: setSelectedSlideIndex,
     onPresentSlide: handlePresentSelectedSlide,
     onGoBack: handleGoBack,
-    enabled: presentedSlideIndex === null,
+    enabled: classicKeyboard && presentedSlideIndex === null,
   })
 
   // Divider drag handlers
@@ -650,24 +651,23 @@ function SongPreviewPage() {
     [setRightDividerPosition],
   )
 
-  // Vertical (row) resize between the Marcaje and Versiuni sections of the
-  // right column. Position is the % height given to Marcaje (the top section).
-  const handleAccordionDividerMouseDown = useCallback(
+  // PowerPoint layout: resize between the Stage board and the accordion column.
+  const handlePpDividerMouseDown = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault()
-      isAccordionDragging.current = true
-      document.body.style.cursor = 'row-resize'
+      isPpDragging.current = true
+      document.body.style.cursor = 'col-resize'
       document.body.style.userSelect = 'none'
 
       const handleMouseMove = (moveEvent: MouseEvent) => {
-        if (!isAccordionDragging.current || !accordionColumnRef.current) return
-        const rect = accordionColumnRef.current.getBoundingClientRect()
-        const newPos = ((moveEvent.clientY - rect.top) / rect.height) * 100
-        setAccordionDividerPosition(Math.min(80, Math.max(20, newPos)))
+        if (!isPpDragging.current || !ppContainerRef.current) return
+        const rect = ppContainerRef.current.getBoundingClientRect()
+        const newPos = ((moveEvent.clientX - rect.left) / rect.width) * 100
+        setPpDividerPosition(Math.min(85, Math.max(50, newPos)))
       }
 
       const handleMouseUp = () => {
-        isAccordionDragging.current = false
+        isPpDragging.current = false
         document.body.style.cursor = ''
         document.body.style.userSelect = ''
         document.removeEventListener('mousemove', handleMouseMove)
@@ -677,7 +677,7 @@ function SongPreviewPage() {
       document.addEventListener('mousemove', handleMouseMove)
       document.addEventListener('mouseup', handleMouseUp)
     },
-    [setAccordionDividerPosition],
+    [setPpDividerPosition],
   )
 
   const handleBookmarkSongClick = useCallback(
@@ -708,22 +708,6 @@ function SongPreviewPage() {
     presentedSlideIndex !== null && presentedSlideIndex > 0
   // Allow navigating next even on last slide - server will end presentation
   const canNavigateNext = presentedSlideIndex !== null
-
-  // The Marcaje↔Versiuni divider only makes sense when both sections are
-  // expanded and visible (Marcaje is hidden below `lg`). Otherwise the column
-  // falls back to its flex behaviour (the open section grows, collapsed ones
-  // shrink to their header).
-  // Split is only meaningful when both sections are actually rendered.
-  // `canViewSongVersions` gates the Versiuni section, so when the operator
-  // lacks it we collapse the layout to a single-section column (no divider,
-  // Marcaje takes the whole height).
-  const accordionSplitActive =
-    isLargeScreen &&
-    accordionColumnVisible &&
-    bookmarksOpen &&
-    versionsOpen &&
-    Boolean(song) &&
-    canViewSongVersions
 
   // The right column can be hidden entirely on desktop to give the Slides and
   // Stage columns more room. On mobile it always renders (Versiuni is the only
@@ -784,6 +768,7 @@ function SongPreviewPage() {
               <button
                 type="button"
                 onClick={handleOpenKeyLineDialog}
+                data-testid="song-key-button"
                 className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 rounded hover:bg-amber-200 dark:hover:bg-amber-800/40 transition-colors"
                 title={t('actions.setKeyLine')}
               >
@@ -839,6 +824,25 @@ function SongPreviewPage() {
           {canEditSong && (
             <button
               type="button"
+              onClick={() =>
+                setEditorLayout(
+                  editorLayout === 'powerpoint' ? 'normal' : 'powerpoint',
+                )
+              }
+              className={`p-2 rounded-lg transition-colors inline-flex items-center justify-center ${
+                editorLayout === 'powerpoint'
+                  ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300'
+                  : 'bg-gray-600 text-white hover:bg-gray-700'
+              }`}
+              title={t('stageEditor.toggleLayout')}
+              aria-pressed={editorLayout === 'powerpoint'}
+            >
+              <Projector size={20} />
+            </button>
+          )}
+          {canEditSong && (
+            <button
+              type="button"
               onClick={handleEdit}
               className="p-2 text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors inline-flex items-center justify-center"
               title={t('preview.edit')}
@@ -849,100 +853,27 @@ function SongPreviewPage() {
         </div>
       </div>
 
-      <div
-        ref={containerRef}
-        className="flex flex-col lg:flex-row lg:flex-1 lg:min-h-0 gap-3 lg:gap-1"
-      >
-        {/* Left Panel - Slides List (shows last on mobile) */}
+      {editorLayout === 'powerpoint' && song && canEditSong ? (
+        /* PowerPoint layout: edit slides directly on the song page, with the
+           same collapsible Marcaje/Versiuni column as the classic layout. */
         <div
-          className="order-2 lg:order-1 lg:min-h-0 lg:self-stretch lg:flex-initial overflow-hidden bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 lg:relative"
-          style={
-            isLargeScreen
-              ? { width: `calc(${dividerPosition}% - 8px)` }
-              : undefined
-          }
+          ref={ppContainerRef}
+          className="flex flex-col lg:flex-row flex-1 min-h-0 gap-3 lg:gap-1"
         >
-          <div className="p-3 lg:p-4 lg:absolute lg:inset-0">
-            <SongSlidesPanel
-              song={song}
-              presentedSlideIndex={presentedSlideIndex}
-              selectedSlideIndex={selectedSlideIndex}
-              isLoading={isLoading}
-              isEditMode={isEditMode}
-              onToggleEditMode={handleToggleEditMode}
-              canEdit={canEditSong}
-              onSave={handleSave}
-              onSlideClick={handleSlideClick}
-              isSaving={pendingExit || isMutating}
-              onApplyText={handleEditAsTextApply}
-              previewMode={previewMode}
-              stagedSlideIndex={stagedSlideIndex}
-              onSlideDoubleClick={handleSlideProject}
-            />
-          </div>
-        </div>
-
-        {/* Draggable Divider */}
-        <div
-          className="hidden lg:flex lg:order-2 items-center justify-center w-2 cursor-col-resize hover:bg-indigo-100 dark:hover:bg-indigo-900/30 rounded transition-colors group"
-          onMouseDown={handleDividerMouseDown}
-        >
-          <GripVertical
-            size={16}
-            className="text-gray-400 group-hover:text-indigo-500 transition-colors"
-          />
-        </div>
-
-        {/* Right Panel — Control alone in the middle column, the right
-            column stacks Marcaje + Versiuni as collapsible sections so
-            both stay visible by default and neither is hidden under a
-            tab. The right divider only controls the Control vs accordion
-            split; the accordion sections balance themselves via flex. */}
-        <div
-          ref={rightPanelRef}
-          className="order-1 lg:order-3 lg:min-h-0 lg:flex-1 overflow-hidden shrink-0 flex flex-col lg:flex-row"
-          style={
-            isLargeScreen
-              ? { width: `calc(${100 - dividerPosition}% - 8px)` }
-              : undefined
-          }
-        >
-          {/* Control Panel column (now owns the full height of its column).
-              When the right column is hidden it grows to fill the row, leaving
-              only the slim rail below for bringing the column back. */}
           <div
-            className="h-full overflow-hidden"
+            className="order-1 flex min-w-0 min-h-0"
             style={
-              isLargeScreen && accordionColumnVisible
-                ? { width: `calc(${rightDividerPosition}% - 12px)` }
+              isLargeScreen && showAccordionColumn
+                ? { width: `calc(${ppDividerPosition}% - 8px)` }
                 : { flex: 1, minWidth: 0 }
             }
           >
-            <SongControlPanel
-              songId={numericId}
-              onPrevSlide={handlePrevSlide}
-              onNextSlide={handleNextSlide}
-              canNavigatePrev={canNavigatePrev}
-              canNavigateNext={canNavigateNext}
-              previewMode={previewMode}
-              onTogglePreviewMode={togglePreviewMode}
-              previewContent={stagedPreviewContent}
-              canProject={
-                previewMode &&
-                stagedSlideIndex !== null &&
-                stagedSlideIndex !== presentedSlideIndex
-              }
-              onProject={handleProjectStaged}
-              isProjecting={presentTemporarySong.isPending}
-              onHide={handleHidePresentation}
-              isHiding={clearTemporary.isPending}
-            />
+            <SongStageBoard song={song} />
           </div>
 
-          {/* Boundary bar — hosts the show/hide toggle for the whole right
-              column plus the drag grip that resizes it. Desktop only; the bar
-              stays put when collapsed so the rail toggle is always reachable. */}
-          <div className="hidden lg:flex w-6 shrink-0 flex-col items-center">
+          {/* Boundary bar — show/hide toggle for the column plus the drag grip
+              that resizes it. Desktop only. */}
+          <div className="hidden lg:flex lg:order-2 w-6 shrink-0 flex-col items-center">
             <button
               type="button"
               onClick={() => setAccordionColumnVisible(!accordionColumnVisible)}
@@ -957,6 +888,7 @@ function SongPreviewPage() {
                   ? t('layout.hidePanel')
                   : t('layout.showPanel')
               }
+              data-testid="pp-accordion-toggle"
               className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded text-gray-400 transition-colors hover:bg-indigo-100 hover:text-indigo-500 dark:hover:bg-indigo-900/30"
             >
               {accordionColumnVisible ? (
@@ -968,7 +900,7 @@ function SongPreviewPage() {
             {accordionColumnVisible ? (
               <div
                 className="group mt-1 flex flex-1 w-full cursor-col-resize items-center justify-center rounded transition-colors hover:bg-indigo-100 dark:hover:bg-indigo-900/30"
-                onMouseDown={handleRightDividerMouseDown}
+                onMouseDown={handlePpDividerMouseDown}
               >
                 <GripVertical
                   size={16}
@@ -978,100 +910,198 @@ function SongPreviewPage() {
             ) : null}
           </div>
 
-          {/* Accordion column — Marcaje on top, Versiuni below.
-              Bookmarks were previously hidden on mobile (the page is
-              too tight); we preserve that. Versions ride along on
-              mobile because they were already visible there before.
-              Hidden entirely on desktop when the operator collapses it. */}
           {showAccordionColumn ? (
-            <div
-              ref={accordionColumnRef}
-              className={`overflow-hidden h-full flex flex-col ${accordionSplitActive ? '' : 'gap-2'}`}
+            <SongAccordionColumn
+              isLargeScreen={isLargeScreen}
+              song={song}
+              bookmarksOpen={bookmarksOpen}
+              versionsOpen={versionsOpen}
+              onToggleBookmarks={() => setBookmarksOpen(!bookmarksOpen)}
+              onToggleVersions={() => setVersionsOpen(!versionsOpen)}
+              onSelectBookmarkSong={handleBookmarkSongClick}
+              onAddAllBookmarksToSchedule={handleAddAllBookmarksToSchedule}
+              canViewSongVersions={canViewSongVersions}
+              canAddSongVersion={canAddSongVersion}
+              canEditSongVersion={canEditSongVersion}
+              canDeleteSongVersion={canDeleteSongVersion}
+              attentionBadge={
+                undismissedSuggestionCount > 0
+                  ? `+${undismissedSuggestionCount}`
+                  : null
+              }
+              className="order-3"
               style={
                 isLargeScreen
-                  ? { width: `calc(${100 - rightDividerPosition}% - 12px)` }
+                  ? { width: `calc(${100 - ppDividerPosition}% - 12px)` }
                   : undefined
               }
-            >
-              <div
-                className={`hidden lg:block min-h-0 ${
-                  accordionSplitActive
-                    ? ''
-                    : bookmarksOpen
-                      ? 'flex-1'
-                      : 'flex-none'
-                }`}
-                style={
-                  accordionSplitActive
-                    ? { height: `calc(${accordionDividerPosition}% - 4px)` }
-                    : undefined
-                }
-              >
-                <SongBookmarksPanel
-                  onSelectSong={handleBookmarkSongClick}
-                  activeSongId={numericId}
-                  onAddAllToSchedule={handleAddAllBookmarksToSchedule}
-                  isCollapsed={!bookmarksOpen}
-                  onToggleCollapse={() => setBookmarksOpen(!bookmarksOpen)}
-                />
-              </div>
+            />
+          ) : null}
+        </div>
+      ) : (
+        <div
+          ref={containerRef}
+          className="flex flex-col lg:flex-row lg:flex-1 lg:min-h-0 gap-3 lg:gap-1"
+        >
+          {/* Left Panel - Slides List (shows last on mobile) */}
+          <div
+            className="order-2 lg:order-1 lg:min-h-0 lg:self-stretch lg:flex-initial overflow-hidden bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 lg:relative"
+            style={
+              isLargeScreen
+                ? { width: `calc(${dividerPosition}% - 8px)` }
+                : undefined
+            }
+          >
+            <div className="p-3 lg:p-4 lg:absolute lg:inset-0">
+              <SongSlidesPanel
+                song={song}
+                presentedSlideIndex={presentedSlideIndex}
+                selectedSlideIndex={selectedSlideIndex}
+                isLoading={isLoading}
+                isEditMode={isEditMode}
+                onToggleEditMode={handleToggleEditMode}
+                canEdit={canEditSong}
+                onSave={handleSave}
+                onSlideClick={handleSlideClick}
+                isSaving={pendingExit || isMutating}
+                onApplyText={handleEditAsTextApply}
+                previewMode={previewMode}
+                stagedSlideIndex={stagedSlideIndex}
+                onSlideDoubleClick={handleSlideProject}
+              />
+            </div>
+          </div>
 
-              {/* Draggable Marcaje ↔ Versiuni divider (only when both expanded) */}
-              {accordionSplitActive ? (
+          {/* Draggable Divider */}
+          <div
+            className="hidden lg:flex lg:order-2 items-center justify-center w-2 cursor-col-resize hover:bg-indigo-100 dark:hover:bg-indigo-900/30 rounded transition-colors group"
+            onMouseDown={handleDividerMouseDown}
+          >
+            <GripVertical
+              size={16}
+              className="text-gray-400 group-hover:text-indigo-500 transition-colors"
+            />
+          </div>
+
+          {/* Right Panel — Control alone in the middle column, the right
+            column stacks Marcaje + Versiuni as collapsible sections so
+            both stay visible by default and neither is hidden under a
+            tab. The right divider only controls the Control vs accordion
+            split; the accordion sections balance themselves via flex. */}
+          <div
+            ref={rightPanelRef}
+            className="order-1 lg:order-3 lg:min-h-0 lg:flex-1 overflow-hidden shrink-0 flex flex-col lg:flex-row"
+            style={
+              isLargeScreen
+                ? { width: `calc(${100 - dividerPosition}% - 8px)` }
+                : undefined
+            }
+          >
+            {/* Control Panel column (now owns the full height of its column).
+              When the right column is hidden it grows to fill the row, leaving
+              only the slim rail below for bringing the column back. */}
+            <div
+              className="h-full overflow-hidden"
+              style={
+                isLargeScreen && accordionColumnVisible
+                  ? { width: `calc(${rightDividerPosition}% - 12px)` }
+                  : { flex: 1, minWidth: 0 }
+              }
+            >
+              <SongControlPanel
+                songId={numericId}
+                onPrevSlide={handlePrevSlide}
+                onNextSlide={handleNextSlide}
+                canNavigatePrev={canNavigatePrev}
+                canNavigateNext={canNavigateNext}
+                previewMode={previewMode}
+                onTogglePreviewMode={togglePreviewMode}
+                previewContent={stagedPreviewContent}
+                canProject={
+                  previewMode &&
+                  stagedSlideIndex !== null &&
+                  stagedSlideIndex !== presentedSlideIndex
+                }
+                onProject={handleProjectStaged}
+                isProjecting={presentTemporarySong.isPending}
+                onHide={handleHidePresentation}
+                isHiding={clearTemporary.isPending}
+              />
+            </div>
+
+            {/* Boundary bar — hosts the show/hide toggle for the whole right
+              column plus the drag grip that resizes it. Desktop only; the bar
+              stays put when collapsed so the rail toggle is always reachable. */}
+            <div className="hidden lg:flex w-6 shrink-0 flex-col items-center">
+              <button
+                type="button"
+                onClick={() =>
+                  setAccordionColumnVisible(!accordionColumnVisible)
+                }
+                aria-expanded={accordionColumnVisible}
+                aria-label={
+                  accordionColumnVisible
+                    ? t('layout.hidePanel')
+                    : t('layout.showPanel')
+                }
+                title={
+                  accordionColumnVisible
+                    ? t('layout.hidePanel')
+                    : t('layout.showPanel')
+                }
+                className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded text-gray-400 transition-colors hover:bg-indigo-100 hover:text-indigo-500 dark:hover:bg-indigo-900/30"
+              >
+                {accordionColumnVisible ? (
+                  <PanelRightClose size={16} />
+                ) : (
+                  <PanelRightOpen size={16} />
+                )}
+              </button>
+              {accordionColumnVisible ? (
                 <div
-                  className="hidden lg:flex flex-col items-center justify-center h-2 cursor-row-resize hover:bg-indigo-100 dark:hover:bg-indigo-900/30 rounded transition-colors group"
-                  onMouseDown={handleAccordionDividerMouseDown}
+                  className="group mt-1 flex flex-1 w-full cursor-col-resize items-center justify-center rounded transition-colors hover:bg-indigo-100 dark:hover:bg-indigo-900/30"
+                  onMouseDown={handleRightDividerMouseDown}
                 >
-                  <GripHorizontal
+                  <GripVertical
                     size={16}
                     className="text-gray-400 group-hover:text-indigo-500 transition-colors"
                   />
                 </div>
               ) : null}
-
-              {song && canViewSongVersions ? (
-                <div
-                  className={`min-h-0 ${
-                    accordionSplitActive
-                      ? ''
-                      : versionsOpen
-                        ? 'flex-1'
-                        : 'flex-none'
-                  }`}
-                  style={
-                    accordionSplitActive
-                      ? {
-                          height: `calc(${100 - accordionDividerPosition}% - 4px)`,
-                        }
-                      : undefined
-                  }
-                >
-                  <SongVersionsPanel
-                    songId={numericId}
-                    songTitle={song.title}
-                    currentSong={{
-                      hymnNumber: song.hymnNumber,
-                      author: song.author,
-                      keyLine: song.keyLine,
-                      categoryName: song.category?.name ?? null,
-                    }}
-                    canAdd={canAddSongVersion}
-                    canEdit={canEditSongVersion}
-                    canDelete={canDeleteSongVersion}
-                    isCollapsed={!versionsOpen}
-                    onToggleCollapse={() => setVersionsOpen(!versionsOpen)}
-                    attentionBadge={
-                      undismissedSuggestionCount > 0
-                        ? `+${undismissedSuggestionCount}`
-                        : null
-                    }
-                  />
-                </div>
-              ) : null}
             </div>
-          ) : null}
+
+            {/* Accordion column — Marcaje on top, Versiuni below. Bookmarks are
+              hidden on mobile (the page is too tight); Versions ride along on
+              mobile. Hidden entirely on desktop when the operator collapses it. */}
+            {showAccordionColumn ? (
+              <SongAccordionColumn
+                isLargeScreen={isLargeScreen}
+                song={song}
+                bookmarksOpen={bookmarksOpen}
+                versionsOpen={versionsOpen}
+                onToggleBookmarks={() => setBookmarksOpen(!bookmarksOpen)}
+                onToggleVersions={() => setVersionsOpen(!versionsOpen)}
+                onSelectBookmarkSong={handleBookmarkSongClick}
+                onAddAllBookmarksToSchedule={handleAddAllBookmarksToSchedule}
+                canViewSongVersions={canViewSongVersions}
+                canAddSongVersion={canAddSongVersion}
+                canEditSongVersion={canEditSongVersion}
+                canDeleteSongVersion={canDeleteSongVersion}
+                attentionBadge={
+                  undismissedSuggestionCount > 0
+                    ? `+${undismissedSuggestionCount}`
+                    : null
+                }
+                style={
+                  isLargeScreen
+                    ? { width: `calc(${100 - rightDividerPosition}% - 12px)` }
+                    : undefined
+                }
+              />
+            ) : null}
+          </div>
         </div>
-      </div>
+      )}
 
       <AddSongToScheduleModal
         isOpen={showAddToScheduleModal}
