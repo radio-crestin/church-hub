@@ -75,19 +75,28 @@ export function useBackup() {
 
     const poll = async () => {
       while (!cancelled) {
-        await queryClient.refetchQueries({ queryKey: ['backup', 'list'] })
-        const driveList =
-          queryClient.getQueryData<BackupFile[]>(['backup', 'list']) ?? []
-        // "Found" is based on what Drive actually returns (not our optimistic
-        // entry): the target id, or ANY id that didn't exist before the backup.
-        // Detecting by new id (not by timestamp) avoids stopping early on an
-        // already-present backup.
+        // Fetch directly (same call the manual refresh uses) and write the
+        // result into the cache, so the list re-renders reliably.
+        let driveList: BackupFile[] = []
+        try {
+          driveList = await listBackups()
+          if (!cancelled) {
+            queryClient.setQueryData<BackupFile[]>(
+              ['backup', 'list'],
+              driveList,
+            )
+          }
+        } catch {
+          // Transient error (e.g. Drive hiccup) — keep polling.
+        }
+        // Stop only once Drive returns the target id, or ANY id that didn't
+        // exist before the backup (detecting by new id, not timestamp).
         const foundInDrive = driveList.some(
           (f) => f.id === targetId || !prevSet.has(f.id),
         )
         if (foundInDrive || Date.now() - since > 120_000) break
         // Keep the just-created backup visible while Drive catches up.
-        if (added && !driveList.some((f) => f.id === added.id)) {
+        if (added && !driveList.some((f) => f.id === added.id) && !cancelled) {
           queryClient.setQueryData<BackupFile[]>(
             ['backup', 'list'],
             [added, ...driveList],
