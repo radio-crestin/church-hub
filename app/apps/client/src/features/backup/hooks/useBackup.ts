@@ -31,6 +31,7 @@ export function useBackup() {
   const [awaitingBackup, setAwaitingBackup] = useState<{
     prevMax: number
     targetId?: string
+    added?: BackupFile
     since: number
   } | null>(null)
 
@@ -50,8 +51,6 @@ export function useBackup() {
     queryFn: listBackups,
     enabled: driveReady,
     staleTime: 30 * 1000,
-    // Auto-refresh until the just-created backup appears.
-    refetchInterval: awaitingBackup ? 2500 : false,
   })
 
   // Stop the polling spinner once the connection lands.
@@ -61,17 +60,42 @@ export function useBackup() {
     }
   }, [isAuthenticating, status?.connected])
 
-  // Stop auto-polling once the new backup shows up (or after a safety timeout).
+  // After a backup, actively refetch the list until the new backup shows up
+  // (Drive's files.list can lag a few seconds behind a just-created file).
   useEffect(() => {
     if (!awaitingBackup) return
-    const list = listQuery.data ?? []
-    const found = awaitingBackup.targetId
-      ? list.some((f) => f.id === awaitingBackup.targetId)
-      : list.some((f) => f.createdAtMs > awaitingBackup.prevMax)
-    if (found || Date.now() - awaitingBackup.since > 90_000) {
-      setAwaitingBackup(null)
+    let cancelled = false
+
+    const { prevMax, targetId, added, since } = awaitingBackup
+
+    const poll = async () => {
+      while (!cancelled) {
+        await queryClient.refetchQueries({ queryKey: ['backup', 'list'] })
+        const driveList =
+          queryClient.getQueryData<BackupFile[]>(['backup', 'list']) ?? []
+        // "Found" is based on what Drive actually returns (not our optimistic
+        // entry), so we stop only once Drive has really indexed the new file.
+        const foundInDrive = targetId
+          ? driveList.some((f) => f.id === targetId)
+          : driveList.some((f) => f.createdAtMs > prevMax)
+        if (foundInDrive || Date.now() - since > 90_000) break
+        // Keep the just-created backup visible while Drive catches up.
+        if (added && !driveList.some((f) => f.id === added.id)) {
+          queryClient.setQueryData<BackupFile[]>(
+            ['backup', 'list'],
+            [added, ...driveList],
+          )
+        }
+        await new Promise((resolve) => setTimeout(resolve, 2500))
+      }
+      if (!cancelled) setAwaitingBackup(null)
     }
-  }, [awaitingBackup, listQuery.data])
+
+    void poll()
+    return () => {
+      cancelled = true
+    }
+  }, [awaitingBackup, queryClient])
 
   const connect = useCallback(async () => {
     setConnectError(null)
@@ -118,18 +142,19 @@ export function useBackup() {
       queryClient.invalidateQueries({ queryKey: ['backup', 'status'] })
 
       // Show it instantly if the server returned metadata...
-      if (result.backup) {
-        const added = result.backup
+      const added = result.backup
+      if (added) {
         queryClient.setQueryData<BackupFile[]>(['backup', 'list'], (old) => {
           const list = old ?? []
           return list.some((f) => f.id === added.id) ? list : [added, ...list]
         })
       }
 
-      // ...and keep auto-refreshing the list until the new backup is present.
+      // ...and keep auto-refreshing the list until Drive really has the backup.
       setAwaitingBackup({
         prevMax: context?.prevMax ?? 0,
-        targetId: result.backup?.id,
+        targetId: added?.id,
+        added,
         since: Date.now(),
       })
     },

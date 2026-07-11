@@ -1978,7 +1978,10 @@ async function startRealServer(): Promise<void> {
         return handleCors(
           req,
           new Response(JSON.stringify({ data: { backups: result.backups } }), {
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-store',
+            },
           }),
         )
       }
