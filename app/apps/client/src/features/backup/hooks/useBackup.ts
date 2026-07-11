@@ -29,7 +29,7 @@ export function useBackup() {
   // Set right after a backup; drives auto-polling of the list until the new
   // backup shows up (Drive's files.list can lag a few seconds behind).
   const [awaitingBackup, setAwaitingBackup] = useState<{
-    prevMax: number
+    prevIds: string[]
     targetId?: string
     added?: BackupFile
     since: number
@@ -70,7 +70,8 @@ export function useBackup() {
     if (!awaitingBackup) return
     let cancelled = false
 
-    const { prevMax, targetId, added, since } = awaitingBackup
+    const { prevIds, targetId, added, since } = awaitingBackup
+    const prevSet = new Set(prevIds)
 
     const poll = async () => {
       while (!cancelled) {
@@ -78,11 +79,13 @@ export function useBackup() {
         const driveList =
           queryClient.getQueryData<BackupFile[]>(['backup', 'list']) ?? []
         // "Found" is based on what Drive actually returns (not our optimistic
-        // entry), so we stop only once Drive has really indexed the new file.
-        const foundInDrive = targetId
-          ? driveList.some((f) => f.id === targetId)
-          : driveList.some((f) => f.createdAtMs > prevMax)
-        if (foundInDrive || Date.now() - since > 90_000) break
+        // entry): the target id, or ANY id that didn't exist before the backup.
+        // Detecting by new id (not by timestamp) avoids stopping early on an
+        // already-present backup.
+        const foundInDrive = driveList.some(
+          (f) => f.id === targetId || !prevSet.has(f.id),
+        )
+        if (foundInDrive || Date.now() - since > 120_000) break
         // Keep the just-created backup visible while Drive catches up.
         if (added && !driveList.some((f) => f.id === added.id)) {
           queryClient.setQueryData<BackupFile[]>(
@@ -131,16 +134,15 @@ export function useBackup() {
     BackupActionResult,
     Error,
     void,
-    { prevMax: number }
+    { prevIds: string[] }
   >({
     mutationFn: backupNow,
-    // Snapshot the newest backup's timestamp BEFORE uploading, so we can detect
-    // when a strictly-newer one appears in the list.
+    // Snapshot the ids that exist BEFORE uploading, so we can detect when a
+    // brand-new backup id appears in the list (reliable even without metadata).
     onMutate: () => {
       const list =
         queryClient.getQueryData<BackupFile[]>(['backup', 'list']) ?? []
-      const prevMax = list.reduce((m, f) => Math.max(m, f.createdAtMs), 0)
-      return { prevMax }
+      return { prevIds: list.map((f) => f.id) }
     },
     onSuccess: (result, _vars, context) => {
       queryClient.invalidateQueries({ queryKey: ['backup', 'status'] })
@@ -156,7 +158,7 @@ export function useBackup() {
 
       // ...and keep auto-refreshing the list until Drive really has the backup.
       setAwaitingBackup({
-        prevMax: context?.prevMax ?? 0,
+        prevIds: context?.prevIds ?? [],
         targetId: added?.id,
         added,
         since: Date.now(),
