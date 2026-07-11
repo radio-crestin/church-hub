@@ -26,6 +26,13 @@ export function useBackup() {
   const queryClient = useQueryClient()
   const [isAuthenticating, setIsAuthenticating] = useState(false)
   const [connectError, setConnectError] = useState<string | null>(null)
+  // Set right after a backup; drives auto-polling of the list until the new
+  // backup shows up (Drive's files.list can lag a few seconds behind).
+  const [awaitingBackup, setAwaitingBackup] = useState<{
+    prevMax: number
+    targetId?: string
+    since: number
+  } | null>(null)
 
   const statusQuery = useQuery({
     queryKey: ['backup', 'status'],
@@ -43,6 +50,8 @@ export function useBackup() {
     queryFn: listBackups,
     enabled: driveReady,
     staleTime: 30 * 1000,
+    // Auto-refresh until the just-created backup appears.
+    refetchInterval: awaitingBackup ? 2500 : false,
   })
 
   // Stop the polling spinner once the connection lands.
@@ -51,6 +60,18 @@ export function useBackup() {
       setIsAuthenticating(false)
     }
   }, [isAuthenticating, status?.connected])
+
+  // Stop auto-polling once the new backup shows up (or after a safety timeout).
+  useEffect(() => {
+    if (!awaitingBackup) return
+    const list = listQuery.data ?? []
+    const found = awaitingBackup.targetId
+      ? list.some((f) => f.id === awaitingBackup.targetId)
+      : list.some((f) => f.createdAtMs > awaitingBackup.prevMax)
+    if (found || Date.now() - awaitingBackup.since > 90_000) {
+      setAwaitingBackup(null)
+    }
+  }, [awaitingBackup, listQuery.data])
 
   const connect = useCallback(async () => {
     setConnectError(null)
@@ -78,47 +99,39 @@ export function useBackup() {
     },
   })
 
-  const backupNowMutation = useMutation<BackupActionResult>({
+  const backupNowMutation = useMutation<
+    BackupActionResult,
+    Error,
+    void,
+    { prevMax: number }
+  >({
     mutationFn: backupNow,
-    onSuccess: (result) => {
+    // Snapshot the newest backup's timestamp BEFORE uploading, so we can detect
+    // when a strictly-newer one appears in the list.
+    onMutate: () => {
+      const list =
+        queryClient.getQueryData<BackupFile[]>(['backup', 'list']) ?? []
+      const prevMax = list.reduce((m, f) => Math.max(m, f.createdAtMs), 0)
+      return { prevMax }
+    },
+    onSuccess: (result, _vars, context) => {
       queryClient.invalidateQueries({ queryKey: ['backup', 'status'] })
 
-      const added = result.backup
-      if (!added) {
-        // No metadata (older server) — refetch a few times to outlast Drive lag.
-        let tries = 0
-        const retry = async () => {
-          tries += 1
-          await queryClient.invalidateQueries({ queryKey: ['backup', 'list'] })
-          if (tries < 4) setTimeout(retry, 3000)
-        }
-        void retry()
-        return
+      // Show it instantly if the server returned metadata...
+      if (result.backup) {
+        const added = result.backup
+        queryClient.setQueryData<BackupFile[]>(['backup', 'list'], (old) => {
+          const list = old ?? []
+          return list.some((f) => f.id === added.id) ? list : [added, ...list]
+        })
       }
 
-      // Drive's files.list can lag several seconds behind a just-created file.
-      // Insert it optimistically so it shows immediately, and keep re-applying
-      // it after each reconcile until Drive returns it on its own.
-      const upsert = (old?: BackupFile[]): BackupFile[] => {
-        const list = old ?? []
-        return list.some((f) => f.id === added.id) ? list : [added, ...list]
-      }
-      queryClient.setQueryData<BackupFile[]>(['backup', 'list'], upsert)
-
-      let attempts = 0
-      const reconcile = async () => {
-        attempts += 1
-        await queryClient.invalidateQueries({ queryKey: ['backup', 'list'] })
-        const list =
-          queryClient.getQueryData<BackupFile[]>(['backup', 'list']) ?? []
-        const present = list.some((f) => f.id === added.id)
-        if (!present) {
-          // Drive still hasn't caught up — keep the optimistic entry and retry.
-          queryClient.setQueryData<BackupFile[]>(['backup', 'list'], upsert)
-          if (attempts < 5) setTimeout(reconcile, 3000)
-        }
-      }
-      setTimeout(reconcile, 3000)
+      // ...and keep auto-refreshing the list until the new backup is present.
+      setAwaitingBackup({
+        prevMax: context?.prevMax ?? 0,
+        targetId: result.backup?.id,
+        since: Date.now(),
+      })
     },
   })
 
@@ -164,6 +177,7 @@ export function useBackup() {
     backups: listQuery.data ?? [],
     isLoadingBackups: listQuery.isLoading,
     isFetchingBackups: listQuery.isFetching,
+    isAwaitingBackup: awaitingBackup !== null,
     refetchBackups: listQuery.refetch,
     // actions
     backupNow: backupNowMutation.mutateAsync,
