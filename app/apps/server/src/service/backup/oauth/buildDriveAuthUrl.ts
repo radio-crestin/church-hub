@@ -20,7 +20,9 @@ export function buildDriveAuthUrl(params: BuildDriveAuthUrlParams): string {
   url.searchParams.set('code_challenge', params.codeChallenge)
   url.searchParams.set('code_challenge_method', 'S256')
   url.searchParams.set('access_type', 'offline')
-  url.searchParams.set('prompt', 'consent')
+  // Always show the account chooser (so users can pick/switch which Google
+  // account to back up with) AND force consent (so a refresh token is issued).
+  url.searchParams.set('prompt', 'select_account consent')
   url.searchParams.set('state', params.state)
   return url.toString()
 }

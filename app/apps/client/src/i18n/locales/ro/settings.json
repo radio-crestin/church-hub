@@ -851,7 +851,8 @@
         "configFailed": "Actualizarea setărilor de backup a eșuat",
         "linkCopied": "Link de conectare copiat — lipește-l într-o fereastră privată",
         "linkCopyFailed": "Linkul nu a putut fi copiat",
-        "notConfigured": "Backupul Google Drive nu este configurat în această versiune"
+        "notConfigured": "Backupul Google Drive nu este configurat în această versiune",
+        "linkShown": "Link de conectare gata — copiază-l și deschide-l într-o fereastră privată"
       },
       "copyLink": "Copiază linkul",
       "copyLinkHint": "Copiază linkul de conectare pentru a-l deschide într-o fereastră privată/incognito (de ex. pentru alt cont Google).",

@@ -850,7 +850,8 @@
         "configFailed": "Failed to update backup settings",
         "linkCopied": "Sign-in link copied — paste it into a private window",
         "linkCopyFailed": "Could not copy the link",
-        "notConfigured": "Google Drive backup isn't configured in this build"
+        "notConfigured": "Google Drive backup isn't configured in this build",
+        "linkShown": "Sign-in link ready — copy it and open it in a private window"
       },
       "copyLink": "Copy link",
       "copyLinkHint": "Copy the sign-in link to open it in a private/incognito window (e.g. to use a different Google account).",

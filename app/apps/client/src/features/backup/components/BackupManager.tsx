@@ -35,6 +35,7 @@ export function BackupManager() {
   const { showToast } = useToast()
   const backup = useBackup()
   const [pendingRestore, setPendingRestore] = useState<BackupFile | null>(null)
+  const [connectUrl, setConnectUrl] = useState<string | null>(null)
 
   const handleBackupNow = useCallback(async () => {
     const result = await backup.backupNow()
@@ -67,7 +68,10 @@ export function BackupManager() {
     }
   }, [pendingRestore, backup, showToast, t])
 
-  const handleCopyLink = useCallback(async () => {
+  // Reveal the sign-in link (and best-effort auto-copy). We fetch the URL first,
+  // which consumes the click's user-activation, so clipboard.writeText may be
+  // blocked — hence we always show the link in a field for manual copy too.
+  const handleShowLink = useCallback(async () => {
     try {
       const { authUrl, error } = await backup.getConnectUrl()
       if (!authUrl) {
@@ -79,12 +83,29 @@ export function BackupManager() {
         )
         return
       }
-      await navigator.clipboard.writeText(authUrl)
-      showToast(t('sections.backup.toast.linkCopied'), 'success')
+      setConnectUrl(authUrl)
+      try {
+        await navigator.clipboard.writeText(authUrl)
+        showToast(t('sections.backup.toast.linkCopied'), 'success')
+      } catch {
+        showToast(t('sections.backup.toast.linkShown'), 'success')
+      }
     } catch {
       showToast(t('sections.backup.toast.linkCopyFailed'), 'error')
     }
   }, [backup, showToast, t])
+
+  // Copy synchronously from state (no await before the clipboard call), so the
+  // click's user-activation is still valid.
+  const handleCopyShownUrl = useCallback(async () => {
+    if (!connectUrl) return
+    try {
+      await navigator.clipboard.writeText(connectUrl)
+      showToast(t('sections.backup.toast.linkCopied'), 'success')
+    } catch {
+      showToast(t('sections.backup.toast.linkCopyFailed'), 'error')
+    }
+  }, [connectUrl, showToast, t])
 
   const handleToggleAuto = useCallback(async () => {
     try {
@@ -198,7 +219,7 @@ export function BackupManager() {
             </button>
             <button
               type="button"
-              onClick={handleCopyLink}
+              onClick={handleShowLink}
               className="inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-1 text-xs text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
               title={t('sections.backup.copyLinkHint')}
             >
@@ -207,6 +228,29 @@ export function BackupManager() {
             </button>
           </div>
         </div>
+        {connectUrl && (
+          <div className="mt-3">
+            <div className="flex items-center gap-2">
+              <input
+                readOnly
+                value={connectUrl}
+                onFocus={(e) => e.currentTarget.select()}
+                className="w-full rounded-md border border-gray-300 bg-white px-2 py-1.5 font-mono text-xs text-gray-700 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300"
+              />
+              <button
+                type="button"
+                onClick={handleCopyShownUrl}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-gray-300 px-2 py-1.5 text-xs text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+              >
+                <Copy className="h-3.5 w-3.5" />
+                {t('sections.backup.copyLink')}
+              </button>
+            </div>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              {t('sections.backup.copyLinkHint')}
+            </p>
+          </div>
+        )}
       </div>
     )
   }
