@@ -29,6 +29,11 @@ function formatDate(ms: number): string {
   return new Date(ms).toLocaleString()
 }
 
+/** Compact, unit-agnostic label for an interval pill: 6→"6h", 24→"1d", 168→"7d". */
+function intervalLabel(hours: number): string {
+  return hours % 24 === 0 ? `${hours / 24}d` : `${hours}h`
+}
+
 const INTERVAL_OPTIONS = [6, 12, 24, 48, 168]
 
 export function BackupManager() {
@@ -394,23 +399,37 @@ export function BackupManager() {
                 </button>
               </div>
               {backup.autoBackupEnabled && (
-                <label className="mt-3 block text-xs text-gray-600 dark:text-gray-400">
-                  {t('sections.backup.auto.interval')}
-                  <select
-                    value={backup.intervalHours}
-                    onChange={(e) =>
-                      handleIntervalChange(Number(e.target.value))
-                    }
-                    disabled={backup.isUpdatingConfig}
-                    className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-900 dark:text-white"
-                  >
-                    {INTERVAL_OPTIONS.map((h) => (
-                      <option key={h} value={h}>
-                        {t('sections.backup.auto.everyHours', { hours: h })}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <div className="mt-3">
+                  <p className="mb-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
+                    {t('sections.backup.auto.interval')}
+                  </p>
+                  <div className="inline-flex flex-wrap gap-1 rounded-lg bg-gray-100 p-1 dark:bg-gray-900">
+                    {INTERVAL_OPTIONS.map((h) => {
+                      const selected = backup.intervalHours === h
+                      return (
+                        <button
+                          key={h}
+                          type="button"
+                          onClick={() => handleIntervalChange(h)}
+                          disabled={backup.isUpdatingConfig}
+                          aria-pressed={selected}
+                          className={`min-w-[3rem] rounded-md px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50 ${
+                            selected
+                              ? 'bg-indigo-600 text-white shadow-sm'
+                              : 'text-gray-600 hover:bg-white hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800'
+                          }`}
+                        >
+                          {intervalLabel(h)}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                    {t('sections.backup.auto.everyHours', {
+                      hours: backup.intervalHours,
+                    })}
+                  </p>
+                </div>
               )}
             </div>
           </div>
