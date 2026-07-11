@@ -50,7 +50,11 @@ export function useBackup() {
     queryKey: ['backup', 'list'],
     queryFn: listBackups,
     enabled: driveReady,
-    staleTime: 30 * 1000,
+    // Always fetch fresh: the list changes out-of-band (new/auto/deleted
+    // backups), so never serve a stale cached list.
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   })
 
   // Stop the polling spinner once the connection lands.
@@ -203,6 +207,8 @@ export function useBackup() {
     isLoadingBackups: listQuery.isLoading,
     isFetchingBackups: listQuery.isFetching,
     isAwaitingBackup: awaitingBackup !== null,
+    backupsError:
+      listQuery.error instanceof Error ? listQuery.error.message : null,
     refetchBackups: listQuery.refetch,
     // actions
     backupNow: backupNowMutation.mutateAsync,

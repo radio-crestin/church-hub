@@ -456,7 +456,11 @@ export function BackupManager() {
                 />
               </button>
             </div>
-            {backup.isLoadingBackups ? (
+            {backup.backupsError ? (
+              <p className="text-sm text-red-600 dark:text-red-400">
+                {backup.backupsError}
+              </p>
+            ) : backup.isLoadingBackups ? (
               <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 {t('sections.backup.list.loading')}
