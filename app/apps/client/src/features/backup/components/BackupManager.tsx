@@ -3,6 +3,7 @@ import {
   Cloud,
   CloudDownload,
   CloudUpload,
+  Copy,
   Loader2,
   LogOut,
   RefreshCw,
@@ -13,6 +14,7 @@ import { useTranslation } from 'react-i18next'
 import { useToast } from '~/ui/toast'
 import { useBackup } from '../hooks/useBackup'
 import type { BackupFile } from '../service'
+import { buildGoogleAuthUrl } from '../utils/googleAuthUrl'
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B'
@@ -65,6 +67,15 @@ export function BackupManager() {
       )
     }
   }, [pendingRestore, backup, showToast, t])
+
+  const handleCopyLink = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(buildGoogleAuthUrl())
+      showToast(t('sections.backup.toast.linkCopied'), 'success')
+    } catch {
+      showToast(t('sections.backup.toast.linkCopyFailed'), 'error')
+    }
+  }, [showToast, t])
 
   const handleToggleAuto = useCallback(async () => {
     try {
@@ -135,25 +146,36 @@ export function BackupManager() {
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => backup.connect()}
-            disabled={backup.isAuthenticating}
-            className={`inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm text-white disabled:opacity-50 ${
-              sessionExpired
-                ? 'bg-amber-600 hover:bg-amber-700'
-                : 'bg-indigo-600 hover:bg-indigo-700'
-            }`}
-          >
-            {backup.isAuthenticating && (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            )}
-            {t(
-              sessionExpired
-                ? 'sections.backup.expired.button'
-                : 'sections.backup.connect.button',
-            )}
-          </button>
+          <div className="flex flex-col items-stretch gap-1.5 sm:items-end">
+            <button
+              type="button"
+              onClick={() => backup.connect()}
+              disabled={backup.isAuthenticating}
+              className={`inline-flex items-center justify-center gap-2 rounded-md px-3 py-1.5 text-sm text-white disabled:opacity-50 ${
+                sessionExpired
+                  ? 'bg-amber-600 hover:bg-amber-700'
+                  : 'bg-indigo-600 hover:bg-indigo-700'
+              }`}
+            >
+              {backup.isAuthenticating && (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              )}
+              {t(
+                sessionExpired
+                  ? 'sections.backup.expired.button'
+                  : 'sections.backup.connect.button',
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={handleCopyLink}
+              className="inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-1 text-xs text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+              title={t('sections.backup.copyLinkHint')}
+            >
+              <Copy className="h-3.5 w-3.5" />
+              {t('sections.backup.copyLink')}
+            </button>
+          </div>
         </div>
       </div>
     )

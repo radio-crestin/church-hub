@@ -848,8 +848,12 @@
         "restoreSuccess": "Backup restaurat. Se reîncarcă…",
         "restoreFailed": "Restaurare eșuată: {{error}}",
         "reconnectNeeded": "Te rugăm să reconectezi Google Drive pentru a acorda acces la backup.",
-        "configFailed": "Actualizarea setărilor de backup a eșuat"
-      }
+        "configFailed": "Actualizarea setărilor de backup a eșuat",
+        "linkCopied": "Link de conectare copiat — lipește-l într-o fereastră privată",
+        "linkCopyFailed": "Linkul nu a putut fi copiat"
+      },
+      "copyLink": "Copiază linkul",
+      "copyLinkHint": "Copiază linkul de conectare pentru a-l deschide într-o fereastră privată/incognito (de ex. pentru alt cont Google)."
     },
     "debug": {
       "title": "Mod Depanare",

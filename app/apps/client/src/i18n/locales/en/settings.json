@@ -847,8 +847,12 @@
         "restoreSuccess": "Backup restored. Reloading…",
         "restoreFailed": "Restore failed: {{error}}",
         "reconnectNeeded": "Please reconnect Google Drive to grant backup access.",
-        "configFailed": "Failed to update backup settings"
-      }
+        "configFailed": "Failed to update backup settings",
+        "linkCopied": "Sign-in link copied — paste it into a private window",
+        "linkCopyFailed": "Could not copy the link"
+      },
+      "copyLink": "Copy link",
+      "copyLinkHint": "Copy the sign-in link to open it in a private/incognito window (e.g. to use a different Google account)."
     },
     "debug": {
       "title": "Debug Mode",
