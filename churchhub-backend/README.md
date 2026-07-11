@@ -2,6 +2,19 @@
 
 A Cloudflare Worker that handles YouTube OAuth authentication for the ChurchHub app.
 
+## Google Drive backup scope
+
+This worker also powers **Google Drive database backup** in the desktop app. It
+requests the `drive.appdata` scope alongside the YouTube scope in a single
+consent — the same access token is reused by the app to upload/restore the
+SQLite database to a private, hidden per-app folder in the user's Drive.
+
+The scope is configured via the `YOUTUBE_SCOPE` var in `wrangler.toml` (space
+separated). **After changing scopes you must redeploy the worker** (`wrangler
+deploy`) and add the new scope + enable the Google Drive API in the Google Cloud
+Console (see below). Users who connected before the scope was added must
+reconnect once to grant Drive access (the app detects this and prompts them).
+
 ## Overview
 
 This worker provides a stateless OAuth flow for YouTube authentication using:
@@ -39,11 +52,16 @@ This worker provides a stateless OAuth flow for YouTube authentication using:
 4. Click **Save and Continue**
 5. Add scopes:
    - Click **Add or Remove Scopes**
-   - Search for and select: `https://www.googleapis.com/auth/youtube.force-ssl`
+   - Search for and select: `https://www.googleapis.com/auth/youtube.force-ssl` (livestream)
+   - Search for and select: `https://www.googleapis.com/auth/drive.appdata` (database backup — private per-app folder)
    - Click **Update**
-6. Add test users (if in testing mode):
+   - Note: `drive.appdata` is a **non-restricted** scope, so it does **not** require Google's third-party security assessment. In testing mode no verification is needed at all.
+6. Enable the required APIs under **APIs & Services** > **Library**:
+   - **YouTube Data API v3** (livestream)
+   - **Google Drive API** (database backup)
+7. Add test users (if in testing mode):
    - Add the Google accounts that will test the integration
-7. Complete the wizard
+8. Complete the wizard
 
 ### 3. Create OAuth 2.0 Credentials
 

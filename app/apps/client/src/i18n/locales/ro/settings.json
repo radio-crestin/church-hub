@@ -18,6 +18,7 @@
       "livestream": "Live Stream",
       "sidebar": "Bara Laterală",
       "developer": "Dezvoltatori",
+      "backup": "Copie de rezervă",
       "logs": "Jurnale",
       "shortcuts": "Scurtături"
     }
@@ -791,6 +792,58 @@
         "importSuccess": "Baza de date importată cu succes. Se reîncarcă...",
         "importFailed": "Importul a eșuat: {{error}}",
         "restartFailed": "Repornirea serverului a eșuat: {{error}}"
+      }
+    },
+    "backup": {
+      "title": "Copie de rezervă Google Drive",
+      "description": "Fă o copie de rezervă a bazei de date în Google Drive și restaureaz-o pe orice calculator conectat cu același cont Google.",
+      "localhostOnly": "Copiile de rezervă pot fi gestionate doar de pe calculatorul pe care rulează Church Hub.",
+      "connect": {
+        "title": "Conectează Google Drive",
+        "description": "Conectează-te cu Google pentru a salva datele într-un folder privat din Drive.",
+        "button": "Conectează Google Drive"
+      },
+      "status": {
+        "connected": "Google Drive conectat",
+        "disconnect": "Deconectează"
+      },
+      "reconnect": {
+        "message": "Contul tău Google trebuie să acorde acces la Drive înainte ca backupul să funcționeze. Te rugăm să reconectezi.",
+        "button": "Reconectează"
+      },
+      "now": {
+        "title": "Fă backup acum",
+        "lastBackup": "Ultimul backup",
+        "button": "Fă backup acum",
+        "backingUp": "Se salvează…"
+      },
+      "auto": {
+        "title": "Backup automat",
+        "description": "Salvează periodic în fundal.",
+        "interval": "Frecvența backupului",
+        "everyHours": "La fiecare {{hours}} ore"
+      },
+      "list": {
+        "title": "Backupuri disponibile",
+        "loading": "Se încarcă backupurile…",
+        "empty": "Încă nu există backupuri.",
+        "restore": "Restaurează"
+      },
+      "restoreModal": {
+        "title": "Restaurezi backupul?",
+        "message": "Restaurezi backupul din {{date}}?",
+        "warning": "Aceasta va înlocui toate datele curente de pe acest calculator. Se păstrează o copie de siguranță a bazei de date curente.",
+        "cancel": "Anulează",
+        "confirm": "Restaurează",
+        "restoring": "Se restaurează…"
+      },
+      "toast": {
+        "backupSuccess": "Backup încărcat în Google Drive",
+        "backupFailed": "Backup eșuat: {{error}}",
+        "restoreSuccess": "Backup restaurat. Se reîncarcă…",
+        "restoreFailed": "Restaurare eșuată: {{error}}",
+        "reconnectNeeded": "Te rugăm să reconectezi Google Drive pentru a acorda acces la backup.",
+        "configFailed": "Actualizarea setărilor de backup a eșuat"
       }
     },
     "debug": {

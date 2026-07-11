@@ -35,6 +35,7 @@ import { Route as SettingsKioskRouteImport } from './routes/settings/kiosk'
 import { Route as SettingsDeveloperRouteImport } from './routes/settings/developer'
 import { Route as SettingsConnectionRouteImport } from './routes/settings/connection'
 import { Route as SettingsBibleRouteImport } from './routes/settings/bible'
+import { Route as SettingsBackupRouteImport } from './routes/settings/backup'
 import { Route as SettingsAppearanceRouteImport } from './routes/settings/appearance'
 import { Route as SettingsAboutRouteImport } from './routes/settings/about'
 import { Route as ScreenScreenIdRouteImport } from './routes/screen/$screenId'
@@ -174,6 +175,11 @@ const SettingsBibleRoute = SettingsBibleRouteImport.update({
   path: '/bible',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
+const SettingsBackupRoute = SettingsBackupRouteImport.update({
+  id: '/backup',
+  path: '/backup',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
 const SettingsAppearanceRoute = SettingsAppearanceRouteImport.update({
   id: '/appearance',
   path: '/appearance',
@@ -222,6 +228,7 @@ export interface FileRoutesByFullPath {
   '/screen/$screenId': typeof ScreenScreenIdRoute
   '/settings/about': typeof SettingsAboutRoute
   '/settings/appearance': typeof SettingsAppearanceRoute
+  '/settings/backup': typeof SettingsBackupRoute
   '/settings/bible': typeof SettingsBibleRoute
   '/settings/connection': typeof SettingsConnectionRoute
   '/settings/developer': typeof SettingsDeveloperRoute
@@ -257,6 +264,7 @@ export interface FileRoutesByTo {
   '/screen/$screenId': typeof ScreenScreenIdRoute
   '/settings/about': typeof SettingsAboutRoute
   '/settings/appearance': typeof SettingsAppearanceRoute
+  '/settings/backup': typeof SettingsBackupRoute
   '/settings/bible': typeof SettingsBibleRoute
   '/settings/connection': typeof SettingsConnectionRoute
   '/settings/developer': typeof SettingsDeveloperRoute
@@ -294,6 +302,7 @@ export interface FileRoutesById {
   '/screen/$screenId': typeof ScreenScreenIdRoute
   '/settings/about': typeof SettingsAboutRoute
   '/settings/appearance': typeof SettingsAppearanceRoute
+  '/settings/backup': typeof SettingsBackupRoute
   '/settings/bible': typeof SettingsBibleRoute
   '/settings/connection': typeof SettingsConnectionRoute
   '/settings/developer': typeof SettingsDeveloperRoute
@@ -332,6 +341,7 @@ export interface FileRouteTypes {
     | '/screen/$screenId'
     | '/settings/about'
     | '/settings/appearance'
+    | '/settings/backup'
     | '/settings/bible'
     | '/settings/connection'
     | '/settings/developer'
@@ -367,6 +377,7 @@ export interface FileRouteTypes {
     | '/screen/$screenId'
     | '/settings/about'
     | '/settings/appearance'
+    | '/settings/backup'
     | '/settings/bible'
     | '/settings/connection'
     | '/settings/developer'
@@ -403,6 +414,7 @@ export interface FileRouteTypes {
     | '/screen/$screenId'
     | '/settings/about'
     | '/settings/appearance'
+    | '/settings/backup'
     | '/settings/bible'
     | '/settings/connection'
     | '/settings/developer'
@@ -638,6 +650,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsBibleRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
+    '/settings/backup': {
+      id: '/settings/backup'
+      path: '/backup'
+      fullPath: '/settings/backup'
+      preLoaderRoute: typeof SettingsBackupRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
     '/settings/appearance': {
       id: '/settings/appearance'
       path: '/appearance'
@@ -700,6 +719,7 @@ declare module '@tanstack/react-router' {
 interface SettingsRouteRouteChildren {
   SettingsAboutRoute: typeof SettingsAboutRoute
   SettingsAppearanceRoute: typeof SettingsAppearanceRoute
+  SettingsBackupRoute: typeof SettingsBackupRoute
   SettingsBibleRoute: typeof SettingsBibleRoute
   SettingsConnectionRoute: typeof SettingsConnectionRoute
   SettingsDeveloperRoute: typeof SettingsDeveloperRoute
@@ -719,6 +739,7 @@ interface SettingsRouteRouteChildren {
 const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
   SettingsAboutRoute: SettingsAboutRoute,
   SettingsAppearanceRoute: SettingsAppearanceRoute,
+  SettingsBackupRoute: SettingsBackupRoute,
   SettingsBibleRoute: SettingsBibleRoute,
   SettingsConnectionRoute: SettingsConnectionRoute,
   SettingsDeveloperRoute: SettingsDeveloperRoute,

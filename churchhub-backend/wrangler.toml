@@ -23,7 +23,11 @@ id = "bc1b72f2df754e88a81e8e8c99ccee50"
 
 # Non-sensitive environment variables
 [vars]
-YOUTUBE_SCOPE = "https://www.googleapis.com/auth/youtube.force-ssl"
+# Space-separated Google OAuth scopes. youtube.force-ssl powers the livestream
+# feature; drive.appdata gives the app a private, hidden per-app folder in the
+# user's Google Drive for database backups (non-restricted scope, so it does NOT
+# require Google's security assessment). A single consent grants both.
+YOUTUBE_SCOPE = "https://www.googleapis.com/auth/youtube.force-ssl https://www.googleapis.com/auth/drive.appdata"
 COOKIE_NAME = "yt_oauth_state"
 COOKIE_MAX_AGE = 600
 

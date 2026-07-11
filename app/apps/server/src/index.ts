@@ -124,6 +124,15 @@ import {
   regenerateSystemToken,
 } from './service/app-sessions'
 import {
+  getBackupConfig,
+  getBackupStatus,
+  listBackups,
+  restoreBackup,
+  startBackupScheduler,
+  uploadBackup,
+  upsertBackupConfig,
+} from './service/backup'
+import {
   type CreateTranslationInput,
   deleteTranslation,
   ensureRCCVExists,
@@ -664,6 +673,9 @@ async function main() {
   await bootServer.stop(true)
 
   await startRealServer()
+
+  // Start the automatic Google Drive backup scheduler (no-op unless enabled).
+  startBackupScheduler()
 }
 
 /**
@@ -1905,6 +1917,199 @@ async function startRealServer(): Promise<void> {
             ),
           )
         }
+      }
+
+      // ---- Google Drive backup routes (localhost only) ----
+      // Reuses isStrictLocalhost() so, like /api/database/*, backups are only
+      // driven from the physically-trusted machine running the desktop app.
+      const backupLocalhostGuard = (): Response | null =>
+        isStrictLocalhost()
+          ? null
+          : handleCors(
+              req,
+              new Response(
+                JSON.stringify({ error: 'Only accessible from localhost' }),
+                {
+                  status: 403,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+
+      // GET /api/backup/status - Drive connection + auto-backup settings
+      if (req.method === 'GET' && url.pathname === '/api/backup/status') {
+        const guard = backupLocalhostGuard()
+        if (guard) return guard
+
+        const status = await getBackupStatus()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: status }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // GET /api/backup/list - List backups stored in Google Drive
+      if (req.method === 'GET' && url.pathname === '/api/backup/list') {
+        const guard = backupLocalhostGuard()
+        if (guard) return guard
+
+        const result = await listBackups()
+        if (!result.success) {
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({
+                error: result.error,
+                requiresReconnect: result.requiresReconnect ?? false,
+              }),
+              {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        }
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: { backups: result.backups } }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/backup/now - Upload a fresh backup to Google Drive
+      if (req.method === 'POST' && url.pathname === '/api/backup/now') {
+        const guard = backupLocalhostGuard()
+        if (guard) return guard
+
+        const result = await uploadBackup()
+        if (!result.success) {
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({
+                error: result.error,
+                requiresReconnect: result.requiresReconnect ?? false,
+              }),
+              {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        }
+        await upsertBackupConfig({ lastBackupAt: Date.now() })
+        return handleCors(
+          req,
+          new Response(
+            JSON.stringify({
+              data: { fileId: result.fileId, fileName: result.fileName },
+            }),
+            { headers: { 'Content-Type': 'application/json' } },
+          ),
+        )
+      }
+
+      // POST /api/backup/restore - Restore a backup from Google Drive
+      if (req.method === 'POST' && url.pathname === '/api/backup/restore') {
+        const guard = backupLocalhostGuard()
+        if (guard) return guard
+
+        let fileId: string | undefined
+        try {
+          const body = await req.json()
+          fileId = body.fileId
+        } catch {
+          // handled below
+        }
+        if (!fileId) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Missing fileId' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        const result = await restoreBackup(fileId)
+        if (!result.success) {
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({
+                error: result.error || result.message,
+                requiresReconnect: result.requiresReconnect ?? false,
+              }),
+              {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        }
+        return handleCors(
+          req,
+          new Response(
+            JSON.stringify({
+              data: {
+                success: true,
+                message: result.message,
+                requiresRestart: result.requiresRestart,
+              },
+            }),
+            { headers: { 'Content-Type': 'application/json' } },
+          ),
+        )
+      }
+
+      // GET /api/backup/config - Read auto-backup settings
+      if (req.method === 'GET' && url.pathname === '/api/backup/config') {
+        const guard = backupLocalhostGuard()
+        if (guard) return guard
+
+        const config = await getBackupConfig()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: config }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // PUT /api/backup/config - Update auto-backup settings
+      if (req.method === 'PUT' && url.pathname === '/api/backup/config') {
+        const guard = backupLocalhostGuard()
+        if (guard) return guard
+
+        let patch: {
+          autoBackupEnabled?: boolean
+          intervalHours?: number
+        } = {}
+        try {
+          const body = await req.json()
+          if (typeof body.autoBackupEnabled === 'boolean') {
+            patch.autoBackupEnabled = body.autoBackupEnabled
+          }
+          if (
+            typeof body.intervalHours === 'number' &&
+            body.intervalHours > 0
+          ) {
+            patch.intervalHours = Math.round(body.intervalHours)
+          }
+        } catch {
+          // No/invalid body - nothing to update
+        }
+
+        const config = await upsertBackupConfig(patch)
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: config }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
       }
 
       // GET /api/users - List all users

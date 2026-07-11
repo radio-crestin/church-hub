@@ -18,6 +18,7 @@
       "livestream": "Livestream",
       "sidebar": "Sidebar",
       "developer": "Developer",
+      "backup": "Backup",
       "logs": "Logs",
       "shortcuts": "Shortcuts"
     }
@@ -790,6 +791,58 @@
         "importSuccess": "Database imported successfully. Reloading...",
         "importFailed": "Failed to import database: {{error}}",
         "restartFailed": "Failed to restart server: {{error}}"
+      }
+    },
+    "backup": {
+      "title": "Google Drive Backup",
+      "description": "Back up your database to your Google Drive and restore it on any computer signed in with the same Google account.",
+      "localhostOnly": "Backups can only be managed from the computer running Church Hub.",
+      "connect": {
+        "title": "Connect Google Drive",
+        "description": "Sign in with Google to back up your data to a private folder in your Drive.",
+        "button": "Connect Google Drive"
+      },
+      "status": {
+        "connected": "Google Drive connected",
+        "disconnect": "Disconnect"
+      },
+      "reconnect": {
+        "message": "Your Google account needs to grant Drive access before backups can work. Please reconnect.",
+        "button": "Reconnect"
+      },
+      "now": {
+        "title": "Back up now",
+        "lastBackup": "Last backup",
+        "button": "Back up now",
+        "backingUp": "Backing up…"
+      },
+      "auto": {
+        "title": "Automatic backups",
+        "description": "Periodically back up in the background.",
+        "interval": "Backup frequency",
+        "everyHours": "Every {{hours}} hours"
+      },
+      "list": {
+        "title": "Available backups",
+        "loading": "Loading backups…",
+        "empty": "No backups yet.",
+        "restore": "Restore"
+      },
+      "restoreModal": {
+        "title": "Restore backup?",
+        "message": "Restore the backup from {{date}}?",
+        "warning": "This will replace all current data on this computer. A safety copy of the current database is kept.",
+        "cancel": "Cancel",
+        "confirm": "Restore",
+        "restoring": "Restoring…"
+      },
+      "toast": {
+        "backupSuccess": "Backup uploaded to Google Drive",
+        "backupFailed": "Backup failed: {{error}}",
+        "restoreSuccess": "Backup restored. Reloading…",
+        "restoreFailed": "Restore failed: {{error}}",
+        "reconnectNeeded": "Please reconnect Google Drive to grant backup access.",
+        "configFailed": "Failed to update backup settings"
       }
     },
     "debug": {
