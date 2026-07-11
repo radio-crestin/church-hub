@@ -802,6 +802,11 @@
         "description": "Sign in with Google to back up your data to a private folder in your Drive.",
         "button": "Connect Google Drive"
       },
+      "expired": {
+        "title": "Reconnect Google Drive",
+        "description": "Your Google session expired and backups are paused. Reconnect to resume backing up.",
+        "button": "Reconnect"
+      },
       "status": {
         "connected": "Google Drive connected",
         "disconnect": "Disconnect"

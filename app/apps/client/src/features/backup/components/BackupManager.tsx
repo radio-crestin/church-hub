@@ -87,21 +87,51 @@ export function BackupManager() {
     [backup, showToast, t],
   )
 
-  // --- Not connected: prompt to connect Google ---
+  // --- Not connected: either first-time setup, or a session that expired ---
   if (!backup.connected && !backup.isLoadingStatus) {
+    // If the user previously backed up or has auto-backup on, the connection was
+    // lost rather than never made — most commonly the Google refresh token
+    // expired (this happens weekly while the OAuth app is in "Testing" mode).
+    // Surface that as an explicit "reconnect" warning instead of a neutral prompt.
+    const sessionExpired =
+      backup.lastBackupAt !== null || backup.autoBackupEnabled
     return (
-      <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
+      <div
+        className={`rounded-lg p-4 ${
+          sessionExpired
+            ? 'border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20'
+            : 'bg-gray-50 dark:bg-gray-800'
+        }`}
+      >
         <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-indigo-100 p-2 dark:bg-indigo-900/30">
-              <Cloud className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+            <div
+              className={`rounded-lg p-2 ${
+                sessionExpired
+                  ? 'bg-amber-100 dark:bg-amber-900/30'
+                  : 'bg-indigo-100 dark:bg-indigo-900/30'
+              }`}
+            >
+              {sessionExpired ? (
+                <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              ) : (
+                <Cloud className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+              )}
             </div>
             <div>
               <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-                {t('sections.backup.connect.title')}
+                {t(
+                  sessionExpired
+                    ? 'sections.backup.expired.title'
+                    : 'sections.backup.connect.title',
+                )}
               </h4>
               <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                {t('sections.backup.connect.description')}
+                {t(
+                  sessionExpired
+                    ? 'sections.backup.expired.description'
+                    : 'sections.backup.connect.description',
+                )}
               </p>
             </div>
           </div>
@@ -109,12 +139,20 @@ export function BackupManager() {
             type="button"
             onClick={() => backup.connect()}
             disabled={backup.isAuthenticating}
-            className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-700 disabled:opacity-50"
+            className={`inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm text-white disabled:opacity-50 ${
+              sessionExpired
+                ? 'bg-amber-600 hover:bg-amber-700'
+                : 'bg-indigo-600 hover:bg-indigo-700'
+            }`}
           >
             {backup.isAuthenticating && (
               <Loader2 className="h-4 w-4 animate-spin" />
             )}
-            {t('sections.backup.connect.button')}
+            {t(
+              sessionExpired
+                ? 'sections.backup.expired.button'
+                : 'sections.backup.connect.button',
+            )}
           </button>
         </div>
       </div>

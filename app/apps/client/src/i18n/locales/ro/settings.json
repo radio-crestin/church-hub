@@ -803,6 +803,11 @@
         "description": "Conectează-te cu Google pentru a salva datele într-un folder privat din Drive.",
         "button": "Conectează Google Drive"
       },
+      "expired": {
+        "title": "Reconectează Google Drive",
+        "description": "Sesiunea Google a expirat și backupurile sunt pe pauză. Reconectează pentru a relua backupul.",
+        "button": "Reconectează"
+      },
       "status": {
         "connected": "Google Drive conectat",
         "disconnect": "Deconectează"
