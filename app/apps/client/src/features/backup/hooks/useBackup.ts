@@ -82,19 +82,43 @@ export function useBackup() {
     mutationFn: backupNow,
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['backup', 'status'] })
-      // Show the new backup immediately: Drive's files.list can lag a moment
-      // behind a just-created file, so insert it optimistically...
-      if (result.backup) {
-        queryClient.setQueryData<BackupFile[]>(['backup', 'list'], (old) => {
-          const list = old ?? []
-          if (list.some((f) => f.id === result.backup?.id)) return list
-          return [result.backup as BackupFile, ...list]
-        })
+
+      const added = result.backup
+      if (!added) {
+        // No metadata (older server) — refetch a few times to outlast Drive lag.
+        let tries = 0
+        const retry = async () => {
+          tries += 1
+          await queryClient.invalidateQueries({ queryKey: ['backup', 'list'] })
+          if (tries < 4) setTimeout(retry, 3000)
+        }
+        void retry()
+        return
       }
-      // ...then reconcile with Drive once it has caught up.
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ['backup', 'list'] })
-      }, 3000)
+
+      // Drive's files.list can lag several seconds behind a just-created file.
+      // Insert it optimistically so it shows immediately, and keep re-applying
+      // it after each reconcile until Drive returns it on its own.
+      const upsert = (old?: BackupFile[]): BackupFile[] => {
+        const list = old ?? []
+        return list.some((f) => f.id === added.id) ? list : [added, ...list]
+      }
+      queryClient.setQueryData<BackupFile[]>(['backup', 'list'], upsert)
+
+      let attempts = 0
+      const reconcile = async () => {
+        attempts += 1
+        await queryClient.invalidateQueries({ queryKey: ['backup', 'list'] })
+        const list =
+          queryClient.getQueryData<BackupFile[]>(['backup', 'list']) ?? []
+        const present = list.some((f) => f.id === added.id)
+        if (!present) {
+          // Drive still hasn't caught up — keep the optimistic entry and retry.
+          queryClient.setQueryData<BackupFile[]>(['backup', 'list'], upsert)
+          if (attempts < 5) setTimeout(reconcile, 3000)
+        }
+      }
+      setTimeout(reconcile, 3000)
     },
   })
 
