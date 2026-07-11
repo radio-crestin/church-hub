@@ -831,7 +831,8 @@
         "title": "Available backups",
         "loading": "Loading backups…",
         "empty": "No backups yet.",
-        "restore": "Restore"
+        "restore": "Restore",
+        "delete": "Delete"
       },
       "restoreModal": {
         "title": "Restore backup?",
@@ -851,13 +852,21 @@
         "linkCopied": "Sign-in link copied — paste it into a private window",
         "linkCopyFailed": "Could not copy the link",
         "notConfigured": "Google Drive backup isn't configured in this build",
-        "linkShown": "Sign-in link ready — copy it and open it in a private window"
+        "linkShown": "Sign-in link ready — copy it and open it in a private window",
+        "deleteSuccess": "Backup deleted",
+        "deleteFailed": "Delete failed: {{error}}"
       },
       "copyLink": "Copy link",
       "copyLinkHint": "Copy the sign-in link to open it in a private/incognito window (e.g. to use a different Google account).",
       "notConfigured": {
         "title": "Backup not available",
         "description": "Google Drive backup isn't configured in this build."
+      },
+      "deleteModal": {
+        "title": "Delete backup?",
+        "message": "Permanently delete the backup from {{date}}? This cannot be undone.",
+        "cancel": "Cancel",
+        "confirm": "Delete"
       }
     },
     "debug": {

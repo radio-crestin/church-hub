@@ -5,6 +5,7 @@ export {
   type BackupStatus,
   backupNow,
   connectGoogleDrive,
+  deleteBackup,
   disconnectGoogleDrive,
   getBackupStatus,
   listBackups,

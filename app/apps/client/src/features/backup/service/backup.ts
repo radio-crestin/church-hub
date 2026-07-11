@@ -123,6 +123,27 @@ export async function restoreBackup(
   }
 }
 
+export async function deleteBackup(
+  fileId: string,
+): Promise<BackupActionResult> {
+  const res = await fetcher<ApiResponse<{ success: boolean }>>(
+    '/api/backup/delete',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fileId }),
+    },
+  )
+  if (res.error) {
+    return {
+      success: false,
+      error: res.error,
+      requiresReconnect: res.requiresReconnect,
+    }
+  }
+  return { success: true }
+}
+
 export async function updateBackupConfig(
   patch: Partial<Pick<BackupConfig, 'autoBackupEnabled' | 'intervalHours'>>,
 ): Promise<BackupConfig> {

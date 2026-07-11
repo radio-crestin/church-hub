@@ -7,6 +7,7 @@ import {
   Loader2,
   LogOut,
   RefreshCw,
+  Trash2,
 } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -35,6 +36,7 @@ export function BackupManager() {
   const { showToast } = useToast()
   const backup = useBackup()
   const [pendingRestore, setPendingRestore] = useState<BackupFile | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<BackupFile | null>(null)
   const [connectUrl, setConnectUrl] = useState<string | null>(null)
 
   const handleBackupNow = useCallback(async () => {
@@ -106,6 +108,22 @@ export function BackupManager() {
       showToast(t('sections.backup.toast.linkCopyFailed'), 'error')
     }
   }, [connectUrl, showToast, t])
+
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!pendingDelete) return
+    const result = await backup.deleteBackup(pendingDelete.id)
+    setPendingDelete(null)
+    if (result.success) {
+      showToast(t('sections.backup.toast.deleteSuccess'), 'success')
+    } else if (result.requiresReconnect) {
+      showToast(t('sections.backup.toast.reconnectNeeded'), 'error')
+    } else {
+      showToast(
+        t('sections.backup.toast.deleteFailed', { error: result.error }),
+        'error',
+      )
+    }
+  }, [pendingDelete, backup, showToast, t])
 
   const handleToggleAuto = useCallback(async () => {
     try {
@@ -278,7 +296,7 @@ export function BackupManager() {
           type="button"
           onClick={() => backup.disconnect()}
           disabled={backup.isDisconnecting}
-          className="inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-gray-700"
+          className="inline-flex items-center gap-2 rounded-md bg-red-600 px-3 py-1.5 text-sm text-white hover:bg-red-700 disabled:opacity-50"
         >
           <LogOut className="h-4 w-4" />
           {t('sections.backup.status.disconnect')}
@@ -427,15 +445,26 @@ export function BackupManager() {
                         {file.appVersion ? ` · v${file.appVersion}` : ''}
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setPendingRestore(file)}
-                      disabled={backup.isRestoring}
-                      className="inline-flex items-center gap-2 self-start rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 sm:self-auto"
-                    >
-                      <CloudDownload className="h-4 w-4" />
-                      {t('sections.backup.list.restore')}
-                    </button>
+                    <div className="flex items-center gap-2 self-start sm:self-auto">
+                      <button
+                        type="button"
+                        onClick={() => setPendingRestore(file)}
+                        disabled={backup.isRestoring}
+                        className="inline-flex items-center gap-2 rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                      >
+                        <CloudDownload className="h-4 w-4" />
+                        {t('sections.backup.list.restore')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPendingDelete(file)}
+                        disabled={backup.isDeleting}
+                        title={t('sections.backup.list.delete')}
+                        className="inline-flex items-center justify-center rounded-md border border-red-300 p-1.5 text-red-600 hover:bg-red-50 disabled:opacity-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -506,6 +535,59 @@ export function BackupManager() {
                   <RefreshCw className="h-4 w-4 animate-spin" />
                 )}
                 {t('sections.backup.restoreModal.confirm')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirmation modal */}
+      {pendingDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={
+              !backup.isDeleting ? () => setPendingDelete(null) : undefined
+            }
+            onKeyDown={(e) =>
+              e.key === 'Escape' && !backup.isDeleting && setPendingDelete(null)
+            }
+          />
+          <div className="relative mx-4 w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-gray-800">
+            <div className="flex items-start gap-4">
+              <div className="rounded-full bg-red-100 p-2 dark:bg-red-900/30">
+                <Trash2 className="h-6 w-6 text-red-600 dark:text-red-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {t('sections.backup.deleteModal.title')}
+                </h3>
+                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                  {t('sections.backup.deleteModal.message', {
+                    date: formatDate(pendingDelete.createdAtMs),
+                  })}
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setPendingDelete(null)}
+                disabled={backup.isDeleting}
+                className="rounded-md px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-gray-700"
+              >
+                {t('sections.backup.deleteModal.cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteConfirm}
+                disabled={backup.isDeleting}
+                className="flex items-center gap-2 rounded-md bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {backup.isDeleting && (
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                )}
+                {t('sections.backup.deleteModal.confirm')}
               </button>
             </div>
           </div>

@@ -271,6 +271,51 @@ export const backupPaths: Record<string, Record<string, unknown>> = {
       },
     },
   },
+  '/api/backup/delete': {
+    post: {
+      tags: ['Backup'],
+      summary: 'Delete a backup from Google Drive',
+      description:
+        'Permanently deletes a single backup from the app-data folder. Only accessible from localhost.',
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['fileId'],
+              properties: {
+                fileId: {
+                  type: 'string',
+                  description: 'Google Drive file id of the backup to delete',
+                },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        '200': {
+          description: 'Backup deleted',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'object',
+                    properties: { success: { type: 'boolean' } },
+                  },
+                },
+              },
+            },
+          },
+        },
+        '400': backupOperationError,
+        '403': localhostError,
+      },
+    },
+  },
   '/api/backup/config': {
     get: {
       tags: ['Backup'],

@@ -832,7 +832,8 @@
         "title": "Backupuri disponibile",
         "loading": "Se încarcă backupurile…",
         "empty": "Încă nu există backupuri.",
-        "restore": "Restaurează"
+        "restore": "Restaurează",
+        "delete": "Șterge"
       },
       "restoreModal": {
         "title": "Restaurezi backupul?",
@@ -852,13 +853,21 @@
         "linkCopied": "Link de conectare copiat — lipește-l într-o fereastră privată",
         "linkCopyFailed": "Linkul nu a putut fi copiat",
         "notConfigured": "Backupul Google Drive nu este configurat în această versiune",
-        "linkShown": "Link de conectare gata — copiază-l și deschide-l într-o fereastră privată"
+        "linkShown": "Link de conectare gata — copiază-l și deschide-l într-o fereastră privată",
+        "deleteSuccess": "Backup șters",
+        "deleteFailed": "Ștergere eșuată: {{error}}"
       },
       "copyLink": "Copiază linkul",
       "copyLinkHint": "Copiază linkul de conectare pentru a-l deschide într-o fereastră privată/incognito (de ex. pentru alt cont Google).",
       "notConfigured": {
         "title": "Backup indisponibil",
         "description": "Backupul Google Drive nu este configurat în această versiune."
+      },
+      "deleteModal": {
+        "title": "Ștergi backupul?",
+        "message": "Ștergi definitiv backupul din {{date}}? Această acțiune nu poate fi anulată.",
+        "cancel": "Anulează",
+        "confirm": "Șterge"
       }
     },
     "debug": {

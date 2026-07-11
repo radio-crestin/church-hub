@@ -6,6 +6,7 @@ import {
   type BackupActionResult,
   backupNow,
   connectGoogleDrive,
+  deleteBackup,
   disconnectGoogleDrive,
   getBackupStatus,
   listBackups,
@@ -87,6 +88,13 @@ export function useBackup() {
     mutationFn: restoreBackup,
   })
 
+  const deleteMutation = useMutation<BackupActionResult, Error, string>({
+    mutationFn: deleteBackup,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['backup', 'list'] })
+    },
+  })
+
   const updateConfigMutation = useMutation({
     mutationFn: updateBackupConfig,
     onSuccess: () => {
@@ -122,6 +130,8 @@ export function useBackup() {
     isBackingUp: backupNowMutation.isPending,
     restore: restoreMutation.mutateAsync,
     isRestoring: restoreMutation.isPending,
+    deleteBackup: deleteMutation.mutateAsync,
+    isDeleting: deleteMutation.isPending,
     updateConfig: updateConfigMutation.mutateAsync,
     isUpdatingConfig: updateConfigMutation.isPending,
   }

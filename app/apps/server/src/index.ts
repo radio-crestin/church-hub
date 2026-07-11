@@ -127,6 +127,7 @@ import {
   clearDriveAuth,
   completeDriveAuth,
   createDriveAuthUrl,
+  deleteBackup,
   getBackupConfig,
   getBackupStatus,
   listBackups,
@@ -2065,6 +2066,52 @@ async function startRealServer(): Promise<void> {
             }),
             { headers: { 'Content-Type': 'application/json' } },
           ),
+        )
+      }
+
+      // POST /api/backup/delete - Delete a single backup from Google Drive
+      if (req.method === 'POST' && url.pathname === '/api/backup/delete') {
+        const guard = backupLocalhostGuard()
+        if (guard) return guard
+
+        let fileId: string | undefined
+        try {
+          const body = await req.json()
+          fileId = body.fileId
+        } catch {
+          // handled below
+        }
+        if (!fileId) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Missing fileId' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        const result = await deleteBackup(fileId)
+        if (!result.success) {
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({
+                error: result.error,
+                requiresReconnect: result.requiresReconnect ?? false,
+              }),
+              {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        }
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: { success: true } }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
         )
       }
 

@@ -3,6 +3,7 @@ export {
   getBackupConfig,
   upsertBackupConfig,
 } from './backupConfig'
+export { type DeleteBackupResult, deleteBackup } from './deleteBackup'
 export {
   clearDriveAuth,
   type DriveAuthRecord,
