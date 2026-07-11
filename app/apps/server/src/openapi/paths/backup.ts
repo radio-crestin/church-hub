@@ -30,6 +30,89 @@ const backupOperationError = {
 }
 
 export const backupPaths: Record<string, Record<string, unknown>> = {
+  '/api/backup/google/connect': {
+    get: {
+      tags: ['Backup'],
+      summary: 'Start the Google Drive connect flow',
+      description:
+        'Generates PKCE + state (kept server-side) and returns the Google authorization URL for the app to open in a browser. Only accessible from localhost.',
+      responses: {
+        '200': {
+          description: 'Authorization URL',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'object',
+                    properties: { authUrl: { type: 'string' } },
+                  },
+                },
+              },
+            },
+          },
+        },
+        '400': {
+          description: 'Drive OAuth client not configured on this build',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: { error: { type: 'string' } },
+              },
+            },
+          },
+        },
+        '403': localhostError,
+      },
+    },
+  },
+  '/api/backup/google/callback': {
+    get: {
+      tags: ['Backup'],
+      summary: 'Google Drive OAuth loopback callback',
+      description:
+        'The redirect target Google returns to after consent. Exchanges the code for tokens and stores the connection, then returns a small HTML page. Not called directly by clients.',
+      parameters: [
+        { name: 'code', in: 'query', schema: { type: 'string' } },
+        { name: 'state', in: 'query', schema: { type: 'string' } },
+        { name: 'error', in: 'query', schema: { type: 'string' } },
+      ],
+      responses: {
+        '200': {
+          description: 'HTML result page',
+          content: { 'text/html': {} },
+        },
+      },
+    },
+  },
+  '/api/backup/google/disconnect': {
+    post: {
+      tags: ['Backup'],
+      summary: 'Disconnect Google Drive',
+      description: 'Removes the stored Drive connection. Only from localhost.',
+      responses: {
+        '200': {
+          description: 'Disconnected',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'object',
+                    properties: { success: { type: 'boolean' } },
+                  },
+                },
+              },
+            },
+          },
+        },
+        '403': localhostError,
+      },
+    },
+  },
   '/api/backup/status': {
     get: {
       tags: ['Backup'],
@@ -47,9 +130,11 @@ export const backupPaths: Record<string, Record<string, unknown>> = {
                   data: {
                     type: 'object',
                     properties: {
+                      configured: { type: 'boolean' },
                       connected: { type: 'boolean' },
                       driveReady: { type: 'boolean' },
                       requiresReconnect: { type: 'boolean' },
+                      email: { type: 'string', nullable: true },
                       autoBackupEnabled: { type: 'boolean' },
                       intervalHours: { type: 'integer' },
                       lastBackupAt: { type: 'integer', nullable: true },

@@ -1,34 +1,86 @@
+import { OAuth2Client } from 'google-auth-library'
 import { type drive_v3, google } from 'googleapis'
 
-import { getAuthenticatedClient } from '../livestream/youtube/client'
+import {
+  clearDriveAuth,
+  getDriveAuth,
+  updateDriveAccessToken,
+} from './driveAuthStore'
+import { getDriveOAuthConfig } from './oauth/config'
+import { createLogger } from '../../utils/logger'
+
+const logger = createLogger('backup')
 
 /**
- * Returns an authenticated Google Drive v3 service, or null if the user has not
- * connected their Google account.
- *
- * Backups reuse the single Google connection established for the livestream
- * feature (tokens live in the `youtube_auth` table). The OAuth consent requests
- * both the YouTube scope and `drive.appdata`, so the same access token works for
- * Drive. Token refresh is handled by `getAuthenticatedClient()`.
- *
- * Note: an account connected BEFORE the Drive scope was added will return a
- * client here, but Drive API calls will fail with an insufficient-scope 403.
- * Callers surface that as "reconnect required" via `isInsufficientScopeError`.
+ * Builds an authenticated OAuth2 client for the independent Drive connection,
+ * refreshing the access token when it is close to expiry. Because the app owns
+ * the OAuth client credentials locally, refresh happens directly against Google
+ * (no worker needed). Returns null when not configured, not connected, or the
+ * refresh token is no longer valid (in which case the connection is cleared).
  */
-export async function getDriveService(): Promise<drive_v3.Drive | null> {
-  const client = await getAuthenticatedClient()
+async function getAuthenticatedDriveClient(): Promise<OAuth2Client | null> {
+  const { clientId, clientSecret, configured } = getDriveOAuthConfig()
+  if (!configured) return null
 
-  if (!client) {
-    return null
+  const record = await getDriveAuth()
+  if (!record) return null
+
+  const client = new OAuth2Client(clientId, clientSecret)
+  client.setCredentials({
+    access_token: record.accessToken,
+    refresh_token: record.refreshToken,
+    expiry_date: record.expiresAt.getTime(),
+  })
+
+  const needsRefresh = record.expiresAt.getTime() < Date.now() + 5 * 60 * 1000
+  if (!needsRefresh) {
+    return client
   }
 
+  try {
+    const { credentials } = await client.refreshAccessToken()
+    const newExpiry = credentials.expiry_date ?? Date.now() + 3600 * 1000
+    await updateDriveAccessToken(
+      record.id,
+      credentials.access_token!,
+      new Date(newExpiry),
+    )
+    client.setCredentials(credentials)
+    return client
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    if (message.includes('invalid_grant')) {
+      logger.warning(
+        'Drive refresh token expired/revoked — clearing connection (reconnect required)',
+      )
+      await clearDriveAuth()
+      return null
+    }
+    // Transient failure (e.g. offline): keep using the token if not yet expired.
+    if (record.expiresAt.getTime() > Date.now()) {
+      logger.warning(
+        `Drive token refresh failed, using existing token: ${message}`,
+      )
+      return client
+    }
+    logger.error(`Drive token refresh failed: ${message}`)
+    return null
+  }
+}
+
+/**
+ * Returns an authenticated Google Drive v3 service, or null if the Drive backup
+ * connection is not available (unconfigured, not connected, or expired).
+ */
+export async function getDriveService(): Promise<drive_v3.Drive | null> {
+  const client = await getAuthenticatedDriveClient()
+  if (!client) return null
   return google.drive({ version: 'v3', auth: client })
 }
 
 /**
- * Detects the Google API error raised when the current access token does not
- * carry the `drive.appdata` scope (i.e. the account was connected before Drive
- * backup existed and must reconnect to re-consent).
+ * Detects the Google API error raised when the access token does not carry the
+ * `drive.appdata` scope (defensive — the connect flow always requests it).
  */
 export function isInsufficientScopeError(error: unknown): boolean {
   const err = error as {

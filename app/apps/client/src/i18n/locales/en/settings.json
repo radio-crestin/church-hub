@@ -849,10 +849,15 @@
         "reconnectNeeded": "Please reconnect Google Drive to grant backup access.",
         "configFailed": "Failed to update backup settings",
         "linkCopied": "Sign-in link copied — paste it into a private window",
-        "linkCopyFailed": "Could not copy the link"
+        "linkCopyFailed": "Could not copy the link",
+        "notConfigured": "Google Drive backup isn't configured in this build"
       },
       "copyLink": "Copy link",
-      "copyLinkHint": "Copy the sign-in link to open it in a private/incognito window (e.g. to use a different Google account)."
+      "copyLinkHint": "Copy the sign-in link to open it in a private/incognito window (e.g. to use a different Google account).",
+      "notConfigured": {
+        "title": "Backup not available",
+        "description": "Google Drive backup isn't configured in this build."
+      }
     },
     "debug": {
       "title": "Debug Mode",

@@ -9,20 +9,21 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
 }
 
 /**
- * Adds the `backup_config` table used by the Google Drive backup feature.
- * Holds the automatic-backup preferences and the last successful upload time.
- * Auth tokens are not stored here — backups reuse the `youtube_auth` connection.
+ * Adds the tables used by the Google Drive backup feature:
+ * - `backup_config`: automatic-backup preferences + last upload time.
+ * - `google_drive_auth`: the independent Google connection for backups
+ *   (its own OAuth client, separate from the livestream YouTube connection).
  *
  * Idempotent — safe to run on every boot.
  */
 export function addBackupConfig(db: Database): void {
-  const tableExists = db
+  const configExists = db
     .query<{ name: string }, []>(
       "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'backup_config'",
     )
     .get()
 
-  if (!tableExists) {
+  if (!configExists) {
     log('info', 'Creating "backup_config" table...')
     db.run(`
       CREATE TABLE backup_config (
@@ -30,6 +31,27 @@ export function addBackupConfig(db: Database): void {
         auto_backup_enabled INTEGER NOT NULL DEFAULT 0,
         interval_hours INTEGER NOT NULL DEFAULT 24,
         last_backup_at INTEGER,
+        created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+        updated_at INTEGER NOT NULL DEFAULT (unixepoch())
+      )
+    `)
+  }
+
+  const authExists = db
+    .query<{ name: string }, []>(
+      "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'google_drive_auth'",
+    )
+    .get()
+
+  if (!authExists) {
+    log('info', 'Creating "google_drive_auth" table...')
+    db.run(`
+      CREATE TABLE google_drive_auth (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        access_token TEXT NOT NULL,
+        refresh_token TEXT NOT NULL,
+        expires_at INTEGER NOT NULL,
+        email TEXT,
         created_at INTEGER NOT NULL DEFAULT (unixepoch()),
         updated_at INTEGER NOT NULL DEFAULT (unixepoch())
       )

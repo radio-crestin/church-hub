@@ -124,6 +124,9 @@ import {
   regenerateSystemToken,
 } from './service/app-sessions'
 import {
+  clearDriveAuth,
+  completeDriveAuth,
+  createDriveAuthUrl,
   getBackupConfig,
   getBackupStatus,
   listBackups,
@@ -2107,6 +2110,84 @@ async function startRealServer(): Promise<void> {
         return handleCors(
           req,
           new Response(JSON.stringify({ data: config }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // GET /api/backup/google/connect - Start the Drive connect flow
+      if (
+        req.method === 'GET' &&
+        url.pathname === '/api/backup/google/connect'
+      ) {
+        const guard = backupLocalhostGuard()
+        if (guard) return guard
+
+        const result = await createDriveAuthUrl()
+        if ('error' in result) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: result.error }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: { authUrl: result.authUrl } }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // GET /api/backup/google/callback - Loopback OAuth callback (browser lands here)
+      if (
+        req.method === 'GET' &&
+        url.pathname === '/api/backup/google/callback'
+      ) {
+        const oauthError = url.searchParams.get('error')
+        const code = url.searchParams.get('code')
+        const state = url.searchParams.get('state')
+
+        const renderPage = (title: string, message: string) =>
+          handleCors(
+            req,
+            new Response(
+              `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title></head><body style="font-family:system-ui;padding:2rem;text-align:center"><p>${message}</p><script>setTimeout(()=>window.close(),1500)</script></body></html>`,
+              { headers: { 'Content-Type': 'text/html; charset=utf-8' } },
+            ),
+          )
+
+        if (oauthError) {
+          return renderPage('Backup', `Authorization failed: ${oauthError}`)
+        }
+        if (!code || !state) {
+          return renderPage('Backup', 'Missing authorization code or state.')
+        }
+
+        const result = await completeDriveAuth(code, state)
+        if (!result.success) {
+          return renderPage('Backup', `Authorization failed: ${result.error}`)
+        }
+        return renderPage(
+          'Backup',
+          'Google Drive connected. You can close this window and return to Church Hub.',
+        )
+      }
+
+      // POST /api/backup/google/disconnect - Disconnect Google Drive
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/backup/google/disconnect'
+      ) {
+        const guard = backupLocalhostGuard()
+        if (guard) return guard
+
+        await clearDriveAuth()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: { success: true } }), {
             headers: { 'Content-Type': 'application/json' },
           }),
         )

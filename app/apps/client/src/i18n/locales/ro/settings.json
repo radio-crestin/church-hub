@@ -850,10 +850,15 @@
         "reconnectNeeded": "Te rugăm să reconectezi Google Drive pentru a acorda acces la backup.",
         "configFailed": "Actualizarea setărilor de backup a eșuat",
         "linkCopied": "Link de conectare copiat — lipește-l într-o fereastră privată",
-        "linkCopyFailed": "Linkul nu a putut fi copiat"
+        "linkCopyFailed": "Linkul nu a putut fi copiat",
+        "notConfigured": "Backupul Google Drive nu este configurat în această versiune"
       },
       "copyLink": "Copiază linkul",
-      "copyLinkHint": "Copiază linkul de conectare pentru a-l deschide într-o fereastră privată/incognito (de ex. pentru alt cont Google)."
+      "copyLinkHint": "Copiază linkul de conectare pentru a-l deschide într-o fereastră privată/incognito (de ex. pentru alt cont Google).",
+      "notConfigured": {
+        "title": "Backup indisponibil",
+        "description": "Backupul Google Drive nu este configurat în această versiune."
+      }
     },
     "debug": {
       "title": "Mod Depanare",

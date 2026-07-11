@@ -1,34 +1,40 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
-import { useYouTubeAuth } from '~/features/livestream/hooks/useYouTubeAuth'
+import { openAuthUrl } from '~/features/livestream/utils'
 import {
   type BackupActionResult,
-  type BackupFile,
-  type BackupStatus,
   backupNow,
+  connectGoogleDrive,
+  disconnectGoogleDrive,
   getBackupStatus,
   listBackups,
   restoreBackup,
   updateBackupConfig,
 } from '../service'
 
+const AUTH_TIMEOUT_MS = 120_000
+
 /**
- * Backup feature state. Reuses the single Google connection managed by the
- * livestream feature (`useYouTubeAuth`) for connecting/reconnecting/disconnecting,
- * and layers the Drive-backup status, list and actions on top.
+ * Backup feature state. The Google Drive connection is fully independent from
+ * the livestream YouTube connection: connect opens its own OAuth flow (loopback)
+ * and we poll the status until the browser completes it.
  */
 export function useBackup() {
   const queryClient = useQueryClient()
-  const google = useYouTubeAuth()
+  const [isAuthenticating, setIsAuthenticating] = useState(false)
+  const [connectError, setConnectError] = useState<string | null>(null)
 
   const statusQuery = useQuery({
     queryKey: ['backup', 'status'],
     queryFn: getBackupStatus,
     staleTime: 60 * 1000,
+    // While the browser completes OAuth, poll so the UI updates on its own.
+    refetchInterval: isAuthenticating ? 2500 : false,
   })
 
-  const driveReady = statusQuery.data?.driveReady ?? false
+  const status = statusQuery.data
+  const driveReady = status?.driveReady ?? false
 
   const listQuery = useQuery({
     queryKey: ['backup', 'list'],
@@ -37,11 +43,38 @@ export function useBackup() {
     staleTime: 30 * 1000,
   })
 
-  // When the Google connection changes (connect / reconnect / logout), the
-  // Drive status may now differ — refresh backup status and list.
+  // Stop the polling spinner once the connection lands.
   useEffect(() => {
-    queryClient.invalidateQueries({ queryKey: ['backup'] })
-  }, [google.isAuthenticated, queryClient])
+    if (isAuthenticating && status?.connected) {
+      setIsAuthenticating(false)
+    }
+  }, [isAuthenticating, status?.connected])
+
+  const connect = useCallback(async () => {
+    setConnectError(null)
+    const result = await connectGoogleDrive()
+    if (result.error || !result.authUrl) {
+      setConnectError(result.error || 'connect_failed')
+      return
+    }
+    setIsAuthenticating(true)
+    try {
+      await openAuthUrl(result.authUrl, { popupName: 'google-drive-auth' })
+    } catch {
+      setConnectError('open_browser_failed')
+      setIsAuthenticating(false)
+      return
+    }
+    // Safety net: stop the spinner even if the user abandons the browser flow.
+    setTimeout(() => setIsAuthenticating(false), AUTH_TIMEOUT_MS)
+  }, [])
+
+  const disconnectMutation = useMutation({
+    mutationFn: disconnectGoogleDrive,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['backup'] })
+    },
+  })
 
   const backupNowMutation = useMutation<BackupActionResult>({
     mutationFn: backupNow,
@@ -61,31 +94,29 @@ export function useBackup() {
     },
   })
 
-  const status: BackupStatus | undefined = statusQuery.data
-  const backups: BackupFile[] = listQuery.data ?? []
-
   return {
     // status
     status,
     isLoadingStatus: statusQuery.isLoading,
+    configured: status?.configured ?? true,
     connected: status?.connected ?? false,
     driveReady,
     requiresReconnect: status?.requiresReconnect ?? false,
+    email: status?.email ?? null,
     autoBackupEnabled: status?.autoBackupEnabled ?? false,
     intervalHours: status?.intervalHours ?? 24,
     lastBackupAt: status?.lastBackupAt ?? null,
-    // Google connection (shared with livestream)
-    channelName: google.channelName,
-    isAuthenticating: google.isAuthenticating,
-    connect: google.login,
-    disconnect: google.logout,
-    isDisconnecting: google.isLoggingOut,
+    // connection
+    connect,
+    connectError,
+    isAuthenticating,
+    /** Fetches a fresh authorization URL (for the "copy link" affordance). */
+    getConnectUrl: connectGoogleDrive,
+    disconnect: disconnectMutation.mutate,
+    isDisconnecting: disconnectMutation.isPending,
     // list
-    backups,
+    backups: listQuery.data ?? [],
     isLoadingBackups: listQuery.isLoading,
-    backupsError: listQuery.error as
-      | (Error & { requiresReconnect?: boolean })
-      | null,
     // actions
     backupNow: backupNowMutation.mutateAsync,
     isBackingUp: backupNowMutation.isPending,
