@@ -35,6 +35,8 @@ export interface BackupActionResult {
   error?: string
   requiresReconnect?: boolean
   fileName?: string
+  /** Metadata of a just-created backup (for optimistic list insertion). */
+  backup?: BackupFile
   requiresRestart?: boolean
   message?: string
 }
@@ -85,10 +87,9 @@ export async function listBackups(): Promise<BackupFile[]> {
 }
 
 export async function backupNow(): Promise<BackupActionResult> {
-  const res = await fetcher<ApiResponse<{ fileId: string; fileName: string }>>(
-    '/api/backup/now',
-    { method: 'POST' },
-  )
+  const res = await fetcher<
+    ApiResponse<{ fileId: string; fileName: string; backup?: BackupFile }>
+  >('/api/backup/now', { method: 'POST' })
   if (res.error) {
     return {
       success: false,
@@ -96,7 +97,11 @@ export async function backupNow(): Promise<BackupActionResult> {
       requiresReconnect: res.requiresReconnect,
     }
   }
-  return { success: true, fileName: res.data?.fileName }
+  return {
+    success: true,
+    fileName: res.data?.fileName,
+    backup: res.data?.backup,
+  }
 }
 
 export async function restoreBackup(

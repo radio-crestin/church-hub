@@ -1,5 +1,5 @@
 import { createReadStream } from 'node:fs'
-import { unlink } from 'node:fs/promises'
+import { stat, unlink } from 'node:fs/promises'
 import { join } from 'node:path'
 
 import {
@@ -8,6 +8,7 @@ import {
   buildBackupFileName,
 } from './constants'
 import { getDriveService, isInsufficientScopeError } from './getDriveService'
+import type { BackupFile } from './listBackups'
 import { pruneOldBackups } from './pruneOldBackups'
 import { createLogger } from '../../utils/logger'
 import { getDataDir } from '../../utils/paths'
@@ -19,6 +20,8 @@ export interface BackupUploadResult {
   success: boolean
   fileId?: string
   fileName?: string
+  /** Metadata of the created backup, for optimistic list insertion. */
+  backup?: BackupFile
   /** True when the connected account lacks the drive.appdata scope. */
   requiresReconnect?: boolean
   error?: string
@@ -48,13 +51,18 @@ export async function uploadBackup(): Promise<BackupUploadResult> {
       return { success: false, error: exportResult.error || 'export_failed' }
     }
 
+    const createdAtMs = Date.now()
+    const sizeBytes = await stat(tempPath)
+      .then((s) => s.size)
+      .catch(() => 0)
+
     const res = await drive.files.create({
       requestBody: {
         name: fileName,
         parents: [APP_DATA_FOLDER],
         appProperties: {
           appVersion,
-          createdAtMs: String(Date.now()),
+          createdAtMs: String(createdAtMs),
         },
       },
       media: {
@@ -71,10 +79,20 @@ export async function uploadBackup(): Promise<BackupUploadResult> {
     // Retention: keep only the most recent backups.
     await pruneOldBackups(drive)
 
+    const fileId = res.data.id ?? undefined
     return {
       success: true,
-      fileId: res.data.id ?? undefined,
+      fileId,
       fileName: res.data.name ?? fileName,
+      backup: fileId
+        ? {
+            id: fileId,
+            name: res.data.name ?? fileName,
+            sizeBytes,
+            createdAtMs,
+            appVersion,
+          }
+        : undefined,
     }
   } catch (error) {
     if (isInsufficientScopeError(error)) {

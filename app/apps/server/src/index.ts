@@ -2009,7 +2009,11 @@ async function startRealServer(): Promise<void> {
           req,
           new Response(
             JSON.stringify({
-              data: { fileId: result.fileId, fileName: result.fileName },
+              data: {
+                fileId: result.fileId,
+                fileName: result.fileName,
+                backup: result.backup,
+              },
             }),
             { headers: { 'Content-Type': 'application/json' } },
           ),

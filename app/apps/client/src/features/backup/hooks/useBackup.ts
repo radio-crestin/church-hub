@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { openAuthUrl } from '~/features/livestream/utils'
 import {
   type BackupActionResult,
+  type BackupFile,
   backupNow,
   connectGoogleDrive,
   deleteBackup,
@@ -79,8 +80,21 @@ export function useBackup() {
 
   const backupNowMutation = useMutation<BackupActionResult>({
     mutationFn: backupNow,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['backup'] })
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['backup', 'status'] })
+      // Show the new backup immediately: Drive's files.list can lag a moment
+      // behind a just-created file, so insert it optimistically...
+      if (result.backup) {
+        queryClient.setQueryData<BackupFile[]>(['backup', 'list'], (old) => {
+          const list = old ?? []
+          if (list.some((f) => f.id === result.backup?.id)) return list
+          return [result.backup as BackupFile, ...list]
+        })
+      }
+      // ...then reconcile with Drive once it has caught up.
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['backup', 'list'] })
+      }, 3000)
     },
   })
 
