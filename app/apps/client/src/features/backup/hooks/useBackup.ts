@@ -163,6 +163,8 @@ export function useBackup() {
     // list
     backups: listQuery.data ?? [],
     isLoadingBackups: listQuery.isLoading,
+    isFetchingBackups: listQuery.isFetching,
+    refetchBackups: listQuery.refetch,
     // actions
     backupNow: backupNowMutation.mutateAsync,
     isBackingUp: backupNowMutation.isPending,

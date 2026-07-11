@@ -436,9 +436,22 @@ export function BackupManager() {
 
           {/* Backup list */}
           <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
-            <h4 className="mb-3 text-sm font-medium text-gray-900 dark:text-white">
-              {t('sections.backup.list.title')}
-            </h4>
+            <div className="mb-3 flex items-center justify-between">
+              <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                {t('sections.backup.list.title')}
+              </h4>
+              <button
+                type="button"
+                onClick={() => backup.refetchBackups()}
+                disabled={backup.isFetchingBackups}
+                title={t('sections.backup.list.refresh')}
+                className="inline-flex items-center justify-center rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+              >
+                <RefreshCw
+                  className={`h-4 w-4 ${backup.isFetchingBackups ? 'animate-spin' : ''}`}
+                />
+              </button>
+            </div>
             {backup.isLoadingBackups ? (
               <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                 <Loader2 className="h-4 w-4 animate-spin" />

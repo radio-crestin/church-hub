@@ -832,7 +832,8 @@
         "loading": "Loading backups…",
         "empty": "No backups yet.",
         "restore": "Restore",
-        "delete": "Delete"
+        "delete": "Delete",
+        "refresh": "Refresh"
       },
       "restoreModal": {
         "title": "Restore backup?",

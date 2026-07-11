@@ -833,7 +833,8 @@
         "loading": "Se încarcă backupurile…",
         "empty": "Încă nu există backupuri.",
         "restore": "Restaurează",
-        "delete": "Șterge"
+        "delete": "Șterge",
+        "refresh": "Reîmprospătează"
       },
       "restoreModal": {
         "title": "Restaurezi backupul?",
