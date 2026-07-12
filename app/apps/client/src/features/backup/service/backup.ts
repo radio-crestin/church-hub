@@ -86,10 +86,13 @@ export async function listBackups(): Promise<BackupFile[]> {
   return res.data?.backups ?? []
 }
 
+/** Backups upload the whole database to Drive, which can take minutes. */
+const LARGE_OP_TIMEOUT_MS = 10 * 60 * 1000
+
 export async function backupNow(): Promise<BackupActionResult> {
   const res = await fetcher<
     ApiResponse<{ fileId: string; fileName: string; backup?: BackupFile }>
-  >('/api/backup/now', { method: 'POST' })
+  >('/api/backup/now', { method: 'POST', timeout: LARGE_OP_TIMEOUT_MS })
   if (res.error) {
     return {
       success: false,
@@ -113,6 +116,7 @@ export async function restoreBackup(
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ fileId }),
+    timeout: LARGE_OP_TIMEOUT_MS,
   })
   if (res.error) {
     return {
