@@ -102,7 +102,9 @@ function SortableBookmarkItem({
           ? 'opacity-80 shadow-lg border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20'
           : isActive
             ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20'
-            : 'border-gray-200 dark:border-gray-700 hover:border-amber-300 dark:hover:border-amber-600 bg-white dark:bg-gray-800 hover:bg-amber-50/50 dark:hover:bg-amber-900/10'
+            : bookmark.isSung
+              ? 'border-green-200 dark:border-green-800/60 bg-green-50/50 dark:bg-green-900/10 hover:border-green-300 dark:hover:border-green-700'
+              : 'border-gray-200 dark:border-gray-700 hover:border-amber-300 dark:hover:border-amber-600 bg-white dark:bg-gray-800 hover:bg-amber-50/50 dark:hover:bg-amber-900/10'
       }`}
     >
       <div
@@ -135,13 +137,7 @@ function SortableBookmarkItem({
         onClick={onSelect}
         className="flex-1 min-w-0 text-left py-1.5 pr-1"
       >
-        <div
-          className={`text-sm font-medium truncate ${
-            bookmark.isSung
-              ? 'text-gray-400 line-through dark:text-gray-500'
-              : 'text-gray-900 dark:text-white'
-          }`}
-        >
+        <div className="text-sm font-medium truncate text-gray-900 dark:text-white">
           {bookmark.songTitle}
         </div>
         {(bookmark.songCategoryName || bookmark.songKeyLine) && (
