@@ -4,17 +4,20 @@ main = "src/index.ts"
 compatibility_date = "2024-12-01"
 minify = true
 
+# Custom domain route. MUST stay above any [section] header: TOML assigns
+# top-level keys to the most recent table, so placing it after
+# [observability.logs] silently nested it there (wrangler warned about it)
+# and the route was not applied from config.
+routes = [
+  { pattern = "churchub-backend.radiocrestin.ro", custom_domain = true }
+]
+
 # Enable observability for logs in Cloudflare dashboard
 [observability]
 [observability.logs]
 enabled = true
 head_sampling_rate = 1
 invocation_logs = true
-
-# Custom domain route
-routes = [
-  { pattern = "churchub-backend.radiocrestin.ro", custom_domain = true }
-]
 
 # KV namespace for WebRTC signaling relay
 [[kv_namespaces]]
@@ -24,12 +27,17 @@ id = "bc1b72f2df754e88a81e8e8c99ccee50"
 # Non-sensitive environment variables
 [vars]
 YOUTUBE_SCOPE = "https://www.googleapis.com/auth/youtube.force-ssl"
+# Google Drive backup flow — same Google OAuth client as YouTube, different
+# scopes (private per-app Drive folder + account identity). The redirect URI
+# must be registered on the OAuth client in Google Cloud Console.
+DRIVE_SCOPE = "openid https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/drive.appdata"
+DRIVE_REDIRECT_URI = "https://churchub-backend.radiocrestin.ro/auth/drive/callback"
 COOKIE_NAME = "yt_oauth_state"
 COOKIE_MAX_AGE = 600
 
 # Secrets must be set via wrangler secret put:
-# - YOUTUBE_CLIENT_ID
-# - YOUTUBE_CLIENT_SECRET
+# - YOUTUBE_CLIENT_ID     (shared by the YouTube AND Drive flows)
+# - YOUTUBE_CLIENT_SECRET (shared by the YouTube AND Drive flows)
 # - COOKIE_ENCRYPTION_KEY (generate: openssl rand -hex 32)
 # - ALLOWED_ORIGINS (comma-separated list)
 # - YOUTUBE_REDIRECT_URI

@@ -128,6 +128,9 @@ async function main() {
   console.log('\x1b[34mCopying MIDI native modules...\x1b[0m')
   copyMidiPrebuilds(os, arch)
 
+  // No credentials are embedded in the binary: Google OAuth (YouTube AND the
+  // Drive backup) goes through the ChurchHub OAuth worker, which holds the
+  // client id/secret server-side.
   console.log('\x1b[34mCompiling server with Bun...\x1b[0m')
   await $`bun build --compile --production --minify --minify-syntax --target bun --bundle ./src/index.ts --outfile ${outfile}`
 

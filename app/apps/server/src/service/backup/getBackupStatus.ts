@@ -2,10 +2,11 @@ import { getBackupConfig } from './backupConfig'
 import { APP_DATA_FOLDER } from './constants'
 import { getDriveAuth } from './driveAuthStore'
 import { getDriveService, isInsufficientScopeError } from './getDriveService'
-import { getDriveOAuthConfig } from './oauth/config'
 
 export interface BackupStatus {
-  /** The Drive OAuth client credentials are configured on this build. */
+  /** Drive backup is available on this build. Always true now that OAuth goes
+   * through the ChurchHub worker (no local credentials needed); kept for API
+   * compatibility. */
   configured: boolean
   /** A Google account is connected for backups. */
   connected: boolean
@@ -26,18 +27,6 @@ export interface BackupStatus {
  */
 export async function getBackupStatus(): Promise<BackupStatus> {
   const config = await getBackupConfig()
-  const { configured } = getDriveOAuthConfig()
-
-  if (!configured) {
-    return {
-      configured: false,
-      connected: false,
-      driveReady: false,
-      requiresReconnect: false,
-      email: null,
-      ...config,
-    }
-  }
 
   // getDriveService refreshes the token and clears the connection if the refresh
   // token has expired, so a null result here means "not connected".
