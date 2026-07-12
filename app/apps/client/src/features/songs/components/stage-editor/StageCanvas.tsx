@@ -19,6 +19,10 @@ interface StageCanvasProps {
    * page) the canvas is simply always editable.
    */
   clickToEdit?: boolean
+  /** Fit the canvas within the available height (letterboxed) instead of
+   * sizing purely by width — lets the stage shrink so a notes panel below it
+   * can grow. */
+  fitHeight?: boolean
   onEditText: (plainText: string) => void
 }
 
@@ -45,6 +49,7 @@ export function StageCanvas({
   previewContent,
   canEdit,
   clickToEdit = false,
+  fitHeight = false,
   onEditText,
 }: StageCanvasProps) {
   const { t } = useTranslation('songs')
@@ -118,22 +123,34 @@ export function StageCanvas({
   const framed = clickToEdit && editing
 
   return (
-    <div className="w-full">
+    <div
+      className={fitHeight ? 'flex min-h-0 w-full flex-1 flex-col' : 'w-full'}
+    >
       {/* Outer frame: reserves the padding + border ring at all times (so
           toggling edit never reflows the slide) and only colours the frame
-          while editing, leaving a clear gap around the black canvas. */}
+          while editing, leaving a clear gap around the black canvas. In
+          fit-height mode it becomes a size container so the black box can size
+          to the largest 16:9 that fits (letterboxed), letting the stage shrink. */}
       <div
         ref={stageRef}
         onMouseDown={handleMouseDown}
         onBlur={handleBlur}
         data-editing={framed ? 'true' : 'false'}
-        className={`w-full rounded-2xl border-2 p-2 transition-colors ${
+        className={`rounded-2xl border-2 p-2 transition-colors ${
           canEdit ? 'cursor-text' : ''
-        } ${framed ? 'border-indigo-500 bg-indigo-500/10' : 'border-transparent'}`}
+        } ${framed ? 'border-indigo-500 bg-indigo-500/10' : 'border-transparent'} ${
+          fitHeight
+            ? 'flex min-h-0 min-w-0 flex-1 items-center justify-center [container-type:size]'
+            : 'w-full'
+        }`}
       >
         <div
-          className={`relative w-full aspect-video rounded-lg overflow-hidden shadow-lg bg-black ${
+          className={`relative aspect-video rounded-lg overflow-hidden shadow-lg bg-black ${
             showEditor ? '' : 'select-none'
+          } ${
+            fitHeight
+              ? 'max-h-full max-w-full w-[min(100cqw,calc(100cqh*16/9))]'
+              : 'w-full'
           }`}
         >
           <ScreenPreview
@@ -149,7 +166,7 @@ export function StageCanvas({
         </div>
       </div>
       {framed && (
-        <p className="mt-2 text-center text-xs text-indigo-500 dark:text-indigo-400">
+        <p className="mt-2 shrink-0 text-center text-xs text-indigo-500 dark:text-indigo-400">
           {t('stageEditor.editHint')}
         </p>
       )}

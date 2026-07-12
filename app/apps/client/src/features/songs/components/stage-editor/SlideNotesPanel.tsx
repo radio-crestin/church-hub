@@ -11,7 +11,7 @@ const HEIGHT_KEY = 'song-stage:notes-height'
 const COLLAPSED_KEY = 'song-stage:notes-collapsed'
 const MIN_HEIGHT = 64
 const DEFAULT_HEIGHT = 140
-const MAX_HEIGHT = 480
+const MAX_HEIGHT = 200
 
 interface SlideNotesPanelProps {
   /** 1-based number of the slide the note belongs to (for the header). */

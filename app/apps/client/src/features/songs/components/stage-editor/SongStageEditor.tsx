@@ -348,18 +348,23 @@ export function SongStageEditor({
         />
       </div>
 
-      {/* Canvas column (canvas + footer under it only) */}
+      {/* Canvas column: in fillHeight mode the canvas shrinks (flex-1) so the
+          footer — nav + the speaker-notes panel — stays pinned at the bottom
+          and the notes panel can grow by shrinking the stage above it. */}
       <div
         className={`order-1 lg:order-3 lg:flex-1 lg:min-w-0 flex flex-col ${
-          fillHeight ? 'lg:min-h-0 lg:overflow-y-auto' : ''
+          fillHeight ? 'lg:min-h-0' : ''
         }`}
       >
-        <div className="shrink-0">
+        <div
+          className={fillHeight ? 'flex min-h-0 flex-1 flex-col' : 'shrink-0'}
+        >
           <StageCanvas
             screen={screen}
             previewContent={previewContent}
             canEdit={editable && activeIndex >= 0}
             clickToEdit={clickToEdit}
+            fitHeight={fillHeight}
             onEditText={handleEditText}
           />
         </div>
