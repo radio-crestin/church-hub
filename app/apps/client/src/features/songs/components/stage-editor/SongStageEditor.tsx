@@ -39,8 +39,12 @@ interface SongStageEditorProps {
   /** Notifies the parent which slide is currently selected on the canvas, so it
    * can render per-slide UI (e.g. the speaker-notes panel) below the canvas. */
   onActiveSlideChange?: (index: number) => void
-  /** Rendered under the canvas column only (e.g. presentation nav buttons). */
+  /** Rendered directly under the stage (e.g. presentation nav buttons), hugging
+   * its bottom edge. */
   canvasFooter?: React.ReactNode
+  /** Rendered at the very bottom of the canvas column, below the stage/nav
+   * zone (e.g. the speaker-notes panel pinned to the column footer). */
+  columnFooter?: React.ReactNode
   /** Fill the parent's height (filmstrip runs to the bottom). Needs a bounded
    * parent — used on the song page, not on the scrolling /edit form. */
   fillHeight?: boolean
@@ -70,6 +74,7 @@ export function SongStageEditor({
   onProjectSlide,
   onActiveSlideChange,
   canvasFooter,
+  columnFooter,
   fillHeight = false,
   onSlidesChange,
 }: SongStageEditorProps) {
@@ -348,27 +353,43 @@ export function SongStageEditor({
         />
       </div>
 
-      {/* Canvas column: in fillHeight mode the canvas shrinks (flex-1) so the
-          footer — nav + the speaker-notes panel — stays pinned at the bottom
-          and the notes panel can grow by shrinking the stage above it. */}
+      {/* Canvas column. In fillHeight mode a size-container "stage zone" fills
+          the space above the column footer: the stage fits (letterboxed) and is
+          top-aligned with the nav hugging its bottom, so collapsing the notes
+          leaves the stage put (it just grows) rather than re-centring. The
+          notes panel is pinned to the column footer below the zone. */}
       <div
         className={`order-1 lg:order-3 lg:flex-1 lg:min-w-0 flex flex-col ${
           fillHeight ? 'lg:min-h-0' : ''
         }`}
       >
-        <div
-          className={fillHeight ? 'flex min-h-0 flex-1 flex-col' : 'shrink-0'}
-        >
-          <StageCanvas
-            screen={screen}
-            previewContent={previewContent}
-            canEdit={editable && activeIndex >= 0}
-            clickToEdit={clickToEdit}
-            fitHeight={fillHeight}
-            onEditText={handleEditText}
-          />
-        </div>
-        {canvasFooter}
+        {fillHeight ? (
+          <div className="flex min-h-0 flex-1 flex-col items-center [container-type:size]">
+            <StageCanvas
+              screen={screen}
+              previewContent={previewContent}
+              canEdit={editable && activeIndex >= 0}
+              clickToEdit={clickToEdit}
+              fitHeight
+              onEditText={handleEditText}
+            />
+            {canvasFooter}
+          </div>
+        ) : (
+          <>
+            <div className="shrink-0">
+              <StageCanvas
+                screen={screen}
+                previewContent={previewContent}
+                canEdit={editable && activeIndex >= 0}
+                clickToEdit={clickToEdit}
+                onEditText={handleEditText}
+              />
+            </div>
+            {canvasFooter}
+          </>
+        )}
+        {columnFooter}
       </div>
 
       <ConfirmModal

@@ -123,14 +123,14 @@ export function StageCanvas({
   const framed = clickToEdit && editing
 
   return (
-    <div
-      className={fitHeight ? 'flex min-h-0 w-full flex-1 flex-col' : 'w-full'}
-    >
+    <div className={fitHeight ? 'flex w-full shrink-0 flex-col' : 'w-full'}>
       {/* Outer frame: reserves the padding + border ring at all times (so
           toggling edit never reflows the slide) and only colours the frame
           while editing, leaving a clear gap around the black canvas. In
-          fit-height mode it becomes a size container so the black box can size
-          to the largest 16:9 that fits (letterboxed), letting the stage shrink. */}
+          fit-height mode it hugs the black box, which sizes to the largest
+          16:9 that fits within the enclosing size container minus the nav row
+          (reserved below) — letterboxed, top-aligned, so the stage can shrink
+          and the nav sits right under it. */}
       <div
         ref={stageRef}
         onMouseDown={handleMouseDown}
@@ -139,9 +139,7 @@ export function StageCanvas({
         className={`rounded-2xl border-2 p-2 transition-colors ${
           canEdit ? 'cursor-text' : ''
         } ${framed ? 'border-indigo-500 bg-indigo-500/10' : 'border-transparent'} ${
-          fitHeight
-            ? 'flex min-h-0 min-w-0 flex-1 items-center justify-center [container-type:size]'
-            : 'w-full'
+          fitHeight ? 'flex items-center justify-center' : 'w-full'
         }`}
       >
         <div
@@ -149,7 +147,7 @@ export function StageCanvas({
             showEditor ? '' : 'select-none'
           } ${
             fitHeight
-              ? 'max-h-full max-w-full w-[min(100cqw,calc(100cqh*16/9))]'
+              ? 'max-h-[calc(100cqh_-_76px)] w-[min(calc(100cqw_-_24px),calc((100cqh_-_76px)*16/9))]'
               : 'w-full'
           }`}
         >

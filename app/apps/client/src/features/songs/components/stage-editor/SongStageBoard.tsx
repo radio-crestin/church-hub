@@ -291,44 +291,41 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
           onSlidesChange={setSlides}
           fillHeight
           canvasFooter={
-            <>
-              {/* Presentation navigation sits under the canvas only, not the
-               filmstrip — advance/retreat the live slide. The session clock is
-               pinned bottom-right of the canvas column. */}
-              <div className="relative flex items-center justify-center gap-3 pt-3 shrink-0">
-                <button
-                  type="button"
-                  onClick={handlePrev}
-                  disabled={!canNavigatePrev || navigateTemporary.isPending}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
-                  data-testid="stage-prev"
-                >
-                  <ChevronLeft size={20} />
-                  <span className="text-sm">{t('bible:controls.prev')}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  disabled={!canNavigateNext || navigateTemporary.isPending}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
-                  data-testid="stage-next"
-                >
-                  <span className="text-sm">{t('bible:controls.next')}</span>
-                  <ChevronRight size={20} />
-                </button>
-                <div className="absolute right-0 top-1/2 -translate-y-1/2">
-                  <StageTimer />
-                </div>
+            /* Presentation navigation hugs the bottom of the stage — advance/
+               retreat the live slide. The session clock is pinned right. */
+            <div className="relative flex w-full items-center justify-center gap-3 pt-3 shrink-0">
+              <button
+                type="button"
+                onClick={handlePrev}
+                disabled={!canNavigatePrev || navigateTemporary.isPending}
+                className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
+                data-testid="stage-prev"
+              >
+                <ChevronLeft size={20} />
+                <span className="text-sm">{t('bible:controls.prev')}</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleNext}
+                disabled={!canNavigateNext || navigateTemporary.isPending}
+                className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
+                data-testid="stage-next"
+              >
+                <span className="text-sm">{t('bible:controls.next')}</span>
+                <ChevronRight size={20} />
+              </button>
+              <div className="absolute right-0 top-1/2 -translate-y-1/2">
+                <StageTimer />
               </div>
-
-              {/* Speaker notes for the selected slide, under the canvas column
-                  (collapsed by default). */}
-              <SlideNotesPanel
-                slideNumber={activeIndex + 1}
-                note={activeNote}
-                onChange={handleNoteChange}
-              />
-            </>
+            </div>
+          }
+          columnFooter={
+            /* Speaker notes pinned to the column footer (collapsed by default). */
+            <SlideNotesPanel
+              slideNumber={activeIndex + 1}
+              note={activeNote}
+              onChange={handleNoteChange}
+            />
           }
         />
       </div>
