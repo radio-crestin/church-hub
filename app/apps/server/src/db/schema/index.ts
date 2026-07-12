@@ -1,6 +1,7 @@
 // Export all tables
 export * from './app-settings'
 export * from './auth'
+export * from './backup'
 export * from './bible'
 export * from './livestream'
 export * from './music'

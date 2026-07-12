@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react'
 import {
   BookOpen,
+  CloudUpload,
   Info,
   Keyboard,
   Monitor,
@@ -176,6 +177,13 @@ export const SETTINGS_GROUPS: SettingsNavGroupDef[] = [
         icon: ScrollText,
         to: '/settings/logs',
         visible: (ctx) => ctx.hasPermission('logs.view'),
+      },
+      {
+        id: 'backup',
+        labelKey: 'nav.items.backup',
+        icon: CloudUpload,
+        to: '/settings/backup',
+        visible: (ctx) => ctx.isLocalhost && canEdit(ctx),
       },
       {
         id: 'developer',

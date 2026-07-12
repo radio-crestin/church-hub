@@ -75,6 +75,9 @@ export function SongStageEditor({
   // Resizable split between the filmstrip (column 1) and the canvas, persisted
   // per device. Only applied on large screens; on mobile the two stack.
   const containerRef = useRef<HTMLDivElement>(null)
+  // Scroll viewport of the filmstrip column (column 1). Used to keep the active
+  // thumbnail in view as navigation advances through the slides.
+  const filmstripScrollRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
   const [isLargeScreen, setIsLargeScreen] = useState(false)
   const [dividerPosition, setDividerPosition] = useDividerPosition(
@@ -162,6 +165,34 @@ export function SongStageEditor({
 
   const effectiveIndex = activeIndex < 0 ? 0 : activeIndex
   const effectiveSongId = songId ?? 0
+
+  // Keep the active thumbnail in view as navigation advances (e.g. a long song
+  // in PowerPoint mode): scroll the filmstrip column only when the active slide
+  // is out of view, never the page. Mirrors the classic panel's auto-scroll.
+  useEffect(() => {
+    const container = filmstripScrollRef.current
+    if (!container || activeIndex < 0) return
+    const active = container.querySelector<HTMLElement>(
+      `[data-slide-index="${activeIndex}"]`,
+    )
+    if (!active) return
+    const containerRect = container.getBoundingClientRect()
+    const activeRect = active.getBoundingClientRect()
+    const margin = 8
+    if (activeRect.top < containerRect.top + margin) {
+      const delta = activeRect.top - containerRect.top - margin
+      container.scrollTo({
+        top: container.scrollTop + delta,
+        behavior: 'smooth',
+      })
+    } else if (activeRect.bottom > containerRect.bottom - margin) {
+      const delta = activeRect.bottom - containerRect.bottom + margin
+      container.scrollTo({
+        top: container.scrollTop + delta,
+        behavior: 'smooth',
+      })
+    }
+  }, [activeIndex])
 
   const previewContent = useMemo<TemporaryContent>(
     () => ({
@@ -270,6 +301,8 @@ export function SongStageEditor({
     >
       {/* Filmstrip (column 1, resizable) */}
       <div
+        ref={filmstripScrollRef}
+        data-testid="stage-filmstrip-scroll"
         className={`order-2 lg:order-1 lg:overflow-y-auto lg:pr-1 ${
           fillHeight ? 'lg:h-full lg:min-h-0' : 'lg:max-h-[70vh]'
         }`}

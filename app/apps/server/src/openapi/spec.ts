@@ -5,6 +5,7 @@
 import { responses, securitySchemes } from './components'
 import {
   authPaths,
+  backupPaths,
   biblePaths,
   categoriesPaths,
   conversionPaths,
@@ -50,6 +51,10 @@ export const openApiSpec = {
     { name: 'Health', description: 'Health check endpoints' },
     { name: 'Settings', description: 'Application and user settings' },
     { name: 'Database', description: 'Database management and backup' },
+    {
+      name: 'Backup',
+      description: 'Google Drive backup and restore',
+    },
     { name: 'Devices', description: 'Device management and authorization' },
     { name: 'Authentication', description: 'Device and user authentication' },
     { name: 'Users', description: 'User accounts and permissions' },
@@ -72,6 +77,7 @@ export const openApiSpec = {
     ...logsPaths,
     ...settingsPaths,
     ...databasePaths,
+    ...backupPaths,
     ...devicesPaths,
     ...authPaths,
     ...usersPaths,

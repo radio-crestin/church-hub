@@ -85,6 +85,7 @@ export function SlideThumbnail({
   return (
     <div
       ref={setNodeRef}
+      data-slide-index={index}
       style={{
         transform: CSS.Transform.toString(transform),
         transition,

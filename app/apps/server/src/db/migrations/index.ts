@@ -1,6 +1,7 @@
 import { join } from 'node:path'
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite'
 
+import { addBackupConfig } from './add-backup-config'
 import { addCategoryHiddenFlag } from './add-category-hidden-flag'
 import { addCloseOnEscape } from './add-close-on-escape'
 import { addLastPresentedAt } from './add-last-presented-at'
@@ -273,6 +274,11 @@ export function runMigrations(
     'rebuild_fts_single_char_fix',
     'Running FTS single-char rebuild migration',
     () => rebuildFtsForSingleCharFix(rawDb),
+  )
+
+  // Add backup_config table for the Google Drive backup feature
+  runStep('add_backup_config', 'Running add backup_config migration', () =>
+    addBackupConfig(rawDb),
   )
 
   return { ftsRecreated: ftsCreated }

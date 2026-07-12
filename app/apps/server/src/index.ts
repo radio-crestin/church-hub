@@ -124,6 +124,19 @@ import {
   regenerateSystemToken,
 } from './service/app-sessions'
 import {
+  clearDriveAuth,
+  completeDriveAuth,
+  createDriveAuthUrl,
+  deleteBackup,
+  getBackupConfig,
+  getBackupStatus,
+  listBackups,
+  restoreBackup,
+  startBackupScheduler,
+  uploadBackup,
+  upsertBackupConfig,
+} from './service/backup'
+import {
   type CreateTranslationInput,
   deleteTranslation,
   ensureRCCVExists,
@@ -664,6 +677,9 @@ async function main() {
   await bootServer.stop(true)
 
   await startRealServer()
+
+  // Start the automatic Google Drive backup scheduler (no-op unless enabled).
+  startBackupScheduler()
 }
 
 /**
@@ -1905,6 +1921,330 @@ async function startRealServer(): Promise<void> {
             ),
           )
         }
+      }
+
+      // ---- Google Drive backup routes (localhost only) ----
+      // Reuses isStrictLocalhost() so, like /api/database/*, backups are only
+      // driven from the physically-trusted machine running the desktop app.
+      const backupLocalhostGuard = (): Response | null =>
+        isStrictLocalhost()
+          ? null
+          : handleCors(
+              req,
+              new Response(
+                JSON.stringify({ error: 'Only accessible from localhost' }),
+                {
+                  status: 403,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+
+      // GET /api/backup/status - Drive connection + auto-backup settings
+      if (req.method === 'GET' && url.pathname === '/api/backup/status') {
+        const guard = backupLocalhostGuard()
+        if (guard) return guard
+
+        const status = await getBackupStatus()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: status }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // GET /api/backup/list - List backups stored in Google Drive
+      if (req.method === 'GET' && url.pathname === '/api/backup/list') {
+        const guard = backupLocalhostGuard()
+        if (guard) return guard
+
+        const result = await listBackups()
+        if (!result.success) {
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({
+                error: result.error,
+                requiresReconnect: result.requiresReconnect ?? false,
+              }),
+              {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        }
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: { backups: result.backups } }), {
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-store',
+            },
+          }),
+        )
+      }
+
+      // POST /api/backup/now - Upload a fresh backup to Google Drive
+      if (req.method === 'POST' && url.pathname === '/api/backup/now') {
+        const guard = backupLocalhostGuard()
+        if (guard) return guard
+
+        const result = await uploadBackup()
+        if (!result.success) {
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({
+                error: result.error,
+                requiresReconnect: result.requiresReconnect ?? false,
+              }),
+              {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        }
+        await upsertBackupConfig({ lastBackupAt: Date.now() })
+        return handleCors(
+          req,
+          new Response(
+            JSON.stringify({
+              data: {
+                fileId: result.fileId,
+                fileName: result.fileName,
+                backup: result.backup,
+              },
+            }),
+            { headers: { 'Content-Type': 'application/json' } },
+          ),
+        )
+      }
+
+      // POST /api/backup/restore - Restore a backup from Google Drive
+      if (req.method === 'POST' && url.pathname === '/api/backup/restore') {
+        const guard = backupLocalhostGuard()
+        if (guard) return guard
+
+        let fileId: string | undefined
+        try {
+          const body = await req.json()
+          fileId = body.fileId
+        } catch {
+          // handled below
+        }
+        if (!fileId) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Missing fileId' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        const result = await restoreBackup(fileId)
+        if (!result.success) {
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({
+                error: result.error || result.message,
+                requiresReconnect: result.requiresReconnect ?? false,
+              }),
+              {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        }
+        return handleCors(
+          req,
+          new Response(
+            JSON.stringify({
+              data: {
+                success: true,
+                message: result.message,
+                requiresRestart: result.requiresRestart,
+              },
+            }),
+            { headers: { 'Content-Type': 'application/json' } },
+          ),
+        )
+      }
+
+      // POST /api/backup/delete - Delete a single backup from Google Drive
+      if (req.method === 'POST' && url.pathname === '/api/backup/delete') {
+        const guard = backupLocalhostGuard()
+        if (guard) return guard
+
+        let fileId: string | undefined
+        try {
+          const body = await req.json()
+          fileId = body.fileId
+        } catch {
+          // handled below
+        }
+        if (!fileId) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Missing fileId' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        const result = await deleteBackup(fileId)
+        if (!result.success) {
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({
+                error: result.error,
+                requiresReconnect: result.requiresReconnect ?? false,
+              }),
+              {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        }
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: { success: true } }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // GET /api/backup/config - Read auto-backup settings
+      if (req.method === 'GET' && url.pathname === '/api/backup/config') {
+        const guard = backupLocalhostGuard()
+        if (guard) return guard
+
+        const config = await getBackupConfig()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: config }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // PUT /api/backup/config - Update auto-backup settings
+      if (req.method === 'PUT' && url.pathname === '/api/backup/config') {
+        const guard = backupLocalhostGuard()
+        if (guard) return guard
+
+        let patch: {
+          autoBackupEnabled?: boolean
+          intervalHours?: number
+        } = {}
+        try {
+          const body = await req.json()
+          if (typeof body.autoBackupEnabled === 'boolean') {
+            patch.autoBackupEnabled = body.autoBackupEnabled
+          }
+          if (
+            typeof body.intervalHours === 'number' &&
+            body.intervalHours > 0
+          ) {
+            patch.intervalHours = Math.round(body.intervalHours)
+          }
+        } catch {
+          // No/invalid body - nothing to update
+        }
+
+        const config = await upsertBackupConfig(patch)
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: config }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // GET /api/backup/google/connect - Start the Drive connect flow
+      if (
+        req.method === 'GET' &&
+        url.pathname === '/api/backup/google/connect'
+      ) {
+        const guard = backupLocalhostGuard()
+        if (guard) return guard
+
+        const result = await createDriveAuthUrl()
+        if ('error' in result) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: result.error }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: { authUrl: result.authUrl } }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // GET /api/backup/google/callback - Loopback OAuth callback (browser lands here)
+      if (
+        req.method === 'GET' &&
+        url.pathname === '/api/backup/google/callback'
+      ) {
+        const oauthError = url.searchParams.get('error')
+        const code = url.searchParams.get('code')
+        const state = url.searchParams.get('state')
+
+        const renderPage = (title: string, message: string) =>
+          handleCors(
+            req,
+            new Response(
+              `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title></head><body style="font-family:system-ui;padding:2rem;text-align:center"><p>${message}</p><script>setTimeout(()=>window.close(),1500)</script></body></html>`,
+              { headers: { 'Content-Type': 'text/html; charset=utf-8' } },
+            ),
+          )
+
+        if (oauthError) {
+          return renderPage('Backup', `Authorization failed: ${oauthError}`)
+        }
+        if (!code || !state) {
+          return renderPage('Backup', 'Missing authorization code or state.')
+        }
+
+        const result = await completeDriveAuth(code, state)
+        if (!result.success) {
+          return renderPage('Backup', `Authorization failed: ${result.error}`)
+        }
+        return renderPage(
+          'Backup',
+          'Google Drive connected. You can close this window and return to Church Hub.',
+        )
+      }
+
+      // POST /api/backup/google/disconnect - Disconnect Google Drive
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/backup/google/disconnect'
+      ) {
+        const guard = backupLocalhostGuard()
+        if (guard) return guard
+
+        await clearDriveAuth()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: { success: true } }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
       }
 
       // GET /api/users - List all users

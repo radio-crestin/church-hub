@@ -18,6 +18,7 @@
       "livestream": "Livestream",
       "sidebar": "Sidebar",
       "developer": "Developer",
+      "backup": "Backup",
       "logs": "Logs",
       "shortcuts": "Shortcuts"
     }
@@ -790,6 +791,83 @@
         "importSuccess": "Database imported successfully. Reloading...",
         "importFailed": "Failed to import database: {{error}}",
         "restartFailed": "Failed to restart server: {{error}}"
+      }
+    },
+    "backup": {
+      "title": "Google Drive Backup",
+      "description": "Back up your database to your Google Drive and restore it on any computer signed in with the same Google account.",
+      "localhostOnly": "Backups can only be managed from the computer running Church Hub.",
+      "connect": {
+        "title": "Connect Google Drive",
+        "description": "Sign in with Google to back up your data to a private folder in your Drive.",
+        "button": "Connect Google Drive"
+      },
+      "expired": {
+        "title": "Reconnect Google Drive",
+        "description": "Your Google session expired and backups are paused. Reconnect to resume backing up.",
+        "button": "Reconnect"
+      },
+      "status": {
+        "connected": "Google Drive connected",
+        "disconnect": "Disconnect"
+      },
+      "reconnect": {
+        "message": "Your Google account needs to grant Drive access before backups can work. Please reconnect.",
+        "button": "Reconnect"
+      },
+      "now": {
+        "title": "Back up now",
+        "lastBackup": "Last backup",
+        "button": "Back up now",
+        "backingUp": "Backing up…"
+      },
+      "auto": {
+        "title": "Automatic backups",
+        "description": "Periodically back up in the background.",
+        "interval": "Backup frequency",
+        "everyHours": "Every {{hours}} hours"
+      },
+      "list": {
+        "title": "Available backups",
+        "loading": "Loading backups…",
+        "empty": "No backups yet.",
+        "restore": "Restore",
+        "delete": "Delete",
+        "refresh": "Refresh"
+      },
+      "restoreModal": {
+        "title": "Restore backup?",
+        "message": "Restore the backup from {{date}}?",
+        "warning": "This will replace all current data on this computer. A safety copy of the current database is kept.",
+        "cancel": "Cancel",
+        "confirm": "Restore",
+        "restoring": "Restoring…"
+      },
+      "toast": {
+        "backupSuccess": "Backup uploaded to Google Drive",
+        "backupFailed": "Backup failed: {{error}}",
+        "restoreSuccess": "Backup restored. Reloading…",
+        "restoreFailed": "Restore failed: {{error}}",
+        "reconnectNeeded": "Please reconnect Google Drive to grant backup access.",
+        "configFailed": "Failed to update backup settings",
+        "linkCopied": "Sign-in link copied — paste it into a private window",
+        "linkCopyFailed": "Could not copy the link",
+        "notConfigured": "Google Drive backup isn't configured in this build",
+        "linkShown": "Sign-in link ready — copy it and open it in a private window",
+        "deleteSuccess": "Backup deleted",
+        "deleteFailed": "Delete failed: {{error}}"
+      },
+      "copyLink": "Copy link",
+      "copyLinkHint": "Copy the sign-in link to open it in a private/incognito window (e.g. to use a different Google account).",
+      "notConfigured": {
+        "title": "Backup not available",
+        "description": "Google Drive backup isn't configured in this build."
+      },
+      "deleteModal": {
+        "title": "Delete backup?",
+        "message": "Permanently delete the backup from {{date}}? This cannot be undone.",
+        "cancel": "Cancel",
+        "confirm": "Delete"
       }
     },
     "debug": {
