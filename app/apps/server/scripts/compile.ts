@@ -128,25 +128,11 @@ async function main() {
   console.log('\x1b[34mCopying MIDI native modules...\x1b[0m')
   copyMidiPrebuilds(os, arch)
 
-  // Embed the Google Drive backup OAuth credentials as compile-time constants
-  // so the shipped sidecar can read `process.env.GOOGLE_DRIVE_*` at runtime
-  // without a .env. This is a Google "Desktop app" client whose secret Google
-  // treats as non-confidential (loopback/PKCE protects it). Sourced from the
-  // environment (CI secrets, or the local .env in dev); unset → embeds "" and
-  // the feature disables gracefully. This script produces the FINAL binary
-  // (Tauri's beforeBuildCommand), so the embedding must happen HERE.
-  const driveClientId = process.env.GOOGLE_DRIVE_CLIENT_ID ?? ''
-  const driveClientSecret = process.env.GOOGLE_DRIVE_CLIENT_SECRET ?? ''
-  const defineDriveId = `process.env.GOOGLE_DRIVE_CLIENT_ID=${JSON.stringify(driveClientId)}`
-  const defineDriveSecret = `process.env.GOOGLE_DRIVE_CLIENT_SECRET=${JSON.stringify(driveClientSecret)}`
-  console.log(
-    `\x1b[36mGoogle Drive credentials embedded:\x1b[0m ${Boolean(
-      driveClientId && driveClientSecret,
-    )}`,
-  )
-
+  // No credentials are embedded in the binary: Google OAuth (YouTube AND the
+  // Drive backup) goes through the ChurchHub OAuth worker, which holds the
+  // client id/secret server-side.
   console.log('\x1b[34mCompiling server with Bun...\x1b[0m')
-  await $`bun build --compile --production --minify --minify-syntax --target bun --bundle --define ${defineDriveId} --define ${defineDriveSecret} ./src/index.ts --outfile ${outfile}`
+  await $`bun build --compile --production --minify --minify-syntax --target bun --bundle ./src/index.ts --outfile ${outfile}`
 
   console.log('\x1b[32mDone! Binary created at:\x1b[0m', outfile)
 }

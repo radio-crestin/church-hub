@@ -1,15 +1,14 @@
-# YouTube OAuth Worker
+# Google OAuth Worker
 
-A Cloudflare Worker that handles YouTube OAuth authentication for the ChurchHub app.
-
-> Note: Google Drive database backup uses a **separate, self-contained OAuth
-> flow** in the desktop app (local loopback with its own Google Cloud OAuth
-> client) — it does NOT go through this worker. See the app's backup feature and
-> `app/apps/server/.env.sample` for setup.
+A Cloudflare Worker that handles Google OAuth authentication for the ChurchHub
+app — both the **YouTube** (livestream) and **Google Drive** (database backup)
+flows. Both flows share the SAME Google OAuth client
+(`YOUTUBE_CLIENT_ID`/`YOUTUBE_CLIENT_SECRET`); they differ only in scopes and
+callback URI, so the app ships with **no embedded Google credentials**.
 
 ## Overview
 
-This worker provides a stateless OAuth flow for YouTube authentication using:
+This worker provides a stateless OAuth flow using:
 - **PKCE** (Proof Key for Code Exchange) for enhanced security
 - **Encrypted cookies** for state management (no database required)
 - **AES-256-GCM** encryption for cookie security
@@ -18,9 +17,17 @@ This worker provides a stateless OAuth flow for YouTube authentication using:
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/auth/youtube` | GET | Initiates OAuth flow, redirects to Google |
-| `/auth/youtube/callback` | GET | Handles Google callback, returns tokens |
+| `/auth/youtube` | GET | Initiates the YouTube OAuth flow, redirects to Google |
+| `/auth/youtube/callback` | GET | Handles Google callback, returns tokens (+ channel info) |
+| `/auth/youtube/refresh` | POST | Refreshes a YouTube access token |
+| `/auth/drive` | GET | Initiates the Drive backup OAuth flow (`drive.appdata` + identity scopes) |
+| `/auth/drive/callback` | GET | Handles Google callback, returns tokens (+ account email) |
+| `/auth/drive/refresh` | POST | Refreshes a Drive access token |
 | `/health` | GET | Health check endpoint |
+
+> Drive setup: enable the **Google Drive API** in the same Google Cloud project
+> and register `https://churchub-backend.radiocrestin.ro/auth/drive/callback`
+> as an additional authorized redirect URI on the SAME OAuth client.
 
 ## Google Cloud Console Setup
 

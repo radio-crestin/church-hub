@@ -3,6 +3,10 @@ export interface Bindings {
   YOUTUBE_CLIENT_SECRET: string
   YOUTUBE_REDIRECT_URI: string
   YOUTUBE_SCOPE: string
+  // Google Drive backup flow — reuses the same Google OAuth client as YouTube
+  // (YOUTUBE_CLIENT_ID/SECRET); only the scopes and callback URI differ.
+  DRIVE_SCOPE: string
+  DRIVE_REDIRECT_URI: string
   COOKIE_ENCRYPTION_KEY: string
   COOKIE_NAME: string
   COOKIE_MAX_AGE: number
@@ -33,4 +37,6 @@ export interface TokenResult {
   expiresAt: number
   channelId?: string
   channelName?: string
+  /** Connected Google account email (Drive flow). */
+  email?: string
 }

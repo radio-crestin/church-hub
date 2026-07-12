@@ -1,7 +1,7 @@
 import { fetcher } from '~/utils/fetcher'
 
 export interface BackupStatus {
-  /** The Drive OAuth client is configured on this build. */
+  /** Always true — OAuth goes through the ChurchHub worker (kept for API compat). */
   configured: boolean
   /** A Google account is connected for backups. */
   connected: boolean
@@ -56,9 +56,9 @@ export async function getBackupStatus(): Promise<BackupStatus> {
 }
 
 /**
- * Starts the Google Drive connect flow and returns the authorization URL to open
- * in a browser (or copy into a private window). `error` is 'not_configured' when
- * the Drive OAuth client isn't set up on this build.
+ * Starts the Google Drive connect flow and returns the authorization URL (on
+ * the ChurchHub OAuth worker) to open in a browser, or copy into a private
+ * window.
  */
 export async function connectGoogleDrive(): Promise<{
   authUrl?: string

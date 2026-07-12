@@ -825,4 +825,53 @@ test.describe('Song editing layout preference', () => {
       await request.delete(`/api/songs/${created.id}`)
     }
   })
+
+  test('presenter remote keys (PageDown/PageUp/Space) move the stage', async ({
+    page,
+    request,
+  }) => {
+    const createResponse = await request.post('/api/songs', {
+      data: {
+        title: `E2E Remote ${Date.now()}`,
+        slides: [
+          { content: 'First slide', sortOrder: 0 },
+          { content: 'Second slide', sortOrder: 1 },
+          { content: 'Third slide', sortOrder: 2 },
+        ],
+      },
+    })
+    expect(createResponse.status()).toBe(201)
+    const { data: created } = await createResponse.json()
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${created.id}`)
+      await page.waitForLoadState('networkidle')
+
+      const thumbs = page.getByTestId('stage-thumbnail')
+      await expect(thumbs).toHaveCount(3, { timeout: 10000 })
+
+      // Present, then drive with the keys a Logitech clicker emits.
+      await page.getByTestId('stage-present').click()
+      await expect(page.getByTestId('stage-hide')).toBeVisible({
+        timeout: 10000,
+      })
+      await expect(thumbs.nth(0)).toHaveAttribute('aria-current', 'true')
+
+      await page.keyboard.press('PageDown')
+      await expect(thumbs.nth(1)).toHaveAttribute('aria-current', 'true')
+
+      await page.keyboard.press('Space')
+      await expect(thumbs.nth(2)).toHaveAttribute('aria-current', 'true')
+
+      await page.keyboard.press('PageUp')
+      await expect(thumbs.nth(1)).toHaveAttribute('aria-current', 'true')
+
+      await page.getByTestId('stage-hide').click()
+    } finally {
+      await request.delete(`/api/songs/${created.id}`)
+    }
+  })
 })

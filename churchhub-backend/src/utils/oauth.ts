@@ -5,6 +5,9 @@ interface BuildAuthUrlParams {
   redirectUri: string
   codeChallenge: string
   scope: string
+  /** OAuth prompt value — defaults to 'consent'; the Drive flow passes
+   * 'select_account consent' so the user can pick the account. */
+  prompt?: string
 }
 
 /**
@@ -19,7 +22,7 @@ export function buildAuthUrl(params: BuildAuthUrlParams): string {
   url.searchParams.set('code_challenge', params.codeChallenge)
   url.searchParams.set('code_challenge_method', 'S256')
   url.searchParams.set('access_type', 'offline')
-  url.searchParams.set('prompt', 'consent')
+  url.searchParams.set('prompt', params.prompt || 'consent')
   return url.toString()
 }
 

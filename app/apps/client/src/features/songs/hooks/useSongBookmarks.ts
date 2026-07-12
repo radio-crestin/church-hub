@@ -5,6 +5,7 @@ import {
   addBookmark,
   clearBookmarks,
   getBookmarks,
+  markBookmarkSung,
   removeBookmark,
   reorderBookmarks,
   type SongBookmark,
@@ -49,6 +50,41 @@ export function useClearBookmarks() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: SONG_BOOKMARKS_QUERY_KEY })
       queryClient.invalidateQueries({ queryKey: BOOKMARK_NOTES_QUERY_KEY })
+    },
+  })
+}
+
+export function useMarkBookmarkSung() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ songId, isSung }: { songId: number; isSung: boolean }) =>
+      markBookmarkSung(songId, isSung),
+    // Optimistic toggle so the button feels instant.
+    onMutate: async ({ songId, isSung }) => {
+      await queryClient.cancelQueries({ queryKey: SONG_BOOKMARKS_QUERY_KEY })
+      const previous = queryClient.getQueryData<SongBookmark[]>(
+        SONG_BOOKMARKS_QUERY_KEY,
+      )
+      if (previous) {
+        queryClient.setQueryData<SongBookmark[]>(
+          SONG_BOOKMARKS_QUERY_KEY,
+          previous.map((b) =>
+            b.songId === songId
+              ? { ...b, isSung, sungAt: isSung ? Date.now() : null }
+              : b,
+          ),
+        )
+      }
+      return { previous }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(SONG_BOOKMARKS_QUERY_KEY, context.previous)
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: SONG_BOOKMARKS_QUERY_KEY })
     },
   })
 }

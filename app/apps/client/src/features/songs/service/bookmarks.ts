@@ -8,6 +8,10 @@ export interface SongBookmark {
   songKeyLine: string | null
   songTagNames: string[]
   sortOrder: number
+  /** Manual "already sung" marker toggled from the bookmarks list. */
+  isSung: boolean
+  /** When it was marked sung (ms epoch), or null. */
+  sungAt: number | null
   createdAt: number
 }
 
@@ -44,6 +48,21 @@ export async function clearBookmarks(): Promise<boolean> {
   const response = await fetcher<{ success: boolean }>('/api/song-bookmarks', {
     method: 'DELETE',
   })
+  return response.success ?? false
+}
+
+export async function markBookmarkSung(
+  songId: number,
+  isSung: boolean,
+): Promise<boolean> {
+  const response = await fetcher<{ success: boolean }>(
+    `/api/song-bookmarks/${songId}/sung`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isSung }),
+    },
+  )
   return response.success ?? false
 }
 

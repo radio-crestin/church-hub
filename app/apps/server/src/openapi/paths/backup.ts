@@ -35,10 +35,10 @@ export const backupPaths: Record<string, Record<string, unknown>> = {
       tags: ['Backup'],
       summary: 'Start the Google Drive connect flow',
       description:
-        'Generates PKCE + state (kept server-side) and returns the Google authorization URL for the app to open in a browser. Only accessible from localhost.',
+        "Returns the ChurchHub OAuth worker's /auth/drive URL for the app to open in a browser. The worker holds the Google client credentials (PKCE against Google happens there) and redirects back to /api/backup/google/callback with the tokens. Only accessible from localhost.",
       responses: {
         '200': {
-          description: 'Authorization URL',
+          description: 'Authorization URL (on the OAuth worker)',
           content: {
             'application/json': {
               schema: {
@@ -53,17 +53,6 @@ export const backupPaths: Record<string, Record<string, unknown>> = {
             },
           },
         },
-        '400': {
-          description: 'Drive OAuth client not configured on this build',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: { error: { type: 'string' } },
-              },
-            },
-          },
-        },
         '403': localhostError,
       },
     },
@@ -71,12 +60,19 @@ export const backupPaths: Record<string, Record<string, unknown>> = {
   '/api/backup/google/callback': {
     get: {
       tags: ['Backup'],
-      summary: 'Google Drive OAuth loopback callback',
+      summary: 'Google Drive OAuth callback (from the OAuth worker)',
       description:
-        'The redirect target Google returns to after consent. Exchanges the code for tokens and stores the connection, then returns a small HTML page. Not called directly by clients.',
+        'The redirect target the ChurchHub OAuth worker returns to after Google authorization. Persists the tokens and returns a small HTML page. Not called directly by clients.',
       parameters: [
-        { name: 'code', in: 'query', schema: { type: 'string' } },
-        { name: 'state', in: 'query', schema: { type: 'string' } },
+        { name: 'accessToken', in: 'query', schema: { type: 'string' } },
+        { name: 'refreshToken', in: 'query', schema: { type: 'string' } },
+        {
+          name: 'expiresAt',
+          in: 'query',
+          schema: { type: 'integer' },
+          description: 'Access-token expiry (ms epoch)',
+        },
+        { name: 'email', in: 'query', schema: { type: 'string' } },
         { name: 'error', in: 'query', schema: { type: 'string' } },
       ],
       responses: {

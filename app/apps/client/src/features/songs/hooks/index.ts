@@ -36,6 +36,7 @@ export { useSong } from './useSong'
 export {
   useAddBookmark,
   useClearBookmarks,
+  useMarkBookmarkSung,
   useRemoveBookmark,
   useReorderBookmarks,
   useSongBookmarks,

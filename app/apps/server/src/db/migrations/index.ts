@@ -7,7 +7,9 @@ import { addCloseOnEscape } from './add-close-on-escape'
 import { addLastPresentedAt } from './add-last-presented-at'
 import { addLogsPermissions } from './add-logs-permissions'
 import { addPreviewScreen } from './add-preview-screen'
+import { addSongBookmarkSung } from './add-song-bookmark-sung'
 import { addSongGroups } from './add-song-groups'
+import { addSongSlideNotes } from './add-song-slide-notes'
 import { addSongVersionsPermissions } from './add-song-versions-permissions'
 import { addUserAuthFields } from './add-user-auth-fields'
 import { dropSongKeyColumn } from './drop-song-key-column'
@@ -279,6 +281,20 @@ export function runMigrations(
   // Add backup_config table for the Google Drive backup feature
   runStep('add_backup_config', 'Running add backup_config migration', () =>
     addBackupConfig(rawDb),
+  )
+
+  // Add notes column to song_slides (per-slide speaker notes).
+  runStep(
+    'add_song_slide_notes',
+    'Running add song_slide notes migration',
+    () => addSongSlideNotes(rawDb),
+  )
+
+  // Add is_sung/sung_at to song_bookmarks (manual "already sung" marker).
+  runStep(
+    'add_song_bookmark_sung',
+    'Running add song_bookmark sung migration',
+    () => addSongBookmarkSung(rawDb),
   )
 
   return { ftsRecreated: ftsCreated }

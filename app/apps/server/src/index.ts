@@ -281,6 +281,7 @@ import {
   exportBookmarksAsText,
   getBookmarkNotes,
   getBookmarks,
+  markBookmarkSung,
   removeBookmark,
   removeBookmarkNote,
   reorderBookmarkItems,
@@ -2169,7 +2170,9 @@ async function startRealServer(): Promise<void> {
         )
       }
 
-      // GET /api/backup/google/connect - Start the Drive connect flow
+      // GET /api/backup/google/connect - Start the Drive connect flow. Returns
+      // the ChurchHub OAuth worker's /auth/drive URL (the worker holds the
+      // Google client credentials and redirects back here with the tokens).
       if (
         req.method === 'GET' &&
         url.pathname === '/api/backup/google/connect'
@@ -2177,16 +2180,7 @@ async function startRealServer(): Promise<void> {
         const guard = backupLocalhostGuard()
         if (guard) return guard
 
-        const result = await createDriveAuthUrl()
-        if ('error' in result) {
-          return handleCors(
-            req,
-            new Response(JSON.stringify({ error: result.error }), {
-              status: 400,
-              headers: { 'Content-Type': 'application/json' },
-            }),
-          )
-        }
+        const result = createDriveAuthUrl()
         return handleCors(
           req,
           new Response(JSON.stringify({ data: { authUrl: result.authUrl } }), {
@@ -2195,14 +2189,17 @@ async function startRealServer(): Promise<void> {
         )
       }
 
-      // GET /api/backup/google/callback - Loopback OAuth callback (browser lands here)
+      // GET /api/backup/google/callback - The OAuth worker redirects the
+      // browser here with the tokens once Google authorization completes.
       if (
         req.method === 'GET' &&
         url.pathname === '/api/backup/google/callback'
       ) {
         const oauthError = url.searchParams.get('error')
-        const code = url.searchParams.get('code')
-        const state = url.searchParams.get('state')
+        const accessToken = url.searchParams.get('accessToken')
+        const refreshToken = url.searchParams.get('refreshToken')
+        const expiresAt = Number(url.searchParams.get('expiresAt'))
+        const email = url.searchParams.get('email') ?? undefined
 
         const renderPage = (title: string, message: string) =>
           handleCors(
@@ -2216,11 +2213,16 @@ async function startRealServer(): Promise<void> {
         if (oauthError) {
           return renderPage('Backup', `Authorization failed: ${oauthError}`)
         }
-        if (!code || !state) {
-          return renderPage('Backup', 'Missing authorization code or state.')
+        if (!accessToken || !refreshToken) {
+          return renderPage('Backup', 'Missing tokens in callback.')
         }
 
-        const result = await completeDriveAuth(code, state)
+        const result = await completeDriveAuth({
+          accessToken,
+          refreshToken,
+          expiresAt,
+          email,
+        })
         if (!result.success) {
           return renderPage('Backup', `Authorization failed: ${result.error}`)
         }
@@ -6898,6 +6900,38 @@ async function startRealServer(): Promise<void> {
               headers: { 'Content-Type': 'application/json' },
             }),
           )
+        }
+      }
+
+      // PUT /api/song-bookmarks/:songId/sung - Toggle the "already sung" marker
+      {
+        const sungMatch = url.pathname.match(
+          /^\/api\/song-bookmarks\/(\d+)\/sung$/,
+        )
+        if (req.method === 'PUT' && sungMatch) {
+          const permError = checkPermission('songs.view')
+          if (permError) return permError
+
+          const songId = Number(sungMatch[1])
+          try {
+            const body = (await req.json()) as { isSung: boolean }
+            const result = markBookmarkSung(songId, Boolean(body.isSung))
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ success: result.success }), {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          } catch {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Invalid request body' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
         }
       }
 

@@ -12,6 +12,7 @@ export {
   addBookmark,
   clearBookmarks,
   getBookmarks,
+  markBookmarkSung,
   removeBookmark,
   reorderBookmarks,
   type SongBookmark,

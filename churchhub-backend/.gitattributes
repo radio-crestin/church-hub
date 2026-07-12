@@ -1,0 +1,3 @@
+# Cloudflare worker: bash + wrangler + esbuild all choke on CRLF — force LF
+# regardless of core.autocrlf on the developer machine.
+* text=auto eol=lf

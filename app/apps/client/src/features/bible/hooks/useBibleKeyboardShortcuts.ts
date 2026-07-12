@@ -67,14 +67,19 @@ export function useBibleKeyboardShortcuts({
       }
 
       switch (event.key) {
+        // PageDown/PageUp and Space are emitted by physical presenter remotes
+        // (e.g. Logitech clickers); bind them alongside the arrows.
         case 'ArrowDown':
         case 'ArrowRight':
+        case 'PageDown':
+        case ' ':
           event.preventDefault()
           onNextVerse()
           return true
 
         case 'ArrowUp':
         case 'ArrowLeft':
+        case 'PageUp':
           event.preventDefault()
           onPreviousVerse()
           return true

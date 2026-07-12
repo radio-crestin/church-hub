@@ -555,6 +555,7 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
               chords: slide.chords ? JSON.stringify(slide.chords) : null,
               sortOrder: slide.sortOrder,
               label: slide.label ?? null,
+              notes: slide.notes ?? null,
               updatedAt: now,
             })
             .where(eq(songSlides.id, slide.id as number))
@@ -569,6 +570,7 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
               chords: slide.chords ? JSON.stringify(slide.chords) : null,
               sortOrder: slide.sortOrder,
               label: slide.label ?? null,
+              notes: slide.notes ?? null,
               createdAt: now,
               updatedAt: now,
             })

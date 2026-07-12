@@ -47,7 +47,12 @@
     "editModeOn": "Editing",
     "editModeOff": "Navigate",
     "projectSlide": "Show this slide on screen",
-    "toggleLayout": "Toggle PowerPoint layout"
+    "toggleLayout": "Toggle PowerPoint layout",
+    "notes": {
+      "title": "Notes",
+      "placeholder": "Notes for this slide…",
+      "resize": "Drag to resize"
+    }
   },
   "editorLayout": {
     "title": "Editing layout",
@@ -165,7 +170,12 @@
     "exportEmpty": "Nothing to export",
     "focusPresentedSong": "Go to displayed song",
     "expand": "Expand",
-    "collapse": "Collapse"
+    "collapse": "Collapse",
+    "markSung": "Mark as sung",
+    "markNotSung": "Mark as not sung",
+    "filterAll": "All",
+    "filterPending": "Pending",
+    "filterSung": "Sung"
   },
   "noSongs": "No songs yet",
   "noSongsDescription": "Create your first song to get started",

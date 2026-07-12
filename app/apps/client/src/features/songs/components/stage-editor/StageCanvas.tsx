@@ -19,6 +19,10 @@ interface StageCanvasProps {
    * page) the canvas is simply always editable.
    */
   clickToEdit?: boolean
+  /** Fit the canvas within the available height (letterboxed) instead of
+   * sizing purely by width — lets the stage shrink so a notes panel below it
+   * can grow. */
+  fitHeight?: boolean
   onEditText: (plainText: string) => void
 }
 
@@ -45,6 +49,7 @@ export function StageCanvas({
   previewContent,
   canEdit,
   clickToEdit = false,
+  fitHeight = false,
   onEditText,
 }: StageCanvasProps) {
   const { t } = useTranslation('songs')
@@ -117,24 +122,46 @@ export function StageCanvas({
 
   const framed = clickToEdit && editing
 
+  // Vertical space to reserve inside the stage zone below the black box: the
+  // nav row + this frame's padding/border, plus the edit-hint line while
+  // editing. Reserving it keeps the nav (and the notes footer below it) from
+  // being overlapped — the stage just shrinks a little instead.
+  const fitReserve = framed ? 112 : 76
+  const boxStyle: React.CSSProperties | undefined = fitHeight
+    ? {
+        maxHeight: `calc(100cqh - ${fitReserve}px)`,
+        width: `min(calc(100cqw - 24px), calc((100cqh - ${fitReserve}px) * 16 / 9))`,
+      }
+    : undefined
+
   return (
-    <div className="w-full">
+    <div
+      className={
+        fitHeight ? 'flex w-full shrink-0 flex-col items-center' : 'w-full'
+      }
+    >
       {/* Outer frame: reserves the padding + border ring at all times (so
           toggling edit never reflows the slide) and only colours the frame
-          while editing, leaving a clear gap around the black canvas. */}
+          while editing. In fit-height mode it hugs the black box (content
+          width, centred) so the edit border sits uniformly around the canvas,
+          and the box sizes to the largest 16:9 that fits within the enclosing
+          size container minus the reserved footer space. */}
       <div
         ref={stageRef}
         onMouseDown={handleMouseDown}
         onBlur={handleBlur}
         data-editing={framed ? 'true' : 'false'}
-        className={`w-full rounded-2xl border-2 p-2 transition-colors ${
+        className={`rounded-2xl border-2 p-2 transition-colors ${
           canEdit ? 'cursor-text' : ''
-        } ${framed ? 'border-indigo-500 bg-indigo-500/10' : 'border-transparent'}`}
+        } ${framed ? 'border-indigo-500 bg-indigo-500/10' : 'border-transparent'} ${
+          fitHeight ? 'flex w-fit items-center justify-center' : 'w-full'
+        }`}
       >
         <div
-          className={`relative w-full aspect-video rounded-lg overflow-hidden shadow-lg bg-black ${
+          style={boxStyle}
+          className={`relative aspect-video rounded-lg overflow-hidden shadow-lg bg-black ${
             showEditor ? '' : 'select-none'
-          }`}
+          } ${fitHeight ? '' : 'w-full'}`}
         >
           <ScreenPreview
             screen={screen}
@@ -149,7 +176,7 @@ export function StageCanvas({
         </div>
       </div>
       {framed && (
-        <p className="mt-2 text-center text-xs text-indigo-500 dark:text-indigo-400">
+        <p className="mt-2 shrink-0 text-center text-xs text-indigo-500 dark:text-indigo-400">
           {t('stageEditor.editHint')}
         </p>
       )}
