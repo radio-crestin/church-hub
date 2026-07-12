@@ -36,8 +36,10 @@ export function SlideNotesPanel({
   disabled,
 }: SlideNotesPanelProps) {
   const { t } = useTranslation('songs')
+  // Collapsed by default; only expanded once the operator opens it (and then
+  // that choice sticks per device).
   const [collapsed, setCollapsed] = useState(
-    () => localStorage.getItem(COLLAPSED_KEY) === 'true',
+    () => localStorage.getItem(COLLAPSED_KEY) !== 'false',
   )
   const [height, setHeight] = useState(() => {
     const saved = Number(localStorage.getItem(HEIGHT_KEY))

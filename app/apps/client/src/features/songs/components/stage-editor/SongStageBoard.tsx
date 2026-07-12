@@ -151,10 +151,16 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
   }, [presentSong, song.id, bumpNav])
 
   const handlePrev = useCallback(async () => {
-    if (!canNavigatePrev) return
-    if (isPresenting) await navigateTemporary.mutateAsync({ direction: 'prev' })
-    bumpNav(-1)
-  }, [canNavigatePrev, isPresenting, navigateTemporary, bumpNav])
+    if (isPresenting) {
+      // Server clamps prev at the first slide (never closes), so don't gate on
+      // the local slide index — a fast next→prev on a presenter remote would
+      // otherwise no-op before the local index caught up.
+      await navigateTemporary.mutateAsync({ direction: 'prev' })
+      bumpNav(-1)
+      return
+    }
+    if (slides.length > 1) bumpNav(-1)
+  }, [isPresenting, navigateTemporary, bumpNav, slides.length])
 
   const handleNext = useCallback(async () => {
     if (!canNavigateNext) return
@@ -285,46 +291,47 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
           onSlidesChange={setSlides}
           fillHeight
           canvasFooter={
-            /* Presentation navigation sits under the canvas only, not the
+            <>
+              {/* Presentation navigation sits under the canvas only, not the
                filmstrip — advance/retreat the live slide. The session clock is
-               pinned bottom-right of the canvas column. */
-            <div className="relative flex items-center justify-center gap-3 pt-3 shrink-0">
-              <button
-                type="button"
-                onClick={handlePrev}
-                disabled={!canNavigatePrev || navigateTemporary.isPending}
-                className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
-                data-testid="stage-prev"
-              >
-                <ChevronLeft size={20} />
-                <span className="text-sm">{t('bible:controls.prev')}</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleNext}
-                disabled={!canNavigateNext || navigateTemporary.isPending}
-                className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
-                data-testid="stage-next"
-              >
-                <span className="text-sm">{t('bible:controls.next')}</span>
-                <ChevronRight size={20} />
-              </button>
-              <div className="absolute right-0 top-1/2 -translate-y-1/2">
-                <StageTimer />
+               pinned bottom-right of the canvas column. */}
+              <div className="relative flex items-center justify-center gap-3 pt-3 shrink-0">
+                <button
+                  type="button"
+                  onClick={handlePrev}
+                  disabled={!canNavigatePrev || navigateTemporary.isPending}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
+                  data-testid="stage-prev"
+                >
+                  <ChevronLeft size={20} />
+                  <span className="text-sm">{t('bible:controls.prev')}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  disabled={!canNavigateNext || navigateTemporary.isPending}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
+                  data-testid="stage-next"
+                >
+                  <span className="text-sm">{t('bible:controls.next')}</span>
+                  <ChevronRight size={20} />
+                </button>
+                <div className="absolute right-0 top-1/2 -translate-y-1/2">
+                  <StageTimer />
+                </div>
               </div>
-            </div>
+
+              {/* Speaker notes for the selected slide, under the canvas column
+                  (collapsed by default). */}
+              <SlideNotesPanel
+                slideNumber={activeIndex + 1}
+                note={activeNote}
+                onChange={handleNoteChange}
+              />
+            </>
           }
         />
       </div>
-
-      {/* Speaker notes for the selected slide, pinned below the editor so it
-          stays visible and resizable whatever the filmstrip/column layout —
-          the editor area above shrinks (and scrolls) as the panel grows. */}
-      <SlideNotesPanel
-        slideNumber={activeIndex + 1}
-        note={activeNote}
-        onChange={handleNoteChange}
-      />
     </div>
   )
 }
