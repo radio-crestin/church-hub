@@ -281,6 +281,7 @@ import {
   exportBookmarksAsText,
   getBookmarkNotes,
   getBookmarks,
+  markBookmarkSung,
   removeBookmark,
   removeBookmarkNote,
   reorderBookmarkItems,
@@ -6898,6 +6899,38 @@ async function startRealServer(): Promise<void> {
               headers: { 'Content-Type': 'application/json' },
             }),
           )
+        }
+      }
+
+      // PUT /api/song-bookmarks/:songId/sung - Toggle the "already sung" marker
+      {
+        const sungMatch = url.pathname.match(
+          /^\/api\/song-bookmarks\/(\d+)\/sung$/,
+        )
+        if (req.method === 'PUT' && sungMatch) {
+          const permError = checkPermission('songs.view')
+          if (permError) return permError
+
+          const songId = Number(sungMatch[1])
+          try {
+            const body = (await req.json()) as { isSung: boolean }
+            const result = markBookmarkSung(songId, Boolean(body.isSung))
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ success: result.success }), {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          } catch {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Invalid request body' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
         }
       }
 

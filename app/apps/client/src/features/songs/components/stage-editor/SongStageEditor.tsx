@@ -36,6 +36,9 @@ interface SongStageEditorProps {
   clickToEdit?: boolean
   /** Project a slide to the screen by its index, without moving the editor. */
   onProjectSlide?: (index: number) => void
+  /** Notifies the parent which slide is currently selected on the canvas, so it
+   * can render per-slide UI (e.g. the speaker-notes panel) below the canvas. */
+  onActiveSlideChange?: (index: number) => void
   /** Rendered under the canvas column only (e.g. presentation nav buttons). */
   canvasFooter?: React.ReactNode
   /** Fill the parent's height (filmstrip runs to the bottom). Needs a bounded
@@ -65,6 +68,7 @@ export function SongStageEditor({
   editable = true,
   clickToEdit = false,
   onProjectSlide,
+  onActiveSlideChange,
   canvasFooter,
   fillHeight = false,
   onSlidesChange,
@@ -165,6 +169,12 @@ export function SongStageEditor({
 
   const effectiveIndex = activeIndex < 0 ? 0 : activeIndex
   const effectiveSongId = songId ?? 0
+
+  // Surface the selected slide to the parent (for the notes panel below the
+  // canvas), keyed on the effective index so it also fires on first mount.
+  useEffect(() => {
+    onActiveSlideChange?.(effectiveIndex)
+  }, [effectiveIndex, onActiveSlideChange])
 
   // Keep the active thumbnail in view as navigation advances (e.g. a long song
   // in PowerPoint mode): scroll the filmstrip column only when the active slide

@@ -4,6 +4,7 @@ export { clearBookmarks } from './clearBookmarks'
 export { exportBookmarksAsText } from './exportBookmarks'
 export { getBookmarkNotes } from './getBookmarkNotes'
 export { getBookmarks } from './getBookmarks'
+export { markBookmarkSung } from './markBookmarkSung'
 export { removeBookmark } from './removeBookmark'
 export { removeBookmarkNote } from './removeBookmarkNote'
 export {

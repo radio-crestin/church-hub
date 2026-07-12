@@ -39,6 +39,7 @@ import {
   useBookmarkNotes,
   useClearBookmarks,
   useExportBookmarksAsText,
+  useMarkBookmarkSung,
   useRemoveBookmark,
   useRemoveBookmarkNote,
   useReorderBookmarkItems,
@@ -61,6 +62,7 @@ interface SortableBookmarkItemProps {
   isActive: boolean
   onSelect: () => void
   onRemove: () => void
+  onToggleSung: () => void
 }
 
 function SortableBookmarkItem({
@@ -68,7 +70,9 @@ function SortableBookmarkItem({
   isActive,
   onSelect,
   onRemove,
+  onToggleSung,
 }: SortableBookmarkItemProps) {
+  const { t } = useTranslation('songs')
   const uniqueId = `song-${bookmark.id}`
   const {
     attributes,
@@ -111,10 +115,33 @@ function SortableBookmarkItem({
 
       <button
         type="button"
+        onClick={onToggleSung}
+        aria-pressed={bookmark.isSung}
+        title={
+          bookmark.isSung ? t('bookmarks.markNotSung') : t('bookmarks.markSung')
+        }
+        data-testid="bookmark-sung-toggle"
+        className={`flex-shrink-0 flex h-5 w-5 items-center justify-center rounded-full border transition-colors ${
+          bookmark.isSung
+            ? 'border-green-500 bg-green-500 text-white'
+            : 'border-gray-300 dark:border-gray-600 text-transparent hover:border-green-400 hover:text-green-400'
+        }`}
+      >
+        <Check size={12} strokeWidth={3} />
+      </button>
+
+      <button
+        type="button"
         onClick={onSelect}
         className="flex-1 min-w-0 text-left py-1.5 pr-1"
       >
-        <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
+        <div
+          className={`text-sm font-medium truncate ${
+            bookmark.isSung
+              ? 'text-gray-400 line-through dark:text-gray-500'
+              : 'text-gray-900 dark:text-white'
+          }`}
+        >
           {bookmark.songTitle}
         </div>
         {(bookmark.songCategoryName || bookmark.songKeyLine) && (
@@ -318,12 +345,17 @@ export function SongBookmarksPanel({
   const { data: notes = [] } = useBookmarkNotes()
   const clearBookmarksMutation = useClearBookmarks()
   const removeBookmarkMutation = useRemoveBookmark()
+  const markSungMutation = useMarkBookmarkSung()
   const reorderItemsMutation = useReorderBookmarkItems()
   const addNoteMutation = useAddBookmarkNote()
   const updateNoteMutation = useUpdateBookmarkNote()
   const removeNoteMutation = useRemoveBookmarkNote()
   const exportMutation = useExportBookmarksAsText()
   const [searchQuery, setSearchQuery] = useState('')
+  // Filter the song bookmarks by their "already sung" state.
+  const [sungFilter, setSungFilter] = useState<'all' | 'sung' | 'pending'>(
+    'all',
+  )
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [isAddingNote, setIsAddingNote] = useState(false)
   const [newNoteContent, setNewNoteContent] = useState('')
@@ -363,9 +395,16 @@ export function SongBookmarksPanel({
   const unifiedItems = localOrder ?? serverItems
 
   const filteredItems = useMemo(() => {
-    if (!searchQuery.trim()) return unifiedItems
-    const q = searchQuery.toLowerCase()
+    const q = searchQuery.trim().toLowerCase()
     return unifiedItems.filter((item) => {
+      // Sung filter applies to song bookmarks only; notes show only in "all".
+      if (sungFilter !== 'all') {
+        if (item.type !== 'song') return false
+        const sung = item.bookmark?.isSung ?? false
+        if (sungFilter === 'sung' && !sung) return false
+        if (sungFilter === 'pending' && sung) return false
+      }
+      if (!q) return true
       if (item.type === 'note') {
         return item.note?.content.toLowerCase().includes(q)
       }
@@ -377,7 +416,24 @@ export function SongBookmarksPanel({
         b?.songTagNames?.some((name) => name.toLowerCase().includes(q))
       )
     })
-  }, [unifiedItems, searchQuery])
+  }, [unifiedItems, searchQuery, sungFilter])
+
+  // Counts for the filter chips (song bookmarks only).
+  const sungCount = useMemo(
+    () => bookmarks.filter((b) => b.isSung).length,
+    [bookmarks],
+  )
+  const pendingCount = bookmarks.length - sungCount
+
+  const handleToggleSung = useCallback(
+    (bookmark: SongBookmark) => {
+      markSungMutation.mutate({
+        songId: bookmark.songId,
+        isSung: !bookmark.isSung,
+      })
+    },
+    [markSungMutation],
+  )
 
   const totalCount = bookmarks.length + notes.length
 
@@ -483,6 +539,9 @@ export function SongBookmarksPanel({
   }, [exportMutation])
 
   const isSearching = searchQuery.trim().length > 0
+  // Any active filter (search or sung state) switches the list to a plain
+  // filtered render (drag-to-reorder is only meaningful on the full list).
+  const isFiltering = isSearching || sungFilter !== 'all'
 
   const renderItem = (item: BookmarkListItem) => {
     if (item.type === 'note' && item.note) {
@@ -503,6 +562,7 @@ export function SongBookmarksPanel({
           isActive={activeSongId === item.bookmark.songId}
           onSelect={() => onSelectSong(item.bookmark!)}
           onRemove={() => handleRemoveBookmark(item.bookmark!.songId)}
+          onToggleSung={() => handleToggleSung(item.bookmark!)}
         />
       )
     }
@@ -637,6 +697,52 @@ export function SongBookmarksPanel({
             </div>
           )}
 
+          {/* Sung/pending/all filter — only when there are song bookmarks. */}
+          {bookmarks.length > 0 && (
+            <div className="px-3 py-1.5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+              <div
+                className="flex items-center gap-1 rounded-md bg-gray-100 p-0.5 dark:bg-gray-900"
+                data-testid="bookmark-sung-filter"
+              >
+                {(
+                  [
+                    {
+                      key: 'all',
+                      label: t('bookmarks.filterAll'),
+                      n: bookmarks.length,
+                    },
+                    {
+                      key: 'pending',
+                      label: t('bookmarks.filterPending'),
+                      n: pendingCount,
+                    },
+                    {
+                      key: 'sung',
+                      label: t('bookmarks.filterSung'),
+                      n: sungCount,
+                    },
+                  ] as const
+                ).map((opt) => (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    onClick={() => setSungFilter(opt.key)}
+                    aria-pressed={sungFilter === opt.key}
+                    data-testid={`bookmark-filter-${opt.key}`}
+                    className={`flex-1 rounded px-2 py-1 text-[11px] font-medium transition-colors ${
+                      sungFilter === opt.key
+                        ? 'bg-white text-amber-700 shadow-sm dark:bg-gray-700 dark:text-amber-300'
+                        : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                    }`}
+                  >
+                    {opt.label}
+                    <span className="ml-1 opacity-60">{opt.n}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Search */}
           {totalCount > 3 && (
             <div className="px-3 py-1.5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
@@ -682,7 +788,7 @@ export function SongBookmarksPanel({
               <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                 {t('bookmarks.noResults')}
               </div>
-            ) : isSearching ? (
+            ) : isFiltering ? (
               <div className="p-2 flex flex-col gap-1.5">
                 {filteredItems.map(renderItem)}
               </div>

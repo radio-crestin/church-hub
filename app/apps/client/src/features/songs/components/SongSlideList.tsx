@@ -27,6 +27,7 @@ export interface LocalSlide {
   chords?: ChordMapping[] | null
   sortOrder: number
   label?: string | null
+  notes?: string | null
 }
 
 interface SongSlideListProps {

@@ -15,6 +15,7 @@ import {
   usePresentationState,
   usePresentTemporarySong,
 } from '~/features/presentation'
+import { SlideNotesPanel } from './SlideNotesPanel'
 import { SongStageEditor } from './SongStageEditor'
 import { StageTimer } from './StageTimer'
 import { useSongKeyboardShortcuts, useUpsertSong } from '../../hooks'
@@ -35,6 +36,7 @@ function mapSlides(song: SongWithSlides): LocalSlide[] {
     chords: s.chords,
     sortOrder: s.sortOrder,
     label: s.label,
+    notes: s.notes,
   }))
 }
 
@@ -45,6 +47,7 @@ function serialize(slides: LocalSlide[]): string {
       content: s.content,
       label: s.label ?? null,
       chords: s.chords ?? null,
+      notes: s.notes ?? null,
     })),
   )
 }
@@ -66,6 +69,8 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
   const [savedSerialized, setSavedSerialized] = useState(() =>
     serialize(mapSlides(song)),
   )
+  // Which slide the canvas is on — drives the speaker-notes panel below it.
+  const [activeSlideIndex, setActiveSlideIndex] = useState(0)
 
   // Re-seed the draft only when navigating to a different song, never on the
   // refetch that follows an autosave (that would clobber in-progress edits).
@@ -96,6 +101,7 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
             chords: s.chords,
             sortOrder: idx,
             label: s.label,
+            notes: s.notes,
           })),
         },
         { onSuccess: () => setSavedSerialized(currentSerialized) },
@@ -184,6 +190,7 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
       chords: s.chords ?? null,
       sortOrder: i,
       label: s.label ?? null,
+      notes: s.notes ?? null,
       createdAt: 0,
       updatedAt: 0,
     }))
@@ -201,6 +208,20 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
       void presentSong.mutateAsync({ songId: song.id, slideIndex })
     },
     [displayIndexByPosition, presentSong, song.id],
+  )
+
+  // Speaker note for the slide currently on the canvas. Clamp the index so a
+  // deletion can't point past the end of the list.
+  const activeIndex =
+    slides.length === 0 ? 0 : Math.min(activeSlideIndex, slides.length - 1)
+  const activeNote = slides[activeIndex]?.notes ?? ''
+  const handleNoteChange = useCallback(
+    (value: string) => {
+      setSlides((prev) =>
+        prev.map((s, i) => (i === activeIndex ? { ...s, notes: value } : s)),
+      )
+    },
+    [activeIndex],
   )
 
   return (
@@ -260,37 +281,47 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
           isPresenting={isPresenting}
           clickToEdit
           onProjectSlide={handleProjectSlide}
+          onActiveSlideChange={setActiveSlideIndex}
           onSlidesChange={setSlides}
           fillHeight
           canvasFooter={
-            /* Presentation navigation sits under the canvas only, not the
+            <>
+              {/* Presentation navigation sits under the canvas only, not the
                filmstrip — advance/retreat the live slide. The session clock is
-               pinned bottom-right of the canvas column. */
-            <div className="relative flex items-center justify-center gap-3 pt-3 shrink-0">
-              <button
-                type="button"
-                onClick={handlePrev}
-                disabled={!canNavigatePrev || navigateTemporary.isPending}
-                className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
-                data-testid="stage-prev"
-              >
-                <ChevronLeft size={20} />
-                <span className="text-sm">{t('bible:controls.prev')}</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleNext}
-                disabled={!canNavigateNext || navigateTemporary.isPending}
-                className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
-                data-testid="stage-next"
-              >
-                <span className="text-sm">{t('bible:controls.next')}</span>
-                <ChevronRight size={20} />
-              </button>
-              <div className="absolute right-0 top-1/2 -translate-y-1/2">
-                <StageTimer />
+               pinned bottom-right of the canvas column. */}
+              <div className="relative flex items-center justify-center gap-3 pt-3 shrink-0">
+                <button
+                  type="button"
+                  onClick={handlePrev}
+                  disabled={!canNavigatePrev || navigateTemporary.isPending}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
+                  data-testid="stage-prev"
+                >
+                  <ChevronLeft size={20} />
+                  <span className="text-sm">{t('bible:controls.prev')}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  disabled={!canNavigateNext || navigateTemporary.isPending}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
+                  data-testid="stage-next"
+                >
+                  <span className="text-sm">{t('bible:controls.next')}</span>
+                  <ChevronRight size={20} />
+                </button>
+                <div className="absolute right-0 top-1/2 -translate-y-1/2">
+                  <StageTimer />
+                </div>
               </div>
-            </div>
+
+              {/* Speaker notes for the selected slide, below the canvas. */}
+              <SlideNotesPanel
+                slideNumber={activeIndex + 1}
+                note={activeNote}
+                onChange={handleNoteChange}
+              />
+            </>
           }
         />
       </div>
