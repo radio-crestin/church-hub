@@ -1,5 +1,21 @@
 [
   {
+    "version": "0.1.81",
+    "date": "2026-07-12T08:22:40+02:00",
+    "features": [],
+    "bugFixes": [],
+    "changes": [
+      {
+        "scope": null,
+        "message": "Google Drive database backup & restore (+ song-editor fixes, release wiring)"
+      },
+      {
+        "scope": null,
+        "message": "sync version to v0.1.80 [skip ci]"
+      }
+    ]
+  },
+  {
     "version": "0.1.80",
     "date": "2026-07-08T08:39:43+02:00",
     "features": [],
