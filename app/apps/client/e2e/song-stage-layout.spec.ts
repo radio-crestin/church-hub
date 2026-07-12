@@ -747,4 +747,82 @@ test.describe('Song editing layout preference', () => {
       await request.delete(`/api/songs/${created.id}`)
     }
   })
+
+  test('pasting text keeps the copied form without extra whitespace', async ({
+    page,
+    request,
+  }) => {
+    const createResponse = await request.post('/api/songs', {
+      data: {
+        title: `E2E Paste ${Date.now()}`,
+        slides: [{ content: 'Old content', sortOrder: 0 }],
+      },
+    })
+    expect(createResponse.status()).toBe(201)
+    const { data: created } = await createResponse.json()
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${created.id}`)
+      await page.waitForLoadState('networkidle')
+
+      await expect(page.getByTestId('stage-thumbnail')).toHaveCount(1, {
+        timeout: 10000,
+      })
+      // Enter edit mode (implicit: click the stage) and clear the slide so the
+      // paste result is deterministic.
+      await page.locator('[data-editing]').click()
+      const editable = page.getByTestId('slide-canvas-editable')
+      await expect(editable).toBeVisible()
+      await editable.click()
+      await page.keyboard.press('ControlOrMeta+a')
+      await page.keyboard.press('Delete')
+
+      // Simulate a messy paste into the empty slide: trailing spaces, a tab, and
+      // runs of blank lines between the verses (what a rich/HTML paste drags in).
+      await editable.evaluate((el) => {
+        el.focus()
+        const range = document.createRange()
+        range.selectNodeContents(el)
+        range.collapse(false)
+        const sel = window.getSelection()
+        sel?.removeAllRanges()
+        sel?.addRange(range)
+        const dt = new DataTransfer()
+        dt.setData('text/plain', 'Verse one   \n\n\n\nVerse two\t')
+        el.dispatchEvent(
+          new ClipboardEvent('paste', {
+            clipboardData: dt,
+            bubbles: true,
+            cancelable: true,
+          }),
+        )
+      })
+
+      // The persisted paste keeps the two verses with a single blank line
+      // between them.
+      await expect
+        .poll(
+          async () => {
+            const res = await request.get(`/api/songs/${created.id}`)
+            const { data } = await res.json()
+            return data.slides[0].content as string
+          },
+          { timeout: 10000 },
+        )
+        .toContain('<p>Verse one</p><p></p><p>Verse two</p>')
+
+      // No whitespace artifacts anywhere in the pasted content.
+      const res = await request.get(`/api/songs/${created.id}`)
+      const { data } = await res.json()
+      const content = data.slides[0].content as string
+      expect(content).not.toContain('\t') // no tabs
+      expect(content).not.toMatch(/ <\/p>/) // no trailing space inside a line
+      expect(content).not.toContain('<p></p><p></p>') // no run of blank lines
+    } finally {
+      await request.delete(`/api/songs/${created.id}`)
+    }
+  })
 })
