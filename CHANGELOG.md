@@ -2,6 +2,17 @@
 
 > Auto-generated from git history by `app/scripts/generate-changelog.ts`. Do not edit by hand.
 
+## v0.1.82 — 2026-07-12
+
+### 🐛 Bug Fixes
+
+- **backup**: embed Drive OAuth creds in compile.ts (final sidecar)
+
+### 🔧 Changes
+
+- sung markers, bookmark filter, slide notes + Drive OAuth via worker
+- sync version to v0.1.81 [skip ci]
+
 ## v0.1.81 — 2026-07-12
 
 ### 🔧 Changes

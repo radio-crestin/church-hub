@@ -1,5 +1,26 @@
 [
   {
+    "version": "0.1.82",
+    "date": "2026-07-12T16:57:43+02:00",
+    "features": [],
+    "bugFixes": [
+      {
+        "scope": "backup",
+        "message": "embed Drive OAuth creds in compile.ts (final sidecar)"
+      }
+    ],
+    "changes": [
+      {
+        "scope": null,
+        "message": "sung markers, bookmark filter, slide notes + Drive OAuth via worker"
+      },
+      {
+        "scope": null,
+        "message": "sync version to v0.1.81 [skip ci]"
+      }
+    ]
+  },
+  {
     "version": "0.1.81",
     "date": "2026-07-12T08:22:40+02:00",
     "features": [],
