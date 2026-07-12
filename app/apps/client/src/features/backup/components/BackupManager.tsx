@@ -80,14 +80,9 @@ export function BackupManager() {
   // blocked — hence we always show the link in a field for manual copy too.
   const handleShowLink = useCallback(async () => {
     try {
-      const { authUrl, error } = await backup.getConnectUrl()
+      const { authUrl } = await backup.getConnectUrl()
       if (!authUrl) {
-        showToast(
-          error === 'not_configured'
-            ? t('sections.backup.toast.notConfigured')
-            : t('sections.backup.toast.linkCopyFailed'),
-          'error',
-        )
+        showToast(t('sections.backup.toast.linkCopyFailed'), 'error')
         return
       }
       setConnectUrl(authUrl)
@@ -150,27 +145,6 @@ export function BackupManager() {
     },
     [backup, showToast, t],
   )
-
-  // --- Drive OAuth client not set up on this build ---
-  if (!backup.configured && !backup.isLoadingStatus) {
-    return (
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
-        <div className="flex items-start gap-3">
-          <div className="rounded-lg bg-gray-100 p-2 dark:bg-gray-700">
-            <Cloud className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-          </div>
-          <div>
-            <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-              {t('sections.backup.notConfigured.title')}
-            </h4>
-            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-              {t('sections.backup.notConfigured.description')}
-            </p>
-          </div>
-        </div>
-      </div>
-    )
-  }
 
   // --- Not connected: either first-time setup, or a session that expired ---
   if (!backup.connected && !backup.isLoadingStatus) {

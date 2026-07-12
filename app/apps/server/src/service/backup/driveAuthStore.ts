@@ -1,8 +1,16 @@
 import { eq } from 'drizzle-orm'
 
-import type { DriveTokens } from './oauth/exchangeDriveCode'
 import { getDatabase } from '../../db'
 import { googleDriveAuth } from '../../db/schema'
+
+/** Token set persisted after a successful Drive authorization. */
+export interface DriveTokens {
+  accessToken: string
+  refreshToken: string
+  /** Expiry as ms epoch. */
+  expiresAt: number
+  email?: string
+}
 
 export interface DriveAuthRecord {
   id: number

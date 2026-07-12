@@ -396,15 +396,6 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Google Drive backup OAuth credentials. Tauri's beforeBuildCommand
-          # runs apps/server compile.ts, which bakes these into the FINAL
-          # sidecar via `bun build --define`. They MUST be present on THIS step
-          # (the earlier "Compile server sidecar" step's binary is overwritten
-          # by this build). Google "Desktop app" client → secret is
-          # non-confidential (loopback/PKCE); unset → embeds "" and the feature
-          # disables gracefully.
-          GOOGLE_DRIVE_CLIENT_ID: ${{ secrets.GOOGLE_DRIVE_CLIENT_ID }}
-          GOOGLE_DRIVE_CLIENT_SECRET: ${{ secrets.GOOGLE_DRIVE_CLIENT_SECRET }}
         with:
           projectPath: app
           tauriScript: bunx tauri

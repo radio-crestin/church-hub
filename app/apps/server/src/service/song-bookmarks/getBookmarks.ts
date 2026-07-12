@@ -26,6 +26,8 @@ export function getBookmarks(): SongBookmark[] {
         songCategoryName: songCategories.name,
         songKeyLine: songs.keyLine,
         sortOrder: songBookmarks.sortOrder,
+        isSung: songBookmarks.isSung,
+        sungAt: songBookmarks.sungAt,
         createdAt: songBookmarks.createdAt,
       })
       .from(songBookmarks)
@@ -47,6 +49,8 @@ export function getBookmarks(): SongBookmark[] {
       songKeyLine: r.songKeyLine,
       songTagNames: (tagsBySongId.get(r.songId) ?? []).map((t) => t.name),
       sortOrder: r.sortOrder,
+      isSung: r.isSung,
+      sungAt: r.sungAt ? r.sungAt.getTime() : null,
       createdAt: r.createdAt.getTime(),
     }))
   } catch (error) {

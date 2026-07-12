@@ -108,6 +108,9 @@ export const songSlides = sqliteTable(
     content: text('content').notNull(),
     chords: text('chords'), // JSON array: [{wordIndex: number, chord: string}]
     label: text('label'),
+    // Free-text speaker note for this slide (PowerPoint-style "what happens on
+    // this slide"). Shown/edited in the notes panel below the stage canvas.
+    notes: text('notes'),
     sortOrder: integer('sort_order').notNull().default(0),
     createdAt: integer('created_at', { mode: 'timestamp' })
       .notNull()
@@ -134,6 +137,10 @@ export const songBookmarks = sqliteTable(
       .notNull()
       .references(() => songs.id, { onDelete: 'cascade' }),
     sortOrder: integer('sort_order').notNull().default(0),
+    // Manual "already sung" marker for the bookmarks list in the song stage
+    // view. Operators toggle it during a service to track what's been sung.
+    isSung: integer('is_sung', { mode: 'boolean' }).notNull().default(false),
+    sungAt: integer('sung_at', { mode: 'timestamp' }),
     createdAt: integer('created_at', { mode: 'timestamp' })
       .notNull()
       .default(sql`(unixepoch())`),

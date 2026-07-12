@@ -31,6 +31,7 @@ function toSongSlide(record: typeof songSlides.$inferSelect): SongSlide {
     chords,
     sortOrder: record.sortOrder,
     label: record.label,
+    notes: record.notes,
     createdAt:
       record.createdAt instanceof Date
         ? Math.floor(record.createdAt.getTime() / 1000)
@@ -156,6 +157,7 @@ export function upsertSongSlide(input: UpsertSongSlideInput): SongSlide | null {
         .set({
           content: input.content,
           label: input.label ?? null,
+          notes: input.notes ?? null,
           chords: input.chords ? JSON.stringify(input.chords) : null,
           updatedAt: sql`(unixepoch())` as unknown as Date,
         })
@@ -178,6 +180,7 @@ export function upsertSongSlide(input: UpsertSongSlideInput): SongSlide | null {
         chords: input.chords ? JSON.stringify(input.chords) : null,
         sortOrder,
         label: input.label ?? null,
+        notes: input.notes ?? null,
       })
       .returning({ id: songSlides.id })
       .get()

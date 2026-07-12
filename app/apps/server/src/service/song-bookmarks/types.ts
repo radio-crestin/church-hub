@@ -6,6 +6,10 @@ export interface SongBookmark {
   songKeyLine: string | null
   songTagNames: string[]
   sortOrder: number
+  /** Manual "already sung" marker toggled from the bookmarks list. */
+  isSung: boolean
+  /** When it was marked sung (ms epoch), or null. */
+  sungAt: number | null
   createdAt: number
 }
 

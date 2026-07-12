@@ -47,7 +47,12 @@
     "editModeOn": "Editare",
     "editModeOff": "Navigare",
     "projectSlide": "Afișează acest slide pe ecran",
-    "toggleLayout": "Comută layout PowerPoint"
+    "toggleLayout": "Comută layout PowerPoint",
+    "notes": {
+      "title": "Notițe",
+      "placeholder": "Notițe pentru acest slide…",
+      "resize": "Trage pentru redimensionare"
+    }
   },
   "editorLayout": {
     "title": "Layout editare",
@@ -165,7 +170,12 @@
     "exportEmpty": "Nimic de exportat",
     "focusPresentedSong": "Mergi la cântarea afișată",
     "expand": "Extinde",
-    "collapse": "Restrânge"
+    "collapse": "Restrânge",
+    "markSung": "Marchează drept cântată",
+    "markNotSung": "Marchează drept necântată",
+    "filterAll": "Toate",
+    "filterPending": "Rămase",
+    "filterSung": "Cântate"
   },
   "noSongs": "Nu există cântări încă",
   "noSongsDescription": "Creează prima ta cântare pentru a începe",

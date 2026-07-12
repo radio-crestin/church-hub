@@ -44,14 +44,21 @@ export function useSongKeyboardShortcuts({
       }
 
       switch (event.key) {
+        // PageDown/PageUp and Space are what physical presenter remotes
+        // (e.g. Logitech clickers) emit — bind them alongside the arrows so
+        // the remote advances the stage, and preventDefault stops the
+        // browser's default PageDown/Space scroll.
         case 'ArrowDown':
         case 'ArrowRight':
+        case 'PageDown':
+        case ' ':
           event.preventDefault()
           onNextSlide()
           return true
 
         case 'ArrowUp':
         case 'ArrowLeft':
+        case 'PageUp':
           event.preventDefault()
           onPreviousSlide()
           return true
@@ -64,5 +71,10 @@ export function useSongKeyboardShortcuts({
   )
 
   // Register with PAGE priority (higher than global presentation shortcuts)
-  useKeyboardNavigationHandler(id, KEYBOARD_PRIORITY.PAGE, handleKeyDown, enabled)
+  useKeyboardNavigationHandler(
+    id,
+    KEYBOARD_PRIORITY.PAGE,
+    handleKeyDown,
+    enabled,
+  )
 }

@@ -417,7 +417,11 @@ function SongPreviewPage() {
   }, [navigate, searchQuery, numericId, aiSearchId])
 
   const handlePrevSlide = useCallback(async () => {
-    if (presentedSlideIndex !== null && presentedSlideIndex > 0) {
+    // Don't gate on the client's (possibly-lagging) slide index — a fast
+    // next→prev on a presenter remote would otherwise no-op because the local
+    // index hasn't caught up yet. The server clamps prev at the first slide
+    // (it never closes on prev), so this is safe.
+    if (presentedSlideIndex !== null) {
       await navigateTemporary.mutateAsync({ direction: 'prev' })
     }
   }, [presentedSlideIndex, navigateTemporary])

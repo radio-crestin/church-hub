@@ -63,6 +63,8 @@ export interface SongSlide {
   chords: ChordMapping[] | null
   sortOrder: number
   label: string | null
+  /** Per-slide speaker note (PowerPoint-style). */
+  notes: string | null
   createdAt: number
   updatedAt: number
 }
@@ -79,6 +81,7 @@ export interface SlideInput {
   chords?: ChordMapping[] | null
   sortOrder: number
   label?: string | null
+  notes?: string | null
 }
 
 export interface UpsertSongInput {
@@ -111,6 +114,7 @@ export interface UpsertSlideInput {
   content: string
   sortOrder?: number
   label?: string | null
+  notes?: string | null
 }
 
 export interface UpsertCategoryInput {
