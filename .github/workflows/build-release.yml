@@ -358,14 +358,27 @@ jobs:
         id: sidecar-cache
         with:
           path: app/tauri/bin/church-hub-sidecar-${{ matrix.sidecar_suffix }}
-          key: ${{ runner.os }}-sidecar-${{ matrix.sidecar_suffix }}-${{ hashFiles('app/apps/server/src/**', 'app/apps/server/package.json') }}
+          # `drive1` namespaces the cache so the first build that embeds the
+          # Google Drive OAuth credentials can't reuse an older binary compiled
+          # without them. Bump the token if the embedded secrets ever change.
+          key: ${{ runner.os }}-sidecar-${{ matrix.sidecar_suffix }}-drive1-${{ hashFiles('app/apps/server/src/**', 'app/apps/server/package.json') }}
           restore-keys: |
-            ${{ runner.os }}-sidecar-${{ matrix.sidecar_suffix }}-
+            ${{ runner.os }}-sidecar-${{ matrix.sidecar_suffix }}-drive1-
 
       - name: Compile server sidecar
         if: steps.sidecar-cache.outputs.cache-hit != 'true'
         working-directory: app/apps/server
         shell: bash
+        env:
+          # Google Drive backup OAuth credentials. This is a Google "Desktop
+          # app" client, whose secret Google treats as non-confidential (the
+          # loopback/PKCE flow protects it), so baking it into the shipped
+          # sidecar is expected. `--define` inlines them as compile-time
+          # constants so `process.env.GOOGLE_DRIVE_*` resolves at runtime
+          # without shipping a .env. Unset secrets inline to "" and the feature
+          # disables gracefully.
+          GOOGLE_DRIVE_CLIENT_ID: ${{ secrets.GOOGLE_DRIVE_CLIENT_ID }}
+          GOOGLE_DRIVE_CLIENT_SECRET: ${{ secrets.GOOGLE_DRIVE_CLIENT_SECRET }}
         run: |
           mkdir -p ../../tauri/bin
           OUTFILE="../../tauri/bin/church-hub-sidecar-${{ matrix.sidecar_suffix }}"
@@ -376,6 +389,8 @@ jobs:
             --minify \
             --minify-syntax \
             --target ${{ matrix.bun_target }} \
+            --define "process.env.GOOGLE_DRIVE_CLIENT_ID=\"${GOOGLE_DRIVE_CLIENT_ID}\"" \
+            --define "process.env.GOOGLE_DRIVE_CLIENT_SECRET=\"${GOOGLE_DRIVE_CLIENT_SECRET}\"" \
             --outfile "$OUTFILE" \
             ./src/index.ts
 

@@ -3,6 +3,7 @@ import { useCallback, useLayoutEffect, useRef } from 'react'
 import { calculateFontSize } from './utils/calculateFontSize'
 import { getTextStyles } from './utils/getTextStyles'
 import { normalizeText } from './utils/normalizeText'
+import { sanitizePastedText } from './utils/sanitizePastedText'
 import type { TextStyle } from '../../types'
 
 interface EditableMainTextProps {
@@ -85,6 +86,36 @@ export function EditableMainText({
     onEdit(editRef.current.innerText)
   }, [fit, onEdit])
 
+  // Force a PLAIN-text paste. The browser's default paste inserts the
+  // clipboard's rich HTML (nested blocks, &nbsp;, tabs, trailing empty
+  // elements), which `innerText` then reads back as stray spaces/tabs/blank
+  // lines between verses. Insert the sanitized plain text instead so the paste
+  // keeps the copied form and nothing extra.
+  const handlePaste = useCallback(
+    (e: React.ClipboardEvent<HTMLDivElement>) => {
+      e.preventDefault()
+      const raw =
+        e.clipboardData.getData('text/plain') || e.clipboardData.getData('text')
+      const text = sanitizePastedText(raw)
+      if (!text) return
+
+      const selection = window.getSelection()
+      if (!selection || selection.rangeCount === 0) return
+      const range = selection.getRangeAt(0)
+      range.deleteContents()
+      const node = document.createTextNode(text)
+      range.insertNode(node)
+      // Drop the caret right after the inserted text.
+      range.setStartAfter(node)
+      range.collapse(true)
+      selection.removeAllRanges()
+      selection.addRange(range)
+
+      handleInput()
+    },
+    [handleInput],
+  )
+
   const textStyles = getTextStyles(style)
   const verticalAlign =
     style.verticalAlignment === 'top'
@@ -143,6 +174,7 @@ export function EditableMainText({
         spellCheck={false}
         style={editableStyle}
         onInput={handleInput}
+        onPaste={handlePaste}
       />
       {showPlaceholder && (
         <div

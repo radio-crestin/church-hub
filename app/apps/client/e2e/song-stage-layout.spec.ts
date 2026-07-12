@@ -247,7 +247,10 @@ test.describe('Song editing layout preference', () => {
       await page.addInitScript(() => {
         window.localStorage.setItem('song-editor-layout', 'powerpoint')
         // Ensure the column starts visible regardless of prior device state.
-        window.localStorage.setItem('song-detail:accordion-column-visible', 'true')
+        window.localStorage.setItem(
+          'song-detail:accordion-column-visible',
+          'true',
+        )
       })
       await page.setViewportSize({ width: 1400, height: 900 })
       await page.goto(`/songs/${created.id}`)
@@ -587,7 +590,9 @@ test.describe('Song editing layout preference', () => {
       await page.getByTestId('stage-present').click()
       await expect(timer).toBeVisible({ timeout: 10000 })
       await expect(timer).toHaveText(/\d+:\d\d/)
-      await expect.poll(readSeconds, { timeout: 5000 }).toBeGreaterThanOrEqual(1)
+      await expect
+        .poll(readSeconds, { timeout: 5000 })
+        .toBeGreaterThanOrEqual(1)
       const beforeSwitch = await readSeconds()
 
       // Open another song WITHOUT hiding — the same session keeps running
@@ -669,6 +674,153 @@ test.describe('Song editing layout preference', () => {
         timeout: 10000,
       })
       await expect(page.getByTestId('slide-canvas-editable')).toHaveCount(0)
+    } finally {
+      await request.delete(`/api/songs/${created.id}`)
+    }
+  })
+
+  test('the filmstrip auto-scrolls to keep the active slide in view', async ({
+    page,
+    request,
+  }) => {
+    // A long song whose filmstrip overflows the column, so advancing to a later
+    // slide is only visible if the column scrolls.
+    const slides = Array.from({ length: 18 }, (_, i) => ({
+      content: `Verse ${i + 1}`,
+      sortOrder: i,
+    }))
+    const createResponse = await request.post('/api/songs', {
+      data: { title: `E2E Filmstrip Scroll ${Date.now()}`, slides },
+    })
+    expect(createResponse.status()).toBe(201)
+    const { data: created } = await createResponse.json()
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${created.id}`)
+      await page.waitForLoadState('networkidle')
+
+      const scroll = page.getByTestId('stage-filmstrip-scroll')
+      await expect(scroll).toBeVisible({ timeout: 10000 })
+      await expect(page.getByTestId('stage-thumbnail')).toHaveCount(18, {
+        timeout: 10000,
+      })
+
+      // Starts at the top.
+      expect(await scroll.evaluate((el) => el.scrollTop)).toBe(0)
+
+      // Advance through the slides — the active thumbnail moves down past the
+      // fold, so the column must scroll to keep it visible.
+      const next = page.getByTestId('stage-next')
+      for (let i = 0; i < 12; i++) await next.click()
+
+      // The column scrolled down to follow the active slide.
+      await expect
+        .poll(async () => scroll.evaluate((el) => el.scrollTop), {
+          timeout: 5000,
+        })
+        .toBeGreaterThan(0)
+
+      // The active thumbnail (aria-current) ends up within the scroll viewport.
+      // Poll to let the smooth-scroll animation settle.
+      const active = page.locator(
+        '[data-testid="stage-thumbnail"][aria-current="true"]',
+      )
+      await expect(active).toBeVisible()
+      await expect
+        .poll(
+          async () =>
+            active.evaluate((el) => {
+              const box = el.getBoundingClientRect()
+              const container = el.closest(
+                '[data-testid="stage-filmstrip-scroll"]',
+              ) as HTMLElement
+              const cRect = container.getBoundingClientRect()
+              return box.top >= cRect.top - 1 && box.bottom <= cRect.bottom + 1
+            }),
+          { timeout: 5000 },
+        )
+        .toBe(true)
+    } finally {
+      await request.delete(`/api/songs/${created.id}`)
+    }
+  })
+
+  test('pasting text keeps the copied form without extra whitespace', async ({
+    page,
+    request,
+  }) => {
+    const createResponse = await request.post('/api/songs', {
+      data: {
+        title: `E2E Paste ${Date.now()}`,
+        slides: [{ content: 'Old content', sortOrder: 0 }],
+      },
+    })
+    expect(createResponse.status()).toBe(201)
+    const { data: created } = await createResponse.json()
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${created.id}`)
+      await page.waitForLoadState('networkidle')
+
+      await expect(page.getByTestId('stage-thumbnail')).toHaveCount(1, {
+        timeout: 10000,
+      })
+      // Enter edit mode (implicit: click the stage) and clear the slide so the
+      // paste result is deterministic.
+      await page.locator('[data-editing]').click()
+      const editable = page.getByTestId('slide-canvas-editable')
+      await expect(editable).toBeVisible()
+      await editable.click()
+      await page.keyboard.press('ControlOrMeta+a')
+      await page.keyboard.press('Delete')
+
+      // Simulate a messy paste into the empty slide: trailing spaces, a tab, and
+      // runs of blank lines between the verses (what a rich/HTML paste drags in).
+      await editable.evaluate((el) => {
+        el.focus()
+        const range = document.createRange()
+        range.selectNodeContents(el)
+        range.collapse(false)
+        const sel = window.getSelection()
+        sel?.removeAllRanges()
+        sel?.addRange(range)
+        const dt = new DataTransfer()
+        dt.setData('text/plain', 'Verse one   \n\n\n\nVerse two\t')
+        el.dispatchEvent(
+          new ClipboardEvent('paste', {
+            clipboardData: dt,
+            bubbles: true,
+            cancelable: true,
+          }),
+        )
+      })
+
+      // The persisted paste keeps the two verses with a single blank line
+      // between them.
+      await expect
+        .poll(
+          async () => {
+            const res = await request.get(`/api/songs/${created.id}`)
+            const { data } = await res.json()
+            return data.slides[0].content as string
+          },
+          { timeout: 10000 },
+        )
+        .toContain('<p>Verse one</p><p></p><p>Verse two</p>')
+
+      // No whitespace artifacts anywhere in the pasted content.
+      const res = await request.get(`/api/songs/${created.id}`)
+      const { data } = await res.json()
+      const content = data.slides[0].content as string
+      expect(content).not.toContain('\t') // no tabs
+      expect(content).not.toMatch(/ <\/p>/) // no trailing space inside a line
+      expect(content).not.toContain('<p></p><p></p>') // no run of blank lines
     } finally {
       await request.delete(`/api/songs/${created.id}`)
     }

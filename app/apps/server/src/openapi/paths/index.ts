@@ -1,4 +1,5 @@
 export { authPaths } from './auth'
+export { backupPaths } from './backup'
 export { biblePaths } from './bible'
 export { categoriesPaths } from './categories'
 export { conversionPaths } from './conversion'

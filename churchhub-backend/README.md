@@ -2,6 +2,11 @@
 
 A Cloudflare Worker that handles YouTube OAuth authentication for the ChurchHub app.
 
+> Note: Google Drive database backup uses a **separate, self-contained OAuth
+> flow** in the desktop app (local loopback with its own Google Cloud OAuth
+> client) — it does NOT go through this worker. See the app's backup feature and
+> `app/apps/server/.env.sample` for setup.
+
 ## Overview
 
 This worker provides a stateless OAuth flow for YouTube authentication using:
