@@ -247,7 +247,10 @@ test.describe('Song editing layout preference', () => {
       await page.addInitScript(() => {
         window.localStorage.setItem('song-editor-layout', 'powerpoint')
         // Ensure the column starts visible regardless of prior device state.
-        window.localStorage.setItem('song-detail:accordion-column-visible', 'true')
+        window.localStorage.setItem(
+          'song-detail:accordion-column-visible',
+          'true',
+        )
       })
       await page.setViewportSize({ width: 1400, height: 900 })
       await page.goto(`/songs/${created.id}`)
@@ -587,7 +590,9 @@ test.describe('Song editing layout preference', () => {
       await page.getByTestId('stage-present').click()
       await expect(timer).toBeVisible({ timeout: 10000 })
       await expect(timer).toHaveText(/\d+:\d\d/)
-      await expect.poll(readSeconds, { timeout: 5000 }).toBeGreaterThanOrEqual(1)
+      await expect
+        .poll(readSeconds, { timeout: 5000 })
+        .toBeGreaterThanOrEqual(1)
       const beforeSwitch = await readSeconds()
 
       // Open another song WITHOUT hiding — the same session keeps running
@@ -669,6 +674,75 @@ test.describe('Song editing layout preference', () => {
         timeout: 10000,
       })
       await expect(page.getByTestId('slide-canvas-editable')).toHaveCount(0)
+    } finally {
+      await request.delete(`/api/songs/${created.id}`)
+    }
+  })
+
+  test('the filmstrip auto-scrolls to keep the active slide in view', async ({
+    page,
+    request,
+  }) => {
+    // A long song whose filmstrip overflows the column, so advancing to a later
+    // slide is only visible if the column scrolls.
+    const slides = Array.from({ length: 18 }, (_, i) => ({
+      content: `Verse ${i + 1}`,
+      sortOrder: i,
+    }))
+    const createResponse = await request.post('/api/songs', {
+      data: { title: `E2E Filmstrip Scroll ${Date.now()}`, slides },
+    })
+    expect(createResponse.status()).toBe(201)
+    const { data: created } = await createResponse.json()
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${created.id}`)
+      await page.waitForLoadState('networkidle')
+
+      const scroll = page.getByTestId('stage-filmstrip-scroll')
+      await expect(scroll).toBeVisible({ timeout: 10000 })
+      await expect(page.getByTestId('stage-thumbnail')).toHaveCount(18, {
+        timeout: 10000,
+      })
+
+      // Starts at the top.
+      expect(await scroll.evaluate((el) => el.scrollTop)).toBe(0)
+
+      // Advance through the slides — the active thumbnail moves down past the
+      // fold, so the column must scroll to keep it visible.
+      const next = page.getByTestId('stage-next')
+      for (let i = 0; i < 12; i++) await next.click()
+
+      // The column scrolled down to follow the active slide.
+      await expect
+        .poll(async () => scroll.evaluate((el) => el.scrollTop), {
+          timeout: 5000,
+        })
+        .toBeGreaterThan(0)
+
+      // The active thumbnail (aria-current) ends up within the scroll viewport.
+      // Poll to let the smooth-scroll animation settle.
+      const active = page.locator(
+        '[data-testid="stage-thumbnail"][aria-current="true"]',
+      )
+      await expect(active).toBeVisible()
+      await expect
+        .poll(
+          async () =>
+            active.evaluate((el) => {
+              const box = el.getBoundingClientRect()
+              const container = el.closest(
+                '[data-testid="stage-filmstrip-scroll"]',
+              ) as HTMLElement
+              const cRect = container.getBoundingClientRect()
+              return box.top >= cRect.top - 1 && box.bottom <= cRect.bottom + 1
+            }),
+          { timeout: 5000 },
+        )
+        .toBe(true)
     } finally {
       await request.delete(`/api/songs/${created.id}`)
     }
