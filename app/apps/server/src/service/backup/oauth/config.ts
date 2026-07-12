@@ -1,42 +1,28 @@
-const DRIVE_REDIRECT_PATH = '/api/backup/google/callback'
+const DRIVE_CALLBACK_PATH = '/api/backup/google/callback'
 
 /**
- * OAuth scopes for the independent Drive-backup connection:
- * - `drive.appdata`: private, hidden per-app folder for the database backups.
- * - `openid` + `userinfo.email`: to show which Google account is connected.
+ * Base URL of the ChurchHub OAuth worker (Cloudflare). It holds the Google
+ * OAuth client credentials server-side and serves BOTH the YouTube and the
+ * Drive-backup flows, so the app ships with no embedded Google credentials.
+ * Same env override as the livestream flow.
  */
-export const DRIVE_SCOPES = [
-  'openid',
-  'https://www.googleapis.com/auth/userinfo.email',
-  'https://www.googleapis.com/auth/drive.appdata',
-]
+export function getOAuthWorkerUrl(): string {
+  return (
+    process.env.YOUTUBE_OAUTH_SERVER ||
+    'https://churchub-backend.radiocrestin.ro'
+  )
+}
 
-/**
- * Reads the ChurchHub "Desktop app" OAuth client credentials from the
- * environment. These belong to the app's OWN Google Cloud project (independent
- * of the livestream YouTube client). `configured` is false when unset, so the
- * feature degrades gracefully instead of erroring.
- */
-export function getDriveOAuthConfig(): {
-  clientId: string
-  clientSecret: string
-  configured: boolean
-} {
-  const clientId = process.env.GOOGLE_DRIVE_CLIENT_ID || ''
-  const clientSecret = process.env.GOOGLE_DRIVE_CLIENT_SECRET || ''
-  return {
-    clientId,
-    clientSecret,
-    configured: Boolean(clientId && clientSecret),
-  }
+/** The local origin the worker validates and calls back to. */
+export function getLocalOrigin(): string {
+  const port = process.env.PORT || '3000'
+  return `http://localhost:${port}`
 }
 
 /**
- * The local-loopback redirect URI Google returns to after consent. Matches the
- * server port so it works in dev (3000) and in worktrees. "Desktop app" OAuth
- * clients accept localhost redirects with any port/path.
+ * The local endpoint the worker redirects back to with the tokens once Google
+ * authorization completes (mode=redirect).
  */
-export function getDriveRedirectUri(): string {
-  const port = process.env.PORT || '3000'
-  return `http://localhost:${port}${DRIVE_REDIRECT_PATH}`
+export function getDriveReturnUrl(): string {
+  return `${getLocalOrigin()}${DRIVE_CALLBACK_PATH}`
 }

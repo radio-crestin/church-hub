@@ -1,43 +1,30 @@
-import { buildDriveAuthUrl } from './buildDriveAuthUrl'
-import { getDriveOAuthConfig, getDriveRedirectUri } from './config'
-import { exchangeDriveCode } from './exchangeDriveCode'
-import {
-  generateCodeChallenge,
-  generateCodeVerifier,
-  generateState,
-} from './pkce'
-import { consumeState, storeState } from './sessionStore'
+import { getDriveReturnUrl, getLocalOrigin, getOAuthWorkerUrl } from './config'
 import { createLogger } from '../../../utils/logger'
 import { storeDriveAuth } from '../driveAuthStore'
 
 const logger = createLogger('backup')
 
-export type CreateDriveAuthUrlResult =
-  | { authUrl: string }
-  | { error: 'not_configured' }
+export type CreateDriveAuthUrlResult = { authUrl: string }
 
 /**
- * Starts a Drive connect flow: generates PKCE + state (kept server-side) and
- * returns the Google authorization URL for the app to open in a browser.
+ * Starts a Drive connect flow through the ChurchHub OAuth worker (the same
+ * Cloudflare worker the YouTube flow uses — it holds the Google client
+ * credentials server-side). The worker runs PKCE against Google and redirects
+ * back to this server's /api/backup/google/callback with the tokens.
  */
-export async function createDriveAuthUrl(): Promise<CreateDriveAuthUrlResult> {
-  const { clientId, configured } = getDriveOAuthConfig()
-  if (!configured) {
-    return { error: 'not_configured' }
-  }
+export function createDriveAuthUrl(): CreateDriveAuthUrlResult {
+  const url = new URL('/auth/drive', getOAuthWorkerUrl())
+  url.searchParams.set('origin', getLocalOrigin())
+  url.searchParams.set('mode', 'redirect')
+  url.searchParams.set('returnUrl', getDriveReturnUrl())
+  return { authUrl: url.toString() }
+}
 
-  const codeVerifier = generateCodeVerifier()
-  const codeChallenge = await generateCodeChallenge(codeVerifier)
-  const state = generateState()
-  storeState(state, codeVerifier)
-
-  const authUrl = buildDriveAuthUrl({
-    clientId,
-    redirectUri: getDriveRedirectUri(),
-    codeChallenge,
-    state,
-  })
-  return { authUrl }
+export interface WorkerDriveTokens {
+  accessToken: string
+  refreshToken: string
+  expiresAt: number
+  email?: string
 }
 
 export type CompleteDriveAuthResult =
@@ -45,41 +32,36 @@ export type CompleteDriveAuthResult =
   | { success: false; error: string }
 
 /**
- * Completes the Drive connect flow at the loopback callback: validates the
- * state, exchanges the code for tokens (PKCE) and persists them.
+ * Completes the Drive connect flow: persists the tokens the worker handed back
+ * on the redirect. A missing refresh token means we couldn't stay connected
+ * across restarts, so it is rejected (the worker requests offline access).
  */
 export async function completeDriveAuth(
-  code: string,
-  state: string,
+  tokens: WorkerDriveTokens,
 ): Promise<CompleteDriveAuthResult> {
-  const codeVerifier = consumeState(state)
-  if (!codeVerifier) {
-    return { success: false, error: 'invalid_or_expired_state' }
+  if (!tokens.accessToken || !tokens.refreshToken) {
+    return { success: false, error: 'missing_tokens' }
   }
-
-  const { clientId, clientSecret, configured } = getDriveOAuthConfig()
-  if (!configured) {
-    return { success: false, error: 'not_configured' }
+  if (!Number.isFinite(tokens.expiresAt) || tokens.expiresAt <= Date.now()) {
+    return { success: false, error: 'invalid_expiry' }
   }
 
   try {
-    const tokens = await exchangeDriveCode({
-      code,
-      clientId,
-      clientSecret,
-      redirectUri: getDriveRedirectUri(),
-      codeVerifier,
+    await storeDriveAuth({
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      expiresAt: tokens.expiresAt,
+      email: tokens.email,
     })
-    await storeDriveAuth(tokens)
     logger.info(
       `Google Drive connected${tokens.email ? ` (${tokens.email})` : ''}`,
     )
     return { success: true, email: tokens.email }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'exchange_failed'
-    logger.error(`Drive token exchange failed: ${message}`)
+    const message = error instanceof Error ? error.message : 'store_failed'
+    logger.error(`Failed to store Drive tokens: ${message}`)
     return { success: false, error: message }
   }
 }
 
-export { getDriveOAuthConfig } from './config'
+export { getOAuthWorkerUrl } from './config'

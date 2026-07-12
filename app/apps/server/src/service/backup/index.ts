@@ -7,6 +7,7 @@ export { type DeleteBackupResult, deleteBackup } from './deleteBackup'
 export {
   clearDriveAuth,
   type DriveAuthRecord,
+  type DriveTokens,
   getDriveAuth,
   storeDriveAuth,
 } from './driveAuthStore'
@@ -22,7 +23,7 @@ export {
   type CreateDriveAuthUrlResult,
   completeDriveAuth,
   createDriveAuthUrl,
-  getDriveOAuthConfig,
+  type WorkerDriveTokens,
 } from './oauth'
 export { type RestoreBackupResult, restoreBackup } from './restoreBackup'
 export {

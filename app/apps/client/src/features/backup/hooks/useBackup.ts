@@ -219,7 +219,6 @@ export function useBackup() {
     // status
     status,
     isLoadingStatus: statusQuery.isLoading,
-    configured: status?.configured ?? true,
     connected: status?.connected ?? false,
     driveReady,
     requiresReconnect: status?.requiresReconnect ?? false,
