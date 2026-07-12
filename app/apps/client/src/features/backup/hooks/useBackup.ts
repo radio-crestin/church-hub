@@ -16,6 +16,11 @@ import {
 } from '../service'
 
 const AUTH_TIMEOUT_MS = 120_000
+// After a backup, re-check the list on this cadence until a genuinely new
+// backup id shows up (Drive's files.list can lag behind a just-created file).
+const BACKUP_POLL_INTERVAL_MS = 15_000
+// Give up polling after this long so the spinner can't spin forever.
+const BACKUP_POLL_TIMEOUT_MS = 5 * 60_000
 
 /**
  * Backup feature state. The Google Drive connection is fully independent from
@@ -75,34 +80,41 @@ export function useBackup() {
 
     const poll = async () => {
       while (!cancelled) {
-        // Fetch directly (same call the manual refresh uses) and write the
-        // result into the cache, so the list re-renders reliably.
+        // Fetch directly (same call the manual refresh uses). Drive's
+        // files.list is eventually consistent, so a just-created backup can be
+        // missing here for a few seconds after the upload already succeeded.
         let driveList: BackupFile[] = []
+        let fetched = false
         try {
           driveList = await listBackups()
-          if (!cancelled) {
-            queryClient.setQueryData<BackupFile[]>(
-              ['backup', 'list'],
-              driveList,
-            )
-          }
+          fetched = true
         } catch {
           // Transient error (e.g. Drive hiccup) — keep polling.
         }
-        // Stop only once Drive returns the target id, or ANY id that didn't
-        // exist before the backup (detecting by new id, not timestamp).
-        const foundInDrive = driveList.some(
-          (f) => f.id === targetId || !prevSet.has(f.id),
-        )
-        if (foundInDrive || Date.now() - since > 120_000) break
-        // Keep the just-created backup visible while Drive catches up.
-        if (added && !driveList.some((f) => f.id === added.id) && !cancelled) {
-          queryClient.setQueryData<BackupFile[]>(
-            ['backup', 'list'],
-            [added, ...driveList],
-          )
+
+        // Whatever Drive returned, never drop the just-created backup from the
+        // visible list while Drive catches up: keep it pinned on top until its
+        // real entry shows up.
+        if (fetched && !cancelled) {
+          const merged =
+            added && !driveList.some((f) => f.id === added.id)
+              ? [added, ...driveList]
+              : driveList
+          queryClient.setQueryData<BackupFile[]>(['backup', 'list'], merged)
         }
-        await new Promise((resolve) => setTimeout(resolve, 2500))
+
+        // Confirmed ONLY when Drive's own list returns the new backup — its
+        // server-issued id, or (if the server sent no metadata) any id that
+        // didn't exist before this backup. Confirming by the target id avoids
+        // false positives from a stale prevIds snapshot.
+        const confirmed = targetId
+          ? driveList.some((f) => f.id === targetId)
+          : fetched && driveList.some((f) => !prevSet.has(f.id))
+        if (confirmed || Date.now() - since > BACKUP_POLL_TIMEOUT_MS) break
+
+        await new Promise((resolve) =>
+          setTimeout(resolve, BACKUP_POLL_INTERVAL_MS),
+        )
       }
       if (!cancelled) setAwaitingBackup(null)
     }
@@ -148,9 +160,19 @@ export function useBackup() {
     mutationFn: backupNow,
     // Snapshot the ids that exist BEFORE uploading, so we can detect when a
     // brand-new backup id appears in the list (reliable even without metadata).
-    onMutate: () => {
-      const list =
-        queryClient.getQueryData<BackupFile[]>(['backup', 'list']) ?? []
+    // Fetch fresh from Drive rather than trusting the cache, which may be empty
+    // or stale at click time and would otherwise make a pre-existing file look
+    // "new" and stop the poll on its very first tick.
+    onMutate: async () => {
+      let list = queryClient.getQueryData<BackupFile[]>(['backup', 'list'])
+      if (!list) {
+        try {
+          list = await listBackups()
+          queryClient.setQueryData<BackupFile[]>(['backup', 'list'], list)
+        } catch {
+          list = []
+        }
+      }
       return { prevIds: list.map((f) => f.id) }
     },
     onSuccess: (result, _vars, context) => {
