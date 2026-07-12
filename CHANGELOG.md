@@ -2,6 +2,13 @@
 
 > Auto-generated from git history by `app/scripts/generate-changelog.ts`. Do not edit by hand.
 
+## v0.1.81 — 2026-07-12
+
+### 🔧 Changes
+
+- Google Drive database backup & restore (+ song-editor fixes, release wiring)
+- sync version to v0.1.80 [skip ci]
+
 ## v0.1.80 — 2026-07-08
 
 ### 🔧 Changes
