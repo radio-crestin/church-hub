@@ -4,15 +4,18 @@ import {
   CloudDownload,
   CloudUpload,
   Copy,
+  Eye,
+  HardDrive,
   Loader2,
   LogOut,
   RefreshCw,
   Trash2,
 } from 'lucide-react'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useToast } from '~/ui/toast'
+import { BackupContentsModal } from './BackupContentsModal'
 import { useBackup } from '../hooks/useBackup'
 import type { BackupFile } from '../service'
 
@@ -36,13 +39,25 @@ function intervalLabel(hours: number): string {
 
 const INTERVAL_OPTIONS = [6, 12, 24, 48, 168]
 
+const MIN_RETAINED_BACKUPS = 1
+const MAX_RETAINED_BACKUPS = 50
+
 export function BackupManager() {
   const { t } = useTranslation('settings')
   const { showToast } = useToast()
   const backup = useBackup()
   const [pendingRestore, setPendingRestore] = useState<BackupFile | null>(null)
   const [pendingDelete, setPendingDelete] = useState<BackupFile | null>(null)
+  const [inspecting, setInspecting] = useState<BackupFile | null>(null)
   const [connectUrl, setConnectUrl] = useState<string | null>(null)
+  const [retentionDraft, setRetentionDraft] = useState<string>(
+    String(backup.maxBackups),
+  )
+
+  // Keep the retention input in sync when the saved value loads/changes.
+  useEffect(() => {
+    setRetentionDraft(String(backup.maxBackups))
+  }, [backup.maxBackups])
 
   const handleBackupNow = useCallback(async () => {
     const result = await backup.backupNow()
@@ -50,6 +65,8 @@ export function BackupManager() {
       showToast(t('sections.backup.toast.backupSuccess'), 'success')
     } else if (result.requiresReconnect) {
       showToast(t('sections.backup.toast.reconnectNeeded'), 'error')
+    } else if (result.error === 'insufficient_drive_space') {
+      showToast(t('sections.backup.toast.insufficientSpace'), 'error')
     } else {
       showToast(
         t('sections.backup.toast.backupFailed', { error: result.error }),
@@ -145,6 +162,28 @@ export function BackupManager() {
     },
     [backup, showToast, t],
   )
+
+  // Commit the retention input on blur/Enter, clamped to the allowed range;
+  // an unparsable draft just snaps back to the saved value.
+  const handleRetentionCommit = useCallback(async () => {
+    const parsed = Number.parseInt(retentionDraft, 10)
+    if (Number.isNaN(parsed)) {
+      setRetentionDraft(String(backup.maxBackups))
+      return
+    }
+    const clamped = Math.min(
+      Math.max(parsed, MIN_RETAINED_BACKUPS),
+      MAX_RETAINED_BACKUPS,
+    )
+    setRetentionDraft(String(clamped))
+    if (clamped === backup.maxBackups) return
+    try {
+      await backup.updateConfig({ maxBackups: clamped })
+    } catch {
+      setRetentionDraft(String(backup.maxBackups))
+      showToast(t('sections.backup.toast.configFailed'), 'error')
+    }
+  }, [retentionDraft, backup, showToast, t])
 
   // --- Not connected: either first-time setup, or a session that expired ---
   if (!backup.connected && !backup.isLoadingStatus) {
@@ -269,6 +308,16 @@ export function BackupManager() {
                 {backup.email}
               </p>
             )}
+            {backup.storage && backup.storage.limitBytes !== null && (
+              <p className="mt-0.5 flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                <HardDrive className="h-3.5 w-3.5" />
+                {t('sections.backup.storage.summary', {
+                  used: formatBytes(backup.storage.usageBytes),
+                  total: formatBytes(backup.storage.limitBytes),
+                  free: formatBytes(backup.storage.availableBytes ?? 0),
+                })}
+              </p>
+            )}
           </div>
         </div>
         <button
@@ -302,6 +351,24 @@ export function BackupManager() {
             )}
             {t('sections.backup.reconnect.button')}
           </button>
+        </div>
+      )}
+
+      {/* Insufficient Drive space: warn before a backup would fail */}
+      {backup.driveReady && backup.storage?.insufficientSpace && (
+        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+          <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600 dark:text-red-400" />
+          <div>
+            <p className="text-sm font-medium text-red-800 dark:text-red-300">
+              {t('sections.backup.storage.warningTitle')}
+            </p>
+            <p className="mt-0.5 text-sm text-red-700 dark:text-red-400">
+              {t('sections.backup.storage.warningMessage', {
+                free: formatBytes(backup.storage.availableBytes ?? 0),
+                needed: formatBytes(backup.storage.dbSizeBytes),
+              })}
+            </p>
+          </div>
         </div>
       )}
 
@@ -405,6 +472,36 @@ export function BackupManager() {
                   </p>
                 </div>
               )}
+
+              {/* Retention: applies to manual and automatic backups alike */}
+              <div className="mt-3 border-t border-gray-200 pt-3 dark:border-gray-700">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                      {t('sections.backup.retention.title')}
+                    </p>
+                    <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                      {t('sections.backup.retention.description', {
+                        total: backup.maxBackups,
+                      })}
+                    </p>
+                  </div>
+                  <input
+                    type="number"
+                    min={MIN_RETAINED_BACKUPS}
+                    max={MAX_RETAINED_BACKUPS}
+                    value={retentionDraft}
+                    onChange={(e) => setRetentionDraft(e.target.value)}
+                    onBlur={handleRetentionCommit}
+                    onKeyDown={(e) =>
+                      e.key === 'Enter' && e.currentTarget.blur()
+                    }
+                    disabled={backup.isUpdatingConfig}
+                    aria-label={t('sections.backup.retention.title')}
+                    className="w-16 shrink-0 rounded-md border border-gray-300 bg-white px-2 py-1.5 text-center text-sm text-gray-900 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-900 dark:text-white"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -468,6 +565,14 @@ export function BackupManager() {
                     <div className="flex items-center gap-2 self-start sm:self-auto">
                       <button
                         type="button"
+                        onClick={() => setInspecting(file)}
+                        title={t('sections.backup.list.inspect')}
+                        className="inline-flex items-center justify-center rounded-md border border-gray-300 p-1.5 text-gray-600 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => setPendingRestore(file)}
                         disabled={backup.isRestoring}
                         className="inline-flex items-center gap-2 rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
@@ -491,6 +596,14 @@ export function BackupManager() {
             )}
           </div>
         </>
+      )}
+
+      {/* Backup contents modal */}
+      {inspecting && (
+        <BackupContentsModal
+          file={inspecting}
+          onClose={() => setInspecting(null)}
+        />
       )}
 
       {/* Restore confirmation modal */}
