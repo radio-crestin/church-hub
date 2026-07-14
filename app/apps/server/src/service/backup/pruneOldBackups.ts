@@ -1,16 +1,20 @@
 import type { drive_v3 } from 'googleapis'
 
-import { APP_DATA_FOLDER, isBackupFile, MAX_BACKUPS } from './constants'
+import { getBackupConfig } from './backupConfig'
+import { APP_DATA_FOLDER, isBackupFile } from './constants'
 import { createLogger } from '../../utils/logger'
 
 const logger = createLogger('backup')
 
 /**
- * Keeps only the most recent `MAX_BACKUPS` backups in the app-data folder,
- * deleting older ones. Failures to delete individual files are logged but do not
- * abort the caller (a fresh backup has already been uploaded by then).
+ * Keeps only the most recent `maxBackups` backups (user-configurable, from
+ * `backup_config`) in the app-data folder, deleting older ones. Failures to
+ * delete individual files are logged but do not abort the caller (a fresh
+ * backup has already been uploaded by then).
  */
 export async function pruneOldBackups(drive: drive_v3.Drive): Promise<void> {
+  const { maxBackups } = await getBackupConfig()
+
   const res = await drive.files.list({
     spaces: APP_DATA_FOLDER,
     orderBy: 'createdTime desc',
@@ -19,7 +23,7 @@ export async function pruneOldBackups(drive: drive_v3.Drive): Promise<void> {
   })
 
   const backups = (res.data.files ?? []).filter((f) => isBackupFile(f.name))
-  const toDelete = backups.slice(MAX_BACKUPS)
+  const toDelete = backups.slice(maxBackups)
 
   for (const file of toDelete) {
     if (!file.id) continue

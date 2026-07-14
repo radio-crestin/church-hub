@@ -133,7 +133,37 @@ export const backupPaths: Record<string, Record<string, unknown>> = {
                       email: { type: 'string', nullable: true },
                       autoBackupEnabled: { type: 'boolean' },
                       intervalHours: { type: 'integer' },
+                      maxBackups: { type: 'integer' },
                       lastBackupAt: { type: 'integer', nullable: true },
+                      storage: {
+                        type: 'object',
+                        nullable: true,
+                        description:
+                          'Drive storage quota vs. current database size; null when Drive is unreachable.',
+                        properties: {
+                          limitBytes: {
+                            type: 'integer',
+                            nullable: true,
+                            description:
+                              'Total Drive quota; null for unlimited accounts.',
+                          },
+                          usageBytes: { type: 'integer' },
+                          availableBytes: {
+                            type: 'integer',
+                            nullable: true,
+                          },
+                          dbSizeBytes: {
+                            type: 'integer',
+                            description:
+                              'Current database size — the approximate size of the next backup.',
+                          },
+                          insufficientSpace: {
+                            type: 'boolean',
+                            description:
+                              'True when the free Drive space cannot fit another backup.',
+                          },
+                        },
+                      },
                     },
                   },
                 },
@@ -192,7 +222,7 @@ export const backupPaths: Record<string, Record<string, unknown>> = {
       tags: ['Backup'],
       summary: 'Create a backup now',
       description:
-        'Checkpoints the database and uploads a fresh backup to Google Drive, then prunes old backups. Only accessible from localhost.',
+        'Checkpoints the database and uploads a fresh backup to Google Drive, then prunes backups beyond the configured `maxBackups`. Fails with `insufficient_drive_space` when the Drive quota cannot fit the backup. Only accessible from localhost.',
       responses: {
         '200': {
           description: 'Backup uploaded',
@@ -255,6 +285,98 @@ export const backupPaths: Record<string, Record<string, unknown>> = {
                       success: { type: 'boolean' },
                       message: { type: 'string' },
                       requiresRestart: { type: 'boolean' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        '400': backupOperationError,
+        '403': localhostError,
+      },
+    },
+  },
+  '/api/backup/inspect': {
+    post: {
+      tags: ['Backup'],
+      summary: "Inspect a backup's contents",
+      description:
+        'Downloads the specified backup and reads its contents (song titles, schedules, playlists and per-table counts) without restoring it. Only accessible from localhost.',
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['fileId'],
+              properties: {
+                fileId: {
+                  type: 'string',
+                  description: 'Google Drive file id of the backup to inspect',
+                },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        '200': {
+          description: 'Backup contents',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'object',
+                    properties: {
+                      counts: {
+                        type: 'object',
+                        properties: {
+                          songs: { type: 'integer' },
+                          songSlides: { type: 'integer' },
+                          songCategories: { type: 'integer' },
+                          songBookmarks: { type: 'integer' },
+                          schedules: { type: 'integer' },
+                          scheduleItems: { type: 'integer' },
+                          musicPlaylists: { type: 'integer' },
+                          musicFiles: { type: 'integer' },
+                          bibleTranslations: { type: 'integer' },
+                          users: { type: 'integer' },
+                          screens: { type: 'integer' },
+                        },
+                      },
+                      songs: {
+                        type: 'array',
+                        items: {
+                          type: 'object',
+                          properties: {
+                            title: { type: 'string' },
+                            category: { type: 'string', nullable: true },
+                          },
+                        },
+                      },
+                      schedules: {
+                        type: 'array',
+                        items: {
+                          type: 'object',
+                          properties: {
+                            title: { type: 'string' },
+                            createdAtMs: { type: 'integer', nullable: true },
+                          },
+                        },
+                      },
+                      playlists: {
+                        type: 'array',
+                        items: {
+                          type: 'object',
+                          properties: {
+                            name: { type: 'string' },
+                            itemCount: { type: 'integer' },
+                          },
+                        },
+                      },
                     },
                   },
                 },
@@ -330,6 +452,7 @@ export const backupPaths: Record<string, Record<string, unknown>> = {
                     properties: {
                       autoBackupEnabled: { type: 'boolean' },
                       intervalHours: { type: 'integer' },
+                      maxBackups: { type: 'integer' },
                       lastBackupAt: { type: 'integer', nullable: true },
                     },
                   },
@@ -345,7 +468,7 @@ export const backupPaths: Record<string, Record<string, unknown>> = {
       tags: ['Backup'],
       summary: 'Update automatic-backup settings',
       description:
-        'Enables/disables automatic backups and sets the interval (hours). Only accessible from localhost.',
+        'Enables/disables automatic backups, sets the interval (hours) and how many backups to keep in Drive. Only accessible from localhost.',
       requestBody: {
         required: false,
         content: {
@@ -358,6 +481,13 @@ export const backupPaths: Record<string, Record<string, unknown>> = {
                   type: 'integer',
                   minimum: 1,
                   description: 'Hours between automatic backups',
+                },
+                maxBackups: {
+                  type: 'integer',
+                  minimum: 1,
+                  maximum: 50,
+                  description:
+                    'Number of most-recent backups kept in Drive; when a new backup exceeds this, the oldest is deleted. Default 5.',
                 },
               },
             },
@@ -377,6 +507,7 @@ export const backupPaths: Record<string, Record<string, unknown>> = {
                     properties: {
                       autoBackupEnabled: { type: 'boolean' },
                       intervalHours: { type: 'integer' },
+                      maxBackups: { type: 'integer' },
                       lastBackupAt: { type: 'integer', nullable: true },
                     },
                   },

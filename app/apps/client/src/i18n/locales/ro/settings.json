@@ -834,7 +834,8 @@
         "empty": "Încă nu există backupuri.",
         "restore": "Restaurează",
         "delete": "Șterge",
-        "refresh": "Reîmprospătează"
+        "refresh": "Reîmprospătează",
+        "inspect": "Vezi conținutul"
       },
       "restoreModal": {
         "title": "Restaurezi backupul?",
@@ -855,7 +856,8 @@
         "linkCopyFailed": "Linkul nu a putut fi copiat",
         "linkShown": "Link de conectare gata — copiază-l și deschide-l într-o fereastră privată",
         "deleteSuccess": "Backup șters",
-        "deleteFailed": "Ștergere eșuată: {{error}}"
+        "deleteFailed": "Ștergere eșuată: {{error}}",
+        "insufficientSpace": "Backup eșuat: spațiu liber insuficient în Google Drive"
       },
       "copyLink": "Copiază linkul",
       "copyLinkHint": "Copiază linkul de conectare pentru a-l deschide într-o fereastră privată/incognito (de ex. pentru alt cont Google).",
@@ -864,6 +866,41 @@
         "message": "Ștergi definitiv backupul din {{date}}? Această acțiune nu poate fi anulată.",
         "cancel": "Anulează",
         "confirm": "Șterge"
+      },
+      "storage": {
+        "summary": "{{used}} din {{total}} folosiți · {{free}} liber",
+        "warningTitle": "Spațiu insuficient în Google Drive pentru backup",
+        "warningMessage": "Drive-ul tău mai are doar {{free}} liber, dar următorul backup are nevoie de aproximativ {{needed}}. Eliberează spațiu în Google Drive, altfel backupurile vor eșua."
+      },
+      "retention": {
+        "title": "Backupuri păstrate",
+        "description": "Păstrează cele mai recente {{total}} backupuri în Drive; când unul nou depășește limita, cel mai vechi este șters automat."
+      },
+      "inspectModal": {
+        "title": "Conținutul backupului",
+        "close": "Închide",
+        "loading": "Se descarcă și se citește backupul…",
+        "failed": "Conținutul backupului nu a putut fi citit.",
+        "songs": "Cântări ({{total}})",
+        "schedules": "Programe ({{total}})",
+        "playlists": "Playlisturi ({{total}})",
+        "more": "…și încă {{total}}",
+        "playlistItems_one": "{{count}} element",
+        "playlistItems_few": "{{count}} elemente",
+        "playlistItems_other": "{{count}} de elemente",
+        "counts": {
+          "songs": "Cântări",
+          "songSlides": "Slide-uri de cântări",
+          "songCategories": "Categorii de cântări",
+          "songBookmarks": "Cântări marcate",
+          "schedules": "Programe",
+          "scheduleItems": "Elemente de program",
+          "musicPlaylists": "Playlisturi",
+          "musicFiles": "Fișiere audio",
+          "bibleTranslations": "Traduceri biblice",
+          "users": "Utilizatori",
+          "screens": "Ecrane"
+        }
       }
     },
     "debug": {

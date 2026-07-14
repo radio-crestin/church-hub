@@ -6,12 +6,15 @@ import { backupConfig } from '../../db/schema'
 export interface BackupConfig {
   autoBackupEnabled: boolean
   intervalHours: number
+  /** Number of most-recent backups kept in Drive; older ones are pruned. */
+  maxBackups: number
   lastBackupAt: number | null
 }
 
 const DEFAULT_CONFIG: BackupConfig = {
   autoBackupEnabled: false,
   intervalHours: 24,
+  maxBackups: 5,
   lastBackupAt: null,
 }
 
@@ -30,6 +33,7 @@ export async function getBackupConfig(): Promise<BackupConfig> {
   return {
     autoBackupEnabled: row.autoBackupEnabled,
     intervalHours: row.intervalHours,
+    maxBackups: row.maxBackups,
     lastBackupAt: row.lastBackupAt ? row.lastBackupAt.getTime() : null,
   }
 }
@@ -55,6 +59,7 @@ export async function upsertBackupConfig(
       autoBackupEnabled:
         patch.autoBackupEnabled ?? DEFAULT_CONFIG.autoBackupEnabled,
       intervalHours: patch.intervalHours ?? DEFAULT_CONFIG.intervalHours,
+      maxBackups: patch.maxBackups ?? DEFAULT_CONFIG.maxBackups,
       lastBackupAt: lastBackupAt ?? null,
     })
   } else {
@@ -66,6 +71,9 @@ export async function upsertBackupConfig(
         }),
         ...(patch.intervalHours !== undefined && {
           intervalHours: patch.intervalHours,
+        }),
+        ...(patch.maxBackups !== undefined && {
+          maxBackups: patch.maxBackups,
         }),
         ...(lastBackupAt !== undefined && { lastBackupAt }),
         updatedAt: new Date(),

@@ -33,6 +33,7 @@ export const backupConfig = sqliteTable('backup_config', {
     .notNull()
     .default(false),
   intervalHours: integer('interval_hours').notNull().default(24),
+  maxBackups: integer('max_backups').notNull().default(5),
   lastBackupAt: integer('last_backup_at', { mode: 'timestamp' }),
   createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()

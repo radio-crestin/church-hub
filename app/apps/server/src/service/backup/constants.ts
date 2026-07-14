@@ -7,9 +7,6 @@ export const BACKUP_MIME_TYPE = 'application/x-sqlite3'
 export const BACKUP_FILE_PREFIX = 'church-hub-backup'
 export const BACKUP_FILE_EXTENSION = '.db'
 
-/** Number of most-recent backups to retain in Drive; older ones are pruned. */
-export const MAX_BACKUPS = 10
-
 /**
  * Builds a sortable, human-readable backup filename, e.g.
  * `church-hub-backup-v0.1.80-2026-07-11T09-30-00-000Z.db`.
