@@ -225,7 +225,9 @@ export function useBackup() {
     email: status?.email ?? null,
     autoBackupEnabled: status?.autoBackupEnabled ?? false,
     intervalHours: status?.intervalHours ?? 24,
+    maxBackups: status?.maxBackups ?? 5,
     lastBackupAt: status?.lastBackupAt ?? null,
+    storage: status?.storage ?? null,
     // connection
     connect,
     connectError,

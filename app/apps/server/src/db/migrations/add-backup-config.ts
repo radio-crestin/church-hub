@@ -30,11 +30,25 @@ export function addBackupConfig(db: Database): void {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         auto_backup_enabled INTEGER NOT NULL DEFAULT 0,
         interval_hours INTEGER NOT NULL DEFAULT 24,
+        max_backups INTEGER NOT NULL DEFAULT 5,
         last_backup_at INTEGER,
         created_at INTEGER NOT NULL DEFAULT (unixepoch()),
         updated_at INTEGER NOT NULL DEFAULT (unixepoch())
       )
     `)
+  } else {
+    const hasMaxBackups = db
+      .query<{ name: string }, []>(
+        "SELECT name FROM pragma_table_info('backup_config') WHERE name = 'max_backups'",
+      )
+      .get()
+
+    if (!hasMaxBackups) {
+      log('info', 'Adding "max_backups" column to "backup_config"...')
+      db.run(
+        'ALTER TABLE backup_config ADD COLUMN max_backups INTEGER NOT NULL DEFAULT 5',
+      )
+    }
   }
 
   const authExists = db

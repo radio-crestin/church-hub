@@ -130,6 +130,7 @@ import {
   deleteBackup,
   getBackupConfig,
   getBackupStatus,
+  inspectBackup,
   listBackups,
   restoreBackup,
   startBackupScheduler,
@@ -2077,6 +2078,56 @@ async function startRealServer(): Promise<void> {
         )
       }
 
+      // POST /api/backup/inspect - Read a backup's contents (songs, schedules,
+      // playlists, per-table counts) without restoring it
+      if (req.method === 'POST' && url.pathname === '/api/backup/inspect') {
+        const guard = backupLocalhostGuard()
+        if (guard) return guard
+
+        let fileId: string | undefined
+        try {
+          const body = await req.json()
+          fileId = body.fileId
+        } catch {
+          // handled below
+        }
+        if (!fileId) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Missing fileId' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        const result = await inspectBackup(fileId)
+        if (!result.success) {
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({
+                error: result.error,
+                requiresReconnect: result.requiresReconnect ?? false,
+              }),
+              {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        }
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: result.contents }), {
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-store',
+            },
+          }),
+        )
+      }
+
       // POST /api/backup/delete - Delete a single backup from Google Drive
       if (req.method === 'POST' && url.pathname === '/api/backup/delete') {
         const guard = backupLocalhostGuard()
@@ -2145,6 +2196,7 @@ async function startRealServer(): Promise<void> {
         let patch: {
           autoBackupEnabled?: boolean
           intervalHours?: number
+          maxBackups?: number
         } = {}
         try {
           const body = await req.json()
@@ -2156,6 +2208,9 @@ async function startRealServer(): Promise<void> {
             body.intervalHours > 0
           ) {
             patch.intervalHours = Math.round(body.intervalHours)
+          }
+          if (typeof body.maxBackups === 'number' && body.maxBackups >= 1) {
+            patch.maxBackups = Math.min(Math.round(body.maxBackups), 50)
           }
         } catch {
           // No/invalid body - nothing to update

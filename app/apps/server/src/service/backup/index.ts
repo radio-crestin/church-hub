@@ -4,6 +4,7 @@ export {
   upsertBackupConfig,
 } from './backupConfig'
 export { type DeleteBackupResult, deleteBackup } from './deleteBackup'
+export { downloadBackupToTemp } from './downloadBackupToTemp'
 export {
   clearDriveAuth,
   type DriveAuthRecord,
@@ -13,6 +14,13 @@ export {
 } from './driveAuthStore'
 export { type BackupStatus, getBackupStatus } from './getBackupStatus'
 export { getDriveService, isInsufficientScopeError } from './getDriveService'
+export { type BackupStorageInfo, getStorageInfo } from './getStorageInfo'
+export {
+  type BackupContents,
+  type BackupCounts,
+  type InspectBackupResult,
+  inspectBackup,
+} from './inspectBackup'
 export {
   type BackupFile,
   type ListBackupsResult,

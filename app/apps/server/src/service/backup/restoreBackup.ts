@@ -1,8 +1,7 @@
-import { createWriteStream } from 'node:fs'
 import { unlink } from 'node:fs/promises'
 import { join } from 'node:path'
-import type { Readable } from 'node:stream'
 
+import { downloadBackupToTemp } from './downloadBackupToTemp'
 import { getDriveService, isInsufficientScopeError } from './getDriveService'
 import { createLogger } from '../../utils/logger'
 import { getDataDir } from '../../utils/paths'
@@ -43,20 +42,7 @@ export async function restoreBackup(
   const tempPath = join(getDataDir(), `.backup-restore-${Date.now()}.db`)
 
   try {
-    const res = await drive.files.get(
-      { fileId, alt: 'media' },
-      { responseType: 'stream' },
-    )
-
-    await new Promise<void>((resolve, reject) => {
-      const dest = createWriteStream(tempPath)
-      const stream = res.data as unknown as Readable
-      stream
-        .on('error', reject)
-        .pipe(dest)
-        .on('error', reject)
-        .on('finish', () => resolve())
-    })
+    await downloadBackupToTemp(drive, fileId, tempPath)
 
     logger.info(`Downloaded backup ${fileId}, restoring database`)
     const result = await importDatabase(tempPath)

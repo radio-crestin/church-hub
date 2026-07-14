@@ -8,6 +8,7 @@ import {
   buildBackupFileName,
 } from './constants'
 import { getDriveService, isInsufficientScopeError } from './getDriveService'
+import { getStorageInfo } from './getStorageInfo'
 import type { BackupFile } from './listBackups'
 import { pruneOldBackups } from './pruneOldBackups'
 import { createLogger } from '../../utils/logger'
@@ -55,6 +56,20 @@ export async function uploadBackup(): Promise<BackupUploadResult> {
     const sizeBytes = await stat(tempPath)
       .then((s) => s.size)
       .catch(() => 0)
+
+    // Preflight: refuse to start an upload Drive has no room for, so the user
+    // gets a clear error instead of a failed/partial upload.
+    const storage = await getStorageInfo(drive)
+    if (
+      storage?.availableBytes != null &&
+      sizeBytes > 0 &&
+      storage.availableBytes < sizeBytes
+    ) {
+      logger.warning(
+        `Backup skipped: Drive has ${storage.availableBytes} bytes free, backup needs ${sizeBytes}`,
+      )
+      return { success: false, error: 'insufficient_drive_space' }
+    }
 
     const res = await drive.files.create({
       requestBody: {

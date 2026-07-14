@@ -833,7 +833,8 @@
         "empty": "No backups yet.",
         "restore": "Restore",
         "delete": "Delete",
-        "refresh": "Refresh"
+        "refresh": "Refresh",
+        "inspect": "View contents"
       },
       "restoreModal": {
         "title": "Restore backup?",
@@ -854,7 +855,8 @@
         "linkCopyFailed": "Could not copy the link",
         "linkShown": "Sign-in link ready — copy it and open it in a private window",
         "deleteSuccess": "Backup deleted",
-        "deleteFailed": "Delete failed: {{error}}"
+        "deleteFailed": "Delete failed: {{error}}",
+        "insufficientSpace": "Backup failed: not enough free space in Google Drive"
       },
       "copyLink": "Copy link",
       "copyLinkHint": "Copy the sign-in link to open it in a private/incognito window (e.g. to use a different Google account).",
@@ -863,6 +865,40 @@
         "message": "Permanently delete the backup from {{date}}? This cannot be undone.",
         "cancel": "Cancel",
         "confirm": "Delete"
+      },
+      "storage": {
+        "summary": "{{used}} of {{total}} used · {{free}} free",
+        "warningTitle": "Not enough Google Drive space for backups",
+        "warningMessage": "Your Drive has only {{free}} free, but the next backup needs about {{needed}}. Free up space in Google Drive, otherwise backups will fail."
+      },
+      "retention": {
+        "title": "Backups kept",
+        "description": "Keeps the most recent {{total}} backups in Drive; when a new one exceeds that, the oldest is deleted automatically."
+      },
+      "inspectModal": {
+        "title": "Backup contents",
+        "close": "Close",
+        "loading": "Downloading and reading the backup…",
+        "failed": "Could not read the backup contents.",
+        "songs": "Songs ({{total}})",
+        "schedules": "Schedules ({{total}})",
+        "playlists": "Playlists ({{total}})",
+        "more": "…and {{total}} more",
+        "playlistItems_one": "{{count}} item",
+        "playlistItems_other": "{{count}} items",
+        "counts": {
+          "songs": "Songs",
+          "songSlides": "Song slides",
+          "songCategories": "Song categories",
+          "songBookmarks": "Song bookmarks",
+          "schedules": "Schedules",
+          "scheduleItems": "Schedule items",
+          "musicPlaylists": "Playlists",
+          "musicFiles": "Music files",
+          "bibleTranslations": "Bible translations",
+          "users": "Users",
+          "screens": "Screens"
+        }
       }
     },
     "debug": {

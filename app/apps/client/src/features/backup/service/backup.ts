@@ -1,5 +1,18 @@
 import { fetcher } from '~/utils/fetcher'
 
+export interface BackupStorageInfo {
+  /** Total Drive quota in bytes; null when the account has unlimited storage. */
+  limitBytes: number | null
+  /** Bytes currently used across the whole Drive account. */
+  usageBytes: number
+  /** Free Drive space in bytes; null when the account has unlimited storage. */
+  availableBytes: number | null
+  /** Current database size — the approximate size of the next backup. */
+  dbSizeBytes: number
+  /** True when the free Drive space cannot fit another backup. */
+  insufficientSpace: boolean
+}
+
 export interface BackupStatus {
   /** Always true — OAuth goes through the ChurchHub worker (kept for API compat). */
   configured: boolean
@@ -13,13 +26,39 @@ export interface BackupStatus {
   email: string | null
   autoBackupEnabled: boolean
   intervalHours: number
+  /** Number of most-recent backups kept in Drive; older ones are pruned. */
+  maxBackups: number
   lastBackupAt: number | null
+  /** Drive storage quota vs. database size; null when Drive is unreachable. */
+  storage: BackupStorageInfo | null
 }
 
 export interface BackupConfig {
   autoBackupEnabled: boolean
   intervalHours: number
+  maxBackups: number
   lastBackupAt: number | null
+}
+
+export interface BackupCounts {
+  songs: number
+  songSlides: number
+  songCategories: number
+  songBookmarks: number
+  schedules: number
+  scheduleItems: number
+  musicPlaylists: number
+  musicFiles: number
+  bibleTranslations: number
+  users: number
+  screens: number
+}
+
+export interface BackupContents {
+  counts: BackupCounts
+  songs: { title: string; category: string | null }[]
+  schedules: { title: string; createdAtMs: number | null }[]
+  playlists: { name: string; itemCount: number }[]
 }
 
 export interface BackupFile {
@@ -153,8 +192,35 @@ export async function deleteBackup(
   return { success: true }
 }
 
+/**
+ * Reads a backup's contents (song titles, schedules, playlists and per-table
+ * counts) without restoring it. The server downloads the whole backup first,
+ * so this shares the large-operation timeout.
+ */
+export async function inspectBackup(fileId: string): Promise<BackupContents> {
+  const res = await fetcher<ApiResponse<BackupContents>>(
+    '/api/backup/inspect',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fileId }),
+      timeout: LARGE_OP_TIMEOUT_MS,
+    },
+  )
+  if (!res.data) {
+    const err = new Error(res.error || 'Failed to inspect backup') as Error & {
+      requiresReconnect?: boolean
+    }
+    err.requiresReconnect = res.requiresReconnect
+    throw err
+  }
+  return res.data
+}
+
 export async function updateBackupConfig(
-  patch: Partial<Pick<BackupConfig, 'autoBackupEnabled' | 'intervalHours'>>,
+  patch: Partial<
+    Pick<BackupConfig, 'autoBackupEnabled' | 'intervalHours' | 'maxBackups'>
+  >,
 ): Promise<BackupConfig> {
   const res = await fetcher<ApiResponse<BackupConfig>>('/api/backup/config', {
     method: 'PUT',

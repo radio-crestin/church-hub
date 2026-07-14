@@ -25,13 +25,17 @@ test.describe('Backup - API', () => {
       'email',
       'autoBackupEnabled',
       'intervalHours',
+      'maxBackups',
       'lastBackupAt',
+      'storage',
     ]) {
       expect(json.data).toHaveProperty(key)
     }
     // No Google account connected in CI/test env.
     expect(json.data.connected).toBe(false)
     expect(json.data.driveReady).toBe(false)
+    // Storage quota can only be read from a connected Drive.
+    expect(json.data.storage).toBeNull()
   })
 
   test('connect returns the OAuth worker authorization URL', async ({
@@ -75,6 +79,34 @@ test.describe('Backup - API', () => {
     expect(resetJson.data.intervalHours).toBe(24)
   })
 
+  test('retention (maxBackups) can be updated and is clamped', async ({
+    request,
+  }) => {
+    const updated = await request.put('/api/backup/config', {
+      data: { maxBackups: 7 },
+    })
+    expect(updated.status()).toBe(200)
+    expect((await updated.json()).data.maxBackups).toBe(7)
+
+    // Values above the cap are clamped to 50.
+    const clamped = await request.put('/api/backup/config', {
+      data: { maxBackups: 999 },
+    })
+    expect((await clamped.json()).data.maxBackups).toBe(50)
+
+    // Values below 1 are ignored (config unchanged).
+    const ignored = await request.put('/api/backup/config', {
+      data: { maxBackups: 0 },
+    })
+    expect((await ignored.json()).data.maxBackups).toBe(50)
+
+    // Reset to the default.
+    const reset = await request.put('/api/backup/config', {
+      data: { maxBackups: 5 },
+    })
+    expect((await reset.json()).data.maxBackups).toBe(5)
+  })
+
   test('backup now fails cleanly when not connected', async ({ request }) => {
     const response = await request.post('/api/backup/now')
     expect(response.status()).toBe(400)
@@ -94,6 +126,22 @@ test.describe('Backup - API', () => {
     expect(response.status()).toBe(400)
     const json = await response.json()
     expect(json.error).toBeTruthy()
+  })
+
+  test('inspect requires a fileId', async ({ request }) => {
+    const response = await request.post('/api/backup/inspect', { data: {} })
+    expect(response.status()).toBe(400)
+    const json = await response.json()
+    expect(json.error).toBeTruthy()
+  })
+
+  test('inspect fails cleanly when not connected', async ({ request }) => {
+    const response = await request.post('/api/backup/inspect', {
+      data: { fileId: 'nonexistent-file-id' },
+    })
+    expect(response.status()).toBe(400)
+    const json = await response.json()
+    expect(json).toHaveProperty('error')
   })
 })
 

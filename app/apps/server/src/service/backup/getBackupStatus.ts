@@ -2,6 +2,7 @@ import { getBackupConfig } from './backupConfig'
 import { APP_DATA_FOLDER } from './constants'
 import { getDriveAuth } from './driveAuthStore'
 import { getDriveService, isInsufficientScopeError } from './getDriveService'
+import { type BackupStorageInfo, getStorageInfo } from './getStorageInfo'
 
 export interface BackupStatus {
   /** Drive backup is available on this build. Always true now that OAuth goes
@@ -18,7 +19,10 @@ export interface BackupStatus {
   email: string | null
   autoBackupEnabled: boolean
   intervalHours: number
+  maxBackups: number
   lastBackupAt: number | null
+  /** Drive storage quota vs. database size; null when Drive is unreachable. */
+  storage: BackupStorageInfo | null
 }
 
 /**
@@ -39,6 +43,7 @@ export async function getBackupStatus(): Promise<BackupStatus> {
       requiresReconnect: false,
       email: null,
       ...config,
+      storage: null,
     }
   }
 
@@ -58,6 +63,7 @@ export async function getBackupStatus(): Promise<BackupStatus> {
       requiresReconnect: false,
       email,
       ...config,
+      storage: await getStorageInfo(drive),
     }
   } catch (error) {
     if (isInsufficientScopeError(error)) {
@@ -68,6 +74,7 @@ export async function getBackupStatus(): Promise<BackupStatus> {
         requiresReconnect: true,
         email,
         ...config,
+        storage: null,
       }
     }
     return {
@@ -77,6 +84,7 @@ export async function getBackupStatus(): Promise<BackupStatus> {
       requiresReconnect: false,
       email,
       ...config,
+      storage: null,
     }
   }
 }
