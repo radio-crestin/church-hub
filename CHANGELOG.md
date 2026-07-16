@@ -2,6 +2,17 @@
 
 > Auto-generated from git history by `app/scripts/generate-changelog.ts`. Do not edit by hand.
 
+## v0.1.83 — 2026-07-14
+
+### 🐛 Bug Fixes
+
+- **backend**: deploy.sh deploys all .prod.vars with validation guard
+
+### 🔧 Changes
+
+- configurable retention, Drive storage quota + warning, and backup contents inspection
+- sync version to v0.1.82 [skip ci]
+
 ## v0.1.82 — 2026-07-12
 
 ### 🐛 Bug Fixes
