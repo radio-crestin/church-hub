@@ -17,7 +17,6 @@ import type { BibleTranslation } from '../types'
 
 interface VersesListProps {
   bookId: number
-  bookName: string
   bookCode: string
   chapter: number
   chapters: ChapterData[]
@@ -42,7 +41,6 @@ interface VersesListProps {
 
 export function VersesList({
   bookId,
-  bookName,
   bookCode,
   chapter,
   chapters,

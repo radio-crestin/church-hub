@@ -662,7 +662,6 @@ export function BibleNavigationPanel({
         ) : (
           <VersesList
             bookId={state.bookId || 0}
-            bookName={state.bookName || ''}
             bookCode={bookCode}
             chapter={state.chapter || 0}
             chapters={infiniteChapters}
