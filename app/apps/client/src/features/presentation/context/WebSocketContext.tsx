@@ -137,6 +137,15 @@ interface SidebarNavigationMessage {
   }
 }
 
+/** A Drive sync cycle applied changes made on another device. */
+interface SyncAppliedMessage {
+  type: 'sync_applied'
+  payload: {
+    appliedCount: number
+    updatedAt: number
+  }
+}
+
 // Screen share message types (for WebRTC signaling)
 interface ScreenShareStartedMessage {
   type: 'screen_share_started'
@@ -204,6 +213,7 @@ type MessageData =
   | SettingsUpdatedMessage
   | MusicStateMessage
   | SidebarNavigationMessage
+  | SyncAppliedMessage
   | ScreenShareStartedMessage
   | ScreenShareStoppedMessage
   | ScreenShareJoinRequestMessage
@@ -437,6 +447,16 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
 
         if (data.type === 'music_state') {
           queryClient.setQueryData(['music', 'playerState'], data.payload)
+        }
+
+        if (data.type === 'sync_applied') {
+          // Remote library changes were applied locally: refresh songs and
+          // schedules (lists + open detail views) and the sync badges/status.
+          queryClient.invalidateQueries({ queryKey: ['songs'] })
+          queryClient.invalidateQueries({ queryKey: ['song'] })
+          queryClient.invalidateQueries({ queryKey: ['schedules'] })
+          queryClient.invalidateQueries({ queryKey: ['schedule'] })
+          queryClient.invalidateQueries({ queryKey: ['sync'] })
         }
 
         if (data.type === 'sidebar_navigation') {

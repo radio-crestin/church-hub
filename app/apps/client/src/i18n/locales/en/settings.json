@@ -901,6 +901,39 @@
         }
       }
     },
+    "sync": {
+      "title": "Library Sync",
+      "description": "Keep your song library and schedules up to date across all your devices through your Google Drive account.",
+      "loading": "Loading sync status…",
+      "toggle": {
+        "title": "Real-time library sync",
+        "description": "Automatically apply changes made on your other devices and share yours with them.",
+        "notConnectedHint": "Connect Google Drive above to enable sync."
+      },
+      "interval": {
+        "label": "Check for changes",
+        "everyMinutes": "Every {{minutes}} minutes"
+      },
+      "status": {
+        "lastSync": "Last sync",
+        "never": "Never",
+        "pendingCount": "Pending changes: {{count}}",
+        "lastError": "Last sync error"
+      },
+      "now": {
+        "button": "Sync now",
+        "syncing": "Syncing…"
+      },
+      "toast": {
+        "syncApplied": "Sync complete — {{count}} changes applied.",
+        "syncComplete": "Sync complete.",
+        "syncUpToDate": "Already up to date.",
+        "syncDisabled": "Sync is turned off.",
+        "syncNotConnected": "Connect Google Drive to sync.",
+        "syncFailed": "Sync failed: {{error}}",
+        "configFailed": "Failed to update sync settings"
+      }
+    },
     "debug": {
       "title": "Debug Mode",
       "description": "Show WebSocket debug panel with connection status and message counts"

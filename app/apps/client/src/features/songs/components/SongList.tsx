@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useSidebarItemShortcuts } from '~/features/sidebar-config'
+import { useSyncUpdatesMap } from '~/features/sync'
 import { useDebouncedValue } from '~/hooks/useDebouncedValue'
 import { MultiSelectCombobox } from '~/ui/combobox'
 import { KeyboardShortcutBadge } from '~/ui/kbd'
@@ -688,6 +689,9 @@ export function SongList({
     onSelect: handleSelectSong,
   })
 
+  // Unseen "changed on another device" sync entries, keyed by song id.
+  const syncUpdatesMap = useSyncUpdatesMap('song')
+
   // Single source of truth for a song card, shared by the flat browse grid and
   // the alphabet scroller so keyboard selection, middle-click and itemRefs
   // behave identically in both. `index` is the flat index into displaySongs.
@@ -708,9 +712,17 @@ export function SongList({
         }
         isSelected={selectedIndex === index}
         showCategoryInTitle={duplicateTitles.has(song.title.toLowerCase())}
+        syncChangeKind={syncUpdatesMap.get(song.id)}
       />
     ),
-    [itemRefs, onSongClick, onSongMiddleClick, selectedIndex, duplicateTitles],
+    [
+      itemRefs,
+      onSongClick,
+      onSongMiddleClick,
+      selectedIndex,
+      duplicateTitles,
+      syncUpdatesMap,
+    ],
   )
 
   // Set initial selection based on initialSelectedSongId and scroll into view.

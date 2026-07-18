@@ -70,5 +70,11 @@
     "tapToReconnect": "Apasă pentru reconectare"
   },
   "settings": "Setări",
-  "options": "Opțiuni"
+  "options": "Opțiuni",
+  "sync": {
+    "updatedBadge": "Actualizat",
+    "conflictBadge": "Conflict",
+    "updatedTooltip": "Actualizat de pe alt dispozitiv",
+    "conflictTooltip": "Conflict de versiuni — modificarea locală a fost înlocuită de o versiune mai nouă de pe alt dispozitiv"
+  }
 }

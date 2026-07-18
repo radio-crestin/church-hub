@@ -1,6 +1,9 @@
 import { ChevronRight, Eye, Music2, Sparkles, Tag } from 'lucide-react'
 import { forwardRef } from 'react'
 
+import type { SyncChangeKind } from '~/features/sync'
+import { SyncUpdateBadge } from '~/features/sync'
+
 interface SongCardProps {
   song: {
     id: number
@@ -19,11 +22,20 @@ interface SongCardProps {
   onMiddleClick?: () => void
   isSelected?: boolean
   showCategoryInTitle?: boolean
+  /** Unseen sync change applied from another device (renders a badge). */
+  syncChangeKind?: SyncChangeKind
 }
 
 export const SongCard = forwardRef<HTMLButtonElement, SongCardProps>(
   function SongCard(
-    { song, onClick, onMiddleClick, isSelected = false, showCategoryInTitle },
+    {
+      song,
+      onClick,
+      onMiddleClick,
+      isSelected = false,
+      showCategoryInTitle,
+      syncChangeKind,
+    },
     ref,
   ) {
     const hasHighlight = song.highlightedTitle?.includes('<mark>')
@@ -82,6 +94,7 @@ export const SongCard = forwardRef<HTMLButtonElement, SongCardProps>(
             </h3>
           )}
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+            {syncChangeKind && <SyncUpdateBadge changeKind={syncChangeKind} />}
             {song.categoryName && (
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded">
                 <Tag className="w-3 h-3" />

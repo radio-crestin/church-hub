@@ -2,6 +2,7 @@ import { CalendarDays, Search } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useSyncUpdatesMap } from '~/features/sync'
 import { ClearSearchButton } from '~/ui/search'
 import { ScheduleCard } from './ScheduleCard'
 import { useSchedules, useSearchSchedules } from '../hooks'
@@ -27,6 +28,9 @@ export function ScheduleList({
 
   const isSearching = searchQuery.length > 0
   const isLoading = isSearching ? searchLoading : schedulesLoading
+
+  // Unseen "changed on another device" sync entries, keyed by schedule id.
+  const syncUpdatesMap = useSyncUpdatesMap('schedule')
 
   const displaySchedules = useMemo(() => {
     if (isSearching && searchResults) {
@@ -111,6 +115,7 @@ export function ScheduleList({
               onClick={() => onScheduleClick(schedule.id)}
               onSaveClick={onSaveClick}
               isSaving={savingScheduleId === schedule.id}
+              syncChangeKind={syncUpdatesMap.get(schedule.id)}
             />
           ))}
         </div>

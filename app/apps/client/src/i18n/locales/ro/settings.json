@@ -903,6 +903,39 @@
         }
       }
     },
+    "sync": {
+      "title": "Sincronizare bibliotecă",
+      "description": "Menține biblioteca de cântări și programele actualizate pe toate dispozitivele tale prin contul Google Drive.",
+      "loading": "Se încarcă starea sincronizării…",
+      "toggle": {
+        "title": "Sincronizare în timp real",
+        "description": "Aplică automat modificările făcute pe celelalte dispozitive și trimite-le pe ale tale.",
+        "notConnectedHint": "Conectează Google Drive mai sus pentru a activa sincronizarea."
+      },
+      "interval": {
+        "label": "Verifică modificările",
+        "everyMinutes": "La fiecare {{minutes}} minute"
+      },
+      "status": {
+        "lastSync": "Ultima sincronizare",
+        "never": "Niciodată",
+        "pendingCount": "Modificări în așteptare: {{count}}",
+        "lastError": "Ultima eroare de sincronizare"
+      },
+      "now": {
+        "button": "Sincronizează acum",
+        "syncing": "Se sincronizează…"
+      },
+      "toast": {
+        "syncApplied": "Sincronizare finalizată — {{count}} modificări aplicate.",
+        "syncComplete": "Sincronizare finalizată.",
+        "syncUpToDate": "Totul este deja actualizat.",
+        "syncDisabled": "Sincronizarea este dezactivată.",
+        "syncNotConnected": "Conectează Google Drive pentru a sincroniza.",
+        "syncFailed": "Sincronizarea a eșuat: {{error}}",
+        "configFailed": "Nu s-au putut salva setările de sincronizare"
+      }
+    },
     "debug": {
       "title": "Mod Depanare",
       "description": "Afișează panoul de depanare WebSocket cu starea conexiunii și numărul de mesaje"
