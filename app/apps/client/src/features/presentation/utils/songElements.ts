@@ -46,17 +46,13 @@ export function resolveSongKey(
 }
 
 /**
- * Value for the "Amin" element. It only appears on the LAST slide, and is
- * suppressed when the slide text already contains "amin" so the word isn't
- * shown twice (mirrors the previous inline behaviour).
+ * True when the text contains "amin" as a standalone WORD. A whole-word match
+ * is essential: the substring test used previously also matched Romanian words
+ * like "aminte" ("Adu-Ți aminte..."), wrongly suppressing the amin element and
+ * the last-slide layout for those songs.
  */
-export function resolveAmen(
-  isLastSlide: boolean,
-  slideContent: string,
-): string | undefined {
-  if (!isLastSlide) return undefined
-  if (/amin/i.test(slideContent)) return undefined
-  return 'Amin!'
+export function containsAminWord(text: string): boolean {
+  return /\bamin\b/i.test(text)
 }
 
 /** Strip HTML tags + decode the few entities the lyrics use, to plain text. */
@@ -122,11 +118,20 @@ export function extractTrailingAmin(
 }
 
 /**
- * Resolves the lyrics (`mainText`) and the amin value for a song slide. On the
- * last slide, a standalone trailing "amin" line is moved out of the lyrics into
- * the amin element ([[extractTrailingAmin]]); otherwise the lyrics are kept
- * as-is and a standard "Amin!" element is added only when the slide has no
- * "amin" at all (see [[resolveAmen]]).
+ * Resolves the lyrics (`mainText`) and the amin value for a song slide.
+ *
+ * This is the SINGLE source of truth for the last-slide treatment: it runs
+ * inside usePresentationContent, which feeds both LivePreview and
+ * ScreenRenderer, and the server serves raw slide content to both paths — so
+ * preview and projection can never disagree about the last slide.
+ *
+ * On the last slide (determined positionally by the caller, never by content):
+ *  - a standalone trailing "Amin" line is moved out of the lyrics into the
+ *    amin element ([[extractTrailingAmin]]) — the layout displays it, so the
+ *    original line must not render twice;
+ *  - an "Amin" that is part of a sentence (not on its own line) is lyrics:
+ *    the text is kept exactly as-is and no extra amin element is added;
+ *  - otherwise the lyrics are kept as-is and the standard "Amin!" is shown.
  *
  * `customAmin` is the operator's configured amin label (`song_last_slide.amen.text`).
  * When set it replaces the shown amin text — both the extracted line and the
@@ -143,7 +148,10 @@ export function resolveSongSlideBody(
   if (extracted) {
     return { mainText: extracted.mainText, amen: custom ?? extracted.amen }
   }
-  // Suppress when an amin appears inline (mid-lyrics) and isn't a trailing line.
-  if (/amin/i.test(slideContent)) return { mainText: slideContent, amen: undefined }
+  // An in-sentence amin is part of the lyrics: keep the text untouched and
+  // don't show a second amin through the dedicated element.
+  if (containsAminWord(slideContent)) {
+    return { mainText: slideContent, amen: undefined }
+  }
   return { mainText: slideContent, amen: custom ?? 'Amin!' }
 }

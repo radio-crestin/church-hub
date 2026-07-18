@@ -1,5 +1,4 @@
 import {
-  addAminToLastSlide,
   expandSongSlidesWithChoruses,
   generateExpandedPresentationOrder,
   getOriginalSlideIndex,
@@ -238,43 +237,5 @@ describe('generateExpandedPresentationOrder', () => {
       makeSlide(3, 'V1', 2),
     ]
     expect(generateExpandedPresentationOrder(slides)).toBe('C1 V1 C1')
-  })
-})
-
-describe('addAminToLastSlide', () => {
-  it('does not modify non-last slides', () => {
-    const content = '<p>Hello world</p>'
-    expect(addAminToLastSlide(content, false)).toBe(content)
-  })
-
-  it('appends Amin! to last slide', () => {
-    const content = '<p>Last verse line</p>'
-    expect(addAminToLastSlide(content, true)).toBe(
-      '<p>Last verse line</p><br><p>Amin!</p>',
-    )
-  })
-
-  it('does not append Amin! if already present (case insensitive)', () => {
-    const content = '<p>Something Amin!</p>'
-    expect(addAminToLastSlide(content, true)).toBe(content)
-  })
-
-  it('does not append Amin! if "amin" is present in lowercase', () => {
-    const content = '<p>Something amin</p>'
-    expect(addAminToLastSlide(content, true)).toBe(content)
-  })
-
-  it('trims trailing empty paragraphs before appending', () => {
-    const content = '<p>Last line</p><p><br></p>'
-    expect(addAminToLastSlide(content, true)).toBe(
-      '<p>Last line</p><br><p>Amin!</p>',
-    )
-  })
-
-  it('trims trailing whitespace before appending', () => {
-    const content = '<p>Last line</p>   '
-    expect(addAminToLastSlide(content, true)).toBe(
-      '<p>Last line</p><br><p>Amin!</p>',
-    )
   })
 })

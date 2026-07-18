@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  containsAminWord,
   extractTrailingAmin,
-  resolveAmen,
   resolveSongKey,
   resolveSongSlideBody,
   resolveSongSlideContentType,
@@ -30,16 +30,18 @@ describe('resolveSongKey', () => {
   })
 })
 
-describe('resolveAmen', () => {
-  it('returns "Amin!" only on the last slide', () => {
-    expect(resolveAmen(true, 'Slăvit să fie El!')).toBe('Amin!')
-    expect(resolveAmen(false, 'Slăvit să fie El!')).toBeUndefined()
+describe('containsAminWord', () => {
+  it('matches "amin" as a standalone word, any case', () => {
+    expect(containsAminWord('Amin, Amin!')).toBe(true)
+    expect(containsAminWord('<p>amin</p>')).toBe(true)
+    expect(containsAminWord('AMIN')).toBe(true)
+    expect(containsAminWord('vecii! Amin!')).toBe(true)
   })
 
-  it('is suppressed when the slide already contains "amin" (any case)', () => {
-    expect(resolveAmen(true, 'Amin, Amin!')).toBeUndefined()
-    expect(resolveAmen(true, '<p>amin</p>')).toBeUndefined()
-    expect(resolveAmen(true, 'AMIN')).toBeUndefined()
+  it('does NOT match words that merely contain "amin" (aminte, etc.)', () => {
+    expect(containsAminWord('Adu-Ţi aminte, Doamne când Te chem')).toBe(false)
+    expect(containsAminWord('ne-aducem aminte')).toBe(false)
+    expect(containsAminWord('lumină')).toBe(false)
   })
 })
 
@@ -149,6 +151,37 @@ describe('resolveSongSlideBody', () => {
     expect(
       resolveSongSlideBody(true, '<p>Amin slăvit</p><p>versul final</p>'),
     ).toEqual({ mainText: '<p>Amin slăvit</p><p>versul final</p>', amen: undefined })
+  })
+
+  it('an "Amin" that ends the last sentence stays in the lyrics untouched', () => {
+    const content = '<p>Să-mpart lumină şi dragoste-n vecii! Amin!</p>'
+    expect(resolveSongSlideBody(true, content)).toEqual({
+      mainText: content,
+      amen: undefined,
+    })
+  })
+
+  it('regression: "aminte" is not an amin — the last slide still gets one', () => {
+    // "Adu-Ţi aminte, Doamne când Te chem": the substring test used to match
+    // "aminte" and suppress the amin element (and the last-slide layout).
+    const content =
+      '<p>Adu-Ţi aminte, că-s făptura Ta,</p><p>Să-mpart lumină şi dragoste-n vecii!</p>'
+    expect(resolveSongSlideBody(true, content)).toEqual({
+      mainText: content,
+      amen: 'Amin!',
+    })
+  })
+
+  it('regression: a trailing amin line is extracted even when "aminte" appears above', () => {
+    expect(
+      resolveSongSlideBody(
+        true,
+        '<p>Adu-Ţi aminte, că-s făptura Ta,</p><p>Amin,</p>',
+      ),
+    ).toEqual({
+      mainText: '<p>Adu-Ţi aminte, că-s făptura Ta,</p>',
+      amen: 'Amin,',
+    })
   })
 
   it('uses a custom amin label instead of the default "Amin!"', () => {
