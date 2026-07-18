@@ -12,6 +12,9 @@ export const songCategories = sqliteTable(
   'song_categories',
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
+    // Global identity for Drive library sync; backfilled + auto-assigned by
+    // the add-sync migration triggers, so inserts may omit it.
+    uuid: text('uuid').notNull().default(''),
     name: text('name').notNull().unique(),
     priority: integer('priority').notNull().default(1),
     // 1 = hidden: the category and its songs are dropped from the song browser
@@ -37,6 +40,8 @@ export const songGroups = sqliteTable(
   'song_groups',
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
+    // Global identity for Drive library sync (see add-sync migration).
+    uuid: text('uuid').notNull().default(''),
     canonicalTitle: text('canonical_title').notNull(),
     // `primarySongId` is set by application logic. We deliberately do NOT
     // declare it as a FK here because `songs` references `songGroups` too
@@ -57,6 +62,8 @@ export const songs = sqliteTable(
   'songs',
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
+    // Global identity for Drive library sync (see add-sync migration).
+    uuid: text('uuid').notNull().default(''),
     title: text('title').notNull(),
     categoryId: integer('category_id').references(() => songCategories.id, {
       onDelete: 'set null',

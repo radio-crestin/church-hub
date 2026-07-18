@@ -8,6 +8,8 @@ export const schedules = sqliteTable(
   'schedules',
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
+    // Global identity for Drive library sync (see add-sync migration).
+    uuid: text('uuid').notNull().default(''),
     title: text('title').notNull(),
     description: text('description'),
     createdAt: integer('created_at', { mode: 'timestamp' })
