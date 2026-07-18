@@ -138,6 +138,15 @@ import {
   upsertBackupConfig,
 } from './service/backup'
 import {
+  getSyncConfig,
+  getSyncStatus,
+  listSyncUpdates,
+  markSyncUpdatesSeen,
+  runSyncCycle,
+  startSyncScheduler,
+  upsertSyncConfig,
+} from './service/sync'
+import {
   type CreateTranslationInput,
   deleteTranslation,
   ensureRCCVExists,
@@ -682,6 +691,10 @@ async function main() {
 
   // Start the automatic Google Drive backup scheduler (no-op unless enabled).
   startBackupScheduler()
+
+  // Start the Drive library sync scheduler (no-op unless sync is enabled).
+  // Also performs the on-startup "import changes made elsewhere" sync.
+  startSyncScheduler()
 }
 
 /**
@@ -2299,6 +2312,147 @@ async function startRealServer(): Promise<void> {
         return handleCors(
           req,
           new Response(JSON.stringify({ data: { success: true } }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // ---- Google Drive library sync routes (localhost only) ----
+      // Same trust model as backups: sync is driven only from the machine
+      // running the desktop app (it holds the Drive tokens).
+
+      // GET /api/sync/status - Sync state for the settings UI and indicator
+      if (req.method === 'GET' && url.pathname === '/api/sync/status') {
+        const guard = backupLocalhostGuard()
+        if (guard) return guard
+
+        const status = await getSyncStatus()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: status }), {
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-store',
+            },
+          }),
+        )
+      }
+
+      // GET /api/sync/config - Read sync settings
+      if (req.method === 'GET' && url.pathname === '/api/sync/config') {
+        const guard = backupLocalhostGuard()
+        if (guard) return guard
+
+        const config = await getSyncConfig()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: config }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // PUT /api/sync/config - Update sync settings
+      if (req.method === 'PUT' && url.pathname === '/api/sync/config') {
+        const guard = backupLocalhostGuard()
+        if (guard) return guard
+
+        const patch: { syncEnabled?: boolean; pollIntervalMinutes?: number } =
+          {}
+        try {
+          const body = await req.json()
+          if (typeof body.syncEnabled === 'boolean') {
+            patch.syncEnabled = body.syncEnabled
+          }
+          if (
+            typeof body.pollIntervalMinutes === 'number' &&
+            body.pollIntervalMinutes >= 1
+          ) {
+            patch.pollIntervalMinutes = Math.min(
+              Math.round(body.pollIntervalMinutes),
+              120,
+            )
+          }
+        } catch {
+          // No/invalid body - nothing to update
+        }
+
+        const config = await upsertSyncConfig(patch)
+        // Enabling sync should feel immediate: kick off a first cycle now.
+        if (patch.syncEnabled === true) void runSyncCycle()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: config }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/sync/now - Run a sync cycle immediately
+      if (req.method === 'POST' && url.pathname === '/api/sync/now') {
+        const guard = backupLocalhostGuard()
+        if (guard) return guard
+
+        const result = await runSyncCycle()
+        if (!result.success) {
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({
+                error: result.error ?? result.skipped ?? 'sync_failed',
+              }),
+              {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
+          )
+        }
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: result }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // GET /api/sync/updates - Changes applied from other devices
+      if (req.method === 'GET' && url.pathname === '/api/sync/updates') {
+        const guard = backupLocalhostGuard()
+        if (guard) return guard
+
+        const unseenOnly = url.searchParams.get('unseenOnly') === 'true'
+        const updates = listSyncUpdates({ unseenOnly })
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: { updates } }), {
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-store',
+            },
+          }),
+        )
+      }
+
+      // POST /api/sync/updates/seen - Mark update entries as reviewed
+      if (req.method === 'POST' && url.pathname === '/api/sync/updates/seen') {
+        const guard = backupLocalhostGuard()
+        if (guard) return guard
+
+        let ids: number[] | undefined
+        try {
+          const body = await req.json()
+          if (Array.isArray(body.ids)) {
+            ids = body.ids.filter((id: unknown) => typeof id === 'number')
+          }
+        } catch {
+          // No body - mark everything seen
+        }
+
+        const changed = markSyncUpdatesSeen(ids)
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: { markedSeen: changed } }), {
             headers: { 'Content-Type': 'application/json' },
           }),
         )

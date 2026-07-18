@@ -20,6 +20,7 @@ import {
   settingsPaths,
   songGroupsPaths,
   songsPaths,
+  syncPaths,
   usersPaths,
 } from './paths'
 import {
@@ -55,6 +56,10 @@ export const openApiSpec = {
       name: 'Backup',
       description: 'Google Drive backup and restore',
     },
+    {
+      name: 'Sync',
+      description: 'Real-time library sync via Google Drive',
+    },
     { name: 'Devices', description: 'Device management and authorization' },
     { name: 'Authentication', description: 'Device and user authentication' },
     { name: 'Users', description: 'User accounts and permissions' },
@@ -78,6 +83,7 @@ export const openApiSpec = {
     ...settingsPaths,
     ...databasePaths,
     ...backupPaths,
+    ...syncPaths,
     ...devicesPaths,
     ...authPaths,
     ...usersPaths,
