@@ -68,6 +68,7 @@ import {
 } from '~/features/songs/hooks'
 import type { SongSlide } from '~/features/songs/types'
 import { expandSongSlidesWithChoruses } from '~/features/songs/utils/expandSongSlides'
+import { useMarkEntitySeen } from '~/features/sync'
 import { useDividerPosition } from '~/hooks/useDividerPosition'
 import { usePermissions } from '~/provider/permissions-provider'
 import { DIVIDER_KEYS, SONG_DETAIL_DEFAULTS } from '~/service/layout'
@@ -140,6 +141,9 @@ function SongPreviewPage() {
     }
   }, [reset, navigate])
   const numericId = parseInt(songId, 10)
+
+  // Opening a song reviews its "updated elsewhere" sync badge.
+  useMarkEntitySeen('song', Number.isNaN(numericId) ? null : numericId)
 
   const { data: song, isLoading, isError } = useSong(numericId)
   const presentTemporarySong = usePresentTemporarySong()

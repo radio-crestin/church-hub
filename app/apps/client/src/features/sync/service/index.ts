@@ -1,0 +1,16 @@
+export {
+  getSyncConfig,
+  getSyncPending,
+  getSyncStatus,
+  getSyncUpdates,
+  markSyncUpdatesSeen,
+  type SyncChangeKind,
+  type SyncConfig,
+  type SyncEntityType,
+  type SyncNowResult,
+  type SyncPendingEntry,
+  type SyncStatus,
+  type SyncUpdate,
+  syncNow,
+  updateSyncConfig,
+} from './sync'

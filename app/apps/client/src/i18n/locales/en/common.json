@@ -70,5 +70,11 @@
     "tapToReconnect": "Tap to reconnect"
   },
   "settings": "Settings",
-  "options": "Options"
+  "options": "Options",
+  "sync": {
+    "updatedBadge": "Updated",
+    "conflictBadge": "Conflict",
+    "updatedTooltip": "Updated on another device",
+    "conflictTooltip": "Version conflict — your local edit was replaced by a newer version from another device"
+  }
 }
