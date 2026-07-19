@@ -77,7 +77,7 @@ export async function runSyncCycle(): Promise<SyncCycleResult> {
 
     // Re-read after adoption: dirty keys may have been remapped to new uuids.
     const dirtyKeys = getPendingKeys()
-    const local = serializeLibrary(state.deviceId)
+    const local = serializeLibrary(state.deviceId, state.deviceName, dirtyKeys)
 
     const { merged, applyOps, uploadNeeded } = mergeLibraries(
       local,

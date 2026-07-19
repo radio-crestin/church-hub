@@ -2,6 +2,7 @@ import { getRawDatabase } from '../../db'
 
 export interface SyncState {
   deviceId: string
+  deviceName: string
   remoteFileId: string | null
   remoteFileVersion: string | null
 }
@@ -13,12 +14,13 @@ export function getSyncState(): SyncState {
     .query<
       {
         device_id: string
+        device_name: string
         remote_file_id: string | null
         remote_file_version: string | null
       },
       []
     >(
-      'SELECT device_id, remote_file_id, remote_file_version FROM sync_state WHERE id = 1',
+      'SELECT device_id, device_name, remote_file_id, remote_file_version FROM sync_state WHERE id = 1',
     )
     .get()
 
@@ -27,6 +29,7 @@ export function getSyncState(): SyncState {
   }
   return {
     deviceId: row.device_id,
+    deviceName: row.device_name,
     remoteFileId: row.remote_file_id,
     remoteFileVersion: row.remote_file_version,
   }

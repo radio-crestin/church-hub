@@ -316,9 +316,16 @@ export function applyRemoteChanges(ops: ApplyOp[]): ApplyResult {
       if (!op.silent) {
         reportedCount++
         db.query(
-          `INSERT INTO sync_updates (entity_type, entity_uuid, local_id, change_kind, title, occurred_at, seen)
-           VALUES (?, ?, ?, ?, ?, unixepoch(), 0)`,
-        ).run(op.entityType, op.uuid, localId, op.changeKind, op.title)
+          `INSERT INTO sync_updates (entity_type, entity_uuid, local_id, change_kind, title, source_device, occurred_at, seen)
+           VALUES (?, ?, ?, ?, ?, ?, unixepoch(), 0)`,
+        ).run(
+          op.entityType,
+          op.uuid,
+          localId,
+          op.changeKind,
+          op.title,
+          op.sourceDevice ?? null,
+        )
       }
     }
 

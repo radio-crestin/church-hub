@@ -13,8 +13,17 @@ import type { SyncEntityType } from '../../db/schema/sync'
  * Serializes the local database into a LibraryFile snapshot — the local side
  * of the merge. Only synced aggregates are included (songs with slides,
  * categories, groups, schedules with items) plus the local tombstones.
+ *
+ * Aggregates in `dirtyKeys` (`entityType:uuid`, the unsynced local edits) are
+ * stamped with `modifiedByDevice = deviceName` so other devices can show where
+ * each change was made; clean rows inherit their attribution from the remote
+ * file during the merge.
  */
-export function serializeLibrary(deviceId: string): LibraryFile {
+export function serializeLibrary(
+  deviceId: string,
+  deviceName: string,
+  dirtyKeys: ReadonlySet<string>,
+): LibraryFile {
   const db = getRawDatabase()
 
   const categories = db
@@ -319,7 +328,7 @@ export function serializeLibrary(deviceId: string): LibraryFile {
       deletedAt: row.deleted_at,
     }))
 
-  return {
+  const library: LibraryFile = {
     schemaVersion: LIBRARY_SCHEMA_VERSION,
     updatedByDevice: deviceId,
     categories,
@@ -328,4 +337,21 @@ export function serializeLibrary(deviceId: string): LibraryFile {
     schedules,
     tombstones,
   }
+
+  const stamp = (
+    entityType: string,
+    items: Array<{ uuid: string } & { modifiedByDevice?: string | null }>,
+  ) => {
+    for (const item of items) {
+      if (dirtyKeys.has(`${entityType}:${item.uuid}`)) {
+        item.modifiedByDevice = deviceName
+      }
+    }
+  }
+  stamp('song_category', library.categories)
+  stamp('song_group', library.groups)
+  stamp('song', library.songs)
+  stamp('schedule', library.schedules)
+
+  return library
 }

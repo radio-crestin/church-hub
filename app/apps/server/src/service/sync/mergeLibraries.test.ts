@@ -206,6 +206,41 @@ describe('mergeLibraries', () => {
     expect(result.merged.tombstones).toHaveLength(0)
   })
 
+  test('the winning remote version carries its device attribution into the op', () => {
+    const local = emptyLibrary()
+    local.songs.push(song({ uuid: 'a', updatedAt: NOW - 500 }))
+    const remote = emptyLibrary('device-b')
+    remote.songs.push(
+      song({
+        uuid: 'a',
+        title: 'Edited',
+        updatedAt: NOW - 100,
+        modifiedByDevice: 'Laptop-Biserica',
+      }),
+    )
+
+    const result = mergeLibraries(local, remote, new Set(), NOW)
+
+    expect(result.applyOps[0]?.sourceDevice).toBe('Laptop-Biserica')
+  })
+
+  test('a clean local winner inherits the remote attribution instead of losing it', () => {
+    const local = emptyLibrary()
+    local.songs.push(song({ uuid: 'a', updatedAt: NOW - 100 }))
+    const remote = emptyLibrary('device-b')
+    remote.songs.push(
+      song({
+        uuid: 'a',
+        updatedAt: NOW - 500,
+        modifiedByDevice: 'Laptop-Biserica',
+      }),
+    )
+
+    const result = mergeLibraries(local, remote, new Set(), NOW)
+
+    expect(result.merged.songs[0]?.modifiedByDevice).toBe('Laptop-Biserica')
+  })
+
   test('identical local and remote need no upload and no apply', () => {
     const shared = song({ uuid: 'a' })
     const local = emptyLibrary()

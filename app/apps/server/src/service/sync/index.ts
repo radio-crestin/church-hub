@@ -4,6 +4,10 @@ export {
   LIBRARY_SCHEMA_VERSION,
 } from './constants'
 export { getSyncStatus, type SyncStatus } from './getSyncStatus'
+export {
+  listPendingChanges,
+  type PendingChangeEntry,
+} from './listPendingChanges'
 export { dirtyKey, mergeLibraries } from './mergeLibraries'
 export { runSyncCycle } from './runSyncCycle'
 export {

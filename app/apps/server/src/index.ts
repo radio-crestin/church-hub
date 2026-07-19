@@ -140,6 +140,7 @@ import {
 import {
   getSyncConfig,
   getSyncStatus,
+  listPendingChanges,
   listSyncUpdates,
   markSyncUpdatesSeen,
   runSyncCycle,
@@ -2412,6 +2413,23 @@ async function startRealServer(): Promise<void> {
           req,
           new Response(JSON.stringify({ data: result }), {
             headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // GET /api/sync/pending - Local changes waiting to upload to Drive
+      if (req.method === 'GET' && url.pathname === '/api/sync/pending') {
+        const guard = backupLocalhostGuard()
+        if (guard) return guard
+
+        const pending = listPendingChanges()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: { pending } }), {
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-store',
+            },
           }),
         )
       }

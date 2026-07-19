@@ -9,8 +9,17 @@ export interface LibrarySlide {
   sortOrder: number
 }
 
+/**
+ * Name of the device that last modified an aggregate. Stamped at serialize
+ * time on locally-dirty rows, inherited from the remote file otherwise, and
+ * shown in the sync changes list ("modified on <device>").
+ */
+export interface DeviceAttributed {
+  modifiedByDevice?: string | null
+}
+
 /** Serialized song aggregate (song row + slides), keyed by uuid. */
-export interface LibrarySong {
+export interface LibrarySong extends DeviceAttributed {
   uuid: string
   title: string
   categoryUuid: string | null
@@ -34,7 +43,7 @@ export interface LibrarySong {
   slides: LibrarySlide[]
 }
 
-export interface LibraryCategory {
+export interface LibraryCategory extends DeviceAttributed {
   uuid: string
   name: string
   priority: number
@@ -43,7 +52,7 @@ export interface LibraryCategory {
   updatedAt: number
 }
 
-export interface LibraryGroup {
+export interface LibraryGroup extends DeviceAttributed {
   uuid: string
   canonicalTitle: string
   primarySongUuid: string | null
@@ -86,7 +95,7 @@ export interface LibraryScheduleItem {
 }
 
 /** Serialized schedule aggregate (schedule row + items + nested verses). */
-export interface LibrarySchedule {
+export interface LibrarySchedule extends DeviceAttributed {
   uuid: string
   title: string
   description: string | null
@@ -140,6 +149,8 @@ export interface ApplyOp {
   changeKind: 'added' | 'updated' | 'removed' | 'conflict'
   /** Display title for the updates feed. */
   title: string
+  /** Device the winning remote version was modified on, when known. */
+  sourceDevice?: string | null
   /**
    * True when only per-device usage fields (presentation count, timestamps)
    * differ: the write is applied but no feed entry / badge is created.

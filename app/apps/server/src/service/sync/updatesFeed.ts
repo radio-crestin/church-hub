@@ -7,6 +7,8 @@ export interface SyncUpdateEntry {
   localId: number | null
   changeKind: 'added' | 'updated' | 'removed' | 'conflict'
   title: string
+  /** Device the change was made on, when the library file carried it. */
+  sourceDevice: string | null
   occurredAt: number
   seen: boolean
 }
@@ -32,12 +34,13 @@ export function listSyncUpdates(options?: {
         local_id: number | null
         change_kind: SyncUpdateEntry['changeKind']
         title: string
+        source_device: string | null
         occurred_at: number
         seen: number
       },
       [number]
     >(
-      `SELECT id, entity_type, entity_uuid, local_id, change_kind, title, occurred_at, seen
+      `SELECT id, entity_type, entity_uuid, local_id, change_kind, title, source_device, occurred_at, seen
          FROM sync_updates ${where} ORDER BY id DESC LIMIT ?`,
     )
     .all(limit)
@@ -48,6 +51,7 @@ export function listSyncUpdates(options?: {
       localId: row.local_id,
       changeKind: row.change_kind,
       title: row.title,
+      sourceDevice: row.source_device,
       occurredAt: row.occurred_at,
       seen: row.seen === 1,
     }))

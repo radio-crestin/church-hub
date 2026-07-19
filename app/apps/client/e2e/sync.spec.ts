@@ -80,6 +80,15 @@ test.describe('Sync - API', () => {
     await request.put('/api/sync/config', { data: { syncEnabled: false } })
   })
 
+  test('pending feed lists local changes waiting to upload', async ({
+    request,
+  }) => {
+    const response = await request.get('/api/sync/pending')
+    expect(response.status()).toBe(200)
+    const json = await response.json()
+    expect(Array.isArray(json.data.pending)).toBe(true)
+  })
+
   test('updates feed lists entries and marks them seen', async ({
     request,
   }) => {

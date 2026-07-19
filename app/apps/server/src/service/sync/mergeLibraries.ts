@@ -45,6 +45,7 @@ const USAGE_FIELDS = new Set([
   'presentationCount',
   'lastPresentedAt',
   'lastManualEdit',
+  'modifiedByDevice',
 ])
 
 function contentKey(item: LibraryAggregate): string {
@@ -163,9 +164,15 @@ export function mergeLibraries(
             data: remoteRow,
             changeKind: !silent && dirtyKeys.has(key) ? 'conflict' : 'updated',
             title: collection.titleOf(remoteRow),
+            sourceDevice: remoteRow.modifiedByDevice ?? null,
             silent,
           })
         } else {
+          // Local wins; clean local rows carry no attribution of their own —
+          // keep the remote file's so the history isn't lost.
+          if (localRow.modifiedByDevice == null && remoteRow.modifiedByDevice) {
+            localRow.modifiedByDevice = remoteRow.modifiedByDevice
+          }
           merged[collection.key].push(localRow as never)
         }
       } else if (localRow && remoteDeadAt !== null) {
@@ -205,6 +212,7 @@ export function mergeLibraries(
             data: remoteRow,
             changeKind: 'added',
             title: collection.titleOf(remoteRow),
+            sourceDevice: remoteRow.modifiedByDevice ?? null,
           })
         }
       } else {

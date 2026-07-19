@@ -53,6 +53,8 @@ export const syncState = sqliteTable('sync_state', {
   id: integer('id').primaryKey(),
   /** Random identifier of this installation, used to attribute file writes. */
   deviceId: text('device_id').notNull(),
+  /** Human-readable machine name shown in the changes list (os.hostname). */
+  deviceName: text('device_name').notNull().default(''),
   applying: integer('applying').notNull().default(0),
   /** Drive file id of the shared library file, once known. */
   remoteFileId: text('remote_file_id'),
@@ -124,6 +126,8 @@ export const syncUpdates = sqliteTable(
     }).notNull(),
     /** Display title snapshot, so removed entities can still be named. */
     title: text('title').notNull(),
+    /** Name of the device the change was made on (null when unattributed). */
+    sourceDevice: text('source_device'),
     occurredAt: integer('occurred_at', { mode: 'timestamp' })
       .notNull()
       .default(sql`(unixepoch())`),

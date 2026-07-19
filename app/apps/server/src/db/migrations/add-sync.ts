@@ -1,3 +1,5 @@
+import { hostname } from 'node:os'
+
 import type { Database } from 'bun:sqlite'
 
 const DEBUG = process.env.DEBUG === 'true'
@@ -112,6 +114,15 @@ function createSyncTables(db: Database): void {
     `)
   }
 
+  // Human-readable device attribution for the sync changes list ("modified on
+  // <device>"). Refreshed every boot so renamed machines stay accurate.
+  if (!columnExists(db, 'sync_state', 'device_name')) {
+    log('info', 'Adding "device_name" column to "sync_state"...')
+    db.run(
+      "ALTER TABLE sync_state ADD COLUMN device_name TEXT NOT NULL DEFAULT ''",
+    )
+  }
+
   // Singleton state row; also resets a stale `applying` flag left behind by a
   // crash mid-apply, which would otherwise disable change tracking forever.
   db.run(`
@@ -120,6 +131,9 @@ function createSyncTables(db: Database): void {
     WHERE NOT EXISTS (SELECT 1 FROM sync_state WHERE id = 1)
   `)
   db.run('UPDATE sync_state SET applying = 0 WHERE id = 1 AND applying != 0')
+  db.query('UPDATE sync_state SET device_name = ? WHERE id = 1').run(
+    safeHostname(),
+  )
 
   if (!tableExists(db, 'sync_pending')) {
     log('info', 'Creating "sync_pending" table...')
@@ -166,6 +180,22 @@ function createSyncTables(db: Database): void {
     db.run(
       'CREATE INDEX idx_sync_updates_entity ON sync_updates (entity_type, entity_uuid)',
     )
+  }
+
+  // Which device made the change that was applied here (nullable — older
+  // library files carry no attribution).
+  if (!columnExists(db, 'sync_updates', 'source_device')) {
+    log('info', 'Adding "source_device" column to "sync_updates"...')
+    db.run('ALTER TABLE sync_updates ADD COLUMN source_device TEXT')
+  }
+}
+
+/** Hostname of this machine, or a generic label when unavailable. */
+function safeHostname(): string {
+  try {
+    return hostname() || 'unknown-device'
+  } catch {
+    return 'unknown-device'
   }
 }
 

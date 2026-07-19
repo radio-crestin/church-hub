@@ -41,8 +41,26 @@ const syncUpdateEntrySchema = {
       enum: ['added', 'updated', 'removed', 'conflict'],
     },
     title: { type: 'string' },
+    sourceDevice: {
+      type: ['string', 'null'],
+      description: 'Name of the device the change was made on, when known.',
+    },
     occurredAt: { type: 'integer', description: 'Unix seconds' },
     seen: { type: 'boolean' },
+  },
+}
+
+const pendingChangeEntrySchema = {
+  type: 'object',
+  properties: {
+    entityType: {
+      type: 'string',
+      enum: ['song', 'song_category', 'song_group', 'schedule'],
+    },
+    entityUuid: { type: 'string' },
+    localId: { type: ['integer', 'null'] },
+    title: { type: 'string' },
+    queuedAt: { type: 'integer', description: 'Unix seconds' },
   },
 }
 
@@ -185,6 +203,38 @@ export const syncPaths: Record<string, Record<string, unknown>> = {
               schema: {
                 type: 'object',
                 properties: { error: { type: 'string' } },
+              },
+            },
+          },
+        },
+        '403': localhostError,
+      },
+    },
+  },
+  '/api/sync/pending': {
+    get: {
+      tags: ['Sync'],
+      summary: 'List local changes waiting to upload',
+      description:
+        'Local edits queued for the next sync cycle (the "to send from this computer" half of the sync changes list), newest first. Deletions are not listed. Only accessible from localhost.',
+      responses: {
+        '200': {
+          description: 'Pending local changes',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'object',
+                    properties: {
+                      pending: {
+                        type: 'array',
+                        items: pendingChangeEntrySchema,
+                      },
+                    },
+                  },
+                },
               },
             },
           },
