@@ -934,6 +934,26 @@
         "syncNotConnected": "Conectează Google Drive pentru a sincroniza.",
         "syncFailed": "Sincronizarea a eșuat: {{error}}",
         "configFailed": "Nu s-au putut salva setările de sincronizare"
+      },
+      "changes": {
+        "toSend": "De trimis de pe acest calculator",
+        "received": "Primite de pe alte dispozitive",
+        "empty": "Totul este sincronizat.",
+        "receivedEmpty": "Nicio modificare primită încă.",
+        "onDevice": "pe {{device}}",
+        "markAllSeen": "Marchează tot ca văzut",
+        "kind": {
+          "added": "Adăugat",
+          "updated": "Modificat",
+          "removed": "Șters",
+          "conflict": "Conflict"
+        },
+        "entity": {
+          "song": "Cântare",
+          "song_category": "Categorie",
+          "song_group": "Grup",
+          "schedule": "Program"
+        }
       }
     },
     "debug": {

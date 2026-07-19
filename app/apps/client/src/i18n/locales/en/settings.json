@@ -932,6 +932,26 @@
         "syncNotConnected": "Connect Google Drive to sync.",
         "syncFailed": "Sync failed: {{error}}",
         "configFailed": "Failed to update sync settings"
+      },
+      "changes": {
+        "toSend": "To send from this computer",
+        "received": "Received from other devices",
+        "empty": "Everything is synced.",
+        "receivedEmpty": "No changes received yet.",
+        "onDevice": "on {{device}}",
+        "markAllSeen": "Mark all as seen",
+        "kind": {
+          "added": "Added",
+          "updated": "Updated",
+          "removed": "Removed",
+          "conflict": "Conflict"
+        },
+        "entity": {
+          "song": "Song",
+          "song_category": "Category",
+          "song_group": "Group",
+          "schedule": "Schedule"
+        }
       }
     },
     "debug": {

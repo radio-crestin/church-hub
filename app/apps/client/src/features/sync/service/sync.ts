@@ -50,6 +50,17 @@ export interface SyncUpdate {
   /** Unix SECONDS (not ms). */
   occurredAt: number
   seen: boolean
+  /** Human-readable device name (hostname) the change was made on. */
+  sourceDevice: string | null
+}
+
+export interface SyncPendingEntry {
+  entityType: SyncEntityType
+  entityUuid: string
+  localId: number | null
+  title: string
+  /** Unix SECONDS (not ms). */
+  queuedAt: number
 }
 
 interface ApiResponse<T> {
@@ -109,6 +120,18 @@ export async function getSyncUpdates(unseenOnly = true): Promise<SyncUpdate[]> {
     throw new Error(res.error || 'Failed to load sync updates')
   }
   return res.data.updates
+}
+
+/** Local changes queued for upload to Drive (deletions are not listed). */
+export async function getSyncPending(): Promise<SyncPendingEntry[]> {
+  const res =
+    await fetcher<ApiResponse<{ pending: SyncPendingEntry[] }>>(
+      '/api/sync/pending',
+    )
+  if (!res.data) {
+    throw new Error(res.error || 'Failed to load pending sync changes')
+  }
+  return res.data.pending
 }
 
 /** Marks the given update entries seen; with no ids, marks all of them. */

@@ -1,5 +1,6 @@
 export {
   getSyncConfig,
+  getSyncPending,
   getSyncStatus,
   getSyncUpdates,
   markSyncUpdatesSeen,
@@ -7,6 +8,7 @@ export {
   type SyncConfig,
   type SyncEntityType,
   type SyncNowResult,
+  type SyncPendingEntry,
   type SyncStatus,
   type SyncUpdate,
   syncNow,

@@ -3,6 +3,8 @@ import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useToast } from '~/ui/toast'
+import { SyncChangesList } from './SyncChangesList'
+import { SyncPendingList } from './SyncPendingList'
 import { useSyncConfig } from '../hooks/useSyncConfig'
 import { useSyncNow } from '../hooks/useSyncNow'
 import { useSyncStatus } from '../hooks/useSyncStatus'
@@ -214,6 +216,12 @@ export function SyncSettingsSection() {
             ? t('sections.sync.now.syncing')
             : t('sections.sync.now.button')}
         </button>
+      </div>
+
+      {/* Changes lists: local queue + history received from other devices */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <SyncPendingList />
+        <SyncChangesList />
       </div>
     </div>
   )
