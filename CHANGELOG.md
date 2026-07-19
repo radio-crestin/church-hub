@@ -2,6 +2,13 @@
 
 > Auto-generated from git history by `app/scripts/generate-changelog.ts`. Do not edit by hand.
 
+## v0.1.84 — 2026-07-19
+
+### 🔧 Changes
+
+- real-time Google Drive library sync, last-slide layout parity, first-run layout defaults
+- sync version to v0.1.83 [skip ci]
+
 ## v0.1.83 — 2026-07-16
 
 ### 🐛 Bug Fixes
