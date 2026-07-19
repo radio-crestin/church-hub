@@ -8,6 +8,8 @@ import {
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import type { SyncChangeKind } from '~/features/sync'
+import { SyncUpdateBadge } from '~/features/sync'
 import { Tooltip } from '~/ui/tooltip/Tooltip'
 
 interface ScheduleCardProps {
@@ -22,6 +24,8 @@ interface ScheduleCardProps {
   onClick: () => void
   onSaveClick?: (scheduleId: number) => void
   isSaving?: boolean
+  /** Unseen sync change applied from another device (renders a badge). */
+  syncChangeKind?: SyncChangeKind
 }
 
 export function ScheduleCard({
@@ -29,6 +33,7 @@ export function ScheduleCard({
   onClick,
   onSaveClick,
   isSaving,
+  syncChangeKind,
 }: ScheduleCardProps) {
   const { t, i18n } = useTranslation('schedules')
 
@@ -58,9 +63,16 @@ export function ScheduleCard({
           <CalendarDays className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-gray-900 dark:text-white truncate">
-            {schedule.title}
-          </h3>
+          <div className="flex items-center gap-2 min-w-0">
+            <h3 className="font-medium text-gray-900 dark:text-white truncate">
+              {schedule.title}
+            </h3>
+            {syncChangeKind && (
+              <span className="flex-shrink-0">
+                <SyncUpdateBadge changeKind={syncChangeKind} />
+              </span>
+            )}
+          </div>
           {schedule.description && (
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-1">
               {schedule.description}

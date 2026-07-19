@@ -10,6 +10,7 @@ import { addPreviewScreen } from './add-preview-screen'
 import { addSongBookmarkSung } from './add-song-bookmark-sung'
 import { addSongGroups } from './add-song-groups'
 import { addSongSlideNotes } from './add-song-slide-notes'
+import { addSync } from './add-sync'
 import { addSongVersionsPermissions } from './add-song-versions-permissions'
 import { addUserAuthFields } from './add-user-auth-fields'
 import { dropSongKeyColumn } from './drop-song-key-column'
@@ -296,6 +297,11 @@ export function runMigrations(
     'Running add song_bookmark sung migration',
     () => addSongBookmarkSung(rawDb),
   )
+
+  // Google Drive library sync: uuid identity columns, sync engine tables and
+  // change-tracking triggers. Must run LAST so seeded rows get their uuid
+  // backfilled without being marked as dirty local edits.
+  runStep('add_sync', 'Running add sync migration', () => addSync(rawDb))
 
   return { ftsRecreated: ftsCreated }
 }

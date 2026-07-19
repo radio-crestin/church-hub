@@ -18,10 +18,7 @@ import type {
 import { getDatabase, getRawDatabase } from '../../db'
 import { songSlides, songs } from '../../db/schema'
 import { createLogger } from '../../utils/logger'
-import {
-  addAminToLastSlide,
-  generateExpandedPresentationOrder,
-} from '../presentation/expand-song-slides'
+import { generateExpandedPresentationOrder } from '../presentation/expand-song-slides'
 
 const logger = createLogger('songs')
 const SLIDE_BULK_INSERT_CHUNK_SIZE = 1000 // Increased from 500 for better performance
@@ -334,10 +331,8 @@ export function getSongById(id: number): Song | null {
 }
 
 /**
- * Gets a song by ID with all its slides and category
- * Applies presentation transformations:
- * - Adds "Amin!" to the last slide
- * - Generates expanded presentation order with chorus insertions
+ * Gets a song by ID with all its slides (raw content) and category, plus the
+ * expanded presentation order with chorus insertions
  */
 export function getSongWithSlides(id: number): SongWithSlides | null {
   try {
@@ -352,11 +347,9 @@ export function getSongWithSlides(id: number): SongWithSlides | null {
     const category = song.categoryId ? getCategoryById(song.categoryId) : null
     const tags = getTagsBySongId(id)
 
-    // Transform slides: add "Amin!" to the last slide
-    const transformedSlides = slides.map((slide, index) => ({
-      ...slide,
-      content: addAminToLastSlide(slide.content, index === slides.length - 1),
-    }))
+    // Slides are served RAW. The last-slide "Amin" treatment is applied at
+    // render time by the shared presentation resolver (songElements.ts), so
+    // preview and projection always work from identical content.
 
     // Generate expanded presentation order (C1 V1 C1 V2 C1 V3 C2...)
     const expandedPresentationOrder = generateExpandedPresentationOrder(slides)
@@ -364,7 +357,7 @@ export function getSongWithSlides(id: number): SongWithSlides | null {
     return {
       ...song,
       presentationOrder: expandedPresentationOrder || song.presentationOrder,
-      slides: transformedSlides,
+      slides,
       category,
       tags,
     }
@@ -375,11 +368,9 @@ export function getSongWithSlides(id: number): SongWithSlides | null {
 }
 
 /**
- * Gets all songs with their slides and categories
+ * Gets all songs with their slides (raw content) and categories, plus the
+ * expanded presentation order with chorus insertions
  * Optionally filters by category ID
- * Applies presentation transformations:
- * - Adds "Amin!" to the last slide
- * - Generates expanded presentation order with chorus insertions
  */
 export function getAllSongsWithSlides(
   categoryId?: number | null,
@@ -408,11 +399,8 @@ export function getAllSongsWithSlides(
       const slides = getSlidesBySongId(song.id)
       const category = song.categoryId ? getCategoryById(song.categoryId) : null
 
-      // Transform slides: add "Amin!" to the last slide
-      const transformedSlides = slides.map((slide, index) => ({
-        ...slide,
-        content: addAminToLastSlide(slide.content, index === slides.length - 1),
-      }))
+      // Slides are served RAW (see getSongWithSlides); exports append their
+      // own "Amin!" where needed.
 
       // Generate expanded presentation order (C1 V1 C1 V2 C1 V3 C2...)
       const expandedPresentationOrder =
@@ -421,7 +409,7 @@ export function getAllSongsWithSlides(
       return {
         ...song,
         presentationOrder: expandedPresentationOrder || song.presentationOrder,
-        slides: transformedSlides,
+        slides,
         category,
         tags: tagsBySongId.get(song.id) ?? [],
       }

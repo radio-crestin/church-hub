@@ -54,6 +54,15 @@ export type SongUpdatedMessage = {
   }
 }
 
+export type SyncAppliedMessage = {
+  type: 'sync_applied'
+  payload: {
+    /** Number of changes just applied from other devices. */
+    appliedCount: number
+    updatedAt: number
+  }
+}
+
 // ============================================================================
 // WEBRTC SCREEN SHARE MESSAGE TYPES
 // ============================================================================
@@ -681,6 +690,31 @@ export function broadcastScreenConfigUpdated(screenId: number) {
   wsLogger.debug(
     `Broadcasting screen config update for screen ${screenId} to ${clients.size} clients`,
   )
+
+  for (const [clientId, conn] of clients) {
+    try {
+      conn.ws.send(message)
+    } catch (error) {
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
+      clients.delete(clientId)
+    }
+  }
+}
+
+/**
+ * Notifies all connected clients that Drive sync just applied changes from
+ * other devices, so open views can refetch songs/schedules and show badges.
+ */
+export function broadcastSyncApplied(appliedCount: number) {
+  const message = JSON.stringify({
+    type: 'sync_applied',
+    payload: {
+      appliedCount,
+      updatedAt: Date.now(),
+    },
+  } satisfies SyncAppliedMessage)
+
+  wsLogger.debug(`Broadcasting sync_applied to ${clients.size} clients`)
 
   for (const [clientId, conn] of clients) {
     try {

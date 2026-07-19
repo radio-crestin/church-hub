@@ -6,6 +6,7 @@ import {
   ScheduleEditor,
   SchedulePresenter,
 } from '~/features/schedules/components'
+import { useMarkEntitySeen } from '~/features/sync'
 
 /**
  * Search params for deep-linking to specific schedule items
@@ -36,6 +37,12 @@ function ScheduleEditorPage() {
 
   const isNew = scheduleId === 'new'
   const numericId = isNew ? null : parseInt(scheduleId, 10)
+
+  // Opening a schedule reviews its "updated elsewhere" sync badge.
+  useMarkEntitySeen(
+    'schedule',
+    numericId !== null && !Number.isNaN(numericId) ? numericId : null,
+  )
 
   // Save last visited schedule to localStorage
   useEffect(() => {

@@ -190,24 +190,3 @@ export function generateExpandedPresentationOrder(
 
   return orderParts.join(' ')
 }
-
-/**
- * Adds "Amin!" to the last slide content if not already present
- *
- * @param content - The slide content (HTML string)
- * @param isLastSlide - Whether this is the last slide
- * @returns The content with "Amin!" appended if applicable
- */
-export function addAminToLastSlide(
-  content: string,
-  isLastSlide: boolean,
-): string {
-  if (!isLastSlide) return content
-  if (/amin/i.test(content)) return content
-
-  // Remove trailing empty paragraphs and whitespace
-  const trimmedContent = content.replace(/(<p><br><\/p>|\s)+$/gi, '')
-
-  // Add Amin! with one empty line before it
-  return `${trimmedContent}<br><p>Amin!</p>`
-}
