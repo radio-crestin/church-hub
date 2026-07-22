@@ -17,7 +17,6 @@ import type { BibleTranslation } from '../types'
 
 interface VersesListProps {
   bookId: number
-  bookName: string
   bookCode: string
   chapter: number
   chapters: ChapterData[]
@@ -42,7 +41,6 @@ interface VersesListProps {
 
 export function VersesList({
   bookId,
-  bookName,
   bookCode,
   chapter,
   chapters,
@@ -72,6 +70,10 @@ export function VersesList({
   const chapterKeyRef = useRef(`${bookId}-${chapter}`)
   // Track if user has scrolled (to enable infinite scroll)
   const hasUserScrolledRef = useRef(false)
+  // Track whether the user has taken manual control of the scroll position.
+  // While true, the auto-scroll below stands down so it never fights an
+  // in-progress gesture. Picking a new target hands control back to it.
+  const userTookOverScrollRef = useRef(false)
   // Track previous chapters count for scroll position preservation
   const prevChaptersCountRef = useRef(chapters.length)
   const scrollPreservationRef = useRef<{
@@ -158,12 +160,42 @@ export function VersesList({
     return () => container.removeEventListener('scroll', handleScroll)
   }, [])
 
+  // Hand scroll ownership to the user on any genuine input gesture. We listen
+  // for input events rather than 'scroll' because a scroll event is emitted
+  // identically for our own scrollTop writes below, so it cannot tell a user
+  // gesture apart from the auto-scroll's own output. 'touchmove' (not
+  // 'touchstart') and 'pointerdown' keep taps on a verse from counting as
+  // scroll intent while still catching drags of the scrollbar.
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    const takeOverScroll = () => {
+      userTookOverScrollRef.current = true
+    }
+
+    const gestures = ['wheel', 'touchmove', 'pointerdown', 'keydown'] as const
+    for (const gesture of gestures) {
+      container.addEventListener(gesture, takeOverScroll, { passive: true })
+    }
+    return () => {
+      for (const gesture of gestures) {
+        container.removeEventListener(gesture, takeOverScroll)
+      }
+    }
+  }, [])
+
   // Scroll to highlighted verse or first verse of current chapter. Runs as a
   // layout effect so the scroll happens synchronously before paint, then keeps
   // retrying for ~5s to survive the case where the new chapter's verses arrive
   // after the first attempt (chapter cross can re-mount the highlighted button
   // multiple times as the infinite-scroll window updates).
   useLayoutEffect(() => {
+    // A genuinely new target (verse selected, chapter crossed, verses arrived)
+    // means the auto-scroll owns the scroll position again, even if the user
+    // had scrolled away from the previous target.
+    userTookOverScrollRef.current = false
+
     const rafIds: number[] = []
     let timeoutId: ReturnType<typeof setTimeout> | null = null
     let cancelled = false
@@ -218,11 +250,14 @@ export function VersesList({
     // Scroll on every attempt for the full window. We can't stop early on
     // isInView because subsequent layout shifts (a sibling chapter finishing
     // its query) can push the verse off-screen again after we declared
-    // success. Total budget ~3s, scrolling roughly every 150ms.
+    // success. Total budget ~3s, scrolling roughly every 150ms. The user
+    // taking over is the one condition that ends the window early — otherwise
+    // every remaining attempt yanks the list back mid-gesture.
     const scheduleAttempt = (attemptsLeft: number, delayMs: number) => {
       const raf = requestAnimationFrame(() => {
+        if (cancelled || userTookOverScrollRef.current) return
         scrollToTarget()
-        if (cancelled || attemptsLeft <= 0) return
+        if (attemptsLeft <= 0) return
         timeoutId = setTimeout(
           () => scheduleAttempt(attemptsLeft - 1, delayMs),
           delayMs,
@@ -238,7 +273,14 @@ export function VersesList({
       for (const id of rafIds) cancelAnimationFrame(id)
       if (timeoutId !== null) clearTimeout(timeoutId)
     }
-  }, [scrollTargetIndex, versesKey, currentChapterKey, chapters])
+    // `chapters` is deliberately not a dependency: useQueries hands back a new
+    // array reference on nearly every render (including the re-render the
+    // scroll listener above causes), which restarted this ~3s re-centering
+    // window mid-scroll and warped the list back to the selected verse.
+    // versesKey and currentChapterKey already cover every change to the
+    // current chapter's own verses; a sibling chapter's late layout shift is
+    // handled by the retry window rather than by re-running the effect.
+  }, [scrollTargetIndex, versesKey, currentChapterKey])
 
   // IntersectionObserver for infinite scroll - load previous chapters
   useEffect(() => {
