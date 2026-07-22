@@ -458,6 +458,76 @@ test.describe('Bible Feature', () => {
     expect(texts.some((t) => t.includes('3'))).toBe(true)
   })
 
+  test('scrolling after selecting a verse does not warp back to it', async ({
+    page,
+  }) => {
+    // Bug: selecting a verse armed a ~3s window that re-centered the verse
+    // every ~150ms, and the window restarted on every re-render (the chapters
+    // array from useQueries is a new reference each time). Scrolling — which
+    // itself triggers a re-render — got yanked back to the selected verse.
+    // Uses Geneza 1 deliberately: it is the first chapter of the Bible, so
+    // canLoadPrevious is false and no chapter can be prepended. That rules out
+    // the legitimate scroll-preservation adjustment as a cause of movement,
+    // leaving the auto-scroll as the only thing that could move us.
+    await page.goto('/bible')
+    await page.waitForLoadState('networkidle')
+
+    const geneza = page.getByRole('button', { name: /geneza/i }).first()
+    await expect(geneza).toBeVisible({ timeout: 10000 })
+    await geneza.click()
+
+    const chapter1 = page.getByRole('button', { name: /^1$/ }).first()
+    await expect(chapter1).toBeVisible({ timeout: 5000 })
+    await chapter1.click()
+
+    const verseButtons = page.locator('.space-y-1 button.w-full.text-left')
+    await expect(verseButtons.first()).toBeVisible({ timeout: 15000 })
+
+    // Present the FIRST verse: its centered resting position is the very top
+    // of the list, so a warp-back is unmistakable (scrollTop collapses to ~0)
+    // rather than landing coincidentally near where we scrolled to.
+    await verseButtons.first().click()
+    await expect(page.locator('button.ring-green-500')).toBeVisible({
+      timeout: 5000,
+    })
+
+    // Resolve the verses scroller from a verse button. `.text-left` is load
+    // bearing: it is what distinguishes a verse button from the nav sidebar's
+    // buttons, whose own scroll container would otherwise be measured instead.
+    const readScrollTop = () =>
+      page.evaluate(() => {
+        const verse = document.querySelector('.space-y-1 button.w-full.text-left')
+        const scroller = verse?.closest('.overflow-y-auto') as HTMLElement | null
+        return scroller?.scrollTop ?? -1
+      })
+
+    // Park the cursor over a verse so the wheel targets the verses scroller.
+    const verseBox = await verseButtons.nth(3).boundingBox()
+    expect(verseBox).toBeTruthy()
+    await page.mouse.move(
+      verseBox!.x + verseBox!.width / 2,
+      verseBox!.y + verseBox!.height / 2,
+    )
+
+    // Scroll fast, well inside the re-centering window that selection armed.
+    for (let i = 0; i < 8; i++) {
+      await page.mouse.wheel(0, 400)
+      await page.waitForTimeout(60)
+    }
+
+    await expect.poll(readScrollTop, { timeout: 5000 }).toBeGreaterThan(1000)
+    const afterScroll = await readScrollTop()
+
+    // Let the full ~3s re-centering budget elapse. Previously every remaining
+    // attempt in that window would drag us back toward the presented verse.
+    await page.waitForTimeout(3500)
+    const afterSettle = await readScrollTop()
+
+    // We must still be roughly where the user left off, not warped to the top.
+    expect(afterSettle).toBeGreaterThan(1000)
+    expect(Math.abs(afterSettle - afterScroll)).toBeLessThan(150)
+  })
+
   test('arrow key navigation backwards across chapter boundary', async ({
     page,
   }) => {
