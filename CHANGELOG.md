@@ -2,6 +2,17 @@
 
 > Auto-generated from git history by `app/scripts/generate-changelog.ts`. Do not edit by hand.
 
+## v0.1.85 — 2026-07-22
+
+### 🐛 Bug Fixes
+
+- **bible**: stop auto-scroll from warping the verse list during user scroll
+
+### 🔧 Changes
+
+- sync version to v0.1.84 [skip ci]
+- **bible**: remove unused bookName prop from VersesList
+
 ## v0.1.84 — 2026-07-19
 
 ### 🔧 Changes

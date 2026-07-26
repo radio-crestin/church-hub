@@ -1,5 +1,26 @@
 [
   {
+    "version": "0.1.85",
+    "date": "2026-07-22T11:22:17+03:00",
+    "features": [],
+    "bugFixes": [
+      {
+        "scope": "bible",
+        "message": "stop auto-scroll from warping the verse list during user scroll"
+      }
+    ],
+    "changes": [
+      {
+        "scope": null,
+        "message": "sync version to v0.1.84 [skip ci]"
+      },
+      {
+        "scope": "bible",
+        "message": "remove unused bookName prop from VersesList"
+      }
+    ]
+  },
+  {
     "version": "0.1.84",
     "date": "2026-07-19T02:26:41+02:00",
     "features": [],
