@@ -48,7 +48,7 @@ import { useDividerPosition } from '~/hooks/useDividerPosition'
 import { DIVIDER_KEYS } from '~/service/layout'
 import { useToast } from '~/ui/toast'
 import { createLogger } from '~/utils/logger'
-import { AddToScheduleMenu } from './AddToScheduleMenu'
+import { AddScheduleItemModal } from './AddScheduleItemModal'
 import { BiblePassagePickerModal } from './BiblePassagePickerModal'
 import { EditAsTextModal } from './EditAsTextModal'
 import { InsertSlideModal } from './InsertSlideModal'
@@ -149,7 +149,6 @@ export function SchedulePresenter({
   const [showImportConfirmModal, setShowImportConfirmModal] = useState(false)
   const [importData, setImportData] = useState<ChurchProgramData | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [showSongPicker, setShowSongPicker] = useState(false)
   const [showSlideModal, setShowSlideModal] = useState(false)
   const [slideTemplate, setSlideTemplate] =
     useState<SlideTemplate>('announcement')
@@ -909,11 +908,10 @@ export function SchedulePresenter({
     enabled: true,
   })
 
-  // Edit handlers - these are called from AddToScheduleMenu, which closes automatically
-  const handleAddSong = useCallback(() => {
-    setShowSongPicker(true)
-  }, [])
-
+  // Edit handlers — called from AddScheduleItemModal, which closes itself
+  // before handing off to a dedicated editor. Songs are picked inside that
+  // modal now, so there is no separate "add song" handler here; the standalone
+  // SongPickerModal is only used for *changing* an existing song.
   const handleAddSlide = useCallback((template: SlideTemplate) => {
     setSlideTemplate(template)
     setShowSlideModal(true)
@@ -1359,10 +1357,10 @@ export function SchedulePresenter({
                   {t('actions.editAsText')}
                 </span>
               </button>
-              <AddToScheduleMenu
+              <AddScheduleItemModal
                 isOpen={showAddMenu}
                 onOpenChange={setShowAddMenu}
-                onAddSong={handleAddSong}
+                onAddSong={handleSongSelected}
                 onAddBiblePassage={handleAddBiblePassage}
                 onAddSlide={handleAddSlide}
                 onAddScene={handleAddScene}
@@ -1422,17 +1420,11 @@ export function SchedulePresenter({
         </div>
       </div>
 
-      {/* Song Picker Modal */}
+      {/* Song Picker Modal — only for replacing an existing song; adding a new
+          one happens inside AddScheduleItemModal. */}
       <SongPickerModal
-        isOpen={showSongPicker || !!changingSongItem}
-        onClose={() => {
-          // Reopen add menu if we were adding (not changing) a song
-          if (showSongPicker && !changingSongItem) {
-            handleReopenAddMenu()
-          }
-          setShowSongPicker(false)
-          setChangingSongItem(null)
-        }}
+        isOpen={!!changingSongItem}
+        onClose={() => setChangingSongItem(null)}
         onSongSelect={handleSongSelected}
       />
 
