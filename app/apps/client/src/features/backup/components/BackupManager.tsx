@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next'
 
 import { useToast } from '~/ui/toast'
 import { BackupContentsModal } from './BackupContentsModal'
+import { LocalBackupPanel } from './LocalBackupPanel'
 import { useBackup } from '../hooks/useBackup'
 import type { BackupFile } from '../service'
 
@@ -194,105 +195,119 @@ export function BackupManager() {
     const sessionExpired =
       backup.lastBackupAt !== null || backup.autoBackupEnabled
     return (
-      <div
-        className={`rounded-lg p-4 ${
-          sessionExpired
-            ? 'border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20'
-            : 'bg-gray-50 dark:bg-gray-800'
-        }`}
-      >
-        <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <div
-              className={`rounded-lg p-2 ${
-                sessionExpired
-                  ? 'bg-amber-100 dark:bg-amber-900/30'
-                  : 'bg-indigo-100 dark:bg-indigo-900/30'
-              }`}
-            >
-              {sessionExpired ? (
-                <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-              ) : (
-                <Cloud className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-              )}
-            </div>
-            <div>
-              <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-                {t(
+      <div className="space-y-4">
+        {/* Local backups need no Google account, so they stay available on the
+            not-connected screen — for many operators this is the whole
+            backup story. */}
+        <LocalBackupPanel
+          localBackupPath={backup.localBackupPath}
+          lastLocalBackupAt={backup.lastLocalBackupAt}
+        />
+        <div
+          className={`rounded-lg p-4 ${
+            sessionExpired
+              ? 'border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20'
+              : 'bg-gray-50 dark:bg-gray-800'
+          }`}
+        >
+          <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <div
+                className={`rounded-lg p-2 ${
                   sessionExpired
-                    ? 'sections.backup.expired.title'
-                    : 'sections.backup.connect.title',
+                    ? 'bg-amber-100 dark:bg-amber-900/30'
+                    : 'bg-indigo-100 dark:bg-indigo-900/30'
+                }`}
+              >
+                {sessionExpired ? (
+                  <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                ) : (
+                  <Cloud className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                 )}
-              </h4>
-              <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                {t(
-                  sessionExpired
-                    ? 'sections.backup.expired.description'
-                    : 'sections.backup.connect.description',
-                )}
-              </p>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                  {t(
+                    sessionExpired
+                      ? 'sections.backup.expired.title'
+                      : 'sections.backup.connect.title',
+                  )}
+                </h4>
+                <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                  {t(
+                    sessionExpired
+                      ? 'sections.backup.expired.description'
+                      : 'sections.backup.connect.description',
+                  )}
+                </p>
+              </div>
             </div>
-          </div>
-          <div className="flex flex-col items-stretch gap-1.5 sm:items-end">
-            <button
-              type="button"
-              onClick={() => backup.connect()}
-              disabled={backup.isAuthenticating}
-              className={`inline-flex items-center justify-center gap-2 rounded-md px-3 py-1.5 text-sm text-white disabled:opacity-50 ${
-                sessionExpired
-                  ? 'bg-amber-600 hover:bg-amber-700'
-                  : 'bg-indigo-600 hover:bg-indigo-700'
-              }`}
-            >
-              {backup.isAuthenticating && (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              )}
-              {t(
-                sessionExpired
-                  ? 'sections.backup.expired.button'
-                  : 'sections.backup.connect.button',
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={handleShowLink}
-              className="inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-1 text-xs text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
-              title={t('sections.backup.copyLinkHint')}
-            >
-              <Copy className="h-3.5 w-3.5" />
-              {t('sections.backup.copyLink')}
-            </button>
-          </div>
-        </div>
-        {connectUrl && (
-          <div className="mt-3">
-            <div className="flex items-center gap-2">
-              <input
-                readOnly
-                value={connectUrl}
-                onFocus={(e) => e.currentTarget.select()}
-                className="w-full rounded-md border border-gray-300 bg-white px-2 py-1.5 font-mono text-xs text-gray-700 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300"
-              />
+            <div className="flex flex-col items-stretch gap-1.5 sm:items-end">
               <button
                 type="button"
-                onClick={handleCopyShownUrl}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-gray-300 px-2 py-1.5 text-xs text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                onClick={() => backup.connect()}
+                disabled={backup.isAuthenticating}
+                className={`inline-flex items-center justify-center gap-2 rounded-md px-3 py-1.5 text-sm text-white disabled:opacity-50 ${
+                  sessionExpired
+                    ? 'bg-amber-600 hover:bg-amber-700'
+                    : 'bg-indigo-600 hover:bg-indigo-700'
+                }`}
+              >
+                {backup.isAuthenticating && (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                )}
+                {t(
+                  sessionExpired
+                    ? 'sections.backup.expired.button'
+                    : 'sections.backup.connect.button',
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={handleShowLink}
+                className="inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-1 text-xs text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+                title={t('sections.backup.copyLinkHint')}
               >
                 <Copy className="h-3.5 w-3.5" />
                 {t('sections.backup.copyLink')}
               </button>
             </div>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              {t('sections.backup.copyLinkHint')}
-            </p>
           </div>
-        )}
+          {connectUrl && (
+            <div className="mt-3">
+              <div className="flex items-center gap-2">
+                <input
+                  readOnly
+                  value={connectUrl}
+                  onFocus={(e) => e.currentTarget.select()}
+                  className="w-full rounded-md border border-gray-300 bg-white px-2 py-1.5 font-mono text-xs text-gray-700 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300"
+                />
+                <button
+                  type="button"
+                  onClick={handleCopyShownUrl}
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-gray-300 px-2 py-1.5 text-xs text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                  {t('sections.backup.copyLink')}
+                </button>
+              </div>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                {t('sections.backup.copyLinkHint')}
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     )
   }
 
   return (
     <div className="space-y-4">
+      <LocalBackupPanel
+        localBackupPath={backup.localBackupPath}
+        lastLocalBackupAt={backup.lastLocalBackupAt}
+      />
+
       {/* Connection status row */}
       <div className="flex flex-col items-start gap-3 rounded-lg bg-gray-50 p-4 dark:bg-gray-800 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">

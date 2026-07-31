@@ -871,7 +871,30 @@
         "warningTitle": "Not enough Google Drive space for backups",
         "warningMessage": "Your Drive has only {{free}} free, but the next backup needs about {{needed}}. Free up space in Google Drive, otherwise backups will fail."
       },
-      "retention": {
+      "local": {
+      "title": "Local backup",
+      "description": "Keep a copy on this computer or an external drive. Works without a Google account, and automatic backups write here first.",
+      "folderLabel": "Backup folder",
+      "noFolder": "No folder chosen",
+      "chooseFolder": "Choose folder",
+      "clearFolder": "Clear",
+      "pathPlaceholder": "Absolute path, e.g. /Users/me/ChurchHubBackups",
+      "folderHint": "Backups are named like the Drive ones and pruned to the same retention setting.",
+      "button": "Back up locally",
+      "backingUp": "Backing up...",
+      "lastBackup": "Last local backup",
+      "listTitle": "Local backups",
+      "empty": "No local backups yet",
+      "pathSaved": "Backup folder saved",
+      "pathCleared": "Local backups turned off",
+      "toast": {
+        "success": "Local backup created",
+        "failed": "Local backup failed",
+        "deleteSuccess": "Local backup deleted",
+        "deleteFailed": "Could not delete the local backup"
+      }
+    },
+    "retention": {
         "title": "Backups kept",
         "description": "Keeps the most recent {{total}} backups in Drive; when a new one exceeds that, the oldest is deleted automatically."
       },
