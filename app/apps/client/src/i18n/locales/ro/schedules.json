@@ -144,13 +144,16 @@
     "unsavedChangesMessage": "Ai modificari nesalvate. Esti sigur ca vrei sa parasesti aceasta pagina?",
     "discardChanges": "Pierde modificarile",
     "addSongTitle": "Adauga in Program",
-    "addSongDescription": "Selecteaza un program pentru a adauga aceasta cantare",
+    "addSongDescription": "Bifeaza unul sau mai multe programe, apoi salveaza",
     "adding": "Se adauga...",
     "createTitle": "Program Nou",
     "scheduleName": "Numele programului",
     "create": "Creeaza",
     "cancel": "Anuleaza",
     "createNew": "Creeaza program nou",
+    "searchSchedules": "Cauta programe...",
+    "addedToSchedules_one": "Cantarea a fost adaugata in {{count}} program",
+    "addedToSchedules_other": "Cantarea a fost adaugata in {{count}} programe",
     "goToSchedule": "Editeaza"
   },
   "export": {

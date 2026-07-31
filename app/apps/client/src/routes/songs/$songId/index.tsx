@@ -846,6 +846,17 @@ function SongPreviewPage() {
               <Bookmark size={20} />
             )}
           </button>
+          {/* Programe sits right next to Marcaje: both answer "where does this
+              song belong?", so they read as a pair. */}
+          <button
+            type="button"
+            onClick={() => setShowAddToScheduleModal(true)}
+            data-testid="song-add-to-schedule"
+            className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors inline-flex items-center justify-center"
+            title={t('actions.addToSchedule')}
+          >
+            <CalendarPlus size={20} />
+          </button>
           <button
             type="button"
             onClick={handleOpenKeyLineDialog}
@@ -862,14 +873,6 @@ function SongPreviewPage() {
             title={t('actions.saveToFile')}
           >
             <Download size={20} />
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowAddToScheduleModal(true)}
-            className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors inline-flex items-center justify-center"
-            title={t('actions.addToSchedule')}
-          >
-            <CalendarPlus size={20} />
           </button>
           {canEditSong && (
             <button

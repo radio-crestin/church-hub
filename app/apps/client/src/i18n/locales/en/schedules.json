@@ -144,13 +144,16 @@
     "unsavedChangesMessage": "You have unsaved changes. Are you sure you want to leave?",
     "discardChanges": "Lose changes",
     "addSongTitle": "Add to Schedule",
-    "addSongDescription": "Select a schedule to add this song",
+    "addSongDescription": "Tick one or more programs, then save",
     "adding": "Adding...",
     "createTitle": "New Schedule",
     "scheduleName": "Schedule name",
     "create": "Create",
     "cancel": "Cancel",
     "createNew": "Create new schedule",
+    "searchSchedules": "Search programs...",
+    "addedToSchedules_one": "Song added to {{count}} program",
+    "addedToSchedules_other": "Song added to {{count}} programs",
     "goToSchedule": "Edit"
   },
   "export": {
