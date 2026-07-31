@@ -64,8 +64,15 @@ export interface ScheduleItem {
     id: number
     title: string
     categoryName: string | null
+    tagNames: string[]
   } | null
   slides: SongSlide[]
+  /** Song key line ("gama"), joined from the song. */
+  keyLine: string | null
+  /** Manual "already sung" marker scoped to this schedule (song items only). */
+  isSung: boolean
+  /** Unix timestamp in ms when marked sung, null otherwise. */
+  sungAt: number | null
   slideType: SlideTemplate | null
   slideContent: string | null
   // Bible passage fields (present when itemType === 'bible_passage')

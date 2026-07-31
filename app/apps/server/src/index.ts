@@ -265,6 +265,7 @@ import {
   deleteSchedule,
   getScheduleById,
   getSchedules,
+  markScheduleItemSung,
   type ReorderScheduleItemsInput,
   type ReplaceScheduleItemsInput,
   rebuildScheduleSearchIndex,
@@ -3231,6 +3232,49 @@ async function startRealServer(): Promise<void> {
             headers: { 'Content-Type': 'application/json' },
           }),
         )
+      }
+
+      // PUT /api/schedules/:id/items/:itemId/sung - Toggle the "already sung"
+      // marker on a schedule item. Scoped to the schedule so the same song can
+      // be pending in one program and sung in another.
+      {
+        const scheduleItemSungMatch = url.pathname.match(
+          /^\/api\/schedules\/(\d+)\/items\/(\d+)\/sung$/,
+        )
+        if (
+          req.method === 'PUT' &&
+          scheduleItemSungMatch?.[1] &&
+          scheduleItemSungMatch?.[2]
+        ) {
+          const permError = checkPermission('programs.edit')
+          if (permError) return permError
+
+          const scheduleId = parseInt(scheduleItemSungMatch[1], 10)
+          const itemId = parseInt(scheduleItemSungMatch[2], 10)
+          try {
+            const body = (await req.json()) as { isSung: boolean }
+            const result = markScheduleItemSung(
+              scheduleId,
+              itemId,
+              Boolean(body.isSung),
+            )
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ data: result }), {
+                status: result.success ? 200 : 404,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          } catch {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Invalid request body' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+        }
       }
 
       // PUT /api/schedules/:id/items/reorder - Reorder schedule items

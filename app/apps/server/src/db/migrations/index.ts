@@ -7,6 +7,7 @@ import { addCloseOnEscape } from './add-close-on-escape'
 import { addLastPresentedAt } from './add-last-presented-at'
 import { addLogsPermissions } from './add-logs-permissions'
 import { addPreviewScreen } from './add-preview-screen'
+import { addScheduleItemSung } from './add-schedule-item-sung'
 import { addSongBookmarkSung } from './add-song-bookmark-sung'
 import { addSongGroups } from './add-song-groups'
 import { addSongSlideNotes } from './add-song-slide-notes'
@@ -296,6 +297,14 @@ export function runMigrations(
     'add_song_bookmark_sung',
     'Running add song_bookmark sung migration',
     () => addSongBookmarkSung(rawDb),
+  )
+
+  // Add is_sung/sung_at to schedule_items so a schedule tracks which of its
+  // songs were already sung, independently of the global bookmarks list.
+  runStep(
+    'add_schedule_item_sung',
+    'Running add schedule_item sung migration',
+    () => addScheduleItemSung(rawDb),
   )
 
   // Google Drive library sync: uuid identity columns, sync engine tables and
