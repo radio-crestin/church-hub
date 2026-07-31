@@ -29,6 +29,9 @@ export interface BackupStatus {
   /** Number of most-recent backups kept in Drive; older ones are pruned. */
   maxBackups: number
   lastBackupAt: number | null
+  /** Folder local backups are written to; null when local backups are off. */
+  localBackupPath: string | null
+  lastLocalBackupAt: number | null
   /** Drive storage quota vs. database size; null when Drive is unreachable. */
   storage: BackupStorageInfo | null
 }
@@ -38,6 +41,19 @@ export interface BackupConfig {
   intervalHours: number
   maxBackups: number
   lastBackupAt: number | null
+  localBackupPath: string | null
+  lastLocalBackupAt: number | null
+}
+
+/** A backup file sitting in the operator's configured local folder. */
+export interface LocalBackupFile {
+  /** File name, which also identifies it (the folder comes from config). */
+  name: string
+  /** Absolute path, shown so the file can be found outside the app. */
+  path: string
+  sizeBytes: number
+  createdAtMs: number
+  appVersion: string | null
 }
 
 export interface BackupCounts {
@@ -230,7 +246,10 @@ export async function inspectBackup(fileId: string): Promise<BackupContents> {
 
 export async function updateBackupConfig(
   patch: Partial<
-    Pick<BackupConfig, 'autoBackupEnabled' | 'intervalHours' | 'maxBackups'>
+    Pick<
+      BackupConfig,
+      'autoBackupEnabled' | 'intervalHours' | 'maxBackups' | 'localBackupPath'
+    >
   >,
 ): Promise<BackupConfig> {
   const res = await fetcher<ApiResponse<BackupConfig>>('/api/backup/config', {
@@ -242,4 +261,48 @@ export async function updateBackupConfig(
     throw new Error(res.error || 'Failed to update backup settings')
   }
   return res.data
+}
+
+/** Lists the backups in the configured local folder, newest first. */
+export async function listLocalBackups(): Promise<LocalBackupFile[]> {
+  const res = await fetcher<ApiResponse<{ backups: LocalBackupFile[] }>>(
+    '/api/backup/local/list',
+    { cache: 'no-store' },
+  )
+  if (res.error) {
+    throw new Error(res.error)
+  }
+  return res.data?.backups ?? []
+}
+
+/** Writes a fresh backup into the configured local folder. */
+export async function localBackupNow(): Promise<
+  BackupActionResult & { path?: string }
+> {
+  const res = await fetcher<ApiResponse<{ success: boolean; path?: string }>>(
+    '/api/backup/local/now',
+    { method: 'POST' },
+  )
+  if (res.error) {
+    return { success: false, error: res.error }
+  }
+  return { success: true, path: res.data?.path }
+}
+
+/** Deletes one backup file from the configured local folder. */
+export async function deleteLocalBackup(
+  fileName: string,
+): Promise<BackupActionResult> {
+  const res = await fetcher<ApiResponse<{ success: boolean }>>(
+    '/api/backup/local/delete',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fileName }),
+    },
+  )
+  if (res.error) {
+    return { success: false, error: res.error }
+  }
+  return { success: true }
 }

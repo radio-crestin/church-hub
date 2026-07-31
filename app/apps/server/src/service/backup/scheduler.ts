@@ -1,4 +1,5 @@
 import { getBackupConfig, upsertBackupConfig } from './backupConfig'
+import { runLocalBackup } from './localBackup'
 import { uploadBackup } from './uploadBackup'
 import { createLogger } from '../../utils/logger'
 
@@ -27,6 +28,19 @@ export async function runScheduledBackupIfDue(): Promise<void> {
 
   isRunning = true
   try {
+    // The local copy runs first and independently: it needs no network and no
+    // Google account, so a Drive failure must not cost the operator their
+    // scheduled local backup.
+    if (config.localBackupPath) {
+      logger.info('Running scheduled local backup...')
+      const localResult = await runLocalBackup()
+      if (localResult.success) {
+        logger.info(`Scheduled local backup completed: ${localResult.path}`)
+      } else {
+        logger.warning(`Scheduled local backup failed: ${localResult.error}`)
+      }
+    }
+
     logger.info('Running scheduled backup...')
     const result = await uploadBackup()
     if (result.success) {

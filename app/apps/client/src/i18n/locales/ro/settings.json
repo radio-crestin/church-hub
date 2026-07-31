@@ -872,7 +872,30 @@
         "warningTitle": "Spațiu insuficient în Google Drive pentru backup",
         "warningMessage": "Drive-ul tău mai are doar {{free}} liber, dar următorul backup are nevoie de aproximativ {{needed}}. Eliberează spațiu în Google Drive, altfel backupurile vor eșua."
       },
-      "retention": {
+      "local": {
+      "title": "Copie locala",
+      "description": "Pastreaza o copie pe acest calculator sau pe un disc extern. Functioneaza fara cont Google, iar copiile automate se scriu mai intai aici.",
+      "folderLabel": "Folderul copiilor",
+      "noFolder": "Niciun folder ales",
+      "chooseFolder": "Alege folder",
+      "clearFolder": "Sterge",
+      "pathPlaceholder": "Cale absoluta, ex. /Users/eu/CopiiChurchHub",
+      "folderHint": "Copiile sunt denumite ca cele din Drive si sunt pastrate dupa aceeasi setare de retentie.",
+      "button": "Fa copie locala",
+      "backingUp": "Se creeaza copia...",
+      "lastBackup": "Ultima copie locala",
+      "listTitle": "Copii locale",
+      "empty": "Nicio copie locala inca",
+      "pathSaved": "Folderul copiilor a fost salvat",
+      "pathCleared": "Copiile locale au fost dezactivate",
+      "toast": {
+        "success": "Copie locala creata",
+        "failed": "Copia locala a esuat",
+        "deleteSuccess": "Copie locala stearsa",
+        "deleteFailed": "Copia locala nu a putut fi stearsa"
+      }
+    },
+    "retention": {
         "title": "Backupuri păstrate",
         "description": "Păstrează cele mai recente {{total}} backupuri în Drive; când unul nou depășește limita, cel mai vechi este șters automat."
       },

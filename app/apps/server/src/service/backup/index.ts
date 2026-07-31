@@ -27,6 +27,15 @@ export {
   listBackups,
 } from './listBackups'
 export {
+  deleteLocalBackup,
+  getLocalBackupDir,
+  type LocalBackupFile,
+  type LocalBackupResult,
+  listLocalBackups,
+  pruneLocalBackups,
+  runLocalBackup,
+} from './localBackup'
+export {
   type CompleteDriveAuthResult,
   type CreateDriveAuthUrlResult,
   completeDriveAuth,

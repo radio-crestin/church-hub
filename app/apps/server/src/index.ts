@@ -128,11 +128,14 @@ import {
   completeDriveAuth,
   createDriveAuthUrl,
   deleteBackup,
+  deleteLocalBackup,
   getBackupConfig,
   getBackupStatus,
   inspectBackup,
   listBackups,
+  listLocalBackups,
   restoreBackup,
+  runLocalBackup,
   startBackupScheduler,
   uploadBackup,
   upsertBackupConfig,
@@ -2189,6 +2192,88 @@ async function startRealServer(): Promise<void> {
         )
       }
 
+      // ---- Local backup routes (same localhost guard) ----
+      // Deliberately independent of Drive: these work with no Google account
+      // connected, which is the whole point of an on-disk copy.
+
+      // GET /api/backup/local/list - Backups present in the configured folder
+      if (req.method === 'GET' && url.pathname === '/api/backup/local/list') {
+        const guard = backupLocalhostGuard()
+        if (guard) return guard
+
+        const backups = await listLocalBackups()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: { backups } }), {
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-store',
+            },
+          }),
+        )
+      }
+
+      // POST /api/backup/local/now - Write a fresh backup to the local folder
+      if (req.method === 'POST' && url.pathname === '/api/backup/local/now') {
+        const guard = backupLocalhostGuard()
+        if (guard) return guard
+
+        const result = await runLocalBackup()
+        return handleCors(
+          req,
+          new Response(
+            JSON.stringify(
+              result.success ? { data: result } : { error: result.error },
+            ),
+            {
+              status: result.success ? 200 : 400,
+              headers: { 'Content-Type': 'application/json' },
+            },
+          ),
+        )
+      }
+
+      // POST /api/backup/local/delete - Delete one local backup by file name
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/backup/local/delete'
+      ) {
+        const guard = backupLocalhostGuard()
+        if (guard) return guard
+
+        let fileName = ''
+        try {
+          const body = (await req.json()) as { fileName?: string }
+          fileName = typeof body.fileName === 'string' ? body.fileName : ''
+        } catch {
+          // Falls through to the missing-name error below.
+        }
+
+        if (!fileName) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Missing fileName' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        const result = await deleteLocalBackup(fileName)
+        return handleCors(
+          req,
+          new Response(
+            JSON.stringify(
+              result.success ? { data: result } : { error: result.error },
+            ),
+            {
+              status: result.success ? 200 : 400,
+              headers: { 'Content-Type': 'application/json' },
+            },
+          ),
+        )
+      }
+
       // GET /api/backup/config - Read auto-backup settings
       if (req.method === 'GET' && url.pathname === '/api/backup/config') {
         const guard = backupLocalhostGuard()
@@ -2212,6 +2297,7 @@ async function startRealServer(): Promise<void> {
           autoBackupEnabled?: boolean
           intervalHours?: number
           maxBackups?: number
+          localBackupPath?: string | null
         } = {}
         try {
           const body = await req.json()
@@ -2226,6 +2312,12 @@ async function startRealServer(): Promise<void> {
           }
           if (typeof body.maxBackups === 'number' && body.maxBackups >= 1) {
             patch.maxBackups = Math.min(Math.round(body.maxBackups), 50)
+          }
+          // An empty string clears the folder, i.e. turns local backups off.
+          if (typeof body.localBackupPath === 'string') {
+            patch.localBackupPath = body.localBackupPath.trim() || null
+          } else if (body.localBackupPath === null) {
+            patch.localBackupPath = null
           }
         } catch {
           // No/invalid body - nothing to update

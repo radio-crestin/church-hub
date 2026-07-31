@@ -232,6 +232,8 @@ export function useBackup() {
     intervalHours: status?.intervalHours ?? 24,
     maxBackups: status?.maxBackups ?? 5,
     lastBackupAt: status?.lastBackupAt ?? null,
+    localBackupPath: status?.localBackupPath ?? null,
+    lastLocalBackupAt: status?.lastLocalBackupAt ?? null,
     storage: status?.storage ?? null,
     // connection
     connect,
