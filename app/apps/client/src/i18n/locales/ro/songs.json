@@ -87,7 +87,11 @@
     "jumpTo": "Sari la cântările care încep cu {{letter}}"
   },
   "picker": {
-    "selectSong": "Selectează Cântare"
+    "selectSong": "Selecteaza Cantare",
+    "searchResults": "Se afiseaza {{shown}} din {{total}} rezultate",
+    "loadedCount_one": "{{count}} cantare incarcata",
+    "loadedCount_other": "{{count}} cantari incarcate",
+    "loadMore": "Incarca inca {{count}}"
   },
   "import": {
     "title": "Importă din text",
