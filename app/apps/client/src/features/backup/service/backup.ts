@@ -54,10 +54,21 @@ export interface BackupCounts {
   screens: number
 }
 
+export interface BackupSchedule {
+  title: string
+  createdAtMs: number | null
+  /** Total items in the program (songs, passages, slides, scenes). */
+  itemCount: number
+  /** Song items only. */
+  songCount: number
+  /** First few song titles, in program order. */
+  songTitles: string[]
+}
+
 export interface BackupContents {
   counts: BackupCounts
   songs: { title: string; category: string | null }[]
-  schedules: { title: string; createdAtMs: number | null }[]
+  schedules: BackupSchedule[]
   playlists: { name: string; itemCount: number }[]
 }
 

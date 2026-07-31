@@ -364,6 +364,21 @@ export const backupPaths: Record<string, Record<string, unknown>> = {
                           properties: {
                             title: { type: 'string' },
                             createdAtMs: { type: 'integer', nullable: true },
+                            itemCount: {
+                              type: 'integer',
+                              description:
+                                'Total items in the program (songs, passages, slides, scenes)',
+                            },
+                            songCount: {
+                              type: 'integer',
+                              description: 'Song items only',
+                            },
+                            songTitles: {
+                              type: 'array',
+                              items: { type: 'string' },
+                              description:
+                                'First song titles, in program order (capped)',
+                            },
                           },
                         },
                       },

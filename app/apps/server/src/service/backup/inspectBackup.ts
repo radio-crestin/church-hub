@@ -16,6 +16,12 @@ const logger = createLogger('backup')
  */
 const MAX_LISTED_ITEMS = 500
 
+/**
+ * Per-program song titles shown in the inspect view. Enough to recognise a
+ * service at a glance without turning the payload into a second song list.
+ */
+const MAX_LISTED_SCHEDULE_SONGS = 25
+
 export interface BackupCounts {
   songs: number
   songSlides: number
@@ -30,11 +36,22 @@ export interface BackupCounts {
   screens: number
 }
 
+export interface BackupSchedule {
+  title: string
+  createdAtMs: number | null
+  /** Total items in the program (songs, passages, slides, scenes). */
+  itemCount: number
+  /** Song items only — what an operator recognises a program by. */
+  songCount: number
+  /** First `MAX_LISTED_SCHEDULE_SONGS` song titles, in program order. */
+  songTitles: string[]
+}
+
 export interface BackupContents {
   counts: BackupCounts
   /** First `MAX_LISTED_ITEMS` songs (alphabetical), with category when set. */
   songs: { title: string; category: string | null }[]
-  schedules: { title: string; createdAtMs: number | null }[]
+  schedules: BackupSchedule[]
   playlists: { name: string; itemCount: number }[]
 }
 
@@ -95,7 +112,76 @@ export async function inspectBackup(
   }
 }
 
-function readBackupContents(db: Database): BackupContents {
+/**
+ * Reads each program with its item/song counts and the first song titles, so
+ * the inspect view proves a program survived the backup with its songs — not
+ * just that a row named "Duminica dimineata" exists. Item tables are absent
+ * from very old backups, in which case the counts read 0 rather than throwing.
+ */
+function readSchedules(
+  db: Database,
+  tableExists: (name: string) => boolean,
+): BackupSchedule[] {
+  if (!tableExists('schedules')) return []
+
+  const rows = db
+    .query<{ id: number; title: string; createdAt: number | null }, []>(
+      `SELECT id, title, created_at AS createdAt
+         FROM schedules
+        ORDER BY created_at DESC
+        LIMIT ${MAX_LISTED_ITEMS}`,
+    )
+    .all()
+
+  if (!tableExists('schedule_items')) {
+    return rows.map((row) => ({
+      title: row.title,
+      createdAtMs: row.createdAt ? row.createdAt * 1000 : null,
+      itemCount: 0,
+      songCount: 0,
+      songTitles: [],
+    }))
+  }
+
+  const hasSongs = tableExists('songs')
+  const countsQuery = db.query<
+    { itemCount: number; songCount: number },
+    [number]
+  >(
+    `SELECT COUNT(*) AS itemCount,
+            SUM(CASE WHEN item_type = 'song' THEN 1 ELSE 0 END) AS songCount
+       FROM schedule_items
+      WHERE schedule_id = ?`,
+  )
+  const titlesQuery = hasSongs
+    ? db.query<{ title: string }, [number]>(
+        `SELECT s.title AS title
+           FROM schedule_items i
+           JOIN songs s ON s.id = i.song_id
+          WHERE i.schedule_id = ? AND i.item_type = 'song'
+          ORDER BY i.sort_order, i.id
+          LIMIT ${MAX_LISTED_SCHEDULE_SONGS}`,
+      )
+    : null
+
+  return rows.map((row) => {
+    const counts = countsQuery.get(row.id)
+    return {
+      title: row.title,
+      createdAtMs: row.createdAt ? row.createdAt * 1000 : null,
+      itemCount: counts?.itemCount ?? 0,
+      songCount: counts?.songCount ?? 0,
+      songTitles: titlesQuery?.all(row.id).map((r) => r.title) ?? [],
+    }
+  })
+}
+
+/**
+ * Reads a backup's contents from an already-open SQLite handle. Exported so the
+ * round-trip test can assert against a real database without going through
+ * Drive.
+ */
+export function readBackupContents(db: Database): BackupContents {
   const tableExists = (name: string): boolean =>
     !!db
       .query<{ name: string }, [string]>(
@@ -124,17 +210,7 @@ function readBackupContents(db: Database): BackupContents {
         .all()
     : []
 
-  const schedules = tableExists('schedules')
-    ? db
-        .query<{ title: string; createdAt: number | null }, []>(
-          `SELECT title, created_at AS createdAt FROM schedules ORDER BY created_at DESC LIMIT ${MAX_LISTED_ITEMS}`,
-        )
-        .all()
-        .map((row) => ({
-          title: row.title,
-          createdAtMs: row.createdAt ? row.createdAt * 1000 : null,
-        }))
-    : []
+  const schedules = readSchedules(db, tableExists)
 
   const playlists = tableExists('music_playlists')
     ? db
