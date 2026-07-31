@@ -122,6 +122,10 @@ function SongPreviewPage() {
   const canAddSongVersion = hasPermission('song_versions.create')
   const canEditSongVersion = hasPermission('song_versions.edit')
   const canDeleteSongVersion = hasPermission('song_versions.delete')
+  // The Programe panel reads schedules and edits their items (sung marker,
+  // remove), so it needs both program perms to be useful.
+  const canViewSchedules =
+    hasPermission('programs.view') && hasPermission('programs.edit')
   const { songId } = Route.useParams()
   const {
     q: searchQuery,
@@ -203,6 +207,15 @@ function SongPreviewPage() {
       return true
     }
   })
+  // Programe starts collapsed: it is an opt-in third section, and expanding it
+  // by default would shrink the two panels operators already rely on.
+  const [schedulesOpen, setSchedulesOpenRaw] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('song-detail:schedules-open') === 'true'
+    } catch {
+      return false
+    }
+  })
   const [versionsOpen, setVersionsOpenRaw] = useState<boolean>(() => {
     try {
       const raw = localStorage.getItem('song-detail:versions-open')
@@ -211,6 +224,14 @@ function SongPreviewPage() {
       return true
     }
   })
+  const setSchedulesOpen = useCallback((next: boolean) => {
+    setSchedulesOpenRaw(next)
+    try {
+      localStorage.setItem('song-detail:schedules-open', String(next))
+    } catch {
+      // Ignore quota errors — non-critical UI state.
+    }
+  }, [])
   const setBookmarksOpen = useCallback((next: boolean) => {
     setBookmarksOpenRaw(next)
     try {
@@ -704,6 +725,27 @@ function SongPreviewPage() {
     setShowAddBookmarksToScheduleModal(true)
   }, [])
 
+  const handleScheduleSongClick = useCallback(
+    (targetSongId: number) => {
+      navigate({
+        to: '/songs/$songId',
+        params: { songId: String(targetSongId) },
+        search: { q: searchQuery || undefined },
+      })
+    },
+    [navigate, searchQuery],
+  )
+
+  const handleOpenSchedule = useCallback(
+    (scheduleId: number) => {
+      navigate({
+        to: '/schedules/$scheduleId',
+        params: { scheduleId: String(scheduleId) },
+      })
+    },
+    [navigate],
+  )
+
   if (isLoading || !song) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -923,15 +965,20 @@ function SongPreviewPage() {
               isLargeScreen={isLargeScreen}
               song={song}
               bookmarksOpen={bookmarksOpen}
+              schedulesOpen={schedulesOpen}
               versionsOpen={versionsOpen}
               onToggleBookmarks={() => setBookmarksOpen(!bookmarksOpen)}
+              onToggleSchedules={() => setSchedulesOpen(!schedulesOpen)}
               onToggleVersions={() => setVersionsOpen(!versionsOpen)}
               onSelectBookmarkSong={handleBookmarkSongClick}
+              onSelectScheduleSong={handleScheduleSongClick}
+              onOpenSchedule={handleOpenSchedule}
               onAddAllBookmarksToSchedule={handleAddAllBookmarksToSchedule}
               canViewSongVersions={canViewSongVersions}
               canAddSongVersion={canAddSongVersion}
               canEditSongVersion={canEditSongVersion}
               canDeleteSongVersion={canDeleteSongVersion}
+              canViewSchedules={canViewSchedules}
               attentionBadge={
                 undismissedSuggestionCount > 0
                   ? `+${undismissedSuggestionCount}`
@@ -1086,15 +1133,20 @@ function SongPreviewPage() {
                 isLargeScreen={isLargeScreen}
                 song={song}
                 bookmarksOpen={bookmarksOpen}
+                schedulesOpen={schedulesOpen}
                 versionsOpen={versionsOpen}
                 onToggleBookmarks={() => setBookmarksOpen(!bookmarksOpen)}
+                onToggleSchedules={() => setSchedulesOpen(!schedulesOpen)}
                 onToggleVersions={() => setVersionsOpen(!versionsOpen)}
                 onSelectBookmarkSong={handleBookmarkSongClick}
+                onSelectScheduleSong={handleScheduleSongClick}
+                onOpenSchedule={handleOpenSchedule}
                 onAddAllBookmarksToSchedule={handleAddAllBookmarksToSchedule}
                 canViewSongVersions={canViewSongVersions}
                 canAddSongVersion={canAddSongVersion}
                 canEditSongVersion={canEditSongVersion}
                 canDeleteSongVersion={canDeleteSongVersion}
+                canViewSchedules={canViewSchedules}
                 attentionBadge={
                   undismissedSuggestionCount > 0
                     ? `+${undismissedSuggestionCount}`
