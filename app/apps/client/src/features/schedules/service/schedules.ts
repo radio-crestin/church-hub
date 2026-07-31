@@ -98,6 +98,26 @@ export async function removeItemFromSchedule(
   return response.data?.success ?? false
 }
 
+/**
+ * Toggles the "already sung" marker on a schedule song. Scoped to the schedule,
+ * so the same song can be pending in one program and sung in another.
+ */
+export async function markScheduleItemSung(
+  scheduleId: number,
+  itemId: number,
+  isSung: boolean,
+): Promise<boolean> {
+  const response = await fetcher<ApiResponse<{ success: boolean }>>(
+    `/api/schedules/${scheduleId}/items/${itemId}/sung`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isSung }),
+    },
+  )
+  return response.data?.success ?? false
+}
+
 export async function updateScheduleSlide(
   scheduleId: number,
   itemId: number,

@@ -34,6 +34,26 @@
     "items_one": "{{count}} element",
     "items_other": "{{count}} elemente"
   },
+  "panel": {
+    "title": "Programe",
+    "expand": "Extinde",
+    "collapse": "Restrange",
+    "selectSchedule": "Alege un program...",
+    "searchPlaceholder": "Cauta in program...",
+    "songCount_one": "{{count}} cantare",
+    "songCount_other": "{{count}} cantari",
+    "filterAll": "Toate",
+    "filterPending": "Ramase",
+    "filterSung": "Cantate",
+    "markSung": "Marcheaza drept cantata",
+    "markNotSung": "Marcheaza drept necantata",
+    "removeFromSchedule": "Elimina din program",
+    "openSchedule": "Deschide programul",
+    "noSchedules": "Niciun program creat",
+    "noSchedulesDescription": "Creeaza un program din pagina Programe pentru a-i vedea cantarile aici.",
+    "emptySchedule": "Acest program nu are cantari",
+    "noResults": "Nicio cantare gasita"
+  },
   "search": {
     "placeholder": "Cauta programe...",
     "noResults": "Nu s-au gasit programe pentru \"{{query}}\"",

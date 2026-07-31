@@ -102,9 +102,13 @@ export interface ScheduleItem {
     id: number
     title: string
     categoryName: string | null
+    tagNames: string[]
   } | null
   slides: SongSlide[]
   keyLine: string | null
+  // Manual "already sung" marker scoped to this schedule (song items only).
+  isSung: boolean
+  sungAt: number | null
   // Standalone slide fields (present when itemType === 'slide')
   slideType: SlideTemplate | null
   slideContent: string | null

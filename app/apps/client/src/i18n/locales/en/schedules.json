@@ -34,6 +34,26 @@
     "items_one": "{{count}} item",
     "items_other": "{{count}} items"
   },
+  "panel": {
+    "title": "Programs",
+    "expand": "Expand",
+    "collapse": "Collapse",
+    "selectSchedule": "Select a program...",
+    "searchPlaceholder": "Search in program...",
+    "songCount_one": "{{count}} song",
+    "songCount_other": "{{count}} songs",
+    "filterAll": "All",
+    "filterPending": "Remaining",
+    "filterSung": "Sung",
+    "markSung": "Mark as sung",
+    "markNotSung": "Mark as not sung",
+    "removeFromSchedule": "Remove from program",
+    "openSchedule": "Open program",
+    "noSchedules": "No programs yet",
+    "noSchedulesDescription": "Create a program from the Programs page to see its songs here.",
+    "emptySchedule": "This program has no songs",
+    "noResults": "No matching songs"
+  },
   "search": {
     "placeholder": "Search schedules...",
     "noResults": "No schedules found for \"{{query}}\"",
