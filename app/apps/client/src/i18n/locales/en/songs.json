@@ -87,7 +87,11 @@
     "jumpTo": "Jump to songs starting with {{letter}}"
   },
   "picker": {
-    "selectSong": "Select Song"
+    "selectSong": "Select Song",
+    "searchResults": "Showing {{shown}} of {{total}} results",
+    "loadedCount_one": "{{count}} song loaded",
+    "loadedCount_other": "{{count}} songs loaded",
+    "loadMore": "Load {{count}} more"
   },
   "import": {
     "title": "Import from Text",
