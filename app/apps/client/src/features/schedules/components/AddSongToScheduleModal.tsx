@@ -214,6 +214,11 @@ export function AddSongToScheduleModal({
 
   const selectedCount = selectedIds.length + namedDrafts.length
 
+  // The song page mounts this modal twice (toolbar + "add all bookmarks").
+  // Keeping a closed <dialog> in the DOM would leave two identical, invisible
+  // dialogs behind, so a closed instance renders nothing at all.
+  if (!isOpen) return null
+
   return (
     <dialog
       ref={dialogRef}

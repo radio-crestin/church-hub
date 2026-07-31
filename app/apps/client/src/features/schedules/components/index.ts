@@ -1,5 +1,5 @@
-export { AddSongToScheduleModal } from './AddSongToScheduleModal'
 export { AddScheduleItemModal } from './AddScheduleItemModal'
+export { AddSongToScheduleModal } from './AddSongToScheduleModal'
 export { BiblePassagePickerModal } from './BiblePassagePickerModal'
 export { CreateScheduleModal } from './CreateScheduleModal'
 export { InsertSlideModal } from './InsertSlideModal'
