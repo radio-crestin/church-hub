@@ -263,6 +263,122 @@ test.describe('Backup - local', () => {
     expect(missingName.status()).toBe(400)
   })
 
+  /**
+   * A restore swaps the live database out, so these tests restore a backup the
+   * test itself just made — the file is byte-for-byte the database already in
+   * use, which exercises the whole close/copy/reopen path without changing any
+   * data. The assertion that matters is that the server still answers queries
+   * afterwards: that is what proves the connection was reopened in-process
+   * rather than left closed.
+   */
+  test('restores a backup from the configured folder', async ({ request }) => {
+    await request.put('/api/backup/config', {
+      data: { localBackupPath: folder },
+    })
+    expect((await request.post('/api/backup/local/now')).status()).toBe(200)
+
+    const backups = (await (await request.get('/api/backup/local/list')).json())
+      .data.backups
+    expect(backups.length).toBe(1)
+
+    const restored = await request.post('/api/backup/local/restore', {
+      data: { fileName: backups[0].name },
+    })
+    expect(restored.status()).toBe(200)
+    const json = (await restored.json()).data
+    expect(json.success).toBe(true)
+    expect(json.requiresRestart).toBe(false)
+
+    // The database reopened — a real query still works.
+    const alive = await request.get('/api/backup/local/list')
+    expect(alive.status()).toBe(200)
+  })
+
+  test('restores from a folder that is not the configured one', async ({
+    request,
+  }) => {
+    await request.put('/api/backup/config', {
+      data: { localBackupPath: folder },
+    })
+    expect((await request.post('/api/backup/local/now')).status()).toBe(200)
+    const fileName = readdirSync(folder).find((n) => n.endsWith('.db'))
+    expect(fileName).toBeTruthy()
+
+    // Local backups off: the folder is now somewhere the app has never written.
+    await request.put('/api/backup/config', { data: { localBackupPath: null } })
+    expect(
+      (await (await request.get('/api/backup/local/list')).json()).data.backups,
+    ).toEqual([])
+
+    // Browsing it still finds the backup, without reconfiguring anything.
+    const browsed = await request.get(
+      `/api/backup/local/list?dir=${encodeURIComponent(folder)}`,
+    )
+    expect(browsed.status()).toBe(200)
+    expect((await browsed.json()).data.backups.length).toBe(1)
+
+    // Browsing alone did not make it the configured folder.
+    const whileBrowsing = await (
+      await request.get('/api/backup/config')
+    ).json()
+    expect(whileBrowsing.data.localBackupPath).toBeNull()
+
+    const restored = await request.post('/api/backup/local/restore', {
+      data: { path: join(folder, fileName as string) },
+    })
+    expect(restored.status()).toBe(200)
+    expect((await restored.json()).data.success).toBe(true)
+
+    // Settings live in the database, so a restore brings back the ones the
+    // backup was taken with — including the folder that was configured then.
+    // That is the whole point of a restore, not a side effect of browsing.
+    const afterRestore = await (await request.get('/api/backup/config')).json()
+    expect(afterRestore.data.localBackupPath).toBe(folder)
+  })
+
+  test('browsing a relative folder lists nothing', async ({ request }) => {
+    const browsed = await request.get('/api/backup/local/list?dir=relative/dir')
+    expect(browsed.status()).toBe(200)
+    expect((await browsed.json()).data.backups).toEqual([])
+  })
+
+  test('restore refuses sources outside the backup naming convention', async ({
+    request,
+  }) => {
+    await request.put('/api/backup/config', {
+      data: { localBackupPath: folder },
+    })
+
+    const cases: { data: Record<string, string>; error: string }[] = [
+      { data: {}, error: 'no_source' },
+      { data: { fileName: '../../etc/hosts' }, error: 'invalid_file_name' },
+      { data: { fileName: 'notes.txt' }, error: 'invalid_file_name' },
+      {
+        data: { path: 'relative/church-hub-backup-v1-2026-01-01.db' },
+        error: 'path_not_absolute',
+      },
+      { data: { path: '/etc/hosts' }, error: 'invalid_file_name' },
+    ]
+
+    for (const { data, error } of cases) {
+      const response = await request.post('/api/backup/local/restore', { data })
+      expect(response.status()).toBe(400)
+      expect((await response.json()).error).toBe(error)
+    }
+  })
+
+  test('restore by file name needs a configured folder', async ({
+    request,
+  }) => {
+    await request.put('/api/backup/config', { data: { localBackupPath: null } })
+
+    const response = await request.post('/api/backup/local/restore', {
+      data: { fileName: 'church-hub-backup-v1-2026-01-01T00-00-00-000Z.db' },
+    })
+    expect(response.status()).toBe(400)
+    expect((await response.json()).error).toBe('no_local_path')
+  })
+
   test('retention prunes older local backups', async ({ request }) => {
     await request.put('/api/backup/config', {
       data: { localBackupPath: folder, maxBackups: 2 },
