@@ -1086,10 +1086,19 @@ test.describe('Dragging a song onto the panels', () => {
         from.x + from.width / 2 + 15,
         from.y + from.height / 2,
       )
+
+      // The song visibly travels with the cursor...
+      const ghost = page.getByTestId('song-drag-ghost')
+      await expect(ghost).toBeVisible()
+      await expect(ghost).toContainText(title)
+
       await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, {
         steps: 12,
       })
       await page.mouse.up()
+
+      // ...and is gone once it lands.
+      await expect(ghost).toHaveCount(0)
 
       // It reached the server...
       await expect
@@ -1168,82 +1177,6 @@ test.describe('Dragging a song onto the panels', () => {
       await expect(card).toBeVisible()
     } finally {
       await request.delete(`/api/schedules/${schedule.id}`).catch(() => {})
-      await request.delete(`/api/songs/${song.id}`).catch(() => {})
-    }
-  })
-
-  test('the drop still lands when the webview strips the custom MIME type', async ({
-    page,
-    request,
-  }) => {
-    const uniq = Date.now()
-    const title = `E2E DropNoMime ${uniq}`
-    const song = await createSong(request, title)
-
-    try {
-      await request.delete(`/api/song-bookmarks/${song.id}`).catch(() => {})
-
-      await page.addInitScript(() => {
-        window.localStorage.setItem('songs-list:bookmarks-open', 'true')
-      })
-      await page.setViewportSize({ width: 1400, height: 900 })
-      await page.goto(`/songs?fromSong=true&q=${encodeURIComponent(title)}`)
-      await page.waitForLoadState('networkidle')
-
-      const card = page.getByTestId('song-card').filter({ hasText: title })
-      await expect(card).toBeVisible({ timeout: 10000 })
-
-      // Begin a real drag so the app records one is in flight...
-      const grip = card.getByTestId('song-card-drag-handle')
-      const from = await grip.boundingBox()
-      if (!from) throw new Error('grip not laid out')
-      await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2)
-      await page.mouse.down()
-      await page.mouse.move(
-        from.x + from.width / 2 + 20,
-        from.y + from.height / 2 + 10,
-      )
-
-      // ...then deliver dragover/drop carrying NOTHING, which is how a webview
-      // that drops custom MIME types presents the same gesture. The panel has
-      // to recognise its own drag anyway.
-      const landed = await page.evaluate(() => {
-        const zone = document.querySelector(
-          '[data-testid="bookmarks-drop-zone"]',
-        )
-        if (!zone) return false
-        const bare = new DataTransfer()
-        zone.dispatchEvent(
-          new DragEvent('dragover', {
-            dataTransfer: bare,
-            bubbles: true,
-            cancelable: true,
-          }),
-        )
-        zone.dispatchEvent(
-          new DragEvent('drop', {
-            dataTransfer: bare,
-            bubbles: true,
-            cancelable: true,
-          }),
-        )
-        return true
-      })
-      expect(landed).toBe(true)
-      await page.mouse.up()
-
-      await expect
-        .poll(
-          async () => {
-            const res = await request.get('/api/song-bookmarks')
-            const { data } = await res.json()
-            return data.some((b: { songId: number }) => b.songId === song.id)
-          },
-          { timeout: 10000 },
-        )
-        .toBe(true)
-    } finally {
-      await request.delete(`/api/song-bookmarks/${song.id}`).catch(() => {})
       await request.delete(`/api/songs/${song.id}`).catch(() => {})
     }
   })

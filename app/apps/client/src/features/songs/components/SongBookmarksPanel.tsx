@@ -501,9 +501,9 @@ export function SongBookmarksPanel({
   )
 
   const {
+    ref: songDropRef,
     isOver: isSongOver,
     justLanded: songJustLanded,
-    dropProps,
   } = useSongDropZone(
     acceptsSongDrop
       ? (song) => {
@@ -581,7 +581,7 @@ export function SongBookmarksPanel({
 
   return (
     <div
-      {...dropProps}
+      ref={songDropRef}
       data-testid="bookmarks-drop-zone"
       className={`bg-white dark:bg-gray-800 rounded-lg border flex flex-col overflow-hidden h-full transition-colors ${
         isSongOver
