@@ -52,6 +52,17 @@ interface SongListProps {
   aiSearchId?: number
   urlPath?: string
   onAISearchSaved?: (searchId: number) => void
+  /**
+   * Reports the keyboard-selected song so the page can act on it (e.g. add the
+   * selected song to a program). Fires with null when nothing is selected.
+   */
+  onSelectedSongChange?: (song: { id: number; title: string } | null) => void
+  /**
+   * Lets song cards be dragged onto the Marcaje / Programe panels beside the
+   * list. Off by default so pickers and embedded lists keep plain click
+   * behaviour.
+   */
+  songsDraggable?: boolean
 }
 
 export function SongList({
@@ -67,6 +78,8 @@ export function SongList({
   aiSearchId,
   urlPath,
   onAISearchSaved,
+  onSelectedSongChange,
+  songsDraggable = false,
 }: SongListProps) {
   const { t } = useTranslation('songs')
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -713,6 +726,8 @@ export function SongList({
         isSelected={selectedIndex === index}
         showCategoryInTitle={duplicateTitles.has(song.title.toLowerCase())}
         syncChangeKind={syncUpdatesMap.get(song.id)}
+        isDraggable={songsDraggable}
+        dragHandleTitle={t('dragToPanel')}
       />
     ),
     [
@@ -722,6 +737,8 @@ export function SongList({
       selectedIndex,
       duplicateTitles,
       syncUpdatesMap,
+      songsDraggable,
+      t,
     ],
   )
 
@@ -756,6 +773,14 @@ export function SongList({
     el?.scrollIntoView({ block: 'center' })
     lastScrolledToSongIdRef.current = initialSelectedSongId
   }, [initialSelectedSongId, displaySongs, setSelectedIndex, itemRefs])
+
+  // Mirror the keyboard selection out to the page. Kept as its own effect so
+  // the selection stays owned by useSearchKeyboardNavigation.
+  useEffect(() => {
+    if (!onSelectedSongChange) return
+    const song = selectedIndex >= 0 ? displaySongs[selectedIndex] : undefined
+    onSelectedSongChange(song ? { id: song.id, title: song.title } : null)
+  }, [selectedIndex, displaySongs, onSelectedSongChange])
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value

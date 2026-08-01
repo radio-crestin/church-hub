@@ -21,6 +21,9 @@ export interface BackupStatus {
   intervalHours: number
   maxBackups: number
   lastBackupAt: number | null
+  /** Folder local backups are written to; null when local backups are off. */
+  localBackupPath: string | null
+  lastLocalBackupAt: number | null
   /** Drive storage quota vs. database size; null when Drive is unreachable. */
   storage: BackupStorageInfo | null
 }

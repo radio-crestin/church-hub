@@ -35,7 +35,11 @@ import {
   usePresentationState,
   usePresentTemporarySong,
 } from '~/features/presentation'
-import { AddSongToScheduleModal } from '~/features/schedules'
+import type { ScheduleItem } from '~/features/schedules'
+import {
+  AddSongToScheduleModal,
+  getSchedulePassageTarget,
+} from '~/features/schedules'
 import {
   type ExportFormat,
   ExportFormatModal,
@@ -122,6 +126,10 @@ function SongPreviewPage() {
   const canAddSongVersion = hasPermission('song_versions.create')
   const canEditSongVersion = hasPermission('song_versions.edit')
   const canDeleteSongVersion = hasPermission('song_versions.delete')
+  // The Programe panel reads schedules and edits their items (sung marker,
+  // remove), so it needs both program perms to be useful.
+  const canViewSchedules =
+    hasPermission('programs.view') && hasPermission('programs.edit')
   const { songId } = Route.useParams()
   const {
     q: searchQuery,
@@ -203,6 +211,15 @@ function SongPreviewPage() {
       return true
     }
   })
+  // Programe starts collapsed: it is an opt-in third section, and expanding it
+  // by default would shrink the two panels operators already rely on.
+  const [schedulesOpen, setSchedulesOpenRaw] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('song-detail:schedules-open') === 'true'
+    } catch {
+      return false
+    }
+  })
   const [versionsOpen, setVersionsOpenRaw] = useState<boolean>(() => {
     try {
       const raw = localStorage.getItem('song-detail:versions-open')
@@ -211,6 +228,14 @@ function SongPreviewPage() {
       return true
     }
   })
+  const setSchedulesOpen = useCallback((next: boolean) => {
+    setSchedulesOpenRaw(next)
+    try {
+      localStorage.setItem('song-detail:schedules-open', String(next))
+    } catch {
+      // Ignore quota errors — non-critical UI state.
+    }
+  }, [])
   const setBookmarksOpen = useCallback((next: boolean) => {
     setBookmarksOpenRaw(next)
     try {
@@ -496,18 +521,35 @@ function SongPreviewPage() {
     [song, upsertSong, numericId],
   )
 
-  const isBookmarked = useMemo(
-    () => bookmarks.some((b) => b.songId === numericId),
+  // Every bookmark row for this song. A song may be bookmarked more than once,
+  // so this is a list rather than a flag.
+  const songBookmarks = useMemo(
+    () => bookmarks.filter((b) => b.songId === numericId),
     [bookmarks, numericId],
   )
+  const isBookmarked = songBookmarks.length > 0
 
+  /**
+   * The toolbar icon reads as "this song is in Marcaje", so it stays a strict
+   * toggle: pressing it when bookmarked clears every copy. Extra copies are
+   * added deliberately — by dragging the song onto the panel — not by pressing
+   * a button that looks like an on/off switch.
+   */
   const handleToggleBookmark = useCallback(() => {
     if (isBookmarked) {
-      removeBookmarkMutation.mutate(numericId)
+      for (const bookmark of songBookmarks) {
+        removeBookmarkMutation.mutate(bookmark.id)
+      }
     } else {
       addBookmarkMutation.mutate(numericId)
     }
-  }, [isBookmarked, numericId, addBookmarkMutation, removeBookmarkMutation])
+  }, [
+    isBookmarked,
+    songBookmarks,
+    numericId,
+    addBookmarkMutation,
+    removeBookmarkMutation,
+  ])
 
   const handleSongAddedToSchedule = useCallback(
     (scheduleId: number) => {
@@ -699,10 +741,52 @@ function SongPreviewPage() {
     [navigate, searchQuery],
   )
 
-  const handleAddAllBookmarksToSchedule = useCallback((songIds: number[]) => {
-    setBookmarkSongIds(songIds)
+  const handleAddAllBookmarksToSchedule = useCallback(() => {
+    setBookmarkSongIds(bookmarks.map((b) => b.songId))
     setShowAddBookmarksToScheduleModal(true)
-  }, [])
+  }, [bookmarks])
+
+  const handleScheduleSongClick = useCallback(
+    (targetSongId: number) => {
+      navigate({
+        to: '/songs/$songId',
+        params: { songId: String(targetSongId) },
+        search: { q: searchQuery || undefined },
+      })
+    },
+    [navigate, searchQuery],
+  )
+
+  /**
+   * "Vezi si versete" is on and a verse row was clicked — jump into the Bible
+   * module at that exact passage.
+   */
+  const handleSchedulePassageClick = useCallback(
+    (item: ScheduleItem) => {
+      const target = getSchedulePassageTarget(item)
+      if (!target) return
+      navigate({
+        to: '/bible/',
+        search: {
+          bookName: target.bookName,
+          chapter: target.chapter,
+          verse: target.verse,
+          select: true,
+        },
+      })
+    },
+    [navigate],
+  )
+
+  const handleOpenSchedule = useCallback(
+    (scheduleId: number) => {
+      navigate({
+        to: '/schedules/$scheduleId',
+        params: { scheduleId: String(scheduleId) },
+      })
+    },
+    [navigate],
+  )
 
   if (isLoading || !song) {
     return (
@@ -804,6 +888,17 @@ function SongPreviewPage() {
               <Bookmark size={20} />
             )}
           </button>
+          {/* Programe sits right next to Marcaje: both answer "where does this
+              song belong?", so they read as a pair. */}
+          <button
+            type="button"
+            onClick={() => setShowAddToScheduleModal(true)}
+            data-testid="song-add-to-schedule"
+            className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors inline-flex items-center justify-center"
+            title={t('actions.addToSchedule')}
+          >
+            <CalendarPlus size={20} />
+          </button>
           <button
             type="button"
             onClick={handleOpenKeyLineDialog}
@@ -820,14 +915,6 @@ function SongPreviewPage() {
             title={t('actions.saveToFile')}
           >
             <Download size={20} />
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowAddToScheduleModal(true)}
-            className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors inline-flex items-center justify-center"
-            title={t('actions.addToSchedule')}
-          >
-            <CalendarPlus size={20} />
           </button>
           {canEditSong && (
             <button
@@ -923,15 +1010,21 @@ function SongPreviewPage() {
               isLargeScreen={isLargeScreen}
               song={song}
               bookmarksOpen={bookmarksOpen}
+              schedulesOpen={schedulesOpen}
               versionsOpen={versionsOpen}
               onToggleBookmarks={() => setBookmarksOpen(!bookmarksOpen)}
+              onToggleSchedules={() => setSchedulesOpen(!schedulesOpen)}
               onToggleVersions={() => setVersionsOpen(!versionsOpen)}
               onSelectBookmarkSong={handleBookmarkSongClick}
+              onSelectScheduleSong={handleScheduleSongClick}
+              onSelectSchedulePassage={handleSchedulePassageClick}
+              onOpenSchedule={handleOpenSchedule}
               onAddAllBookmarksToSchedule={handleAddAllBookmarksToSchedule}
               canViewSongVersions={canViewSongVersions}
               canAddSongVersion={canAddSongVersion}
               canEditSongVersion={canEditSongVersion}
               canDeleteSongVersion={canDeleteSongVersion}
+              canViewSchedules={canViewSchedules}
               attentionBadge={
                 undismissedSuggestionCount > 0
                   ? `+${undismissedSuggestionCount}`
@@ -1086,15 +1179,21 @@ function SongPreviewPage() {
                 isLargeScreen={isLargeScreen}
                 song={song}
                 bookmarksOpen={bookmarksOpen}
+                schedulesOpen={schedulesOpen}
                 versionsOpen={versionsOpen}
                 onToggleBookmarks={() => setBookmarksOpen(!bookmarksOpen)}
+                onToggleSchedules={() => setSchedulesOpen(!schedulesOpen)}
                 onToggleVersions={() => setVersionsOpen(!versionsOpen)}
                 onSelectBookmarkSong={handleBookmarkSongClick}
+                onSelectScheduleSong={handleScheduleSongClick}
+                onSelectSchedulePassage={handleSchedulePassageClick}
+                onOpenSchedule={handleOpenSchedule}
                 onAddAllBookmarksToSchedule={handleAddAllBookmarksToSchedule}
                 canViewSongVersions={canViewSongVersions}
                 canAddSongVersion={canAddSongVersion}
                 canEditSongVersion={canEditSongVersion}
                 canDeleteSongVersion={canDeleteSongVersion}
+                canViewSchedules={canViewSchedules}
                 attentionBadge={
                   undismissedSuggestionCount > 0
                     ? `+${undismissedSuggestionCount}`

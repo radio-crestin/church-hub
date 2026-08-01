@@ -2,7 +2,7 @@ import { Loader2, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { SongList } from './SongList'
+import { SongSearchPicker } from './SongSearchPicker'
 
 interface SongPickerModalProps {
   isOpen: boolean
@@ -10,6 +10,12 @@ interface SongPickerModalProps {
   onSongSelect: (songId: number) => void | Promise<void>
 }
 
+/**
+ * Standalone song picker dialog, used where a song has to be chosen outside the
+ * schedule add-item flow (inserting after an item, resolving missing songs).
+ * Shares `SongSearchPicker` with that flow, so both get the same virtualized,
+ * incrementally loaded list.
+ */
 export function SongPickerModal({
   isOpen,
   onClose,
@@ -19,7 +25,6 @@ export function SongPickerModal({
   const dialogRef = useRef<HTMLDialogElement>(null)
   const [isProcessing, setIsProcessing] = useState(false)
 
-  // Dialog open/close handling
   useEffect(() => {
     if (isOpen) {
       dialogRef.current?.showModal()
@@ -28,7 +33,6 @@ export function SongPickerModal({
     }
   }, [isOpen])
 
-  // Handle escape key
   useEffect(() => {
     const dialog = dialogRef.current
     if (!dialog) return
@@ -63,17 +67,16 @@ export function SongPickerModal({
   return (
     <dialog
       ref={dialogRef}
-      className="fixed inset-0 m-auto w-full max-w-lg p-0 bg-white dark:bg-gray-800 rounded-xl shadow-xl backdrop:bg-black/50"
+      // Near-full-screen with a ~5% margin: searching a song library inside a
+      // small box was the main complaint about this picker.
+      className="fixed inset-0 m-auto h-[90vh] w-[90vw] max-w-none p-0 bg-white dark:bg-gray-800 rounded-xl shadow-xl backdrop:bg-black/50"
       onClick={(e) => {
         if (e.target === dialogRef.current) handleClose()
       }}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') handleClose()
-      }}
     >
-      <div className="flex flex-col max-h-[80vh]">
+      <div className="flex h-full flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             {t('picker.selectSong')}
           </h2>
@@ -88,13 +91,16 @@ export function SongPickerModal({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex flex-1 min-h-0 flex-col p-4">
           {isProcessing ? (
-            <div className="flex items-center justify-center py-8">
+            <div className="flex flex-1 items-center justify-center">
               <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
             </div>
           ) : (
-            <SongList onSongClick={handleSongSelect} />
+            <SongSearchPicker
+              onSongSelect={handleSongSelect}
+              className="flex-1"
+            />
           )}
         </div>
       </div>

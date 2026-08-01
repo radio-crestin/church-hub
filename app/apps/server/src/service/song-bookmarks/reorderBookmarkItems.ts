@@ -31,7 +31,7 @@ export function reorderBookmarkItems(
         if (item.type === 'song') {
           tx.update(songBookmarks)
             .set({ sortOrder: i })
-            .where(eq(songBookmarks.songId, item.id))
+            .where(eq(songBookmarks.id, item.id))
             .run()
         } else {
           tx.update(songBookmarkNotes)

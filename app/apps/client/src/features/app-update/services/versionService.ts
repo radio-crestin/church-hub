@@ -49,7 +49,14 @@ export async function getCurrentVersion(): Promise<string> {
 }
 
 /**
- * Gets the platform-specific download asset name pattern
+ * Matches the release asset for this machine.
+ *
+ * The patterns follow what the release workflow actually uploads —
+ * `church-hub-macos-arm64-v-0.1.85.dmg`, `church-hub-windows-x64-v-0.1.85.exe`.
+ * They used to look for Tauri's raw bundle names (`…aarch64.dmg`,
+ * `…setup.exe`), which the workflow renames, so no asset ever matched and the
+ * download URL was always null — the "Download" button silently fell back to
+ * opening the release page.
  */
 function getAssetPattern(): RegExp | null {
   if (!isTauri) return null
@@ -63,28 +70,19 @@ function getAssetPattern(): RegExp | null {
     return null
   }
 
-  // Map OS and arch to GitHub release asset patterns
   if (osType === 'macos') {
-    if (osArch === 'aarch64') {
-      return /church-hub.*aarch64\.dmg$/i
-    }
-    return /church-hub.*x64\.dmg$/i
+    return osArch === 'aarch64'
+      ? /church-hub-macos-arm64-.*\.dmg$/i
+      : /church-hub-macos-x64-.*\.dmg$/i
   }
 
   if (osType === 'windows') {
-    if (osArch === 'aarch64') {
-      return /church-hub.*arm64.*setup\.exe$/i
-    }
-    return /church-hub.*x64.*setup\.exe$/i
+    return osArch === 'aarch64'
+      ? /church-hub-windows-arm64-.*\.exe$/i
+      : /church-hub-windows-x64-.*\.exe$/i
   }
 
-  if (osType === 'linux') {
-    if (osArch === 'aarch64') {
-      return /church-hub.*aarch64\.(AppImage|deb)$/i
-    }
-    return /church-hub.*amd64\.(AppImage|deb)$/i
-  }
-
+  // Linux is not built by the release workflow yet; nothing to offer.
   return null
 }
 

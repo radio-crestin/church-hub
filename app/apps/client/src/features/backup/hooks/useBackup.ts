@@ -205,6 +205,11 @@ export function useBackup() {
     mutationFn: deleteBackup,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['backup', 'list'] })
+      // Deleting a backup frees Drive space, and the "X of Y used - Z free"
+      // line plus the insufficient-space banner both read `storage` off the
+      // status payload. Without this the freed space stayed invisible until
+      // the 60s staleTime lapsed, which read as "deleting did nothing".
+      queryClient.invalidateQueries({ queryKey: ['backup', 'status'] })
     },
   })
 
@@ -227,6 +232,8 @@ export function useBackup() {
     intervalHours: status?.intervalHours ?? 24,
     maxBackups: status?.maxBackups ?? 5,
     lastBackupAt: status?.lastBackupAt ?? null,
+    localBackupPath: status?.localBackupPath ?? null,
+    lastLocalBackupAt: status?.lastLocalBackupAt ?? null,
     storage: status?.storage ?? null,
     // connection
     connect,

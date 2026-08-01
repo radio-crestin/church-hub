@@ -1,8 +1,20 @@
-import { ChevronRight, Eye, Music2, Sparkles, Tag } from 'lucide-react'
-import { forwardRef } from 'react'
+import {
+  ChevronRight,
+  Eye,
+  GripVertical,
+  Music2,
+  Sparkles,
+  Tag,
+} from 'lucide-react'
+import { forwardRef, useEffect, useState } from 'react'
 
 import type { SyncChangeKind } from '~/features/sync'
 import { SyncUpdateBadge } from '~/features/sync'
+import {
+  getSongDragState,
+  startSongDrag,
+  subscribeSongDrag,
+} from '../utils/songDragController'
 
 interface SongCardProps {
   song: {
@@ -24,6 +36,13 @@ interface SongCardProps {
   showCategoryInTitle?: boolean
   /** Unseen sync change applied from another device (renders a badge). */
   syncChangeKind?: SyncChangeKind
+  /**
+   * Lets the card be dragged onto the Marcaje / Programe panels. The song stays
+   * in the list — this is a copy-style drag, not a move.
+   */
+  isDraggable?: boolean
+  /** Tooltip for the grip; supplied by the list so it can be translated. */
+  dragHandleTitle?: string
 }
 
 export const SongCard = forwardRef<HTMLButtonElement, SongCardProps>(
@@ -35,9 +54,22 @@ export const SongCard = forwardRef<HTMLButtonElement, SongCardProps>(
       isSelected = false,
       showCategoryInTitle,
       syncChangeKind,
+      isDraggable = false,
+      dragHandleTitle,
     },
     ref,
   ) {
+    // True while *this* card is the one being dragged, so it can fade out
+    // behind the floating preview.
+    const [isDragging, setIsDragging] = useState(
+      () => getSongDragState().song?.id === song.id,
+    )
+    useEffect(
+      () =>
+        subscribeSongDrag((state) => setIsDragging(state.song?.id === song.id)),
+      [song.id],
+    )
+
     const hasHighlight = song.highlightedTitle?.includes('<mark>')
     const categorySuffix =
       showCategoryInTitle && song.categoryName ? ` (${song.categoryName})` : ''
@@ -63,11 +95,32 @@ export const SongCard = forwardRef<HTMLButtonElement, SongCardProps>(
           }
         }}
         className={`w-full min-w-0 flex items-center justify-between p-4 border rounded-lg hover:border-indigo-300 dark:hover:border-indigo-600 hover:shadow-sm transition-all text-left group overflow-hidden ${
+          isDragging ? 'opacity-40 scale-[0.98]' : ''
+        } ${
           isSelected
             ? 'border-indigo-500 dark:border-indigo-400 ring-2 ring-indigo-500/20 dark:ring-indigo-400/20 bg-indigo-50 dark:bg-indigo-900/20'
             : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
         }`}
       >
+        {/* Grip — the only place a drag can start. It drives a pointer-event
+            drag (see songDragController) rather than a native one, which the
+            desktop webview never handled reliably. `stopPropagation` keeps the
+            press off the card's own click handler. */}
+        {isDraggable && (
+          <span
+            role="presentation"
+            data-testid="song-card-drag-handle"
+            title={dragHandleTitle}
+            onPointerDown={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              startSongDrag(e, { id: song.id, title: song.title })
+            }}
+            className="-ml-1 mr-2 flex shrink-0 cursor-grab items-center self-stretch rounded px-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 active:cursor-grabbing dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+          >
+            <GripVertical size={16} />
+          </span>
+        )}
         <div className="flex-1 min-w-0">
           {hasHighlight ? (
             <h3 className="font-medium text-gray-900 dark:text-white truncate">
