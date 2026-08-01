@@ -9,6 +9,7 @@ import { useEffect } from 'react'
 
 import { isTauri } from '~/config'
 import { MobileConnectionGuard } from '~/features/api-url-config'
+import { UpdateAvailableModal } from '~/features/app-update'
 import { LoginGate } from '~/features/auth'
 import {
   GlobalAppShortcutManager,
@@ -170,6 +171,9 @@ function MainLayout() {
                                   onto Marcaje / Programe. Global because the
                                   drag crosses subtrees. */}
                               <SongDragGhost />
+                              {/* Opens by itself when a newer version is
+                                  published; postponing is per-version. */}
+                              <UpdateAvailableModal />
                               <AutoOpenScreens />
                               <AutoReopenScreensOnPresentation />
                               <AutoCloseScreensOnHide />
