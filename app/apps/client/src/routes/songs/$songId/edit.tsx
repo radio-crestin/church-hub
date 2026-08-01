@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next'
 
 import { SongEditor, UnsavedChangesModal } from '~/features/songs/components'
 import { type LocalSlide } from '~/features/songs/components/SongSlideList'
-import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
 import {
   useDeleteSong,
   useDirtyState,
@@ -13,6 +12,7 @@ import {
   useUpsertSong,
 } from '~/features/songs/hooks'
 import { ConfirmModal } from '~/ui/modal'
+import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
 import { useToast } from '~/ui/toast'
 
 interface SongSearchParams {
