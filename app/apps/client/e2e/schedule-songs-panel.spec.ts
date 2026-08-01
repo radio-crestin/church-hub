@@ -220,6 +220,93 @@ test.describe('Programe panel on the song page', () => {
       await request.delete(`/api/songs/${songB.id}`).catch(() => {})
     }
   })
+
+  test('songs can be dragged into a new order, leaving other item types put', async ({
+    page,
+    request,
+  }) => {
+    const uniq = Date.now()
+    const songA = await createSong(request, `E2E Drag A ${uniq}`)
+    const songB = await createSong(request, `E2E Drag B ${uniq}`)
+    const schedule = await createSchedule(request, `E2E Drag Prog ${uniq}`)
+
+    try {
+      // song A, an announcement, song B — the announcement sits between them so
+      // the test proves reordering songs does not disturb other item types.
+      await request.post(`/api/schedules/${schedule.id}/items`, {
+        data: { songId: songA.id },
+      })
+      await request.post(`/api/schedules/${schedule.id}/items`, {
+        data: { slideType: 'announcement', slideContent: 'Anunt' },
+      })
+      await request.post(`/api/schedules/${schedule.id}/items`, {
+        data: { songId: songB.id },
+      })
+
+      await page.addInitScript((scheduleId: number) => {
+        window.localStorage.setItem(
+          'song-detail:accordion-column-visible',
+          'true',
+        )
+        window.localStorage.setItem('song-detail:schedules-open', 'true')
+        window.localStorage.setItem(
+          'songPage.selectedScheduleId',
+          String(scheduleId),
+        )
+      }, schedule.id)
+      await page.setViewportSize({ width: 1400, height: 900 })
+      await page.goto(`/songs/${songA.id}`)
+      await page.waitForLoadState('networkidle')
+
+      const panel = page.getByTestId('schedule-songs-panel')
+      const rows = panel.getByTestId('schedule-song-item')
+      await expect(rows).toHaveCount(2, { timeout: 10000 })
+      await expect(rows.first()).toContainText(`E2E Drag A ${uniq}`)
+
+      // Drag song A below song B.
+      const handle = rows.first().getByTestId('schedule-song-drag-handle')
+      const target = rows.nth(1)
+      const from = await handle.boundingBox()
+      const to = await target.boundingBox()
+      if (!from || !to) throw new Error('drag targets not laid out')
+
+      await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2)
+      await page.mouse.down()
+      // A couple of intermediate moves so the 8px activation constraint trips
+      // and dnd-kit registers the drop target.
+      await page.mouse.move(
+        from.x + from.width / 2,
+        from.y + from.height / 2 + 20,
+      )
+      await page.mouse.move(to.x + to.width / 2, to.y + to.height + 5, {
+        steps: 10,
+      })
+      await page.mouse.up()
+
+      await expect(rows.first()).toContainText(`E2E Drag B ${uniq}`, {
+        timeout: 10000,
+      })
+
+      // The new order persists, and the announcement is still the middle item.
+      await expect
+        .poll(
+          async () => {
+            const res = await request.get(`/api/schedules/${schedule.id}`)
+            const { data } = await res.json()
+            return data.items.map(
+              (i: { itemType: string; songId: number | null }) =>
+                i.itemType === 'song' ? i.songId : i.itemType,
+            )
+          },
+          { timeout: 10000 },
+        )
+        .toEqual([songB.id, 'slide', songA.id])
+    } finally {
+      await request.delete(`/api/schedules/${schedule.id}`).catch(() => {})
+      await request.delete(`/api/songs/${songA.id}`).catch(() => {})
+      await request.delete(`/api/songs/${songB.id}`).catch(() => {})
+    }
+  })
 })
 
 test.describe('Programe modal from the song toolbar', () => {
