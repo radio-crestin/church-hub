@@ -1,5 +1,31 @@
 [
   {
+    "version": "0.1.90",
+    "date": "2026-08-01T23:45:08+02:00",
+    "features": [
+      {
+        "scope": "backup",
+        "message": "restore the database from a local copy, in any folder"
+      }
+    ],
+    "bugFixes": [
+      {
+        "scope": "ci",
+        "message": "stop sync-version-back from moving main's version backwards"
+      }
+    ],
+    "changes": [
+      {
+        "scope": null,
+        "message": "sync version to v0.1.89 [skip ci]"
+      },
+      {
+        "scope": null,
+        "message": "sync version to v0.1.88 [skip ci]"
+      }
+    ]
+  },
+  {
     "version": "0.1.89",
     "date": "2026-08-01T22:49:20+02:00",
     "features": [],

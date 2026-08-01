@@ -2,6 +2,21 @@
 
 > Auto-generated from git history by `app/scripts/generate-changelog.ts`. Do not edit by hand.
 
+## v0.1.90 — 2026-08-01
+
+### 🚀 Features
+
+- **backup**: restore the database from a local copy, in any folder
+
+### 🐛 Bug Fixes
+
+- **ci**: stop sync-version-back from moving main's version backwards
+
+### 🔧 Changes
+
+- sync version to v0.1.89 [skip ci]
+- sync version to v0.1.88 [skip ci]
+
 ## v0.1.89 — 2026-08-01
 
 ### 🐛 Bug Fixes
