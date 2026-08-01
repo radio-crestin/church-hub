@@ -1013,6 +1013,14 @@
         "disabled": "Fereastra va rămâne deschisă tot timpul",
         "error": "Nu s-a putut actualiza setarea"
       },
+      "openOnStartup": {
+        "tooltip": "Daca fereastra acestui ecran se deschide singura la pornirea aplicatiei",
+        "on": "Se deschide la pornire",
+        "off": "Se deschide doar la nevoie",
+        "enabled": "Ecranul se va deschide la pornirea aplicatiei",
+        "disabled": "Ecranul ramane inchis la pornire si se deschide la prima afisare",
+        "error": "Setarea de pornire nu a putut fi salvata"
+      },
       "previewScreen": {
         "set": "Oglindește acest ecran în previzualizarea din aplicație",
         "unset": "Nu mai oglindi acest ecran în previzualizarea din aplicație",

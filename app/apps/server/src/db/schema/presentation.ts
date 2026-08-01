@@ -50,6 +50,15 @@ export const screens = sqliteTable(
     isPreviewScreen: integer('is_preview_screen', { mode: 'boolean' })
       .notNull()
       .default(false),
+    /**
+     * Open this screen's window automatically when the app launches. Separate
+     * from `isActive`, which only says the screen has a window: a screen with
+     * this off stays closed at launch but still opens as soon as something is
+     * presented to it.
+     */
+    openOnStartup: integer('open_on_startup', { mode: 'boolean' })
+      .notNull()
+      .default(true),
     width: integer('width').notNull().default(1920),
     height: integer('height').notNull().default(1080),
     globalSettings: text('global_settings').notNull().default('{}'),
