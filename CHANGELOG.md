@@ -2,6 +2,16 @@
 
 > Auto-generated from git history by `app/scripts/generate-changelog.ts`. Do not edit by hand.
 
+## v0.1.87 — 2026-08-01
+
+### 🐛 Bug Fixes
+
+- **scripts**: force LF on shell scripts so release.sh runs under core.autocrlf
+
+### 🔧 Changes
+
+- **app-update**: correct the asset-matching rationale
+
 ## v0.1.86 — 2026-08-01
 
 ### 🚀 Features
