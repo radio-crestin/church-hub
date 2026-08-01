@@ -8,6 +8,24 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
   console.log(`[add-backup-config:${level}] ${message}`)
 }
 
+/** Adds a `backup_config` column when it isn't there yet. */
+function addColumnIfMissing(
+  db: Database,
+  column: string,
+  definition: string,
+): void {
+  const exists = db
+    .query<{ name: string }, [string]>(
+      "SELECT name FROM pragma_table_info('backup_config') WHERE name = ?",
+    )
+    .get(column)
+
+  if (!exists) {
+    log('info', `Adding "${column}" column to "backup_config"...`)
+    db.run(`ALTER TABLE backup_config ADD COLUMN ${column} ${definition}`)
+  }
+}
+
 /**
  * Adds the tables used by the Google Drive backup feature:
  * - `backup_config`: automatic-backup preferences + last upload time.
@@ -50,6 +68,12 @@ export function addBackupConfig(db: Database): void {
       )
     }
   }
+
+  // Local backups: a chosen folder each backup is also written to, plus the
+  // timestamp of the last successful local write. Added separately from the
+  // CREATE above so existing installs pick them up too.
+  addColumnIfMissing(db, 'local_backup_path', 'TEXT')
+  addColumnIfMissing(db, 'last_local_backup_at', 'INTEGER')
 
   const authExists = db
     .query<{ name: string }, []>(

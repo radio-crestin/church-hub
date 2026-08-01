@@ -135,6 +135,8 @@ export const backupPaths: Record<string, Record<string, unknown>> = {
                       intervalHours: { type: 'integer' },
                       maxBackups: { type: 'integer' },
                       lastBackupAt: { type: 'integer', nullable: true },
+                      localBackupPath: { type: 'string', nullable: true },
+                      lastLocalBackupAt: { type: 'integer', nullable: true },
                       storage: {
                         type: 'object',
                         nullable: true,
@@ -364,6 +366,21 @@ export const backupPaths: Record<string, Record<string, unknown>> = {
                           properties: {
                             title: { type: 'string' },
                             createdAtMs: { type: 'integer', nullable: true },
+                            itemCount: {
+                              type: 'integer',
+                              description:
+                                'Total items in the program (songs, passages, slides, scenes)',
+                            },
+                            songCount: {
+                              type: 'integer',
+                              description: 'Song items only',
+                            },
+                            songTitles: {
+                              type: 'array',
+                              items: { type: 'string' },
+                              description:
+                                'First song titles, in program order (capped)',
+                            },
                           },
                         },
                       },
@@ -434,6 +451,128 @@ export const backupPaths: Record<string, Record<string, unknown>> = {
       },
     },
   },
+  '/api/backup/local/list': {
+    get: {
+      tags: ['Backup'],
+      summary: 'List local backups',
+      description:
+        'Lists the backup files present in the configured local folder, newest first. Returns an empty list when local backups are off or the folder is unreachable. Only accessible from localhost.',
+      responses: {
+        '200': {
+          description: 'Local backups',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'object',
+                    properties: {
+                      backups: {
+                        type: 'array',
+                        items: {
+                          type: 'object',
+                          properties: {
+                            name: { type: 'string' },
+                            path: { type: 'string' },
+                            sizeBytes: { type: 'integer' },
+                            createdAtMs: { type: 'integer' },
+                            appVersion: { type: 'string', nullable: true },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        '403': localhostError,
+      },
+    },
+  },
+  '/api/backup/local/now': {
+    post: {
+      tags: ['Backup'],
+      summary: 'Write a backup to the local folder',
+      description:
+        'Checkpoints the database and copies it into the configured local folder, then prunes older local backups down to the retention setting. Works without a Google account. Only accessible from localhost.',
+      responses: {
+        '200': {
+          description: 'Local backup written',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean' },
+                      fileName: { type: 'string' },
+                      path: { type: 'string' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        '400': backupOperationError,
+        '403': localhostError,
+      },
+    },
+  },
+  '/api/backup/local/delete': {
+    post: {
+      tags: ['Backup'],
+      summary: 'Delete a local backup',
+      description:
+        'Deletes one backup file from the configured local folder. Only accessible from localhost.',
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['fileName'],
+              properties: {
+                fileName: {
+                  type: 'string',
+                  description:
+                    'Name of the backup file inside the configured folder',
+                },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        '200': {
+          description: 'Local backup deleted',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean' },
+                      fileName: { type: 'string' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        '400': backupOperationError,
+        '403': localhostError,
+      },
+    },
+  },
   '/api/backup/config': {
     get: {
       tags: ['Backup'],
@@ -454,6 +593,8 @@ export const backupPaths: Record<string, Record<string, unknown>> = {
                       intervalHours: { type: 'integer' },
                       maxBackups: { type: 'integer' },
                       lastBackupAt: { type: 'integer', nullable: true },
+                      localBackupPath: { type: 'string', nullable: true },
+                      lastLocalBackupAt: { type: 'integer', nullable: true },
                     },
                   },
                 },
@@ -489,6 +630,12 @@ export const backupPaths: Record<string, Record<string, unknown>> = {
                   description:
                     'Number of most-recent backups kept in Drive; when a new backup exceeds this, the oldest is deleted. Default 5.',
                 },
+                localBackupPath: {
+                  type: 'string',
+                  nullable: true,
+                  description:
+                    'Absolute folder each backup is also written to. Null or an empty string turns local backups off.',
+                },
               },
             },
           },
@@ -509,6 +656,8 @@ export const backupPaths: Record<string, Record<string, unknown>> = {
                       intervalHours: { type: 'integer' },
                       maxBackups: { type: 'integer' },
                       lastBackupAt: { type: 'integer', nullable: true },
+                      localBackupPath: { type: 'string', nullable: true },
+                      lastLocalBackupAt: { type: 'integer', nullable: true },
                     },
                   },
                 },

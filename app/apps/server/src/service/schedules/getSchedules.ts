@@ -17,6 +17,7 @@ import {
   songs,
 } from '../../db/schema'
 import { getSlidesBySongId, getSlidesBySongIds } from '../songs'
+import { getTagsBySongIds } from '../songs/tags'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -257,6 +258,8 @@ export function getScheduleById(id: number): ScheduleWithItems | null {
         biblePassageReference: scheduleItems.biblePassageReference,
         biblePassageTranslation: scheduleItems.biblePassageTranslation,
         obsSceneName: scheduleItems.obsSceneName,
+        isSung: scheduleItems.isSung,
+        sungAt: scheduleItems.sungAt,
         sortOrder: scheduleItems.sortOrder,
         createdAt: scheduleItems.createdAt,
         updatedAt: scheduleItems.updatedAt,
@@ -292,6 +295,9 @@ export function getScheduleById(id: number): ScheduleWithItems | null {
     const slidesBySongId = getSlidesBySongIds(songIds)
     const versesByItemId = getBiblePassageVersesBatch(biblePassageItemIds)
     const entriesByItemId = getVerseteTineriEntriesBatch(verseteTineriItemIds)
+    // Tags power the schedule songs panel chips — same single-query bulk load
+    // the bookmarks list uses, so no N+1 creeps in here.
+    const tagsBySongId = getTagsBySongIds(songIds)
 
     // Convert items with pre-loaded data
     const items: ScheduleItem[] = itemRecords.map((record) => {
@@ -321,10 +327,15 @@ export function getScheduleById(id: number): ScheduleWithItems | null {
               id: record.songId!,
               title: record.songTitle!,
               categoryName: record.categoryName,
+              tagNames: (tagsBySongId.get(record.songId!) ?? []).map(
+                (tag) => tag.name,
+              ),
             }
           : null,
         slides,
         keyLine: record.songKeyLine ?? null,
+        isSung: record.isSung,
+        sungAt: record.sungAt ? record.sungAt.getTime() : null,
         slideType: record.slideType,
         slideContent: record.slideContent,
         biblePassageReference: record.biblePassageReference,
@@ -378,6 +389,8 @@ export function getScheduleItemById(id: number): ScheduleItem | null {
         biblePassageReference: scheduleItems.biblePassageReference,
         biblePassageTranslation: scheduleItems.biblePassageTranslation,
         obsSceneName: scheduleItems.obsSceneName,
+        isSung: scheduleItems.isSung,
+        sungAt: scheduleItems.sungAt,
         sortOrder: scheduleItems.sortOrder,
         createdAt: scheduleItems.createdAt,
         updatedAt: scheduleItems.updatedAt,
@@ -421,10 +434,14 @@ export function getScheduleItemById(id: number): ScheduleItem | null {
             id: record.songId!,
             title: record.songTitle!,
             categoryName: record.categoryName,
+            tagNames: (getTagsBySongIds([record.songId!]).get(record.songId!) ??
+              []).map((tag) => tag.name),
           }
         : null,
       slides,
       keyLine: record.songKeyLine ?? null,
+      isSung: record.isSung,
+      sungAt: record.sungAt ? record.sungAt.getTime() : null,
       slideType: record.slideType,
       slideContent: record.slideContent,
       biblePassageReference: record.biblePassageReference,

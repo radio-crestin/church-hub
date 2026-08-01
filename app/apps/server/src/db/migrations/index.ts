@@ -7,11 +7,14 @@ import { addCloseOnEscape } from './add-close-on-escape'
 import { addLastPresentedAt } from './add-last-presented-at'
 import { addLogsPermissions } from './add-logs-permissions'
 import { addPreviewScreen } from './add-preview-screen'
+import { addScheduleItemSung } from './add-schedule-item-sung'
+import { addScreenOpenOnStartup } from './add-screen-open-on-startup'
 import { addSongBookmarkSung } from './add-song-bookmark-sung'
 import { addSongGroups } from './add-song-groups'
 import { addSongSlideNotes } from './add-song-slide-notes'
 import { addSync } from './add-sync'
 import { addSongVersionsPermissions } from './add-song-versions-permissions'
+import { allowDuplicateBookmarks } from './allow-duplicate-bookmarks'
 import { addUserAuthFields } from './add-user-auth-fields'
 import { dropSongKeyColumn } from './drop-song-key-column'
 import { EMBEDDED_MIGRATIONS } from './embedded'
@@ -205,6 +208,14 @@ export function runMigrations(
     () => addCategoryHiddenFlag(rawDb),
   )
 
+  // open_on_startup on screens: whether the window opens automatically at
+  // launch, split out of is_active. Before seed_screens so the seed can set it.
+  runStep(
+    'add_screen_open_on_startup',
+    'Running add screen open_on_startup migration',
+    () => addScreenOpenOnStartup(rawDb),
+  )
+
   // Seed default screens
   runStep('seed_screens', 'Seeding default screens', () =>
     seedDefaultScreens(rawDb),
@@ -296,6 +307,22 @@ export function runMigrations(
     'add_song_bookmark_sung',
     'Running add song_bookmark sung migration',
     () => addSongBookmarkSung(rawDb),
+  )
+
+  // Drop the UNIQUE constraint on song_bookmarks.song_id so the same song can
+  // be bookmarked more than once.
+  runStep(
+    'allow_duplicate_bookmarks',
+    'Running allow duplicate bookmarks migration',
+    () => allowDuplicateBookmarks(rawDb),
+  )
+
+  // Add is_sung/sung_at to schedule_items so a schedule tracks which of its
+  // songs were already sung, independently of the global bookmarks list.
+  runStep(
+    'add_schedule_item_sung',
+    'Running add schedule_item sung migration',
+    () => addScheduleItemSung(rawDb),
   )
 
   // Google Drive library sync: uuid identity columns, sync engine tables and

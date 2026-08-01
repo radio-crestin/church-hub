@@ -307,6 +307,66 @@ export const schedulesPaths = {
       },
     },
   },
+  '/api/schedules/{id}/items/{itemId}/sung': {
+    put: {
+      tags: ['Schedules'],
+      summary: 'Toggle the "already sung" marker on a schedule item',
+      description:
+        'Marks a schedule song as sung (or not) within this schedule only. The same song can be pending in one program and sung in another.',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      parameters: [
+        {
+          name: 'id',
+          in: 'path',
+          required: true,
+          schema: { type: 'integer' },
+          description: 'Schedule ID',
+        },
+        {
+          name: 'itemId',
+          in: 'path',
+          required: true,
+          schema: { type: 'integer' },
+          description: 'Schedule item ID',
+        },
+      ],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['isSung'],
+              properties: {
+                isSung: {
+                  type: 'boolean',
+                  description: 'New "already sung" state',
+                },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        '200': {
+          description: 'Marker updated',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: { $ref: '#/components/schemas/OperationResult' },
+                },
+              },
+            },
+          },
+        },
+        '400': { $ref: '#/components/responses/BadRequest' },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+        '404': { $ref: '#/components/responses/NotFound' },
+      },
+    },
+  },
   '/api/schedules/{id}/items/reorder': {
     put: {
       tags: ['Schedules'],

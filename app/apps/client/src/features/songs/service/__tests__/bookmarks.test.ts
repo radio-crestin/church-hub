@@ -8,7 +8,6 @@ import {
   clearBookmarks,
   getBookmarks,
   removeBookmark,
-  reorderBookmarks,
 } from '../bookmarks'
 
 const mockFetcher = vi.mocked(fetcher)
@@ -91,25 +90,6 @@ describe('clearBookmarks', () => {
   it('returns false when success is undefined', async () => {
     mockFetcher.mockResolvedValue({})
     const result = await clearBookmarks()
-    expect(result).toBe(false)
-  })
-})
-
-describe('reorderBookmarks', () => {
-  it('returns true on success', async () => {
-    mockFetcher.mockResolvedValue({ success: true })
-    const result = await reorderBookmarks([3, 1, 2])
-    expect(result).toBe(true)
-    expect(mockFetcher).toHaveBeenCalledWith('/api/song-bookmarks/reorder', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ songIds: [3, 1, 2] }),
-    })
-  })
-
-  it('returns false on failure', async () => {
-    mockFetcher.mockResolvedValue({})
-    const result = await reorderBookmarks([1])
     expect(result).toBe(false)
   })
 })

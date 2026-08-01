@@ -25,40 +25,8 @@ export function addBookmark(
       (t) => t.name,
     )
 
-    // Check if already bookmarked
-    const existing = db
-      .select()
-      .from(songBookmarks)
-      .where(eq(songBookmarks.songId, songId))
-      .get()
-
-    if (existing) {
-      // Already bookmarked, return existing with song info
-      const song = db
-        .select({
-          title: songs.title,
-          categoryName: songCategories.name,
-          keyLine: songs.keyLine,
-        })
-        .from(songs)
-        .leftJoin(songCategories, eq(songs.categoryId, songCategories.id))
-        .where(eq(songs.id, songId))
-        .get()
-
-      return {
-        data: {
-          id: existing.id,
-          songId: existing.songId,
-          songTitle: song?.title ?? '',
-          songCategoryName: song?.categoryName ?? null,
-          songKeyLine: song?.keyLine ?? null,
-          songTagNames,
-          sortOrder: existing.sortOrder,
-          createdAt: existing.createdAt.getTime(),
-        },
-      }
-    }
-
+    // No duplicate check: the same song may legitimately appear several times
+    // in a service, so every add creates its own row.
     // Get max sort order
     const maxOrder = db
       .select({ max: sql<number>`MAX(sort_order)` })

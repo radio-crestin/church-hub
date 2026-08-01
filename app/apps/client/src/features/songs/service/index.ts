@@ -14,7 +14,6 @@ export {
   getBookmarks,
   markBookmarkSung,
   removeBookmark,
-  reorderBookmarks,
   type SongBookmark,
 } from './bookmarks'
 export {

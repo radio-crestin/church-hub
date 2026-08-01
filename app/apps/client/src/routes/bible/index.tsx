@@ -4,8 +4,14 @@ import {
   useNavigate,
   useSearch,
 } from '@tanstack/react-router'
-import { Book, GripVertical, Loader2, Settings } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  Book,
+  CalendarPlus,
+  GripVertical,
+  Loader2,
+  Settings,
+} from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type {
@@ -34,9 +40,17 @@ import {
   usePresentationState,
   usePresentTemporaryBible,
 } from '~/features/presentation'
+import type { ScheduleItem } from '~/features/schedules'
+import {
+  getSchedulePassageTarget,
+  readSelectedScheduleId,
+  SchedulePanel,
+  useAddItemToSchedule,
+} from '~/features/schedules'
 import { useDividerPosition } from '~/hooks/useDividerPosition'
 import { DIVIDER_KEYS } from '~/service/layout'
 import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
+import { useToast } from '~/ui/toast'
 
 interface BibleSearchParams {
   reset?: number
@@ -87,6 +101,8 @@ export const Route = createFileRoute('/bible/')({
 
 function BiblePage() {
   const { t } = useTranslation('bible')
+  const { t: tSchedules } = useTranslation('schedules')
+  const { showToast } = useToast()
   const navigate = useNavigate()
   const {
     reset,
@@ -120,6 +136,7 @@ function BiblePage() {
   const clearSlide = useClearSlide()
   const navigateTemporary = useNavigateTemporary()
   const addToHistory = useAddToHistory()
+  const addItemToSchedule = useAddItemToSchedule()
 
   const [dividerPosition, setDividerPosition] = useDividerPosition(
     DIVIDER_KEYS.bibleLeft,
@@ -133,6 +150,41 @@ function BiblePage() {
     const stored = localStorage.getItem('bible-history-collapsed')
     return stored === 'true'
   })
+  // Inside the right column, Istoric and Programe are independently
+  // collapsible — the same accordion the song page's Marcaje / Programe /
+  // Versiuni column uses. `isHistoryCollapsed` above still hides the whole
+  // column from the control panel.
+  const [historyOpen, setHistoryOpenRaw] = useState<boolean>(() => {
+    try {
+      const raw = localStorage.getItem('bible:history-open')
+      return raw === null ? true : raw === 'true'
+    } catch {
+      return true
+    }
+  })
+  const [programsOpen, setProgramsOpenRaw] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('bible:programs-open') === 'true'
+    } catch {
+      return false
+    }
+  })
+  const setHistoryOpen = useCallback((next: boolean) => {
+    setHistoryOpenRaw(next)
+    try {
+      localStorage.setItem('bible:history-open', String(next))
+    } catch {
+      // Ignore quota errors — non-critical UI state.
+    }
+  }, [])
+  const setProgramsOpen = useCallback((next: boolean) => {
+    setProgramsOpenRaw(next)
+    try {
+      localStorage.setItem('bible:programs-open', String(next))
+    } catch {
+      // Ignore quota errors — non-critical UI state.
+    }
+  }, [])
   const [isLargeScreen, setIsLargeScreen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const rightPanelRef = useRef<HTMLDivElement>(null)
@@ -610,6 +662,98 @@ function BiblePage() {
     (t) => t.id === navigation.state.translationId,
   )
 
+  // --- Programe panel wiring -------------------------------------------------
+
+  /** The verse the page has in focus, shaped for "add to program". */
+  const candidatePassage = useMemo(() => {
+    const index =
+      navigation.state.presentedIndex ?? navigation.state.searchedIndex
+    const verse = index !== null && index >= 0 ? verses[index] : undefined
+    if (!verse || !currentTranslation) return null
+    return {
+      translationId: currentTranslation.id,
+      translationAbbreviation: currentTranslation.abbreviation,
+      bookCode: verse.bookCode,
+      bookName: verse.bookName,
+      startChapter: verse.chapter,
+      startVerse: verse.verse,
+      endChapter: verse.chapter,
+      endVerse: verse.verse,
+      label: `${verse.bookName} ${verse.chapter}:${verse.verse}`,
+    }
+  }, [
+    navigation.state.presentedIndex,
+    navigation.state.searchedIndex,
+    verses,
+    currentTranslation,
+  ])
+
+  /** Highlights the program row matching what is open right now. */
+  const activePassageReference = candidatePassage?.label ?? null
+
+  /**
+   * Opens a program's passage at its exact verse.
+   *
+   * The passage carries no book id, so the book is resolved by name against the
+   * operator's primary translation — the same fallback this route's own URL
+   * handler uses.
+   */
+  const handleSelectSchedulePassage = useCallback(
+    (item: ScheduleItem) => {
+      const target = getSchedulePassageTarget(item)
+      if (!target) return
+
+      const book = primaryBooks.find((b) => b.bookName === target.bookName)
+
+      isBrowsingRef.current = true
+      pendingInternalNavRef.current = true
+      navigate({
+        to: '/bible/',
+        search: {
+          book: book?.id,
+          bookName: target.bookName,
+          chapter: target.chapter,
+          verse: target.verse,
+          select: true,
+        },
+      })
+    },
+    [primaryBooks, navigate],
+  )
+
+  /**
+   * Top-bar action: adds the verse currently open to the program the Programe
+   * panel has selected. The panel owns that selection and persists it, so the
+   * id is read at click time rather than mirrored into this component.
+   */
+  const handleAddCurrentVerseToProgram = useCallback(() => {
+    const scheduleId = readSelectedScheduleId()
+    if (!scheduleId || !candidatePassage) {
+      showToast(tSchedules('panel.selectScheduleFirst'), 'error')
+      return
+    }
+    const { label, ...biblePassage } = candidatePassage
+    addItemToSchedule.mutate(
+      { scheduleId, input: { biblePassage } },
+      {
+        onSuccess: () =>
+          showToast(
+            tSchedules('panel.verseAdded', { reference: label }),
+            'success',
+          ),
+        onError: () => showToast(tSchedules('messages.error'), 'error'),
+      },
+    )
+  }, [candidatePassage, addItemToSchedule, showToast, tSchedules])
+
+  /** "Vezi si cantari" is on and a song row was clicked — jump to that song. */
+  const handleSelectScheduleSong = useCallback(
+    (songId: number) => {
+      navigate({ to: '/songs/$songId', params: { songId: String(songId) } })
+    },
+    [navigate],
+  )
+
   // Handle verse presentation to screen (API call)
   const presentVerseToScreen = useCallback(
     async (verse: BibleVerse, verseIndex: number) => {
@@ -1039,6 +1183,24 @@ function BiblePage() {
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">
             {t('title')}
           </h1>
+          {/* Mirrors the song page's Programe button: adds whatever verse is
+              currently open to the program picked in the Programe panel. */}
+          <button
+            type="button"
+            onClick={handleAddCurrentVerseToProgram}
+            disabled={!candidatePassage}
+            data-testid="bible-add-to-schedule"
+            title={
+              candidatePassage
+                ? tSchedules('panel.addVerse', {
+                    reference: candidatePassage.label,
+                  })
+                : tSchedules('panel.addVerseDisabled')
+            }
+            className="ml-auto p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-40 transition-colors inline-flex items-center justify-center"
+          >
+            <CalendarPlus size={20} />
+          </button>
         </div>
 
         {translationsLoading ? (
@@ -1156,33 +1318,58 @@ function BiblePage() {
                 </div>
               )}
 
-              {/* History Panel - Right section */}
+              {/* Istoric + Programe - Right section, each collapsible */}
               {!isHistoryCollapsed && (
                 <div
-                  className="overflow-hidden h-full hidden lg:block"
+                  className="overflow-hidden h-full hidden lg:flex flex-col gap-2"
                   style={
                     isLargeScreen
                       ? { width: `calc(${100 - rightDividerPosition}% - 4px)` }
                       : undefined
                   }
                 >
-                  <BibleHistoryPanel
-                    onSelectVerse={(item: BibleHistoryItem) => {
-                      // Navigate via URL - select only without presenting
-                      isBrowsingRef.current = true
-                      pendingInternalNavRef.current = true
-                      navigate({
-                        to: '/bible/',
-                        search: {
-                          book: item.bookId,
-                          bookName: item.bookName,
-                          chapter: item.chapter,
-                          verse: item.verse,
-                          select: true,
-                        },
-                      })
-                    }}
-                  />
+                  <div
+                    className={`min-h-0 ${historyOpen ? 'flex-1' : 'flex-none'}`}
+                  >
+                    <BibleHistoryPanel
+                      isCollapsed={!historyOpen}
+                      onToggleCollapse={() => setHistoryOpen(!historyOpen)}
+                      onSelectVerse={(item: BibleHistoryItem) => {
+                        // Navigate via URL - select only without presenting
+                        isBrowsingRef.current = true
+                        pendingInternalNavRef.current = true
+                        navigate({
+                          to: '/bible/',
+                          search: {
+                            book: item.bookId,
+                            bookName: item.bookName,
+                            chapter: item.chapter,
+                            verse: item.verse,
+                            select: true,
+                          },
+                        })
+                      }}
+                    />
+                  </div>
+                  <div
+                    className={`min-h-0 ${programsOpen ? 'flex-1' : 'flex-none'}`}
+                  >
+                    <SchedulePanel
+                      variant="verses"
+                      activeReference={activePassageReference}
+                      candidatePassage={candidatePassage}
+                      onSelectPassage={handleSelectSchedulePassage}
+                      onSelectSong={handleSelectScheduleSong}
+                      onOpenSchedule={(scheduleId) =>
+                        navigate({
+                          to: '/schedules/$scheduleId',
+                          params: { scheduleId: String(scheduleId) },
+                        })
+                      }
+                      isCollapsed={!programsOpen}
+                      onToggleCollapse={() => setProgramsOpen(!programsOpen)}
+                    />
+                  </div>
                 </div>
               )}
             </div>

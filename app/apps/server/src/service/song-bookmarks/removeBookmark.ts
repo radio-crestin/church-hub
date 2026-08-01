@@ -12,14 +12,14 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
   console.log(`[${level.toUpperCase()}] [song-bookmarks] ${message}`)
 }
 
-export function removeBookmark(songId: number): OperationResult {
+export function removeBookmark(bookmarkId: number): OperationResult {
   try {
-    log('debug', `Removing bookmark for song ${songId}`)
+    log('debug', `Removing bookmark ${bookmarkId}`)
 
     const db = getDatabase()
-    db.delete(songBookmarks).where(eq(songBookmarks.songId, songId)).run()
+    db.delete(songBookmarks).where(eq(songBookmarks.id, bookmarkId)).run()
 
-    log('info', `Bookmark removed for song ${songId}`)
+    log('info', `Bookmark ${bookmarkId} removed`)
     return { success: true }
   } catch (error) {
     log('error', `Failed to remove bookmark: ${error}`)

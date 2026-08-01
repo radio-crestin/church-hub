@@ -6,10 +6,15 @@ import { useTranslation } from 'react-i18next'
 import { useFocusSearchEvent } from '~/features/keyboard-shortcuts/utils'
 import { getSongsLastVisited } from '~/features/navigation'
 import { usePresentationState } from '~/features/presentation'
-import { AddSongToScheduleModal } from '~/features/schedules'
+import type { ScheduleItem } from '~/features/schedules'
+import {
+  AddSongToScheduleModal,
+  getSchedulePassageTarget,
+  SchedulePanel,
+} from '~/features/schedules'
 import { DiscoverButton } from '~/features/song-discovery'
 import { SongBookmarksPanel, SongList } from '~/features/songs/components'
-import { useSearchHistoryById } from '~/features/songs/hooks'
+import { useSearchHistoryById, useSongBookmarks } from '~/features/songs/hooks'
 import { openSongWindow } from '~/features/songs/utils/openSongWindow'
 import { useMarcajeBoundary } from '~/hooks/useMarcajeBoundary'
 import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
@@ -67,6 +72,45 @@ function SongsPage() {
   const [showAddToScheduleModal, setShowAddToScheduleModal] = useState(false)
   const [bookmarkSongIds, setBookmarkSongIds] = useState<number[]>([])
   const [focusTrigger, setFocusTrigger] = useState(0)
+  // The row the operator has highlighted in the list — what the Programe
+  // panel's "+" acts on.
+  const [selectedSong, setSelectedSong] = useState<{
+    id: number
+    title: string
+  } | null>(null)
+  // Both side panels are collapsible here, exactly as on the song page, and
+  // remember their state across visits.
+  const [bookmarksOpen, setBookmarksOpenRaw] = useState<boolean>(() => {
+    try {
+      const raw = localStorage.getItem('songs-list:bookmarks-open')
+      return raw === null ? true : raw === 'true'
+    } catch {
+      return true
+    }
+  })
+  const [schedulesOpen, setSchedulesOpenRaw] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('songs-list:schedules-open') === 'true'
+    } catch {
+      return false
+    }
+  })
+  const setBookmarksOpen = useCallback((next: boolean) => {
+    setBookmarksOpenRaw(next)
+    try {
+      localStorage.setItem('songs-list:bookmarks-open', String(next))
+    } catch {
+      // Ignore quota errors — non-critical UI state.
+    }
+  }, [])
+  const setSchedulesOpen = useCallback((next: boolean) => {
+    setSchedulesOpenRaw(next)
+    try {
+      localStorage.setItem('songs-list:schedules-open', String(next))
+    } catch {
+      // Ignore quota errors — non-critical UI state.
+    }
+  }, [])
   // The List | Marcaje split mirrors the song-detail page exactly: the Marcaje
   // panel starts at the same horizontal position there as here, and dragging
   // this divider moves the song page's Stage|Marcaje divider in lock-step (the
@@ -83,6 +127,7 @@ function SongsPage() {
 
   // Fetch search history by ID when aiSearchId is present
   const { data: searchHistoryData } = useSearchHistoryById(aiSearchId)
+  const { data: bookmarks = [] } = useSongBookmarks()
 
   // Get AI results from history if available (only for AI searches)
   const initialAIResults = useMemo(() => {
@@ -252,6 +297,48 @@ function SongsPage() {
     setShowAddToScheduleModal(true)
   }, [])
 
+  const handleOpenSchedule = useCallback(
+    (scheduleId: number) => {
+      navigate({
+        to: '/schedules/$scheduleId',
+        params: { scheduleId: String(scheduleId) },
+      })
+    },
+    [navigate],
+  )
+
+  /**
+   * "Vezi si versete" is on and a verse row was clicked — jump into the Bible
+   * module at that exact passage, selected but not projected.
+   */
+  const handleSchedulePassageClick = useCallback(
+    (item: ScheduleItem) => {
+      const target = getSchedulePassageTarget(item)
+      if (!target) return
+      navigate({
+        to: '/bible/',
+        search: {
+          bookName: target.bookName,
+          chapter: target.chapter,
+          verse: target.verse,
+          select: true,
+        },
+      })
+    },
+    [navigate],
+  )
+
+  const handleScheduleSongClick = useCallback(
+    (targetSongId: number) => {
+      navigate({
+        to: '/songs/$songId',
+        params: { songId: String(targetSongId) },
+        search: { q: searchQuery || undefined },
+      })
+    },
+    [navigate, searchQuery],
+  )
+
   const presentedSong =
     presentationState?.temporaryContent?.type === 'song'
       ? presentationState.temporaryContent.data
@@ -334,6 +421,8 @@ function SongsPage() {
               aiSearchId={aiSearchId}
               urlPath={urlPath ?? undefined}
               onAISearchSaved={handleAISearchSaved}
+              onSelectedSongChange={setSelectedSong}
+              songsDraggable
             />
           </div>
 
@@ -348,19 +437,45 @@ function SongsPage() {
             />
           </div>
 
-          {/* Bookmarks Panel */}
+          {/* Marcaje + Programe, stacked and independently collapsible.
+              Songs can be dragged from the list onto either one. */}
           <div
-            className="overflow-hidden h-full hidden lg:block"
+            className="overflow-hidden h-full hidden lg:flex flex-col gap-2"
             style={
               isLargeScreen
                 ? { width: `calc(${100 - dividerPosition}% - 4px)` }
                 : undefined
             }
           >
-            <SongBookmarksPanel
-              onSelectSong={handleBookmarkSongClick}
-              onAddAllToSchedule={handleAddAllToSchedule}
-            />
+            <div
+              className={`min-h-0 ${bookmarksOpen ? 'flex-1' : 'flex-none'}`}
+            >
+              <SongBookmarksPanel
+                onSelectSong={handleBookmarkSongClick}
+                acceptsSongDrop
+                isCollapsed={!bookmarksOpen}
+                onToggleCollapse={() => setBookmarksOpen(!bookmarksOpen)}
+              />
+            </div>
+            <div
+              className={`min-h-0 ${schedulesOpen ? 'flex-1' : 'flex-none'}`}
+            >
+              <SchedulePanel
+                onSelectSong={handleScheduleSongClick}
+                onSelectPassage={handleSchedulePassageClick}
+                onOpenSchedule={handleOpenSchedule}
+                candidateSong={selectedSong}
+                acceptsSongDrop
+                onAddAllBookmarks={
+                  bookmarks.length > 0
+                    ? () =>
+                        handleAddAllToSchedule(bookmarks.map((b) => b.songId))
+                    : undefined
+                }
+                isCollapsed={!schedulesOpen}
+                onToggleCollapse={() => setSchedulesOpen(!schedulesOpen)}
+              />
+            </div>
           </div>
         </div>
 

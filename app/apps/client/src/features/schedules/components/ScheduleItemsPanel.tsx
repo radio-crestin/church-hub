@@ -33,6 +33,7 @@ import { useTranslation } from 'react-i18next'
 
 import { usePresentationState } from '~/features/presentation'
 import { expandSongSlidesWithChoruses } from '~/features/songs/utils/expandSongSlides'
+import { stripHtmlTags } from '~/features/songs/utils/stripHtmlTags'
 import { ScheduleItemContextMenu } from './ScheduleItemContextMenu'
 import type { ScheduleItem } from '../types'
 
@@ -64,24 +65,10 @@ interface ContextMenuState {
 /**
  * Decode HTML entities to their corresponding characters
  */
-function decodeHtmlEntities(text: string): string {
-  const textarea = document.createElement('textarea')
-  textarea.innerHTML = text
-  return textarea.value
-}
 
 /**
  * Strip HTML tags and extract plain text content
  */
-function stripHtmlTags(html: string): string {
-  const stripped = html
-    .replace(/<\/p>\s*<p>/gi, '\n')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<[^>]*>/g, '')
-    .trim()
-
-  return decodeHtmlEntities(stripped)
-}
 
 interface ExpandedState {
   [key: string]: boolean

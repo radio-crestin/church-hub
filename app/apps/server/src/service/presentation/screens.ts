@@ -453,6 +453,7 @@ function toScreen(record: typeof screens.$inferSelect): Screen {
     alwaysOnTop: record.alwaysOnTop,
     closeOnEscape: record.closeOnEscape,
     isPreviewScreen: record.isPreviewScreen,
+    openOnStartup: record.openOnStartup,
     width: record.width,
     height: record.height,
     globalSettings: parseGlobalSettings(record.globalSettings),
@@ -666,6 +667,9 @@ export function upsertScreen(input: UpsertScreenInput): Screen | null {
       if (input.closeOnEscape !== undefined) {
         updateData.closeOnEscape = input.closeOnEscape
       }
+      if (input.openOnStartup !== undefined) {
+        updateData.openOnStartup = input.openOnStartup
+      }
       if (input.isPreviewScreen !== undefined) {
         updateData.isPreviewScreen = input.isPreviewScreen
         // Enforce a single preview screen: clear the flag on every other screen
@@ -700,6 +704,7 @@ export function upsertScreen(input: UpsertScreenInput): Screen | null {
         alwaysOnTop: input.alwaysOnTop === true,
         closeOnEscape: input.closeOnEscape === true,
         isPreviewScreen: input.isPreviewScreen === true,
+        openOnStartup: input.openOnStartup !== false,
         width,
         height,
         globalSettings: globalSettingsJson,

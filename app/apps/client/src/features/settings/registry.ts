@@ -2,6 +2,7 @@ import type { LucideIcon } from 'lucide-react'
 import {
   BookOpen,
   CloudUpload,
+  DownloadCloud,
   Info,
   Keyboard,
   Monitor,
@@ -191,6 +192,15 @@ export const SETTINGS_GROUPS: SettingsNavGroupDef[] = [
         icon: Wrench,
         to: '/settings/developer',
         visible: canEdit,
+      },
+      {
+        // Downloading and installing a new version is driven by the sidecar,
+        // so this is only meaningful on the machine running it.
+        id: 'updates',
+        labelKey: 'nav.items.updates',
+        icon: DownloadCloud,
+        to: '/settings/updates',
+        visible: (ctx) => ctx.isLocalhost && canEdit(ctx),
       },
       {
         id: 'about',

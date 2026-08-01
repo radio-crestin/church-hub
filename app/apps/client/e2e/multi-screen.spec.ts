@@ -505,3 +505,83 @@ test.describe('Multi-Screen', () => {
     expect(afterRes.status()).toBe(404)
   })
 })
+
+/**
+ * `open_on_startup` decides whether a screen's window comes up when the app
+ * launches. It is deliberately independent of `isActive` (which only says the
+ * screen has a window): turning it off must not stop the screen from opening
+ * the moment content is presented to it.
+ */
+test.describe('Screens - open on startup', () => {
+  const ids: number[] = []
+
+  test.afterAll(async ({ request }) => {
+    for (const id of ids) {
+      await request.delete(`/api/screens/${id}`)
+    }
+  })
+
+  test('defaults to on, so existing behaviour is preserved', async ({
+    request,
+  }) => {
+    const res = await request.post('/api/screens', {
+      data: { name: `E2E Startup Default ${Date.now()}`, type: 'primary' },
+    })
+    expect(res.status()).toBe(201)
+    const screen = (await res.json()).data
+    ids.push(screen.id)
+
+    expect(screen.openOnStartup).toBe(true)
+  })
+
+  test('can be turned off and back on independently of isActive', async ({
+    request,
+  }) => {
+    const created = await request.post('/api/screens', {
+      data: {
+        name: `E2E Startup Toggle ${Date.now()}`,
+        type: 'primary',
+        isActive: true,
+      },
+    })
+    const screen = (await created.json()).data
+    ids.push(screen.id)
+    expect(screen.isActive).toBe(true)
+    expect(screen.openOnStartup).toBe(true)
+
+    const off = await request.post('/api/screens', {
+      data: {
+        id: screen.id,
+        name: screen.name,
+        type: screen.type,
+        openOnStartup: false,
+      },
+    })
+    expect(off.status()).toBe(200)
+    const afterOff = (await off.json()).data
+    expect(afterOff.openOnStartup).toBe(false)
+    // The screen is still active — only the launch behaviour changed, so it
+    // still opens when something is presented to it.
+    expect(afterOff.isActive).toBe(true)
+
+    const on = await request.post('/api/screens', {
+      data: {
+        id: screen.id,
+        name: screen.name,
+        type: screen.type,
+        openOnStartup: true,
+      },
+    })
+    expect((await on.json()).data.openOnStartup).toBe(true)
+  })
+
+  test('is reported by the screens list', async ({ request }) => {
+    const res = await request.get('/api/screens')
+    expect(res.status()).toBe(200)
+    const screens = (await res.json()).data
+    expect(screens.length).toBeGreaterThan(0)
+    for (const screen of screens) {
+      expect(typeof screen.openOnStartup).toBe('boolean')
+    }
+  })
+})

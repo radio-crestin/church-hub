@@ -36,9 +36,11 @@ export async function addBookmark(
   return response.data ?? null
 }
 
-export async function removeBookmark(songId: number): Promise<boolean> {
+/** Removes one bookmark row. Keyed on the bookmark, since a song may be
+ *  bookmarked several times. */
+export async function removeBookmark(bookmarkId: number): Promise<boolean> {
   const response = await fetcher<{ success: boolean }>(
-    `/api/song-bookmarks/${songId}`,
+    `/api/song-bookmarks/${bookmarkId}`,
     { method: 'DELETE' },
   )
   return response.success ?? false
@@ -52,27 +54,15 @@ export async function clearBookmarks(): Promise<boolean> {
 }
 
 export async function markBookmarkSung(
-  songId: number,
+  bookmarkId: number,
   isSung: boolean,
 ): Promise<boolean> {
   const response = await fetcher<{ success: boolean }>(
-    `/api/song-bookmarks/${songId}/sung`,
+    `/api/song-bookmarks/${bookmarkId}/sung`,
     {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ isSung }),
-    },
-  )
-  return response.success ?? false
-}
-
-export async function reorderBookmarks(songIds: number[]): Promise<boolean> {
-  const response = await fetcher<{ success: boolean }>(
-    '/api/song-bookmarks/reorder',
-    {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ songIds }),
     },
   )
   return response.success ?? false

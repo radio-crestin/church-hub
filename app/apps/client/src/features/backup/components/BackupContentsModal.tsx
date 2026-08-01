@@ -1,4 +1,11 @@
-import { AlertTriangle, ListMusic, Loader2, Music, X } from 'lucide-react'
+import {
+  AlertTriangle,
+  CalendarDays,
+  ListMusic,
+  Loader2,
+  Music,
+  X,
+} from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { useBackupContents } from '../hooks/useBackupContents'
@@ -131,29 +138,50 @@ export function BackupContentsModal({
                 </section>
               )}
 
-              {/* Schedules */}
+              {/* Schedules — each program lists the songs it carries, so the
+                  backup can be verified to hold the programs as arranged, not
+                  just their names. */}
               {contents.schedules.length > 0 && (
                 <section>
-                  <h4 className="mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                  <h4 className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
+                    <CalendarDays className="h-4 w-4 text-orange-500" />
                     {t('sections.backup.inspectModal.schedules', {
                       total: contents.schedules.length,
                     })}
                   </h4>
-                  <ul className="max-h-48 divide-y divide-gray-100 overflow-y-auto rounded-lg border border-gray-200 dark:divide-gray-700 dark:border-gray-700">
+                  <ul className="max-h-64 divide-y divide-gray-100 overflow-y-auto rounded-lg border border-gray-200 dark:divide-gray-700 dark:border-gray-700">
                     {contents.schedules.map((schedule, i) => (
                       <li
                         key={`${schedule.title}-${i}`}
-                        className="flex items-center justify-between gap-3 px-3 py-1.5"
+                        className="px-3 py-2"
+                        data-testid="backup-schedule-row"
                       >
-                        <span className="truncate text-sm text-gray-700 dark:text-gray-300">
-                          {schedule.title}
-                        </span>
-                        {schedule.createdAtMs && (
-                          <span className="shrink-0 text-xs text-gray-400 dark:text-gray-500">
-                            {new Date(
-                              schedule.createdAtMs,
-                            ).toLocaleDateString()}
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="truncate text-sm text-gray-700 dark:text-gray-300">
+                            {schedule.title}
                           </span>
+                          <span className="flex shrink-0 items-center gap-2">
+                            <span className="rounded-full bg-orange-50 px-2 py-0.5 text-xs text-orange-600 dark:bg-orange-900/30 dark:text-orange-300">
+                              {t('sections.backup.inspectModal.scheduleSongs', {
+                                count: schedule.songCount,
+                              })}
+                            </span>
+                            {schedule.createdAtMs && (
+                              <span className="text-xs text-gray-400 dark:text-gray-500">
+                                {new Date(
+                                  schedule.createdAtMs,
+                                ).toLocaleDateString()}
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                        {schedule.songTitles.length > 0 && (
+                          <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
+                            {schedule.songTitles.join(' · ')}
+                            {schedule.songCount > schedule.songTitles.length
+                              ? ' …'
+                              : ''}
+                          </p>
                         )}
                       </li>
                     ))}

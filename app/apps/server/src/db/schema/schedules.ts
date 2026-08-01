@@ -44,6 +44,10 @@ export const scheduleItems = sqliteTable(
     biblePassageTranslation: text('bible_passage_translation'),
     // Scene fields (when slideType === 'scene')
     obsSceneName: text('obs_scene_name'),
+    // Manual "already sung" marker, per schedule (mirrors song_bookmarks).
+    // Only meaningful for itemType === 'song'.
+    isSung: integer('is_sung', { mode: 'boolean' }).notNull().default(false),
+    sungAt: integer('sung_at', { mode: 'timestamp' }),
     sortOrder: integer('sort_order').notNull().default(0),
     createdAt: integer('created_at', { mode: 'timestamp' })
       .notNull()

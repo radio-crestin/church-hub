@@ -124,29 +124,32 @@ import {
   regenerateSystemToken,
 } from './service/app-sessions'
 import {
+  cancelDownload,
+  findDownloadedArtifact,
+  getDefaultDownloadDir,
+  getDownloadState,
+  getUpdateConfig,
+  installUpdate,
+  setDownloadDir,
+  startDownload,
+} from './service/app-update'
+import {
   clearDriveAuth,
   completeDriveAuth,
   createDriveAuthUrl,
   deleteBackup,
+  deleteLocalBackup,
   getBackupConfig,
   getBackupStatus,
   inspectBackup,
   listBackups,
+  listLocalBackups,
   restoreBackup,
+  runLocalBackup,
   startBackupScheduler,
   uploadBackup,
   upsertBackupConfig,
 } from './service/backup'
-import {
-  getSyncConfig,
-  getSyncStatus,
-  listPendingChanges,
-  listSyncUpdates,
-  markSyncUpdatesSeen,
-  runSyncCycle,
-  startSyncScheduler,
-  upsertSyncConfig,
-} from './service/sync'
 import {
   type CreateTranslationInput,
   deleteTranslation,
@@ -265,6 +268,7 @@ import {
   deleteSchedule,
   getScheduleById,
   getSchedules,
+  markScheduleItemSung,
   type ReorderScheduleItemsInput,
   type ReplaceScheduleItemsInput,
   rebuildScheduleSearchIndex,
@@ -296,7 +300,6 @@ import {
   removeBookmark,
   removeBookmarkNote,
   reorderBookmarkItems,
-  reorderBookmarks,
   updateBookmarkNote,
 } from './service/song-bookmarks'
 import {
@@ -352,6 +355,16 @@ import {
   upsertTag,
   warmupSearchIndex as warmupSongsSearchIndex,
 } from './service/songs'
+import {
+  getSyncConfig,
+  getSyncStatus,
+  listPendingChanges,
+  listSyncUpdates,
+  markSyncUpdatesSeen,
+  runSyncCycle,
+  startSyncScheduler,
+  upsertSyncConfig,
+} from './service/sync'
 import {
   type BootPhase,
   getBootHealth,
@@ -1939,6 +1952,213 @@ async function startRealServer(): Promise<void> {
         }
       }
 
+      // ---- App update routes (localhost only) ----
+      // Downloading and installing a new version happens in the sidecar, not
+      // the webview: the webview's filesystem scope only reaches $HOME and
+      // $DOCUMENT (so an external drive would be refused) and it may not spawn
+      // an installer, while the sidecar has neither limit. Same localhost guard
+      // as /api/backup/* and /api/database/*.
+      const updateLocalhostGuard = (): Response | null =>
+        isStrictLocalhost()
+          ? null
+          : handleCors(
+              req,
+              new Response(
+                JSON.stringify({ error: 'Only accessible from localhost' }),
+                {
+                  status: 403,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+
+      // GET /api/app-update/config - Download folder (configured + effective)
+      if (req.method === 'GET' && url.pathname === '/api/app-update/config') {
+        const guard = updateLocalhostGuard()
+        if (guard) return guard
+
+        const permError = checkPermission('settings.view')
+        if (permError) return permError
+
+        return handleCors(
+          req,
+          new Response(
+            JSON.stringify({
+              data: {
+                ...getUpdateConfig(),
+                defaultDir: getDefaultDownloadDir(),
+              },
+            }),
+            { headers: { 'Content-Type': 'application/json' } },
+          ),
+        )
+      }
+
+      // PUT /api/app-update/config - Set the download folder
+      if (req.method === 'PUT' && url.pathname === '/api/app-update/config') {
+        const guard = updateLocalhostGuard()
+        if (guard) return guard
+
+        const permError = checkPermission('settings.edit')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as { downloadDir?: string | null }
+          const next =
+            typeof body.downloadDir === 'string' ? body.downloadDir : null
+          const config = setDownloadDir(next)
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({
+                data: { ...config, defaultDir: getDefaultDownloadDir() },
+              }),
+              { headers: { 'Content-Type': 'application/json' } },
+            ),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid request body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // GET /api/app-update/status - Download progress / readiness
+      if (req.method === 'GET' && url.pathname === '/api/app-update/status') {
+        const guard = updateLocalhostGuard()
+        if (guard) return guard
+
+        const permError = checkPermission('settings.view')
+        if (permError) return permError
+
+        // `?url=` lets the client ask whether this particular artifact is
+        // already sitting in the folder from an earlier session, so it can
+        // offer "install" without downloading again.
+        const assetUrl = url.searchParams.get('url')
+        const version = url.searchParams.get('version') ?? ''
+        const live = getDownloadState()
+
+        if (live.phase === 'idle' && assetUrl) {
+          const existing = await findDownloadedArtifact(assetUrl, version)
+          if (existing) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ data: existing }), {
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Cache-Control': 'no-store',
+                },
+              }),
+            )
+          }
+        }
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: live }), {
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-store',
+            },
+          }),
+        )
+      }
+
+      // POST /api/app-update/download - Start (or reuse) a download
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/app-update/download'
+      ) {
+        const guard = updateLocalhostGuard()
+        if (guard) return guard
+
+        const permError = checkPermission('settings.edit')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as { url?: string; version?: string }
+          if (!body.url) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Missing url' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+          const started = await startDownload(body.url, body.version ?? '')
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: started }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid request body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // POST /api/app-update/cancel - Abort a download in flight
+      if (req.method === 'POST' && url.pathname === '/api/app-update/cancel') {
+        const guard = updateLocalhostGuard()
+        if (guard) return guard
+
+        const permError = checkPermission('settings.edit')
+        if (permError) return permError
+
+        cancelDownload()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: getDownloadState() }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/app-update/install - Install the downloaded artifact
+      if (req.method === 'POST' && url.pathname === '/api/app-update/install') {
+        const guard = updateLocalhostGuard()
+        if (guard) return guard
+
+        const permError = checkPermission('settings.edit')
+        if (permError) return permError
+
+        const current = getDownloadState()
+        if (current.phase !== 'ready' || !current.filePath) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'no_downloaded_artifact' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        const result = await installUpdate(current.filePath)
+        return handleCors(
+          req,
+          new Response(
+            JSON.stringify(
+              result.success ? { data: result } : { error: result.error },
+            ),
+            {
+              status: result.success ? 200 : 400,
+              headers: { 'Content-Type': 'application/json' },
+            },
+          ),
+        )
+      }
+
       // ---- Google Drive backup routes (localhost only) ----
       // Reuses isStrictLocalhost() so, like /api/database/*, backups are only
       // driven from the physically-trusted machine running the desktop app.
@@ -2188,6 +2408,88 @@ async function startRealServer(): Promise<void> {
         )
       }
 
+      // ---- Local backup routes (same localhost guard) ----
+      // Deliberately independent of Drive: these work with no Google account
+      // connected, which is the whole point of an on-disk copy.
+
+      // GET /api/backup/local/list - Backups present in the configured folder
+      if (req.method === 'GET' && url.pathname === '/api/backup/local/list') {
+        const guard = backupLocalhostGuard()
+        if (guard) return guard
+
+        const backups = await listLocalBackups()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: { backups } }), {
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-store',
+            },
+          }),
+        )
+      }
+
+      // POST /api/backup/local/now - Write a fresh backup to the local folder
+      if (req.method === 'POST' && url.pathname === '/api/backup/local/now') {
+        const guard = backupLocalhostGuard()
+        if (guard) return guard
+
+        const result = await runLocalBackup()
+        return handleCors(
+          req,
+          new Response(
+            JSON.stringify(
+              result.success ? { data: result } : { error: result.error },
+            ),
+            {
+              status: result.success ? 200 : 400,
+              headers: { 'Content-Type': 'application/json' },
+            },
+          ),
+        )
+      }
+
+      // POST /api/backup/local/delete - Delete one local backup by file name
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/backup/local/delete'
+      ) {
+        const guard = backupLocalhostGuard()
+        if (guard) return guard
+
+        let fileName = ''
+        try {
+          const body = (await req.json()) as { fileName?: string }
+          fileName = typeof body.fileName === 'string' ? body.fileName : ''
+        } catch {
+          // Falls through to the missing-name error below.
+        }
+
+        if (!fileName) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Missing fileName' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        const result = await deleteLocalBackup(fileName)
+        return handleCors(
+          req,
+          new Response(
+            JSON.stringify(
+              result.success ? { data: result } : { error: result.error },
+            ),
+            {
+              status: result.success ? 200 : 400,
+              headers: { 'Content-Type': 'application/json' },
+            },
+          ),
+        )
+      }
+
       // GET /api/backup/config - Read auto-backup settings
       if (req.method === 'GET' && url.pathname === '/api/backup/config') {
         const guard = backupLocalhostGuard()
@@ -2211,6 +2513,7 @@ async function startRealServer(): Promise<void> {
           autoBackupEnabled?: boolean
           intervalHours?: number
           maxBackups?: number
+          localBackupPath?: string | null
         } = {}
         try {
           const body = await req.json()
@@ -2225,6 +2528,12 @@ async function startRealServer(): Promise<void> {
           }
           if (typeof body.maxBackups === 'number' && body.maxBackups >= 1) {
             patch.maxBackups = Math.min(Math.round(body.maxBackups), 50)
+          }
+          // An empty string clears the folder, i.e. turns local backups off.
+          if (typeof body.localBackupPath === 'string') {
+            patch.localBackupPath = body.localBackupPath.trim() || null
+          } else if (body.localBackupPath === null) {
+            patch.localBackupPath = null
           }
         } catch {
           // No/invalid body - nothing to update
@@ -3231,6 +3540,49 @@ async function startRealServer(): Promise<void> {
             headers: { 'Content-Type': 'application/json' },
           }),
         )
+      }
+
+      // PUT /api/schedules/:id/items/:itemId/sung - Toggle the "already sung"
+      // marker on a schedule item. Scoped to the schedule so the same song can
+      // be pending in one program and sung in another.
+      {
+        const scheduleItemSungMatch = url.pathname.match(
+          /^\/api\/schedules\/(\d+)\/items\/(\d+)\/sung$/,
+        )
+        if (
+          req.method === 'PUT' &&
+          scheduleItemSungMatch?.[1] &&
+          scheduleItemSungMatch?.[2]
+        ) {
+          const permError = checkPermission('programs.edit')
+          if (permError) return permError
+
+          const scheduleId = parseInt(scheduleItemSungMatch[1], 10)
+          const itemId = parseInt(scheduleItemSungMatch[2], 10)
+          try {
+            const body = (await req.json()) as { isSung: boolean }
+            const result = markScheduleItemSung(
+              scheduleId,
+              itemId,
+              Boolean(body.isSung),
+            )
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ data: result }), {
+                status: result.success ? 200 : 404,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          } catch {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Invalid request body' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+        }
       }
 
       // PUT /api/schedules/:id/items/reorder - Reorder schedule items
@@ -7101,36 +7453,9 @@ async function startRealServer(): Promise<void> {
         }
       }
 
-      // PUT /api/song-bookmarks/reorder - Reorder bookmarks
-      if (
-        req.method === 'PUT' &&
-        url.pathname === '/api/song-bookmarks/reorder'
-      ) {
-        const permError = checkPermission('songs.view')
-        if (permError) return permError
-
-        try {
-          const body = (await req.json()) as { songIds: number[] }
-          const result = reorderBookmarks(body.songIds)
-          return handleCors(
-            req,
-            new Response(JSON.stringify({ success: result.success }), {
-              status: 200,
-              headers: { 'Content-Type': 'application/json' },
-            }),
-          )
-        } catch {
-          return handleCors(
-            req,
-            new Response(JSON.stringify({ error: 'Invalid request body' }), {
-              status: 400,
-              headers: { 'Content-Type': 'application/json' },
-            }),
-          )
-        }
-      }
-
-      // PUT /api/song-bookmarks/:songId/sung - Toggle the "already sung" marker
+      // PUT /api/song-bookmarks/:id/sung - Toggle the "already sung" marker.
+      // Keyed on the bookmark row, not the song: the same song can be
+      // bookmarked several times and each copy is ticked off separately.
       {
         const sungMatch = url.pathname.match(
           /^\/api\/song-bookmarks\/(\d+)\/sung$/,
@@ -7139,10 +7464,10 @@ async function startRealServer(): Promise<void> {
           const permError = checkPermission('songs.view')
           if (permError) return permError
 
-          const songId = Number(sungMatch[1])
+          const bookmarkId = Number(sungMatch[1])
           try {
             const body = (await req.json()) as { isSung: boolean }
-            const result = markBookmarkSung(songId, Boolean(body.isSung))
+            const result = markBookmarkSung(bookmarkId, Boolean(body.isSung))
             return handleCors(
               req,
               new Response(JSON.stringify({ success: result.success }), {
@@ -7162,7 +7487,7 @@ async function startRealServer(): Promise<void> {
         }
       }
 
-      // DELETE /api/song-bookmarks/:songId - Remove single bookmark
+      // DELETE /api/song-bookmarks/:id - Remove a single bookmark row
       if (
         req.method === 'DELETE' &&
         url.pathname.startsWith('/api/song-bookmarks/')
@@ -7170,18 +7495,18 @@ async function startRealServer(): Promise<void> {
         const permError = checkPermission('songs.view')
         if (permError) return permError
 
-        const songId = Number(url.pathname.split('/').pop())
-        if (Number.isNaN(songId)) {
+        const bookmarkId = Number(url.pathname.split('/').pop())
+        if (Number.isNaN(bookmarkId)) {
           return handleCors(
             req,
-            new Response(JSON.stringify({ error: 'Invalid song ID' }), {
+            new Response(JSON.stringify({ error: 'Invalid bookmark ID' }), {
               status: 400,
               headers: { 'Content-Type': 'application/json' },
             }),
           )
         }
 
-        const result = removeBookmark(songId)
+        const result = removeBookmark(bookmarkId)
         return handleCors(
           req,
           new Response(JSON.stringify({ success: result.success }), {
