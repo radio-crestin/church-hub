@@ -8,5 +8,13 @@
 app/apps/server/drizzle/migrations/*.sql text eol=lf
 app/apps/server/src/db/migrations/embedded.ts text eol=lf
 
+# Shell scripts must be LF everywhere. With core.autocrlf=true — which a
+# contributor may well have set globally, and which is the default on a Windows
+# checkout — a script comes back with CRLF and its shebang becomes
+# `#!/usr/bin/env bash\r`, so running it fails with
+# `env: bash\r: No such file or directory`. That made scripts/release.sh
+# unrunnable on macOS.
+*.sh text eol=lf
+
 # Native modules are binary — never apply text/EOL conversion to them.
 *.node binary
