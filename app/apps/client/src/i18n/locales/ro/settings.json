@@ -1213,6 +1213,7 @@
         "downloading": "Se descarca...",
         "readyToInstall": "Gata de instalare",
         "install": "Instaleaza si reporneste",
+        "installFailed": "Instalarea nu a putut porni ({{reason}}). O instanta de dezvoltare nu se poate inlocui pe sine - incearca dintr-o versiune instalata.",
         "installing": "Se instaleaza...",
         "later": "Mai tarziu",
         "failed": "Descarcarea a esuat. Verifica folderul si conexiunea, apoi incearca din nou.",

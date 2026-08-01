@@ -236,7 +236,18 @@ export function UpdatePanel() {
             {isReady ? (
               <button
                 type="button"
-                onClick={() => void install()}
+                onClick={() => {
+                  void install().then((result) => {
+                    if (!result.success) {
+                      showToast(
+                        t('sections.updates.available.installFailed', {
+                          reason: result.error ?? '',
+                        }),
+                        'error',
+                      )
+                    }
+                  })
+                }}
                 disabled={isInstalling}
                 data-testid="update-install"
                 className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"

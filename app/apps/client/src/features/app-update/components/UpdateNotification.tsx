@@ -23,16 +23,17 @@ interface UpdateNotificationProps {
 export function UpdateNotification({ isCollapsed }: UpdateNotificationProps) {
   const { t } = useTranslation('sidebar')
   const navigate = useNavigate()
-  const { updateInfo, isDismissed, isDevInstance, dismissUpdate } =
-    useAppUpdate()
+  const { updateInfo, isDismissed, dismissUpdate } = useAppUpdate()
 
   const { isReady, isDownloading, progress } = useUpdateDownload(
     updateInfo?.downloadUrl ?? null,
     updateInfo?.latestVersion ?? null,
   )
 
-  // Only inside the packaged desktop app — never on a dev instance.
-  if (isDevInstance || !isTauri() || !updateInfo?.hasUpdate) return null
+  // A dev instance never polls, so `hasUpdate` can only be true there after
+  // the operator pressed "Check now" — at which point hiding the badge would
+  // be hiding something they asked for.
+  if (!isTauri() || !updateInfo?.hasUpdate) return null
   // A downloaded-but-uninstalled update outranks dismissal: the operator asked
   // for it, so it stays until it is actually applied.
   if (isDismissed && !isReady) return null
