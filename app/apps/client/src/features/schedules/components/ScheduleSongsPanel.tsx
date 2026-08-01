@@ -1,3 +1,19 @@
+import {
+  closestCenter,
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
 import { CalendarDays, ChevronDown, ExternalLink, Search } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -8,9 +24,11 @@ import { ScheduleSongRow } from './ScheduleSongRow'
 import {
   useMarkScheduleItemSung,
   useRemoveItemFromSchedule,
+  useReorderScheduleItems,
   useSchedule,
   useSchedules,
 } from '../hooks'
+import type { ScheduleItem } from '../types'
 
 /** Remembers the operator's last picked program across song navigations. */
 const SELECTED_SCHEDULE_STORAGE_KEY = 'songPage.selectedScheduleId'
@@ -66,6 +84,17 @@ export function ScheduleSongsPanel({
 
   const removeItemMutation = useRemoveItemFromSchedule()
   const markSungMutation = useMarkScheduleItemSung()
+  const reorderItemsMutation = useReorderScheduleItems()
+  // Local order override so a drag lands instantly instead of waiting for the
+  // refetch — cleared as soon as server data catches up.
+  const [localOrder, setLocalOrder] = useState<ScheduleItem[] | null>(null)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  )
 
   // Default to the most recently updated program the first time the panel is
   // used, and recover if the remembered one was deleted elsewhere.
@@ -113,10 +142,15 @@ export function ScheduleSongsPanel({
 
   // Only songs — a program's bible passages, announcements and scenes are not
   // what this panel is for.
-  const songItems = useMemo(
+  const serverSongItems = useMemo(
     () => (schedule?.items ?? []).filter((item) => item.itemType === 'song'),
     [schedule],
   )
+  const songItems = localOrder ?? serverSongItems
+
+  useEffect(() => {
+    setLocalOrder(null)
+  }, [serverSongItems])
 
   const sungCount = useMemo(
     () => songItems.filter((item) => item.isSung).length,
@@ -159,7 +193,43 @@ export function ScheduleSongsPanel({
     [selectedScheduleId, removeItemMutation],
   )
 
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event
+      if (!over || active.id === over.id || !selectedScheduleId) return
+
+      const oldIndex = songItems.findIndex((item) => item.id === active.id)
+      const newIndex = songItems.findIndex((item) => item.id === over.id)
+      if (oldIndex === -1 || newIndex === -1) return
+
+      const newSongOrder = arrayMove(songItems, oldIndex, newIndex)
+      setLocalOrder(newSongOrder)
+
+      // The endpoint rewrites sort_order from the index of every id it is
+      // given, so it needs the program's FULL running order — not just the
+      // songs shown here. Songs are poured back into the slots songs already
+      // occupied, which leaves bible passages, announcements and scenes exactly
+      // where the operator put them in the program editor.
+      const fullOrder = schedule?.items ?? []
+      let cursor = 0
+      const itemIds = fullOrder.map((item) =>
+        item.itemType === 'song'
+          ? (newSongOrder[cursor++]?.id ?? item.id)
+          : item.id,
+      )
+
+      reorderItemsMutation.mutate({
+        scheduleId: selectedScheduleId,
+        input: { itemIds },
+      })
+    },
+    [songItems, schedule, selectedScheduleId, reorderItemsMutation],
+  )
+
   const isSearching = searchQuery.trim().length > 0
+  // Dragging only makes sense on the full list — a filtered view has no
+  // meaningful "drop between these two" position. Same rule as Marcaje.
+  const isFiltering = isSearching || sungFilter !== 'all'
   const isLoading =
     schedulesLoading || (!!selectedScheduleId && scheduleLoading)
 
@@ -319,19 +389,50 @@ export function ScheduleSongsPanel({
               <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                 {t('panel.noResults')}
               </div>
-            ) : (
+            ) : isFiltering ? (
               <div className="p-2 flex flex-col gap-1.5">
                 {filteredItems.map((item) => (
                   <ScheduleSongRow
                     key={item.id}
                     item={item}
                     isActive={activeSongId === item.songId}
+                    isSortable={false}
                     onSelect={() => item.songId && onSelectSong(item.songId)}
                     onRemove={() => handleRemove(item.id)}
                     onToggleSung={() => handleToggleSung(item.id, item.isSung)}
                   />
                 ))}
               </div>
+            ) : (
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                modifiers={[restrictToVerticalAxis]}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={songItems.map((item) => item.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="p-2 flex flex-col gap-1.5">
+                    {songItems.map((item) => (
+                      <ScheduleSongRow
+                        key={item.id}
+                        item={item}
+                        isActive={activeSongId === item.songId}
+                        isSortable
+                        onSelect={() =>
+                          item.songId && onSelectSong(item.songId)
+                        }
+                        onRemove={() => handleRemove(item.id)}
+                        onToggleSung={() =>
+                          handleToggleSung(item.id, item.isSung)
+                        }
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
             )}
           </div>
         </>
