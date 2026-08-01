@@ -15,11 +15,13 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import {
+  BookOpen,
   CalendarDays,
   CalendarPlus,
   ChevronDown,
   ExternalLink,
   Loader2,
+  Music,
   Plus,
   Search,
   Trash2,
@@ -33,6 +35,7 @@ import { ConfirmModal } from '~/ui/modal'
 import { ClearSearchButton } from '~/ui/search'
 import { useToast } from '~/ui/toast'
 import { ScheduleSongRow } from './ScheduleSongRow'
+import { ScheduleVerseRow } from './ScheduleVerseRow'
 import {
   useAddItemToSchedule,
   useDeleteSchedule,
@@ -42,14 +45,29 @@ import {
   useSchedule,
   useSchedules,
 } from '../hooks'
-import type { ScheduleItem } from '../types'
+import type { AddToScheduleInput, ScheduleItem } from '../types'
 
-/** Remembers the operator's last picked program across song navigations. */
+/**
+ * Remembers the operator's last picked program. Deliberately one key for every
+ * page: picking a program on the song page and walking into the Bible page
+ * should land on the same program.
+ */
 const SELECTED_SCHEDULE_STORAGE_KEY = 'songPage.selectedScheduleId'
+
+/** Per-variant key for the "also show the other kind" switch. */
+const SHOW_OTHER_STORAGE_KEY = {
+  songs: 'programPanel.showVerses',
+  verses: 'programPanel.showSongs',
+} as const
 
 type SungFilter = 'all' | 'pending' | 'sung'
 
-function readStoredScheduleId(): number | null {
+/**
+ * The program the Programe panel currently has selected. Exported so a page
+ * toolbar can act on the same selection without mirroring it into its own
+ * state — the panel is the single owner and persists it.
+ */
+export function readSelectedScheduleId(): number | null {
   try {
     const stored = localStorage.getItem(SELECTED_SCHEDULE_STORAGE_KEY)
     if (!stored) return null
@@ -60,10 +78,19 @@ function readStoredScheduleId(): number | null {
   }
 }
 
-interface ScheduleSongsPanelProps {
+interface SchedulePanelProps {
+  /**
+   * Which item kind this panel is primarily about. The song page lists songs,
+   * the Bible page lists passages; each can opt into showing the other.
+   */
+  variant?: 'songs' | 'verses'
   /** Highlights the song currently open on the song page. */
   activeSongId?: number
-  onSelectSong: (songId: number) => void
+  /** Highlights the passage currently open on the Bible page. */
+  activeReference?: string | null
+  onSelectSong?: (songId: number) => void
+  /** Opens a passage on the Bible page at its exact verse. */
+  onSelectPassage?: (item: ScheduleItem) => void
   /** Opens the full program page. */
   onOpenSchedule?: (scheduleId: number) => void
   /**
@@ -71,6 +98,10 @@ interface ScheduleSongsPanelProps {
    * the highlighted row on the search page. The header's "+" adds this one.
    */
   candidateSong?: { id: number; title: string } | null
+  /** The passage the Bible page has in focus — what the header's "+" adds. */
+  candidatePassage?:
+    | (NonNullable<AddToScheduleInput['biblePassage']> & { label: string })
+    | null
   /** Accepts songs dragged in from the song list. */
   acceptsSongDrop?: boolean
   /**
@@ -92,23 +123,36 @@ interface ScheduleSongsPanelProps {
  * passages, announcements, scenes) are filtered out; this panel is about
  * singing through a program.
  */
-export function ScheduleSongsPanel({
+export function SchedulePanel({
+  variant = 'songs',
   activeSongId,
+  activeReference = null,
   onSelectSong,
+  onSelectPassage,
   onOpenSchedule,
   candidateSong = null,
+  candidatePassage = null,
   acceptsSongDrop = false,
   onAddAllBookmarks,
   isCollapsed = false,
   onToggleCollapse,
-}: ScheduleSongsPanelProps) {
+}: SchedulePanelProps) {
   const { t } = useTranslation('schedules')
   const { showToast } = useToast()
   const { data: schedules = [], isLoading: schedulesLoading } = useSchedules()
   const [selectedScheduleId, setSelectedScheduleId] = useState<number | null>(
-    readStoredScheduleId,
+    readSelectedScheduleId,
   )
   const [sungFilter, setSungFilter] = useState<SungFilter>('all')
+  // "Vezi versete" on the song page / "Vezi cantari" on the Bible page: when
+  // on, the other kind is listed too and clicking it jumps to that module.
+  const [showOther, setShowOther] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(SHOW_OTHER_STORAGE_KEY[variant]) === 'true'
+    } catch {
+      return false
+    }
+  })
   const [searchQuery, setSearchQuery] = useState('')
   const searchInputRef = useRef<HTMLInputElement>(null)
 
@@ -154,6 +198,14 @@ export function ScheduleSongsPanel({
     }
   }, [selectedScheduleId])
 
+  useEffect(() => {
+    try {
+      localStorage.setItem(SHOW_OTHER_STORAGE_KEY[variant], String(showOther))
+    } catch {
+      // localStorage unavailable — the switch just won't persist.
+    }
+  }, [variant, showOther])
+
   const { data: schedule, isLoading: scheduleLoading } = useSchedule(
     selectedScheduleId ?? undefined,
   )
@@ -173,11 +225,19 @@ export function ScheduleSongsPanel({
     [schedules, t],
   )
 
-  // Only songs — a program's bible passages, announcements and scenes are not
-  // what this panel is for.
+  const primaryType = variant === 'songs' ? 'song' : 'bible_passage'
+  const otherType = variant === 'songs' ? 'bible_passage' : 'song'
+
+  // Announcements, Versete Tineri and OBS scenes never appear here — this
+  // panel is about working through a program's songs and readings.
   const serverSongItems = useMemo(
-    () => (schedule?.items ?? []).filter((item) => item.itemType === 'song'),
-    [schedule],
+    () =>
+      (schedule?.items ?? []).filter(
+        (item) =>
+          item.itemType === primaryType ||
+          (showOther && item.itemType === otherType),
+      ),
+    [schedule, primaryType, otherType, showOther],
   )
   const songItems = localOrder ?? serverSongItems
 
@@ -197,6 +257,14 @@ export function ScheduleSongsPanel({
       if (sungFilter === 'sung' && !item.isSung) return false
       if (sungFilter === 'pending' && item.isSung) return false
       if (!q) return true
+      if (item.itemType === 'bible_passage') {
+        return (
+          item.biblePassageReference?.toLowerCase().includes(q) ||
+          item.biblePassageVerses.some((verse) =>
+            verse.text.toLowerCase().includes(q),
+          )
+        )
+      }
       return (
         item.song?.title.toLowerCase().includes(q) ||
         item.song?.categoryName?.toLowerCase().includes(q) ||
@@ -249,6 +317,23 @@ export function ScheduleSongsPanel({
     [selectedScheduleId, songItems, addItemMutation, showToast, t],
   )
 
+  /** Appends the Bible page's current passage to the selected program. */
+  const addPassageToSelected = useCallback(() => {
+    if (!selectedScheduleId || !candidatePassage) {
+      showToast(t('panel.selectScheduleFirst'), 'error')
+      return
+    }
+    const { label, ...biblePassage } = candidatePassage
+    addItemMutation.mutate(
+      { scheduleId: selectedScheduleId, input: { biblePassage } },
+      {
+        onSuccess: () =>
+          showToast(t('panel.verseAdded', { reference: label }), 'success'),
+        onError: () => showToast(t('messages.error'), 'error'),
+      },
+    )
+  }, [selectedScheduleId, candidatePassage, addItemMutation, showToast, t])
+
   const { isOver: isSongOver, dropProps } = useSongDropZone(
     acceptsSongDrop ? addSongToSelected : undefined,
   )
@@ -286,7 +371,7 @@ export function ScheduleSongsPanel({
       const fullOrder = schedule?.items ?? []
       let cursor = 0
       const itemIds = fullOrder.map((item) =>
-        item.itemType === 'song'
+        item.itemType === primaryType
           ? (newSongOrder[cursor++]?.id ?? item.id)
           : item.id,
       )
@@ -296,13 +381,60 @@ export function ScheduleSongsPanel({
         input: { itemIds },
       })
     },
-    [songItems, schedule, selectedScheduleId, reorderItemsMutation],
+    [
+      songItems,
+      schedule,
+      primaryType,
+      selectedScheduleId,
+      reorderItemsMutation,
+    ],
+  )
+
+  const renderRow = useCallback(
+    (item: ScheduleItem, sortable: boolean) => {
+      if (item.itemType === 'bible_passage') {
+        return (
+          <ScheduleVerseRow
+            key={item.id}
+            item={item}
+            isActive={
+              !!activeReference &&
+              item.biblePassageReference?.startsWith(activeReference) === true
+            }
+            isSortable={sortable}
+            onSelect={() => onSelectPassage?.(item)}
+            onRemove={() => handleRemove(item.id)}
+            onToggleSung={() => handleToggleSung(item.id, item.isSung)}
+          />
+        )
+      }
+      return (
+        <ScheduleSongRow
+          key={item.id}
+          item={item}
+          isActive={activeSongId === item.songId}
+          isSortable={sortable}
+          onSelect={() => item.songId && onSelectSong?.(item.songId)}
+          onRemove={() => handleRemove(item.id)}
+          onToggleSung={() => handleToggleSung(item.id, item.isSung)}
+        />
+      )
+    },
+    [
+      activeReference,
+      activeSongId,
+      onSelectPassage,
+      onSelectSong,
+      handleRemove,
+      handleToggleSung,
+    ],
   )
 
   const isSearching = searchQuery.trim().length > 0
-  // Dragging only makes sense on the full list — a filtered view has no
-  // meaningful "drop between these two" position. Same rule as Marcaje.
-  const isFiltering = isSearching || sungFilter !== 'all'
+  // Dragging only makes sense on an unfiltered list of ONE kind: a filtered
+  // view has no meaningful "drop between these two" position, and a mixed list
+  // would have to reorder two independent slot sets at once.
+  const isFiltering = isSearching || sungFilter !== 'all' || showOther
   const isLoading =
     schedulesLoading || (!!selectedScheduleId && scheduleLoading)
 
@@ -351,13 +483,26 @@ export function ScheduleSongsPanel({
                 highlighted row in the search list. */}
             <button
               type="button"
-              onClick={() => candidateSong && addSongToSelected(candidateSong)}
-              disabled={!candidateSong || addItemMutation.isPending}
+              onClick={() => {
+                if (variant === 'verses') {
+                  addPassageToSelected()
+                } else if (candidateSong) {
+                  addSongToSelected(candidateSong)
+                }
+              }}
+              disabled={
+                (variant === 'verses' ? !candidatePassage : !candidateSong) ||
+                addItemMutation.isPending
+              }
               data-testid="schedule-add-candidate-song"
               title={
-                candidateSong
-                  ? t('panel.addSong', { title: candidateSong.title })
-                  : t('panel.addSongDisabled')
+                variant === 'verses'
+                  ? candidatePassage
+                    ? t('panel.addVerse', { reference: candidatePassage.label })
+                    : t('panel.addVerseDisabled')
+                  : candidateSong
+                    ? t('panel.addSong', { title: candidateSong.title })
+                    : t('panel.addSongDisabled')
               }
               className="p-1.5 rounded-md bg-green-50 text-green-600 hover:bg-green-100 disabled:opacity-40 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50 transition-colors"
             >
@@ -418,6 +563,44 @@ export function ScheduleSongsPanel({
               allowClear={false}
               className="w-full"
             />
+          </div>
+
+          {/* Cross-module switch: shows the program's other content kind and
+              makes each row jump to the module that owns it. */}
+          <div className="px-3 py-1.5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+            <button
+              type="button"
+              onClick={() => setShowOther((value) => !value)}
+              aria-pressed={showOther}
+              data-testid="schedule-show-other-toggle"
+              className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-[11px] font-medium transition-colors ${
+                showOther
+                  ? 'bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300'
+                  : 'bg-gray-50 text-gray-500 hover:text-gray-700 dark:bg-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
+              }`}
+            >
+              <span
+                className={`relative inline-flex h-3.5 w-6 shrink-0 items-center rounded-full transition-colors ${
+                  showOther ? 'bg-teal-500' : 'bg-gray-300 dark:bg-gray-600'
+                }`}
+              >
+                <span
+                  className={`inline-block h-2.5 w-2.5 transform rounded-full bg-white transition-transform ${
+                    showOther ? 'translate-x-3' : 'translate-x-0.5'
+                  }`}
+                />
+              </span>
+              {variant === 'songs' ? (
+                <BookOpen className="h-3.5 w-3.5 shrink-0" />
+              ) : (
+                <Music className="h-3.5 w-3.5 shrink-0" />
+              )}
+              <span className="truncate">
+                {variant === 'songs'
+                  ? t('panel.showVerses')
+                  : t('panel.showSongs')}
+              </span>
+            </button>
           </div>
 
           {songItems.length > 0 && (
@@ -513,17 +696,7 @@ export function ScheduleSongsPanel({
               </div>
             ) : isFiltering ? (
               <div className="p-2 flex flex-col gap-1.5">
-                {filteredItems.map((item) => (
-                  <ScheduleSongRow
-                    key={item.id}
-                    item={item}
-                    isActive={activeSongId === item.songId}
-                    isSortable={false}
-                    onSelect={() => item.songId && onSelectSong(item.songId)}
-                    onRemove={() => handleRemove(item.id)}
-                    onToggleSung={() => handleToggleSung(item.id, item.isSung)}
-                  />
-                ))}
+                {filteredItems.map((item) => renderRow(item, false))}
               </div>
             ) : (
               <DndContext
@@ -537,21 +710,7 @@ export function ScheduleSongsPanel({
                   strategy={verticalListSortingStrategy}
                 >
                   <div className="p-2 flex flex-col gap-1.5">
-                    {songItems.map((item) => (
-                      <ScheduleSongRow
-                        key={item.id}
-                        item={item}
-                        isActive={activeSongId === item.songId}
-                        isSortable
-                        onSelect={() =>
-                          item.songId && onSelectSong(item.songId)
-                        }
-                        onRemove={() => handleRemove(item.id)}
-                        onToggleSung={() =>
-                          handleToggleSung(item.id, item.isSung)
-                        }
-                      />
-                    ))}
+                    {songItems.map((item) => renderRow(item, true))}
                   </div>
                 </SortableContext>
               </DndContext>

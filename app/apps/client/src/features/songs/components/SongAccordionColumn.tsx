@@ -1,7 +1,7 @@
 import { GripHorizontal } from 'lucide-react'
 import { useCallback, useRef } from 'react'
 
-import { ScheduleSongsPanel } from '~/features/schedules'
+import { SchedulePanel } from '~/features/schedules'
 import { useDividerPosition } from '~/hooks/useDividerPosition'
 import { DIVIDER_KEYS } from '~/service/layout'
 import { SongBookmarksPanel } from './SongBookmarksPanel'
@@ -156,7 +156,7 @@ export function SongAccordionColumn({
             schedulesOpen ? 'flex-1' : 'flex-none'
           }`}
         >
-          <ScheduleSongsPanel
+          <SchedulePanel
             activeSongId={song.id}
             onSelectSong={onSelectScheduleSong}
             onOpenSchedule={onOpenSchedule}

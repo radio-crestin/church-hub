@@ -557,3 +557,151 @@ test.describe('Add-item modal on the program page', () => {
     }
   })
 })
+
+/**
+ * The same Programe module on the Bible page, listing the program's verses
+ * instead of its songs, plus the switches that make each panel show — and jump
+ * to — the other module's content.
+ */
+test.describe('Programe panel on the Bible page', () => {
+  test('lists the program verses and marks one read', async ({
+    page,
+    request,
+  }) => {
+    const uniq = Date.now()
+    const schedule = await createSchedule(request, `E2E Bible Prog ${uniq}`)
+
+    try {
+      // Add a passage the same way the schedule editor does.
+      const translations = await request.get('/api/bible/translations')
+      const translation = (await translations.json()).data?.[0]
+      test.skip(!translation, 'no bible translation seeded')
+
+      const added = await request.post(`/api/schedules/${schedule.id}/items`, {
+        data: {
+          biblePassage: {
+            translationId: translation.id,
+            translationAbbreviation: translation.abbreviation,
+            bookCode: 'JHN',
+            bookName: 'Ioan',
+            startChapter: 3,
+            startVerse: 16,
+            endChapter: 3,
+            endVerse: 16,
+          },
+        },
+      })
+      test.skip(added.status() !== 201, 'passage could not be created')
+
+      await page.addInitScript((scheduleId: number) => {
+        window.localStorage.setItem('bible-history-collapsed', 'false')
+        window.localStorage.setItem('bible:programs-open', 'true')
+        window.localStorage.setItem(
+          'songPage.selectedScheduleId',
+          String(scheduleId),
+        )
+      }, schedule.id)
+      await page.setViewportSize({ width: 1400, height: 900 })
+      await page.goto('/bible')
+      await page.waitForLoadState('networkidle')
+
+      const panel = page.getByTestId('schedule-songs-panel')
+      await expect(panel).toBeVisible({ timeout: 10000 })
+
+      const row = panel.getByTestId('schedule-verse-item').first()
+      await expect(row).toBeVisible({ timeout: 10000 })
+      await expect(row).toContainText('Ioan 3:16')
+
+      // The read marker is the same per-program marker songs use.
+      await row.getByTestId('schedule-verse-read-toggle').click()
+      await expect
+        .poll(
+          async () => {
+            const res = await request.get(`/api/schedules/${schedule.id}`)
+            const { data } = await res.json()
+            return data.items[0]?.isSung
+          },
+          { timeout: 10000 },
+        )
+        .toBe(true)
+    } finally {
+      await request.delete(`/api/schedules/${schedule.id}`).catch(() => {})
+    }
+  })
+
+  test('the Bible history panel collapses like Marcaje', async ({ page }) => {
+    await page.addInitScript(() => {
+      window.localStorage.setItem('bible-history-collapsed', 'false')
+      window.localStorage.setItem('bible:history-open', 'true')
+    })
+    await page.setViewportSize({ width: 1400, height: 900 })
+    await page.goto('/bible')
+    await page.waitForLoadState('networkidle')
+
+    const chevron = page.getByTestId('bible-history-collapse')
+    await expect(chevron).toBeVisible({ timeout: 10000 })
+    await expect(chevron).toHaveAttribute('aria-expanded', 'true')
+
+    await chevron.click()
+    await expect(chevron).toHaveAttribute('aria-expanded', 'false')
+
+    // The choice is persisted, so it carries over to the next visit. Asserted
+    // through localStorage rather than a reload, because the init script above
+    // re-seeds the key on every navigation.
+    await expect
+      .poll(() =>
+        page.evaluate(() => window.localStorage.getItem('bible:history-open')),
+      )
+      .toBe('false')
+  })
+
+  test('the cross-module switch reveals the other kind of item', async ({
+    page,
+    request,
+  }) => {
+    const uniq = Date.now()
+    const song = await createSong(request, `E2E Cross Song ${uniq}`)
+    const schedule = await createSchedule(request, `E2E Cross Prog ${uniq}`)
+
+    try {
+      await request.post(`/api/schedules/${schedule.id}/items`, {
+        data: { songId: song.id },
+      })
+
+      await page.addInitScript((scheduleId: number) => {
+        window.localStorage.setItem('bible-history-collapsed', 'false')
+        window.localStorage.setItem('bible:programs-open', 'true')
+        window.localStorage.setItem('programPanel.showSongs', 'false')
+        window.localStorage.setItem(
+          'songPage.selectedScheduleId',
+          String(scheduleId),
+        )
+      }, schedule.id)
+      await page.setViewportSize({ width: 1400, height: 900 })
+      await page.goto('/bible')
+      await page.waitForLoadState('networkidle')
+
+      const panel = page.getByTestId('schedule-songs-panel')
+      await expect(panel).toBeVisible({ timeout: 10000 })
+
+      // Off: the Bible panel shows verses only, so this song is hidden.
+      await expect(panel.getByTestId('schedule-song-item')).toHaveCount(0)
+
+      await panel.getByTestId('schedule-show-other-toggle').click()
+
+      const songRow = panel
+        .getByTestId('schedule-song-item')
+        .filter({ hasText: `E2E Cross Song ${uniq}` })
+      await expect(songRow).toBeVisible({ timeout: 10000 })
+
+      // Clicking it jumps to the songs module, on that exact song.
+      await songRow.getByRole('button').nth(1).click()
+      await expect(page).toHaveURL(new RegExp(`/songs/${song.id}`), {
+        timeout: 10000,
+      })
+    } finally {
+      await request.delete(`/api/schedules/${schedule.id}`).catch(() => {})
+      await request.delete(`/api/songs/${song.id}`).catch(() => {})
+    }
+  })
+})
