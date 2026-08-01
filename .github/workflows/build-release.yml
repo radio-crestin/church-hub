@@ -488,6 +488,21 @@ jobs:
           VERSION=${GITHUB_REF#refs/tags/v}
           # Match the build job: strip non-numeric pre-release identifiers.
           TAURI_VERSION=$(echo "$VERSION" | sed 's/-[^0-9].*//')
+
+          # Never move main backwards. This job runs at the very end of a build,
+          # so a release cut while an earlier one was still building would
+          # otherwise have the older run overwrite the newer version — which is
+          # exactly what happened when v0.1.88 finished after v0.1.89 was
+          # tagged, leaving main claiming 0.1.88 and the next `release.sh patch`
+          # about to collide with an existing tag.
+          CURRENT=$(grep -m1 '"version"' app/tauri/tauri.conf.json \
+            | sed -E 's/.*: *"([^"]+)".*/\1/')
+          NEWEST=$(printf '%s\n%s\n' "$CURRENT" "$TAURI_VERSION" | sort -V | tail -1)
+          if [ "$CURRENT" != "$TAURI_VERSION" ] && [ "$NEWEST" = "$CURRENT" ]; then
+            echo "main is at $CURRENT, newer than $TAURI_VERSION — refusing to downgrade."
+            exit 0
+          fi
+
           echo "Syncing main to version $TAURI_VERSION"
 
           # tauri.conf.json is the single source of truth for the displayed
