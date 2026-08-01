@@ -10,7 +10,11 @@ import { forwardRef, useEffect, useState } from 'react'
 
 import type { SyncChangeKind } from '~/features/sync'
 import { SyncUpdateBadge } from '~/features/sync'
-import { endInternalSongDrag, setSongDragData } from '../utils/songDragData'
+import {
+  getSongDragState,
+  startSongDrag,
+  subscribeSongDrag,
+} from '../utils/songDragController'
 
 interface SongCardProps {
   song: {
@@ -55,25 +59,16 @@ export const SongCard = forwardRef<HTMLButtonElement, SongCardProps>(
     },
     ref,
   ) {
-    // Only a press that starts on the grip arms the drag. Without this the
-    // whole card is draggable, which turns an ordinary click-and-move into a
-    // drag and makes text selection impossible.
-    const [dragArmed, setDragArmed] = useState(false)
-    const [isDragging, setIsDragging] = useState(false)
-
-    // A press that never turned into a drag has to disarm somewhere, and the
-    // grip's own pointerup does not fire once the browser takes the gesture
-    // over. The document always sees the release.
-    useEffect(() => {
-      if (!dragArmed) return
-      const disarm = () => setDragArmed(false)
-      document.addEventListener('pointerup', disarm)
-      document.addEventListener('pointercancel', disarm)
-      return () => {
-        document.removeEventListener('pointerup', disarm)
-        document.removeEventListener('pointercancel', disarm)
-      }
-    }, [dragArmed])
+    // True while *this* card is the one being dragged, so it can fade out
+    // behind the floating preview.
+    const [isDragging, setIsDragging] = useState(
+      () => getSongDragState().song?.id === song.id,
+    )
+    useEffect(
+      () =>
+        subscribeSongDrag((state) => setIsDragging(state.song?.id === song.id)),
+      [song.id],
+    )
 
     const hasHighlight = song.highlightedTitle?.includes('<mark>')
     const categorySuffix =
@@ -84,24 +79,6 @@ export const SongCard = forwardRef<HTMLButtonElement, SongCardProps>(
         ref={ref}
         type="button"
         data-testid="song-card"
-        draggable={isDraggable && dragArmed}
-        onDragStart={
-          isDraggable
-            ? (e) => {
-                setSongDragData(e, { id: song.id, title: song.title })
-                setIsDragging(true)
-              }
-            : undefined
-        }
-        onDragEnd={
-          isDraggable
-            ? () => {
-                setIsDragging(false)
-                setDragArmed(false)
-                endInternalSongDrag()
-              }
-            : undefined
-        }
         onClick={(e) => {
           // CMD+click (Mac) or Ctrl+click (Windows/Linux) opens in new window
           if ((e.metaKey || e.ctrlKey) && onMiddleClick) {
@@ -125,20 +102,20 @@ export const SongCard = forwardRef<HTMLButtonElement, SongCardProps>(
             : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
         }`}
       >
-        {/* Grip — the only place a drag can start. Pressing it arms the card's
-            native drag, so the ghost is the whole card while an ordinary click
-            or text selection anywhere else still behaves normally.
-            Deliberately NOT disarmed on pointerleave: the pointer leaves this
-            small target as soon as the drag gesture begins, and disarming there
-            flipped `draggable` back to false before `dragstart` could fire —
-            which is why drags never started. A document-level pointerup clears
-            it instead, so a press that never became a drag still disarms. */}
+        {/* Grip — the only place a drag can start. It drives a pointer-event
+            drag (see songDragController) rather than a native one, which the
+            desktop webview never handled reliably. `stopPropagation` keeps the
+            press off the card's own click handler. */}
         {isDraggable && (
           <span
             role="presentation"
             data-testid="song-card-drag-handle"
             title={dragHandleTitle}
-            onPointerDown={() => setDragArmed(true)}
+            onPointerDown={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              startSongDrag(e, { id: song.id, title: song.title })
+            }}
             className="-ml-1 mr-2 flex shrink-0 cursor-grab items-center self-stretch rounded px-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 active:cursor-grabbing dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-300"
           >
             <GripVertical size={16} />

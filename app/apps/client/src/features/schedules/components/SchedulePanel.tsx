@@ -335,9 +335,9 @@ export function SchedulePanel({
   }, [selectedScheduleId, candidatePassage, addItemMutation, showToast, t])
 
   const {
+    ref: songDropRef,
     isOver: isSongOver,
     justLanded: songJustLanded,
-    dropProps,
   } = useSongDropZone(acceptsSongDrop ? addSongToSelected : undefined)
 
   const handleDeleteSchedule = useCallback(() => {
@@ -443,7 +443,7 @@ export function SchedulePanel({
 
   return (
     <div
-      {...dropProps}
+      ref={songDropRef}
       className={`bg-white dark:bg-gray-800 rounded-lg border flex flex-col overflow-hidden h-full transition-colors ${
         isSongOver
           ? 'border-orange-400 dark:border-orange-500 ring-2 ring-orange-400/40'

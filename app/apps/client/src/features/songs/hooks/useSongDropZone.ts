@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import {
-  endInternalSongDrag,
-  isSongDrag,
-  readSongDragData,
+  registerSongDropZone,
   type SongDragPayload,
-} from '../utils/songDragData'
+  subscribeSongDrag,
+} from '../utils/songDragController'
 
 interface SongDropZone {
-  /** True while a song is hovering the zone — drives the highlight ring. */
+  /** Attach to the element that should accept dropped songs. */
+  ref: (node: HTMLElement | null) => void
+  /** True while a dragged song is over the zone — drives the highlight ring. */
   isOver: boolean
   /**
    * True for a moment right after a drop, so the zone can pulse. Without it a
@@ -16,29 +17,56 @@ interface SongDropZone {
    * put it there.
    */
   justLanded: boolean
-  /** Spread onto the element that should accept the drop. */
-  dropProps: {
-    onDragOver: (event: React.DragEvent) => void
-    onDragEnter: (event: React.DragEvent) => void
-    onDragLeave: (event: React.DragEvent) => void
-    onDrop: (event: React.DragEvent) => void
-  }
 }
 
 /**
  * Accepts songs dragged out of the song list.
  *
- * Enter/leave are counted rather than toggled: dragging across a child element
- * fires `dragleave` on the parent even though the pointer never left it, which
- * would make the highlight flicker.
+ * Registers with `songDragController`, which runs the drag on pointer events —
+ * the native HTML5 API was unusable in the desktop webview and collided with
+ * the file-import provider. Passing `undefined` leaves the zone unregistered,
+ * so a panel that does not accept drops costs nothing.
  */
 export function useSongDropZone(
   onDropSong: ((song: SongDragPayload) => void) | undefined,
 ): SongDropZone {
+  const [node, setNode] = useState<HTMLElement | null>(null)
   const [isOver, setIsOver] = useState(false)
   const [justLanded, setJustLanded] = useState(false)
-  const depth = useRef(0)
   const landedTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Kept in a ref so the zone isn't re-registered every render just because
+  // the handler's identity changed.
+  const handler = useRef(onDropSong)
+  handler.current = onDropSong
+
+  const ref = useCallback((next: HTMLElement | null) => setNode(next), [])
+
+  const accepts = !!onDropSong
+
+  useEffect(() => {
+    if (!node || !accepts) return
+
+    const { id, unregister } = registerSongDropZone(node, (song) => {
+      handler.current?.(song)
+
+      // Matches the .song-drop-land animation; re-triggering restarts it
+      // cleanly for back-to-back drops.
+      setJustLanded(false)
+      if (landedTimer.current) clearTimeout(landedTimer.current)
+      requestAnimationFrame(() => setJustLanded(true))
+      landedTimer.current = setTimeout(() => setJustLanded(false), 600)
+    })
+
+    const unsubscribe = subscribeSongDrag((state) =>
+      setIsOver(state.activeZoneId === id),
+    )
+
+    return () => {
+      unregister()
+      unsubscribe()
+      setIsOver(false)
+    }
+  }, [node, accepts])
 
   useEffect(
     () => () => {
@@ -47,66 +75,5 @@ export function useSongDropZone(
     [],
   )
 
-  const reset = useCallback(() => {
-    depth.current = 0
-    setIsOver(false)
-  }, [])
-
-  const onDragEnter = useCallback(
-    (event: React.DragEvent) => {
-      if (!onDropSong || !isSongDrag(event)) return
-      event.preventDefault()
-      depth.current += 1
-      setIsOver(true)
-    },
-    [onDropSong],
-  )
-
-  const onDragOver = useCallback(
-    (event: React.DragEvent) => {
-      if (!onDropSong || !isSongDrag(event)) return
-      // Without preventDefault the browser refuses the drop entirely.
-      event.preventDefault()
-      event.dataTransfer.dropEffect = 'copy'
-    },
-    [onDropSong],
-  )
-
-  const onDragLeave = useCallback(
-    (event: React.DragEvent) => {
-      if (!onDropSong || !isSongDrag(event)) return
-      depth.current -= 1
-      if (depth.current <= 0) reset()
-    },
-    [onDropSong, reset],
-  )
-
-  const onDrop = useCallback(
-    (event: React.DragEvent) => {
-      if (!onDropSong) return
-      const song = readSongDragData(event)
-      if (!song) return
-      event.preventDefault()
-      reset()
-      // `dragend` fires on the source too, but a drop that lands is the
-      // definitive end of the drag — clear it here so nothing can observe a
-      // stale "internal drag in flight" between the two events.
-      endInternalSongDrag()
-      onDropSong(song)
-
-      // Matches the .song-drop-land animation duration; re-triggering restarts
-      // it cleanly for back-to-back drops.
-      setJustLanded(false)
-      if (landedTimer.current) clearTimeout(landedTimer.current)
-      requestAnimationFrame(() => setJustLanded(true))
-      landedTimer.current = setTimeout(() => setJustLanded(false), 600)
-    },
-    [onDropSong, reset],
-  )
-
-  return {
-    isOver,
-    justLanded,
-    dropProps: { onDragOver, onDragEnter, onDragLeave, onDrop },
-  }
+  return { ref, isOver, justLanded }
 }
