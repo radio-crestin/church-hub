@@ -1,7 +1,24 @@
 [
   {
+    "version": "0.1.87",
+    "date": "2026-08-01T09:56:56+02:00",
+    "features": [],
+    "bugFixes": [
+      {
+        "scope": "scripts",
+        "message": "force LF on shell scripts so release.sh runs under core.autocrlf"
+      }
+    ],
+    "changes": [
+      {
+        "scope": "app-update",
+        "message": "correct the asset-matching rationale"
+      }
+    ]
+  },
+  {
     "version": "0.1.86",
-    "date": "2026-08-01T09:45:26+02:00",
+    "date": "2026-08-01T09:47:44+02:00",
     "features": [
       {
         "scope": "app-update",
