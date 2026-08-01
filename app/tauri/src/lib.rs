@@ -129,7 +129,8 @@ pub fn run() {
         .plugin(tauri_plugin_websocket::init())
         .plugin(tauri_plugin_keep_screen_on::init())
         .plugin(tauri_plugin_screen_brightness::init())
-        .plugin(tauri_plugin_process::init());
+        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_os::init());
     println!("[startup] plugins_core: {:?}", t.elapsed());
 
     // Start the embedded audio player (rodio) with internal HTTP API
