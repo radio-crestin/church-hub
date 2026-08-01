@@ -2,6 +2,14 @@
 
 > Auto-generated from git history by `app/scripts/generate-changelog.ts`. Do not edit by hand.
 
+## v0.1.89 — 2026-08-01
+
+### 🐛 Bug Fixes
+
+- restore the app version to 0.1.88 on main
+- **tauri**: register tauri-plugin-os, which three features already called
+- **app-update**: make "Check now" actually check, including on a dev instance
+
 ## v0.1.88 — 2026-08-01
 
 ### 🚀 Features
