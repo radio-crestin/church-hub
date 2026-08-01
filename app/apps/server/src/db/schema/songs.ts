@@ -5,7 +5,6 @@ import {
   primaryKey,
   sqliteTable,
   text,
-  uniqueIndex,
 } from 'drizzle-orm/sqlite-core'
 
 export const songCategories = sqliteTable(
@@ -153,7 +152,9 @@ export const songBookmarks = sqliteTable(
       .default(sql`(unixepoch())`),
   },
   (table) => [
-    uniqueIndex('idx_song_bookmarks_song_id').on(table.songId),
+    // Deliberately not unique: the same song may be bookmarked several times
+    // (see the allow-duplicate-bookmarks migration).
+    index('idx_song_bookmarks_song_id').on(table.songId),
     index('idx_song_bookmarks_sort_order').on(table.sortOrder),
     index('idx_song_bookmarks_created_at').on(table.createdAt),
   ],

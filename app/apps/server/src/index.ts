@@ -300,7 +300,6 @@ import {
   removeBookmark,
   removeBookmarkNote,
   reorderBookmarkItems,
-  reorderBookmarks,
   updateBookmarkNote,
 } from './service/song-bookmarks'
 import {
@@ -7237,36 +7236,9 @@ async function startRealServer(): Promise<void> {
         }
       }
 
-      // PUT /api/song-bookmarks/reorder - Reorder bookmarks
-      if (
-        req.method === 'PUT' &&
-        url.pathname === '/api/song-bookmarks/reorder'
-      ) {
-        const permError = checkPermission('songs.view')
-        if (permError) return permError
-
-        try {
-          const body = (await req.json()) as { songIds: number[] }
-          const result = reorderBookmarks(body.songIds)
-          return handleCors(
-            req,
-            new Response(JSON.stringify({ success: result.success }), {
-              status: 200,
-              headers: { 'Content-Type': 'application/json' },
-            }),
-          )
-        } catch {
-          return handleCors(
-            req,
-            new Response(JSON.stringify({ error: 'Invalid request body' }), {
-              status: 400,
-              headers: { 'Content-Type': 'application/json' },
-            }),
-          )
-        }
-      }
-
-      // PUT /api/song-bookmarks/:songId/sung - Toggle the "already sung" marker
+      // PUT /api/song-bookmarks/:id/sung - Toggle the "already sung" marker.
+      // Keyed on the bookmark row, not the song: the same song can be
+      // bookmarked several times and each copy is ticked off separately.
       {
         const sungMatch = url.pathname.match(
           /^\/api\/song-bookmarks\/(\d+)\/sung$/,
@@ -7275,10 +7247,10 @@ async function startRealServer(): Promise<void> {
           const permError = checkPermission('songs.view')
           if (permError) return permError
 
-          const songId = Number(sungMatch[1])
+          const bookmarkId = Number(sungMatch[1])
           try {
             const body = (await req.json()) as { isSung: boolean }
-            const result = markBookmarkSung(songId, Boolean(body.isSung))
+            const result = markBookmarkSung(bookmarkId, Boolean(body.isSung))
             return handleCors(
               req,
               new Response(JSON.stringify({ success: result.success }), {
@@ -7298,7 +7270,7 @@ async function startRealServer(): Promise<void> {
         }
       }
 
-      // DELETE /api/song-bookmarks/:songId - Remove single bookmark
+      // DELETE /api/song-bookmarks/:id - Remove a single bookmark row
       if (
         req.method === 'DELETE' &&
         url.pathname.startsWith('/api/song-bookmarks/')
@@ -7306,18 +7278,18 @@ async function startRealServer(): Promise<void> {
         const permError = checkPermission('songs.view')
         if (permError) return permError
 
-        const songId = Number(url.pathname.split('/').pop())
-        if (Number.isNaN(songId)) {
+        const bookmarkId = Number(url.pathname.split('/').pop())
+        if (Number.isNaN(bookmarkId)) {
           return handleCors(
             req,
-            new Response(JSON.stringify({ error: 'Invalid song ID' }), {
+            new Response(JSON.stringify({ error: 'Invalid bookmark ID' }), {
               status: 400,
               headers: { 'Content-Type': 'application/json' },
             }),
           )
         }
 
-        const result = removeBookmark(songId)
+        const result = removeBookmark(bookmarkId)
         return handleCors(
           req,
           new Response(JSON.stringify({ success: result.success }), {

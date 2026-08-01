@@ -14,6 +14,7 @@ import { addSongGroups } from './add-song-groups'
 import { addSongSlideNotes } from './add-song-slide-notes'
 import { addSync } from './add-sync'
 import { addSongVersionsPermissions } from './add-song-versions-permissions'
+import { allowDuplicateBookmarks } from './allow-duplicate-bookmarks'
 import { addUserAuthFields } from './add-user-auth-fields'
 import { dropSongKeyColumn } from './drop-song-key-column'
 import { EMBEDDED_MIGRATIONS } from './embedded'
@@ -306,6 +307,14 @@ export function runMigrations(
     'add_song_bookmark_sung',
     'Running add song_bookmark sung migration',
     () => addSongBookmarkSung(rawDb),
+  )
+
+  // Drop the UNIQUE constraint on song_bookmarks.song_id so the same song can
+  // be bookmarked more than once.
+  runStep(
+    'allow_duplicate_bookmarks',
+    'Running allow duplicate bookmarks migration',
+    () => allowDuplicateBookmarks(rawDb),
   )
 
   // Add is_sung/sung_at to schedule_items so a schedule tracks which of its

@@ -62,7 +62,6 @@
     "addSongDisabled": "Selecteaza mai intai o cantare",
     "addAllBookmarks": "Adauga toate cantarile marcate intr-un program",
     "songAdded": "\"{{title}}\" a fost adaugata in program",
-    "alreadyInSchedule": "\"{{title}}\" este deja in acest program",
     "selectScheduleFirst": "Alege mai intai un program",
     "deleteSchedule": "Sterge acest program",
     "deleteScheduleTitle": "Sterge programul",

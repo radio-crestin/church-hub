@@ -11,6 +11,5 @@ export {
   type BookmarkItemRef,
   reorderBookmarkItems,
 } from './reorderBookmarkItems'
-export { reorderBookmarks } from './reorderBookmarks'
 export * from './types'
 export { updateBookmarkNote } from './updateBookmarkNote'

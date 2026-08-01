@@ -38,7 +38,6 @@ export {
   useClearBookmarks,
   useMarkBookmarkSung,
   useRemoveBookmark,
-  useReorderBookmarks,
   useSongBookmarks,
 } from './useSongBookmarks'
 export { useSongDropZone } from './useSongDropZone'

@@ -1219,3 +1219,136 @@ test.describe('Dragging a song onto the panels', () => {
     }
   })
 })
+
+test.describe('The same song more than once', () => {
+  test('a song can be bookmarked twice, and each copy is removed on its own', async ({
+    request,
+  }) => {
+    const uniq = Date.now()
+    const song = await createSong(request, `E2E Dup Bookmark ${uniq}`)
+
+    try {
+      const first = await request.post('/api/song-bookmarks', {
+        data: { songId: song.id },
+      })
+      const second = await request.post('/api/song-bookmarks', {
+        data: { songId: song.id },
+      })
+      expect(first.status()).toBe(201)
+      expect(second.status()).toBe(201)
+
+      const firstId = (await first.json()).data.id
+      const secondId = (await second.json()).data.id
+      // Two distinct rows, not the same one handed back twice.
+      expect(secondId).not.toBe(firstId)
+
+      const listed = await request.get('/api/song-bookmarks')
+      const mine = (await listed.json()).data.filter(
+        (b: { songId: number }) => b.songId === song.id,
+      )
+      expect(mine).toHaveLength(2)
+
+      // The sung marker belongs to the row, not the song.
+      await request.put(`/api/song-bookmarks/${firstId}/sung`, {
+        data: { isSung: true },
+      })
+      const afterSung = await request.get('/api/song-bookmarks')
+      const rows = (await afterSung.json()).data.filter(
+        (b: { songId: number }) => b.songId === song.id,
+      )
+      expect(rows.find((b: { id: number }) => b.id === firstId)?.isSung).toBe(
+        true,
+      )
+      expect(rows.find((b: { id: number }) => b.id === secondId)?.isSung).toBe(
+        false,
+      )
+
+      // Deleting one leaves the other.
+      await request.delete(`/api/song-bookmarks/${firstId}`)
+      const afterDelete = await request.get('/api/song-bookmarks')
+      const left = (await afterDelete.json()).data.filter(
+        (b: { songId: number }) => b.songId === song.id,
+      )
+      expect(left).toHaveLength(1)
+      expect(left[0].id).toBe(secondId)
+    } finally {
+      const listed = await request.get('/api/song-bookmarks')
+      for (const b of (await listed.json()).data) {
+        if (b.songId === song.id) {
+          await request.delete(`/api/song-bookmarks/${b.id}`).catch(() => {})
+        }
+      }
+      await request.delete(`/api/songs/${song.id}`).catch(() => {})
+    }
+  })
+
+  test('a song can be added to the same program twice by dragging it twice', async ({
+    page,
+    request,
+  }) => {
+    const uniq = Date.now()
+    const title = `E2E Dup Prog ${uniq}`
+    const song = await createSong(request, title)
+    const schedule = await createSchedule(request, `E2E Dup Prog Sch ${uniq}`)
+
+    try {
+      await page.addInitScript((scheduleId: number) => {
+        window.localStorage.setItem('songs-list:schedules-open', 'true')
+        window.localStorage.setItem(
+          'songPage.selectedScheduleId',
+          String(scheduleId),
+        )
+      }, schedule.id)
+      await page.setViewportSize({ width: 1400, height: 900 })
+      await page.goto(`/songs?fromSong=true&q=${encodeURIComponent(title)}`)
+      await page.waitForLoadState('networkidle')
+
+      const card = page.getByTestId('song-card').filter({ hasText: title })
+      await expect(card).toBeVisible({ timeout: 10000 })
+      const zone = page.getByTestId('schedule-songs-panel')
+      await expect(zone).toBeVisible()
+
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const from = await card
+          .getByTestId('song-card-drag-handle')
+          .boundingBox()
+        const to = await zone.boundingBox()
+        if (!from || !to) throw new Error('drag targets not laid out')
+
+        await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2)
+        await page.mouse.down()
+        await page.mouse.move(
+          from.x + from.width / 2 + 15,
+          from.y + from.height / 2,
+        )
+        await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, {
+          steps: 12,
+        })
+        await page.mouse.up()
+
+        await expect
+          .poll(
+            async () => {
+              const res = await request.get(`/api/schedules/${schedule.id}`)
+              const { data } = await res.json()
+              return data.items.length
+            },
+            { timeout: 10000 },
+          )
+          .toBe(attempt + 1)
+      }
+
+      // Two separate items, both pointing at the same song.
+      const res = await request.get(`/api/schedules/${schedule.id}`)
+      const items = (await res.json()).data.items
+      expect(items.map((i: { songId: number }) => i.songId)).toEqual([
+        song.id,
+        song.id,
+      ])
+      expect(items[0].id).not.toBe(items[1].id)
+    } finally {
+      await request.delete(`/api/schedules/${schedule.id}`).catch(() => {})
+      await request.delete(`/api/songs/${song.id}`).catch(() => {})
+    }
+  })
+})

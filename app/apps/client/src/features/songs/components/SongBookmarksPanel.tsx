@@ -430,7 +430,7 @@ export function SongBookmarksPanel({
   const handleToggleSung = useCallback(
     (bookmark: SongBookmark) => {
       markSungMutation.mutate({
-        songId: bookmark.songId,
+        bookmarkId: bookmark.id,
         isSung: !bookmark.isSung,
       })
     },
@@ -464,7 +464,7 @@ export function SongBookmarksPanel({
       reorderItemsMutation.mutate(
         newOrder.map((item) => ({
           type: item.type,
-          id: item.type === 'song' ? item.bookmark!.songId : item.note!.id,
+          id: item.type === 'song' ? item.bookmark!.id : item.note!.id,
         })),
       )
     },
@@ -472,8 +472,8 @@ export function SongBookmarksPanel({
   )
 
   const handleRemoveBookmark = useCallback(
-    (songId: number) => {
-      removeBookmarkMutation.mutate(songId)
+    (bookmarkId: number) => {
+      removeBookmarkMutation.mutate(bookmarkId)
     },
     [removeBookmarkMutation],
   )
@@ -505,13 +505,9 @@ export function SongBookmarksPanel({
     isOver: isSongOver,
     justLanded: songJustLanded,
   } = useSongDropZone(
-    acceptsSongDrop
-      ? (song) => {
-          if (!bookmarks.some((b) => b.songId === song.id)) {
-            addBookmarkMutation.mutate(song.id)
-          }
-        }
-      : undefined,
+    // Duplicates are allowed on purpose — the same song often belongs twice in
+    // one service, so every drop adds another row.
+    acceptsSongDrop ? (song) => addBookmarkMutation.mutate(song.id) : undefined,
   )
 
   const handleExport = useCallback(async () => {
@@ -571,7 +567,7 @@ export function SongBookmarksPanel({
           bookmark={item.bookmark}
           isActive={activeSongId === item.bookmark.songId}
           onSelect={() => onSelectSong(item.bookmark!)}
-          onRemove={() => handleRemoveBookmark(item.bookmark!.songId)}
+          onRemove={() => handleRemoveBookmark(item.bookmark!.id)}
           onToggleSung={() => handleToggleSung(item.bookmark!)}
         />
       )

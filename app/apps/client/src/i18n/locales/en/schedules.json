@@ -62,7 +62,6 @@
     "addSongDisabled": "Select a song first",
     "addAllBookmarks": "Add all bookmarked songs to a program",
     "songAdded": "\"{{title}}\" added to the program",
-    "alreadyInSchedule": "\"{{title}}\" is already in this program",
     "selectScheduleFirst": "Pick a program first",
     "deleteSchedule": "Delete this program",
     "deleteScheduleTitle": "Delete program",
