@@ -1215,7 +1215,8 @@
         "installing": "Installing...",
         "later": "Later",
         "failed": "The download failed. Check the folder and your connection, then try again.",
-        "unavailable": "No installer is published for this platform."
+        "unavailable": "Could not work out which installer fits this machine, so there is nothing to download automatically.",
+        "openRelease": "Open the release on GitHub"
       }
     },
     "about": {

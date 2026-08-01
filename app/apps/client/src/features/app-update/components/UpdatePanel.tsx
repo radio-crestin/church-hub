@@ -259,17 +259,28 @@ export function UpdatePanel() {
                 )}
                 {t('sections.updates.available.install')}
               </button>
+            ) : !canDownload ? (
+              /* A disabled button with only a tooltip left the operator with
+                 no idea why nothing happened. Say it outright. */
+              <div data-testid="update-unavailable">
+                <p className="text-sm text-amber-700 dark:text-amber-400">
+                  {t('sections.updates.available.unavailable')}
+                </p>
+                <a
+                  href={updateInfo?.releaseUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-1 inline-block text-xs text-indigo-600 underline dark:text-indigo-400"
+                >
+                  {t('sections.updates.available.openRelease')}
+                </a>
+              </div>
             ) : (
               <button
                 type="button"
                 onClick={() => void startDownload()}
-                disabled={!canDownload || isDownloading || isStarting}
+                disabled={isDownloading || isStarting}
                 data-testid="update-download"
-                title={
-                  canDownload
-                    ? undefined
-                    : t('sections.updates.available.unavailable')
-                }
                 className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
               >
                 {isDownloading || isStarting ? (
