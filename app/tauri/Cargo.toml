@@ -38,6 +38,10 @@ tauri-plugin-keep-screen-on = "0.1.2"
 tauri-plugin-screen-brightness = { path = "../tauri-plugins/tauri-plugin-screen-brightness" }
 tauri-plugin-single-instance = "2"
 tauri-plugin-process = "2"
+# Used by the update check (asset selection), the feedback report and the
+# sidebar user agent. Declared as a JS dependency long before this, but never
+# registered here — so every os_type()/arch() call threw.
+tauri-plugin-os = "2"
 reqwest = { version = "0.12", default-features = false, features = ["json", "blocking", "rustls-tls"] }
 rodio = { version = "0.20", features = ["symphonia-all"] }
 dirs = "5"
