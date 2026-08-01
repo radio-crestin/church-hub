@@ -2,6 +2,35 @@
 
 > Auto-generated from git history by `app/scripts/generate-changelog.ts`. Do not edit by hand.
 
+## v0.1.86 — 2026-08-01
+
+### 🚀 Features
+
+- **app-update**: in-app download and unattended install of new versions
+- **songs**: allow the same song more than once in Marcaje and Programe
+- **schedules**: preview a song before adding it to a program
+- **songs**: reorder a mixed program list, and a real grip on song rows
+- **songs**: jump to the Bible when a program's verse row is clicked
+- **bible**: collapsible history + the Programe module, listing verses
+- **screens**: per-screen "open when the app starts" toggle
+- **songs**: Marcaje + Programe side by side on the song list page
+- **songs**: drag-to-reorder songs in the Programe panel
+- **backup**: local backups to a configurable folder
+- **songs**: multi-select Programe modal from the song toolbar
+- **songs**: Programe panel in the song page's right column
+
+### 🐛 Bug Fixes
+
+- **songs**: drive list-to-panel drag with pointer events instead of native DnD
+- **songs**: make the list-to-panel drop work where custom MIME types are stripped
+- **songs**: tell an internal song drag apart from a file arriving from outside
+- **backup**: refresh Drive storage after delete, show program contents
+
+### 🔧 Changes
+
+- **schedules**: one large add-item modal with a virtualized song search
+- sync version to v0.1.85 [skip ci]
+
 ## v0.1.85 — 2026-07-22
 
 ### 🐛 Bug Fixes
