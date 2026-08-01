@@ -42,6 +42,7 @@ import {
 } from '~/features/presentation'
 import type { ScheduleItem } from '~/features/schedules'
 import {
+  getSchedulePassageTarget,
   readSelectedScheduleId,
   SchedulePanel,
   useAddItemToSchedule,
@@ -693,21 +694,16 @@ function BiblePage() {
   /**
    * Opens a program's passage at its exact verse.
    *
-   * A bible_passage item stores its per-verse `reference` ("Ioan 3:16") but no
-   * book id, so the book is resolved by name against the operator's primary
-   * translation — the same fallback the route's URL handler uses.
+   * The passage carries no book id, so the book is resolved by name against the
+   * operator's primary translation — the same fallback this route's own URL
+   * handler uses.
    */
   const handleSelectSchedulePassage = useCallback(
     (item: ScheduleItem) => {
-      const reference =
-        item.biblePassageVerses[0]?.reference ??
-        item.biblePassageReference?.split(' - ')[0] ??
-        ''
-      const match = reference.match(/^(.+?)\s+(\d+):(\d+)/)
-      if (!match) return
+      const target = getSchedulePassageTarget(item)
+      if (!target) return
 
-      const [, bookName, chapter, verse] = match
-      const book = primaryBooks.find((b) => b.bookName === bookName)
+      const book = primaryBooks.find((b) => b.bookName === target.bookName)
 
       isBrowsingRef.current = true
       pendingInternalNavRef.current = true
@@ -715,9 +711,9 @@ function BiblePage() {
         to: '/bible/',
         search: {
           book: book?.id,
-          bookName,
-          chapter: Number(chapter),
-          verse: Number(verse),
+          bookName: target.bookName,
+          chapter: target.chapter,
+          verse: target.verse,
           select: true,
         },
       })
