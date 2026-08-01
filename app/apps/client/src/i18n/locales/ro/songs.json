@@ -86,6 +86,7 @@
     "label": "Sari la literă",
     "jumpTo": "Sari la cântările care încep cu {{letter}}"
   },
+  "dragToPanel": "Trage in Marcaje sau Programe",
   "picker": {
     "selectSong": "Selecteaza Cantare",
     "searchResults": "Se afiseaza {{shown}} din {{total}} rezultate",

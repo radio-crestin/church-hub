@@ -500,7 +500,11 @@ export function SongBookmarksPanel({
     [removeNoteMutation],
   )
 
-  const { isOver: isSongOver, dropProps } = useSongDropZone(
+  const {
+    isOver: isSongOver,
+    justLanded: songJustLanded,
+    dropProps,
+  } = useSongDropZone(
     acceptsSongDrop
       ? (song) => {
           if (!bookmarks.some((b) => b.songId === song.id)) {
@@ -583,7 +587,7 @@ export function SongBookmarksPanel({
         isSongOver
           ? 'border-amber-400 dark:border-amber-500 ring-2 ring-amber-400/40'
           : 'border-gray-200 dark:border-gray-700'
-      }`}
+      } ${songJustLanded ? 'song-drop-land' : ''}`}
     >
       {/* Header — when `onToggleCollapse` is wired, the leading chevron lets
           this panel double as its own accordion section so the parent doesn't

@@ -727,6 +727,7 @@ export function SongList({
         showCategoryInTitle={duplicateTitles.has(song.title.toLowerCase())}
         syncChangeKind={syncUpdatesMap.get(song.id)}
         isDraggable={songsDraggable}
+        dragHandleTitle={t('dragToPanel')}
       />
     ),
     [
@@ -737,6 +738,7 @@ export function SongList({
       duplicateTitles,
       syncUpdatesMap,
       songsDraggable,
+      t,
     ],
   )
 
