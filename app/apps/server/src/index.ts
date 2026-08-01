@@ -144,7 +144,9 @@ import {
   inspectBackup,
   listBackups,
   listLocalBackups,
+  type RestoreLocalBackupInput,
   restoreBackup,
+  restoreLocalBackup,
   runLocalBackup,
   startBackupScheduler,
   uploadBackup,
@@ -2412,12 +2414,14 @@ async function startRealServer(): Promise<void> {
       // Deliberately independent of Drive: these work with no Google account
       // connected, which is the whole point of an on-disk copy.
 
-      // GET /api/backup/local/list - Backups present in the configured folder
+      // GET /api/backup/local/list - Backups present in the configured folder,
+      // or in `?dir=` when the operator is browsing another one to restore from
       if (req.method === 'GET' && url.pathname === '/api/backup/local/list') {
         const guard = backupLocalhostGuard()
         if (guard) return guard
 
-        const backups = await listLocalBackups()
+        const dir = url.searchParams.get('dir') || undefined
+        const backups = await listLocalBackups(dir)
         return handleCors(
           req,
           new Response(JSON.stringify({ data: { backups } }), {
@@ -2476,6 +2480,41 @@ async function startRealServer(): Promise<void> {
         }
 
         const result = await deleteLocalBackup(fileName)
+        return handleCors(
+          req,
+          new Response(
+            JSON.stringify(
+              result.success ? { data: result } : { error: result.error },
+            ),
+            {
+              status: result.success ? 200 : 400,
+              headers: { 'Content-Type': 'application/json' },
+            },
+          ),
+        )
+      }
+
+      // POST /api/backup/local/restore - Replace the database with a local copy
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/backup/local/restore'
+      ) {
+        const guard = backupLocalhostGuard()
+        if (guard) return guard
+
+        let input: RestoreLocalBackupInput = {}
+        try {
+          const body = (await req.json()) as RestoreLocalBackupInput
+          input = {
+            fileName:
+              typeof body.fileName === 'string' ? body.fileName : undefined,
+            path: typeof body.path === 'string' ? body.path : undefined,
+          }
+        } catch {
+          // Falls through to the service's `no_source` error below.
+        }
+
+        const result = await restoreLocalBackup(input)
         return handleCors(
           req,
           new Response(

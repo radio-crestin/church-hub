@@ -1,8 +1,8 @@
 import { mkdir, readdir, stat, unlink } from 'node:fs/promises'
 import { isAbsolute, join } from 'node:path'
 
-import { buildBackupFileName, isBackupFile } from './constants'
 import { getBackupConfig, upsertBackupConfig } from './backupConfig'
+import { buildBackupFileName, isBackupFile } from './constants'
 import { createLogger } from '../../utils/logger'
 import { checkpointAndExport } from '../database/database'
 
@@ -52,12 +52,22 @@ export async function getLocalBackupDir(): Promise<string | null> {
 }
 
 /**
- * Lists the backups present in the configured folder, newest first. Returns an
- * empty list when local backups are off or the folder is gone (an unplugged
- * external drive is a normal state, not an error).
+ * Lists the backups present in a folder, newest first. Returns an empty list
+ * when local backups are off or the folder is gone (an unplugged external drive
+ * is a normal state, not an error).
+ *
+ * `dirOverride` lets the operator look inside a folder they just picked without
+ * making it the configured backup destination — restoring a copy carried over
+ * on a USB stick should not silently redirect where future backups are written.
  */
-export async function listLocalBackups(): Promise<LocalBackupFile[]> {
-  const dir = await getLocalBackupDir()
+export async function listLocalBackups(
+  dirOverride?: string,
+): Promise<LocalBackupFile[]> {
+  const dir = dirOverride?.trim()
+    ? isAbsolute(dirOverride.trim())
+      ? dirOverride.trim()
+      : null
+    : await getLocalBackupDir()
   if (!dir) return []
 
   let entries: string[]
@@ -157,7 +167,11 @@ export async function deleteLocalBackup(
   if (!dir) {
     return { success: false, error: 'no_local_path' }
   }
-  if (!isBackupFile(fileName) || fileName.includes('/') || fileName.includes('\\')) {
+  if (
+    !isBackupFile(fileName) ||
+    fileName.includes('/') ||
+    fileName.includes('\\')
+  ) {
     return { success: false, error: 'invalid_file_name' }
   }
 

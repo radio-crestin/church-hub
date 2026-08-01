@@ -44,6 +44,11 @@ export {
 } from './oauth'
 export { type RestoreBackupResult, restoreBackup } from './restoreBackup'
 export {
+  type RestoreLocalBackupInput,
+  type RestoreLocalBackupResult,
+  restoreLocalBackup,
+} from './restoreLocalBackup'
+export {
   runScheduledBackupIfDue,
   startBackupScheduler,
   stopBackupScheduler,
