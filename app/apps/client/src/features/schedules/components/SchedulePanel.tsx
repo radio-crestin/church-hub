@@ -294,15 +294,14 @@ export function SchedulePanel({
     [selectedScheduleId, removeItemMutation],
   )
 
-  /** Appends a song to the selected program, skipping duplicates. */
+  /**
+   * Appends a song to the selected program. Duplicates are allowed on purpose:
+   * a service often opens and closes with the same song.
+   */
   const addSongToSelected = useCallback(
     (song: { id: number; title: string }) => {
       if (!selectedScheduleId) {
         showToast(t('panel.selectScheduleFirst'), 'error')
-        return
-      }
-      if (songItems.some((item) => item.songId === song.id)) {
-        showToast(t('panel.alreadyInSchedule', { title: song.title }), 'info')
         return
       }
       addItemMutation.mutate(
@@ -314,7 +313,7 @@ export function SchedulePanel({
         },
       )
     },
-    [selectedScheduleId, songItems, addItemMutation, showToast, t],
+    [selectedScheduleId, addItemMutation, showToast, t],
   )
 
   /** Appends the Bible page's current passage to the selected program. */
