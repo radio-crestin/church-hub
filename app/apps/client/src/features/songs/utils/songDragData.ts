@@ -31,6 +31,13 @@ export interface SongDragPayload {
  * handlers and Tauri callbacks that are not part of any render.
  */
 let internalDragActive = false
+/**
+ * The song being dragged. `dataTransfer` is the primary channel, but it is not
+ * readable during `dragover` in every engine, and a webview can hand back an
+ * empty payload on `drop`. Keeping the song here too means the drop target can
+ * always answer "which song is this?".
+ */
+let internalDragPayload: SongDragPayload | null = null
 const listeners = new Set<(active: boolean) => void>()
 
 /** Safety net for drags that end without a `dragend` (cancelled off-window). */
@@ -47,6 +54,11 @@ export function isInternalSongDragActive(): boolean {
   return internalDragActive
 }
 
+/** The song currently being dragged inside the app, if any. */
+export function getInternalSongDragPayload(): SongDragPayload | null {
+  return internalDragPayload
+}
+
 /** Notified whenever an internal song drag starts or ends. */
 export function subscribeInternalSongDrag(
   listener: (active: boolean) => void,
@@ -61,6 +73,7 @@ export function endInternalSongDrag(): void {
     clearTimeout(internalDragTimer)
     internalDragTimer = null
   }
+  internalDragPayload = null
   setInternalDragActive(false)
 }
 
@@ -77,6 +90,7 @@ export function setSongDragData(
   event.dataTransfer.setData('text/plain', song.title)
   event.dataTransfer.effectAllowed = 'copy'
 
+  internalDragPayload = song
   setInternalDragActive(true)
   if (internalDragTimer) clearTimeout(internalDragTimer)
   // No drag realistically outlives this; without it a drag cancelled outside
@@ -90,7 +104,10 @@ export function setSongDragData(
  * only inspect the type list — which is exactly what this checks.
  */
 export function isSongDrag(event: React.DragEvent): boolean {
-  return Array.from(event.dataTransfer.types).includes(SONG_DRAG_MIME)
+  return (
+    internalDragActive ||
+    Array.from(event.dataTransfer.types).includes(SONG_DRAG_MIME)
+  )
 }
 
 /** Reads the dragged song on `drop`. Returns null for foreign drags. */
@@ -98,11 +115,15 @@ export function readSongDragData(
   event: React.DragEvent,
 ): SongDragPayload | null {
   const raw = event.dataTransfer.getData(SONG_DRAG_MIME)
-  if (!raw) return null
-  try {
-    const parsed = JSON.parse(raw) as SongDragPayload
-    return typeof parsed?.id === 'number' ? parsed : null
-  } catch {
-    return null
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw) as SongDragPayload
+      if (typeof parsed?.id === 'number') return parsed
+    } catch {
+      // Fall through to the in-flight payload below.
+    }
   }
+  // A drag we started ourselves is still identifiable even when the transfer
+  // comes back empty.
+  return internalDragPayload
 }

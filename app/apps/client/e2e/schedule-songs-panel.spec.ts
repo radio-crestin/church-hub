@@ -1048,3 +1048,241 @@ test.describe('Add-item modal - song preview', () => {
     }
   })
 })
+
+test.describe('Dragging a song onto the panels', () => {
+  test('a song dragged onto Marcaje is bookmarked and stays in the list', async ({
+    page,
+    request,
+  }) => {
+    const uniq = Date.now()
+    const title = `E2E DropMark ${uniq}`
+    const song = await createSong(request, title)
+
+    try {
+      await request.delete(`/api/song-bookmarks/${song.id}`).catch(() => {})
+
+      await page.addInitScript(() => {
+        window.localStorage.setItem('songs-list:bookmarks-open', 'true')
+        window.localStorage.setItem('songList.sortBy', 'newest')
+      })
+      await page.setViewportSize({ width: 1400, height: 900 })
+      await page.goto(`/songs?fromSong=true&q=${encodeURIComponent(title)}`)
+      await page.waitForLoadState('networkidle')
+
+      const card = page.getByTestId('song-card').filter({ hasText: title })
+      await expect(card).toBeVisible({ timeout: 10000 })
+
+      const grip = card.getByTestId('song-card-drag-handle')
+      await expect(grip).toBeVisible()
+
+      const zone = page.getByTestId('bookmarks-drop-zone')
+      const from = await grip.boundingBox()
+      const to = await zone.boundingBox()
+      if (!from || !to) throw new Error('drag targets not laid out')
+
+      await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2)
+      await page.mouse.down()
+      await page.mouse.move(
+        from.x + from.width / 2 + 15,
+        from.y + from.height / 2,
+      )
+      await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, {
+        steps: 12,
+      })
+      await page.mouse.up()
+
+      // It reached the server...
+      await expect
+        .poll(
+          async () => {
+            const res = await request.get('/api/song-bookmarks')
+            const { data } = await res.json()
+            return data.some((b: { songId: number }) => b.songId === song.id)
+          },
+          { timeout: 10000 },
+        )
+        .toBe(true)
+
+      // ...and the song is still in the list it was dragged from.
+      await expect(card).toBeVisible()
+    } finally {
+      await request.delete(`/api/song-bookmarks/${song.id}`).catch(() => {})
+      await request.delete(`/api/songs/${song.id}`).catch(() => {})
+    }
+  })
+
+  test('a song dragged onto Programe is appended to the selected program', async ({
+    page,
+    request,
+  }) => {
+    const uniq = Date.now()
+    const title = `E2E DropProg ${uniq}`
+    const song = await createSong(request, title)
+    const schedule = await createSchedule(request, `E2E DropProg Prog ${uniq}`)
+
+    try {
+      await page.addInitScript((scheduleId: number) => {
+        window.localStorage.setItem('songs-list:schedules-open', 'true')
+        window.localStorage.setItem('songList.sortBy', 'newest')
+        window.localStorage.setItem(
+          'songPage.selectedScheduleId',
+          String(scheduleId),
+        )
+      }, schedule.id)
+      await page.setViewportSize({ width: 1400, height: 900 })
+      await page.goto(`/songs?fromSong=true&q=${encodeURIComponent(title)}`)
+      await page.waitForLoadState('networkidle')
+
+      const card = page.getByTestId('song-card').filter({ hasText: title })
+      await expect(card).toBeVisible({ timeout: 10000 })
+
+      const zone = page.getByTestId('schedule-songs-panel')
+      await expect(zone).toBeVisible()
+
+      const from = await card.getByTestId('song-card-drag-handle').boundingBox()
+      const to = await zone.boundingBox()
+      if (!from || !to) throw new Error('drag targets not laid out')
+
+      await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2)
+      await page.mouse.down()
+      await page.mouse.move(
+        from.x + from.width / 2 + 15,
+        from.y + from.height / 2,
+      )
+      await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, {
+        steps: 12,
+      })
+      await page.mouse.up()
+
+      await expect
+        .poll(
+          async () => {
+            const res = await request.get(`/api/schedules/${schedule.id}`)
+            const { data } = await res.json()
+            return data.items.map((i: { songId: number }) => i.songId)
+          },
+          { timeout: 10000 },
+        )
+        .toEqual([song.id])
+
+      await expect(card).toBeVisible()
+    } finally {
+      await request.delete(`/api/schedules/${schedule.id}`).catch(() => {})
+      await request.delete(`/api/songs/${song.id}`).catch(() => {})
+    }
+  })
+
+  test('the drop still lands when the webview strips the custom MIME type', async ({
+    page,
+    request,
+  }) => {
+    const uniq = Date.now()
+    const title = `E2E DropNoMime ${uniq}`
+    const song = await createSong(request, title)
+
+    try {
+      await request.delete(`/api/song-bookmarks/${song.id}`).catch(() => {})
+
+      await page.addInitScript(() => {
+        window.localStorage.setItem('songs-list:bookmarks-open', 'true')
+      })
+      await page.setViewportSize({ width: 1400, height: 900 })
+      await page.goto(`/songs?fromSong=true&q=${encodeURIComponent(title)}`)
+      await page.waitForLoadState('networkidle')
+
+      const card = page.getByTestId('song-card').filter({ hasText: title })
+      await expect(card).toBeVisible({ timeout: 10000 })
+
+      // Begin a real drag so the app records one is in flight...
+      const grip = card.getByTestId('song-card-drag-handle')
+      const from = await grip.boundingBox()
+      if (!from) throw new Error('grip not laid out')
+      await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2)
+      await page.mouse.down()
+      await page.mouse.move(
+        from.x + from.width / 2 + 20,
+        from.y + from.height / 2 + 10,
+      )
+
+      // ...then deliver dragover/drop carrying NOTHING, which is how a webview
+      // that drops custom MIME types presents the same gesture. The panel has
+      // to recognise its own drag anyway.
+      const landed = await page.evaluate(() => {
+        const zone = document.querySelector(
+          '[data-testid="bookmarks-drop-zone"]',
+        )
+        if (!zone) return false
+        const bare = new DataTransfer()
+        zone.dispatchEvent(
+          new DragEvent('dragover', {
+            dataTransfer: bare,
+            bubbles: true,
+            cancelable: true,
+          }),
+        )
+        zone.dispatchEvent(
+          new DragEvent('drop', {
+            dataTransfer: bare,
+            bubbles: true,
+            cancelable: true,
+          }),
+        )
+        return true
+      })
+      expect(landed).toBe(true)
+      await page.mouse.up()
+
+      await expect
+        .poll(
+          async () => {
+            const res = await request.get('/api/song-bookmarks')
+            const { data } = await res.json()
+            return data.some((b: { songId: number }) => b.songId === song.id)
+          },
+          { timeout: 10000 },
+        )
+        .toBe(true)
+    } finally {
+      await request.delete(`/api/song-bookmarks/${song.id}`).catch(() => {})
+      await request.delete(`/api/songs/${song.id}`).catch(() => {})
+    }
+  })
+
+  test('every row carries a visible grip, not just the first', async ({
+    page,
+    request,
+  }) => {
+    const uniq = Date.now()
+    const songs = await Promise.all([
+      createSong(request, `E2E Grips A ${uniq}`),
+      createSong(request, `E2E Grips B ${uniq}`),
+      createSong(request, `E2E Grips C ${uniq}`),
+    ])
+
+    try {
+      await page.setViewportSize({ width: 1400, height: 900 })
+      await page.goto(
+        `/songs?fromSong=true&q=${encodeURIComponent(`E2E Grips`)}`,
+      )
+      await page.waitForLoadState('networkidle')
+
+      const cards = page.getByTestId('song-card')
+      await expect(cards.first()).toBeVisible({ timeout: 10000 })
+
+      // Every rendered row, not just the first: the grip is the affordance
+      // that says these rows can be dragged at all, so it must be visible
+      // without hovering.
+      const count = await cards.count()
+      expect(count).toBeGreaterThanOrEqual(3)
+      for (let i = 0; i < count; i++) {
+        await expect(
+          cards.nth(i).getByTestId('song-card-drag-handle'),
+        ).toBeVisible()
+      }
+    } finally {
+      for (const song of songs) {
+        await request.delete(`/api/songs/${song.id}`).catch(() => {})
+      }
+    }
+  })
+})
