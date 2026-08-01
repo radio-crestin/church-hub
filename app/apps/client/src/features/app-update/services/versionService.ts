@@ -51,12 +51,11 @@ export async function getCurrentVersion(): Promise<string> {
 /**
  * Matches the release asset for this machine.
  *
- * The patterns follow what the release workflow actually uploads —
- * `church-hub-macos-arm64-v-0.1.85.dmg`, `church-hub-windows-x64-v-0.1.85.exe`.
- * They used to look for Tauri's raw bundle names (`…aarch64.dmg`,
- * `…setup.exe`), which the workflow renames, so no asset ever matched and the
- * download URL was always null — the "Download" button silently fell back to
- * opening the release page.
+ * A release carries the same build under two names: Tauri's raw bundle
+ * (`church-hub_0.1.85_aarch64.dmg`) and the workflow's renamed copy
+ * (`church-hub-macos-arm64-v-0.1.85.dmg`). These patterns target the renamed
+ * ones — they are what the release notes link to, they carry the version, and
+ * they are stable against Tauri changing its bundle naming.
  */
 function getAssetPattern(): RegExp | null {
   if (!isTauri) return null
