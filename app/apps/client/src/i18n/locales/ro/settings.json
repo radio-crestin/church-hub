@@ -1192,9 +1192,11 @@
         "saved": "Folderul descarcarilor a fost salvat",
         "failed": "Folderul descarcarilor nu a putut fi salvat"
       },
+      "whatsNew": "Ce e nou in v{{version}}",
       "status": {
         "title": "Versiune",
         "check": "Verifica acum",
+        "checking": "Se verifica...",
         "upToDate": "Ai ultima versiune (v{{version}})",
         "available": "Versiunea {{version}} este disponibila"
       },

@@ -1,74 +1,110 @@
-import { Download, X } from 'lucide-react'
+import { useNavigate } from '@tanstack/react-router'
+import { CheckCircle2, Download, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { isTauri } from '~/utils/isTauri'
 import { useAppUpdate } from '../hooks/useAppUpdate'
+import { useUpdateDownload } from '../hooks/useUpdateDownload'
 
 interface UpdateNotificationProps {
   isCollapsed: boolean
 }
 
+/**
+ * The sidebar's "a new version is waiting" badge.
+ *
+ * It opens the update page rather than GitHub: everything an operator needs —
+ * the changelog, the download, the install — lives in the app now, and being
+ * dropped into a browser was the reason updates never got applied.
+ *
+ * It also stays visible once the installer has been downloaded but not yet
+ * run, which is exactly the moment the reminder matters most.
+ */
 export function UpdateNotification({ isCollapsed }: UpdateNotificationProps) {
   const { t } = useTranslation('sidebar')
-  const {
-    updateInfo,
-    isDismissed,
-    isDownloading,
-    isDevInstance,
-    dismissUpdate,
-    downloadUpdate,
-  } = useAppUpdate()
+  const navigate = useNavigate()
+  const { updateInfo, isDismissed, isDevInstance, dismissUpdate } =
+    useAppUpdate()
 
-  // Only show inside the packaged Tauri desktop app — never on a dev instance.
-  if (isDevInstance || !isTauri() || !updateInfo?.hasUpdate || isDismissed) {
-    return null
-  }
+  const { isReady, isDownloading, progress } = useUpdateDownload(
+    updateInfo?.downloadUrl ?? null,
+    updateInfo?.latestVersion ?? null,
+  )
+
+  // Only inside the packaged desktop app — never on a dev instance.
+  if (isDevInstance || !isTauri() || !updateInfo?.hasUpdate) return null
+  // A downloaded-but-uninstalled update outranks dismissal: the operator asked
+  // for it, so it stays until it is actually applied.
+  if (isDismissed && !isReady) return null
 
   const { latestVersion } = updateInfo
+  const openUpdates = () => navigate({ to: '/settings/updates' })
+
+  const label = isReady
+    ? t('version.readyToInstall', { version: latestVersion })
+    : t('version.updateAvailable', { version: latestVersion })
 
   if (isCollapsed) {
-    // Collapsed view - just show a dot indicator
     return (
       <div className="flex justify-center mb-2">
         <button
-          onClick={() => void downloadUpdate()}
+          type="button"
+          onClick={openUpdates}
+          data-testid="sidebar-update-badge"
           className="relative p-2 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
-          title={t('version.updateAvailable', { version: latestVersion })}
+          title={label}
         >
-          <Download size={16} />
+          {isReady ? <CheckCircle2 size={16} /> : <Download size={16} />}
           <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
         </button>
       </div>
     )
   }
 
-  // Expanded view - full notification
   return (
     <div className="mb-2 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-green-800 dark:text-green-200">
-            {t('version.updateAvailable', { version: latestVersion })}
+            {label}
           </p>
           <p className="text-xs text-green-600 dark:text-green-400 mt-0.5">
-            {t('version.clickToDownload')}
+            {isReady
+              ? t('version.clickToInstall')
+              : t('version.clickToOpenUpdates')}
           </p>
         </div>
-        <button
-          onClick={dismissUpdate}
-          className="p-1 rounded hover:bg-green-200 dark:hover:bg-green-800/50 transition-colors text-green-600 dark:text-green-400"
-          title={t('version.dismiss')}
-        >
-          <X size={14} />
-        </button>
+        {!isReady && (
+          <button
+            type="button"
+            onClick={dismissUpdate}
+            className="p-1 rounded hover:bg-green-200 dark:hover:bg-green-800/50 transition-colors text-green-600 dark:text-green-400"
+            title={t('version.dismiss')}
+          >
+            <X size={14} />
+          </button>
+        )}
       </div>
+
+      {/* A download started from the page keeps reporting here, so switching
+          away from it does not hide the fact that something is in flight. */}
+      {isDownloading && (
+        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-green-200 dark:bg-green-800">
+          <div
+            className="h-full rounded-full bg-green-600 transition-[width] duration-200 dark:bg-green-400"
+            style={{ width: `${progress ?? 0}%` }}
+          />
+        </div>
+      )}
+
       <button
-        onClick={() => void downloadUpdate()}
-        disabled={isDownloading}
-        className="mt-2 w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-colors disabled:opacity-50"
+        type="button"
+        onClick={openUpdates}
+        data-testid="sidebar-update-badge"
+        className="mt-2 w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-colors"
       >
-        <Download size={14} />
-        {isDownloading ? t('version.downloading') : t('version.download')}
+        {isReady ? <CheckCircle2 size={14} /> : <Download size={14} />}
+        {isReady ? t('version.install') : t('version.viewUpdate')}
       </button>
     </div>
   )
