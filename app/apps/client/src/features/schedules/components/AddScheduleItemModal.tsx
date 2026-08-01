@@ -191,7 +191,13 @@ export function AddScheduleItemModal({
             : 'w-full max-w-sm max-h-[90vh]'
         }`}
       >
-        <div className="flex h-full flex-col">
+        {/* `h-full` only in the song step. The menu step's dialog has no
+            explicit height, so a full-height child would resolve against `auto`
+            and collapse to zero — leaving a visible backdrop with no modal. */}
+        {/* `h-full` only where the dialog has an explicit height. In the menu
+            step its height is content-driven, and a percentage height against
+            an auto-height parent is a dependency worth not having. */}
+        <div className={`flex flex-col ${isSongStep ? 'h-full' : ''}`}>
           {/* Header */}
           <div className="flex items-center justify-between gap-2 p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
             <div className="flex items-center gap-2 min-w-0">

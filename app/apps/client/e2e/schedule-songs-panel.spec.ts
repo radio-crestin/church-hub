@@ -847,12 +847,53 @@ test.describe('Song list drag handles', () => {
     }
   })
 
-  test('an internal song drag does not raise the file-import overlay', async ({
+  test('dragging a song from the list never raises the file-import overlay', async ({
     page,
     request,
   }) => {
     const uniq = Date.now()
     const song = await createSong(request, `E2E NoOverlay ${uniq}`)
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('songs-list:bookmarks-open', 'true')
+      })
+      await page.setViewportSize({ width: 1400, height: 900 })
+      await page.goto('/songs?fromSong=true')
+      await page.waitForLoadState('networkidle')
+
+      const card = page.getByTestId('song-card').first()
+      await expect(card).toBeVisible({ timeout: 10000 })
+
+      // Drive a real drag from the grip onto the Marcaje panel and hold it
+      // there: the overlay must never appear at any point.
+      const grip = card.getByTestId('song-card-drag-handle')
+      const zone = page.getByTestId('bookmarks-drop-zone')
+      const from = await grip.boundingBox()
+      const to = await zone.boundingBox()
+      if (!from || !to) throw new Error('drag targets not laid out')
+
+      const overlay = page.locator('text=/powerpoint|pptx/i')
+
+      await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2)
+      await page.mouse.down()
+      await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, {
+        steps: 12,
+      })
+      await expect(overlay).toHaveCount(0)
+      await page.mouse.up()
+      await expect(overlay).toHaveCount(0)
+    } finally {
+      await request.delete(`/api/songs/${song.id}`).catch(() => {})
+    }
+  })
+
+  test('a file arriving from outside still raises the import overlay', async ({
+    page,
+    request,
+  }) => {
+    const uniq = Date.now()
+    const song = await createSong(request, `E2E Overlay ${uniq}`)
 
     try {
       await page.setViewportSize({ width: 1400, height: 900 })
@@ -862,25 +903,67 @@ test.describe('Song list drag handles', () => {
         timeout: 10000,
       })
 
-      // Dispatch a drag carrying our own MIME. The provider must ignore it, so
-      // the "drop PowerPoint files here" overlay never shows.
+      // A drag carrying a real file — the case the provider exists for.
       await page.evaluate(() => {
         const transfer = new DataTransfer()
-        transfer.setData(
-          'application/x-church-hub-song',
-          JSON.stringify({ id: 1, title: 'x' }),
+        transfer.items.add(
+          new File(['x'], 'deck.pptx', {
+            type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+          }),
         )
         document.dispatchEvent(
-          new DragEvent('dragenter', {
-            dataTransfer: transfer,
-            bubbles: true,
-          }),
+          new DragEvent('dragenter', { dataTransfer: transfer, bubbles: true }),
         )
       })
 
-      await expect(page.locator('text=/powerpoint|pptx/i')).toHaveCount(0)
+      await expect(page.locator('text=/powerpoint|pptx/i').first()).toBeVisible(
+        {
+          timeout: 5000,
+        },
+      )
     } finally {
       await request.delete(`/api/songs/${song.id}`).catch(() => {})
+    }
+  })
+})
+
+test.describe('Add-item modal on the program page - rendering', () => {
+  test('the type menu is actually visible, not just its backdrop', async ({
+    page,
+    request,
+  }) => {
+    const uniq = Date.now()
+    const schedule = await createSchedule(request, `E2E Menu Render ${uniq}`)
+
+    try {
+      await page.setViewportSize({ width: 1400, height: 900 })
+      await page.goto(`/schedules/${schedule.id}`)
+      await page.waitForLoadState('networkidle')
+
+      await page.getByTestId('schedule-add-item').click()
+
+      const modal = page.getByTestId('add-schedule-item-modal')
+      await expect(modal).toBeVisible({ timeout: 10000 })
+
+      // The regression was a dialog with a visible backdrop but zero-height
+      // content, so assert the options are on screen and the box has size.
+      const option = modal.getByTestId('add-schedule-item-song')
+      await expect(option).toBeVisible()
+
+      const box = await modal.boundingBox()
+      expect(box?.height ?? 0).toBeGreaterThan(200)
+
+      // ...and still has size after switching to the song step and back.
+      await option.click()
+      await expect(modal.getByTestId('song-picker-search')).toBeVisible()
+      await modal.getByTestId('add-schedule-item-back').click()
+      await expect(
+        modal.getByTestId('add-schedule-item-biblePassage'),
+      ).toBeVisible()
+      const backBox = await modal.boundingBox()
+      expect(backBox?.height ?? 0).toBeGreaterThan(200)
+    } finally {
+      await request.delete(`/api/schedules/${schedule.id}`).catch(() => {})
     }
   })
 })
