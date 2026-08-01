@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
-import { UpdateSettingsPanel } from '~/features/app-update'
+import { UpdatePanel } from '~/features/app-update'
 import { SettingsLeafGuard, SettingsSection } from '~/features/settings'
 
 export const Route = createFileRoute('/settings/updates')({
@@ -18,7 +18,7 @@ function UpdateSettings() {
           title={t('sections.updates.title')}
           description={t('sections.updates.description')}
         >
-          <UpdateSettingsPanel />
+          <UpdatePanel />
         </SettingsSection>
       </div>
     </SettingsLeafGuard>
